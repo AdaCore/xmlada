@@ -105,6 +105,10 @@ package body Unicode.CES.Utf16 is
    is
       C, D : Unicode_Char;
    begin
+      if Index + 1 > Str'Last then
+         raise Invalid_Encoding;
+      end if;
+
       C := Character'Pos (Str (Index + 1)) * 256 + Character'Pos (Str (Index));
 
       --  High surrogate value
@@ -138,6 +142,10 @@ package body Unicode.CES.Utf16 is
    is
       C, D : Unicode_Char;
    begin
+      if Index + 1 > Str'Last then
+         raise Invalid_Encoding;
+      end if;
+
       C := Character'Pos (Str (Index)) * 256 + Character'Pos (Str (Index + 1));
 
       --  High surrogate value

@@ -78,7 +78,7 @@ package body Unicode.CES.Utf32 is
       Char  : out Unicode_Char) is
    begin
       if Index > Str'Last - 3 then
-         Char := Nul;
+         raise Invalid_Encoding;
       else
          Char := Character'Pos (Str (Index))
            + Character'Pos (Str (Index + 1)) * (2 ** 8)
@@ -98,7 +98,7 @@ package body Unicode.CES.Utf32 is
       Char  : out Unicode_Char) is
    begin
       if Index > Str'Last - 3 then
-         Char := Nul;
+         raise Invalid_Encoding;
       else
          Char := Character'Pos (Str (Index + 3))
            + Character'Pos (Str (Index + 2)) * (2 ** 8)
