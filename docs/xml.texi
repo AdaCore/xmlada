@@ -1449,6 +1449,10 @@ gnatmake main.adb -Iprefix/include/xmlada -largs -Lprefix/lib \
    environment variable, by adding to it the installation directory of
    XML/Ada, ie the one that contains xmlada.gpr
 
+   If the installation prefix is the same as your GNAT installation, and you
+   are using GNAT more recent than 5.03a, then it will automatically find
+   XML/Ada's project files.
+
    Check the @file{dom/test} directory in the XML/Ada package, which contains
    both code examples and project files that you can use as a basic for your
    own code.
