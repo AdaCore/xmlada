@@ -4,12 +4,12 @@ project Shared is
 
    for Source_Dirs use ();
 
-   type Mode_Type is ("distrib", "test", "debug", "optimize", "profile");
+   type Mode_Type is ("distrib", "debug", "optimize", "profile");
    Mode : Mode_Type := external ("MODE", "optimize");
 
    package Builder is
        case Mode is
-          when "debug" | "test" => 
+          when "debug" => 
              for Default_Switches ("Ada") use ("-g", "-gnatVa");
              for Global_Configuration_Pragmas use "../gnat.adc";
           when others =>
@@ -24,7 +24,7 @@ project Shared is
          when "distrib" =>
             for Default_Switches ("Ada") use ("-O2", "-gnatN");
 
-         when "debug" | "test" =>
+         when "debug" =>
             for Default_Switches ("Ada") use warnings
                & ("-gnata", "-gnatVaMI");
 
@@ -39,7 +39,7 @@ project Shared is
 
    package binder is
       case Mode is
-         when "debug" | "test" =>
+         when "debug" =>
             for Default_Switches ("Ada") use ("-E");
       end case;
    end binder;
