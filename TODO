@@ -20,9 +20,6 @@ xml module:
 * SAX: Should have a feature to specify whether entity refs in attribute
   values should be expanded or not
 
-* SAX: Should we report the same attribute twice for a given element, or
-  should this be simplified ?
-
 * Parser: Checking of self-contained entities could be cleaner (ie done at
   a more general level). For instance, directly at the end of Next_Token,
   but we must exclude Text from the tests.
