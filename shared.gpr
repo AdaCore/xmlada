@@ -1,5 +1,5 @@
 project Shared is
-   Version := "1.0";
+   Version := "1.1w";
    Library_Type := "relocatable";
 
    for Source_Dirs use ();
@@ -11,14 +11,14 @@ project Shared is
        case Mode is
           when "debug" => 
              for Default_Switches ("Ada") use ("-g", "-gnatVa");
-             for Global_Configuration_Pragmas use "../gnat.adc";
+             --  for Global_Configuration_Pragmas use "../gnat.adc";
           when others =>
              for Default_Switches ("Ada") use ("-O2");
        end case;
    end Builder;
 
    package compiler is
-      warnings := ("-gnatwua", "-gnaty");
+      warnings := ("-gnatwua", "-gnaty", "-gnatQ");
 
       case Mode is
          when "distrib" =>
