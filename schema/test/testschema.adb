@@ -44,6 +44,7 @@ begin
    end if;
 
    if Xml_File.all /= "" then
+      Set_Feature (My_Reader, Schema_Validation_Feature, True);
       Open (Xml_File.all, Read);
       Set_Public_Id (Read, Xml_File.all);
       Set_System_Id (Read, Xml_File.all);
