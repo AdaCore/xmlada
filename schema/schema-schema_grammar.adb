@@ -744,7 +744,7 @@ package body Schema.Schema_Grammar is
       Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "simpleContent choice");
       Add_Particle (Choice1, Create_Element
-                      ("retriction",
+                      ("restriction",
                        Lookup (G, "simpleRestrictionType")));
       Add_Particle (Choice1, Create_Element
                       ("extension",
