@@ -319,8 +319,8 @@ package body Schema.Readers is
       procedure Compute_Type is
          Type_Index : constant Integer := Get_Index
            (Atts, URI => XML_Instance_URI, Local_Name => "type");
-         Derives_By_Extension, Derives_By_Restriction : Boolean;
          G : XML_Grammar_NS;
+         Had_Restriction, Had_Extension : Boolean := False;
       begin
          Typ := Get_Type (Element);
 
@@ -352,37 +352,27 @@ package body Schema.Readers is
                  ("Unknown type """ & Get_Value (Atts, Type_Index) & '"');
             end if;
 
-            Derives_By_Extension :=
-              Is_Extension_Of (Get_Validator (Typ), Get_Type (Element));
-            Derives_By_Restriction :=
-              Is_Restriction_Of (Get_Validator (Typ), Get_Type (Element));
+            if Get_Validator (Typ) /= Get_Validator (Get_Type (Element)) then
+               Check_Replacement
+                 (Get_Validator (Typ), Get_Type (Element),
+                  Had_Restriction => Had_Restriction,
+                  Had_Extension   => Had_Extension);
 
-            if not Derives_By_Extension
-              and then not Derives_By_Restriction
-              and then Typ /= Get_Type (Element)
-              and then Get_Local_Name (Get_Type (Element)) /= "ur-Type"
-            then
-               Validation_Error
-                 ("The type mentionned in the ""type"" attribute must"
-                  & " derive from the element's type in the schema");
-            end if;
+               if Had_Restriction
+                 and then Get_Block_On_Restriction (Element)
+               then
+                  Validation_Error
+                    ("Element """ & Get_Local_Name (Element)
+                       & """ blocks the use of restrictions of the type");
+               end if;
 
-            if Derives_By_Restriction
-              and then
-                (Get_Block_On_Restriction (Element)
-                 or else Get_Block_On_Restriction (Get_Type (Element)))
-            then
-               Validation_Error
-                 ("Cannot use restriction of element's type in this context");
-            end if;
-
-            if Derives_By_Extension
-              and then
-                (Get_Block_On_Extension (Element)
-                 or else Get_Block_On_Extension (Get_Type (Element)))
-            then
-               Validation_Error
-                 ("Cannot use extension of element's type in this context");
+               if Had_Extension
+                 and then Get_Block_On_Extension (Element)
+               then
+                  Validation_Error
+                    ("Element """ & Get_Local_Name (Element)
+                       & """ blocks the use of extensions of the type");
+               end if;
             end if;
          end if;
       end Compute_Type;

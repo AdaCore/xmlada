@@ -35,12 +35,11 @@ package body Schema.Validators.Extensions is
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
       Dependency2 : out XML_Validator);
-   function Is_Extension_Of
-     (Validator : access Extension_XML_Validator; Typ : XML_Type)
-      return Boolean;
-   function Is_Restriction_Of
-     (Validator : access Extension_XML_Validator; Typ : XML_Type)
-      return Boolean;
+   procedure Check_Replacement
+     (Validator         : access Extension_XML_Validator;
+      Typ               : XML_Type;
+      Had_Restriction   : in out Boolean;
+      Had_Extension     : in out Boolean);
    procedure Check_Content_Type
      (Validator        : access Extension_XML_Validator;
       Should_Be_Simple : Boolean);
@@ -182,29 +181,37 @@ package body Schema.Validators.Extensions is
            (Get_Validator (Validator.Base), Ch, Empty_Element);
    end Validate_Characters;
 
-   ---------------------
-   -- Is_Extension_Of --
-   ---------------------
-
-   function Is_Extension_Of
-     (Validator : access Extension_XML_Validator; Typ : XML_Type)
-      return Boolean is
-   begin
-      return Validator.Base = Typ
-        or else Is_Extension_Of (Get_Validator (Validator.Base), Typ)
-        or else Is_Restriction_Of (Get_Validator (Validator.Base), Typ);
-   end Is_Extension_Of;
-
    -----------------------
-   -- Is_Restriction_Of --
+   -- Check_Replacement --
    -----------------------
 
-   function Is_Restriction_Of
-     (Validator : access Extension_XML_Validator; Typ : XML_Type)
-      return Boolean is
+   procedure Check_Replacement
+     (Validator         : access Extension_XML_Validator;
+      Typ               : XML_Type;
+      Had_Restriction   : in out Boolean;
+      Had_Extension     : in out Boolean) is
    begin
-      return Is_Restriction_Of (Get_Validator (Validator.Base), Typ);
-   end Is_Restriction_Of;
+      Had_Extension := True;
+
+      if Validator.Base.Block_Restriction and then Had_Restriction then
+         Validation_Error
+           ("Restrictions of type """
+            & Get_Local_Name (Validator.Base) & """ are forbidden");
+      end if;
+
+      if Validator.Base.Block_Extension and then Had_Extension then
+         Validation_Error
+           ("Extensions of type """
+            & Get_Local_Name (Validator.Base) & """ are forbidden");
+      end if;
+
+      if Validator.Base /= Typ then
+         Check_Replacement
+           (Get_Validator (Validator.Base), Typ,
+            Had_Restriction => Had_Restriction,
+            Had_Extension   => Had_Extension);
+      end if;
+   end Check_Replacement;
 
    ------------------------
    -- Check_Content_Type --
