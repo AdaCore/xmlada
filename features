@@ -1,5 +1,8 @@
 New features in version 1.1
 
+- A new input source is now provided: Http
+  See testxml.adb for an example of use
+
 - A project file is now installed by default (xmlada.gpr) to facilitate the
   use of XML/Ada
 
