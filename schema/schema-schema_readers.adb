@@ -212,7 +212,7 @@ package body Schema.Schema_Readers is
 
    procedure End_Document (Handler : in out Schema_Reader) is
    begin
-      Global_Check (Handler.Target_NS);
+      Global_Check (Handler.Created_Grammar);
    end End_Document;
 
    ----------------------
@@ -542,6 +542,7 @@ package body Schema.Schema_Readers is
       Typ     : XML_Type := No_Type;
       Group   : XML_Element;
       Form    : Form_Type;
+      Is_Ref  : Boolean;
 
    begin
       if Form_Index /= -1 then
@@ -563,19 +564,24 @@ package body Schema.Schema_Readers is
 
          case Handler.Contexts.Typ is
             when Context_Schema | Context_Redefine =>
-               Element := Register (Handler.Target_NS,
+               Element := Create_Global_Element (Handler.Target_NS,
                                     Get_Value (Atts, Name_Index),
                                     Form => Form);
-               Set_Type (Element, Typ);
+               Is_Ref := False;
                Output (Ada_Name (Element)
                        & " := Register (Handler.Target_NS, """
                        & Get_Value (Atts, Name_Index) & """, " & Form'Img
                        & ");");
-               Output ("Set_Type (" & Ada_Name (Element) & ", "
-                       & Ada_Name (Typ) & ");");
+
+               if Typ /= No_Type then
+                  Set_Type (Element, Typ);
+                  Output ("Set_Type (" & Ada_Name (Element) & ", "
+                          & Ada_Name (Typ) & ");");
+               end if;
             when others =>
                Element := Create_Local_Element
                  (Get_Value (Atts, Name_Index), Typ, Form => Form);
+               Is_Ref := False;
                Output
                  (Ada_Name (Element) & " := Create_Local_Element ("""
                   & Get_Value (Atts, Name_Index) & """, " & Ada_Name (Typ)
@@ -597,6 +603,7 @@ package body Schema.Schema_Readers is
       else
          Lookup_With_NS
            (Handler, Get_Value (Atts, Ref_Index), Result => Element);
+         Is_Ref := True;
 
          --  Section 3.3.2, validity constraints 3.3.3
          if Type_Index /= -1 then
@@ -720,6 +727,7 @@ package body Schema.Schema_Readers is
       Handler.Contexts := new Context'
         (Typ            => Context_Element,
          Element        => Element,
+         Is_Ref         => Is_Ref,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
    end Create_Element;
@@ -730,7 +738,9 @@ package body Schema.Schema_Readers is
 
    procedure Finish_Element (Handler : in out Schema_Reader) is
    begin
-      if Get_Type (Handler.Contexts.Element) = No_Type then
+      if not Handler.Contexts.Is_Ref
+        and then Get_Type (Handler.Contexts.Element) = No_Type
+      then
          Set_Type (Handler.Contexts.Element,
                    Lookup (Handler.Schema_NS, "ur-Type"));
          Output ("Set_Type (" & Ada_Name (Handler.Contexts)
@@ -748,17 +758,25 @@ package body Schema.Schema_Readers is
    is
       Name_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "name");
+      Mixed_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "mixed");
       Name       : Byte_Sequence_Access;
+      Mixed   : Boolean;
    begin
       if Name_Index /= -1 then
          Name := new Byte_Sequence'(Get_Value (Atts, Name_Index));
       end if;
+
+      Mixed := Mixed_Index /= -1
+        and then Get_Value_As_Boolean (Atts, Mixed_Index);
 
       Handler.Contexts := new Context'
         (Typ            => Context_Type_Def,
          Type_Name      => Name,
          Type_Validator => null,
          Redefined_Type => No_Type,
+         Mixed_Content  => Mixed,
+         Simple_Content => False,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
 
@@ -786,26 +804,34 @@ package body Schema.Schema_Readers is
          Typ := Lookup (XML_G, "ur-Type");
 
          if C.Type_Name /= null then
-            Typ := Create_Type (C.Type_Name.all, Get_Validator (Typ));
+            Typ := Create_Global_Type
+              (Handler.Target_NS, C.Type_Name.all, Get_Validator (Typ));
          end if;
 
          Output (Ada_Name (C) & " := Lookup (G, ""ur-Type"");");
 
       elsif C.Type_Name = null then
-         Typ := Create_Type ("", C.Type_Validator);
-         Output (Ada_Name (C) & " := Create_Type ("""", Validator);");
+         Typ := Create_Local_Type (C.Type_Validator);
+         Output (Ada_Name (C) & " := Create_Local_Type (Validator);");
+
       else
-         Typ := Create_Type (C.Type_Name.all, C.Type_Validator);
+         Typ := Create_Global_Type
+           (Handler.Target_NS, C.Type_Name.all, C.Type_Validator);
          Set_Debug_Name (C.Type_Validator, C.Type_Name.all);
          Output (Ada_Name (C)
-                 & " := Create_Type (""" & C.Type_Name.all
+                 & " := Register (Handler.Target_NS, """ & C.Type_Name.all
                  & """, Validator);");
       end if;
 
+
+      Set_Mixed_Content (Get_Validator (Typ), Handler.Contexts.Mixed_Content);
+      Output ("Set_Mixed_Content ("
+              & Ada_Name (Typ) & ", "
+              & Boolean'Image (Handler.Contexts.Mixed_Content));
+
       case Handler.Contexts.Next.Typ is
          when Context_Schema | Context_Redefine =>
-            Register (Handler.Target_NS, Typ);
-            Output ("Register (Handler.Target_NS, " & Ada_Name (C) & ");");
+            null;
          when Context_Element =>
             Set_Type (Handler.Contexts.Next.Element, Typ);
             Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
@@ -852,6 +878,14 @@ package body Schema.Schema_Readers is
       else
          Get_NS (Handler.Created_Grammar, XML_Schema_URI, G);
          Base := Lookup (G, "ur-Type");
+      end if;
+
+      if Handler.Contexts.Simple_Content then
+         if not Is_Simple_Type (Get_Validator (Base)) then
+            Validation_Error
+              ("Type """ & Get_Local_Name (Base) & """ specified as the base"
+               & " in a simpleContent element must not have complexContent");
+         end if;
       end if;
 
       Handler.Contexts := new Context'
@@ -1288,6 +1322,13 @@ package body Schema.Schema_Readers is
 
    procedure Finish_Attribute (Handler : in out Schema_Reader) is
    begin
+      if Get_Type (Handler.Contexts.Attribute) = No_Type then
+         Set_Type (Handler.Contexts.Attribute,
+                   Lookup (Handler.Schema_NS, "ur-Type"));
+         Output ("Set_Type (" & Ada_Name (Handler.Contexts)
+                 & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
+      end if;
+
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
             Add_Attribute (Handler.Contexts.Next.Type_Validator,
@@ -1623,6 +1664,12 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "group" then
          Create_Group (Handler, Atts);
 
+      elsif Local_Name = "simpleContent" then
+         Handler.Contexts.Simple_Content := True;
+
+      elsif Local_Name = "complexContent" then
+         Handler.Contexts.Simple_Content := False;
+
       elsif Local_Name = "attributeGroup" then
          Create_Attribute_Group (Handler, Atts);
 
@@ -1722,7 +1769,10 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "any" then
          Handled := False;
 
-      elsif Local_Name = "import" then
+      elsif Local_Name = "import"
+        or else Local_Name = "simpleContent"
+        or else Local_Name = "complexContent"
+      then
          Handled := False;
 
       else

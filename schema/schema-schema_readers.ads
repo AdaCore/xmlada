@@ -56,8 +56,11 @@ private
             Type_Validator : Schema.Validators.XML_Validator;
             Redefined_Type : Schema.Validators.XML_Type;
             --  Handling of <redefine>
+            Mixed_Content  : Boolean;
+            Simple_Content : Boolean;
          when Context_Element =>
             Element : Schema.Validators.XML_Element;
+            Is_Ref  : Boolean;
          when Context_Sequence =>
             Seq       : Schema.Validators.Sequence;
          when Context_Choice =>
