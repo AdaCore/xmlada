@@ -1401,7 +1401,7 @@ package body Sax.Readers is
          Set_Line_Number (L, Id.Line);
          Set_Column_Number (L, Id.Column);
          Put ("++Lex (" & Parser.State.Name & ") at "
-              & To_String (L) & " (" & Id.Typ'Img & ")");
+              & To_String (L) & " (" & Token_Type'Image (Id.Typ) & ")");
          if Parser.State.Ignore_Special then
             Put (" (in string)");
          end if;
@@ -4097,7 +4097,8 @@ package body Sax.Readers is
                Parse_Doctype;
 
             when others =>
-               Fatal_Error (Parser, "[WF] Currently ignored: " & Id.Typ'Img);
+               Fatal_Error (Parser, "[WF] Currently ignored: "
+                            & Token_Type'Image (Id.Typ));
          end case;
       end loop;
    end Syntactic_Parse;
