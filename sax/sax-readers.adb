@@ -237,6 +237,21 @@ package body Sax.Readers is
       In_Tag => True,
       Report_Parenthesis => True,
       In_Attlist => True);
+   Attribute_Def_Name_State : constant Parser_State :=
+     (Name => "ADN",
+      Ignore_Special => False,
+      Detect_End_Of_PI => False,
+      Greater_Special => True,
+      Less_Special => False,
+      Expand_Param_Entities => True,
+      Expand_Entities => False,
+      Expand_Character_Ref => True,
+      In_DTD => True,
+      Recognize_External => False,
+      Handle_Strings => True,
+      In_Tag => True,
+      Report_Parenthesis => True,
+      In_Attlist => False);
    Entity_Str_Def_State : constant Parser_State :=
      (Name => "EtS",
       Ignore_Special => True,
@@ -3023,7 +3038,9 @@ package body Sax.Readers is
          end if;
 
          loop
-            Set_State (Parser, Attribute_Def_State);
+            --  Temporarily disable In_Attlist, so that the names like "NAME"
+            --  are parsed as names and not as NMTOKEN.
+            Set_State (Parser, Attribute_Def_Name_State);
             Next_Token_Skip_Spaces (Input, Parser, Id);
             exit when Id.Typ = End_Of_Tag or else Id.Typ = End_Of_Input;
 
@@ -3034,6 +3051,8 @@ package body Sax.Readers is
                  (Parser, "[3.3] Expecting space between attribute name"
                   & " and type", Id);
             end if;
+
+            Set_State (Parser, Attribute_Def_State);
             Next_Token (Input, Parser, Id);
 
             Type_Id := Id;
