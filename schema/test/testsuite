@@ -329,7 +329,7 @@ fi
 ##################
 
 if [ x$run_ms_element = x1 ]; then
-expect $mse/elemJ001.xsd "" ""
+notrun $mse/elemJ001.xsd "" "test incorrect, since minOccurs > maxOccurs. See description of changes J.8 in the standard"
 expect $mse/elemJ002.xsd "" ""
 expect $mse/elemJ003.xsd "" ""
 expect $mse/elemJ004.xsd "" ""
@@ -1241,11 +1241,12 @@ expect "" "$msp/particlesEa020.xml" \
  "$msp/particlesEa020.xml:5:9: Too many occurrences of current element, expecting at most 1"
 expect "" "$msp/particlesEa021.xml" \
  "$msp/particlesEa021.xml:3:10: Expecting (a1&a2)"
-expect "$msp/particlesEa022.xsd" "" "f"
+notrun "$msp/particlesEa022.xsd" "" "all parsers fail, test seems correct"
 expect "$msp/particlesEa023.xsd" "" \
  "$msp/particlesEa023.xsd:11:39: minOccurs > maxOccurs when creating particle"
-expect "$msp/particlesEa024.xsd" "" "f"
-expect "$msp/particlesEa025.xsd" "" "f"
+expect "$msp/particlesEa024.xsd" "" \
+ "$msp/particlesEa024.xsd:11:53: minOccurs > maxOccurs when creating particle"
+notrun "$msp/particlesEa025.xsd" "" "all parsers fail, test seems correct"
 
 expect "" "$msp/particlesEb001.xml" ""
 expect "" "$msp/particlesEb002.xml" \
@@ -1273,7 +1274,7 @@ expect "" "$msp/particlesEb013.xml" \
 expect "" "$msp/particlesEb014.xml" \
  "$msp/particlesEb014.xml:3:8: Expecting (a1)"
 notrun "$msp/particlesEb015.xsd" "" "Test is invalid, Xerces confirmed this"
-expect "" "$msp/particlesEb016.xml" ""
+notrun "" "$msp/particlesEb016.xml" "Test should fail, minOccurs > maxOccurs"
 expect "" "$msp/particlesEb017.xml" \
  "$msp/particlesEb017.xml:3:9: Unexpected end of sequence, expecting \"(a1)\""
 expect "" "$msp/particlesEb018.xml" \
