@@ -51,6 +51,7 @@ unmodified in any copy.
 * The SAX module::
 * The DOM module::
 * The XML_GTK module::
+* The Schema module::
 * Using the library::
 
 @detailmenu
@@ -79,6 +80,9 @@ The DOM module
 * Using DOM::
 
 The XML_GTK module
+
+The Schema module
+* Using the Schema module::
 
 Using the library
 
@@ -1151,6 +1155,175 @@ an XML tree compatible with the one in @file{glib-xml.ads}. This can be
 used for instance in current applications that used GtkAda's lightweight
 parser, to use an XML parser which will accept a broader range of XML
 files, and will provide better error messages.
+
+@c -------------------------------------------------------------------
+@node The Schema module
+@chapter The Schema module
+@c -------------------------------------------------------------------
+
+@noindent
+The XML standard defines what a grammatically correct file is (each
+tag must be closed, format of comments,@dots{}). However, most applications
+will also need to check that a given XML file also satisfies some semantic
+constraints.
+
+For instance, in the example we used to explain how to use SAX, we except
+each @code{<pref>} node to have a @code{name} attribute, and its value to
+be a string.
+
+Such constraints can be checked at the application level, with add-hoc
+code. However, this means that any change in the grammar will result in
+changes in the code, and that the two might be hard to maintain in sync.
+Additionally, it is often difficult not to forget special cases when
+doing this validating through a set of @code{if} tests in the Ada code.
+
+XML provides two ways to describe additional constraints that a file
+must satisfy in order to be considered as valid.
+
+@itemize @bullet
+@item DTD
+
+The Document Type Description is the original way to do this. They come
+directly from the ancestor of XML, SGML. All XML parsers must parse the
+DTD, and report events if the user is using SAX. However, not all parsers
+are able to validate the document against a DTD (XML/Ada doesn't).
+
+Their use tend to greatly diminish. Among their limitation are a limit
+capability to express constraints on the order of tag children, the fact
+they the DTD themselves are written in a separate language totally
+different from XML, and that users must learn as a result.
+
+@item XML Schema
+
+The XML schemas are replacing the DTDs. They are written in XML, and
+provide an extensive capability to describe what the XML document should
+look like. In fact, almost all Ada types can be described in an XML
+schema, including range constraints, arrays, records, type inheritance,@dots{}.
+
+It is for instance possible to indicate that the value of a preference, in
+our example, must be a string of length 6. Any other length will result in
+a validation error.
+
+@end itemize
+
+The Schema modules provides subprograms and types to parse an XML schema
+and validate an XML document with this schema.
+
+This documentation will not describe all that can be done with schemas,
+since this is simply too extensive. We recommend the reading of
+@url{http://www.w3.org/TR/xmlschema-0/} for a detailed description of
+schemas.
+
+@menu 
+* Using the Schema module::
+@end menu
+
+@c -------------------------------------------------------------------
+@node Using the Schema module
+@section Using the Schema module
+@c -------------------------------------------------------------------
+
+@noindent
+In XML/Ada, the validation is done by a SAX parser. This is more efficient,
+since there is no need to read the whole XML stream in memory before
+starting the validation, and errors can be reported immediatly.
+
+It also requires less memory to run, and thus can validate huge XML
+documents.
+
+It also means that even if you are using SAX, and not DOM, you have access
+to the validation features.
+
+This section will reuse the example we had in @xref{Using SAX}.
+
+The first thing to do is to define the XML Schema itself. The typical extension
+for such files is @file{.xsd}.
+
+@smallexample
+@include schema/pref.xsd
+@end smallexample
+
+The XML schema language is quite verbose. However, with the above schema
+we have expressed the fact that only two type of elements are valid in our
+XML file (@code{"preferences"} and @code{"pref"}), that the first can contain
+any number of @code{"pref"} elements (and nothing else, such as text), and
+that the latter has one required attribute @code{"name"} and can contain
+textual information.
+
+There are several ways that XML/Ada will find what schema to use when
+validating a file.
+
+@itemize @bullet
+@item Manually creating the grammar
+
+The schema module contains the package @code{Schema.Validators} which allows
+you to create a grammar by hand. It is very low-level, and it is likely that
+you will never need to use it. It is used internally mostly, and when
+creating the schema which is used to validate schema files themselves.
+
+@item Explicitly parsing a schema file
+
+Parsing a schema file can be done through a call to parse for a reader
+derived from @code{Schema.Schema_Readers.Schema_reader}.  As usual, you
+call @code{Parse}, and pass it an input source. As output, you get access
+to a grammar, that can then be given to another instance of a
+@code{Schema.Readers.Validating_Reader}.
+
+This technics will generally be used when you need to validate several
+XML files with the same grammar: you parse the grammar only once, and then
+reuse its instance, instead of reparsing the @file{.xsd} file every time.
+
+@item Implicitly parsing the schema
+
+Two special attributes, defined in the Schema standard, can be used to
+indicate, in an XML document itself, that it should be validated with
+a specific schema.
+
+These attributes are both defined in a special namespace,
+@url{http://www.w3.org/2001/XMLSchema-instance}.
+
+@itemize -
+@item @code{xsi:noNamespaceSchemaLocation}
+
+The value of this attribute is the name of a file that contains the
+schema to use for elements that are not associated with a specific
+namespace.
+
+@item @code{xsi:schemaLocation}
+
+This attribute is a list of strings, alternatively the prefix of a
+namespace and the name of an xsd file to use for that namespace. For
+instance, @code{"ns1 file1.xsd ns2 file2.xsd"}.
+@end itemize
+
+When it encounters any of these two attributes, XML/Ada will automatically
+parse the corresponding schema files, and use the result to validate
+the file.
+
+@end itemize
+
+We will therefore modify our @file{pref.xml} file to indicate that it
+should be validated:
+
+@smallexample
+@include schema/pref.xml
+@end smallexample
+
+
+The final thing to do is to modify the code we were using in the SAX
+example so that we actually validate the file. In the following example,
+we use directly an instance of @code{Validating_Reader}. In most cases,
+however, you will need to derive from that tagged type to override
+the primitive operations and do something useful as we did for SAX.
+
+Note the activationg of the @code{Schema_Validation_Feature} feature,
+withouth which no validation takes place
+
+@smallexample
+@include schema/schemaexample.adb
+@end smallexample
+
+
 
 @c -------------------------------------------------------------------
 @node Using the library
