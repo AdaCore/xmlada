@@ -74,7 +74,7 @@ package body DOM.Core.Elements is
    procedure Set_Attribute
      (Elem : Element; Name : DOM_String; Value : DOM_String)
    is
-      Att : constant Attr := Create_Attribute (Parent_Node (Elem), Name);
+      Att : constant Attr := Create_Attribute (Owner_Document (Elem), Name);
    begin
       Set_Value (Att, Value);
       Set_Named_Item (Elem.Attributes, Att);
