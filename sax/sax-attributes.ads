@@ -142,7 +142,9 @@ package Sax.Attributes is
    --  For the sake of speed, this function doesn't check if the attribute is
    --  already in the list, this is the responsability of the application.
    --  Content should be null unless Att_Type is Notation or Enumeration.
-   --  No copy of Content is made, so you shouldn't free it.
+   --
+   --  No copy of Content is made, so you shouldn't free it until the attribute
+   --  itself is destroyed (this is also not done automatically)
 
    procedure Clear (Attr : in out Attributes);
    --  Clear the list of attributes for reuse (or to free the memory allocated

@@ -69,7 +69,9 @@ package body Sax.Attributes is
       Free (Attr.Local_Name);
       Free (Attr.Value);
       Free (Attr.Qname);
-      Free (Attr.Content);
+
+      --  Do not free Attr.Content, since this is a pointer to an external
+      --  structure, shared by all attributes with the same model
    end Free;
 
    ---------
