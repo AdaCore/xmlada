@@ -13,7 +13,7 @@ package body Schema.Schema_Grammar is
       All_Validator              : XML_Type;
       Elem                       : XML_Element;
       Gr                         : XML_Group;
-      Union                      : XML_Union;
+      Union, Union2              : XML_Union;
       Attr                       : XML_Attribute_Group;
       Created                    : XML_Type;
    begin
@@ -654,6 +654,15 @@ package body Schema.Schema_Grammar is
       Add_Facet (Typ, "enumeration", "##any");
       Add_Facet (Typ, "enumeration", "##other");
       Add_Union (Union, Create_Type ("", Typ));
+
+      Union2 := Create_Union;
+      Add_Union (Union, Create_Type ("", Union2));
+      Add_Union (Union2, Lookup (G, "uriReference"));
+      Typ := Restriction_Of (Lookup (G, "token"));
+      Add_Facet (Typ, "enumeration", "##targetNamespace");
+      Add_Facet (Typ, "enumeration", "##local");
+      Add_Union (Union2, Create_Type ("", Typ));
+
       Created := Create_Type ("namespaceList", Union);
       Register (G, Created);
 
