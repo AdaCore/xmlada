@@ -118,4 +118,8 @@ private
       System_Id : Unicode.CES.Byte_Sequence_Access;
    end record;
 
+   pragma Inline (Get_Line_Number);
+   pragma Inline (Get_Column_Number);
+   pragma Inline (Set_Line_Number);
+   pragma Inline (Set_Column_Number);
 end Sax.Locators;
