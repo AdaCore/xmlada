@@ -31,9 +31,9 @@ obj: force
 	${GNATMAKE} -Pbuild_all.gpr -XMODE=${MODE}
  
 test: force
-	${GNATMAKE} -Punicode/test/unicode_test.gpr
-	${GNATMAKE} -Psax/test/sax_test.gpr
-	${GNATMAKE} -Pdom/test/dom_test.gpr
+	${GNATMAKE} -Punicode/test/unicode_test.gpr -XMODE=debug
+	${GNATMAKE} -Psax/test/sax_test.gpr -XMODE=debug
+	${GNATMAKE} -Pdom/test/dom_test.gpr -XMODE=debug
 
 docs: force
 	${MAKE} -e -C docs
