@@ -4,7 +4,7 @@
 @settitle The Ada95 XML Library
 @syncodeindex fn cp
 
-@set XMLVersion 1.1
+@set XMLVersion 2.0
 
 @titlepage
 

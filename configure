@@ -1211,8 +1211,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-XMLADA_MAJOR_VERSION=1
-XMLADA_MINOR_VERSION=0.1w
+XMLADA_MAJOR_VERSION=2
+XMLADA_MINOR_VERSION=0
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
