@@ -5,5 +5,5 @@
 
 project XmlAda_Avoid_Recompile is
    for Source_Dirs use ();
-   for Object_Dir use "../include/xmlada/obj";
+   for Object_Dir use "../../include/xmlada/obj";
 end Xmlada_Avoid_Recompile;

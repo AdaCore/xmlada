@@ -4,9 +4,9 @@ with "xmlada_sax";
 with "xmlada_avoid_recompile";
 with "gtkada";
 project XmlAda_Gtk is
-    for Source_Dirs use ("../include/xmlada");
+    for Source_Dirs use ("../../include/xmlada");
     for Source_List_File use "xmlada_xml_gtk.lgpr";
-    for Library_Dir use "../include/xmlada/obj";
+    for Library_Dir use "../../include/xmlada/obj";
     for Library_Name use "xmlada_gtk";
     for Library_Kind use "relocatable";
 end XmlAda_Gtk;

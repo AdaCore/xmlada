@@ -60,34 +60,33 @@ docs: force
 
 # Rule for installing the modules
 %_inst: force
-	@${MKDIR}                ${PREFIX}/include/xmlada
 	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
 	-${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
 	-${CP} $*/lib/libxmlada_* ${PREFIX}/include/xmlada/obj
 	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
-           ${LN} ${PREFIX}/include/xmlada/obj/${lib} ${PREFIX}/lib/${lib};}
+           ${LN} ../include/xmlada/obj/${lib} ${PREFIX}/lib/${lib};}
 	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
-	cd $*; ls *.ad[bs] > ${PREFIX}/projects/xmlada_$*.lgpr
+	cd $*; ls *.ad[bs] > ${PREFIX}/lib/gnat/xmlada_$*.lgpr
 
 install_dirs: force
 	@${MKDIR} ${PREFIX}/bin
 	@${MKDIR} ${PREFIX}/lib
-	@${MKDIR} ${PREFIX}/projects
 	@${MKDIR} ${PREFIX}/doc/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada/obj
+	@${MKDIR} ${PREFIX}/lib/gnat
 
 install: obj docs install_dirs ${MODULE_INSTALL}
-	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/projects/
+	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/lib/gnat
 	${CP} xmlada-config ${PREFIX}/bin
 	-${CP} docs/xml.ps ${PREFIX}/doc/xmlada
 	-${CP} docs/xml.html ${PREFIX}/doc/xmlada
 	-${CP} docs/xml.info ${PREFIX}/doc/xmlada
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 ifeq (${GTKADA_GPR},)
-	cp distrib/xmlada_no_gtk.gpr ${PREFIX}/projects/xmlada.gpr
+	cp distrib/xmlada_no_gtk.gpr ${PREFIX}/lib/gnat/xmlada.gpr
 else
-	cp distrib/xmlada.gpr ${PREFIX}/projects/xmlada.gpr
+	cp distrib/xmlada.gpr ${PREFIX}/lib/gnat/xmlada.gpr
 endif
 
 clean: force

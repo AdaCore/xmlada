@@ -1,8 +1,8 @@
 with "xmlada_avoid_recompile";
 project XmlAda_Unicode is
-    for Source_Dirs use ("../include/xmlada");
+    for Source_Dirs use ("../../include/xmlada");
     for Source_List_File use "xmlada_unicode.lgpr";
-    for Library_Dir use "../include/xmlada/obj";
+    for Library_Dir use "../../include/xmlada/obj";
     for Library_Name use "xmlada_unicode";
     for Library_Kind use "static";
 end XmlAda_Unicode;

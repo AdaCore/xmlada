@@ -8,5 +8,5 @@ with "xmlada_schema";
 
 project Xmlada is
    for Source_Dirs use ();
-   for Object_Dir use "../include/xmlada/obj";
+   for Object_Dir use "../../include/xmlada/obj";
 end Xmlada;
