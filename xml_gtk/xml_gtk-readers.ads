@@ -32,7 +32,6 @@ with Sax.Attributes;
 with Sax.Exceptions;
 with Unicode.CES;
 with Glib.XML;
-with Glib.Xml_Int;
 
 generic
    type XML_Specific_Data is private;

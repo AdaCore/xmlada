@@ -221,7 +221,7 @@ package body XML_Gtk.Readers is
       Open (File, Input);
       Set_Public_Id (Input, File);
       Set_System_Id (Input, File);
-      
+
       Set_Warnings_As_Errors (Reader, True);
       Set_Feature (Reader, Validation_Feature, False);
       Set_Feature (Reader, Test_Valid_Chars_Feature, True);
