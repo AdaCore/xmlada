@@ -57,7 +57,7 @@ install_dirs: force
 	@${MKDIR} ${PREFIX}/include/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada/obj
 
-install: obj install_dirs ${MODULE_INSTALL}
+install: obj docs install_dirs ${MODULE_INSTALL}
 	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}
 	${CP} xmlada-config ${PREFIX}/bin
 	${CP} docs/xml.ps ${PREFIX}/doc/xmlada
