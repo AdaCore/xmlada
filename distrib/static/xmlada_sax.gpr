@@ -1,10 +1,10 @@
 with "xmlada_unicode";
 with "xmlada_input";
+with "xmlada_avoid_recompile";
 project XmlAda_Sax is
     for Source_Dirs use ("include/xmlada");
     for Source_List_File use "xmlada_sax.lgpr";
-    for Object_Dir use "include/xmlada/obj";
-    for Library_Dir use "lib/";
+    for Library_Dir use "include/xmlada/obj";
     for Library_Name use "xmlada_sax";
     for Library_Kind use "static";
 end XmlAda_Sax;
