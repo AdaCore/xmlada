@@ -483,12 +483,12 @@ expect $mse/elemQ005.xsd "" ""
 expect $mse/elemQ006.xsd "" \
  "$mse/elemQ006.xsd:10:19: Unexpected element: \"annotation\""
 expect "" $mse/elemQ007.xml \
- "$mse/elemQ007.xml:3:8: Element \"fooTest\" or its substitutionGroup must be specified"
+ "$mse/elemQ007.xml:3:8: Unexpected end of sequence, expecting \"fooTest\""
 expect "" $mse/elemQ008.xml ""
 expect "" $mse/elemQ009.xml \
- "$mse/elemQ009.xml:4:11: Element \"fooTest\" is repeated too many times, maximum number of occurrences is 1"
+ "$mse/elemQ009.xml:5:8: <all> element was repeated too many times, expecting at most 1 times"
 expect "" $mse/elemQ010.xml \
- "$mse/elemQ010.xml:3:8: Element \"fooTest\" or its substitutionGroup must be specified"
+ "$mse/elemQ010.xml:3:8: Unexpected end of sequence, expecting \"fooTest\""
 expect "" $mse/elemQ011.xml ""
 expect "" $mse/elemQ012.xml \
  "$mse/elemQ012.xml:4:11: Unexpected element: \"fooTest\""
@@ -694,7 +694,7 @@ expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.v00.xml" "<key> not su
 ### SYN xsd001
 
 expect "$sun/xsd001.xsd" "$sun/xsd001.n00.xml" \
- "$sun/xsd001.n00.xml:6:12: Element \"child\" or its substitutionGroup must be specified"
+ "$sun/xsd001.n00.xml:6:12: Unexpected end of sequence, expecting \"child\""
 expect "$sun/xsd001.xsd" "$sun/xsd001.n01.xml" \
  "$sun/xsd001.n01.xml:10:9: Unexpected element: \"child\""
 expect "$sun/xsd001.xsd" "$sun/xsd001.n02.xml" \
@@ -772,7 +772,7 @@ expect "$sun/xsd004.xsd" "$sun/xsd004.v00.xml" ""
 ### SUN xsd005
 
 expect "$sun/xsd005.xsd" "$sun/xsd005.n00.xml" \
- "$sun/xsd005.n00.xml:5:10: Element \"a\" or its substitutionGroup must be specified"
+ "$sun/xsd005.n00.xml:5:10: Unexpected end of sequence, expecting \"a\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n01.xml" \
  "$sun/xsd005.n01.xml:5:30: Unknown type \"undeclared\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n02.xml" \
@@ -784,7 +784,7 @@ expect "$sun/xsd005.xsd" "$sun/xsd005.n04.xml" \
 expect "$sun/xsd005.xsd" "$sun/xsd005.n05.xml" \
  "$sun/xsd005.n05.xml:6:18: Unknown type \"ext\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n06.xml" \
- "$sun/xsd005.n06.xml:7:9: Element \"d\" or its substitutionGroup must be specified"
+ "$sun/xsd005.n06.xml:7:9: Unexpected end of sequence, expecting \"d\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.v00.xml" ""
 
 ### SUN xsd006
@@ -794,23 +794,23 @@ expect "$sun/xsd006.xsd" "$sun/xsd006.n00.xml" \
 expect "$sun/xsd006.xsd" "$sun/xsd006.n01.xml" \
  "$sun/xsd006.n01.xml:5:15: Unexpected element: \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n02.xml" \
- "$sun/xsd006.n02.xml:5:13: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd006.n02.xml:5:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n03.xml" \
  "$sun/xsd006.n03.xml:5:15: Unexpected element: \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n04.xml" \
- "$sun/xsd006.n04.xml:5:13: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd006.n04.xml:5:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n05.xml" \
- "$sun/xsd006.n05.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd006.n05.xml:6:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n06.xml" \
  "$sun/xsd006.n06.xml:5:15: Unexpected element: \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n07.xml" \
- "$sun/xsd006.n07.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd006.n07.xml:6:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n08.xml" \
- "$sun/xsd006.n08.xml:5:13: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd006.n08.xml:5:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n09.xml" \
- "$sun/xsd006.n09.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd006.n09.xml:6:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n10.xml" \
- "$sun/xsd006.n10.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd006.n10.xml:6:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.v00.xml" ""
 
 ### SUN xsd008
@@ -826,9 +826,9 @@ expect "$sun/xsd008.xsd" "$sun/xsd008.v00.xml" ""
 ### SUN xsd011
 
 expect "$sun/xsd011.xsd" "$sun/xsd011.n00.xml" \
- "$sun/xsd011.n00.xml:7:17: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd011.n00.xml:7:17: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd011.xsd" "$sun/xsd011.n01.xml" \
- "$sun/xsd011.n01.xml:7:14: Element \"x\" or its substitutionGroup must be specified"
+ "$sun/xsd011.n01.xml:7:14: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd011.xsd" "$sun/xsd011.n02.xml" \
  "$sun/xsd011.n02.xml:7:7: Element is set as nil, and doesn't accept any child element"
 expect "$sun/xsd011.xsd" "$sun/xsd011.n03.xml" \
@@ -1039,19 +1039,24 @@ if [ x$run_ms_particle = x1 ]; then
 expect "" "$msp/particlesA001.xml" \
  "$msp/particlesA001.xml:3:7: Element \"elem\" must appear at least 1 times"
 expect "" "$msp/particlesA002.xml" ""
-expect "" "$msp/particlesA003.xml" "f"
-expect "" "$msp/particlesA004.xml" "f"
-expect "" "$msp/particlesA005.xml" "f"
+expect "" "$msp/particlesA003.xml" \
+ "$msp/particlesA003.xml:7:7: <all> element was repeated too many times, expecting at most 1 times"
+expect "" "$msp/particlesA004.xml" \
+ "$msp/particlesA004.xml:4:9: Unexpected end of sequence, expecting \"(e1)\""
+expect "" "$msp/particlesA005.xml" \
+ "$msp/particlesA005.xml:6:9: Unexpected end of sequence, expecting \"(e1)\""
 expect "" "$msp/particlesA006.xml" ""
 expect "" "$msp/particlesA007.xml" ""
-expect "" "$msp/particlesA008.xml" "f"
+expect "" "$msp/particlesA008.xml" \
+ "$msp/particlesA008.xml:4:9: Unexpected end of sequence, expecting \"(e1|e2)\""
 expect "" "$msp/particlesA009.xml" \
  "$msp/particlesA009.xml:5:9: Unexpected end of sequence, expecting \"(e1|e2)\""
 expect "" "$msp/particlesA010.xml" ""
 expect "" "$msp/particlesA011.xml" ""
 expect "" "$msp/particlesA012.xml" \
- "$msp/particlesA012.xml:4:9: At least one child is expected in this context"
-expect "" "$msp/particlesA013.xml" "f"
+ "$msp/particlesA012.xml:4:9: Unexpected end of sequence, expecting \"<any>\""
+expect "" "$msp/particlesA013.xml" \
+ "$msp/particlesA013.xml:5:9: Unexpected end of sequence, expecting \"<any>\""
 expect "" "$msp/particlesA014.xml" ""
 expect "" "$msp/particlesA015.xml" ""
 
@@ -1059,19 +1064,21 @@ expect "" "$msp/particlesB001.xml" \
  "$msp/particlesB001.xml:4:9: Element \"e1\" must appear at least 1 times"
 expect "" "$msp/particlesB002.xml" ""
 expect "" "$msp/particlesB003.xml" \
- "$msp/particlesB003.xml:6:8: Element \"e1\" is repeated too many times, maximum number of occurrences is 1"
+ "$msp/particlesB003.xml:8:9: <all> element was repeated too many times, expecting at most 1 times"
 expect "" "$msp/particlesB004.xml" \
  "$msp/particlesB004.xml:4:9: Unexpected end of sequence, expecting \"(e1)\""
 expect "" "$msp/particlesB005.xml" ""
 expect "" "$msp/particlesB006.xml" ""
 expect "" "$msp/particlesB007.xml" \
- "$msp/particlesB007.xml:5:7: Unexpected element: \"e1\""
+ "$msp/particlesB007.xml:5:7: Too many occurrences of current element, expecting at most 2"
 expect "" "$msp/particlesB008.xml" \
  "$msp/particlesB008.xml:4:9: Unexpected end of sequence, expecting \"(e1|e2|e3|e4)\""
 expect "" "$msp/particlesB009.xml" ""
 expect "" "$msp/particlesB010.xml" ""
-expect "" "$msp/particlesB011.xml" "f"
-expect "" "$msp/particlesB012.xml" "f"
+expect "" "$msp/particlesB011.xml" \
+ "$msp/particlesB011.xml:4:18: Too many occurrences of current element, expecting at most 2"
+expect "" "$msp/particlesB012.xml" \
+ "$msp/particlesB012.xml:4:9: Expecting one of \"<any>\""
 expect "" "$msp/particlesB013.xml" ""
 expect "" "$msp/particlesB014.xml" ""
 expect "" "$msp/particlesB015.xml" \
