@@ -44,6 +44,16 @@ package body Unicode is
         or else Char = Carriage_Return;
    end Is_White_Space;
 
+   --------------------
+   -- Is_Ideographic --
+   --------------------
+
+   function Is_Ideographic (Char : Unicode_Char) return Boolean is
+   begin
+      return Char in 16#4E00# .. 16#9FA5#
+        or else Char = 16#3007#
+        or else Char in 16#3021# .. 16#3029#;
+   end Is_Ideographic;
 
    ---------------
    -- Is_Letter --
@@ -469,17 +479,6 @@ package body Unicode is
                            or else Char in 16#309D# .. 16#309E#
                            or else Char in 16#30FC# .. 16#30FE#));
    end Is_Extender;
-
-   --------------------
-   -- Is_Ideographic --
-   --------------------
-
-   function Is_Ideographic (Char : Unicode_Char) return Boolean is
-   begin
-      return Char in 16#4E00# .. 16#9FA5#
-        or else Char = 16#3007#
-        or else Char in 16#3021# .. 16#3029#;
-   end Is_Ideographic;
 
    ----------------
    -- To_Unicode --
