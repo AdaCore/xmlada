@@ -1,5 +1,7 @@
 Problems fixed in 1.x
 
+- D714-002 Attribute quotes are no longer present in a processing-instruction
+  data, in SAX or DOM
 - Constraint_Error raised when an external entity doesn't reference an
   existing file
 - D213-012: Constraint_Error when using the same parser twice
