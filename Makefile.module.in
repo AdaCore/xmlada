@@ -119,7 +119,7 @@ clean: force
 	-${RM} ${TEST_PROGS}
 	@-rmdir obj
 
-lib: ${OBJ}
+lib: all_obj
 	cd obj; ${AR} ${ARFLAGS} ${libname}.a ${OBJ}
 ifeq (${WIN32}, TRUE)
 	cd obj; ${RANLIB} ${libname}.a
