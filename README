@@ -1,13 +1,15 @@
 
 XML/Ada: A XML parser for Ada95
 
-I   - INSTALLING THIS LIBRARY ON UNIX
-II  - INSTALLING THIS LIBRARY ON VMS
-III - INSTALLING THIS LIBRARY ON WINDOWS
-IV  - TESTING THE LIBRARY
-V   - CONTENTS OF THE LIBRARY
-VI  - LICENSING
-VII - BUG REPORTS
+I    - INSTALLING THIS LIBRARY ON UNIX
+II   - INSTALLING THIS LIBRARY ON VMS
+III  - INSTALLING THIS LIBRARY ON WINDOWS
+IV   - TWEAKING THE LIBRARY
+V    - USING THE LIBRARY
+VI   - TESTING THE LIBRARY
+VII  - CONTENTS OF THE LIBRARY
+VIII - LICENSING
+IX   - BUG REPORTS
 
 
 I - INSTALLING THIS LIBRARY ON UNIX
@@ -132,8 +134,25 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
 
 4. The best way to proceed is to do a 'make install'.
 
-IV - USING THE LIBRARY
-======================
+
+IV - TWEAKING THE LIBRARY
+=========================
+
+You can change the way the library behaves, in particular the DOM part,
+by changing some of the hard-coded constants in the code. If you change
+these, you will need to recompile the library and your application:
+
+- sax-encodings.ads :: Encoding
+  It contains the encoding used internally by the library. The default is
+  UTF8, which supports the whole Unicode range, and is economical
+  memory-wise
+
+- dom-core.ads :: Shared_Namespaces
+  Whether the internal representation of namespaces should be shared among
+  nodes. The default is yes
+
+V - USING THE LIBRARY
+=====================
 
 There are two ways to use this library. One solution is to use Makefiles to
 build your application, specifying all search patchs and libraries directly
@@ -187,8 +206,8 @@ You can also build a static version of your program by using:
    gnatmake test.adb `xmlada-config --static`
 
 
-V - TESTING THE LIBRARY
-=======================
+VI - TESTING THE LIBRARY
+========================
 
 Several test programs are provided in the XML/Ada source package. These
 are found in the dom/test and sax/test subdirectories. These are very simple
@@ -213,8 +232,8 @@ XML/Ada itself. Here is how you can run this testsuite:
    This will report the number of errors found.
 
 
-VI - CONTENTS OF THE LIBRARY
-============================
+VII - CONTENTS OF THE LIBRARY
+=============================
 
 The sources in this library are split into several subdirectories, each
 with its own README, sources, documentation and unit tests.
@@ -245,8 +264,8 @@ The list of subdirectories (aka modules) is:
   This contains the full documentation for this XML library
 
 
-VII - LICENSING
-===============
+VIII - LICENSING
+================
 
 This library is distributed under the GNAT-Modified GNU Public License.
 It has the following addition to the GPL:
@@ -258,8 +277,8 @@ It has the following addition to the GPL:
  exception does not however invalidate any other reasons why the
  executable file  might be covered by the  GNU Public License."
 
-VIII - BUG REPORTS
-==================
+IX - BUG REPORTS
+================
 
 Please send questions and bug reports to report@gnat.com following
 the same procedures used to submit reports with the GNAT toolset itself.
