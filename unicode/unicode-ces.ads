@@ -119,6 +119,8 @@ package Unicode.CES is
                 Char  : out Unicode_Char);
    --  This function returns the character at position Index in the byte
    --  sequence Str, and moves Index to the start of the next character.
+   --  If Str doesn't contain enough bytes for a valid encoding of a character,
+   --  Invalid_Encoding is raised.
 
    type Width_Function is access
      function (Char : Unicode.Unicode_Char) return Natural;
