@@ -4,7 +4,6 @@ xml module:
 * DOM requires Utf16-encoding for strings.
   Can we make all the packages generic, so that the user can decide whether
   to use Utf16 or Utf8 ?
-* Should recognize the "encoding" attribute for <?xml?>
 
 * Unicode: Add conversion to Wide_Char and Wide_String
 
