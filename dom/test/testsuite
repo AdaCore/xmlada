@@ -15,7 +15,7 @@ if [ "$verbose " = " " ]; then
   verbose=0
 fi
 
-XML=../obj/testxml
+XML=./testxml
 XML_SILENT="$XML -silent"   # Use for testing error messages only
 XML_SILENT_VALIDATE="$XML -silent -validate" 
 valid_sa="$BASE/xmltest/valid/sa"
