@@ -70,9 +70,18 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Union
      (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Choice
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Redefine
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Group
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Attribute_Group
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    --  Create a new context for a specific tag:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
-   --  <attribute>, <schema>, <extension>, <list>, <union>
+   --  <attribute>, <schema>, <extension>, <list>, <union>, <choice>,
+   --  <redefine>, <group>, <attributeGroup>
 
    procedure Finish_Element (Handler : in out Schema_Reader);
    procedure Finish_Complex_Type (Handler : in out Schema_Reader);
@@ -83,9 +92,10 @@ package body Schema.Schema_Readers is
    procedure Finish_Extension (Handler : in out Schema_Reader);
    procedure Finish_Union (Handler : in out Schema_Reader);
    procedure Finish_List (Handler : in out Schema_Reader);
+   procedure Finish_Choice (Handler : in out Schema_Reader);
    --  Finish the handling of various tags:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
-   --  <extension>, <union>, <list>
+   --  <extension>, <union>, <list>, <choice>
 
    function Max_Occurs_From_Value (Value : Byte_Sequence) return Integer;
    --  Return the value of maxOccurs from the attributes'value. This properly
@@ -161,7 +171,7 @@ package body Schema.Schema_Readers is
    function Get_Created_Grammar
      (Reader : Schema_Reader) return Schema.Validators.XML_Grammar is
    begin
-      return Reader.Grammar;
+      return Reader.Created_Grammar;
    end Get_Created_Grammar;
 
    -------------------------
@@ -172,7 +182,7 @@ package body Schema.Schema_Readers is
      (Reader  : in out Schema_Reader;
       Grammar : Schema.Validators.XML_Grammar) is
    begin
-      Reader.Grammar := Grammar;
+      Reader.Created_Grammar := Grammar;
    end Set_Created_Grammar;
 
    --------------------
@@ -181,12 +191,12 @@ package body Schema.Schema_Readers is
 
    procedure Start_Document (Handler : in out Schema_Reader) is
    begin
-      if Handler.Grammar = No_Grammar then
-         Handler.Grammar := Create_Schema_For_Schema;
+      if Handler.Created_Grammar = No_Grammar then
+         Handler.Created_Grammar := Create_Schema_For_Schema;
       end if;
 
       Handler.Target_NS := null;
-      Get_NS (Handler.Grammar, XML_Schema_URI, Handler.Schema_NS);
+      Get_NS (Handler.Created_Grammar, XML_Schema_URI, Handler.Schema_NS);
    end Start_Document;
 
    ------------------
@@ -268,6 +278,134 @@ package body Schema.Schema_Readers is
          & " := Lookup_Element (G, """
          & QName (Separator + 1 .. QName'Last) & """);");
    end Lookup_With_NS;
+
+   ------------------
+   -- Create_Group --
+   ------------------
+
+   procedure Create_Group
+     (Handler : in out Schema_Reader;
+      Atts    : Sax.Attributes.Attributes'Class)
+   is
+      Name_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "name");
+      Ref_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "ref");
+      Group     : XML_Group;
+   begin
+      if Name_Index /= -1 then
+         Group := Create_Group (Get_Value (Atts, Name_Index));
+
+      elsif Ref_Index /= -1 then
+         Group := Lookup_Group
+           (Handler.Target_NS, Get_Value (Atts, Ref_Index));
+      end if;
+
+      Handler.Contexts := new Context'
+        (Typ            => Context_Group,
+         Group          => Group,
+         Level          => Handler.Contexts.Level + 1,
+         Next           => Handler.Contexts);
+
+      if Name_Index /= -1 then
+         Output (Ada_Name (Handler.Contexts) & " := Create_Group ("""
+                 & Get_Value (Atts, Name_Index) & """);");
+      else
+         Output (Ada_Name (Handler.Contexts) &
+                 " := Lookup_Group (Handler.Target_NS, """
+                 & Get_Value (Atts, Ref_Index) & """);");
+      end if;
+
+      case Handler.Contexts.Next.Typ is
+         when Context_Schema | Context_Redefine =>
+            Register (Handler.Target_NS, Handler.Contexts.Group);
+            Output ("Register (Handler.Target_NS, "
+                    & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Type_Def =>
+            Handler.Contexts.Next.Type_Validator := Extension_Of
+              (Lookup (Handler.Schema_NS, "anyType"), Handler.Contexts.Group);
+            Output ("Validator := Extension_Of (Lookup (Handler.Schema.NS,"
+                    & """anytype""), " & Ada_Name (Handler.Contexts) & ");");
+
+         when others =>
+            Output ("Can't handle nested group decl");
+      end case;
+   end Create_Group;
+
+   ----------------------------
+   -- Create_Attribute_Group --
+   ----------------------------
+
+   procedure Create_Attribute_Group
+     (Handler : in out Schema_Reader;
+      Atts    : Sax.Attributes.Attributes'Class)
+   is
+      Name_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "name");
+      Ref_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "ref");
+      Group     : XML_Attribute_Group;
+   begin
+      if Name_Index /= -1 then
+         Group := Create_Attribute_Group (Get_Value (Atts, Name_Index));
+
+      elsif Ref_Index /= -1 then
+         Group := Lookup_Attribute_Group
+           (Handler.Target_NS, Get_Value (Atts, Ref_Index));
+      end if;
+
+      Handler.Contexts := new Context'
+        (Typ            => Context_Attribute_Group,
+         Attr_Group     => Group,
+         Level          => Handler.Contexts.Level + 1,
+         Next           => Handler.Contexts);
+
+      if Name_Index /= -1 then
+         Output (Ada_Name (Handler.Contexts) & " := Create_Attribute_Group ("""
+                 & Get_Value (Atts, Name_Index) & """);");
+      else
+         Output (Ada_Name (Handler.Contexts) &
+                 " := Lookup_Attribute_Group (Handler.Target_NS, """
+                 & Get_Value (Atts, Ref_Index) & """);");
+      end if;
+
+      case Handler.Contexts.Next.Typ is
+         when Context_Schema | Context_Redefine =>
+            Register (Handler.Target_NS, Handler.Contexts.Attr_Group);
+            Output ("Register (Handler.Target_NS, "
+                    & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Type_Def =>
+            Add_Attribute_Group (Handler.Contexts.Next.Type_Validator, Group);
+            Output ("Add_Attribute_Group ("
+                    & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
+
+         when others =>
+            Output ("Can't handle nested attribute group decl");
+      end case;
+   end Create_Attribute_Group;
+
+   ---------------------
+   -- Create_Redefine --
+   ---------------------
+
+   procedure Create_Redefine
+     (Handler : in out Schema_Reader;
+      Atts    : Sax.Attributes.Attributes'Class)
+   is
+      Location_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
+   begin
+      Parse_Grammar
+        (Handler, Get_Value (Atts, Location_Index), Handler.Created_Grammar);
+
+      Handler.Contexts := new Context'
+        (Typ            => Context_Redefine,
+         Level          => Handler.Contexts.Level + 1,
+         Next           => Handler.Contexts);
+   end Create_Redefine;
 
    --------------------
    -- Create_Element --
@@ -449,7 +587,7 @@ package body Schema.Schema_Readers is
       end if;
 
       case Handler.Contexts.Typ is
-         when Context_Schema =>
+         when Context_Schema | Context_Redefine =>
             Register (Handler.Target_NS, Element);
             Output ("Register (Handler.Target_NS, "
                     & Ada_Name (Element) & ");");
@@ -473,7 +611,6 @@ package body Schema.Schema_Readers is
          when others =>
             Output ("Can't handle nested element decl");
       end case;
-
 
       Handler.Contexts := new Context'
         (Typ            => Context_Element,
@@ -530,7 +667,7 @@ package body Schema.Schema_Readers is
       XML_G : XML_Grammar_NS;
    begin
       if C.Type_Validator = null then
-         Get_NS (Handler.Grammar, XML_Schema_URI, XML_G);
+         Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
          Typ := Lookup (XML_G, "ur-Type");
 
          if C.Type_Name /= null then
@@ -550,7 +687,7 @@ package body Schema.Schema_Readers is
       end if;
 
       case Handler.Contexts.Next.Typ is
-         when Context_Schema =>
+         when Context_Schema | Context_Redefine =>
             Register (Handler.Target_NS, Typ);
             Output ("Register (Handler.Target_NS, " & Ada_Name (C) & ");");
          when Context_Element =>
@@ -594,7 +731,7 @@ package body Schema.Schema_Readers is
          Lookup_With_NS
            (Handler, Get_Value (Atts, Base_Index), Result => Base);
       else
-         Get_NS (Handler.Grammar, XML_Schema_URI, G);
+         Get_NS (Handler.Created_Grammar, XML_Schema_URI, G);
          Base := Lookup (G, "ur-Type");
       end if;
 
@@ -789,6 +926,74 @@ package body Schema.Schema_Readers is
       end case;
    end Finish_List;
 
+   -------------------
+   -- Create_Choice --
+   -------------------
+
+   procedure Create_Choice
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class)
+   is
+      Min_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "minOccurs");
+      Max_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
+      Min_Occurs, Max_Occurs : Integer := 1;
+   begin
+      if Min_Occurs_Index /= -1 then
+         Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
+      end if;
+
+      if Max_Occurs_Index /= -1 then
+         Max_Occurs := Max_Occurs_From_Value
+           (Get_Value (Atts, Max_Occurs_Index));
+      end if;
+
+      Handler.Contexts := new Context'
+        (Typ      => Context_Choice,
+         C        => Create_Choice (Min_Occurs, Max_Occurs),
+         Level    => Handler.Contexts.Level + 1,
+         Next     => Handler.Contexts);
+      Output (Ada_Name (Handler.Contexts) & " := Create_Choice ("
+              & Min_Occurs'Img & ',' & Max_Occurs'Img & ")");
+   end Create_Choice;
+
+   -------------------
+   -- Finish_Choice --
+   -------------------
+
+   procedure Finish_Choice (Handler : in out Schema_Reader) is
+   begin
+      case Handler.Contexts.Next.Typ is
+         when Context_Type_Def =>
+            Handler.Contexts.Next.Type_Validator :=
+              XML_Validator (Handler.Contexts.C);
+            Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
+         when Context_Sequence =>
+            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.C);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
+         when Context_Choice =>
+            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.C);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
+         when Context_Extension =>
+            Handler.Contexts.Next.Extension :=
+              XML_Validator (Handler.Contexts.C);
+            Output ("Validator := " & Ada_Name (Handler.Contexts));
+
+         when Context_Group =>
+            Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.C);
+            Output ("Add_Particle ("
+                    & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Schema | Context_Attribute | Context_Element
+            | Context_Restriction | Context_All | Context_Union
+            | Context_List | Context_Redefine | Context_Attribute_Group =>
+            Output ("Can't handle nested sequence");
+      end case;
+   end Finish_Choice;
+
    ---------------------
    -- Create_Sequence --
    ---------------------
@@ -845,9 +1050,15 @@ package body Schema.Schema_Readers is
               XML_Validator (Handler.Contexts.Seq);
             Output ("Validator := " & Ada_Name (Handler.Contexts));
 
+         when Context_Group =>
+            Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.Seq);
+            Output ("Add_Particle ("
+                    & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
+
          when Context_Schema | Context_Attribute | Context_Element
             | Context_Restriction | Context_All | Context_Union
-            | Context_List =>
+            | Context_List | Context_Redefine | Context_Attribute_Group =>
             Output ("Can't handle nested sequence");
       end case;
    end Finish_Sequence;
@@ -866,6 +1077,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "type");
       Use_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "use");
+      Ref_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "ref");
 
       Att : Attribute_Validator;
       Typ : XML_Type := No_Type;
@@ -880,21 +1093,34 @@ package body Schema.Schema_Readers is
          Use_Type := Optional;
       end if;
 
-      Att := Create_Attribute
-        (Local_Name     => Get_Value (Atts, Name_Index),
-         NS             => Handler.Target_NS,
-         Attribute_Type => Typ,
-         Attribute_Use  => Use_Type,
-         Attribute_Form => Qualified,
-         Value          => "");
+      if Name_Index /= -1 then
+         Att := Create_Attribute
+           (Local_Name     => Get_Value (Atts, Name_Index),
+            NS             => Handler.Target_NS,
+            Attribute_Type => Typ,
+            Attribute_Use  => Use_Type,
+            Attribute_Form => Qualified,
+            Value          => "");
+      else
+         Att := Lookup_Attribute
+           (Handler.Target_NS, Get_Value (Atts, Ref_Index));
+      end if;
 
       Handler.Contexts := new Context'
         (Typ        => Context_Attribute,
          Attribute  => Att,
+         Attribute_Is_Ref => Name_Index = -1,
          Level      => Handler.Contexts.Level + 1,
          Next       => Handler.Contexts);
-      Output (Ada_Name (Handler.Contexts) & " := Create_Attribute ("""
-              & Get_Value (Atts, Name_Index) & """);");
+
+      if Name_Index /= -1 then
+         Output (Ada_Name (Handler.Contexts) & " := Create_Attribute ("""
+                 & Get_Value (Atts, Name_Index) & """);");
+      else
+         Output (Ada_Name (Handler.Contexts)
+                 & " := Lookup_Attribute (Handler.Target_NS, """
+                 & Get_Value (Atts, Ref_Index) & """);");
+      end if;
    end Create_Attribute;
 
    ----------------------
@@ -910,10 +1136,12 @@ package body Schema.Schema_Readers is
             Output ("Add_Attribute (Validator, "
                     & Ada_Name (Handler.Contexts) & ");");
 
-         when Context_Schema =>
-            Register (Handler.Contexts.Attribute);
-            Output ("Register (Handler.Target_NS, "
-                    & Ada_Name (Handler.Contexts) & ");");
+         when Context_Schema | Context_Redefine =>
+            if not Handler.Contexts.Attribute_Is_Ref then
+               Output ("Register (Handler.Target_NS, "
+                       & Ada_Name (Handler.Contexts) & ");");
+               Register (Handler.Contexts.Attribute);
+            end if;
 
          when Context_Extension =>
             --  If there is no extension at this point, there won't be any as
@@ -938,9 +1166,15 @@ package body Schema.Schema_Readers is
             Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
                     & Ada_Name (Handler.Contexts) & ");");
 
+         when Context_Attribute_Group =>
+            Add_Attribute (Handler.Contexts.Next.Attr_Group,
+                           Handler.Contexts.Attribute);
+            Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
+                    & Ada_Name (Handler.Contexts) & ");");
+
          when Context_Element | Context_Sequence | Context_Choice
             | Context_Attribute | Context_All
-            | Context_Union | Context_List =>
+            | Context_Union | Context_List | Context_Group =>
             Output ("Can't handle attribute decl in this context");
       end case;
    end Finish_Attribute;
@@ -959,17 +1193,18 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "elementFormDefault");
    begin
       if Target_NS_Index /= -1 then
-         Get_NS (Handler.Grammar, Get_Value (Atts, Target_NS_Index),
+         Get_NS (Handler.Created_Grammar, Get_Value (Atts, Target_NS_Index),
                  Handler.Target_NS);
          if Debug then
-            Output ("Get_NS (Handler.Grammar, """
+            Output ("Get_NS (Handler.Created_Grammar, """
                     & Get_Value (Atts, Target_NS_Index)
                     & """, Handler.Target_NS)");
          end if;
       else
-         Get_NS (Handler.Grammar, "", Handler.Target_NS);
+         Get_NS (Handler.Created_Grammar, "", Handler.Target_NS);
          if Debug then
-            Output ("Get_NS (Handler.Grammar, """", Handler.Target_NS)");
+            Output
+              ("Get_NS (Handler.Created_Grammar, """", Handler.Target_NS)");
          end if;
       end if;
 
@@ -1031,7 +1266,7 @@ package body Schema.Schema_Readers is
       L : constant String := Integer'Image (C.Level);
    begin
       case C.Typ is
-         when Context_Schema =>
+         when Context_Schema | Context_Redefine =>
             return "";
          when Context_Choice =>
             return "Choice" & L (L'First + 1 .. L'Last);
@@ -1057,6 +1292,10 @@ package body Schema.Schema_Readers is
             return "U_" & L (L'First + 1 .. L'Last);
          when Context_List =>
             return "L_" & L (L'First + 1 .. L'Last);
+         when Context_Group =>
+            return "G_" & L (L'First + 1 .. L'Last);
+         when Context_Attribute_Group =>
+            return "AG_" & L (L'First + 1 .. L'Last);
       end case;
    end Ada_Name;
 
@@ -1132,6 +1371,9 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "sequence" then
          Create_Sequence (Handler, Atts);
 
+      elsif Local_Name = "choice" then
+         Create_Choice (Handler, Atts);
+
       elsif Local_Name = "list" then
          Create_List (Handler, Atts);
 
@@ -1140,6 +1382,15 @@ package body Schema.Schema_Readers is
 
       elsif Local_Name = "attribute" then
          Create_Attribute (Handler, Atts);
+
+      elsif Local_Name = "group" then
+         Create_Group (Handler, Atts);
+
+      elsif Local_Name = "attributeGroup" then
+         Create_Attribute_Group (Handler, Atts);
+
+      elsif Local_Name = "redefine" then
+         Create_Redefine (Handler, Atts);
 
       else
          Output ("Tag not handled yet: " & Local_Name);
@@ -1184,6 +1435,9 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "sequence" then
          Finish_Sequence (Handler);
 
+      elsif Local_Name = "choice" then
+         Finish_Choice (Handler);
+
       elsif Local_Name = "restriction" then
          Finish_Restriction (Handler);
 
@@ -1212,6 +1466,15 @@ package body Schema.Schema_Readers is
         or else Local_Name = "minExclusive"
       then
          Handled := False;
+
+      elsif Local_Name = "redefine" then
+         null;
+
+      elsif Local_Name = "group" then
+         null;
+
+      elsif Local_Name = "attributeGroup" then
+         null;
 
       else
          Output ("Close tag not handled yet: " & Local_Name);
@@ -1336,8 +1599,9 @@ package body Schema.Schema_Readers is
          Grammar := Handler.Target_NS;
       else
          Output
-           ("Get_NS (Handler.Grammar, """ & Tmp.Namespace.all & """, G);");
-         Get_NS (Handler.Grammar, Tmp.Namespace.all, Grammar);
+           ("Get_NS (Handler.Created_Grammar, """
+            & Tmp.Namespace.all & """, G);");
+         Get_NS (Handler.Created_Grammar, Tmp.Namespace.all, Grammar);
       end if;
    end Get_Grammar_For_Namespace;
 

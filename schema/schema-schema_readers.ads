@@ -51,6 +51,9 @@ private
                          Context_All,
                          Context_List,
                          Context_Union,
+                         Context_Redefine,
+                         Context_Group,
+                         Context_Attribute_Group,
                          Context_Attribute);
 
    type Context (Typ : Context_Type);
@@ -68,7 +71,7 @@ private
             Seq       : Schema.Validators.Sequence;
          when Context_Choice =>
             C       : Schema.Validators.Choice;
-         when Context_Schema =>
+         when Context_Schema | Context_Redefine =>
             null;
          when Context_All =>
             All_Validator : Schema.Validators.XML_All;
@@ -85,12 +88,17 @@ private
             List_Items : Schema.Validators.XML_Type;
          when Context_Attribute =>
             Attribute : Schema.Validators.Attribute_Validator;
+            Attribute_Is_Ref : Boolean;
+         when Context_Group =>
+            Group     : Schema.Validators.XML_Group;
+         when Context_Attribute_Group =>
+            Attr_Group : Schema.Validators.XML_Attribute_Group;
       end case;
    end record;
 
 
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
-      Grammar         : Schema.Validators.XML_Grammar :=
+      Created_Grammar : Schema.Validators.XML_Grammar :=
         Schema.Validators.No_Grammar;
       --  This is the grammar created by the Schema file. Do not mix up with
       --  Schema.Readers.Validating_Reader.Grammar, which is in this case the
