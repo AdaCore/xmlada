@@ -55,6 +55,11 @@ package body Sax.Readers is
    Initial_Buffer_Length : constant := 10000;
    --  Initial length of the internal buffer that stores CDATA, tag names,...
 
+   Basic_Latin_Colon : constant Byte_Sequence := Encoding.Encode
+     (Unicode.Names.Basic_Latin.Colon);
+   Percent_Sign_Sequence : constant Byte_Sequence := Encoding.Encode
+     (Percent_Sign);
+
    ------------
    -- Tokens --
    ------------
@@ -429,8 +434,11 @@ package body Sax.Readers is
      (Parser : in out Reader'Class;
       Name   : Byte_Sequence;
       M      : out Element_Model_Ptr;
-      Attlist : Boolean := False);
+      Attlist : Boolean := False;
+      Open_Was_Read : Boolean := False);
    --  Same as above, but the model is contained in the entity Name.
+   --  If Open_Was_Read, then the opening parenthesis is considered to have
+   --  been read already and is automatically inserted into the stack.
 
    procedure Fatal_Error
      (Parser : in out Reader'Class;
@@ -922,7 +930,7 @@ package body Sax.Readers is
          return Value (Parser, Local_Name, Local_Name);
       else
          return Value (Parser, Prefix, Prefix)
-           & Encoding.Encode (Unicode.Names.Basic_Latin.Colon)
+           & Basic_Latin_Colon
            & Value (Parser, Local_Name, Local_Name);
       end if;
    end Qname_From_Name;
@@ -2264,7 +2272,9 @@ package body Sax.Readers is
 
             when Number_Sign =>
                if Expect_Operator then
-                  Fatal_Error (Parser, "Invalid content model", Start_Token);
+                  Fatal_Error
+                    (Parser, "Invalid content model, cannot start with #",
+                     Start_Token);
                end if;
                Expect_Operator := True;
 
@@ -2337,7 +2347,7 @@ package body Sax.Readers is
 
                Parse_Element_Model_From_Entity
                     (Parser, Parser.Buffer (Start_Sub .. Parser.Buffer_Length),
-                     Operand_Stack (Operand_Index), Attlist);
+                     Operand_Stack (Operand_Index), Attlist, Open_Was_Read);
                if Operand_Stack (Operand_Index) /= null then
                   Operand_Index := Operand_Index + 1;
                end if;
@@ -2441,13 +2451,15 @@ package body Sax.Readers is
 
    exception
       when Input_Ended =>
-         if Operator_Index /= Operator_Stack'First
-           or else Operand_Index /= Operand_Stack'First + 1
-         then
-            for J in Operand_Stack'First .. Operand_Index - 1 loop
-               Free (Operand_Stack (J));
-            end loop;
-            Fatal_Error (Parser, "Invalid content model", Start_Token);
+         if not Open_Was_Read then
+            if Operator_Index /= Operator_Stack'First
+              or else Operand_Index /= Operand_Stack'First + 1
+            then
+               for J in Operand_Stack'First .. Operand_Index - 1 loop
+                  Free (Operand_Stack (J));
+               end loop;
+               Fatal_Error (Parser, "Invalid content model", Start_Token);
+            end if;
          end if;
          Result := Operand_Stack (Operand_Stack'First);
 
@@ -2466,12 +2478,13 @@ package body Sax.Readers is
      (Parser : in out Reader'Class;
       Name   : Byte_Sequence;
       M      : out Element_Model_Ptr;
-      Attlist : Boolean := False)
+      Attlist : Boolean := False;
+      Open_Was_Read : Boolean := False)
    is
       Loc : Locator_Impl;
       Last : constant Unicode_Char := Parser.Last_Read;
       Input_S : String_Input;
-      Val : Entity_Entry := Get (Parser.Entities, Name);
+      Val : constant Entity_Entry := Get (Parser.Entities, Name);
    begin
       if Val = Null_Entity then
          Put_Line ("Unknown entity " & Name);
@@ -2488,7 +2501,7 @@ package body Sax.Readers is
 
          Open (Val.Value, Encoding, Input_S);
          Next_Char (Input_S, Parser);
-         Parse_Element_Model (Input_S, Parser, M, Attlist, False);
+         Parse_Element_Model (Input_S, Parser, M, Attlist, Open_Was_Read);
          Close (Input_S);
 
          Copy (Parser.Locator.all, Loc);
@@ -2811,7 +2824,7 @@ package body Sax.Readers is
 
          if Name_Id.Typ = Text
            and then Value (Parser, Name_Id, Name_Id) =
-           Encoding.Encode (Percent_Sign)
+           Percent_Sign_Sequence
          then
             Is_Parameter := Name_Id;
             Next_Token_Skip_Spaces (Input, Parser, Name_Id);
