@@ -1,3 +1,7 @@
 *.o
 *.ali
 gnat.adc
+b~*
+test_node
+testxml
+test_chardata
