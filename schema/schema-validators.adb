@@ -96,13 +96,18 @@ package body Schema.Validators is
       renames Schema.Validators.Restrictions.Create_Restriction_Of;
 
    function Internal_Type_Model
-     (Validator : access Group_Model_Record'Class;
-      Separator : Byte_Sequence) return Byte_Sequence;
+     (Validator  : access Group_Model_Record'Class;
+      Separator  : Byte_Sequence;
+      First_Only : Boolean;
+      All_In_List : Boolean) return Byte_Sequence;
    --  Internal version of Type_Model (shared implementation)
+   --  All_In_List indicates whether all the elements from the list should be
+   --  included, or only the first one.
 
    function Type_Model
-     (Iter : Particle_Iterator) return Byte_Sequence;
-   --  Return the content model describes by Particle
+     (Iter       : Particle_Iterator;
+      First_Only : Boolean) return Byte_Sequence;
+   --  Return the content model describes by Particle.
 
    Debug_Prefixes_Level : Natural := 0;
    procedure Debug_Push_Prefix (Append : String);
@@ -2117,25 +2122,20 @@ package body Schema.Validators is
    function Move_To_Next_Particle
      (Seq   : access Sequence_Record'Class;
       Data  : Sequence_Data_Access;
-      Force : Boolean := False) return Boolean
-   is
-      Curr : XML_Particle_Access;
+      Force : Boolean := False) return Boolean is
    begin
       Data.Num_Occurs_Of_Current := Data.Num_Occurs_Of_Current + 1;
       Debug_Output ("Num_Occurs_Of_Current="
                       & Data.Num_Occurs_Of_Current'Img);
 
-      Curr := Get (Data.Current);
-      if Curr /= null then
+      if Get (Data.Current) /= null then
          if Force
            or else
              (Get_Max_Occurs (Data.Current) /= Unbounded
               and then Data.Num_Occurs_Of_Current >=
                 Get_Max_Occurs (Data.Current))
          then
-            Debug_Output ("Goto next particle in " & Get_Name (Seq)
-                          & " Occurs of Current="
-                       & Data.Num_Occurs_Of_Current'Img);
+            Debug_Output ("Goto next particle in " & Get_Name (Seq));
 
             Next (Data.Current);
             Data.Num_Occurs_Of_Current := 0;
@@ -2242,11 +2242,37 @@ package body Schema.Validators is
          Run_Nested
            (Validator, D, Local_Name, Namespace_URI, Grammar,
             Element_Validator);
-         if Element_Validator /= No_Element
-           or else not Move_To_Next_Particle (Validator, D, Force => False)
-         then
+         if Element_Validator /= No_Element then
             Debug_Pop_Prefix;
             return;
+
+         else
+            --  We might have to try the same element again, in case it only
+            --  returned No_Element because its maxOccurs was reached, be could
+            --  itself be repeat another time:
+            --     <sequence>
+            --       <choice maxOccurs="3">
+            --          <element name="foo" maxOccurs="2" />
+            --          <element name="bar" maxOccurs="1" />
+            --  and the following instance
+            --       <foo/> <foo/> <bar/>    (the choice is repeat twice here)
+
+            Check_Nested
+              (Get (D.Current).Validator, D, Local_Name,
+               Namespace_URI, Grammar, Element_Validator, Skip_Current);
+            if Element_Validator = No_Element then
+               --  The number of calls should only be incremented when we start
+               --  the sequence initially, not when encountering the end of the
+               --  sequence
+               D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current - 1;
+               if not Move_To_Next_Particle (Validator, D, Force => False) then
+                  Debug_Pop_Prefix;
+                  return;
+               end if;
+            else
+               Debug_Pop_Prefix;
+               return;
+            end if;
          end if;
       end if;
 
@@ -2373,7 +2399,7 @@ package body Schema.Validators is
             exit when Curr = null;
 
             case Curr.Typ is
-               when Particle_Element | Particle_Any =>
+               when Particle_Element =>
                   if Get_Min_Occurs (D.Current) /= 0 then
                      Validation_Error
                        ("Element """ & Get_Local_Name (Curr.Element)
@@ -2382,6 +2408,12 @@ package body Schema.Validators is
                   Debug_Output ("Skipping element "
                                 & Curr.Element.Elem.Local_Name.all
                                 & " since optional");
+               when Particle_Any =>
+                  if Get_Min_Occurs (D.Current) /= 0 then
+                     Validation_Error
+                       ("At least one child is expected in this context");
+                  end if;
+
                when Particle_Nested =>
                   --  Is an empty sequence valid ?
                   if Get_Min_Occurs (D.Current) /= 0
@@ -2391,7 +2423,7 @@ package body Schema.Validators is
                                    & Get_Name (Curr.Validator));
                      Validation_Error
                        ("Unexpected end of sequence, expecting """
-                       & Type_Model (D.Current) & """");
+                       & Type_Model (D.Current, True) & """");
                   else
                      Debug_Output ("Skipping nested, since optional");
                   end if;
@@ -2408,7 +2440,7 @@ package body Schema.Validators is
                        & Get (D.Current).Typ'Img
                        & Get_Min_Occurs (D.Current)'Img);
          Validation_Error ("Unexpected end of sequence, expecting """
-                          & Type_Model (D.Current) & """");
+                          & Type_Model (D.Current, True) & """");
       end if;
 
       Debug_Pop_Prefix;
@@ -2554,11 +2586,42 @@ package body Schema.Validators is
       Element_Validator : out XML_Element)
    is
       D     : constant Choice_Data_Access := Choice_Data_Access (Data);
-      Item  : Particle_Iterator := Start (Validator.Particles);
-      It    : XML_Particle_Access;
       Skip_Current : Boolean;
+      Must_Check_Qualification : Boolean;
+
+      procedure Check_Particle (It : XML_Particle_Access);
+      --  Check whether a specific particle matches
+
+      procedure Check_Particle (It : XML_Particle_Access) is
+      begin
+         case It.Typ is
+            when Particle_Element =>
+               Element_Validator := Check_Substitution_Groups
+                 (It.Element.Elem, Local_Name, Namespace_URI);
+               Must_Check_Qualification := True;
+
+            when Particle_Nested =>
+               Check_Nested
+                 (It.Validator, D, Local_Name, Namespace_URI,
+                  Grammar, Element_Validator, Skip_Current);
+               Must_Check_Qualification := True;
+
+            when Particle_Any =>
+               Validate_Start_Element
+                 (It.Any, Local_Name, Namespace_URI,
+                  null, Grammar, Element_Validator);
+               Must_Check_Qualification := False;
+
+            when Particle_Group | Particle_XML_Type =>
+               --  Not possible, since the iterator hides these
+               raise Program_Error;
+         end case;
+      end Check_Particle;
+
    begin
-      Debug_Push_Prefix ("Validate_Start_Element " & Get_Name (Validator));
+      Debug_Push_Prefix ("Validate_Start_Element choice "
+                         & Get_Name (Validator)
+                         & " occurs=" & D.Num_Occurs_Of_Current'Img);
 
       if D.Nested /= null then
          Run_Nested
@@ -2570,47 +2633,66 @@ package body Schema.Validators is
          end if;
       end if;
 
+      if D.Current /= No_Iter then
+         Debug_Output ("MANU current is not null");
+         Check_Particle (Get (D.Current));
+         if Element_Validator = No_Element then
+            Debug_Output ("MANU current didn't match");
+            if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
+               Validation_Error
+                 ("Not enough occurrences of current element, expecting at"
+                  & " least" & Integer'Image (Get_Min_Occurs (D.Current)));
+            end if;
+            Free (D.Current);
+
+         else
+            D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
+            Debug_Output ("MANU New occurs=" & D.Num_Occurs_Of_Current'Img
+                          & Get_Max_Occurs (D.Current)'Img);
+            if Get_Max_Occurs (D.Current) /= Unbounded
+              and then D.Num_Occurs_Of_Current > Get_Max_Occurs (D.Current)
+            then
+               --  No need to insist on the same element again next time
+               Free (D.Current);
+               D.Current := No_Iter;
+               Element_Validator := No_Element;
+               Debug_Output ("Giving up choice, since too many occurrences");
+            end if;
+
+            Debug_Pop_Prefix;
+            return;
+         end if;
+      end if;
+
+      D.Num_Occurs_Of_Current := 0;
+      D.Current := Start (Validator.Particles);
+
       --  Check whether the current item is valid
 
-      while Get (Item) /= null loop
-         It := Get (Item);
-         case It.Typ is
-            when Particle_Element =>
-               Element_Validator := Check_Substitution_Groups
-                 (It.Element.Elem, Local_Name, Namespace_URI);
-               exit when Element_Validator /= No_Element;
-
-            when Particle_Nested =>
-               Debug_Output
-                 ("Testing nested " & Get_Name (It.Validator));
-
-               Check_Nested
-                 (It.Validator, D, Local_Name, Namespace_URI,
-                  Grammar, Element_Validator, Skip_Current);
-               exit when Element_Validator /= No_Element;
-
-            when Particle_Any =>
-               Validate_Start_Element
-                 (It.Any, Local_Name, Namespace_URI,
-                  null, Grammar, Element_Validator);
-               exit when Element_Validator /= No_Element;
-
-            when Particle_Group | Particle_XML_Type =>
-               --  Not possible, since the iterator hides these
-               raise Program_Error;
-         end case;
-
-         Next (Item);
+      while Get (D.Current) /= null loop
+         Check_Particle (Get (D.Current));
+         exit when Element_Validator /= No_Element;
+         Next (D.Current);
       end loop;
 
-      if Get (Item) = null then
+      if Get (D.Current) = null then
          Debug_Output ("Choice didn't match");
          Element_Validator := No_Element;
          Debug_Pop_Prefix;
          return;
       end if;
 
-      if Element_Validator /= No_Element then
+      D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
+      if Get_Max_Occurs (D.Current) = Unbounded
+        or else D.Num_Occurs_Of_Current > Get_Max_Occurs (D.Current)
+      then
+         Free (D.Current);
+      else
+         --  Keep same current element, and we will try again next time
+         null;
+      end if;
+
+      if Must_Check_Qualification and then Element_Validator /= No_Element then
          Check_Qualification (Element_Validator, Namespace_URI);
       end if;
 
@@ -2626,9 +2708,22 @@ package body Schema.Validators is
       Local_Name        : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data)
    is
-      pragma Unreferenced (Validator, Local_Name, Data);
+      pragma Unreferenced (Validator, Local_Name);
+      D     : constant Choice_Data_Access := Choice_Data_Access (Data);
    begin
-      null;
+      if D.Current /= No_Iter
+        and then D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current)
+      then
+         if Get (D.Current).Typ = Particle_Element then
+
+            Validation_Error
+              ("Not enough occurrences of """
+               & Get_Local_Name (Get (D.Current).Element) & """");
+         else
+            Validation_Error
+              ("Not enough occurrences of current element");
+         end if;
+      end if;
    end Validate_End_Element;
 
    ---------------------------
@@ -2640,7 +2735,10 @@ package body Schema.Validators is
    is
       pragma Unreferenced (Validator);
    begin
-      return new Choice_Data;
+      return new Choice_Data'
+        (Group_Model_Data_Record with
+         Current               => No_Iter,
+         Num_Occurs_Of_Current => 0);
    end Create_Validator_Data;
 
    ----------
@@ -3080,7 +3178,9 @@ package body Schema.Validators is
       Iter := new Particle_Iterator_Record'
         (Current => List.First, Parent  => null);
 
-      while Iter.Current.Typ = Particle_Group loop
+      while Iter.Current /= null
+        and then Iter.Current.Typ = Particle_Group
+      loop
          if Iter.Current.Group.Particles.First = null then
             Next (Iter);
             exit;
@@ -3380,6 +3480,7 @@ package body Schema.Validators is
          Count := Count + 1;
          Next (Tmp);
       end loop;
+      Free (Tmp);
 
       return new All_Data'
         (Group_Model_Data_Record with
@@ -3964,9 +4065,11 @@ package body Schema.Validators is
    ----------------
 
    function Type_Model
-     (Validator : access Group_Model_Record) return Byte_Sequence is
+     (Validator : access Group_Model_Record;
+      First_Only : Boolean) return Byte_Sequence is
    begin
-      return Internal_Type_Model (Validator, "");
+      return Internal_Type_Model
+        (Validator, "", First_Only, All_In_List => True);
    end Type_Model;
 
    ----------------
@@ -3974,9 +4077,11 @@ package body Schema.Validators is
    ----------------
 
    function Type_Model
-     (Validator : access Sequence_Record) return Byte_Sequence is
+     (Validator  : access Sequence_Record;
+      First_Only : Boolean) return Byte_Sequence is
    begin
-      return Internal_Type_Model (Validator, ",");
+      return Internal_Type_Model
+        (Validator, ",", First_Only, All_In_List => not First_Only);
    end Type_Model;
 
    ----------------
@@ -3984,9 +4089,11 @@ package body Schema.Validators is
    ----------------
 
    function Type_Model
-     (Validator : access Choice_Record) return Byte_Sequence is
+     (Validator : access Choice_Record;
+      First_Only : Boolean) return Byte_Sequence is
    begin
-      return Internal_Type_Model (Validator, "|");
+      return Internal_Type_Model
+        (Validator, "|", First_Only => First_Only, All_In_List => True);
    end Type_Model;
 
    -------------------------
@@ -3995,22 +4102,28 @@ package body Schema.Validators is
 
    function Internal_Type_Model
      (Validator : access Group_Model_Record'Class;
-      Separator : Byte_Sequence) return Byte_Sequence
+      Separator : Byte_Sequence;
+      First_Only : Boolean;
+      All_In_List : Boolean) return Byte_Sequence
    is
       Str : Unbounded_String;
       Iter : Particle_Iterator := Start (Validator.Particles);
       First : Boolean := True;
    begin
-      while Get (Iter) /= null loop
-         if not First then
-            Str := Str & Separator & Type_Model (Iter);
-         else
-            Str := Str & Type_Model (Iter);
-            First := False;
-         end if;
+      if not All_In_List then
+         Str := Str & Type_Model (Iter, First_Only);
+      else
+         while Get (Iter) /= null loop
+            if not First then
+               Str := Str & Separator & Type_Model (Iter, First_Only);
+            else
+               Str := Str & Type_Model (Iter, First_Only);
+               First := False;
+            end if;
 
-         Next (Iter);
-      end loop;
+            Next (Iter);
+         end loop;
+      end if;
       Free (Iter);
 
       return To_String (Str);
@@ -4021,7 +4134,8 @@ package body Schema.Validators is
    ----------------
 
    function Type_Model
-     (Iter : Particle_Iterator) return Byte_Sequence
+     (Iter       : Particle_Iterator;
+      First_Only : Boolean) return Byte_Sequence
    is
       Particle : constant XML_Particle_Access := Get (Iter);
       Str : Unbounded_String;
@@ -4030,35 +4144,38 @@ package body Schema.Validators is
          when Particle_Element =>
             Str := Str & Get_Local_Name (Particle.Element);
          when Particle_Nested =>
-            Str := Str & "(" & Type_Model (Particle.Validator) & ")";
+            Str := Str & "("
+              & Type_Model (Particle.Validator, First_Only) & ")";
          when Particle_Group | Particle_XML_Type =>
             raise Program_Error;
          when Particle_Any =>
             Str := Str & "<any>";
       end case;
 
-      if Get_Min_Occurs (Iter) = 0 then
-         if Get_Max_Occurs (Iter) = Unbounded then
-            Str := Str & "*";
-         elsif Get_Max_Occurs (Iter) = 1 then
-            Str := Str & "?";
-         else
-            Str := Str & "{0,"
-              & Integer'Image (Get_Max_Occurs (Iter)) & "}";
-         end if;
+      if not First_Only then
+         if Get_Min_Occurs (Iter) = 0 then
+            if Get_Max_Occurs (Iter) = Unbounded then
+               Str := Str & "*";
+            elsif Get_Max_Occurs (Iter) = 1 then
+               Str := Str & "?";
+            else
+               Str := Str & "{0,"
+                 & Integer'Image (Get_Max_Occurs (Iter)) & "}";
+            end if;
 
-      elsif Get_Min_Occurs (Iter) = 1 then
-         if Get_Max_Occurs (Iter) = Unbounded then
-            Str := Str & "+";
-         elsif Get_Max_Occurs (Iter) /= 1 then
-            Str := Str & "{,"
+         elsif Get_Min_Occurs (Iter) = 1 then
+            if Get_Max_Occurs (Iter) = Unbounded then
+               Str := Str & "+";
+            elsif Get_Max_Occurs (Iter) /= 1 then
+               Str := Str & "{"
+                 & Integer'Image (Get_Min_Occurs (Iter)) & ","
+                 & Integer'Image (Get_Max_Occurs (Iter)) & "}";
+            end if;
+         else
+            Str := Str & "{"
               & Integer'Image (Get_Min_Occurs (Iter)) & ","
               & Integer'Image (Get_Max_Occurs (Iter)) & "}";
          end if;
-      else
-         Str := Str & "{,"
-           & Integer'Image (Get_Min_Occurs (Iter)) & ","
-           & Integer'Image (Get_Max_Occurs (Iter)) & "}";
       end if;
 
       return To_String (Str);

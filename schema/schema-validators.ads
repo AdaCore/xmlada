@@ -1089,8 +1089,11 @@ private
    --  See doc for inherited subprograms
 
    function Type_Model
-     (Validator : access Group_Model_Record) return Unicode.CES.Byte_Sequence;
-   --  Return the type model described by Validator;
+     (Validator  : access Group_Model_Record;
+      First_Only : Boolean) return Unicode.CES.Byte_Sequence;
+   --  Return the type model described by Validator.
+   --  If First_Only is true, then only the first element(s) expected should
+   --  be returned. This is mostly to deal with with sequences.
 
    --------------------
    -- XML_Any_Record --
@@ -1184,7 +1187,8 @@ private
       Skip_Current : out Boolean);
    function Can_Be_Empty (Group : access Sequence_Record) return Boolean;
    function Type_Model
-     (Validator : access Sequence_Record) return Unicode.CES.Byte_Sequence;
+     (Validator  : access Sequence_Record;
+      First_Only : Boolean) return Unicode.CES.Byte_Sequence;
    --  See doc for inherited subprograms
 
    -------------------
@@ -1192,7 +1196,10 @@ private
    -------------------
 
    type Choice_Record is new Group_Model_Record with null record;
-   type Choice_Data is new Group_Model_Data_Record with null record;
+   type Choice_Data is new Group_Model_Data_Record with record
+      Current               : Particle_Iterator := No_Iter;
+      Num_Occurs_Of_Current : Natural;
+   end record;
    type Choice_Data_Access is access all Choice_Data'Class;
    procedure Validate_Start_Element
      (Validator         : access Choice_Record;
@@ -1216,7 +1223,8 @@ private
       Skip_Current : out Boolean);
    function Can_Be_Empty (Group : access Choice_Record) return Boolean;
    function Type_Model
-     (Validator : access Choice_Record) return Unicode.CES.Byte_Sequence;
+     (Validator  : access Choice_Record;
+      First_Only : Boolean) return Unicode.CES.Byte_Sequence;
    --  See doc for inherited subprograms
 
    -------------------------------
