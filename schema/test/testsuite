@@ -37,6 +37,7 @@ sun=$xmltests/suntest/SunTestsAll
 
 total=0
 failed=0
+expected_fail=0
 passed=0
 not_run=0
 
@@ -45,7 +46,7 @@ not_run=0
 #######################################
 
 summary() {
-  echo "Total: $total  Passed: $passed   Failed: $failed  Notrun: $not_run"
+  echo "Total:$total  Passed:$passed  Failed:$failed  Expected_Fail:$expected_fail  Notrun:$not_run"
 }
 
 #######################################
@@ -98,7 +99,7 @@ notrun() {
 ##################
 
 expected_failure() {
-  failed=`expr $failed + 1`
+  expected_fail=`expr $expected_fail + 1`
   total=`expr $total + 1`
   if [ x$show_expected_failure = x1 ]; then
      echo "$1: $2"
@@ -535,15 +536,15 @@ fi
 
 if [ x$run_ms = x1 ]; then
 expect "" $ms/element/elemT001.xml \
- "$ms/element/elemT001.xml:3:29: Cannot use restriction of element's type in this context"
+ "$ms/element/elemT001.xml:3:29: Element \"fooTest\" blocks the use of restrictions of the type"
 expect "" $ms/element/elemT002.xml ""
 expect "" $ms/element/elemT003.xml ""
 expect "" $ms/element/elemT004.xml \
- "$ms/element/elemT004.xml:3:29: Cannot use extension of element's type in this context"
+ "$ms/element/elemT004.xml:3:29: Element \"fooTest\" blocks the use of extensions of the type"
 expect "" $ms/element/elemT005.xml \
- "$ms/element/elemT005.xml:3:29: Cannot use restriction of element's type in this context"
+ "$ms/element/elemT005.xml:3:29: Element \"fooTest\" blocks the use of restrictions of the type"
 expect "" $ms/element/elemT006.xml \
- "$ms/element/elemT006.xml:3:29: Cannot use extension of element's type in this context"
+ "$ms/element/elemT006.xml:3:29: Element \"fooTest\" blocks the use of extensions of the type"
 expect "" $ms/element/elemT007.xml ""
 expect "" $ms/element/elemT008.xml ""
 expect $ms/element/elemT009.xsd "" \
@@ -551,23 +552,23 @@ expect $ms/element/elemT009.xsd "" \
 expect $ms/element/elemT010.xsd "" \
  "$ms/element/elemT010.xsd:10:60: Attribute \"block\": Invalid value \"union\""
 expect "" $ms/element/elemT011.xml \
- "$ms/element/elemT011.xml:2:29: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT011.xml:2:29: Type is not a valid replacement for \"int\""
 expect "" $ms/element/elemT012.xml \
- "$ms/element/elemT012.xml:2:30: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT012.xml:2:30: Type is not a valid replacement for \"int\""
 expect "" $ms/element/elemT013.xml \
- "$ms/element/elemT013.xml:2:30: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT013.xml:2:30: Type is not a valid replacement for \"int\""
 notrun $ms/element/elemT014.xml "Test seems invalid, all parsers fail"
 notrun $ms/element/elemT015.xml "Test seems invalid, all parsers fail"
 expect "" $ms/element/elemT016.xml ""
 expect "" $ms/element/elemT017.xml \
- "$ms/element/elemT017.xml:3:21: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT017.xml:3:21: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT018.xml \
- "$ms/element/elemT018.xml:2:23: Cannot use restriction of element's type in this context"
+ "$ms/element/elemT018.xml:2:23: Element \"test\" blocks the use of restrictions of the type"
 expect "" $ms/element/elemT019.xml \
- "$ms/element/elemT019.xml:2:26: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT019.xml:2:26: Type is not a valid replacement for \"A\""
 notrun $ms/element/elemT022.xml "Test seems invalid, all parsers fail"
 expect "" $ms/element/elemT024.xml \
- "$ms/element/elemT024.xml:2:24: Cannot use restriction of element's type in this context"
+ "$ms/element/elemT024.xml:2:24: Element \"test\" blocks the use of restrictions of the type"
 expect "" $ms/element/elemT025.xml ""
 expect "" $ms/element/elemT026.xml ""
 expect "" $ms/element/elemT027.xml ""
@@ -575,43 +576,43 @@ expect "" $ms/element/elemT028.xml ""
 expect "" $ms/element/elemT029.xml ""
 expect "" $ms/element/elemT030.xml ""
 expect "" $ms/element/elemT031.xml \
- "$ms/element/elemT031.xml:2:21: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT031.xml:2:21: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT032.xml ""
 expect "" $ms/element/elemT033.xml \
- "$ms/element/elemT033.xml:2:26: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT033.xml:2:26: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT038.xml ""
 expect "" $ms/element/elemT039.xml \
- "$ms/element/elemT039.xml:2:25: Cannot use extension of element's type in this context"
+ "$ms/element/elemT039.xml:2:25: Element \"test3\" blocks the use of extensions of the type"
 expect "" $ms/element/elemT040.xml ""
 expect "" $ms/element/elemT041.xml ""
 expect "" $ms/element/elemT042.xml ""
 expect "" $ms/element/elemT043.xml ""
 expect "" $ms/element/elemT044.xml ""
 expect "" $ms/element/elemT045.xml \
- "$ms/element/elemT045.xml:2:21: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT045.xml:2:21: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT046.xml \
- "$ms/element/elemT046.xml:2:21: Cannot use restriction of element's type in this context"
+ "$ms/element/elemT046.xml:2:21: Element \"test\" blocks the use of restrictions of the type"
 expect "" $ms/element/elemT047.xml \
- "$ms/element/elemT047.xml:2:26: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT047.xml:2:26: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT048.xml \
- "$ms/element/elemT048.xml:2:27: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT048.xml:2:27: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT049.xml \
- "$ms/element/elemT049.xml:2:28: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT049.xml:2:28: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT050.xml \
- "$ms/element/elemT050.xml:2:26: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT050.xml:2:26: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT051.xml \
- "$ms/element/elemT051.xml:2:27: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT051.xml:2:27: Type is not a valid replacement for \"A\""
 expect "" $ms/element/elemT052.xml \
- "$ms/element/elemT052.xml:2:25: Cannot use restriction of element's type in this context"
+ "$ms/element/elemT052.xml:2:25: Element \"test2\" blocks the use of restrictions of the type"
 expect "" $ms/element/elemT053.xml \
- "$ms/element/elemT053.xml:2:25: Cannot use extension of element's type in this context"
+ "$ms/element/elemT053.xml:2:25: Element \"test2\" blocks the use of extensions of the type"
 notrun $ms/element/elemT054.xml "Should fail, but all parsers let pass"
 notrun $ms/element/elemT055.xml "Should fail, but all parsers let pass"
 notrun $ms/element/elemT056.xml "Should fail, but all parsers let pass"
 notrun $ms/element/elemT057.xml "Should fail, but all parsers let pass"
 expect "" $ms/element/elemT058.xml ""
 expect "" $ms/element/elemT074.xml \
- "$ms/element/elemT074.xml:2:23: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$ms/element/elemT074.xml:2:23: Restrictions of type \"A\" are forbidden"
 fi
 
 ##################
@@ -900,55 +901,124 @@ notrun "$sun/xsd023.e.xsd" "" "Schema is in fact correct, confirmed by Xerces"
 
 expect "$sun/xsiType1.xsd" "$sun/xsiType1.v1.xml" ""
 expect "$sun/xsiType1.xsd" "$sun/xsiType1.n1.xml" \
- "$sun/xsiType1.n1.xml:5:30: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+ "$sun/xsiType1.n1.xml:5:30: Type is not a valid replacement for \"B\""
 
 ## SUN xsiTypeBlock-1
 
 expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.v1.xml" ""
 expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.n1.xml" \
- "$sun/xsiType-block-1.n1.xml:5:26: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-1.n1.xml:5:26: Extensions of type \"B\" are forbidden"
 expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.n2.xml" \
- "$sun/xsiType-block-1.n2.xml:3:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-1.n2.xml:3:27: Extensions of type \"B\" are forbidden"
 expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.n3.xml" \
- "$sun/xsiType-block-1.n3.xml:3:27: Cannot use extension of element's type in this context"
+"$sun/xsiType-block-1.n3.xml:3:27: Extensions of type \"B\" are forbidden"
 expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.n4.xml" \
- "$sun/xsiType-block-1.n4.xml:3:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-1.n4.xml:3:27: Extensions of type \"B\" are forbidden"
 
 ## SUN xsiTypeBlock-2
 
 expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.v1.xml" ""
 expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.n1.xml" \
- "$sun/xsiType-block-2.n1.xml:5:26: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-2.n1.xml:5:26: Extensions of type \"B\" are forbidden"
 expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.n2.xml" \
- "$sun/xsiType-block-2.n2.xml:3:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-2.n2.xml:3:27: Extensions of type \"Dr\" are forbidden"
 expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.n3.xml" \
- "$sun/xsiType-block-2.n3.xml:3:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-2.n3.xml:3:27: Extensions of type \"B\" are forbidden"
 expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.n4.xml" \
- "$sun/xsiType-block-2.n4.xml:3:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-2.n4.xml:3:27: Extensions of type \"De\" are forbidden"
 
 ### SUN xsiTypeBlock-3
 
 expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.v1.xml" ""
 expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.n1.xml" \
- "$sun/xsiType-block-3.n1.xml:4:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-3.n1.xml:4:27: Element \"item2\" blocks the use of extensions of the type"
 expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.n2.xml" \
- "$sun/xsiType-block-3.n2.xml:3:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-3.n2.xml:3:27: Element \"item2\" blocks the use of extensions of the type"
 expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.n3.xml" \
- "$sun/xsiType-block-3.n3.xml:3:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-3.n3.xml:3:27: Element \"item2\" blocks the use of extensions of the type"
 expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.n4.xml" \
- "$sun/xsiType-block-3.n4.xml:3:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-3.n4.xml:3:27: Element \"item2\" blocks the use of extensions of the type"
 
 ### SUN xsiTypeBlock-4
 
-expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.v1.xml" ""
-expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n1.xml" "f"
+expected_failure "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.v1.xml" "Test itself says it is probably invalid"
+expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n1.xml" \
+ "$sun/xsiType-block-4.n1.xml:5:27: Restrictions of type \"Dr\" are forbidden"
 expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n2.xml" \
- "$sun/xsiType-block-4.n2.xml:3:27: Cannot use extension of element's type in this context"
-expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n3.xml" "f"
+ "$sun/xsiType-block-4.n2.xml:3:27: Element \"item2\" blocks the use of extensions of the type"
+expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n3.xml" \
+ "$sun/xsiType-block-4.n3.xml:4:27: Restrictions of type \"Dr\" are forbidden"
 expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n4.xml" \
- "$sun/xsiType-block-4.n4.xml:4:27: Cannot use extension of element's type in this context"
+ "$sun/xsiType-block-4.n4.xml:4:27: Element \"item2\" blocks the use of extensions of the type"
 
+### SUN type-and-subst
 
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.v1.xml" ""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.v2.xml" ""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n1.xml" \
+ "$sun/type-and-subst-1.n1.xml:4:26: Type is not a valid replacement for \"Dr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n2.xml" \
+ "$sun/type-and-subst-1.n2.xml:2:26: Type is not a valid replacement for \"Dr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n3.xml" \
+ "$sun/type-and-subst-1.n3.xml:2:26: Type is not a valid replacement for \"Dr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n4.xml" \
+ "$sun/type-and-subst-1.n4.xml:2:26: Type is not a valid replacement for \"Dr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n5.xml" \
+ "$sun/type-and-subst-1.n5.xml:3:27: Type is not a valid replacement for \"De\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n6.xml" \
+ "$sun/type-and-subst-1.n6.xml:2:27: Type is not a valid replacement for \"De\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n7.xml" \
+ "$sun/type-and-subst-1.n7.xml:2:27: Type is not a valid replacement for \"De\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n8.xml" \
+ "$sun/type-and-subst-1.n8.xml:2:27: Type is not a valid replacement for \"De\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n9.xml" \
+ "$sun/type-and-subst-1.n9.xml:2:27: Type is not a valid replacement for \"Drr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n10.xml" \
+ "$sun/type-and-subst-1.n10.xml:2:27: Type is not a valid replacement for \"Drr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n11.xml" \
+ "$sun/type-and-subst-1.n11.xml:2:27: Type is not a valid replacement for \"Drr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n12.xml" \
+ "$sun/type-and-subst-1.n12.xml:2:27: Type is not a valid replacement for \"Drr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n13.xml" \
+ "$sun/type-and-subst-1.n13.xml:2:27: Type is not a valid replacement for \"Drr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n14.xml" \
+ "$sun/type-and-subst-1.n14.xml:2:27: Type is not a valid replacement for \"Drr\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n15.xml" \
+ "$sun/type-and-subst-1.n15.xml:2:27: Type is not a valid replacement for \"Dre\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n16.xml" \
+ "$sun/type-and-subst-1.n16.xml:2:27: Type is not a valid replacement for \"Dre\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n17.xml" \
+ "$sun/type-and-subst-1.n17.xml:2:27: Type is not a valid replacement for \"Dre\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n18.xml" \
+ "$sun/type-and-subst-1.n18.xml:2:27: Type is not a valid replacement for \"Dre\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n19.xml" \
+ "$sun/type-and-subst-1.n19.xml:2:27: Type is not a valid replacement for \"Dre\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n20.xml" \
+ "$sun/type-and-subst-1.n20.xml:2:27: Type is not a valid replacement for \"Dre\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n21.xml" \
+ "$sun/type-and-subst-1.n21.xml:2:27: Type is not a valid replacement for \"Der\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n22.xml" \
+ "$sun/type-and-subst-1.n22.xml:2:27: Type is not a valid replacement for \"Der\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n23.xml" \
+ "$sun/type-and-subst-1.n23.xml:2:27: Type is not a valid replacement for \"Der\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n24.xml" \
+ "$sun/type-and-subst-1.n24.xml:2:27: Type is not a valid replacement for \"Der\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n25.xml" \
+ "$sun/type-and-subst-1.n25.xml:2:27: Type is not a valid replacement for \"Der\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n26.xml" \
+ "$sun/type-and-subst-1.n26.xml:2:27: Type is not a valid replacement for \"Der\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n27.xml" \
+ "$sun/type-and-subst-1.n27.xml:2:27: Type is not a valid replacement for \"Dee\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n28.xml" \
+ "$sun/type-and-subst-1.n28.xml:2:27: Type is not a valid replacement for \"Dee\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n29.xml" \
+ "$sun/type-and-subst-1.n29.xml:2:27: Type is not a valid replacement for \"Dee\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n30.xml" \
+ "$sun/type-and-subst-1.n30.xml:2:27: Type is not a valid replacement for \"Dee\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n31.xml" \
+ "$sun/type-and-subst-1.n31.xml:2:27: Type is not a valid replacement for \"Dee\""
+expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n32.xml" \
+ "$sun/type-and-subst-1.n32.xml:2:27: Type is not a valid replacement for \"Dee\""
 
 
 
