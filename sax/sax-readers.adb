@@ -4381,6 +4381,15 @@ package body Sax.Readers is
 
             while Id.Typ /= End_Of_PI and then Id.Typ /= End_Of_Input loop
                Data_End := Id;
+
+               if Id.Typ = Double_String_Delimiter then
+                  Put_In_Buffer (Parser, """");
+                  Data_End.Last := Data_End.Last + 1;
+               elsif Id.Typ = Single_String_Delimiter then
+                  Put_In_Buffer (Parser, "'");
+                  Data_End.Last := Data_End.Last + 1;
+               end if;
+
                Next_Token (Input, Parser, Id);
             end loop;
 
