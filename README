@@ -147,7 +147,7 @@ these, you will need to recompile the library and your application:
   UTF8, which supports the whole Unicode range, and is economical
   memory-wise
 
-- dom-core.ads :: Shared_Namespaces
+- dom-core.ads :: Shared_Strings  and dom-core.ads :: Shared_Node_Names
   Whether the internal representation of namespaces should be shared among
   nodes. The default is yes
 
