@@ -416,7 +416,7 @@ package body Schema.Readers is
          Validate_Start_Element
            (Get_Validator (Handler.Validators.Typ),
             Local_Name, Namespace_URI, G, Handler.Validators.Data,
-            Element);
+            Get_Target_NS (Handler.Grammar), Element);
       else
          if Debug then
             Put_Line ("Getting element definition from grammar: "
@@ -548,6 +548,7 @@ package body Schema.Readers is
    begin
       if Handler.Validators /= null
         and then Is_Simple_Type (Get_Type (Handler.Validators.Element))
+        and then not Handler.Validators.Is_Nil
       then
          Internal_Characters (Handler, Ch, Empty_Element => False);
       end if;
