@@ -1145,7 +1145,7 @@ package body DOM.Core.Nodes is
 
          when Processing_Instruction_Node =>
             if Print_XML_PI
-              or else N.Target.all /= XML_Sequence
+              or else N.Target.all /= Xml_Sequence
             then
                Put (Encoding.Encode (Less_Than_Sign)
                     & Encoding.Encode (Question_Mark)
