@@ -40,13 +40,18 @@ with Sax.HTable;
 
 package DOM.Core is
 
-   Shared_Namespaces : constant Boolean := False;
-   --  Set this to true if the name of namespaces should be shared among nodes.
+   Shared_Strings : constant Boolean := True;
+   --  Set this to true if the name of namespaces and elements should be shared
+   --  among nodes.
    --  This can result in dramatic memory use reduction (more than 30% is
    --  possible if you have lots of nodes).
    --  Speed difference is very minor: even though we have to do a hash-table
    --  lookup every time, we also save on the number of system calls to
    --  malloc().
+
+   Shared_Node_Names : constant Boolean := True;
+   --  Whether the local_name+prefix+namespace are shared between nodes. This
+   --  also results in memory usage reduction.
 
 
    subtype DOM_String is Unicode.CES.Byte_Sequence;
@@ -213,52 +218,160 @@ private
    --  Not the most efficient way to implement a hash-table, but these are
    --  generally short lists anyway (attributes,...)
    type Named_Node_Map is new Node_List;
-
    Null_Node_Map : constant Named_Node_Map := (null, -1);
 
-   --  We share the namespace names, since there are only a limited number of
-   --  possible values, and sharing them helps reduce the size of the tree.
 
-   type Namespace_Definition is record
-      Namespace : DOM_String_Access;
+   ---------------------
+   --  Shared_Strings --
+   ---------------------
+   --  If Shared_Strings is True, then the namespaces and node names are not
+   --  duplicated for each node in the tree, This provides significant memory
+   --  usage reduction.
+
+   type Shared_String is record
+      Str : DOM_String_Access;
    end record;
-   --  Use a separate type, so that we have thin pointers later on to access
+   --  Use a constrained type, so that we have thin pointers later on to access
    --  the name, this saves 4 bytes per node in the tree.
 
-   type Namespace_Definition_Access is access Namespace_Definition;
-   No_Namespace : constant Namespace_Definition_Access := null;
+   type Shared_String_Access is access Shared_String;
+   No_String : constant Shared_String_Access := null;
 
-   procedure Free (Str : in out Namespace_Definition_Access);
+   procedure Force_Free (Str : in out Shared_String_Access);
+   --  Free the memory pointed to by Str. Warning: Do not use this if you are
+   --  using Shared_Strings, use Free_Unless_Shared instead.
+
+   procedure Free_Unless_Shared (Str : in out Shared_String_Access);
+   --  Reset Str to null, and free the memory if needed
+
    function Get_Key
-     (Str : Namespace_Definition_Access) return DOM_String_Access;
+     (Str : Shared_String_Access) return DOM_String_Access;
    function Hash (Key : DOM_String_Access) return Interfaces.Unsigned_32;
    function Key_Equal (Key1, Key2 : DOM_String_Access) return Boolean;
 
    package String_Htable is new Sax.HTable
-     (Element       => Namespace_Definition_Access,
-      Empty_Element => No_Namespace,
-      Free          => Free,
+     (Element       => Shared_String_Access,
+      Empty_Element => No_String,
+      Free          => Force_Free,
       Key           => DOM_String_Access,
       Get_Key       => Get_Key,
       Hash          => Hash,
       Equal         => Key_Equal);
    type String_Htable_Access is access String_Htable.HTable;
 
+   function Internalize_String
+     (Doc  : Document; Name : DOM_String) return Shared_String_Access;
+   --  Return an internal version of Name, meant to save space in the
+   --  DOM tree
+
+   procedure Clone_Shared
+     (Dest   : out Shared_String_Access;
+      Source : Shared_String_Access);
+   pragma Inline (Clone_Shared);
+   --  Clone the value of Source into Dest, so that whatever happens to Source,
+   --  Dest remains readable.
+
+   -------------------
+   -- Node_Name_Def --
+   -------------------
+   --  Attributes and Elements share the same kind description. These are
+   --  grouped in the same type for ease of use
+
+   type Node_Name_Def is record
+      Prefix     : Shared_String_Access;
+      Local_Name : Shared_String_Access;
+      Namespace  : Shared_String_Access;
+   end record;
+   No_Node_Name : constant Node_Name_Def :=
+     (Prefix => null, Local_Name => null, Namespace => null);
+
+   function Qualified_Name (N : Node_Name_Def) return DOM_String;
+   pragma Inline (Qualified_Name);
+   --  Return the qualified name of N
+
+   function Get_Prefix (N : Node_Name_Def) return DOM_String;
+   procedure Set_Prefix
+     (Doc : Document; N : in out Node_Name_Def; Prefix : DOM_String);
+   pragma Inline (Get_Prefix, Set_Prefix);
+   --  Return or set the prefix of N
+
+   function Get_Local_Name (N : Node_Name_Def) return DOM_String;
+   pragma Inline (Get_Local_Name);
+   --  Return the local name of N
+
+   function Get_Namespace_URI (N : Node_Name_Def) return DOM_String;
+   pragma Inline (Get_Namespace_URI);
+   --  Return the namespace of N
+
+   procedure Clone (Dest : out Node_Name_Def; Source : Node_Name_Def);
+   pragma Inline (Clone);
+   --  Clone Source
+
+   procedure Force_Free (N : in out Node_Name_Def);
+   pragma Inline (Force_Free);
+   --  Free the contents of N
+
+   -----------------------
+   --  Shared_Node_Name --
+   -----------------------
+   --  The Node_Name_Def above can be shared to save even more memory.
+
+   type Shared_Node_Name_Def is access Node_Name_Def;
+
+   procedure Force_Free (N : in out Shared_Node_Name_Def);
+   --  Free the contents of N. Warning: Do not call this yourself, if the
+   --  strings are shared. Call Free_Unless_Shared instead
+
+   procedure Free_Unless_Shared (N : in out Shared_Node_Name_Def);
+   pragma Inline (Free_Unless_Shared);
+   --  Free N unless we use Shared_Node_Names
+
+   function Self (N : Shared_Node_Name_Def) return Node_Name_Def;
+   --  Return N itself
+
+   function Equal (N1, N2 : Node_Name_Def) return Boolean;
+   --  Whether N1 and N2 are the same
+
+   function Hash (N : Node_Name_Def) return Interfaces.Unsigned_32;
+   --  Return a hash code
+
+   package Node_Name_Htable is new Sax.HTable
+     (Element       => Shared_Node_Name_Def,
+      Empty_Element => null,
+      Free          => Force_Free,
+      Key           => Node_Name_Def,
+      Get_Key       => Self,
+      Hash          => Hash,
+      Equal         => Equal);
+   type Node_Name_Htable_Access is access Node_Name_Htable.HTable;
+
+   function From_Qualified_Name
+     (Doc       : Document;
+      Name      : DOM_String;
+      Namespace : Shared_String_Access := null) return Shared_Node_Name_Def;
+   --  Build a node name from its qualified name. This is shared if
+   --  Shared_Node_Names is True
+
+   procedure Clone_Node_Name
+     (Dest   : out Shared_Node_Name_Def;
+      Source : Shared_Node_Name_Def);
+   pragma Inline (Clone_Node_Name);
+
+   -----------------
+   -- Node_Record --
+   -----------------
+
    type Node_Record (Node_Type : Node_Types) is record
       Parent   : Node;
       case Node_Type is
          when Element_Node =>
-            Prefix     : DOM_String_Access;
-            Local_Name : DOM_String_Access;
-            Namespace  : Namespace_Definition_Access;
+            Name       : Shared_Node_Name_Def;
             Children   : Node_List;
             Attributes : Named_Node_Map;
 
          when Attribute_Node =>
-            Attr_Prefix     : DOM_String_Access;
-            Attr_Local_Name : DOM_String_Access;
+            Attr_Name       : Shared_Node_Name_Def;
             Attr_Value      : DOM_String_Access;
-            Attr_Namespace  : Namespace_Definition_Access;
             Specified       : Boolean := False;
             --   ??? In fact, attributes can have children (text or
             --   entity_reference).
@@ -287,7 +400,8 @@ private
             Doc_Children   : Node_List;
             Doc_Type       : Node;
             Implementation : DOM_Implementation;
-            Namespaces     : String_Htable_Access;
+            Shared_Strings : String_Htable_Access;
+            Node_Names     : Node_Name_Htable_Access;
 
          when Document_Type_Node =>
             Document_Type_Name : DOM_String_Access;
@@ -310,16 +424,7 @@ private
    --  N must be an element of List, this is not checked.
 
 
-   function Internalize_Namespace
-     (Doc  : Document; Name : DOM_String) return Namespace_Definition_Access;
-   --  Return an internal version of the namespace, meant to save space in the
-   --  DOM tree
 
-   procedure Clone_Namespace
-     (Dest   : out Namespace_Definition_Access;
-      Source : Namespace_Definition_Access);
-   pragma Inline (Clone_Namespace);
-   --  Clone the value of Source into Dest, so that whatever happens to Source,
-   --  Dest remains readable.
+
 
 end DOM.Core;

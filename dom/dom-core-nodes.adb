@@ -97,21 +97,10 @@ package body DOM.Core.Nodes is
    begin
       case N.Node_Type is
          when Element_Node =>
-            pragma Assert (N.Local_Name /= null);
-            if N.Prefix = null then
-               return N.Local_Name.all;
-            else
-               return N.Prefix.all & Colon_Sequence & N.Local_Name.all;
-            end if;
+            return Qualified_Name (N.Name.all);
 
          when Attribute_Node =>
-            pragma Assert (N.Attr_Local_Name /= null);
-            if N.Attr_Prefix = null then
-               return N.Attr_Local_Name.all;
-            else
-               return N.Attr_Prefix.all
-                 & Colon_Sequence & N.Attr_Local_Name.all;
-            end if;
+            return Qualified_Name (N.Attr_Name.all);
 
          when Text_Node =>
             --  ??? Should this return an encoded string instead ?
@@ -356,22 +345,9 @@ package body DOM.Core.Nodes is
    function Namespace_URI (N : Node) return DOM_String is
    begin
       case N.Node_Type is
-         when Element_Node =>
-            if N.Namespace /= No_Namespace then
-               return N.Namespace.Namespace.all;
-            else
-               return "";
-            end if;
-
-         when Attribute_Node =>
-            if N.Attr_Namespace /= No_Namespace then
-               return N.Attr_Namespace.Namespace.all;
-            else
-               return "";
-            end if;
-
-         when others =>
-            return "";
+         when Element_Node   => return Get_Namespace_URI (N.Name.all);
+         when Attribute_Node => return Get_Namespace_URI (N.Attr_Name.all);
+         when others         => return "";
       end case;
    end Namespace_URI;
 
@@ -382,22 +358,9 @@ package body DOM.Core.Nodes is
    function Prefix (N : Node) return DOM_String is
    begin
       case N.Node_Type is
-         when Element_Node =>
-            if N.Prefix = null then
-               return "";
-            else
-               return N.Prefix.all;
-            end if;
-
-         when Attribute_Node =>
-            if N.Attr_Prefix = null then
-               return "";
-            else
-               return N.Attr_Prefix.all;
-            end if;
-
-         when others =>
-            return "";
+         when Element_Node   => return Get_Prefix (N.Name.all);
+         when Attribute_Node => return Get_Prefix (N.Attr_Name.all);
+         when others         => return "";
       end case;
    end Prefix;
 
@@ -406,19 +369,18 @@ package body DOM.Core.Nodes is
    ----------------
 
    procedure Set_Prefix (N : Node; Prefix : DOM_String) is
+      Doc : constant Document := Owner_Document (N);
    begin
-      --  ??? We're supposed to check that Prefix is valid, and raise
-      --  Invalid_Character_Err otherwise
+      if Doc = null then
+         Put_Line ("Set_Prefix only works when the node is part of a"
+                   & " tree already");
+         return;
+      end if;
+
       case N.Node_Type is
-         when Element_Node =>
-            Free (N.Prefix);
-            N.Prefix := new DOM_String'(Prefix);
-
-         when Attribute_Node =>
-            Free (N.Attr_Prefix);
-            N.Attr_Prefix := new DOM_String'(Prefix);
-
-         when others => null;
+         when Element_Node   => Set_Prefix (Doc, N.Name.all, Prefix);
+         when Attribute_Node => Set_Prefix (Doc, N.Attr_Name.all, Prefix);
+         when others         => null;
       end case;
    end Set_Prefix;
 
@@ -429,16 +391,9 @@ package body DOM.Core.Nodes is
    function Local_Name (N : Node) return DOM_String is
    begin
       case N.Node_Type is
-         when Element_Node =>
-            pragma Assert (N.Local_Name /= null);
-            return N.Local_Name.all;
-
-         when Attribute_Node =>
-            pragma Assert (N.Attr_Local_Name /= null);
-            return N.Attr_Local_Name.all;
-
-         when others =>
-            return "";
+         when Element_Node   => return Get_Local_Name (N.Name.all);
+         when Attribute_Node => return Get_Local_Name (N.Attr_Name.all);
+         when others         => return "";
       end case;
    end Local_Name;
 
@@ -477,6 +432,8 @@ package body DOM.Core.Nodes is
       pragma Unreferenced (Tmp);
    begin
       pragma Assert (Child_Is_Valid (N, New_Child));
+
+      --  ??? New_Child should use Shared strings from the new document
 
       --  ??? Should check that New_Child was created from the same document
       --  (ie same DTD,...), or raise Wrong_Document_Err
@@ -531,6 +488,8 @@ package body DOM.Core.Nodes is
       pragma Assert (Child_Is_Valid (N, New_Child));
       --  ??? Case where New_Child is a document_fragment
 
+      --  ??? New_Child should use Shared strings from the new document
+
       for J in 0 .. List.Last loop
          if List.Items (J) = Old_Child then
             List.Items (J) := New_Child;
@@ -547,6 +506,9 @@ package body DOM.Core.Nodes is
 
    function Remove_Child (N : Node; Old_Child : Node) return Node is
    begin
+      --  ??? Shared strings should be duplicated, so as not to depend on the
+      --  initial document
+
       case N.Node_Type is
          when Element_Node => Remove (N.Children, Old_Child);
          when Document_Node => Remove (N.Doc_Children, Old_Child);
@@ -606,32 +568,18 @@ package body DOM.Core.Nodes is
 
       case N.Node_Type is
          when Element_Node =>
-            if N.Prefix /= null then
-               Clone.Prefix := new DOM_String'(N.Prefix.all);
-            end if;
-
-            pragma Assert (N.Local_Name /= null);
-            Clone.Local_Name := new DOM_String'(N.Local_Name.all);
-
-            Clone_Namespace (Clone.Namespace, N.Namespace);
+            Clone_Node_Name (Clone.Name, Source => N.Name);
             Clone.Children := Clone_List (N.Children, Deep);
             Clone.Attributes := Named_Node_Map
               (Clone_List (Node_List (N.Attributes), True));
 
          when Attribute_Node =>
-            if N.Attr_Prefix /= null then
-               Clone.Attr_Prefix := new DOM_String'(N.Attr_Prefix.all);
-            end if;
-
-            pragma Assert (N.Attr_Local_Name /= null);
-            Clone.Attr_Local_Name :=
-              new DOM_String'(N.Attr_Local_Name.all);
+            Clone_Node_Name (Clone.Attr_Name, Source => N.Attr_Name);
 
             if N.Attr_Value /= null then
                Clone.Attr_Value := new DOM_String'(N.Attr_Value.all);
             end if;
 
-            Clone_Namespace (Clone.Attr_Namespace, N.Attr_Namespace);
 
          when Text_Node =>
             if N.Text /= null then
@@ -971,23 +919,21 @@ package body DOM.Core.Nodes is
         (Node_Record, Node);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_Htable.HTable, String_Htable_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Node_Name_Htable.HTable, Node_Name_Htable_Access);
    begin
       if N = null then
          return;
       end if;
       case N.Node_Type is
          when Element_Node =>
-            Free (N.Prefix);
-            Free (N.Local_Name);
-            Free (N.Namespace);
+            Free_Unless_Shared (N.Name);
             Free (Node_List (N.Attributes), Deep => True);
             Free (N.Children, Deep);
 
          when Attribute_Node =>
-            Free (N.Attr_Prefix);
-            Free (N.Attr_Local_Name);
+            Free_Unless_Shared (N.Attr_Name);
             Free (N.Attr_Value);
-            Free (N.Attr_Namespace);
 
          when Text_Node =>
             Free (N.Text);
@@ -1010,8 +956,10 @@ package body DOM.Core.Nodes is
 
          when Document_Node =>
             Free (N.Doc_Children, Deep);
-            String_Htable.Reset (N.Namespaces.all);
-            Unchecked_Free (N.Namespaces);
+            String_Htable.Reset (N.Shared_Strings.all);
+            Unchecked_Free (N.Shared_Strings);
+            Node_Name_Htable.Reset (N.Node_Names.all);
+            Unchecked_Free (N.Node_Names);
 
          when Document_Type_Node =>
             Free (N.Document_Type_Name);

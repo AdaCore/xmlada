@@ -89,6 +89,8 @@ package DOM.Core.Nodes is
 
    procedure Set_Prefix (N : Node; Prefix : DOM_String);
    --  Changing this prefix will affect the qualified name.
+   --  Note: In the Ada implementation, this only works when N belongs to
+   --  a tree already, it doesn't work for isolated nodes.
 
    function Local_Name (N : Node) return DOM_String;
    --  Return the local name of N (second part of the qualified name). This is

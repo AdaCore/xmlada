@@ -83,9 +83,7 @@ package body DOM.Core.Documents is
       return new Node_Record'
         (Node_Type  => Element_Node,
          Parent     => null,
-         Prefix     => null,
-         Local_Name => new DOM_String'(Tag_Name),
-         Namespace  => null,
+         Name       => From_Qualified_Name (Doc, Tag_Name, null),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element;
@@ -100,37 +98,12 @@ package body DOM.Core.Documents is
       Qualified_Name : DOM_String) return Element
    is
       pragma Warnings (Off, Doc);
-      Colon_Pos : Integer;
-      C : Unicode_Char;
-      Prefix : DOM_String_Access;
-      Local : DOM_String_Access;
-      Index : Positive := Qualified_Name'First;
    begin
-      --  ??? Test for Invalid_Character_Err
-      --  ??? Must convert Tag_Name to uppercase for HTML documents
-      --  ??? Test for Namespace_Err
-
-      while Index <= Qualified_Name'Last loop
-         Colon_Pos := Index;
-         Encoding.Read (Qualified_Name, Index, C);
-         exit when C = Colon;
-      end loop;
-
-      if C = Colon then
-         Prefix := new DOM_String'(Qualified_Name
-            (Qualified_Name'First .. Colon_Pos - 1));
-         Local := new DOM_String'(Qualified_Name
-           (Index .. Qualified_Name'Last));
-      else
-         Local := new DOM_String'(Qualified_Name);
-      end if;
-
       return new Node_Record'
         (Node_Type  => Element_Node,
          Parent     => null,
-         Prefix     => Prefix,
-         Local_Name => Local,
-         Namespace  => Internalize_Namespace (Doc, Namespace_URI),
+         Name       => From_Qualified_Name
+           (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element_NS;
@@ -228,10 +201,8 @@ package body DOM.Core.Documents is
         (Node_Type       => Attribute_Node,
          Parent          => null,
          Specified       => False,
-         Attr_Prefix     => null,
-         Attr_Local_Name => new DOM_String'(Name),
-         Attr_Value      => null,
-         Attr_Namespace  => null);
+         Attr_Name       => From_Qualified_Name (Doc, Name, null),
+         Attr_Value      => null);
    end Create_Attribute;
 
    -------------------------
@@ -244,39 +215,14 @@ package body DOM.Core.Documents is
       Qualified_Name : DOM_String) return Attr
    is
       pragma Warnings (Off, Doc);
-      Index : Natural := Qualified_Name'First;
-      Colon_Pos : Natural;
-      C : Unicode_Char;
-      Prefix : DOM_String_Access;
-      Local : DOM_String_Access;
    begin
-      --  ??? Test for Invalid_Character_Err
-      --  ??? Must convert Tag_Name to uppercase for HTML documents
-      --  ??? Test for Namespace_Err
-
-      while Index <= Qualified_Name'Last loop
-         Colon_Pos := Index;
-         Encoding.Read (Qualified_Name, Index, C);
-         exit when C = Colon;
-      end loop;
-
-      if C = Colon then
-         Prefix := new DOM_String'(Qualified_Name
-            (Qualified_Name'First .. Colon_Pos - 1));
-         Local := new DOM_String'(Qualified_Name
-           (Index .. Qualified_Name'Last));
-      else
-         Local := new DOM_String'(Qualified_Name);
-      end if;
-
       return new Node_Record'
         (Node_Type       => Attribute_Node,
          Parent          => null,
          Specified       => False,
-         Attr_Prefix     => Prefix,
-         Attr_Local_Name => Local,
-         Attr_Value      => null,
-         Attr_Namespace  => Internalize_Namespace (Doc, Namespace_URI));
+         Attr_Name       => From_Qualified_Name
+           (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
+         Attr_Value      => null);
    end Create_Attribute_NS;
 
    -----------------------------
