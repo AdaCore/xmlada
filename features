@@ -1,5 +1,9 @@
 New features in version 0.8
 
+- Independence from GNAT
+  XML/Ada should now be compilable with other compilers. The GNAT-specific
+  packages and attributes have been replaced by equivalents.
+
 - Better support for encodings
   XML/Ada now has a better auto-detection of the encoding (for Utf16 and Utf8
   documents, even when they don't have a Byte-Order-Mark).
