@@ -69,7 +69,7 @@ package body Unicode.CES is
         and then Str (Str'First + 3) = Character'Val (16#00#)
       then
          Len := 4;
-         BOM := Utf32_BE;
+         BOM := Utf32_LE;
 
       elsif Str'Length >= 3
         and then Str (Str'First)     = Character'Val (16#EF#)
@@ -155,6 +155,43 @@ package body Unicode.CES is
          BOM := Unknown;
       end if;
    end Read_Bom;
+
+   --------------
+   -- Write_Bom --
+   --------------
+
+   function Write_Bom (BOM : Bom_Type) return String is
+   begin
+      case BOM is
+         when Utf16_LE =>
+            return Character'Val (16#FF#) & Character'Val (16#FE#);
+         when Utf16_BE =>
+            return Character'Val (16#FE#) & Character'Val (16#FF#);
+         when Utf32_LE =>
+            return Character'Val (16#FF#) & Character'Val (16#FE#)
+              & Character'Val (16#00#) & Character'Val (16#00#);
+         when Utf32_BE =>
+            return Character'Val (16#00#) & Character'Val (16#00#)
+              & Character'Val (16#FE#) & Character'Val (16#FF#);
+         when Utf8_All =>
+            return Character'Val (16#EF#) & Character'Val (16#BB#)
+              & Character'Val (16#BF#);
+         when Ucs4_BE =>
+            return Character'Val (16#00#) & Character'Val (16#00#)
+              & Character'Val (16#00#) & Character'Val (16#3C#);
+         when Ucs4_LE =>
+            return Character'Val (16#3C#) & Character'Val (16#00#)
+              & Character'Val (16#00#) & Character'Val (16#00#);
+         when Ucs4_2143 =>
+            return Character'Val (16#00#) & Character'Val (16#00#)
+              & Character'Val (16#3C#) & Character'Val (16#00#);
+         when Ucs4_3412 =>
+            return Character'Val (16#00#) & Character'Val (16#3C#)
+              & Character'Val (16#00#) & Character'Val (16#00#);
+         when Unknown =>
+            return "";
+      end case;
+   end Write_Bom;
 
    -----------------------
    -- Index_From_Offset --
