@@ -139,6 +139,10 @@ package body Unicode.CES.Utf8 is
          raise Invalid_Encoding;
       end if;
 
+      if Str'Last < Len then
+         raise Invalid_Encoding;
+      end if;
+
       for Count in Index + 1 .. Len loop
          C := Character'Pos (Str (Count));
          if (C and 16#C0#) /= 16#80# then
