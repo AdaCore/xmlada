@@ -81,6 +81,7 @@ install_dirs: force
 install: obj install_dirs ${MODULE_INSTALL}
 	cd ${PREFIX}/include/xmlada; ${CHMOD} -w *.ali
 	${CP} xmlada-config ${PREFIX}/bin
+	${CP} xmlada.gpr ${PREFIX}
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 
 clean: force
