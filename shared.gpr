@@ -8,9 +8,9 @@ project Shared is
    package Builder is
        case Mode is
           when "debug" => 
-             for Default_Switches ("Ada") use ("-s", "-g");
+             for Default_Switches ("Ada") use ("-g");
           when others =>
-             for Default_Switches ("Ada") use ("-s");
+             for Default_Switches ("Ada") use ("-O2");
        end case;
    end Builder;
 
