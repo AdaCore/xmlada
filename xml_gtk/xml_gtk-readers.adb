@@ -198,4 +198,13 @@ package body XML_Gtk.Readers is
       Read.Warnings_As_Error := Warnings_As_Error;
    end Set_Warnings_As_Errors;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Read : in out Gtk_Reader) is
+   begin
+      Read.Tree := null;
+   end Free;
+
 end XML_Gtk.Readers;

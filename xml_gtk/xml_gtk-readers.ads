@@ -44,8 +44,15 @@ package XML_Gtk.Readers is
    --  Special SAX Reader that creates a tree compatible with Glib.XML, found
    --  in the GtkAda distribution. This allows replacing the parser in that
    --  package with the better one in XML/Ada.
+   --  You should free the previous Tree before calling Parse multiple times
+   --  if you want to avoid memory leaks.
 
    function Get_Tree (Read : Gtk_Reader) return Glib_XML.Node_Ptr;
+   --  Get the tree that Read created
+
+   procedure Free (Read : in out Gtk_Reader);
+   --  Free the memory occupied by Read.
+   --  This doesn't free the tree, you must do it yourself before this call.
 
    procedure Set_Warnings_As_Errors
      (Read : in out Gtk_Reader; Warnings_As_Error : Boolean);
