@@ -23,6 +23,7 @@ package body Schema.Readers is
 
    procedure Push  (List    : in out Validator_List;
                     Element : XML_Element;
+                    Typ     : XML_Type;
                     Data    : Validator_Data;
                     Is_Nil  : Boolean);
    procedure Pop   (List : in out Validator_List);
@@ -74,11 +75,13 @@ package body Schema.Readers is
    procedure Push
      (List    : in out Validator_List;
       Element : XML_Element;
+      Typ     : XML_Type;
       Data    : Validator_Data;
       Is_Nil  : Boolean) is
    begin
       List := new Validator_List_Record'
         (Element => Element,
+         Typ     => Typ,
          Data    => Data,
          Is_Nil  => Is_Nil,
          Had_Character_Data => False,
@@ -250,6 +253,8 @@ package body Schema.Readers is
       Element   : XML_Element := No_Element;
       Data      : Validator_Data;
       G         : XML_Grammar_NS;
+      Typ       : XML_Type;
+      Type_Index : Integer;
       Index     : Integer;
       Is_Nil    : Boolean;
    begin
@@ -280,11 +285,11 @@ package body Schema.Readers is
 
       if Handler.Validators /= null then
          Validate_Start_Element
-           (Get_Validator (Get_Type (Handler.Validators.Element)),
+           (Get_Validator (Handler.Validators.Typ),
             Local_Name, Handler.Validators.Data, Element);
       else
          if Debug then
-            Put_Line ("Getting element definition from grammar "
+            Put_Line ("Getting element definition from grammar: "
                       & Namespace_URI & " " & Local_Name);
          end if;
          Get_NS (Handler.Grammar, Namespace_URI, Result => G);
@@ -300,11 +305,25 @@ package body Schema.Readers is
             "No data type definition for element " & String (Local_Name));
       end if;
 
-      Data := Create_Validator_Data (Get_Validator (Get_Type (Element)));
+      Typ := Get_Type (Element);
+
+      Type_Index := Get_Index
+        (Atts, URI => XML_Instance_URI, Local_Name => "type");
+      if Type_Index /= -1 then
+         if Debug then
+            Put_Line ("Getting element definition from type attribute: "
+                      & Get_Value (Atts, Type_Index));
+         end if;
+         --  ??? Should check with namespaces
+         Get_NS (Handler.Grammar, Namespace_URI, Result => G);
+         Typ := Lookup (G, Get_Value (Atts, Type_Index));
+      end if;
+
+      Data := Create_Validator_Data (Get_Validator (Typ));
       Validate_Attributes
-        (Get_Validator (Get_Type (Element)), Atts, Handler.Ids,
+        (Get_Validator (Typ), Atts, Handler.Ids,
          Is_Nillable (Element), Is_Nil);
-      Push (Handler.Validators, Element, Data, Is_Nil);
+      Push (Handler.Validators, Element, Typ, Data, Is_Nil);
    end Start_Element;
 
    -----------------
@@ -331,7 +350,7 @@ package body Schema.Readers is
          end if;
 
          Validate_End_Element
-           (Get_Validator (Get_Type (Handler.Validators.Element)),
+           (Get_Validator (Handler.Validators.Typ),
             Qname,
             Handler.Validators.Data);
       end if;
