@@ -2,7 +2,7 @@
 # @configure_input@
 
 prefix=@EXEC_PREFIX@
-cflags="-aI${prefix}/include/xmlada/input_sources -aI${prefix}/include/xmlada/unicode -aI${prefix}/include/xmlada/sax -aI${prefix}/include/xmlada/dom -aO${prefix}/include/xmlada/obj"
+cflags="-aI${prefix}/include/xmlada -aO${prefix}/include/xmlada/obj"
 libs="-L${prefix}/lib -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode"
 static_libs="${prefix}/lib/libxmlada_input_sources.a ${prefix}/lib/libxmlada_sax.a ${prefix}/lib/libxmlada_unicode.a"
 full_libs="-lxmlada_dom"
