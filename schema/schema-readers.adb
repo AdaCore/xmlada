@@ -394,7 +394,8 @@ package body Schema.Readers is
       if Handler.Validators /= null then
          Validate_Start_Element
            (Get_Validator (Handler.Validators.Typ),
-            Local_Name, Handler.Validators.Data, Element);
+            Local_Name, Namespace_URI,
+            Handler.Validators.Data, Handler.Grammar, Element);
       else
          if Debug then
             Put_Line ("Getting element definition from grammar: "
