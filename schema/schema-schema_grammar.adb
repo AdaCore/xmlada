@@ -308,6 +308,7 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Seq1, "topLevelElement seq");
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Choice1 := Create_Choice (Min_Occurs => 0);
+      Set_Debug_Name (Choice1, "topLevelElement choice");
       Add_Particle (Seq1, Choice1);
       Add_Particle (Choice1, Create_Element
                       ("simpleType", Lookup (G, "localSimpleType")));
