@@ -154,57 +154,7 @@ these, you will need to recompile the library and your application:
 V - USING THE LIBRARY
 =====================
 
-There are two ways to use this library. One solution is to use Makefiles to
-build your application, specifying all search patchs and libraries directly
-on the command line of the compiler.
-The other solution is to use the project files provided by GNAT. These have
-evolved a lot in recent versions of GNAT, and the provided project files
-might not work correctly with older versions of GNAT.
-
-One you have managed to build your application, you might need to edit the
-LD_LIBRARY_PATH environment variable on Unix systems, or the PATH variable
-on Windows systems to make the library visible to the dynamic linker. The
-directory ${PREFIX}/lib should be added to this path.
-
-Using the library through project files
----------------------------------------
-
-If you are building your application with the help of GNAT project files (see
-the GNAT documentation for more information on these), you just have to add
-the following statement at the beginning of your project file:
-
-   with "xmlada";
-
-This assumes that the xmlada.gpr project file is visible through the
-environment variable ADA_PROJECT_PATH. You should add the directory ${PREFIX}
-to that path to be able to build your application.
-
-The statement above with automatically set the appropriate search paths for
-the compiler, as well as the proper linker arguments.
-
-An example of such a project file is provided as the dom/test/default.gpr.
-To use this example project, change to that dom/test directory, and run
-    gnatmake -Pdefault
-This automatically creates an executable using dynamic libraries
-
-
-Using the library through Makefiles
------------------------------------
-
-Files will be copied into ${PREFIX}/lib and ${PREFIX}/include/xmlada.
-
-To use this library, add the following arguments to the gnatmake
-command line:
-   -aI${PREFIX}/include/xmlada -largs -L${PREFIX}/lib -lxmlada_input_sources \
-   -lxmlada_unicode -lxmlada_dom -lxmlada_sax
-
-Alternatively, a script is provided in ${PREFIX}/bin, that outputs all
-the command line arguments. You should compile with:
-   gnatmake test.adb `xmlada-config`
-
-You can also build a static version of your program by using:
-   gnatmake test.adb `xmlada-config --static`
-
+See the XML/Ada user's guide for information on how to use this library.
 
 VI - TESTING THE LIBRARY
 ========================
