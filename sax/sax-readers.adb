@@ -116,9 +116,11 @@ package body Sax.Readers is
       Line, Column : Natural; --   Line and col within the current stream
       Input_Id : Natural;     --   Id of the input source in which Token was
                               --   read.
+      From_Entity : Boolean;  --   Whether the characters come from the
+                              --   expansion of an entity.
    end record;
 
-   Null_Token : constant Token := (End_Of_Input, 1, 0, 0, 0, 0);
+   Null_Token : constant Token := (End_Of_Input, 1, 0, 0, 0, 0, False);
 
    Default_State : constant Parser_State :=
      (Name => "Def",
@@ -1294,6 +1296,7 @@ package body Sax.Readers is
          Test_Valid_Char (Parser, Val, Id);
          Put_In_Buffer (Parser, Val);
          Next_Char (Input, Parser);
+         Id.From_Entity := True;
       end Handle_Character_Ref;
 
       ---------------------------
@@ -1494,6 +1497,8 @@ package body Sax.Readers is
                   & ASCII.LF & "Did you want to use &amp; ?", Id);
             end if;
 
+            Id.From_Entity := True;
+
          else
             Fatal_Error
               (Parser, "[4.1] Invalid first letter in entity name '"
@@ -1552,6 +1557,7 @@ package body Sax.Readers is
       Id.Line := Get_Line_Number (Parser.Locator.all);
       Id.Column := Get_Column_Number (Parser.Locator.all);
       Id.Input_Id := Input_Id (Parser);
+      Id.From_Entity := False;
 
       Close_Inputs (Parser);
 
@@ -2899,7 +2905,9 @@ package body Sax.Readers is
                         Index := Str'First;
                         while Index <= Str'Last loop
                            Encoding.Read (Str, Index, C);
-                           if Is_White_Space (C) then
+                           if not Id.From_Entity
+                             and then Is_White_Space (C)
+                           then
                               if not Had_Space then
                                  Put_In_Buffer
                                    (Parser, Unicode.Names.Basic_Latin.Space);
