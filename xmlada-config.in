@@ -1,0 +1,101 @@
+#!/bin/sh
+# @configure_input@
+
+prefix=@EXEC_PREFIX@
+cflags="-I${prefix}/include/xmlada"
+libs="-L${prefix}/lib -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode"
+static_libs="${prefix}/lib/libxmlada_input_sources.a ${prefix}/lib/libxmlada_sax.a ${prefix}/lib/libxmlada_unicode.a"
+full_libs="-lxmlada_dom"
+static_full_libs="${prefix}/lib/libxmlada_dom.a"
+
+MAJOR=@XMLADA_MAJOR_VERSION@
+MINOR=@XMLADA_MINOR_VERSION@
+
+usage()
+{
+   cat <<EOF
+Usage: xmlada-config [OPTIONS]
+Options:
+        No option:
+            Output all the flags (compiler and linker) required
+            to compiler your program
+        [--prefix]
+            Output the directory in which XML/Ada is installed
+        [--version|-v]
+            Output the version of XML/Ada
+        [--libs]
+            Output the linker flags to use for XML/Ada
+        [--cflags]
+            Output the compiler flags to use for XML/Ada
+        [--sax]
+            Output all the flags to usr for XML/Ada, provided
+            you are not using the DOM module.
+        [--static]
+            Output all the flags (compiler and linker) required to
+            compile a static version of your program
+        [--static-sax]
+            Output all the flags (compiler and linker) required to
+            compile a static version of your program, omitting the
+            DOM module.
+EOF
+}
+
+# Can have the following values:
+#   0 = none
+#   1 = cflags
+#   2 = libs
+#   3 = sax
+#   4 = full
+#   5 = static
+output_type=full
+while test $# -gt 0; do
+  case "$1" in
+  -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+  *) optarg= ;;
+  esac
+
+  case $1 in
+    --help|-h)
+      usage 1>&2
+      exit 1
+      ;;
+    --prefix)
+      echo $prefix
+      output_type=none
+      ;;
+    --version|-v)
+      echo XmlAda ${MAJOR}.${MINOR}
+      exit 1
+      ;;
+    --libs)
+      output_type=libs
+      ;;
+    --sax)
+      output_type=sax
+      ;;
+    --cflags)
+      output_type=cflags
+      ;;
+    --static)
+      output_type=static
+      ;;
+    --static-sax)
+      output_type=static_sax
+      ;;
+    *)
+      usage 1>&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+case $output_type in
+   cflags) echo $cflags ;;
+   libs)   echo $libs $full_libs;;
+   sax)    echo $cflags -largs $libs ;;
+   full)   echo $cflags -largs $libs $full_libs;;
+   static) echo $cflags -largs $static_libs $static_full_libs;;
+   static_sax)  echo $cflags -largs $static_libs ;;
+esac
+

@@ -47,6 +47,7 @@ unmodified in any copy.
 * The Input module::
 * The SAX module::
 * The DOM module::
+* Using the library::
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -69,6 +70,9 @@ The SAX module
 * SAX Handlers::
 
 The DOM module
+
+Using the library
+
 
 @end detailmenu
 @end menu
@@ -729,11 +733,11 @@ DOM module, and it creates a tree in memory. As you will see if you look at
 the code, the callbacks are actually very short.
 
 Note that internally, all the strings are encoded with a unique character
-encoding scheme, that is defined in the file @file{encodings.ads}. The input
+encoding scheme, that is defined in the file @file{sax-encodings.ads}. The input
 stream is converted on the fly to this internal encoding, and all the
 subprograms from then on will receive and pass parameters with this new
 encoding. You can of course freely change the encoding defined in the file
-@file{encodings.ads}.
+@file{sax-encodings.ads}.
 
 @c -------------------------------------------------------------------
 @node SAX Handlers
@@ -773,7 +777,7 @@ element. Calls to @code{Start_Element} and @code{End_Element} are garanteed
 to be properly nested (ie you can't see the end of an element before seeing
 the end of all its nested children.
 
-@item Characters
+@item Characters and Ignore_Whitespace
 This procedure will be called every time some character not part of an
 element declaration are encounted. The characters themselves are passed as
 an argument to the callback. Note that the white spaces (and tabulations)
@@ -825,6 +829,86 @@ You can create such a tree through the tree_readers.Parse function.
 
 Only the Core module of the DOM standard is currently implemented, other
 modules will follow.
+
+@c -------------------------------------------------------------------
+@node Using the library
+@chapter Using the library
+@c -------------------------------------------------------------------
+
+@noindent
+
+XML/Ada is a library. When compiling an application that uses it, you
+thus need to specify where the specifications are to be found, as well
+as where the libraries are installed.
+
+There are several ways to do it:
+
+@itemize @bullet
+
+@item The simplest is to use the @command{xmlada-config} script, and let it
+   provide the list of switches for @command{gnatmake}. This is more
+   convenient on Unix systems, where you can simply compile your application
+   with
+
+@smallexample
+gnatmake main.adb `xmlada-config`
+@end smallexample
+
+   Note the use of backticks. This means that @command{xmlada-config} is
+   first executed, and then the command line is replaced with the output of
+   the script, thus finally executing something like:
+
+@smallexample
+gnatmake main.adb -Iprefix/include/xmlada -largs -Lprefix/lib \
+  -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode -lxmlada_dom
+@end smallexample
+
+   Unfortunately, this behavior is not available on Windows (unless of course
+   you use a Unix shell). The simplest in that case is to create a
+   @file{Makefile}, to be used with the @command{make} command, and copy-paste
+   the output of @command{xmlada-config} into it.
+
+   @command{xmlada-config} has several switches that might be useful:
+
+   @enumerate
+
+   @item @option{--sax}: If you this flag, your application will not be
+      linked against the DOM module. This might save some space, particularly
+      if linking statically. This also reduces the dependencies on external
+      tools.
+
+   @item @option{--static}: Return the list of flags to use to link your
+      application statically against Xml/Ada. Your application is then
+      standalone, and you don't need to distribute XMl/Ada at the same time.
+
+   @item @option{--static_sax}: Combines both of the above flags.
+
+   @end enumerate
+
+@item On Windows system, you might also simply want to register once and for
+   all the library in the Windows registry, with the command @command{gnatreg}.
+   This means that @command{GNAT} will automatically find the installation
+   directory for the XML/Ada.
+
+@item If you are working on a big project, particularly one that includes
+   sources in languages other than Ada, you generally have to run the three
+   steps of the compilation process separately (compile, bind and then link).
+   @command{xmlada-config} can also be used, provided you use one of the
+   following switches:
+
+   @enumerate
+
+   @item @option{--cflags}: This returns the compiler flags only, to be used
+       for instance with @command{gcc}.
+
+   @item @option{--libs}: This returns the linker flags only, to be used for
+       instance with @command{gnatlink}.
+
+   @end enumerate
+
+
+@end itemize
+
 
 @contents
 @bye

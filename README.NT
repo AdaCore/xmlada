@@ -13,7 +13,8 @@ Windows Specifics
 
 2. Run 'configure' to generate the makefile.
    An example copy is provided as Makefile.nt, rename it to makefile if you
-   cannot run configure
+   cannot run configure. You also need to rename Makefile.module.nt to
+   Makefile.module
 
 3. Before building make sure to set the following values in 'Makefile':
 
@@ -23,12 +24,12 @@ Windows Specifics
 
       PREFIX=C:/GNAT/XMLada
 
-   to tell the makefile where to install the library. Note the slashes
-   in the path!
+   in 'Makefile.module' to tell the makefile where to install the library.
+   Note the slashes in the path!
 
 4. The best way to proceed is to do a 'make' then 'make install'.
 
-5. If you have GNAT 3.14 or later, you can register the library as an
+5. If you have GNAT 3.14 or later, you can register the library as a
    standard library using the 'gnatreg' command.
 
 success!

@@ -29,6 +29,7 @@
 -----------------------------------------------------------------------
 
 with Unicode.CES;  use Unicode.CES;
+with Unchecked_Deallocation;
 
 package body Sax.Locators is
 
@@ -40,6 +41,18 @@ package body Sax.Locators is
    begin
       Free (Loc.Public_Id);
       Free (Loc.System_Id);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Loc : in out Locator_Impl_Access) is
+      procedure Internal is new Unchecked_Deallocation
+        (Locator_Impl'Class, Locator_Impl_Access);
+   begin
+      Free (Loc.all);
+      Internal (Loc);
    end Free;
 
    ----------

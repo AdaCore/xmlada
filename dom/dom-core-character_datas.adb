@@ -28,8 +28,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Encodings;   use Encodings;
-with Unicode.CES; use Unicode.CES;
+with Sax.Encodings; use Sax.Encodings;
+with Unicode.CES;   use Unicode.CES;
 
 package body DOM.Core.Character_Datas is
 

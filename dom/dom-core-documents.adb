@@ -31,7 +31,7 @@
 with DOM.Core.Nodes;            use DOM.Core.Nodes;
 with DOM.Core.Elements;         use DOM.Core.Elements;
 with Unicode;                   use Unicode;
-with Encodings;                 use Encodings;
+with Sax.Encodings;             use Sax.Encodings;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
 package body DOM.Core.Documents is

@@ -73,7 +73,10 @@ package Sax.Locators is
    type Locator_Impl_Access is access all Locator_Impl'Class;
 
    procedure Free (Loc : in out Locator_Impl);
+   procedure Free (Loc : in out Locator_Impl_Access);
    --  Free the memory allocated internally for the strings.
+   --  For the second subprogram, we also free the memory allocated for the
+   --  access type itself
 
    procedure Copy (Loc : in out Locator_Impl; Loc_I : in Locator'Class);
    --  Copy the location information from Loc_I to Loc

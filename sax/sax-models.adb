@@ -1,10 +1,9 @@
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
-with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
 with Unchecked_Deallocation;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Encodings;                 use Encodings;
+with Sax.Encodings;             use Sax.Encodings;
 
 package body Sax.Models is
 
@@ -29,13 +28,13 @@ package body Sax.Models is
    begin
       case Model.Content is
          when Character_Data =>
-            return Encodings.From_Utf32 (To_Utf32 ("#PCDATA"));
+            return Pcdata_Sequence;
 
          when Empty =>
-            return Encodings.From_Utf32 (To_Utf32 ("EMPTY"));
+            return Empty_Sequence;
 
          when Anything =>
-            return Encodings.From_Utf32 (To_Utf32 ("ANY"));
+            return Any_Sequence;
 
          when Element_Ref =>
             return Model.Name.all;

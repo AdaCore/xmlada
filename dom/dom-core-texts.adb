@@ -28,7 +28,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Encodings;          use Encodings;
+with Sax.Encodings;      use Sax.Encodings;
 with Unicode.CES;        use Unicode.CES;
 with DOM.Core.Documents; use DOM.Core.Documents;
 with DOM.Core.Nodes;     use DOM.Core.Nodes;

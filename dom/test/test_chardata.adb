@@ -1,7 +1,7 @@
 with DOM.Core;                 use DOM.Core;
 with DOM.Core.Documents;       use DOM.Core.Documents;
 with DOM.Core.Nodes;           use DOM.Core.Nodes;
-with Encodings;                use Encodings;
+with Sax.Encodings;            use Sax.Encodings;
 with Unicode.CES;              use Unicode.CES;
 with Unicode.CES.Basic_8bit;   use Unicode.CES.Basic_8bit;
 with DOM.Core.Character_Datas; use DOM.Core.Character_Datas;
@@ -19,7 +19,7 @@ procedure Test_Chardata is
 
    function "-" (Str : String) return Byte_Sequence is
    begin
-      return Encodings.From_Utf32 (Unicode.CES.Basic_8bit.To_Utf32 (Str));
+      return Sax.Encodings.From_Utf32 (Unicode.CES.Basic_8bit.To_Utf32 (Str));
    end "-";
 
    ------------

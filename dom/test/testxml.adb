@@ -13,16 +13,18 @@ procedure Testxml is
    My_Tree_Reader : Tree_Reader;
    Name_Start : Natural;
    Validate : Boolean := False;
+   Must_Normalize : Boolean := False;
 
 begin
    --  Parse the command line
    loop
-      case Getopt ("silent uri validate") is
+      case Getopt ("silent uri normalize validate") is
          when ASCII.Nul => exit;
 
          when 's' => Silent := True;
          when 'u' => With_URI := True;
          when 'v' => Validate := True;
+         when 'n' => Must_Normalize := True;
 
          when others => null;
       end case;
@@ -54,6 +56,10 @@ begin
    Parse (My_Tree_Reader, Read);
    Close (Read);
 
+   if Must_Normalize then
+      Normalize (Get_Tree (My_Tree_Reader));
+   end if;
+
    if not Silent then
       Print (Get_Tree (My_Tree_Reader),
              Print_Comments => False,
@@ -61,7 +67,11 @@ begin
              With_URI => With_URI);
    end if;
 
+   Free (My_Tree_Reader);
+
 exception
    when E : XML_Fatal_Error =>
+      Close (Read);
       Put_Line (Exception_Message (E));
+      Free (My_Tree_Reader);
 end Testxml;

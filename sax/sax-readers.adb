@@ -1,19 +1,19 @@
-with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Unicode;                   use Unicode;
+with Ada.Text_IO;               use Ada.Text_IO;
+with Input_Sources.File;        use Input_Sources.File;
+with Input_Sources.Strings;     use Input_Sources.Strings;
+with Input_Sources;             use Input_Sources;
+with Sax.Attributes;            use Sax.Attributes;
+with Sax.Attributes;            use Sax.Attributes;
+with Sax.Encodings;             use Sax.Encodings;
+with Sax.Exceptions;            use Sax.Exceptions;
+with Sax.Locators;              use Sax.Locators;
+with Sax.Models;                use Sax.Models;
+with Unchecked_Deallocation;
+with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
-with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
-with Sax.Exceptions;            use Sax.Exceptions;
-with Sax.Attributes;            use Sax.Attributes;
-with Sax.Models;                use Sax.Models;
-with Input_Sources;             use Input_Sources;
-with Sax.Locators;              use Sax.Locators;
-with Encodings;                 use Encodings;
-with Input_Sources.Strings;     use Input_Sources.Strings;
-with Input_Sources.File;        use Input_Sources.File;
-with Sax.Attributes;            use Sax.Attributes;
-with Unchecked_Deallocation;
+with Unicode;                   use Unicode;
 
 package body Sax.Readers is
 
@@ -22,247 +22,6 @@ package body Sax.Readers is
    Debug_Lexical : constant Boolean := False;
    Debug_Input : constant Boolean := False;
    --  Set to True if you want to debug this package
-
-   Amp_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_A)
-     & Encoding.Encode (Latin_Small_Letter_M)
-     & Encoding.Encode (Latin_Small_Letter_P);
-
-   Any_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_Y);
-
-   Apos_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_A)
-     & Encoding.Encode (Latin_Small_Letter_P)
-     & Encoding.Encode (Latin_Small_Letter_O)
-     & Encoding.Encode (Latin_Small_Letter_S);
-
-   Attlist_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_S)
-     & Encoding.Encode (Latin_Capital_Letter_T);
-
-   Cdata_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_C)
-     & Encoding.Encode (Latin_Capital_Letter_D)
-     & Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_A);
-
-   Doctype_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_D)
-     & Encoding.Encode (Latin_Capital_Letter_O)
-     & Encoding.Encode (Latin_Capital_Letter_C)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_Y)
-     & Encoding.Encode (Latin_Capital_Letter_P)
-     & Encoding.Encode (Latin_Capital_Letter_E);
-
-   Element_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_M)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_T);
-
-   Empty_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_M)
-     & Encoding.Encode (Latin_Capital_Letter_P)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_Y);
-
-   Encoding_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_E)
-     & Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_C)
-     & Encoding.Encode (Latin_Small_Letter_O)
-     & Encoding.Encode (Latin_Small_Letter_D)
-     & Encoding.Encode (Latin_Small_Letter_I)
-     & Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_G);
-
-   Entit_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_T);
-
-   Id_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_D);
-
-   Ies_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_S);
-
-   Fixed_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_F)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_X)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_D);
-
-   Gt_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_G)
-     & Encoding.Encode (Latin_Small_Letter_T);
-
-   Implied_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_M)
-     & Encoding.Encode (Latin_Capital_Letter_P)
-     & Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_D);
-
-   Include_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_C)
-     & Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_U)
-     & Encoding.Encode (Latin_Capital_Letter_D)
-     & Encoding.Encode (Latin_Capital_Letter_E);
-
-   Ignore_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_G)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_O)
-     & Encoding.Encode (Latin_Capital_Letter_R)
-     & Encoding.Encode (Latin_Capital_Letter_E);
-
-   Lang_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_L)
-     & Encoding.Encode (Latin_Small_Letter_A)
-     & Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_G);
-
-   Lt_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_L)
-     & Encoding.Encode (Latin_Small_Letter_T);
-
-   Mtoken_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_M)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_O)
-     & Encoding.Encode (Latin_Capital_Letter_K)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_N);
-
-   Ndata_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_D)
-     & Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_A);
-
-   Otation_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_O)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_O)
-     & Encoding.Encode (Latin_Capital_Letter_N);
-
-   No_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_O);
-
-   Notation_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_N)
-     & Otation_Sequence;
-
-   Ntity_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_Y);
-
-   Public_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_P)
-     & Encoding.Encode (Latin_Capital_Letter_U)
-     & Encoding.Encode (Latin_Capital_Letter_B)
-     & Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_C);
-
-   Quot_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_Q)
-     & Encoding.Encode (Latin_Small_Letter_U)
-     & Encoding.Encode (Latin_Small_Letter_O)
-     & Encoding.Encode (Latin_Small_Letter_T);
-
-   Ref_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_R)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_F);
-
-   Required_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_R)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_Q)
-     & Encoding.Encode (Latin_Capital_Letter_U)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_R)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_D);
-
-   Standalone_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_S)
-     & Encoding.Encode (Latin_Small_Letter_T)
-     & Encoding.Encode (Latin_Small_Letter_A)
-     & Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_D)
-     & Encoding.Encode (Latin_Small_Letter_A)
-     & Encoding.Encode (Latin_Small_Letter_L)
-     & Encoding.Encode (Latin_Small_Letter_O)
-     & Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_E);
-
-   System_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_S)
-     & Encoding.Encode (Latin_Capital_Letter_Y)
-     & Encoding.Encode (Latin_Capital_Letter_S)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_M);
-
-   Version_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_V)
-     & Encoding.Encode (Latin_Small_Letter_E)
-     & Encoding.Encode (Latin_Small_Letter_R)
-     & Encoding.Encode (Latin_Small_Letter_S)
-     & Encoding.Encode (Latin_Small_Letter_I)
-     & Encoding.Encode (Latin_Small_Letter_O)
-     & Encoding.Encode (Latin_Small_Letter_N);
-
-   Xml_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_X)
-     & Encoding.Encode (Latin_Small_Letter_M)
-     & Encoding.Encode (Latin_Small_Letter_L);
-
-   Xmlns_Sequence : constant Byte_Sequence :=
-     Xml_Sequence
-     & Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_S);
-
-   Yes_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_Y)
-     & Encoding.Encode (Latin_Small_Letter_E)
-     & Encoding.Encode (Latin_Small_Letter_S);
 
    ------------
    -- Tokens --
@@ -595,6 +354,15 @@ package body Sax.Readers is
    procedure Free (NS : in out XML_NS);
    --  Free NS and its successors in the list
 
+   procedure Free (Parser : in out Reader'Class);
+   --  Free the memory allocated for the parser, including the namespaces,
+   --  entities,...
+
+   procedure Free (Elem : in out Element_Access);
+   --  Free the memory of Elem (and its contents). Note that this doesn't free
+   --  the parent of Elem).
+   --  On Exit, Elem is set to its parent.
+
    procedure Parse_Element_Model
      (Input   : in out Input_Sources.Input_Source'Class;
       Parser  : in out Reader'Class;
@@ -646,6 +414,12 @@ package body Sax.Readers is
    pragma Inline (Input_Id);
    --  Return the current input id.
 
+   procedure Close_Inputs (Parser : in out Reader'Class);
+   --  Close the inputs that have been completely read. This should be
+   --  called every time one starts an entity, so that calls to
+   --  Start_Entity/End_Entity are properly nested, and error messages
+   --  point to the right entity.
+
    --------------
    -- Input_Id --
    --------------
@@ -658,6 +432,22 @@ package body Sax.Readers is
          return Parser.Inputs.Id;
       end if;
    end Input_Id;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Elem : in out Element_Access) is
+      procedure Free_Element is new Unchecked_Deallocation
+        (Element, Element_Access);
+      Tmp : constant Element_Access := Elem.Parent;
+   begin
+      Free (Elem.NS);
+      Free (Elem.Name);
+      Free (Elem.Namespaces);
+      Free_Element (Elem);
+      Elem := Tmp;
+   end Free;
 
    -----------------
    -- Resolve_URI --
@@ -718,13 +508,13 @@ package body Sax.Readers is
       Id2 : Token := Id;
    begin
       if Id = Null_Token then
-         Id2.Line := Get_Line_Number (Parser.Locator.all);
+         Id2.Line   := Get_Line_Number (Parser.Locator.all);
          Id2.Column := Get_Column_Number (Parser.Locator.all) - 1;
       end if;
       Parser.Buffer_Length := 0;
       Fatal_Error
         (Parser, Create (Location (Parser, Id2) & ": " & Msg,
-                         Locator_Impl (Parser.Locator.all)));
+                         Parser.Locator));
       raise Program_Error;
    end Fatal_Error;
 
@@ -744,7 +534,7 @@ package body Sax.Readers is
          Id2.Column := Get_Column_Number (Parser.Locator.all);
       end if;
       Error (Parser, Create (Location (Parser, Id2) & ": " & Msg,
-                             Locator_Impl (Parser.Locator.all)));
+                             Parser.Locator));
    end Error;
 
    ---------------
@@ -1137,6 +927,33 @@ package body Sax.Readers is
       end if;
    end Add_Namespace;
 
+   ------------------
+   -- Close_Inputs --
+   ------------------
+
+   procedure Close_Inputs (Parser : in out Reader'Class) is
+      procedure Free is new Unchecked_Deallocation
+        (Entity_Input_Source, Entity_Input_Source_Access);
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Input_Source'Class, Input_Source_Access);
+      Input_A : Entity_Input_Source_Access;
+   begin
+      while Parser.Close_Inputs /= null loop
+         Close (Parser.Close_Inputs.Input.all);
+         Unchecked_Free (Parser.Close_Inputs.Input);
+
+         --  not in string context
+         if not Parser.State.Ignore_Special then
+            End_Entity (Parser, Parser.Close_Inputs.Name.all);
+         end if;
+
+         Input_A := Parser.Close_Inputs;
+         Parser.Close_Inputs := Parser.Close_Inputs.Next;
+         Free (Input_A.Name);
+         Free (Input_A);
+      end loop;
+   end Close_Inputs;
+
    ----------------
    -- Next_Token --
    ----------------
@@ -1163,12 +980,6 @@ package body Sax.Readers is
 
       procedure Debug_Print;
       --  Print the returned token
-
-      procedure Close_Inputs;
-      --  Close the inputs that have been completely read. This should be
-      --  called every time one starts an entity, so that calls to
-      --  Start_Entity/End_Entity are properly nested, and error messages
-      --  point to the right entity.
 
       procedure Handle_Entity_Ref;
       --  '&' has been read (as well as the following character). Skips till
@@ -1555,33 +1366,6 @@ package body Sax.Readers is
             & "--");
       end Debug_Print;
 
-      ------------------
-      -- Close_Inputs --
-      ------------------
-
-      procedure Close_Inputs is
-         procedure Free is new Unchecked_Deallocation
-           (Entity_Input_Source, Entity_Input_Source_Access);
-         procedure Unchecked_Free is new Unchecked_Deallocation
-           (Input_Source'Class, Input_Source_Access);
-         Input_A : Entity_Input_Source_Access;
-      begin
-         while Parser.Close_Inputs /= null loop
-            Close (Parser.Close_Inputs.Input.all);
-            Unchecked_Free (Parser.Close_Inputs.Input);
-
-            --  not in string context
-            if not Parser.State.Ignore_Special then
-               End_Entity (Parser, Parser.Close_Inputs.Name.all);
-            end if;
-
-            Input_A := Parser.Close_Inputs;
-            Parser.Close_Inputs := Parser.Close_Inputs.Next;
-            Free (Input_A.Name);
-            Free (Input_A);
-         end loop;
-      end Close_Inputs;
-
       type Entity_Ref is (None, Entity, Param_Entity);
       Is_Entity_Ref : Entity_Ref := None;
    begin
@@ -1591,7 +1375,7 @@ package body Sax.Readers is
       Id.Line := Get_Line_Number (Parser.Locator.all);
       Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
       Id.Input_Id := Input_Id (Parser);
-      Close_Inputs;
+      Close_Inputs (Parser);
 
       if Eof (Input) and then Parser.Last_Read = 16#FFFF# then
          Id.Column := Id.Column + 1;
@@ -2093,7 +1877,7 @@ package body Sax.Readers is
                      & " cannot occur in attribute values", Id);
                end if;
 
-               Close_Inputs;
+               Close_Inputs (Parser);
 
                --  not in string context
                if not Parser.State.Ignore_Special then
@@ -3806,9 +3590,6 @@ package body Sax.Readers is
 
       procedure End_Element (NS_Id, Name_Id : Token) is
          NS : XML_NS;
-         Tmp : Element_Access;
-         procedure Free_Element is new Unchecked_Deallocation
-           (Element, Element_Access);
       begin
          Find_NS (Parser, Parser.Current_Node, NS_Id, NS);
          End_Element
@@ -3831,12 +3612,7 @@ package body Sax.Readers is
          end loop;
 
          --  Move back to the parent node (after freeing the current node)
-         Tmp := Parser.Current_Node;
-         Parser.Current_Node := Parser.Current_Node.Parent;
-         Free (Tmp.NS);
-         Free (Tmp.Name);
-         Free (Tmp.Namespaces);
-         Free_Element (Tmp);
+         Free (Parser.Current_Node);
       end End_Element;
 
       -------------------
@@ -4250,6 +4026,35 @@ package body Sax.Readers is
       end loop;
    end Syntactic_Parse;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Parser : in out Reader'Class) is
+      Arr : Entity_Table.Table_Array :=
+        Convert_To_Array (Parser.Entities);
+      Tmp : Element_Access;
+   begin
+      Close_Inputs (Parser);
+      Free (Parser.Default_Namespaces);
+      Free (Parser.Locator);
+      Free (Parser.DTD_Name);
+
+      --  Free all the entities that were declared in the DTD.
+      --  ??? Probably not the most efficient, but we would need another
+      --  ??? implementation of table for that.
+
+      for J in Arr'Range loop
+         Free (Arr (J).Value.Value);
+      end loop;
+
+      --  Free the nodes, in case there are still some open
+      Tmp := Parser.Current_Node;
+      while Tmp /= null loop
+         Free (Tmp);
+      end loop;
+   end Free;
+
    -----------
    -- Parse --
    -----------
@@ -4309,8 +4114,12 @@ package body Sax.Readers is
 
       End_Document (Reader'Class (Parser));
 
-      --  ??? Free (Parser.Locator);
-      --  ??? Should also free Entities
+      Free (Parser);
+
+   exception
+      when others =>
+         Free (Parser);
+         raise;
    end Parse;
 
    ----------------

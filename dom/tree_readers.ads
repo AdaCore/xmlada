@@ -45,6 +45,9 @@ package Tree_Readers is
 
    function Get_Tree (Read : Tree_Reader) return Document;
 
+   procedure Free (Read : in out Tree_Reader);
+   --  Free the memory associated with the reader, in particular the tree.
+
 private
 
    type Tree_Reader is new Reader with record

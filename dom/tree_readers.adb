@@ -187,4 +187,14 @@ package body Tree_Readers is
       Fatal_Error (Handler, Except);
    end Warning;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Read : in out Tree_Reader) is
+   begin
+      Free (Read.Tree);
+      Read.Tree := null;
+   end Free;
+
 end Tree_Readers;

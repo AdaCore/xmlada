@@ -72,14 +72,15 @@ package Sax.Exceptions is
    type Sax_Parse_Exception (<>) is new Sax_Exception with private;
 
    function Create (Message : Unicode.CES.Byte_Sequence;
-                    Loc     : Sax.Locators.Locator_Impl)
+                    Loc     : access Sax.Locators.Locator_Impl'Class)
       return Sax_Parse_Exception'Class;
 
    function Create
      (Message       : Unicode.CES.Byte_Sequence;
       Ada_Exception : Ada.Exceptions.Exception_Id;
-      Loc           : Sax.Locators.Locator_Impl)
+      Loc           : access Sax.Locators.Locator_Impl'Class)
       return Sax_Exception'Class;
+   --  Create a new Sax_Parse_Exception. Note: no copy of Loc is made.
 
    function Get_Locator (Except : Sax_Parse_Exception)
       return Locators.Locator'Class;
@@ -92,6 +93,6 @@ private
    end record;
 
    type Sax_Parse_Exception is new Sax_Exception with record
-      Loc : Sax.Locators.Locator_Impl;
+      Loc : Sax.Locators.Locator_Impl_Access;
    end record;
 end Sax.Exceptions;

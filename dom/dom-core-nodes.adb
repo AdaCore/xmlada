@@ -31,7 +31,7 @@
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
-with Encodings;                 use Encodings;
+with Sax.Encodings;             use Sax.Encodings;
 with Unchecked_Deallocation;
 with Ada.Text_IO;               use Ada.Text_IO;
 
@@ -56,58 +56,6 @@ package body DOM.Core.Nodes is
    procedure Sort (Map : in out Named_Node_Map);
    --  Sort alphabetically the contents of Map (this is based on the value
    --  of Node_Name).
-
-   XML_Sequence : constant DOM_String :=
-     Encoding.Encode (Latin_Small_Letter_X)
-     & Encoding.Encode (Latin_Small_Letter_M)
-     & Encoding.Encode (Latin_Small_Letter_L);
-
-   Amp_Sequence : constant DOM_String :=
-     Encoding.Encode (Ampersand)
-     & Encoding.Encode (Latin_Small_Letter_A)
-     & Encoding.Encode (Latin_Small_Letter_M)
-     & Encoding.Encode (Latin_Small_Letter_P)
-     & Encoding.Encode (Semicolon);
-
-   Lt_Sequence : constant DOM_String :=
-     Encoding.Encode (Ampersand)
-     & Encoding.Encode (Latin_Small_Letter_L)
-     & Encoding.Encode (Latin_Small_Letter_T)
-     & Encoding.Encode (Semicolon);
-
-   Gt_Sequence : constant DOM_String :=
-     Encoding.Encode (Ampersand)
-     & Encoding.Encode (Latin_Small_Letter_G)
-     & Encoding.Encode (Latin_Small_Letter_T)
-     & Encoding.Encode (Semicolon);
-
-   Quot_Sequence : constant DOM_String :=
-     Encoding.Encode (Ampersand)
-     & Encoding.Encode (Latin_Small_Letter_Q)
-     & Encoding.Encode (Latin_Small_Letter_U)
-     & Encoding.Encode (Latin_Small_Letter_O)
-     & Encoding.Encode (Latin_Small_Letter_T)
-     & Encoding.Encode (Semicolon);
-
-   Tab_Sequence : constant DOM_String :=
-     Encoding.Encode (Ampersand)
-     & Encoding.Encode (Hash)
-     & Encoding.Encode (Digit_Nine)
-     & Encoding.Encode (Semicolon);
-
-   Lf_Sequence : constant DOM_String :=
-     Encoding.Encode (Ampersand)
-     & Encoding.Encode (Hash)
-     & Encoding.Encode (Digit_One)
-     & Encoding.Encode (Digit_Zero)
-     & Encoding.Encode (Semicolon);
-
-   Cr_Sequence : constant DOM_String :=
-     Encoding.Encode (Ampersand)
-     & Encoding.Encode (Hash)
-     & Encoding.Encode (Digit_One)
-     & Encoding.Encode (Digit_Three)
-     & Encoding.Encode (Semicolon);
 
    --------------------
    -- Child_Is_Valid --
@@ -168,6 +116,7 @@ package body DOM.Core.Nodes is
             end if;
 
          when Text_Node =>
+            --  ??? Should this return an encoded string instead ?
             return "#text";
 
          when Cdata_Section_Node =>
@@ -756,6 +705,7 @@ package body DOM.Core.Nodes is
             J := J + 1;
          end if;
       end loop;
+
       case N.Node_Type is
          when Element_Node => N.Children := List;
          when Document_Node => N.Doc_Children := List;
@@ -763,6 +713,13 @@ package body DOM.Core.Nodes is
          when Document_Fragment_Node => N.Doc_Frag_Children := List;
          when others => null;
       end case;
+
+      --  Normalize all the children
+      J := 0;
+      while J <= List.Last loop
+         Normalize (List.Items (J));
+         J := J + 1;
+      end loop;
    end Normalize;
 
    --------------
@@ -1095,10 +1052,10 @@ package body DOM.Core.Nodes is
       while J <= Str'Last loop
          C := Encoding.Read (Str, J);
          case C is
-            when Ampersand             => Put (Amp_Sequence);
-            when Less_Than_Sign        => Put (Lt_Sequence);
-            when Greater_Than_Sign     => Put (Gt_Sequence);
-            when Quotation_Mark        => Put (Quot_Sequence);
+            when Ampersand             => Put (Amp_DOM_Sequence);
+            when Less_Than_Sign        => Put (Lt_DOM_Sequence);
+            when Greater_Than_Sign     => Put (Gt_DOM_Sequence);
+            when Quotation_Mark        => Put (Quot_DOM_Sequence);
                --  when Apostrophe            => Put ("&apos;");
             when Horizontal_Tabulation => Put (Tab_Sequence);
             when Line_Feed             => Put (Lf_Sequence);
@@ -1158,6 +1115,7 @@ package body DOM.Core.Nodes is
 
       case N.Node_Type is
          when Element_Node =>
+            --  ??? Should define a new constant in Sax.Encodings
             Put (Encoding.Encode (Less_Than_Sign));
             Print_Name (N);
 

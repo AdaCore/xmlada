@@ -1,10 +1,5 @@
 # Generated automatically from Makefile.in by configure.
 
-# Modify the line below to reflect the location where
-# you want to install the library
-
-PREFIX=D:/xmlada
-
 # Set WIN32 on the line below to 'TRUE' if building on Windows, otherwise
 # set it to 'FALSE'
 export WIN32=TRUE
@@ -26,8 +21,9 @@ MODULE_OBJ=${MODULES:%=-aO%/obj}
 MODULE_SRC=${MODULES:%=-aI%}
 MODULE_CLEAN=${MODULES:%=%_clean}
 MODULE_TEST=${MODULES:%=%_test}
+MODULE_INSTALL=${MODULES:%=%_install}
 
-RANLIB= :
+RANLIB= ranlib
 CHMOD=chmod
 ARFLAGS=cr
 CP=cp -p -f
@@ -53,23 +49,8 @@ ${MODULE_TEST}: force
 ${MODULE_INSTALL}: force
 	${MAKE} -e -C ${@:%_install=%} install
 
-install: ${MODULES}
-	@${MKDIR} ${PREFIX}/lib
-	@${MKDIR} ${PREFIX}/include/xmlada
-	# Building the libraries
-	${AR} ${ARFLAGS} ${PREFIX}/lib/libxmlada.a ${MODULES:%=%/obj/*.o}
-ifeq (${WIN32}, TRUE)
-	${RANLIB} ${PREFIX}/lib/libxmlada.a;
-else
-	@if [ -f /usr/bin/$(RANLIB) -o -f /bin/$(RANLIB) ]; then \
-	  ${RANLIB} ${PREFIX}/lib/libxmlada.a; \
-        fi
-	gcc -shared -o ${PREFIX}/lib/libxmlada.so ${MODULES:%=%/obj/*.o}
-endif
-	# Installing the files
-	${CP} ${MODULES:%=%/obj/*.ali} ${PREFIX}/lib/
-	cd ${PREFIX}/lib; ${CHMOD} -w *.ali
-	${CP} ${MODULES:%=%/*.ad[bs]} ${PREFIX}/include/xmlada/
+install: ${MODULE_INSTALL}
+	@echo "Installation finished"
 
 test: force
 	${MAKE} -e ${MODULE_TEST}

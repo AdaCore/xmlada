@@ -150,6 +150,7 @@ package DOM.Core.Nodes is
 
    procedure Normalize (N : Node);
    --  Make sure there are no adjacent text nodes in the children of N.
+   --  This processes the full-depth of the sub-tree underneath N.
 
    function Supports
      (N : Node;

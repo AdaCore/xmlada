@@ -94,13 +94,13 @@ package body Sax.Exceptions is
    ------------
 
    function Create (Message : Unicode.CES.Byte_Sequence;
-                    Loc     : Sax.Locators.Locator_Impl)
+                    Loc     : access Sax.Locators.Locator_Impl'Class)
       return Sax_Parse_Exception'Class
    is
       Pe : Sax_Parse_Exception (Message'Length);
    begin
       Pe.Message := Message;
-      Copy (Pe.Loc, Loc);
+      Pe.Loc := Locator_Impl_Access (Loc);
       Pe.Except := Null_Id;
       return Pe;
    end Create;
@@ -112,13 +112,13 @@ package body Sax.Exceptions is
    function Create
      (Message       : Unicode.CES.Byte_Sequence;
       Ada_Exception : Ada.Exceptions.Exception_Id;
-      Loc           : Locators.Locator_Impl)
+      Loc           : access Locators.Locator_Impl'Class)
       return Sax_Exception'Class
    is
       Pe : Sax_Parse_Exception (Message'Length);
    begin
       Pe.Message := Message;
-      Copy (Pe.Loc, Loc);
+      Pe.Loc := Locator_Impl_Access (Loc);
       Pe.Except := Ada_Exception;
       return Pe;
    end Create;
@@ -130,7 +130,7 @@ package body Sax.Exceptions is
    function Get_Locator (Except : Sax_Parse_Exception)
       return Locators.Locator'Class is
    begin
-      return Except.Loc;
+      return Except.Loc.all;
    end Get_Locator;
 
 end Sax.Exceptions;

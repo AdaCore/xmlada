@@ -24,27 +24,18 @@ xml module:
 * SAX: Should we report the same attribute twice for a given element, or
   should this be simplified ?
 
-* Finite state automaton: Should allow for non-deterministic automata, and
-  have a function to automatically convert them to a deterministic automaton.
-  Of course, this makes debugging much more difficult...
-
 * Parser: Checking of self-contained entities could be cleaner (ie done at
   a more general level). For instance, directly at the end of Next_Token,
   but we must exclude Text from the tests.
 
 * Can we implement the lexical parser as a state machine (Next_Char called
-  at a single place). This might might it shorter (but probably not more
+  at a single place). This might make it shorter (but probably not more
   efficient)
 
-Release 0.6
+Release 0.7
 ===========
-* Document the XML conformance suite
 * Add configure script for -FPIC on HPUX
 * Support for external entities, including EntityResolver in SAX
-* While recursively parsing entities, we should report error messages at the
-  correct location ("while parsing entity .. at 1:2")
-* Sax.Exceptions leaks memory with the exception location. We should just
-  remove the locator for now.
 * Add elaboration pragmas
 * Parse_Element_Model_From_Entity should use Next_Token (for entitites)
 * File_Input shouldn't store the whole file in memory (have a buffer of 64k

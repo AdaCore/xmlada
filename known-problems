@@ -1,3 +1,9 @@
+Problems fixed in 0.7
+
+- Dom.Core.Nodes.Normalize now processes the full subtree, as it should.
+
+- Several memory leaks fixed (all of them, according to gnatmem)
+
 Problems fixed in 0.6
 
 - Library renamed to libxmlada

@@ -1,16 +1,13 @@
 
-INSTALLING THIS LIBRARY
-=======================
+INSTALLING THIS LIBRARY ON UNIX
+===============================
 
-Edit the file Makefile in the root directory, and change the variable
-PREFIX at the top to reflect the intended location for the library.
-
-If you are using GNAT version 3.13p or lower, uncomment the second
-COMPILER line in the file Makefile.module, so that it only contains
+If you are using GNAT version 3.13p or lower, swap the two COMPILER
+lines in the file Makefile.module, so that it only contains
 "gnatmake". The other switches are not supported in these versions.
 
 type:
-   >  ./configure
+   >  ./configure --prefix=<PREFIX>
    >  make install
 to build and install the library.
 
@@ -19,6 +16,16 @@ Files will be copied into ${PREFIX}/lib and ${PREFIX}/include/xmlada.
 To use this library, add the following arguments to the gnatmake
 command line:
    -aI${PREFIX}/include/xmlada -largs -L${PREFIX}/lib -lxmlada
+
+Alternatively, a script is provided in ${PREFIX}/bin, that outputs all
+the command line arguments. You should compile with:
+   gnatmake test.adb `xmlada-config`
+
+You can also build a static version of your program by using:
+   gnatmake test.adb `xmlada-config --static`
+
+To run a command compiled with this library, you might need to edit the
+LD_LIBRARY_PATH environment variable so that ${PREFIX}/lib is included.
 
 TESTING THE LIBRARY
 ===================
@@ -32,6 +39,7 @@ reflect the location of that testsuite (BASE should point to the directory
 containing these official tests)
 
 Execute the file
+    make test
     cd dom/test
     ./testsuite
 

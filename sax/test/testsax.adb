@@ -37,5 +37,5 @@ begin
 
 exception
    when XML_Fatal_Error =>
-      null;
+      Close (Read);
 end TestSAX;

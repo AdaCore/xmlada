@@ -7,7 +7,7 @@ with Sax.Models;     use Sax.Models;
 with Unicode.CES;    use Unicode.CES;
 with Unicode;        use Unicode;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
-with Encodings;      use Encodings;
+with Sax.Encodings;  use Sax.Encodings;
 
 package body Debug_Readers is
 
