@@ -2,11 +2,33 @@
 INSTALLING THIS LIBRARY ON UNIX
 ===============================
 
-If you are using GNAT version 3.13 or lower, swap the two COMPILER
-lines in the file Makefile.module, so that it only contains
-"gnatmake". The other switches are not supported in these versions.
+Make sure that you do not have a previous installation of XML/Ada in one
+of the directories given in ADA_OBJECTS_PATH, or some files will not be
+properly recompiled.
 
-You will need to modify the lines
+
+Compiling with GNAT 3.14p
+-------------------------
+
+You might need to modify Makefile.module.314 to replace the GNATMAKE=
+and CC= lines, in case you are using a compiler other than gnatmake,
+or in case the compiler is called gnatgcc (debian systems for instance).
+
+You might also want to change the variable BUILD_SHARED if you want to get
+shared libraries. However, on some systems this means you'll also need to
+set the line
+    FPIC=-fPIC
+This is for instance the case on HPUX.
+
+Configure and compile with the following commands:
+   > ./configure --prefix=<PREFIX>
+   > make -f Makefile.314 install
+
+
+Compiling with GNAT 3.15a1 or GNAT 3.16w
+----------------------------------------
+
+You might need to modify the following lines in the Makefile
     GNATMAKE= gnatmake
     CC= gcc
 if you are using a compiler other than native GNAT. For instance, if 
@@ -15,15 +37,20 @@ to
     GNATMAKE= powerpc-wrs-vxworks-gnatmake
     CC= powerpc-wrs-vxworks-gcc
 
+You might also want to change the variable BUILD_SHARED if you want to get
+shared libraries. However, on some systems this means you'll also need to
+set the line
+    FPIC=-fPIC
+This is for instance the case on HPUX.
 
-Make sure that you do not have a previous installation of XML/Ada in one
-of the directories given in ADA_OBJECTS_PATH, or some files will not be
-properly recompiled.
-
-type:
+Configure and compile with the following commands:
    >  ./configure --prefix=<PREFIX>
    >  make install
 to build and install the library.
+
+
+Using the library
+-----------------
 
 Files will be copied into ${PREFIX}/lib and ${PREFIX}/include/xmlada.
 
