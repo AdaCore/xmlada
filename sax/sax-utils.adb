@@ -147,4 +147,22 @@ package body Sax.Utils is
       return True;
    end Is_Valid_NCname;
 
+   --------------------
+   -- Is_Valid_QName --
+   --------------------
+
+   function Is_Valid_QName
+     (Name : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      for N in Name'Range loop
+         if Name (N) = ':' then
+            return N /= Name'Last
+              and then Is_Valid_NCname (Name (Name'First .. N - 1))
+              and then Is_Valid_NCname (Name (N + 1 .. Name'Last));
+         end if;
+      end loop;
+      return Is_Valid_NCname (Name);
+
+   end Is_Valid_QName;
+
 end Sax.Utils;

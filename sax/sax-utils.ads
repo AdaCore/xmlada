@@ -27,4 +27,8 @@ package Sax.Utils is
    --  Whether Name is valid NCname as per 2 in the XML namespaces
    --  specifications
 
+   function Is_Valid_QName
+     (Name : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether Name is valid QName as per 3 in the XML specifications
+
 end Sax.Utils;
