@@ -1,7 +1,10 @@
 New features in version 1.1
 
-- Improve location reports in SAX events. In particular, check debug_readers.adb on
-  how to get the context of an entity expansion if you want even better locations.
+- Shared strings in DOM tree, to reduce memory usage by up to 50%
+
+- Improve location reports in SAX events. In particular, check debug_readers.adb
+  on how to get the context of an entity expansion if you want even better
+  locations.
 
 - CB14-002 Add support for SAX's Entity_Resolver
 
