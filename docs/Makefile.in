@@ -6,7 +6,7 @@ MAKEINFO= @MAKEINFO@
 TEXI2HTML= @TEXI2HTML@
 TEX= @TEX@
 
-all: ${FORMATS}
+all: ${FORMATS} clean
 
 %.dvi: %.texi
 ifneq (${TEX},)
