@@ -225,9 +225,9 @@ expect $ms/element/elemE006.xsd "" \
 expect $ms/element/elemE007.xsd "" \
  "$ms/element/elemE007.xsd:4:50: Attribute \"substitutionGroup\": Invalid value: \"\""
 expect $ms/element/elemE008.xsd "" \
- "$ms/element/elemE008.xsd:11: Element \"foo\" was referenced, but never declared"
+ "$ms/element/elemE008.xsd:11: Element \"foo\" from namespace \"\" was referenced, but never declared"
 expect $ms/element/elemE009.xsd "" \
- "$ms/element/elemE009.xsd:16: Element \"foo\" was referenced, but never declared"
+ "$ms/element/elemE009.xsd:16: Element \"foo\" from namespace \"\" was referenced, but never declared"
 fi
 
 ##################
@@ -377,7 +377,7 @@ fi
 if [ x$run_ms = x1 ]; then
 expect $ms/element/elemL001.xsd "" ""
 expect $ms/element/elemL002.xsd "" \
- "$ms/element/elemL002.xsd:10: Element \"foo\" was referenced, but never declared"
+ "$ms/element/elemL002.xsd:10: Element \"foo\" from namespace \"\" was referenced, but never declared"
 expect $ms/element/elemL003.xsd "" \
  "$ms/element/elemL003.xsd:5:39: \"ref\" attribute cannot be self-referencing"
 expect $ms/element/elemL004.xsd "" ""
@@ -391,7 +391,7 @@ fi
 if [ x$run_ms = x1 ]; then
 expect $ms/element/elemM001.xsd "" ""
 expect $ms/element/elemM002.xsd "" \
- "$ms/element/elemM002.xsd:6: Type \"foo\" was referenced, but never declared"
+ "$ms/element/elemM002.xsd:6: Type \"foo\" from namespace \"\" was referenced, but never declared"
 expect $ms/element/elemM003.xsd "" \
  "$ms/element/elemM003.xsd:5:31: Self-referencing restriction not allowed"
 expect $ms/element/elemM004.xsd "" ""
@@ -812,6 +812,50 @@ expect "$sun/xsd008.xsd" "$sun/xsd008.n01.xml" \
 expect "$sun/xsd008.xsd" "$sun/xsd008.n02.xml" \
  "$sun/xsd008.n02.xml:4:25: Expecting at least 1 occurrences of \"long\" or its substitutionGroup"
 expect "$sun/xsd008.xsd" "$sun/xsd008.v00.xml" ""
+
+### SUN xsd011
+
+expect "$sun/xsd011.xsd" "$sun/xsd011.n00.xml" \
+ "$sun/xsd011.n00.xml:7:17: Expecting \"x\" or one in its substitutionGroup"
+expect "$sun/xsd011.xsd" "$sun/xsd011.n01.xml" \
+ "$sun/xsd011.n01.xml:7:14: Expecting \"x\" or one in its substitutionGroup"
+expect "$sun/xsd011.xsd" "$sun/xsd011.n02.xml" \
+ "$sun/xsd011.n02.xml:7:7: Element is set as nil, and doesn't accept any child element"
+expect "$sun/xsd011.xsd" "$sun/xsd011.n03.xml" \
+ "$sun/xsd011.n03.xml:7:14: String is too short, minimum length is 2 characters"
+expect "$sun/xsd011.xsd" "$sun/xsd011.v00.xml" ""
+
+### SUN xsd012
+
+expect "$sun/xsd012.xsd" "$sun/xsd012.n00.xml" \
+ "$sun/xsd012.n00.xml:4:12: No character data allowed by content model"
+expect "$sun/xsd012.xsd" "$sun/xsd012.v00.xml" ""
+
+### SUN xsd013
+
+expect "$sun/xsd013.e.xsd" "" \
+ "$sun/xsd013.e.xsd:20:9: Element \"root\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+expect "$sun/xsd014.e.xsd" "" \
+ "$sun/xsd014.e.xsd:19:9: Element \"undef\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+expect "$sun/xsd015.e.xsd" "" \
+ "$sun/xsd015.e.xsd:22:9: Type \"abc\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+expect "$sun/xsd016.e.xsd" "" \
+ "$sun/xsd016.e.xsd:15:9: Type \"abc\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+expect "$sun/xsd017.e.xsd" "" \
+ "$sun/xsd017.e.xsd:29:9: Type \"def\" from namespace \"foo\" was referenced, but never declared"
+expect "$sun/xsd018.e.xsd" "" \
+ "$sun/xsd018.e.xsd:29:9: Type \"abc\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+expect "$sun/xsd019.e.xsd" "" \
+ "$sun/xsd019.e.xsd:28:9: Type \"abc\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+
+### SUN xsd020
+
+expect "$sun/xsd020.e.xsd" "" \
+ "$sun/xsd020.e.xsd:22:33: Type \"abc\" specified as the base in a simpleContent element must not have complexContent"
+expect "$sun/xsd020-2.e.xsd" "" "f"
+expect "$sun/xsd020-3.e.xsd" "" "f"
+expect "$sun/xsd020-4.e.xsd" "" "f"
+
 
 
 fi
