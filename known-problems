@@ -1,3 +1,9 @@
+Problems fixed in 1.x
+
+- DOM: There is now initially a single Text node per block of text, as required
+  by DOM specifications
+- DOM: Missing function DOM.Core.Nodes.Node_Type added
+
 Problems fixed in 1.0
 
 - SAX: Ignorable_Whitespace is now only called when there are only spaces
