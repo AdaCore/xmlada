@@ -1,5 +1,9 @@
 New features in version 0.8
 
+- More efficient parser
+  The API in the unicode module has been changed to avoid functions returning
+  unconstrained types, resulting in a much faster parser.
+
 - Independence from GNAT
   XML/Ada should now be compilable with other compilers. The GNAT-specific
   packages and attributes have been replaced by equivalents.
