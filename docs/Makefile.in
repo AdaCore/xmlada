@@ -1,9 +1,10 @@
 
-FORMATS=${addprefix xml.,ps html info txt}
+FORMATS=${addprefix xml.,pdf ps html info txt}
 
 DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
 TEXI2HTML= @TEXI2HTML@
+TEXI2DVI= @TEXI2DVI@
 TEX= @TEX@
 
 all: ${FORMATS} clean
@@ -26,6 +27,15 @@ else
 	@echo "------------------------------------------------------"
 	@echo "dvips not found, cannot build POSTSCRIPT documentation"
 	@echo "------------------------------------------------------"
+endif
+
+%.pdf: %.texi
+ifneq (${TEXI2DVI},)
+	@echo x | ${TEXI2DVI} -p $<
+else
+	@echo "--------------------------------------------------"
+	@echo "texi2dvi not found, cannot build PDF documentation"
+	@echo "--------------------------------------------------"
 endif
 
 %.html: %.texi
