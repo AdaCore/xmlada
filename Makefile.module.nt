@@ -139,7 +139,5 @@ install: lib
 	cd obj; ${CP} *.ali ${PREFIX}/include/xmlada
 	cd ${PREFIX}/include/xmlada; ${CHMOD} -w *.ali
 	${CP} *.ad[bs] ${PREFIX}/include/xmlada
-	cd obj; ${CP} ${soname}.a ${soname}.so ${PREFIX}/lib
-	cd ${PREFIX}/lib; ${LN} ${soname}.so ${libname}.so
 
 force:
