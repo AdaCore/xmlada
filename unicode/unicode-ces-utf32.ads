@@ -113,7 +113,7 @@ package Unicode.CES.Utf32 is
    --  Convert a string from any byte-order, any character set (CS) to
    --  Unicode little-endian byte sequence
    --  Order is the order in which bytes are coded in Str. This is silently
-   --  overriden in case Str as a BOM (byte-order-marker) at the beginning
+   --  overriden in case Str has a BOM (byte-order-marker) at the beginning
    --  that specifies an explicit order.
    --  The BOM is removed from the resulting string
    --  Invalid_Encoding is raised if there is a BOM that indicates an
@@ -131,13 +131,15 @@ package Unicode.CES.Utf32 is
    ---------------------
 
    Utf32_LE_Encoding : constant Encoding_Scheme :=
-     (Read   => Read'Access,
+     (BOM    => Utf32_LE,
+      Read   => Read'Access,
       Width  => Width'Access,
       Encode => Encode_Function'(Encode'Access),
       Length => Length'Access);
 
    Utf32_BE_Encoding : constant Encoding_Scheme :=
-     (Read   => Read_BE'Access,
+     (BOM    => Utf32_BE,
+      Read   => Read_BE'Access,
       Width  => Width'Access,
       Encode => Encode_Function'(Encode_BE'Access),
       Length => Length'Access);

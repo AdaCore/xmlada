@@ -142,13 +142,15 @@ package Unicode.CES.Utf16 is
    ---------------------
 
    Utf16_LE_Encoding : constant Encoding_Scheme :=
-     (Read   => Read'Access,
+     (BOM    => Utf16_LE,
+      Read   => Read'Access,
       Width  => Width'Access,
       Encode => Encode_Function'(Encode'Access),
       Length => Length'Access);
 
    Utf16_BE_Encoding : constant Encoding_Scheme :=
-     (Read   => Read_BE'Access,
+     (BOM    => Utf16_BE,
+      Read   => Read_BE'Access,
       Width  => Width'Access,
       Encode => Encode_Function'(Encode_BE'Access),
       Length => Length'Access);

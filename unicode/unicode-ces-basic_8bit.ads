@@ -111,7 +111,8 @@ package Unicode.CES.Basic_8bit is
    ---------------------
 
    Basic_8bit_Encoding : constant Encoding_Scheme :=
-     (Read   => Read'Access,
+     (BOM    => Unknown,
+      Read   => Read'Access,
       Width  => Width'Access,
       Encode => Encode_Function'(Encode'Access),
       Length => Length'Access);
