@@ -7,6 +7,7 @@ with Sax.Models;     use Sax.Models;
 with Unicode.CES;    use Unicode.CES;
 with Unicode;        use Unicode;
 with Sax.Encodings;  use Sax.Encodings;
+with Input_Sources.Strings; use Input_Sources.Strings;
 
 package body Debug_Readers is
 
@@ -28,7 +29,7 @@ package body Debug_Readers is
      (Handler : in out Debug_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class)
    is
-     pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Handler);
    begin
       Put_Line ("Sax.Warning ("
                 & Get_Message (Except) & ", at "
@@ -434,5 +435,34 @@ package body Debug_Readers is
          end if;
       end if;
    end Attribute_Decl;
+
+   --------------------
+   -- Resolve_Entity --
+   --------------------
+
+   function Resolve_Entity
+     (Handler   : Debug_Reader;
+      Public_Id : Unicode.CES.Byte_Sequence;
+      System_Id : Unicode.CES.Byte_Sequence)
+      return Input_Sources.Input_Source_Access is
+   begin
+      if not Handler.Silent then
+         Put_Line ("Sax.Resolve_Entity ("
+                   & Public_Id & ", " & System_Id
+                   & ") at " & To_String (Handler.Locator.all));
+      end if;
+
+      if System_Id = "t3.xml" then
+         declare
+            S : constant String_Input_Access := new String_Input;
+         begin
+            Open (new Byte_Sequence'("Virtual_t3.xml_file"),
+                  Sax.Encodings.Encoding, S.all);
+            return Input_Sources.Input_Source_Access (S);
+         end;
+      end if;
+
+      return null;
+   end Resolve_Entity;
 
 end Debug_Readers;

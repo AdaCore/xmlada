@@ -4,6 +4,7 @@ with Sax.Readers;
 with Sax.Attributes;
 with Sax.Models;
 with Unicode.CES;
+with Input_Sources;
 
 package Debug_Readers is
    type Debug_Reader is new Sax.Readers.Reader with private;
@@ -100,6 +101,11 @@ package Debug_Readers is
       Content : Sax.Models.Element_Model_Ptr;
       Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence);
+   function Resolve_Entity
+     (Handler   : Debug_Reader;
+      Public_Id : Unicode.CES.Byte_Sequence;
+      System_Id : Unicode.CES.Byte_Sequence)
+      return Input_Sources.Input_Source_Access;
 
 private
    type Debug_Reader is new Sax.Readers.Reader with record
