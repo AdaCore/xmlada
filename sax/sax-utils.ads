@@ -3,6 +3,7 @@
 --  standard, but which are used by the various components of XML/Ada
 
 with Unicode.CES;
+with Interfaces;
 
 package Sax.Utils is
 
@@ -30,5 +31,12 @@ package Sax.Utils is
    function Is_Valid_QName
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
    --  Whether Name is valid QName as per 3 in the XML specifications
+
+
+   function Hash
+     (Key : Unicode.CES.Byte_Sequence) return Interfaces.Unsigned_32;
+   --  Hash-code used for all htables indexed on strings
+
+
 
 end Sax.Utils;

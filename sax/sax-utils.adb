@@ -1,6 +1,7 @@
 with Unicode.CES;               use Unicode, Unicode.CES;
 with Sax.Encodings;             use Sax.Encodings;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
+with Interfaces;                use Interfaces;
 
 package body Sax.Utils is
 
@@ -130,7 +131,7 @@ package body Sax.Utils is
       C     : Unicode_Char;
       Index : Natural := Name'First;
    begin
-      if Name'length = 0 then
+      if Name'Length = 0 then
          return False;
       end if;
 
@@ -168,5 +169,25 @@ package body Sax.Utils is
       return Is_Valid_NCname (Name);
 
    end Is_Valid_QName;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (Key : Unicode.CES.Byte_Sequence) return Interfaces.Unsigned_32
+   is
+      type Uns is mod 2 ** 32;
+      function Rotate_Left (Value : Uns; Amount : Natural) return Uns;
+      pragma Import (Intrinsic, Rotate_Left);
+
+      Tmp : Uns := 0;
+   begin
+      for J in Key'Range loop
+         Tmp := Rotate_Left (Tmp, 1) + Character'Pos (Key (J));
+      end loop;
+
+      return Interfaces.Unsigned_32 (Tmp);
+   end Hash;
 
 end Sax.Utils;
