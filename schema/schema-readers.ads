@@ -26,6 +26,11 @@ package Schema.Readers is
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether we should output debug traces
 
+--     function Current_Type
+--       (Reader : Validating_Reader) return Schema.Validators.XML_Type;
+   --  Return the type of the current element, used to check its
+   --  attributes and children
+
 private
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;

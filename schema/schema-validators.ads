@@ -70,13 +70,6 @@ package Schema.Validators is
    function Get_Validator (Typ : XML_Type) return XML_Validator;
    --  Return the validator used for that type
 
-   procedure Add_Restriction
-     (Typ               : XML_Type;
-      Restriction_Name  : Unicode.CES.Byte_Sequence;
-      Restriction_Value : Unicode.CES.Byte_Sequence);
-   --  Add a new restriction to the type (in fact, to its validator, so you
-   --  should do a Clone first if you do not wish to alter the base type).
-
    function List_Of (Typ : XML_Type) return XML_Type;
    --  Return a new type validator that checks for a list of values valid for
    --  Validator.
@@ -90,7 +83,7 @@ package Schema.Validators is
 
    function Restriction_Of
      (Base        : XML_Type;
-      Restriction : access XML_Validator_Record'Class) return XML_Validator;
+      Restriction : XML_Validator := null) return XML_Validator;
    --  Create a restriction of Base
    --  Base doesn't need to be a Clone of some other type, since it isn't
    --  altered
@@ -155,14 +148,6 @@ package Schema.Validators is
    --  Such validators are build to validate specific parts of an XML
    --  document (a whole element).
 
-   function Clone (Validator : XML_Validator) return XML_Validator;
-   --  Return a clone of Validator
-
-   procedure Clone
-     (Validator : access XML_Validator_Record;
-      Into      : in out XML_Validator_Record'Class);
-   --  Copy all the fields of Validator into Into.
-
    procedure Free (Validator : in out XML_Validator_Record);
    procedure Free (Validator : in out XML_Validator);
    --  Free the memory occupied by Validator
@@ -206,16 +191,15 @@ package Schema.Validators is
 
    procedure Validate_Characters
      (Validator      : access XML_Validator_Record;
-      Ch             : Unicode.CES.Byte_Sequence;
-      Data           : Validator_Data);
+      Ch             : Unicode.CES.Byte_Sequence);
    --  Check whether this Characters event is valid in the context of
    --  Validator. Multiple calls to the SAX event Characters are grouped before
    --  calling this subprogram.
 
-   procedure Add_Restriction
-     (Validator         : access XML_Validator_Record;
-      Restriction_Name  : Unicode.CES.Byte_Sequence;
-      Restriction_Value : Unicode.CES.Byte_Sequence);
+   procedure Add_Facet
+     (Validator   : access XML_Validator_Record;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence);
    --  Add a restriction to the set of possible values for Validator.
    --  The valid list of restrictions and their values depends on the type
    --  of Validator.
@@ -474,12 +458,6 @@ private
      is array (Natural range <>) of Attribute_Validator;
    type Attribute_Validator_List_Access is access Attribute_Validator_List;
 
-   function Clone
-     (List : Attribute_Validator_List_Access)
-      return Attribute_Validator_List_Access;
-   --  Return a copy of the list. The validators themselves have not been
-   --  cloned, however
-
    type Attribute_Validator_Record is tagged record
       Local_Name     : Unicode.CES.Byte_Sequence_Access;
       NS             : XML_Grammar_NS;
@@ -737,13 +715,9 @@ private
    --  nested in a choice, so that we can find out which one should be applied
    --  (given the restrictions in schema, only one of them can apply).
 
-   procedure Clone
-     (Validator : access Group_Model_Record;
-      Into      : in out XML_Validator_Record'Class);
    procedure Validate_Characters
      (Validator      : access Group_Model_Record;
-      Ch             : Unicode.CES.Byte_Sequence;
-      Data           : Validator_Data);
+      Ch             : Unicode.CES.Byte_Sequence);
    --  See doc for inherited subprograms
 
    ---------------------
@@ -834,8 +808,7 @@ private
    end record;
    procedure Validate_Characters
      (Union       : access XML_Union_Record;
-      Ch          : Unicode.CES.Byte_Sequence;
-      Data        : Validator_Data);
+      Ch          : Unicode.CES.Byte_Sequence);
    --  See doc from inherited subprograms
 
 end Schema.Validators;

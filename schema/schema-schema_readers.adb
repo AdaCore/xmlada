@@ -112,21 +112,21 @@ package body Schema.Schema_Readers is
       Unknown := Lookup (G, "debug");
 
       --  The "formChoice" type of schema.xsd
-      Typ := Clone (Get_Validator (Lookup (G, "NMTOKEN")));
-      Add_Restriction (Typ, "enumeration", "qualified");
-      Add_Restriction (Typ, "enumeration", "unqualified");
+      Typ := Restriction_Of (Lookup (G, "NMTOKEN"));
+      Add_Facet (Typ, "enumeration", "qualified");
+      Add_Facet (Typ, "enumeration", "unqualified");
       Register (G, Create_Type ("formChoice", Typ));
 
       --  The "derivationControl" type
-      Typ := Clone (Get_Validator (Lookup (G, "NMTOKEN")));
-      Add_Restriction (Typ, "enumeration", "substitution");
-      Add_Restriction (Typ, "enumeration", "extension");
-      Add_Restriction (Typ, "enumeration", "restriction");
+      Typ := Restriction_Of (Lookup (G, "NMTOKEN"));
+      Add_Facet (Typ, "enumeration", "substitution");
+      Add_Facet (Typ, "enumeration", "extension");
+      Add_Facet (Typ, "enumeration", "restriction");
       Register (G, Create_Type ("derivationControl", Typ));
 
       --  The "blockSet" type
-      Typ := Clone (Get_Validator (Lookup (G, "token")));
-      Add_Restriction (Typ, "enumeration", "#all");
+      Typ := Restriction_Of (Lookup (G, "token"));
+      Add_Facet (Typ, "enumeration", "#all");
       All_Validator := Create_Type ("#all", Typ);
 
       Union := Create_Union;
@@ -135,9 +135,9 @@ package body Schema.Schema_Readers is
       Register (G, Create_Type ("blockSet", Union));
 
       --  The "reducedDerivationControl" type
-      Typ := Clone (Get_Validator (Lookup (G, "derivationControl")));
-      Add_Restriction (Typ, "enumeration", "extension");
-      Add_Restriction (Typ, "enumeration", "restriction");
+      Typ := Restriction_Of (Lookup (G, "derivationControl"));
+      Add_Facet (Typ, "enumeration", "extension");
+      Add_Facet (Typ, "enumeration", "restriction");
       Register (G, Create_Type ("reducedDerivationControl", Typ));
 
       --  The "derivationSet" type
@@ -147,12 +147,12 @@ package body Schema.Schema_Readers is
       Register (G, Create_Type ("derivationSet", Union));
 
       --  The "uriReference" type
-      Typ := Clone (Get_Validator (Lookup (G, "anySimpleType")));
-      Add_Restriction (Typ, "whiteSpace", "collapse");
+      Typ := Restriction_Of (Lookup (G, "anySimpleType"));
+      Add_Facet (Typ, "whiteSpace", "collapse");
       Register (G, Create_Type ("uriReference", Typ));
 
       --  The "openAttrs" type  --  ??? <anyAttribute>
-      Typ := Clone (Get_Validator (Lookup (G, "anyType")));
+      Typ := Restriction_Of (Lookup (G, "anyType"));
       Register (G, Create_Type ("openAttrs", Typ));
 
       --  The "annotated" type
@@ -166,7 +166,7 @@ package body Schema.Schema_Readers is
       Register (G, Create_Element ("schemaTop", Lookup (G, "annotated")));
 
       --  The "include" element
-      Typ := Clone (Get_Validator (Lookup (G, "annotated")));
+      Typ := Restriction_Of (Lookup (G, "annotated"));
       Add_Attribute
         (Typ, Create_Attribute ("schemaLocation", G,
                                 Lookup (G, "uriReference"),
@@ -174,7 +174,7 @@ package body Schema.Schema_Readers is
       Register (G, Create_Element ("include", Create_Type ("", Typ)));
 
       --  The "import" element
-      Typ := Clone (Get_Validator (Lookup (G, "annotated")));
+      Typ := Restriction_Of (Lookup (G, "annotated"));
       Add_Attribute
         (Typ, Create_Attribute ("namespace", G,
                                 Lookup (G, "uriReference")));
@@ -233,7 +233,7 @@ package body Schema.Schema_Readers is
       Set_Debug_Name (Seq1, "localComplexType seq");
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Group (G, "complexTypeModel"));
-      Typ := Restriction_Of (Lookup (G, "complexType"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "complexType"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Attribute ("name", G, Attribute_Use => Prohibited));
       Register (G, Create_Type ("localComplexType", Typ));
@@ -262,12 +262,12 @@ package body Schema.Schema_Readers is
       Register (G, Elem);
 
       --  The "XPathExprApprox" type  Incorrect pattern
-      Typ := Clone (Get_Validator (Lookup (G, "string")));
---    Add_Restriction (Typ, "pattern", "(/|//|\.|\.\.|:|::|\||(\w-[.:/|])+)+");
+      Typ := Restriction_Of (Lookup (G, "string"));
+--    Add_Facet (Typ, "pattern", "(/|//|\.|\.\.|:|::|\||(\w-[.:/|])+)+");
       Register (G, Create_Type ("XPathExprApprox", Typ));
 
       --  The "XPathSpec" type"
-      Typ := Clone (Get_Validator (Lookup (G, "annotated")));
+      Typ := Restriction_Of (Lookup (G, "annotated"));
       Add_Attribute (Typ, Create_Attribute ("xpath", G,
                                             Lookup (G, "XPathExprApprox")));
       Register (G, Create_Type ("XPathSpec", Typ));
@@ -281,8 +281,8 @@ package body Schema.Schema_Readers is
       --  The "allNNI" type"
       Union := Create_Union;
       Add_Union (Union, Lookup (G, "nonNegativeInteger"));
-      Typ   := Clone (Get_Validator (Lookup (G, "NMTOKEN")));
-      Add_Restriction (Typ, "enumeration", "unbounded");
+      Typ := Restriction_Of (Lookup (G, "NMTOKEN"));
+      Add_Facet (Typ, "enumeration", "unbounded");
       Add_Union (Union, Create_Type ("", Typ));
       Register (G, Create_Type ("allNNI", Union));
 
@@ -381,7 +381,7 @@ package body Schema.Schema_Readers is
                       ("complexType", Lookup (G, "localComplexType")));
       Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Restriction_Of (Lookup (G, "element"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "element"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "topLevelElement restriction");
       Add_Attribute
         (Typ, Create_Attribute ("ref", G, Attribute_Use => Prohibited));
@@ -431,7 +431,7 @@ package body Schema.Schema_Readers is
                                              Attribute_Use => Prohibited));
       Add_Attribute (Seq1, Create_Attribute ("final", G,
                                              Attribute_Use => Prohibited));
-      Typ := Restriction_Of (Lookup (G, "element"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "element"), XML_Validator (Seq1));
       Register (G, Create_Type ("localElement", Typ));
 
       --  The "particle" group
@@ -479,7 +479,7 @@ package body Schema.Schema_Readers is
                     Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Group (G, "nestedParticle"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Restriction_Of (Lookup (G, "group"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "group"), XML_Validator (Seq1));
       Register (G, Create_Type ("explicitGroup", Typ));
       Add_Attribute
         (Typ, Create_Attribute
@@ -509,14 +509,14 @@ package body Schema.Schema_Readers is
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Group (G, "groupDefParticle"),
                     Min_Occurs => 0, Max_Occurs => 1);
-      Typ := Restriction_Of (Lookup (G, "group"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "group"), XML_Validator (Seq1));
       Register (G, Create_Type ("realGroup", Typ));
 
       --  The "groupRef" type
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "groupRef seq");
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Restriction_Of (Lookup (G, "realGroup"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "realGroup"), XML_Validator (Seq1));
       Register (G, Create_Type ("groupRef", Typ));
       Add_Attribute
         (Typ, Create_Attribute
@@ -534,7 +534,7 @@ package body Schema.Schema_Readers is
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Group (G, "groupDefParticle"),
                     Min_Occurs => 1, Max_Occurs => 1);
-      Typ := Restriction_Of (Lookup (G, "realGroup"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "realGroup"), XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Attribute
                        ("name", G, Lookup (G, "NCName"),
                         Attribute_Use => Required));
@@ -557,7 +557,8 @@ package body Schema.Schema_Readers is
       Seq1 := Create_Sequence;
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Restriction_Of (Lookup (G, "attributeGroup"), Seq1);
+      Typ := Restriction_Of
+        (Lookup (G, "attributeGroup"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
                                 Attribute_Use => Required));
@@ -593,12 +594,12 @@ package body Schema.Schema_Readers is
       Register (G, Create_Type ("attribute", Typ));
       Add_Attribute (Typ, Create_Attribute ("type", G, Lookup (G, "QName")));
 
-      Typ2 := Clone (Get_Validator (Lookup (G, "NMTOKEN")));
-      Add_Restriction (Typ2, "enumeration", "prohibited");
-      Add_Restriction (Typ2, "enumeration", "optional");
-      Add_Restriction (Typ2, "enumeration", "required");
-      Add_Restriction (Typ2, "enumeration", "default");
-      Add_Restriction (Typ2, "enumeration", "fixed");
+      Typ2 := Restriction_Of (Lookup (G, "NMTOKEN"));
+      Add_Facet (Typ2, "enumeration", "prohibited");
+      Add_Facet (Typ2, "enumeration", "optional");
+      Add_Facet (Typ2, "enumeration", "required");
+      Add_Facet (Typ2, "enumeration", "default");
+      Add_Facet (Typ2, "enumeration", "fixed");
       Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
       Add_Attribute (Typ, Create_Attribute
                        ("use", G, Create_Type ("use_type", Typ2),
@@ -617,7 +618,7 @@ package body Schema.Schema_Readers is
       Add_Particle (Seq1, Create_Element ("simpleType",
                                           Lookup (G, "localSimpleType")),
                     Min_Occurs => 0);
-      Typ := Restriction_Of (Lookup (G, "attribute"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "attribute"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "topLevelAttribute restriction");
       Register (G, Create_Type ("topLevelAttribute", Typ));
       Add_Attribute
@@ -635,22 +636,22 @@ package body Schema.Schema_Readers is
 
       --  The "namespaceList" type   ??? Incomplete
       Union := Create_Union;
-      Typ := Clone (Get_Validator (Lookup (G, "token")));
-      Add_Restriction (Typ, "enumeration", "##any");
-      Add_Restriction (Typ, "enumeration", "##other");
+      Typ := Restriction_Of (Lookup (G, "token"));
+      Add_Facet (Typ, "enumeration", "##any");
+      Add_Facet (Typ, "enumeration", "##other");
       Add_Union (Union, Create_Type ("", Typ));
       Register (G, Create_Type ("namespaceList", Union));
 
       --  The "wildcard" type
-      Typ := Clone (Get_Validator (Lookup (G, "annotated")));
+      Typ := Restriction_Of (Lookup (G, "annotated"));
       Add_Attribute (Typ, Create_Attribute ("namespace", G,
                                             Lookup (G, "namespaceList"),
                                             Attribute_Use => Default,
                                             Value => "##any"));
-      Typ2 := Clone (Get_Validator (Lookup (G, "NMTOKEN")));
-      Add_Restriction (Typ2, "enumeration", "skip");
-      Add_Restriction (Typ2, "enumeration", "lax");
-      Add_Restriction (Typ2, "enumeration", "strict");
+      Typ2 := Restriction_Of (Lookup (G, "NMTOKEN"));
+      Add_Facet (Typ2, "enumeration", "skip");
+      Add_Facet (Typ2, "enumeration", "lax");
+      Add_Facet (Typ2, "enumeration", "strict");
       Add_Attribute (Typ, Create_Attribute ("processContents", G,
                                             Create_Type ("", Typ2),
                                             Attribute_Use => Default,
@@ -658,14 +659,15 @@ package body Schema.Schema_Readers is
       Register (G, Create_Type ("wildcard", Typ));
 
       --  The "any" element   ??? Error if you put before "wildcard"
-      Typ := Clone (Get_Validator (Lookup (G, "wildcard")));
+      Typ := Restriction_Of (Lookup (G, "wildcard"));
       Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
       Register (G, Create_Element ("any", Create_Type ("", Typ)));
 
       --  The "attributeGroupRef"  ??? invalid
       Seq1 := Create_Sequence;
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Restriction_Of (Lookup (G, "attributeGroup"), Seq1);
+      Typ := Restriction_Of
+        (Lookup (G, "attributeGroup"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Attribute ("ref", G, Lookup (G, "QName"),
                                 Attribute_Use => Required));
@@ -737,7 +739,8 @@ package body Schema.Schema_Readers is
       Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
       Register (G, Create_Type
                   ("simpleExtensionType",
-                   Restriction_Of (Lookup (G, "extensionType"), Seq1)));
+                   Restriction_Of (Lookup (G, "extensionType"),
+                                   XML_Validator (Seq1))));
 
       --  The "simpleRestrictionType"
       Seq1 := Create_Sequence;
@@ -748,7 +751,8 @@ package body Schema.Schema_Readers is
       Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
       Register (G, Create_Type
                   ("simpleRestrictionType",
-                   Restriction_Of (Lookup (G, "restrictionType"), Seq1)));
+                   Restriction_Of (Lookup (G, "restrictionType"),
+                                   XML_Validator (Seq1))));
 
       --  The "simpleContent" element
       Choice1 := Create_Choice;
@@ -771,7 +775,8 @@ package body Schema.Schema_Readers is
       Add_Particle
         (Seq1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Restriction_Of (Lookup (G, "restrictionType"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "restrictionType"),
+                             XML_Validator (Seq1));
       Register (G, Create_Type ("complexRestrictionType", Typ));
 
       --  The "complexContent" element
@@ -829,7 +834,8 @@ package body Schema.Schema_Readers is
       Set_Debug_Name (Seq1, "topLevelComplexType seq");
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Group (G, "complexTypeModel"));
-      Typ := Restriction_Of (Lookup (G, "complexType"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "complexType"),
+                             XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
                                             Attribute_Use => Required));
       Register (G, Create_Type ("topLevelComplexType", Typ));
@@ -841,7 +847,7 @@ package body Schema.Schema_Readers is
       Register (G, Elem);
 
       --  The "notation" element
-      Typ := Clone (Get_Validator (Lookup (G, "annotated")));
+      Typ := Restriction_Of (Lookup (G, "annotated"));
       Add_Attribute (Typ, Create_Attribute
                        ("name", G, Lookup (G, "NCName"),
                         Attribute_Use => Required));
@@ -865,7 +871,8 @@ package body Schema.Schema_Readers is
       Seq1 := Create_Sequence;
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
-      Typ := Restriction_Of (Lookup (G, "simpleType"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "simpleType"),
+                             XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Attribute
                        ("name", G, Attribute_Use => Prohibited));
       Register (G, Create_Type ("localSimpleType", Typ));
@@ -884,7 +891,8 @@ package body Schema.Schema_Readers is
       Seq1 := Create_Sequence;
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
-      Typ := Restriction_Of (Lookup (G, "simpleType"), Seq1);
+      Typ := Restriction_Of (Lookup (G, "simpleType"),
+                             XML_Validator (Seq1));
       Register (G, Create_Type ("topLevelSimpleType", Typ));
       Add_Attribute
         (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
@@ -937,7 +945,7 @@ package body Schema.Schema_Readers is
       Register (G, Elem);
 
       --  The "facet" type
-      Typ := Clone (Get_Validator (Lookup (G, "annotated")));
+      Typ := Restriction_Of (Lookup (G, "annotated"));
       Add_Attribute
         (Typ, Create_Attribute ("value", G,
                                 Lookup (G, "anySimpleType"),
@@ -1144,6 +1152,37 @@ package body Schema.Schema_Readers is
                      Local_Name,
                      Qname,
                      Atts);
+
+      --  3.3 Element Declaration details:  Validation Rule 3.1
+      --  The "default" attribute of element must match the validation rule
+      --  for that element
+
+      if Local_Name = "element" then
+         Typ := No_Type;
+
+         Index := Get_Index (Atts, URI => "", Local_Name => "type");
+         if Index /= -1 then
+            Lookup_With_NS (Handler, Get_Value (Atts, Index), Result => Typ);
+         end if;
+
+         Index := Get_Index (Atts, URI => "", Local_Name => "default");
+         if Index /= -1 then
+            if Debug then
+               Put_Line ("Validate ""default"" attribute");
+            end if;
+
+            if Typ = No_Type then
+               Raise_Exception
+                 (XML_Validation_Error'Identity,
+                  "Element has not type declaration, ""default"" attribute"
+                  & " can't be validated");
+            end if;
+
+            Validate_Characters (Get_Validator (Typ), Get_Value (Atts, Index));
+         end if;
+      end if;
+
+
 
       --  Process the element
 

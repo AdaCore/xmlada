@@ -85,6 +85,20 @@ package body Schema.Readers is
       end loop;
    end Clear;
 
+   ------------------
+   -- Current_Type --
+   ------------------
+
+--     function Current_Type
+--       (Reader : Validating_Reader) return Schema.Validators.XML_Type is
+--     begin
+--        if Reader.Validators /= null then
+--           return Reader.Validators.Validator;
+--        else
+--           return No_Type;
+--        end if;
+--     end Current_Type;
+
    -------------------
    -- Start_Element --
    -------------------
@@ -162,8 +176,7 @@ package body Schema.Readers is
    begin
       if Handler.Validators /= null then
          Validate_Characters
-           (Get_Validator (Handler.Validators.Validator),
-            Ch, Handler.Validators.Data);
+           (Get_Validator (Handler.Validators.Validator), Ch);
       end if;
    end Characters;
 
