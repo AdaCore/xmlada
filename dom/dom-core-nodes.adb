@@ -31,15 +31,29 @@ with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Sax.Encodings;             use Sax.Encodings;
+with Unicode.Encodings;         use Unicode.Encodings;
 with Ada.Text_IO;               use Ada.Text_IO;
 
 package body DOM.Core.Nodes is
 
-   procedure Print_String (Str : DOM_String);
-   --  Print a string on standard output, in XML.
-   --  If Normalize is True, then adjoining spaces will be concatenated into
-   --  one single space character, except for leading and trailing spaces
-   --  which are discarded.
+   procedure Print_String
+     (Str          : DOM_String;
+      EOL_Sequence : String;
+      Encoding     : Unicode.Encodings.Unicode_Encoding);
+   --  Print a string on standard output, in XML, protecting special
+   --  characters.
+   --  Str is encoded in Unicode/Sax.Encodings.Encoding, and the output is done
+   --  with Encoding
+
+   procedure Put (Str : DOM_String; Encoding : Unicode_Encoding);
+   --  Print Str, but doesn't protect any special character in it
+
+   procedure Print_Name
+     (N            : Node;
+      With_URI     : Boolean;
+      EOL_Sequence : String;
+      Encoding     : Unicode.Encodings.Unicode_Encoding);
+   --  Print the name of the node.
 
    function Clone_List (List : Node_List; Deep : Boolean) return Node_List;
    --  Return a clone of List. If Deep is True, then each item in the list
@@ -1008,14 +1022,18 @@ package body DOM.Core.Nodes is
    -- Print_String --
    ------------------
 
-   procedure Print_String (Str : DOM_String) is
+   procedure Print_String
+     (Str          : DOM_String;
+      EOL_Sequence : String;
+      Encoding     : Unicode.Encodings.Unicode_Encoding)
+   is
       J : Natural := Str'First;
       C : Unicode.Unicode_Char;
       Buffer : Byte_Sequence (1 .. 20);
       Index : Natural;
    begin
       while J <= Str'Last loop
-         Encoding.Read (Str, J, C);
+         Sax.Encodings.Encoding.Read (Str, J, C);
          case C is
             when Ampersand             => Put (Amp_DOM_Sequence);
             when Less_Than_Sign        => Put (Lt_DOM_Sequence);
@@ -1023,15 +1041,54 @@ package body DOM.Core.Nodes is
             when Quotation_Mark        => Put (Quot_DOM_Sequence);
                --  when Apostrophe            => Put ("&apos;");
             when Horizontal_Tabulation => Put (Tab_Sequence);
-            when Line_Feed             => Put (Lf_Sequence);
+            when Line_Feed             => Put (EOL_Sequence, Encoding);
             when Carriage_Return       => Put (Cr_Sequence);
             when others                =>
                Index := Buffer'First - 1;
-               Encoding.Encode (C, Buffer, Index);
+               Encoding.Encoding_Scheme.Encode
+                 (Encoding.Character_Set.To_CS (C), Buffer, Index);
                Put (Buffer (Buffer'First .. Index));
          end case;
       end loop;
    end Print_String;
+
+   ---------
+   -- Put --
+   ---------
+
+   procedure Put (Str : DOM_String; Encoding : Unicode_Encoding) is
+      J : Natural := Str'First;
+      C : Unicode.Unicode_Char;
+      Buffer : Byte_Sequence (1 .. 20);
+      Index : Natural;
+   begin
+      while J <= Str'Last loop
+         Sax.Encodings.Encoding.Read (Str, J, C);
+         Index := Buffer'First - 1;
+         Encoding.Encoding_Scheme.Encode
+           (Encoding.Character_Set.To_CS (C), Buffer, Index);
+         Put (Buffer (Buffer'First .. Index));
+      end loop;
+   end Put;
+
+   ----------------
+   -- Print_Name --
+   ----------------
+
+   procedure Print_Name
+     (N            : Node;
+      With_URI     : Boolean;
+      EOL_Sequence : String;
+      Encoding     : Unicode.Encodings.Unicode_Encoding) is
+   begin
+      if With_URI then
+         Print_String
+           (Namespace_URI (N) & Colon_Sequence & Local_Name (N),
+            EOL_Sequence, Encoding);
+      else
+         Print_String (Node_Name (N), EOL_Sequence, Encoding);
+      end if;
+   end Print_Name;
 
    -----------
    -- Print --
@@ -1041,10 +1098,16 @@ package body DOM.Core.Nodes is
      (List           : Node_List;
       Print_Comments : Boolean := False;
       Print_XML_PI   : Boolean := False;
-      With_URI       : Boolean := False) is
+      With_URI       : Boolean := False;
+      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
+      Encoding       : Unicode.Encodings.Unicode_Encoding :=
+        Unicode.Encodings.Get_By_Name ("utf-8"))
+   is
    begin
       for J in 0 .. List.Last loop
-         Print (List.Items (J), Print_Comments, Print_XML_PI, With_URI);
+         Print
+           (List.Items (J), Print_Comments, Print_XML_PI, With_URI,
+            EOL_Sequence, Encoding);
       end loop;
    end Print;
 
@@ -1056,24 +1119,10 @@ package body DOM.Core.Nodes is
      (N              : Node;
       Print_Comments : Boolean := False;
       Print_XML_PI   : Boolean := False;
-      With_URI       : Boolean := False)
-   is
-      procedure Print_Name (N : Node);
-      --  Print the name of the node.
-
-      ----------------
-      -- Print_Name --
-      ----------------
-
-      procedure Print_Name (N : Node) is
-      begin
-         if With_URI then
-            Print_String (Namespace_URI (N) & Colon_Sequence & Local_Name (N));
-         else
-            Print_String (Node_Name (N));
-         end if;
-      end Print_Name;
-
+      With_URI       : Boolean := False;
+      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
+      Encoding       : Unicode.Encodings.Unicode_Encoding :=
+        Unicode.Encodings.Get_By_Name ("utf-8")) is
    begin
       if N = null then
          return;
@@ -1082,80 +1131,91 @@ package body DOM.Core.Nodes is
       case N.Node_Type is
          when Element_Node =>
             --  ??? Should define a new constant in Sax.Encodings
-            Put (Less_Than_Sequence);
-            Print_Name (N);
+            Put (Less_Than_Sequence, Encoding);
+            Print_Name (N, With_URI, EOL_Sequence, Encoding);
 
             --  Sort the XML attributes as required for canonical XML
             Sort (N.Attributes);
 
             for J in 0 .. N.Attributes.Last loop
-               Put (Space_Sequence);
+               Put (Space_Sequence, Encoding);
                Print (N.Attributes.Items (J),
-                      Print_Comments, Print_XML_PI, With_URI);
+                      Print_Comments, Print_XML_PI, With_URI,
+                      EOL_Sequence, Encoding);
             end loop;
-            Put (Greater_Than_Sequence);
+            Put (Greater_Than_Sequence, Encoding);
 
-            Print (N.Children, Print_Comments, Print_XML_PI, With_URI);
+            Print
+              (N.Children, Print_Comments, Print_XML_PI, With_URI,
+               EOL_Sequence, Encoding);
 
-            Put (Less_Than_Sequence & Slash_Sequence);
-            Print_Name (N);
-            Put (Greater_Than_Sequence);
+            Put (Less_Than_Sequence & Slash_Sequence, Encoding);
+            Print_Name (N, With_URI, EOL_Sequence, Encoding);
+            Put (Greater_Than_Sequence, Encoding);
 
          when Attribute_Node =>
-            Print_Name (N);
-            Put (Equals_Sign_Sequence & Quotation_Mark_Sequence);
-            Print_String (Node_Value (N));
-            Put (Quotation_Mark_Sequence);
+            Print_Name (N, With_URI, EOL_Sequence, Encoding);
+            Put (Equals_Sign_Sequence & Quotation_Mark_Sequence, Encoding);
+            Print_String (Node_Value (N), EOL_Sequence, Encoding);
+            Put (Quotation_Mark_Sequence, Encoding);
 
          when Processing_Instruction_Node =>
-            if Print_XML_PI
-              or else N.Target.all /= Xml_Sequence
-            then
-               Put (Less_Than_Sequence
-                    & Question_Mark_Sequence
-                    & N.Target.all);
+            Put
+              (Less_Than_Sequence
+               & Question_Mark_Sequence
+               & N.Target.all, Encoding);
 
-               if N.Pi_Data'Length = 0 then
-                  Put (Space_Sequence);
+            if N.Pi_Data'Length = 0 then
+               Put (Space_Sequence, Encoding);
 
-               else
-                  declare
-                     C : Unicode_Char;
-                     Index : Natural := N.Pi_Data'First;
-                  begin
-                     Encoding.Read (N.Pi_Data.all, Index, C);
+            else
+               declare
+                  C : Unicode_Char;
+                  Index : Natural := N.Pi_Data'First;
+               begin
+                  Sax.Encodings.Encoding.Read (N.Pi_Data.all, Index, C);
 
-                     if C /= Space then
-                        Put (Space_Sequence);
-                     end if;
-                  end;
-               end if;
-               Put
-                 (N.Pi_Data.all & Question_Mark_Sequence
-                  & Greater_Than_Sequence);
+                  if C /= Space then
+                     Put (Space_Sequence, Encoding);
+                  end if;
+               end;
             end if;
+            Put
+              (N.Pi_Data.all & Question_Mark_Sequence
+               & Greater_Than_Sequence, Encoding);
 
          when Comment_Node =>
             if Print_Comments then
-               Put ("<!--" & Node_Value (N) & "-->");
+               Put ("<!--", Encoding);
+               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+               Put ("-->", Encoding);
             end if;
 
          when Document_Node =>
+            if Print_XML_PI then
+               Put (Write_BOM (Encoding.Encoding_Scheme.BOM));
+               Put
+                 ("<?xml version=""1.0"" encoding="""
+                  & Encoding.Name.all & """?>", Encoding);
+               Print_String ("" & ASCII.LF, EOL_Sequence, Encoding);
+            end if;
             Print (N.Doc_Children,
-                   Print_Comments, Print_XML_PI, With_URI);
+                   Print_Comments, Print_XML_PI, With_URI,
+                   EOL_Sequence, Encoding);
 
          when Document_Fragment_Node =>
             Print (N.Doc_Frag_Children,
-                   Print_Comments, Print_XML_PI, With_URI);
+                   Print_Comments, Print_XML_PI, With_URI,
+                   EOL_Sequence, Encoding);
 
          when Document_Type_Node | Notation_Node =>
             null;
 
          when Text_Node =>
-            Print_String (Node_Value (N));
+            Print_String (Node_Value (N), EOL_Sequence, Encoding);
 
          when others =>
-            Put (Node_Value (N));
+            Print_String (Node_Value (N), EOL_Sequence, Encoding);
       end case;
    end Print;
 
@@ -1170,21 +1230,8 @@ package body DOM.Core.Nodes is
       procedure Dump (List : Node_List; Prefix : String);
       --  Same as above, but for a list.
 
-      procedure Print_Name (N : Node);
-      --  Print the name of the node.
-
-      ----------------
-      -- Print_Name --
-      ----------------
-
-      procedure Print_Name (N : Node) is
-      begin
-         if With_URI then
-            Print_String (Namespace_URI (N) & Colon_Sequence & Local_Name (N));
-         else
-            Print_String (Node_Name (N));
-         end if;
-      end Print_Name;
+      Encoding : constant Unicode_Encoding := Get_By_Name ("utf-8");
+      EOL_Sequence : constant Byte_Sequence := Sax.Encodings.Lf_Sequence;
 
       ----------
       -- Dump --
@@ -1206,7 +1253,7 @@ package body DOM.Core.Nodes is
          case N.Node_Type is
             when Element_Node =>
                Put (Prefix & "Element: ");
-               Print_Name (N);
+               Print_Name (N, With_URI, EOL_Sequence, Encoding);
                New_Line;
 
                --  Sort the XML attributes as required for canonical XML
@@ -1221,9 +1268,11 @@ package body DOM.Core.Nodes is
 
             when Attribute_Node =>
                Put (Prefix & "Attribute: ");
-               Print_Name (N);
+               Print_Name (N, With_URI, EOL_Sequence, Encoding);
                Put ("=");
-               Print_String (Node_Value (N));  --  ??? Could be a tree
+               --  ??? Could be a tree
+               Print_String
+                 (Node_Value (N), EOL_Sequence, Encoding);
                New_Line;
 
             when Processing_Instruction_Node =>
@@ -1249,22 +1298,22 @@ package body DOM.Core.Nodes is
 
             when Text_Node =>
                Put (Prefix & "Text: ");
-               Print_String (Node_Value (N));
+               Print_String (Node_Value (N), EOL_Sequence, Encoding);
                New_Line;
 
             when Cdata_Section_Node =>
                Put (Prefix & "Cdata: ");
-               Print_String (Node_Value (N));
+               Print_String (Node_Value (N), EOL_Sequence, Encoding);
                New_Line;
 
             when Entity_Reference_Node =>
                Put (Prefix & "Entity_Reference: ");
-               Print_String (Node_Value (N));
+               Print_String (Node_Value (N), EOL_Sequence, Encoding);
                New_Line;
 
             when Entity_Node =>
                Put (Prefix & "Entity: ");
-               Print_String (Node_Value (N));
+               Print_String (Node_Value (N), EOL_Sequence, Encoding);
                New_Line;
          end case;
       end Dump;

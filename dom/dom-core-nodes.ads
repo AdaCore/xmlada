@@ -27,6 +27,9 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Unicode.Encodings;
+with Sax.Encodings;
+
 package DOM.Core.Nodes is
 
    ----------
@@ -247,11 +250,22 @@ package DOM.Core.Nodes is
      (N              : Node;
       Print_Comments : Boolean := False;
       Print_XML_PI   : Boolean := False;
-      With_URI       : Boolean := False);
+      With_URI       : Boolean := False;
+      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
+      Encoding       : Unicode.Encodings.Unicode_Encoding :=
+        Unicode.Encodings.Get_By_Name ("utf-8"));
    --  Print the contents of Node and its children in XML format.
    --  If Print_Comments is True, then nodes associated with comments are
    --  also displayed.
-   --  The <?xml?> processing instruction is displayed only if Print_XML_PI
+   --  EOL_Sequence is output at every end of line. It should be encoded in
+   --  Sax.Encodings.Encoding, and will be automatically converted to the
+   --  appropriate output encoding.
+   --  Encoding specifies the encoding to use in the output stream.
+   --
+   --  The <?xml?> processing instruction is displayed only if Print_XML_PI and
+   --  N is a Document_Node. In this case, a Byte-Order mark is also output
+   --  so that proper decoding of the document can be performed later on.
+   --
    --  By default, names are of the form  ns_prefix:local_name. However, if
    --  with_URI is True, names will be  ns_URI:local_name instead
 
@@ -259,7 +273,10 @@ package DOM.Core.Nodes is
      (List           : Node_List;
       Print_Comments : Boolean := False;
       Print_XML_PI   : Boolean := False;
-      With_URI       : Boolean := False);
+      With_URI       : Boolean := False;
+      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
+      Encoding       : Unicode.Encodings.Unicode_Encoding :=
+        Unicode.Encodings.Get_By_Name ("utf-8"));
    --  Same as Print, byt for all the nodes in the list.
 
    procedure Dump (N : Node; With_URI : Boolean := False);
