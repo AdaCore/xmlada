@@ -1,3 +1,17 @@
+New features in version 0.8
+
+- Better support for encodings
+  XML/Ada now has a better auto-detection of the encoding (for Utf16 and Utf8
+  documents, even when they don't have a Byte-Order-Mark).
+  It will also fully process the "<?xml encoding=...?>" declaration at the
+  beginning of the documents. The following encodings are currently supported:
+    UTF-8
+    UTF-16
+    ISO-8859-1    LATIN-1
+    ISO-8859-2    LATIN-2
+    ISO-8859-3
+    ISO-8859-4
+
 New features in version 0.6
 
 - Parser twice as fast
