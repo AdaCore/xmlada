@@ -113,6 +113,9 @@ package body Unicode.CES.Utf16 is
 
       --  High surrogate value
       if C in 16#D800# .. 16#DBFF# then
+         if Index + 3 > Str'Last then
+            raise Invalid_Encoding;
+         end if;
          D := Character'Pos (Str (Index + 3)) * 256
            + Character'Pos (Str (Index + 2));
 
@@ -150,6 +153,9 @@ package body Unicode.CES.Utf16 is
 
       --  High surrogate value
       if C in 16#D800# .. 16#DBFF# then
+         if Index + 3 > Str'Last then
+            raise Invalid_Encoding;
+         end if;
          D := Character'Pos (Str (Index + 2)) * 256
            + Character'Pos (Str (Index + 3));
 
