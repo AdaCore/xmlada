@@ -157,6 +157,11 @@ to that path to be able to build your application.
 The statement above with automatically set the appropriate search paths for
 the compiler, as well as the proper linker arguments.
 
+An example of such a project file is provided as the dom/test/default.gpr.
+To use this example project, change to that dom/test directory, and run
+    gnatmake -Pdefault
+This automatically creates an executable using dynamic libraries
+
 
 Using the library through Makefiles
 -----------------------------------
@@ -179,20 +184,27 @@ You can also build a static version of your program by using:
 V - TESTING THE LIBRARY
 =======================
 
-You need to download the official OASIS test suite for XML,
-from www.xml.org. The name of the current archive is
+Several test programs are provided in the XML/Ada source package. These
+are found in the dom/test and sax/test subdirectories. These are very simple
+examples on how to use the DOM and SAX API.
+
+The w3c organization has constructed an official testsuite that can be used to
+check XML/Ada. Most likely, this is only useful to you if you are modifying
+XML/Ada itself. Here is how you can run this testsuite:
+   You need to download the official OASIS test suite for XML,
+   from www.xml.org. The name of the current archive is
      xmlconf-19990712.tar.Z.
 
-Uncompress it somewhere on your disk, then edit the file dom/test/testsuite to
-reflect the location of that testsuite (BASE should point to the directory
-containing these official tests)
+   Uncompress it somewhere on your disk, then edit the file dom/test/testsuite to
+   reflect the location of that testsuite (BASE should point to the directory
+   containing these official tests)
 
-Execute the file
-    make test
-    cd dom/test
-    ./testsuite
+   Execute the file
+     make test
+     cd dom/test
+     ./testsuite
 
-This will report the number of errors found.
+   This will report the number of errors found.
 
 
 VI - CONTENTS OF THE LIBRARY
