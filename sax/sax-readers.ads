@@ -240,7 +240,7 @@ package Sax.Readers is
    --  so that the Locator provides useful information
    --
    --  Note that some parsers will report (and validating parsers must) report
-   --  whitespace in element content using the Ignorable_Whitespace event.
+   --  whitespace between elements using the Ignorable_Whitespace event.
 
    procedure Ignorable_Whitespace
      (Handler : in out Reader;
@@ -248,8 +248,8 @@ package Sax.Readers is
    --  Receive notification of ignorable whitespace in element content (ie
    --  for elements whose xml:space attribute is not set to 'preserve', see
    --  XML specifications 2.10)
-   --  Validating Parsers must use this method to report each chunk of
-   --  whitespace in element content.
+   --  If there is only white spaces between two tags, they are reported via
+   --  this callback.
    --  SAX parsers may return all contiguous whitespace in a single chunk, or
    --  they may split it into several chunks.
 
