@@ -36,8 +36,8 @@
 
 package Unicode.CCS.Iso_8859_2 is
 
-   Name1 : constant String := "ISO-8859-2";
-   Name2 : constant String := "Latin2";
+   Name1 : aliased constant String := "ISO-8859-2";
+   Name2 : aliased constant String := "Latin2";
 
    function To_Unicode    (Char : Unicode_Char) return Unicode_Char;
    function To_Iso_8859_2 (Char : Unicode_Char) return Unicode_Char;

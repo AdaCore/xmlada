@@ -33,7 +33,7 @@
 
 package Unicode.CCS.Iso_8859_15 is
 
-   Name1 : constant String := "ISO-8859-15";
+   Name1 : aliased constant String := "ISO-8859-15";
 
    function To_Unicode     (Char : Unicode_Char) return Unicode_Char;
    function To_Iso_8859_15 (Char : Unicode_Char) return Unicode_Char;

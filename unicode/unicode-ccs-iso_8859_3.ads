@@ -32,7 +32,7 @@
 
 package Unicode.CCS.Iso_8859_3 is
 
-   Name1 : constant String := "ISO-8859-3";
+   Name1 : aliased constant String := "ISO-8859-3";
 
    function To_Unicode    (Char : Unicode_Char) return Unicode_Char;
    function To_Iso_8859_3 (Char : Unicode_Char) return Unicode_Char;
