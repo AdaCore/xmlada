@@ -3,13 +3,12 @@ project Shared is
    for Source_Dirs use ();
 
    type Mode_Type is ("distrib", "debug", "optimize", "profile");
-   Mode : Mode_Type := external ("MODE", "debug");
+   Mode : Mode_Type := external ("MODE", "optimize");
 
    package Builder is
        case Mode is
           when "debug" => 
              for Default_Switches ("Ada") use ("-s", "-g");
-             for Global_Configuration_Pragmas use "../gnat.adc";
           when others =>
              for Default_Switches ("Ada") use ("-s");
        end case;
