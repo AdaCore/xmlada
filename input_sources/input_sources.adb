@@ -98,7 +98,7 @@ package body Input_Sources is
    procedure Set_System_Id (Input : in out Input_Source; Id : Byte_Sequence) is
    begin
       Free (Input.System_Id);
-      Input.System_Id := new Byte_Sequence' (Id);
+      Input.System_Id := new Byte_Sequence'(Id);
    end Set_System_Id;
 
    -------------------
@@ -121,7 +121,7 @@ package body Input_Sources is
    procedure Set_Public_Id (Input : in out Input_Source; Id : Byte_Sequence) is
    begin
       Free (Input.Public_Id);
-      Input.Public_Id := new Byte_Sequence' (Id);
+      Input.Public_Id := new Byte_Sequence'(Id);
    end Set_Public_Id;
 
    -------------------
