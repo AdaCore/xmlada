@@ -94,9 +94,28 @@ Do the following, from the root directory of XML/Ada:
      where you want to install XML/Ada
    - make -f makefile.vms
    - make -f makefile.vms install
+     If you do not have MKDIR.EXE and other unix-like tools, this command
+     will fail.
+     You can replace it with some manual steps:
+       * Create the installation directory
+       * copy the files 
+           unicode/obj/*
+           unicode/*.adb unicode/*.ads
+           input_sources/obj/*
+           input_sources/*.ads input_sources/*.adb
+           sax/obj/*
+           sax/*.adb sax/*.ads
+           dom/obj/*
+           dom/*.adb dom/*.ads
+         into this directory
+
+      To use XML/Ada in your own applications, you need to add the installation
+      directory on the gnatmake command line with a -I switch
+
    - (optional) make -f makefile.vms test
      This last step is only required if you want to build the test executables
      testsax and testdom which can be used to test the library on any XML file.
+
 
 III - INSTALLING THIS LIBRARY ON WINDOWS
 ========================================
