@@ -124,6 +124,13 @@ package Sax.Attributes is
    --  Do not modify the pointer returned, since this is directly the
    --  internal pointer.
 
+   procedure Set_Content
+     (Attr    : Attributes;
+      Index   : Natural;
+      Content : Sax.Models.Element_Model_Ptr);
+   --  Set the content model for the attribute. No copy of content is made, and
+   --  you shouldn't free it until the attribute itself is destroyed.
+
    function Get_Default_Declaration
      (Attr : Attributes; Index : Natural) return Default_Declaration;
    --  Return the specification used for the default value of the attribute.

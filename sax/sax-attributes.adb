@@ -514,6 +514,18 @@ package body Sax.Attributes is
    end Get_Default_Declaration;
 
    -----------------
+   -- Set_Content --
+   -----------------
+
+   procedure Set_Content
+     (Attr    : Attributes;
+      Index   : Natural;
+      Content : Sax.Models.Element_Model_Ptr) is
+   begin
+      Get (Attr, Index).Content := Content;
+   end Set_Content;
+
+   -----------------
    -- Get_Content --
    -----------------
 
