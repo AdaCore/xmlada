@@ -803,7 +803,7 @@ fi
 
 if [ $run_not_wf_tests = 1 ]; then
     expect_not_wf_not_sa "001" \
-       "001.ent:3:2: [WF] Unexpected character in the DTD"
+       "001.ent:3:2: [3.4] Conditional section must be properly terminated"
     expect_not_wf_not_sa "002" \
        "entity %e:1:1: [2.8] <?xml?> instruction must be first in document"
     expect_not_wf_not_sa "003" \
@@ -860,7 +860,7 @@ if [ $run_not_wf_tests = 1 ]; then
     expect_sun_not_wf "dtd02" \
         "dtd02.xml:5:6: [WF] Unterminated entity"
     expect_sun_not_wf "dtd03" \
-        "dtd03.xml:6:0: [WF] Unterminated entity"
+        "dtd03.xml:5:9: [WF] Unterminated entity"
     expect_sun_not_wf "dtd04" \
         "dtd04.xml:4:26: [WF] Expecting string after PUBLIC"
     expect_sun_not_wf "dtd05" \
@@ -902,7 +902,7 @@ if [ $run_not_wf_tests = 1 ]; then
     [ $VALIDATING = 1 ] && expect_sun_not_wf "pubid04" \
         "pubid04.xml:6:24: Invalid PubID character '{'"
     expect_sun_not_wf "pubid05" \
-        "pubid05.xml:6:0: [WF] Expecting SystemID after PUBLIC"
+        "pubid05.xml:5:45: [WF] Expecting SystemID after PUBLIC"
     expect_sun_not_wf "sgml01" \
         "sgml01.xml:8:0: [2.1] Node <root> is not closed"
 	## Location is incorrect
@@ -1151,7 +1151,7 @@ Did you want to use &amp; ?"
     expect_not_wf_sa "114" \
            "114.xml:2:15: [4.1] Invalid first letter in entity name '\"'"
     expect_not_wf_sa "115" \
-           "entity e:1:1: [4.1] Invalid first letter in entity name '\"'"
+           "entity e:1:1: [4.3.2] Entity must be self-contained"
     expect_not_wf_sa "116" \
            "entity e:1:1: [4.3.2] Entity must be self-contained"
     expect_not_wf_sa "117" \
@@ -1161,9 +1161,7 @@ Did you want to use &amp; ?"
     expect_not_wf_sa "119" \
            "entity e:1:1: [4.3.2] Entity must be self-contained"
     expect_not_wf_sa "120" \
-           "entity e:1:1: [4.1] Invalid first letter in entity name '
-'"
-           # ??? Message could be better for 120
+           "entity e:1:1: [4.3.2] Entity must be self-contained"
     expect_not_wf_sa "121" \
            "121.xml:2:18: [WF] Expecting entity name"
     expect_not_wf_sa "122" \
@@ -1693,7 +1691,7 @@ if [ $run_not_wf_tests = 1 ]; then
     expect_oasis_not_wf "p62fail1" \
            "p62fail1.dtd:1:11: [WF] Unexpected character in the DTD"
     expect_oasis_not_wf "p62fail2" \
-           "p62fail2.dtd:3:2: [WF] Unexpected character in the DTD"
+           "p62fail2.dtd:3:4: [3.4] Conditional section must be properly terminated"
     expect_oasis_not_wf "p63fail1" \
            "p63fail1.dtd:2:10: [WF] Unexpected character in the DTD"
     expect_oasis_not_wf "p63fail2" \
