@@ -105,7 +105,7 @@ examples, we refer the reader to the standards themselves, which are all
 easily readable.
 
    
-@b{??? Explain what XML is}
+@c ??? Explain what XML is
 
 @c -------------------------------------------------------------------
 @node The Unicode module
