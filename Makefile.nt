@@ -31,7 +31,7 @@ MKDIR=mkdir -p
 
 .PHONY: all obj test clean install
 
-all: obj test docs
+all: obj test
 obj: ${MODULES}
 
 docs: force
