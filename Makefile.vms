@@ -9,8 +9,6 @@ BUILD_SHARED=FALSE
 
 GNATMAKE=gnatmake
 CC=gcc
-
-
   
 # List of all modules to compile
 # You can remove "dom" if you don't intend to use the DOM interface
@@ -43,17 +41,24 @@ MODULE_INSTALL=${MODULES:%=%_inst}
 
 .PHONY: all obj clean install install_dirs
 
-all: obj docs 
+all: obj
 obj: ${MODULES}
 test: ${MODULE_TEST}
 
-docs: force
-	${MAKE} -e -C docs -f Makefile.vms
-
 ${MODULES}: force
+	# The following four lines are a workaround for a bug in GNAT 3.15a1
+	# Since logical names are not automatically reset the a command exits
+	assign/job tmp ADA_INCLUDE_PATH
+	deassign/job ADA_INCLUDE_PATH
+	assign/job tmp ADA_OBJECTS_PATH
+	deassign/job ADA_OBJECTS_PATH
 	${GNATMAKE} ${FPIC} -u -P$@/$@.gpr -XMODE=${MODE}
 
 ${MODULE_TEST}: force
+	assign/job tmp ADA_INCLUDE_PATH
+	deassign/job ADA_INCLUDE_PATH
+	assign/job tmp ADA_OBJECTS_PATH
+	deassign/job ADA_OBJECTS_PATH
 	${GNATMAKE} ${FPIC} -P${@:%_test=%}/${@:%_test=%}.gpr -XMODE=debug
 
 ${MODULE_INSTALL}: force
@@ -84,7 +89,7 @@ install: obj install_dirs ${MODULE_INSTALL}
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 
 clean: force
-	-${RM} ${MODULES:%=%/obj/*}  2>/dev/null
+	-rm ${MODULES:%=%/obj/*}  2>/dev/null
 	cd docs; ${MAKE} -e clean
 
 force:
