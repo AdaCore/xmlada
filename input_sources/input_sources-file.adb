@@ -28,6 +28,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Direct_IO;
+with Ada.Sequential_IO;
 with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
@@ -44,10 +45,10 @@ package body Input_Sources.File is
    ---------------
 
    procedure Fast_Read (The_File : in String;
-                        Buf      : in Byte_Sequence_Access) is
+                        Buf      : in Byte_Sequence_Access)
+   is
       type Fixed_String is new String (Buf'Range);
-
-      package Dir_Fast is new Ada.Direct_IO (Fixed_String);
+      package Dir_Fast is new Ada.Sequential_IO (Fixed_String);
       use Dir_Fast;
 
       F : Dir_Fast.File_Type;
