@@ -30,10 +30,13 @@
 with Sax.Attributes;        use Sax.Attributes;
 with Unicode;               use Unicode;
 with Unicode.CES;           use Unicode.CES;
+with Unicode.CES.Utf8;      use Unicode.CES.Utf8;
 with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Glib;                  use Glib;
+with Input_Sources;         use Input_Sources;
 with Input_Sources.File;    use Input_Sources.File;
+with Input_Sources.Strings; use Input_Sources.Strings;
 
 package body XML_Gtk.Readers is
 
@@ -43,6 +46,12 @@ package body XML_Gtk.Readers is
      (Atts : Sax.Attributes.Attributes'Class) return Glib.String_Ptr;
    --  Convert a list of attributes to a string suitable for Glib.XML
 
+   procedure Parse
+     (Input : in out Input_Source'Class;
+      Tree  : out Glib_XML.Node_Ptr;
+      Error : out Unicode.CES.Byte_Sequence_Access);
+   --  Parse an input stream.
+   --  Input is freed before returning from this procedure
 
    --------------------
    -- Start_Document --
@@ -211,17 +220,29 @@ package body XML_Gtk.Readers is
    -----------
 
    procedure Parse
-       (File  : String;
-        Tree  : out Glib_XML.Node_Ptr;
-        Error : out Unicode.CES.Byte_Sequence_Access)
+     (File  : String;
+      Tree  : out Glib_XML.Node_Ptr;
+      Error : out Unicode.CES.Byte_Sequence_Access)
    is
       Input  : File_Input;
-      Reader : Gtk_Reader;
    begin
       Open (File, Input);
       Set_Public_Id (Input, File);
       Set_System_Id (Input, File);
+      Parse (Input, Tree, Error);
+   end Parse;
 
+   -----------
+   -- Parse --
+   -----------
+
+   procedure Parse
+     (Input : in out Input_Source'Class;
+      Tree  : out Glib_XML.Node_Ptr;
+      Error : out Unicode.CES.Byte_Sequence_Access)
+   is
+      Reader : Gtk_Reader;
+   begin
       Set_Warnings_As_Errors (Reader, True);
       Set_Feature (Reader, Validation_Feature, False);
       Set_Feature (Reader, Test_Valid_Chars_Feature, True);
@@ -239,5 +260,22 @@ package body XML_Gtk.Readers is
          Error := new Byte_Sequence'(Exception_Message (E));
          Tree := null;
    end Parse;
+
+   ------------------
+   -- Parse_Buffer --
+   ------------------
+
+   procedure Parse_Buffer
+     (Buffer : Glib.UTF8_String;
+      Tree   : out Glib_XML.Node_Ptr;
+      Error  : out Unicode.CES.Byte_Sequence_Access)
+   is
+      Input : String_Input;
+   begin
+      Open (Buffer'Unrestricted_Access, Utf8_Encoding, Input);
+      Set_Public_Id (Input, "<input>");
+      Set_System_Id (Input, "<input>");
+      Parse (Input, Tree, Error);
+   end Parse_Buffer;
 
 end XML_Gtk.Readers;

@@ -60,6 +60,12 @@ package XML_Gtk.Readers is
    --  Both return value must be freed by the user.
    --  If there is an error, Tree is always set to null.
 
+   procedure Parse_Buffer
+     (Buffer : Glib.UTF8_String;
+      Tree   : out Glib_XML.Node_Ptr;
+      Error  : out Unicode.CES.Byte_Sequence_Access);
+   --  Same as Parse, but the string to parse is already in memory
+
    function Get_Tree (Read : Gtk_Reader) return Glib_XML.Node_Ptr;
    --  Get the tree that Read created
 
