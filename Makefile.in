@@ -38,18 +38,21 @@ test: force
 docs: force
 	${MAKE} -e -C docs
 
-${MODULE_INSTALL}: force
-	${CP} ${@:%_inst=%}/*.ad[bs]        ${PREFIX}/include/xmlada
-	${CP} ${@:%_inst=%}/lib/*.ali       ${PREFIX}/include/xmlada
-	${CP} ${@:%_inst=%}/lib/libxmlada_* ${PREFIX}/lib
+# Rule for installing the modules
+%_inst: force
+	@${MKDIR}                ${PREFIX}/include/xmlada/$*
+	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada/$*
+	${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
+	${CP} $*/lib/libxmlada_* ${PREFIX}/lib
+	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
 
 install_dirs: force
 	@${MKDIR} ${PREFIX}/bin
 	@${MKDIR} ${PREFIX}/lib
 	@${MKDIR} ${PREFIX}/include/xmlada
+	@${MKDIR} ${PREFIX}/include/xmlada/obj
 
 install: obj install_dirs ${MODULE_INSTALL}
-	cd ${PREFIX}/include/xmlada; ${CHMOD} -w *.ali
 	${CP} xmlada-config ${PREFIX}/bin
 	${CP} xmlada.gpr ${PREFIX}
 	${CP} xmlada_unicode.gpr ${PREFIX}
