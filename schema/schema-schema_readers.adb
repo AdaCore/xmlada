@@ -567,6 +567,7 @@ package body Schema.Schema_Readers is
       Base_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "base");
       Base : XML_Type;
+      G : XML_Grammar_NS;
    begin
       if Handler.Contexts.Type_Name /= null
         and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
@@ -576,7 +577,13 @@ package body Schema.Schema_Readers is
             "Self-referencing restriction not allowed");
       end if;
 
-      Lookup_With_NS (Handler, Get_Value (Atts, Base_Index), Result => Base);
+      if Base_Index /= -1 then
+         Lookup_With_NS
+           (Handler, Get_Value (Atts, Base_Index), Result => Base);
+      else
+         Get_NS (Handler.Grammar, XML_Schema_URI, G);
+         Base := Lookup (G, "ur-Type");
+      end if;
 
       Handler.Contexts := new Context'
         (Typ            => Context_Restriction,
