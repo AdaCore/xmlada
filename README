@@ -121,9 +121,6 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
       http://www.weihenstephan.de/~syring/win32/UnxUtils.html
 
 2. Run 'configure' to generate the makefile.
-   An example copy is provided as Makefile.nt, rename it to makefile if you
-   cannot run configure. You also need to rename Makefile.module.nt to
-   Makefile.module
 
 3. Before building make sure to set the following values in 'Makefile':
 
