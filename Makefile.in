@@ -1,70 +1,90 @@
-
-# Set WIN32 on the line below to 'TRUE' if building on Windows, otherwise
-# set it to 'FALSE'
-export WIN32=FALSE
+# Generated automatically from Makefile.in by configure.
 
 # Replace with the location for the installation directory
 PREFIX=@EXEC_PREFIX@
+
+# Set the following to True to build shared libraries. Note that this will
+# not work on most systems, you need to at least compile with -fPIC
+BUILD_SHARED=FALSE
+
+GNATMAKE=gnatmake
+CC=gcc
+
+
   
 # List of all modules to compile
 # You can remove "dom" if you don't intend to use the DOM interface
 MODULES=unicode input_sources sax dom
 
-##############################
-##  Main Makefile: three targets are available:
-##    obj:   build all objects (no executable)
-##    test:  build the test programs found in the modules
-##    clean: remove all object files and temporary files
-##    install: install all the files under the PREFIX hierarchy, as
-##           defined in Makefile.module
-##############################
+# Version of the library
+MAJOR=0
+MINOR=8
 
-MODULE_OBJ=${MODULES:%=-aO%/obj}
-MODULE_SRC=${MODULES:%=-aI%}
-MODULE_CLEAN=${MODULES:%=%_clean}
-MODULE_TEST=${MODULES:%=%_test}
-MODULE_INSTALL=${MODULES:%=%_install}
+# Compiler mode: one of "distrib", "debug", "optimize", "profile"
+MODE=distrib
 
-RANLIB= @RANLIB@
+FPIC=
 CHMOD=chmod
-ARFLAGS=cr
 CP=cp -p -f
 MKDIR=mkdir -p
+RANLIB= @RANLIB@
+ARFLAGS=cr
+CFLAGS=
+CP=cp -p -f
+CHMOD=chmod
+LN=ln -f -s
 
-.PHONY: all obj test clean install
+#########################################################################
+## Nothing to modify below this point
+#########################################################################
 
-all: obj test docs
+MODULE_TEST=${MODULES:%=%_test}
+MODULE_INSTALL=${MODULES:%=%_inst}
+
+.PHONY: all obj clean install install_dirs
+
+all: obj test docs 
 obj: ${MODULES}
+test: ${MODULE_TEST}
 
 docs: force
 	${MAKE} -e -C docs
 
 ${MODULES}: force
-	${MAKE} -e -C $@ all_obj
-
-${MODULE_CLEAN}: force
-	${MAKE} -e -C ${@:%_clean=%} clean
+	${GNATMAKE} ${FPIC} -u -P$@/$@.gpr -XMODE=${MODE}
 
 ${MODULE_TEST}: force
-	${MAKE} -e -C ${@:%_test=%} test
+	${GNATMAKE} ${FPIC} -P${@:%_test=%}/${@:%_test=%}.gpr -XMODE=${MODE}
 
 ${MODULE_INSTALL}: force
-	${MAKE} -e -C ${@:%_install=%} install
+	# Build the libraries themselves
+	cd ${@:%_inst=%}/obj; ${AR} ${ARFLAGS} libxmlada_${@:%_inst=%}.a *.o
+ifneq (${RANLIB}, "")
+	cd ${@:%_inst=%}/obj; ${RANLIB} libxmlada_${@:%_inst=%}.a
+endif
+ifeq (${BUILD_SHARED}, TRUE)
+	cd ${@:%_inst=%}/obj; ${CC} -shared -o libxmlada_${@:%_install=%}-${MAJOR}.${MINOR}.so *.o
+endif
+	#Install the libraries
+	${CP} ${@:%_inst=%}/obj/*.ali ${PREFIX}/include/xmlada
+	${CP} ${@:%_inst=%}/*.ad[bs]  ${PREFIX}/include/xmlada
+	${CP} ${@:%_inst=%}/obj/libxmlada_* ${PREFIX}/lib
+ifeq (${BUILD_SHARED}, TRUE)
+	cd ${PREFIX}/lib; ${LN} libxmlada_${@:%_inst=%}-${MAJOR}.${MINOR}.so libxmlada_${@:%_install=%}.so
+endif
 
-install: ${MODULE_INSTALL}
-	${MKDIR} ${PREFIX}/bin
+install_dirs: force
+	@${MKDIR} ${PREFIX}/lib
+	@${MKDIR} ${PREFIX}/bin
+	@${MKDIR} ${PREFIX}/include/xmlada
+
+install: clean obj install_dirs ${MODULE_INSTALL}
+	cd ${PREFIX}/include/xmlada; ${CHMOD} -w *.ali
 	${CP} xmlada-config ${PREFIX}/bin
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 
-test: force
-	${MAKE} -e ${MODULE_TEST}
-
 clean: force
-	-${RM} *.o
-	-${RM} *.ali
-	-${RM} textxml
-	-${RM} b~*
-	${MAKE} -e ${MODULE_CLEAN}
+	-${RM} ${MODULES:%=%/obj/*}  2>/dev/null
 	cd docs; ${MAKE} -e clean
 
 force:
