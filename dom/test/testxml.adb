@@ -7,11 +7,15 @@ with Sax.Readers;        use Sax.Readers;
 with DOM.Core.Nodes;     use DOM.Core.Nodes;
 with Ada.Exceptions;     use Ada.Exceptions;
 with Ada.Text_IO;        use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 
 --  Try also
---     ./testxml http://java.sun.com/j2ee/1.4/docs/tutorial/examples/jaxp/dom/samples/slideSample01.xml
+--     ./testxml http://java.sun.com/j2ee/1.4/docs/tutorial/examples/jaxp
+--     /dom/samples/slideSample01.xml
 
 procedure Testxml is
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Input_Source'Class, Input_Source_Access);
    Silent : Boolean := False;
    With_URI : Boolean := False;
    Dump : Boolean := False;
@@ -78,6 +82,7 @@ begin
 
    Parse (My_Tree_Reader, Read.all);
    Close (Read.all);
+   Unchecked_Free (Read);
 
    if Must_Normalize then
       Normalize (Get_Tree (My_Tree_Reader));
