@@ -6,8 +6,9 @@ package body Schema.Validators.Extensions is
    end record;
    type Extension_Type is access Extension_XML_Validator'Class;
    type Extension_Data is new Validator_Data_Record with record
-      Base_Data      : Validator_Data;
-      Extension_Data : Validator_Data;
+      Validating_Base : Boolean := True;
+      Base_Data       : Validator_Data;
+      Extension_Data  : Validator_Data;
    end record;
    type Extension_Data_Access is access all Extension_Data'Class;
 
@@ -21,6 +22,10 @@ package body Schema.Validators.Extensions is
       Data              : Validator_Data;
       Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
+   procedure Validate_End_Element
+     (Validator      : access Extension_XML_Validator;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Data           : Validator_Data);
    procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
@@ -101,24 +106,51 @@ package body Schema.Validators.Extensions is
       --  none of these matched, but this isn't an error. In this case, we keep
       --  looking in the base type
 
-      begin
-         Validate_Start_Element
-           (Get_Validator (Validator.Base), Local_Name, Namespace_URI,
-            D.Base_Data, Grammar, Element_Validator);
-      exception
-         when XML_Validation_Error =>
-            Debug_Output ("Validation error in base, testing extension");
-            Element_Validator := No_Element;
-      end;
+      if D.Validating_Base then
+         begin
+            Debug_Output ("Validating base part of the extension");
+            Validate_Start_Element
+              (Get_Validator (Validator.Base), Local_Name, Namespace_URI,
+               D.Base_Data, Grammar, Element_Validator);
+         exception
+            when XML_Validation_Error =>
+               Debug_Output ("Validation error in base, testing extension");
+               Element_Validator := No_Element;
+         end;
+      end if;
 
       if Element_Validator = No_Element then
+         D.Validating_Base := False;
          if Validator.Extension /= null then
+            Debug_Output ("Validating extension part of the extension");
             Validate_Start_Element
               (Validator.Extension, Local_Name, Namespace_URI,
                D.Extension_Data, Grammar, Element_Validator);
          end if;
       end if;
    end Validate_Start_Element;
+
+   --------------------------
+   -- Validate_End_Element --
+   --------------------------
+
+   procedure Validate_End_Element
+     (Validator      : access Extension_XML_Validator;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Data           : Validator_Data)
+   is
+      D : constant Extension_Data_Access := Extension_Data_Access (Data);
+   begin
+      if D.Validating_Base then
+         Validate_End_Element
+           (Get_Validator (Validator.Base), Local_Name, D.Base_Data);
+      end if;
+
+      if Validator.Extension /= null then
+         Validate_End_Element
+           (Validator.Extension, Local_Name, D.Extension_Data);
+      end if;
+   end Validate_End_Element;
 
    -------------------------
    -- Validate_Characters --
@@ -193,10 +225,12 @@ package body Schema.Validators.Extensions is
       Max_Occurs : Integer := 1) return XML_Validator
    is
       Result : constant Extension_Type := new Extension_XML_Validator;
-      C      : Choice;
+      C      : Sequence;
    begin
       Result.Base      := Base;
-      C := Create_Choice (Min_Occurs => Min_Occurs, Max_Occurs => Max_Occurs);
+      C := Create_Sequence
+        (Min_Occurs => Min_Occurs, Max_Occurs => Max_Occurs);
+      Set_Debug_Name (C, "automatic_extension_sequence");
       Add_Particle (C, Group);
       Result.Extension := XML_Validator (C);
       return XML_Validator (Result);

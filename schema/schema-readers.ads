@@ -36,7 +36,26 @@ package Schema.Readers is
    --  Parse the grammar to use from an XSD file, and add it to the grammar
    --  currently defined by Handled.
 
+   function Get_Namespace_From_Prefix
+     (Handler  : Validating_Reader;
+      Prefix   : Unicode.CES.Byte_Sequence)
+      return Unicode.CES.Byte_Sequence_Access;
+   --  Get the namespace associated with a given prefix.
+   --  Do not modify the return value.
+
 private
+   type Prefix_Mapping;
+   type Prefix_Mapping_Access is access Prefix_Mapping;
+   type Prefix_Mapping is record
+      Prefix    : Unicode.CES.Byte_Sequence_Access;
+      Namespace : Unicode.CES.Byte_Sequence_Access;
+      Next      : Prefix_Mapping_Access;
+   end record;
+   --  Usee a list to store the prefixes, since there aren't that many of them,
+   --  and a local prefix can override a more global one (so a hash table needs
+   --  some special handling in any case).
+
+
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;
    type Validator_List_Record is record
@@ -58,6 +77,8 @@ private
       Grammar  : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar;
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator_Access;
+
+      Prefixes   : Prefix_Mapping_Access;
 
       Id_Validator : Schema.Validators.XML_Validator;
       Ids          : Schema.Validators.Id_Htable_Access;
@@ -85,4 +106,12 @@ private
    procedure Ignorable_Whitespace
      (Handler : in out Validating_Reader;
       Ch      : Unicode.CES.Byte_Sequence);
+   procedure Start_Prefix_Mapping
+     (Handler : in out Validating_Reader;
+      Prefix  : Unicode.CES.Byte_Sequence;
+      URI     : Unicode.CES.Byte_Sequence);
+   procedure End_Prefix_Mapping
+     (Handler : in out Validating_Reader;
+      Prefix  : Unicode.CES.Byte_Sequence);
+
 end Schema.Readers;

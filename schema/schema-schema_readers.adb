@@ -2,6 +2,7 @@ with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Attributes;    use Sax.Attributes;
 with Sax.Encodings;     use Sax.Encodings;
+with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
 with Schema.Readers;    use Schema.Readers;
 with Schema.Validators; use Schema.Validators;
@@ -13,9 +14,6 @@ package body Schema.Schema_Readers is
 
    Debug : Boolean := False;
 
-   procedure Free (Mapping : in out Prefix_Mapping_Access);
-   --  Free the memory occupied by Mapping
-
    procedure Free (C : in out Context_Access);
    --  Free the memory occupied by C
 
@@ -24,9 +22,6 @@ package body Schema.Schema_Readers is
       Prefix  : Byte_Sequence;
       Grammar : out XML_Grammar_NS);
    --  Return the grammar matching a given prefix
-
-   function Split_Qname (Qname : Byte_Sequence) return Natural;
-   --  Return the position of the ':' separate in Qname
 
    procedure Output (Str : String);
    --  Output a debug string
@@ -108,6 +103,10 @@ package body Schema.Schema_Readers is
    --  Return the value of maxOccurs from the attributes'value. This properly
    --  takes into account the "unbounded" case
 
+   procedure Create_Restricted (Ctx : Context_Access);
+   --  Applies to a Context_Restriction, ensures that the restriction has been
+   --  created appropriately.
+
    -------------------------
    -- In_Redefine_Context --
    -------------------------
@@ -171,21 +170,6 @@ package body Schema.Schema_Readers is
    begin
       return "T_" & XML_To_Ada (Get_Local_Name (Typ));
    end Ada_Name;
-
-   -----------------
-   -- Split_Qname --
-   -----------------
-
-   function Split_Qname (Qname : Byte_Sequence) return Natural is
-   begin
-      --  ??? This function assumes we are using UTF8 internally
-      for Q in Qname'Range loop
-         if Qname (Q) = ':' then
-            return Q;
-         end if;
-      end loop;
-      return Qname'First - 1;
-   end Split_Qname;
 
    -------------------------
    -- Get_Created_Grammar --
@@ -263,13 +247,8 @@ package body Schema.Schema_Readers is
       Separator : constant Integer := Split_Qname (QName);
       G         : XML_Grammar_NS;
    begin
-      if Separator < QName'First then
-         Get_Grammar_For_Namespace (Handler, "", G);
-      else
-         Get_Grammar_For_Namespace
-           (Handler, QName (QName'First .. Separator - 1), G);
-      end if;
-
+      Get_Grammar_For_Namespace
+        (Handler, QName (QName'First .. Separator - 1), G);
       Result := Lookup (G, QName (Separator + 1 .. QName'Last));
       Output
         (Ada_Name (Result) & " := Lookup (G, """
@@ -288,12 +267,8 @@ package body Schema.Schema_Readers is
       Separator : constant Integer := Split_Qname (QName);
       G         : XML_Grammar_NS;
    begin
-      if Separator < QName'First then
-         Get_Grammar_For_Namespace (Handler, "", G);
-      else
-         Get_Grammar_For_Namespace
-           (Handler, QName (QName'First .. Separator - 1), G);
-      end if;
+      Get_Grammar_For_Namespace
+        (Handler, QName (QName'First .. Separator - 1), G);
 
       Result := Lookup_Element (G, QName (Separator + 1 .. QName'Last));
       Output
@@ -868,13 +843,29 @@ package body Schema.Schema_Readers is
       end if;
 
       Handler.Contexts := new Context'
-        (Typ            => Context_Restriction,
-         Restriction    => Restriction_Of (Base, null),
-         Level          => Handler.Contexts.Level + 1,
-         Next           => Handler.Contexts);
-      Output (Ada_Name (Handler.Contexts)
-              & " := Restriction_Of (" & Ada_Name (Base) & ", null);");
+        (Typ              => Context_Restriction,
+         Restriction_Base => Base,
+         Restricted       => null,
+         Restriction      => null,
+         Level            => Handler.Contexts.Level + 1,
+         Next             => Handler.Contexts);
    end Create_Restriction;
+
+   -----------------------
+   -- Create_Restricted --
+   -----------------------
+
+   procedure Create_Restricted (Ctx : Context_Access) is
+   begin
+      if Ctx.Restricted = null then
+         Ctx.Restricted := Restriction_Of
+           (Ctx.Restriction_Base, Ctx.Restriction);
+         Output (Ada_Name (Ctx)
+                 & " := Restriction_Of ("
+                 & Ada_Name (Ctx.Restriction_Base) & ", "
+                 & "Validator" & ");");
+      end if;
+   end Create_Restricted;
 
    ------------------------
    -- Finish_Restriction --
@@ -882,10 +873,12 @@ package body Schema.Schema_Readers is
 
    procedure Finish_Restriction (Handler : in out Schema_Reader) is
    begin
+      Create_Restricted (Handler.Contexts);
+
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
             Handler.Contexts.Next.Type_Validator :=
-              Handler.Contexts.Restriction;
+              Handler.Contexts.Restricted;
             Set_Debug_Name (Handler.Contexts.Next.Type_Validator,
                             Ada_Name (Handler.Contexts));
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
@@ -1197,7 +1190,10 @@ package body Schema.Schema_Readers is
             Handler.Contexts.Next.Extension :=
               XML_Validator (Handler.Contexts.Seq);
             Output ("Validator := " & Ada_Name (Handler.Contexts));
-
+         when Context_Restriction =>
+            Handler.Contexts.Next.Restriction :=
+              XML_Validator (Handler.Contexts.Seq);
+            Output ("Validator := " & Ada_Name (Handler.Contexts));
          when Context_Group =>
             Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.Seq);
             Output ("Add_Particle ("
@@ -1207,9 +1203,8 @@ package body Schema.Schema_Readers is
               (Handler.Contexts.Seq,
                "seq_in_group__"
                & Get_Local_Name (Handler.Contexts.Next.Group));
-
          when Context_Schema | Context_Attribute | Context_Element
-            | Context_Restriction | Context_All | Context_Union
+            | Context_All | Context_Union
             | Context_List | Context_Redefine | Context_Attribute_Group =>
             Output ("Can't handle nested sequence");
       end case;
@@ -1313,7 +1308,8 @@ package body Schema.Schema_Readers is
                     & Ada_Name (Handler.Contexts) & ");");
 
          when Context_Restriction =>
-            Add_Attribute (Handler.Contexts.Next.Restriction,
+            Create_Restricted (Handler.Contexts.Next);
+            Add_Attribute (Handler.Contexts.Next.Restricted,
                            Handler.Contexts.Attribute);
             Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
                     & Ada_Name (Handler.Contexts) & ");");
@@ -1585,7 +1581,8 @@ package body Schema.Schema_Readers is
         or else Local_Name = "minInclusive"
         or else Local_Name = "minExclusive"
       then
-         Add_Facet (Handler.Contexts.Restriction, Local_Name,
+         Create_Restricted (Handler.Contexts);
+         Add_Facet (Handler.Contexts.Restricted, Local_Name,
                     Get_Value (Atts, URI => "", Local_Name => "value"));
          Output ("Add_Facet ("
                  & Ada_Name (Handler.Contexts) & ", """ & Local_Name
@@ -1758,67 +1755,6 @@ package body Schema.Schema_Readers is
       Characters (Validating_Reader (Handler), Ch);
    end Characters;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Mapping : in out Prefix_Mapping_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Prefix_Mapping, Prefix_Mapping_Access);
-   begin
-      if Mapping /= null then
-         Free (Mapping.Prefix);
-         Free (Mapping.Namespace);
-         Unchecked_Free (Mapping);
-      end if;
-   end Free;
-
-   --------------------------
-   -- Start_Prefix_Mapping --
-   --------------------------
-
-   procedure Start_Prefix_Mapping
-     (Handler : in out Schema_Reader;
-      Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence) is
-   begin
-      Handler.Prefixes := new Prefix_Mapping'
-        (Prefix    => new Byte_Sequence'(Prefix),
-         Namespace => new Byte_Sequence'(URI),
-         Next      => Handler.Prefixes);
-   end Start_Prefix_Mapping;
-
-   ------------------------
-   -- End_Prefix_Mapping --
-   ------------------------
-
-   procedure End_Prefix_Mapping
-     (Handler : in out Schema_Reader;
-      Prefix  : Unicode.CES.Byte_Sequence)
-   is
-      Tmp  : Prefix_Mapping_Access := Handler.Prefixes;
-      Tmp2 : Prefix_Mapping_Access;
-   begin
-      if Handler.Prefixes /= null then
-         if Handler.Prefixes.Prefix.all = Prefix then
-            Handler.Prefixes := Handler.Prefixes.Next;
-            Free (Tmp);
-         else
-            while Tmp.Next /= null
-              and then Tmp.Next.Prefix.all /= Prefix
-            loop
-               Tmp := Tmp.Next;
-            end loop;
-
-            if Tmp.Next /= null then
-               Tmp2 := Tmp.Next;
-               Tmp.Next := Tmp2.Next;
-               Free (Tmp2);
-            end if;
-         end if;
-      end if;
-   end End_Prefix_Mapping;
-
    -------------------------------
    -- Get_Grammar_For_Namespace --
    -------------------------------
@@ -1828,20 +1764,17 @@ package body Schema.Schema_Readers is
       Prefix  : Byte_Sequence;
       Grammar : out XML_Grammar_NS)
    is
-      Tmp : Prefix_Mapping_Access := Handler.Prefixes;
+      Namespace : constant Byte_Sequence_Access := Get_Namespace_From_Prefix
+        (Handler, Prefix);
    begin
-      while Tmp /= null and then Tmp.Prefix.all /= Prefix loop
-         Tmp := Tmp.Next;
-      end loop;
-
-      if Tmp = null then
+      if Namespace = null then
          Output ("G := Handler.Target_NS;");
          Grammar := Handler.Target_NS;
       else
          Output
            ("Get_NS (Handler.Created_Grammar, """
-            & Tmp.Namespace.all & """, G);");
-         Get_NS (Handler.Created_Grammar, Tmp.Namespace.all, Grammar);
+            & Namespace.all & """, G);");
+         Get_NS (Handler.Created_Grammar, Namespace.all, Grammar);
       end if;
    end Get_Grammar_For_Namespace;
 

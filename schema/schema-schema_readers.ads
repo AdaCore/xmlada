@@ -30,17 +30,6 @@ package Schema.Schema_Readers is
    --  Whether extra debug output should be displayed
 
 private
-   type Prefix_Mapping;
-   type Prefix_Mapping_Access is access Prefix_Mapping;
-   type Prefix_Mapping is record
-      Prefix    : Unicode.CES.Byte_Sequence_Access;
-      Namespace : Unicode.CES.Byte_Sequence_Access;
-      Next      : Prefix_Mapping_Access;
-   end record;
-   --  Usee a list to store the prefixes, since there aren't that many of them,
-   --  and a local prefix can override a more global one (so a hash table needs
-   --  some special handling in any case).
-
    type Context_Type is (Context_Type_Def,
                          Context_Element,
                          Context_Sequence,
@@ -79,6 +68,8 @@ private
             All_Validator : Schema.Validators.XML_All;
          when Context_Restriction =>
             Restriction : Schema.Validators.XML_Validator;
+            Restricted  : Schema.Validators.XML_Validator; --  result
+            Restriction_Base : Schema.Validators.XML_Type;
          when Context_Extension =>
             Extension_Base : Schema.Validators.XML_Type;
             Extension      : Schema.Validators.XML_Validator;
@@ -110,7 +101,6 @@ private
 
       Target_NS       : Schema.Validators.XML_Grammar_NS;
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
-      Prefixes        : Prefix_Mapping_Access;
       Contexts        : Context_Access;
    end record;
 
@@ -129,12 +119,5 @@ private
       Qname         : Unicode.CES.Byte_Sequence := "");
    procedure Characters
      (Handler : in out Schema_Reader; Ch : Unicode.CES.Byte_Sequence);
-   procedure Start_Prefix_Mapping
-     (Handler : in out Schema_Reader;
-      Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence);
-   procedure End_Prefix_Mapping
-     (Handler : in out Schema_Reader;
-      Prefix  : Unicode.CES.Byte_Sequence);
 
 end Schema.Schema_Readers;

@@ -4,6 +4,7 @@ with Sax.Attributes;    use Sax.Attributes;
 with Sax.Exceptions;    use Sax.Exceptions;
 with Sax.Locators;      use Sax.Locators;
 with Sax.Encodings;     use Sax.Encodings;
+with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
@@ -50,6 +51,24 @@ package body Schema.Readers is
       Empty_Element : Boolean);
    --  Internal version of Characters, that can deal with empty content for
    --  elements
+
+   procedure Free (Mapping : in out Prefix_Mapping_Access);
+   --  Free the memory occupied by Mapping
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Mapping : in out Prefix_Mapping_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Prefix_Mapping, Prefix_Mapping_Access);
+   begin
+      if Mapping /= null then
+         Free (Mapping.Prefix);
+         Free (Mapping.Namespace);
+         Unchecked_Free (Mapping);
+      end if;
+   end Free;
 
    ----------------------
    -- Set_Debug_Output --
@@ -269,7 +288,7 @@ package body Schema.Readers is
       procedure Get_Grammar_From_Attributes;
       --  Parse the grammar, reading its name from the attributes
 
-      procedure Compute_Type (G : XML_Grammar_NS);
+      procedure Compute_Type;
       --  Compute the type to use, depending on whether the xsi:type attribute
       --  was specified
 
@@ -297,10 +316,11 @@ package body Schema.Readers is
       -- Compute_Type --
       ------------------
 
-      procedure Compute_Type (G : XML_Grammar_NS) is
+      procedure Compute_Type is
          Type_Index : constant Integer := Get_Index
            (Atts, URI => XML_Instance_URI, Local_Name => "type");
          Derives_By_Extension, Derives_By_Restriction : Boolean;
+         G : XML_Grammar_NS;
       begin
          Typ := Get_Type (Element);
 
@@ -310,8 +330,27 @@ package body Schema.Readers is
                          & Get_Value (Atts, Type_Index));
             end if;
 
-            --  ??? Should check with namespaces
-            Typ := Lookup (G, Get_Value (Atts, Type_Index));
+            declare
+               Qname : constant Byte_Sequence := Get_Value (Atts, Type_Index);
+               Separator : constant Integer := Split_Qname (Qname);
+               Namespace : Byte_Sequence_Access;
+            begin
+               Namespace := Get_Namespace_From_Prefix
+                 (Handler, Qname (Qname'First .. Separator - 1));
+               if Namespace /= null then
+                  Get_NS (Handler.Grammar, Namespace.all, G);
+               else
+                  Get_NS (Handler.Grammar, Namespace_URI, G);
+               end if;
+
+               Typ := Lookup (G, Qname (Separator + 1 .. Qname'Last),
+                              Create_If_Needed => False);
+            end;
+
+            if Typ = No_Type then
+               Validation_Error
+                 ("Unknown type """ & Get_Value (Atts, Type_Index) & '"');
+            end if;
 
             Derives_By_Extension :=
               Is_Extension_Of (Get_Validator (Typ), Get_Type (Element));
@@ -389,7 +428,7 @@ package body Schema.Readers is
            ("No data type definition for element " & String (Local_Name));
       end if;
 
-      Compute_Type (G);
+      Compute_Type;
       Data := Create_Validator_Data (Get_Validator (Typ));
       Validate_Attributes
         (Get_Validator (Typ), Atts, Handler.Ids,
@@ -536,5 +575,73 @@ package body Schema.Readers is
       Handler.Locator := Locator_Access (Loc);
       Ref (Handler.Locator.all);
    end Set_Document_Locator;
+
+   --------------------------
+   -- Start_Prefix_Mapping --
+   --------------------------
+
+   procedure Start_Prefix_Mapping
+     (Handler : in out Validating_Reader;
+      Prefix  : Unicode.CES.Byte_Sequence;
+      URI     : Unicode.CES.Byte_Sequence) is
+   begin
+      Handler.Prefixes := new Prefix_Mapping'
+        (Prefix    => new Byte_Sequence'(Prefix),
+         Namespace => new Byte_Sequence'(URI),
+         Next      => Handler.Prefixes);
+   end Start_Prefix_Mapping;
+
+   ------------------------
+   -- End_Prefix_Mapping --
+   ------------------------
+
+   procedure End_Prefix_Mapping
+     (Handler : in out Validating_Reader;
+      Prefix  : Unicode.CES.Byte_Sequence)
+   is
+      Tmp  : Prefix_Mapping_Access := Handler.Prefixes;
+      Tmp2 : Prefix_Mapping_Access;
+   begin
+      if Handler.Prefixes /= null then
+         if Handler.Prefixes.Prefix.all = Prefix then
+            Handler.Prefixes := Handler.Prefixes.Next;
+            Free (Tmp);
+         else
+            while Tmp.Next /= null
+              and then Tmp.Next.Prefix.all /= Prefix
+            loop
+               Tmp := Tmp.Next;
+            end loop;
+
+            if Tmp.Next /= null then
+               Tmp2 := Tmp.Next;
+               Tmp.Next := Tmp2.Next;
+               Free (Tmp2);
+            end if;
+         end if;
+      end if;
+   end End_Prefix_Mapping;
+
+   -------------------------------
+   -- Get_Namespace_From_Prefix --
+   -------------------------------
+
+   function Get_Namespace_From_Prefix
+     (Handler  : Validating_Reader;
+      Prefix   : Unicode.CES.Byte_Sequence)
+      return Unicode.CES.Byte_Sequence_Access
+   is
+      Tmp : Prefix_Mapping_Access := Handler.Prefixes;
+   begin
+      while Tmp /= null and then Tmp.Prefix.all /= Prefix loop
+         Tmp := Tmp.Next;
+      end loop;
+
+      if Tmp = null then
+         return null;
+      else
+         return Tmp.Namespace;
+      end if;
+   end Get_Namespace_From_Prefix;
 
 end Schema.Readers;
