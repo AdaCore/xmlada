@@ -312,9 +312,6 @@ package body Sax.Readers is
    function Debug_Encode (C : Unicode_Char) return Byte_Sequence;
    --  Return an encoded string matching C (matching Sax.Encodins.Encoding)
 
-   function Is_Name_Char (C : Unicode_Char) return Boolean;
-   --  Return True if C is a valid character to use in a Name.
-
    procedure Test_Valid_Char
      (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token);
    --  Raise an error if C is not valid in XML. The error is reported at
@@ -403,10 +400,6 @@ package body Sax.Readers is
    function Qname_From_Name (Parser : Reader'Class; Prefix, Local_Name : Token)
       return Byte_Sequence;
    --  Create the qualified name from the namespace URI and the local name.
-
-   function Prefix_From_Qname (Qname : Byte_Sequence) return Byte_Sequence;
-   --  Return the prefix part of Qname, or the empty string if no explicit
-   --  prefix is defined.
 
    procedure Add_Namespace
      (Parser : in out Reader'Class;

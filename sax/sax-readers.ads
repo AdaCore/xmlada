@@ -425,6 +425,18 @@ package Sax.Readers is
 
    XML_Fatal_Error : exception;
 
+   -------------------
+   -- Misc services --
+   -------------------
+
+   function Is_Name_Char (C : Unicode.Unicode_Char) return Boolean;
+   --  Return True if C is a valid character to use in a Name.
+
+   function Prefix_From_Qname (Qname : Unicode.CES.Byte_Sequence)
+      return Unicode.CES.Byte_Sequence;
+   --  Return the prefix part of Qname, or the empty string if no explicit
+   --  prefix is defined.
+
 private
    Entities_Table_Size : constant := 50;
    --  Size of the hash-table used to store entities.
