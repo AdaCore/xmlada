@@ -144,6 +144,8 @@ install: lib
 	cd ${PREFIX}/include/xmlada; ${CHMOD} -w *.ali
 	${CP} *.ad[bs] ${PREFIX}/include/xmlada
 	cd obj; ${CP} ${libname}.a ${soname}.so ${PREFIX}/lib
+ifeq (${BUILD_SHARED}, TRUE)
 	cd ${PREFIX}/lib; ${LN} ${soname}.so ${libname}.so
+endif
 
 force:
