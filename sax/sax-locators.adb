@@ -142,7 +142,7 @@ package body Sax.Locators is
       Id  : Unicode.CES.Byte_Sequence) is
    begin
       Free (Loc.Public_Id);
-      Loc.Public_Id := new Byte_Sequence' (Id);
+      Loc.Public_Id := new Byte_Sequence'(Id);
    end Set_Public_Id;
 
    -------------------
@@ -154,7 +154,7 @@ package body Sax.Locators is
       Id  : Unicode.CES.Byte_Sequence) is
    begin
       Free (Loc.System_Id);
-      Loc.System_Id := new Byte_Sequence' (Id);
+      Loc.System_Id := new Byte_Sequence'(Id);
    end Set_System_Id;
 
    ---------------

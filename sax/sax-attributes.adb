@@ -159,11 +159,11 @@ package body Sax.Attributes is
          Attr.Last := Attr.Last.Next;
       end if;
 
-      Attr.Last.URI := new Byte_Sequence' (URI);
-      Attr.Last.Local_Name := new Byte_Sequence' (Local_Name);
+      Attr.Last.URI := new Byte_Sequence'(URI);
+      Attr.Last.Local_Name := new Byte_Sequence'(Local_Name);
       Attr.Last.Att_Type := Att_Type;
-      Attr.Last.Value := new Byte_Sequence' (Value);
-      Attr.Last.Qname := new Byte_Sequence' (Qname);
+      Attr.Last.Value := new Byte_Sequence'(Value);
+      Attr.Last.Qname := new Byte_Sequence'(Qname);
       Attr.Last.Default_Decl := Default_Decl;
       Attr.Last.Content := Content;
       Attr.Length := Attr.Length + 1;
@@ -239,11 +239,11 @@ package body Sax.Attributes is
       Att : Attribute_Access := Get (Attr, Index);
    begin
       Free (Att.all);
-      Att.URI := new Byte_Sequence' (URI);
-      Att.Local_Name := new Byte_Sequence' (Local_Name);
+      Att.URI := new Byte_Sequence'(URI);
+      Att.Local_Name := new Byte_Sequence'(Local_Name);
       Att.Att_Type := Att_Type;
-      Att.Value := new Byte_Sequence' (Value);
-      Att.Qname := new Byte_Sequence' (Qname);
+      Att.Value := new Byte_Sequence'(Value);
+      Att.Qname := new Byte_Sequence'(Qname);
       Att.Default_Decl := Default_Decl;
       Att.Content := Content;
    end Set_Attribute;
@@ -256,7 +256,7 @@ package body Sax.Attributes is
      (Attr : in out Attributes;
       From : Attributes'Class)
    is
-      Length : Natural := Get_Length (From);
+      Length : constant Natural := Get_Length (From);
       Att : Attribute_Access;
    begin
       for J in 0 .. Length - 1 loop
@@ -283,7 +283,7 @@ package body Sax.Attributes is
       Tmp : Attribute_Access := Get (Attr, Index);
    begin
       Free (Tmp.Local_Name);
-      Tmp.Local_Name := new Byte_Sequence' (Local_Name);
+      Tmp.Local_Name := new Byte_Sequence'(Local_Name);
    end Set_Local_Name;
 
    ---------------
@@ -298,7 +298,7 @@ package body Sax.Attributes is
       Tmp : Attribute_Access := Get (Attr, Index);
    begin
       Free (Tmp.Qname);
-      Tmp.Qname := new Byte_Sequence' (Qname);
+      Tmp.Qname := new Byte_Sequence'(Qname);
    end Set_Qname;
 
    --------------
@@ -325,7 +325,7 @@ package body Sax.Attributes is
       Tmp : Attribute_Access := Get (Attr, Index);
    begin
       Free (Tmp.URI);
-      Tmp.URI := new Byte_Sequence' (URI);
+      Tmp.URI := new Byte_Sequence'(URI);
    end Set_URI;
 
    ---------------
@@ -341,7 +341,7 @@ package body Sax.Attributes is
    begin
       pragma Assert (Tmp /= null, "Unexpected null attribute");
       Free (Tmp.Value);
-      Tmp.Value := new Byte_Sequence' (Value);
+      Tmp.Value := new Byte_Sequence'(Value);
    end Set_Value;
 
    ---------------
