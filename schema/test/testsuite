@@ -452,6 +452,39 @@ expect "" $ms/element/elemR004.xml ""
 expect "" $ms/element/elemR005.xml ""
 notrun $ms/element/elemR006.xsd "test seems wrong, all parsers fail"
 
+##################
+## Microsoft elements tests -- S serie (final)
+##################
+
+expect $ms/element/elemS001.xsd "" \
+ "$ms/element/elemS001.xsd:36:84: \"fr_invalid\" is final for restrictions, and cannot be substituted by\"fr1_invalid\""
+expect "" $ms/element/elemS002.xml ""
+expect "" $ms/element/elemS003.xml ""
+expect $ms/element/elemS004.xsd "" \
+ "$ms/element/elemS004.xsd:36:84: \"fe_invalid\" is final for extensions, and cannot be substituted by\"fe1_invalid\""
+expect $ms/element/elemS005.xsd "" \
+ "$ms/element/elemS005.xsd:36:80: \"fr_valid\" is final for restrictions, and cannot be substituted by\"fr1_valid\""
+expect $ms/element/elemS006.xsd "" \
+ "$ms/element/elemS006.xsd:36:84: \"fe_invalid\" is final for extensions, and cannot be substituted by\"fe1_invalid\""
+expect "" $ms/element/elemS007.xml ""
+expect "" $ms/element/elemS008.xml ""
+
+##################
+## Microsoft elements tests -- T serie
+##################
+
+expect "" $ms/element/elemT001.xml "f"
+expect "" $ms/element/elemT002.xml ""
+expect "" $ms/element/elemT003.xml ""
+expect "" $ms/element/elemT004.xml "f"
+expect "" $ms/element/elemT005.xml "f"
+expect "" $ms/element/elemT006.xml "f"
+expect "" $ms/element/elemT007.xml ""
+expect "" $ms/element/elemT008.xml ""
+expect $ms/element/elemT009.xsd "" \
+ "$ms/element/elemT009.xsd:10:59: Attribute \"block\": Invalid value \"list\""
+expect $ms/element/elemT010.xsd "" \
+ "$ms/element/elemT010.xsd:10:60: Attribute \"block\": Invalid value \"union\""
 
 
 
