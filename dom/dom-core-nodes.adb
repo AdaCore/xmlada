@@ -1272,6 +1272,7 @@ package body DOM.Core.Nodes is
             when Attribute_Node =>
                Put (Prefix & "Attribute: ");
                Print_Name (N);
+               Put ("=");
                Print_String (Node_Value (N));  --  ??? Could be a tree
                New_Line;
 
