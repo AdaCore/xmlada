@@ -1,0 +1,13 @@
+with "../shared.gpr";
+with "../unicode/unicode.gpr";
+
+project Input_Sources is
+
+   for Object_Dir use "obj/";
+
+   package Builder  renames Shared.Builder;
+   package Compiler renames Shared.Compiler;
+   package Binder   renames Shared.Binder;
+   package Linker   renames Shared.Linker;
+ 
+end Input_Sources;
