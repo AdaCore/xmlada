@@ -84,8 +84,7 @@ package body Input_Sources.Strings is
      (From : in out String_Input;
       C    : out Unicode.Unicode_Char) is
    begin
-      C := From.Encoding.Read (From.Buffer.all, From.Index);
-      From.Index := From.Index + From.Encoding.Width (C);
+      From.Encoding.Read (From.Buffer.all, From.Index, C);
    end Next_Char;
 
    ---------

@@ -122,8 +122,7 @@ package body Input_Sources.File is
      (From : in out File_Input;
       C    : out Unicode.Unicode_Char) is
    begin
-      C := From.Es.Read (From.Buffer.all, From.Index);
-      From.Index := From.Index + From.Es.Width (C);
+      From.Es.Read (From.Buffer.all, From.Index, C);
       C := From.Cs.To_Unicode (C);
    end Next_Char;
 
