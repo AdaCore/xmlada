@@ -19,8 +19,8 @@ package body Schema.Validators.Extensions is
      (Validator         : access Extension_XML_Validator;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
+      NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator      : access Extension_XML_Validator;
@@ -94,8 +94,8 @@ package body Schema.Validators.Extensions is
      (Validator         : access Extension_XML_Validator;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
+      NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element)
    is
       D : constant Extension_Data_Access := Extension_Data_Access (Data);
@@ -113,8 +113,8 @@ package body Schema.Validators.Extensions is
          begin
             Debug_Output ("Validating base part of the extension");
             Validate_Start_Element
-              (Get_Validator (Validator.Base), Local_Name, Namespace_URI,
-               D.Base_Data, Grammar, Element_Validator);
+              (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
+               D.Base_Data, Element_Validator);
          exception
             when XML_Validation_Error =>
                Debug_Output ("Validation error in base, testing extension");
@@ -127,8 +127,8 @@ package body Schema.Validators.Extensions is
          if Validator.Extension /= null then
             Debug_Output ("Validating extension part of the extension");
             Validate_Start_Element
-              (Validator.Extension, Local_Name, Namespace_URI,
-               D.Extension_Data, Grammar, Element_Validator);
+              (Validator.Extension, Local_Name, Namespace_URI, NS,
+               D.Extension_Data, Element_Validator);
          end if;
       end if;
    end Validate_Start_Element;

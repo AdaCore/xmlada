@@ -20,8 +20,8 @@ package body Schema.Validators.Restrictions is
      (Validator         : access Restriction_XML_Validator;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
+      NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
@@ -69,16 +69,16 @@ package body Schema.Validators.Restrictions is
      (Validator         : access Restriction_XML_Validator;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
+      NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element)
    is
       D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
    begin
       if Validator.Restriction /= null then
          Validate_Start_Element
-           (Validator.Restriction, Local_Name, Namespace_URI,
-            D.Restriction_Data, Grammar, Element_Validator);
+           (Validator.Restriction, Local_Name, Namespace_URI, NS,
+            D.Restriction_Data, Element_Validator);
 
          if Element_Validator /= No_Element then
             Debug_Output ("Validate_Start_Element: end of restriction, result="
@@ -89,8 +89,8 @@ package body Schema.Validators.Restrictions is
          end if;
       else
          Validate_Start_Element
-           (Get_Validator (Validator.Base), Local_Name, Namespace_URI,
-            D.Restriction_Data, Grammar, Element_Validator);
+           (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
+            D.Restriction_Data, Element_Validator);
       end if;
    end Validate_Start_Element;
 
