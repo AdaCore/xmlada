@@ -5,6 +5,7 @@ with Sax.Exceptions;    use Sax.Exceptions;
 with Sax.Locators;      use Sax.Locators;
 with Sax.Encodings;     use Sax.Encodings;
 with Sax.Utils;         use Sax.Utils;
+with Sax.Readers;       use Sax.Readers;
 with Schema.Validators; use Schema.Validators;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
@@ -54,6 +55,35 @@ package body Schema.Readers is
 
    procedure Free (Mapping : in out Prefix_Mapping_Access);
    --  Free the memory occupied by Mapping
+
+   procedure Hook_Start_Element
+     (Handler       : in out Reader'Class;
+      Namespace_URI : Unicode.CES.Byte_Sequence := "";
+      Local_Name    : Unicode.CES.Byte_Sequence := "";
+      Qname         : Unicode.CES.Byte_Sequence := "";
+      Atts          : Sax.Attributes.Attributes'Class);
+   procedure Hook_End_Element
+     (Handler       : in out Reader'Class;
+      Namespace_URI : Unicode.CES.Byte_Sequence := "";
+      Local_Name    : Unicode.CES.Byte_Sequence := "";
+      Qname         : Unicode.CES.Byte_Sequence := "");
+   procedure Hook_Characters
+     (Handler : in out Reader'Class; Ch : Unicode.CES.Byte_Sequence);
+   procedure Hook_Ignorable_Whitespace
+     (Handler : in out Reader'Class;
+      Ch      : Unicode.CES.Byte_Sequence);
+   procedure Hook_Start_Prefix_Mapping
+     (Handler : in out Reader'Class;
+      Prefix  : Unicode.CES.Byte_Sequence;
+      URI     : Unicode.CES.Byte_Sequence);
+   procedure Hook_End_Prefix_Mapping
+     (Handler : in out Reader'Class;
+      Prefix  : Unicode.CES.Byte_Sequence);
+   procedure Hook_Set_Document_Locator
+     (Handler : in out Reader'Class;
+      Loc     : access Sax.Locators.Locator'Class);
+   --  See for the corresponding primitive operations. These provide the
+   --  necessary validation hooks.
 
    ----------
    -- Free --
@@ -268,12 +298,12 @@ package body Schema.Readers is
       end loop;
    end Parse_Grammars;
 
-   -------------------
-   -- Start_Element --
-   -------------------
+   ------------------------
+   -- Hook_Start_Element --
+   ------------------------
 
-   procedure Start_Element
-     (Handler       : in out Validating_Reader;
+   procedure Hook_Start_Element
+     (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
@@ -305,12 +335,14 @@ package body Schema.Readers is
             Local_Name => "schemaLocation");
       begin
          if No_Index /= -1 then
-            Parse_Grammar (Handler, Get_Value (Atts, No_Index),
-                           Add_To => Handler.Grammar);
+            Parse_Grammar (Validating_Reader (Handler),
+                           Get_Value (Atts, No_Index),
+                           Add_To => Validating_Reader (Handler).Grammar);
          end if;
 
          if Location_Index /= -1 then
-            Parse_Grammars (Handler, Get_Value (Atts, Location_Index));
+            Parse_Grammars (Validating_Reader (Handler),
+                            Get_Value (Atts, Location_Index));
          end if;
       end Get_Grammar_From_Attributes;
 
@@ -338,11 +370,14 @@ package body Schema.Readers is
                Namespace : Byte_Sequence_Access;
             begin
                Namespace := Get_Namespace_From_Prefix
-                 (Handler, Qname (Qname'First .. Separator - 1));
+                 (Validating_Reader (Handler),
+                  Qname (Qname'First .. Separator - 1));
                if Namespace /= null then
-                  Get_NS (Handler.Grammar, Namespace.all, G);
+                  Get_NS
+                    (Validating_Reader (Handler).Grammar, Namespace.all, G);
                else
-                  Get_NS (Handler.Grammar, Namespace_URI, G);
+                  Get_NS
+                    (Validating_Reader (Handler).Grammar, Namespace_URI, G);
                end if;
 
                Typ := Lookup (G, Qname (Separator + 1 .. Qname'Last),
@@ -389,10 +424,10 @@ package body Schema.Readers is
 
       --  Get the name of the grammar to use from the element's attributes
 
-      if Handler.Grammar = No_Grammar then
+      if Validating_Reader (Handler).Grammar = No_Grammar then
          Get_Grammar_From_Attributes;
 
-         if Handler.Grammar = No_Grammar then
+         if Validating_Reader (Handler).Grammar = No_Grammar then
             return;  --  Always valid
          end if;
       end if;
@@ -403,20 +438,22 @@ package body Schema.Readers is
       --  mandatory or not is tested later on
 
       if Namespace_URI = ""
-        and then Handler.Validators /= null
+        and then Validating_Reader (Handler).Validators /= null
       then
-         G := Handler.Validators.Grammar;
+         G := Validating_Reader (Handler).Validators.Grammar;
       else
-         Get_NS (Handler.Grammar, Namespace_URI, Result => G);
+         Get_NS (Validating_Reader (Handler).Grammar,
+                 Namespace_URI, Result => G);
       end if;
 
       --  Whether this element is valid in the current context
 
-      if Handler.Validators /= null then
+      if Validating_Reader (Handler).Validators /= null then
          Validate_Start_Element
-           (Get_Validator (Handler.Validators.Typ),
-            Local_Name, Namespace_URI, G, Handler.Validators.Data,
-            Get_Target_NS (Handler.Grammar), Element);
+           (Get_Validator (Validating_Reader (Handler).Validators.Typ),
+            Local_Name, Namespace_URI, G,
+            Validating_Reader (Handler).Validators.Data,
+            Get_Target_NS (Validating_Reader (Handler).Grammar), Element);
       else
          if Debug then
             Put_Line ("Getting element definition from grammar: "
@@ -425,7 +462,7 @@ package body Schema.Readers is
          Element := Lookup_Element (G, Local_Name);
 
          Add_XML_Instance_Attributes
-           (Handler, Get_Validator (Get_Type (Element)));
+           (Validating_Reader (Handler), Get_Validator (Get_Type (Element)));
       end if;
 
       --  If not: this is a validation error
@@ -439,26 +476,27 @@ package body Schema.Readers is
       Data := Create_Validator_Data (Get_Validator (Typ));
 
       Validate_Attributes
-        (Get_Validator (Typ), Atts, Handler.Ids,
+        (Get_Validator (Typ), Atts, Validating_Reader (Handler).Ids,
          Is_Nillable (Element), Is_Nil,
-         Handler.Grammar);
+         Validating_Reader (Handler).Grammar);
 
-      if Handler.Validators /= null
-        and then Handler.Validators.Is_Nil
+      if Validating_Reader (Handler).Validators /= null
+        and then Validating_Reader (Handler).Validators.Is_Nil
       then
          Validation_Error
            ("Element is set as nil, and doesn't accept any child element");
       end if;
 
-      Push (Handler.Validators, Element, Typ, G, Data, Is_Nil);
-   end Start_Element;
+      Push (Validating_Reader (Handler).Validators, Element,
+            Typ, G, Data, Is_Nil);
+   end Hook_Start_Element;
 
-   -----------------
-   -- End_Element --
-   -----------------
+   ----------------------
+   -- Hook_End_Element --
+   ----------------------
 
-   procedure End_Element
-     (Handler       : in out Validating_Reader;
+   procedure Hook_End_Element
+     (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "")
@@ -471,28 +509,29 @@ package body Schema.Readers is
                    & ASCII.ESC & "[39m");
       end if;
 
-      if Handler.Validators /= null then
+      if Validating_Reader (Handler).Validators /= null then
          --  No character data => behave as an empty element, but we need to
          --  test explicitely. For instance, the "minLength" facet might or
          --  the "fixed" attribute need to test whether the empty string is
          --  valid.
-         if not Handler.Validators.Had_Character_Data
-           and then not Handler.Validators.Is_Nil
+         if not Validating_Reader (Handler).Validators.Had_Character_Data
+           and then not Validating_Reader (Handler).Validators.Is_Nil
          then
-            Internal_Characters (Handler, "", Empty_Element => True);
+            Internal_Characters
+              (Validating_Reader (Handler), "", Empty_Element => True);
          end if;
 
          --  Do not check if the element is nil, since no child is expected
          --  anyway, and some validators (sequence,...) will complain
-         if not Handler.Validators.Is_Nil then
+         if not Validating_Reader (Handler).Validators.Is_Nil then
             Validate_End_Element
-              (Get_Validator (Handler.Validators.Typ),
+              (Get_Validator (Validating_Reader (Handler).Validators.Typ),
                Qname,
-               Handler.Validators.Data);
+               Validating_Reader (Handler).Validators.Data);
          end if;
       end if;
-      Pop (Handler.Validators);
-   end End_Element;
+      Pop (Validating_Reader (Handler).Validators);
+   end Hook_End_Element;
 
    -------------------------
    -- Internal_Characters --
@@ -527,32 +566,35 @@ package body Schema.Readers is
       end if;
    end Internal_Characters;
 
-   ----------------
-   -- Characters --
-   ----------------
+   ---------------------
+   -- Hook_Characters --
+   ---------------------
 
-   procedure Characters
-     (Handler : in out Validating_Reader;
+   procedure Hook_Characters
+     (Handler : in out Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence) is
    begin
-      Internal_Characters (Handler, Ch, Empty_Element => False);
-   end Characters;
+      Internal_Characters
+        (Validating_Reader (Handler), Ch, Empty_Element => False);
+   end Hook_Characters;
 
-   --------------------------
-   -- Ignorable_Whitespace --
-   --------------------------
+   -------------------------------
+   -- Hook_Ignorable_Whitespace --
+   -------------------------------
 
-   procedure Ignorable_Whitespace
-     (Handler : in out Validating_Reader;
+   procedure Hook_Ignorable_Whitespace
+     (Handler : in out Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence) is
    begin
-      if Handler.Validators /= null
-        and then Is_Simple_Type (Get_Type (Handler.Validators.Element))
-        and then not Handler.Validators.Is_Nil
+      if Validating_Reader (Handler).Validators /= null
+        and then Is_Simple_Type
+          (Get_Type (Validating_Reader (Handler).Validators.Element))
+        and then not Validating_Reader (Handler).Validators.Is_Nil
       then
-         Internal_Characters (Handler, Ch, Empty_Element => False);
+         Internal_Characters
+           (Validating_Reader (Handler), Ch, Empty_Element => False);
       end if;
-   end Ignorable_Whitespace;
+   end Hook_Ignorable_Whitespace;
 
    -----------
    -- Parse --
@@ -564,8 +606,31 @@ package body Schema.Readers is
    is
       Loc : aliased Locator_Impl;
    begin
+      if Get_Feature (Parser, Schema_Validation_Feature) then
+         Set_Hooks (Parser,
+                    Start_Element => Hook_Start_Element'Access,
+                    End_Element   => Hook_End_Element'Access,
+                    Characters    => Hook_Characters'Access,
+                    Whitespace    => Hook_Ignorable_Whitespace'Access,
+                    Start_Prefix  => Hook_Start_Prefix_Mapping'Access,
+                    End_Prefix    => Hook_End_Prefix_Mapping'Access,
+                    Doc_Locator   => Hook_Set_Document_Locator'Access);
+      else
+         Set_Hooks (Parser,
+                    Start_Element => null,
+                    End_Element   => null,
+                    Characters    => null,
+                    Whitespace    => null,
+                    Start_Prefix  => null,
+                    End_Prefix    => null,
+                    Doc_Locator   => null);
+      end if;
+
       Sax.Readers.Parse (Sax.Readers.Reader (Parser), Input);
-      Unref (Parser.Locator.all);
+
+      if Parser.Locator /= null then
+         Unref (Parser.Locator.all);
+      end if;
 
    exception
       when E : XML_Validation_Error =>
@@ -591,47 +656,48 @@ package body Schema.Readers is
          & String (Get_Message (Except)));
    end Validation_Error;
 
-   --------------------------
-   -- Set_Document_Locator --
-   --------------------------
+   -------------------------------
+   -- Hook_Set_Document_Locator --
+   -------------------------------
 
-   procedure Set_Document_Locator
-     (Handler : in out Validating_Reader;
+   procedure Hook_Set_Document_Locator
+     (Handler : in out Reader'Class;
       Loc     : access Sax.Locators.Locator'Class) is
    begin
-      Handler.Locator := Locator_Access (Loc);
-      Ref (Handler.Locator.all);
-   end Set_Document_Locator;
+      Validating_Reader (Handler).Locator := Locator_Access (Loc);
+      Ref (Validating_Reader (Handler).Locator.all);
+   end Hook_Set_Document_Locator;
 
-   --------------------------
-   -- Start_Prefix_Mapping --
-   --------------------------
+   -------------------------------
+   -- Hook_Start_Prefix_Mapping --
+   -------------------------------
 
-   procedure Start_Prefix_Mapping
-     (Handler : in out Validating_Reader;
+   procedure Hook_Start_Prefix_Mapping
+     (Handler : in out Reader'Class;
       Prefix  : Unicode.CES.Byte_Sequence;
       URI     : Unicode.CES.Byte_Sequence) is
    begin
-      Handler.Prefixes := new Prefix_Mapping'
+      Validating_Reader (Handler).Prefixes := new Prefix_Mapping'
         (Prefix    => new Byte_Sequence'(Prefix),
          Namespace => new Byte_Sequence'(URI),
-         Next      => Handler.Prefixes);
-   end Start_Prefix_Mapping;
+         Next      => Validating_Reader (Handler).Prefixes);
+   end Hook_Start_Prefix_Mapping;
 
-   ------------------------
-   -- End_Prefix_Mapping --
-   ------------------------
+   -----------------------------
+   -- Hook_End_Prefix_Mapping --
+   -----------------------------
 
-   procedure End_Prefix_Mapping
-     (Handler : in out Validating_Reader;
+   procedure Hook_End_Prefix_Mapping
+     (Handler : in out Reader'Class;
       Prefix  : Unicode.CES.Byte_Sequence)
    is
-      Tmp  : Prefix_Mapping_Access := Handler.Prefixes;
+      Tmp  : Prefix_Mapping_Access := Validating_Reader (Handler).Prefixes;
       Tmp2 : Prefix_Mapping_Access;
    begin
-      if Handler.Prefixes /= null then
-         if Handler.Prefixes.Prefix.all = Prefix then
-            Handler.Prefixes := Handler.Prefixes.Next;
+      if Validating_Reader (Handler).Prefixes /= null then
+         if Validating_Reader (Handler).Prefixes.Prefix.all = Prefix then
+            Validating_Reader (Handler).Prefixes :=
+              Validating_Reader (Handler).Prefixes.Next;
             Free (Tmp);
          else
             while Tmp.Next /= null
@@ -647,7 +713,7 @@ package body Schema.Readers is
             end if;
          end if;
       end if;
-   end End_Prefix_Mapping;
+   end Hook_End_Prefix_Mapping;
 
    -------------------------------
    -- Get_Namespace_From_Prefix --

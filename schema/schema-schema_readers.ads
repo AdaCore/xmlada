@@ -6,6 +6,7 @@ with Sax.Attributes;
 with Schema.Readers;
 with Unicode.CES;
 with Schema.Validators;
+with Input_Sources;
 
 package Schema.Schema_Readers is
 
@@ -26,14 +27,12 @@ package Schema.Schema_Readers is
    --  parsing, that ensure that any entity (element, type, attribute,...) that
    --  has been referenced was correctly declared.
 
-
    function Get_Created_Grammar
      (Reader : Schema_Reader) return Schema.Validators.XML_Grammar;
    --  Return the grammar parsed
 
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether extra debug output should be displayed
-
 
 private
    type Context_Type is (Context_Type_Def,
@@ -132,5 +131,8 @@ private
       Qname         : Unicode.CES.Byte_Sequence := "");
    procedure Characters
      (Handler : in out Schema_Reader; Ch : Unicode.CES.Byte_Sequence);
+   procedure Parse
+     (Parser : in out Schema_Reader;
+      Input  : in out Input_Sources.Input_Source'Class);
 
 end Schema.Schema_Readers;

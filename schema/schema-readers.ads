@@ -1,5 +1,4 @@
 
-with Sax.Attributes;
 with Sax.Exceptions;
 with Sax.Locators;
 with Input_Sources;
@@ -10,19 +9,39 @@ with Schema.Validators;
 package Schema.Readers is
 
    type Validating_Reader is new Sax.Readers.Reader with private;
+   --  To get full validation of an XML document, you must derive from this
+   --  type. You must also enable the Validation_Feature feature, through a
+   --  call to Set_Feature.
+   --  If you override the Parse method in your code, you must call
+   --     Parse (Validating_Reader (Your_Reader), Input);
+   --  and not  Parse (Reader (Your_Reader), Input) to get validation.
+   --
+   --  In most cases, the reader will find by itself what variable should be
+   --  used, from the contents of the XML file:
+   --  It uses the attribute of the nodes to find out what grammar, for
+   --  instance from the following XML extract:
+   --     <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   --           xsi:noNamespaceSchemaLocation="my_file.xsd" />
+   --  or
+   --     <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   --           xsi:schemaLocation="ns1 my_file.xsd  ns2 my_file2.xsd" />
+   --
+   --  The second variant associates a specific grammar with each of the
+   --  namespaces found in the document.
 
    procedure Set_Validating_Grammar
      (Reader  : in out Validating_Reader;
       Grammar : Schema.Validators.XML_Grammar);
    --  Create an XML reader that will validate its input file. The grammar
-   --  must have been parsed first.
+   --  must have been parsed first (most likely through a call to
+   --  Schema.Schema_Readers.Schema_Reader or a call to Parse_Grammar below).
    --  If other schema files need to be parsed because of the presence of a
    --  "targetNamespace" attribute, their corresponding grammars will be added
    --  to grammar, in their own namespace of course.
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;
-      Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
+      Except : Sax.Exceptions.Sax_Parse_Exception'Class);
    --  Called when a validation error occurs.
    --  By default, this raises XML_Validation_Error
 
@@ -33,15 +52,16 @@ package Schema.Readers is
      (Handler  : in out Validating_Reader;
       Xsd_File : Unicode.CES.Byte_Sequence;
       Add_To   : in out Schema.Validators.XML_Grammar);
-   --  Parse the grammar to use from an XSD file, and add it to the grammar
-   --  currently defined by Handled.
+   --  Parse the grammar to use from an XSD file, and add it to Add_To.
+   --  The resulting grammar can be passed to Set_Validating_Grammar.
 
    function Get_Namespace_From_Prefix
      (Handler  : Validating_Reader;
       Prefix   : Unicode.CES.Byte_Sequence)
       return Unicode.CES.Byte_Sequence_Access;
-   --  Get the namespace associated with a given prefix.
-   --  Do not modify the return value.
+   --  Get the namespace associated with a given prefix, in the current
+   --  context.
+   --  The caller must not modify the return value.
 
 private
    type Prefix_Mapping;
@@ -87,31 +107,6 @@ private
    procedure Parse
      (Parser : in out Validating_Reader;
       Input  : in out Input_Sources.Input_Source'Class);
-   procedure Set_Document_Locator
-     (Handler : in out Validating_Reader;
-      Loc     : access Sax.Locators.Locator'Class);
-   procedure Start_Element
-     (Handler       : in out Validating_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class);
-   procedure End_Element
-     (Handler       : in out Validating_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "");
-   procedure Characters
-     (Handler : in out Validating_Reader; Ch : Unicode.CES.Byte_Sequence);
-   procedure Ignorable_Whitespace
-     (Handler : in out Validating_Reader;
-      Ch      : Unicode.CES.Byte_Sequence);
-   procedure Start_Prefix_Mapping
-     (Handler : in out Validating_Reader;
-      Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence);
-   procedure End_Prefix_Mapping
-     (Handler : in out Validating_Reader;
-      Prefix  : Unicode.CES.Byte_Sequence);
+   --  Override inherited method.
 
 end Schema.Readers;

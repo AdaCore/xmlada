@@ -2,6 +2,7 @@ with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Attributes;    use Sax.Attributes;
 with Sax.Encodings;     use Sax.Encodings;
+with Sax.Readers;
 with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
 with Schema.Readers;    use Schema.Readers;
@@ -254,6 +255,18 @@ package body Schema.Schema_Readers is
          Global_Check (Handler.Created_Grammar);
       end if;
    end End_Document;
+
+   -----------
+   -- Parse --
+   -----------
+
+   procedure Parse
+     (Parser : in out Schema_Reader;
+      Input  : in out Input_Sources.Input_Source'Class) is
+   begin
+      Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
+      Parse (Validating_Reader (Parser), Input);
+   end Parse;
 
    ----------------------
    -- Set_Debug_Output --
