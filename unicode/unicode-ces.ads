@@ -140,11 +140,14 @@ package Unicode.CES is
      function (Str : Byte_Sequence) return Natural;
 
    type Encoding_Scheme is record
+      BOM             : Bom_Type;
       Read            : Read_Function;
       Width           : Width_Function;
       Encode          : Encode_Function;
       Length          : Length_Function;
    end record;
+   --  BOM is the byte-order mark to write when first writting a file with this
+   --  encoding
 
    --------------------
    -- Misc functions --
