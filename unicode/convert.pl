@@ -76,8 +76,8 @@ sub print_line() {
 }
 
 
-open (BLOCKS, "$blocks");
-open (NAMES, "$names");
+open (BLOCKS, "$blocks") || die "$blocks not found";
+open (NAMES, "$names") || die "$names not found";
 # @names=<NAMES>;
 # close (NAMES);
 
@@ -95,9 +95,45 @@ while (<BLOCKS>) {
 
     $name = &to_ada ($name);
 
+    ## On VMS, Filename lengths are limited to 39.39 characters
+
+    $name = "Alpha_Presentation_Forms"
+	if ($name eq "Alphabetic_Presentation_Forms");
+    $name = "Arabic_Present_FormsA"
+	if ($name eq "Arabic_Presentation_Forms_A");
+    $name = "Arabic_Present_FormsB"
+	if ($name eq "Arabic_Presentation_Forms_B");
+    $name = "Cjk_Compat_Ideographs"
+	if ($name eq "Cjk_Compatibility_Ideographs");
+    $name = "Cjk_Symbols_And_Punct"
+	if ($name eq "Cjk_Symbols_And_Punctuation");
+    $name = "Cjk_Unified_Ideographs"
+	if ($name eq "Cjk_Unified_Ideographs_Extension_A");
+    $name = "Combining_Diacritical"
+	if ($name eq "Combining_Diacritical_Marks");
+    $name = "Combining_Marks_Symbols"
+	if ($name eq "Combining_Marks_For_Symbols");
+    $name = "Cjk_Letters_Months"
+	if ($name eq "Enclosed_Cjk_Letters_And_Months");
+    $name = "Half_Full_Withdt_Forms"
+	if ($name eq "Halfwidth_And_Fullwidth_Forms");
+    $name = "High_Private_Surrogates"
+	if ($name eq "High_Private_Use_Surrogates");
+    $name = "Ideograph_Descr_Chars"
+	if ($name eq "Ideographic_Description_Characters");
+    $name = "Optical_Chars_Recognition"
+	if ($name eq "Optical_Character_Recognition");
+    $name = "Super_And_Sub_Scripts"
+	if ($name eq "Superscripts_And_Subscripts");
+    $name = "Canadian_Aboriginal"
+	if ($name eq "Unified_Canadian_Aboriginal_Syllabics");
+    
+    (length ($name) <= 25)
+	|| die "!!! File name too long $name (length=", length ($name), ")\n";
+
     $pkg = $name;
     $pkg =~ tr/A-Z/a-z/;
-
+    
     next if ($pkg eq "");
     
     open (OUT, ">unicode-names-$pkg.ads");
