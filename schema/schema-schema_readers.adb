@@ -357,11 +357,6 @@ package body Schema.Schema_Readers is
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value
            (Get_Value (Atts, Max_Occurs_Index));
-
-         --  Imposed by test elemJ001.xsd, but not sure why
-         if Max_Occurs = 0 then
-            Min_Occurs := 0;
-         end if;
       end if;
 
       Handler.Contexts := new Context'
@@ -424,7 +419,7 @@ package body Schema.Schema_Readers is
                   Handler.Contexts.Group, Min_Occurs, Max_Occurs);
                Output ("Validator := Extension_Of (Lookup (Handler.Schema.NS,"
                        & """anytype""), " & Ada_Name (Handler.Contexts)
-                    & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
+                       & "," & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
 
          when Context_Sequence =>
             Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Group,
@@ -799,11 +794,6 @@ package body Schema.Schema_Readers is
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value
            (Get_Value (Atts, Max_Occurs_Index));
-
-         --  Imposed by test elemJ001.xsd, but not sure why
-         if Max_Occurs = 0 then
-            Min_Occurs := 0;
-         end if;
       end if;
 
       case Handler.Contexts.Typ is
@@ -1774,6 +1764,7 @@ package body Schema.Schema_Readers is
 
    procedure Finish_All (Handler : in out Schema_Reader) is
    begin
+
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
             Handler.Contexts.Next.Type_Validator :=
