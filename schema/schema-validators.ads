@@ -218,14 +218,19 @@ package Schema.Validators is
    --  By default, this returns null, and no data is associated.
 
    procedure Validate_Start_Element
-     (Validator         : access XML_Validator_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
+     (Validator              : access XML_Validator_Record;
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Element_Validator      : out XML_Element);
    --  Check whether this Start_Element event is valid in the context of the
    --  validator. Data is the result of Create_Validator_Data.
+   --
+   --  NS is the *apparent* namespace, ie for local elements is it
+   --  resolved to the parent element's namespace automatically.
+   --  Namespace_URI is the actual namespace found in the XML file, possibly
+   --  the empty string for an unqualified element.
    --
    --  Element_Validator is set, on exit, to the validator that should be used
    --  to validate the next element.
@@ -338,6 +343,7 @@ package Schema.Validators is
 
    function Create_Local_Element
      (Local_Name : Unicode.CES.Byte_Sequence;
+      NS         : XML_Grammar_NS;
       Of_Type    : XML_Type;
       Form       : Form_Type) return XML_Element;
    --  Create a new element, with a specific type.
@@ -406,7 +412,8 @@ package Schema.Validators is
    procedure Check_Qualification
      (Element : XML_Element; Namespace_URI : Unicode.CES.Byte_Sequence);
    --  Check whether the element should have been qualified or not,
-   --  depending on its "form" attribute
+   --  depending on its "form" attribute.
+   --  Namespace_URI is the namespace as read in the file.
 
    function Is_Global (Element : XML_Element) return Boolean;
    --  Whether Element is a global element (ie declared at the top-level of
@@ -722,6 +729,8 @@ private
 
    type XML_Element_Record is record
       Local_Name : Unicode.CES.Byte_Sequence_Access;
+      NS         : XML_Grammar_NS;
+
       Of_Type    : XML_Type;
 
       Substitution_Groups : Element_List_Access;
@@ -1066,7 +1075,7 @@ private
      (Group         : access Group_Model_Record;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
-      Grammar       : in out XML_Grammar;
+      NS            : XML_Grammar_NS;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
    --  Whether Group can process Local_Name. This is used for group_models
@@ -1107,16 +1116,18 @@ private
    end record;
 
    procedure Validate_Start_Element
-     (Validator         : access XML_Any_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
+     (Validator              : access XML_Any_Record;
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Element_Validator      : out XML_Element);
    procedure Validate_Characters
      (Validator     : access XML_Any_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean);
+   function Get_Namespace_From_Parent_For_Locals
+     (Validator : access XML_Any_Record) return Boolean;
 
    --------------------
    -- XML_All_Record --
@@ -1138,11 +1149,11 @@ private
 
    procedure Validate_Start_Element
      (Validator         : access XML_All_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access XML_All_Record;
       Local_Name        : Unicode.CES.Byte_Sequence;
@@ -1170,11 +1181,11 @@ private
    type Sequence_Data_Access is access all Sequence_Data'Class;
    procedure Validate_Start_Element
      (Validator         : access Sequence_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access Sequence_Record;
       Local_Name        : Unicode.CES.Byte_Sequence;
@@ -1185,7 +1196,7 @@ private
      (Group        : access Sequence_Record;
       Local_Name   : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
-      Grammar      : in out XML_Grammar;
+      NS            : XML_Grammar_NS;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
    function Can_Be_Empty (Group : access Sequence_Record) return Boolean;
@@ -1205,12 +1216,12 @@ private
    end record;
    type Choice_Data_Access is access all Choice_Data'Class;
    procedure Validate_Start_Element
-     (Validator         : access Choice_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
+     (Validator              : access Choice_Record;
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access Choice_Record;
       Local_Name        : Unicode.CES.Byte_Sequence;
@@ -1218,12 +1229,12 @@ private
    function Create_Validator_Data
      (Validator : access Choice_Record) return Validator_Data;
    procedure Applies_To_Tag
-     (Group        : access Choice_Record;
-      Local_Name   : Unicode.CES.Byte_Sequence;
+     (Group         : access Choice_Record;
+      Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
-      Grammar      : in out XML_Grammar;
-      Applies      : out Boolean;
-      Skip_Current : out Boolean);
+      NS            : XML_Grammar_NS;
+      Applies       : out Boolean;
+      Skip_Current  : out Boolean);
    function Can_Be_Empty (Group : access Choice_Record) return Boolean;
    function Type_Model
      (Validator  : access Choice_Record;
@@ -1240,12 +1251,12 @@ private
    --  elements and attributes
 
    procedure Validate_Start_Element
-     (Validator         : access Any_Simple_XML_Validator_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
+     (Validator              : access Any_Simple_XML_Validator_Record;
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator  : access Any_Simple_XML_Validator_Record;
       Local_Name : Unicode.CES.Byte_Sequence;
