@@ -32,7 +32,6 @@ with Sax.Encodings; use Sax.Encodings;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Unicode;       use Unicode;
 with Interfaces;    use Interfaces;
-with GNAT.IO; use GNAT.IO;
 
 package body DOM.Core is
 
@@ -509,6 +508,4 @@ package body DOM.Core is
       end if;
    end Free_Unless_Shared;
 
-begin
-   Put_Line (Node_Record'Size'Img & Node_Record'Object_Size'Img);
 end DOM.Core;
