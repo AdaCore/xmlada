@@ -4,7 +4,7 @@
 # from www.xml.org. The name of the current archive is
 #     xmlconf-19990712.tar.Z
 
-BASE=/home/briot/internet/xml/tests
+BASE=${BASE:-tests}
 XML=./testxml
 XML_SILENT="$XML -silent"   # Use for testing error messages only
 XML_SILENT_VALIDATE="$XML -silent -validate" 
