@@ -4,5 +4,5 @@ project XmlAda_Unicode is
     for Source_Files use ();
     for Library_Dir use "lib/";
     for Library_Name use "xmlada_unicode";
-    for Library_Kind use "static";
+    for Library_Kind use "relocatable";
 end XmlAda_Unicode;
