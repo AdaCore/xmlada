@@ -465,6 +465,7 @@ package body DOM.Core.Nodes is
       end Insert_Before;
 
       Tmp : Node;
+      pragma Unreferenced (Tmp);
    begin
       pragma Assert (Child_Is_Valid (N, New_Child));
 
@@ -1198,5 +1199,120 @@ package body DOM.Core.Nodes is
             Put (Node_Value (N));
       end case;
    end Print;
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump (N : Node; With_URI : Boolean := False) is
+      procedure Dump (N : Node; Prefix : String);
+      --  Dump N, with a leading Prefix on the line
+
+      procedure Dump (List : Node_List; Prefix : String);
+      --  Same as above, but for a list.
+
+      procedure Print_Name (N : Node);
+      --  Print the name of the node.
+
+      ----------------
+      -- Print_Name --
+      ----------------
+
+      procedure Print_Name (N : Node) is
+      begin
+         if With_URI then
+            Print_String (Namespace_URI (N) & Colon_Sequence & Local_Name (N));
+         else
+            Print_String (Node_Name (N));
+         end if;
+      end Print_Name;
+
+      ----------
+      -- Dump --
+      ----------
+
+      procedure Dump (List : Node_List; Prefix : String) is
+      begin
+         for J in 0 .. List.Last loop
+            Dump (List.Items (J), Prefix);
+         end loop;
+      end Dump;
+
+      ----------
+      -- Dump --
+      ----------
+
+      procedure Dump (N : Node; Prefix : String) is
+      begin
+         case N.Node_Type is
+            when Element_Node =>
+               Put (Prefix & "Element: ");
+               Print_Name (N);
+               New_Line;
+
+               --  Sort the XML attributes as required for canonical XML
+               Sort (N.Attributes);
+
+               for J in 0 .. N.Attributes.Last loop
+                  Dump (N.Attributes.Items (J),
+                        Prefix => Prefix & "  ");
+               end loop;
+
+               Dump (N.Children, Prefix & "  ");
+
+            when Attribute_Node =>
+               Put (Prefix & "Attribute: ");
+               Print_Name (N);
+               Print_String (Node_Value (N));  --  ??? Could be a tree
+               New_Line;
+
+            when Processing_Instruction_Node =>
+               Put_Line (Prefix & "PI: " & N.Target.all);
+               Put_Line (Prefix & "   Data: " & N.Pi_Data.all);
+
+            when Comment_Node =>
+               Put_Line (Prefix & "Comment: " & Node_Value (N));
+
+            when Document_Node =>
+               Put_Line (Prefix & "Document: ");
+               Dump (N.Doc_Children, Prefix => Prefix & "  ");
+
+            when Document_Fragment_Node =>
+               Put_Line (Prefix & "Document_Fragment: ");
+               Dump (N.Doc_Frag_Children, Prefix => Prefix & "  ");
+
+            when Document_Type_Node =>
+               Put_Line (Prefix & "Document_Type: ");
+
+            when Notation_Node =>
+               Put_Line (Prefix & "Notation:");
+
+            when Text_Node =>
+               Put (Prefix & "Text: ");
+               Print_String (Node_Value (N));
+               New_Line;
+
+            when Cdata_Section_Node =>
+               Put (Prefix & "Cdata: ");
+               Print_String (Node_Value (N));
+               New_Line;
+
+            when Entity_Reference_Node =>
+               Put (Prefix & "Entity_Reference: ");
+               Print_String (Node_Value (N));
+               New_Line;
+
+            when Entity_Node =>
+               Put (Prefix & "Entity: ");
+               Print_String (Node_Value (N));
+               New_Line;
+         end case;
+      end Dump;
+
+   begin
+      if N /= null then
+         Dump (N, Prefix => "");
+      end if;
+   end Dump;
 
 end DOM.Core.Nodes;

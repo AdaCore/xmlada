@@ -234,7 +234,9 @@ package DOM.Core.Nodes is
    -- Extra subprograms --
    -----------------------
    --  The following subprograms are not part of the standard DOM interface.
-   --  However, they are needed for a full usage of this DOM implementation
+   --  However, they are needed for a full usage of this DOM implementation.
+   --  The output of any of these subprograms is likely to change from one
+   --  version of XML/Ada to the next, do not rely on it.
 
    procedure Print
      (N              : Node;
@@ -254,6 +256,10 @@ package DOM.Core.Nodes is
       Print_XML_PI   : Boolean := False;
       With_URI       : Boolean := False);
    --  Same as Print, byt for all the nodes in the list.
+
+   procedure Dump (N : Node; With_URI : Boolean := False);
+   --  Dump the contents of the node to standard output.
+   --  This output shows the structure of the tree instead of a valid XML file.
 
    procedure Free (N : in out Node; Deep : Boolean := True);
    --  This procedure is not part of the DOM standard, but is required to
