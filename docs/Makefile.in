@@ -5,6 +5,7 @@ DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
 TEXI2HTML= @TEXI2HTML@
 TEXI2DVI= @TEXI2DVI@
+PDFTEX= @PDFTEX@
 TEX= @TEX@
 
 all: ${FORMATS} clean
@@ -31,7 +32,13 @@ endif
 
 %.pdf: %.texi
 ifneq (${TEXI2DVI},)
+ifneq (${PDFTEX},)
 	@echo x | ${TEXI2DVI} -p $<
+else
+	@echo "-----------------------------------------------"
+	@echo "pdftex not fond, cannot build PDF documentation"
+	@echo "-----------------------------------------------"
+endif
 else
 	@echo "--------------------------------------------------"
 	@echo "texi2dvi not found, cannot build PDF documentation"
