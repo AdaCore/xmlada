@@ -47,6 +47,7 @@ unmodified in any copy.
 * The Input module::
 * The SAX module::
 * The DOM module::
+* The XML_GTK module::
 * Using the library::
 
 @detailmenu
@@ -70,6 +71,8 @@ The SAX module
 * SAX Handlers::
 
 The DOM module
+
+The XML_GTK module
 
 Using the library
 
@@ -843,6 +846,31 @@ You can create such a tree through the tree_readers.Parse function.
 
 Only the Core module of the DOM standard is currently implemented, other
 modules will follow.
+
+@c -------------------------------------------------------------------
+@node The XML_GTK module
+@chapter The XML_GTK module
+@c -------------------------------------------------------------------
+
+@noindent
+
+GTK/Ada is a library that can be used to build graphical user interfaces.
+It is available either from AdaCore directly, which should be the prefered
+version if you are using it in a commercial project, or directly from
+@url{http://libre.act-europe.fr} for university projects.
+
+You should first install GTK/Ada, and change the @code{ADA_PROJECT_PATH}
+environment variable so that it includes the directory containing
+@file{gtkada.gpr}.
+
+Then configure, compile and install XML/Ada. This will install an extra
+module and library called @file{xml_gtk} and @file{libxml_gtk.so}.
+
+This library allows you to use XML/Ada as the parser, while still generating
+an XML tree compatible with the one in @file{glib-xml.ads}. This can be
+used for instance in current applications that used GtkAda's lightweight
+parser, to use an XML parser which will accept a broader range of XML
+files, and will provide better error messages.
 
 @c -------------------------------------------------------------------
 @node Using the library
