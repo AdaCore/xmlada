@@ -1,5 +1,6 @@
 Problems fixed in 1.x
 
+- DB25-005 Incorrect value returned by DOM.Attributes.Owner_Element
 - D714-002 Attribute quotes are no longer present in a processing-instruction
   data, in SAX or DOM
 - Constraint_Error raised when an external entity doesn't reference an
