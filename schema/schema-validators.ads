@@ -521,7 +521,8 @@ package Schema.Validators is
    type XML_All_Record is new XML_Validator_Record with private;
    type XML_All is access all XML_All_Record'Class;
 
-   function Create_All return XML_All;
+   function Create_All
+     (Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) return XML_All;
    --  Return a new validator that checks that all its elements appear the
    --  right number of time
 
@@ -1126,10 +1127,13 @@ private
 
    type XML_All_Record is new XML_Validator_Record with record
       Particles  : Particle_List := Empty_Particle_List;
+      Min_Occurs : Natural;
+      Max_Occurs : Integer;
    end record;
    type All_Data (Num_Elements : Integer) is new Group_Model_Data_Record with
       record
          All_Elements : Natural_Array (1 .. Num_Elements);
+         Num_Occurs   : Natural;
       end record;
    type All_Data_Access is access all All_Data'Class;
 
