@@ -1,5 +1,8 @@
 Problems fixed in 0.8
 
+- URI were incorrectly reported for attributes with namespace.
+- URI are correctly resolved for attributes even if the xmlns:... is 
+  found after the attribute (but in the same element start tag)
 - Some random failures on some systems. Patch sent by J.C. Groult
 - Error when an external DTD wasn't found. An Assert_Failure was raised
 - Bug in handling of DTD models, for attributes with default values.
