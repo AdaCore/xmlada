@@ -2578,9 +2578,9 @@ package body Sax.Readers is
       --  If Allow_Publicid is True, then PUBLIC might be followed by a single
       --  string, as in rule [83] of the XML specifications.
 
-      procedure Check_Standalone_Value;
-      procedure Check_Encoding_Value;
-      procedure Check_Version_Value;
+      procedure Check_Standalone_Value (Id : in out Token);
+      procedure Check_Encoding_Value (Id : in out Token);
+      procedure Check_Version_Value (Id : in out Token);
       --  Check the arguments for the <?xml?> processing instruction.
       --  Each of this procedures gets the arguments from Next_Token, up to,
       --  and including, the following space or End_Of_PI character.
@@ -3740,7 +3740,7 @@ package body Sax.Readers is
       -- Check_Version_Value --
       -------------------------
 
-      procedure Check_Version_Value is
+      procedure Check_Version_Value (Id : in out Token) is
          C : Unicode_Char;
          J : Natural;
          Value_Start, Value_End : Token;
@@ -3789,7 +3789,7 @@ package body Sax.Readers is
       -- Check_Encoding_Value --
       --------------------------
 
-      procedure Check_Encoding_Value is
+      procedure Check_Encoding_Value (Id : in out Token) is
          C : Unicode_Char;
          J : Natural;
          Value_Start, Value_End : Token;
@@ -3859,7 +3859,7 @@ package body Sax.Readers is
       -- Check_Standalone_Value --
       ----------------------------
 
-      procedure Check_Standalone_Value is
+      procedure Check_Standalone_Value (Id : in out Token) is
          Value_Start, Value_End : Token;
       begin
          Next_Token_Skip_Spaces (Input, Parser, Id);
@@ -3939,7 +3939,7 @@ package body Sax.Readers is
             Set_State (Parser, Tag_State);
 
             if Value (Parser, Id, Id) = Version_Sequence then
-               Check_Version_Value;
+               Check_Version_Value (Id);
             elsif not Parser.In_External_Entity then
                Fatal_Error
                  (Parser, "'version' must be the first argument to <?xml?>",
@@ -3949,7 +3949,7 @@ package body Sax.Readers is
             if Id.Typ = Name
               and then Value (Parser, Id, Id) = Encoding_Sequence
             then
-               Check_Encoding_Value;
+               Check_Encoding_Value (Id);
             elsif Parser.In_External_Entity then
                Fatal_Error
                  (Parser, "'encoding' must be specified for <?xml?> in"
@@ -3960,7 +3960,7 @@ package body Sax.Readers is
               and then Id.Typ = Name
               and then Value (Parser, Id, Id) = Standalone_Sequence
             then
-               Check_Standalone_Value;
+               Check_Standalone_Value (Id);
             end if;
 
             if Id.Typ /= End_Of_PI then
