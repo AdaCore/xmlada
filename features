@@ -8,6 +8,8 @@ New features in version 1.1
 - D719-001: Dom.Core.Nodes.Print will now output the <?xml?> PI when outputing
   a document
 
+- D714-002: Comments are now properly stored in the DOM tree
+
 - Sax.Locators are now reference-counted, so that they can be preserved across
   calls to Parse.
 
