@@ -309,6 +309,9 @@ package body Sax.Readers is
    -- Internal subprograms --
    --------------------------
 
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Input_Source'Class, Input_Source_Access);
+
    function Debug_Encode (C : Unicode_Char) return Byte_Sequence;
    --  Return an encoded string matching C (matching Sax.Encodins.Encoding)
 
@@ -700,7 +703,10 @@ package body Sax.Readers is
 
       Input_A : Entity_Input_Source_Access;
    begin
-      while Parser.Inputs /= null and then Eof (Parser.Inputs.Input.all) loop
+      while Parser.Inputs /= null
+        and then (Parser.Inputs.Input = null
+                  or else Eof (Parser.Inputs.Input.all))
+      loop
          Copy (Parser.Locator.all, Parser.Inputs.Save_Loc);
          Free (Parser.Inputs.Save_Loc);
 
@@ -1127,14 +1133,14 @@ package body Sax.Readers is
    procedure Close_Inputs (Parser : in out Reader'Class) is
       procedure Free is new Unchecked_Deallocation
         (Entity_Input_Source, Entity_Input_Source_Access);
-      procedure Unchecked_Free is new Unchecked_Deallocation
-        (Input_Source'Class, Input_Source_Access);
       Input_A : Entity_Input_Source_Access;
    begin
       while Parser.Close_Inputs /= null loop
          --  ??? Could use Input_Sources.Locator.Free
-         Close (Parser.Close_Inputs.Input.all);
-         Unchecked_Free (Parser.Close_Inputs.Input);
+         if Parser.Close_Inputs.Input /= null then
+            Close (Parser.Close_Inputs.Input.all);
+            Unchecked_Free (Parser.Close_Inputs.Input);
+         end if;
 
          --  not in string context
          if not Parser.State.Ignore_Special then
@@ -2134,6 +2140,7 @@ package body Sax.Readers is
                V.Already_Read := True;
 
                Parser.Element_Id := Parser.Element_Id + 1;
+
                Parser.Inputs := new Entity_Input_Source'
                  (External       => V.External,
                   Name           => new Byte_Sequence'(N),
@@ -2155,36 +2162,59 @@ package body Sax.Readers is
 
                   declare
                      URI : constant Byte_Sequence :=
-                       Resolve_URI (Parser, V.Value.all);
+                             Resolve_URI (Parser, V.Value.all);
                   begin
-                     Parser.Inputs.Input := new File_Input;
-                     Open (URI, File_Input (Parser.Inputs.Input.all));
+                     Parser.Inputs.Input := Resolve_Entity
+                       (Parser, Public_Id => V.Public.all, System_Id => URI);
+
+                     --  If either there is no entity resolver or if the
+                     --  standard algorithm should be used
+
+                     if Parser.Inputs.Input = null then
+                        Parser.Inputs.Input := new File_Input;
+                        Open (URI, File_Input (Parser.Inputs.Input.all));
+
+                        Set_Public_Id
+                          (Parser.Inputs.Input.all, V.Value.all);
+                     end if;
+
                      Set_System_Id (Parser.Locator.all, URI);
                      Set_Public_Id (Parser.Locator.all, V.Value.all);
-                     Parser.In_External_Entity := True;
+
                   exception
                      when Name_Error =>
                         Error (Parser,
                                "External entity not found: " & URI, Id);
+                        Unchecked_Free (Parser.Inputs.Input);
                   end;
                else
                   Parser.Inputs.Input := new String_Input;
                   Open (V.Value, Encoding,
                         String_Input (Parser.Inputs.Input.all));
                   Set_Public_Id (Parser.Locator.all, "entity " & N);
+                  Set_Public_Id
+                    (Parser.Inputs.Input.all,
+                     Get_Public_Id (Parser.Locator.all));
                end if;
 
-               Set_Public_Id
-                 (Parser.Inputs.Input.all, Get_Public_Id (Parser.Locator.all));
-               Set_Line_Number (Parser.Locator.all, 1);
-               Set_Column_Number
-                 (Parser.Locator.all,
-                  1 + Prolog_Size (Parser.Inputs.Input.all));
+               if Parser.Inputs.Input = null then
+                  Skipped_Entity (Parser, V.Name.all);
+                  Next_Char (Input, Parser);
+                  Next_Token (Input, Parser, Id);
 
-               Next_Char (Input, Parser);
-               Next_Token (Input, Parser, Id);
+               else
+                  Parser.In_External_Entity := V.External;
 
-               V.Already_Read := False;
+                  Set_Line_Number (Parser.Locator.all, 1);
+                  Set_Column_Number
+                    (Parser.Locator.all,
+                     1 + Prolog_Size (Parser.Inputs.Input.all));
+
+                  Next_Char (Input, Parser);
+                  Next_Token (Input, Parser, Id);
+
+                  V.Already_Read := False;
+               end if;
             end if;
          end;
       end if;
@@ -3116,6 +3146,7 @@ package body Sax.Readers is
                        & Parser.Buffer (Name_Id.First .. Name_Id.Last)),
                     Value => new Byte_Sequence'
                       (Parser.Buffer (Def_Start.First .. Def_End.Last)),
+                    Public       => null,
                     External     => False,
                     Already_Read => False));
             Internal_Entity_Decl
@@ -3142,9 +3173,12 @@ package body Sax.Readers is
                     (Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
                      & Parser.Buffer (Name_Id.First .. Name_Id.Last)),
                   Value => new Byte_Sequence'
-                  (Parser.Buffer (System_Start.First .. System_End.Last)),
-                  External => True,
+                    (Parser.Buffer (System_Start.First .. System_End.Last)),
+                  Public       => new Byte_Sequence'
+                    (Parser.Buffer (Public_Start.First .. Public_End.Last)),
+                  External     => True,
                   Already_Read => False));
+
             External_Entity_Decl
               (Parser,
                Name => Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
@@ -5035,4 +5069,22 @@ package body Sax.Readers is
    begin
       null;
    end Attribute_Decl;
+
+   --------------------
+   -- Resolve_Entity --
+   --------------------
+
+   function Resolve_Entity
+     (Handler   : Reader;
+      Public_Id : Unicode.CES.Byte_Sequence;
+      System_Id : Unicode.CES.Byte_Sequence)
+      return Input_Sources.Input_Source_Access
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Public_Id);
+      pragma Warnings (Off, System_Id);
+   begin
+      return null;
+   end Resolve_Entity;
+
 end Sax.Readers;
