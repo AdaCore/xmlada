@@ -14,6 +14,9 @@ New features in version 1.1
 - A project file is now installed by default (xmlada.gpr) to facilitate the
   use of XML/Ada
 
+- Better integration with GtkAda: A special SAX reader is provided that can
+  generate an XML tree in the format expected by Glib.XML
+
 New features in version 1.0
 
 - Some file names were shorten in the unicode module, for compatibility with
