@@ -10,7 +10,8 @@ AC_CHECK_PROGS(DVIPS, dvips, "")
 AC_CHECK_PROGS(MAKEINFO, makeinfo, "")
 AC_CHECK_PROGS(TEXI2HTML, texi2html, "")
 AC_CHECK_PROGS(TEX, tex, "")
-AC_CHECK_PROG(GTKADA_GPR, gtkada.gpr, "gtkada.gpr", "", $ADA_PROJECT_PATH)
+AC_CHECK_PROGS(GTKADA_GPR, gtkada.gpr, "", $ADA_PROJECT_PATH)
+IFS=' '
 
 EXEC_PREFIX="$prefix"
 
