@@ -31,7 +31,6 @@ with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Sax.Encodings;             use Sax.Encodings;
-with Unchecked_Deallocation;
 with Ada.Text_IO;               use Ada.Text_IO;
 
 package body DOM.Core.Nodes is
