@@ -553,12 +553,6 @@ package Schema.Validators is
    --  validation checks can only be performed at the end, not while the
    --  grammar is being constructed.
 
-   procedure Set_Redefine_Mode
-     (Grammar : XML_Grammar_NS; Redefine : Boolean);
-   --  Whether we are redefining data from Grammar.
-   --  Calls to Register will no longer fail when an element was already
-   --  registered, same as if we are in a <redefine> element.
-
 
    procedure Set_Debug_Name
      (Typ : access XML_Validator_Record'Class; Name : String);
@@ -903,7 +897,6 @@ private
 
    type XML_Grammar_NS_Record is record
       Namespace_URI : Unicode.CES.Byte_Sequence_Access;
-      Redefine      : Boolean;
       Types         : Types_Htable_Access;
       Elements      : Elements_Htable_Access;
       Groups        : Groups_Htable_Access;

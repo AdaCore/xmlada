@@ -2029,7 +2029,6 @@ package body Schema.Validators is
 
       Grammar.Grammars (Grammar.Grammars'Last) := new XML_Grammar_NS_Record'
         (Namespace_URI    => new Byte_Sequence'(Namespace_URI),
-         Redefine         => False,
          Types            => new Types_Htable.HTable (101),
          Elements         => new Elements_Htable.HTable (101),
          Groups           => new Groups_Htable.HTable (101),
@@ -2304,16 +2303,6 @@ package body Schema.Validators is
       Created := Create_Type ("unsignedByte", Tmp);
       Register (G, Created);
    end Initialize;
-
-   -----------------------
-   -- Set_Redefine_Mode --
-   -----------------------
-
-   procedure Set_Redefine_Mode
-     (Grammar : XML_Grammar_NS; Redefine : Boolean) is
-   begin
-      Grammar.Redefine := Redefine;
-   end Set_Redefine_Mode;
 
    --------------------
    -- Create_Element --

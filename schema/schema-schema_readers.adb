@@ -498,7 +498,6 @@ package body Schema.Schema_Readers is
    begin
       Parse_Grammar
         (Handler, Get_Value (Atts, Location_Index), Handler.Created_Grammar);
---      Set_Redefine_Mode (Handler.Target_NS, True);
 
       Handler.Contexts := new Context'
         (Typ            => Context_Redefine,
@@ -1603,7 +1602,7 @@ package body Schema.Schema_Readers is
          Handled := False;
 
       elsif Local_Name = "redefine" then
-         Set_Redefine_Mode (Handler.Target_NS, False);
+         null;
 
       elsif Local_Name = "group" then
          Finish_Group (Handler);
