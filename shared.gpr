@@ -1,6 +1,8 @@
 project Shared is
    Version := "1.1w";
-   Library_Type := "relocatable";
+
+   type Library_Type_Type is ("relocatable", "static");
+   Library_Type : Library_Type_Type := external ("LIBRARY_TYPE", "static");
 
    for Source_Dirs use ();
 
