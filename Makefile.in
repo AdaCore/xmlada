@@ -59,6 +59,8 @@ install: obj install_dirs ${MODULE_INSTALL}
 
 clean: force
 	gnat clean -r -Pbuild_all.gpr
+	gnat clean -r -Pdom/dom.gpr -XMODE=test
+	gnat clean -r -Psax/sax.gpr -XMODE=test
 	cd docs; ${MAKE} -e clean
 
 distclean: clean
