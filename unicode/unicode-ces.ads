@@ -94,6 +94,11 @@ package Unicode.CES is
    --  checked to recognize "<?xml", and thus distinguish in case there is no
    --  Byte-Order-Mark strictly speaking.
 
+   function Write_Bom (BOM : Bom_Type) return String;
+   --  Return a string suitable to output the BOM (Byte-order-mark). This
+   --  should be added at the beginning of an output string, although this is
+   --  not mandatory
+
    -----------------------
    -- Parsing functions --
    -----------------------
