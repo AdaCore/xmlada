@@ -101,8 +101,7 @@ package body DOM.Core.Nodes is
             if N.Prefix = null then
                return N.Local_Name.all;
             else
-               return N.Prefix.all
-                 & Encoding.Encode (Colon) & N.Local_Name.all;
+               return N.Prefix.all & Colon_Sequence & N.Local_Name.all;
             end if;
 
          when Attribute_Node =>
@@ -111,7 +110,7 @@ package body DOM.Core.Nodes is
                return N.Attr_Local_Name.all;
             else
                return N.Attr_Prefix.all
-                 & Encoding.Encode (Colon) & N.Attr_Local_Name.all;
+                 & Colon_Sequence & N.Attr_Local_Name.all;
             end if;
 
          when Text_Node =>
@@ -1051,9 +1050,11 @@ package body DOM.Core.Nodes is
    procedure Print_String (Str : DOM_String) is
       J : Natural := Str'First;
       C : Unicode.Unicode_Char;
+      Buffer : Byte_Sequence (1 .. 20);
+      Index : Natural;
    begin
       while J <= Str'Last loop
-         C := Encoding.Read (Str, J);
+         Encoding.Read (Str, J, C);
          case C is
             when Ampersand             => Put (Amp_DOM_Sequence);
             when Less_Than_Sign        => Put (Lt_DOM_Sequence);
@@ -1063,9 +1064,11 @@ package body DOM.Core.Nodes is
             when Horizontal_Tabulation => Put (Tab_Sequence);
             when Line_Feed             => Put (Lf_Sequence);
             when Carriage_Return       => Put (Cr_Sequence);
-            when others                => Put (Encoding.Encode (C));
+            when others                =>
+               Index := Buffer'First - 1;
+               Encoding.Encode (C, Buffer, Index);
+               Put (Buffer (Buffer'First .. Index));
          end case;
-         J := J + Encoding.Width (C);
       end loop;
    end Print_String;
 
@@ -1104,8 +1107,7 @@ package body DOM.Core.Nodes is
       procedure Print_Name (N : Node) is
       begin
          if With_URI then
-            Print_String (Namespace_URI (N) & Encoding.Encode (Colon)
-                          & Local_Name (N));
+            Print_String (Namespace_URI (N) & Colon_Sequence & Local_Name (N));
          else
             Print_String (Node_Name (N));
          end if;
@@ -1119,49 +1121,58 @@ package body DOM.Core.Nodes is
       case N.Node_Type is
          when Element_Node =>
             --  ??? Should define a new constant in Sax.Encodings
-            Put (Encoding.Encode (Less_Than_Sign));
+            Put (Less_Than_Sequence);
             Print_Name (N);
 
             --  Sort the XML attributes as required for canonical XML
             Sort (N.Attributes);
 
             for J in 0 .. N.Attributes.Last loop
-               Put (Encoding.Encode (Space));
+               Put (Space_Sequence);
                Print (N.Attributes.Items (J),
                       Print_Comments, Print_XML_PI, With_URI);
             end loop;
-            Put (Encoding.Encode (Greater_Than_Sign));
+            Put (Greater_Than_Sequence);
 
             Print (N.Children, Print_Comments, Print_XML_PI, With_URI);
 
-            Put (Encoding.Encode (Less_Than_Sign)
-                 & Encoding.Encode (Slash));
+            Put (Less_Than_Sequence & Slash_Sequence);
             Print_Name (N);
-            Put (Encoding.Encode (Greater_Than_Sign));
+            Put (Greater_Than_Sequence);
 
          when Attribute_Node =>
             Print_Name (N);
-            Put (Encoding.Encode (Equals_Sign)
-                 & Encoding.Encode (Quotation_Mark));
+            Put (Equals_Sign_Sequence
+                 & Quotation_Mark_Sequence);
             Print_String (Node_Value (N));
-            Put (Encoding.Encode (Quotation_Mark));
+            Put (Quotation_Mark_Sequence);
 
          when Processing_Instruction_Node =>
             if Print_XML_PI
               or else N.Target.all /= Xml_Sequence
             then
-               Put (Encoding.Encode (Less_Than_Sign)
-                    & Encoding.Encode (Question_Mark)
+               Put (Less_Than_Sequence
+                    & Question_Mark_Sequence
                     & N.Target.all);
-               if N.Pi_Data'Length = 0
-                 or else Encoding.Read
-                 (N.Pi_Data.all, N.Pi_Data'First) /= Space
-               then
-                  Put (Encoding.Encode (Space));
+
+               if N.Pi_Data'Length = 0 then
+                  Put (Space_Sequence);
+
+               else
+                  declare
+                     C : Unicode_Char;
+                     Index : Natural := N.Pi_Data'First;
+                  begin
+                     Encoding.Read (N.Pi_Data.all, Index, C);
+
+                     if C /= Space then
+                        Put (Space_Sequence);
+                     end if;
+                  end;
                end if;
                Put (N.Pi_Data.all
-                    & Encoding.Encode (Question_Mark)
-                    & Encoding.Encode (Greater_Than_Sign));
+                    & Question_Mark_Sequence
+                    & Greater_Than_Sequence);
             end if;
 
          when Comment_Node =>
