@@ -29,9 +29,11 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 with Input_Sources.File;        use Input_Sources.File;
 with Input_Sources.Strings;     use Input_Sources.Strings;
 with Input_Sources;             use Input_Sources;
+with Interfaces;                use Interfaces;
 with Sax.Attributes;            use Sax.Attributes;
 with Sax.Attributes;            use Sax.Attributes;
 with Sax.Encodings;             use Sax.Encodings;
@@ -1880,7 +1882,7 @@ package body Sax.Readers is
       if Is_Entity_Ref /= None then
          declare
             N : constant Byte_Sequence := Value (Parser, Id, Id);
-            V : Entity_Entry := Get (Parser.Entities, N);
+            V : Entity_Entry_Access := Get (Parser.Entities, N);
             Null_Loc : Locator_Impl;
          begin
             Reset_Buffer (Parser, Id);
@@ -1914,7 +1916,7 @@ package body Sax.Readers is
                Id.Last := Parser.Buffer_Length;
                Next_Char (Input, Parser);
 
-            elsif V = Null_Entity then
+            elsif V = null then
                Skipped_Entity (Parser, N);
                Error (Parser, "[4.1] Undefined entity '" & N & ''', Id);
                Id.Typ := Text;
@@ -1955,7 +1957,6 @@ package body Sax.Readers is
                end if;
 
                V.Already_Read := True;
-               Set (Parser.Entities, N, V);
 
                Parser.Element_Id := Parser.Element_Id + 1;
                Parser.Inputs := new Entity_Input_Source'
@@ -2009,7 +2010,6 @@ package body Sax.Readers is
                Next_Token (Input, Parser, Id);
 
                V.Already_Read := False;
-               Set (Parser.Entities, N, V);
             end if;
          end;
       end if;
@@ -2484,9 +2484,9 @@ package body Sax.Readers is
       Loc : Locator_Impl;
       Last : constant Unicode_Char := Parser.Last_Read;
       Input_S : String_Input;
-      Val : constant Entity_Entry := Get (Parser.Entities, Name);
+      Val : constant Entity_Entry_Access := Get (Parser.Entities, Name);
    begin
-      if Val = Null_Entity then
+      if Val = null then
          Put_Line ("Unknown entity " & Name);
          M := null;
 
@@ -2862,8 +2862,9 @@ package body Sax.Readers is
                   Fatal_Error (Parser, "[WF] Expecting string after NDATA");
                else
                   if Parser.Feature_Validation
-                    and then not Get (Parser.Notations,
-                                      Value (Parser, Ndata_Id, Ndata_Id))
+                    and then Get
+                      (Parser.Notations, Value (Parser, Ndata_Id, Ndata_Id)) /=
+                    Null_Notation
                   then
                      Fatal_Error
                        (Parser, "[VC 4.2.2] Notation '"
@@ -2891,17 +2892,20 @@ package body Sax.Readers is
          --  Only report the first definition
          if Get (Parser.Entities,
                  Value (Parser, Is_Parameter, Is_Parameter)
-                 & Value (Parser, Name_Id, Name_Id)) /= Null_Entity
+                 & Value (Parser, Name_Id, Name_Id)) /= null
          then
             null;
 
          elsif Def_End /= Null_Token then
             Set (Parser.Entities,
-                 Value (Parser, Is_Parameter, Is_Parameter)
-                 & Value (Parser, Name_Id, Name_Id),
-                 (new Byte_Sequence'(Value (Parser, Def_Start, Def_End)),
-                  External     => False,
-                  Already_Read => False));
+                 new Entity_Entry'
+                   (Name => new Byte_Sequence'
+                      (Value (Parser, Is_Parameter, Is_Parameter)
+                       & Value (Parser, Name_Id, Name_Id)),
+                    Value => new Byte_Sequence'
+                    (Value (Parser, Def_Start, Def_End)),
+                    External     => False,
+                    Already_Read => False));
             Internal_Entity_Decl
               (Parser,
                Name => Value (Parser, Is_Parameter, Is_Parameter)
@@ -2919,11 +2923,14 @@ package body Sax.Readers is
          else
             Set
               (Parser.Entities,
-               Value (Parser, Is_Parameter, Is_Parameter)
-               & Value (Parser, Name_Id, Name_Id),
-               (new Byte_Sequence'(Value (Parser, System_Start, System_End)),
-                External => True,
-                Already_Read => False));
+               new Entity_Entry'
+                 (Name => new Byte_Sequence'
+                    (Value (Parser, Is_Parameter, Is_Parameter)
+                     & Value (Parser, Name_Id, Name_Id)),
+                  Value => new Byte_Sequence'
+                  (Value (Parser, System_Start, System_End)),
+                  External => True,
+                  Already_Read => False));
             External_Entity_Decl
               (Parser,
                Name => Value (Parser, Is_Parameter, Is_Parameter)
@@ -3018,7 +3025,9 @@ package body Sax.Readers is
             System_Id => Value (Parser, System_Start, System_End));
 
          if Parser.Feature_Validation then
-            Set (Parser.Notations, Value (Parser, Name_Id, Name_Id), True);
+            Set (Parser.Notations,
+                 (Name => new Byte_Sequence'
+                    (Value (Parser, Name_Id, Name_Id))));
          end if;
 
          Set_State (Parser, DTD_State);
@@ -3038,6 +3047,7 @@ package body Sax.Readers is
          NS : XML_NS;
          Default_Decl : Default_Declaration;
          Att_Type : Attribute_Type;
+         Is_New : Boolean;
       begin
          Set_State (Parser, Element_Def_State);
          Next_Token_Skip_Spaces (Input, Parser, Ename_Id);
@@ -3046,9 +3056,13 @@ package body Sax.Readers is
             Fatal_Error (Parser, "[WF] Expecting element name", Ename_Id);
          end if;
 
-         Attr := Get (Parser.Default_Atts, Value (Parser, Ename_Id, Ename_Id));
+         Attr := Get (Parser.Default_Atts,
+                      Value (Parser, Ename_Id, Ename_Id)).Attributes;
          if Attr = null then
+            Is_New := True;
             Attr := new Sax.Attributes.Attributes;
+         else
+            Is_New := False;
          end if;
 
          loop
@@ -3093,7 +3107,9 @@ package body Sax.Readers is
 
                   if Parser.Feature_Validation then
                      for J in M.List'Range loop
-                        if not Get (Parser.Notations, M.List (J).Name.all) then
+                        if Get (Parser.Notations, M.List (J).Name.all) /=
+                          Null_Notation
+                        then
                            Fatal_Error
                              (Parser,
                               "[VC 3.3.1] Notation '"
@@ -3163,6 +3179,11 @@ package body Sax.Readers is
                   M,
                   Value (Parser, Default_Start, Default_End),
                   Default_Decl);
+
+               --  M will be freed automatically when the Default_Atts field is
+               --  freed. However, we need to reset it for the next attribute
+               --  in the list.
+               M := null;
             else
                Free (M);
             end if;
@@ -3180,7 +3201,12 @@ package body Sax.Readers is
          end if;
 
          --  Store the default attributes
-         Set (Parser.Default_Atts, Value (Parser, Ename_Id, Ename_Id), Attr);
+         if Is_New then
+            Set (Parser.Default_Atts,
+                 (Element_Name =>
+                    new Byte_Sequence'(Value (Parser, Ename_Id, Ename_Id)),
+                  Attributes => Attr));
+         end if;
 
          Set_State (Parser, DTD_State);
          Reset_Buffer (Parser, Ename_Id);
@@ -3327,7 +3353,7 @@ package body Sax.Readers is
                   declare
                      Atts : constant Attributes_Ptr := Get
                        (Parser.Default_Atts,
-                        Value (Parser, Elem_Name_Id, Elem_Name_Id));
+                        Value (Parser, Elem_Name_Id, Elem_Name_Id)).Attributes;
                      Index : Integer;
                      Att_Type : Attribute_Type;
                   begin
@@ -3397,7 +3423,7 @@ package body Sax.Readers is
 
          Attr := Get
            (Parser.Default_Atts,
-            Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id));
+            Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id)).Attributes;
 
          --  Check that all #REQUIRED attributes are defined
          --  and that #FIXED attributes have the defined value
@@ -4109,9 +4135,10 @@ package body Sax.Readers is
    ----------
 
    procedure Free (Parser : in out Reader'Class) is
-      Arr : Entity_Table.Table_Array :=
-        Convert_To_Array (Parser.Entities);
       Tmp : Element_Access;
+      Iter : Attributes_Table.Iterator;
+      Length : Natural;
+      Model : Element_Model_Ptr;
    begin
       Close_Inputs (Parser);
       Free (Parser.Default_Namespaces);
@@ -4119,19 +4146,28 @@ package body Sax.Readers is
       Free (Parser.DTD_Name);
       Free (Parser.Buffer);
 
-      --  Free all the entities that were declared in the DTD.
-      --  ??? Probably not the most efficient, but we would need another
-      --  ??? implementation of table for that.
-
-      for J in Arr'Range loop
-         Free (Arr (J).Value.Value);
-      end loop;
-
       --  Free the nodes, in case there are still some open
       Tmp := Parser.Current_Node;
       while Tmp /= null loop
          Free (Tmp);
       end loop;
+
+      --  Free the content model for the default attributes
+      Iter := First (Parser.Default_Atts);
+      while Iter /= Attributes_Table.No_Iterator loop
+         Length := Get_Length (Current (Iter).Attributes.all);
+         for A in 1 .. Length loop
+            Model := Get_Content (Current (Iter).Attributes.all, A - 1);
+            Free (Model);
+            Set_Content (Current (Iter).Attributes.all, A - 1, null);
+         end loop;
+         Next (Parser.Default_Atts, Iter);
+      end loop;
+
+      --  Free the internal tables
+      Reset (Parser.Entities);
+      Reset (Parser.Default_Atts);
+      Reset (Parser.Notations);
    end Free;
 
    -----------
@@ -4202,28 +4238,82 @@ package body Sax.Readers is
          raise;
    end Parse;
 
-   ----------------
-   -- Entity_Img --
-   ----------------
+   ----------
+   -- Hash --
+   ----------
 
-   function Entity_Img (A : Entity_Entry) return String is
+   function Hash (Str : String) return Unsigned_32 is
+      Result : Unsigned_32 := Str'Length;
    begin
-      if A.Value /= null then
-         return A.Value.all;
-      else
-         return "<null>";
-      end if;
-   end Entity_Img;
+      for J in Str'Range loop
+         Result := Rotate_Left (Result, 1) +
+           Unsigned_32 (Character'Pos (Str (J)));
+      end loop;
 
-   --------------------
-   -- Attributes_Img --
-   --------------------
+      return Result;
+   end Hash;
 
-   function Attributes_Img (A : Attributes_Ptr) return String is
-      pragma Warnings (Off, A);
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Entity : in out Entity_Entry_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Entity_Entry, Entity_Entry_Access);
    begin
-      return "<???>";
-   end Attributes_Img;
+      Free (Entity.Name);
+      Free (Entity.Value);
+      Unchecked_Free (Entity);
+   end Free;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Entity : Entity_Entry_Access) return String is
+   begin
+      return Entity.Name.all;
+   end Get_Key;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Att : in out Attributes_Entry) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Sax.Attributes.Attributes'Class, Attributes_Ptr);
+   begin
+      Free (Att.Element_Name);
+      Clear (Att.Attributes.all);
+      Unchecked_Free (Att.Attributes);
+   end Free;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Att : Attributes_Entry) return String is
+   begin
+      return Att.Element_Name.all;
+   end Get_Key;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Notation : in out Notation_Entry) is
+   begin
+      Free (Notation.Name);
+   end Free;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Notation : Notation_Entry) return String is
+   begin
+      return Notation.Name.all;
+   end Get_Key;
 
    -----------------
    -- Get_Feature --
