@@ -1,9 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001                          --
+--                       Copyright (C) 2001-2002                     --
 --                            ACT-Europe                             --
---                       Author: Emmanuel Briot                      --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --

@@ -1,9 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001                          --
+--                       Copyright (C) 2001-2002                     --
 --                            ACT-Europe                             --
---                       Author: Emmanuel Briot                      --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -95,7 +94,9 @@ package body Input_Sources.File is
             Set_Encoding (Input, Utf16_LE_Encoding);
          when Utf16_BE =>
             Set_Encoding (Input, Utf16_BE_Encoding);
-         when others =>
+         when Ucs4_BE | Ucs4_LE | Ucs4_2143 | Ucs4_3412 =>
+            raise Invalid_Encoding;
+         when Utf8_All | Unknown =>
             Set_Encoding (Input, Utf8_Encoding);
       end case;
 
