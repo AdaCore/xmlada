@@ -82,7 +82,9 @@ install: obj docs install_dirs ${MODULE_INSTALL}
 	-${CP} docs/xml.info ${PREFIX}/doc/xmlada
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 ifeq (${GTKADA_GPR},)
-	cp distrib/xmlada_gtk_no_module.gpr ${PREFIX}/xmlada_gtk.gpr
+	cp distrib/xmlada_no_gtk.gpr ${PREFIX}/xmlada.gpr
+else
+	cp distrib/xmlada.gpr ${PREFIX}/xmlada.gpr
 endif
 
 clean: force
