@@ -1325,8 +1325,7 @@ package body Schema.Schema_Readers is
          Seq      => Create_Sequence,
          Level    => Handler.Contexts.Level + 1,
          Next     => Handler.Contexts);
-      Output (Ada_Name (Handler.Contexts) & " := Create_Sequence ("
-              & Min_Occurs'Img & ',' & Max_Occurs'Img & ")");
+      Output (Ada_Name (Handler.Contexts) & " := Create_Sequence;");
 
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
