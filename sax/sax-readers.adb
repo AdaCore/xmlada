@@ -3646,6 +3646,7 @@ package body Sax.Readers is
                when Name_Error =>
                   Error (Parser,
                          "External subset not found: " & URI, Id);
+                  Reset_Buffer (Parser, Name_Id);
             end;
          else
             Reset_Buffer (Parser, Name_Id);
