@@ -705,7 +705,7 @@ expect "$sun/xsd001.xsd" "$sun/xsd001.v03.xml" ""
 expect "$sun/xsd002.xsd" "$sun/xsd002.n00.xml" \
  "$sun/xsd002.n00.xml:3:11: Namespace specification not authorized in this context"
 expect "$sun/xsd002.xsd" "$sun/xsd002.n01.xml" \
- "$sun/xsd002.n01.xml:3:9: Namespace specification is mandatory in this context"
+ "$sun/xsd002.n01.xml:3:9: Namespace specification is required in this context"
 expect "$sun/xsd002.xsd" "$sun/xsd002.n02.xml" \
  "$sun/xsd002.n02.xml:3:11: Namespace specification not authorized in this context"
 expect "$sun/xsd002.xsd" "$sun/xsd002.v00.xml" ""
@@ -721,7 +721,6 @@ expect "$sun/xsd003b.xsd" "$sun/xsd003b.n01.xml" \
  "$sun/xsd003b.n01.xml:3:50: Attribute \"foo:gAtt\": Element's value not in the enumeration set"
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.v00.xml" ""
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.v01.xml" ""
-
 expect "$sun/xsd004.xsd" "$sun/xsd004.n00.xml" \
  "$sun/xsd004.n00.xml:11:15: Must be a simple type, no <illegal> child allowed"
 expect "$sun/xsd004.xsd" "$sun/xsd004.n01.xml" \
@@ -748,7 +747,7 @@ expect "$sun/xsd004.xsd" "$sun/xsd004.n11.xml" \
  "$sun/xsd004.n11.xml:8:15: Invalid namespace for this element: \"foo\" not in \"bar\""
 expect "$sun/xsd004.xsd" "$sun/xsd004.n12.xml" \
  "$sun/xsd004.n12.xml:8:18: Invalid namespace for this element: \"\" not in \"bar\""
-
+expect "$sun/xsd004.xsd" "$sun/xsd004.v00.xml" ""
 
 fi
 
