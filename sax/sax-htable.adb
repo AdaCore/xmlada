@@ -24,6 +24,8 @@ package body Sax.HTable is
             Item := Item.Next;
             Unchecked_Free (Tmp);
          end loop;
+
+         Hash_Table.Table (Index) := null;
       end loop;
    end Reset;
 
