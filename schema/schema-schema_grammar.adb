@@ -86,7 +86,7 @@ package body Schema.Schema_Grammar is
       Register (G, Created);
 
       --  The "schemaTop" element  ??? Missing abstract
-      Elem := Create_Element ("schemaTop", Lookup (G, "annotated"));
+      Elem := Create_Element ("schemaTop", Lookup (G, "annotated"), Qualified);
       Register (G, Elem);
 
       --  The "include" element
@@ -95,7 +95,7 @@ package body Schema.Schema_Grammar is
         (Typ, Create_Attribute ("schemaLocation", G,
                                 Lookup (G, "uriReference"),
                                 Attribute_Use => Required));
-      Elem := Create_Element ("include", Create_Type ("", Typ));
+      Elem := Create_Element ("include", Create_Type ("", Typ), Qualified);
       Register (G, Elem);
 
       --  The "import" element
@@ -106,7 +106,7 @@ package body Schema.Schema_Grammar is
       Add_Attribute
         (Typ, Create_Attribute ("schemaLocation", G,
                                 Lookup (G, "uriReference")));
-      Elem := Create_Element ("import", Create_Type ("", Typ));
+      Elem := Create_Element ("import", Create_Type ("", Typ), Qualified);
       Register (G, Elem);
 
       --  The "schema" element
@@ -152,7 +152,8 @@ package body Schema.Schema_Grammar is
             Value             => "unqualified"));
       Add_Attribute (Seq2, Create_Attribute ("id", G, Lookup (G, "ID"),
                                              Is_ID => True));
-      Elem := Create_Element ("schema", Create_Type ("schema type", Seq2));
+      Elem := Create_Element
+        ("schema", Create_Type ("schema type", Seq2), Qualified);
       Register (G, Elem);
 
       --  The "localComplexType" type
@@ -179,12 +180,14 @@ package body Schema.Schema_Grammar is
       Register (G, Created);
 
       --  The "identityConstraint" element  ??? abstract=true
-      Elem := Create_Element ("identityConstraint", Lookup (G, "keybase"));
+      Elem := Create_Element
+        ("identityConstraint", Lookup (G, "keybase"), Qualified);
       Register (G, Elem);
 
       --  The "unique" element
       Elem := Create_Element
-        ("unique", Get_Type (Lookup_Element (G, "identityConstraint")));
+        ("unique", Get_Type (Lookup_Element (G, "identityConstraint")),
+         Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "identityConstraint"));
       Register (G, Elem);
 
@@ -193,14 +196,14 @@ package body Schema.Schema_Grammar is
       Add_Attribute (Typ, Create_Attribute
                        ("refer", G, Lookup (G, "QName"),
                         Attribute_Use => Required));
-      Elem := Create_Element ("keyref", Create_Type ("", Typ));
+      Elem := Create_Element ("keyref", Create_Type ("", Typ), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "identityConstraint"));
       Register (G, Elem);
 
       --  The "key" element
       Elem := Create_Element
         ("key",
-         Get_Type (Lookup_Element (G, "identityConstraint")));
+         Get_Type (Lookup_Element (G, "identityConstraint")), Qualified);
       Set_Substitution_Group
         (Elem, Lookup_Element (G, "identityConstraint"));
       Register (G, Elem);
@@ -219,11 +222,11 @@ package body Schema.Schema_Grammar is
       Register (G, Created);
 
       --  The "selector" element
-      Elem := Create_Element ("selector", Lookup (G, "XPathSpec"));
+      Elem := Create_Element ("selector", Lookup (G, "XPathSpec"), Qualified);
       Register (G, Elem);
 
       --  The "field" element
-      Elem := Create_Element ("field", Lookup (G, "XPathSpec"));
+      Elem := Create_Element ("field", Lookup (G, "XPathSpec"), Qualified);
       Register (G, Elem);
 
       --  The "allNNI" type"
@@ -260,9 +263,11 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Seq1, "element seq");
       Choice1 := Create_Choice (Min_Occurs => 0);
       Add_Particle (Choice1, Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")));
+                      ("simpleType", Lookup (G, "localSimpleType"),
+                       Qualified));
       Add_Particle (Choice1, Create_Element
-                      ("complexType", Lookup (G, "localComplexType")));
+                      ("complexType", Lookup (G, "localComplexType"),
+                       Qualified));
       Add_Particle (Seq1, Choice1);
       Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
@@ -299,7 +304,8 @@ package body Schema.Schema_Grammar is
       Add_Attribute
         (Seq1, Create_Attribute ("source", G, Lookup (G, "uriReference")));
       Set_Mixed_Content (Seq1, True);
-      Elem := Create_Element ("appinfo", Create_Type ("", Seq1));
+      Elem := Create_Element
+        ("appinfo", Create_Type ("", Seq1), Qualified);
       Register (G, Elem);
 
       --  The "documentation" element
@@ -309,7 +315,8 @@ package body Schema.Schema_Grammar is
         (Seq1, Create_Attribute ("source", G, Lookup (G, "uriReference")));
       Add_Attribute (Seq1, Lookup_Attribute (XML_G, "lang"));
       Set_Mixed_Content (Seq1, True);
-      Elem := Create_Element ("documentation", Create_Type ("", Seq1));
+      Elem := Create_Element
+        ("documentation", Create_Type ("", Seq1), Qualified);
       Register (G, Elem);
 
       --  The "annotation" element  ??? invalid
@@ -317,7 +324,8 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Choice1, "annotation choice");
       Add_Particle (Choice1, Lookup_Element (G, "appinfo"));
       Add_Particle (Choice1, Lookup_Element (G, "documentation"));
-      Elem := Create_Element ("annotation", Create_Type ("", Choice1));
+      Elem := Create_Element
+        ("annotation", Create_Type ("", Choice1), Qualified);
       Register (G, Elem);
 
       --  The "topLevelElement" type
@@ -328,9 +336,11 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Choice1, "topLevelElement choice");
       Add_Particle (Seq1, Choice1);
       Add_Particle (Choice1, Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")));
+                      ("simpleType", Lookup (G, "localSimpleType"),
+                       Qualified));
       Add_Particle (Choice1, Create_Element
-                      ("complexType", Lookup (G, "localComplexType")));
+                      ("complexType", Lookup (G, "localComplexType"),
+                       Qualified));
       Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ := Restriction_Of (Lookup (G, "element"), XML_Validator (Seq1));
@@ -350,17 +360,20 @@ package body Schema.Schema_Grammar is
       Register (G, Created);
 
       --  The "element" element
-      Elem := Create_Element ("element", Lookup (G, "topLevelElement"));
+      Elem := Create_Element
+        ("element", Lookup (G, "topLevelElement"), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
       Register (G, Elem);
 
       --  The "attribute" element
-      Elem := Create_Element ("attribute", Lookup (G, "topLevelAttribute"));
+      Elem := Create_Element
+        ("attribute", Lookup (G, "topLevelAttribute"), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
       Register (G, Elem);
 
       --  The "redefinable" element  --  abstract=true
-      Elem := Create_Element ("redefinable", Lookup (G, "anyType"));
+      Elem := Create_Element
+        ("redefinable", Lookup (G, "anyType"), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
       Register (G, Elem);
 
@@ -373,9 +386,11 @@ package body Schema.Schema_Grammar is
       Choice1 := Create_Choice (Min_Occurs => 0);
       Add_Particle (Seq2, Choice1);
       Add_Particle (Choice1, Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")));
+                      ("simpleType", Lookup (G, "localSimpleType"),
+                       Qualified));
       Add_Particle (Choice1, Create_Element
-                      ("complexType", Lookup (G, "localComplexType")));
+                      ("complexType", Lookup (G, "localComplexType"),
+                       Qualified));
       Add_Particle (Seq2, Lookup_Element (G, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ2 := Restriction_Of
@@ -395,7 +410,8 @@ package body Schema.Schema_Grammar is
         (Typ2, Create_Attribute ("maxOccurs", G, Create_Type ("", Typ),
                                  Attribute_Use => Default, Value => "1"));
 
-      Add_Particle (Seq1, Create_Element ("element", Create_Type ("", Typ2)),
+      Add_Particle (Seq1, Create_Element ("element", Create_Type ("", Typ2),
+                                          Qualified),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
 
       Typ := Restriction_Of
@@ -413,7 +429,7 @@ package body Schema.Schema_Grammar is
         (Typ, Create_Attribute ("maxOccurs", G, Create_Type ("", Typ2),
                                 Attribute_Use => Default, Value => "1"));
 
-      Elem := Create_Element ("all", Create_Type ("", Typ));
+      Elem := Create_Element ("all", Create_Type ("", Typ), Qualified);
       Register (G, Elem);
 
       --  The "localElement" type
@@ -422,9 +438,11 @@ package body Schema.Schema_Grammar is
       Choice1 := Create_Choice (Min_Occurs => 0);
       Add_Particle (Seq1, Choice1);
       Add_Particle (Choice1, Create_Element ("simpleType",
-                                             Lookup (G, "localSimpleType")));
+                                             Lookup (G, "localSimpleType"),
+                                             Qualified));
       Add_Particle (Choice1, Create_Element ("complexType",
-                                             Lookup (G, "localComplexType")));
+                                             Lookup (G, "localComplexType"),
+                                             Qualified));
       Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Attribute (Seq1, Create_Attribute ("substitutionGroup", G,
@@ -441,9 +459,10 @@ package body Schema.Schema_Grammar is
       Choice1 := Create_Choice;
       Add_Particle (Gr, Choice1);
       Add_Particle
-        (Choice1, Create_Element ("element", Lookup (G, "localElement")));
+        (Choice1, Create_Element
+           ("element", Lookup (G, "localElement"), Qualified));
       Add_Particle
-        (Choice1, Create_Element ("group", Lookup (G, "groupRef")));
+        (Choice1, Create_Element ("group", Lookup (G, "groupRef"), Qualified));
       Add_Particle (Choice1, Lookup_Element (G, "all"));
       Add_Particle (Choice1, Lookup_Element (G, "choice"));
       Add_Particle (Choice1, Lookup_Element (G, "sequence"));
@@ -467,9 +486,10 @@ package body Schema.Schema_Grammar is
       Add_Particle (Gr, Choice1);
       Set_Debug_Name (Choice1, "nestedParticle choice");
       Add_Particle
-        (Choice1, Create_Element ("element", Lookup (G, "localElement")));
+        (Choice1, Create_Element ("element", Lookup (G, "localElement"),
+                                  Qualified));
       Add_Particle
-        (Choice1, Create_Element ("group", Lookup (G, "groupRef")));
+        (Choice1, Create_Element ("group", Lookup (G, "groupRef"), Qualified));
       Add_Particle (Choice1, Lookup_Element (G, "choice"));
       Add_Particle (Choice1, Lookup_Element (G, "sequence"));
       Add_Particle (Choice1, Lookup_Element (G, "any"));
@@ -492,11 +512,13 @@ package body Schema.Schema_Grammar is
            ("ref", G, Lookup (G, "QName"), Attribute_Use => Prohibited));
 
       --  The "choice" element
-      Elem := Create_Element ("choice", Lookup (G, "explicitGroup"));
+      Elem := Create_Element
+        ("choice", Lookup (G, "explicitGroup"), Qualified);
       Register (G, Elem);
 
       --  The "sequence" element
-      Elem := Create_Element ("sequence", Lookup (G, "explicitGroup"));
+      Elem := Create_Element
+        ("sequence", Lookup (G, "explicitGroup"), Qualified);
       Register (G, Elem);
 
       --  "groupDefParticle" group
@@ -532,7 +554,7 @@ package body Schema.Schema_Grammar is
         (Typ, Create_Attribute ("name", G, Attribute_Use => Prohibited));
 
       --  The "group" element
-      Elem := Create_Element ("group", Lookup (G, "namedGroup"));
+      Elem := Create_Element ("group", Lookup (G, "namedGroup"), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
       Register (G, Elem);
 
@@ -578,7 +600,8 @@ package body Schema.Schema_Grammar is
 
       --  The "attributeGroup" element
       Elem := Create_Element ("attributeGroup",
-                              Lookup (G, "namedAttributeGroup"));
+                              Lookup (G, "namedAttributeGroup"),
+                              Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
       Register (G, Elem);
 
@@ -588,7 +611,8 @@ package body Schema.Schema_Grammar is
       Choice1 := Create_Choice;
       Add_Particle (Gr, Choice1);
       Set_Debug_Name (Choice1, "typeDefParticle choice");
-      Add_Particle (Choice1, Create_Element ("group", Lookup (G, "groupRef")));
+      Add_Particle (Choice1, Create_Element
+                      ("group", Lookup (G, "groupRef"), Qualified));
       Add_Particle (Choice1, Lookup_Element (G, "all"));
       Add_Particle (Choice1, Lookup_Element (G, "choice"));
       Add_Particle (Choice1, Lookup_Element (G, "sequence"));
@@ -596,8 +620,9 @@ package body Schema.Schema_Grammar is
       --  The "attribute" type
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "attribute seq");
-      Add_Particle (Seq1, Create_Element ("simpleType",
-                                         Lookup (G, "localSimpleType")),
+      Add_Particle (Seq1, Create_Element
+                      ("simpleType",
+                       Lookup (G, "localSimpleType"), Qualified),
                     Min_Occurs => 0);
       Typ := Extension_Of (Lookup (G, "annotated"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "attribute extension");
@@ -627,8 +652,9 @@ package body Schema.Schema_Grammar is
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "topLevelAttribute seq");
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Create_Element ("simpleType",
-                                          Lookup (G, "localSimpleType")),
+      Add_Particle (Seq1, Create_Element
+                      ("simpleType", Lookup (G, "localSimpleType"),
+                       Qualified),
                     Min_Occurs => 0);
       Typ := Restriction_Of (Lookup (G, "attribute"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "topLevelAttribute restriction");
@@ -645,7 +671,8 @@ package body Schema.Schema_Grammar is
                                 Attribute_Use => Required));
 
       --  The "anyAttributes" element
-      Elem := Create_Element ("anyAttribute", Lookup (G, "wildcard"));
+      Elem := Create_Element
+        ("anyAttribute", Lookup (G, "wildcard"), Qualified);
       Register (G, Elem);
 
       --  The "namespaceList" type   ??? Incomplete
@@ -686,7 +713,8 @@ package body Schema.Schema_Grammar is
       --  The "any" element   ??? Error if you put before "wildcard"
       Typ := Restriction_Of (Lookup (G, "wildcard"));
       Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
-      Elem := Create_Element ("any", Create_Type ("", Typ));
+      Elem := Create_Element
+        ("any", Create_Type ("", Typ), Qualified);
       Register (G, Elem);
 
       --  The "attributeGroupRef"  ??? invalid
@@ -712,10 +740,12 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Choice1, "attrDecls choice");
       Add_Particle (Seq1, Choice1);
       Add_Particle
-        (Choice1, Create_Element ("attribute", Lookup (G, "attribute")));
+        (Choice1, Create_Element
+           ("attribute", Lookup (G, "attribute"), Qualified));
       Add_Particle
         (Choice1, Create_Element ("attributeGroup",
-                                  Lookup (G, "attributeGroupRef")));
+                                  Lookup (G, "attributeGroupRef"),
+                                  Qualified));
       Add_Particle
         (Seq1, Lookup_Element (G, "anyAttribute"), Min_Occurs => 0);
 
@@ -754,7 +784,8 @@ package body Schema.Schema_Grammar is
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "simpleRestrictionModel seq");
       Add_Particle (Seq1, Create_Element ("simpleType",
-                                          Lookup (G, "localSimpleType")),
+                                          Lookup (G, "localSimpleType"),
+                                          Qualified),
                     Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Element (G, "facet"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
@@ -790,14 +821,17 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Choice1, "simpleContent choice");
       Add_Particle (Choice1, Create_Element
                       ("restriction",
-                       Lookup (G, "simpleRestrictionType")));
+                       Lookup (G, "simpleRestrictionType"),
+                       Qualified));
       Add_Particle (Choice1, Create_Element
                       ("extension",
-                       Lookup (G, "simpleExtensionType")));
+                       Lookup (G, "simpleExtensionType"),
+                       Qualified));
       Typ := Extension_Of (Lookup (G, "annotated"), XML_Validator (Choice1));
       Set_Debug_Name (Typ, "simpleContent extension");
       Elem := Create_Element
-        ("simpleContent", Create_Type ("simpleContent type", Typ));
+        ("simpleContent", Create_Type ("simpleContent type", Typ),
+         Qualified);
       Register (G, Elem);
 
       --  The "complexRestrictionType" type
@@ -817,14 +851,17 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Choice1, "complexContent choice");
       Add_Particle (Choice1,
                     Create_Element ("restriction",
-                                    Lookup (G, "complexRestrictionType")));
+                                    Lookup (G, "complexRestrictionType"),
+                                    Qualified));
       Add_Particle (Choice1,
                     Create_Element ("extension",
-                                    Lookup (G, "extensionType")));
+                                    Lookup (G, "extensionType"),
+                                    Qualified));
       Add_Attribute
         (Choice1, Create_Attribute ("mixed", G, Lookup (G, "boolean")));
       Typ := Extension_Of (Lookup (G, "annotated"), XML_Validator (Choice1));
-      Elem := Create_Element ("complexContent", Create_Type ("", Typ));
+      Elem := Create_Element
+        ("complexContent", Create_Type ("", Typ), Qualified);
       Register (G, Elem);
 
       --  The "complexTypeModel" group
@@ -878,7 +915,8 @@ package body Schema.Schema_Grammar is
 
       --  The "complexType" element
       Elem := Create_Element
-        ("complexType", Lookup (G, "topLevelComplexType"));
+        ("complexType", Lookup (G, "topLevelComplexType"),
+         Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
       Register (G, Elem);
 
@@ -892,7 +930,8 @@ package body Schema.Schema_Grammar is
                         Attribute_Use => Required));
       Add_Attribute (Typ, Create_Attribute
                        ("system", G, Lookup (G, "uriReference")));
-      Elem := Create_Element ("notation", Create_Type ("", Typ));
+      Elem := Create_Element
+        ("notation", Create_Type ("", Typ), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
       Register (G, Elem);
 
@@ -909,7 +948,7 @@ package body Schema.Schema_Grammar is
                                     Lookup (G, "uriReference"),
                                     Attribute_Use => Required));
       Typ := Extension_Of (Lookup (G, "openAttrs"), XML_Validator (Choice1));
-      Elem := Create_Element ("redefine", Create_Type ("", Typ));
+      Elem := Create_Element ("redefine", Create_Type ("", Typ), Qualified);
       Register (G, Elem);
 
 
@@ -928,7 +967,8 @@ package body Schema.Schema_Grammar is
       Register (G, Created);
 
       --  The "simpleDerivation" element  ??? abstract=true
-      Elem := Create_Element ("simpleDerivation", Lookup (G, "annotated"));
+      Elem := Create_Element
+        ("simpleDerivation", Lookup (G, "annotated"), Qualified);
       Register (G, Elem);
 
       --  The "simpleType" type  ??? abstract=true
@@ -950,7 +990,8 @@ package body Schema.Schema_Grammar is
                                 Attribute_Use => Required));
 
       --  The "simpleType" element
-      Elem := Create_Element ("simpleType", Lookup (G, "topLevelSimpleType"));
+      Elem := Create_Element
+        ("simpleType", Lookup (G, "topLevelSimpleType"), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
       Register (G, Elem);
 
@@ -963,7 +1004,8 @@ package body Schema.Schema_Grammar is
         (Typ, Create_Attribute ("base", G, Lookup (G, "QName"),
                                  Attribute_Use => Optional));
       Set_Debug_Name (Typ, "restriction extension");
-      Elem := Create_Element ("restriction", Create_Type ("", Typ));
+      Elem := Create_Element
+        ("restriction", Create_Type ("", Typ), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
       Register (G, Elem);
 
@@ -971,27 +1013,30 @@ package body Schema.Schema_Grammar is
       Seq1 := Create_Sequence;
       Add_Particle (Seq1,
                     Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")),
+                      ("simpleType", Lookup (G, "localSimpleType"),
+                       Qualified),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ := Extension_Of (Lookup (G, "annotated"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Attribute ("memberTypes", G,
                                 List_Of (Lookup (G, "QName")),
                                 Attribute_Use => Optional));
-      Elem := Create_Element ("union", Create_Type ("", Typ));
+      Elem := Create_Element
+        ("union", Create_Type ("", Typ), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
       Register (G, Elem);
 
       --  The "list" element
       Seq1 := Create_Sequence;
       Add_Particle (Seq1, Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")),
+                      ("simpleType", Lookup (G, "localSimpleType"),
+                       Qualified),
                     Min_Occurs => 0);
       Typ := Extension_Of (Lookup (G, "annotated"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Attribute ("itemType", G, Lookup (G, "QName"),
                                 Attribute_Use => Optional));
-      Elem := Create_Element ("list", Create_Type ("", Typ));
+      Elem := Create_Element ("list", Create_Type ("", Typ), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
       Register (G, Elem);
 
@@ -1017,33 +1062,35 @@ package body Schema.Schema_Grammar is
       Register (G, Created);
 
       --  The "facet" element  ??? abstract=true
-      Elem := Create_Element ("facet", Lookup (G, "facet"));
+      Elem := Create_Element ("facet", Lookup (G, "facet"), Qualified);
       Register (G, Elem);
 
       --  The "enumeration" element
       Elem := Create_Element ("enumeration",
-                              Get_Type (Lookup_Element (G, "facet")));
+                              Get_Type (Lookup_Element (G, "facet")),
+                              Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
       Register (G, Elem);
 
       --  The "pattern" element
-      Elem := Create_Element ("pattern",
-                              Get_Type (Lookup_Element (G, "facet")));
+      Elem := Create_Element
+        ("pattern",
+         Get_Type (Lookup_Element (G, "facet")), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
       Register (G, Elem);
 
       --  The "maxLength" element
-      Elem := Create_Element ("maxLength", Lookup (G, "numFacet"));
+      Elem := Create_Element ("maxLength", Lookup (G, "numFacet"), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
       Register (G, Elem);
 
       --  The "minLength" element
-      Elem := Create_Element ("minLength", Lookup (G, "numFacet"));
+      Elem := Create_Element ("minLength", Lookup (G, "numFacet"), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
       Register (G, Elem);
 
       --  The "length" element
-      Elem := Create_Element ("length", Lookup (G, "numFacet"));
+      Elem := Create_Element ("length", Lookup (G, "numFacet"), Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
       Register (G, Elem);
 

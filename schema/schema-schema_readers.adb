@@ -566,18 +566,32 @@ package body Schema.Schema_Readers is
       Element : XML_Element;
       Typ     : XML_Type := No_Type;
       Group   : XML_Element;
+      Form    : Form_Type;
 
    begin
+      if Form_Index /= -1 then
+         if Get_Value (Atts, Form_Index) = "qualified" then
+            Form := Qualified;
+         else
+            Form := Unqualified;
+         end if;
+      else
+         Form := Get_Element_Form_Default (Handler.Target_NS);
+      end if;
+
+
       if Name_Index /= -1 then
          if Type_Index /= -1 then
             Lookup_With_NS
               (Handler, Get_Value (Atts, Type_Index), Result => Typ);
          end if;
 
-         Element := Create_Element (Get_Value (Atts, Name_Index), Typ);
+         Element := Create_Element
+           (Get_Value (Atts, Name_Index), Typ, Form => Form);
          Output
            (Ada_Name (Element) & " := Create_Element ("""
-            & Get_Value (Atts, Name_Index) & """, " & Ada_Name (Typ) & ");");
+            & Get_Value (Atts, Name_Index) & """, " & Ada_Name (Typ)
+            & ", " & Form'Img & ");");
 
          if Ref_Index /= -1
            and then Get_Value (Atts, Name_Index) = Get_Value (Atts, Ref_Index)
@@ -675,17 +689,6 @@ package body Schema.Schema_Readers is
                     & Boolean'Image (On_Extension) & ");");
          end;
       end if;
-
-      if Form_Index /= -1 then
-         if Get_Value (Atts, Form_Index) = "qualified" then
-            Set_Form (Element, Qualified);
-            Output ("Set_Form (" & Ada_Name (Element) & ", Qualified);");
-         else
-            Set_Form (Element, Unqualified);
-            Output ("Set_Form (" & Ada_Name (Element) & ", Unqualified);");
-         end if;
-      end if;
-
 
       if Min_Occurs_Index /= -1 then
          Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
