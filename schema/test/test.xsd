@@ -1,0 +1,84 @@
+<?xml version="1.0" ?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            >
+            <!-- targetNamespace="http://www.act-europe.fr/XMLAda/ManuSchema" -->
+
+<xsd:element name="root" type="xsd:anyType"/>
+
+<xsd:complexType name="AdaString">
+ <xsd:sequence>
+  <xsd:element name="size"     type="xsd:nonNegativeInteger"/>
+  <xsd:element name="contents" type="xsd:string" />
+ </xsd:sequence>
+</xsd:complexType>
+
+<xsd:element name="my_string" type="AdaString" />
+
+<xsd:complexType name="zip">
+ <xsd:choice>
+  <xsd:element name="zipcode" type="xsd:string"/>
+  <xsd:element name="code_postal" type="xsd:string"/>
+ </xsd:choice>
+</xsd:complexType>
+
+<xsd:element name="zip" type="zip" />
+
+<!-- Ambigous:
+  Error at file /home/briot/Ada/xml/xmlada/schema/test/test.xml, line 4, char 49
+  Message: 'str' and 'str' violate the Unique Particle Attribution rule
+  -->
+<!--
+<xsd:complexType name="ambiguous">
+ <xsd:choice>
+  <xsd:sequence>
+    <xsd:element name="str" type="xsd:string"/>
+    <xsd:element name="str2" type="xsd:string"/>
+  </xsd:sequence>
+  <xsd:element name="str" type="xsd:string"/>
+ </xsd:choice>
+</xsd:complexType>
+-->
+
+<!-- Valid, since sequence doesn't mix with "str" -->
+
+<xsd:complexType name="valid">
+ <xsd:sequence>
+  <xsd:sequence>
+   <xsd:element name="str" type="xsd:string"/>
+   <xsd:element name="str2" type="xsd:string"/>
+  </xsd:sequence>
+  <xsd:element name="str" type="xsd:string"/>
+ </xsd:sequence>
+</xsd:complexType>
+
+<!-- Ambiguous2:
+  Error at file /home/briot/Ada/xml/xmlada/schema/test/test.xml, line 4, char 49
+  Message: 'str' and 'str' violate the Unique Particle Attribution rule -->
+
+<!--
+<xsd:complexType name="ambiguous2">
+ <xsd:choice>
+  <xsd:choice>
+   <xsd:element name="str2" type="xsd:string"/>
+   <xsd:element name="str" type="xsd:string"/>
+  </xsd:choice>
+  <xsd:element name="str" type="xsd:string"/>
+ </xsd:choice>
+</xsd:complexType>
+-->
+
+<xsd:complexType name="strs">
+  <xsd:sequence>
+   <xsd:sequence>
+     <xsd:element name="str" type="xsd:string"/>
+     <xsd:element name="str2" type="xsd:string"/>
+   </xsd:sequence>
+   <xsd:element name="str" type="xsd:string"/>
+  </xsd:sequence>
+</xsd:complexType>
+<xsd:element name="strs" type="strs" />
+
+
+
+</xsd:schema>
