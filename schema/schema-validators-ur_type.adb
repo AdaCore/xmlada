@@ -24,8 +24,8 @@ package body Schema.Validators.UR_Type is
      (Validator         : access UR_Type_Validator;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
+      NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
    --  See doc for inherited subprograms
 
@@ -35,15 +35,14 @@ package body Schema.Validators.UR_Type is
    ----------------------------
 
    procedure Validate_Start_Element
-     (Validator         : access UR_Type_Validator;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element)
+     (Validator              : access UR_Type_Validator;
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Element_Validator      : out XML_Element)
    is
       pragma Unreferenced (Data);
-      G : XML_Grammar_NS;
    begin
       Debug_Output
         ("Validate_Start_Element UR_Type Process_Contents="
@@ -53,18 +52,18 @@ package body Schema.Validators.UR_Type is
 
       case Validator.Process_Contents is
          when Process_Strict =>
-            Get_NS (Grammar, Namespace_URI, G);
             Element_Validator := Lookup_Element
-              (G, Local_Name, Create_If_Needed => False);
+              (NS, Local_Name, Create_If_Needed => False);
             if Element_Validator = No_Element then
                Validation_Error
                  ("No definition provided for """ & Local_Name & """");
+            else
+               Check_Qualification (Element_Validator, Namespace_URI);
             end if;
 
          when Process_Lax =>
-            Get_NS (Grammar, Namespace_URI, G);
             Element_Validator := Lookup_Element
-              (G, Local_Name, Create_If_Needed => False);
+              (NS, Local_Name, Create_If_Needed => False);
             if Element_Validator = No_Element then
                Debug_Output ("Definition not found for " & Local_Name);
                Element_Validator :=
@@ -77,6 +76,7 @@ package body Schema.Validators.UR_Type is
             Element_Validator :=
               Get_UR_Type_Element (Validator.Process_Contents);
       end case;
+
    end Validate_Start_Element;
 
    -------------------------
@@ -115,8 +115,17 @@ package body Schema.Validators.UR_Type is
    -------------------------
 
    function Get_UR_Type_Element
-     (Process_Contents : Process_Contents_Type)
-         return XML_Element
+     (Process_Contents : Process_Contents_Type) return XML_Element is
+   begin
+      return UR_Type_Element (Process_Contents);
+   end Get_UR_Type_Element;
+
+   -----------------------------
+   -- Create_UR_Type_Elements --
+   -----------------------------
+
+   procedure Create_UR_Type_Elements
+     (Schema_NS : Schema.Validators.XML_Grammar_NS)
    is
       Validator : UR_Type_Access;
    begin
@@ -125,11 +134,9 @@ package body Schema.Validators.UR_Type is
             Validator := new UR_Type_Validator;
             Validator.Process_Contents := P;
             UR_Type_Element (P)  := Create_Local_Element
-              ("", Create_Local_Type (Validator), Qualified);
+              ("", Schema_NS, Create_Local_Type (Validator), Qualified);
          end loop;
       end if;
-
-      return UR_Type_Element (Process_Contents);
-   end Get_UR_Type_Element;
+   end Create_UR_Type_Elements;
 
 end Schema.Validators.UR_Type;
