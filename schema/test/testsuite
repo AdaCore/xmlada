@@ -12,11 +12,16 @@
 xmltests=./xmltests
 
 debug=""
+show_expected_failure=0
+run_ms=1
+run_sun=1
 
-while getopts "d" opt
+while getopts "ds" opt
 do 
    case $opt in
       d) debug="-debug";;
+      s) show_expected_failure=1;;
+      m) run_ms=0;;
       *) echo "Invalid command line switch: $opt"
          exit 1
          ;;
@@ -93,13 +98,16 @@ notrun() {
 expected_failure() {
   failed=`expr $failed + 1`
   total=`expr $total + 1`
-  echo "$1: $2"
+  if [ x$show_expected_failure = x1 ]; then
+     echo "$1: $2"
+  fi
 }
 
 ##################
 ## Microsoft elements tests -- A serie  (name attribute tests)
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemA001.xsd ""\
  "$ms/element/elemA001.xsd:3:16: Attribute \"name\" is required in this context"
 expect $ms/element/elemA002.xsd "" ""
@@ -124,12 +132,13 @@ expect $ms/element/elemA014.xsd "" \
 expect $ms/element/elemA015.xsd "" ""
 expect $ms/element/elemA016.xsd "" ""
 expect $ms/element/elemA017.xsd "" ""
-
+fi
 
 ##################
 ## Microsoft elements tests -- B serie  (boolean tests)
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemB001.xsd "" ""
 expect $ms/element/elemB002.xsd "" ""
 expect $ms/element/elemB003.xsd "" \
@@ -146,12 +155,13 @@ expect $ms/element/elemB009.xsd "" \
  "$ms/element/elemB009.xsd:3:47: Attribute \"abstract\": Invalid value for boolean type: \"abstract\""
 expect $ms/element/elemB010.xsd "" \
  "$ms/element/elemB010.xsd:3:49: Attribute \"abstract\": Invalid value for boolean type: \"true false\""
-
+fi
 
 ##################
 ## Microsoft elements tests -- C serie  (block attribute + list type)
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemC001.xsd "" ""
 expect $ms/element/elemC002.xsd "" ""
 expect $ms/element/elemC003.xsd "" ""
@@ -180,11 +190,13 @@ expect $ms/element/elemC017.xsd "" \
  "$ms/element/elemC017.xsd:3:52: Attribute \"block\": Invalid value \"substitution foo\""
 expect $ms/element/elemC018.xsd "" ""
 expect $ms/element/elemC020.xsd "" ""
+fi
 
 ##################
 ## Microsoft elements tests -- D serie (default)
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemD001.xsd "" ""
 expect $ms/element/elemD002.xsd "" ""
 expect $ms/element/elemD003.xsd "" \
@@ -194,11 +206,13 @@ expect $ms/element/elemD004.xsd "" \
 expect $ms/element/elemD005.xsd "" \
  "$ms/element/elemD005.xsd:3:58: string pattern not matched: \d\d\d\d-\d\d-\d\d"
 expect $ms/element/elemD006.xsd "" ""
+fi
 
 ##################
 ## Microsoft elements tests -- E serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemE001.xsd "" ""
 expect $ms/element/elemE002.xsd "" ""
 expect $ms/element/elemE003.xsd "" ""
@@ -212,11 +226,13 @@ expect $ms/element/elemE008.xsd "" \
  "$ms/element/elemE008.xsd:11: Element \"foo\" was referenced, but never declared"
 expect $ms/element/elemE009.xsd "" \
  "$ms/element/elemE009.xsd:16: Element \"foo\" was referenced, but never declared"
+fi
 
 ##################
 ## Microsoft elements tests -- F serie (final)
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemF001.xsd "" ""
 expect $ms/element/elemF002.xsd "" ""
 expect $ms/element/elemF003.xsd "" ""
@@ -248,12 +264,13 @@ expect $ms/element/elemF016.xsd "" \
 expect $ms/element/elemF017.xsd "" \
  "$ms/element/elemF017.xsd:3:52: Attribute \"final\": Invalid value \"substitution foo\""
 expect $ms/element/elemF018.xsd "" ""
-
+fi
 
 ##################
 ## Microsoft elements tests -- G serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemG001.xsd "" ""
 expect $ms/element/elemG002.xsd "" ""
 expect $ms/element/elemG003.xsd "" \
@@ -261,12 +278,13 @@ expect $ms/element/elemG003.xsd "" \
 expect $ms/element/elemG004.xsd "" \
  "$ms/element/elemG004.xsd:8:21: No character data allowed by content model"
 expect $ms/element/elemG005.xsd "" ""
-
+fi
 
 ##################
 ## Microsoft elements tests -- H serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemH001.xsd "" ""
 expect $ms/element/elemH002.xsd "" ""
 expect $ms/element/elemH003.xsd "" \
@@ -277,11 +295,13 @@ expect $ms/element/elemH005.xsd "" \
  "$ms/element/elemH005.xsd:2:91: Attribute \"elementFormDefault\": Element's value not in the enumeration set"
 expect $ms/element/elemH006.xsd "" \
  "$ms/element/elemH006.xsd:2:101: Attribute \"elementFormDefault\": Element's value not in the enumeration set"
+fi
 
 ##################
 ## Microsoft elements tests -- I serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemI001.xsd "" ""
 expect $ms/element/elemI002.xsd "" ""
 expect $ms/element/elemI003.xsd "" \
@@ -290,11 +310,13 @@ expect $ms/element/elemI004.xsd "" \
  "$ms/element/elemI004.xsd:3:33: Attribute \"id\": Invalid value: \"\""
 expect $ms/element/elemI005.xsd "" \
  "$ms/element/elemI005.xsd:4:39: ID \"foo25\" already defined"
+fi
 
 ##################
 ## Microsoft elements tests -- J serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemJ001.xsd "" ""
 expect $ms/element/elemJ002.xsd "" ""
 expect $ms/element/elemJ003.xsd "" ""
@@ -325,11 +347,13 @@ expect $ms/element/elemJ019.xsd "" \
 expect $ms/element/elemJ020.xsd "" \
  "$ms/element/elemJ020.xsd:6:74: Attribute \"minOccurs\": Value must be an integer"
 expect $ms/element/elemJ021.xsd "" ""
+fi
 
 ##################
 ## Microsoft elements tests -- K serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemK001.xsd "" ""
 expect $ms/element/elemK002.xsd "" ""
 expect $ms/element/elemK003.xsd "" \
@@ -342,11 +366,13 @@ expect $ms/element/elemK006.xsd "" \
  "$ms/element/elemK006.xsd:3:49: Attribute \"nillable\": Invalid value for boolean type: \"true false\""
 expect $ms/element/elemK007.xsd "" \
  "$ms/element/elemK007.xsd:3:43: Attribute \"nullable\": Invalid in this context"
+fi
 
 ##################
 ## Microsoft elements tests -- L serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemL001.xsd "" ""
 expect $ms/element/elemL002.xsd "" \
  "$ms/element/elemL002.xsd:10: Element \"foo\" was referenced, but never declared"
@@ -355,11 +381,13 @@ expect $ms/element/elemL003.xsd "" \
 expect $ms/element/elemL004.xsd "" ""
 expect $ms/element/elemL005.xsd "" \
  "$ms/element/elemL005.xsd:3:14: Not enough occurrences of sequence, expecting at least 1, got 0"
+fi
 
 ##################
 ## Microsoft elements tests -- M serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemM001.xsd "" ""
 expect $ms/element/elemM002.xsd "" \
  "$ms/element/elemM002.xsd:6: Type \"foo\" was referenced, but never declared"
@@ -368,11 +396,13 @@ expect $ms/element/elemM003.xsd "" \
 expect $ms/element/elemM004.xsd "" ""
 expect $ms/element/elemM005.xsd "" \
  "$ms/element/elemM005.xsd:6:39: \"type\" attribute cannot be specified along with \"ref\""
+fi
 
 ##################
 ## Microsoft elements tests -- N serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemN001.xsd "" ""
 expect $ms/element/elemN002.xsd "" ""
 expect $ms/element/elemN003.xsd "" ""
@@ -380,11 +410,13 @@ expect $ms/element/elemN004.xsd "" ""
 expect $ms/element/elemN005.xsd "" ""
 expect $ms/element/elemN006.xsd "" \
  "$ms/element/elemN006.xsd:3:58: Attribute \"foo\": Invalid in this context"
+fi
 
 ##################
 ## Microsoft elements tests -- O serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect "" $ms/element/elemO001.xml \
  "$ms/element/elemO001.xml:4:11: \"parent\" is an abstract element"
 expect "" $ms/element/elemO002.xml ""
@@ -401,11 +433,13 @@ expect "" $ms/element/elemO010.xml \
 expect "" $ms/element/elemO011.xml \
  "$ms/element/elemO011.xml:3:27: Attribute \"xsi:nil\" invalid for this element"
 expect "" $ms/element/elemO012.xml ""
+fi
 
 ##################
 ## Microsoft elements tests -- P serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemP001.xsd "" \
  "$ms/element/elemP001.xsd:3:90: Attributes \"fixed\" and \"default\" conflict with each other"
 expect $ms/element/elemP002.xsd "" \
@@ -422,11 +456,13 @@ expect $ms/element/elemP008.xsd "" \
  "$ms/element/elemP008.xsd:9:22: Cannot mix complexType definition and \"ref\" attribute"
 expect $ms/element/elemP009.xsd "" \
  "$ms/element/elemP009.xsd:6:49: \"type\" attribute cannot be specified along with \"ref\""
+fi
 
 ##################
 ## Microsoft elements tests -- Q serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemQ001.xsd "" ""
 expect $ms/element/elemQ002.xsd "" ""
 expect $ms/element/elemQ003.xsd "" ""
@@ -458,22 +494,26 @@ expect "" $ms/element/elemQ019.xml \
 expect "" $ms/element/elemQ020.xml ""
 expect "" $ms/element/elemQ021.xml ""
 expect "" $ms/element/elemQ022.xml ""
+fi
 
 ##################
 ## Microsoft elements tests -- R serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect "" $ms/element/elemR001.xml ""
 expect "" $ms/element/elemR002.xml ""
 notrun $ms/element/elemR003.xsd "test seems wrong, all parsers fail"
 expect "" $ms/element/elemR004.xml ""
 expect "" $ms/element/elemR005.xml ""
 notrun $ms/element/elemR006.xsd "test seems wrong, all parsers fail"
+fi
 
 ##################
 ## Microsoft elements tests -- S serie (final)
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect $ms/element/elemS001.xsd "" \
  "$ms/element/elemS001.xsd:36:84: \"fr_invalid\" is final for restrictions, and cannot be substituted by\"fr1_invalid\""
 expect "" $ms/element/elemS002.xml ""
@@ -486,11 +526,13 @@ expect $ms/element/elemS006.xsd "" \
  "$ms/element/elemS006.xsd:36:84: \"fe_invalid\" is final for extensions, and cannot be substituted by\"fe1_invalid\""
 expect "" $ms/element/elemS007.xml ""
 expect "" $ms/element/elemS008.xml ""
+fi
 
 ##################
 ## Microsoft elements tests -- T serie (block)
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect "" $ms/element/elemT001.xml \
  "$ms/element/elemT001.xml:3:29: Cannot use restriction of element's type in this context"
 expect "" $ms/element/elemT002.xml ""
@@ -569,11 +611,13 @@ notrun $ms/element/elemT057.xml "Should fail, but all parsers let pass"
 expect "" $ms/element/elemT058.xml ""
 expect "" $ms/element/elemT074.xml \
  "$ms/element/elemT074.xml:2:23: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+fi
 
 ##################
 ## Microsoft elements tests -- U serie (restrictions and facets)
 ##################
 
+if [ x$run_ms = x1 ]; then
 expect "" $ms/element/elemU001.xml ""
 expect "" $ms/element/elemU002.xml ""
 expect "" $ms/element/elemU003.xml ""
@@ -599,23 +643,48 @@ expect "" $ms/element/elemU023.xml ""
 expect "" $ms/element/elemU024.xml ""
 expect "" $ms/element/elemU025.xml \
  "$ms/element/elemU025.xml:2:14: string pattern not matched: Chapter \d"
+fi
 
 ##################
 ## Microsoft elements tests -- Z serie
 ##################
 
+if [ x$run_ms = x1 ]; then
 notrun $ms/element/elemZ001.xml "All parsers accept it"
 expected_failure $ms/element/elemZ002.xml "Improper handling of derivation for simpleType for xsi:type attribute"
 expect "" $ms/element/elemZ003.xml ""
 expected_failure $ms/element/elemZ004.xsd "maxInt can't be bigger than Long_Integer'Last"
 expect $ms/element/elemZ005.xsd ""
-
+fi
 
 ##################
 ## Sun tests
 ##################
 
-expect "$sun/idc001.nogen.xsd" "$sun/idc001.nogen.n00.xml" "f"
+if [ x$run_sun = x1 ]; then
+expected_failure "$sun/idc001.nogen.n00.xml" "XPath not support => <unique> not supported"
+expect "$sun/idc001.nogen.xsd" "$sun/idc001.nogen.v00.xml" ""
+expect "$sun/idc001.nogen.xsd" "$sun/idc001.nogen.v01.xml" ""
+expected_failure "$sun/idc002.e.xsd" "<key> not supported"
+expected_failure "$sun/idc002b.e.xsd" "<key> not supported"
+expected_failure "$sun/idc003.e.xsd" "<key> not supported"
+expected_failure "$sun/idc004.nogen.xsd $sun/idc004.nogen.n01.xml" "<key> not supported"
+expected_failure "$sun/idc004.nogen.xsd $sun/idc004.nogen.n02.xml" "<key> not supported"
+expected_failure "$sun/idc004.nogen.xsd $sun/idc004.nogen.n03.xml" "<key> not supported"
+expected_failure "$sun/idc004.nogen.xsd $sun/idc004.nogen.v00.xml" "<key> not supported"
+expected_failure "$sun/idc004.e.xsd" "<key> not supported"
+expected_failure "$sun/idc005.nogen.xsd $sun/idc005.nogen.n00.xml" "<key> not supported"
+expected_failure "$sun/idc005.nogen.xsd $sun/idc005.nogen.n01.xml" "<key> not supported"
+expected_failure "$sun/idc005.nogen.xsd $sun/idc005.nogen.v00.xml" "<key> not supported"
+expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.n00.xml" "<key> not supported"
+expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.n01.xml" "<key> not supported"
+expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.v00.xml" "<key> not supported"
+
+expect "$sun/xsd001.xsd" "$sun/xsd001.n00.xml" \
+ "$sun/xsd001.n00.xml:6:12: Element must be repeated at least 3 times"
+
+
+fi
 
 
 
