@@ -299,6 +299,15 @@ package body DOM.Core.Nodes is
       return null;
    end Next_Sibling;
 
+   ---------------
+   -- Node_Type --
+   ---------------
+
+   function Node_Type (N : Node) return Node_Types is
+   begin
+      return N.Node_Type;
+   end Node_Type;
+
    -----------------
    -- Parent_Node --
    -----------------

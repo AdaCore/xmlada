@@ -41,6 +41,9 @@ package DOM.Core.Nodes is
    --  Return the value of the node.
    --  Its meaning depends on the type of the node, see the DOM specifications.
 
+   function Node_Type (N : Node) return Node_Types;
+   --  Return the type of the node
+
    procedure Set_Node_Value (N : Node; Value : DOM_String);
    --  Change the value of the node.
    --  No_Modification_Allowed_Err is raised when Node is read-only.
