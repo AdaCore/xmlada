@@ -14,6 +14,10 @@ package Debug_Readers is
    --  If Silent is True, then nothing will be output on the console, except
    --  error messages
 
+   procedure Set_Color
+     (Handler : in out Debug_Reader; Color : Boolean);
+   --  Whether the output should use color for locations
+
    procedure Warning
      (Handler : in out Debug_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class);
@@ -108,8 +112,14 @@ package Debug_Readers is
       return Input_Sources.Input_Source_Access;
 
 private
+   type String_Access is access String;
+   type String_List is array (Natural range <>) of String_Access;
+   type String_List_Access is access String_List;
+
    type Debug_Reader is new Sax.Readers.Reader with record
       Locator : Sax.Locators.Locator_Access;
       Silent  : Boolean := False;
+      Saved_Locs : String_List_Access;
+      Color   : Boolean := True;
    end record;
 end Debug_Readers;
