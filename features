@@ -1,5 +1,9 @@
 New features in version 0.8
 
+- tree_readers.ads renamed to dom-readers.ads
+  This way, only the XML/Ada namespace is used, without conflicts with files
+  that may come from the user's code.
+
 - Builds are now based on GNAT project files
   Users of GNAT 3.15 and later will now use GNAT project files to build the
   library, which is easier to configure.
