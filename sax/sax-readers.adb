@@ -4521,6 +4521,7 @@ package body Sax.Readers is
       Parser.Previous_Char_Was_CR := False;
       Parser.Ignore_State_Special := False;
       Parser.In_External_Entity := False;
+      Parser.Last_Read_Is_Valid := False;
       Parser.Buffer := new Byte_Sequence (1 .. Initial_Buffer_Length);
       Set_State (Parser, Default_State);
 
