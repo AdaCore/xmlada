@@ -130,6 +130,10 @@ package body Sax.Utils is
       C     : Unicode_Char;
       Index : Natural := Name'First;
    begin
+      if Name'length = 0 then
+         return False;
+      end if;
+
       Encoding.Read (Name, Index, C);
 
       if C /= Spacing_Underscore and then not Is_Letter (C) then
