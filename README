@@ -1,0 +1,62 @@
+
+INSTALLING THIS LIBRARY
+=======================
+
+Edit the file Makefile in the root directory, and change the variable
+PREFIX at the top to reflect the intended location for the library.
+
+If you are using GNAT version 3.13p or lower, uncomment the second
+COMPILER line in the file Makefile.module, so that it only contains
+"gnatmake". The other switches are not supported in these versions.
+
+type:
+   >  make install
+to build and install the library.
+
+Files will be copied into ${PREFIX}/lib and ${PREFIX}/include/xmlada.
+
+To use this library, add the following arguments to the gnatmake
+command line:
+   -aI${PREFIX}/include/xmlada -largs -L${PREFIX}/lib -lxml
+
+
+CONTENTS OF THE LIBRARY
+=======================
+
+The sources in this library are split into several subdirectories, each
+with its own README, sources, documentation and unit tests.
+
+The list of subdirectories (aka modules) is:
+
+- state_machine:
+  provides a generic state machine, that can be instantiated to transition on
+  any type of event
+
+- unicode:
+  provides a full support for Unicode and Utf8/Utf16/Utf32 encodings. It also
+  support other encodings like Latin1, Latin2, ...
+
+- input_sources
+  provides types to read characters from several types of media.
+
+- sax
+  Provides a common, standard interface for any XML parser, through
+  callback subprograms. You can extend any of the tagged types defined in these
+  package and thus parse XML files without having to store a XML tree in
+  memory.
+  This package is compatible with SAX 2.0, but doesn't implement the functions
+  specific to SAX 1.0
+
+- dom
+  The Document Object Model is a set of standard subprograms to manipulate
+  XML tree in memory.
+  Only the Core module is currently implemented.
+
+- docs
+  This contains the full documentation for this XML library
+
+
+BUG REPORTS
+===========
+
+Please send questions and bug reports to Emmanuel Briot <briot@act-europe.fr>

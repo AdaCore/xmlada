@@ -1,0 +1,1826 @@
+#!/bin/sh
+
+# The test suite is the official OASIS test suite, that can be downloaded
+# from www.xml.org. The name of the current archive is
+#     xmlconf-19990712.tar.Z
+
+BASE=/home/briot/internet/xml/tests
+XML=./testxml
+XML_SILENT="$XML -silent"   # Use for testing error messages only
+valid_sa="$BASE/xmltest/valid/sa"
+valid_not_sa="$BASE/xmltest/valid/not-sa"
+valid_ext_sa="$BASE/xmltest/valid/ext-sa"
+sun_valid="$BASE/sun/valid"
+oasis="$BASE/oasis"
+japanese="$BASE/japanese"
+out_file="testsuite.out"
+old_out_file="testsuite.out.old"
+
+# Set to 1 if we want to test a validating XML parser
+VALIDATING=0
+
+# Set to 1 if the parser can get external entities
+EXTERN=0
+
+# Set to 1 if we parse the DTD to find the definition of entities
+READ_ENTITIES=1
+
+# Set to 1 if the default value for attributes was read
+READ_DEFAULT=0
+
+# Set to 1 to activate tests whose result is dubious
+NOT_SURE=0
+
+num_tests_run=0
+num_failures=0
+
+# Which tests do we want to run ?
+run_valid_tests=1
+run_invalid_tests=1
+run_not_wf_tests=1
+optional_errors=0
+
+# special characters (these are not saved as is so that we can easily save
+# that testsuite file in 7 bit mode)
+x80=`printf "\0200"`
+xb7=`printf "\0267"`
+xc2=`printf "\0302"`
+xcc=`printf "\0314"`
+x82=`printf "\0202"`
+xe3=`printf "\0343"`
+x9a=`printf "\0232"`
+xe0=`printf "\0340"`
+xb9=`printf "\0271"`
+x9c=`printf "\0234"`
+
+# Initialize the out file
+if [ -f $out_file ]; then
+   mv $out_file $old_out_file
+fi
+touch $out_file
+
+######################################
+## expect ()
+##  $1 = command to execute
+##  $2 = expected output
+##  $3 = input to be send to the command
+######################################
+expect () {
+  num_tests_run=`expr $num_tests_run + 1`
+  out=`eval $1 2>&1 <<EOF
+$3
+EOF`
+  exp="$2"
+  if [ "$exp " != "$out " ]; then
+     num_failures=`expr $num_failures + 1`
+     echo "  Cmd: $1" >> $out_file
+     echo "#---------- Test failed ----------"
+     echo "  Cmd: $1"
+     echo "  Got: $out"
+     echo "  Expecting: $exp"
+  fi
+}
+
+######################################
+## expect_file ()
+##  $1 = command to execute
+##  $2 = directory
+##  $3 = name of test
+######################################
+expect_file () {
+  file=`cat $2/out/$3`
+  expect "$1 $2/$3" "$file" ""
+}
+
+######################################
+## Oasis tests
+######################################
+
+expect_oasis() {
+  expect "$XML_SILENT $oasis/$1.xml" ""
+}
+
+if [ $run_valid_tests = 1 ]; then
+    # "p01pass1" is an invalid document. See section later
+    expect_oasis "p01pass2"
+    # "p01pass3" is an invalid document. See section later
+    [ $NOT_SURE = 1 ] && expect_oasis "p02pass1"
+     # ??? "p02pass1" Removed apparently from the official suite
+    # "p03pass1" is an invalid document. See section later
+    # "p04pass1" is an invalid document. See section later
+    # "p05pass1" is an invalid document. See section later
+    expect_oasis "p06pass1"
+    expect_oasis "p07pass1"
+    expect_oasis "p08pass1"
+    expect_oasis "p09pass1"
+    expect_oasis "p10pass1"
+    expect_oasis "p11pass1"
+    expect_oasis "p12pass1"
+    expect_oasis "p14pass1"
+    # "p15pass1" is an invalid document. See section later
+    # "p16pass1" is an invalid document. See section later
+    # "p16pass2" is an invalid document. See section later
+    # "p16pass3" is an invalid document. See section later
+    # "p18pass1" is an invalid document. See section later
+    # "p22pass1" is an invalid document. See section later
+    # "p22pass2" is an invalid document. See section later
+    # "p22pass3" is an invalid document. See section later
+    expect_oasis "p22pass4"
+    expect_oasis "p22pass5"
+    expect_oasis "p22pass6"
+    expect_oasis "p23pass1"
+    expect_oasis "p23pass2"
+    expect_oasis "p23pass3"
+    expect_oasis "p23pass4"
+    expect_oasis "p24pass1"
+    expect_oasis "p24pass2"
+    expect_oasis "p24pass3"
+    expect_oasis "p24pass4"
+    expect_oasis "p25pass1"
+    expect_oasis "p25pass2"
+    expect_oasis "p26pass1"
+    expect_oasis "p27pass1"
+    expect_oasis "p27pass2"
+    expect_oasis "p27pass3"
+    expect_oasis "p27pass4"
+    expect_oasis "p28pass1"
+    expect_oasis "p28pass2"
+    expect_oasis "p28pass3"
+    expect_oasis "p28pass4"
+    expect_oasis "p28pass5"
+    expect_oasis "p29pass1"
+    expect_oasis "p30pass1"
+    expect_oasis "p30pass2"
+    expect_oasis "p31pass1"
+    expect_oasis "p31pass2"
+    expect_oasis "p32pass1"
+    expect_oasis "p32pass2"
+    expect_oasis "p39pass1"
+    expect_oasis "p39pass2"
+    expect_oasis "p40pass1"
+    expect_oasis "p40pass2"
+    expect_oasis "p40pass3"
+    expect_oasis "p40pass4"
+    expect_oasis "p41pass1"
+    expect_oasis "p41pass2"
+    expect_oasis "p42pass1"
+    expect_oasis "p42pass2"
+    [ $READ_ENTITIES = 1 ] && expect_oasis "p43pass1"
+    expect_oasis "p44pass1"
+    expect_oasis "p44pass2"
+    expect_oasis "p44pass3"
+    expect_oasis "p44pass4"
+    expect_oasis "p44pass5"
+    expect_oasis "p45pass1"
+    expect_oasis "p46pass1"
+    expect_oasis "p47pass1"
+    expect_oasis "p48pass1"
+    expect_oasis "p49pass1"
+    expect_oasis "p50pass1"
+    expect_oasis "p51pass1"
+    expect_oasis "p52pass1"
+    expect_oasis "p53pass1"
+    expect_oasis "p54pass1"
+    expect_oasis "p55pass1"
+    expect_oasis "p56pass1"
+    expect_oasis "p57pass1"
+    expect_oasis "p58pass1"
+    expect_oasis "p59pass1"
+    expect_oasis "p60pass1"
+    expect_oasis "p61pass1"
+    expect_oasis "p62pass1"
+    expect_oasis "p63pass1"
+    expect_oasis "p64pass1"
+    expect_oasis "p66pass1"
+    [ $READ_ENTITIES = 1 ] && expect_oasis "p68pass1"
+    expect_oasis "p69pass1"
+    expect_oasis "p70pass1"
+    expect_oasis "p71pass1"
+    expect_oasis "p72pass1"
+    expect_oasis "p73pass1"
+    expect_oasis "p74pass1"
+    expect_oasis "p75pass1"
+    expect_oasis "p76pass1"
+fi
+
+######################################
+## Sun tests
+######################################
+
+expect_sun_valid () { expect_file "$XML" "$sun_valid" "$1.xml" }
+
+if [ $run_valid_tests = 1 ]; then
+    expect_sun_valid "dtd00"
+    expect_sun_valid "dtd01"
+    expect_sun_valid "element"
+    expect_sun_valid "optional"
+    expect_sun_valid "required00"
+    expect_sun_valid "sa01"
+    expect_sun_valid "v-lang01"
+    expect_sun_valid "v-lang02"
+    expect_sun_valid "v-lang03"
+    expect_sun_valid "v-lang04"
+    expect_sun_valid "v-lang05"
+    expect_sun_valid "v-lang06"
+    [ $READ_ENTITIES = 1 ] && expect_sun_valid "ext01"
+    [ $READ_ENTITIES = 1 ] && expect_sun_valid "ext02"
+    [ $READ_ENTITIES = 1 ] && expect_sun_valid "empty"
+    [ $EXTERN = 1 ] && expect_sun_valid "pe00"
+    [ $READ_ENTITIES = 1 ] && expect_sun_valid "pe01"
+    [ $READ_ENTITIES = 1 ] && expect_sun_valid "pe02"
+    [ $NOT_SURE = 1 ] && expect_sun_valid "sa02"
+    [ $NOT_SURE = 1 ] && expect_sun_valid "sa03"
+    [ $NOT_SURE = 1 ] && expect_sun_valid "sa04"
+    [ $VALIDATING = 1 ]    && expect_sun_valid "sa05"
+    [ $VALIDATING = 1 ]    && expect_sun_valid "sgml01"
+    [ $VALIDATING = 1 ]    && expect_sun_valid "notation01"
+    [ $EXTERN = 1 ]        && expect_sun_valid "not-sa01"
+    [ $EXTERN = 1 ]        && expect_sun_valid "not-sa02"
+    [ $EXTERN = 1 ]        && expect_sun_valid "not-sa03"
+    [ $EXTERN = 1 ]        && expect_sun_valid "not-sa04"
+fi
+
+######################################
+## Japanese tests
+######################################
+
+expect_japanese() { expect "$XML_SILENT $japanese/$1.xml" "" }
+
+if [ $run_valid_tests = 1 ]; then
+    [ $READ_ENTITIES = 1 ] && expect_japanese "pr-xml-little-endian"
+    [ $READ_ENTITIES = 1 ] && expect_japanese "pr-xml-utf-16"
+    [ $READ_ENTITIES = 1 ] && expect_japanese "pr-xml-utf-8"
+    expect_japanese "weekly-little-endian"
+    expect_japanese "weekly-utf-16"
+    expect_japanese "weekly-utf-8"
+fi
+
+######################################
+## Valid external standalone tests
+######################################
+
+expect_valid_ext_sa() { expect_file "$XML" "$valid_ext_sa" "$1.xml" }
+
+if [ $run_valid_tests = 1 ]; then
+    [ $EXTERN = 1 ]        && expect_valid_ext_sa "001"
+    [ $EXTERN = 1 ]        && expect_valid_ext_sa "002"
+    [ $READ_ENTITIES = 1 ] && expect_valid_ext_sa "003"
+    [ $EXTERN = 1 ]        && expect_valid_ext_sa "004"
+    [ $READ_ENTITIES = 1 ] && expect_valid_ext_sa "005"
+    [ $EXTERN = 1 ]        && expect_valid_ext_sa "006"
+    [ $READ_ENTITIES = 1 ] && expect_valid_ext_sa "007"
+    [ $READ_ENTITIES = 1 ] && expect_valid_ext_sa "008"
+    [ $EXTERN = 1 ]        && expect_valid_ext_sa "009"
+    [ $READ_ENTITIES = 1 ] && expect_valid_ext_sa "010"
+    [ $EXTERN = 1 ]        && expect_valid_ext_sa "011"
+    [ $READ_ENTITIES = 1 ] && expect_valid_ext_sa "012"
+    [ $READ_ENTITIES = 1 ] && expect_valid_ext_sa "013"
+    [ $READ_ENTITIES = 1 ] && expect_valid_ext_sa "014"
+fi
+
+######################################
+## Valid not standalone tests
+######################################
+
+expect_valid_not_sa() { expect_file "$XML" "$valid_not_sa" "$1.xml" }
+
+if [ $run_valid_tests = 1 ]; then
+			      expect_valid_not_sa "001"
+			      expect_valid_not_sa "002"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "003"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "004"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "005"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "006"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "007"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "008"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "009"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "010"
+    [ $READ_DEFAULT = 1 ]  && expect_valid_not_sa "011"
+    [ $READ_DEFAULT = 1 ]  && expect_valid_not_sa "012"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "013"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "014"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "015"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "016"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "017"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "018"
+    [ $READ_DEFAULT = 1 ]  && expect_valid_not_sa "019"
+    [ $READ_DEFAULT = 1 ]  && expect_valid_not_sa "020"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "021"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "022"
+    [ $EXTERN = 1 ]        && expect_valid_not_sa "023"
+    [ $EXTERN = 1 ]        && expect_valid_not_sa "024"
+    [ $READ_DEFAULT = 1 ]  && expect_valid_not_sa "025"
+    [ $READ_ENTITIES = 1 ] && expect_valid_not_sa "026"
+			      expect_valid_not_sa "027"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "028"
+    [ $EXTERN = 1 -a $READ_DEFAULT = 1 ] && expect_valid_not_sa "029"
+			      expect_valid_not_sa "030"
+    [ $READ_ENTITIES = 1 ] && expect_valid_not_sa "031"
+fi
+
+######################################
+## Output tests
+## The following tests must be accepted as is, with no error
+######################################
+
+expect_valid_sa() {
+    expect_file "$XML" "$valid_sa" "$1.xml"
+}
+expect_valid_sa_error() {
+    expect "$XML $valid_sa/$1.xml" "$2"
+}
+
+if [ $run_valid_tests = 1 ]; then
+    expect_valid_sa "001"
+    expect_valid_sa "002"
+    expect_valid_sa "003"
+    expect_valid_sa "004"
+    expect_valid_sa "005"
+    expect_valid_sa "006"
+    expect_valid_sa "007"
+    expect_valid_sa "008"
+    expect_valid_sa "009"
+    expect_valid_sa "010"
+    expect_valid_sa "011"
+    expect_valid_sa "012"
+    expect_valid_sa "013"
+    expect_valid_sa "014"
+    expect_valid_sa "015"
+    expect_valid_sa "016"
+    expect_valid_sa "017"
+    expect_valid_sa "018"
+    expect_valid_sa "019"
+    expect_valid_sa "020"
+    expect_valid_sa "021"
+    expect_valid_sa "022"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "023"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "024"
+    expect_valid_sa "025"
+    expect_valid_sa "026"
+    expect_valid_sa "027"
+    expect_valid_sa "028"
+    expect_valid_sa "029"
+    expect_valid_sa "030"
+    [ $EXTERN = 1 ] && expect_valid_sa "031"
+    expect_valid_sa "032"
+    expect_valid_sa "033"
+    expect_valid_sa "034"
+    expect_valid_sa "035"
+    expect_valid_sa "036"
+    expect_valid_sa "037"
+    expect_valid_sa "038"
+    expect_valid_sa "039"
+    expect_valid_sa "040"
+    expect_valid_sa "041"
+    expect_valid_sa "042"
+    expect_valid_sa "043"
+    [ $VALIDATING = 1 ]   && expect_valid_sa "044"
+    [ $READ_DEFAULT = 1 ] && expect_valid_sa "045"
+    [ $READ_DEFAULT = 1 ] && expect_valid_sa "046"
+    expect_valid_sa "047"
+    expect_valid_sa "048"
+    expect_valid_sa "049"
+    expect_valid_sa "050"
+    expect_valid_sa "051"
+    expect_valid_sa "052"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "053"
+    expect_valid_sa "054"
+    expect_valid_sa "055"
+    expect_valid_sa "056"
+    expect_valid_sa "057"
+    expect_valid_sa "058"
+    expect_valid_sa "059"
+    expect_valid_sa "060"
+    expect_valid_sa "061"
+    expect_valid_sa "062"
+    expect_valid_sa "063"
+    expect_valid_sa "064"
+    expect_valid_sa "065"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "066"
+    expect_valid_sa "067"
+    [ $VALIDATING = 1 ]    && expect_valid_sa "068"
+    expect_valid_sa "069"
+    expect_valid_sa "070"
+    expect_valid_sa "071"
+    expect_valid_sa "072"
+    expect_valid_sa "073"
+    expect_valid_sa "074"
+    expect_valid_sa "075"
+    expect_valid_sa "076"
+    expect_valid_sa "077"
+    expect_valid_sa "078"
+    expect_valid_sa "079"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "080"
+    expect_valid_sa "081"
+    expect_valid_sa "082"
+    expect_valid_sa "082"
+    expect_valid_sa "083"
+    expect_valid_sa "084"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "085"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "086"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "087"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "088"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "089"
+    expect_valid_sa "090"
+    [ $READ_DEFAULT = 1 ] && expect_valid_sa "091"
+    expect_valid_sa "092"
+    expect_valid_sa "093"
+    [ $READ_DEFAULT = 1 ]  && expect_valid_sa_error "094" \
+         "(2.8) undefined parameter entity reference within a markup declaration"
+    [ $NOT_SURE = 1 ] && expect_valid_sa "095" # Attr must be normalized
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "096"
+    [ $VALIDATING = 1 ]    && expect_valid_sa "097"
+    expect_valid_sa "098"
+    expect_valid_sa "099"
+    expect_valid_sa "100"
+    expect_valid_sa "101"
+    expect_valid_sa "102"
+    expect_valid_sa "103"
+    expect_valid_sa "104"
+    [ $NOT_SURE = 1 ] && expect_valid_sa "105" # Attr must be normalized
+    [ $NOT_SURE = 1 ] && expect_valid_sa "106" # Attr must be normalized
+    [ $NOT_SURE = 1 ] && expect_valid_sa "107" # Attr must be normalized
+    [ $VALIDATING = 1 ]    && expect_valid_sa "108"
+    expect_valid_sa "109"
+    [ $NOT_SURE = 1 ] && expect_valid_sa "110"
+    expect_valid_sa "111"
+    expect_valid_sa "112"
+    expect_valid_sa "113"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "114"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "115"
+    expect_valid_sa "116"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "117"
+    [ $READ_ENTITIES = 1 ] && expect_valid_sa "118"
+    expect_valid_sa "119"
+fi
+
+###########################################
+## Invalid XML documents
+##
+## All conforming XML 1.0 Validating Processors are required to report
+## recoverable errors in the case of documents which are Invalid. Such
+## errors are violations of some validity constraint (VC).
+##
+## Non-validating processors should accept all these documents without
+## reporting errors
+###########################################
+
+expect_invalid() {
+  if [ $VALIDATING = 1 ] ; then
+     expect "$1" "$2"
+  else
+     expect "$1" ""
+  fi
+}
+
+expect_invalid_oasis () {
+  expect_invalid "$XML_SILENT $BASE/oasis/$1.xml" "$2"
+}
+expect_invalid_oasis_always () {
+  expect "$XML_SILENT $BASE/oasis/$1.xml" "$2"
+}
+expect_invalid_sa () {
+  expect_invalid "$XML_SILENT $BASE/xmltest/invalid/$1.xml" "$2"
+}
+expect_invalid_not_wf_not_sa () {
+  expect_invalid "$XML_SILENT $BASE/xmltest/not-wf/not-sa/$1.xml" "$2"
+}
+expect_invalid_sun () {
+  expect_invalid "$XML_SILENT $BASE/sun/invalid/$1.xml" "$2"
+}
+expect_invalid_sun_out () {
+  expect "$XML_SILENT $BASE/sun/invalid/$1.xml" "$2"
+}
+
+if [ $run_invalid_tests = 1 ]; then
+    expect_invalid_oasis "p01pass1" "no prolog"
+    expect_invalid_oasis "p01pass3" "items after the document"
+    expect_invalid_oasis "p03pass1" "all valid space characters"
+    #expect_invalid_oasis "p04pass1"  # Not valid with namespace support
+    #expect_invalid_oasis "p05pass1"  # Not valid with namespace support
+    expect_invalid_oasis "p06fail1" "requires at least one name"
+    expect_invalid_oasis "p08fail1" "at least one NMTOKEN is required"
+    expect_invalid_oasis "p08fail2" "Invalid NMTOKEN character"
+    expect_invalid_oasis "p15pass1" "valid comments"
+    expect_invalid_oasis "p16fail3" "Space after PItarget is required"
+    expect_invalid_oasis "p16pass1" "valid form of PI instructions"
+    expect_invalid_oasis "p16pass2" "valid form of PI instructions"
+    expect_invalid_oasis "p16pass3" "valid form of PI instructions"
+    expect_invalid_oasis "p18pass1" "valid CDsect's"
+    expect_invalid_oasis "p22pass1" "Prolog can be empty"
+    expect_invalid_oasis "p22pass2" "XML declaration only"
+    expect_invalid_oasis "p22pass3" "XML decl and misc"
+fi
+
+
+if [ $run_invalid_tests = 1 ]; then
+    expect_invalid_sa "001" "Tests the 'Proper Declaration/PE Nesting'"
+    expect_invalid_sa "002" "Tests the 'Proper Declaration/PE Nesting'"
+    expect_invalid_sa "003" "Tests the 'Proper Declaration/PE Nesting'"
+    expect_invalid_sa "004" "Tests the 'Proper Declaration/PE Nesting'"
+    expect_invalid_sa "005" "Tests the 'Proper Declaration/PE Nesting'"
+    expect_invalid_sa "006" "Tests the 'Proper Declaration/PE Nesting'"
+fi
+
+if [ $run_invalid_tests = 1 ]; then
+    expect_invalid_not_wf_not_sa "005" \
+      "Tests the Entity Declared VC by referring to an undefined parameter \
+      entity within an external entity"
+fi
+
+
+if [ $run_invalid_tests = 1 ]; then
+    expect_invalid_sun "attr01" \
+      "Tests the 'Entity Name' VC for the ENTITY attribute type"
+    expect_invalid_sun "attr02" \
+      "Tests the 'Entity Name' VC for the ENTITIES attribute type"
+    expect_invalid_sun "attr03" \
+      "value must be one of the ones that's declared"
+    expect_invalid_sun "attr04" \
+      "the names in the declaration must all be declared"
+    expect_invalid_sun "attr05" \
+      "Tests the 'Name Token' VC for the NMTOKEN attribute type"
+    expect_invalid_sun "attr06" \
+      "Tests the 'Name Token' VC for the NMTOKENS attribute type"
+    expect_invalid_sun "attr07" \
+      "Tests the 'Enumeration' VC by providing a value which wasn't one of\
+      the choices"
+    expect_invalid_sun "attr08" \
+      "Tests the 'Fixed Attribute Default' VC by providing the wrong value"
+    expect_invalid_sun "attr09" \
+      "Tests the 'Attribute Default Legal' VC by providing an illegal IDREF value"
+    expect_invalid_sun "attr10" \
+      "Tests the 'Attribute Default Legal' VC by providing an illegal IDREFS value"
+    expect_invalid_sun "attr11" \
+      "Tests the 'Attribute Default Legal' VC by providing an illegal ENTITY value"
+    expect_invalid_sun "attr12" \
+     "Tests the 'Attribute Default Legal' VC by providing an illegal ENTITIES value"
+    expect_invalid_sun "attr13" \
+      "Tests the 'Attribute Default Legal' VC by providing an illegal NMTOKEN value"
+    expect_invalid_sun "attr14" \
+      "Tests the 'Attribute Default Legal' VC by providing an illegal NMTOKENS value"
+    expect_invalid_sun "attr15" \
+      "Tests the 'Attribute Default Legal' VC by providing an illegal NOTATIONS value"
+    expect_invalid_sun "attr16" \
+      "Tests the 'Attribute Default Legal' VC by providing an illegal enumeration value"
+    expect_invalid_sun "dtd01" \
+      "Tests the No Duplicate Types VC"
+    expect_invalid_sun "dtd02" \
+      "Tests the 'Notation Declared' VC by using an undeclared notation name"
+    expect_invalid_sun "dtd03" \
+      "Tests the 'Element Valid' VC (clause 2) by omitting a required element"
+    expect_invalid_sun_out "dtd06" \
+      "(4.1) Undefined entity '%undefined', at dtd06.xml:3:5"
+    expect_invalid_sun "el01" \
+      "Tests the Element Valid VC (clause 4) by including an undeclared child\
+      element"
+    expect_invalid_sun "el02" \
+      "Tests the Element Valid VC (clause 1) by including elements in an\
+      EMPTY content model"
+    expect_invalid_sun "el03" \
+      "Tests the Element Valid VC (clause 3) by including a child element not\
+      permitted by a mixed content model"
+    expect_invalid_sun "el04" \
+      "Tests the Unique Element Type Declaration VC"
+    expect_invalid_sun "el05" \
+      "Tests the No Duplicate Types VC"
+    expect_invalid_sun "el06" \
+      "Tests the Element Valid VC (clause 1), using one of the predefined\
+      internal entities inside an EMPTY content model."
+    expect_invalid_sun "id01" \
+      "Tests the ID (is a Name) VC"
+    expect_invalid_sun "id02" \
+      "Tests the ID (appears once) VC"
+    expect_invalid_sun "id03" \
+      "Tests the One ID per Element Type VC"
+    expect_invalid_sun "id04" \
+      "Tests the ID Attribute Default VC"
+    expect_invalid_sun "id05" \
+      "Tests the ID Attribute Default VC"
+    expect_invalid_sun "id06" \
+      "Tests the IDREF (is a Name) VC"
+    expect_invalid_sun "id07" \
+      "Tests the IDREFS (is a Names) VC"
+    expect_invalid_sun "id08" \
+      "Tests the IDREF (matches an ID) VC"
+    expect_invalid_sun "id09" \
+      "Tests the IDREF (IDREFS matches an ID) VC"
+    expect_invalid_sun "not-sa01" "Optional whitespace is validity error"
+    [ $READ_ENTITIES = 1 ] && expect_invalid_sun "not-sa02" \
+      "attributes needing normalization cause a validity error"
+    [ $EXTERN = 1 ] && expect_invalid_sun "not-sa03" \
+      "reference to externally defined entity causes a validity error"
+    expect_invalid_sun "not-sa04" \
+      "attributes needing defaulting cause a validity error"
+    expect_invalid_sun "not-sa05" \
+      "token attribute that needs normalization causes a validity error"
+    expect_invalid_sun "not-sa06" \
+      "NOTATION attribute that needs normalization causes a validity error"
+    expect_invalid_sun "not-sa07" \
+      "NMTOKEN attribute needing normalization causes a validity error"
+    expect_invalid_sun "not-sa08" \
+      "NMTOKENS attribute needing normalization causes a validity error"
+    expect_invalid_sun "not-sa09" \
+     "NMTOKENS attribute needing normalization causes a validity error"
+    expect_invalid_sun "not-sa10" \
+      "IDREF attribute needing normalization causes a validity error"
+    expect_invalid_sun "not-sa11" \
+      "IDREFS attribute needing normalization causes a validity error"
+    expect_invalid_sun "not-sa12" \
+      "ENTITY attribute needing normalization causes a validity error"
+    expect_invalid_sun "not-sa13" \
+      "ENTITIES attribute needing normalization causes a validity error"
+    expect_invalid_sun "not-sa14" \
+      "optional whitespace causes a validity error (even if it's CDATA whitespace)"   
+    expect_invalid_sun "optional01" \
+      "Tests the Element Valid VC (clause 2) for one instance of 'children' \
+      content model, providing no children where one is required"
+    expect_invalid_sun "optional02" \
+      "Tests the Element Valid VC (clause 2) for one instance of 'children'\
+      content model, providing two children where one is required"
+    expect_invalid_sun "optional03" \
+      "Tests the Element Valid VC (clause 2) for one instance of 'children'\
+     content model, providing no children where two are required."
+    expect_invalid_sun "optional04" \
+      "Tests the Element Valid VC (clause 2) for one instance of 'children'\
+      content model, providing three children where two are required"
+    expect_invalid_sun "optional05" \
+      "providing no children where one or two are required"
+    expect_invalid_sun "optional06" \
+      "providing no children where one or two are required"
+    expect_invalid_sun "optional07" \
+      "roviding no children where one or two are required"
+    expect_invalid_sun "optional08" \
+      "providing no children where one or two are required"
+    expect_invalid_sun "optional09" \
+      "providing no children where one or two are required"
+    expect_invalid_sun "optional10" \
+      "providing three children where one or two are required"
+    expect_invalid_sun "optional11" \
+      "providing three children where one or two are required"
+    expect_invalid_sun "optional12" \
+      "providing three children where one or two are required"
+    expect_invalid_sun "optional13" \
+      "providing three children where one or two are required"
+    expect_invalid_sun "optional14" \
+      "providing three children where one or two are required"
+    expect_invalid_sun "optional15" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional16" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional17" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional18" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional19" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional20" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional21" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional22" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional23" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional24" \
+      "providing no children where one or more are required"
+    expect_invalid_sun "optional25" \
+      "providing text content where one or more elements are required"
+    expect_invalid_sun "required00" \
+      "Tests the Required Attribute VC"
+    expect_invalid_sun "required01" \
+      "Tests the Attribute Value Type (declared) VC for the xml:space attribute"
+    expect_invalid_sun "required02" \
+      "Tests the Attribute Value Type (declared) VC for the xml:lang attribute"
+    expect_invalid_sun "root" "Tests the Root Element Type VC"
+    expect_invalid_sun "utf16b" \
+      "Tests reading an invalid 'big endian' UTF-16 document"
+    expect_invalid_sun "utf16l" \
+      "Tests reading an invalid 'little endian' UTF-16 document"
+fi
+
+####################################
+##  Not well formed documents
+##  Parsers are required to report fatal errors for not-well-formed documents,
+##  except for processors that do not read certain kinds of external entities
+####################################
+
+expect_not_wf() { expect "$1" "" }
+expect_not_wf_sa() {
+   expect "$XML_SILENT $BASE/xmltest/not-wf/sa/$1.xml" "$2"
+}
+expect_not_wf_not_sa() {
+   expect "$XML_SILENT $BASE/xmltest/not-wf/not-sa/$1.xml" "$2"
+}
+expect_not_wf_ext_sa() {
+   expect "$XML_SILENT $BASE/xmltest/not-wf/ext-sa/$1.xml" "$2"
+}
+expect_oasis_not_wf() { expect "$XML_SILENT $BASE/oasis/$1.xml" "$2" }
+expect_sun_not_wf() { expect "$XML_SILENT $BASE/sun/not-wf/$1.xml" "$2" }
+
+if [ $run_not_wf_tests = 1 ]; then
+    [ $EXTERN = 1 ] && expect_not_wf_ext_sa "001" \
+       "(4.1) Tests the No Recursion WFC by having an external general entity be
+   self-recursive"
+    [ $EXTERN = 1 ] && expect_not_wf_ext_sa "002" \
+       "(4.3.1) External entities have 'text declarations', which do not permit the
+   'standalone=...' attribute that's allowed in XML declarations"
+fi
+
+if [ $run_not_wf_tests = 1 ]; then
+    [ $VALIDATING = 1 ] && expect_not_wf_not_sa "001" \
+       "(3.4) Conditional sections must be properly terminated"
+    [ $VALIDATING = 1 ] && expect_not_wf_not_sa "002" \
+       "(2.6) 'xml' is not a valid processing instruction target,\
+ at position 14"  ## Position not fully accurate, should be 
+    [ $VALIDATING = 1 ] && expect_not_wf_not_sa "003" \
+       "(2.1) <?xml..?> prolog must be first in the document"
+       #Conditional sections must be properly terminated
+    [ $VALIDATING = 1 ] && expect_not_wf_not_sa "004" \
+       "(3.4) Conditional sections must be properly terminated"
+    [ $VALIDATING = 1 ] && expect_not_wf_not_sa "006" \
+       "(3.4) Conditional sections need a '[' after the INCLUDE or IGNORE"
+    [ $VALIDATING = 1 ] && expect_not_wf_not_sa "007" \
+       "(4.3.2) A <!DOCTYPE ...> declaration may not begin any external entity; it's only found once, in the document entity"
+    [ $VALIDATING = 1 ] && expect_not_wf_not_sa "008" \
+       "(4.1) the '%' character must be part of a parameter entity reference"
+fi
+
+if [ $run_not_wf_tests = 1 ]; then
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist01" \
+        "(3.3.1) SGML's NUTOKEN is not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist02" \
+        "(3.3.1) SGML's NUTOKENS attribute type is not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist03" \
+        "(3.3.1) Comma doesn't separate enumerations, unlike in SGML"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist04" \
+        "(3.3.1) SGML's NUMBER attribute type is not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist05" \
+        "(3.3.1) SGML's NUMBERS attribute type is not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist06" \
+        "(3.3.1) SGML's NAME attribute type is not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist07" \
+        "(3.3.1) SGML's NAMES attribute type is not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist08" \
+        "(3.3.1) SGML's #CURRENT attribute type is not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "attlist09" \
+        "(3.3.1) SGML's #CONREF attribute type is not allowed"
+    expect_sun_not_wf "attlist10" \
+        "(3.1) Attributes must be separated by spaces, at attlist10.xml:6:20"
+    expect_sun_not_wf "attlist11" \
+        "(3.1) Attributes must be separated by spaces, at attlist11.xml:6:20"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "cond01" \
+    	"(3.4) Only INCLUDE and IGNORE are conditional section keywords"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "cond02" \
+    	"(3.4) Must have keyword in conditional sections"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "content01" \
+    	"(3.2.1) No whitespace before '?' in content model"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "content02" \
+    	"(3.2.1) No whitespace before '*' in content model"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "content03" \
+    	"(3.2.1) No whitespace before '+' in content model"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "decl01" \
+        "(4.3.1) External entities may not have standalone decls"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "dtd00" \
+        "(3.2.1) Comma mandatory in content model"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "dtd01" \
+        "(3.2.1) Can't mix comma and vertical bar in content model"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "dtd02" \
+        "(4.1) PE name immediately after '%'"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "dtd03" \
+        "(4.1) PE name immediately followed by ';'"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "dtd04" \
+        "(4.2.2) PUBLIC literal must be quoted"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "dtd05" \
+        "(4.2.2) SYSTEM identifier must be quoted"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "dtd07" \
+        "(4.3.1) Text declarations are required to have 'encoding=...'"
+    expect_sun_not_wf "element00" \
+        "(2.1) Node <root> is not closed, at element00.xml:3:4"
+    expect_sun_not_wf "element01" \
+        "(2.1) Node <root> is not closed, at element01.xml:3:6"
+    expect_sun_not_wf "element02" \
+        "(2.3) '%' is not a valid name, at element02.xml:3:7"
+    expect_sun_not_wf "element03" \
+        "(2.3) '%' is not a valid name, at element03.xml:3:7"
+    expect_sun_not_wf "element04" \
+        "(2.7) Invalid declaration, at element04.xml:3:5"
+    expect_sun_not_wf "encoding01" \
+        "(4.3.3) Illegal character ' ' in encoding value, at encoding01.xml:1:1"
+    expect_sun_not_wf "encoding02" \
+        "(4.3.3) Illegal character '/' in encoding value, at encoding02.xml:1:1"
+    expect_sun_not_wf "encoding03" \
+        "(4.3.3) Illegal character '&' in encoding value, at encoding03.xml:1:1"
+    expect_sun_not_wf "encoding04" \
+        "(4.3.3) Illegal character ':' in encoding value, at encoding04.xml:1:1"
+    expect_sun_not_wf "encoding05" \
+        "(4.3.3) Illegal character '@' in encoding value, at encoding05.xml:1:1"
+    expect_sun_not_wf "encoding06" \
+        "(4.3.3) Illegal character '+' in encoding value, at encoding06.xml:1:1"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "encoding07" \
+        "(4.3.1) Text declarations are required to have 'encoding=...'"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "pi" \
+	"(2.6) No space between target name and data"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "pubid01" \
+	"Illegal entity ref in public ID"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "pubid02" \
+	"Illegal entity ref in public ID"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "pubid03" \
+	"Illegal entity ref in public ID"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "pubid04" \
+	"Illegal entity ref in public ID"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "pubid05" \
+	"public ID without system ID"
+    expect_sun_not_wf "sgml01" \
+        "(2.1) Node <root> is not closed, at sgml01.xml:7:7"
+    expect_sun_not_wf "sgml02" \
+        "(2.8) Spaces must not occur before <?xml?> instruction, at sgml02.xml:1:2"
+    expect_sun_not_wf "sgml03" \
+        "(2.5) '--' is not valid inside comments, at sgml03.xml:3:23"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml04" \
+        "(3.3) ATTLIST declarations apply to only one element, unlike SGML"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml05" \
+        "(3.2) ELEMENT declarations apply to only one element, unlike SGML"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml06" \
+        "(3.3) ATTLIST declarations are never global, unlike in SGML"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml07" \
+        "(3.2) SGML Tag minimization specifications are not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml08" \
+        "(3.2) SGML Tag minimization specifications are not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml09" \
+        "(3.2) SGML Content model exception specifications are not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml10" \
+        "(3.2) SGML Content model exception specifications are not allowed"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml11" \
+        "(3.2) CDATA is not a valid content model spec"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml12" \
+        "(3.2) RCDATA is not a valid content model spec"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "sgml13" \
+        "(3.2.1) unordered content type"
+fi
+
+if [ $run_not_wf_tests = 1 ]; then
+    expect_not_wf_sa "001" \
+           "(2.3) '?' is not a valid name, at 001.xml:3:3"
+    expect_not_wf_sa "002" \
+           "(2.3) '.doc' is not a valid name, at 002.xml:2:6"
+    expect_not_wf_sa "003" \
+           "(2.6) Processing Instruction must specify a target name, at 003.xml:1:6"
+    expect_not_wf_sa "004" \
+           "(2.6) Processing instruction must end with ?>, at 004.xml:1:6"
+    expect_not_wf_sa "005" \
+           "(2.6) Processing instruction must end with ?>, at 005.xml:1:6"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "008" \
+           "(4.1) Invalid name '.entity' for an entity, at 008.xml:1:14"
+    expect_not_wf_sa "006" \
+	   "(2.5) '--' is not valid inside comments, at 006.xml:1:23"
+    expect_not_wf_sa "007" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at 007.xml:1:6"
+    expect_not_wf_sa "009" \
+           "(4.1) Invalid character 'R', at 009.xml:1:8"
+    expect_not_wf_sa "010" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at 010.xml:1:8"
+    expect_not_wf_sa "011" \
+           "(3.1) Attributes must have an explicit value, at 011.xml:1:8"
+    expect_not_wf_sa "012" \
+           "(2.3) Attribute values must be quoted, at 012.xml:1:9"
+    expect_not_wf_sa "013" \
+           "(2.3) Attribute value unterminated. possible end, at 013.xml:1:12"
+    expect_not_wf_sa "014" \
+           "(2.3) Attribute values may not contain literal '<', at 014.xml:1:10"
+    expect_not_wf_sa "015" \
+           "(2.3) Attribute values must be quoted, at 015.xml:1:9"
+    expect_not_wf_sa "016" \
+           "(2.3) '\"v2\"' is not a valid attribute name, at 016.xml:1:18"
+    expect_not_wf_sa "017" \
+           "(2.7, 2.8) Declaration must be terminated, at 017.xml:1:6"
+    expect_not_wf_sa "018" \
+           "(2.7) Invalid declaration, at 018.xml:1:6"
+    expect_not_wf_sa "019" \
+           "(3) Names differ for closing tag, at 019.xml:1:8"
+    expect_not_wf_sa "020" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at 020.xml:1:12"
+    expect_not_wf_sa "022" \
+           "(4.1) Invalid character ':', at 022.xml:1:15"
+    expect_not_wf_sa "023" \
+           "(2.3) '12' is not a valid name, at 023.xml:1:8"
+    expect_not_wf_sa "024" \
+           "(2.3) '123' is not a valid name, at 024.xml:2:5"
+    expect_not_wf_sa "025" \
+           "(2.4) Text may not contain the literal ']]>', at 025.xml:1:8"
+    expect_not_wf_sa "026" \
+           "(2.4) Text may not contain the literal ']]>', at 026.xml:1:9"
+    expect_not_wf_sa "027" \
+           "(2.5) Comment must end with -->, at 027.xml:2:1"
+    expect_not_wf_sa "028" \
+           "(2.6) Processing instruction must end with ?>, at 028.xml:2:1"
+    expect_not_wf_sa "029" \
+           "(2.4) Text may not contain the literal ']]>', at 029.xml:1:12"
+    expect_not_wf_sa "030" \
+           "(2.2) Illegal character (code 12), at 030.xml:1:19"
+    expect_not_wf_sa "031" \
+           "(2.2) Illegal character (code 12), at 031.xml:1:24"
+    expect_not_wf_sa "032" \
+           "(2.2) Illegal character (code 12), at 032.xml:1:24"
+    expect_not_wf_sa "033" \
+           "(2.2) Illegal character (code 27), at 033.xml:1:9"
+    expect_not_wf_sa "034" \
+           "(2.2) Illegal character (code 12), at 034.xml:1:5"
+    expect_not_wf_sa "035" \
+           "Invalid character ' ', at 035.xml:1:9"
+    expect_not_wf_sa "036" \
+           "(2.1) Non-white space found at top level, at 036.xml:2:1"
+    expect_not_wf_sa "037" \
+           "(2.1) Entity references can not appear at the top-level, at 037.xml:2:1"
+    expect_not_wf_sa "038" \
+           "(3.1) Attributes must have a unique value, at 038.xml:1:23"
+    expect_not_wf_sa "039" \
+           "(3) Names differ for closing tag, at 039.xml:1:13"
+    expect_not_wf_sa "040" \
+           "(2.1) Too many children for top-level node, when adding <doc>, at 040.xml:2:5"
+    expect_not_wf_sa "041" \
+           "(2.1) Too many children for top-level node, when adding <doc>, at 041.xml:2:5"
+    expect_not_wf_sa "042" \
+           "(3) Names differ for closing tag, at 042.xml:1:13"
+    expect_not_wf_sa "043" \
+           "(2.1) Non-white space found at top level, at 043.xml:2:1"
+    expect_not_wf_sa "044" \
+           "(2.1) Too many children for top-level node, when adding <doc>, at 044.xml:1:11"
+    expect_not_wf_sa "045" \
+           "Invalid character '
+', at 045.xml:2:5"
+           # Error reported at column 5 instead of 4 because of the handling
+	   # of CR (always read next char)
+    expect_not_wf_sa "046" \
+           "Invalid character '<', at 046.xml:2:4"
+    expect_not_wf_sa "047" \
+           "Invalid character ' ', at 047.xml:2:5"
+    expect_not_wf_sa "048" \
+           "(2.7) Invalid placement of CDATA section, at 048.xml:3:1"
+    expect_not_wf_sa "049" \
+           "(3) Names differ for closing tag, at 049.xml:3:16"
+	   # ??? Incorrect offset in location
+    expect_not_wf_sa "050" \
+           "(2.1) No root element specified, at 050.xml:1:1"
+    expect_not_wf_sa "051" \
+           "(2.7) Invalid placement of CDATA section, at 051.xml:2:1"
+    expect_not_wf_sa "052" \
+           "(2.1) Entity references can not appear at the top-level, at 052.xml:2:1"
+    expect_not_wf_sa "053" \
+           "(3) Names differ for closing tag, at 053.xml:1:11"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "054" \
+           "(4.2) PUBLIC requires two literals"
+    expect_not_wf_sa "055" \
+           "(2.8) DTD must be terminated by ']>', at 055.xml:2:13"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "056" \
+           "(2.8) Invalid DTD"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "057" \
+           "(3.2) Comments can't exist in declarations"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "058" \
+           "(3.3.1) Invalid character , in ATTLIST enumeration"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "059" \
+           "(3.3.1) String literal must be in quotes"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "060" \
+           "(3.3.1) Invalid type NAME defined in ATTLIST"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "061" \
+           "(4.2) required whitespace between public and system IDs"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "062" \
+	   "(4.2) Entity declarations need space after the entity name"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "063" \
+           "(2.8) Conditional section allowed only in external context"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "064" \
+           "(3.3) Space is required between attribute type and default values"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "065" \
+           "(3.3) Space is required between attribute name and type"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "066" \
+           "(3.3) Required whitespace is missing"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "067" \
+           "(3.3) Space is required between attribute type and default values"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "068" \
+           "(3.3.1) Space is required between NOTATION keyword and list of enumerated"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "069" \
+           "(4.2.2) Space is required before an NDATA entity annotation"
+    expect_not_wf_sa "070" \
+	   "(2.5) '--' is not valid inside comments, at 070.xml:1:43"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "071" \
+           "(4.1) Entity can not reference itself, at 071.xml:6:9"
+    expect_not_wf_sa "072" \
+           "(4.1) Undefined entity 'foo', at 072.xml:1:6"
+    expect_not_wf_sa "073" \
+           "(4.1) Undefined entity 'f', at 073.xml:4:6"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "074" \
+           "(4.5) Entity values must be self-contained, at 074.xml:5:8"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "075" \
+	   "(4.1) Entity can not reference itself"
+    expect_not_wf_sa "076" \
+           "(4.1) Undefined entity 'foo', at 076.xml:1:9"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "077" \
+           "(4.1) Undefined entity 'bar'"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "078" \
+           "(4.1) Undefined entity 'foo', at 078.xml:3:24"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "079" \
+	   "(4.1) Entity can not reference itself"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "080" \
+	   "(4.1) Entity can not reference itself"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "081" \
+           "(3.1) Attribute values can not reference external entities, at 081.xml:4:11"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "082" \
+           "(3.1) Attribute values can not reference external entities, at 082.xml:4:26"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "083" \
+           "(4.2.2) Undefined NOTATION n"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "084" \
+           "(4.1) Undefined entity 'e', at 084.xml:4:24"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "085" \
+           "(2.3) Public IDs may not contain '['"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "086" \
+           "(2.3) Public IDs may not contain '['"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "087" \
+           "(2.3) Public IDs may not contain '['"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "088" \
+           "(2.3) Attribute values may not contain literal '<', at 088.xml:6:13"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "089" \
+           "(4.2) Parameter entities "are" always parsed; NDATA annotations are not permitted"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "090" \
+           "(2.3) Attribute values may not contain literal '<', at 090.xml:4:8"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "091" \
+           "(4.2) Parameter entities "are" always parsed; NDATA annotations are not permitted"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "092" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at 092.xml:4:8"
+    expect_not_wf_sa "093" \
+           "(4.1) Invalid character 'X', at 093.xml:1:8"
+    expect_not_wf_sa "094" \
+           "(2.8) <?xml?> prolog must have the 'version=' string as its\
+ first parameter, at 094.xml:1:1"
+    expect_not_wf_sa "095" \
+           "(2.8) <?xml?> prolog must have the 'version=' string as its\
+ first parameter, at 095.xml:1:1"
+    expect_not_wf_sa "096" \
+           "(2.8) Parameters in <?xml?> must be separated by spaces,\
+ at 096.xml:1:1"
+    expect_not_wf_sa "097" \
+           "(2.8) Parameters in <?xml?> must be separated by spaces, at 097.xml:1:1"
+    expect_not_wf_sa "098" \
+           "(2.8) <?xml?> arguments can only be 'version', 'encoding' or\
+ 'standalone', in that order, at 098.xml:1:1"
+    expect_not_wf_sa "099" \
+           "(2.8) <?xml?> arguments can only be 'version', 'encoding' or\
+ 'standalone', in that order, at 099.xml:1:1"
+    expect_not_wf_sa "100" \
+           "(2.9 [32]) Invalid value for standalone parameter in <?xml?>,\
+ at 100.xml:1:1"
+    expect_not_wf_sa "101" \
+           "(4.3.3) Illegal character ' ' in encoding value, at 101.xml:1:1"
+    expect_not_wf_sa "102" \
+           "(2.8) Illegal version number in <?xml?> processing instruction, at 102.xml:1:1"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "103" \
+           "(4.5) Entity values must be self-contained, at 103.xml:4:8"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "104" \
+           "(4.5) Entity values must be self-contained, at 104.xml:4:8"
+    expect_not_wf_sa "105" \
+       "(2.7) Invalid placement of CDATA section, at 105.xml:2:1"
+    expect_not_wf_sa "106" \
+       "(2.1) Entity references can not appear at the top-level, at 106.xml:2:1"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "107" \
+           "(2.8) Invalid DTD"
+    expect_not_wf_sa "108" \
+           "(2.7) Invalid declaration, at 108.xml:2:1"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "109" \
+           "(4.2.2) Tags invalid within EntityDecl"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "110" \
+           "(2.1) Entity references can not appear at the top-level, at 110.xml:5:1"
+    expect_not_wf_sa "111" \
+           "(2.3) '&e;' is not a valid attribute name, at 111.xml:4:9"
+    expect_not_wf_sa "112" \
+           "(2.7) Invalid declaration, at 112.xml:2:1"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "113" \
+           "(2.3) Invalid character reference"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "114" \
+           "(2.3) Invalid character reference"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "115" \
+           "(4.5) replacement text of this entity is an illegal character reference" 
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "116" \
+           "(4.3.2) Internal general parsed entities are only well formed if they match the 'content' production"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "117" \
+           "(4.3.2) Internal general parsed entities are only well formed if they match the 'content' production"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "118" \
+           "(4.1) Invalid name '&e' for an entity, at 118.xml:4:9"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "119" \
+           "(4.3.2) Internal general parsed entities are only well formed if they match the 'content' production"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "120" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at 120.xml:5:3"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "121" \
+           "A name of an ENTITY was started with an invalid character"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "122" \
+            "(3.2.1) Invalid syntax mixed connectors are used"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "123" \
+            "(3.2.1) Invalid syntax mistmatched parenthesis"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "124" \
+            "(3.2.2) Invalid format of Mixed-content declaration"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "125" \
+            "(3.2.2) Invalid syntax extra set of parenthesis not necessary"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "126" \
+            "(3.2.2) Invalid syntax Mixed-content must be defined as zero or more"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "127" \
+            "(3.2.2) Invalid syntax Mixed-content must be defined as zero or more"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "128" \
+	    "(2.7) Invalid CDATA syntax"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "129" \
+            "(3.2) Invalid syntax for Element Type Declaration"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "130" \
+            "(3.2) Invalid syntax for Element Type Declaration"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "131" \
+            "(3.2) Invalid syntax for Element Type Declaration"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "132" \
+	    "(3.2.1) Connectors must match"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "133" \
+            "(3.2.1) Illegal whitespace before optional character"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "134" \
+            "(3.2.1) Illegal whitespace before optional character"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "135" \
+            "(3.2.1) Invalid character used as connector"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "136" \
+            "(3.2) tag omission is invalid in XML"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "137" \
+            "(3.2) Space is required before content model"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "138" \
+            "(3.2.1) Invalid syntax for content particle"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "139" \
+            "(3.2.1) The element-content model should not be empty"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "140" \
+           "(2.3) '$xe3$x82$x9a' is not a valid name, at 140.xml:4:8"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "141" \
+           "(2.3) 'X$xe0$xb9$x9c' is not a valid name, at 141.xml:4:8"
+    expect_not_wf_sa "142" \
+           "(2.2) Illegal character (code 0), at 142.xml:4:9"
+    expect_not_wf_sa "143" \
+           "(2.2) Illegal character (code 31), at 143.xml:4:10"
+    expect_not_wf_sa "144" \
+           "(2.2) Illegal character (code 65535), at 144.xml:4:13"
+    expect_not_wf_sa "145" \
+           "(2.2) Illegal character (code 55296), at 145.xml:4:13"
+    expect_not_wf_sa "146" \
+           "(2.2) Illegal character (code 1114112), at 146.xml:4:15"
+    expect_not_wf_sa "147" \
+           "(2.8) Spaces must not occur before <?xml?> instruction, at 147.xml:2:1"
+    expect_not_wf_sa "148" \
+           "(2.8) <?xml?> prolog must be first in the document, at 148.xml:2:1"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "149" \
+           "(2.8) Invalid DTD"
+    expect_not_wf_sa "150" \
+           "(2.8) <?xml?> prolog can not appear within an element, at 150.xml:2:1"
+    expect_not_wf_sa "151" \
+           "(2.8) <?xml?> prolog must be first in the document, at 151.xml:3:1"
+    expect_not_wf_sa "152" \
+           "(2.8) <?xml?> prolog must have the 'version=' string as its first parameter, at 152.xml:1:1"
+    [ $READ_ENTITIES = 1 ] && expect_not_wf_sa "153" \
+           "(2.8) <?xml?> prolog can not appear within an element, at 153.xml:5:7"
+    expect_not_wf_sa "154" \
+           "(2.6) 'XML' is not a valid processing instruction target, at 154.xml:1:1"
+    expect_not_wf_sa "155" \
+           "(2.6) 'xmL' is not a valid processing instruction target, at 155.xml:1:1"
+    expect_not_wf_sa "156" \
+           "(2.6) 'xMl' is not a valid processing instruction target, at 156.xml:2:1"
+    expect_not_wf_sa "157" \
+        "(2.6) 'xmL' is not a valid processing instruction target, at 157.xml:2:1"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "158" \
+           "(3.3) SGML-ism: '#NOTATION gif' can't have attributes"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "159" \
+           "(2.3) '&' must be quoted in entity declaration"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "160" \
+	"(2.8) Violates the PEs in Internal Subset WFC (PE reference within decl)"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "161" \
+	"(2.8) Violates the PEs in Internal Subset WFC (PE reference within decl)"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "162" \
+	"(2.8) Violates the PEs in Internal Subset WFC (PE reference within decl)"
+    expect_not_wf_sa "163" \
+           "(2.1) Non-white space found at top level, at 163.xml:5:1"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "164" \
+           "(4.1) Invalid placement of Parameter entity reference"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "165" \
+           "(4.2) Parameter entity declarations must have a space before the '%'"
+    expect_not_wf_sa "166" \
+           "(2.2) Illegal character (code 65535), at 166.xml:1:6"
+    expect_not_wf_sa "167" \
+           "(2.2) Illegal character (code 65534), at 167.xml:1:6"
+    expect_not_wf_sa "168" \
+           "(2.2) Illegal character (code 55296), at 168.xml:1:6"
+    expect_not_wf_sa "169" \
+           "(2.2) Illegal character (code 56320), at 169.xml:1:6"
+    expect_not_wf_sa "170" \
+           "(2.2) Illegal character (code 1835008), at 170.xml:1:6"
+    expect_not_wf_sa "171" \
+           "(2.2) Illegal character (code 65535), at 171.xml:1:6"
+    expect_not_wf_sa "172" \
+           "(2.2) Illegal character (code 65535), at 172.xml:1:6"
+    expect_not_wf_sa "173" \
+           "(2.2) Illegal character (code 65535), at 173.xml:1:9"
+    expect_not_wf_sa "174" \
+           "(2.2) Illegal character (code 65535), at 174.xml:1:15"
+    expect_not_wf_sa "175" \
+           "(2.2) Illegal character (code 65535), at 175.xml:3:15"
+    expect_not_wf_sa "176" \
+           "(2.1) Node <doc> is not closed, at 176.xml:4:6"
+    expect_not_wf_sa "177" \
+           "(2.2) Illegal character (code 65535), at 177.xml:4:7"
+    expect_not_wf_sa "178" \
+           "(2.3) Attribute values may not contain literal '<', at 178.xml:5:15"
+           # "(3.1) Invalid syntax matching double quote is missing"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "179" \
+	   "(4.1) Invalid syntax matching double quote is missing"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "180" \
+           "(4.1) The Entity Declared WFC requires entities to be declared before they
+   are used in an attribute list declaration"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "181" \
+           "(4.3.2) Internal parsed entities must match the content production to be well formed"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "182" \
+           "(4.3.2) Internal parsed entities must match the content production to be well formed"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "183" \
+           "(3.2.2) Mixed content declarations may not include content particles"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "184" \
+	   "(3.2.2) In mixed content models, element names must not be parenthesized"
+    [ $VALIDATING = 1 ] && expect_not_wf_sa "185" \
+           "Tests the Entity Declared WFC"
+	   #. Note: a nonvalidating parser is
+   # permitted not to report this WFC violation, since it would need to
+   # read an external parameter entity to distinguish it from a violation
+   # of the Standalone Declaration VC.
+    expect_not_wf_sa "186" \
+           "(3.1) Attributes must be separated by spaces, at 186.xml:5:9"
+fi
+
+if [ $run_not_wf_tests = 1 ]; then
+    expect_oasis_not_wf "p01fail1" \
+       "(2.8) Spaces must not occur before <?xml?> instruction, at p01fail1.xml:2:1"
+    expect_oasis_not_wf "p01fail2" \
+       "(2.8) <?xml?> prolog must be first in the document, at p01fail2.xml:1:19"
+    expect_oasis_not_wf "p01fail3" \
+       "(2.1) Too many children for top-level node, when adding <bad>, at p01fail3.xml:1:11"
+    expect_oasis_not_wf "p01fail4" \
+       "(2.1) Node <doc> is not closed, at p01fail4.xml:1:5"
+    expect_oasis_not_wf "p02fail1" \
+       "(2.2) Illegal character (code 0), at p02fail1.xml:1:8"
+    expect_oasis_not_wf "p02fail2" \
+       "(2.2) Illegal character (code 1), at p02fail2.xml:1:8"
+    expect_oasis_not_wf "p02fail4" \
+       "(2.2) Illegal character (code 3), at p02fail4.xml:1:8"
+    expect_oasis_not_wf "p02fail5" \
+       "(2.2) Illegal character (code 4), at p02fail5.xml:1:8"
+    expect_oasis_not_wf "p02fail6" \
+       "(2.2) Illegal character (code 5), at p02fail6.xml:1:8"
+    expect_oasis_not_wf "p02fail7" \
+       "(2.2) Illegal character (code 6), at p02fail7.xml:1:8"
+    expect_oasis_not_wf "p02fail8" \
+       "(2.2) Illegal character (code 7), at p02fail8.xml:1:8"
+    expect_oasis_not_wf "p02fail9" \
+       "(2.2) Illegal character (code 8), at p02fail9.xml:1:8"
+    expect_oasis_not_wf "p02fail10" \
+       "(2.2) Illegal character (code 11), at p02fail10.xml:1:8"
+    expect_oasis_not_wf "p02fail11" \
+       "(2.2) Illegal character (code 12), at p02fail11.xml:1:8"
+    expect_oasis_not_wf "p02fail12" \
+       "(2.2) Illegal character (code 14), at p02fail12.xml:1:8"
+    expect_oasis_not_wf "p02fail13" \
+       "(2.2) Illegal character (code 15), at p02fail13.xml:1:8"
+    expect_oasis_not_wf "p02fail14" \
+       "(2.2) Illegal character (code 16), at p02fail14.xml:1:8"
+    expect_oasis_not_wf "p02fail15" \
+       "(2.2) Illegal character (code 17), at p02fail15.xml:1:8"
+    expect_oasis_not_wf "p02fail16" \
+       "(2.2) Illegal character (code 18), at p02fail16.xml:1:8"
+    expect_oasis_not_wf "p02fail17" \
+       "(2.2) Illegal character (code 19), at p02fail17.xml:1:8"
+    expect_oasis_not_wf "p02fail18" \
+       "(2.2) Illegal character (code 20), at p02fail18.xml:1:8"
+    expect_oasis_not_wf "p02fail19" \
+       "(2.2) Illegal character (code 21), at p02fail19.xml:1:8"
+    expect_oasis_not_wf "p02fail20" \
+       "(2.2) Illegal character (code 22), at p02fail20.xml:1:8"
+    expect_oasis_not_wf "p02fail21" \
+       "(2.2) Illegal character (code 23), at p02fail21.xml:1:8"
+    expect_oasis_not_wf "p02fail22" \
+       "(2.2) Illegal character (code 24), at p02fail22.xml:1:8"
+    expect_oasis_not_wf "p02fail23" \
+       "(2.2) Illegal character (code 25), at p02fail23.xml:1:8"
+    expect_oasis_not_wf "p02fail24" \
+       "(2.2) Illegal character (code 26), at p02fail24.xml:1:8"
+    expect_oasis_not_wf "p02fail25" \
+       "(2.2) Illegal character (code 27), at p02fail25.xml:1:8"
+    expect_oasis_not_wf "p02fail26" \
+       "(2.2) Illegal character (code 28), at p02fail26.xml:1:8"
+    expect_oasis_not_wf "p02fail27" \
+       "(2.2) Illegal character (code 29), at p02fail27.xml:1:8"
+    expect_oasis_not_wf "p02fail28" \
+       "(2.2) Illegal character (code 30), at p02fail28.xml:1:8"
+    expect_oasis_not_wf "p02fail29" \
+       "(2.2) Illegal character (code 31), at p02fail29.xml:1:8"
+    expect_oasis_not_wf "p02fail30" \
+       "(2.2) Illegal character (code 65534), at p02fail30.xml:1:8"
+    expect_oasis_not_wf "p02fail31" \
+       "(2.2) Illegal character (code 65535), at p02fail31.xml:1:8"
+    expect_oasis_not_wf "p03fail1" \
+       "(2.2) Illegal character (code 0), at p03fail1.xml:1:1"
+    expect_oasis_not_wf "p03fail2" \
+       "(2.2) Illegal character (code 1), at p03fail2.xml:1:1"
+    expect_oasis_not_wf "p03fail3" \
+       "(2.2) Illegal character (code 2), at p03fail3.xml:1:1"
+    expect_oasis_not_wf "p03fail4" \
+       "(2.2) Illegal character (code 3), at p03fail4.xml:1:1"
+    expect_oasis_not_wf "p03fail5" \
+       "(2.2) Illegal character (code 4), at p03fail5.xml:1:1"
+    expect_oasis_not_wf "p03fail7" \
+       "(2.2) Illegal character (code 6), at p03fail7.xml:1:1"
+    expect_oasis_not_wf "p03fail8" \
+       "(2.2) Illegal character (code 7), at p03fail8.xml:1:1"
+    expect_oasis_not_wf "p03fail9" \
+       "(2.2) Illegal character (code 8), at p03fail9.xml:1:1"
+    expect_oasis_not_wf "p03fail10" \
+       "(2.2) Illegal character (code 11), at p03fail10.xml:1:1"
+    expect_oasis_not_wf "p03fail11" \
+       "(2.2) Illegal character (code 12), at p03fail11.xml:1:1"
+    expect_oasis_not_wf "p03fail12" \
+       "(2.2) Illegal character (code 14), at p03fail12.xml:1:1"
+    expect_oasis_not_wf "p03fail13" \
+       "(2.2) Illegal character (code 15), at p03fail13.xml:1:1"
+    expect_oasis_not_wf "p03fail14" \
+       "(2.2) Illegal character (code 16), at p03fail14.xml:1:1"
+    expect_oasis_not_wf "p03fail15" \
+       "(2.2) Illegal character (code 17), at p03fail15.xml:1:1"
+    expect_oasis_not_wf "p03fail16" \
+       "(2.2) Illegal character (code 18), at p03fail16.xml:1:1"
+    expect_oasis_not_wf "p03fail17" \
+       "(2.2) Illegal character (code 19), at p03fail17.xml:1:1"
+    expect_oasis_not_wf "p03fail18" \
+       "(2.2) Illegal character (code 20), at p03fail18.xml:1:1"
+    expect_oasis_not_wf "p03fail19" \
+       "(2.2) Illegal character (code 21), at p03fail19.xml:1:1"
+    expect_oasis_not_wf "p03fail20" \
+       "(2.2) Illegal character (code 22), at p03fail20.xml:1:1"
+    expect_oasis_not_wf "p03fail21" \
+       "(2.2) Illegal character (code 23), at p03fail21.xml:1:1"
+    expect_oasis_not_wf "p03fail22" \
+       "(2.2) Illegal character (code 24), at p03fail22.xml:1:1"
+    expect_oasis_not_wf "p03fail23" \
+       "(2.2) Illegal character (code 25), at p03fail23.xml:1:1"
+    expect_oasis_not_wf "p03fail24" \
+       "(2.2) Illegal character (code 26), at p03fail24.xml:1:1"
+    expect_oasis_not_wf "p03fail25" \
+       "(2.2) Illegal character (code 27), at p03fail25.xml:1:1"
+    expect_oasis_not_wf "p03fail26" \
+       "(2.2) Illegal character (code 28), at p03fail26.xml:1:1"
+    expect_oasis_not_wf "p03fail27" \
+       "(2.2) Illegal character (code 29), at p03fail27.xml:1:1"
+    expect_oasis_not_wf "p03fail28" \
+       "(2.2) Illegal character (code 30), at p03fail28.xml:1:1"
+    expect_oasis_not_wf "p03fail29" \
+       "(2.2) Illegal character (code 31), at p03fail29.xml:1:1"
+    expect_oasis_not_wf "p04fail1" \
+       "(2.3) 'A@' is not a valid name, at p04fail1.xml:1:4"
+    expect_oasis_not_wf "p04fail2" \
+       "(2.3) 'A#' is not a valid name, at p04fail2.xml:1:4"
+    expect_oasis_not_wf "p04fail3" \
+       "(2.3) 'A$' is not a valid name, at p04fail3.xml:1:4"
+    expect_oasis_not_wf "p05fail1" \
+       "(2.3) '0A' is not a valid name, at p05fail1.xml:1:4"
+    expect_oasis_not_wf "p05fail2" \
+       "(2.3) '.A' is not a valid name, at p05fail2.xml:1:4"
+    expect_oasis_not_wf "p05fail3" \
+       "(2.3) '-A' is not a valid name, at p05fail3.xml:1:4"
+    expect_oasis_not_wf "p05fail4" \
+       "(2.3) '"$xcc$x80"A' is not a valid name, at p05fail4.xml:1:4"
+    expect_oasis_not_wf "p05fail5" \
+       "(2.3) '"$xc2$xb7"A' is not a valid name, at p05fail5.xml:1:4"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p09fail1" \
+       "(2.3) Entity value excludes '%' literal"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p09fail2" \
+       "(2.3) Entity value excludes '&' literal"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p09fail3" \
+       "(2.3) Incomplete character reference"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p09fail4" \
+       "(2.3) Quote types must match"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p09fail5" \
+       "(2.3) Quote types must match"
+    expect_oasis_not_wf "p10fail1" \
+       "(2.3) Attribute values may not contain literal '<', at p10fail1.xml:1:11"
+    expect_oasis_not_wf "p10fail2" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at p10fail2.xml:1:11"
+    expect_oasis_not_wf "p10fail3" \
+           "(2.3) Attribute value unterminated. possible end, at p10fail3.xml:1:12"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p11fail1" \
+       "(2.3) Quotes must match on both ends of attribute value, at position 9"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p11fail2" \
+        "(2.3) Quotes must match on both ends of attribute value, at position 9"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p12fail1" \
+	"(2.3) illegal character '\"'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p12fail2" \
+	"(2.3) illegal character '\\'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p12fail3" \
+	"(2.3) entity reference excluded"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p12fail4" \
+	"(2.3) illegal character '>'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p12fail5" \
+	"(2.3) illegal character '<'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p12fail6" \
+	"(2.3) built-in entity refs excluded"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p12fail7" \
+	"(2.3) "
+    expect_oasis_not_wf "p14fail1" \
+        "Invalid character ' ', at p14fail1.xml:1:7"
+        # "(2.4) Text may not contain the literal '<', at position 7"
+    expect_oasis_not_wf "p14fail2" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at p14fail2.xml:1:6"
+    expect_oasis_not_wf "p14fail3" \
+        "(2.4) Text may not contain the literal ']]>', at p14fail3.xml:1:9"
+    expect_oasis_not_wf "p15fail1" \
+        "(2.5) '--' is not valid inside comments, at p15fail1.xml:1:8"
+    expect_oasis_not_wf "p15fail2" \
+        "(2.5) '--' is not valid inside comments, at p15fail2.xml:1:8"
+    expect_oasis_not_wf "p15fail3" \
+        "(2.5) '--' is not valid inside comments, at p15fail3.xml:1:8"
+    expect_oasis_not_wf "p16fail1" \
+        "(2.8) <?xml?> prolog must be first in the document, at p16fail1.xml:2:1"
+    expect_oasis_not_wf "p16fail2" \
+        "(2.6) Processing Instruction must specify a target name, at p16fail2.xml:1:1"
+    expect_oasis_not_wf "p18fail1" \
+        "(2.7) Invalid declaration, at p18fail1.xml:1:6"
+    expect_oasis_not_wf "p18fail2" \
+        "(2.7) Invalid declaration, at p18fail2.xml:1:6"
+    expect_oasis_not_wf "p18fail3" \
+        "(2.4) Text may not contain the literal ']]>', at p18fail3.xml:4:3"
+    expect_oasis_not_wf "p22fail1" \
+        "(2.8) Spaces must not occur before <?xml?> instruction, at p22fail1.xml:2:1"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p22fail2" \
+        "(2.8) <?xml..?> prolog must be first in the document"
+    expect_oasis_not_wf "p23fail1" \
+        "(2.6) 'XML' is not a valid processing instruction target,\
+ at p23fail1.xml:1:1"
+    expect_oasis_not_wf "p23fail2" \
+        "(2.8) <?xml?> prolog must have the 'version=' string as its\
+ first parameter, at p23fail2.xml:1:1"
+    expect_oasis_not_wf "p23fail3" \
+        "(2.8) <?xml?> prolog must have the 'version=' string as its first parameter, at p23fail3.xml:1:1"
+    expect_oasis_not_wf "p23fail4" \
+           "(2.8) <?xml..?> arguments can only be 'version', 'encoding' or\
+ 'standalone', in that order, at p23fail4.xml:1:1"
+    expect_oasis_not_wf "p23fail5" \
+           "(2.6) Processing instruction must end with ?>, at p23fail5.xml:1:1"
+    expect_oasis_not_wf "p24fail1" \
+           "(2.8) Illegal version number in <?xml?> processing instruction, at p24fail1.xml:1:1"
+    expect_oasis_not_wf "p24fail2" \
+           "(2.8) Illegal version number in <?xml?> processing instruction, at p24fail2.xml:1:1"
+    expect_oasis_not_wf "p25fail1" \
+           "(2.8) Badly formed parameter in <?xml?> PI: no '=' sign, at p25fail1.xml:1:1"
+    expect_oasis_not_wf "p26fail1" \
+           "(2.8) Illegal version number in <?xml?> processing instruction, at p26fail1.xml:1:1"
+    expect_oasis_not_wf "p26fail2" \
+           "(2.8) Illegal version number in <?xml?> processing instruction, at p26fail2.xml:1:1"
+    expect_oasis_not_wf "p27fail1" \
+           "(2.1) Entity references can not appear at the top-level, at p27fail1.xml:2:1"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p28fail1" \
+           "(2.8) Invalid DTD"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p29fail1" \
+           "(2.8) Unknown declaration type"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p30fail1" \
+           "(2.8) Not a valid XML declaration"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p31fail1" \
+           "(2.8) External subset exludes doctypedecl"
+    expect_oasis_not_wf "p32fail1" \
+           "(2.9 [32]) Invalid value for standalone parameter in <?xml?>, at p32fail1.xml:1:1"
+    expect_oasis_not_wf "p32fail2" \
+           "(2.9 [32]) Invalid value for standalone parameter in <?xml?>, at p32fail2.xml:1:1"
+    expect_oasis_not_wf "p32fail3" \
+           "(2.8) Parameters in <?xml?> must be separated by spaces, at p32fail3.xml:1:1"
+    expect_oasis_not_wf "p32fail4" \
+           "(2.8) Badly formed parameter in <?xml?> PI: no quote sign, at p32fail4.xml:1:1"
+    expect_oasis_not_wf "p32fail5" \
+           "(2.9 [32]) Invalid value for standalone parameter in <?xml?>, at p32fail5.xml:1:1"
+    expect_oasis_not_wf "p39fail1" \
+           "(2.1) Node <doc> is not closed, at p39fail1.xml:1:12"
+    expect_oasis_not_wf "p39fail2" \
+           "(3) Names differ for closing tag, at p39fail2.xml:1:16"
+    expect_oasis_not_wf "p39fail3" \
+           "(2.1) No root element specified, at p39fail3.xml:1:1"
+    expect_oasis_not_wf "p39fail4" \
+           "(2.6) Processing instruction must end with ?>, at p39fail4.xml:1:1"
+    expect_oasis_not_wf "p39fail5" \
+           "(2.8) Processing instruction <?xml?> must end with '?>', at p39fail5.xml:1:1"
+    expect_oasis_not_wf "p40fail1" \
+           "(3.1) Attributes must be separated by spaces, at p40fail1.xml:1:15"
+    expect_oasis_not_wf "p40fail2" \
+           "(2.3) '3notname' is not a valid name, at p40fail2.xml:1:10"
+    expect_oasis_not_wf "p40fail3" \
+           "(2.3) '3notname' is not a valid name, at p40fail3.xml:1:10"
+    expect_oasis_not_wf "p40fail4" \
+           "Invalid character ' ', at p40fail4.xml:1:2"
+    [ $NOT_SURE = 1 ] && expect_oasis_not_wf "p41fail1" \
+           "(2.3) Attribute values must be quoted, at p41fail1.xml:5:10"
+    [ $NOT_SURE = 1 ] && expect_oasis_not_wf "p41fail2" \
+           "(3.1) Attributes must have an explicit value, at p41fail2.xml:5:9"
+    expect_oasis_not_wf "p41fail3" \
+           "(3.1) Attribute names must be followed by '=', at p41fail3.xml:1:10"
+    expect_oasis_not_wf "p42fail1" \
+           "(3) Names differ for closing tag, at p42fail1.xml:1:8"
+    expect_oasis_not_wf "p42fail2" \
+           "(3) Names differ for closing tag, at p42fail2.xml:1:12"
+    expect_oasis_not_wf "p42fail3" \
+           "Invalid character 'd', at p42fail3.xml:1:6"
+    expect_oasis_not_wf "p43fail1" \
+           "(2.7) Invalid declaration, at p43fail1.xml:7:1"
+    expect_oasis_not_wf "p43fail2" \
+           "(2.7) Invalid declaration, at p43fail2.xml:7:1"
+    expect_oasis_not_wf "p43fail3" \
+           "(2.7) Invalid declaration, at p43fail3.xml:7:1"
+    expect_oasis_not_wf "p44fail1" \
+           "Invalid character ' ', at p44fail1.xml:1:2"
+    expect_oasis_not_wf "p44fail2" \
+           "Invalid character ' ', at p44fail2.xml:1:6"
+    expect_oasis_not_wf "p44fail3" \
+           "(2.3) '--bad' is not a valid name, at p44fail3.xml:1:11"
+    expect_oasis_not_wf "p44fail4" \
+           "(3.1) Attributes must be separated by spaces, at p44fail4.xml:1:15"
+    expect_oasis_not_wf "p44fail5" \
+           "(3.1) Attributes must have a unique value, at p44fail5.xml:1:19"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p45fail1" \
+           "(3.2) ELEMENT must be upper case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p45fail2" \
+           "(3.2) S before contentspec is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p45fail3" \
+           "(3.2) only one content spec"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p45fail4" \
+           "(3.2) no comments in declarations (contrast with SGML)"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p46fail1" \
+           "(3.2) no parens on declared content"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p46fail2" \
+           "(3.2) no inclusions (contrast with SGML)"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p46fail3" \
+           "(3.2) no exclusions (contrast with SGML)"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p46fail4" \
+           "(3.2) no space before occurrence"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p46fail5" \
+           "(3.2) single group"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p46fail6" \
+           "(3.2) can't be both declared and modeled"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p47fail1" \
+           "(3.2.1) Invalid operator '|' must match previous operator ','"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p47fail2" \
+           "(3.2.1) Illegal character '-' in Element-content model"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p47fail3" \
+	   "(3.2.1) Optional character must follow a name or list"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p47fail4" \
+	   "(3.2.1) Illegal space before optional character"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p48fail1" \
+           "(3.2.1) Illegal space before optional character"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p48fail2" \
+           "(3.2.1) Illegal space before optional character"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p49fail1" \
+           "(3.2.1) Connectors must match"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p50fail1" \
+           "(3.2.1) Connectors must match"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p51fail1" \
+           "(3.2.2) occurrence on #PCDATA group must be *"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p51fail2" \
+           "(3.2.2) occurrence on #PCDATA group must be *"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p51fail3" \
+           "(3.2.2) #PCDATA must come first"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p51fail4" \
+           "(3.2.2) occurrence on #PCDATA group must be *"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p51fail5" \
+           "(3.2.2) Only '|' connectors"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p51fail6" \
+           "(3.2.2) Only '|' connectors and occurrence on #PCDATA group must be *"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p51fail7" \
+	   "(3.2.2) No nested groups"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p52fail1" \
+           "(3.3) A name is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p52fail2" \
+           "(3.3) A name is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p53fail1" \
+           "(3.3) S is required before default"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p53fail2" \
+           "(3.3) S is required before type"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p53fail3" \
+           "(3.3) type is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p53fail4" \
+           "(3.3) default is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p53fail5" \
+           "(3.3) name is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p54fail1" \
+	   "(3.3.1) don't pass unknown attribute types"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p55fail1" \
+	   "(3.3.1) must be upper case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p56fail1" \
+	   "(3.3.1) no IDS type"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p56fail2" \
+	   "(3.3.1) no NUMBER type"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p56fail3" \
+	   "(3.3.1) no NAME type"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p56fail4" \
+	   "(3.3.1) no ENTITYS type - types must be upper case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p56fail5" \
+	   "(3.3.1) types must be upper case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p57fail1" \
+	   "(3.3.1) no keyword for NMTOKEN enumeration"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p58fail1" \
+	   "(3.3.1) at least one value required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p58fail2" \
+	   "(3.3.1) separator must be '|'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p58fail3" \
+	   "(3.3.1) notations are NAMEs, not NMTOKEN
+   A parser that reports error positions should report an error at
+   the AttlistDecl on line 6, before reaching the notation declaration."
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p58fail4" \
+	   "(3.3.1) NOTATION must be upper case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p58fail5" \
+	   "(3.3.1) S after keyword is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p58fail6" \
+	   "(3.3.1) parentheses are require"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p58fail7" \
+	   "(3.3.1) values are unquoted"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p58fail8" \
+	   "(3.3.1) values are unquoted"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p59fail1" \
+	   "(3.3.1) at least one required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p59fail2" \
+	   "(3.3.1) separator must be ','"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p59fail3" \
+	   "(3.3.1) values are unquoted"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p60fail1" \
+	   "(3.3.2) keywords must be upper case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p60fail2" \
+	   "(3.3.2) S is required after #FIXED"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p60fail3" \
+	   "(3.3.2) only #FIXED has both keyword and value"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p60fail4" \
+	   "(3.3.2) #FIXED required value"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p60fail5" \
+	   "(3.3.2) only one default type"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p61fail1" \
+	   "(3.4) no other types, including TEMP, which is valid in SGML"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p62fail1" \
+	   "(3.4) INCLUDE must be upper case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p62fail2" \
+	   "(3.4) no spaces in terminating delimiter"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p63fail1" \
+	   "(3.4) IGNORE must be upper case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p63fail2" \
+	   "(3.4) delimiters must be balanced"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p64fail1" \
+	   "(3.4) section delimiters must balance"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p64fail2" \
+	   "(3.4) section delimiters must balance"
+    expect_oasis_not_wf "p66fail1" \
+           "(4.1) Invalid character '<', at p66fail1.xml:1:10"
+    expect_oasis_not_wf "p66fail2" \
+           "(4.1) Invalid character ' ', at p66fail2.xml:1:8"
+    expect_oasis_not_wf "p66fail3" \
+           "(4.1) Invalid character 'A', at p66fail3.xml:1:8"
+    expect_oasis_not_wf "p66fail4" \
+           "(4.1) Invalid character 'G', at p66fail4.xml:1:10"
+    expect_oasis_not_wf "p66fail5" \
+           "(2.2) Illegal character (code 5), at p66fail5.xml:1:9"
+    expect_oasis_not_wf "p66fail6" \
+           "(2.2) Illegal character (code 55298), at p66fail6.xml:1:13"
+    expect_oasis_not_wf "p68fail1" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at p68fail1.xml:7:1"
+    expect_oasis_not_wf "p68fail2" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at p68fail2.xml:7:1"
+    [ $READ_ENTITIES = 1 ] && expect_oasis_not_wf "p68fail3" \
+           "(2.3, 2.4) Entity is not terminated. Did you want to use &amp;, at p68fail3.xml:7:1"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p69fail1" \
+           "(4.1) terminating ';' is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p69fail2" \
+           "(4.1) no S after '%'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p69fail3" \
+           "(4.1) no S before ';'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p70fail1" \
+           "(4.2) This is neither"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p71fail1" \
+           "(4.2) S is required before EntityDef"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p71fail2" \
+           "(4.2) Entity name is a Name, not an NMToken"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p71fail3" \
+           "(4.2) no S after '<!'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p71fail4" \
+           "(4.2) S is required after '<!ENTITY'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p72fail1" \
+           "(4.2) S is required after '<!ENTITY'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p72fail2" \
+           "(4.2) S is required after '%'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p72fail3" \
+           "(4.2) S is required after name"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p72fail4" \
+           "(4.2) Entity name is a name, not an NMToken"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p73fail1" \
+           "(4.2) No typed replacement text"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p73fail2" \
+           "(4.2) Only one replacement value"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p73fail3" \
+           "(4.2) No NDataDecl on replacement text"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p73fail4" \
+           "(4.2) Value is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p73fail5" \
+           "(4.2) No NDataDecl without value"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p74fail1" \
+           "(4.2) no NDataDecls on parameter entities"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p74fail2" \
+           "(4.2) value is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p74fail3" \
+           "(4.2) only one value"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p75fail1" \
+           "(4.2.2) S required after 'PUBLIC'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p75fail2" \
+           "(4.2.2) S required after 'SYSTEM'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p75fail3" \
+           "(4.2.2) S required between literals"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p75fail4" \
+           "(4.2.2) \"SYSTEM\" implies only one literal"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p75fail5" \
+           "(4.2.2) only one keyword"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p75fail6" \
+           "(4.2.2) \"PUBLIC\" requires two literals (contrast with SGML)"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p76fail1" \
+           "(4.2.2) S is required before 'NDATA'"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p76fail2" \
+           "(4.2.2) 'NDATA' is upper-case"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p76fail3" \
+           "(4.2.2) notation name is required"
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p76fail4" \
+           "(4.2.2) notation names are Names"
+fi
+
+##########################
+## Optional errors
+##########################
+
+if [ $optional_errors = 1 ]; then
+    expect_sun_not_wf "lang01" \
+        "(2.11) Illegal language identification"
+    expect_sun_not_wf "lang02" \
+        "(2.11) Illegal language identification"
+    expect_sun_not_wf "lang03" \
+        "(2.11) Illegal language identification"
+    expect_sun_not_wf "lang04" \
+        "(2.11) Illegal language identification"
+    expect_sun_not_wf "lang05" \
+        "(2.11) Illegal language identification"
+    expect_sun_not_wf "lang06" \
+        "(2.11) Illegal language identification"
+    expect_invalid_sun "pe01" \
+        "(2.8) Parameter entities must consist of a series of complete markup"
+    [ $VALIDATING = 1 ] && expect_sun_not_wf "uri01" \
+        "(4.2.2) SYSTEM ids may not have URI fragments"
+fi
+
+if [ $optional_errors = 1 ]; then
+    [ $VALIDATING = 1 ] && expect_oasis_not_wf "p11pass1" \
+        "(2.3, 4.2.2) system literals may not contain URI fragments"
+fi
+
+if [ $optional_errors = 1 ]; then
+    # encoding not supported
+    # ??? We must report a fatal error in that case
+    [ $VALIDATING = 1 ] && expect_japanese "pr-xml-euc-jp"
+    [ $VALIDATING = 1 ] && expect_japanese "pr-xml-iso-2022-jp"
+    [ $VALIDATING = 1 ] && expect_japanese "weekly-iso-2022-jp"
+    [ $VALIDATING = 1 ] && expect_japanese "weekly-shift_jis"
+    [ $VALIDATING = 1 ] && expect_japanese "weekly-euc-jp"
+    [ $VALIDATING = 1 ] && expect_japanese "pr-xml-shift_jis"
+fi
+
+echo "----------------------------------"
+num_read_entities=0
+if [ $READ_ENTITIES != 1 ]; then
+   num_read_entities=`grep "READ_ENTITIES ""= 1" testsuite | wc -l`
+   echo " tests that should be run when reading entities: $num_read_entities"
+fi
+
+num_read_default=0
+if [ $READ_DEFAULT != 1 ]; then
+   num_read_default=`grep "READ_DEFAULT ""= 1" testsuite | wc -l`
+   echo " tests that should be run when reading entities values: $num_read_default"
+fi
+
+num_validating=0
+if [ $VALIDATING != 1 ]; then
+   num_validating=`grep "VALIDATING ""= 1" testsuite | wc -l`
+   echo " tests that should be run when validating: $num_validating"
+fi
+
+num_extern=0
+if [ $EXTERN != 1 ]; then
+   num_extern=`grep "EXTERN ""= 1" testsuite | wc -l`
+   echo " tests that should be run when reading external entities: $num_extern"
+fi
+
+num_not_sure=0
+if [ $NOT_SURE != 1 ]; then
+   num_not_sure=`grep "NOT_SURE ""= 1" testsuite | wc -l`
+   echo " ambiguous tests: $num_not_sure"
+fi
+
+total=`expr $num_tests_run + $num_read_entities + $num_read_default \
+  + $num_validating + $num_extern + $num_not_sure`
+   
+echo "----------------------------------"
+echo "Results: ($num_tests_run / $total) tests run, $num_failures failures"
+echo "Results: ($num_tests_run / $total) tests run, $num_failures failures" >> $out_file
+

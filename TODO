@@ -1,0 +1,40 @@
+xml module:
+============
+
+* DOM requires Utf16-encoding for strings.
+  Can we make all the packages generic, so that the user can decide whether
+  to use Utf16 or Utf8 ?
+* Should recognize the "encoding" attribute for <?xml?>
+
+* Unicode: Add conversion to Wide_Char and Wide_String
+
+* Support for xml:* attributes (space, lang, ...)
+  Note that xml:space means that we must use the Ignorable_Whitespace callback
+  in SAX.
+
+* Should Encoding_Scheme include support for From_Utf32 and To_Utf32
+
+* Unicode: http://www.unicode.org/unicode/standard/versions/Unicode3.0.html
+
+* DOM: Finish implementation for the few remaining cases
+
+* XML says that entity *references* appearing in attribute values, like this:
+        <FOO bar="this is a &baz; value">
+  must be internal: "baz" has to be an internal parsed entity, not
+  an external entity.
+  => We must distinguish between internal and external entities
+
+* SAX: Should have a feature to specify whether entity refs in attribute
+  values should be expanded or not
+
+* SAX: Should we report the same attribute twice for a given element, or
+  should this be simplified ?
+
+* Finite state automaton: Should allow for non-deterministic automata, and
+  have a function to automatically convert them to a deterministic automaton.
+  Of course, this makes debugging much more difficult...
+
+* Parser: Maybe we could add to the error message when we are re-entering
+  the main loop to parse entity values (like "while parsing the value of...")
+
+* Parser: Error message are not really clear when we are parsing an entity.
