@@ -26,6 +26,7 @@ package body Schema.Validators.UR_Type is
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element);
    --  See doc for inherited subprograms
 
@@ -40,6 +41,7 @@ package body Schema.Validators.UR_Type is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element)
    is
       pragma Unreferenced (Data);
@@ -58,7 +60,8 @@ package body Schema.Validators.UR_Type is
                Validation_Error
                  ("No definition provided for """ & Local_Name & """");
             else
-               Check_Qualification (Element_Validator, Namespace_URI);
+               Check_Qualification
+                 (Schema_Target_NS, Element_Validator, Namespace_URI);
             end if;
 
          when Process_Lax =>
