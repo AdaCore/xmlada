@@ -381,8 +381,7 @@ expect $ms/element/elemL002.xsd "" \
 expect $ms/element/elemL003.xsd "" \
  "$ms/element/elemL003.xsd:5:39: \"ref\" attribute cannot be self-referencing"
 expect $ms/element/elemL004.xsd "" ""
-expect $ms/element/elemL005.xsd "" \
- "$ms/element/elemL005.xsd:3:14: Not enough occurrences of sequence, expecting at least 1, got 0"
+notrun $ms/element/elemL005.xsd "Schema is empty"
 fi
 
 ##################
@@ -474,12 +473,12 @@ expect $ms/element/elemQ005.xsd "" ""
 expect $ms/element/elemQ006.xsd "" \
  "$ms/element/elemQ006.xsd:10:19: Too many occurrences of sequence. Expecting at most 1"
 expect "" $ms/element/elemQ007.xml \
- "$ms/element/elemQ007.xml:3:8: Not enough occurrences of sequence, expecting at least 1, got 0"
+ "$ms/element/elemQ007.xml:3:8: Expecting \"fooTest\" or one in its substitutionGroup"
 expect "" $ms/element/elemQ008.xml ""
 expect "" $ms/element/elemQ009.xml \
  "$ms/element/elemQ009.xml:4:11: Element \"fooTest\" is repeated too many times, maximum number of occurrences is 1"
 expect "" $ms/element/elemQ010.xml \
- "$ms/element/elemQ010.xml:3:8: Not enough occurrences of sequence, expecting at least 1, got 0"
+ "$ms/element/elemQ010.xml:3:8: Expecting \"fooTest\" or one in its substitutionGroup"
 expect "" $ms/element/elemQ011.xml ""
 expect "" $ms/element/elemQ012.xml \
  "$ms/element/elemQ012.xml:4:11: Too many occurrences of sequence. Expecting at most 1"
@@ -683,7 +682,7 @@ expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.n01.xml" "<key> not su
 expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.v00.xml" "<key> not supported"
 
 expect "$sun/xsd001.xsd" "$sun/xsd001.n00.xml" \
- "$sun/xsd001.n00.xml:6:12: Element must be repeated at least 3 times"
+ "$sun/xsd001.n00.xml:6:12: Element \"child\" or its substitutionGroup must be specified"
 expect "$sun/xsd001.xsd" "$sun/xsd001.n01.xml" \
  "$sun/xsd001.n01.xml:10:9: Too many occurrences of sequence. Expecting at most 1"
 expect "$sun/xsd001.xsd" "$sun/xsd001.n02.xml" \
@@ -748,6 +747,20 @@ expect "$sun/xsd004.xsd" "$sun/xsd004.n11.xml" \
 expect "$sun/xsd004.xsd" "$sun/xsd004.n12.xml" \
  "$sun/xsd004.n12.xml:8:18: Invalid namespace for this element: \"\" not in \"bar\""
 expect "$sun/xsd004.xsd" "$sun/xsd004.v00.xml" ""
+
+expect "$sun/xsd005.xsd" "$sun/xsd005.n01.xml" \
+ "$sun/xsd005.n01.xml:5:30: Unknown type \"undeclared\""
+expect "$sun/xsd005.xsd" "$sun/xsd005.n02.xml" \
+ "$sun/xsd005.n02.xml:6:15: Expecting at least 1 occurrences of \"c\" or its substitutionGroup"
+expect "$sun/xsd005.xsd" "$sun/xsd005.n03.xml" \
+ "$sun/xsd005.n03.xml:6:11: Expecting at least 1 occurrences of \"c\" or its substitutionGroup"
+expect "$sun/xsd005.xsd" "$sun/xsd005.n04.xml" \
+ "$sun/xsd005.n04.xml:6:15: Too many occurrences of sequence. Expecting at most 1"
+expect "$sun/xsd005.xsd" "$sun/xsd005.n05.xml" \
+ "$sun/xsd005.n05.xml:6:18: Unknown type \"ext\""
+expect "$sun/xsd005.xsd" "$sun/xsd005.n06.xml" \
+ "$sun/xsd005.n06.xml:7:9: Expecting \"d\" or one in its substitutionGroup"
+expect "$sun/xsd005.xsd" "$sun/xsd005.v00.xml" ""
 
 fi
 
