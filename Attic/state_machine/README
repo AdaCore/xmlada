@@ -1,7 +1,0 @@
-
-This package provides a generate state machine, that can transition on
-any kind of events and have callbacks associated with each transition.
-
-See generic_state_machine.ads for the documentation of the state machine,
-and character_automaton.ads for an example of an instantiation for character
-events.
