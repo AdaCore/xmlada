@@ -35,7 +35,7 @@ package body Schema.Validators.Facets is
             Facets.Pattern := new Pattern_Matcher '
               (Compile (Facets.Pattern_String.all));
          end if;
-         if not Match (Facets.Pattern.all, String (Value)) then
+         if Match (Facets.Pattern.all, String (Value)) < Value'First then
             Validation_Error ("string pattern not matched: "
                               & Facets.Pattern_String.all);
          end if;
