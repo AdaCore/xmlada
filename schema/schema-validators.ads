@@ -885,8 +885,7 @@ private
       --  can go back to the parent.
 
       Nested_Data : Validator_Data := null;
-      Parent_Data : Validator_Data := null;
-      --  The data used to evaluate Nested or Parent
+      --  The data used to evaluate Nested
    end record;
    type Group_Model_Data is access all Group_Model_Data_Record'Class;
 

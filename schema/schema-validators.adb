@@ -35,13 +35,35 @@ package body Schema.Validators is
    procedure Free (Element : in out XML_Element_Record);
    --  Free Element
 
-   function Move_To_Next_Sequence_Particle
-     (Seq  : access Sequence_Record'Class;
-      Data : Sequence_Data_Access;
-      Force_Next : Boolean := False) return Boolean;
+   function Move_To_Next_Particle
+     (Seq   : access Sequence_Record'Class;
+      Data  : Sequence_Data_Access;
+      Force : Boolean := False) return Boolean;
    --  Move to the next particle to match in the sequence, or stay on the
    --  current one if it still can match (its maxOccurs hasn't been reached
    --  for instance).
+
+   procedure Check_Nested
+     (Parent      : access Group_Model_Record'Class;
+      Nested      : access Group_Model_Record'Class;
+      Data        : access Group_Model_Data_Record'Class;
+      Local_Name  : Byte_Sequence;
+      Element_Validator : out XML_Element);
+   --  Check whether Nested matches Local_Name.
+   --  If Nested should match but there is an error, XML_Validator_Record is
+   --  raised.
+   --  If Nested cannot match Local_Name, Element_Validator is set to null on
+   --  exit.
+   --  Data should be the parent's data
+
+   procedure Run_Nested
+     (Validator         : access Group_Model_Record'Class;
+      Data              : access Group_Model_Data_Record'Class;
+      Local_Name        : Byte_Sequence;
+      Element_Validator : out XML_Element);
+   --  Run the nested group of Validator, if there is any.
+   --  On exit, Element_Validator is set to No_Element if either the nested
+   --  group didn't match, or there was no nested group.
 
    -------------------------
    --  Byte_Sequence_List --
@@ -66,7 +88,10 @@ package body Schema.Validators is
      (Element    : XML_Element;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Element;
    --  Check whether any element in the substitution group of Validator can
-   --  be used to match Local_Name.
+   --  be used to match Local_Name. This also check whether Element itself
+   --  matches.
+   --  This also raises an XML_Validator_Record if the matching element is
+   --  in fact abstract
 
    ------------
    -- Facets --
@@ -886,9 +911,9 @@ package body Schema.Validators is
      (Validator : access XML_Validator_Record'Class) return String is
    begin
       if Validator.Debug_Name = null then
-         return "(rule tag=" & External_Tag (Validator'Tag) & ")";
+         return External_Tag (Validator'Tag);
       else
-         return "(rule debug=""" & Validator.Debug_Name.all & """)";
+         return Validator.Debug_Name.all;
       end if;
    end Get_Name;
 
@@ -2587,27 +2612,36 @@ package body Schema.Validators is
    is
       Groups : constant Element_List_Access :=
         Element.Elem.Substitution_Groups;
-      Result : XML_Element;
+      Result : XML_Element := No_Element;
    begin
-      if Groups /= null then
+      if Debug then
+         Put_Line ("++ Testing element xsd=" & Element.Elem.Local_Name.all
+                   & " xml=" & Local_Name);
+      end if;
+
+      if Element.Elem.Local_Name.all = Local_Name then
+         Result := Element;
+
+      elsif Groups /= null then
          for S in Groups'Range loop
             if Debug then
                Put_Line ("Check_Substitution group: "
                          & Element.Elem.Local_Name.all & " -> "
                          & Groups (S).Elem.Local_Name.all);
             end if;
-            if Groups (S).Elem.Local_Name.all = Local_Name then
-               return Groups (S);
-            end if;
 
             Result := Check_Substitution_Groups (Groups (S), Local_Name);
-            if Result /= No_Element then
-               return Result;
-            end if;
-
+            exit when Result /= No_Element;
          end loop;
       end if;
-      return No_Element;
+
+      if Result /= No_Element and then Is_Abstract (Result) then
+         Validation_Error
+           ("""" & Result.Elem.Local_Name.all & """ is abstract");
+         Result := No_Element;
+      end if;
+
+      return Result;
    end Check_Substitution_Groups;
 
    -------------------------
@@ -2639,31 +2673,29 @@ package body Schema.Validators is
       end if;
    end Initialize_Sequence;
 
-   ------------------------------------
-   -- Move_To_Next_Sequence_Particle --
-   ------------------------------------
+   ---------------------------
+   -- Move_To_Next_Particle --
+   ---------------------------
 
-   function Move_To_Next_Sequence_Particle
-     (Seq  : access Sequence_Record'Class;
-      Data : Sequence_Data_Access;
-      Force_Next : Boolean := False) return Boolean
+   function Move_To_Next_Particle
+     (Seq   : access Sequence_Record'Class;
+      Data  : Sequence_Data_Access;
+      Force : Boolean := False) return Boolean
    is
       Curr : XML_Particle_Access;
    begin
-      Free_Nested_Group (Group_Model_Data (Data));
-
       Data.Num_Occurs_Of_Current := Data.Num_Occurs_Of_Current + 1;
 
       Curr := Get (Data.Current);
-      if Force_Next
+      if Force
         or else
           (Get_Max_Occurs (Data.Current) /= Unbounded
            and then Data.Num_Occurs_Of_Current >=
              Get_Max_Occurs (Data.Current))
       then
          if Debug then
-            Put_Line ("Goto next particle in sequence " & Get_Name (Seq)
-                      & " Num_Occurs_Of_Current="
+            Put_Line ("Goto next particle in " & Get_Name (Seq)
+                      & " Occurs of Current="
                       & Data.Num_Occurs_Of_Current'Img);
          end if;
 
@@ -2680,7 +2712,67 @@ package body Schema.Validators is
       end if;
 
       return True;
-   end Move_To_Next_Sequence_Particle;
+   end Move_To_Next_Particle;
+
+   ------------------
+   -- Check_Nested --
+   ------------------
+
+   procedure Check_Nested
+     (Parent            : access Group_Model_Record'Class;
+      Nested            : access Group_Model_Record'Class;
+      Data              : access Group_Model_Data_Record'Class;
+      Local_Name        : Byte_Sequence;
+      Element_Validator : out XML_Element) is
+   begin
+      if Debug then
+         Put_Line ("++ Testing nested " & Get_Name (Nested));
+      end if;
+
+      if Applies_To_Tag (Nested, Local_Name) then
+         Data.Nested      := Group_Model (Nested);
+         Data.Nested_Data := Create_Validator_Data (Nested);
+         Group_Model_Data (Data.Nested_Data).Parent := Group_Model (Parent);
+
+         Validate_Start_Element
+           (Data.Nested, Local_Name, Data.Nested_Data, Element_Validator);
+
+         if Element_Validator /= No_Element then
+            if Debug then
+               Put_Line
+                 ("++ nested Matched " & Get_Name (Data.Nested) & ' '
+                  & Get_Local_Name (Element_Validator.Elem.Of_Type));
+            end if;
+         else
+            Free_Nested_Group (Group_Model_Data (Data));
+         end if;
+      else
+         Element_Validator := No_Element;
+      end if;
+   end Check_Nested;
+
+   ----------------
+   -- Run_Nested --
+   ----------------
+
+   procedure Run_Nested
+     (Validator         : access Group_Model_Record'Class;
+      Data              : access Group_Model_Data_Record'Class;
+      Local_Name        : Byte_Sequence;
+      Element_Validator : out XML_Element) is
+   begin
+      if Debug then
+         Put_Line ("++ Executing nested: " & Get_Name (Validator)
+                   & " -> " & Get_Name (Data.Nested));
+      end if;
+
+      Validate_Start_Element
+        (Data.Nested, Local_Name, Data.Nested_Data, Element_Validator);
+
+      if Element_Validator = No_Element then
+         Free_Nested_Group (Group_Model_Data (Data));
+      end if;
+   end Run_Nested;
 
    ----------------------------
    -- Validate_Start_Element --
@@ -2695,43 +2787,28 @@ package body Schema.Validators is
       D         : constant Sequence_Data_Access := Sequence_Data_Access (Data);
       Start_Elem : XML_Particle_Access;
       First_Iter : Boolean := True;
-      Valid      : Boolean;
       Curr       : XML_Particle_Access;
       Tmp        : Boolean;
       pragma Unreferenced (Tmp);
+
    begin
-      --  If we have a nested group_model somewhere, it is its responsability
-      --  to check for the current item
       if D.Nested /= null then
-         if Debug then
-            Put_Line ("++ Going into nested of " & Get_Name (Validator)
-                      & ", ie " & Get_Name (D.Nested));
-         end if;
-
-         Validate_Start_Element
-           (D.Nested, Local_Name, D.Nested_Data, Element_Validator);
-
-         --  If we either managed to match the current particle or there are
-         --  no more possible match for this sequence, then go back to the
-         --  parent.
-
+         Run_Nested (Validator, D, Local_Name, Element_Validator);
          if Element_Validator /= No_Element
-           or else not Move_To_Next_Sequence_Particle (Validator, D)
+           or else not Move_To_Next_Particle (Validator, D)
          then
             return;
          end if;
       end if;
 
-      --  Initialize the sequence if needed
-
       Start_Elem := Get (D.Current);
-      Valid      := False;
 
       if Debug then
          Put_Line ("++ Start sequence " & Get_Name (Validator)
-                   & " minOccurs=" & Validator.Min_Occurs'Img
-                   & " maxOccurs=" & Validator.Max_Occurs'Img);
+                   & " occurs=(" & Validator.Min_Occurs'Img
+                   & Validator.Max_Occurs'Img & ')');
       end if;
+
       while First_Iter or else Get (D.Current) /= Start_Elem loop
          First_Iter := False;
 
@@ -2743,104 +2820,32 @@ package body Schema.Validators is
 
          case Curr.Typ is
             when Particle_Element =>
-               if Debug then
-                  Put_Line ("++ Testing element xsd="
-                            & Curr.Element.Elem.Local_Name.all
-                            & " xml=" & Local_Name);
-               end if;
-               if Curr.Element.Elem.Local_Name.all = Local_Name then
-                  Element_Validator := Curr.Element;
-                  Valid := True;
-               else
-                  Element_Validator :=
-                    Check_Substitution_Groups (Curr.Element, Local_Name);
-                  Valid := Element_Validator /= No_Element;
-               end if;
+               Element_Validator :=
+                 Check_Substitution_Groups (Curr.Element, Local_Name);
 
-               if Element_Validator /= No_Element
-                 and then Is_Abstract (Element_Validator)
-               then
-                  Validation_Error
-                    ("""" & Element_Validator.Elem.Local_Name.all
-                     & """ is abstract");
-               end if;
-
-               if Debug
-                 and then Valid
-                 and then Element_Validator = No_Element
-               then
-                  Put_Line ("Element matched, but validator is null");
-               end if;
-
-               if Valid then
+               if Element_Validator /= No_Element then
                   if Debug then
-                     if Element_Validator.Elem.Of_Type /= No_Type then
-                        Put_Line
-                          ("++ element Matched: "
-                           & Element_Validator.Elem.Local_Name.all & ' '
-                           & Element_Validator.Elem.Of_Type.Local_Name.all);
-                     else
-                        Put_Line ("++ element Matched: "
-                                  & Element_Validator.Elem.Local_Name.all
-                                  & " No_Type");
-                     end if;
+                     Put_Line
+                       ("++ element Matched: "
+                        & Element_Validator.Elem.Local_Name.all & ' '
+                        & Get_Local_Name (Element_Validator.Elem.Of_Type));
                   end if;
 
-                  Tmp := Move_To_Next_Sequence_Particle (Validator, D);
-                  exit;
+                  Tmp := Move_To_Next_Particle (Validator, D, Force => False);
                end if;
 
             when Particle_Nested =>
-               if Debug then
-                  Put_Line ("++ Testing nested " & Get_Name (Curr.Validator));
-               end if;
-               if Applies_To_Tag (Curr.Validator, Local_Name) then
-                  D.Nested      := Curr.Validator;
-                  D.Nested_Data := Create_Validator_Data (D.Nested);
-                  Group_Model_Data (D.Nested_Data).Parent :=
-                    Group_Model (Validator);
-                  Group_Model_Data (D.Nested_Data).Parent_Data := Data;
-
-                  Validate_Start_Element
-                    (D.Nested, Local_Name, D.Nested_Data, Element_Validator);
-
-                  --  Do not move to next, this will be done when the nested
-                  --  terminates, through a call to Nested_Group_Terminated
-                  if Debug and then Element_Validator /= No_Element then
-                     if D.Nested = null then
-                        Put_Line ("++ nested Matched, and called"
-                                  & " Nested_Group_Terminated, back to"
-                                  & Get_Name (Validator));
-                     elsif Element_Validator.Elem.Of_Type /= No_Type then
-                        Put_Line
-                          ("++ nested Matched " & Get_Name (D.Nested)
-                           & ' '
-                           & Element_Validator.Elem.Of_Type.Local_Name.all);
-                     else
-                        Put_Line ("++ nested Matched " & Get_Name (D.Nested)
-                                  & " No_Type");
-                     end if;
-                  end if;
-
-                  if Element_Validator /= No_Element then
-                     return;
-                  end if;
-
-               else
-                  if Debug then
-                     Put_Line ("Nested of sequence " & Get_Name (Validator)
-                               & " doesn't apply to " & Local_Name);
-                  end if;
-               end if;
+               Check_Nested
+                 (Validator, Curr.Validator, D, Local_Name, Element_Validator);
 
             when Particle_Group | Particle_XML_Type =>
                --  Not possible, since the iterator doesn't return those
-               if Debug then
-                  Put_Line ("Unexpected " & Curr.Typ'Img & " particle in"
-                            & " sequence " & Get_Name (Validator));
-               end if;
                raise Program_Error;
          end case;
+
+         if Element_Validator /= No_Element then
+            return;
+         end if;
 
          if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
             Validation_Error
@@ -2853,13 +2858,10 @@ package body Schema.Validators is
          --  The current element was in fact optional at this point
 
          if Debug then
-            Put_Line ("Skip optional current particle in "
-                      & Get_Name (Validator));
+            Put_Line ("Skip optional particle in " & Get_Name (Validator));
          end if;
 
-         if not Move_To_Next_Sequence_Particle
-           (Validator, D, Force_Next => True)
-         then
+         if not Move_To_Next_Particle (Validator, D, Force => True) then
             Element_Validator := No_Element;
             return;
          end if;
@@ -3057,17 +3059,11 @@ package body Schema.Validators is
       Item  : Particle_Iterator := Start (Validator.Particles);
       It    : XML_Particle_Access;
    begin
-      --  If we have a nested group_model somewhere, it is its responsability
-      --  to check for the current item
       if D.Nested /= null then
-         Validate_Start_Element
-           (D.Nested, Local_Name, D.Nested_Data, Element_Validator);
-
+         Run_Nested (Validator, D, Local_Name, Element_Validator);
          if Element_Validator /= No_Element then
             return;
          end if;
-
-         Free_Nested_Group (Group_Model_Data (D));
       end if;
 
       --  No more match to be had from this choice
@@ -3091,26 +3087,8 @@ package body Schema.Validators is
          It := Get (Item);
          case It.Typ is
             when Particle_Element =>
-               if Debug then
-                  Put_Line ("++ Choice Testing element "
-                            & It.Element.Elem.Local_Name.all);
-               end if;
-
-               if It.Element.Elem.Local_Name.all = Local_Name then
-                  Element_Validator := It.Element;
-               else
-                  Element_Validator :=
-                    Check_Substitution_Groups (It.Element, Local_Name);
-               end if;
-
-               if Element_Validator /= No_Element
-                 and then Is_Abstract (Element_Validator)
-               then
-                  Validation_Error
-                    ("""" & Element_Validator.Elem.Local_Name.all
-                     & """ is abstract");
-               end if;
-
+               Element_Validator :=
+                 Check_Substitution_Groups (It.Element, Local_Name);
                exit when Element_Validator /= No_Element;
 
             when Particle_Nested =>
@@ -3119,7 +3097,9 @@ package body Schema.Validators is
                             & Get_Name (It.Validator));
                end if;
 
-               exit when Applies_To_Tag (It.Validator, Local_Name);
+               Check_Nested
+                 (Validator, It.Validator, D, Local_Name, Element_Validator);
+               exit when Element_Validator /= No_Element;
 
             when Particle_Group | Particle_XML_Type =>
                --  Not possible, since the iterator hides these
@@ -3152,42 +3132,6 @@ package body Schema.Validators is
            ("Too many occurrences of choice, expecting at most"
             & Integer'Image (Validator.Max_Occurs));
          Element_Validator := No_Element;
-      end if;
-
-      if It.Typ = Particle_Nested then
-         D.Nested      := It.Validator;
-         D.Nested_Data := Create_Validator_Data (D.Nested);
-         Group_Model_Data (D.Nested_Data).Parent := Group_Model (Validator);
-         Group_Model_Data (D.Nested_Data).Parent_Data := Data;
-         if Debug then
-            Put_Line ("+++ Tested nested for choice " & Get_Name (Validator)
-                      & ": " & Get_Name (D.Nested));
-         end if;
-
-         Validate_Start_Element
-           (D.Nested, Local_Name, D.Nested_Data, Element_Validator);
-
-         if Debug then
-            Put_Line ("+++ Done testing nested for choice "
-                      & Get_Name (Validator) & ": " & Get_Name (D.Nested));
-         end if;
-
-         if Element_Validator = No_Element then
-            Free_Nested_Group (Group_Model_Data (D));
-         end if;
-
-         --  The nested element will call Nested_Group_Terminated if needed,
-         --  otherwise it remains the current element
-
---        else
---           if D.Parent /= null
---             and then D.Num_Occurs >= Validator.Min_Occurs
---             and then (Validator.Max_Occurs /= Unbounded
---                       and then D.Num_Occurs >= Validator.Max_Occurs)
---           then
---              Element_Validator := No_Element;
---              return;
---           end if;
       end if;
    end Validate_Start_Element;
 
@@ -3380,12 +3324,8 @@ package body Schema.Validators is
                   Put_Line ("Testing " & Item.Element.Elem.Local_Name.all);
                end if;
 
-               if Item.Element.Elem.Local_Name.all = Local_Name then
-                  Applies := True;
-               else
-                  Applies := Check_Substitution_Groups
-                    (Item.Element, Local_Name) /= No_Element;
-               end if;
+               Applies := Check_Substitution_Groups
+                 (Item.Element, Local_Name) /= No_Element;
 
             when Particle_Nested =>
                Applies := Applies_To_Tag (Item.Validator, Local_Name);
@@ -3421,13 +3361,9 @@ package body Schema.Validators is
          It := Get (Item);
          case It.Typ is
             when Particle_Element =>
-               if It.Element.Elem.Local_Name.all = Local_Name then
+               T := Check_Substitution_Groups (It.Element, Local_Name);
+               if T /= No_Element then
                   return True;
-               else
-                  T := Check_Substitution_Groups (It.Element, Local_Name);
-                  if T /= No_Element then
-                     return True;
-                  end if;
                end if;
 
             when Particle_Nested =>
@@ -3978,29 +3914,12 @@ package body Schema.Validators is
       Tmp     : Particle_Iterator := Start (Validator.Particles);
       D       : constant All_Data_Access := All_Data_Access (Data);
       Count   : Positive := 1;
-      Elem    : XML_Element;
-      Valid   : Boolean;
    begin
       while Get (Tmp) /= null loop
-         Elem := Get (Tmp).Element;
+         Element_Validator :=
+           Check_Substitution_Groups (Get (Tmp).Element, Local_Name);
 
-         Valid := False;
-         if Elem.Elem.Local_Name.all = Local_Name then
-            Valid := True;
-            Element_Validator := Elem;
-         else
-            Element_Validator := Check_Substitution_Groups (Elem, Local_Name);
-            if Element_Validator /= No_Element then
-               Valid := True;
-            end if;
-         end if;
-
-         if Valid then
-            if Is_Abstract (Element_Validator) then
-               Validation_Error ("""" & Element_Validator.Elem.Local_Name.all
-                                 & """ is an abstract element");
-            end if;
-
+         if Element_Validator /= No_Element then
             D.All_Elements (Count) := D.All_Elements (Count) + 1;
             if D.All_Elements (Count) > Get_Max_Occurs (Tmp) then
                Validation_Error
