@@ -124,7 +124,7 @@ package Schema.Validators is
    type Attribute_Use_Type is
      (Prohibited, Optional, Required, Default, Fixed);
 
-   function Create_Attribute
+   function Create_Local_Attribute
      (Local_Name     : Unicode.CES.Byte_Sequence;
       NS             : XML_Grammar_NS;
       Attribute_Type : XML_Type                  := No_Type;
@@ -133,7 +133,7 @@ package Schema.Validators is
       Value          : Unicode.CES.Byte_Sequence := "";
       Is_ID          : Boolean := False)
       return Attribute_Validator;
-   --  Create a new attribute validator
+   --  Create a new local attribute validator. See also Create_Global_Attribute
 
    type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List);
    function Create_Any_Attribute
@@ -562,7 +562,11 @@ package Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence;
       Form       : Form_Type) return XML_Element;
    procedure Register (Grammar : XML_Grammar_NS; Group   : in out XML_Group);
-   procedure Register (Attr    : Attribute_Validator);
+   function Create_Global_Attribute
+     (NS             : XML_Grammar_NS;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Attribute_Type : XML_Type;
+      Is_ID          : Boolean := False) return Attribute_Validator;
    procedure Register (Grammar : XML_Grammar_NS;
                        Group   : in out XML_Attribute_Group);
    --  Register a new type or element in the grammar.
@@ -577,6 +581,11 @@ package Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence;
       Validator  : access XML_Validator_Record'Class);
+   procedure Create_Global_Attribute
+     (NS             : XML_Grammar_NS;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Attribute_Type : XML_Type;
+      Is_ID          : Boolean := False);
    --  Same as above, but doesn't return the newly created type. Use Lookup if
    --  you need access to it later on
 
@@ -871,17 +880,20 @@ private
    --  This iterator iterates over a list of particles, but consider a group
    --  as a set of particles that are also iterated
 
-   type Particle_Iterator is record
-      Current  : XML_Particle_Access;
-      In_Group : XML_Particle_Access;
+   type Particle_Iterator_Record;
+   type Particle_Iterator is access Particle_Iterator_Record;
+   type Particle_Iterator_Record is record
+      Current : XML_Particle_Access;
+      Parent  : Particle_Iterator;
    end record;
-   No_Iter : constant Particle_Iterator := (null, null);
+   No_Iter : constant Particle_Iterator := null;
 
    function  Start (List : Particle_List) return Particle_Iterator;
    procedure Next  (Iter : in out Particle_Iterator);
    function  Get   (Iter : Particle_Iterator) return XML_Particle_Access;
    function  Get_Min_Occurs (Iter : Particle_Iterator) return Natural;
    function  Get_Max_Occurs (Iter : Particle_Iterator) return Integer;
+   procedure Free (Iter : in out Particle_Iterator);
    --  Iterate over a list of particles. Get returns null at the end of the
    --  iteration
 
@@ -998,19 +1010,12 @@ private
 
    type Group_Model_Record is abstract new XML_Validator_Record with record
       Particles  : Particle_List := Empty_Particle_List;
---        Max_Occurs : Integer := 1;
---        Min_Occurs : Natural := 1;
    end record;
    type Group_Model_Data_Record is new Validator_Data_Record with record
---        Num_Occurs   : Natural := 0;
-
       Nested : Group_Model := null;
-      Parent : Group_Model := null;
       --  If a group_model is nested inside another (a sequence within a
       --  a sequence for instance), then Nested will point to the nested
-      --  group_model while it is being processed. Parent will point to its
-      --  parent, so that at the end of the evaluation of the nested group, we
-      --  can go back to the parent.
+      --  group_model while it is being processed.
 
       Nested_Data : Validator_Data := null;
       --  The data used to evaluate Nested
@@ -1111,7 +1116,6 @@ private
    type Sequence_Record is new Group_Model_Record with null record;
    type Sequence_Data is new Group_Model_Data_Record with record
       Current      : Particle_Iterator := No_Iter;
-
       Num_Occurs_Of_Current : Integer := 0;
       --  Number of repeats for the current particle of the sequence. This is
       --  set to Unbounded to force transition to the next element in the

@@ -21,6 +21,8 @@ package body Schema.Validators is
      (Element_List, Element_List_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (XML_Attribute_Group_Record, XML_Attribute_Group);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Particle_Iterator_Record, Particle_Iterator);
 
    procedure Create_NS_Grammar
      (Grammar       : in out XML_Grammar;
@@ -39,8 +41,7 @@ package body Schema.Validators is
    --  for instance).
 
    procedure Check_Nested
-     (Parent      : access Group_Model_Record'Class;
-      Nested      : access Group_Model_Record'Class;
+     (Nested      : access Group_Model_Record'Class;
       Data        : access Group_Model_Data_Record'Class;
       Local_Name  : Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
@@ -71,9 +72,6 @@ package body Schema.Validators is
    function Register_Forward
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
-   function Register_Forward
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return Attribute_Validator;
    --  Register a type, the definition of which is not know at that point.
    --  The definition must be provided before the grammar is fully filled, or
    --  this is an error.
@@ -919,11 +917,11 @@ package body Schema.Validators is
       end if;
    end Add_Facet;
 
-   ----------------------
-   -- Create_Attribute --
-   ----------------------
+   ----------------------------
+   -- Create_Local_Attribute --
+   ----------------------------
 
-   function Create_Attribute
+   function Create_Local_Attribute
      (Local_Name     : Unicode.CES.Byte_Sequence;
       NS             : XML_Grammar_NS;
       Attribute_Type : XML_Type                  := No_Type;
@@ -942,7 +940,7 @@ package body Schema.Validators is
          Attribute_Use  => Attribute_Use,
          Value          => new Unicode.CES.Byte_Sequence'(Value),
          Is_Id          => Is_ID);
-   end Create_Attribute;
+   end Create_Local_Attribute;
 
    ------------------------
    -- Validate_Attribute --
@@ -1098,7 +1096,7 @@ package body Schema.Validators is
         Attributes_Htable.Get (Grammar.Attributes.all, Local_Name);
    begin
       if Result = null then
-         return Register_Forward (Grammar, Local_Name);
+         return Create_Global_Attribute (Grammar, Local_Name, No_Type);
       end if;
       return Attribute_Validator (Result);
    end Lookup_Attribute;
@@ -1340,7 +1338,7 @@ package body Schema.Validators is
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_Language_Name'Access;
       Created := Create_Global_Type (G, "language", Tmp);
-      Register (Create_Attribute ("lang", XML_G, Created));
+      Create_Global_Attribute (XML_G, "lang", Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
@@ -1679,36 +1677,54 @@ package body Schema.Validators is
       Typ := Create_Global_Type (Grammar, Local_Name, Validator);
    end Create_Global_Type;
 
-   --------------
-   -- Register --
-   --------------
+   -----------------------------
+   -- Create_Global_Attribute --
+   -----------------------------
 
-   procedure Register (Attr : Attribute_Validator) is
-      A   : Named_Attribute_Validator;
-      Old : Named_Attribute_Validator;
+   procedure Create_Global_Attribute
+     (NS             : XML_Grammar_NS;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Attribute_Type : XML_Type;
+      Is_ID          : Boolean := False)
+   is
+      Att : Attribute_Validator;
    begin
-      if Attr.all in Named_Attribute_Validator_Record'Class then
-         A := Named_Attribute_Validator (Attr);
+      Att := Create_Global_Attribute (NS, Local_Name, Attribute_Type, Is_ID);
+   end Create_Global_Attribute;
 
-         Old := Attributes_Htable.Get
-           (A.NS.Attributes.all, A.Local_Name.all);
+   -----------------------------
+   -- Create_Global_Attribute --
+   -----------------------------
 
-         if Old /= null then
-            if Get_Validator (Old.Attribute_Type) = null
-              or else Get_Validator (Old.Attribute_Type).all not in
-                 Debug_Validator_Record'Class
-            then
-               Validation_Error
-                 ("Attribute has already been declared: "
-                  & A.Local_Name.all);
-            end if;
-
-            Old.all := A.all;
-         else
-            Attributes_Htable.Set (Attr.NS.Attributes.all, A);
+   function Create_Global_Attribute
+     (NS             : XML_Grammar_NS;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Attribute_Type : XML_Type;
+      Is_ID          : Boolean := False) return Attribute_Validator
+   is
+      Old : Named_Attribute_Validator :=
+        Attributes_Htable.Get (NS.Attributes.all, Local_Name);
+   begin
+      if Old /= null then
+         if Old.Attribute_Type /= No_Type then
+            Validation_Error
+              ("Attribute has already been declared: " & Local_Name);
          end if;
+
+         Old.Attribute_Type := Attribute_Type;
+      else
+         Old := new Named_Attribute_Validator_Record'
+           (NS             => NS,
+            Local_Name     => new Byte_Sequence'(Local_Name),
+            Attribute_Type => Attribute_Type,
+            Attribute_Form => Unqualified,
+            Attribute_Use  => Optional,
+            Value          => null,
+            Is_Id          => Is_ID);
+         Attributes_Htable.Set (NS.Attributes.all, Old);
       end if;
-   end Register;
+      return Attribute_Validator (Old);
+   end Create_Global_Attribute;
 
    --------------
    -- Register --
@@ -1756,23 +1772,6 @@ package body Schema.Validators is
          Attribute_Groups_Htable.Set (Grammar.Attribute_Groups.all, Group);
       end if;
    end Register;
-
-   ----------------------
-   -- Register_Forward --
-   ----------------------
-
-   function Register_Forward
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return Attribute_Validator
-   is
-      Attr    : Attribute_Validator;
-   begin
-      Debug_Output ("Forward attribute decl: " & Local_Name);
-
-      Attr := Create_Attribute (Local_Name, Grammar, No_Type);
-      Register (Attr);
-      return Attr;
-   end Register_Forward;
 
    ----------------------
    -- Register_Forward --
@@ -2134,11 +2133,7 @@ package body Schema.Validators is
 
          Next (Data.Current);
          Data.Num_Occurs_Of_Current := 0;
-
-         --  No more element possible in this sequence ?
-         return not
-           (Get (Data.Current) = null
-            and then Data.Parent /= null);
+         return Get (Data.Current) /= null;
       end if;
 
       return True;
@@ -2149,8 +2144,7 @@ package body Schema.Validators is
    ------------------
 
    procedure Check_Nested
-     (Parent            : access Group_Model_Record'Class;
-      Nested            : access Group_Model_Record'Class;
+     (Nested            : access Group_Model_Record'Class;
       Data              : access Group_Model_Data_Record'Class;
       Local_Name        : Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
@@ -2168,7 +2162,6 @@ package body Schema.Validators is
       if Applies then
          Data.Nested      := Group_Model (Nested);
          Data.Nested_Data := Create_Validator_Data (Nested);
-         Group_Model_Data (Data.Nested_Data).Parent := Group_Model (Parent);
 
          Validate_Start_Element
            (Data.Nested, Local_Name, Namespace_URI,
@@ -2251,8 +2244,9 @@ package body Schema.Validators is
          end if;
       end if;
 
-      while Get (D.Current) /= null loop
+      loop
          Curr := Get (D.Current);
+         exit when Curr = null;
 
          case Curr.Typ is
             when Particle_Element =>
@@ -2292,7 +2286,7 @@ package body Schema.Validators is
                              & Get_Name (Validator) & ": "
                              & Get_Name (Curr.Validator));
                Check_Nested
-                 (Validator, Curr.Validator, D, Local_Name,
+                 (Curr.Validator, D, Local_Name,
                   Namespace_URI, Grammar, Element_Validator, Skip_Current);
 
                if Element_Validator = No_Element then
@@ -2585,7 +2579,7 @@ package body Schema.Validators is
                  ("Testing nested " & Get_Name (It.Validator));
 
                Check_Nested
-                 (Validator, It.Validator, D, Local_Name, Namespace_URI,
+                 (It.Validator, D, Local_Name, Namespace_URI,
                   Grammar, Element_Validator, Skip_Current);
                exit when Element_Validator /= No_Element;
 
@@ -2863,10 +2857,7 @@ package body Schema.Validators is
          if Applies then
             Debug_Pop_Prefix;
             return;
-         elsif Item.Min_Occurs > 0
-           and then (Item.Typ /= Particle_Nested
-                     or else not Can_Be_Empty (Item.Validator))
-         then
+         elsif Get_Min_Occurs (Iter) > 0 and then not Skip_Current then
             Debug_Output ("Current element is not optional => doesn't apply");
             Skip_Current := False;
             Applies := False;
@@ -3073,6 +3064,20 @@ package body Schema.Validators is
       Typ.Debug_Name := new Unicode.CES.Byte_Sequence'(Name);
    end Set_Debug_Name;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Iter : in out Particle_Iterator) is
+      Tmp : Particle_Iterator;
+   begin
+      while Iter /= null loop
+         Tmp := Iter;
+         Iter := Iter.Parent;
+         Unchecked_Free (Tmp);
+      end loop;
+   end Free;
+
    -----------
    -- Start --
    -----------
@@ -3080,25 +3085,21 @@ package body Schema.Validators is
    function Start (List : Particle_List) return Particle_Iterator is
       Iter : Particle_Iterator;
    begin
-      if List.First /= null
-        and then List.First.Typ = Particle_Group
-      then
-         if List.First.Group.Particles.First = null then
-            Iter := Particle_Iterator'
-              (Current  => List.First,
-               In_Group => null);
+      Iter := new Particle_Iterator_Record'
+        (Current => List.First, Parent  => null);
+
+      while Iter.Current.Typ = Particle_Group loop
+         if Iter.Current.Group.Particles.First = null then
             Next (Iter);
-            return Iter;
+            exit;
          else
-            return Particle_Iterator'
-              (Current  => List.First,
-               In_Group => List.First.Group.Particles.First);
+            Iter := new Particle_Iterator_Record'
+              (Current => Iter.Current.Group.Particles.First,
+               Parent  => Iter);
          end if;
-      else
-         return Particle_Iterator'
-           (Current  => List.First,
-            In_Group => null);
-      end if;
+      end loop;
+
+      return Iter;
    end Start;
 
    ----------
@@ -3106,30 +3107,51 @@ package body Schema.Validators is
    ----------
 
    procedure Next (Iter : in out Particle_Iterator) is
+      Tmp : Particle_Iterator;
    begin
-      if Iter.In_Group /= null then
-         Iter.In_Group := Iter.In_Group.Next;
-         if Iter.In_Group = null then
-            Debug_Output ("---> End of group "
-                          & Iter.Current.Group.Local_Name.all);
+      Iter.Current := Iter.Current.Next;
+
+      while Iter.Current = null loop
+         Tmp := Iter;
+         Iter := Iter.Parent;
+         Unchecked_Free (Tmp);
+
+         if Iter = null then
+            return;
          end if;
-      end if;
 
-      if Iter.In_Group = null then
+         Debug_Output ("--> End of group "
+                       & Iter.Current.Group.Local_Name.all);
+
          Iter.Current := Iter.Current.Next;
+      end loop;
 
-         if Iter.Current /= null
-           and then Iter.Current.Typ = Particle_Group
-         then
-            Debug_Output
-              ("---> in group " & Iter.Current.Group.Local_Name.all);
-            Iter.In_Group := Iter.Current.Group.Particles.First;
+      while Iter.Current.Typ = Particle_Group loop
+         if Iter.Current.Group.Particles.First = null then
+            Next (Iter);
+            exit;
+         else
+            Debug_Output ("--> In group "
+                          & Iter.Current.Group.Local_Name.all);
+            Iter := new Particle_Iterator_Record'
+              (Current => Iter.Current.Group.Particles.First,
+               Parent  => Iter);
+         end if;
+      end loop;
 
-            if Iter.In_Group = null then
-               Next (Iter);
+      declare
+         Curr : constant XML_Particle_Access := Get (Iter);
+      begin
+         if Curr /= null then
+            if Curr.Typ = Particle_Element then
+               Debug_Output ("Next particle_iterator "
+                             & Curr.Element.Elem.Local_Name.all);
+            else
+               Debug_Output ("Next particle_iterator "
+                             & Curr.Typ'Img);
             end if;
          end if;
-      end if;
+      end;
    end Next;
 
    ---------
@@ -3138,8 +3160,8 @@ package body Schema.Validators is
 
    function Get (Iter : Particle_Iterator) return XML_Particle_Access is
    begin
-      if Iter.In_Group /= null then
-         return Iter.In_Group;
+      if Iter = null then
+         return null;
       else
          return Iter.Current;
       end if;
@@ -3151,7 +3173,11 @@ package body Schema.Validators is
 
    function Get_Min_Occurs (Iter : Particle_Iterator) return Natural is
    begin
-      return Iter.Current.Min_Occurs;
+      if Iter.Parent /= null then
+         return Iter.Parent.Current.Min_Occurs;
+      else
+         return Iter.Current.Min_Occurs;
+      end if;
    end Get_Min_Occurs;
 
    --------------------
@@ -3720,7 +3746,7 @@ package body Schema.Validators is
    begin
       if Debug then
          Debug_Prefixes_Level := Debug_Prefixes_Level + 1;
-         Debug_Output (ASCII.ESC & "[34m(Prefix = " & Append
+         Debug_Output (ASCII.ESC & "[36m(" & Append
                        & ")" & ASCII.ESC & "[39m");
       end if;
    end Debug_Push_Prefix;
@@ -3732,7 +3758,6 @@ package body Schema.Validators is
    procedure Debug_Pop_Prefix is
    begin
       if Debug then
---       Debug_Output (ASCII.ESC & "[34m(End of Prefix)" & ASCII.ESC & "[39m");
          Debug_Prefixes_Level := Debug_Prefixes_Level - 1;
       end if;
    end Debug_Pop_Prefix;
