@@ -116,14 +116,7 @@ package body Schema.Validators is
    pragma Inline (Is_Optional);
    --  Whether the current optional can be omitted
 
---     function Occurred_Enough
---       (Iter : Particle_Iterator; Num_Occurs : Natural) return Boolean;
-   --  Whether Num_Occurs is greater than the max_occurs of Iter;
-
    Debug_Prefixes_Level : Natural := 0;
-   procedure Debug_Push_Prefix (Append : String);
-   procedure Debug_Pop_Prefix;
-   --  Append a prefix to the current output
 
    ------------------------------
    -- Attribute_Validator_List --
@@ -2351,10 +2344,13 @@ package body Schema.Validators is
       Local_Name        : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data)
    is
-      pragma Unreferenced (Local_Name);
       D : constant Sequence_Data_Access := Sequence_Data_Access (Data);
    begin
       Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator));
+
+      if D.Nested /= null then
+         Validate_End_Element (D.Nested, Local_Name, D.Nested_Data);
+      end if;
 
       if Get (D.Current) /= null
         and then (D.Num_Occurs_Of_Current >= Get_Min_Occurs (D.Current)
@@ -3206,6 +3202,7 @@ package body Schema.Validators is
    --------------------
 
    function Get_Max_Occurs (Iter : Particle_Iterator) return Integer is
+--      Tmp : Particle_Iterator := Iter;
    begin
       --  If we have a <sequence> or <choice> inside a group, we need to
       --  consider the number of occurrences defined at the group level.
@@ -3215,6 +3212,21 @@ package body Schema.Validators is
       --     <group name="nestedParticle">
       --       <choice>
       --         <element name="...">
+
+--        Debug_Push_Prefix ("Get_Max_Occurs");
+--        while Tmp /= null loop
+--           if Tmp.Current.Typ /= Particle_Group then
+--              Debug_Output (Tmp.Current.Typ'Img & ' '
+--                            & Type_Model (Tmp, First_Only => True)
+--                            & Tmp.Current.Max_Occurs'Img);
+--           else
+--              Debug_Output (Tmp.Current.Typ'Img & ' '
+--                            & Tmp.Current.Max_Occurs'Img);
+--           end if;
+--           Tmp := Tmp.Parent;
+--        end loop;
+--        Debug_Pop_Prefix;
+
 
       if Iter.Current.Typ = Particle_Nested
         and then Iter.Parent /= null
@@ -3389,7 +3401,6 @@ package body Schema.Validators is
          if D.All_Elements (Count) < Get_Max_Occurs (Tmp) then
             exit;
          end if;
-
          Count := Count + 1;
          Next (Tmp);
       end loop;
@@ -3399,6 +3410,8 @@ package body Schema.Validators is
            ("<all> can no longer match, all particles have been matched");
          D.All_Elements := (others => 0);
          D.Num_Occurs   := D.Num_Occurs + 1;
+         Element_Validator := No_Element;
+         return;
       end if;
 
       Free (Tmp);
@@ -3449,6 +3462,9 @@ package body Schema.Validators is
       D     : constant All_Data_Access := All_Data_Access (Data);
       Count : Positive := 1;
    begin
+      Debug_Push_Prefix ("Validate_End_Element <all> "
+                         & Get_Name (Validator));
+
       while Get (Tmp) /= null loop
          if D.All_Elements (Count) < Get_Min_Occurs (Tmp) then
             Validation_Error
@@ -3474,6 +3490,8 @@ package body Schema.Validators is
            ("<all> element was repeated too many times, expecting at most"
             & Integer'Image (Validator.Max_Occurs) & " times");
       end if;
+
+      Debug_Pop_Prefix;
    end Validate_End_Element;
 
    ---------------------------
@@ -3499,21 +3517,45 @@ package body Schema.Validators is
          All_Elements => (others => 0));
    end Create_Validator_Data;
 
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
+   ----------------
+   -- Type_Model --
+   ----------------
 
-   procedure Validate_Characters
-     (Validator     : access XML_All_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
-   is
-      pragma Unreferenced (Validator, Ch);
+   function Type_Model
+     (Validator  : access XML_All_Record;
+      First_Only : Boolean) return Unicode.CES.Byte_Sequence is
    begin
-      if not Empty_Element then
-         Validation_Error ("No character data allowed by content model");
-      end if;
-   end Validate_Characters;
+      return Internal_Type_Model
+        (Validator, "&", First_Only, All_In_List => True);
+   end Type_Model;
+
+   ------------------
+   -- Can_Be_Empty --
+   ------------------
+
+   function Can_Be_Empty
+     (Group : access XML_All_Record) return Boolean
+   is
+      Current : Particle_Iterator;
+   begin
+      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
+
+      Current := Start (Group.Particles);
+      while Get (Current) /= null loop
+         if not Is_Optional (Current) then
+            Free (Current);
+            Debug_Output ("Cannot be empty");
+            Debug_Pop_Prefix;
+            return False;
+         end if;
+
+         Next (Current);
+      end loop;
+
+      Debug_Output ("Can be empty");
+      Debug_Pop_Prefix;
+      return True;
+   end Can_Be_Empty;
 
    ----------------------------
    -- Validate_Start_Element --

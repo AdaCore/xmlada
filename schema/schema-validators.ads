@@ -525,7 +525,7 @@ package Schema.Validators is
    -- XML_All --
    -------------
 
-   type XML_All_Record is new XML_Validator_Record with private;
+   type XML_All_Record is new Group_Model_Record with private;
    type XML_All is access all XML_All_Record'Class;
 
    function Create_All
@@ -662,6 +662,10 @@ package Schema.Validators is
 
 
 private
+
+   procedure Debug_Push_Prefix (Append : String);
+   procedure Debug_Pop_Prefix;
+   --  Append a prefix to the current output
 
    ---------
    -- Ids --
@@ -1129,43 +1133,6 @@ private
    function Get_Namespace_From_Parent_For_Locals
      (Validator : access XML_Any_Record) return Boolean;
 
-   --------------------
-   -- XML_All_Record --
-   --------------------
-
-   type Natural_Array is array (Natural range <>) of Natural;
-
-   type XML_All_Record is new XML_Validator_Record with record
-      Particles  : Particle_List := Empty_Particle_List;
-      Min_Occurs : Natural;
-      Max_Occurs : Integer;
-   end record;
-   type All_Data (Num_Elements : Integer) is new Group_Model_Data_Record with
-      record
-         All_Elements : Natural_Array (1 .. Num_Elements);
-         Num_Occurs   : Natural;
-      end record;
-   type All_Data_Access is access all All_Data'Class;
-
-   procedure Validate_Start_Element
-     (Validator         : access XML_All_Record;
-      Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Element_Validator      : out XML_Element);
-   procedure Validate_End_Element
-     (Validator         : access XML_All_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data);
-   procedure Validate_Characters
-     (Validator     : access XML_All_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
-   function Create_Validator_Data
-     (Validator : access XML_All_Record) return Validator_Data;
-   --  See doc for inherited subprograms
-
    ---------------------
    -- Sequence_Record --
    ---------------------
@@ -1239,6 +1206,43 @@ private
    function Type_Model
      (Validator  : access Choice_Record;
       First_Only : Boolean) return Unicode.CES.Byte_Sequence;
+   --  See doc for inherited subprograms
+
+   --------------------
+   -- XML_All_Record --
+   --------------------
+
+   type Natural_Array is array (Natural range <>) of Natural;
+
+   type XML_All_Record is new Choice_Record with record
+      Min_Occurs : Natural;
+      Max_Occurs : Integer;
+   end record;
+   type All_Data (Num_Elements : Integer) is new Group_Model_Data_Record with
+      record
+         All_Elements : Natural_Array (1 .. Num_Elements);
+         Num_Occurs   : Natural;
+      end record;
+   type All_Data_Access is access all All_Data'Class;
+
+   procedure Validate_Start_Element
+     (Validator         : access XML_All_Record;
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Element_Validator      : out XML_Element);
+   procedure Validate_End_Element
+     (Validator         : access XML_All_Record;
+      Local_Name        : Unicode.CES.Byte_Sequence;
+      Data              : Validator_Data);
+   function Create_Validator_Data
+     (Validator : access XML_All_Record) return Validator_Data;
+   function Type_Model
+     (Validator  : access XML_All_Record;
+      First_Only : Boolean) return Unicode.CES.Byte_Sequence;
+   function Can_Be_Empty
+     (Group : access XML_All_Record) return Boolean;
    --  See doc for inherited subprograms
 
    -------------------------------
