@@ -14,7 +14,12 @@ MODE=distrib
 CHMOD=chmod
 CP=cp -p -f
 MKDIR=mkdir -p
+
+ifeq (${OS}, Windows_NT)
+LN=cp -f -p
+else
 LN=ln -f -s
+endif
 
 GTKADA_GPR=@GTKADA_GPR@
 
@@ -45,7 +50,7 @@ obj: force
 ifneq (${GTKADA_GPR},)
 	${GNATMAKE} -Pxml_gtk/xml_gtk.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
 endif
- 
+
 test: force
 	${GNATMAKE} -Punicode/test/unicode_test.gpr -XMODE=${MODE}
 	${GNATMAKE} -Psax/test/sax_test.gpr -XMODE=${MODE}
@@ -62,7 +67,7 @@ docs: force
 %_inst: force
 	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
 	-${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
-	-${CP} $*/lib/libxmlada_* ${PREFIX}/include/xmlada/obj
+	-${CP} $*/lib/*xmlada_* ${PREFIX}/include/xmlada/obj
 	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
            ${LN} ../include/xmlada/obj/${lib} ${PREFIX}/lib/${lib};}
 	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
