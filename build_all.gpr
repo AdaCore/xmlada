@@ -4,5 +4,5 @@ with "sax/sax",         "sax/test/sax_test";
 with "dom/dom",         "dom/test/dom_test";
 
 project Build_All is
-   for Source_Dirs use (".");
+   for Source_Files use ();
 end Build_All;
