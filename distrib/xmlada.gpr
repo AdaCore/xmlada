@@ -4,6 +4,7 @@
 --  "xmlada.gpr".
 
 with "xmlada_unicode", "xmlada_sax", "xmlada_input", "xmlada_dom", "xmlada_gtk";
+with "xmlada_schema";
 
 project Xmlada is
    for Source_Dirs use ();

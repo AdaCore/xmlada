@@ -1,0 +1,10 @@
+with "xmlada_sax";
+with "xmlada_unicode";
+with "xmlada_avoid_recompile";
+project XmlAda_Schema is
+    for Source_Dirs use ("../include/xmlada");
+    for Source_List_File use "xmlada_Schema.lgpr";
+    for Library_Dir use "../include/xmlada/obj";
+    for Library_Name use "xmlada_Schema";
+    for Library_Kind use "static";
+end XmlAda_Schema;

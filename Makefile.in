@@ -22,7 +22,7 @@ GTKADA_GPR=@GTKADA_GPR@
 ## Nothing to modify below this point
 #########################################################################
 
-MODULES=unicode input_sources sax dom
+MODULES=unicode input_sources sax dom schema
 
 ifneq (${GTKADA_GPR},)
 MODULES:=${MODULES} xml_gtk
