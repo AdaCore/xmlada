@@ -27,34 +27,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Unicode.CCS.Iso_8859_1;
-with Unicode.CCS.Iso_8859_2;
-with Unicode.CCS.Iso_8859_3;
-with Unicode.CCS.Iso_8859_4;
-with Unicode.CCS.Iso_8859_15;
-
 package body Unicode.CCS is
-
-   -----------------------
-   -- Get_Character_Set --
-   -----------------------
-
-   function Get_Character_Set (Name : String) return Character_Set is
-   begin
-      if Name = Iso_8859_1.Name1 or else Name = Iso_8859_1.Name2 then
-         return Iso_8859_1.Iso_8859_1_Character_Set;
-      elsif Name = Iso_8859_2.Name1 or else Name = Iso_8859_2.Name2 then
-         return Iso_8859_2.Iso_8859_2_Character_Set;
-      elsif Name = Iso_8859_3.Name1 then
-         return Iso_8859_3.Iso_8859_3_Character_Set;
-      elsif Name = Iso_8859_4.Name1 then
-         return Iso_8859_4.Iso_8859_4_Character_Set;
-      elsif Name = Iso_8859_15.Name1 then
-         return Iso_8859_15.Iso_8859_15_Character_Set;
-      else
-         raise Unknown_Character_Set;
-      end if;
-   end Get_Character_Set;
 
    --------------
    -- Identity --

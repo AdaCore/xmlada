@@ -54,11 +54,6 @@ package Unicode.CCS is
    -- Character sets --
    --------------------
 
-   function Get_Character_Set (Name : String) return Character_Set;
-   --  Get the character set associated with a given name
-   --  The valid names are given in the packages Unicode.CCS.*.
-   --  Unknown_Character_Set is raised if Name is not found.
-
    function Identity (Char : Unicode_Char) return Unicode_Char;
    --  return its parameter directly.
 
