@@ -69,6 +69,7 @@ docs: force
 	-${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
 	-${CP} $*/lib/*xmlada_* ${PREFIX}/include/xmlada/obj
 	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
+	   ${RM} ${PREFIX}/lib/${lib}; \
            ${LN} ../include/xmlada/obj/${lib} ${PREFIX}/lib/${lib};}
 	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
 	cd $*; ls *.ad[bs] > ${PREFIX}/lib/gnat/xmlada_$*.lgpr
