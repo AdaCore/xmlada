@@ -72,5 +72,7 @@ private
       Qname         : Unicode.CES.Byte_Sequence := "");
    procedure Characters
      (Handler : in out Validating_Reader; Ch : Unicode.CES.Byte_Sequence);
-
+   procedure Ignorable_Whitespace
+     (Handler : in out Validating_Reader;
+      Ch      : Unicode.CES.Byte_Sequence);
 end Schema.Readers;

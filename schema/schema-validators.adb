@@ -189,8 +189,9 @@ package body Schema.Validators is
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
    procedure Validate_Characters
-     (Validator   : access Debug_Validator_Record;
-      Ch          : Unicode.CES.Byte_Sequence);
+     (Validator     : access Debug_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
 
    ------------------------------
    -- Attribute_Validator_List --
@@ -221,8 +222,9 @@ package body Schema.Validators is
       end record;
 
    procedure Validate_Characters
-     (Validator   : access List_Validator_Record;
-      Ch          : Unicode.CES.Byte_Sequence);
+     (Validator     : access List_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
    --  See doc from inherited subprogram
 
 
@@ -239,14 +241,17 @@ package body Schema.Validators is
      is access all Common_Simple_XML_Validator'Class;
 
    procedure Validate_Characters
-     (Validator   : access Common_Simple_XML_Validator;
-      Ch          : Unicode.CES.Byte_Sequence);
+     (Validator     : access Common_Simple_XML_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
    procedure Free
      (Validator : in out Common_Simple_XML_Validator);
    procedure Add_Facet
      (Validator   : access Common_Simple_XML_Validator;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence);
+   function Is_Simple_Type
+     (Validator : access Common_Simple_XML_Validator) return Boolean;
    --  See doc from inherited subprogram
 
    -----------------------
@@ -256,8 +261,9 @@ package body Schema.Validators is
    type Boolean_Validator_Record is new Common_Simple_XML_Validator with
      null record;
    procedure Validate_Characters
-     (Validator   : access Boolean_Validator_Record;
-      Ch          : Unicode.CES.Byte_Sequence);
+     (Validator     : access Boolean_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
    procedure Add_Facet
      (Validator   : access Boolean_Validator_Record;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -288,8 +294,9 @@ package body Schema.Validators is
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
    procedure Validate_Characters
-     (Validator   : access Extension_XML_Validator;
-      Ch          : Unicode.CES.Byte_Sequence);
+     (Validator     : access Extension_XML_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
    procedure Get_Attribute_Lists
      (Validator   : access Extension_XML_Validator;
       List        : out Attribute_Validator_List_Access;
@@ -298,6 +305,8 @@ package body Schema.Validators is
    function Is_Extension_Of
      (Validator : access Extension_XML_Validator; Typ : XML_Type)
       return Boolean;
+   function Is_Simple_Type
+     (Validator : access Extension_XML_Validator) return Boolean;
    --  See doc from inherited subprograms
 
    -------------------------------
@@ -324,8 +333,9 @@ package body Schema.Validators is
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
    procedure Validate_Characters
-     (Validator   : access Restriction_XML_Validator;
-      Ch          : Unicode.CES.Byte_Sequence);
+     (Validator     : access Restriction_XML_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
    procedure Get_Attribute_Lists
      (Validator   : access Restriction_XML_Validator;
       List        : out Attribute_Validator_List_Access;
@@ -338,6 +348,8 @@ package body Schema.Validators is
    function Is_Restriction_Of
      (Validator : access Restriction_XML_Validator; Typ : XML_Type)
       return Boolean;
+   function Is_Simple_Type
+     (Validator : access Restriction_XML_Validator) return Boolean;
    --  See doc from inherited subprograms
 
    ----------
@@ -453,14 +465,17 @@ package body Schema.Validators is
          if Facets.Mask (Facet_Min_Length)
            and then Length < Facets.Min_Length
          then
-            Validation_Error ("Invalid min_length");
+            Validation_Error ("String is too short, minimum length is"
+                              & Integer'Image (Facets.Min_Length)
+                              & " characters");
          end if;
 
          if Facets.Mask (Facet_Max_Length)
            and then Length > Facets.Max_Length
          then
             Validation_Error ("String too long, maximum length is"
-                              & Integer'Image (Facets.Max_Length));
+                              & Integer'Image (Facets.Max_Length)
+                              & " characters");
          end if;
       end if;
 
@@ -958,10 +973,11 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Validator   : access Debug_Validator_Record;
-      Ch          : Unicode.CES.Byte_Sequence)
+     (Validator     : access Debug_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean)
    is
-      pragma Unreferenced (Validator);
+      pragma Unreferenced (Validator, Empty_Element);
    begin
       Put_Line (ASCII.ESC & "[36m"
                 & "****** Charactes: DebugType validator for " & Ch
@@ -1258,11 +1274,12 @@ package body Schema.Validators is
 
    procedure Validate_Characters
      (Validator      : access XML_Validator_Record;
-      Ch             : Unicode.CES.Byte_Sequence) is
+      Ch             : Unicode.CES.Byte_Sequence;
+      Empty_Element  : Boolean) is
    begin
       if Debug then
          Put_Line ("Validate_Character for unknown " & Get_Name (Validator)
-                   & " --" & Ch & "--");
+                   & " --" & Ch & "--" & Boolean'Image (Empty_Element));
       end if;
    end Validate_Characters;
 
@@ -1271,8 +1288,11 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Validator   : access Common_Simple_XML_Validator;
-      Ch          : Unicode.CES.Byte_Sequence) is
+     (Validator     : access Common_Simple_XML_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean)
+   is
+      pragma Unreferenced (Empty_Element);
    begin
       if Debug then
          Put_Line ("Validate_Character for common: --" & Ch & "--"
@@ -1287,8 +1307,9 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Validator   : access Boolean_Validator_Record;
-      Ch          : Unicode.CES.Byte_Sequence) is
+     (Validator     : access Boolean_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean) is
    begin
       if Debug then
          Put_Line ("Validate_Characters for boolean --" & Ch & "--"
@@ -1303,7 +1324,8 @@ package body Schema.Validators is
          Validation_Error ("Invalid value for boolean type: """ & Ch & """");
       end if;
       Validate_Characters
-        (Common_Simple_XML_Validator (Validator.all)'Access, Ch);
+        (Common_Simple_XML_Validator (Validator.all)'Access, Ch,
+         Empty_Element);
    end Validate_Characters;
 
    -------------------------
@@ -1311,8 +1333,9 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Validator   : access List_Validator_Record;
-      Ch          : Unicode.CES.Byte_Sequence)
+     (Validator     : access List_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean)
    is
       Start : Integer := Ch'First;
    begin
@@ -1326,7 +1349,8 @@ package body Schema.Validators is
          if Ch (C) = ' ' then
             if C /= Ch'First then
                Validate_Characters
-                 (Get_Validator (Validator.Base), Ch (Start .. C - 1));
+                 (Get_Validator (Validator.Base), Ch (Start .. C - 1),
+                  Empty_Element);
             end if;
             Start := C + 1;
          end if;
@@ -1334,7 +1358,8 @@ package body Schema.Validators is
 
       if Start <= Ch'Last then
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch (Start .. Ch'Last));
+           (Get_Validator (Validator.Base), Ch (Start .. Ch'Last),
+            Empty_Element);
       end if;
    end Validate_Characters;
 
@@ -1381,8 +1406,9 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Union       : access XML_Union_Record;
-      Ch          : Unicode.CES.Byte_Sequence)
+     (Union         : access XML_Union_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean)
    is
       Iter : Particle_Iterator;
       Valid : XML_Validator;
@@ -1393,7 +1419,11 @@ package body Schema.Validators is
       end if;
 
       if Union.Unions = null then
-         Validation_Error ("No content allowed for this union");
+         if Empty_Element then
+            return;
+         else
+            Validation_Error ("No content allowed for this union");
+         end if;
       end if;
 
       Iter := Start (Union.Unions);
@@ -1401,7 +1431,7 @@ package body Schema.Validators is
          begin
             Valid := Get_Validator (Get (Iter).Type_Descr);
             if Valid /= null then
-               Validate_Characters (Valid, Ch);
+               Validate_Characters (Valid, Ch, Empty_Element);
             end if;
 
             --  No error ? => Everything is fine
@@ -1485,7 +1515,7 @@ package body Schema.Validators is
      (Local_Name     : Unicode.CES.Byte_Sequence;
       NS             : XML_Grammar_NS;
       Attribute_Type : XML_Type                  := No_Type;
-      Attribute_Form : Attribute_Form_Type       := Qualified;
+      Attribute_Form : Form_Type                 := Qualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Value          : Unicode.CES.Byte_Sequence := "";
       Is_ID          : Boolean := False)
@@ -1519,7 +1549,8 @@ package body Schema.Validators is
 
       if Validator.Attribute_Type /= No_Type then
          Validate_Characters (Get_Validator (Validator.Attribute_Type),
-                              Get_Value (Atts, Index));
+                              Get_Value (Atts, Index),
+                              Empty_Element => False);
       end if;
    end Validate_Attribute;
 
@@ -1735,7 +1766,8 @@ package body Schema.Validators is
 
          if Element.Elem.Default /= null then
             Validate_Characters
-              (Get_Validator (Element_Type), Element.Elem.Default.all);
+              (Get_Validator (Element_Type), Element.Elem.Default.all,
+               Empty_Element => False);
          end if;
 
          --  3.3 Element Declaration details:  Validation Rule 3.1
@@ -1744,7 +1776,8 @@ package body Schema.Validators is
 
          if Element.Elem.Fixed /= null then
             Validate_Characters
-              (Get_Validator (Element_Type), Element.Elem.Fixed.all);
+              (Get_Validator (Element_Type), Element.Elem.Fixed.all,
+               Empty_Element => False);
          end if;
       end if;
    end Set_Type;
@@ -1799,7 +1832,8 @@ package body Schema.Validators is
          Elements         => new Elements_Htable.HTable (101),
          Groups           => new Groups_Htable.HTable (101),
          Attributes       => new Attributes_Htable.HTable (101),
-         Attribute_Groups => new Attribute_Groups_Htable.HTable (101));
+         Attribute_Groups => new Attribute_Groups_Htable.HTable (101),
+         Element_Form_Default => Unqualified);
    end Create_NS_Grammar;
 
    ----------------
@@ -2059,6 +2093,8 @@ package body Schema.Validators is
             Final_Extension     => False,
             Block_Restriction   => False,
             Block_Extension     => False,
+            Is_Global           => False,
+            Form                => Form_Default,
             Fixed               => null),
          Is_Ref => False);
       return Result;
@@ -2095,6 +2131,8 @@ package body Schema.Validators is
       else
          Elements_Htable.Set (Grammar.Elements.all, Element.Elem);
       end if;
+
+      Element.Elem.Is_Global := True;
    end Register;
 
    --------------
@@ -2419,7 +2457,8 @@ package body Schema.Validators is
       --  for that element
 
       if Element.Elem.Of_Type /= No_Type then
-         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Default);
+         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Default,
+                              Empty_Element => False);
       end if;
 
       Free (Element.Elem.Default);
@@ -2465,7 +2504,8 @@ package body Schema.Validators is
       --  for that element
 
       if Element.Elem.Of_Type /= No_Type then
-         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Fixed);
+         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Fixed,
+                              Empty_Element => False);
       end if;
 
 
@@ -2914,16 +2954,19 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Validator      : access Group_Model_Record;
-      Ch             : Unicode.CES.Byte_Sequence)
+     (Validator     : access Group_Model_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean)
    is
       pragma Unreferenced (Ch);
    begin
-      if Validator.Mixed_Content then
-         null;
-      else
-         Validation_Error
-           ("No character data allowed by content model");
+      if not Empty_Element then
+         if Validator.Mixed_Content then
+            null;
+         else
+            Validation_Error
+              ("No character data allowed by content model");
+         end if;
       end if;
    end Validate_Characters;
 
@@ -3585,8 +3628,9 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Validator   : access Restriction_XML_Validator;
-      Ch          : Unicode.CES.Byte_Sequence) is
+     (Validator     : access Restriction_XML_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean) is
    begin
       if Debug then
          Put_Line ("Validate_Characters for restriction --" & Ch & "--"
@@ -3595,7 +3639,7 @@ package body Schema.Validators is
 
       Check_Facet (Validator.Facets, Ch);
       if Validator.Restriction /= null then
-         Validate_Characters (Validator.Restriction, Ch);
+         Validate_Characters (Validator.Restriction, Ch, Empty_Element);
       end if;
    end Validate_Characters;
 
@@ -3810,8 +3854,9 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Validator   : access Extension_XML_Validator;
-      Ch          : Unicode.CES.Byte_Sequence) is
+     (Validator     : access Extension_XML_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean) is
    begin
       if Debug then
          Put_Line ("Validate_Characters for extension "
@@ -3819,7 +3864,7 @@ package body Schema.Validators is
       end if;
 
       if Validator.Extension /= null then
-         Validate_Characters (Validator.Extension, Ch);
+         Validate_Characters (Validator.Extension, Ch, Empty_Element);
       end if;
 
    exception
@@ -3828,7 +3873,8 @@ package body Schema.Validators is
             Put_Line ("Validation error in extension: "
                       & Exception_Message (E) & ", testing base");
          end if;
-         Validate_Characters (Get_Validator (Validator.Base), Ch);
+         Validate_Characters
+           (Get_Validator (Validator.Base), Ch, Empty_Element);
    end Validate_Characters;
 
    ------------------
@@ -3989,12 +4035,15 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Characters
-     (Validator      : access XML_All_Record;
-      Ch             : Unicode.CES.Byte_Sequence)
+     (Validator     : access XML_All_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean)
    is
       pragma Unreferenced (Validator, Ch);
    begin
-      Validation_Error ("No character data allowed by content model");
+      if not Empty_Element then
+         Validation_Error ("No character data allowed by content model");
+      end if;
    end Validate_Characters;
 
    ----------
@@ -4202,5 +4251,101 @@ package body Schema.Validators is
       Data.Nested := null;
       Free (Data.Nested_Data);
    end Free_Nested_Group;
+
+   --------------------
+   -- Is_Simple_Type --
+   --------------------
+
+   function Is_Simple_Type
+     (Validator : access Common_Simple_XML_Validator) return Boolean
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return True;
+   end Is_Simple_Type;
+
+   --------------------
+   -- Is_Simple_Type --
+   --------------------
+
+   function Is_Simple_Type
+     (Validator : access XML_Validator_Record) return Boolean
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return False;
+   end Is_Simple_Type;
+
+   --------------------
+   -- Is_Simple_Type --
+   --------------------
+
+   function Is_Simple_Type
+     (Validator : access Extension_XML_Validator) return Boolean is
+   begin
+      return Is_Simple_Type (Get_Validator (Validator.Base));
+   end Is_Simple_Type;
+
+   --------------------
+   -- Is_Simple_Type --
+   --------------------
+
+   function Is_Simple_Type
+     (Validator : access Restriction_XML_Validator) return Boolean is
+   begin
+      return Is_Simple_Type (Get_Validator (Validator.Base));
+   end Is_Simple_Type;
+
+   ------------------------------
+   -- Set_Element_Form_Default --
+   ------------------------------
+
+   procedure Set_Element_Form_Default
+     (Grammar : XML_Grammar_NS; Form_Default : Form_Type) is
+   begin
+      Grammar.Element_Form_Default := Form_Default;
+   end Set_Element_Form_Default;
+
+   ------------------------------
+   -- Get_Element_Form_Default --
+   ------------------------------
+
+   function Get_Element_Form_Default
+     (Grammar : XML_Grammar_NS) return Form_Type is
+   begin
+      return Grammar.Element_Form_Default;
+   end Get_Element_Form_Default;
+
+   --------------
+   -- Set_Form --
+   --------------
+
+   procedure Set_Form (Element : XML_Element; Form : Form_Type) is
+   begin
+      Element.Elem.Form := Form;
+   end Set_Form;
+
+   --------------
+   -- Get_Form --
+   --------------
+
+   function Get_Form
+     (Element : XML_Element; Grammar : XML_Grammar_NS) return Form_Type is
+   begin
+      if Element.Elem.Form = Form_Default then
+         return Get_Element_Form_Default (Grammar);
+      else
+         return Element.Elem.Form;
+      end if;
+   end Get_Form;
+
+   ---------------
+   -- Is_Global --
+   ---------------
+
+   function Is_Global (Element : XML_Element) return Boolean is
+   begin
+      return Element.Elem.Is_Global;
+   end Is_Global;
 
 end Schema.Validators;

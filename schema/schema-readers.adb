@@ -48,6 +48,13 @@ package body Schema.Readers is
       Schema_Location : Byte_Sequence);
    --  Parse multiple grammars, as defined by the "schemaLocation" attribute
 
+   procedure Internal_Characters
+     (Handler : in out Validating_Reader;
+      Ch      : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
+   --  Internal version of Characters, that can deal with empty content for
+   --  elements
+
    ----------------------
    -- Set_Debug_Output --
    ----------------------
@@ -258,85 +265,87 @@ package body Schema.Readers is
       Data      : Validator_Data;
       G         : XML_Grammar_NS;
       Typ       : XML_Type;
-      Type_Index : Integer;
-      Index     : Integer;
       Is_Nil    : Boolean;
-   begin
-      if Debug then
-         Put_Line (ASCII.ESC & "[33m"
-                   & "Start_Element: " & Local_Name
-                   & ASCII.ESC & "[39m");
-      end if;
 
-      --  Get the name of the grammar to use from the element's attributes
+      procedure Get_Grammar_From_Attributes;
+      --  Parse the grammar, reading its name from the attributes
 
-      if Handler.Grammar = No_Grammar then
-         Index := Get_Index (Atts, URI => XML_Instance_URI,
-                             Local_Name => "noNamespaceSchemaLocation");
-         if Index /= -1 then
-            Parse_Grammar (Handler, Get_Value (Atts, Index));
+      procedure Check_Qualification;
+      --  Check whether the element should have been qualified or not
+
+      procedure Compute_Type;
+      --  Compute the type to use, depending on whether the xsi:type attribute
+      --  was specified
+
+      ---------------------------------
+      -- Get_Grammar_From_Attributes --
+      ---------------------------------
+
+      procedure Get_Grammar_From_Attributes is
+         No_Index : constant Integer := Get_Index
+           (Atts, URI => XML_Instance_URI,
+            Local_Name => "noNamespaceSchemaLocation");
+         Location_Index : constant Integer := Get_Index
+           (Atts, URI => XML_Instance_URI,
+            Local_Name => "schemaLocation");
+      begin
+         if No_Index /= -1 then
+            Parse_Grammar (Handler, Get_Value (Atts, No_Index));
+         elsif Location_Index /= -1 then
+            Parse_Grammars (Handler, Get_Value (Atts, Location_Index));
          end if;
+      end Get_Grammar_From_Attributes;
 
-         Index := Get_Index (Atts, URI => XML_Instance_URI,
-                             Local_Name => "schemaLocation");
-         if Index /= -1 then
-            Parse_Grammars (Handler, Get_Value (Atts, Index));
+      -------------------------
+      -- Check_Qualification --
+      -------------------------
+
+      procedure Check_Qualification is
+      begin
+         if not Is_Global (Element)
+           and then Get_Form (Element, G) = Unqualified
+           and then Namespace_URI /= ""
+         then
+            Raise_Exception
+              (XML_Validation_Error'Identity,
+               "Elements other than global elements mustn't have explicit"
+               & " namespace specification in this schema");
+
+         elsif Get_Form (Element, G) = Qualified
+           and then Namespace_URI = ""
+         then
+            Raise_Exception
+              (XML_Validation_Error'Identity,
+               "All elements must have namespace specification in this"
+               & " schema");
          end if;
+      end Check_Qualification;
 
-         if Handler.Grammar = No_Grammar then
-            --  Always valid
-            return;
-         end if;
-      end if;
+      ------------------
+      -- Compute_Type --
+      ------------------
 
-      --  Whether this element is valid in the current context
+      procedure Compute_Type is
+         Type_Index : constant Integer := Get_Index
+           (Atts, URI => XML_Instance_URI, Local_Name => "type");
+         Derives_By_Extension, Derives_By_Restriction : Boolean;
+      begin
+         Typ := Get_Type (Element);
 
-      if Handler.Validators /= null then
-         Validate_Start_Element
-           (Get_Validator (Handler.Validators.Typ),
-            Local_Name, Handler.Validators.Data, Element);
-      else
-         if Debug then
-            Put_Line ("Getting element definition from grammar: "
-                      & Namespace_URI & " " & Local_Name);
-         end if;
-         Get_NS (Handler.Grammar, Namespace_URI, Result => G);
-         Element := Lookup_Element (G, Local_Name);
+         if Type_Index /= -1 then
+            if Debug then
+               Put_Line ("Getting element definition from type attribute: "
+                         & Get_Value (Atts, Type_Index));
+            end if;
 
-         Add_XML_Instance_Attributes
-           (Handler, Get_Validator (Get_Type (Element)));
-      end if;
+            --  ??? Should check with namespaces
+            Typ := Lookup (G, Get_Value (Atts, Type_Index));
 
-      --  If not: this is a validation error
-
-      if Element = No_Element then
-         Raise_Exception
-           (XML_Validation_Error'Identity,
-            "No data type definition for element " & String (Local_Name));
-      end if;
-
-      --  Whether the element specifies a different type to use than the one
-      --  defined in the grammar
-
-      Typ := Get_Type (Element);
-
-      Type_Index := Get_Index
-        (Atts, URI => XML_Instance_URI, Local_Name => "type");
-      if Type_Index /= -1 then
-         if Debug then
-            Put_Line ("Getting element definition from type attribute: "
-                      & Get_Value (Atts, Type_Index));
-         end if;
-         --  ??? Should check with namespaces
-         Get_NS (Handler.Grammar, Namespace_URI, Result => G);
-         Typ := Lookup (G, Get_Value (Atts, Type_Index));
-
-         declare
-            Derives_By_Extension : constant Boolean :=
+            Derives_By_Extension :=
               Is_Extension_Of (Get_Validator (Typ), Get_Type (Element));
-            Derives_By_Restriction : constant Boolean :=
+            Derives_By_Restriction :=
               Is_Restriction_Of (Get_Validator (Typ), Get_Type (Element));
-         begin
+
             if not Derives_By_Extension
               and then not Derives_By_Restriction
               and then Typ /= Get_Type (Element)
@@ -344,8 +353,8 @@ package body Schema.Readers is
             then
                Raise_Exception
                  (XML_Validation_Error'Identity,
-                  "The type mentionned in the ""type"" attribute must derive"
-                  & " from the element's type in the schema");
+                  "The type mentionned in the ""type"" attribute must"
+                  & " derive from the element's type in the schema");
             end if;
 
             if Derives_By_Restriction
@@ -362,11 +371,55 @@ package body Schema.Readers is
                  (XML_Validation_Error'Identity,
                   "Cannot use extension of element's type in this context");
             end if;
-         end;
+         end if;
+      end Compute_Type;
+
+   begin
+      if Debug then
+         Put_Line (ASCII.ESC & "[33m"
+                   & "Start_Element: " & Local_Name
+                   & ASCII.ESC & "[39m");
       end if;
 
-      --  Check the element's attributes
+      --  Get the name of the grammar to use from the element's attributes
 
+      if Handler.Grammar = No_Grammar then
+         Get_Grammar_From_Attributes;
+
+         if Handler.Grammar = No_Grammar then
+            return;  --  Always valid
+         end if;
+      end if;
+
+      --  Whether this element is valid in the current context
+
+      Get_NS (Handler.Grammar, Namespace_URI, Result => G);
+
+      if Handler.Validators /= null then
+         Validate_Start_Element
+           (Get_Validator (Handler.Validators.Typ),
+            Local_Name, Handler.Validators.Data, Element);
+      else
+         if Debug then
+            Put_Line ("Getting element definition from grammar: "
+                      & Namespace_URI & " " & Local_Name);
+         end if;
+         Element := Lookup_Element (G, Local_Name);
+
+         Add_XML_Instance_Attributes
+           (Handler, Get_Validator (Get_Type (Element)));
+      end if;
+
+      --  If not: this is a validation error
+
+      if Element = No_Element then
+         Raise_Exception
+           (XML_Validation_Error'Identity,
+            "No data type definition for element " & String (Local_Name));
+      end if;
+
+      Check_Qualification;
+      Compute_Type;
       Data := Create_Validator_Data (Get_Validator (Typ));
       Validate_Attributes
         (Get_Validator (Typ), Atts, Handler.Ids,
@@ -387,15 +440,25 @@ package body Schema.Readers is
       pragma Unreferenced (Namespace_URI, Local_Name);
    begin
       if Handler.Validators /= null then
-         if Has_Fixed (Handler.Validators.Element)
-           and then not Handler.Validators.Had_Character_Data
-           and then Get_Fixed (Handler.Validators.Element).all /= ""
+         --  No character data => behave as an empty element, but we need to
+         --  test explicitely. For instance, the "minLength" facet might or
+         --  the "fixed" attribute need to test whether the empty string is
+         --  valid.
+         if not Handler.Validators.Had_Character_Data
+           and then not Handler.Validators.Is_Nil
          then
-            Raise_Exception
-              (XML_Validation_Error'Identity,
-               "Element's value must be """
-               & Get_Fixed (Handler.Validators.Element).all & """");
+            Internal_Characters (Handler, "", Empty_Element => True);
          end if;
+
+--           if Has_Fixed (Handler.Validators.Element)
+--             and then not Handler.Validators.Had_Character_Data
+--             and then Get_Fixed (Handler.Validators.Element).all /= ""
+--           then
+--              Raise_Exception
+--                (XML_Validation_Error'Identity,
+--                 "Element's value must be """
+--                 & Get_Fixed (Handler.Validators.Element).all & """");
+--           end if;
 
          Validate_End_Element
            (Get_Validator (Handler.Validators.Typ),
@@ -405,13 +468,14 @@ package body Schema.Readers is
       Pop (Handler.Validators);
    end End_Element;
 
-   ----------------
-   -- Characters --
-   ----------------
+   -------------------------
+   -- Internal_Characters --
+   -------------------------
 
-   procedure Characters
+   procedure Internal_Characters
      (Handler : in out Validating_Reader;
-      Ch      : Unicode.CES.Byte_Sequence) is
+      Ch      : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean) is
    begin
       if Handler.Validators /= null then
          Handler.Validators.Had_Character_Data := True;
@@ -430,12 +494,41 @@ package body Schema.Readers is
                   "Element's value must be """
                   & Get_Fixed (Handler.Validators.Element).all & """");
             end if;
+
          else
             Validate_Characters
-                 (Get_Validator (Get_Type (Handler.Validators.Element)), Ch);
+              (Get_Validator (Get_Type (Handler.Validators.Element)), Ch,
+               Empty_Element => Empty_Element);
          end if;
       end if;
+   end Internal_Characters;
+
+   ----------------
+   -- Characters --
+   ----------------
+
+   procedure Characters
+     (Handler : in out Validating_Reader;
+      Ch      : Unicode.CES.Byte_Sequence) is
+   begin
+      Internal_Characters (Handler, Ch, Empty_Element => False);
    end Characters;
+
+   --------------------------
+   -- Ignorable_Whitespace --
+   --------------------------
+
+   procedure Ignorable_Whitespace
+     (Handler : in out Validating_Reader;
+      Ch      : Unicode.CES.Byte_Sequence) is
+   begin
+      if Handler.Validators /= null
+        and then Is_Simple_Type
+          (Get_Validator (Get_Type (Handler.Validators.Element)))
+      then
+         Internal_Characters (Handler, Ch, Empty_Element => False);
+      end if;
+   end Ignorable_Whitespace;
 
    -----------
    -- Parse --

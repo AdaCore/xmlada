@@ -47,6 +47,8 @@ package Schema.Validators is
    Unbounded : constant Integer := -1;
    --  To indicate that a Max_Occurs is set to unbounded
 
+   type Form_Type is (Qualified, Unqualified, Form_Default);
+
    --------------------
    -- Validator_Data --
    --------------------
@@ -111,13 +113,12 @@ package Schema.Validators is
 
    type Attribute_Use_Type is
      (Prohibited, Optional, Required, Default, Fixed);
-   type Attribute_Form_Type is (Qualified, Unqualified);
 
    function Create_Attribute
      (Local_Name     : Unicode.CES.Byte_Sequence;
       NS             : XML_Grammar_NS;
       Attribute_Type : XML_Type                  := No_Type;
-      Attribute_Form : Attribute_Form_Type       := Qualified;
+      Attribute_Form : Form_Type                 := Qualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Value          : Unicode.CES.Byte_Sequence := "";
       Is_ID          : Boolean := False)
@@ -237,10 +238,15 @@ package Schema.Validators is
 
    procedure Validate_Characters
      (Validator      : access XML_Validator_Record;
-      Ch             : Unicode.CES.Byte_Sequence);
+      Ch             : Unicode.CES.Byte_Sequence;
+      Empty_Element  : Boolean);
    --  Check whether this Characters event is valid in the context of
    --  Validator. Multiple calls to the SAX event Characters are grouped before
    --  calling this subprogram.
+   --  If Empty_Element is true, this indicates that the element is in fact
+   --  empty. This is to distinguish from the empty string:
+   --      <tag/>   and <tag></tag>
+   --  If Empty_Element is true, then Ch is irrelevant
 
    procedure Add_Facet
      (Validator   : access XML_Validator_Record;
@@ -272,6 +278,10 @@ package Schema.Validators is
    function Is_Restriction_Of
      (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean;
    --  Whether Validator is an extension or a restriction of Typ
+
+   function Is_Simple_Type
+     (Validator : access XML_Validator_Record) return Boolean;
+   --  Whether Validator describes a simple Type (versus a Complex Type);
 
    ------------
    -- Unions --
@@ -353,6 +363,22 @@ package Schema.Validators is
    function Get_Block_On_Restriction (Element : XML_Element) return Boolean;
    function Get_Block_On_Extension (Element : XML_Element) return Boolean;
    --  Set the "block" status of the element
+
+   procedure Set_Form (Element : XML_Element; Form : Form_Type);
+   function Get_Form
+     (Element : XML_Element; Grammar : XML_Grammar_NS) return Form_Type;
+   --  Get the value of the "form" attribute of the element. If the attribute
+   --  wasn't specified for the element, it returns the default set for the
+   --  grammar.
+
+   function Is_Global (Element : XML_Element) return Boolean;
+   --  Whether Element is a global element (ie declared at the top-level of
+   --  the schema file), as opposed to a local element declared inside a
+   --  global element:
+   --     <schema>
+   --       <element name="global">
+   --         <sequence>
+   --           <element name="local" />
 
    ------------
    -- Groups --
@@ -502,6 +528,12 @@ package Schema.Validators is
    --  The definition must be provided before the grammar is fully filled, or
    --  this is an error.
 
+   procedure Set_Element_Form_Default
+     (Grammar : XML_Grammar_NS; Form_Default : Form_Type);
+   function Get_Element_Form_Default
+     (Grammar : XML_Grammar_NS) return Form_Type;
+   --  Set the elementFormDefault attribute
+
    procedure Initialize (Grammar : in out XML_Grammar);
    --  Initialize the internal structure of the grammar
 
@@ -596,6 +628,11 @@ private
       Block_Extension   : Boolean;
       --  The value for the "block" attribute of the element
 
+      Form : Form_Type := Form_Default;
+      --  The value of the "form" attribute of the element
+
+      Is_Global : Boolean;
+      --  Whether the element was declared at the toplevel of the <schema>
    end record;
    type XML_Element_Access is access all XML_Element_Record;
 
@@ -623,7 +660,7 @@ private
       record
          Local_Name     : Unicode.CES.Byte_Sequence_Access;
          Attribute_Type : XML_Type;
-         Attribute_Form : Attribute_Form_Type;
+         Attribute_Form : Form_Type;
          Attribute_Use  : Attribute_Use_Type;
          Value          : Unicode.CES.Byte_Sequence_Access;
          Is_Id          : Boolean;
@@ -850,6 +887,7 @@ private
       Groups        : Groups_Htable_Access;
       Attributes    : Attributes_Htable_Access;
       Attribute_Groups : Attribute_Groups_Htable_Access;
+      Element_Form_Default : Form_Type := Unqualified;
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_NS);
@@ -900,8 +938,9 @@ private
    --  (given the restrictions in schema, only one of them can apply).
 
    procedure Validate_Characters
-     (Validator      : access Group_Model_Record;
-      Ch             : Unicode.CES.Byte_Sequence);
+     (Validator     : access Group_Model_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
    --  See doc for inherited subprograms
 
    --------------------
@@ -929,8 +968,9 @@ private
       Local_Name        : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data);
    procedure Validate_Characters
-     (Validator      : access XML_All_Record;
-      Ch             : Unicode.CES.Byte_Sequence);
+     (Validator     : access XML_All_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
    function Create_Validator_Data
      (Validator : access XML_All_Record) return Validator_Data;
    --  See doc for inherited subprograms
@@ -1016,8 +1056,9 @@ private
       Unions : Particle_List := Empty_Particle_List;
    end record;
    procedure Validate_Characters
-     (Union       : access XML_Union_Record;
-      Ch          : Unicode.CES.Byte_Sequence);
+     (Union         : access XML_Union_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
    --  See doc from inherited subprograms
 
 end Schema.Validators;

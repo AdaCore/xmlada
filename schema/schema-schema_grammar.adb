@@ -20,6 +20,8 @@ package body Schema.Schema_Grammar is
       Get_NS (Grammar, XML_Schema_URI, G);
       Get_NS (Grammar, XML_URI, XML_G);
 
+      Set_Element_Form_Default (G, Qualified);
+
       --  The "formChoice" type of schema.xsd
       Typ := Restriction_Of (Lookup (G, "NMTOKEN"));
       Add_Facet (Typ, "enumeration", "qualified");

@@ -303,6 +303,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "final");
       Block_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "block");
+      Form_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "form");
 
       Min_Occurs, Max_Occurs : Integer := 1;
       Element : XML_Element;
@@ -420,6 +422,17 @@ package body Schema.Schema_Readers is
                     & Boolean'Image (On_Extension) & ");");
          end;
       end if;
+
+      if Form_Index /= -1 then
+         if Get_Value (Atts, Form_Index) = "qualified" then
+            Set_Form (Element, Qualified);
+            Output ("Set_Form (" & Ada_Name (Element) & ", Qualified);");
+         else
+            Set_Form (Element, Unqualified);
+            Output ("Set_Form (" & Ada_Name (Element) & ", Unqualified);");
+         end if;
+      end if;
+
 
       if Min_Occurs_Index /= -1 then
          Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
@@ -919,8 +932,14 @@ package body Schema.Schema_Readers is
             Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
                     & Ada_Name (Handler.Contexts) & ");");
 
+         when Context_Restriction =>
+            Add_Attribute (Handler.Contexts.Next.Restriction,
+                           Handler.Contexts.Attribute);
+            Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
+                    & Ada_Name (Handler.Contexts) & ");");
+
          when Context_Element | Context_Sequence | Context_Choice
-            | Context_Attribute | Context_Restriction | Context_All
+            | Context_Attribute | Context_All
             | Context_Union | Context_List =>
             Output ("Can't handle attribute decl in this context");
       end case;
@@ -936,6 +955,8 @@ package body Schema.Schema_Readers is
    is
       Target_NS_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "targetNamespace");
+      Form_Default_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "elementFormDefault");
    begin
       if Target_NS_Index /= -1 then
          Get_NS (Handler.Grammar, Get_Value (Atts, Target_NS_Index),
@@ -949,6 +970,14 @@ package body Schema.Schema_Readers is
          Get_NS (Handler.Grammar, "", Handler.Target_NS);
          if Debug then
             Output ("Get_NS (Handler.Grammar, """", Handler.Target_NS)");
+         end if;
+      end if;
+
+      if Form_Default_Index /= -1 then
+         if Get_Value (Atts, Form_Default_Index) = "qualified" then
+            Set_Element_Form_Default (Handler.Target_NS, Qualified);
+         else
+            Set_Element_Form_Default (Handler.Target_NS, Unqualified);
          end if;
       end if;
 
