@@ -130,7 +130,7 @@ package body DOM.Core.Documents is
          Parent     => null,
          Prefix     => Prefix,
          Local_Name => Local,
-         Namespace  => new DOM_String'(Namespace_URI),
+         Namespace  => Internalize_Namespace (Doc, Namespace_URI),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element_NS;
@@ -276,7 +276,7 @@ package body DOM.Core.Documents is
          Attr_Prefix     => Prefix,
          Attr_Local_Name => Local,
          Attr_Value      => null,
-         Attr_Namespace  => new DOM_String'(Namespace_URI));
+         Attr_Namespace  => Internalize_Namespace (Doc, Namespace_URI));
    end Create_Attribute_NS;
 
    -----------------------------

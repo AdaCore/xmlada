@@ -357,15 +357,15 @@ package body DOM.Core.Nodes is
    begin
       case N.Node_Type is
          when Element_Node =>
-            if N.Namespace /= null then
-               return N.Namespace.all;
+            if N.Namespace /= No_Namespace then
+               return N.Namespace.Namespace.all;
             else
                return "";
             end if;
 
          when Attribute_Node =>
-            if N.Attr_Namespace /= null then
-               return N.Attr_Namespace.all;
+            if N.Attr_Namespace /= No_Namespace then
+               return N.Attr_Namespace.Namespace.all;
             else
                return "";
             end if;
@@ -613,10 +613,7 @@ package body DOM.Core.Nodes is
             pragma Assert (N.Local_Name /= null);
             Clone.Local_Name := new DOM_String'(N.Local_Name.all);
 
-            if N.Namespace /= null then
-               Clone.Namespace := new DOM_String'(N.Namespace.all);
-            end if;
-
+            Clone_Namespace (Clone.Namespace, N.Namespace);
             Clone.Children := Clone_List (N.Children, Deep);
             Clone.Attributes := Named_Node_Map
               (Clone_List (Node_List (N.Attributes), True));
@@ -634,9 +631,7 @@ package body DOM.Core.Nodes is
                Clone.Attr_Value := new DOM_String'(N.Attr_Value.all);
             end if;
 
-            if N.Attr_Namespace /= null then
-               Clone.Attr_Namespace := new DOM_String'(N.Attr_Namespace.all);
-            end if;
+            Clone_Namespace (Clone.Attr_Namespace, N.Attr_Namespace);
 
          when Text_Node =>
             if N.Text /= null then
@@ -972,8 +967,10 @@ package body DOM.Core.Nodes is
    ----------
 
    procedure Free (N : in out Node; Deep : Boolean := True) is
-      procedure Internal_Free is new Unchecked_Deallocation
+      procedure Internal_Free is new Ada.Unchecked_Deallocation
         (Node_Record, Node);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (String_Htable.HTable, String_Htable_Access);
    begin
       if N = null then
          return;
@@ -1013,6 +1010,8 @@ package body DOM.Core.Nodes is
 
          when Document_Node =>
             Free (N.Doc_Children, Deep);
+            String_Htable.Reset (N.Namespaces.all);
+            Unchecked_Free (N.Namespaces);
 
          when Document_Type_Node =>
             Free (N.Document_Type_Name);
