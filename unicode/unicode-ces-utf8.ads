@@ -97,11 +97,11 @@ package Unicode.CES.Utf8 is
 
    function From_Utf32 (Str : Unicode.CES.Utf32.Utf32_LE_String)
       return Utf8_String;
-   --  Return a new tf8-encoded string, from a Utf32-encoded string.
+   --  Return a new Utf8-encoded string, from a Utf32-encoded string.
 
    function To_Utf32 (Str : Utf8_String)
       return Unicode.CES.Utf32.Utf32_LE_String;
-   --  Return a new utf32-encoded string, from a Utf8-encoded string.
+   --  Return a new Utf32-encoded string, from a Utf8-encoded string.
 
    ---------------------------
    -- Byte order conversion --
