@@ -706,7 +706,7 @@ package body Sax.Readers is
 
       elsif Parser.Inputs /= null then
          Copy (Parser.Locator.all, Parser.Inputs.Save_Loc);
-         Free (Parser.Inputs.Save_Loc);
+         Unref (Parser.Inputs.Save_Loc);
 
          if Parser.Inputs.External then
             Parser.In_External_Entity := False;
@@ -2344,7 +2344,7 @@ package body Sax.Readers is
             Close (Input_S);
 
             Copy (Parser.Locator.all, Loc);
-            Free (Loc);
+            Unref (Loc);
             Parser.Last_Read := Last;
          end if;
       end Parse_Element_Model_From_Entity;
@@ -3982,7 +3982,7 @@ package body Sax.Readers is
                Close (Input_F);
                Parser.In_External_Entity := In_External;
                Copy (Parser.Locator.all, Loc);
-               Free (Loc);
+               Unref (Loc);
                Parser.Last_Read := 0;
                Parser.Last_Read_Is_Valid := False;
             exception
@@ -4475,7 +4475,7 @@ package body Sax.Readers is
    begin
       Close_Inputs (Parser);
       Free (Parser.Default_Namespaces);
-      Free (Parser.Locator);
+      Unref (Parser.Locator);
       Free (Parser.DTD_Name);
       Free (Parser.Buffer);
 
