@@ -780,6 +780,10 @@ package body Sax.Readers is
             Put_Line ("Line_Feed");
          end if;
       end if;
+
+   exception
+      when Unicode.CES.Invalid_Encoding =>
+         Fatal_Error (Parser, "Invalid character encoding");
    end Next_Char;
 
    -------------------
