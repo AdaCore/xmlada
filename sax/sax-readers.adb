@@ -595,7 +595,7 @@ package body Sax.Readers is
    begin
       if Id = Null_Token then
          Id2.Line   := Get_Line_Number (Parser.Locator.all);
-         Id2.Column := Get_Column_Number (Parser.Locator.all) - 1;
+         Id2.Column := Get_Column_Number (Parser.Locator.all);
       end if;
       Parser.Buffer_Length := 0;
 
@@ -672,14 +672,6 @@ package body Sax.Readers is
          C : Unicode_Char;
       begin
          Next_Char (Stream, C);
-         if C = Line_Feed then
-            Set_Column_Number (Parser.Locator.all, 1);
-            Set_Line_Number
-              (Parser.Locator.all, Get_Line_Number (Parser.Locator.all) + 1);
-         else
-            Set_Column_Number
-              (Parser.Locator.all, Get_Column_Number (Parser.Locator.all) + 1);
-         end if;
 
          --  XML specs say that #xD#xA must be converted to one single #xA.
          --  A single #xD must be converted to one single #xA
@@ -690,7 +682,7 @@ package body Sax.Readers is
 
          elsif C = Line_Feed and then Parser.Previous_Char_Was_CR then
             Parser.Previous_Char_Was_CR := False;
-            Next_Char (Input, Parser);
+            Next_Char (Stream, Parser);
          else
             Parser.Previous_Char_Was_CR := False;
             Parser.Last_Read := C;
@@ -702,11 +694,20 @@ package body Sax.Readers is
       end Internal;
 
       Input_A : Entity_Input_Source_Access;
+
    begin
-      while Parser.Inputs /= null
-        and then (Parser.Inputs.Input = null
-                  or else Eof (Parser.Inputs.Input.all))
-      loop
+      --  First thing is to take into account location changes due to the
+      --  previous character.
+      if Parser.Last_Read_Is_Valid then
+         if Parser.Last_Read = Line_Feed
+           and then not Parser.Previous_Char_Was_CR
+         then
+            Set_Column_Number (Parser.Locator.all, 0);
+            Set_Line_Number
+              (Parser.Locator.all, Get_Line_Number (Parser.Locator.all) + 1);
+         end if;
+
+      elsif Parser.Inputs /= null then
          Copy (Parser.Locator.all, Parser.Inputs.Save_Loc);
          Free (Parser.Inputs.Save_Loc);
 
@@ -735,11 +736,27 @@ package body Sax.Readers is
          Input_A := Parser.Inputs;
          Parser.Inputs := Parser.Inputs.Next;
          Input_A.Next := null;
-      end loop;
+      end if;
+
+      Parser.Last_Read_Is_Valid := True;
 
       --  Read the text of the entity if there is any
 
       if Parser.Inputs /= null then
+         if Parser.Inputs.Input = null
+           or else Eof (Parser.Inputs.Input.all)
+         then
+            if Debug_Input then
+               Put_Line ("++Input END OF INPUT");
+            end if;
+
+            Parser.Last_Read := Unicode_Char'Val (16#00#);
+            Parser.Last_Read_Is_Valid := False;
+            return;
+         end if;
+
+         Set_Column_Number
+           (Parser.Locator.all, Get_Column_Number (Parser.Locator.all) + 1);
          Internal (Parser.Inputs.Input.all);
 
       --  Else read from the initial input stream
@@ -752,10 +769,12 @@ package body Sax.Readers is
          raise Input_Ended;
 
       else
+         Set_Column_Number
+           (Parser.Locator.all, Get_Column_Number (Parser.Locator.all) + 1);
          Internal (Input);
       end if;
 
-      if Debug_Input then
+      if Debug_Input and then Parser.Last_Read_Is_Valid then
          Put ("++Input " & To_String (Parser.Locator.all)
               & "(" & Unicode_Char'Image (Parser.Last_Read) & ")= ");
          if Parser.Last_Read /= Line_Feed then
@@ -764,6 +783,7 @@ package body Sax.Readers is
             Put_Line ("Line_Feed");
          end if;
       end if;
+
    end Next_Char;
 
    -------------------
@@ -935,7 +955,7 @@ package body Sax.Readers is
             Id := Loc;
          else
             Id.Line := Get_Line_Number (Parser.Locator.all);
-            Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
+            Id.Column := Get_Column_Number (Parser.Locator.all);
          end if;
          Fatal_Error
            (Parser, "[2.2] Invalid character (code"
@@ -1199,7 +1219,9 @@ package body Sax.Readers is
          while Index <= Str'Last loop
             Encoding.Read (Str, Index, C);
 
-            if C /= Parser.Last_Read or else Eof (Input) then
+            if C /= Parser.Last_Read
+              or else not Parser.Last_Read_Is_Valid
+            then
                return False;
             end if;
             Put_In_Buffer (Parser, Parser.Last_Read);
@@ -1228,7 +1250,7 @@ package body Sax.Readers is
                   if Parser.Last_Read = Hyphen_Minus then
                      Next_Char (Input, Parser);
                      if Parser.Last_Read = Hyphen_Minus then
-                        if not Eof (Input) then
+                        if Parser.Last_Read_Is_Valid then
                            Next_Char (Input, Parser);
                            if Parser.Last_Read = Greater_Than_Sign then
                               exit;
@@ -1237,8 +1259,8 @@ package body Sax.Readers is
                         Parser.Buffer_Length := Id.First - 1;
                         Id.Line := Get_Line_Number (Parser.Locator.all);
                         Id.Column :=
-                          Get_Column_Number (Parser.Locator.all) - 3;
-                        --  3 = 2 * Hyphen_Minus + Parser.Last_Read
+                          Get_Column_Number (Parser.Locator.all) - 2;
+                        --  2 = 2 * Hyphen_Minus
                         Fatal_Error
                           (Parser, "[2.5] '--' cannot appear in comments", Id);
                      else
@@ -1255,9 +1277,7 @@ package body Sax.Readers is
                     (Parser, "[4.5] Entity values must be self-contained", Id);
                end if;
 
-               if not Eof (Input) then
-                  Next_Char (Input, Parser);
-               end if;
+               Next_Char (Input, Parser);
                return;
             end if;
          end if;
@@ -1286,7 +1306,9 @@ package body Sax.Readers is
          if Parser.Last_Read = Latin_Small_Letter_X then
             Next_Char (Input, Parser);
 
-            while Parser.Last_Read /= Semicolon loop
+            while Parser.Last_Read_Is_Valid
+              and then Parser.Last_Read /= Semicolon
+            loop
                if Parser.Last_Read in Digit_Zero .. Digit_Nine then
                   Val := Val * 16 + Parser.Last_Read - Digit_Zero;
 
@@ -1304,7 +1326,7 @@ package body Sax.Readers is
 
                else
                   Id.Line := Get_Line_Number (Parser.Locator.all);
-                  Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
+                  Id.Column := Get_Column_Number (Parser.Locator.all);
                   Fatal_Error
                     (Parser, "[4.1] Invalid character '"
                      & Debug_Encode (Parser.Last_Read) & "' in"
@@ -1313,12 +1335,14 @@ package body Sax.Readers is
                Next_Char (Input, Parser);
             end loop;
          else
-            while Parser.Last_Read /= Semicolon loop
+            while Parser.Last_Read_Is_Valid
+              and then Parser.Last_Read /= Semicolon
+            loop
                if Parser.Last_Read in Digit_Zero .. Digit_Nine then
                   Val := Val * 10 + Parser.Last_Read - Digit_Zero;
                else
                   Id.Line := Get_Line_Number (Parser.Locator.all);
-                  Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
+                  Id.Column := Get_Column_Number (Parser.Locator.all);
                   Fatal_Error
                     (Parser, "[4.1] Invalid character '"
                      & Debug_Encode (Parser.Last_Read) & "' in"
@@ -1377,21 +1401,24 @@ package body Sax.Readers is
                      Num_Closing_Bracket := 1;
                      loop
                         Next_Char (Input, Parser);
-                        Put_In_Buffer (Parser, Parser.Last_Read);
 
-                        if Parser.Last_Read = Closing_Square_Bracket then
-                           Num_Closing_Bracket := Num_Closing_Bracket + 1;
+                        if Parser.Last_Read_Is_Valid then
+                           Put_In_Buffer (Parser, Parser.Last_Read);
 
-                        elsif Parser.Last_Read = Greater_Than_Sign
-                          and then Num_Closing_Bracket >= 2
-                        then
-                           Parser.Buffer_Length := Parser.Buffer_Length
-                             - 2 * Encoding.Width (Closing_Square_Bracket)
-                             - Encoding.Width (Greater_Than_Sign);
-                           exit;
+                           if Parser.Last_Read = Closing_Square_Bracket then
+                              Num_Closing_Bracket := Num_Closing_Bracket + 1;
 
-                        else
-                           Num_Closing_Bracket := 0;
+                           elsif Parser.Last_Read = Greater_Than_Sign
+                             and then Num_Closing_Bracket >= 2
+                           then
+                              Parser.Buffer_Length := Parser.Buffer_Length
+                                - 2 * Encoding.Width (Closing_Square_Bracket)
+                                - Encoding.Width (Greater_Than_Sign);
+                              exit;
+
+                           else
+                              Num_Closing_Bracket := 0;
+                           end if;
                         end if;
                      end loop;
                      if Id.Input_Id /= Input_Id (Parser) then
@@ -1503,25 +1530,29 @@ package body Sax.Readers is
 
       procedure Handle_Entity_Ref is
       begin
-         if Is_Letter (Parser.Last_Read)
+         if not Parser.Last_Read_Is_Valid
+           or else Is_Letter (Parser.Last_Read)
            or else Parser.Last_Read = Spacing_Underscore
          then
-            while Parser.Last_Read /= Semicolon
+            while Parser.Last_Read_Is_Valid
+              and then Parser.Last_Read /= Semicolon
               and then Is_Name_Char (Parser.Last_Read)
             loop
                Put_In_Buffer (Parser, Parser.Last_Read);
                Next_Char (Input, Parser);
             end loop;
 
+            if not Parser.Last_Read_Is_Valid
+              or else Input_Id (Parser) /= Id.Input_Id
+            then
+               Fatal_Error
+                 (Parser, "[4.3.2] Entity must be self-contained", Id);
+            end if;
+
             if Parser.Last_Read /= Semicolon then
                Fatal_Error
                  (Parser, "[4.1] Entity references must end with ';'."
                   & ASCII.LF & "Did you want to use &amp; ?", Id);
-            end if;
-
-            if Input_Id (Parser) /= Id.Input_Id then
-               Fatal_Error
-                 (Parser, "[4.3.2] Entity must be self-contained", Id);
             end if;
 
          else
@@ -1572,12 +1603,17 @@ package body Sax.Readers is
       type Entity_Ref is (None, Entity, Param_Entity);
       Is_Entity_Ref : Entity_Ref := None;
    begin
+      if not Parser.Last_Read_Is_Valid then
+         Next_Char (Input, Parser);
+      end if;
+
       Id.First := Parser.Buffer_Length + 1;
       Id.Last := Parser.Buffer_Length;
       Id.Typ := End_Of_Input;
       Id.Line := Get_Line_Number (Parser.Locator.all);
-      Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
+      Id.Column := Get_Column_Number (Parser.Locator.all);
       Id.Input_Id := Input_Id (Parser);
+
       Close_Inputs (Parser);
 
       if Eof (Input) and then Parser.Last_Read = 16#FFFF# then
@@ -1595,13 +1631,13 @@ package body Sax.Readers is
 
       --  If we are ignoring special characters
       elsif Id.Typ = End_Of_Input
-        and then not Parser.Ignore_State_Special
-        and then Parser.State.Ignore_Special
+        and then (Parser.Ignore_State_Special
+                  or else Parser.State.Ignore_Special)
         and then not Parser.State.Detect_End_Of_PI
       then
          Id.Typ := Text;
          Parser.Ignore_State_Special := True;
-         loop
+         while Parser.Last_Read_Is_Valid loop
             exit when Parser.Last_Read = Ampersand
               and then (Parser.State.Expand_Entities
                         or else Parser.State.Expand_Character_Ref);
@@ -1779,7 +1815,10 @@ package body Sax.Readers is
                   loop
                      Next_Char (Input, Parser);
                      exit when Parser.Last_Read = Greater_Than_Sign;
-                     if not Is_White_Space (Parser.Last_Read) then
+
+                     if Parser.Last_Read_Is_Valid
+                       and then not Is_White_Space (Parser.Last_Read)
+                     then
                         Fatal_Error
                           (Parser, "[2.8] Unexpected character between ']'"
                            & " and '>' in the DTD", Id);
@@ -1989,25 +2028,44 @@ package body Sax.Readers is
            and then (Id.Typ = Text
                      or else (Coalesce_Space and then Id.Typ = Name))
          then
-            while (Coalesce_Space
-                   or else not Is_White_Space (Parser.Last_Read))
-              and then (not Parser.State.Greater_Special
-                        or else Parser.Last_Read /= Greater_Than_Sign)
-              and then Parser.Last_Read /= Less_Than_Sign
-              and then Parser.Last_Read /= Ampersand
-              and then (not Parser.State.Expand_Param_Entities
-                        or else Parser.Last_Read /= Percent_Sign)
-              and then Parser.Last_Read /= Equals_Sign
-              and then Parser.Last_Read /= Quotation_Mark
-              and then Parser.Last_Read /= Apostrophe
-              and then Parser.Last_Read /= Closing_Square_Bracket
-              and then Parser.Last_Read /= Slash
-              and then (Parser.Last_Read /= Question_Mark
-                        or else not Parser.State.Detect_End_Of_PI)
-            loop
-               Put_In_Buffer (Parser, Parser.Last_Read);
+            if not Parser.Last_Read_Is_Valid then
                Next_Char (Input, Parser);
-            end loop;
+
+            else
+               loop
+                  if Is_White_Space (Parser.Last_Read) then
+                     exit when not Coalesce_Space;
+
+                  else
+                     case Parser.Last_Read is
+                     when Greater_Than_Sign =>
+                        exit when Parser.State.Greater_Special;
+
+                     when Less_Than_Sign
+                        | Ampersand
+                        | Equals_Sign
+                        | Quotation_Mark
+                        | Apostrophe
+                        | Closing_Square_Bracket
+                        | Slash =>
+                        exit;
+
+                     when Percent_Sign =>
+                        exit when Parser.State.Expand_Param_Entities;
+
+                     when Question_Mark =>
+                        exit when Parser.State.Detect_End_Of_PI;
+
+                     when others =>
+                        null;
+                     end case;
+                  end if;
+
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Next_Char (Input, Parser);
+                  exit when not Parser.Last_Read_Is_Valid;
+               end loop;
+            end if;
          end if;
 
          Parser.Ignore_State_Special := False;
@@ -2050,7 +2108,6 @@ package body Sax.Readers is
             end if;
          end;
       end if;
-
 
       Id.Last := Parser.Buffer_Length;
 
@@ -2165,7 +2222,9 @@ package body Sax.Readers is
                              Resolve_URI (Parser, V.Value.all);
                   begin
                      Parser.Inputs.Input := Resolve_Entity
-                       (Parser, Public_Id => V.Public.all, System_Id => URI);
+                       (Parser,
+                        Public_Id => V.Public.all,
+                        System_Id => URI);
 
                      --  If either there is no entity resolver or if the
                      --  standard algorithm should be used
@@ -2173,7 +2232,6 @@ package body Sax.Readers is
                      if Parser.Inputs.Input = null then
                         Parser.Inputs.Input := new File_Input;
                         Open (URI, File_Input (Parser.Inputs.Input.all));
-
                         Set_Public_Id
                           (Parser.Inputs.Input.all, V.Value.all);
                      end if;
@@ -2187,6 +2245,8 @@ package body Sax.Readers is
                                "External entity not found: " & URI, Id);
                         Unchecked_Free (Parser.Inputs.Input);
                   end;
+
+                  Parser.In_External_Entity := True;
                else
                   Parser.Inputs.Input := new String_Input;
                   Open (V.Value, Encoding,
@@ -2203,12 +2263,10 @@ package body Sax.Readers is
                   Next_Token (Input, Parser, Id);
 
                else
-                  Parser.In_External_Entity := V.External;
-
                   Set_Line_Number (Parser.Locator.all, 1);
                   Set_Column_Number
                     (Parser.Locator.all,
-                     1 + Prolog_Size (Parser.Inputs.Input.all));
+                     Prolog_Size (Parser.Inputs.Input.all));
 
                   Next_Char (Input, Parser);
                   Next_Token (Input, Parser, Id);
@@ -2375,7 +2433,7 @@ package body Sax.Readers is
 
       begin
          Start_Token.Line := Get_Line_Number (Parser.Locator.all);
-         Start_Token.Column := Get_Column_Number (Parser.Locator.all) - 1;
+         Start_Token.Column := Get_Column_Number (Parser.Locator.all);
 
          if Open_Was_Read then
             Start_Token.Column := Start_Token.Column - 1;
@@ -2386,7 +2444,9 @@ package body Sax.Readers is
          end loop;
 
          loop
-            if Input_Id (Parser) /= Start_Id then
+            if not Parser.Last_Read_Is_Valid
+              or else Input_Id (Parser) /= Start_Id
+            then
                Fatal_Error
                  (Parser, "[4.5] Entity values must be self-contained",
                   Start_Token);
@@ -2461,6 +2521,7 @@ package body Sax.Readers is
                      Fatal_Error
                        (Parser, "Invalid content model", Start_Token);
                   end if;
+
                   if Current_Operand < Operand_Stack'First then
                      Fatal_Error
                        (Parser, "Invalid content model: "
@@ -2600,7 +2661,9 @@ package body Sax.Readers is
 
                   Start_Sub := Parser.Buffer_Length + 1;
 
-                  while Parser.Last_Read /= Semicolon loop
+                  while Parser.Last_Read_Is_Valid
+                    and then Parser.Last_Read /= Semicolon
+                  loop
                      Put_In_Buffer (Parser, Parser.Last_Read);
                      Next_Char (Input, Parser);
                   end loop;
@@ -3869,8 +3932,12 @@ package body Sax.Readers is
                   when Notation => Parse_Notation_Def (Id);
                   when Attlist_Def => Parse_Attlist_Def (Id);
                   when Text | Name =>
-                     Fatal_Error
-                       (Parser,  "[WF] Unexpected character in the DTD");
+                     if Id.First < Id.Last then
+                        Fatal_Error
+                          (Parser,  "[WF] Unexpected character in the DTD");
+                     else
+                        Reset_Buffer (Parser, Id);
+                     end if;
                   when Comment =>
                      Comment (Parser, Parser.Buffer (Id.First .. Id.Last));
                      Reset_Buffer (Parser, Id);
@@ -3951,14 +4018,18 @@ package body Sax.Readers is
                  (Parser,
                   Parser.Buffer (System_Start.First .. System_End.Last));
                In_External : constant Boolean := Parser.In_External_Entity;
-               Last  : constant Unicode_Char := Parser.Last_Read;
                Input_F : File_Input;
             begin
                Open (URI, Input_F);
                Copy (Loc, Parser.Locator.all);
+
+               --  Protect against the case where the last character read was
+               --  a LineFeed.
+               Parser.Last_Read := Unicode_Char'Val (16#00#);
+
                Set_Line_Number (Parser.Locator.all, 1);
                Set_Column_Number
-                 (Parser.Locator.all, 1 + Prolog_Size (Input_F));
+                 (Parser.Locator.all, Prolog_Size (Input_F));
                Set_System_Id (Parser.Locator.all, URI);
                Set_Public_Id
                  (Parser.Locator.all,
@@ -3972,7 +4043,8 @@ package body Sax.Readers is
                Parser.In_External_Entity := In_External;
                Copy (Parser.Locator.all, Loc);
                Free (Loc);
-               Parser.Last_Read := Last;
+               Parser.Last_Read := 0;
+               Parser.Last_Read_Is_Valid := False;
             exception
                when Name_Error =>
                   Error (Parser,
@@ -4488,7 +4560,7 @@ package body Sax.Readers is
       Parser.Locator := new Locator_Impl;
       Set_Public_Id (Parser.Locator.all, Get_Public_Id (Input));
       Set_System_Id (Parser.Locator.all, Get_System_Id (Input));
-      Set_Column_Number (Parser.Locator.all, 1 + Prolog_Size (Input));
+      Set_Column_Number (Parser.Locator.all, Prolog_Size (Input));
       Set_Line_Number (Parser.Locator.all, 1);
       Parser.Current_Node := null;
       Parser.Num_Toplevel_Elements := 0;
