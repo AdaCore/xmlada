@@ -776,9 +776,9 @@ expect "$sun/xsd005.xsd" "$sun/xsd005.n00.xml" \
 expect "$sun/xsd005.xsd" "$sun/xsd005.n01.xml" \
  "$sun/xsd005.n01.xml:5:30: Unknown type \"undeclared\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n02.xml" \
- "$sun/xsd005.n02.xml:6:15: Expecting at least 1 occurrences of \"c\" or its substitutionGroup"
+ "$sun/xsd005.n02.xml:6:15: Expecting at least 1 occurrences of \"c\" from namespace \"foo\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n03.xml" \
- "$sun/xsd005.n03.xml:6:11: Expecting at least 1 occurrences of \"c\" or its substitutionGroup"
+ "$sun/xsd005.n03.xml:6:11: Expecting at least 1 occurrences of \"c\" from namespace \"foo\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n04.xml" \
  "$sun/xsd005.n04.xml:6:15: Unexpected element: \"d\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n05.xml" \
@@ -818,9 +818,9 @@ expect "$sun/xsd006.xsd" "$sun/xsd006.v00.xml" ""
 expect "$sun/xsd008.xsd" "$sun/xsd008.n00.xml" \
  "$sun/xsd008.n00.xml:4:27: \"facet\" is abstract"
 expect "$sun/xsd008.xsd" "$sun/xsd008.n01.xml" \
- "$sun/xsd008.n01.xml:4:27: Expecting at least 1 occurrences of \"long\" or its substitutionGroup"
+ "$sun/xsd008.n01.xml:4:27: Expecting at least 1 occurrences of \"long\" from namespace \"foo\""
 expect "$sun/xsd008.xsd" "$sun/xsd008.n02.xml" \
- "$sun/xsd008.n02.xml:4:25: Expecting at least 1 occurrences of \"long\" or its substitutionGroup"
+ "$sun/xsd008.n02.xml:4:25: Expecting at least 1 occurrences of \"long\" from namespace \"foo\""
 expect "$sun/xsd008.xsd" "$sun/xsd008.v00.xml" ""
 
 ### SUN xsd011
@@ -1155,6 +1155,63 @@ expect "" "$msp/particlesC047.xml" \
  "$msp/particlesC047.xml:4:40: Invalid namespace for this element: \"http://importedXSD\" not in \"foo ##targetNamespace bar ##local\""
 expect "" "$msp/particlesC048.xml" \
  "$msp/particlesC048.xml:4:25: Invalid namespace for this element: \"xyz\" not in \"foo ##targetNamespace bar ##local\""
+
+expect "" "$msp/particlesDa001.xml" \
+ "$msp/particlesDa001.xml:5:39: Unexpected element: \"a1\""
+expect "" "$msp/particlesDa002.xml" ""
+expect "" "$msp/particlesDa003.xml" \
+ "$msp/particlesDa003.xml:4:10: Namespace specification is required in this context"
+expect "" "$msp/particlesDa004.xml" \
+ "$msp/particlesDa004.xml:4:26: Expecting at least 1 occurrences of \"elem2\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDa005.xml" \
+ "$msp/particlesDa005.xml:4:10: Expecting at least 1 occurrences of \"elem2\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDa006.xml" \
+ "$msp/particlesDa006.xml:5:39: Unexpected element: \"a1\""
+expect "" "$msp/particlesDa007.xml" ""
+expect "" "$msp/particlesDa008.xml" \
+ "$msp/particlesDa008.xml:4:10: Namespace specification is required in this context"
+expect "" "$msp/particlesDa009.xml" \
+ "$msp/particlesDa009.xml:4:26: Expecting at least 1 occurrences of \"elem2\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDa010.xml" \
+ "$msp/particlesDa010.xml:6:10: Expecting at least 1 occurrences of \"elem2\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDa011.xml" \
+ "$msp/particlesDa011.xml:4:12: \"elem2\" is abstract"
+
+expect "" "$msp/particlesDb001.xml" \
+ "$msp/particlesDb001.xml:3:41: Expecting at least 1 occurrences of \"elem1\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDb002.xml" ""
+expect "" "$msp/particlesDb003.xml" \
+ "$msp/particlesDb003.xml:3:10: Namespace specification is required in this context"
+expect "" "$msp/particlesDb004.xml" \
+ "$msp/particlesDb004.xml:3:26: Expecting at least 1 occurrences of \"elem1\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDb005.xml" \
+ "$msp/particlesDb005.xml:3:10: Expecting at least 1 occurrences of \"elem1\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDb006.xml" \
+ "$msp/particlesDb006.xml:3:41: Expecting at least 1 occurrences of \"elem1\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDb007.xml" ""
+expect "" "$msp/particlesDb008.xml" \
+ "$msp/particlesDb008.xml:3:10: Namespace specification is required in this context"
+expect "" "$msp/particlesDb009.xml" \
+ "$msp/particlesDb009.xml:3:26: Expecting at least 1 occurrences of \"elem1\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDb010.xml" \
+ "$msp/particlesDb010.xml:3:10: Expecting at least 1 occurrences of \"elem1\" from namespace \"http://xsdtesting\""
+expect "" "$msp/particlesDb011.xml" \
+ "$msp/particlesDb011.xml:3:12: \"elem1\" is abstract"
+
+expect "" "$msp/particlesDc001.xml" ""
+expect "" "$msp/particlesDc002.xml" ""
+expect "" "$msp/particlesDc003.xml" ""
+expect "" "$msp/particlesDc004.xml" ""
+expect "" "$msp/particlesDc005.xml" ""
+expect "" "$msp/particlesDc006.xml" ""
+expect "" "$msp/particlesDc007.xml" ""
+expect "" "$msp/particlesDc008.xml" ""
+expect "" "$msp/particlesDc009.xml" ""
+
+
+
+
+
 
 
 
