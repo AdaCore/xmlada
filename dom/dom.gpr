@@ -1,0 +1,21 @@
+with "../shared.gpr";
+with "../sax/sax.gpr";
+with "../unicode/unicode.gpr";
+
+project Dom is
+
+   for Object_Dir use "obj/";
+
+   case Shared.Mode is
+      when "distrib" => for Main use ();
+      when others =>
+         for Main use ("testxml.adb", "test_node.adb", "test_chardata.adb");
+         for Source_Dirs use (".", "test");
+   end case;
+
+   package Builder  renames Shared.Builder;
+   package Compiler renames Shared.Compiler;
+   package Binder   renames Shared.Binder;
+   package Linker   renames Shared.Linker;
+ 
+end Dom;
