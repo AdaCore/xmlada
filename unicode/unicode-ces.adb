@@ -166,12 +166,13 @@ package body Unicode.CES is
    is
       Pos  : Natural := Str'First;
       Offs : Integer := Offset;
+      C    : Unicode_Char;
    begin
       while Pos <= Str'Last loop
          if Offs <= 0 then
             return Pos;
          end if;
-         Pos := Pos + Encoding.Width (Encoding.Read (Str, Pos));
+         Encoding.Read (Str, Pos, C);
          Offs := Offs - 1;
       end loop;
       return -1;

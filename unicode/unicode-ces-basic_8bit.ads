@@ -52,13 +52,18 @@ package Unicode.CES.Basic_8bit is
    -- Conversion to and from byte sequences --
    -------------------------------------------
 
-   function Encode (Char : Unicode_Char) return Basic_8bit_String;
+   procedure Encode
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural);
    --  Return the byte sequence representing Char in the 8bit character
    --  encoding form
    --  Invalid_Encoding is raised if Char can not be converted.
 
-   function Read (Str : Basic_8bit_String; Index : Positive)
-      return Unicode_Char;
+   procedure Read
+     (Str   : Basic_8bit_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char);
    --  Return the character starting at location Index in Str
 
    function Width (Char : Unicode_Char) return Natural;

@@ -48,22 +48,29 @@ package body Unicode.CES.Basic_8bit is
    -- Encode --
    ------------
 
-   function Encode (Char : Unicode_Char) return Basic_8bit_String is
+   procedure Encode
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural) is
    begin
       if Char > 16#FF# then
          raise Invalid_Encoding;
       end if;
-      return "" & Character'Val (Char);
+      Index := Index + 1;
+      Output (Index) := Character'Val (Char);
    end Encode;
 
    ----------
    -- Read --
    ----------
 
-   function Read (Str : Basic_8bit_String; Index : Positive)
-      return Unicode_Char is
+   procedure Read
+     (Str   : Basic_8bit_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char) is
    begin
-      return Character'Pos (Str (Index));
+      Char := Character'Pos (Str (Index));
+      Index := Index + 1;
    end Read;
 
    -----------
@@ -71,6 +78,7 @@ package body Unicode.CES.Basic_8bit is
    -----------
 
    function Width (Char : Unicode_Char) return Natural is
+      pragma Warnings (Off, Char);
    begin
       return 1;
    end Width;
@@ -93,15 +101,13 @@ package body Unicode.CES.Basic_8bit is
       return Basic_8bit_String
    is
       Result : Basic_8bit_String (1 .. Str'Length / Utf32_Char_Width);
-      R_Index : Positive := Result'First;
+      R_Index : Natural := Result'First - 1;
       C : Unicode_Char;
       J : Positive := Str'First;
    begin
       while J <= Str'Last loop
-         C := Unicode.CES.Utf32.Read (Str, J);
-         Result (R_Index .. R_Index) :=  Encode (C);
-         J := J + Unicode.CES.Utf32.Width (C);
-         R_Index := R_Index + 1;
+         Unicode.CES.Utf32.Read (Str, J, Char => C);
+         Encode (C, Result, R_Index);
       end loop;
       return Result;
    end From_Utf32;
@@ -115,12 +121,13 @@ package body Unicode.CES.Basic_8bit is
       return Unicode.CES.Utf32.Utf32_LE_String
    is
       Result : Utf32_LE_String (1 .. Str'Length * Utf32_Char_Width);
-      R_Index : Positive := Result'First;
+      R_Index : Natural := Result'First - 1;
+      J : Positive := Str'First;
+      C : Unicode_Char;
    begin
-      for J in Str'Range loop
-         Result (R_Index .. R_Index + 3) :=
-           Unicode.CES.Utf32.Encode (Read (Str, J));
-         R_Index := R_Index + 4;
+      while J <= Str'Last loop
+         Read (Str, J, C);
+         Unicode.CES.Utf32.Encode (C, Result, R_Index);
       end loop;
       return Result;
    end To_Utf32;
@@ -134,13 +141,18 @@ package body Unicode.CES.Basic_8bit is
       Convert : Unicode.CCS.Conversion_Function := Identity'Access;
       Order   : Byte_Order := Default_Byte_Order) return Basic_8bit_String
    is
-      S   : String (Str'Range);
+      pragma Warnings (Off, Order);
+      S : String (Str'Range);
+      C : Unicode_Char;
+      J : Positive := Str'First;
+      J_Out : Natural := S'First - 1;
    begin
       if Convert = Identity'Access then
          return Str;
       else
-         for J in Str'Range loop
-            S (J .. J) := Encode (Convert (Read (Str, J)));
+         while J <= Str'Last loop
+            Read (Str, J, C);
+            Encode (Convert (C), S, J_Out);
          end loop;
          return S;
       end if;

@@ -67,12 +67,20 @@ package Unicode.CES.Utf8 is
    -- Conversion to and from byte sequences --
    -------------------------------------------
 
-   function Encode (Char : Unicode_Char) return Utf8_String;
-   --  Return the byte sequence representing Char in the Utf8 character
-   --  encoding form
+   procedure Encode
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural);
+   --  Set the byte sequence representing Char in the Utf8 character encoding.
+   --  There must remain at least 6 characters in Output if you want to avoid
+   --  Constraint_Errors.
 
-   function Read (Str : Utf8_String; Index : Positive) return Unicode_Char;
-   --  Return the character starting at location Index in Str.
+   procedure Read
+     (Str   : Utf8_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char);
+   --  Return the character starting at location Index in Str, and move Index
+   --  to the beginning of the next location
    --  Invalid_Encoding is raised if not valid byte sequence starts at Index.
    --  Constraint_Error is raised if Index does not point to a valid character
    --  in Str.

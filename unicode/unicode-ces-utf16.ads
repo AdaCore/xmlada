@@ -67,18 +67,29 @@ package Unicode.CES.Utf16 is
    -- Conversion to and from byte sequences --
    -------------------------------------------
 
-   function Encode (Char : Unicode_Char) return Utf16_LE_String;
+   procedure Encode
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural);
    --  Return the byte sequence representing Char in the Utf16 character
    --  encoding form (little-endian)
 
-   function Read (Str : Utf16_LE_String; Index : Positive) return Unicode_Char;
+   procedure Read
+     (Str   : Utf16_LE_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char);
    --  Return the character starting at location Index in Str
 
-   function Read_BE (Str : Utf16_BE_String; Index : Positive)
-      return Unicode_Char;
+   procedure Read_BE
+     (Str   : Utf16_BE_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char);
    --  Return the character starting at location Index in Str (big-endian)
 
-   function Encode_BE (Char : Unicode_Char) return Utf16_BE_String;
+   procedure Encode_BE
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural);
    --  Return the byte sequence representing Char in the Utf16 character
    --  encoding form (big-endian)
 

@@ -32,115 +32,11 @@ with Unicode.CCS;       use Unicode.CCS;
 
 package body Unicode.CES.Utf8 is
 
-   function Compute_Mask (Char : Unicode_Char) return Unicode_Char;
-   pragma Inline (Compute_Mask);
-   --  Return the mask to be used for the encoding of the first byte in the
-   --  sequence representing Char.
-
    function Internal_Convert
      (Str     : Utf8_String;
       Convert : Unicode.CCS.Conversion_Function := Identity'Access;
       Order   : Byte_Order := Default_Byte_Order) return Utf8_String;
    --  Internal function used to convert character sets
-
-   ------------
-   -- Encode --
-   ------------
-
-   function Encode (Char : Unicode_Char) return String is
-      Len    : constant Natural := Width (Char);
-      Mask   : constant Unicode_Char := Compute_Mask (Char);
-      Val    : Unicode_Char := Char;
-      Output : String (1 .. Len);
-   begin
-      for J in reverse 2 .. Len loop
-         Output (J) := Character'Val ((Val and 16#3f#) or 16#80#);
-         Val := Val / (2 ** 6);
-      end loop;
-      Output (1) := Character'Val (Val or Mask);
-      return Output;
-   end Encode;
-
-   ----------
-   -- Read --
-   ----------
-
-   function Read (Str : Utf8_String; Index : Positive) return Unicode_Char is
-      Mask : Unicode_Char;
-      Len  : Natural;
-      Val  : Unicode_Char;
-      C    : Unicode_Char := Character'Pos (Str (Index));
-   begin
-      --  Compute the length of the encoding given what was in the first byte
-      if C < 128 then
-         Len := 1;
-         Mask := 16#7f#;
-      elsif (C and 16#E0#) = 16#C0# then
-         Len := 2;
-         Mask := 16#1f#;
-      elsif (C and 16#F0#) = 16#E0# then
-         Len := 3;
-         Mask := 16#0f#;
-      elsif (C and 16#F8#) = 16#F0# then
-         Len := 4;
-         Mask := 16#07#;
-      elsif (C and 16#FC#) = 16#F8# then
-         Len := 5;
-         Mask := 16#03#;
-      elsif (C and 16#FE#) = 16#FC# then
-         Len := 6;
-         Mask := 16#01#;
-      else
-         raise Invalid_Encoding;
-      end if;
-
-      Val := C and Mask;
-      for Count in 1 .. Len - 1 loop
-         C := Character'Pos (Str (Index + Count));
-         if (C and 16#C0#) /= 16#80# then
-            raise Invalid_Encoding;
-         end if;
-         Val := Val * (2 ** 6);
-         Val := Val or (C and 16#3f#);
-      end loop;
-      return Val;
-   end Read;
-
-   ------------
-   -- Length --
-   ------------
-
-   function Length (Str : Utf8_String) return Natural is
-      Pos : Natural := Str'First;
-      Length : Natural := 0;
-   begin
-      while Pos <= Str'Last loop
-         Pos := Pos + Width (Read (Str, Pos));
-         Length := Length + 1;
-      end loop;
-      return Length;
-   end Length;
-
-   ------------------
-   -- Compute_Mask --
-   ------------------
-
-   function Compute_Mask (Char : Unicode_Char) return Unicode_Char is
-   begin
-      if Char < 16#80# then
-         return 16#0#;
-      elsif Char < 16#800# then
-         return 16#C0#;
-      elsif Char < 16#10000# then
-         return 16#E0#;
-      elsif Char < 16#200000# then
-         return 16#F0#;
-      elsif Char < 16#4000000# then
-         return 16#F8#;
-      else
-         return 16#FC#;
-      end if;
-   end Compute_Mask;
 
    -----------
    -- Width --
@@ -163,6 +59,114 @@ package body Unicode.CES.Utf8 is
       end if;
    end Width;
 
+   ------------
+   -- Encode --
+   ------------
+
+   procedure Encode
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural)
+   is
+      Len  : Natural;
+      Mask : Unicode_Char;
+      Val  : Unicode_Char := Char;
+      First, Last : Natural;
+   begin
+      if Char < 16#80# then
+         Len := 1;
+         Mask := 16#0#;
+      elsif Char < 16#800# then
+         Len := 2;
+         Mask := 16#C0#;
+      elsif Char < 16#10000# then
+         Len := 3;
+         Mask := 16#E0#;
+      elsif Char < 16#200000# then
+         Len := 4;
+         Mask := 16#F0#;
+      elsif Char < 16#4000000# then
+         Len := 5;
+         Mask := 16#F8#;
+      else
+         Len := 6;
+         Mask := 16#FC#;
+      end if;
+
+      First := Index + 2;
+      Last  := Index + Len;
+      for J in reverse First .. Last loop
+         Output (J) := Character'Val ((Val and 16#3f#) or 16#80#);
+         Val := Val / (2 ** 6);
+      end loop;
+      Output (Index + 1) := Character'Val (Val or Mask);
+      Index := Last;
+   end Encode;
+
+   ----------
+   -- Read --
+   ----------
+
+   procedure Read
+     (Str   : Utf8_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char)
+   is
+      Len  : Natural;
+      Val  : Unicode_Char;
+      C    : Unicode_Char := Character'Pos (Str (Index));
+   begin
+      --  Compute the length of the encoding given what was in the first byte
+      if C < 128 then
+         Len := Index;
+         Val := C and 16#7f#;
+      elsif (C and 16#E0#) = 16#C0# then
+         Len := Index + 1;
+         Val := C and 16#1f#;
+      elsif (C and 16#F0#) = 16#E0# then
+         Len := Index + 2;
+         Val := C and 16#0f#;
+      elsif (C and 16#F8#) = 16#F0# then
+         Len := Index + 3;
+         Val := C and 16#07#;
+      elsif (C and 16#FC#) = 16#F8# then
+         Len := Index + 4;
+         Val := C and 16#03#;
+      elsif (C and 16#FE#) = 16#FC# then
+         Len := Index + 5;
+         Val := C and 16#01#;
+      else
+         raise Invalid_Encoding;
+      end if;
+
+      for Count in Index + 1 .. Len loop
+         C := Character'Pos (Str (Count));
+         if (C and 16#C0#) /= 16#80# then
+            raise Invalid_Encoding;
+         end if;
+         Val := (Val * (2 ** 6)) or (C and 16#3f#);
+      end loop;
+
+      Index := Len + 1;
+      Char  := Val;
+   end Read;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (Str : Utf8_String) return Natural is
+      Pos : Natural := Str'First;
+      Length : Natural := 0;
+      C : Unicode_Char;
+   begin
+      while Pos <= Str'Last loop
+         Read (Str, Pos, C);
+         Length := Length + 1;
+      end loop;
+      return Length;
+   end Length;
+
    ----------------
    -- From_Utf32 --
    ----------------
@@ -173,21 +177,15 @@ package body Unicode.CES.Utf8 is
       --  Allocate worst case
       Result : Utf8_String (1 .. (Str'Length / Utf32_Char_Width) * 6);
       J : Positive := Str'First;
-      R_Index : Positive := Result'First;
+      R_Index : Natural := Result'First - 1;
       C : Unicode_Char;
    begin
       while J <= Str'Last loop
-         C := Unicode.CES.Utf32.Read (Str, J);
-         declare
-            Tmp : constant String := Encode (C);
-         begin
-            Result (R_Index .. R_Index + Tmp'Length - 1) := Tmp;
-            R_Index := R_Index + Tmp'Length;
-         end;
-         J := J + Unicode.CES.Utf32.Width (C);
+         Unicode.CES.Utf32.Read (Str, J, C);
+         Encode (C, Result, R_Index);
       end loop;
 
-      return Result (1 .. R_Index - 1);
+      return Result (1 .. R_Index);
    end From_Utf32;
 
    --------------
@@ -200,17 +198,14 @@ package body Unicode.CES.Utf8 is
       --  Allocate worst case
       Result : Utf32_LE_String (1 .. Str'Length * Utf32_Char_Width);
       J : Positive := Str'First;
-      R_Index : Positive := 1;
+      R_Index : Natural := Result'First - 1;
       C : Unicode_Char;
    begin
       while J <= Str'Last loop
-         C := Read (Str, J);
-         Result (R_Index .. R_Index + Utf32_Char_Width - 1) :=
-           Unicode.CES.Utf32.Encode (C);
-         R_Index := R_Index + Utf32_Char_Width;
-         J := J + Width (C);
+         Read (Str, J, C);
+         Unicode.CES.Utf32.Encode (C, Result, R_Index);
       end loop;
-      return Result (1 .. R_Index - 1);
+      return Result (1 .. R_Index);
    end To_Utf32;
 
    ----------------------
@@ -222,6 +217,7 @@ package body Unicode.CES.Utf8 is
       Convert : Unicode.CCS.Conversion_Function := Identity'Access;
       Order   : Byte_Order := Default_Byte_Order) return Utf8_String
    is
+      pragma Warnings (Off, Order);
       Offset : Natural := 0;
       BOM : Bom_Type;
       C : Unicode_Char;
@@ -240,18 +236,12 @@ package body Unicode.CES.Utf8 is
          declare
             --  Allocate worst case for the string
             Result : Utf8_String (1 .. Str'Length * 6);
-            R_Index : Natural := Result'First;
+            R_Index : Natural := Result'First - 1;
          begin
             J := Str'First + Offset;
             while J <= Str'Last loop
-               C := Read (Str, J);
-               declare
-                  Tmp : constant String := Encode (Convert (C));
-               begin
-                  Result (R_Index .. R_Index + Tmp'Length - 1) := Tmp;
-                  R_Index := R_Index + Tmp'Length;
-               end;
-               J := J + Width (C);
+               Read (Str, J, C);
+               Encode (Convert (C), Result, R_Index);
             end loop;
             return Result (1 .. R_Index - 1);
          end;

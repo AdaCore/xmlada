@@ -36,56 +36,76 @@ package body Unicode.CES.Utf32 is
    -- Encode --
    ------------
 
-   function Encode (Char : Unicode_Char) return Utf32_LE_String is
+   procedure Encode
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural) is
    begin
-      return Character'Val (Char and 16#000000FF#)
-        & Character'Val ((Char and 16#0000FF00#) / (2 ** 8))
-        & Character'Val ((Char and 16#00FF0000#) / (2 ** 16))
-        & Character'Val ((Char and 16#FF000000#) / (2 ** 24));
+      Output (Index + 1) := Character'Val (Char and 16#000000FF#);
+      Output (Index + 2) := Character'Val ((Char and 16#0000FF00#) / (2 ** 8));
+      Output (Index + 3) :=
+        Character'Val ((Char and 16#00FF0000#) / (2 ** 16));
+      Output (Index + 4) :=
+        Character'Val ((Char and 16#FF000000#) / (2 ** 24));
+      Index := Index + 4;
    end Encode;
 
    ---------------
    -- Encode_BE --
    ---------------
 
-   function Encode_BE (Char : Unicode_Char) return Utf32_LE_String is
+   procedure Encode_BE
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural) is
    begin
-      return Character'Val ((Char and 16#FF000000#) / (2 ** 24))
-        & Character'Val ((Char and 16#00FF0000#) / (2 ** 16))
-        & Character'Val ((Char and 16#0000FF00#) / (2 ** 8))
-        &  Character'Val (Char and 16#000000FF#);
+      Output (Index + 1) :=
+        Character'Val ((Char and 16#FF000000#) / (2 ** 24));
+      Output (Index + 2) :=
+        Character'Val ((Char and 16#00FF0000#) / (2 ** 16));
+      Output (Index + 3) := Character'Val ((Char and 16#0000FF00#) / (2 ** 8));
+      Output (Index + 4) := Character'Val (Char and 16#000000FF#);
+      Index := Index + 4;
    end Encode_BE;
 
    ----------
    -- Read --
    ----------
 
-   function Read (Str : Utf32_LE_String; Index : Positive)
-      return Unicode_Char is
+   procedure Read
+     (Str   : Utf32_LE_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char) is
    begin
       if Index > Str'Last - 3 then
-         return Nul;
+         Char := Nul;
+      else
+         Char := Character'Pos (Str (Index))
+           + Character'Pos (Str (Index + 1)) * (2 ** 8)
+           + Character'Pos (Str (Index + 2)) * (2 ** 16)
+           + Character'Pos (Str (Index + 3)) * (2 ** 24);
+         Index := Index + 4;
       end if;
-      return Character'Pos (Str (Index))
-        + Character'Pos (Str (Index + 1)) * (2 ** 8)
-        + Character'Pos (Str (Index + 2)) * (2 ** 16)
-        + Character'Pos (Str (Index + 3)) * (2 ** 24);
    end Read;
 
    -------------
    -- Read_BE --
    -------------
 
-   function Read_BE (Str : Utf32_BE_String; Index : Positive)
-      return Unicode_Char is
+   procedure Read_BE
+     (Str   : Utf32_BE_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char) is
    begin
       if Index > Str'Last - 3 then
-         return Nul;
+         Char := Nul;
+      else
+         Char := Character'Pos (Str (Index + 3))
+           + Character'Pos (Str (Index + 2)) * (2 ** 8)
+           + Character'Pos (Str (Index + 1)) * (2 ** 16)
+           + Character'Pos (Str (Index)) * (2 ** 24);
+         Index := Index + 4;
       end if;
-      return Character'Pos (Str (Index + 3))
-        + Character'Pos (Str (Index + 2)) * (2 ** 8)
-        + Character'Pos (Str (Index + 1)) * (2 ** 16)
-        + Character'Pos (Str (Index)) * (2 ** 24);
    end Read_BE;
 
    -----------
@@ -93,6 +113,7 @@ package body Unicode.CES.Utf32 is
    -----------
 
    function Width (Char : Unicode_Char) return Natural is
+      pragma Warnings (Off, Char);
    begin
       return 4;
    end Width;
@@ -117,7 +138,8 @@ package body Unicode.CES.Utf32 is
    is
       Offset : Natural;
       O : Byte_Order := Order;
-      J : Positive := Str'First;
+      J : Natural := Str'First;
+      J_Out : Natural;
       S : Utf32_LE_String (1 .. Str'Length);
       C : Unicode_Char;
       BOM : Bom_Type;
@@ -137,10 +159,10 @@ package body Unicode.CES.Utf32 is
             return Str (Str'First + Offset .. Str'Last);
          else
             J := J + Offset;
+            J_Out := S'First - 1;
             while J <= Str'Last loop
-               C := Cs.To_Unicode (Read (Str, J));
-               S (J .. J + 3) := Encode (C);
-               J := J + 4;
+               Read (Str, J, C);
+               Encode (Cs.To_Unicode (C), S, J_Out);
             end loop;
             return S (S'First + Offset .. S'Last);
          end if;
@@ -155,10 +177,10 @@ package body Unicode.CES.Utf32 is
                J := J + 4;
             end loop;
          else
+            J_Out := S'First - 1;
             while J <= Str'Last loop
-               C := Cs.To_Unicode (Read_BE (Str, J));
-               S (J .. J + 3) := Encode (C);
-               J := J + 4;
+               Read_BE (Str, J, C);
+               Encode (Cs.To_Unicode (C), S, J_Out);
             end loop;
          end if;
          return S (S'First + Offset .. S'Last);
@@ -174,7 +196,7 @@ package body Unicode.CES.Utf32 is
       Cs    : Unicode.CCS.Character_Set := Unicode.CCS.Unicode_Character_Set;
       Order : Byte_Order := Default_Byte_Order) return Utf32_String
    is
-      J : Positive := Str'First;
+      J : Natural := Str'First;
       S : Utf32_LE_String (1 .. Str'Length);
       C : Unicode_Char;
 
@@ -183,10 +205,10 @@ package body Unicode.CES.Utf32 is
          if Cs.To_CS = Identity'Access then
             return Str;
          else
+            J := J - 1;
             while J <= Str'Last loop
-               C := Cs.To_CS (Read (Str, J));
-               S (J .. J + 3) := Encode (C);
-               J := J + 4;
+               Read (Str, J, C);
+               Encode (Cs.To_CS (C), S, J);
             end loop;
             return S;
          end if;
@@ -200,10 +222,10 @@ package body Unicode.CES.Utf32 is
                J := J + 4;
             end loop;
          else
+            J := J - 1;
             while J <= Str'Last loop
-               C := Cs.To_CS (Read_BE (Str, J));
-               S (J .. J + 3) := Encode_BE (C);
-               J := J + 4;
+               Read_BE (Str, J, C);
+               Encode (Cs.To_CS (C), S, J);
             end loop;
          end if;
          return S;

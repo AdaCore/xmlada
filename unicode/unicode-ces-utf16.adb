@@ -36,22 +36,30 @@ package body Unicode.CES.Utf16 is
    -- Encode --
    ------------
 
-   function Encode (Char : Unicode_Char) return Utf16_LE_String is
+   procedure Encode
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural)
+   is
       C, D : Unicode_Char;
    begin
       if Char < 16#10000# then
          C := Char and 16#00FF#;
          D := (Char and 16#FF00#) / (2 ** 8);
-         return Character'Val (C) & Character'Val (D);
+         Output (Index + 1) := Character'Val (C);
+         Output (Index + 2) := Character'Val (D);
+         Index := Index + 2;
+
       else
          C := 16#D800#
            + ((Char - 16#10000#) and 2#11111111110000000000#) / (2 ** 10);
          D := 16#DC00#
            + ((Char - 16#10000#) and 2#1111111111#);
-         return Character'Val (C and 16#00FF#)
-           & Character'Val ((C and 16#FF00#) / (2 ** 8))
-           & Character'Val (D and 16#00FF#)
-           & Character'Val ((D and 16#FF00#) / (2 ** 8));
+         Output (Index + 1) := Character'Val (C and 16#00FF#);
+         Output (Index + 2) := Character'Val ((C and 16#FF00#) / (2 ** 8));
+         Output (Index + 3) := Character'Val (D and 16#00FF#);
+         Output (Index + 4) := Character'Val ((D and 16#FF00#) / (2 ** 8));
+         Index := Index + 4;
       end if;
    end Encode;
 
@@ -59,22 +67,30 @@ package body Unicode.CES.Utf16 is
    -- Encode_BE --
    ---------------
 
-   function Encode_BE (Char : Unicode_Char) return Utf16_BE_String is
+   procedure Encode_BE
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural)
+   is
       C, D : Unicode_Char;
    begin
       if Char < 16#10000# then
          C := Char and 16#00FF#;
          D := (Char and 16#FF00#) / (2 ** 8);
-         return Character'Val (D) & Character'Val (C);
+         Output (Index + 1) := Character'Val (D);
+         Output (Index + 2) := Character'Val (C);
+         Index := Index + 2;
+
       else
          C := 16#D800#
            + ((Char - 16#10000#) and 2#11111111110000000000#) / (2 ** 10);
          D := 16#DC00#
            + ((Char - 16#10000#) and 2#1111111111#);
-         return Character'Val ((C and 16#FF00#) / (2 ** 8))
-           & Character'Val (C and 16#00FF#)
-           & Character'Val ((D and 16#FF00#) / (2 ** 8))
-           & Character'Val (D and 16#00FF#);
+         Output (Index + 1) := Character'Val ((C and 16#FF00#) / (2 ** 8));
+         Output (Index + 2) := Character'Val (C and 16#00FF#);
+         Output (Index + 3) := Character'Val ((D and 16#FF00#) / (2 ** 8));
+         Output (Index + 4) := Character'Val (D and 16#00FF#);
+         Index := Index + 4;
       end if;
    end Encode_BE;
 
@@ -82,7 +98,10 @@ package body Unicode.CES.Utf16 is
    -- Read --
    ----------
 
-   function Read (Str : Utf16_LE_String; Index : Positive) return Unicode_Char
+   procedure Read
+     (Str   : Utf16_LE_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char)
    is
       C, D : Unicode_Char;
    begin
@@ -100,18 +119,22 @@ package body Unicode.CES.Utf16 is
 
          C := C and 2#1111111111#;
          D := D and 2#1111111111#;
-         C := C * 2#10000000000# + D + 16#10000#;
+         Char := C * 2#10000000000# + D + 16#10000#;
+         Index := Index + 4;
+      else
+         Char := C;
+         Index := Index + 2;
       end if;
-
-      return C;
    end Read;
 
    -------------
    -- Read_BE --
    -------------
 
-   function Read_BE
-     (Str : Utf16_BE_String; Index : Positive) return Unicode_Char
+   procedure Read_BE
+     (Str   : Utf16_BE_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char)
    is
       C, D : Unicode_Char;
    begin
@@ -129,10 +152,12 @@ package body Unicode.CES.Utf16 is
 
          C := C and 2#1111111111#;
          D := D and 2#1111111111#;
-         C := C * 2#10000000000# + D + 16#10000#;
+         Char := C * 2#10000000000# + D + 16#10000#;
+         Index := Index + 4;
+      else
+         Char := C;
+         Index := Index + 2;
       end if;
-
-      return C;
    end Read_BE;
 
    -----------
@@ -155,9 +180,10 @@ package body Unicode.CES.Utf16 is
    function Length (Str : Utf16_String) return Natural is
       Pos : Natural := Str'First;
       Len : Natural := 0;
+      C   : Unicode_Char;
    begin
       while Pos <= Str'Last loop
-         Pos := Pos + Width (Read (Str, Pos));
+         Read (Str, Pos, C);
          Len := Len + 1;
       end loop;
       return Len;
@@ -173,20 +199,14 @@ package body Unicode.CES.Utf16 is
    is
       Result : Utf16_LE_String (1 .. (Str'Length / Utf32_Char_Width) * 4);
       J : Positive := Str'First;
-      R_Index : Positive := Result'First;
+      R_Index : Natural := Result'First - 1;
       C : Unicode_Char;
    begin
       while J <= Str'Last loop
-         C := Unicode.CES.Utf32.Read (Str, J);
-         declare
-            Tmp : constant String := Encode (C);
-         begin
-            Result (R_Index .. R_Index + Tmp'Length - 1) := Tmp;
-            R_Index := R_Index + Tmp'Length;
-         end;
-         J := J + Unicode.CES.Utf32.Width (C);
+         Unicode.CES.Utf32.Read (Str, J, C);
+         Encode (C, Result, R_Index);
       end loop;
-      return Result (1 .. R_Index - 1);
+      return Result (1 .. R_Index);
    end From_Utf32;
 
    --------------
@@ -198,18 +218,15 @@ package body Unicode.CES.Utf16 is
       return Unicode.CES.Utf32.Utf32_LE_String
    is
       Result : Utf32_LE_String (1 .. (Str'Length / 2) * Utf32_Char_Width);
-      J : Positive := Str'First;
-      R_Index : Positive := 1;
+      J : Natural := Str'First;
+      R_Index : Natural := Result'First - 1;
       C : Unicode_Char;
    begin
       while J <= Str'Last loop
-         C := Read (Str, J);
-         Result (R_Index .. R_Index + Utf32_Char_Width - 1) :=
-           Unicode.CES.Utf32.Encode (C);
-         R_Index := R_Index + Utf32_Char_Width;
-         J := J + Width (C);
+         Read (Str, J, C);
+         Unicode.CES.Utf32.Encode (C, Result, R_Index);
       end loop;
-      return Result (1 .. R_Index - 1);
+      return Result (1 .. R_Index);
    end To_Utf32;
 
    -------------------
@@ -227,7 +244,7 @@ package body Unicode.CES.Utf16 is
       BOM    : Bom_Type;
       Offset : Natural := 0;
       O      : Byte_Order := Order;
-      J      : Positive := Str'First;
+      J      : Natural := Str'First;
       S      : Utf16_LE_String (1 .. Str'Length);
       C      : Unicode_Char;
 
@@ -245,11 +262,10 @@ package body Unicode.CES.Utf16 is
          if Cs.To_Unicode = Identity'Access then
             return Str (Str'First + Offset .. Str'Last);
          else
-            J := J + Offset;
+            J := J + Offset - 1;
             while J <= Str'Last loop
-               C := Cs.To_Unicode (Read (Str, J));
-               S (J .. J + Width (C) - 1) := Encode (C);
-               J := J + Width (C);
+               Read (Str, J, C);
+               Encode (Cs.To_Unicode (C), S, J);
             end loop;
             return S (S'First + Offset .. S'Last);
          end if;
@@ -262,10 +278,10 @@ package body Unicode.CES.Utf16 is
                J := J + 2;
             end loop;
          else
+            J := J - 1;
             while J <= Str'Last loop
-               C := Cs.To_Unicode (Read_BE (Str, J));
-               S (J .. J + Width (C) - 1) := Encode (C);
-               J := J + Width (C);
+               Read_BE (Str, J, C);
+               Encode (Cs.To_Unicode (C), S, J);
             end loop;
             return S (S'First + Offset .. S'Last);
          end if;
@@ -282,8 +298,9 @@ package body Unicode.CES.Utf16 is
       Cs    : Unicode.CCS.Character_Set := Unicode.CCS.Unicode_Character_Set;
       Order : Byte_Order := Default_Byte_Order) return Utf16_String
    is
-      Offset : Natural := 0;
-      J      : Positive := Str'First;
+      pragma Warnings (Off, Order);
+      Offset : constant Natural := 0;
+      J      : Natural := Str'First;
       S      : Utf16_LE_String (1 .. Str'Length);
       C      : Unicode_Char;
    begin
@@ -291,11 +308,10 @@ package body Unicode.CES.Utf16 is
          if Cs.To_CS = Identity'Access then
             return Str (Str'First + Offset .. Str'Last);
          else
-            J := J + Offset;
+            J := J + Offset - 1;
             while J <= Str'Last loop
-               C := Cs.To_CS (Read (Str, J));
-               S (J .. J + Width (C) - 1) := Encode (C);
-               J := J + Width (C);
+               Read (Str, J, C);
+               Encode (Cs.To_CS (C), S, J);
             end loop;
             return S (S'First + Offset .. S'Last);
          end if;
@@ -308,10 +324,10 @@ package body Unicode.CES.Utf16 is
                J := J + 2;
             end loop;
          else
+            J := J - 1;
             while J <= Str'Last loop
-               C := Cs.To_CS (Read (Str, J));
-               S (J .. J + Width (C) - 1) := Encode_BE (C);
-               J := J + Width (C);
+               Read (Str, J, C);
+               Encode_BE (Cs.To_CS (C), S, J);
             end loop;
             return S (S'First + Offset .. S'Last);
          end if;

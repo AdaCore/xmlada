@@ -108,10 +108,12 @@ package Unicode.CES is
    --          J := J + Width (C);    --   Move to the next
    --      end loop;
 
-   type Read_Function is access function
-     (Str : Byte_Sequence; Index : Positive) return Unicode.Unicode_Char;
+   type Read_Function is access
+     procedure (Str   : Byte_Sequence;
+                Index : in out Positive;
+                Char  : out Unicode_Char);
    --  This function returns the character at position Index in the byte
-   --  sequence Str.
+   --  sequence Str, and moves Index to the start of the next character.
 
    type Width_Function is access
      function (Char : Unicode.Unicode_Char) return Natural;
@@ -119,9 +121,13 @@ package Unicode.CES is
    --  specific encoding scheme.
 
    type Encode_Function is access
-     function (Char : Unicode.Unicode_Char) return Byte_Sequence;
+     procedure (Char   : Unicode_Char;
+                Output : in out Byte_Sequence;
+                Index  : in out Natural);
    --  This function converts Char to the appropriate byte sequence that
-   --  represents it in the specific encoding
+   --  represents it in the specific encoding.
+   --  The byte sequence is stored in Output, starting at Index + 1. On exit,
+   --  Index is left on the last character set in Output.
 
    type Length_Function is access
      function (Str : Byte_Sequence) return Natural;

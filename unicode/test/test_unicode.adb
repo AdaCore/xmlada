@@ -17,6 +17,8 @@ procedure Test_Unicode is
 
    procedure Assert (S1, S2 : String; Msg : String);
    function Image (Str : String) return String;
+   function Encode
+     (C : Unicode_Char; Scheme : Encoding_Scheme) return Byte_Sequence;
 
    -----------
    -- Image --
@@ -52,10 +54,24 @@ procedure Test_Unicode is
       end if;
    end Assert;
 
-   Utf16_S : constant Utf16_String := Utf16.Encode (16#004D#)
-     & Utf16.Encode (16#0061#)
-     & Utf16.Encode (16#D800#)
-     & Utf16.Encode (16#DC00#);
+   ------------
+   -- Encode --
+   ------------
+
+   function Encode
+     (C : Unicode_Char; Scheme : Encoding_Scheme) return Byte_Sequence
+   is
+      Buffer : Byte_Sequence (1 .. 20);
+      Index  : Natural := Buffer'First - 1;
+   begin
+      Scheme.Encode (C, Buffer, Index);
+      return Buffer (Buffer'First .. Index);
+   end Encode;
+
+   Utf16_S : constant Utf16_String := Encode (16#004D#, Utf16_LE_Encoding)
+     & Encode (16#0061#, Utf16_LE_Encoding)
+     & Encode (16#D800#, Utf16_LE_Encoding)
+     & Encode (16#DC00#, Utf16_LE_Encoding);
    Utf16_LE_BOM : constant String :=
      Character'Val (16#FF#) & Character'Val (16#FE#);
    Utf16_BE_BOM : constant String :=
@@ -63,11 +79,13 @@ procedure Test_Unicode is
 
 begin
    --  Simple Utf32 encoding of characters
-   Assert (Image (Utf32.Encode (16#004D#)), " 77  0  0  0 ",
+   Assert (Image (Encode (16#004D#, Utf32_LE_Encoding)), " 77  0  0  0 ",
            "Incorrect encoding for 16#004D#");
-   Assert (Image (Utf32.Encode (16#0061#)), " 97  0  0  0 ",
+   Assert (Image (Encode (16#0061#, Utf32_LE_Encoding)),
+           " 97  0  0  0 ",
            "Incorrect encoding for 16#0061#");
-   Assert (Image (Utf32.Encode (16#D800#)), " 0  216  0  0 ",
+   Assert (Image (Encode (16#D800#, Utf32_LE_Encoding)),
+           " 0  216  0  0 ",
            "Incorrect encoding for 16#D800#");
 
    --  Conversion from utf16 to utf32
@@ -107,13 +125,13 @@ begin
    --  Conversion from other character sets
    declare
       Latin_1_Utf16 : constant String :=
-        Utf16.Encode (16#E9#)    --  e_Acute
-        & Utf16.Encode (Character'Pos ('t'))
-        & Utf16.Encode (16#E9#); --  e_Acute
+        Encode (16#E9#, Utf16_LE_Encoding)    --  e_Acute
+        & Encode (Character'Pos ('t'), Utf16_LE_Encoding)
+        & Encode (16#E9#, Utf16_LE_Encoding); --  e_Acute
       Latin_2_Utf16 : constant String :=
-        Utf16.Encode (16#F9#)    --  u_dot  ù
-        & Utf16.Encode (Character'Pos ('t'))
-        & Utf16.Encode (16#E8#); --  c carron  è
+        Encode (16#F9#, Utf16_LE_Encoding)    --  u_dot  ù
+        & Encode (Character'Pos ('t'), Utf16_LE_Encoding)
+        & Encode (16#E8#, Utf16_LE_Encoding); --  c carron  è
       Latin_1_8bit : constant String :=
         Character'Val (16#E9#)    --  e_Acute
         & 't'

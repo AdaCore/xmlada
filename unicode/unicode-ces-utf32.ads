@@ -67,21 +67,33 @@ package Unicode.CES.Utf32 is
    -- Conversion to and from byte sequences --
    -------------------------------------------
 
-   function Encode (Char : Unicode_Char) return Utf32_LE_String;
+   procedure Encode
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural);
    --  Return the byte sequence representing Char in the Utf32 character
    --  encoding form.
    --  The character is encoded in little-endian byte order.
+   --  Output must have at least Utf32_Char_Width characters available.
 
-   function Read (Str : Utf32_LE_String; Index : Positive) return Unicode_Char;
+   procedure Read
+     (Str   : Utf32_LE_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char);
    --  Return the character starting at location Index in Str
 
-   function Encode_BE (Char : Unicode_Char) return Utf32_BE_String;
+   procedure Encode_BE
+     (Char   : Unicode_Char;
+      Output : in out Byte_Sequence;
+      Index  : in out Natural);
    --  Return the byte sequence representing Char in the Utf32 character
    --  encoding form.
    --  The character is encoded in big-endian byte order.
 
-   function Read_BE (Str : Utf32_BE_String; Index : Positive)
-      return Unicode_Char;
+   procedure Read_BE
+     (Str   : Utf32_BE_String;
+      Index : in out Positive;
+      Char  : out Unicode_Char);
    --  Same as Read, but when Str is in big-endian order
 
    function Width (Char : Unicode_Char) return Natural;
