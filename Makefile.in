@@ -18,7 +18,7 @@ MODULES=unicode input_sources sax dom
 
 # Version of the library
 MAJOR=0
-MINOR=8
+MINOR=8.1
 
 # Compiler mode: one of "distrib", "debug", "optimize", "profile"
 MODE=distrib
