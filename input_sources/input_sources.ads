@@ -1,9 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001                          --
+--                       Copyright (C) 2001-2002                     --
 --                            ACT-Europe                             --
---                       Author: Emmanuel Briot                      --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -34,6 +33,10 @@
 --  It is not possible to go backward, nor to previous characters. This
 --  interface is intentionally kept minimal, so that it can easily be used
 --  with files, sockets, ...
+--
+--  Input sources should try to automatically detect the appropriate encoding
+--  to use, for instance by using the byte order mark, if present, of the
+--  unicode stream (16#FFFE# or 16#FEFF#).
 --  </description>
 
 with Unicode;
@@ -87,6 +90,15 @@ package Input_Sources is
    function Get_Character_Set (Input : Input_Source)
       return Unicode.CCS.Character_Set;
    --  Return the character set associated with the input.
+
+   procedure Set_Stream_Encoding
+     (Input    : in out Input_Sources.Input_Source'Class;
+      Encoding : String);
+   --  Set the encoding and the character set for the stream associated with
+   --  Parser.
+   --  Invalid_Encoding is raised if Encoding is unknown.
+   --  Encoding should have the form given in an XML file in the "encoding="
+   --  parameter, for instance "UTF-8", "UTF-16", "ISO-8859-1",...
 
    procedure Set_System_Id
      (Input : in out Input_Source;

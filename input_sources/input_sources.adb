@@ -1,9 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001                          --
+--                       Copyright (C) 2001-2002                     --
 --                            ACT-Europe                             --
---                       Author: Emmanuel Briot                      --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -28,7 +27,16 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Unicode.CES;  use Unicode.CES;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Unicode.CES;               use Unicode.CES;
+with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
+with Unicode.CES.Utf8;          use Unicode.CES.Utf8;
+with Unicode.CCS;               use Unicode.CCS;
+with Unicode.CCS.Iso_8859_1;    use Unicode.CCS.Iso_8859_1;
+with Unicode.CCS.Iso_8859_2;    use Unicode.CCS.Iso_8859_2;
+with Unicode.CCS.Iso_8859_3;    use Unicode.CCS.Iso_8859_3;
+with Unicode.CCS.Iso_8859_4;    use Unicode.CCS.Iso_8859_4;
 
 package body Input_Sources is
 
@@ -138,4 +146,51 @@ package body Input_Sources is
       Free (Input.Public_Id);
       Free (Input.System_Id);
    end Close;
+
+   -------------------------
+   -- Set_Stream_Encoding --
+   -------------------------
+
+   procedure Set_Stream_Encoding
+     (Input    : in out Input_Sources.Input_Source'Class;
+      Encoding : String)
+   is
+      Upper : constant String := To_Upper (Encoding);
+   begin
+      if Upper = "UTF-16" then
+         --  Do nothing, since UTF-16 is automatically detected by the input
+         --  stream, based on the first bytes. This also includes detection of
+         --  big-endian/little-endian, which we can't do from this function.
+         null;
+
+      elsif Upper = "UTF-8" then
+         Set_Encoding      (Input, Utf8_Encoding);
+         Set_Character_Set (Input, Unicode_Character_Set);
+
+      elsif Upper = Unicode.CCS.Iso_8859_1.Name1
+        or else Upper = Unicode.CCS.Iso_8859_1.Name2
+      then
+         Set_Encoding      (Input, Basic_8bit_Encoding);
+         Set_Character_Set (Input, Iso_8859_1_Character_Set);
+
+      elsif Upper = Unicode.CCS.Iso_8859_2.Name1
+        or else Upper = Unicode.CCS.Iso_8859_2.Name2
+      then
+         Set_Encoding      (Input, Basic_8bit_Encoding);
+         Set_Character_Set (Input, Iso_8859_2_Character_Set);
+
+      elsif Upper = Unicode.CCS.Iso_8859_3.Name1 then
+         Set_Encoding      (Input, Basic_8bit_Encoding);
+         Set_Character_Set (Input, Iso_8859_3_Character_Set);
+
+      elsif Upper = Unicode.CCS.Iso_8859_4.Name1 then
+         Set_Encoding      (Input, Basic_8bit_Encoding);
+         Set_Character_Set (Input, Iso_8859_4_Character_Set);
+
+      else
+         Raise_Exception
+           (Invalid_Encoding'Identity,  "Invalid encoding: " & Upper);
+      end if;
+   end Set_Stream_Encoding;
+
 end Input_Sources;
