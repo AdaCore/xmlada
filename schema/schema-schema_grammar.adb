@@ -222,7 +222,7 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "allNNI", Union);
 
       --  The "occurs" AttributeGroup
-      Attr := Create_Attribute_Group ("occurs");
+      Attr := Create_Global_Attribute_Group (G, "occurs");
       Add_Attribute (Attr,
                      Create_Local_Attribute ("minOccurs", G,
                                              Lookup (G, "nonNegativeInteger"),
@@ -233,15 +233,13 @@ package body Schema.Schema_Grammar is
                                              Lookup (G, "allNNI"),
                                              Attribute_Use => Default,
                                              Value => "1"));
-      Register (G, Attr);
 
       --  From AttributeGroup "defRef"
-      Attr := Create_Attribute_Group ("defRef");
+      Attr := Create_Global_Attribute_Group (G, "defRef");
       Add_Attribute (Attr, Create_Local_Attribute
                        ("name", G, Lookup (G, "NCName")));
       Add_Attribute (Attr, Create_Local_Attribute
                        ("ref", G, Lookup (G, "QName")));
-      Register (G, Attr);
 
       --  The "element" type   ??? abstract=true
       Seq1 := Create_Sequence;
@@ -455,8 +453,7 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "localElement", Typ);
 
       --  The "particle" group
-      Gr := Create_Group ("particle");
-      Register (G, Gr);
+      Gr := Create_Global_Group (G, "particle");
       Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "particle_choice");
       Add_Particle (Gr, Choice1);
@@ -482,8 +479,7 @@ package body Schema.Schema_Grammar is
       Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
 
       --  The "nestedParticle" element
-      Gr := Create_Group ("nestedParticle");
-      Register (G, Gr);
+      Gr := Create_Global_Group (G, "nestedParticle");
       Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "nestedParticle_choice");
       Add_Particle (Gr, Choice1);
@@ -522,8 +518,7 @@ package body Schema.Schema_Grammar is
                 Lookup (G, "explicitGroup"));
 
       --  "groupDefParticle" group
-      Gr := Create_Group ("groupDefParticle");
-      Register (G, Gr);
+      Gr := Create_Global_Group (G, "groupDefParticle");
       Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "groupDefParticle_choice");
       Add_Particle (Gr, Choice1);
@@ -603,8 +598,7 @@ package body Schema.Schema_Grammar is
       Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
 
       --  The "typeDefParticle" group
-      Gr := Create_Group ("typeDefParticle");
-      Register (G, Gr);
+      Gr := Create_Global_Group (G, "typeDefParticle");
       Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "typeDefParticle_choice");
       Add_Particle (Gr, Choice1);
@@ -723,8 +717,7 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "attributeGroupRef", Typ);
 
       --  The "attrDecls" group
-      Gr := Create_Group ("attrDecls");
-      Register (G, Gr);
+      Gr := Create_Global_Group (G, "attrDecls");
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "attrDecls_seq");
       Add_Particle (Gr, Seq1);
@@ -772,7 +765,7 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "restrictionType", Typ);
 
       --  The "simpleRestrictionModel" group
-      Gr := Create_Group ("simpleRestrictionModel");
+      Gr := Create_Global_Group (G, "simpleRestrictionModel");
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "simpleRestrictionModel_seq");
       Add_Particle (Seq1, Create_Local_Element ("simpleType",
@@ -782,7 +775,6 @@ package body Schema.Schema_Grammar is
       Add_Particle (Seq1, Lookup_Element (G, "facet"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Particle (Gr, Seq1);
-      Register (G, Gr);
 
       --  The "simpleExtensionType"
       Seq1 := Create_Sequence;
@@ -849,8 +841,7 @@ package body Schema.Schema_Grammar is
                 Create_Local_Type (Typ));
 
       --  The "complexTypeModel" group
-      Gr := Create_Group ("complexTypeModel");
-      Register (G, Gr);
+      Gr := Create_Global_Group (G, "complexTypeModel");
       Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "complexTypeModel_choice");
       Add_Particle (Gr, Choice1);
