@@ -9,16 +9,19 @@ procedure TestSAX is
    My_Reader  : Debug_Reader;
    Name_Start : Natural;
    Silent     : Boolean := False;
+   Color      : Boolean := True;
 
 begin
    loop
-      case Getopt ("silent") is
+      case Getopt ("silent nocolor") is
          when 's' => Silent := True;
+         when 'n' => Color  := False;
          when others => exit;
       end case;
    end loop;
 
    Set_Silent (My_Reader, Silent);
+   Set_Color  (My_Reader, Color);
 
    declare
       S : constant String := Get_Argument;
