@@ -1,11 +1,9 @@
-with Schema.Validators.Facets; use Schema.Validators.Facets;
-
 package body Schema.Validators.Restrictions is
 
    type Restriction_XML_Validator is new XML_Validator_Record with record
       Base              : XML_Type;
       Restriction       : XML_Validator;
-      Facets            : Facets_Value;
+      Facets            : Facets_Description;
    end record;
    type Restriction_Type is access Restriction_XML_Validator'Class;
    type Restriction_Data is new Validator_Data_Record with record
@@ -22,6 +20,7 @@ package body Schema.Validators.Restrictions is
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element);
    procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
@@ -44,7 +43,20 @@ package body Schema.Validators.Restrictions is
    procedure Check_Content_Type
      (Validator        : access Restriction_XML_Validator;
       Should_Be_Simple : Boolean);
+   function Get_Facets_Description
+     (Validator : access Restriction_XML_Validator) return Facets_Description;
    --  See doc from inherited subprograms
+
+   ----------------------------
+   -- Get_Facets_Description --
+   ----------------------------
+
+   function Get_Facets_Description
+     (Validator : access Restriction_XML_Validator)
+      return Facets_Description is
+   begin
+      return Get_Facets_Description (Validator.Base.Validator);
+   end Get_Facets_Description;
 
    -------------------------
    -- Get_Attribute_Lists --
@@ -71,6 +83,7 @@ package body Schema.Validators.Restrictions is
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element)
    is
       D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
@@ -78,7 +91,7 @@ package body Schema.Validators.Restrictions is
       if Validator.Restriction /= null then
          Validate_Start_Element
            (Validator.Restriction, Local_Name, Namespace_URI, NS,
-            D.Restriction_Data, Element_Validator);
+            D.Restriction_Data, Schema_Target_NS, Element_Validator);
 
          if Element_Validator /= No_Element then
             Debug_Output ("Validate_Start_Element: end of restriction, result="
@@ -90,7 +103,7 @@ package body Schema.Validators.Restrictions is
       else
          Validate_Start_Element
            (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
-            D.Restriction_Data, Element_Validator);
+            D.Restriction_Data, Schema_Target_NS, Element_Validator);
       end if;
    end Validate_Start_Element;
 
@@ -101,18 +114,24 @@ package body Schema.Validators.Restrictions is
    procedure Add_Facet
      (Validator   : access Restriction_XML_Validator;
       Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence) is
+      Facet_Value : Unicode.CES.Byte_Sequence)
+   is
+      Applies : Boolean;
    begin
-      --  We won't allow to set a facet that the ancestor doesn't know.
-      --  ??? Problem: The ancestor might not be known yet at that point...
-      if Validator.Restriction = null then
-         Validator.Facets.Settable := (others => True);
---           Validator.Facets.Settable := Common_Simple_XML_Validator
---             (Validator.Base.Validator.all).Facets.Settable;
-      else
-         Validator.Facets.Settable := (others => False);
+      if Validator.Base.Validator /= null
+        and then Validator.Facets = null
+      then
+         Validator.Facets := Get_Facets_Description (Validator.Base.Validator);
       end if;
-      Add_Facet (Validator.Facets, Facet_Name, Facet_Value);
+
+      if Validator.Facets = null then
+         Validation_Error ("No facet overridable for this type");
+      end if;
+
+      Add_Facet (Validator.Facets.all, Facet_Name, Facet_Value, Applies);
+      if not Applies then
+         Validation_Error ("Invalid facet: " & Facet_Name);
+      end if;
    end Add_Facet;
 
    -------------------------
@@ -127,7 +146,10 @@ package body Schema.Validators.Restrictions is
       Debug_Output ("Validate_Characters for restriction --" & Ch & "--"
                     & Get_Name (Validator));
 
-      Check_Facet (Validator.Facets, Ch);
+      if Validator.Facets /= null then
+         Check_Facet (Validator.Facets.all, Ch);
+      end if;
+
       if Validator.Restriction /= null then
          Validate_Characters (Validator.Restriction, Ch, Empty_Element);
       end if;
