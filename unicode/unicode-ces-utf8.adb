@@ -243,7 +243,7 @@ package body Unicode.CES.Utf8 is
                Read (Str, J, C);
                Encode (Convert (C), Result, R_Index);
             end loop;
-            return Result (1 .. R_Index - 1);
+            return Result (1 .. R_Index);
          end;
       end if;
    end Internal_Convert;
