@@ -49,6 +49,8 @@ private
                          Context_Restriction,
                          Context_Extension,
                          Context_All,
+                         Context_List,
+                         Context_Union,
                          Context_Attribute);
 
    type Context (Typ : Context_Type);
@@ -77,7 +79,10 @@ private
             Extension      : Schema.Validators.XML_Validator;
             --  Extension_Base set to null if Extension is the result of the
             --  call to Extension_Of already
-
+         when Context_Union =>
+            Union : Schema.Validators.XML_Union;
+         when Context_List =>
+            List_Items : Schema.Validators.XML_Type;
          when Context_Attribute =>
             Attribute : Schema.Validators.Attribute_Validator;
       end case;
