@@ -1133,8 +1133,7 @@ private
       Grammar      : in out XML_Grammar;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
-   function Can_Be_Empty
-     (Group : access Sequence_Record) return Boolean;
+   function Can_Be_Empty (Group : access Sequence_Record) return Boolean;
    --  See doc for inherited subprograms
 
    -------------------
@@ -1164,6 +1163,7 @@ private
       Grammar      : in out XML_Grammar;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
+   function Can_Be_Empty (Group : access Choice_Record) return Boolean;
    --  See doc for inherited subprograms
 
    -------------------------------

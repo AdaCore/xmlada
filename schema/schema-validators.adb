@@ -110,6 +110,11 @@ package body Schema.Validators is
       Restriction : XML_Validator := null) return XML_Validator
       renames Schema.Validators.Restrictions.Create_Restriction_Of;
 
+   Debug_Prefixes_Level : Natural := 0;
+   procedure Debug_Push_Prefix (Append : String);
+   procedure Debug_Pop_Prefix;
+   --  Append a prefix to the current output
+
    ---------------------
    -- Debug_Validator --
    ---------------------
@@ -195,7 +200,9 @@ package body Schema.Validators is
    -- Validation_Error --
    ----------------------
 
-   procedure Validation_Error (Message : String) is begin
+   procedure Validation_Error (Message : String) is
+   begin
+      Debug_Output ("Validation_Error: " & Message);
       Raise_Exception (XML_Validation_Error'Identity, Message);
    end Validation_Error;
 
@@ -2079,8 +2086,7 @@ package body Schema.Validators is
         Element.Substitution_Groups;
       Result : XML_Element := No_Element;
    begin
-      Debug_Output ("++ Testing element xsd=" & Element.Local_Name.all
-                    & " xml=" & Local_Name);
+      Debug_Output ("Test " & Element.Local_Name.all);
 
       if Element.Local_Name.all = Local_Name then
          Result := (Elem => Element, Is_Ref => True);
@@ -2190,7 +2196,7 @@ package body Schema.Validators is
    is
       Applies : Boolean;
    begin
-      Debug_Output ("++ Testing nested " & Get_Name (Nested));
+      Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
 
       Applies_To_Tag
         (Nested, Local_Name, Namespace_URI, Grammar, Applies, Skip_Current);
@@ -2206,7 +2212,7 @@ package body Schema.Validators is
 
          if Element_Validator /= No_Element then
             Debug_Output
-              ("++ nested Matched " & Get_Name (Data.Nested) & ' '
+              ("nested Matched "
                & Get_Local_Name (Element_Validator.Elem.Of_Type));
          else
             Validate_End_Element (Nested, Local_Name, Data.Nested_Data);
@@ -2216,6 +2222,8 @@ package body Schema.Validators is
       else
          Element_Validator := No_Element;
       end if;
+
+      Debug_Pop_Prefix;
    end Check_Nested;
 
    ----------------
@@ -2230,8 +2238,8 @@ package body Schema.Validators is
       Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element) is
    begin
-      Debug_Output ("++ Executing nested: " & Get_Name (Validator)
-                    & " -> " & Get_Name (Data.Nested));
+      Debug_Push_Prefix ("Run_Nested: " & Get_Name (Validator)
+                         & " -> " & Get_Name (Data.Nested));
 
       Validate_Start_Element
         (Data.Nested, Local_Name, Namespace_URI,
@@ -2240,6 +2248,8 @@ package body Schema.Validators is
       if Element_Validator = No_Element then
          Free_Nested_Group (Group_Model_Data (Data));
       end if;
+
+      Debug_Pop_Prefix;
    end Run_Nested;
 
    ----------------------------
@@ -2263,6 +2273,8 @@ package body Schema.Validators is
       Skip_Current : Boolean;
 
    begin
+      Debug_Push_Prefix ("Validate_Start_Element " & Get_Name (Validator));
+
       if D.Nested /= null then
          Run_Nested
            (Validator, D, Local_Name, Namespace_URI, Grammar,
@@ -2270,13 +2282,14 @@ package body Schema.Validators is
          if Element_Validator /= No_Element
            or else not Move_To_Next_Particle (Validator, D)
          then
+            Debug_Pop_Prefix;
             return;
          end if;
       end if;
 
       Start_Elem := Get (D.Current);
 
-      Debug_Output ("++ Start sequence " & Get_Name (Validator)
+      Debug_Output ("Start sequence "
                     & " occurs=(" & Validator.Min_Occurs'Img
                     & " <=" & D.Num_Occurs'Img & " <="
                     & Validator.Max_Occurs'Img & ')');
@@ -2297,7 +2310,7 @@ package body Schema.Validators is
 
                if Element_Validator /= No_Element then
                   Debug_Output
-                    ("++ element Matched: "
+                    ("Element Matched: "
                      & Element_Validator.Elem.Local_Name.all & ' '
                      & Get_Local_Name (Element_Validator.Elem.Of_Type));
 
@@ -2311,6 +2324,7 @@ package body Schema.Validators is
                      & " occurrences of """
                      & Curr.Element.Elem.Local_Name.all
                      & """ or its substitutionGroup");
+                  Debug_Pop_Prefix;
                   return;
                end if;
 
@@ -2323,16 +2337,27 @@ package body Schema.Validators is
                end if;
 
             when Particle_Nested =>
+               Debug_Output ("Testing nested of sequence "
+                             & Get_Name (Validator) & ": "
+                             & Get_Name (Curr.Validator));
                Check_Nested
                  (Validator, Curr.Validator, D, Local_Name,
                   Namespace_URI, Grammar, Element_Validator, Skip_Current);
 
-               if Element_Validator = No_Element
-                 and then not Skip_Current
-               then
-                  Validation_Error
-                    ("Expecting at least 1 occurrence of a nested Schema "
-                     & " sequence");
+               if Element_Validator = No_Element then
+                  if not Skip_Current then
+                     Debug_Output
+                       ("Nested " & Get_Name (Curr.Validator)
+                        & " didn't match, and is mandatory");
+                     Validation_Error
+                       ("Expecting at least 1 occurrence of a nested"
+                        & " sequence");
+                  end if;
+                  Debug_Output ("Nested " & Get_Name (Curr.Validator)
+                                & " didn't match, but is optional");
+               else
+                  Debug_Output ("Nested " & Get_Name (Curr.Validator)
+                                & " matched");
                end if;
 
             when Particle_Group | Particle_XML_Type =>
@@ -2341,6 +2366,8 @@ package body Schema.Validators is
          end case;
 
          if Element_Validator /= No_Element then
+            Debug_Output ("Found validator");
+            Debug_Pop_Prefix;
             return;
          end if;
 
@@ -2356,9 +2383,12 @@ package body Schema.Validators is
 
          if not Move_To_Next_Particle (Validator, D, Force => True) then
             Element_Validator := No_Element;
+            Debug_Pop_Prefix;
             return;
          end if;
       end loop;
+
+      Debug_Pop_Prefix;
    end Validate_Start_Element;
 
    --------------------------
@@ -2602,11 +2632,14 @@ package body Schema.Validators is
       It    : XML_Particle_Access;
       Skip_Current : Boolean;
    begin
+      Debug_Push_Prefix ("Validate_Start_Element " & Get_Name (Validator));
+
       if D.Nested /= null then
          Run_Nested
            (Validator, D, Local_Name, Namespace_URI, Grammar,
             Element_Validator);
          if Element_Validator /= No_Element then
+            Debug_Pop_Prefix;
             return;
          end if;
       end if;
@@ -2617,10 +2650,11 @@ package body Schema.Validators is
                   and then D.Num_Occurs >= Validator.Max_Occurs)
       then
          Element_Validator := No_Element;
+         Debug_Pop_Prefix;
          return;
       end if;
 
-      Debug_Output ("++ Start choice " & Get_Name (Validator)
+      Debug_Output ("Start choice " & Get_Name (Validator)
                     & " minOccurs=" & Validator.Min_Occurs'Img
                     & " maxOccurs=" & Validator.Max_Occurs'Img);
 
@@ -2636,7 +2670,7 @@ package body Schema.Validators is
 
             when Particle_Nested =>
                Debug_Output
-                 ("++ Choice Testing nested " & Get_Name (It.Validator));
+                 ("Testing nested " & Get_Name (It.Validator));
 
                Check_Nested
                  (Validator, It.Validator, D, Local_Name, Namespace_URI,
@@ -2665,6 +2699,7 @@ package body Schema.Validators is
               ("Terminating nested choice, since no longer matches");
 
             Element_Validator := No_Element;
+            Debug_Pop_Prefix;
             return;
          else
             Validation_Error ("Invalid choice: " & Local_Name);
@@ -2684,6 +2719,8 @@ package body Schema.Validators is
       if Element_Validator /= No_Element then
          Check_Qualification (Element_Validator, Namespace_URI);
       end if;
+
+      Debug_Pop_Prefix;
    end Validate_Start_Element;
 
    --------------------------
@@ -2908,6 +2945,7 @@ package body Schema.Validators is
       Item : XML_Particle_Access;
 
    begin
+      Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
       loop
          Item := Get (Iter);
          exit when Item = null;
@@ -2941,11 +2979,20 @@ package body Schema.Validators is
                raise Program_Error;
          end case;
 
+         Debug_Output ("Applies= " & Applies'Img
+                       & " minOccurs=" & Item.Min_Occurs'Img);
+
          if Applies then
+            Debug_Pop_Prefix;
             return;
-         elsif Item.Min_Occurs > 0 then
+         elsif Item.Min_Occurs > 0
+           and then (Item.Typ /= Particle_Nested
+                     or else not Can_Be_Empty (Item.Validator))
+         then
+            Debug_Output ("Current element is not optional => doesn't apply");
             Skip_Current := False;
             Applies := False;
+            Debug_Pop_Prefix;
             return;
          end if;
          Next (Iter);
@@ -2953,6 +3000,8 @@ package body Schema.Validators is
 
       Skip_Current := True;
       Applies := False;
+
+      Debug_Pop_Prefix;
    end Applies_To_Tag;
 
    --------------------
@@ -2970,6 +3019,7 @@ package body Schema.Validators is
       Item : Particle_Iterator := Start (Group.Particles);
       It   : XML_Particle_Access;
    begin
+      Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
       while Get (Item) /= null loop
          It := Get (Item);
          case It.Typ is
@@ -3005,6 +3055,8 @@ package body Schema.Validators is
          end case;
 
          if Applies then
+            Debug_Output ("Applies");
+            Debug_Pop_Prefix;
             return;
          end if;
 
@@ -3013,6 +3065,8 @@ package body Schema.Validators is
 
       Applies := False;
       Skip_Current := Group.Min_Occurs = 0;
+      Debug_Output ("Doesn't apply");
+      Debug_Pop_Prefix;
    end Applies_To_Tag;
 
    ----------------------------
@@ -3767,9 +3821,42 @@ package body Schema.Validators is
    procedure Debug_Output (Str : String) is
    begin
       if Debug then
+         for Prefix in 1 .. Debug_Prefixes_Level loop
+            declare
+               Str : constant String := Integer'Image (Prefix);
+            begin
+               Put ("#" & Str (Str'First + 1 .. Str'Last) & ' ');
+            end;
+         end loop;
+
          Put_Line (Str);
       end if;
    end Debug_Output;
+
+   -----------------------
+   -- Debug_Push_Prefix --
+   -----------------------
+
+   procedure Debug_Push_Prefix (Append : String) is
+   begin
+      if Debug then
+         Debug_Prefixes_Level := Debug_Prefixes_Level + 1;
+         Debug_Output (ASCII.ESC & "[34m(Prefix = " & Append
+                       & ")" & ASCII.ESC & "[39m");
+      end if;
+   end Debug_Push_Prefix;
+
+   ----------------------
+   -- Debug_Pop_Prefix --
+   ----------------------
+
+   procedure Debug_Pop_Prefix is
+   begin
+      if Debug then
+--       Debug_Output (ASCII.ESC & "[34m(End of Prefix)" & ASCII.ESC & "[39m");
+         Debug_Prefixes_Level := Debug_Prefixes_Level - 1;
+      end if;
+   end Debug_Pop_Prefix;
 
    -------------------------
    -- Check_Qualification --
@@ -3812,8 +3899,8 @@ package body Schema.Validators is
    is
       Current : Particle_Iterator;
    begin
-      Debug_Output ("Checking whether sequence can be empty minOccurs="
-                    & Group.Min_Occurs'Img & ' ' & Get_Name (Group));
+      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group)
+                         & " minOccurs=" & Group.Min_Occurs'Img);
 
       if Group.Min_Occurs /= 0 then
          Current := Start (Group.Particles);
@@ -3822,6 +3909,8 @@ package body Schema.Validators is
                if Get (Current).Typ /= Particle_Nested
                  or else not Can_Be_Empty (Get (Current).Validator)
                then
+                  Debug_Output ("Cannot be empty");
+                  Debug_Pop_Prefix;
                   return False;
                end if;
             end if;
@@ -3829,7 +3918,46 @@ package body Schema.Validators is
          end loop;
       end if;
 
+      Debug_Output ("Can be empty");
+      Debug_Pop_Prefix;
       return True;
+   end Can_Be_Empty;
+
+   ------------------
+   -- Can_Be_Empty --
+   ------------------
+
+   function Can_Be_Empty
+     (Group : access Choice_Record) return Boolean
+   is
+      Current : Particle_Iterator;
+   begin
+      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group)
+                         & " minOccurs=" & Group.Min_Occurs'Img);
+
+      if Group.Min_Occurs /= 0 then
+         Current := Start (Group.Particles);
+         while Get (Current) /= null loop
+            if Get_Min_Occurs (Current) = 0
+              or else (Get (Current).Typ = Particle_Nested
+                       and then Can_Be_Empty (Get (Current).Validator))
+            then
+               Debug_Output ("Can be empty");
+               Debug_Pop_Prefix;
+               return True;
+            end if;
+
+            Next (Current);
+         end loop;
+
+         Debug_Output ("Cannot be empty");
+         Debug_Pop_Prefix;
+         return False;
+      else
+         Debug_Output ("Can be empty");
+         Debug_Pop_Prefix;
+         return True;
+      end if;
    end Can_Be_Empty;
 
    ------------------------
