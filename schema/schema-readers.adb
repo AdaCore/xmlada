@@ -430,9 +430,11 @@ package body Schema.Readers is
 
       Compute_Type;
       Data := Create_Validator_Data (Get_Validator (Typ));
+
       Validate_Attributes
         (Get_Validator (Typ), Atts, Handler.Ids,
-         Is_Nillable (Element), Is_Nil);
+         Is_Nillable (Element), Is_Nil,
+         Handler.Grammar);
 
       if Handler.Validators /= null
         and then Handler.Validators.Is_Nil
@@ -454,8 +456,14 @@ package body Schema.Readers is
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "")
    is
-      pragma Unreferenced (Namespace_URI, Local_Name);
+      pragma Unreferenced (Namespace_URI);
    begin
+      if Debug then
+         Put_Line (ASCII.ESC & "[33m"
+                   & "End_Element: " & Local_Name
+                   & ASCII.ESC & "[39m");
+      end if;
+
       if Handler.Validators /= null then
          --  No character data => behave as an empty element, but we need to
          --  test explicitely. For instance, the "minLength" facet might or

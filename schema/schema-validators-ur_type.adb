@@ -18,7 +18,8 @@ package body Schema.Validators.UR_Type is
       Atts              : Sax.Attributes.Attributes'Class;
       Id_Table          : in out Id_Htable_Access;
       Nillable          : Boolean;
-      Is_Nil            : out Boolean);
+      Is_Nil            : out Boolean;
+      Grammar           : in out XML_Grammar);
    procedure Validate_Start_Element
      (Validator         : access UR_Type_Validator;
       Local_Name        : Unicode.CES.Byte_Sequence;
@@ -87,9 +88,10 @@ package body Schema.Validators.UR_Type is
       Atts              : Sax.Attributes.Attributes'Class;
       Id_Table          : in out Id_Htable_Access;
       Nillable          : Boolean;
-      Is_Nil            : out Boolean)
+      Is_Nil            : out Boolean;
+      Grammar           : in out XML_Grammar)
    is
-      pragma Unreferenced (Validator, Atts, Id_Table, Nillable);
+      pragma Unreferenced (Validator, Atts, Id_Table, Nillable, Grammar);
    begin
       Is_Nil := False;
    end Validate_Attributes;

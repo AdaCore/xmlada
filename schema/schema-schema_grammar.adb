@@ -62,10 +62,11 @@ package body Schema.Schema_Grammar is
       Add_Facet (Typ, "whiteSpace", "collapse");
       Create_Global_Type (G, "uriReference", Typ);
 
-      --  The "openAttrs" type  --  ??? <anyAttribute>
+      --  The "openAttrs" type
       Typ := Restriction_Of (Lookup (G, "anyType"));
       Add_Attribute
-        (Typ, Create_Any_Attribute (NS => G, Kind => Namespace_Other));
+        (Typ, Create_Any_Attribute
+           (Process_Lax, NS => G, Kind => Namespace_Other));
       Create_Global_Type (G, "openAttrs", Typ);
 
       --  The "annotated" type

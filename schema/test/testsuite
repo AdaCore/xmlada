@@ -367,7 +367,7 @@ expect $ms/element/elemK005.xsd "" \
 expect $ms/element/elemK006.xsd "" \
  "$ms/element/elemK006.xsd:3:49: Attribute \"nillable\": Invalid value for boolean type: \"true false\""
 expect $ms/element/elemK007.xsd "" \
- "$ms/element/elemK007.xsd:3:43: Attribute \"nullable\": Invalid in this context"
+ "$ms/element/elemK007.xsd:3:43: Attribute \"nullable\": Attributes with no namespace invalid in this context"
 fi
 
 ##################
@@ -410,7 +410,7 @@ expect $ms/element/elemN003.xsd "" ""
 expect $ms/element/elemN004.xsd "" ""
 expect $ms/element/elemN005.xsd "" ""
 expect $ms/element/elemN006.xsd "" \
- "$ms/element/elemN006.xsd:3:58: Attribute \"foo\": Invalid in this context"
+ "$ms/element/elemN006.xsd:3:58: Attribute \"foo\": Attributes with no namespace invalid in this context"
 fi
 
 ##################
@@ -859,6 +859,33 @@ expect "$sun/xsd020-3.e.xsd" "" \
 expect "$sun/xsd020-4.e.xsd" "" \
  "$sun/xsd020-4.e.xsd:32:9: attributeGroup \"foo:abc\" is referenced, but not defined"
 
+### SUN xsd021
+
+expect "$sun/xsd021.xsd" "$sun/xsd021.n00.xml" \
+ "$sun/xsd021.n00.xml:8:28: Attribute \"f:a\": Value must be an integer"
+expect "$sun/xsd021.xsd" "$sun/xsd021.n01.xml" \
+ "$sun/xsd021.n01.xml:8:27: Attribute \"z:c\": Value must be an integer"
+expect "$sun/xsd021.xsd" "$sun/xsd021.n02.xml" \
+ "$sun/xsd021.n02.xml:8:38: Attribute \"u:undeclared\": No definition provided"
+expect "$sun/xsd021.xsd" "$sun/xsd021.n03.xml" \
+ "$sun/xsd021.n03.xml:8:31: Attribute \"f:b\": Value must be an integer"
+expect "$sun/xsd021.xsd" "$sun/xsd021.n04.xml" \
+ "$sun/xsd021.n04.xml:8:33: Attribute \"f:a\": Invalid namespace in this context, must be different from \"foo\""
+expect "$sun/xsd021.xsd" "$sun/xsd021.n05.xml" \
+ "$sun/xsd021.n05.xml:8:25: Attribute \"f:a\": Invalid namespace in this context, must be different from \"foo\""
+expect "$sun/xsd021.xsd" "$sun/xsd021.n06.xml" \
+ "$sun/xsd021.n06.xml:8:24: Attribute \"f:a\": No namespace allowed"
+expect "$sun/xsd021.xsd" "$sun/xsd021.n07.xml" \
+ "$sun/xsd021.n07.xml:8:24: Attribute \"b:b\": No namespace allowed"
+expect "$sun/xsd021.xsd" "$sun/xsd021.n08.xml" \
+ "$sun/xsd021.n08.xml:8:35: Attribute \"local\": Invalid namespace in this context, must be \"foo\""
+expect "$sun/xsd021.xsd" "$sun/xsd021.n09.xml" \
+ "$sun/xsd021.n09.xml:8:34: Attribute \"f:a\": Value must be an integer"
+expect "$sun/xsd021.xsd" "$sun/xsd021.n10.xml" \
+ "$sun/xsd021.n10.xml:8:30: Attribute \"local\": Invalid namespace in this context, must be \"bar\""
+expect "$sun/xsd021.xsd" "$sun/xsd021.n11.xml" \
+ "$sun/xsd021.n11.xml:8:28: Attribute \"f:a\": Invalid namespace in this context, must be \"bar\""
+notrun "$sun/xsd021.xsd" "$sun/xsd021.v00.xml" "This test seems wrong, since it conflicts with elemK007 and elemN006, and isn't passed by Xerces"
 
 
 fi

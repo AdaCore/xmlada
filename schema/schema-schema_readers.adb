@@ -58,6 +58,18 @@ package body Schema.Schema_Readers is
    function In_Redefine_Context (Handler : Schema_Reader) return Boolean;
    --  Whether we are currently processing a <redefine> tag
 
+   procedure Insert_Attribute
+     (Handler    : in out Schema_Reader;
+      In_Context : Context_Access;
+      Attribute  : Attribute_Validator;
+      Attribute_Name : Byte_Sequence);
+   --  Insert attribute at the right location in In_Context.
+   --  Attribute_Name is only for debugging purposes
+
+   function Process_Contents_From_Atts
+     (Atts : Sax.Attributes.Attributes'Class) return Process_Contents_Type;
+   --  Get the value of processContents from the attributes
+
    procedure Create_Element
      (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Complex_Type
@@ -90,10 +102,12 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Import
      (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Any_Attribute
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    --  Create a new context for a specific tag:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
    --  <attribute>, <schema>, <extension>, <list>, <union>, <choice>,
-   --  <redefine>, <group>, <attributeGroup>, <any>, <import>
+   --  <redefine>, <group>, <attributeGroup>, <any>, <import>, <anyAttribute>
 
    procedure Finish_Element (Handler : in out Schema_Reader);
    procedure Finish_Complex_Type (Handler : in out Schema_Reader);
@@ -496,6 +510,46 @@ package body Schema.Schema_Readers is
         (Handler, Get_Value (Atts, Location_Index), Handler.Created_Grammar);
    end Create_Import;
 
+   --------------------------
+   -- Create_Any_Attribute --
+   --------------------------
+
+   procedure Create_Any_Attribute
+     (Handler : in out Schema_Reader;
+      Atts    : Sax.Attributes.Attributes'Class)
+   is
+      Namespace_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "namespace");
+      Process_Contents : constant Process_Contents_Type :=
+        Process_Contents_From_Atts (Atts);
+      Kind             : Namespace_Kind;
+      NS               : XML_Grammar_NS := Handler.Target_NS;
+   begin
+      if Namespace_Index = -1 then
+         Kind := Namespace_Any;
+      elsif Get_Value (Atts, Namespace_Index) = "##other" then
+         Kind := Namespace_Other;
+      elsif Get_Value (Atts, Namespace_Index) = "##any" then
+         Kind := Namespace_Any;
+      elsif Get_Value (Atts, Namespace_Index) = "##local" then
+         Kind := Namespace_Local;
+      elsif Get_Value (Atts, Namespace_Index) = "##targetNamespace" then
+         Kind := Namespace_List;
+      else
+         Kind := Namespace_List;
+         Get_NS (Handler.Created_Grammar,
+                 Get_Value (Atts, Namespace_Index), NS);
+      end if;
+
+      Insert_Attribute
+        (Handler,
+         Handler.Contexts,
+         Create_Any_Attribute (Process_Contents, Kind, NS),
+         "Create_Any_Attribute (" & Process_Contents'Img
+         & ", " & Kind'Img & ", """
+         & Get_Namespace_URI (NS) & """);");
+   end Create_Any_Attribute;
+
    --------------------
    -- Create_Element --
    --------------------
@@ -796,9 +850,11 @@ package body Schema.Schema_Readers is
       XML_G : XML_Grammar_NS;
    begin
       if C.Type_Validator = null then
+         --  Create an extension, instead of a simple ur-Type, so that we can
+         --  add attributes to it without impacting ur-Type itself
          Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
-         C.Type_Validator := Get_Validator (Lookup (XML_G, "ur-Type"));
-         Output ("Validator := Lookup (G, ""ur-Type"");");
+         C.Type_Validator := Extension_Of (Lookup (XML_G, "ur-Type"));
+         Output ("Validator := Extension_Of (Lookup (G, ""ur-Type""));");
       end if;
    end Ensure_Type;
 
@@ -1372,14 +1428,26 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts.Attribute := Att;
 
-      case Handler.Contexts.Next.Typ is
+      Insert_Attribute
+        (Handler, Handler.Contexts.Next, Handler.Contexts.Attribute,
+         Ada_Name (Handler.Contexts));
+   end Create_Attribute;
+
+   ----------------------
+   -- Insert_Attribute --
+   ----------------------
+
+   procedure Insert_Attribute
+     (Handler    : in out Schema_Reader;
+      In_Context : Context_Access;
+      Attribute  : Attribute_Validator;
+      Attribute_Name : Byte_Sequence) is
+   begin
+      case In_Context.Typ is
          when Context_Type_Def =>
-            --  ??? Incorrect, since we are adding the attribute to ur-Type
-            Ensure_Type (Handler, Handler.Contexts.Next);
-            Add_Attribute (Handler.Contexts.Next.Type_Validator,
-                           Handler.Contexts.Attribute);
-            Output ("Add_Attribute (Validator, "
-                    & Ada_Name (Handler.Contexts) & ");");
+            Ensure_Type (Handler, In_Context);
+            Add_Attribute (In_Context.Type_Validator, Attribute);
+            Output ("Add_Attribute (Validator, " & Attribute_Name & ");");
 
          when Context_Schema | Context_Redefine =>
             null;
@@ -1387,39 +1455,36 @@ package body Schema.Schema_Readers is
          when Context_Extension =>
             --  If there is no extension at this point, there won't be any as
             --  per the XML schema, since the attributes come last
-            if Handler.Contexts.Next.Extension = null then
-               Handler.Contexts.Next.Extension := Extension_Of
-                 (Handler.Contexts.Next.Extension_Base, null);
-               Output (Ada_Name (Handler.Contexts.Next) & " := Extension_Of ("
-                       & Ada_Name (Handler.Contexts.Next.Extension_Base)
+            if In_Context.Extension = null then
+               In_Context.Extension := Extension_Of
+                 (In_Context.Extension_Base, null);
+               Output (Ada_Name (In_Context) & " := Extension_Of ("
+                       & Ada_Name (In_Context.Extension_Base)
                        & ", null);");
-               Handler.Contexts.Next.Extension_Base := No_Type;
+               In_Context.Extension_Base := No_Type;
             end if;
 
-            Add_Attribute (Handler.Contexts.Next.Extension,
-                           Handler.Contexts.Attribute);
-            Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
-                    & Ada_Name (Handler.Contexts) & ");");
+            Add_Attribute (In_Context.Extension, Attribute);
+            Output ("Add_Attribute (" & Ada_Name (In_Context) & ", "
+                    & Attribute_Name & ");");
 
          when Context_Restriction =>
-            Create_Restricted (Handler.Contexts.Next);
-            Add_Attribute (Handler.Contexts.Next.Restricted,
-                           Handler.Contexts.Attribute);
-            Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
-                    & Ada_Name (Handler.Contexts) & ");");
+            Create_Restricted (In_Context);
+            Add_Attribute (In_Context.Restricted, Attribute);
+            Output ("Add_Attribute (" & Ada_Name (In_Context) & ", "
+                    & Attribute_Name & ");");
 
          when Context_Attribute_Group =>
-            Add_Attribute (Handler.Contexts.Next.Attr_Group,
-                           Handler.Contexts.Attribute);
-            Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
-                    & Ada_Name (Handler.Contexts) & ");");
+            Add_Attribute (In_Context.Attr_Group, Attribute);
+            Output ("Add_Attribute (" & Ada_Name (In_Context) & ", "
+                    & Attribute_Name & ");");
 
          when Context_Element | Context_Sequence | Context_Choice
             | Context_Attribute | Context_All
             | Context_Union | Context_List | Context_Group =>
             Output ("Can't handle attribute decl in this context");
       end case;
-   end Create_Attribute;
+   end Insert_Attribute;
 
    ----------------------
    -- Finish_Attribute --
@@ -1484,6 +1549,27 @@ package body Schema.Schema_Readers is
          Next        => null);
    end Create_Schema;
 
+   --------------------------------
+   -- Process_Contents_From_Atts --
+   --------------------------------
+
+   function Process_Contents_From_Atts
+     (Atts : Sax.Attributes.Attributes'Class) return Process_Contents_Type
+   is
+      Process_Contents_Index : constant Integer :=
+        Get_Index (Atts, "processContents");
+   begin
+      if Process_Contents_Index = -1 then
+         return Process_Strict;
+      elsif Get_Value (Atts, Process_Contents_Index) = "lax" then
+         return Process_Lax;
+      elsif Get_Value (Atts, Process_Contents_Index) = "strict" then
+         return Process_Strict;
+      else
+         return Process_Skip;
+      end if;
+   end Process_Contents_From_Atts;
+
    ----------------
    -- Create_Any --
    ----------------
@@ -1492,8 +1578,6 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
-      Process_Contents_Index : constant Integer :=
-        Get_Index (Atts, "processContents");
       Namespace_Index : constant Integer := Get_Index (Atts, "namespace");
       Min_Occurs_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "minOccurs");
@@ -1512,15 +1596,7 @@ package body Schema.Schema_Readers is
            (Get_Value (Atts, Max_Occurs_Index));
       end if;
 
-      if Process_Contents_Index = -1 then
-         Process_Contents := Process_Strict;
-      elsif Get_Value (Atts, Process_Contents_Index) = "lax" then
-         Process_Contents := Process_Lax;
-      elsif Get_Value (Atts, Process_Contents_Index) = "strict" then
-         Process_Contents := Process_Strict;
-      else
-         Process_Contents := Process_Skip;
-      end if;
+      Process_Contents := Process_Contents_From_Atts (Atts);
 
       if Namespace_Index /= -1 then
          Any := Create_Any
@@ -1679,6 +1755,9 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "extension" then
          Create_Extension (Handler, Atts);
 
+      elsif Local_Name = "anyAttribute" then
+         Create_Any_Attribute (Handler, Atts);
+
       elsif Local_Name = "maxLength"
         or else Local_Name = "pattern"
         or else Local_Name = "minLength"
@@ -1781,6 +1860,9 @@ package body Schema.Schema_Readers is
 
       elsif Local_Name = "sequence" then
          Finish_Sequence (Handler);
+
+      elsif Local_Name = "anyAttribute" then
+         Handled := False;
 
       elsif Local_Name = "choice" then
          Finish_Choice (Handler);
