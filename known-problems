@@ -1,3 +1,12 @@
+Problems fixed in 0.8
+
+- Some random failures on some systems. Patch sent by J.C. Groult
+- Error when an external DTD wasn't found. An Assert_Failure was raised
+- Bug in handling of DTD models, for attributes with default values.
+  Patch sent by S. Doiel
+- Constraint_Error when validating a document that contained invalid
+  attributes. Patch sent by S. Doiel
+
 Problems fixed in 0.7
 
 - Dom.Core.Nodes.Normalize now processes the full subtree, as it should.
