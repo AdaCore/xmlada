@@ -5,17 +5,10 @@ with "../unicode/unicode.gpr";
 project Dom is
 
    for Object_Dir use "obj/";
-
-   case Shared.Mode is
-       when "test" =>
-          for Source_Dirs use (".", "test");
-          for Main use ("testxml.adb");
-
-       when others =>
-          for Library_Dir use "lib/";
-          for Library_Name use "xmlada_dom";
-          for Library_Kind use Shared.Library_Type;
-   end case;
+   for Library_Dir use "lib/";
+   for Library_Name use "xmlada_dom";
+   for Library_Kind use Shared.Library_Type;
+   for Library_Version use "libxmlada_dom.so." & Shared.Version;
 
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;

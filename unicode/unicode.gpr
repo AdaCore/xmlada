@@ -6,11 +6,7 @@ project Unicode is
    for Library_Dir  use "lib";
    for Library_Name use "xmlada_unicode";
    for Library_Kind use Shared.Library_Type;
-
-   case Shared.Mode is
-      when others    => 
-         for Source_Dirs use (".", "test");
-   end case;
+   for Library_Version use "libxmlada_unicode.so." & Shared.Version;
 
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;

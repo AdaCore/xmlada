@@ -7,6 +7,7 @@ project Input_Sources is
    for Library_Dir use "lib/";
    for Library_Name use "xmlada_input_sources";
    for Library_Kind use Shared.Library_Type;
+   for Library_Version use "libxmlada_input_sources.so." & Shared.Version;
 
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;
