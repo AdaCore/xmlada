@@ -5,7 +5,7 @@ with Unicode.CES.Utf16;      use Unicode.CES.Utf16;
 with Unicode.CES.Utf8;       use Unicode.CES.Utf8;
 with Unicode.CES.Basic_8bit; use Unicode.CES.Basic_8bit;
 with Unicode.CCS;            use Unicode.CCS;
---  with Unicode.CCS.Iso_8859_1; use Unicode.CCS.Iso_8859_1;
+with Unicode.Encodings;      use Unicode.Encodings;
 with Unicode.CCS.Iso_8859_2; use Unicode.CCS.Iso_8859_2;
 
 with Ada.Text_IO; use Ada.Text_IO;
@@ -129,9 +129,9 @@ begin
         & Encode (Character'Pos ('t'), Utf16_LE_Encoding)
         & Encode (16#E9#, Utf16_LE_Encoding); --  e_Acute
       Latin_2_Utf16 : constant String :=
-        Encode (16#F9#, Utf16_LE_Encoding)    --  u_dot  ù
+        Encode (16#F9#, Utf16_LE_Encoding)    --  u_dot  
         & Encode (Character'Pos ('t'), Utf16_LE_Encoding)
-        & Encode (16#E8#, Utf16_LE_Encoding); --  c carron  è
+        & Encode (16#E8#, Utf16_LE_Encoding); --  c carron  
       Latin_1_8bit : constant String :=
         Character'Val (16#E9#)    --  e_Acute
         & 't'
@@ -143,7 +143,7 @@ begin
               & "Iso_8859_1");
       Assert (Image (Utf32.To_Unicode_LE
                      (Utf16.To_Utf32 (Latin_1_Utf16),
-                      Get_Character_Set ("Latin1"))),
+                      Get_By_Name ("Latin1").Character_Set)),
               " 233  0  0  0  116  0  0  0  233  0  0  0 ",
               "Incorrect conversion to utf32 for Latin1_Utf16, with "
               & "Iso_8859_1");
@@ -161,7 +161,7 @@ begin
               " 233  116  233 ",
               "Incorrect conversion to 8bit for Latin1_8bit");
       Assert (Image (Basic_8bit.To_Unicode_LE
-                     (Latin_1_8bit, Get_Character_Set ("Latin1"))),
+                     (Latin_1_8bit, Get_By_Name ("Latin1").Character_Set)),
               " 233  116  233 ",
               "Incorrect conversion to 8bit for Latin1_8bit, with "
               & "Iso_8859_1");
@@ -170,13 +170,13 @@ begin
       --  is prefered
       Assert (Image (Basic_8bit.To_Utf32 (Basic_8bit.To_Unicode_LE
                      (Latin_1_8bit,
-                      Get_Character_Set ("Latin1")))),
+                      Get_By_Name ("Latin1").Character_Set))),
               " 233  0  0  0  116  0  0  0  233  0  0  0 ",
               "Incorrect conversion to 8bit for Latin1_8bit, with "
               & "Iso_8859_1");
       Assert (Image (Utf32.To_Unicode_LE
                      (Basic_8bit.To_Utf32 (Latin_1_8bit),
-                      Get_Character_Set ("Latin1"))),
+                      Get_By_Name ("Latin1").Character_Set)),
               " 233  0  0  0  116  0  0  0  233  0  0  0 ",
               "Incorrect conversion to 8bit for Latin1_8bit, with "
               & "Iso_8859_1");
