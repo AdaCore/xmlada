@@ -3328,7 +3328,7 @@ package body Sax.Readers is
                      Atts : constant Attributes_Ptr := Get
                        (Parser.Default_Atts,
                         Value (Parser, Elem_Name_Id, Elem_Name_Id));
-                     Index : Natural;
+                     Index : Integer;
                      Att_Type : Attribute_Type;
                   begin
                      if Atts = null then
