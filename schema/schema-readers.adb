@@ -307,7 +307,9 @@ package body Schema.Readers is
          if No_Index /= -1 then
             Parse_Grammar (Handler, Get_Value (Atts, No_Index),
                            Add_To => Handler.Grammar);
-         elsif Location_Index /= -1 then
+         end if;
+
+         if Location_Index /= -1 then
             Parse_Grammars (Handler, Get_Value (Atts, Location_Index));
          end if;
       end Get_Grammar_From_Attributes;
