@@ -31,8 +31,9 @@ obj: force
 	${GNATMAKE} -Pbuild_all.gpr -XMODE=${MODE}
  
 test: force
-	${GNATMAKE} -Pdom/dom.gpr -XMODE=test
-	${GNATMAKE} -Psax/sax.gpr -XMODE=test
+	${GNATMAKE} -Punicode/test/unicode_test.gpr
+	${GNATMAKE} -Psax/test/sax_test.gpr
+	${GNATMAKE} -Pdom/test/dom_test.gpr
 
 docs: force
 	${MAKE} -e -C docs
@@ -59,8 +60,8 @@ install: obj install_dirs ${MODULE_INSTALL}
 
 clean: force
 	gnat clean -r -Pbuild_all.gpr
-	gnat clean -r -Pdom/dom.gpr -XMODE=test
-	gnat clean -r -Psax/sax.gpr -XMODE=test
+	gnat clean -Pdom/test/dom_test.gpr
+	gnat clean -Psax/test/sax_test.gpr
 	cd docs; ${MAKE} -e clean
 
 distclean: clean
