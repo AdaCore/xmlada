@@ -1,4 +1,7 @@
-with "unicode/unicode", "input_sources/input_sources", "sax/sax", "dom/dom";
+with "input_sources/input_sources";
+with "unicode/unicode", "unicode/test/unicode_test";
+with "sax/sax",         "sax/test/sax_test";
+with "dom/dom",         "dom/test/dom_test";
 
 project Build_All is
    for Source_Dirs use (".");
