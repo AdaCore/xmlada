@@ -301,11 +301,14 @@ package Schema.Validators is
    -- Elements --
    --------------
 
-   function Create_Element
+   function Create_Local_Element
      (Local_Name : Unicode.CES.Byte_Sequence;
       Of_Type    : XML_Type;
       Form       : Form_Type) return XML_Element;
-   --  Create a new element, with a specific type
+   --  Create a new element, with a specific type.
+   --  This element is a local element, that cannot be registered in the
+   --  grammar and looked up later on.
+   --  See Register below if you want to create a global element
 
    procedure Set_Substitution_Group
      (Element : XML_Element; Head : XML_Element);
@@ -530,7 +533,10 @@ package Schema.Validators is
    --  it, that must be overriden later on.
 
    procedure Register (Grammar : XML_Grammar_NS; Typ     : in out XML_Type);
-   procedure Register (Grammar : XML_Grammar_NS; Element : in out XML_Element);
+   function Register
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence;
+      Form       : Form_Type) return XML_Element;
    procedure Register (Grammar : XML_Grammar_NS; Group   : in out XML_Group);
    procedure Register (Attr    : Attribute_Validator);
    procedure Register (Grammar : XML_Grammar_NS;
@@ -624,7 +630,10 @@ private
    -- Element_List --
    ------------------
 
-   type Element_List is array (Natural range <>) of XML_Element;
+   type XML_Element_Record;
+   type XML_Element_Access is access all XML_Element_Record;
+
+   type Element_List is array (Natural range <>) of XML_Element_Access;
    type Element_List_Access is access Element_List;
 
    procedure Append
@@ -665,7 +674,6 @@ private
       Is_Global : Boolean;
       --  Whether the element was declared at the toplevel of the <schema>
    end record;
-   type XML_Element_Access is access all XML_Element_Record;
 
    type XML_Element is record
       Elem   : XML_Element_Access;

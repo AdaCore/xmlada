@@ -12,6 +12,7 @@ with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
 with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
 with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
+with System.Address_Image;
 
 package body Schema.Validators is
 
@@ -78,9 +79,6 @@ package body Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Type;
    function Register_Forward
      (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Element;
-   function Register_Forward
-     (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
    function Register_Forward
      (Grammar    : XML_Grammar_NS;
@@ -90,7 +88,7 @@ package body Schema.Validators is
    --  this is an error.
 
    function Check_Substitution_Groups
-     (Element    : XML_Element;
+     (Element    : XML_Element_Access;
       Local_Name : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence) return XML_Element;
    --  Check whether any element in the substitution group of Validator can
@@ -324,11 +322,11 @@ package body Schema.Validators is
       L : Element_List_Access;
    begin
       if List /= null then
-         L := new Element_List'(List.all & Element);
+         L := new Element_List'(List.all & Element.Elem);
          Unchecked_Free (List);
          List := L;
       else
-         List := new Element_List'(1 => Element);
+         List := new Element_List'(1 => Element.Elem);
       end if;
    end Append;
 
@@ -1037,11 +1035,15 @@ package body Schema.Validators is
             Debug_Output ("Lookup_Element: creating forward "
                           & Grammar.Namespace_URI.all & " : "
                           & Local_Name);
-            return (Elem   => Register_Forward (Grammar, Local_Name).Elem,
-                    Is_Ref => True);
+            return Register (Grammar, Local_Name, Form => Unqualified);
          else
             return No_Element;
          end if;
+      else
+         Debug_Output
+           ("MANU Lookup_Element " & Local_Name
+            & " has_subs=" &
+            Boolean'Image (Result.Substitution_Groups /= null));
       end if;
       return (Elem => Result, Is_Ref => True);
    end Lookup_Element;
@@ -1518,18 +1520,19 @@ package body Schema.Validators is
       Register (G, Created);
    end Initialize;
 
-   --------------------
-   -- Create_Element --
-   --------------------
+   --------------------------
+   -- Create_Local_Element --
+   --------------------------
 
-   function Create_Element
+   function Create_Local_Element
      (Local_Name : Unicode.CES.Byte_Sequence;
       Of_Type    : XML_Type;
-      Form       : Form_Type) return XML_Element
-   is
-      Result : XML_Element;
+      Form       : Form_Type) return XML_Element is
    begin
-      Result :=
+      --  ??? Should be stored in a list in the grammar, so that we can free
+      --  them all later on.
+      Debug_Output ("MANU Create_Local_Element: " & Local_Name);
+      return
         (Elem => new XML_Element_Record'
            (Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
             Substitution_Groups => null,
@@ -1545,8 +1548,7 @@ package body Schema.Validators is
             Form                => Form,
             Fixed               => null),
          Is_Ref => False);
-      return Result;
-   end Create_Element;
+   end Create_Local_Element;
 
    -------------------
    -- Redefine_Type --
@@ -1593,11 +1595,15 @@ package body Schema.Validators is
    -- Register --
    --------------
 
-   procedure Register
-     (Grammar : XML_Grammar_NS; Element : in out XML_Element)
+   function Register
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence;
+      Form       : Form_Type) return XML_Element
    is
-      Old : constant XML_Element_Access := Elements_Htable.Get
-        (Grammar.Elements.all, Element.Elem.Local_Name.all);
+      Old : XML_Element_Access := Elements_Htable.Get
+        (Grammar.Elements.all, Local_Name);
+      Invalid : XML_Type := Lookup (Grammar, "@@invalid@@");
+      Tmp     : XML_Validator;
    begin
       if Old /= null then
          if Get_Validator (Old.Of_Type) = null
@@ -1605,21 +1611,35 @@ package body Schema.Validators is
              Debug_Validator_Record'Class
          then
             Validation_Error
-              ("Element """ & Element.Elem.Local_Name.all
-               & """ has already been declared");
+              ("Element """ & Local_Name & """ has already been declared");
          end if;
 
-         Debug_Output ("Overriding forward decl for element "
-                       & Element.Elem.Local_Name.all);
-
-         Free (Old.all);
-         Old.all := Element.Elem.all;
-         Element := (Elem => Old, Is_Ref => False);
+         Old.Form := Form;
       else
-         Elements_Htable.Set (Grammar.Elements.all, Element.Elem);
+         if Invalid = No_Type then
+            Tmp := new Debug_Validator_Record;
+            Invalid := Create_Type ("@@invalid@@", Tmp);
+            Register (Grammar, Invalid);
+         end if;
+
+         Old := new XML_Element_Record'
+           (Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
+            Substitution_Groups => null,
+            Of_Type             => Invalid,
+            Default             => null,
+            Is_Abstract         => False,
+            Nillable            => False,
+            Final_Restriction   => False,
+            Final_Extension     => False,
+            Block_Restriction   => False,
+            Block_Extension     => False,
+            Is_Global           => True,
+            Form                => Form,
+            Fixed               => null);
+         Elements_Htable.Set (Grammar.Elements.all, Old);
       end if;
 
-      Element.Elem.Is_Global := True;
+      return (Elem => Old, Is_Ref => False);
    end Register;
 
    --------------
@@ -1763,39 +1783,6 @@ package body Schema.Validators is
       Typ := Create_Type (Local_Name, Get_Validator (Invalid));
       Types_Htable.Set (Grammar.Types.all, Typ);
       return Typ;
-   end Register_Forward;
-
-   ----------------------
-   -- Register_Forward --
-   ----------------------
-
-   function Register_Forward
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Element
-   is
-      Invalid : XML_Type := Lookup (Grammar, "@@invalid@@");
-      Elem    : XML_Element;
-      Tmp     : XML_Validator;
-   begin
-      if Debug then
-         --  Always create a new one
-         Tmp := new Debug_Validator_Record;
-         Set_Debug_Name (Tmp, "Forward for element " & Local_Name);
-         Invalid := Create_Type ("@@invalid@@", Tmp);
-
-      else
-         if Invalid = No_Type then
-            Tmp := new Debug_Validator_Record;
-            Invalid := Create_Type ("@@invalid@@", Tmp);
-            Register (Grammar, Invalid);
-         end if;
-      end if;
-
-      Debug_Output ("Forward element decl: " & Local_Name);
-
-      Elem := Create_Element (Local_Name, Invalid, Qualified);
-      Register (Grammar, Elem);
-      return Elem;
    end Register_Forward;
 
    ----------------------
@@ -2132,25 +2119,27 @@ package body Schema.Validators is
    -------------------------------
 
    function Check_Substitution_Groups
-     (Element       : XML_Element;
+     (Element       : XML_Element_Access;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence) return XML_Element
    is
       Groups : constant Element_List_Access :=
-        Element.Elem.Substitution_Groups;
+        Element.Substitution_Groups;
       Result : XML_Element := No_Element;
    begin
-      Debug_Output ("++ Testing element xsd=" & Element.Elem.Local_Name.all
+      Debug_Output ("++ Testing element xsd=" & Element.Local_Name.all
                     & " xml=" & Local_Name);
+      Debug_Output ("MANU Element="
+                      & System.Address_Image (Element.all'Address));
 
-      if Element.Elem.Local_Name.all = Local_Name then
-         Result := Element;
+      if Element.Local_Name.all = Local_Name then
+         Result := (Elem => Element, Is_Ref => True);
 
       elsif Groups /= null then
          for S in Groups'Range loop
             Debug_Output ("Check_Substitution group: "
-                          & Element.Elem.Local_Name.all & " -> "
-                          & Groups (S).Elem.Local_Name.all);
+                          & Element.Local_Name.all & " -> "
+                          & Groups (S).Local_Name.all);
 
             Result := Check_Substitution_Groups
               (Groups (S), Local_Name, Namespace_URI);
@@ -2187,8 +2176,9 @@ package body Schema.Validators is
       if Seq.Max_Occurs /= Unbounded
         and then Data.Num_Occurs > Seq.Max_Occurs
       then
-         Debug_Output ("Too many occurrences of " & Get_Name (Seq));
-
+         Debug_Output ("Too many occurrences of " & Get_Name (Seq)
+                       & Data.Num_Occurs'Img
+                       & Seq.Max_Occurs'Img);
          Validation_Error
            ("Too many occurrences of sequence. Expecting at most"
             & Integer'Image (Seq.Max_Occurs));
@@ -2353,7 +2343,7 @@ package body Schema.Validators is
          case Curr.Typ is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
-                 (Curr.Element, Local_Name, Namespace_URI);
+                 (Curr.Element.Elem, Local_Name, Namespace_URI);
 
                if Element_Validator /= No_Element then
                   Debug_Output
@@ -2406,7 +2396,13 @@ package body Schema.Validators is
 
          --  The current element was in fact optional at this point
 
-         Debug_Output ("Skip optional particle in " & Get_Name (Validator));
+         if Curr.Typ = Particle_Element then
+            Debug_Output ("Skip optional particle in " & Get_Name (Validator)
+                          & ':' & Curr.Element.Elem.Local_Name.all);
+         else
+            Debug_Output ("Skip optional particle in " & Get_Name (Validator)
+                          & ' ' & Curr.Typ'Img);
+         end if;
 
          if not Move_To_Next_Particle (Validator, D, Force => True) then
             Element_Validator := No_Element;
@@ -2687,7 +2683,7 @@ package body Schema.Validators is
          case It.Typ is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
-                 (It.Element, Local_Name, Namespace_URI);
+                 (It.Element.Elem, Local_Name, Namespace_URI);
                exit when Element_Validator /= No_Element;
 
             when Particle_Nested =>
@@ -2971,7 +2967,7 @@ package body Schema.Validators is
          case Item.Typ is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
-                 (Item.Element, Local_Name, Namespace_URI) /= No_Element;
+                 (Item.Element.Elem, Local_Name, Namespace_URI) /= No_Element;
 
             when Particle_Nested =>
                Applies_To_Tag
@@ -3031,7 +3027,7 @@ package body Schema.Validators is
          case It.Typ is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
-                 (It.Element, Local_Name, Namespace_URI) /=
+                 (It.Element.Elem, Local_Name, Namespace_URI) /=
                  No_Element;
 
             when Particle_Nested =>
@@ -3105,6 +3101,12 @@ package body Schema.Validators is
          end if;
       end if;
 
+      Debug_Output ("Set_Substitution_Group "
+                    & Element.Elem.Local_Name.all
+                    & System.Address_Image (Element.Elem.all'Address)
+                    & " belongs to "
+                    & Head.Elem.Local_Name.all
+                    & System.Address_Image (Head.Elem.all'Address));
       Append (Head.Elem.Substitution_Groups, Element);
    end Set_Substitution_Group;
 
@@ -3388,7 +3390,7 @@ package body Schema.Validators is
    begin
       while Get (Tmp) /= null loop
          Element_Validator := Check_Substitution_Groups
-           (Get (Tmp).Element, Local_Name, Namespace_URI);
+           (Get (Tmp).Element.Elem, Local_Name, Namespace_URI);
 
          if Element_Validator /= No_Element then
             D.All_Elements (Count) := D.All_Elements (Count) + 1;
