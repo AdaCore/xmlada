@@ -2045,7 +2045,7 @@ package body Sax.Readers is
       if Is_Entity_Ref /= None then
          declare
             N : constant Byte_Sequence := Parser.Buffer (Id.First .. Id.Last);
-            V : Entity_Entry_Access := Get (Parser.Entities, N);
+            V : constant Entity_Entry_Access := Get (Parser.Entities, N);
             Null_Loc : Locator_Impl;
          begin
             Reset_Buffer (Parser, Id);
