@@ -4,7 +4,17 @@
 # from www.xml.org. The name of the current archive is
 #     xmlconf-19990712.tar.Z
 
+# When running this script, run with
+#   ./testsuite 0
+# to suppress the summary message printed at the end
+
 BASE=${BASE:-tests}
+verbose="$1"
+
+if [ "$verbose " = " " ]; then
+  verbose=0
+fi
+
 XML=./testxml
 XML_SILENT="$XML -silent"   # Use for testing error messages only
 XML_SILENT_VALIDATE="$XML -silent -validate" 
@@ -60,28 +70,30 @@ touch $out_file
 ## Print the results
 ######################################
 print_result () {
-  echo "----------------------------------"
+  if [ $verbose = 1 ]; then
+    echo "----------------------------------"
  
-  num_validating=0
-  if [ $VALIDATING != 1 ]; then
-     num_validating=`grep "VALIDATING ""= 1" testsuite | wc -l`
-     echo " tests that should be run when validating: $num_validating"
-  fi
+    num_validating=0
+    if [ $VALIDATING != 1 ]; then
+       num_validating=`grep "VALIDATING ""= 1" testsuite | wc -l`
+       echo " tests that should be run when validating: $num_validating"
+    fi
 
-  num_not_sure=0
-  if [ $NOT_SURE != 1 ]; then
-     num_not_sure=`grep "NOT_SURE ""= 1" testsuite | wc -l`
-     echo " ambiguous tests: $num_not_sure"
-  fi
+    num_not_sure=0
+    if [ $NOT_SURE != 1 ]; then
+       num_not_sure=`grep "NOT_SURE ""= 1" testsuite | wc -l`
+       echo " ambiguous tests: $num_not_sure"
+    fi
 
-  success=`expr $num_tests_run - $num_failures`
-  total=`expr $num_tests_run + $num_not_sure + $num_validating`
+    success=`expr $num_tests_run - $num_failures`
+    total=`expr $num_tests_run + $num_not_sure + $num_validating`
    
-  echo "----------------------------------"
-  echo "Results: ($success / $num_tests_run) tests run, $num_failures failures"
-  echo "Results: ($success / $num_tests_run) tests run, $num_failures failures" >> $out_file
-  echo
-  exit
+    echo "----------------------------------"
+    echo "Results: ($success / $num_tests_run) tests run, $num_failures failures"
+    echo "Results: ($success / $num_tests_run) tests run, $num_failures failures" >> $out_file
+    echo
+  fi
+    exit
 }
 
 trap print_result INT STOP QUIT KILL TERM
