@@ -1,0 +1,5 @@
+This directory provides a way to use, from GtkAda, the XML/Ada parser
+instead of glib-xml.
+This provides a faster parser, with better error message, and that handles
+any XML file, whereas glib-xml has a lot of limitations, since it was meant
+to be a very simple parser for Glade files
