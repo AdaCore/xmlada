@@ -1,0 +1,9 @@
+
+--  This project file makes sure that gnatmake doesn't try to recompile
+--  XML/Ada when one does a with on "xmlada_sax" directly, instead of
+--  "xmlada"
+
+project XmlAda_Avoid_Recompile is
+   for Source_Dirs use ();
+   for Object_Dir use "include/xmlada/obj";
+end Xmlada_Avoid_Recompile;
