@@ -369,7 +369,7 @@ package body Schema.Schema_Grammar is
 
       --  The "redefinable" element  --  abstract=true
       Elem := Create_Global_Element (G, "redefinable", Qualified);
-      Set_Type (Elem, Lookup (G, "anyType"));
+      Set_Type (Elem, Get_Type (Lookup_Element (G, "schemaTop")));
       Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
 
       --  The "all" element
@@ -951,9 +951,10 @@ package body Schema.Schema_Grammar is
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "simpleType_seq");
       Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
+      Typ := Extension_Of (Lookup (G, "annotated"), XML_Validator (Seq1));
       Add_Attribute
-        (Seq1, Create_Local_Attribute ("name", G, Lookup (G, "NCName")));
-      Create_Global_Type (G, "simpleType", Seq1);
+        (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName")));
+      Create_Global_Type (G, "simpleType", Typ);
 
       --  The "topLevelSimpleType" type
       Seq1 := Create_Sequence;
