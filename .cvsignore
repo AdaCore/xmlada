@@ -4,3 +4,4 @@ config.cache
 config.status
 Makefile
 xmlada-config
+xml.adp
