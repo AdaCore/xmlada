@@ -880,13 +880,14 @@ files, and will provide better error messages.
 @noindent
 
 XML/Ada is a library. When compiling an application that uses it, you
-thus need to specify where the specifications are to be found, as well
+thus need to specify where the spec files are to be found, as well
 as where the libraries are installed.
 
 There are several ways to do it:
 
 @itemize @bullet
 
+@cindex xmlada-config
 @item The simplest is to use the @command{xmlada-config} script, and let it
    provide the list of switches for @command{gnatmake}. This is more
    convenient on Unix systems, where you can simply compile your application
@@ -916,8 +917,7 @@ gnatmake main.adb -Iprefix/include/xmlada -largs -Lprefix/lib \
 
    @item @option{--sax}: If you this flag, your application will not be
       linked against the DOM module. This might save some space, particularly
-      if linking statically. This also reduces the dependencies on external
-      tools.
+      if linking statically. 
 
    @item @option{--static}: Return the list of flags to use to link your
       application statically against Xml/Ada. Your application is then
@@ -927,12 +927,7 @@ gnatmake main.adb -Iprefix/include/xmlada -largs -Lprefix/lib \
 
    @end enumerate
 
-@item On Windows system, you might also simply want to register once and for
-   all the library in the Windows registry, with the command @command{gnatreg}.
-   This means that @command{GNAT} will automatically find the installation
-   directory for the XML/Ada.
-
-@item If you are working on a big project, particularly one that includes
+   If you are working on a big project, particularly one that includes
    sources in languages other than Ada, you generally have to run the three
    steps of the compilation process separately (compile, bind and then link).
    @command{xmlada-config} can also be used, provided you use one of the
@@ -948,9 +943,70 @@ gnatmake main.adb -Iprefix/include/xmlada -largs -Lprefix/lib \
 
    @end enumerate
 
+   This @command{xmlada-config} method doesn't provide access to the
+   @file{xml_gtk} module, which is only available when using project files
+   (see below).
 
+@cindex project files
+@cindex xmlada.gpr
+@item The preferred method, however, is to use the GNAT project files.
+   See the GNAT user's guide for more information on the project files and
+   how to create them for your application.
+ 
+   Basically, a project file contains the description of your build
+   environment (source directories, object directories, libraries,@dots{}).
+
+   The very simple case is when you have all your sources in the same
+   directory (say @file{src/}), and the object files are all generated in the
+   @file{obj/} directory.
+
+   In this case, your project file would look like:
+
+   @smallexample
+   with "xmlada";
+   project Default is
+      for Source_Dirs use ("src/");
+      for Object_Dir use "obj/";
+   end Default;
+   @end smallexample
+
+   and you build your application with
+
+   @smallexample
+   gnatmake -Pdefault main.adb
+   @end smallexample
+
+   Note in the project file the first line, which indicates that your
+   application requires XML/Ada to build. This will automatically set the
+   appropriate compiler and linker switches to use XML/Ada. Your application
+   will be linker against all modules of XML/Ada (DOM, SAX, ...).
+
+   If your application doesn't use DOM, you can replace the first line with
+   something like:
+
+   @smallexample
+   with "xmlada_sax";
+   @end smallexample
+
+   which will reduce the number of libraries that your application is
+   linked with.
+
+   WHen you are using project files, you need to let GNAT know where to find
+   the project files. This is done by setting the @code{ADA_PROJECT_PATH}
+   environment variable, by adding to it the installation directory of
+   XML/Ada, ie the one that contains xmlada.gpr
+
+   Check the @file{dom/test} directory in the XML/Ada package, which contains
+   both code examples and project files that you can use as a basic for your
+   own code.
 @end itemize
 
+Whatever method you used to build your application, you might have to change,
+at least one UNIX systems, the environment variable @code{LD_LIBRARY_PATH}
+so that it contains the @file{lib/} directory in the XML/Ada installation,
+so that the dynamic libraries are correctly found.
+
+This is not needed if you build XML/Ada as a static directory.
 
 @contents
 @bye
