@@ -1162,7 +1162,7 @@ package body DOM.Core.Nodes is
 
          when Comment_Node =>
             if Print_Comments then
-               Put (Node_Value (N));
+               Put ("<!--" & Node_Value (N) & "-->");
             end if;
 
          when Document_Node =>
