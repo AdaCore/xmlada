@@ -88,11 +88,11 @@ clean: force
 	gnat clean -q -r -Pinput_sources/input_sources.gpr
 	gnat clean -q -r -Psax/sax.gpr
 	gnat clean -q -r -Pdom/dom.gpr
-	gnat clean -q -r -Pxml_gtk/xml_gtk.gpr
 	gnat clean -q -Punicode/test/unicode_test.gpr
 	gnat clean -q -Pdom/test/dom_test.gpr
 	gnat clean -q -Psax/test/sax_test.gpr
 ifneq (${GTKADA_GPR},)
+	gnat clean -q -r -Pxml_gtk/xml_gtk.gpr
 	gnat clean -q -Pxml_gtk/test/xml_gtk_test.gpr
 endif
 	cd docs; ${MAKE} -e clean
