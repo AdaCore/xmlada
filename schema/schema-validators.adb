@@ -72,6 +72,22 @@ package body Schema.Validators is
    --  On exit, Element_Validator is set to No_Element if either the nested
    --  group didn't match, or there was no nested group.
 
+   function Register_Forward
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Type;
+   function Register_Forward
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Element;
+   function Register_Forward
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
+   function Register_Forward
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return Attribute_Validator;
+   --  Register a type, the definition of which is not know at that point.
+   --  The definition must be provided before the grammar is fully filled, or
+   --  this is an error.
+
    -------------
    -- UR_Type --
    -------------
@@ -511,6 +527,7 @@ package body Schema.Validators is
          end if;
       end if;
 
+      --  If we have a
       if Facets.Mask (Facet_Total_Digits)
         or Facets.Mask (Facet_Fraction_Digits)
         or Facets.Mask (Facet_Max_Exclusive)
@@ -529,12 +546,26 @@ package body Schema.Validators is
          if Facets.Mask (Facet_Fraction_Digits) then
             for V in Value'Range loop
                if Value (V) = '.' then
-                  if Value'Last - V /= Facets.Fraction_Digits then
+                  if Value'Last - V > Facets.Fraction_Digits then
                      Validation_Error
                        ("Too many digits in the fractional part");
                   end if;
                end if;
             end loop;
+
+            declare
+               Val : Long_Long_Float;
+               pragma Unreferenced (Val);
+            begin
+               Val := Long_Long_Float'Value (Value);
+            exception
+               when Constraint_Error =>
+                  Validation_Error ("Must have a decimal value");
+            end;
+
+            --  ??? Should check over properties, but Min_* and Max_* are
+            --  stored as integers
+            return;
          end if;
 
          begin
@@ -1251,6 +1282,11 @@ package body Schema.Validators is
         (Named : Named_Attribute_Validator) return Integer is
       begin
          for A in 0 .. Length - 1 loop
+            if Debug then
+               Put_Line ("Check attribute: "
+                         & Named.NS.Namespace_URI.all
+                         & ':' & Named.Local_Name.all);
+            end if;
             if not Seen (A)
               and then Get_Local_Name (Atts, A) = Named.Local_Name.all
               and then (Get_URI (Atts, A) = ""
@@ -1980,7 +2016,8 @@ package body Schema.Validators is
       end if;
 
       Grammar.Grammars (Grammar.Grammars'Last) := new XML_Grammar_NS_Record'
-        (Namespace_URI => new Byte_Sequence'(Namespace_URI),
+        (Namespace_URI    => new Byte_Sequence'(Namespace_URI),
+         Redefine         => False,
          Types            => new Types_Htable.HTable (101),
          Elements         => new Elements_Htable.HTable (101),
          Groups           => new Groups_Htable.HTable (101),
@@ -1997,6 +2034,7 @@ package body Schema.Validators is
       Tmp      : Common_Simple_Validator;
       Tmp2     : XML_Validator;
       G, XML_G, XML_IG : XML_Grammar_NS;
+      Created  : XML_Type;
 
    begin
       Get_NS (Grammar, XML_URI,          Result => XML_G);
@@ -2004,45 +2042,54 @@ package body Schema.Validators is
       Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
 
       Create_UR_Type;
-      Register (G, Create_Type ("ur-Type", UR_Type_Validator_Instance));
+      Created := Create_Type ("ur-Type", UR_Type_Validator_Instance);
+      Register (G, Created);
 
       Tmp2 := new XML_Validator_Record;
-      Register (G, Create_Type ("anyType", Tmp2));
+      Created := Create_Type ("anyType", Tmp2);
+      Register (G, Created);
 
       Tmp2 := new Any_Simple_XML_Validator_Record;
-      Register (G, Create_Type ("anySimpleType", Tmp2));
+      Created := Create_Type ("anySimpleType", Tmp2);
+      Register (G, Created);
 
       Tmp := new Boolean_Validator_Record;
-      Register (G, Create_Type ("boolean", Tmp));
+      Created := Create_Type ("boolean", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
       Tmp.Facets.Mask (Facet_Pattern) := True;
       Tmp.Facets.Pattern_String := new Byte_Sequence'("\d\d\d\d-\d\d-\d\d");
-      Register (G, Create_Type ("date", Tmp));
+      Created := Create_Type ("date", Tmp);
+      Register (G, Created);
 
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
-      Register (G, Create_Type ("string", Tmp));
+      Created := Create_Type ("string", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_QName'Access;
-      Register (G, Create_Type ("QName", Tmp));
+      Created := Create_Type ("QName", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
       Tmp.Facets.Mask (Facet_Whitespace) := True;
       Tmp.Facets.Whitespace := Replace;
-      Register (G, Create_Type ("normalizeString", Tmp));
+      Created := Create_Type ("normalizeString", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
       Tmp.Facets.Mask (Facet_Whitespace) := True;
       Tmp.Facets.Whitespace := Collapse;
-      Register (G, Create_Type ("token", Tmp));
+      Created := Create_Type ("token", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
@@ -2050,7 +2097,8 @@ package body Schema.Validators is
       Tmp.Facets.Whitespace := Collapse;
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_Language_Name'Access;
-      Register (G, Create_Type ("language", Tmp));
+      Created := Create_Type ("language", Tmp);
+      Register (G, Created);
       Register (Create_Attribute ("lang", XML_G, Lookup (G, "language")));
 
       Tmp := new Common_Simple_XML_Validator;
@@ -2059,7 +2107,8 @@ package body Schema.Validators is
       Tmp.Facets.Whitespace := Collapse;
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_Nmtoken'Access;
-      Register (G, Create_Type ("NMTOKEN", Tmp));
+      Created := Create_Type ("NMTOKEN", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
@@ -2067,7 +2116,8 @@ package body Schema.Validators is
       Tmp.Facets.Whitespace := Collapse;
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_Name'Access;
-      Register (G, Create_Type ("Name", Tmp));
+      Created := Create_Type ("Name", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
@@ -2075,7 +2125,8 @@ package body Schema.Validators is
       Tmp.Facets.Whitespace := Collapse;
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
-      Register (G, Create_Type ("NCName", Tmp));
+      Created := Create_Type ("NCName", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
@@ -2083,7 +2134,16 @@ package body Schema.Validators is
       Tmp.Facets.Whitespace := Collapse;
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
-      Register (G, Create_Type ("ID", Tmp));
+      Created := Create_Type ("ID", Tmp);
+      Register (G, Created);
+      Tmp := new Common_Simple_XML_Validator;
+      Tmp.Facets.Settable := String_Facets;
+      Tmp.Facets.Mask (Facet_Whitespace) := True;
+      Tmp.Facets.Whitespace := Collapse;
+      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
+      Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
+      Created := Create_Type ("IDREF", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := String_Facets;
@@ -2091,25 +2151,23 @@ package body Schema.Validators is
       Tmp.Facets.Whitespace := Collapse;
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
-      Register (G, Create_Type ("IDREF", Tmp));
-
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
-      Register (G, Create_Type ("ENTITY", Tmp));
+      Created := Create_Type ("ENTITY", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
-      Register (G, Create_Type ("decimal", Tmp));
+      --  ??? Hack to make it understood as an integer type, not a string
+      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
+      Tmp.Facets.Fraction_Digits := Natural'Last;
+      Created := Create_Type ("decimal", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
       Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
       Tmp.Facets.Fraction_Digits := 0;
-      Register (G, Create_Type ("integer", Tmp));
+      Created := Create_Type ("integer", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2117,7 +2175,8 @@ package body Schema.Validators is
       Tmp.Facets.Fraction_Digits := 0;
       Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
       Tmp.Facets.Max_Inclusive := 0;
-      Register (G, Create_Type ("nonPositiveInteger", Tmp));
+      Created := Create_Type ("nonPositiveInteger", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2125,7 +2184,8 @@ package body Schema.Validators is
       Tmp.Facets.Fraction_Digits := 0;
       Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
       Tmp.Facets.Max_Inclusive := -1;
-      Register (G, Create_Type ("negativeInteger", Tmp));
+      Created := Create_Type ("negativeInteger", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2135,7 +2195,8 @@ package body Schema.Validators is
       Tmp.Facets.Max_Inclusive := +9_223_372_036_854_775_807;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := -9_223_372_036_854_775_808;
-      Register (G, Create_Type ("long", Tmp));
+      Created := Create_Type ("long", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2145,7 +2206,8 @@ package body Schema.Validators is
       Tmp.Facets.Max_Inclusive := +2_147_483_647;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := -2_147_483_648;
-      Register (G, Create_Type ("int", Tmp));
+      Created := Create_Type ("int", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2155,7 +2217,8 @@ package body Schema.Validators is
       Tmp.Facets.Max_Inclusive := +32_767;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := -32_768;
-      Register (G, Create_Type ("short", Tmp));
+      Created := Create_Type ("short", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2165,7 +2228,8 @@ package body Schema.Validators is
       Tmp.Facets.Max_Inclusive := +127;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := -128;
-      Register (G, Create_Type ("byte", Tmp));
+      Created := Create_Type ("byte", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2173,7 +2237,8 @@ package body Schema.Validators is
       Tmp.Facets.Fraction_Digits := 0;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := 0;
-      Register (G, Create_Type ("nonNegativeInteger", Tmp));
+      Created := Create_Type ("nonNegativeInteger", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2181,7 +2246,8 @@ package body Schema.Validators is
       Tmp.Facets.Fraction_Digits := 0;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := 1;
-      Register (G, Create_Type ("positiveInteger", Tmp));
+      Created := Create_Type ("positiveInteger", Tmp);
+      Register (G, Created);
 
 --        Tmp := new Common_Simple_XML_Validator;
 --        Tmp.Facets.Settable := Integer_Facets;
@@ -2201,7 +2267,8 @@ package body Schema.Validators is
       Tmp.Facets.Max_Inclusive := +4_294_967_295;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := 0;
-      Register (G, Create_Type ("unsignedInt", Tmp));
+      Created := Create_Type ("unsignedInt", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2211,7 +2278,8 @@ package body Schema.Validators is
       Tmp.Facets.Max_Inclusive := +65_535;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := 0;
-      Register (G, Create_Type ("unsignedShort", Tmp));
+      Created := Create_Type ("unsignedShort", Tmp);
+      Register (G, Created);
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2221,8 +2289,19 @@ package body Schema.Validators is
       Tmp.Facets.Max_Inclusive := +255;
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := 0;
-      Register (G, Create_Type ("unsignedByte", Tmp));
+      Created := Create_Type ("unsignedByte", Tmp);
+      Register (G, Created);
    end Initialize;
+
+   -----------------------
+   -- Set_Redefine_Mode --
+   -----------------------
+
+   procedure Set_Redefine_Mode
+     (Grammar : XML_Grammar_NS; Redefine : Boolean) is
+   begin
+      Grammar.Redefine := Redefine;
+   end Set_Redefine_Mode;
 
    --------------------
    -- Create_Element --
@@ -2288,15 +2367,41 @@ package body Schema.Validators is
       Element.Elem.Is_Global := True;
    end Register;
 
+   -------------------
+   -- Redefine_Type --
+   -------------------
+
+   function Redefine_Type
+     (Grammar : XML_Grammar_NS; Local_Name : Byte_Sequence) return XML_Type
+   is
+      Old : constant XML_Type := Types_Htable.Get
+        (Grammar.Types.all, Local_Name);
+      Result : XML_Type;
+   begin
+      if Old /= No_Type then
+         Result := Create_Type
+           ("@redefine_" & Local_Name, Get_Validator (Old));
+         Old.Validator := new Debug_Validator_Record;
+         return Result;
+      end if;
+      return No_Type;
+   end Redefine_Type;
+
    --------------
    -- Register --
    --------------
 
-   procedure Register (Grammar : XML_Grammar_NS; Typ : XML_Type) is
+   procedure Register (Grammar : XML_Grammar_NS; Typ : in out XML_Type) is
       Old : constant XML_Type := Types_Htable.Get
         (Grammar.Types.all, Typ.Local_Name.all);
    begin
       if Old /= No_Type then
+--           if Grammar.Redefine then
+--              --  ??? Free Typ
+--              Old.Validator := Typ.Validator;
+--              Typ := Old;
+--
+--           else
          if Get_Validator (Old).all not in Debug_Validator_Record'Class then
             Validation_Error
               ("Type has already been declared: "
@@ -2308,6 +2413,7 @@ package body Schema.Validators is
          end if;
 
          Old.Validator := Typ.Validator;
+--         end if;
       else
          Types_Htable.Set (Grammar.Types.all, Typ);
 
@@ -2356,17 +2462,26 @@ package body Schema.Validators is
    -- Register --
    --------------
 
-   procedure Register (Grammar : XML_Grammar_NS; Group : XML_Group) is
+   procedure Register (Grammar : XML_Grammar_NS; Group : in out XML_Group) is
       Old : constant XML_Group :=
         Groups_Htable.Get (Grammar.Groups.all, Group.Local_Name.all);
    begin
       if Old /= No_Group then
-         if Old.Particles.First /= null then
-            Validation_Error
-              ("Group has already been declared: "
-               & Group.Local_Name.all);
+         if Grammar.Redefine then
+            Old.Particles := Group.Particles;
+            --  ??? Free Group
+            Group := Old;
+         else
+            if Old.Particles.First /= null then
+               Validation_Error
+                 ("Group has already been declared: "
+                  & Group.Local_Name.all);
+            end if;
+            Old.Particles := Group.Particles;
+
+            --  ??? Free Group
+            Group := Old;
          end if;
-         Old.Particles := Group.Particles;
       else
          Groups_Htable.Set (Grammar.Groups.all, Group);
       end if;
@@ -2510,7 +2625,7 @@ package body Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Group
    is
-      Gr : constant XML_Group := Create_Group (Local_Name);
+      Gr : XML_Group := Create_Group (Local_Name);
    begin
       if Debug then
          Put_Line ("Forward group decl: " & Local_Name);
@@ -3684,6 +3799,16 @@ package body Schema.Validators is
         (Local_Name => new String'(Local_Name),
          Particles  => Empty_Particle_List);
    end Create_Group;
+
+   --------------------
+   -- Get_Local_Name --
+   --------------------
+
+   function Get_Local_Name
+     (Group : XML_Group) return Unicode.CES.Byte_Sequence is
+   begin
+      return Group.Local_Name.all;
+   end Get_Local_Name;
 
    -----------------
    -- Create_Type --

@@ -407,6 +407,10 @@ package Schema.Validators is
    --  Base doesn't need to be a Clone of some other type, since it isn't
    --  altered
 
+   function Get_Local_Name
+     (Group : XML_Group) return Unicode.CES.Byte_Sequence;
+   --  Return the local name of the group
+
    ---------------
    -- Particles --
    ---------------
@@ -505,29 +509,27 @@ package Schema.Validators is
    --  If the element doesn't exist yet, a forward declaration is created for
    --  it, that must be overriden later on.
 
-   procedure Register (Grammar : XML_Grammar_NS; Typ     : XML_Type);
+   procedure Register (Grammar : XML_Grammar_NS; Typ     : in out XML_Type);
    procedure Register (Grammar : XML_Grammar_NS; Element : in out XML_Element);
-   procedure Register (Grammar : XML_Grammar_NS; Group   : XML_Group);
+   procedure Register (Grammar : XML_Grammar_NS; Group   : in out XML_Group);
    procedure Register (Attr    : Attribute_Validator);
    procedure Register (Grammar : XML_Grammar_NS;
                        Group   : in out XML_Attribute_Group);
-   --  Register a new type or element in the grammar
+   --  Register a new type or element in the grammar.
+   --  Whenever we are overriding a previous definition (either because we are
+   --  in a <redefine> context, or because the type for forward-referenced),
+   --  it is possible that the parameter is changed to point to the old one
+   --  instead, and freed as appropriate. You should always either use
+   --  the output value of the parameter, or do a Lookup again to get access
+   --  to the new definition.
 
-   function Register_Forward
+   function Redefine_Type
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Type;
-   function Register_Forward
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Element;
-   function Register_Forward
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
-   function Register_Forward
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return Attribute_Validator;
-   --  Register a type, the definition of which is not know at that point.
-   --  The definition must be provided before the grammar is fully filled, or
-   --  this is an error.
+   --  Indicate that a given type or element is being redefined inside a
+   --  <redefine> tag. The old definition is returned, and all types that
+   --  were referencing it will now refer to a new, invalid type. You need to
+   --  register the new type or element before using the grammar.
 
    procedure Set_Element_Form_Default
      (Grammar : XML_Grammar_NS; Form_Default : Form_Type);
@@ -546,6 +548,13 @@ package Schema.Validators is
    --  This must be called before you start using the grammar, since some
    --  validation checks can only be performed at the end, not while the
    --  grammar is being constructed.
+
+   procedure Set_Redefine_Mode
+     (Grammar : XML_Grammar_NS; Redefine : Boolean);
+   --  Whether we are redefining data from Grammar.
+   --  Calls to Register will no longer fail when an element was already
+   --  registered, same as if we are in a <redefine> element.
+
 
    procedure Set_Debug_Name
      (Typ : access XML_Validator_Record'Class; Name : String);
@@ -890,6 +899,7 @@ private
 
    type XML_Grammar_NS_Record is record
       Namespace_URI : Unicode.CES.Byte_Sequence_Access;
+      Redefine      : Boolean;
       Types         : Types_Htable_Access;
       Elements      : Elements_Htable_Access;
       Groups        : Groups_Htable_Access;
