@@ -54,7 +54,7 @@ package Schema.Validators is
    --  data while their node is active. Such data might be used to store
    --  counters, current items,...
 
-   type Validator_Data_Record is abstract tagged null record;
+   type Validator_Data_Record is abstract tagged private;
    type Validator_Data is access all Validator_Data_Record'Class;
 
    procedure Free (Data : in out Validator_Data_Record);
@@ -73,10 +73,11 @@ package Schema.Validators is
    --  A type, which can either be named (ie it has been explicitely declared
    --  with a name and stored in the grammar), or anonymous.
 
-   function Create_Type
-     (Local_Name : Unicode.CES.Byte_Sequence;
-      Validator  : access XML_Validator_Record'Class) return XML_Type;
-   --  Create a new named type.
+   function Create_Local_Type
+     (Validator : access XML_Validator_Record'Class) return XML_Type;
+   --  Create a new local type.
+   --  This type cannot be looked up in the grammar later on. See the function
+   --  Register below if you need this capability
 
    function Get_Validator (Typ : XML_Type) return XML_Validator;
    --  Return the validator used for that type
@@ -151,8 +152,9 @@ package Schema.Validators is
    --  Whether the two are the same
 
    procedure Set_Type
-     (Attr      : access Attribute_Validator_Record;
-      Attr_Type : XML_Type);
+     (Attr : access Attribute_Validator_Record; Attr_Type : XML_Type);
+   function Get_Type
+     (Attr : access Attribute_Validator_Record) return XML_Type;
    --  Set the type of the attribute
 
    ---------------
@@ -532,8 +534,11 @@ package Schema.Validators is
    --  If the element doesn't exist yet, a forward declaration is created for
    --  it, that must be overriden later on.
 
-   procedure Register (Grammar : XML_Grammar_NS; Typ     : in out XML_Type);
-   function Register
+   function Create_Global_Type
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence;
+      Validator  : access XML_Validator_Record'Class) return XML_Type;
+   function Create_Global_Element
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence;
       Form       : Form_Type) return XML_Element;
@@ -548,6 +553,13 @@ package Schema.Validators is
    --  instead, and freed as appropriate. You should always either use
    --  the output value of the parameter, or do a Lookup again to get access
    --  to the new definition.
+
+   procedure Create_Global_Type
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence;
+      Validator  : access XML_Validator_Record'Class);
+   --  Same as above, but doesn't return the newly created type. Use Lookup if
+   --  you need access to it later on
 
    function Redefine_Type
      (Grammar    : XML_Grammar_NS;
@@ -572,7 +584,7 @@ package Schema.Validators is
    procedure Free (Grammar : in out XML_Grammar);
    --  Free the memory occupied by the grammar
 
-   procedure Global_Check (Grammar : XML_Grammar_NS);
+   procedure Global_Check (Grammar : XML_Grammar);
    --  Perform checks on the grammar, once it has been fully declared.
    --  This must be called before you start using the grammar, since some
    --  validation checks can only be performed at the end, not while the
@@ -614,6 +626,12 @@ private
    type Id_Htable_Access is access Id_Htable.HTable;
    --  This table is used to store the list of IDs that have been used in the
    --  document so far, and prevent their duplication in the document.
+
+   --------------------
+   -- Validator_Data --
+   --------------------
+
+   type Validator_Data_Record is abstract tagged null record;
 
    --------------
    -- XML_Type --
@@ -724,6 +742,8 @@ private
    procedure Set_Type
      (Attr      : access Named_Attribute_Validator_Record;
       Attr_Type : XML_Type);
+   function Get_Type
+     (Attr : access Named_Attribute_Validator_Record) return XML_Type;
 
    type Any_Attribute_Validator is new Attribute_Validator_Record with record
       Kind      : Namespace_Kind;
