@@ -144,6 +144,8 @@ package body Schema.Validators.Extensions is
    is
       D : constant Extension_Data_Access := Extension_Data_Access (Data);
    begin
+      Debug_Push_Prefix ("Validate_End_Element <extension> "
+                         & Get_Name (Validator));
       if D.Validating_Base then
          Validate_End_Element
            (Get_Validator (Validator.Base), Local_Name, D.Base_Data);
@@ -153,6 +155,8 @@ package body Schema.Validators.Extensions is
          Validate_End_Element
            (Validator.Extension, Local_Name, D.Extension_Data);
       end if;
+
+      Debug_Pop_Prefix;
    end Validate_End_Element;
 
    -------------------------
