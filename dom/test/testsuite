@@ -1009,7 +1009,7 @@ Did you want to use &amp; ?"
     expect_not_wf_sa "038" \
            "038.xml:1:22: (3.1) Attributes must have a unique name"
     expect_not_wf_sa "039" \
-           "039.xml:1:9: [WF-Element Type Match] Name differ for closing tag"
+           "039.xml:1:9: [WF-Element Type Match] Name differ for closing tag (expecting a)"
     expect_not_wf_sa "040" \
            "040.xml:2:1: (2.1) Too many children for top-level node, when adding <doc>"
     expect_not_wf_sa "041" \
@@ -1029,7 +1029,7 @@ Did you want to use &amp; ?"
     expect_not_wf_sa "048" \
            "048.xml:3:1: [2.1] Non-white space found at top level"
     expect_not_wf_sa "049" \
-           "049.xml:3:13: [WF-Element Type Match] Name differ for closing tag"
+           "049.xml:3:13: [WF-Element Type Match] Name differ for closing tag (expecting doc)"
     expect_not_wf_sa "050" \
            "050.xml:1:0: [2.1] No root element specified"
 	   ## ??? Location is incorrect
@@ -1038,7 +1038,7 @@ Did you want to use &amp; ?"
     expect_not_wf_sa "052" \
            "052.xml:2:1: [2.1] Character references can not appear at top-level"
     expect_not_wf_sa "053" \
-           "053.xml:1:6: [WF-Element Type Match] Name differ for closing tag"
+           "053.xml:1:6: [WF-Element Type Match] Name differ for closing tag (expecting doc)"
     expect_not_wf_sa "054" \
            "054.xml:2:38: [WF] Expecting SystemID after PUBLIC"
     expect_not_wf_sa "055" \
@@ -1525,7 +1525,7 @@ if [ $run_not_wf_tests = 1 ]; then
     expect_oasis_not_wf "p39fail1" \
         "p39fail1.xml:1:12: [2.1] Node <doc> is not closed"
     expect_oasis_not_wf "p39fail2" \
-        "p39fail2.xml:1:13: [WF-Element Type Match] Name differ for closing tag"
+        "p39fail2.xml:1:13: [WF-Element Type Match] Name differ for closing tag (expecting doc)"
     expect_oasis_not_wf "p39fail3" \
         "p39fail3.xml:1:0: [2.1] No root element specified"
         # ??? Location is incorrect
