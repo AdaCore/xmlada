@@ -49,7 +49,8 @@ package body DOM.Core is
          Parent         => null,
          Doc_Children   => Null_List,
          Doc_Type       => Doc_Type,
-         Implementation => Implementation);
+         Implementation => Implementation,
+         Namespaces     => new String_Htable.HTable (11));
    end Create_Document;
 
    -----------------
@@ -114,4 +115,93 @@ package body DOM.Core is
       Free (List.Items);
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Str : in out Namespace_Definition_Access) is
+   begin
+      Unicode.CES.Free (Str.Namespace);
+   end Free;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key
+     (Str : Namespace_Definition_Access) return DOM_String_Access is
+   begin
+      return Str.Namespace;
+   end Get_Key;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Key : DOM_String_Access) return Interfaces.Unsigned_32 is
+      type Uns is mod 2 ** 32;
+      function Rotate_Left (Value : Uns; Amount : Natural) return Uns;
+      pragma Import (Intrinsic, Rotate_Left);
+
+      Tmp : Uns := 0;
+   begin
+      for J in Key'Range loop
+         Tmp := Rotate_Left (Tmp, 1) + Character'Pos (Key (J));
+      end loop;
+
+      return Interfaces.Unsigned_32 (Tmp);
+   end Hash;
+
+   ---------------
+   -- Key_Equal --
+   ---------------
+
+   function Key_Equal (Key1, Key2 : DOM_String_Access) return Boolean is
+   begin
+      return Key1.all = Key2.all;
+   end Key_Equal;
+
+   ---------------------------
+   -- Internalize_Namespace --
+   ---------------------------
+
+   function Internalize_Namespace
+     (Doc  : Document;
+      Name : DOM_String) return Namespace_Definition_Access
+   is
+      Result : Namespace_Definition_Access;
+   begin
+      if Shared_Namespaces then
+         Result :=
+           String_Htable.Get (Doc.Namespaces.all, Name'Unrestricted_Access);
+
+         if Result = null then
+            Result := new Namespace_Definition'
+              (Namespace => new DOM_String'(Name));
+            String_Htable.Set (Doc.Namespaces.all, Result);
+         end if;
+      else
+         Result := new Namespace_Definition'
+           (Namespace => new DOM_String'(Name));
+      end if;
+      return Result;
+   end Internalize_Namespace;
+
+   ---------------------
+   -- Clone_Namespace --
+   ---------------------
+
+   procedure Clone_Namespace
+     (Dest   : out Namespace_Definition_Access;
+      Source : Namespace_Definition_Access) is
+   begin
+      if Shared_Namespaces then
+         Dest := Source;
+      elsif Source = null then
+         Dest := null;
+      else
+         Dest := new Namespace_Definition'
+           (Namespace => new DOM_String'(Source.Namespace.all));
+      end if;
+   end Clone_Namespace;
 end DOM.Core;

@@ -34,9 +34,20 @@
 --  types; and direct access through the Node interface.
 
 with Unicode.CES;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
+with Interfaces;
+with Sax.HTable;
 
 package DOM.Core is
+
+   Shared_Namespaces : constant Boolean := False;
+   --  Set this to true if the name of namespaces should be shared among nodes.
+   --  This can result in dramatic memory use reduction (more than 30% is
+   --  possible if you have lots of nodes).
+   --  Speed difference is very minor: even though we have to do a hash-table
+   --  lookup every time, we also save on the number of system calls to
+   --  malloc().
+
 
    subtype DOM_String is Unicode.CES.Byte_Sequence;
    --  A simple redefinition of the strings, to be compatible with the
@@ -183,12 +194,13 @@ package DOM.Core is
    --  object.
 
 private
+
    type DOM_Implementation is null record;
 
    type Node_Array is array (Natural range <>) of Node;
    type Node_Array_Access is access Node_Array;
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Node_Array, Node_Array_Access);
 
    type Node_List is record
@@ -204,13 +216,41 @@ private
 
    Null_Node_Map : constant Named_Node_Map := (null, -1);
 
+   --  We share the namespace names, since there are only a limited number of
+   --  possible values, and sharing them helps reduce the size of the tree.
+
+   type Namespace_Definition is record
+      Namespace : DOM_String_Access;
+   end record;
+   --  Use a separate type, so that we have thin pointers later on to access
+   --  the name, this saves 4 bytes per node in the tree.
+
+   type Namespace_Definition_Access is access Namespace_Definition;
+   No_Namespace : constant Namespace_Definition_Access := null;
+
+   procedure Free (Str : in out Namespace_Definition_Access);
+   function Get_Key
+     (Str : Namespace_Definition_Access) return DOM_String_Access;
+   function Hash (Key : DOM_String_Access) return Interfaces.Unsigned_32;
+   function Key_Equal (Key1, Key2 : DOM_String_Access) return Boolean;
+
+   package String_Htable is new Sax.HTable
+     (Element       => Namespace_Definition_Access,
+      Empty_Element => No_Namespace,
+      Free          => Free,
+      Key           => DOM_String_Access,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => Key_Equal);
+   type String_Htable_Access is access String_Htable.HTable;
+
    type Node_Record (Node_Type : Node_Types) is record
       Parent   : Node;
       case Node_Type is
          when Element_Node =>
             Prefix     : DOM_String_Access;
             Local_Name : DOM_String_Access;
-            Namespace  : DOM_String_Access;
+            Namespace  : Namespace_Definition_Access;
             Children   : Node_List;
             Attributes : Named_Node_Map;
 
@@ -218,7 +258,7 @@ private
             Attr_Prefix     : DOM_String_Access;
             Attr_Local_Name : DOM_String_Access;
             Attr_Value      : DOM_String_Access;
-            Attr_Namespace  : DOM_String_Access;
+            Attr_Namespace  : Namespace_Definition_Access;
             Specified       : Boolean := False;
             --   ??? In fact, attributes can have children (text or
             --   entity_reference).
@@ -247,6 +287,7 @@ private
             Doc_Children   : Node_List;
             Doc_Type       : Node;
             Implementation : DOM_Implementation;
+            Namespaces     : String_Htable_Access;
 
          when Document_Type_Node =>
             Document_Type_Name : DOM_String_Access;
@@ -267,5 +308,18 @@ private
    procedure Remove (List : in out Node_List; N : Node);
    --  Remove N from the list
    --  N must be an element of List, this is not checked.
+
+
+   function Internalize_Namespace
+     (Doc  : Document; Name : DOM_String) return Namespace_Definition_Access;
+   --  Return an internal version of the namespace, meant to save space in the
+   --  DOM tree
+
+   procedure Clone_Namespace
+     (Dest   : out Namespace_Definition_Access;
+      Source : Namespace_Definition_Access);
+   pragma Inline (Clone_Namespace);
+   --  Clone the value of Source into Dest, so that whatever happens to Source,
+   --  Dest remains readable.
 
 end DOM.Core;
