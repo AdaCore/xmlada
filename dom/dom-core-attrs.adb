@@ -45,7 +45,7 @@ package body DOM.Core.Attrs is
 
    function Owner_Element (Att : Attr) return Element is
    begin
-      return Att.Parent;
+      return Att.Owner_Element;
    end Owner_Element;
 
 end DOM.Core.Attrs;

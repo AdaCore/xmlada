@@ -198,6 +198,7 @@ package body DOM.Core.Documents is
         (Node_Type       => Attribute_Node,
          Parent          => null,
          Specified       => False,
+         Owner_Element   => Doc,
          Attr_Name       => From_Qualified_Name (Doc, Name, null),
          Attr_Value      => null);
    end Create_Attribute;
@@ -217,6 +218,7 @@ package body DOM.Core.Documents is
         (Node_Type       => Attribute_Node,
          Parent          => null,
          Specified       => False,
+         Owner_Element   => Doc,
          Attr_Name       => From_Qualified_Name
            (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
          Attr_Value      => null);

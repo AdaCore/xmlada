@@ -380,6 +380,7 @@ private
             Attr_Name       : Shared_Node_Name_Def;
             Attr_Value      : DOM_String_Access;
             Specified       : Boolean := False;
+            Owner_Element   : Node;
             --   ??? In fact, attributes can have children (text or
             --   entity_reference).
 
