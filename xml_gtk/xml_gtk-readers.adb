@@ -32,6 +32,7 @@ with Unicode;               use Unicode;
 with Unicode.CES;           use Unicode.CES;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Glib;                  use Glib;
+with Input_Sources.File;    use Input_Sources.File;
 
 package body XML_Gtk.Readers is
 
@@ -87,7 +88,7 @@ package body XML_Gtk.Readers is
       N := new Glib_XML.Node'
         (Tag           => new String'(Qname),
          Attributes    => Attributes_From_List (Atts),
-         Value         => null,
+         Value         => new String'(""),
          Parent        => Handler.Current_Node,
          Child         => null,
          Next          => null,
@@ -206,5 +207,28 @@ package body XML_Gtk.Readers is
    begin
       Read.Tree := null;
    end Free;
+
+   -----------
+   -- Parse --
+   -----------
+
+   function Parse (File : String) return Glib_XML.Node_Ptr is
+      Input  : File_Input;
+      Reader : Gtk_Reader;
+      Tree   : Glib_XML.Node_Ptr;
+   begin
+      Open (File, Input);
+      Set_Public_Id (Input, File);
+      Set_System_Id (Input, File);
+      
+      Set_Feature (Reader, Validation_Feature, False);
+      Set_Feature (Reader, Test_Valid_Chars_Feature, True);
+
+      Parse (Reader, Input);
+      Tree := Get_Tree (Reader);
+
+      Close (Input);
+      return Tree;
+   end Parse;
 
 end XML_Gtk.Readers;

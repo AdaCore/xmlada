@@ -32,6 +32,7 @@ with Sax.Attributes;
 with Sax.Exceptions;
 with Unicode.CES;
 with Glib.XML;
+with Glib.Xml_Int;
 
 generic
    type XML_Specific_Data is private;
@@ -46,6 +47,9 @@ package XML_Gtk.Readers is
    --  package with the better one in XML/Ada.
    --  You should free the previous Tree before calling Parse multiple times
    --  if you want to avoid memory leaks.
+
+   function Parse (File : String) return Glib_XML.Node_Ptr;
+   --  Same as Glib.Xml.Parse, but uses XML/Ada as the XML parser instead
 
    function Get_Tree (Read : Gtk_Reader) return Glib_XML.Node_Ptr;
    --  Get the tree that Read created
