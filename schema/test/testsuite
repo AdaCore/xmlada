@@ -722,6 +722,34 @@ expect "$sun/xsd003b.xsd" "$sun/xsd003b.n01.xml" \
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.v00.xml" ""
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.v01.xml" ""
 
+expect "$sun/xsd004.xsd" "$sun/xsd004.n00.xml" \
+ "$sun/xsd004.n00.xml:11:15: Must be a simple type, no <illegal> child allowed"
+expect "$sun/xsd004.xsd" "$sun/xsd004.n01.xml" \
+ "$sun/xsd004.n01.xml:8:20: No definition provided for \"undefined\""
+expect "$sun/xsd004.xsd" "$sun/xsd004.n02.xml" \
+ "$sun/xsd004.n02.xml:8:15: Namespace should be different from foo"
+expect "$sun/xsd004.xsd" "$sun/xsd004.n03.xml" \
+ "$sun/xsd004.n03.xml:8:21: Namespace should be different from foo"
+expect "$sun/xsd004.xsd" "$sun/xsd004.n04.xml" \
+ "$sun/xsd004.n04.xml:9:2: No character data allowed by content model"
+expect "$sun/xsd004.xsd" "$sun/xsd004.n05.xml" \
+ "$sun/xsd004.n05.xml:8:15: Invalid namespace for this element: \"foo\" not in \"##local\""
+expect "$sun/xsd004.xsd" "$sun/xsd004.n06.xml" \
+ "$sun/xsd004.n06.xml:8:12: Invalid namespace for this element: \"bar\" not in \"##local\""
+expect "$sun/xsd004.xsd" "$sun/xsd004.n07.xml" \
+ "$sun/xsd004.n07.xml:8:21: Invalid namespace for this element: \"zot\" not in \"##local\""
+expect "$sun/xsd004.xsd" "$sun/xsd004.n08.xml" \
+ "$sun/xsd004.n08.xml:8:21: No definition provided for \"undeclared\""
+expect "$sun/xsd004.xsd" "$sun/xsd004.n09.xml" \
+ "$sun/xsd004.n09.xml:8:12: Invalid namespace for this element: \"bar\" not in \"##targetNamespace\""
+expect "$sun/xsd004.xsd" "$sun/xsd004.n10.xml" \
+ "$sun/xsd004.n10.xml:8:18: Invalid namespace for this element: \"\" not in \"##targetNamespace\""
+expect "$sun/xsd004.xsd" "$sun/xsd004.n11.xml" \
+ "$sun/xsd004.n11.xml:8:15: Invalid namespace for this element: \"foo\" not in \"bar\""
+expect "$sun/xsd004.xsd" "$sun/xsd004.n12.xml" \
+ "$sun/xsd004.n12.xml:8:18: Invalid namespace for this element: \"\" not in \"bar\""
+
+
 fi
 
 
