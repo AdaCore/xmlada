@@ -397,16 +397,26 @@ package body Schema.Readers is
          end if;
       end if;
 
-      --  Whether this element is valid in the current context
+      --  Find out the namespace to use for the current element. This namespace
+      --  can be guessed from the parent's element for validation purposes if
+      --  we have an unqualified item. Whether qualification should be
+      --  mandatory or not is tested later on
 
-      Get_NS (Handler.Grammar, Namespace_URI, Result => G);
+      if Namespace_URI = ""
+        and then Handler.Validators /= null
+      then
+         G := Handler.Validators.Grammar;
+      else
+         Get_NS (Handler.Grammar, Namespace_URI, Result => G);
+      end if;
+
+      --  Whether this element is valid in the current context
 
       if Handler.Validators /= null then
          Validate_Start_Element
            (Get_Validator (Handler.Validators.Typ),
-            Local_Name, Namespace_URI,
-            Handler.Validators.Data,
-            Handler.Grammar, Element);
+            Local_Name, Namespace_URI, G, Handler.Validators.Data,
+            Element);
       else
          if Debug then
             Put_Line ("Getting element definition from grammar: "
