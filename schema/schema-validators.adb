@@ -13,6 +13,7 @@ with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
 with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
 with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
+with Schema.Validators.Lists;        use Schema.Validators.Lists;
 
 package body Schema.Validators is
 
@@ -48,6 +49,7 @@ package body Schema.Validators is
       Local_Name  : Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element;
       Skip_Current      : out Boolean);
    --  Check whether Nested matches Local_Name.
@@ -66,6 +68,7 @@ package body Schema.Validators is
       Local_Name        : Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element);
    --  Run the nested group of Validator, if there is any.
    --  On exit, Element_Validator is set to No_Element if either the nested
@@ -139,21 +142,6 @@ package body Schema.Validators is
    --  If a similar attribute already exists in the list, Validator will either
    --  be ignored (Override is False), or replace the existing definition
    --  (Override is True).
-
-   --------------------
-   -- List_Validator --
-   --------------------
-
-   type List_Validator_Record is new Any_Simple_XML_Validator_Record with
-      record
-         Base : XML_Type;
-      end record;
-
-   procedure Validate_Characters
-     (Validator     : access List_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
-   --  See doc from inherited subprogram
 
    -------------------------
    -- Get_Attribute_Lists --
@@ -400,9 +388,11 @@ package body Schema.Validators is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element)
    is
-      pragma Unreferenced (Validator, Data, Namespace_URI, NS);
+      pragma Unreferenced
+        (Validator, Data, Namespace_URI, NS, Schema_Target_NS);
    begin
       Validation_Error
         ("Must be a simple type, no <" & Local_Name & "> child allowed");
@@ -419,9 +409,11 @@ package body Schema.Validators is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element)
    is
-      pragma Unreferenced (Validator, Data, Namespace_URI, NS);
+      pragma Unreferenced
+        (Validator, Data, Namespace_URI, NS, Schema_Target_NS);
    begin
       Validation_Error ("No definition found for """ & Local_Name & """");
       Element_Validator := No_Element;
@@ -727,48 +719,13 @@ package body Schema.Validators is
                     & " --" & Ch & "--" & Boolean'Image (Empty_Element));
    end Validate_Characters;
 
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access List_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
-   is
-      Start : Integer := Ch'First;
-   begin
-      Debug_Output ("Validate_Characters for list --" & Ch & "--"
-                    & Get_Name (Validator));
-
-      --  Ch has already been normalized by the SAX parser
-      for C in Ch'Range loop
-         if Ch (C) = ' ' then
-            if C /= Ch'First then
-               Validate_Characters
-                 (Get_Validator (Validator.Base), Ch (Start .. C - 1),
-                  Empty_Element);
-            end if;
-            Start := C + 1;
-         end if;
-      end loop;
-
-      if Start <= Ch'Last then
-         Validate_Characters
-           (Get_Validator (Validator.Base), Ch (Start .. Ch'Last),
-            Empty_Element);
-      end if;
-   end Validate_Characters;
-
    -------------
    -- List_Of --
    -------------
 
    function List_Of (Typ : XML_Type) return XML_Type is
-      Tmp : constant XML_Validator := new List_Validator_Record'
-        (Any_Simple_XML_Validator_Record with Base => Typ);
    begin
-      return Create_Local_Type (Tmp);
+      return Create_Local_Type (List_Of (Typ));
    end List_Of;
 
    ---------------
@@ -1067,8 +1024,10 @@ package body Schema.Validators is
 
    function Get_Local_Name (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
    begin
-      if Typ = null or else Typ.Local_Name = null then
+      if Typ = No_Type then
          return "No_Type";
+      elsif Typ.Local_Name = null then
+         return "anonymous";
       else
          return Typ.Local_Name.all;
       end if;
@@ -1232,7 +1191,7 @@ package body Schema.Validators is
    ----------------
 
    procedure Initialize (Grammar : in out XML_Grammar) is
-      Tmp      : Common_Simple_Validator;
+      Tmp      : Any_Simple_XML_Validator;
       Tmp2     : XML_Validator;
       G, XML_G, XML_IG : XML_Grammar_NS;
       Created  : XML_Type;
@@ -1256,174 +1215,137 @@ package body Schema.Validators is
       Tmp := new Boolean_Validator_Record;
       Create_Global_Type (G, "boolean", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Pattern) := True;
-      Tmp.Facets.Pattern_String := new Byte_Sequence'("\d\d\d\d-\d\d-\d\d");
-      Create_Global_Type (G, "date", Tmp);
-
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
+      Tmp := new String_Validator_Record;
       Create_Global_Type (G, "string", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_QName'Access;
+      Tmp := new String_Validator_Record;
+      Set_Implicit_Enumeration
+        (String_Validator (Tmp).Facets.Facets, Is_Valid_QName'Access);
       Create_Global_Type (G, "QName", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Replace;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Replace);
       Create_Global_Type (G, "normalizeString", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Collapse);
       Create_Global_Type (G, "token", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_Language_Name'Access;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Collapse);
+      Set_Implicit_Enumeration
+        (String_Validator (Tmp).Facets.Facets, Is_Valid_Language_Name'Access);
       Created := Create_Global_Type (G, "language", Tmp);
       Create_Global_Attribute (XML_G, "lang", Created);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_Nmtoken'Access;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Collapse);
+      Set_Implicit_Enumeration
+        (String_Validator (Tmp).Facets.Facets, Is_Valid_Nmtoken'Access);
       Create_Global_Type (G, "NMTOKEN", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_Name'Access;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Collapse);
+      Set_Implicit_Enumeration
+        (String_Validator (Tmp).Facets.Facets, Is_Valid_Name'Access);
       Create_Global_Type (G, "Name", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Collapse);
+      Set_Implicit_Enumeration
+        (String_Validator (Tmp).Facets.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "NCName", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Collapse);
+      Set_Implicit_Enumeration
+        (String_Validator (Tmp).Facets.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ID", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Collapse);
+      Set_Implicit_Enumeration
+        (String_Validator (Tmp).Facets.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "IDREF", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := String_Facets;
-      Tmp.Facets.Mask (Facet_Whitespace) := True;
-      Tmp.Facets.Whitespace := Collapse;
-      Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
-      Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
+      Tmp := new String_Validator_Record;
+      Set_Whitespace (String_Validator (Tmp).Facets.Facets, Collapse);
+      Set_Implicit_Enumeration
+        (String_Validator (Tmp).Facets.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ENTITY", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      --  ??? Hack to make it understood as an integer type, not a string
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := Natural'Last;
+      Tmp := new Integer_Validator_Record;
       Create_Global_Type (G, "decimal", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
       Create_Global_Type (G, "integer", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := 0;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive := 0;
       Create_Global_Type (G, "nonPositiveInteger", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := -1;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive := -1;
       Create_Global_Type (G, "negativeInteger", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := +9_223_372_036_854_775_807;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := -9_223_372_036_854_775_808;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive :=
+        +9_223_372_036_854_775_807;
+      Integer_Validator (Tmp).Facets.Min_Inclusive :=
+        -9_223_372_036_854_775_808;
       Create_Global_Type (G, "long", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := +2_147_483_647;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := -2_147_483_648;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive := +2_147_483_647;
+      Integer_Validator (Tmp).Facets.Min_Inclusive := -2_147_483_648;
       Create_Global_Type (G, "int", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := +32_767;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := -32_768;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive := +32_767;
+      Integer_Validator (Tmp).Facets.Min_Inclusive := -32_768;
       Create_Global_Type (G, "short", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := +127;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := -128;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive := +127;
+      Integer_Validator (Tmp).Facets.Min_Inclusive := -128;
       Create_Global_Type (G, "byte", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := 0;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "nonNegativeInteger", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := 1;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Min_Inclusive := 1;
       Create_Global_Type (G, "positiveInteger", Tmp);
 
 --        Tmp := new Common_Simple_XML_Validator;
@@ -1436,35 +1358,48 @@ package body Schema.Validators is
 --        Tmp.Facets.Min_Inclusive := 0;
 --        Create_Global_Type (G, Create_Type ("unsignedLong", Tmp));
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := +4_294_967_295;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := 0;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive := +4_294_967_295;
+      Integer_Validator (Tmp).Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "unsignedInt", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := +65_535;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := 0;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive := +65_535;
+      Integer_Validator (Tmp).Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "unsignedShort", Tmp);
 
-      Tmp := new Common_Simple_XML_Validator;
-      Tmp.Facets.Settable := Integer_Facets;
-      Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
-      Tmp.Facets.Fraction_Digits := 0;
-      Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
-      Tmp.Facets.Max_Inclusive := +255;
-      Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
-      Tmp.Facets.Min_Inclusive := 0;
+      Tmp := new Integer_Validator_Record;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Fraction_Digits) := True;
+      Integer_Validator (Tmp).Facets.Fraction_Digits := 0;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Max_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Mask (Facet_Min_Inclusive) := True;
+      Integer_Validator (Tmp).Facets.Max_Inclusive := +255;
+      Integer_Validator (Tmp).Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "unsignedByte", Tmp);
+
+      Tmp := new Time_Validator_Record;
+      Create_Global_Type (G, "time", Tmp);
+
+      Tmp := new Float_Validator_Record;
+      Create_Global_Type (G, "float", Tmp);
+
+      --  Invalid below
+
+      Tmp := new Time_Validator_Record;
+      Create_Global_Type (G, "dateTime", Tmp);
+
+      Tmp := new Time_Validator_Record;
+      Create_Global_Type (G, "date", Tmp);
+
+
 
       Create_Global_Attribute (XML_IG, "nil", Lookup (G, "boolean"));
       Create_Global_Attribute (XML_IG, "type", Lookup (G, "QName"));
@@ -1473,6 +1408,61 @@ package body Schema.Validators is
       Create_Global_Attribute (XML_IG, "noNamespaceSchemaLocation",
                                Lookup (G, "uriReference"));
    end Initialize;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Facets : in out Facets_Description) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Facets_Description_Record'Class, Facets_Description);
+   begin
+      if Facets /= null then
+         Free (Facets.all);
+         Unchecked_Free (Facets);
+      end if;
+   end Free;
+
+   ----------------------------
+   -- Get_Facets_Description --
+   ----------------------------
+
+   function Get_Facets_Description
+     (Validator : access XML_Validator_Record) return Facets_Description
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return null;
+   end Get_Facets_Description;
+
+   ----------------------------
+   -- Get_Facets_Description --
+   ----------------------------
+
+   function Get_Facets_Description
+     (Validator : access Any_Simple_XML_Validator_Record)
+      return Facets_Description
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return new Common_Facets_Description;
+   end Get_Facets_Description;
+
+   ------------------------
+   -- Check_Content_Type --
+   ------------------------
+
+   procedure Check_Content_Type
+     (Validator        : access Any_Simple_XML_Validator_Record;
+      Should_Be_Simple : Boolean)
+   is
+      pragma Unreferenced (Validator);
+   begin
+      if not Should_Be_Simple then
+         Validation_Error
+           ("Expecting simple type, got complex type");
+      end if;
+   end Check_Content_Type;
 
    --------------------------
    -- Create_Local_Element --
@@ -2110,6 +2100,7 @@ package body Schema.Validators is
       Local_Name        : Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element;
       Skip_Current      : out Boolean)
    is
@@ -2118,7 +2109,8 @@ package body Schema.Validators is
       Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
 
       Applies_To_Tag
-        (Nested, Local_Name, Namespace_URI, NS, Applies, Skip_Current);
+        (Nested, Local_Name, Namespace_URI, NS,
+         Schema_Target_NS, Applies, Skip_Current);
 
       if Applies then
          Data.Nested      := Group_Model (Nested);
@@ -2126,7 +2118,7 @@ package body Schema.Validators is
 
          Validate_Start_Element
            (Data.Nested, Local_Name, Namespace_URI, NS,
-            Data.Nested_Data, Element_Validator);
+            Data.Nested_Data, Schema_Target_NS, Element_Validator);
 
          if Element_Validator /= No_Element then
             Debug_Output
@@ -2154,6 +2146,7 @@ package body Schema.Validators is
       Local_Name        : Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element) is
    begin
       Debug_Push_Prefix ("Run_Nested: " & Get_Name (Validator)
@@ -2161,7 +2154,7 @@ package body Schema.Validators is
 
       Validate_Start_Element
         (Data.Nested, Local_Name, Namespace_URI, NS,
-         Data.Nested_Data, Element_Validator);
+         Data.Nested_Data, Schema_Target_NS, Element_Validator);
 
       if Element_Validator = No_Element then
          Free_Nested_Group (Group_Model_Data (Data));
@@ -2180,6 +2173,7 @@ package body Schema.Validators is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element)
    is
       D         : constant Sequence_Data_Access := Sequence_Data_Access (Data);
@@ -2194,7 +2188,8 @@ package body Schema.Validators is
 
       if D.Nested /= null then
          Run_Nested
-           (Validator, D, Local_Name, Namespace_URI, NS, Element_Validator);
+           (Validator, D, Local_Name, Namespace_URI, NS,
+            Schema_Target_NS, Element_Validator);
          if Element_Validator /= No_Element then
             Debug_Pop_Prefix;
             return;
@@ -2212,7 +2207,8 @@ package body Schema.Validators is
 
             Check_Nested
               (Get (D.Current).Validator, D, Local_Name,
-               Namespace_URI, NS, Element_Validator, Skip_Current);
+               Namespace_URI, NS, Schema_Target_NS,
+               Element_Validator, Skip_Current);
 
             if Element_Validator /= No_Element then
                D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
@@ -2255,7 +2251,8 @@ package body Schema.Validators is
                     ("Element Matched: "
                      & Element_Validator.Elem.Local_Name.all & ' '
                      & Get_Local_Name (Element_Validator.Elem.Of_Type));
-                  Check_Qualification (Element_Validator, Namespace_URI);
+                  Check_Qualification
+                    (Schema_Target_NS, Element_Validator, Namespace_URI);
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
@@ -2273,7 +2270,7 @@ package body Schema.Validators is
             when Particle_Any =>
                Validate_Start_Element
                  (Curr.Any, Local_Name, Namespace_URI, NS,
-                  null, Element_Validator);
+                  null, Schema_Target_NS, Element_Validator);
                if Element_Validator /= No_Element then
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
                end if;
@@ -2284,7 +2281,8 @@ package body Schema.Validators is
                              & Get_Name (Curr.Validator));
                Check_Nested
                  (Curr.Validator, D, Local_Name,
-                  Namespace_URI, NS, Element_Validator, Skip_Current);
+                  Namespace_URI, NS,
+                  Schema_Target_NS, Element_Validator, Skip_Current);
 
                if Element_Validator /= No_Element then
                   D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
@@ -2516,6 +2514,7 @@ package body Schema.Validators is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element)
    is
       D     : constant Choice_Data_Access := Choice_Data_Access (Data);
@@ -2531,18 +2530,19 @@ package body Schema.Validators is
                Element_Validator := Check_Substitution_Groups
                  (It.Element.Elem, Local_Name, NS);
                if Element_Validator /= No_Element then
-                  Check_Qualification (Element_Validator, Namespace_URI);
+                  Check_Qualification
+                    (Schema_Target_NS, Element_Validator, Namespace_URI);
                end if;
 
             when Particle_Nested =>
                Check_Nested
                  (It.Validator, D, Local_Name, Namespace_URI, NS,
-                  Element_Validator, Skip_Current);
+                  Schema_Target_NS, Element_Validator, Skip_Current);
 
             when Particle_Any =>
                Validate_Start_Element
                  (It.Any, Local_Name, Namespace_URI, NS,
-                  null, Element_Validator);
+                  null, Schema_Target_NS, Element_Validator);
 
             when Particle_Group | Particle_XML_Type =>
                --  Not possible, since the iterator hides these
@@ -2557,7 +2557,8 @@ package body Schema.Validators is
 
       if D.Nested /= null then
          Run_Nested
-           (Validator, D, Local_Name, Namespace_URI, NS, Element_Validator);
+           (Validator, D, Local_Name, Namespace_URI, NS,
+            Schema_Target_NS, Element_Validator);
          if Element_Validator /= No_Element then
             Debug_Pop_Prefix;
             return;
@@ -2837,10 +2838,12 @@ package body Schema.Validators is
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
+      Schema_Target_NS : XML_Grammar_NS;
       Applies       : out Boolean;
       Skip_Current  : out Boolean)
    is
-      pragma Unreferenced (Group, Local_Name, Namespace_URI, NS);
+      pragma Unreferenced (Group, Local_Name, Namespace_URI, NS,
+                           Schema_Target_NS);
    begin
       Applies := False;
       Skip_Current := False;
@@ -2855,6 +2858,7 @@ package body Schema.Validators is
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
+      Schema_Target_NS : XML_Grammar_NS;
       Applies       : out Boolean;
       Skip_Current  : out Boolean)
    is
@@ -2875,7 +2879,7 @@ package body Schema.Validators is
             when Particle_Nested =>
                Applies_To_Tag
                  (Item.Validator, Local_Name, Namespace_URI, NS,
-                  Applies, Skip_Current);
+                  Schema_Target_NS, Applies, Skip_Current);
 
             when Particle_Any =>
                --  ??? Tmp
@@ -2884,7 +2888,7 @@ package body Schema.Validators is
                begin
                   Validate_Start_Element
                     (Item.Any, Local_Name, Namespace_URI, NS, null,
-                     Element_Validator);
+                     Schema_Target_NS, Element_Validator);
                   Applies := True;
                exception
                   when XML_Validation_Error =>
@@ -2927,6 +2931,7 @@ package body Schema.Validators is
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
+      Schema_Target_NS : XML_Grammar_NS;
       Applies       : out Boolean;
       Skip_Current  : out Boolean)
    is
@@ -2944,7 +2949,7 @@ package body Schema.Validators is
             when Particle_Nested =>
                Applies_To_Tag
                  (It.Validator, Local_Name, Namespace_URI,
-                  NS, Applies, Skip_Current);
+                  NS, Schema_Target_NS, Applies, Skip_Current);
                Applies := Applies
                  or else Can_Be_Empty (It.Validator);
 
@@ -2955,7 +2960,7 @@ package body Schema.Validators is
                begin
                   Validate_Start_Element
                     (It.Any, Local_Name, Namespace_URI, NS, null,
-                     Element_Validator);
+                     Schema_Target_NS, Element_Validator);
                   Applies := True;
                exception
                   when XML_Validation_Error =>
@@ -3385,6 +3390,7 @@ package body Schema.Validators is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element)
    is
       Tmp     : Particle_Iterator := Start (Validator.Particles);
@@ -3442,7 +3448,8 @@ package body Schema.Validators is
       Free (Tmp);
 
       if Element_Validator /= No_Element then
-         Check_Qualification (Element_Validator, Namespace_URI);
+         Check_Qualification
+           (Schema_Target_NS, Element_Validator, Namespace_URI);
       end if;
 
       Debug_Pop_Prefix;
@@ -3567,6 +3574,7 @@ package body Schema.Validators is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element)
    is
       pragma Unreferenced (Data);
@@ -3632,7 +3640,8 @@ package body Schema.Validators is
       Validate_Start_Element
         (Get_Validator
            (Get_Type (Get_UR_Type_Element (Validator.Process_Contents))),
-         Local_Name, Namespace_URI, NS, null, Element_Validator);
+         Local_Name, Namespace_URI, NS, null,
+         Schema_Target_NS, Element_Validator);
    end Validate_Start_Element;
 
    -------------------------
@@ -3970,7 +3979,9 @@ package body Schema.Validators is
    -------------------------
 
    procedure Check_Qualification
-     (Element : XML_Element; Namespace_URI : Unicode.CES.Byte_Sequence) is
+     (Target_NS     : XML_Grammar_NS;
+      Element       : XML_Element;
+      Namespace_URI : Unicode.CES.Byte_Sequence) is
    begin
       if not Is_Global (Element)
         and then Element.Elem.Form = Unqualified
@@ -3981,6 +3992,7 @@ package body Schema.Validators is
 
       elsif Element.Elem.Form = Qualified
         and then Namespace_URI = ""
+        and then Target_NS /= null
       then
          Validation_Error
            ("Namespace specification is required in this context");
@@ -4299,5 +4311,26 @@ package body Schema.Validators is
    begin
       return False;
    end Get_Namespace_From_Parent_For_Locals;
+
+   -------------------
+   -- Set_Target_NS --
+   -------------------
+
+   procedure Set_Target_NS
+     (Grammar : in out XML_Grammar;
+      NS      : XML_Grammar_NS) is
+   begin
+      Grammar.Target_NS := NS;
+   end Set_Target_NS;
+
+   -------------------
+   -- Get_Target_NS --
+   -------------------
+
+   function Get_Target_NS (Grammar : XML_Grammar) return XML_Grammar_NS is
+   begin
+      return Grammar.Target_NS;
+   end Get_Target_NS;
+
 
 end Schema.Validators;

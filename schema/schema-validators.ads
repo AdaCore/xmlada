@@ -64,6 +64,30 @@ package Schema.Validators is
    procedure Free (Data : in out Validator_Data);
    --  Free Data and the pointed data
 
+   ------------
+   -- Facets --
+   ------------
+
+   type Facets_Description_Record is abstract tagged null record;
+   type Facets_Description is access all Facets_Description_Record'Class;
+
+   procedure Add_Facet
+     (Facets      : in out Facets_Description_Record;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence;
+      Applied     : out Boolean) is abstract;
+   --  Set the value of a facet.
+   --  Applied is set to True if the facet was valid for Facets
+
+   procedure Check_Facet
+     (Facets : in out Facets_Description_Record;
+      Value  : Unicode.CES.Byte_Sequence) is abstract;
+   --  Check whether Value matches Facets. Raises XML_Validator_Error otherwise
+
+   procedure Free (Facets : in out Facets_Description_Record) is abstract;
+   procedure Free (Facets : in out Facets_Description);
+   --  Free the facets;
+
    -----------
    -- Types --
    -----------
@@ -223,6 +247,7 @@ package Schema.Validators is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element);
    --  Check whether this Start_Element event is valid in the context of the
    --  validator. Data is the result of Create_Validator_Data.
@@ -277,6 +302,15 @@ package Schema.Validators is
    --  empty. This is to distinguish from the empty string:
    --      <tag/>   and <tag></tag>
    --  If Empty_Element is true, then Ch is irrelevant
+
+   function Get_Facets_Description
+     (Validator : access XML_Validator_Record) return Facets_Description;
+   --  Allocate a new record to store some values for the facets associated
+   --  with Validator. This is used in restrictions or extensions of base
+   --  types to override some of the facets. The returned description contains
+   --  no preset facets.
+   --  null is returned if the type doesn't have any facet.
+   --  Return value must be freed by the caller
 
    procedure Add_Facet
      (Validator   : access XML_Validator_Record;
@@ -410,10 +444,13 @@ package Schema.Validators is
    --  Set the "block" status of the element
 
    procedure Check_Qualification
-     (Element : XML_Element; Namespace_URI : Unicode.CES.Byte_Sequence);
+     (Target_NS     : XML_Grammar_NS;
+      Element       : XML_Element;
+      Namespace_URI : Unicode.CES.Byte_Sequence);
    --  Check whether the element should have been qualified or not,
    --  depending on its "form" attribute.
    --  Namespace_URI is the namespace as read in the file.
+   --  Target_NS is the namespace described by the current schema
 
    function Is_Global (Element : XML_Element) return Boolean;
    --  Whether Element is a global element (ie declared at the top-level of
@@ -549,6 +586,11 @@ package Schema.Validators is
       Result        : out XML_Grammar_NS);
    --  Return the part of the grammar specialized for a given namespace.
    --  If no such namespace exists yet in the grammar, it is created.
+
+   procedure Set_Target_NS (Grammar : in out XML_Grammar; NS : XML_Grammar_NS);
+   function Get_Target_NS (Grammar : XML_Grammar) return XML_Grammar_NS;
+   --  Set the target namespace for the grammar. This is the "targetNamespace"
+   --  attribute of the <schema> node.
 
    function Lookup_Element
      (Grammar       : XML_Grammar_NS;
@@ -1051,8 +1093,10 @@ private
    type XML_Grammar is record
       Grammars : Grammar_NS_Array_Access;
       --  All the namespaces known for that grammar
+
+      Target_NS : XML_Grammar_NS;
    end record;
-   No_Grammar : constant XML_Grammar := (Grammars => null);
+   No_Grammar : constant XML_Grammar := (Grammars => null, Target_NS => null);
 
    ------------------------
    -- Group_Model_Record --
@@ -1080,6 +1124,7 @@ private
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
+      Schema_Target_NS : XML_Grammar_NS;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
    --  Whether Group can process Local_Name. This is used for group_models
@@ -1125,6 +1170,7 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element);
    procedure Validate_Characters
      (Validator     : access XML_Any_Record;
@@ -1152,6 +1198,7 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access Sequence_Record;
@@ -1164,6 +1211,7 @@ private
       Local_Name   : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
+      Schema_Target_NS : XML_Grammar_NS;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
    function Can_Be_Empty (Group : access Sequence_Record) return Boolean;
@@ -1188,6 +1236,7 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access Choice_Record;
@@ -1200,6 +1249,7 @@ private
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
+      Schema_Target_NS : XML_Grammar_NS;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
    function Can_Be_Empty (Group : access Choice_Record) return Boolean;
@@ -1231,6 +1281,7 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access XML_All_Record;
@@ -1251,6 +1302,8 @@ private
 
    type Any_Simple_XML_Validator_Record is new XML_Validator_Record
    with null record;
+   type Any_Simple_XML_Validator
+     is access all Any_Simple_XML_Validator_Record'Class;
    --  Validates a "SimpleType" XML datatype, ie accepts any contents but
    --  elements and attributes
 
@@ -1260,12 +1313,20 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator  : access Any_Simple_XML_Validator_Record;
       Local_Name : Unicode.CES.Byte_Sequence;
       Data       : Validator_Data);
+   procedure Check_Content_Type
+     (Validator        : access Any_Simple_XML_Validator_Record;
+      Should_Be_Simple : Boolean);
+   function Get_Facets_Description
+     (Validator : access Any_Simple_XML_Validator_Record)
+      return Facets_Description;
    --  See doc from inherited subprograms
+
 
    ---------------
    -- XML_Union --
