@@ -1,5 +1,8 @@
 Problems fixed in 0.8
 
+- Parameter entities used to defined element models no longer have
+  to be encapsulated in parenthesis (e.g  "A|B" is a valid value for %ent,
+  which can be used in a content model as "(%ent;)").
 - URI were incorrectly reported for attributes with namespace.
 - URI are correctly resolved for attributes even if the xmlns:... is 
   found after the attribute (but in the same element start tag)
