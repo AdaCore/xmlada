@@ -10,7 +10,7 @@
 # Modify the line below to reflect the location where
 # you want to install the library
 
-PREFIX=NONE
+PREFIX=/home/briot/Ada/xml/install
 
 MAJOR=0
 MINOR=7
@@ -120,7 +120,7 @@ clean: force
 	-${RM} ${TEST_PROGS}
 	@-rmdir obj
 
-lib: ${OBJ}
+lib: all_obj
 	cd obj; ${AR} ${ARFLAGS} ${libname}.a ${OBJ}
 ifeq (${WIN32}, TRUE)
 	cd obj; ${RANLIB} ${libname}.a
