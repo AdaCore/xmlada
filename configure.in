@@ -6,10 +6,11 @@ XMLADA_MINOR_VERSION=0.1w
 
 AC_PROG_CC
 AC_PROG_RANLIB
-AC_CHECK_PROGS(DVIPS, dvips)
-AC_CHECK_PROGS(MAKEINFO, makeinfo)
-AC_CHECK_PROGS(TEXI2HTML, texi2html)
-AC_CHECK_PROGS(TEX, tex)
+AC_CHECK_PROGS(DVIPS, dvips, "")
+AC_CHECK_PROGS(MAKEINFO, makeinfo, "")
+AC_CHECK_PROGS(TEXI2HTML, texi2html, "")
+AC_CHECK_PROGS(TEX, tex, "")
+AC_CHECK_PROG(GTKADA_GPR, gtkada.gpr, "gtkada.gpr", "", $ADA_PROJECT_PATH)
 
 EXEC_PREFIX="$prefix"
 
@@ -18,4 +19,13 @@ AC_SUBST(CC)
 AC_SUBST(RANLIB)
 AC_SUBST(XMLADA_MAJOR_VERSION)
 AC_SUBST(XMLADA_MINOR_VERSION)
+
+echo "--------------------------------------------------"
+if [[ x"$GTKADA_GPR" = x ]]; then
+   echo "--  GtkAda support: no  (add gtkada.gpr to ADA_PROJECT_PATH)" 
+else
+   echo "--  GtkAda support: yes"
+fi
+echo "--------------------------------------------------"
+
 AC_OUTPUT(Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config)
