@@ -1,7 +1,6 @@
 with Unicode.CES;       use Unicode.CES;
 with Schema.Validators; use Schema.Validators;
 with Schema.Validators; use Schema.Validators;
-with GNAT.IO; use GNAT.IO;
 
 package body Schema.Schema_Grammar is
 
