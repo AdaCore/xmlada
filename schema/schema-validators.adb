@@ -1523,7 +1523,8 @@ package body Schema.Validators is
 
    function Create_Element
      (Local_Name : Unicode.CES.Byte_Sequence;
-      Of_Type    : XML_Type) return XML_Element
+      Of_Type    : XML_Type;
+      Form       : Form_Type) return XML_Element
    is
       Result : XML_Element;
    begin
@@ -1540,7 +1541,7 @@ package body Schema.Validators is
             Block_Restriction   => False,
             Block_Extension     => False,
             Is_Global           => False,
-            Form                => Form_Default,
+            Form                => Form,
             Fixed               => null),
          Is_Ref => False);
       return Result;
@@ -1791,7 +1792,7 @@ package body Schema.Validators is
 
       Debug_Output ("Forward element decl: " & Local_Name);
 
-      Elem := Create_Element (Local_Name, Invalid);
+      Elem := Create_Element (Local_Name, Invalid, Qualified);
       Register (Grammar, Elem);
       return Elem;
    end Register_Forward;
@@ -2359,6 +2360,7 @@ package body Schema.Validators is
                      & Get_Local_Name (Element_Validator.Elem.Of_Type));
 
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
+                  Check_Qualification (Element_Validator, Namespace_URI);
 
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
                   Validation_Error
@@ -2684,6 +2686,10 @@ package body Schema.Validators is
             & Integer'Image (Validator.Max_Occurs));
          Element_Validator := No_Element;
       end if;
+
+      if Element_Validator /= No_Element then
+         Check_Qualification (Element_Validator, Namespace_URI);
+      end if;
    end Validate_Start_Element;
 
    --------------------------
@@ -2916,8 +2922,8 @@ package body Schema.Validators is
 
             when Particle_Nested =>
                Applies_To_Tag
-                 (Item.Validator, Local_Name, Namespace_URI, Grammar,
-                  Applies, Skip_Current);
+                 (Item.Validator, Local_Name, Namespace_URI,
+                  Grammar, Applies, Skip_Current);
 
             when Particle_Any =>
                --  ??? Tmp
@@ -2925,8 +2931,8 @@ package body Schema.Validators is
                   Element_Validator : XML_Element;
                begin
                   Validate_Start_Element
-                    (Item.Any, Local_Name, Namespace_URI, null, Grammar,
-                     Element_Validator);
+                    (Item.Any, Local_Name, Namespace_URI, null,
+                     Grammar, Element_Validator);
                   Applies := True;
                exception
                   when XML_Validation_Error =>
@@ -2977,8 +2983,8 @@ package body Schema.Validators is
 
             when Particle_Nested =>
                Applies_To_Tag
-                 (It.Validator, Local_Name, Namespace_URI, Grammar,
-                  Applies, Skip_Current);
+                 (It.Validator, Local_Name, Namespace_URI,
+                  Grammar, Applies, Skip_Current);
 
             when Particle_Any =>
                --  ??? Tmp
@@ -2986,8 +2992,8 @@ package body Schema.Validators is
                   Element_Validator : XML_Element;
                begin
                   Validate_Start_Element
-                    (It.Any, Local_Name, Namespace_URI, null, Grammar,
-                     Element_Validator);
+                    (It.Any, Local_Name, Namespace_URI, null,
+                     Grammar, Element_Validator);
                   Applies := True;
                exception
                   when XML_Validation_Error =>
@@ -3346,6 +3352,8 @@ package body Schema.Validators is
          Count := Count + 1;
          Next (Tmp);
       end loop;
+
+      Check_Qualification (Element_Validator, Namespace_URI);
    end Validate_Start_Element;
 
    --------------------------
@@ -3429,6 +3437,9 @@ package body Schema.Validators is
       C : Unicode_Char;
       Valid : Boolean := False;
    begin
+      --  Do not check qualification, there is a special handling for
+      --  namespaces
+
       if Validator.Namespace.all = "##any" then
          null;
 
@@ -3716,29 +3727,6 @@ package body Schema.Validators is
       return Grammar.Element_Form_Default;
    end Get_Element_Form_Default;
 
-   --------------
-   -- Set_Form --
-   --------------
-
-   procedure Set_Form (Element : XML_Element; Form : Form_Type) is
-   begin
-      Element.Elem.Form := Form;
-   end Set_Form;
-
-   --------------
-   -- Get_Form --
-   --------------
-
-   function Get_Form
-     (Element : XML_Element; Grammar : XML_Grammar_NS) return Form_Type is
-   begin
-      if Element.Elem.Form = Form_Default then
-         return Get_Element_Form_Default (Grammar);
-      else
-         return Element.Elem.Form;
-      end if;
-   end Get_Form;
-
    ---------------
    -- Is_Global --
    ---------------
@@ -3758,5 +3746,27 @@ package body Schema.Validators is
          Put_Line (Str);
       end if;
    end Debug_Output;
+
+   -------------------------
+   -- Check_Qualification --
+   -------------------------
+
+   procedure Check_Qualification
+     (Element : XML_Element; Namespace_URI : Unicode.CES.Byte_Sequence) is
+   begin
+      if not Is_Global (Element)
+        and then Element.Elem.Form = Unqualified
+        and then Namespace_URI /= ""
+      then
+         Validation_Error
+           ("Namespace specification not authorized in this context");
+
+      elsif Element.Elem.Form = Qualified
+        and then Namespace_URI = ""
+      then
+         Validation_Error
+           ("Namespace specification is required in this context");
+      end if;
+   end Check_Qualification;
 
 end Schema.Validators;

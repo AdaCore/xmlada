@@ -44,7 +44,7 @@ package Schema.Validators is
    Unbounded : constant Integer := -1;
    --  To indicate that a Max_Occurs is set to unbounded
 
-   type Form_Type is (Qualified, Unqualified, Form_Default);
+   type Form_Type is (Qualified, Unqualified);
    type Process_Contents_Type is (Process_Strict, Process_Lax, Process_Skip);
 
    --------------------
@@ -303,7 +303,8 @@ package Schema.Validators is
 
    function Create_Element
      (Local_Name : Unicode.CES.Byte_Sequence;
-      Of_Type    : XML_Type) return XML_Element;
+      Of_Type    : XML_Type;
+      Form       : Form_Type) return XML_Element;
    --  Create a new element, with a specific type
 
    procedure Set_Substitution_Group
@@ -364,12 +365,10 @@ package Schema.Validators is
    function Get_Block_On_Extension (Element : XML_Element) return Boolean;
    --  Set the "block" status of the element
 
-   procedure Set_Form (Element : XML_Element; Form : Form_Type);
-   function Get_Form
-     (Element : XML_Element; Grammar : XML_Grammar_NS) return Form_Type;
-   --  Get the value of the "form" attribute of the element. If the attribute
-   --  wasn't specified for the element, it returns the default set for the
-   --  grammar.
+   procedure Check_Qualification
+     (Element : XML_Element; Namespace_URI : Unicode.CES.Byte_Sequence);
+   --  Check whether the element should have been qualified or not,
+   --  depending on its "form" attribute
 
    function Is_Global (Element : XML_Element) return Boolean;
    --  Whether Element is a global element (ie declared at the top-level of
@@ -659,7 +658,7 @@ private
       Block_Extension   : Boolean;
       --  The value for the "block" attribute of the element
 
-      Form : Form_Type := Form_Default;
+      Form : Form_Type;
       --  The value of the "form" attribute of the element
 
       Is_Global : Boolean;
