@@ -7,6 +7,7 @@ with Ada.Exceptions;  use Ada.Exceptions;
 with Sax.Utils;       use Sax.Utils;
 with GNAT.IO; use GNAT.IO;
 with Ada.Tags; use Ada.Tags;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
 with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
@@ -93,6 +94,15 @@ package body Schema.Validators is
      (Base        : XML_Type;
       Restriction : XML_Validator := null) return XML_Validator
       renames Schema.Validators.Restrictions.Create_Restriction_Of;
+
+   function Internal_Type_Model
+     (Validator : access Group_Model_Record'Class;
+      Separator : Byte_Sequence) return Byte_Sequence;
+   --  Internal version of Type_Model (shared implementation)
+
+   function Type_Model
+     (Iter : Particle_Iterator) return Byte_Sequence;
+   --  Return the content model describes by Particle
 
    Debug_Prefixes_Level : Natural := 0;
    procedure Debug_Push_Prefix (Append : String);
@@ -486,7 +496,8 @@ package body Schema.Validators is
       Atts              : Sax.Attributes.Attributes'Class;
       Id_Table          : in out Id_Htable_Access;
       Nillable          : Boolean;
-      Is_Nil            : out Boolean)
+      Is_Nil            : out Boolean;
+      Grammar           : in out XML_Grammar)
    is
       Length : constant Natural := Get_Length (Atts);
       Seen   : array (0 .. Length - 1) of Boolean := (others => False);
@@ -559,7 +570,7 @@ package body Schema.Validators is
                Check_Id (Named, Found);
 
                begin
-                  Validate_Attribute (Named.all, Atts, Found);
+                  Validate_Attribute (Named.all, Atts, Found, Grammar);
                exception
                   when E : XML_Validation_Error =>
                      Validation_Error
@@ -577,7 +588,7 @@ package body Schema.Validators is
       procedure Check_Any_Attribute
         (Any : Any_Attribute_Validator; Index : Integer) is
       begin
-         Validate_Attribute (Any, Atts, Index);
+         Validate_Attribute (Any, Atts, Index, Grammar);
       exception
          when E : XML_Validation_Error =>
             Validation_Error
@@ -711,8 +722,8 @@ package body Schema.Validators is
 
             else
                Debug_Output ("Invalid attribute "
-                             & Get_URI (Atts, S) & " -> "
-                             & Get_Qname (Atts, S));
+                             & Get_URI (Atts, S) & ":"
+                             & Get_Local_Name (Atts, S));
 
                Validation_Error
                  ("Attribute """ & Get_Qname (Atts, S) & """ invalid for this"
@@ -933,7 +944,10 @@ package body Schema.Validators is
    procedure Validate_Attribute
      (Validator : Named_Attribute_Validator_Record;
       Atts      : Sax.Attributes.Attributes'Class;
-      Index     : Natural) is
+      Index     : Natural;
+      Grammar   : in out XML_Grammar)
+   is
+      pragma Unreferenced (Grammar);
    begin
       Debug_Output ("Checking attribute "
                     & Validator.Local_Name.all
@@ -1072,12 +1086,13 @@ package body Schema.Validators is
 
    function Lookup_Attribute
      (Grammar       : XML_Grammar_NS;
-      Local_Name    : Unicode.CES.Byte_Sequence) return Attribute_Validator
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Create_If_Needed : Boolean := True) return Attribute_Validator
    is
       Result : constant Named_Attribute_Validator :=
         Attributes_Htable.Get (Grammar.Attributes.all, Local_Name);
    begin
-      if Result = null then
+      if Result = null and then Create_If_Needed then
          return Create_Global_Attribute (Grammar, Local_Name, No_Type);
       end if;
       return Attribute_Validator (Result);
@@ -1494,6 +1509,13 @@ package body Schema.Validators is
       Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
       Tmp.Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "unsignedByte", Tmp);
+
+      Create_Global_Attribute (XML_IG, "nil", Lookup (G, "boolean"));
+      Create_Global_Attribute (XML_IG, "type", Lookup (G, "QName"));
+      Create_Global_Attribute (XML_IG, "schemaLocation",
+                               List_Of (Lookup (G, "uriReference")));
+      Create_Global_Attribute (XML_IG, "noNamespaceSchemaLocation",
+                               Lookup (G, "uriReference"));
    end Initialize;
 
    --------------------------
@@ -2094,21 +2116,25 @@ package body Schema.Validators is
       Curr : XML_Particle_Access;
    begin
       Data.Num_Occurs_Of_Current := Data.Num_Occurs_Of_Current + 1;
+      Debug_Output ("Num_Occurs_Of_Current="
+                      & Data.Num_Occurs_Of_Current'Img);
 
       Curr := Get (Data.Current);
-      if Force
-        or else
-          (Get_Max_Occurs (Data.Current) /= Unbounded
-           and then Data.Num_Occurs_Of_Current >=
-             Get_Max_Occurs (Data.Current))
-      then
-         Debug_Output ("Goto next particle in " & Get_Name (Seq)
-                       & " Occurs of Current="
+      if Curr /= null then
+         if Force
+           or else
+             (Get_Max_Occurs (Data.Current) /= Unbounded
+              and then Data.Num_Occurs_Of_Current >=
+                Get_Max_Occurs (Data.Current))
+         then
+            Debug_Output ("Goto next particle in " & Get_Name (Seq)
+                          & " Occurs of Current="
                        & Data.Num_Occurs_Of_Current'Img);
 
-         Next (Data.Current);
-         Data.Num_Occurs_Of_Current := 0;
-         return Get (Data.Current) /= null;
+            Next (Data.Current);
+            Data.Num_Occurs_Of_Current := 0;
+            return Get (Data.Current) /= null;
+         end if;
       end if;
 
       return True;
@@ -2211,9 +2237,8 @@ package body Schema.Validators is
            (Validator, D, Local_Name, Namespace_URI, Grammar,
             Element_Validator);
          if Element_Validator /= No_Element
-           or else not Move_To_Next_Particle (Validator, D)
+           or else not Move_To_Next_Particle (Validator, D, Force => False)
          then
-            D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
             Debug_Pop_Prefix;
             return;
          end if;
@@ -2233,9 +2258,8 @@ package body Schema.Validators is
                     ("Element Matched: "
                      & Element_Validator.Elem.Local_Name.all & ' '
                      & Get_Local_Name (Element_Validator.Elem.Of_Type));
-
-                  Tmp := Move_To_Next_Particle (Validator, D, Force => False);
                   Check_Qualification (Element_Validator, Namespace_URI);
+                  Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
                   Validation_Error
@@ -2278,8 +2302,7 @@ package body Schema.Validators is
                   Debug_Output ("Nested " & Get_Name (Curr.Validator)
                                 & " didn't match, but is optional");
                else
-                  Debug_Output ("Nested " & Get_Name (Curr.Validator)
-                                & " matched");
+                  D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
                end if;
 
             when Particle_Group | Particle_XML_Type =>
@@ -2361,7 +2384,8 @@ package body Schema.Validators is
                      Debug_Output ("Nested cannot be empty: "
                                    & Get_Name (Curr.Validator));
                      Validation_Error
-                       ("Unexpected end of sequence");
+                       ("Unexpected end of sequence, expecting """
+                       & Type_Model (D.Current) & """");
                   else
                      Debug_Output ("Skipping nested, since optional");
                   end if;
@@ -2377,7 +2401,8 @@ package body Schema.Validators is
          Debug_Output ("Unexpected end of sequence " & Get_Name (Validator)
                        & Get (D.Current).Typ'Img
                        & Get_Min_Occurs (D.Current)'Img);
-         Validation_Error ("Unexpected end of sequence");
+         Validation_Error ("Unexpected end of sequence, expecting """
+                          & Type_Model (D.Current) & """");
       end if;
 
       Debug_Pop_Prefix;
@@ -2573,6 +2598,7 @@ package body Schema.Validators is
       end loop;
 
       if Get (Item) = null then
+         Debug_Output ("Choice didn't match");
          Element_Validator := No_Element;
          Debug_Pop_Prefix;
          return;
@@ -3101,20 +3127,6 @@ package body Schema.Validators is
                Parent  => Iter);
          end if;
       end loop;
-
-      declare
-         Curr : constant XML_Particle_Access := Get (Iter);
-      begin
-         if Curr /= null then
-            if Curr.Typ = Particle_Element then
-               Debug_Output ("Next particle_iterator "
-                             & Curr.Element.Elem.Local_Name.all);
-            else
-               Debug_Output ("Next particle_iterator "
-                             & Curr.Typ'Img);
-            end if;
-         end if;
-      end;
    end Next;
 
    ---------
@@ -3502,11 +3514,14 @@ package body Schema.Validators is
    --------------------------
 
    function Create_Any_Attribute
-     (Kind : Namespace_Kind; NS : XML_Grammar_NS) return Attribute_Validator is
+     (Process_Contents : Process_Contents_Type := Process_Strict;
+      Kind : Namespace_Kind;
+      NS   : XML_Grammar_NS) return Attribute_Validator is
    begin
       return new Any_Attribute_Validator'
-        (Kind => Kind,
-         NS   => NS);
+        (Process_Contents => Process_Contents,
+         Kind             => Kind,
+         NS               => NS);
    end Create_Any_Attribute;
 
    ------------------------
@@ -3516,22 +3531,65 @@ package body Schema.Validators is
    procedure Validate_Attribute
      (Validator : Any_Attribute_Validator;
       Atts      : Sax.Attributes.Attributes'Class;
-      Index     : Natural) is
+      Index     : Natural;
+      Grammar   : in out XML_Grammar)
+   is
+      URI  : constant Byte_Sequence := Get_URI (Atts, Index);
+      Attr : Attribute_Validator;
+      G    : XML_Grammar_NS;
    begin
+      Debug_Output ("Validate_Attribute, anyAttribute: "
+                    & Get_Local_Name (Atts, Index));
+
       case Validator.Kind is
          when Namespace_Other =>
-            if Get_URI (Atts, Index) = "" then
-               Validation_Error ("Invalid in this context");
-
-            elsif Get_URI (Atts, Index) = Validator.NS.Namespace_URI.all then
-               Validation_Error ("Invalid namespace in this context");
+            if URI = "" then
+               Validation_Error
+                 ("Attributes with no namespace invalid in this context");
+            elsif URI = Validator.NS.Namespace_URI.all then
+               Validation_Error
+                 ("Invalid namespace in this context, must be different from "
+                  & """" & Validator.NS.Namespace_URI.all & """");
             end if;
          when Namespace_Any =>
             null;
-         when Namespace_List =>
-            if Get_URI (Atts, Index) /= Validator.NS.Namespace_URI.all then
-               Validation_Error ("Invalid namespace in this context");
+         when Namespace_Local =>
+            if URI /= "" then
+               Validation_Error ("No namespace allowed");
             end if;
+         when Namespace_List =>
+            if URI /= Validator.NS.Namespace_URI.all then
+               Validation_Error
+                 ("Invalid namespace in this context, must be """
+                  & Validator.NS.Namespace_URI.all & """");
+            end if;
+      end case;
+
+      case Validator.Process_Contents is
+         when Process_Strict =>
+            Get_NS (Grammar, URI, G);
+            Attr := Lookup_Attribute
+              (G, Get_Local_Name (Atts, Index), Create_If_Needed => False);
+            if Attr = null then
+               Validation_Error ("No definition provided");
+            else
+               Validate_Attribute (Attr.all, Atts, Index, Grammar);
+            end if;
+
+         when Process_Lax =>
+            Get_NS (Grammar, URI, G);
+            Attr := Lookup_Attribute
+              (G, Get_Local_Name (Atts, Index), Create_If_Needed => False);
+            if Attr = null then
+               Debug_Output
+                 ("Definition not found for attribute "
+                  & Get_Local_Name (Atts, Index));
+            else
+               Validate_Attribute (Attr.all, Atts, Index, Grammar);
+            end if;
+
+         when Process_Skip =>
+            null;
       end case;
    end Validate_Attribute;
 
@@ -3900,5 +3958,124 @@ package body Schema.Validators is
 
       return Typ.Simple_Type = Simple_Content;
    end Is_Simple_Type;
+
+   ----------------
+   -- Type_Model --
+   ----------------
+
+   function Type_Model
+     (Validator : access Group_Model_Record) return Byte_Sequence is
+   begin
+      return Internal_Type_Model (Validator, "");
+   end Type_Model;
+
+   ----------------
+   -- Type_Model --
+   ----------------
+
+   function Type_Model
+     (Validator : access Sequence_Record) return Byte_Sequence is
+   begin
+      return Internal_Type_Model (Validator, ",");
+   end Type_Model;
+
+   ----------------
+   -- Type_Model --
+   ----------------
+
+   function Type_Model
+     (Validator : access Choice_Record) return Byte_Sequence is
+   begin
+      return Internal_Type_Model (Validator, "|");
+   end Type_Model;
+
+   -------------------------
+   -- Internal_Type_Model --
+   -------------------------
+
+   function Internal_Type_Model
+     (Validator : access Group_Model_Record'Class;
+      Separator : Byte_Sequence) return Byte_Sequence
+   is
+      Str : Unbounded_String;
+      Iter : Particle_Iterator := Start (Validator.Particles);
+      First : Boolean := True;
+   begin
+      while Get (Iter) /= null loop
+         if not First then
+            Str := Str & Separator & Type_Model (Iter);
+         else
+            Str := Str & Type_Model (Iter);
+            First := False;
+         end if;
+
+         Next (Iter);
+      end loop;
+      Free (Iter);
+
+      return To_String (Str);
+   end Internal_Type_Model;
+
+   ----------------
+   -- Type_Model --
+   ----------------
+
+   function Type_Model
+     (Iter : Particle_Iterator) return Byte_Sequence
+   is
+      Particle : constant XML_Particle_Access := Get (Iter);
+      Str : Unbounded_String;
+   begin
+      case Particle.Typ is
+         when Particle_Element =>
+            Str := Str & Get_Local_Name (Particle.Element);
+         when Particle_Nested =>
+            Str := Str & "(" & Type_Model (Particle.Validator) & ")";
+         when Particle_Group | Particle_XML_Type =>
+            raise Program_Error;
+         when Particle_Any =>
+            Str := Str & "<any>";
+      end case;
+
+      if Get_Min_Occurs (Iter) = 0 then
+         if Get_Max_Occurs (Iter) = Unbounded then
+            Str := Str & "*";
+         elsif Get_Max_Occurs (Iter) = 1 then
+            Str := Str & "?";
+         else
+            Str := Str & "{0,"
+              & Integer'Image (Get_Max_Occurs (Iter)) & "}";
+         end if;
+
+      elsif Get_Min_Occurs (Iter) = 1 then
+         if Get_Max_Occurs (Iter) = Unbounded then
+            Str := Str & "+";
+         elsif Get_Max_Occurs (Iter) /= 1 then
+            Str := Str & "{,"
+              & Integer'Image (Get_Min_Occurs (Iter)) & ","
+              & Integer'Image (Get_Max_Occurs (Iter)) & "}";
+         end if;
+      else
+         Str := Str & "{,"
+           & Integer'Image (Get_Min_Occurs (Iter)) & ","
+           & Integer'Image (Get_Max_Occurs (Iter)) & "}";
+      end if;
+
+      return To_String (Str);
+   end Type_Model;
+
+   -----------------------
+   -- Get_Namespace_URI --
+   -----------------------
+
+   function Get_Namespace_URI
+     (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence is
+   begin
+      if Grammar = null then
+         return "";
+      else
+         return Grammar.Namespace_URI.all;
+      end if;
+   end Get_Namespace_URI;
 
 end Schema.Validators;

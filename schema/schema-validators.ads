@@ -135,9 +135,11 @@ package Schema.Validators is
       return Attribute_Validator;
    --  Create a new local attribute validator. See also Create_Global_Attribute
 
-   type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List);
+   type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List,
+                           Namespace_Local);
    function Create_Any_Attribute
-     (Kind : Namespace_Kind;
+     (Process_Contents : Process_Contents_Type := Process_Strict;
+      Kind : Namespace_Kind;
       NS   : XML_Grammar_NS) return Attribute_Validator;
    --  Equivalent of <anyAttribute> in an XML schema.
    --  Validates to true if the attribute's namespace is:
@@ -148,7 +150,8 @@ package Schema.Validators is
    procedure Validate_Attribute
      (Validator : Attribute_Validator_Record;
       Atts      : Sax.Attributes.Attributes'Class;
-      Index     : Natural) is abstract;
+      Index     : Natural;
+      Grammar   : in out XML_Grammar) is abstract;
    --  Return True if Value is valid for this attribute.
    --  Raise XML_Validation_Error in case of error
 
@@ -227,7 +230,8 @@ package Schema.Validators is
       Atts              : Sax.Attributes.Attributes'Class;
       Id_Table          : in out Id_Htable_Access;
       Nillable          : Boolean;
-      Is_Nil            : out Boolean);
+      Is_Nil            : out Boolean;
+      Grammar           : in out XML_Grammar);
    --  Check whether this list of attributes is valid for elements associated
    --  with this validator. By default, this simply check whether the list of
    --  attributes registered through Add_Attribute matches Atts.
@@ -533,8 +537,9 @@ package Schema.Validators is
      (Grammar       : XML_Grammar_NS;
       Local_Name    : Unicode.CES.Byte_Sequence) return XML_Group;
    function Lookup_Attribute
-     (Grammar       : XML_Grammar_NS;
-      Local_Name    : Unicode.CES.Byte_Sequence) return Attribute_Validator;
+     (Grammar          : XML_Grammar_NS;
+      Local_Name       : Unicode.CES.Byte_Sequence;
+      Create_If_Needed : Boolean := True) return Attribute_Validator;
    function Lookup_Attribute_Group
      (Grammar       : XML_Grammar_NS;
       Local_Name    : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
@@ -608,6 +613,10 @@ package Schema.Validators is
    --  This must be called before you start using the grammar, since some
    --  validation checks can only be performed at the end, not while the
    --  grammar is being constructed.
+
+   function Get_Namespace_URI
+     (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence;
+   --  Return the namespace URI associated with Grammar
 
 
    procedure Set_Debug_Name
@@ -755,7 +764,8 @@ private
    procedure Validate_Attribute
      (Validator : Named_Attribute_Validator_Record;
       Atts      : Sax.Attributes.Attributes'Class;
-      Index     : Natural);
+      Index     : Natural;
+      Grammar   : in out XML_Grammar);
    procedure Free (Validator : in out Named_Attribute_Validator_Record);
    function Is_Equal
      (Attribute : Named_Attribute_Validator_Record;
@@ -768,12 +778,14 @@ private
      (Attr : access Named_Attribute_Validator_Record) return XML_Type;
 
    type Any_Attribute_Validator is new Attribute_Validator_Record with record
-      Kind      : Namespace_Kind;
+      Process_Contents : Process_Contents_Type;
+      Kind             : Namespace_Kind;
    end record;
    procedure Validate_Attribute
      (Validator : Any_Attribute_Validator;
       Atts      : Sax.Attributes.Attributes'Class;
-      Index     : Natural);
+      Index     : Natural;
+      Grammar   : in out XML_Grammar);
    procedure Free (Validator : in out Any_Attribute_Validator);
    function Is_Equal
      (Attribute : Any_Attribute_Validator;
@@ -1047,6 +1059,10 @@ private
       Empty_Element : Boolean);
    --  See doc for inherited subprograms
 
+   function Type_Model
+     (Validator : access Group_Model_Record) return Unicode.CES.Byte_Sequence;
+   --  Return the type model described by Validator;
+
    --------------------
    -- XML_Any_Record --
    --------------------
@@ -1138,6 +1154,8 @@ private
       Applies      : out Boolean;
       Skip_Current : out Boolean);
    function Can_Be_Empty (Group : access Sequence_Record) return Boolean;
+   function Type_Model
+     (Validator : access Sequence_Record) return Unicode.CES.Byte_Sequence;
    --  See doc for inherited subprograms
 
    -------------------
@@ -1168,6 +1186,8 @@ private
       Applies      : out Boolean;
       Skip_Current : out Boolean);
    function Can_Be_Empty (Group : access Choice_Record) return Boolean;
+   function Type_Model
+     (Validator : access Choice_Record) return Unicode.CES.Byte_Sequence;
    --  See doc for inherited subprograms
 
    -------------------------------
