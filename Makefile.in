@@ -61,8 +61,8 @@ clean: force
 	gnat clean -r -Pbuild_all.gpr
 	cd docs; ${MAKE} -e clean
 
-dist_clean: clean
+distclean: clean
 	${RM} dom/test/default.gpr
-	${RM} Makefile
+	${RM} Makefile config.cache config.log config.status Makefile.314
 
 force:
