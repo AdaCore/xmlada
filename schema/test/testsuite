@@ -7,6 +7,8 @@
 ## IMPORTANT: BUG FIXES TO THE TESTSUITE:
 ## msxsdtest/element/elemT074.xml
 ##   - needs to be modified to point to right schema (not elemT074.xml)
+##   - suntest/SunTestsAll/xsd003b.xsd: replace use of xsd:number with
+##     xsd:decimal, since the former doesn't exist in the standard
 
 
 xmltests=./xmltests
@@ -708,12 +710,17 @@ expect "$sun/xsd002.xsd" "$sun/xsd002.n02.xml" \
  "$sun/xsd002.n02.xml:3:11: Namespace specification not authorized in this context"
 expect "$sun/xsd002.xsd" "$sun/xsd002.v00.xml" ""
 expect "$sun/xsd002.xsd" "$sun/xsd002.v01.xml" ""
-
 expect "$sun/xsd003-1.e.xsd" "" \
  "$sun/xsd003-1.e.xsd:10:30: Invalid choice: element"
 expect "$sun/xsd003-2.e.xsd" "" \
  "$sun/xsd003-2.e.xsd:10:50: Invalid choice: attribute"
 expect "$sun/xsd003a.xsd" "$sun/xsd003a.v00.xml" ""
+expect "$sun/xsd003b.xsd" "$sun/xsd003b.n00.xml" \
+ "$sun/xsd003b.n00.xml:3:29: Attribute \"add\": Must have a decimal value"
+expect "$sun/xsd003b.xsd" "$sun/xsd003b.n01.xml" \
+ "$sun/xsd003b.n01.xml:3:50: Attribute \"foo:gAtt\": Element's value not in the enumeration set"
+expect "$sun/xsd003b.xsd" "$sun/xsd003b.v00.xml" ""
+expect "$sun/xsd003b.xsd" "$sun/xsd003b.v01.xml" ""
 
 fi
 
