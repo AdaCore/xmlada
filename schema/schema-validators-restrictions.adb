@@ -39,6 +39,9 @@ package body Schema.Validators.Restrictions is
    function Is_Restriction_Of
      (Validator : access Restriction_XML_Validator; Typ : XML_Type)
       return Boolean;
+   function Is_Extension_Of
+     (Validator : access Restriction_XML_Validator; Typ : XML_Type)
+      return Boolean;
    procedure Check_Content_Type
      (Validator        : access Restriction_XML_Validator;
       Should_Be_Simple : Boolean);
@@ -170,6 +173,17 @@ package body Schema.Validators.Restrictions is
         or else Is_Restriction_Of (Get_Validator (Validator.Base), Typ)
         or else Is_Extension_Of (Get_Validator (Validator.Base), Typ);
    end Is_Restriction_Of;
+
+   ---------------------
+   -- Is_Extension_Of --
+   ---------------------
+
+   function Is_Extension_Of
+     (Validator : access Restriction_XML_Validator; Typ : XML_Type)
+      return Boolean is
+   begin
+      return Is_Extension_Of (Get_Validator (Validator.Base), Typ);
+   end Is_Extension_Of;
 
    --------------------
    -- Is_Simple_Type --

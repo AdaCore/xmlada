@@ -58,6 +58,8 @@ private
             --  Handling of <redefine>
             Mixed_Content  : Boolean;
             Simple_Content : Boolean;
+            Block_Restriction : Boolean;
+            Block_Extension   : Boolean;
          when Context_Element =>
             Element : Schema.Validators.XML_Element;
             Is_Ref  : Boolean;

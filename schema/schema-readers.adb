@@ -368,13 +368,18 @@ package body Schema.Readers is
             end if;
 
             if Derives_By_Restriction
-              and then Get_Block_On_Restriction (Element)
+              and then
+                (Get_Block_On_Restriction (Element)
+                 or else Get_Block_On_Restriction (Get_Type (Element)))
             then
                Validation_Error
                  ("Cannot use restriction of element's type in this context");
+            end if;
 
-            elsif Derives_By_Extension
-              and then Get_Block_On_Extension (Element)
+            if Derives_By_Extension
+              and then
+                (Get_Block_On_Extension (Element)
+                 or else Get_Block_On_Extension (Get_Type (Element)))
             then
                Validation_Error
                  ("Cannot use extension of element's type in this context");

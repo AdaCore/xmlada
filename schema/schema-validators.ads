@@ -114,6 +114,16 @@ package Schema.Validators is
    function Is_Simple_Type (Typ : XML_Type) return Boolean;
    --  Whether Typ is a simple type
 
+   procedure Set_Block
+     (Typ            : XML_Type;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean);
+   function Get_Block_On_Restriction (Typ : XML_Type) return Boolean;
+   function Get_Block_On_Extension (Typ : XML_Type) return Boolean;
+   --  Set the "block" status of the type.
+   --  This can also be done at the element's level
+
+
    -------------------------
    -- Attribute_Validator --
    -------------------------
@@ -602,6 +612,12 @@ package Schema.Validators is
      (Grammar : XML_Grammar_NS) return Form_Type;
    --  Set the elementFormDefault attribute
 
+   procedure Set_Block_Default
+     (Grammar : XML_Grammar_NS;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean);
+   --  Set the default value for the "block" attribute
+
    procedure Initialize (Grammar : in out XML_Grammar);
    --  Initialize the internal structure of the grammar
 
@@ -671,6 +687,10 @@ private
       Local_Name : Unicode.CES.Byte_Sequence_Access;
       Validator  : XML_Validator;
       Simple_Type : Content_Type;
+
+      Block_Restriction : Boolean;
+      Block_Extension   : Boolean;
+      --  The value for the "block" attribute of the type
    end record;
    type XML_Type is access all XML_Type_Record;
    No_Type : constant XML_Type := null;
@@ -997,6 +1017,8 @@ private
       Attributes    : Attributes_Htable_Access;
       Attribute_Groups : Attribute_Groups_Htable_Access;
       Element_Form_Default : Form_Type := Unqualified;
+      Block_Extension   : Boolean := False;
+      Block_Restriction : Boolean := False;
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_NS);

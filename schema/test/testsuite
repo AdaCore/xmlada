@@ -887,6 +887,73 @@ expect "$sun/xsd021.xsd" "$sun/xsd021.n11.xml" \
  "$sun/xsd021.n11.xml:8:28: Attribute \"f:a\": Invalid namespace in this context, must be \"bar\""
 notrun "$sun/xsd021.xsd" "$sun/xsd021.v00.xml" "This test seems wrong, since it conflicts with elemK007 and elemN006, and isn't passed by Xerces"
 
+### SUN xsd022
+
+notrun "$sun/xsd022.xsd" "$sun/xsd022.n00.xml" "Schema is invalid, no base attribute specified for restriction"
+notrun "$sun/xsd022.xsd" "$sun/xsd022.v00.xml" "Schema is invalid, no base attribute specified for restriction"
+
+### SUN xsd023
+
+notrun "$sun/xsd023.e.xsd" "" "Schema is in fact correct, confirmed by Xerces"
+
+## SUN xsiType
+
+expect "$sun/xsiType1.xsd" "$sun/xsiType1.v1.xml" ""
+expect "$sun/xsiType1.xsd" "$sun/xsiType1.n1.xml" \
+ "$sun/xsiType1.n1.xml:5:30: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+
+## SUN xsiTypeBlock-1
+
+expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.v1.xml" ""
+expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.n1.xml" \
+ "$sun/xsiType-block-1.n1.xml:5:26: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.n2.xml" \
+ "$sun/xsiType-block-1.n2.xml:3:27: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.n3.xml" \
+ "$sun/xsiType-block-1.n3.xml:3:27: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-1.xsd" "$sun/xsiType-block-1.n4.xml" \
+ "$sun/xsiType-block-1.n4.xml:3:27: Cannot use extension of element's type in this context"
+
+## SUN xsiTypeBlock-2
+
+expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.v1.xml" ""
+expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.n1.xml" \
+ "$sun/xsiType-block-2.n1.xml:5:26: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.n2.xml" \
+ "$sun/xsiType-block-2.n2.xml:3:27: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.n3.xml" \
+ "$sun/xsiType-block-2.n3.xml:3:27: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-2.xsd" "$sun/xsiType-block-2.n4.xml" \
+ "$sun/xsiType-block-2.n4.xml:3:27: Cannot use extension of element's type in this context"
+
+### SUN xsiTypeBlock-3
+
+expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.v1.xml" ""
+expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.n1.xml" \
+ "$sun/xsiType-block-3.n1.xml:4:27: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.n2.xml" \
+ "$sun/xsiType-block-3.n2.xml:3:27: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.n3.xml" \
+ "$sun/xsiType-block-3.n3.xml:3:27: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-3.xsd" "$sun/xsiType-block-3.n4.xml" \
+ "$sun/xsiType-block-3.n4.xml:3:27: Cannot use extension of element's type in this context"
+
+### SUN xsiTypeBlock-4
+
+expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.v1.xml" ""
+expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n1.xml" "f"
+expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n2.xml" \
+ "$sun/xsiType-block-4.n2.xml:3:27: Cannot use extension of element's type in this context"
+expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n3.xml" "f"
+expect "$sun/xsiType-block-4.xsd" "$sun/xsiType-block-4.n4.xml" \
+ "$sun/xsiType-block-4.n4.xml:4:27: Cannot use extension of element's type in this context"
+
+
+
+
+
+
+
 
 fi
 

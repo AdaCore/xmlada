@@ -810,8 +810,11 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "name");
       Mixed_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "mixed");
+      Block_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "block");
       Name       : Byte_Sequence_Access;
       Mixed   : Boolean;
+
    begin
       if Name_Index /= -1 then
          Name := new Byte_Sequence'(Get_Value (Atts, Name_Index));
@@ -827,8 +830,21 @@ package body Schema.Schema_Readers is
          Redefined_Type => No_Type,
          Mixed_Content  => Mixed,
          Simple_Content => False,
+         Block_Restriction => False,
+         Block_Extension => False,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
+
+      if Block_Index /= -1 then
+         declare
+            Block : constant Byte_Sequence := Get_Value (Atts, Block_Index);
+         begin
+            Handler.Contexts.Block_Restriction :=
+              Block = "restriction" or else Block = "#all";
+            Handler.Contexts.Block_Extension :=
+              Block = "extension" or else Block = "#all";
+         end;
+      end if;
 
       --  Do not use In_Redefine_Context, since this only applies for types
       --  that are redefined
@@ -879,6 +895,17 @@ package body Schema.Schema_Readers is
                  & """, Validator);");
       end if;
 
+      if Handler.Contexts.Block_Restriction
+        or else Handler.Contexts.Block_Extension
+      then
+         Set_Block (Typ,
+                    On_Restriction => Handler.Contexts.Block_Restriction,
+                    On_Extension   => Handler.Contexts.Block_Extension);
+         Output ("Set_Block ("
+                 & Ada_Name (Typ) & ", "
+                 & Boolean'Image (Handler.Contexts.Block_Restriction) & ", "
+                 & Boolean'Image (Handler.Contexts.Block_Extension) & ");");
+      end if;
 
       Set_Mixed_Content (Get_Validator (Typ), Handler.Contexts.Mixed_Content);
       Output ("Set_Mixed_Content ("
@@ -1514,6 +1541,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "targetNamespace");
       Form_Default_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "elementFormDefault");
+      Block_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "blockDefault");
    begin
       if Target_NS_Index /= -1 then
          Get_NS (Handler.Created_Grammar, Get_Value (Atts, Target_NS_Index),
@@ -1541,6 +1570,22 @@ package body Schema.Schema_Readers is
             Output
               ("Set_Element_Form_Default (Handler.Target_NS, Unqualified);");
          end if;
+      end if;
+
+      if Block_Index /= -1 then
+         declare
+            Block : constant Byte_Sequence := Get_Value (Atts, Block_Index);
+         begin
+            Set_Block_Default
+              (Handler.Target_NS,
+               On_Restriction => Block = "restriction" or else Block = "#all",
+               On_Extension   => Block = "extension" or else Block = "#all");
+            Output ("Set_Block (Handler.Target_NS, "
+                    & Boolean'Image
+                      (Block = "restriction" or else Block = "#all")
+                    & ", " & Boolean'Image
+                      (Block = "extension" or else Block = "#all"));
+         end;
       end if;
 
       Handler.Contexts := new Context'

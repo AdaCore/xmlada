@@ -1011,7 +1011,9 @@ package body Schema.Validators is
          Typ := new XML_Type_Record'
            (Local_Name  => new Byte_Sequence'(Local_Name),
             Validator   => null,
-            Simple_Type => Unknown_Content);
+            Simple_Type => Unknown_Content,
+            Block_Extension   => Grammar.Block_Extension,
+            Block_Restriction => Grammar.Block_Restriction);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Debug_Output ("Forward type decl: " & Local_Name);
       end if;
@@ -1269,6 +1271,8 @@ package body Schema.Validators is
          Groups           => new Groups_Htable.HTable (101),
          Attributes       => new Attributes_Htable.HTable (101),
          Attribute_Groups => new Attribute_Groups_Htable.HTable (101),
+         Block_Restriction => False,
+         Block_Extension   => False,
          Element_Form_Default => Unqualified);
    end Create_NS_Grammar;
 
@@ -1616,8 +1620,8 @@ package body Schema.Validators is
             Nillable            => False,
             Final_Restriction   => False,
             Final_Extension     => False,
-            Block_Restriction   => False,
-            Block_Extension     => False,
+            Block_Restriction   => Grammar.Block_Restriction,
+            Block_Extension     => Grammar.Block_Extension,
             Is_Global           => True,
             Form                => Form,
             Fixed               => null);
@@ -1654,9 +1658,11 @@ package body Schema.Validators is
 
       else
          Typ := new XML_Type_Record'
-           (Local_Name  => new Byte_Sequence'(Local_Name),
-            Validator   => XML_Validator (Validator),
-            Simple_Type => Unknown_Content);
+           (Local_Name        => new Byte_Sequence'(Local_Name),
+            Validator         => XML_Validator (Validator),
+            Simple_Type       => Unknown_Content,
+            Block_Extension   => Grammar.Block_Extension,
+            Block_Restriction => Grammar.Block_Restriction);
          Types_Htable.Set (Grammar.Types.all, Typ);
 
          if Debug and then Typ.Validator.Debug_Name = null then
@@ -3007,9 +3013,11 @@ package body Schema.Validators is
      (Validator  : access XML_Validator_Record'Class) return XML_Type is
    begin
       return new XML_Type_Record'
-        (Local_Name  => null,
-         Validator   => XML_Validator (Validator),
-         Simple_Type => Unknown_Content);
+        (Local_Name        => null,
+         Validator         => XML_Validator (Validator),
+         Simple_Type       => Unknown_Content,
+         Block_Extension   => False,
+         Block_Restriction => False);
    end Create_Local_Type;
 
    -------------------
@@ -4077,5 +4085,49 @@ package body Schema.Validators is
          return Grammar.Namespace_URI.all;
       end if;
    end Get_Namespace_URI;
+
+   ---------------
+   -- Set_Block --
+   ---------------
+
+   procedure Set_Block
+     (Typ            : XML_Type;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean) is
+   begin
+      Typ.Block_Restriction := On_Restriction;
+      Typ.Block_Extension := On_Extension;
+   end Set_Block;
+
+   ------------------------------
+   -- Get_Block_On_Restriction --
+   ------------------------------
+
+   function Get_Block_On_Restriction (Typ : XML_Type) return Boolean is
+   begin
+      return Typ.Block_Restriction;
+   end Get_Block_On_Restriction;
+
+   ----------------------------
+   -- Get_Block_On_Extension --
+   ----------------------------
+
+   function Get_Block_On_Extension (Typ : XML_Type) return Boolean is
+   begin
+      return Typ.Block_Extension;
+   end Get_Block_On_Extension;
+
+   -----------------------
+   -- Set_Block_Default --
+   -----------------------
+
+   procedure Set_Block_Default
+     (Grammar : XML_Grammar_NS;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean) is
+   begin
+      Grammar.Block_Restriction := On_Restriction;
+      Grammar.Block_Extension   := On_Extension;
+   end Set_Block_Default;
 
 end Schema.Validators;
