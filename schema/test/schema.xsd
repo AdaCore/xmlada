@@ -582,7 +582,7 @@
     <attributeGroup ref="occurs"/>
     <attribute name="default" type="string"/>
     <attribute name="fixed" type="string"/>
-    <attribute name="nullable" type="boolean" use="default" value="false"/>
+    <attribute name="nillable" type="boolean" use="default" value="false"/>
     <attribute name="abstract" type="boolean" use="default" value="false"/>
     <attribute name="final" type="derivationSet" use="default" value=""/>
     <attribute name="block" type="blockSet" use="default" value=""/>
