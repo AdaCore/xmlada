@@ -1,5 +1,7 @@
 New features in version 1.1
 
+- Initial support for schema validation is now provided.
+
 - D507-011: Dom.Core.Nodes.Print can now output real newline characters
 
 - DA04-015: Dom.Core.Nodes.Print can now output with different character set
