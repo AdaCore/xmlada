@@ -200,6 +200,7 @@ package body Schema.Readers is
       Start_NS, Last_NS, Index : Integer;
       Start_XSD, Last_XSD : Integer;
       C : Unicode_Char;
+      G : XML_Grammar_NS;
    begin
       Index    := Schema_Location'First;
       Start_NS := Schema_Location'First;
@@ -222,13 +223,17 @@ package body Schema.Readers is
             exit when Is_White_Space (C);
          end loop;
 
-         if Debug then
-            Put_Line ("NS=" & Schema_Location (Start_NS .. Last_NS)
-                      & ASCII.LF
-                      & "XSD=" & Schema_Location (Start_XSD .. Last_XSD));
+         if Index > Schema_Location'Last then
+            Last_XSD := Schema_Location'Last + 1;
          end if;
 
-         Parse_Grammar (Handler, Schema_Location (Start_XSD .. Last_XSD));
+         if Debug then
+            Put_Line ("NS=" & Schema_Location (Start_NS .. Last_NS - 1)
+                      & ASCII.LF
+                      & "XSD=" & Schema_Location (Start_XSD .. Last_XSD - 1));
+         end if;
+
+         Parse_Grammar (Handler, Schema_Location (Start_XSD .. Last_XSD - 1));
 
          while Index <= Schema_Location'Last loop
             Start_NS := Index;
@@ -264,6 +269,8 @@ package body Schema.Readers is
                    & ASCII.ESC & "[39m");
       end if;
 
+      --  Get the name of the grammar to use from the element's attributes
+
       if Handler.Grammar = No_Grammar then
          Index := Get_Index (Atts, URI => XML_Instance_URI,
                              Local_Name => "noNamespaceSchemaLocation");
@@ -283,6 +290,8 @@ package body Schema.Readers is
          end if;
       end if;
 
+      --  Whether this element is valid in the current context
+
       if Handler.Validators /= null then
          Validate_Start_Element
            (Get_Validator (Handler.Validators.Typ),
@@ -299,11 +308,16 @@ package body Schema.Readers is
            (Handler, Get_Validator (Get_Type (Element)));
       end if;
 
+      --  If not: this is a validation error
+
       if Element = No_Element then
          Raise_Exception
            (XML_Validation_Error'Identity,
             "No data type definition for element " & String (Local_Name));
       end if;
+
+      --  Whether the element specifies a different type to use than the one
+      --  defined in the grammar
 
       Typ := Get_Type (Element);
 
@@ -317,7 +331,42 @@ package body Schema.Readers is
          --  ??? Should check with namespaces
          Get_NS (Handler.Grammar, Namespace_URI, Result => G);
          Typ := Lookup (G, Get_Value (Atts, Type_Index));
+
+         declare
+            Derives_By_Extension : constant Boolean :=
+              Is_Extension_Of (Get_Validator (Typ), Get_Type (Element));
+            Derives_By_Restriction : constant Boolean :=
+              Is_Restriction_Of (Get_Validator (Typ), Get_Type (Element));
+         begin
+            if not Derives_By_Extension
+              and then not Derives_By_Restriction
+              and then Typ /= Get_Type (Element)
+              and then Get_Local_Name (Get_Type (Element)) /= "ur-Type"
+            then
+               Raise_Exception
+                 (XML_Validation_Error'Identity,
+                  "The type mentionned in the ""type"" attribute must derive"
+                  & " from the element's type in the schema");
+            end if;
+
+            if Derives_By_Restriction
+              and then Get_Block_On_Restriction (Element)
+            then
+               Raise_Exception
+                 (XML_Validation_Error'Identity,
+                  "Cannot use restriction of element's type in this context");
+
+            elsif Derives_By_Extension
+              and then Get_Block_On_Extension (Element)
+            then
+               Raise_Exception
+                 (XML_Validation_Error'Identity,
+                  "Cannot use extension of element's type in this context");
+            end if;
+         end;
       end if;
+
+      --  Check the element's attributes
 
       Data := Create_Validator_Data (Get_Validator (Typ));
       Validate_Attributes
