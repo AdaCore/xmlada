@@ -79,6 +79,4 @@
 </xsd:complexType>
 <xsd:element name="strs" type="strs" />
 
-
-
 </xsd:schema>
