@@ -509,7 +509,8 @@ package Schema.Validators is
       Create_If_Needed : Boolean := True) return XML_Element;
    function Lookup
      (Grammar       : XML_Grammar_NS;
-      Local_Name    : Unicode.CES.Byte_Sequence) return XML_Type;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Create_If_Needed : Boolean := True) return XML_Type;
    function Lookup_Group
      (Grammar       : XML_Grammar_NS;
       Local_Name    : Unicode.CES.Byte_Sequence) return XML_Group;
@@ -986,6 +987,10 @@ private
    --  matches in fact an empty item, and Local_Name should be passed over to
    --  the successor of Group in its parent sequence or choice.
 
+   function Can_Be_Empty
+     (Group : access Group_Model_Record) return Boolean;
+   --  Whether having no child is acceptable for Group
+
    procedure Validate_Characters
      (Validator     : access Group_Model_Record;
       Ch            : Unicode.CES.Byte_Sequence;
@@ -1083,6 +1088,8 @@ private
       Grammar      : in out XML_Grammar;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
+   function Can_Be_Empty
+     (Group : access Sequence_Record) return Boolean;
    --  See doc for inherited subprograms
 
    -------------------

@@ -1009,11 +1009,12 @@ package body Schema.Validators is
 
    function Lookup
      (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Type
+      Local_Name : Unicode.CES.Byte_Sequence;
+      Create_If_Needed : Boolean := True) return XML_Type
    is
       Result : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
    begin
-      if Result = No_Type then
+      if Result = No_Type and then Create_If_Needed then
          Result := Register_Forward (Grammar, Local_Name);
       end if;
       return Result;
@@ -2179,6 +2180,7 @@ package body Schema.Validators is
       Data.Num_Occurs := Data.Num_Occurs + 1;
 
       if Get (Data.Current) = null then
+         Debug_Output ("No child authorized for " & Get_Name (Seq));
          Validation_Error ("No child authorized for this sequence");
       end if;
 
@@ -2366,7 +2368,9 @@ package body Schema.Validators is
                   Validation_Error
                     ("Expecting at least"
                      & Integer'Image (Get_Min_Occurs (D.Current))
-                     & " occurrences of current particle");
+                     & " occurrences of """
+                     & Curr.Element.Elem.Local_Name.all
+                     & """ or its substitutionGroup");
                   return;
                end if;
 
@@ -2420,23 +2424,74 @@ package body Schema.Validators is
       Local_Name        : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data)
    is
-      pragma Unreferenced (Local_Name);
       D   : constant Sequence_Data_Access := Sequence_Data_Access (Data);
+      Curr : XML_Particle_Access;
    begin
       --  If the only remaining elements are optional, ignore them
 
+      Debug_Output ("Validate_End_Element " & Get_Name (Validator)
+                    & " " & Local_Name);
+
       if Get (D.Current) /= null then
          if D.Num_Occurs_Of_Current >= Get_Min_Occurs (D.Current) then
-            loop
-               Next (D.Current);
-               exit when Get (D.Current) = null
-                 or else Get_Min_Occurs (D.Current) /= 0;
-            end loop;
-         else
-            Validation_Error
-              ("Element must be repeated at least"
-               & Integer'Image (Get_Min_Occurs (D.Current)) & " times");
+            Debug_Output ("Skipping current, since occurred enough times");
+            Next (D.Current);
          end if;
+
+         loop
+            Curr := Get (D.Current);
+            exit when Curr = null;
+
+            case Curr.Typ is
+               when Particle_Element | Particle_Any =>
+                  if Get_Min_Occurs (D.Current) /= 0 then
+                     Validation_Error
+                       ("Element """ & Get_Local_Name (Curr.Element)
+                        & """ or its substitutionGroup must be specified");
+                  end if;
+                  Debug_Output ("Skipping element "
+                                & Curr.Element.Elem.Local_Name.all
+                                & " since optional");
+               when Particle_Nested =>
+                  --  Is an empty sequence valid ?
+                  if Get_Min_Occurs (D.Current) /= 0
+                    and then not Can_Be_Empty (Curr.Validator)
+                  then
+                     Debug_Output ("Nested cannot be empty: "
+                                   & Get_Name (Curr.Validator));
+                     Validation_Error
+                       ("Unexpected end of sequence");
+                  else
+                     Debug_Output ("Skipping nested, since optional");
+                  end if;
+               when Particle_XML_Type | Particle_Group =>
+                  raise Program_Error;
+            end case;
+
+            Next (D.Current);
+         end loop;
+
+      elsif D.Num_Occurs = 0 then
+         if not Can_Be_Empty (Validator) then
+            D.Current := Start (Validator.Particles);
+            if Get (D.Current).Typ = Particle_Element then
+               Validation_Error
+                 ("Expecting """
+                  & Get_Local_Name (Get (D.Current).Element)
+                  & """ or one in its substitutionGroup");
+
+            else
+               Validation_Error
+                 ("Expecting some children tags, got a childless node """
+                  & Local_Name & """");
+            end if;
+         end if;
+         D.Num_Occurs := D.Num_Occurs + 1;
+      end if;
+
+      if Get (D.Current) /= null then
+         Debug_Output ("Unexpected end of sequence " & Get_Name (Validator));
+         Validation_Error ("Unexpected end of sequence");
       end if;
 
       if D.Num_Occurs < Validator.Min_Occurs then
@@ -2444,11 +2499,6 @@ package body Schema.Validators is
            ("Not enough occurrences of sequence, expecting at least"
             & Integer'Image (Validator.Min_Occurs)
             & ", got" & Integer'Image (D.Num_Occurs));
-      end if;
-
-      if Get (D.Current) /= null then
-         Validation_Error
-           ("Unexpected end of sequence " & Get_Name (Validator));
       end if;
    end Validate_End_Element;
 
@@ -2704,6 +2754,9 @@ package body Schema.Validators is
       pragma Unreferenced (Local_Name);
    begin
       if Choice_Data (Data.all).Num_Occurs < Validator.Min_Occurs then
+         Debug_Output ("Missing choice occurrences:"
+                       & Choice_Data (Data.all).Num_Occurs'Img
+                       & ' ' & Get_Name (Validator));
          Validation_Error
            ("Not enough occurrences of choice, expecting at least"
             & Integer'Image (Validator.Min_Occurs));
@@ -3768,5 +3821,44 @@ package body Schema.Validators is
            ("Namespace specification is required in this context");
       end if;
    end Check_Qualification;
+
+   ------------------
+   -- Can_Be_Empty --
+   ------------------
+
+   function Can_Be_Empty
+     (Group : access Group_Model_Record) return Boolean is
+   begin
+      return Group.Min_Occurs = 0;
+   end Can_Be_Empty;
+
+   ------------------
+   -- Can_Be_Empty --
+   ------------------
+
+   function Can_Be_Empty
+     (Group : access Sequence_Record) return Boolean
+   is
+      Current : Particle_Iterator;
+   begin
+      Debug_Output ("Checking whether sequence can be empty minOccurs="
+                    & Group.Min_Occurs'Img & ' ' & Get_Name (Group));
+
+      if Group.Min_Occurs /= 0 then
+         Current := Start (Group.Particles);
+         while Get (Current) /= null loop
+            if Get_Min_Occurs (Current) /= 0 then
+               if Get (Current).Typ /= Particle_Nested
+                 or else not Can_Be_Empty (Get (Current).Validator)
+               then
+                  return False;
+               end if;
+            end if;
+            Next (Current);
+         end loop;
+      end if;
+
+      return True;
+   end Can_Be_Empty;
 
 end Schema.Validators;
