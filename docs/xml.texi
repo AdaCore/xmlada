@@ -4,7 +4,7 @@
 @settitle The Ada95 XML Library
 @syncodeindex fn cp
 
-@set XMLVersion 0.7.1
+@set XMLVersion 0.8
 
 @titlepage
 
@@ -35,7 +35,7 @@ Version @value{XMLVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2000-2001, Emmanuel Briot
+Copyright @copyright{} 2000-2002, Emmanuel Briot
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
