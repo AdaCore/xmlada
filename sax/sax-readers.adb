@@ -40,6 +40,7 @@ with Sax.Encodings;             use Sax.Encodings;
 with Sax.Exceptions;            use Sax.Exceptions;
 with Sax.Locators;              use Sax.Locators;
 with Sax.Models;                use Sax.Models;
+with Sax.Utils;                 use Sax.Utils;
 with Unchecked_Deallocation;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
@@ -825,76 +826,16 @@ package body Sax.Readers is
       Parser.Buffer_Length := Parser.Buffer_Length + Str'Length;
    end Put_In_Buffer;
 
-   ------------------
-   -- Is_Name_Char --
-   ------------------
-
-   function Is_Name_Char (C : Unicode_Char) return Boolean is
-   begin
-      return C = Period
-        or else C = Hyphen_Minus
-        or else C = Spacing_Underscore
-        or else Is_Digit (C)
-        or else Is_Letter (C)
-        or else Is_Combining_Char (C)
-        or else Is_Extender (C);
-   end Is_Name_Char;
-
    ---------------------
    -- Test_Valid_Lang --
    ---------------------
 
    procedure Test_Valid_Lang
-     (Parser : in out Reader'Class; Lang : Byte_Sequence)
-   is
-      C, C2 : Unicode_Char;
-      Index : Natural := Lang'First;
+     (Parser : in out Reader'Class; Lang : Byte_Sequence) is
    begin
-      Encoding.Read (Lang, Index, C2);
-
-      if not (C2 in Latin_Small_Letter_A .. Latin_Small_Letter_Z
-              or else C2 in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
-        or else Index > Lang'Last
-      then
+      if not Is_Valid_Language_Name (Lang) then
          Fatal_Error (Parser, "[2.12] Invalid language specification");
       end if;
-
-      Encoding.Read (Lang, Index, C);
-      if C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
-        or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
-      then
-         if Index <= Lang'Last then
-            Encoding.Read (Lang, Index, C);
-         end if;
-
-      elsif C2 /= Latin_Small_Letter_I
-        and then C2 /= Latin_Capital_Letter_I
-        and then C2 /= Latin_Small_Letter_X
-        and then C2 /= Latin_Capital_Letter_X
-      then
-         Fatal_Error (Parser, "[2.12] Invalid language specification");
-      end if;
-
-      if C = Hyphen_Minus and then Index > Lang'Last then
-         Fatal_Error (Parser, "[2.12] Invalid language specification");
-      end if;
-
-      while Index <= Lang'Last loop
-         if C /= Hyphen_Minus
-           or else Index > Lang'Last
-         then
-            Fatal_Error (Parser, "[2.12] Invalid language specification");
-         end if;
-
-         loop
-            Encoding.Read (Lang, Index, C);
-
-            exit when Index > Lang'Last
-              or else not
-              (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
-               or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z);
-         end loop;
-      end loop;
    end Test_Valid_Lang;
 
    -------------------
@@ -1530,7 +1471,7 @@ package body Sax.Readers is
          then
             while Parser.Last_Read_Is_Valid
               and then Parser.Last_Read /= Semicolon
-              and then Is_Name_Char (Parser.Last_Read)
+              and then Is_Valid_Name_Char (Parser.Last_Read)
             loop
                Put_In_Buffer (Parser, Parser.Last_Read);
                Next_Char (Input, Parser);
@@ -1760,7 +1701,7 @@ package body Sax.Readers is
                Next_Char (Input, Parser);
                if Parser.State.Expand_Param_Entities then
                   while Parser.Last_Read /= Semicolon
-                    and then Is_Name_Char (Parser.Last_Read)
+                    and then Is_Valid_Name_Char (Parser.Last_Read)
                   loop
                      Put_In_Buffer (Parser, Parser.Last_Read);
                      Next_Char (Input, Parser);
@@ -2013,7 +1954,7 @@ package body Sax.Readers is
          end if;
 
          if Id.Typ = Name and then not Coalesce_Space then
-            while Is_Name_Char (Parser.Last_Read) loop
+            while Is_Valid_Name_Char (Parser.Last_Read) loop
                Put_In_Buffer (Parser, Parser.Last_Read);
                Next_Char (Input, Parser);
             end loop;
@@ -2678,7 +2619,7 @@ package body Sax.Readers is
                   Start_Sub := Parser.Buffer_Length + 1;
 
                   while Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
-                    or else Is_Name_Char (Parser.Last_Read)
+                    or else Is_Valid_Name_Char (Parser.Last_Read)
                   loop
                      Put_In_Buffer (Parser, Parser.Last_Read);
                      Next_Char (Input, Parser);
@@ -3849,6 +3790,7 @@ package body Sax.Readers is
 
          Set_State (Parser, Default_State);
          Find_NS (Parser, Parser.Current_Node,  Elem_NS_Id, NS);
+
          Start_Element
            (Parser,
             Namespace_URI => NS.URI.all,
@@ -4111,17 +4053,31 @@ package body Sax.Readers is
               (Parser, "[4.5] Entity values must be self-contained", Id);
          end if;
 
-         if Parser.Current_Node = null
-           or else Parser.Buffer (NS_Id.First .. NS_Id.Last) /=
+         if Parser.Current_Node = null then
+            Fatal_Error
+              (Parser,
+               "[WF-Element Type Match] Unexpected closing tag", Open_Id);
+
+         elsif Parser.Buffer (NS_Id.First .. NS_Id.Last) /=
              Parser.Current_Node.NS.all
            or else Parser.Buffer (Name_Id.First .. Name_Id.Last) /=
              Parser.Current_Node.Name.all
          then
             --  Well-Formedness Constraint: Element Type Match
-            Fatal_Error
-              (Parser,
-               "[WF-Element Type Match] Name differ for closing tag",
-               Open_Id);
+            if Parser.Current_Node.NS.all /= "" then
+               Fatal_Error
+                 (Parser,
+                  "[WF-Element Type Match] Name differ for closing tag ("
+                  & "expecting " & Parser.Current_Node.NS.all & ':'
+                  & Parser.Current_Node.Name.all & ')',
+                  Open_Id);
+            else
+               Fatal_Error
+                 (Parser,
+                  "[WF-Element Type Match] Name differ for closing tag ("
+                  & "expecting " & Parser.Current_Node.Name.all & ')',
+                  Open_Id);
+            end if;
          end if;
 
          End_Element (NS_Id, Name_Id);
