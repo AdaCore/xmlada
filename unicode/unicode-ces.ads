@@ -146,7 +146,7 @@ package Unicode.CES is
    function Index_From_Offset
      (Str : Byte_Sequence; Offset : Natural; Encoding : Encoding_Scheme)
       return Integer;
-   --  return the index in Str matching starting at Offset.
+   --  return the index in Str starting at Offset.
    --  (-1) is returned if Offset is invalid (outside of the range of Str).
 
    ----------------
