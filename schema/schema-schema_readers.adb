@@ -561,12 +561,26 @@ package body Schema.Schema_Readers is
               (Handler, Get_Value (Atts, Type_Index), Result => Typ);
          end if;
 
-         Element := Create_Element
-           (Get_Value (Atts, Name_Index), Typ, Form => Form);
-         Output
-           (Ada_Name (Element) & " := Create_Element ("""
-            & Get_Value (Atts, Name_Index) & """, " & Ada_Name (Typ)
-            & ", " & Form'Img & ");");
+         case Handler.Contexts.Typ is
+            when Context_Schema | Context_Redefine =>
+               Element := Register (Handler.Target_NS,
+                                    Get_Value (Atts, Name_Index),
+                                    Form => Form);
+               Set_Type (Element, Typ);
+               Output (Ada_Name (Element)
+                       & " := Register (Handler.Target_NS, """
+                       & Get_Value (Atts, Name_Index) & """, " & Form'Img
+                       & ");");
+               Output ("Set_Type (" & Ada_Name (Element) & ", "
+                       & Ada_Name (Typ) & ");");
+            when others =>
+               Element := Create_Local_Element
+                 (Get_Value (Atts, Name_Index), Typ, Form => Form);
+               Output
+                 (Ada_Name (Element) & " := Create_Local_Element ("""
+                  & Get_Value (Atts, Name_Index) & """, " & Ada_Name (Typ)
+                  & ", " & Form'Img & ");");
+         end case;
 
          if Ref_Index /= -1
            and then Get_Value (Atts, Name_Index) = Get_Value (Atts, Ref_Index)
@@ -681,9 +695,7 @@ package body Schema.Schema_Readers is
 
       case Handler.Contexts.Typ is
          when Context_Schema | Context_Redefine =>
-            Register (Handler.Target_NS, Element);
-            Output ("Register (Handler.Target_NS, "
-                    & Ada_Name (Element) & ");");
+            null;
          when Context_Sequence =>
             Add_Particle
               (Handler.Contexts.Seq, Element, Min_Occurs, Max_Occurs);
