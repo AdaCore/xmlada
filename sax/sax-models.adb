@@ -111,4 +111,5 @@ package body Sax.Models is
          Internal (Model);
       end if;
    end Free;
+
 end Sax.Models;

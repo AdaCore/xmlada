@@ -14,7 +14,7 @@ generic
    with function Hash    (F : Key)      return Interfaces.Unsigned_32;
    with function Equal   (F1, F2 : Key) return Boolean;
 
-package HTable is
+package Sax.HTable is
 
    type HTable (Size : Interfaces.Unsigned_32) is private;
 
@@ -74,4 +74,4 @@ private
    end record;
 
    No_Iterator : constant Iterator := (Interfaces.Unsigned_32'Last, null);
-end HTable;
+end Sax.HTable;

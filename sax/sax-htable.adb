@@ -1,7 +1,7 @@
 with Ada.Unchecked_Deallocation;
 with Interfaces; use Interfaces;
 
-package body HTable is
+package body Sax.HTable is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Element, Element_Ptr);
@@ -143,4 +143,4 @@ package body HTable is
       return Iter.Item.Elem.all;
    end Current;
 
-end HTable;
+end Sax.HTable;

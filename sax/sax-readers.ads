@@ -35,7 +35,7 @@ with Sax.Attributes;
 with Sax.Models;
 with Unicode;
 with Unicode.CES;
-with HTable;
+with Sax.HTable;
 
 package Sax.Readers is
 
@@ -457,7 +457,7 @@ private
    procedure Free (Entity : in out Entity_Entry_Access);
    function Get_Key (Entity : Entity_Entry_Access) return String;
 
-   package Entity_Table is new HTable
+   package Entity_Table is new Sax.HTable
      (Element       => Entity_Entry_Access,
       Empty_Element => null,
       Free          => Free,
@@ -571,7 +571,7 @@ private
    procedure Free (Att : in out Attributes_Entry);
    function Get_Key (Att : Attributes_Entry) return String;
 
-   package Attributes_Table is new HTable
+   package Attributes_Table is new Sax.HTable
      (Element       => Attributes_Entry,
       Empty_Element => Null_Attribute,
       Free          => Free,
@@ -588,7 +588,7 @@ private
    procedure Free (Notation : in out Notation_Entry);
    function Get_Key (Notation : Notation_Entry) return String;
 
-   package Notations_Table is new HTable
+   package Notations_Table is new Sax.HTable
      (Element       => Notation_Entry,
       Empty_Element => Null_Notation,
       Free          => Free,

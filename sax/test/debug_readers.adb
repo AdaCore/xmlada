@@ -6,7 +6,6 @@ with Sax.Attributes; use Sax.Attributes;
 with Sax.Models;     use Sax.Models;
 with Unicode.CES;    use Unicode.CES;
 with Unicode;        use Unicode;
-with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Sax.Encodings;  use Sax.Encodings;
 
 package body Debug_Readers is
@@ -27,7 +26,9 @@ package body Debug_Readers is
 
    procedure Warning
      (Handler : in out Debug_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class) is
+      Except : Sax.Exceptions.Sax_Parse_Exception'Class)
+   is
+     pragma Warnings (Off, Handler);
    begin
       Put_Line ("Sax.Warning ("
                 & Get_Message (Except) & ", at "
@@ -40,7 +41,9 @@ package body Debug_Readers is
 
    procedure Error
      (Handler : in out Debug_Reader;
-      Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class)
+   is
+      pragma Warnings (Off, Handler);
    begin
       Put_Line ("Sax.Error ("
                 & Get_Message (Except) & ", at "
@@ -137,7 +140,8 @@ package body Debug_Readers is
          Put ("Sax.Start_Element ("
               & Namespace_URI & ", " & Local_Name & ", " & Qname);
          for J in 0 .. Get_Length (Atts) - 1 loop
-            Put (", " & Get_Qname (Atts, J) & "='" & Get_Value (Atts, J) & ''');
+            Put (", " & Get_Qname (Atts, J) & "='"
+                 & Get_Value (Atts, J) & ''');
          end loop;
          Put_Line (") at " & To_String (Handler.Locator.all));
       end if;
