@@ -10,9 +10,9 @@ all: ${FORMATS} clean
 
 %.dvi: %.texi
 ifneq (${TEX},)
-	echo x | ${TEX} $<
-	texindex ${<:%.texi=%.cp}
-	echo x | ${TEX} $<
+	-echo x | ${TEX} $<
+	-texindex ${<:%.texi=%.cp}
+	-echo x | ${TEX} $<
 else
 	@echo "---------------------------------------------------"
 	@echo "tex not found, cannot build DVI or PS documentation"
@@ -21,7 +21,7 @@ endif
 
 %.ps: %.dvi
 ifneq (${DVIPS},)
-	dvips -o $@ $<
+	-dvips -o $@ $<
 else
 	@echo "------------------------------------------------------"
 	@echo "dvips not found, cannot build POSTSCRIPT documentation"
@@ -30,7 +30,7 @@ endif
 
 %.html: %.texi
 ifneq (${TEXI2HTML},)
-	${TEXI2HTML} -menu -split_chapter -number $<
+	-${TEXI2HTML} -menu -split_chapter -number $<
 else
 	@echo "----------------------------------------------------"
 	@echo "texi2html not found, cannot build HTML documentation"
@@ -39,7 +39,7 @@ endif
 
 %.info: %.texi
 ifneq (${MAKEINFO},)
-	${MAKEINFO} $<
+	-${MAKEINFO} $<
 else
 	@echo "---------------------------------------------------"
 	@echo "makeinfo not found, cannot build INFO documentation"
@@ -48,7 +48,7 @@ endif
 
 %.txt: %.texi
 ifneq (${MAKEINFO},)
-	${MAKEINFO} -o $@ --number-sections $<
+	-${MAKEINFO} -o $@ --number-sections $<
 else
 	@echo "---------------------------------------------------"
 	@echo "makeinfo not found, cannot build TEXT documentation"
