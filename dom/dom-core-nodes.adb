@@ -696,14 +696,19 @@ package body DOM.Core.Nodes is
       List  : Node_List := Child_Nodes (N);
       J     : Natural := 0;
       Old   : DOM_String_Access;
+      L1, L2 : Integer;
    begin
       while J < List.Last loop
          if List.Items (J).Node_Type = Text_Node
            and then List.Items (J + 1).Node_Type = Text_Node
          then
             Old := List.Items (J).Text;
-            List.Items (J).Text := new DOM_String'
-              (Old.all & List.Items (J + 1).Text.all);
+            L1 := Old.all'Length;
+            L2 := List.Items (J + 1).Text.all'Length;
+            List.Items (J).Text := new DOM_String (1 .. L1 + L2);
+            List.Items (J).Text (1 .. L1) := Old.all;
+            List.Items (J).Text (L1 + 1 .. L1 + L2) :=
+              List.Items (J + 1).Text.all;
             Free (List.Items (J + 1));
             Free (Old);
             List.Items (J + 1 .. List.Last - 1) :=
@@ -1146,14 +1151,14 @@ package body DOM.Core.Nodes is
 
             Print (N.Children, Print_Comments, Print_XML_PI, With_URI);
 
-            Put (Less_Than_Sequence & Slash_Sequence);
+            Put (Less_Than_Sequence); Put (Slash_Sequence);
             Print_Name (N);
             Put (Greater_Than_Sequence);
 
          when Attribute_Node =>
             Print_Name (N);
-            Put (Equals_Sign_Sequence
-                 & Quotation_Mark_Sequence);
+            Put (Equals_Sign_Sequence);
+            Put (Quotation_Mark_Sequence);
             Print_String (Node_Value (N));
             Put (Quotation_Mark_Sequence);
 
@@ -1161,9 +1166,9 @@ package body DOM.Core.Nodes is
             if Print_XML_PI
               or else N.Target.all /= Xml_Sequence
             then
-               Put (Less_Than_Sequence
-                    & Question_Mark_Sequence
-                    & N.Target.all);
+               Put (Less_Than_Sequence);
+               Put (Question_Mark_Sequence);
+               Put (N.Target.all);
 
                if N.Pi_Data'Length = 0 then
                   Put (Space_Sequence);
@@ -1180,14 +1185,14 @@ package body DOM.Core.Nodes is
                      end if;
                   end;
                end if;
-               Put (N.Pi_Data.all
-                    & Question_Mark_Sequence
-                    & Greater_Than_Sequence);
+               Put (N.Pi_Data.all);
+               Put (Question_Mark_Sequence);
+               Put (Greater_Than_Sequence);
             end if;
 
          when Comment_Node =>
             if Print_Comments then
-               Put ("<!--" & Node_Value (N) & "-->");
+               Put ("<!--"); Put (Node_Value (N)); Put ("-->");
             end if;
 
          when Document_Node =>
@@ -1255,7 +1260,7 @@ package body DOM.Core.Nodes is
       begin
          case N.Node_Type is
             when Element_Node =>
-               Put (Prefix & "Element: ");
+               Put (Prefix); Put ("Element: ");
                Print_Name (N);
                New_Line;
 
@@ -1270,50 +1275,50 @@ package body DOM.Core.Nodes is
                Dump (N.Children, Prefix & "  ");
 
             when Attribute_Node =>
-               Put (Prefix & "Attribute: ");
+               Put (Prefix); Put ("Attribute: ");
                Print_Name (N);
                Put ("=");
                Print_String (Node_Value (N));  --  ??? Could be a tree
                New_Line;
 
             when Processing_Instruction_Node =>
-               Put_Line (Prefix & "PI: " & N.Target.all);
-               Put_Line (Prefix & "   Data: " & N.Pi_Data.all);
+               Put (Prefix); Put ("PI: "); Put_Line (N.Target.all);
+               Put (Prefix); Put ("   Data: "); Put_Line (N.Pi_Data.all);
 
             when Comment_Node =>
-               Put_Line (Prefix & "Comment: " & Node_Value (N));
+               Put (Prefix); Put ("Comment: "); Put_Line (Node_Value (N));
 
             when Document_Node =>
-               Put_Line (Prefix & "Document: ");
+               Put (Prefix); Put_Line ("Document: ");
                Dump (N.Doc_Children, Prefix => Prefix & "  ");
 
             when Document_Fragment_Node =>
-               Put_Line (Prefix & "Document_Fragment: ");
+               Put (Prefix); Put_Line ("Document_Fragment: ");
                Dump (N.Doc_Frag_Children, Prefix => Prefix & "  ");
 
             when Document_Type_Node =>
-               Put_Line (Prefix & "Document_Type: ");
+               Put (Prefix); Put_Line ("Document_Type: ");
 
             when Notation_Node =>
-               Put_Line (Prefix & "Notation:");
+               Put (Prefix); Put_Line ("Notation:");
 
             when Text_Node =>
-               Put (Prefix & "Text: ");
+               Put (Prefix); Put ("Text: ");
                Print_String (Node_Value (N));
                New_Line;
 
             when Cdata_Section_Node =>
-               Put (Prefix & "Cdata: ");
+               Put (Prefix); Put ("Cdata: ");
                Print_String (Node_Value (N));
                New_Line;
 
             when Entity_Reference_Node =>
-               Put (Prefix & "Entity_Reference: ");
+               Put (Prefix); Put ("Entity_Reference: ");
                Print_String (Node_Value (N));
                New_Line;
 
             when Entity_Node =>
-               Put (Prefix & "Entity: ");
+               Put (Prefix); Put ("Entity: ");
                Print_String (Node_Value (N));
                New_Line;
          end case;
