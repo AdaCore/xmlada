@@ -28,6 +28,7 @@
 -----------------------------------------------------------------------
 
 with Sax.Attributes;        use Sax.Attributes;
+with Sax.Locators;          use Sax.Locators;
 with Unicode;               use Unicode;
 with Unicode.CES;           use Unicode.CES;
 with Unicode.CES.Utf8;      use Unicode.CES.Utf8;
@@ -47,11 +48,15 @@ package body XML_Gtk.Readers is
    --  Convert a list of attributes to a string suitable for Glib.XML
 
    procedure Parse
-     (Input : in out Input_Source'Class;
+     (Start_Line : Natural := 1;
+      Input : in out Input_Source'Class;
       Tree  : out Glib_XML.Node_Ptr;
       Error : out Unicode.CES.Byte_Sequence_Access);
    --  Parse an input stream.
    --  Input is freed before returning from this procedure
+   --  Start_Line indicates the extra offset that should be added to line
+   --  numbers in the error messages for proper location in their actual
+   --  source file.
 
    --------------------
    -- Start_Document --
@@ -80,6 +85,17 @@ package body XML_Gtk.Readers is
 
       return new String'(To_String (Str));
    end Attributes_From_List;
+
+   --------------------------
+   -- Set_Document_Locator --
+   --------------------------
+
+   procedure Set_Document_Locator
+     (Handler : in out Gtk_Reader; Loc : access Sax.Locators.Locator'Class) is
+   begin
+      Set_Line_Number (Locator_Impl_Access (Loc).all,
+                       Get_Line_Number (Loc.all) + Handler.Start_Line - 1);
+   end Set_Document_Locator;
 
    -------------------
    -- Start_Element --
@@ -229,7 +245,7 @@ package body XML_Gtk.Readers is
       Open (File, Input);
       Set_Public_Id (Input, File);
       Set_System_Id (Input, File);
-      Parse (Input, Tree, Error);
+      Parse (1, Input, Tree, Error);
    end Parse;
 
    -----------
@@ -237,7 +253,8 @@ package body XML_Gtk.Readers is
    -----------
 
    procedure Parse
-     (Input : in out Input_Source'Class;
+     (Start_Line : Natural := 1;
+      Input : in out Input_Source'Class;
       Tree  : out Glib_XML.Node_Ptr;
       Error : out Unicode.CES.Byte_Sequence_Access)
    is
@@ -246,6 +263,7 @@ package body XML_Gtk.Readers is
       Set_Warnings_As_Errors (Reader, True);
       Set_Feature (Reader, Validation_Feature, False);
       Set_Feature (Reader, Test_Valid_Chars_Feature, True);
+      Reader.Start_Line := Start_Line;
 
       Parse (Reader, Input);
       Tree  := Get_Tree (Reader);
@@ -266,16 +284,18 @@ package body XML_Gtk.Readers is
    ------------------
 
    procedure Parse_Buffer
-     (Buffer : Glib.UTF8_String;
-      Tree   : out Glib_XML.Node_Ptr;
-      Error  : out Unicode.CES.Byte_Sequence_Access)
+     (Buffer     : Glib.UTF8_String;
+      Tree       : out Glib_XML.Node_Ptr;
+      Error      : out Unicode.CES.Byte_Sequence_Access;
+      From_File  : String := "<input>";
+      Start_Line : Natural := 1)
    is
       Input : String_Input;
    begin
       Open (Buffer'Unrestricted_Access, Utf8_Encoding, Input);
-      Set_Public_Id (Input, "<input>");
-      Set_System_Id (Input, "<input>");
-      Parse (Input, Tree, Error);
+      Set_Public_Id (Input, From_File);
+      Set_System_Id (Input, From_File);
+      Parse (Start_Line, Input, Tree, Error);
    end Parse_Buffer;
 
 end XML_Gtk.Readers;

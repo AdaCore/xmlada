@@ -30,6 +30,7 @@
 with Sax.Readers;          use Sax.Readers;
 with Sax.Attributes;
 with Sax.Exceptions;
+with Sax.Locators;
 with Unicode.CES;
 with Glib.XML;
 
@@ -61,10 +62,14 @@ package XML_Gtk.Readers is
    --  If there is an error, Tree is always set to null.
 
    procedure Parse_Buffer
-     (Buffer : Glib.UTF8_String;
-      Tree   : out Glib_XML.Node_Ptr;
-      Error  : out Unicode.CES.Byte_Sequence_Access);
-   --  Same as Parse, but the string to parse is already in memory
+     (Buffer     : Glib.UTF8_String;
+      Tree       : out Glib_XML.Node_Ptr;
+      Error      : out Unicode.CES.Byte_Sequence_Access;
+      From_File  : String := "<input>";
+      Start_Line : Natural := 1);
+   --  Same as Parse, but the string to parse is already in memory.
+   --  (From_File, Start_Line) can be used to identify where the buffer was
+   --  read from, and will show up in error messages locations
 
    function Get_Tree (Read : Gtk_Reader) return Glib_XML.Node_Ptr;
    --  Get the tree that Read created
@@ -82,12 +87,15 @@ private
 
    type Gtk_Reader is new Reader with record
       Tree                       : Glib_XML.Node_Ptr;
+      Start_Line                 : Natural := 1;
       Current_Node               : Glib_XML.Node_Ptr;
       Internal_Encoding          : Unicode.CES.Encoding_Scheme;
       Warnings_As_Error          : Boolean := False;
    end record;
 
    procedure Start_Document (Handler : in out Gtk_Reader);
+   procedure Set_Document_Locator
+     (Handler : in out Gtk_Reader; Loc : access Sax.Locators.Locator'Class);
    procedure Start_Element
      (Handler       : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
