@@ -37,74 +37,55 @@ private package Schema.Validators.Facets is
    --  Return True if Str is a valid value.
    --  Str is encoded with Sax.Encodings.Encoding
 
-   pragma Warnings (Off);
-   type All_Facets is (Facet_Whitespace,
-                       Facet_Pattern,
-                       Facet_Enumeration,
-                       Facet_Implicit_Enumeration,
-                       Facet_Length,
-                       Facet_Min_Length,
-                       Facet_Max_Length,
-                       Facet_Total_Digits,
-                       Facet_Fraction_Digits,
-                       Facet_Min_Inclusive,
-                       Facet_Min_Exclusive,
-                       Facet_Max_Exclusive,
-                       Facet_Max_Inclusive);
-   pragma Warnings (On);
+   --------------------
+   --  Common facets --
+   --------------------
+   --  These are the facets that are shared by most base types.
 
-   type Facets_Mask is array (All_Facets) of Boolean;
-   pragma Pack (Facets_Mask);
+   type Common_Facets_Names is (Facet_Whitespace,
+                                Facet_Pattern,
+                                Facet_Enumeration,
+                                Facet_Implicit_Enumeration);
+   type Common_Facets_Mask is array (Common_Facets_Names) of Boolean;
+   pragma Pack (Common_Facets_Mask);
 
-   No_Facets : constant Facets_Mask := (others => False);
+   type Common_Facets_Description is new Facets_Description_Record with record
+      Settable             : Common_Facets_Mask        := (others => True);
+      Mask                 : Common_Facets_Mask        := (others => False);
+      --  List of facets than can be set or are currently set
 
-   String_Facets : constant Facets_Mask :=
-     (Facet_Whitespace | Facet_Pattern | Facet_Enumeration
-      | Facet_Length | Facet_Min_Length | Facet_Max_Length => True,
-      others => False);
-   Integer_Facets : constant Facets_Mask :=
-     (Facet_Whitespace | Facet_Pattern | Facet_Total_Digits
-      | Facet_Fraction_Digits | Facet_Min_Inclusive
-      | Facet_Max_Inclusive | Facet_Min_Exclusive
-      | Facet_Max_Exclusive => True,
-      others => False);
-
-   type Facets_Value is record
-      Settable             : Facets_Mask := No_Facets;
-      --  List of facets than can be set
-
-      Mask                 : Facets_Mask := No_Facets;
       Whitespace           : Whitespace_Restriction    := Preserve;
       Pattern              : Pattern_Matcher_Access    := null;
       Pattern_String       : Unicode.CES.Byte_Sequence_Access      := null;
+      Implicit_Enumeration : Value_Validator           := null;
       Enumeration          : Byte_Sequence_List_Access := null;
       --  ??? Could use a htable here for faster access
-      Implicit_Enumeration : Value_Validator           := null;
-      Length               : Natural                   := Natural'Last;
-      Min_Length           : Natural                   := 0;
-      Max_Length           : Natural                   := Natural'Last;
-      Total_Digits         : Positive                  := Positive'Last;
-      Fraction_Digits      : Natural                   := Natural'Last;
-      Max_Inclusive        : Long_Long_Integer;
-      Max_Exclusive        : Long_Long_Integer;
-      Min_Inclusive        : Long_Long_Integer;
-      Min_Exclusive        : Long_Long_Integer;
    end record;
+   --  Facets shared by all basic types
 
-
-
-   procedure Free (Facets : in out Facets_Value);
+   procedure Free (Facets : in out Common_Facets_Description);
    --  Free the contents of the facets
 
    procedure Check_Facet
-     (Facets : in out Facets_Value; Value : Unicode.CES.Byte_Sequence);
-   --  Check whether Value matches all the facets.
-   --  raises XML_Validation_Error in case of error
+     (Facets : in out Common_Facets_Description;
+      Value  : Unicode.CES.Byte_Sequence);
+   --  Check whether the facets match Value. If they don't, an exception is
+   --  raised.
 
    procedure Add_Facet
-     (Facets      : in out Facets_Value;
+     (Facets      : in out Common_Facets_Description;
       Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence);
-   --  Raises Invalid_Restriction in case of error
+      Facet_Value : Unicode.CES.Byte_Sequence;
+      Applied     : out Boolean);
+   --  Set a new facet in Facets.
+   --  Applies is set to True if Facet_Name was indeed one of the common
+   --  facets
+
+   procedure Set_Implicit_Enumeration
+     (Facets : in out Common_Facets_Description; Validator : Value_Validator);
+   procedure Set_Whitespace
+     (Facets     : in out Common_Facets_Description;
+      Whitespace : Whitespace_Restriction);
+   --  Set the various facets more efficiently than going through a string
 
 end Schema.Validators.Facets;
