@@ -855,6 +855,19 @@ package body Schema.Schema_Grammar is
       Register
         (G, Create_Type ("public", Get_Validator (Lookup (G, "token"))));
 
+      --  The "redefine" element
+      Choice1 := Create_Choice (Min_Occurs => 0, Max_Occurs => Unbounded);
+      Add_Particle (Choice1, Lookup_Element (G, "annotation"));
+      Add_Particle (Choice1, Lookup_Element (G, "redefinable"));
+      Add_Attribute
+        (Choice1, Create_Attribute ("schemaLocation", G,
+                                    Lookup (G, "uriReference"),
+                                    Attribute_Use => Required));
+      Typ := Extension_Of (Lookup (G, "openAttrs"), XML_Validator (Choice1));
+      Elem := Create_Element ("redefine", Create_Type ("", Typ));
+      Register (G, Elem);
+
+
 
       --  From datatypes.xsd
 
