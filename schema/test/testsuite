@@ -468,23 +468,23 @@ expect $ms/element/elemQ001.xsd "" ""
 expect $ms/element/elemQ002.xsd "" ""
 expect $ms/element/elemQ003.xsd "" ""
 expect $ms/element/elemQ004.xsd "" \
- "$ms/element/elemQ004.xsd:7:19: Too many occurrences of sequence. Expecting at most 1"
+ "$ms/element/elemQ004.xsd:7:19: Unexpected element: \"annotation\""
 expect $ms/element/elemQ005.xsd "" ""
 expect $ms/element/elemQ006.xsd "" \
- "$ms/element/elemQ006.xsd:10:19: Too many occurrences of sequence. Expecting at most 1"
+ "$ms/element/elemQ006.xsd:10:19: Unexpected element: \"annotation\""
 expect "" $ms/element/elemQ007.xml \
- "$ms/element/elemQ007.xml:3:8: Expecting \"fooTest\" or one in its substitutionGroup"
+ "$ms/element/elemQ007.xml:3:8: Element \"fooTest\" or its substitutionGroup must be specified"
 expect "" $ms/element/elemQ008.xml ""
 expect "" $ms/element/elemQ009.xml \
  "$ms/element/elemQ009.xml:4:11: Element \"fooTest\" is repeated too many times, maximum number of occurrences is 1"
 expect "" $ms/element/elemQ010.xml \
- "$ms/element/elemQ010.xml:3:8: Expecting \"fooTest\" or one in its substitutionGroup"
+ "$ms/element/elemQ010.xml:3:8: Element \"fooTest\" or its substitutionGroup must be specified"
 expect "" $ms/element/elemQ011.xml ""
 expect "" $ms/element/elemQ012.xml \
- "$ms/element/elemQ012.xml:4:11: Too many occurrences of sequence. Expecting at most 1"
+ "$ms/element/elemQ012.xml:4:11: Unexpected element: \"fooTest\""
 expect "" $ms/element/elemQ013.xml ""
 expect "" $ms/element/elemQ014.xml \
- "$ms/element/elemQ014.xml:5:11: Too many occurrences of sequence. Expecting at most 1"
+ "$ms/element/elemQ014.xml:5:11: Unexpected element: \"fooTest\""
 expect "" $ms/element/elemQ015.xml ""
 expect $ms/element/elemQ016.xsd "" ""
 expect "" $ms/element/elemQ017.xml ""
@@ -686,7 +686,7 @@ expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.v00.xml" "<key> not su
 expect "$sun/xsd001.xsd" "$sun/xsd001.n00.xml" \
  "$sun/xsd001.n00.xml:6:12: Element \"child\" or its substitutionGroup must be specified"
 expect "$sun/xsd001.xsd" "$sun/xsd001.n01.xml" \
- "$sun/xsd001.n01.xml:10:9: Too many occurrences of sequence. Expecting at most 1"
+ "$sun/xsd001.n01.xml:10:9: Unexpected element: \"child\""
 expect "$sun/xsd001.xsd" "$sun/xsd001.n02.xml" \
  "$sun/xsd001.n02.xml:7:21: Attribute \"attr\": String is too short, minimum length is 5 characters"
 expect "$sun/xsd001.xsd" "$sun/xsd001.n03.xml" \
@@ -718,9 +718,9 @@ expect "$sun/xsd002.xsd" "$sun/xsd002.v01.xml" ""
 ### SUN xsd003
 
 expect "$sun/xsd003-1.e.xsd" "" \
- "$sun/xsd003-1.e.xsd:10:30: Invalid choice: element"
+ "$sun/xsd003-1.e.xsd:10:30: Unexpected element: \"element\""
 expect "$sun/xsd003-2.e.xsd" "" \
- "$sun/xsd003-2.e.xsd:10:50: Invalid choice: attribute"
+ "$sun/xsd003-2.e.xsd:10:50: Unexpected element: \"attribute\""
 expect "$sun/xsd003a.xsd" "$sun/xsd003a.v00.xml" ""
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.n00.xml" \
  "$sun/xsd003b.n00.xml:3:29: Attribute \"add\": Must have a decimal value"
@@ -762,7 +762,7 @@ expect "$sun/xsd004.xsd" "$sun/xsd004.v00.xml" ""
 ### SUN xsd005
 
 expect "$sun/xsd005.xsd" "$sun/xsd005.n00.xml" \
- "$sun/xsd005.n00.xml:5:10: Expecting \"a\" or one in its substitutionGroup"
+ "$sun/xsd005.n00.xml:5:10: Element \"a\" or its substitutionGroup must be specified"
 expect "$sun/xsd005.xsd" "$sun/xsd005.n01.xml" \
  "$sun/xsd005.n01.xml:5:30: Unknown type \"undeclared\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n02.xml" \
@@ -770,33 +770,33 @@ expect "$sun/xsd005.xsd" "$sun/xsd005.n02.xml" \
 expect "$sun/xsd005.xsd" "$sun/xsd005.n03.xml" \
  "$sun/xsd005.n03.xml:6:11: Expecting at least 1 occurrences of \"c\" or its substitutionGroup"
 expect "$sun/xsd005.xsd" "$sun/xsd005.n04.xml" \
- "$sun/xsd005.n04.xml:6:15: Too many occurrences of sequence. Expecting at most 1"
+ "$sun/xsd005.n04.xml:6:15: Unexpected element: \"d\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n05.xml" \
  "$sun/xsd005.n05.xml:6:18: Unknown type \"ext\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n06.xml" \
- "$sun/xsd005.n06.xml:7:9: Expecting \"d\" or one in its substitutionGroup"
+ "$sun/xsd005.n06.xml:7:9: Element \"d\" or its substitutionGroup must be specified"
 expect "$sun/xsd005.xsd" "$sun/xsd005.v00.xml" ""
 
 ### SUN xsd006
 
 expect "$sun/xsd006.xsd" "$sun/xsd006.n00.xml" \
- "$sun/xsd006.n00.xml:5:11: Too many occurrences of sequence. Expecting at most 1"
+ "$sun/xsd006.n00.xml:5:11: Unexpected element: \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n01.xml" \
- "$sun/xsd006.n01.xml:5:15: Too many occurrences of sequence. Expecting at most 1"
+ "$sun/xsd006.n01.xml:5:15: Unexpected element: \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n02.xml" \
- "$sun/xsd006.n02.xml:5:13: Expecting \"x\" or one in its substitutionGroup"
+ "$sun/xsd006.n02.xml:5:13: Element \"x\" or its substitutionGroup must be specified"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n03.xml" \
- "$sun/xsd006.n03.xml:5:15: Too many occurrences of sequence. Expecting at most 1"
+ "$sun/xsd006.n03.xml:5:15: Unexpected element: \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n04.xml" \
- "$sun/xsd006.n04.xml:5:13: Expecting \"x\" or one in its substitutionGroup"
+ "$sun/xsd006.n04.xml:5:13: Element \"x\" or its substitutionGroup must be specified"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n05.xml" \
  "$sun/xsd006.n05.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n06.xml" \
- "$sun/xsd006.n06.xml:5:15: Too many occurrences of sequence. Expecting at most 1"
+ "$sun/xsd006.n06.xml:5:15: Unexpected element: \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n07.xml" \
  "$sun/xsd006.n07.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n08.xml" \
- "$sun/xsd006.n08.xml:5:13: Expecting \"x\" or one in its substitutionGroup"
+ "$sun/xsd006.n08.xml:5:13: Element \"x\" or its substitutionGroup must be specified"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n09.xml" \
  "$sun/xsd006.n09.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n10.xml" \
@@ -816,9 +816,9 @@ expect "$sun/xsd008.xsd" "$sun/xsd008.v00.xml" ""
 ### SUN xsd011
 
 expect "$sun/xsd011.xsd" "$sun/xsd011.n00.xml" \
- "$sun/xsd011.n00.xml:7:17: Expecting \"x\" or one in its substitutionGroup"
+ "$sun/xsd011.n00.xml:7:17: Element \"x\" or its substitutionGroup must be specified"
 expect "$sun/xsd011.xsd" "$sun/xsd011.n01.xml" \
- "$sun/xsd011.n01.xml:7:14: Expecting \"x\" or one in its substitutionGroup"
+ "$sun/xsd011.n01.xml:7:14: Element \"x\" or its substitutionGroup must be specified"
 expect "$sun/xsd011.xsd" "$sun/xsd011.n02.xml" \
  "$sun/xsd011.n02.xml:7:7: Element is set as nil, and doesn't accept any child element"
 expect "$sun/xsd011.xsd" "$sun/xsd011.n03.xml" \

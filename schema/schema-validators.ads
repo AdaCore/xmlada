@@ -427,7 +427,8 @@ package Schema.Validators is
    --  Return a new empty group
 
    procedure Add_Particle
-     (Group : in out XML_Group; Particle : access Group_Model_Record'Class);
+     (Group : in out XML_Group; Particle : access Group_Model_Record'Class;
+      Min_Occurs : Natural := 1; Max_Occurs : Natural := 1);
    --  Add a new particle in the group
 
    function Extension_Of
@@ -453,9 +454,7 @@ package Schema.Validators is
    type Choice_Record is new Group_Model_Record with private;
    type Choice is access all Choice_Record'Class;
 
-   function Create_Sequence
-     (Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return Sequence;
+   function Create_Sequence return Sequence;
    --  Create a new empty sequence
    --  (Min_Occurs, Max_Occurs) indicate the number of repetition allowed for
    --  that sequence.
@@ -464,8 +463,12 @@ package Schema.Validators is
    procedure Add_Particle
      (Seq : access Sequence_Record; Item : XML_Element;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-   procedure Add_Particle (Seq : access Sequence_Record; Item : Sequence);
-   procedure Add_Particle (Seq : access Sequence_Record; Item : Choice);
+   procedure Add_Particle
+     (Seq : access Sequence_Record; Item : Sequence;
+      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
+   procedure Add_Particle
+     (Seq : access Sequence_Record; Item : Choice;
+      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
    procedure Add_Particle
      (Seq : access Sequence_Record; Item : XML_Any;
       Min_Occurs : Integer := 1; Max_Occurs : Integer := 1);
@@ -474,9 +477,7 @@ package Schema.Validators is
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
 
 
-   function Create_Choice
-     (Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return Choice;
+   function Create_Choice return Choice;
    --  Create a new empty choice.
    --  (Min_Occurs, Max_Occurs) indicate the number of repetition allowed for
    --  that choice.
@@ -485,8 +486,12 @@ package Schema.Validators is
    procedure Add_Particle
      (C : access Choice_Record; Item : XML_Element;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-   procedure Add_Particle (C : access Choice_Record; Item : Sequence);
-   procedure Add_Particle (C : access Choice_Record; Item : Choice);
+   procedure Add_Particle
+     (C : access Choice_Record; Item : Sequence;
+      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
+   procedure Add_Particle
+     (C : access Choice_Record; Item : Choice;
+      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
    procedure Add_Particle
      (C : access Choice_Record; Item : XML_Any;
       Min_Occurs : Integer := 1; Max_Occurs : Integer := 1);
@@ -993,11 +998,11 @@ private
 
    type Group_Model_Record is abstract new XML_Validator_Record with record
       Particles  : Particle_List := Empty_Particle_List;
-      Max_Occurs : Integer := 1;
-      Min_Occurs : Natural := 1;
+--        Max_Occurs : Integer := 1;
+--        Min_Occurs : Natural := 1;
    end record;
    type Group_Model_Data_Record is new Validator_Data_Record with record
-      Num_Occurs   : Natural := 0;
+--        Num_Occurs   : Natural := 0;
 
       Nested : Group_Model := null;
       Parent : Group_Model := null;
@@ -1105,7 +1110,7 @@ private
 
    type Sequence_Record is new Group_Model_Record with null record;
    type Sequence_Data is new Group_Model_Data_Record with record
-      Current      : Particle_Iterator;
+      Current      : Particle_Iterator := No_Iter;
 
       Num_Occurs_Of_Current : Integer := 0;
       --  Number of repeats for the current particle of the sequence. This is

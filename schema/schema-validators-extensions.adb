@@ -230,10 +230,9 @@ package body Schema.Validators.Extensions is
       C      : Sequence;
    begin
       Result.Base      := Base;
-      C := Create_Sequence
-        (Min_Occurs => Min_Occurs, Max_Occurs => Max_Occurs);
+      C := Create_Sequence;
       Set_Debug_Name (C, "automatic_extension_sequence");
-      Add_Particle (C, Group);
+      Add_Particle (C, Group, Min_Occurs, Max_Occurs);
       Result.Extension := XML_Validator (C);
       return XML_Validator (Result);
    end Create_Extension_Of;

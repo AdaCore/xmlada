@@ -22,11 +22,6 @@ package body Schema.Validators is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (XML_Attribute_Group_Record, XML_Attribute_Group);
 
-   procedure Initialize_Sequence
-     (Seq  : access Sequence_Record'Class;
-      Data : Sequence_Data_Access);
-   --  Reset the sequence to point to its first item
-
    procedure Create_NS_Grammar
      (Grammar       : in out XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence);
@@ -713,7 +708,7 @@ package body Schema.Validators is
       end Recursive_Check;
 
    begin
-      Debug_Output ("Validate_Attributes " & Get_Name (Validator));
+      Debug_Push_Prefix ("Validate_Attributes " & Get_Name (Validator));
 
       Recursive_Check (XML_Validator (Validator));
 
@@ -743,6 +738,8 @@ package body Schema.Validators is
             end if;
          end if;
       end loop;
+
+      Debug_Pop_Prefix;
    end Validate_Attributes;
 
    --------------------------
@@ -2058,21 +2055,6 @@ package body Schema.Validators is
       return Att.Local_Name.all;
    end Get_Key;
 
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   function Create_Validator_Data
-     (Validator : access Sequence_Record) return Validator_Data
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return new Sequence_Data'
-        (Group_Model_Data_Record with
-         Current               => No_Iter,
-         Num_Occurs_Of_Current => 0);
-   end Create_Validator_Data;
-
    -------------------------------
    -- Check_Substitution_Groups --
    -------------------------------
@@ -2112,34 +2094,19 @@ package body Schema.Validators is
       return Result;
    end Check_Substitution_Groups;
 
-   -------------------------
-   -- Initialize_Sequence --
-   -------------------------
+   ---------------------------
+   -- Create_Validator_Data --
+   ---------------------------
 
-   procedure Initialize_Sequence
-     (Seq  : access Sequence_Record'Class;
-      Data : Sequence_Data_Access) is
+   function Create_Validator_Data
+     (Validator : access Sequence_Record) return Validator_Data
+   is
    begin
-      Data.Current    := Start (Seq.Particles);
-
-      Data.Num_Occurs := Data.Num_Occurs + 1;
-
-      if Get (Data.Current) = null then
-         Debug_Output ("No child authorized for " & Get_Name (Seq));
-         Validation_Error ("No child authorized for this sequence");
-      end if;
-
-      if Seq.Max_Occurs /= Unbounded
-        and then Data.Num_Occurs > Seq.Max_Occurs
-      then
-         Debug_Output ("Too many occurrences of " & Get_Name (Seq)
-                       & Data.Num_Occurs'Img
-                       & Seq.Max_Occurs'Img);
-         Validation_Error
-           ("Too many occurrences of sequence. Expecting at most"
-            & Integer'Image (Seq.Max_Occurs));
-      end if;
-   end Initialize_Sequence;
+      return new Sequence_Data'
+        (Group_Model_Data_Record with
+         Current               => Start (Validator.Particles),
+         Num_Occurs_Of_Current => 0);
+   end Create_Validator_Data;
 
    ---------------------------
    -- Move_To_Next_Particle --
@@ -2171,10 +2138,7 @@ package body Schema.Validators is
          --  No more element possible in this sequence ?
          return not
            (Get (Data.Current) = null
-            and then Data.Parent /= null
-            and then Data.Num_Occurs >= Seq.Min_Occurs
-            and then (Seq.Max_Occurs /= Unbounded
-                      and then Data.Num_Occurs <= Seq.Max_Occurs));
+            and then Data.Parent /= null);
       end if;
 
       return True;
@@ -2265,15 +2229,14 @@ package body Schema.Validators is
       Element_Validator : out XML_Element)
    is
       D         : constant Sequence_Data_Access := Sequence_Data_Access (Data);
-      Start_Elem : XML_Particle_Access;
-      First_Iter : Boolean := True;
       Curr       : XML_Particle_Access;
       Tmp        : Boolean;
       pragma Unreferenced (Tmp);
       Skip_Current : Boolean;
 
    begin
-      Debug_Push_Prefix ("Validate_Start_Element " & Get_Name (Validator));
+      Debug_Push_Prefix ("Validate_Start_Element " & Get_Name (Validator)
+                         & " occurs=" & D.Num_Occurs_Of_Current'Img);
 
       if D.Nested /= null then
          Run_Nested
@@ -2282,25 +2245,13 @@ package body Schema.Validators is
          if Element_Validator /= No_Element
            or else not Move_To_Next_Particle (Validator, D)
          then
+            D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
             Debug_Pop_Prefix;
             return;
          end if;
       end if;
 
-      Start_Elem := Get (D.Current);
-
-      Debug_Output ("Start sequence "
-                    & " occurs=(" & Validator.Min_Occurs'Img
-                    & " <=" & D.Num_Occurs'Img & " <="
-                    & Validator.Max_Occurs'Img & ')');
-
-      while First_Iter or else Get (D.Current) /= Start_Elem loop
-         First_Iter := False;
-
-         if Get (D.Current) = null then
-            Initialize_Sequence (Validator, D);
-         end if;
-
+      while Get (D.Current) /= null loop
          Curr := Get (D.Current);
 
          case Curr.Typ is
@@ -2345,7 +2296,9 @@ package body Schema.Validators is
                   Namespace_URI, Grammar, Element_Validator, Skip_Current);
 
                if Element_Validator = No_Element then
-                  if not Skip_Current then
+                  if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current)
+                    and then not Skip_Current
+                  then
                      Debug_Output
                        ("Nested " & Get_Name (Curr.Validator)
                         & " didn't match, and is mandatory");
@@ -2405,13 +2358,16 @@ package body Schema.Validators is
    begin
       --  If the only remaining elements are optional, ignore them
 
-      Debug_Output ("Validate_End_Element " & Get_Name (Validator)
-                    & " " & Local_Name);
+      Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator)
+                         & " " & Local_Name);
 
       if Get (D.Current) /= null then
          if D.Num_Occurs_Of_Current >= Get_Min_Occurs (D.Current) then
             Debug_Output ("Skipping current, since occurred enough times");
             Next (D.Current);
+         else
+            Debug_Output ("Current element occurred "
+                          & D.Num_Occurs_Of_Current'Img & " times");
          end if;
 
          loop
@@ -2446,36 +2402,16 @@ package body Schema.Validators is
 
             Next (D.Current);
          end loop;
-
-      elsif D.Num_Occurs = 0 then
-         if not Can_Be_Empty (Validator) then
-            D.Current := Start (Validator.Particles);
-            if Get (D.Current).Typ = Particle_Element then
-               Validation_Error
-                 ("Expecting """
-                  & Get_Local_Name (Get (D.Current).Element)
-                  & """ or one in its substitutionGroup");
-
-            else
-               Validation_Error
-                 ("Expecting some children tags, got a childless node """
-                  & Local_Name & """");
-            end if;
-         end if;
-         D.Num_Occurs := D.Num_Occurs + 1;
       end if;
 
       if Get (D.Current) /= null then
-         Debug_Output ("Unexpected end of sequence " & Get_Name (Validator));
+         Debug_Output ("Unexpected end of sequence " & Get_Name (Validator)
+                       & Get (D.Current).Typ'Img
+                       & Get_Min_Occurs (D.Current)'Img);
          Validation_Error ("Unexpected end of sequence");
       end if;
 
-      if D.Num_Occurs < Validator.Min_Occurs then
-         Validation_Error
-           ("Not enough occurrences of sequence, expecting at least"
-            & Integer'Image (Validator.Min_Occurs)
-            & ", got" & Integer'Image (D.Num_Occurs));
-      end if;
+      Debug_Pop_Prefix;
    end Validate_End_Element;
 
    -------------------------
@@ -2528,19 +2464,9 @@ package body Schema.Validators is
    -- Create_Sequence --
    ---------------------
 
-   function Create_Sequence
-     (Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return Sequence
-   is
+   function Create_Sequence return Sequence is
       Seq : constant Sequence := new Sequence_Record;
    begin
-      if Max_Occurs /= Unbounded and then Min_Occurs > Max_Occurs then
-         Validation_Error
-           ("minOccurs > maxOccurs when creating sequence");
-      end if;
-
-      Seq.Max_Occurs := Max_Occurs;
-      Seq.Min_Occurs := Min_Occurs;
       return Seq;
    end Create_Sequence;
 
@@ -2572,15 +2498,15 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (Seq        : access Sequence_Record;
-      Item       : Sequence) is
+     (Seq : access Sequence_Record; Item : Sequence;
+      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
       Append (Seq.Particles, XML_Particle'
                 (Typ        => Particle_Nested,
                  Validator  => Group_Model (Item),
                  Next       => null,
-                 Min_Occurs => Item.Min_Occurs,
-                 Max_Occurs => Item.Max_Occurs));
+                 Min_Occurs => Min_Occurs,
+                 Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -2588,15 +2514,15 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (Seq        : access Sequence_Record;
-      Item       : Choice) is
+     (Seq : access Sequence_Record; Item : Choice;
+      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
       Append (Seq.Particles, XML_Particle'
                 (Typ        => Particle_Nested,
                  Validator  => Group_Model (Item),
                  Next       => null,
-                 Min_Occurs => Item.Min_Occurs,
-                 Max_Occurs => Item.Max_Occurs));
+                 Min_Occurs => Min_Occurs,
+                 Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -2644,20 +2570,6 @@ package body Schema.Validators is
          end if;
       end if;
 
-      --  No more match to be had from this choice
-      if D.Parent /= null
-        and then (Validator.Max_Occurs /= Unbounded
-                  and then D.Num_Occurs >= Validator.Max_Occurs)
-      then
-         Element_Validator := No_Element;
-         Debug_Pop_Prefix;
-         return;
-      end if;
-
-      Debug_Output ("Start choice " & Get_Name (Validator)
-                    & " minOccurs=" & Validator.Min_Occurs'Img
-                    & " maxOccurs=" & Validator.Max_Occurs'Img);
-
       --  Check whether the current item is valid
 
       while Get (Item) /= null loop
@@ -2692,28 +2604,9 @@ package body Schema.Validators is
       end loop;
 
       if Get (Item) = null then
-         if D.Parent /= null
-           and then D.Num_Occurs >= Validator.Min_Occurs
-         then
-            Debug_Output
-              ("Terminating nested choice, since no longer matches");
-
-            Element_Validator := No_Element;
-            Debug_Pop_Prefix;
-            return;
-         else
-            Validation_Error ("Invalid choice: " & Local_Name);
-         end if;
-      end if;
-
-      D.Num_Occurs := D.Num_Occurs + 1;
-      if Validator.Max_Occurs /= Unbounded
-        and then D.Num_Occurs > Validator.Max_Occurs
-      then
-         Validation_Error
-           ("Too many occurrences of choice, expecting at most"
-            & Integer'Image (Validator.Max_Occurs));
          Element_Validator := No_Element;
+         Debug_Pop_Prefix;
+         return;
       end if;
 
       if Element_Validator /= No_Element then
@@ -2732,16 +2625,9 @@ package body Schema.Validators is
       Local_Name        : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data)
    is
-      pragma Unreferenced (Local_Name);
+      pragma Unreferenced (Validator, Local_Name, Data);
    begin
-      if Choice_Data (Data.all).Num_Occurs < Validator.Min_Occurs then
-         Debug_Output ("Missing choice occurrences:"
-                       & Choice_Data (Data.all).Num_Occurs'Img
-                       & ' ' & Get_Name (Validator));
-         Validation_Error
-           ("Not enough occurrences of choice, expecting at least"
-            & Integer'Image (Validator.Min_Occurs));
-      end if;
+      null;
    end Validate_End_Element;
 
    ---------------------------
@@ -2782,19 +2668,9 @@ package body Schema.Validators is
    -- Create_Choice --
    -------------------
 
-   function Create_Choice
-     (Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return Choice
-   is
-      C : constant Choice := new Choice_Record;
+   function Create_Choice return Choice is
    begin
-      if Max_Occurs /= Unbounded and then Min_Occurs > Max_Occurs then
-         Validation_Error
-           ("minOccurs > maxOccurs when creating choice");
-      end if;
-      C.Max_Occurs := Max_Occurs;
-      C.Min_Occurs := Min_Occurs;
-      return C;
+      return new Choice_Record;
    end Create_Choice;
 
    ------------------
@@ -2856,14 +2732,15 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (C : access Choice_Record; Item : Sequence) is
+     (C : access Choice_Record; Item : Sequence;
+      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
       Append (C.Particles, XML_Particle'
                 (Typ        => Particle_Nested,
                  Validator  => Group_Model (Item),
                  Next       => null,
-                 Min_Occurs => Item.Min_Occurs,
-                 Max_Occurs => Item.Max_Occurs));
+                 Min_Occurs => Min_Occurs,
+                 Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -2871,14 +2748,15 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (C : access Choice_Record; Item : Choice) is
+     (C : access Choice_Record; Item : Choice;
+      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
       Append (C.Particles, XML_Particle'
                 (Typ        => Particle_Nested,
                  Validator  => Group_Model (Item),
                  Next       => null,
-                 Min_Occurs => Item.Min_Occurs,
-                 Max_Occurs => Item.Max_Occurs));
+                 Min_Occurs => Min_Occurs,
+                 Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -3064,7 +2942,7 @@ package body Schema.Validators is
       end loop;
 
       Applies := False;
-      Skip_Current := Group.Min_Occurs = 0;
+      Skip_Current := Can_Be_Empty (Group);
       Debug_Output ("Doesn't apply");
       Debug_Pop_Prefix;
    end Applies_To_Tag;
@@ -3172,15 +3050,16 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (Group : in out XML_Group; Particle : access Group_Model_Record'Class) is
+     (Group : in out XML_Group; Particle : access Group_Model_Record'Class;
+      Min_Occurs : Natural := 1; Max_Occurs : Natural := 1) is
    begin
       Append
         (Group.Particles, XML_Particle'
            (Typ        => Particle_Nested,
             Validator  => Group_Model (Particle),
             Next       => null,
-            Min_Occurs => 1,
-            Max_Occurs => 1));
+            Min_Occurs => Min_Occurs,
+            Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    --------------------
@@ -3885,9 +3764,11 @@ package body Schema.Validators is
    ------------------
 
    function Can_Be_Empty
-     (Group : access Group_Model_Record) return Boolean is
+     (Group : access Group_Model_Record) return Boolean
+   is
+      pragma Unreferenced (Group);
    begin
-      return Group.Min_Occurs = 0;
+      return False;
    end Can_Be_Empty;
 
    ------------------
@@ -3899,24 +3780,21 @@ package body Schema.Validators is
    is
       Current : Particle_Iterator;
    begin
-      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group)
-                         & " minOccurs=" & Group.Min_Occurs'Img);
+      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
 
-      if Group.Min_Occurs /= 0 then
-         Current := Start (Group.Particles);
-         while Get (Current) /= null loop
-            if Get_Min_Occurs (Current) /= 0 then
-               if Get (Current).Typ /= Particle_Nested
-                 or else not Can_Be_Empty (Get (Current).Validator)
-               then
-                  Debug_Output ("Cannot be empty");
-                  Debug_Pop_Prefix;
-                  return False;
-               end if;
+      Current := Start (Group.Particles);
+      while Get (Current) /= null loop
+         if Get_Min_Occurs (Current) /= 0 then
+            if Get (Current).Typ /= Particle_Nested
+              or else not Can_Be_Empty (Get (Current).Validator)
+            then
+               Debug_Output ("Cannot be empty");
+               Debug_Pop_Prefix;
+               return False;
             end if;
-            Next (Current);
-         end loop;
-      end if;
+         end if;
+         Next (Current);
+      end loop;
 
       Debug_Output ("Can be empty");
       Debug_Pop_Prefix;
@@ -3932,32 +3810,25 @@ package body Schema.Validators is
    is
       Current : Particle_Iterator;
    begin
-      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group)
-                         & " minOccurs=" & Group.Min_Occurs'Img);
+      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
 
-      if Group.Min_Occurs /= 0 then
-         Current := Start (Group.Particles);
-         while Get (Current) /= null loop
-            if Get_Min_Occurs (Current) = 0
-              or else (Get (Current).Typ = Particle_Nested
-                       and then Can_Be_Empty (Get (Current).Validator))
-            then
-               Debug_Output ("Can be empty");
-               Debug_Pop_Prefix;
-               return True;
-            end if;
+      Current := Start (Group.Particles);
+      while Get (Current) /= null loop
+         if Get_Min_Occurs (Current) = 0
+           or else (Get (Current).Typ = Particle_Nested
+                    and then Can_Be_Empty (Get (Current).Validator))
+         then
+            Debug_Output ("Can be empty");
+            Debug_Pop_Prefix;
+            return True;
+         end if;
 
-            Next (Current);
-         end loop;
+         Next (Current);
+      end loop;
 
-         Debug_Output ("Cannot be empty");
-         Debug_Pop_Prefix;
-         return False;
-      else
-         Debug_Output ("Can be empty");
-         Debug_Pop_Prefix;
-         return True;
-      end if;
+      Debug_Output ("Cannot be empty");
+      Debug_Pop_Prefix;
+      return False;
    end Can_Be_Empty;
 
    ------------------------

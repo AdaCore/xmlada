@@ -425,7 +425,7 @@ package body Schema.Readers is
 
       if Element = No_Element then
          Validation_Error
-           ("No data type definition for element " & String (Local_Name));
+           ("Unexpected element: """ & String (Local_Name) & """");
       end if;
 
       Compute_Type;

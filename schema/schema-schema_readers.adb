@@ -36,6 +36,13 @@ package body Schema.Schema_Readers is
       Result  : out XML_Element);
    --  Lookup a type or element  with a possible namespace specification
 
+   function Create_Repeat
+     (Validator : access XML_Validator_Record'Class;
+      Min_Occurs, Max_Occurs : Integer)
+      return XML_Validator;
+   --  Repeat Validator a number of times, by including it in a sequence if
+   --  needed
+
    function Ada_Name (Element : XML_Element) return String;
    function Ada_Name (Typ : XML_Type)        return String;
    function Ada_Name (C : Context_Access)    return String;
@@ -1110,6 +1117,38 @@ package body Schema.Schema_Readers is
    end Finish_List;
 
    -------------------
+   -- Create_Repeat --
+   -------------------
+
+   function Create_Repeat
+     (Validator : access XML_Validator_Record'Class;
+      Min_Occurs, Max_Occurs : Integer)
+      return XML_Validator
+   is
+      Seq : Sequence;
+   begin
+      if Min_Occurs = 1 and then Max_Occurs = 1 then
+         return XML_Validator (Validator);
+      else
+         Seq := Create_Sequence;
+         Set_Debug_Name (Seq, "repeat_seq");
+         if Validator.all in Sequence_Record'Class then
+            Add_Particle (Seq, Sequence (Validator),
+                          Min_Occurs => Min_Occurs,
+                          Max_Occurs => Max_Occurs);
+         else
+            Add_Particle (Seq, Choice (Validator),
+                          Min_Occurs => Min_Occurs,
+                          Max_Occurs => Max_Occurs);
+         end if;
+         Output ("Seq := Create_Sequence;");
+         Output ("Add_Particle (Seq, Validator,"
+                 & Min_Occurs'Img & Max_Occurs'Img & ")");
+         return XML_Validator (Seq);
+      end if;
+   end Create_Repeat;
+
+   -------------------
    -- Create_Choice --
    -------------------
 
@@ -1133,39 +1172,34 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ      => Context_Choice,
-         C        => Create_Choice (Min_Occurs, Max_Occurs),
+         C        => Create_Choice,
          Level    => Handler.Contexts.Level + 1,
          Next     => Handler.Contexts);
-      Output (Ada_Name (Handler.Contexts) & " := Create_Choice ("
-              & Min_Occurs'Img & ',' & Max_Occurs'Img & ")");
-   end Create_Choice;
+      Output (Ada_Name (Handler.Contexts) & " := Create_Choice;");
 
-   -------------------
-   -- Finish_Choice --
-   -------------------
-
-   procedure Finish_Choice (Handler : in out Schema_Reader) is
-   begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator :=
-              XML_Validator (Handler.Contexts.C);
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
+            Handler.Contexts.Next.Type_Validator := Create_Repeat
+              (Handler.Contexts.C, Min_Occurs, Max_Occurs);
          when Context_Sequence =>
-            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.C);
+            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.C,
+                          Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
          when Context_Choice =>
-            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.C);
+            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.C,
+                          Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
          when Context_Extension =>
-            Handler.Contexts.Next.Extension :=
-              XML_Validator (Handler.Contexts.C);
             Output ("Validator := " & Ada_Name (Handler.Contexts));
+            Handler.Contexts.Next.Extension := Create_Repeat
+              (Handler.Contexts.C, Min_Occurs, Max_Occurs);
 
          when Context_Group =>
-            Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.C);
+            Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.C,
+                          Min_Occurs, Max_Occurs);
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
@@ -1175,6 +1209,16 @@ package body Schema.Schema_Readers is
             | Context_List | Context_Redefine | Context_Attribute_Group =>
             Output ("Can't handle nested sequence");
       end case;
+   end Create_Choice;
+
+   -------------------
+   -- Finish_Choice --
+   -------------------
+
+   procedure Finish_Choice (Handler : in out Schema_Reader) is
+      pragma Unreferenced (Handler);
+   begin
+      null;
    end Finish_Choice;
 
    ---------------------
@@ -1202,42 +1246,40 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ      => Context_Sequence,
-         Seq      => Create_Sequence (Min_Occurs, Max_Occurs),
+         Seq      => Create_Sequence,
          Level    => Handler.Contexts.Level + 1,
          Next     => Handler.Contexts);
       Output (Ada_Name (Handler.Contexts) & " := Create_Sequence ("
               & Min_Occurs'Img & ',' & Max_Occurs'Img & ")");
-   end Create_Sequence;
 
-   ---------------------
-   -- Finish_Sequence --
-   ---------------------
-
-   procedure Finish_Sequence (Handler : in out Schema_Reader) is
-   begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator :=
-              XML_Validator (Handler.Contexts.Seq);
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
+            Handler.Contexts.Next.Type_Validator := Create_Repeat
+              (Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Sequence =>
-            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Seq);
+            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Seq,
+                          Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
-                    & ", " & Ada_Name (Handler.Contexts) & ");");
+                    & ", " & Ada_Name (Handler.Contexts)
+                    & "," & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
          when Context_Choice =>
-            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Seq);
+            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Seq,
+                          Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
-                    & ", " & Ada_Name (Handler.Contexts) & ");");
+                    & ", " & Ada_Name (Handler.Contexts)
+                    & "," & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
          when Context_Extension =>
-            Handler.Contexts.Next.Extension :=
-              XML_Validator (Handler.Contexts.Seq);
-            Output ("Validator := " & Ada_Name (Handler.Contexts));
+            Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
+            Handler.Contexts.Next.Extension := Create_Repeat
+              (Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Restriction =>
-            Handler.Contexts.Next.Restriction :=
-              XML_Validator (Handler.Contexts.Seq);
-            Output ("Validator := " & Ada_Name (Handler.Contexts));
+            Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
+            Handler.Contexts.Next.Restriction := Create_Repeat
+              (Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Group =>
-            Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.Seq);
+            Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.Seq,
+                          Min_Occurs, Max_Occurs);
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
@@ -1250,6 +1292,16 @@ package body Schema.Schema_Readers is
             | Context_List | Context_Redefine | Context_Attribute_Group =>
             Output ("Can't handle nested sequence");
       end case;
+   end Create_Sequence;
+
+   ---------------------
+   -- Finish_Sequence --
+   ---------------------
+
+   procedure Finish_Sequence (Handler : in out Schema_Reader) is
+      pragma Unreferenced (Handler);
+   begin
+      null;
    end Finish_Sequence;
 
    ----------------------

@@ -102,21 +102,21 @@ package body Schema.Schema_Grammar is
                 Create_Local_Type (Typ));
 
       --  The "schema" element
-      Choice1 := Create_Choice (Min_Occurs => 0, Max_Occurs => Unbounded);
+      Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "schema_choice1");
       Add_Particle (Choice1, Lookup_Element (G, "include"));
       Add_Particle (Choice1, Lookup_Element (G, "import"));
       Add_Particle (Choice1, Lookup_Element (G, "redefine"));
       Add_Particle (Choice1, Lookup_Element (G, "annotation"));
-      Seq1    := Create_Sequence (Min_Occurs => 0, Max_Occurs => Unbounded);
+      Seq1    := Create_Sequence;
       Set_Debug_Name (Seq1, "schema_seq1");
       Add_Particle (Seq1, Lookup_Element (G, "schemaTop"));
       Add_Particle (Seq1, Lookup_Element (G, "annotation"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Seq2    := Create_Sequence;
       Set_Debug_Name (Seq2, "schema_seq2");
-      Add_Particle (Seq2, Choice1);
-      Add_Particle (Seq2, Seq1);
+      Add_Particle (Seq2, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Add_Particle (Seq2, Seq1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Attribute
         (Seq2, Create_Attribute
            ("targetNamespace", G, Lookup (G, "uriReference")));
@@ -244,7 +244,7 @@ package body Schema.Schema_Grammar is
       --  The "element" type   ??? abstract=true
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "element_seq");
-      Choice1 := Create_Choice (Min_Occurs => 0);
+      Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "element_choice");
       Add_Particle (Choice1, Create_Local_Element
                       ("simpleType", Lookup (G, "localSimpleType"),
@@ -252,7 +252,7 @@ package body Schema.Schema_Grammar is
       Add_Particle (Choice1, Create_Local_Element
                       ("complexType", Lookup (G, "localComplexType"),
                        Qualified));
-      Add_Particle (Seq1, Choice1);
+      Add_Particle (Seq1, Choice1, Min_Occurs => 0);
       Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ := Extension_Of (Lookup (G, "annotated"), XML_Validator (Seq1));
@@ -282,8 +282,11 @@ package body Schema.Schema_Grammar is
         (Typ, Create_Attribute ("form", G, Lookup (G, "formChoice")));
 
       --  The "appinfo" element"
-      Seq1 := Create_Sequence (Min_Occurs => 0, Max_Occurs => Unbounded);
+      Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "appinfo_seq");
+      Seq2 := Create_Sequence;
+      Add_Particle (Seq1, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Set_Debug_Name (Seq2, "appinfo_seq2");
       --   <any processContents="lax" />
       Add_Attribute
         (Seq1, Create_Attribute ("source", G, Lookup (G, "uriReference")));
@@ -292,8 +295,11 @@ package body Schema.Schema_Grammar is
                 Create_Local_Type (Seq1));
 
       --  The "documentation" element
-      Seq1 := Create_Sequence (Min_Occurs => 0, Max_Occurs => Unbounded);
+      Seq1 := Create_Sequence;
+      Seq2 := Create_Sequence;
+      Add_Particle (Seq1, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Seq1, "documentation_seq");
+      Set_Debug_Name (Seq2, "documentation_seq2");
       --   <any processContents="lax" />
       Add_Attribute
         (Seq1, Create_Attribute ("source", G, Lookup (G, "uriReference")));
@@ -303,20 +309,23 @@ package body Schema.Schema_Grammar is
                 Create_Local_Type (Seq1));
 
       --  The "annotation" element  ??? invalid
-      Choice1 := Create_Choice (Min_Occurs => 0, Max_Occurs => Unbounded);
+      Seq1 := Create_Sequence;
+      Choice1 := Create_Choice;
+      Add_Particle (Seq1, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Set_Debug_Name (Seq1, "annotation_seq");
       Set_Debug_Name (Choice1, "annotation_choice");
       Add_Particle (Choice1, Lookup_Element (G, "appinfo"));
       Add_Particle (Choice1, Lookup_Element (G, "documentation"));
       Set_Type (Create_Global_Element (G, "annotation", Qualified),
-                Create_Local_Type (Choice1));
+                Create_Local_Type (Seq1));
 
       --  The "topLevelElement" type
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "topLevelElement_seq");
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Choice1 := Create_Choice (Min_Occurs => 0);
+      Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "topLevelElement_choice");
-      Add_Particle (Seq1, Choice1);
+      Add_Particle (Seq1, Choice1, Min_Occurs => 0);
       Add_Particle (Choice1, Create_Local_Element
                       ("simpleType", Lookup (G, "localSimpleType"),
                        Qualified));
@@ -363,9 +372,9 @@ package body Schema.Schema_Grammar is
       Seq2 := Create_Sequence;
       Set_Debug_Name (Seq2, "all_seq2");
       Add_Particle (Seq2, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Choice1 := Create_Choice (Min_Occurs => 0);
+      Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "all_choice");
-      Add_Particle (Seq2, Choice1);
+      Add_Particle (Seq2, Choice1, Min_Occurs => 0);
       Add_Particle (Choice1, Create_Local_Element
                       ("simpleType", Lookup (G, "localSimpleType"),
                        Qualified));
@@ -418,9 +427,9 @@ package body Schema.Schema_Grammar is
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "localElement_seq");
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Choice1 := Create_Choice (Min_Occurs => 0);
+      Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "localElement_choice");
-      Add_Particle (Seq1, Choice1);
+      Add_Particle (Seq1, Choice1, Min_Occurs => 0);
       Add_Particle (Choice1, Create_Local_Element ("simpleType",
                                              Lookup (G, "localSimpleType"),
                                              Qualified));
@@ -709,9 +718,9 @@ package body Schema.Schema_Grammar is
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "attrDecls_seq");
       Add_Particle (Gr, Seq1);
-      Choice1 := Create_Choice (Min_Occurs => 0, Max_Occurs => Unbounded);
+      Choice1 := Create_Choice;
       Set_Debug_Name (Choice1, "attrDecls_choice");
-      Add_Particle (Seq1, Choice1);
+      Add_Particle (Seq1, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Particle
         (Choice1, Create_Local_Element
            ("attribute", Lookup (G, "attribute"), Qualified));
@@ -897,15 +906,18 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "public", Get_Validator (Lookup (G, "token")));
 
       --  The "redefine" element
-      Choice1 := Create_Choice (Min_Occurs => 0, Max_Occurs => Unbounded);
+      Seq1 := Create_Sequence;
+      Choice1 := Create_Choice;
+      Add_Particle (Seq1, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Choice1, "redefine_choice");
+      Set_Debug_Name (Seq1, "redefine_seq");
       Add_Particle (Choice1, Lookup_Element (G, "annotation"));
       Add_Particle (Choice1, Lookup_Element (G, "redefinable"));
       Add_Attribute
-        (Choice1, Create_Attribute ("schemaLocation", G,
+        (Seq1, Create_Attribute ("schemaLocation", G,
                                     Lookup (G, "uriReference"),
                                     Attribute_Use => Required));
-      Typ := Extension_Of (Lookup (G, "openAttrs"), XML_Validator (Choice1));
+      Typ := Extension_Of (Lookup (G, "openAttrs"), XML_Validator (Seq1));
       Set_Type (Create_Global_Element (G, "redefine", Qualified),
                 Create_Local_Type (Typ));
 
