@@ -969,8 +969,8 @@ package body Sax.Readers is
       NS : XML_NS;
    begin
       NS := new XML_NS_Record'
-        (Prefix => new Byte_Sequence' (Value (Parser, Prefix, Prefix)),
-         URI    => new Byte_Sequence' (Value (Parser, URI_Start, URI_End)),
+        (Prefix => new Byte_Sequence'(Value (Parser, Prefix, Prefix)),
+         URI    => new Byte_Sequence'(Value (Parser, URI_Start, URI_End)),
          Next   => null);
 
       if Node = null then
@@ -1960,7 +1960,7 @@ package body Sax.Readers is
                Parser.Element_Id := Parser.Element_Id + 1;
                Parser.Inputs := new Entity_Input_Source'
                  (External       => V.External,
-                  Name           => new Byte_Sequence' (N),
+                  Name           => new Byte_Sequence'(N),
                   Input          => null,
                   Save_Loc       => Null_Loc,
                   Id             => Parser.Element_Id,
@@ -2899,7 +2899,7 @@ package body Sax.Readers is
             Set (Parser.Entities,
                  Value (Parser, Is_Parameter, Is_Parameter)
                  & Value (Parser, Name_Id, Name_Id),
-                 (new Byte_Sequence' (Value (Parser, Def_Start, Def_End)),
+                 (new Byte_Sequence'(Value (Parser, Def_Start, Def_End)),
                   External     => False,
                   Already_Read => False));
             Internal_Entity_Decl
@@ -2921,7 +2921,7 @@ package body Sax.Readers is
               (Parser.Entities,
                Value (Parser, Is_Parameter, Is_Parameter)
                & Value (Parser, Name_Id, Name_Id),
-               (new Byte_Sequence' (Value (Parser, System_Start, System_End)),
+               (new Byte_Sequence'(Value (Parser, System_Start, System_End)),
                 External => True,
                 Already_Read => False));
             External_Entity_Decl
@@ -3624,6 +3624,7 @@ package body Sax.Readers is
                Last  : constant Unicode_Char := Parser.Last_Read;
                Input_F : File_Input;
             begin
+               Open (URI, Input_F);
                Copy (Loc, Parser.Locator.all);
                Set_Line_Number (Parser.Locator.all, 1);
                Set_Column_Number
@@ -3634,7 +3635,6 @@ package body Sax.Readers is
                Reset_Buffer (Parser, Name_Id);
 
                Parser.In_External_Entity := True;
-               Open (URI, Input_F);
 
                Syntactic_Parse (Parser, Input_F);
                Close (Input_F);
