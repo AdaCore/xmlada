@@ -50,6 +50,9 @@ package body Schema.Schema_Readers is
    function XML_To_Ada (Str : Byte_Sequence) return Byte_Sequence;
    --  Return a string suitable as an Ada identifier
 
+   function In_Redefine_Context (Handler : Schema_Reader) return Boolean;
+   --  Whether we are currently processing a <redefine> tag
+
    procedure Create_Element
      (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Complex_Type
@@ -93,13 +96,30 @@ package body Schema.Schema_Readers is
    procedure Finish_Union (Handler : in out Schema_Reader);
    procedure Finish_List (Handler : in out Schema_Reader);
    procedure Finish_Choice (Handler : in out Schema_Reader);
+   procedure Finish_Group (Handler : in out Schema_Reader);
    --  Finish the handling of various tags:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
-   --  <extension>, <union>, <list>, <choice>
+   --  <extension>, <union>, <list>, <choice>, <group>
 
    function Max_Occurs_From_Value (Value : Byte_Sequence) return Integer;
    --  Return the value of maxOccurs from the attributes'value. This properly
    --  takes into account the "unbounded" case
+
+   -------------------------
+   -- In_Redefine_Context --
+   -------------------------
+
+   function In_Redefine_Context (Handler : Schema_Reader) return Boolean is
+      Tmp : Context_Access := Handler.Contexts;
+   begin
+      while Tmp /= null loop
+         if Tmp.Typ = Context_Redefine then
+            return True;
+         end if;
+         Tmp := Tmp.Next;
+      end loop;
+      return False;
+   end In_Redefine_Context;
 
    ---------------------------
    -- Max_Occurs_From_Value --
@@ -315,6 +335,17 @@ package body Schema.Schema_Readers is
                  " := Lookup_Group (Handler.Target_NS, """
                  & Get_Value (Atts, Ref_Index) & """);");
       end if;
+   end Create_Group;
+
+   ------------------
+   -- Finish_Group --
+   ------------------
+
+   procedure Finish_Group (Handler : in out Schema_Reader) is
+   begin
+      --  This must be done after the group has been fully defined, since when
+      --  we are in a <redefine>, we wouldn't have access to the old definition
+      --  otherwise.
 
       case Handler.Contexts.Next.Typ is
          when Context_Schema | Context_Redefine =>
@@ -331,7 +362,7 @@ package body Schema.Schema_Readers is
          when others =>
             Output ("Can't handle nested group decl");
       end case;
-   end Create_Group;
+   end Finish_Group;
 
    ----------------------------
    -- Create_Attribute_Group --
@@ -345,9 +376,32 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "name");
       Ref_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "ref");
+      In_Redefine : constant Boolean := In_Redefine_Context (Handler);
       Group     : XML_Attribute_Group;
    begin
-      if Name_Index /= -1 then
+      if In_Redefine then
+         --  <redefine><attributeGroup>
+         --     <attributeGroup ref="foo" />
+         --     <attribute name="bar" />
+         --  </attributeGroup></redefine>    <!--  xsd003b.xsd test -->
+
+         if Handler.Contexts /= null
+           and then Handler.Contexts.Typ = Context_Attribute_Group
+         then
+            --  Ignore, this is just to indicate which group we are redefining,
+            --  but this was already taken into account for the enclosing tag
+            return;
+         end if;
+
+         Group := Lookup_Attribute_Group
+           (Handler.Target_NS, Get_Value (Atts, Name_Index));
+         Handler.Contexts := new Context'
+           (Typ            => Context_Attribute_Group,
+            Attr_Group     => Group,
+            Level          => Handler.Contexts.Level + 1,
+            Next           => Handler.Contexts);
+
+      elsif Name_Index /= -1 then
          Group := Create_Attribute_Group (Get_Value (Atts, Name_Index));
 
       elsif Ref_Index /= -1 then
@@ -361,7 +415,11 @@ package body Schema.Schema_Readers is
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
 
-      if Name_Index /= -1 then
+      if In_Redefine then
+         Output (Ada_Name (Handler.Contexts)
+                 & " := Lookup_Attribute_Group (Handler.Target_NS, """
+                 & Get_Value (Atts, Name_Index) & """);");
+      elsif Name_Index /= -1 then
          Output (Ada_Name (Handler.Contexts) & " := Create_Attribute_Group ("""
                  & Get_Value (Atts, Name_Index) & """);");
       else
@@ -370,7 +428,8 @@ package body Schema.Schema_Readers is
                  & Get_Value (Atts, Ref_Index) & """);");
       end if;
 
-      case Handler.Contexts.Next.Typ is
+      if not In_Redefine then
+         case Handler.Contexts.Next.Typ is
          when Context_Schema | Context_Redefine =>
             Register (Handler.Target_NS, Handler.Contexts.Attr_Group);
             Output ("Register (Handler.Target_NS, "
@@ -384,7 +443,8 @@ package body Schema.Schema_Readers is
 
          when others =>
             Output ("Can't handle nested attribute group decl");
-      end case;
+         end case;
+      end if;
    end Create_Attribute_Group;
 
    ---------------------
@@ -400,6 +460,7 @@ package body Schema.Schema_Readers is
    begin
       Parse_Grammar
         (Handler, Get_Value (Atts, Location_Index), Handler.Created_Grammar);
+      Set_Redefine_Mode (Handler.Target_NS, True);
 
       Handler.Contexts := new Context'
         (Typ            => Context_Redefine,
@@ -462,8 +523,8 @@ package body Schema.Schema_Readers is
             & Get_Value (Atts, Name_Index) & """, " & Ada_Name (Typ) & ");");
 
          if Ref_Index /= -1
-           and then Get_Value (Atts, Name_Index) =
-             Get_Value (Atts, Ref_Index)
+           and then Get_Value (Atts, Name_Index) = Get_Value (Atts, Ref_Index)
+           and then not In_Redefine_Context (Handler)
          then
             Raise_Exception
               (XML_Validation_Error'Identity,
@@ -681,6 +742,7 @@ package body Schema.Schema_Readers is
          Output (Ada_Name (C) & " := Create_Type ("""", Validator);");
       else
          Typ := Create_Type (C.Type_Name.all, C.Type_Validator);
+         Set_Debug_Name (C.Type_Validator, C.Type_Name.all);
          Output (Ada_Name (C)
                  & " := Create_Type (""" & C.Type_Name.all
                  & """, Validator);");
@@ -720,14 +782,22 @@ package body Schema.Schema_Readers is
       G : XML_Grammar_NS;
    begin
       if Handler.Contexts.Type_Name /= null
+        and then Base_Index /= -1
         and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
       then
-         Raise_Exception
-           (XML_Validation_Error'Identity,
-            "Self-referencing restriction not allowed");
-      end if;
+         if In_Redefine_Context (Handler) then
+            Base := Redefine_Type
+              (Handler.Target_NS, Handler.Contexts.Type_Name.all);
+            Output (Ada_Name (Base)
+                    & " := Redefine_Type (Handler.Target_NS, """
+                    & Handler.Contexts.Type_Name.all & """);");
+         else
+            Raise_Exception
+              (XML_Validation_Error'Identity,
+               "Self-referencing restriction not allowed");
+         end if;
 
-      if Base_Index /= -1 then
+      elsif Base_Index /= -1 then
          Lookup_With_NS
            (Handler, Get_Value (Atts, Base_Index), Result => Base);
       else
@@ -754,6 +824,8 @@ package body Schema.Schema_Readers is
          when Context_Type_Def =>
             Handler.Contexts.Next.Type_Validator :=
               Handler.Contexts.Restriction;
+            Set_Debug_Name (Handler.Contexts.Next.Type_Validator,
+                            Ada_Name (Handler.Contexts));
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
          when others =>
             Output ("Can't handler nested restrictions");
@@ -845,12 +917,21 @@ package body Schema.Schema_Readers is
       if Handler.Contexts.Type_Name /= null
         and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
       then
-         Raise_Exception
-           (XML_Validation_Error'Identity,
-            "Self-referencing restriction not allowed");
+         if In_Redefine_Context (Handler) then
+            Base := Redefine_Type
+              (Handler.Target_NS, Handler.Contexts.Type_Name.all);
+            Output (Ada_Name (Base)
+                    & " := Redefine_Type (Handler.Target_NS, """
+                    & Handler.Contexts.Type_Name.all & """);");
+         else
+            Raise_Exception
+              (XML_Validation_Error'Identity,
+               "Self-referencing extension not allowed");
+         end if;
+      else
+         Lookup_With_NS
+           (Handler, Get_Value (Atts, Base_Index), Result => Base);
       end if;
-
-      Lookup_With_NS (Handler, Get_Value (Atts, Base_Index), Result => Base);
 
       Handler.Contexts := new Context'
         (Typ            => Context_Extension,
@@ -872,6 +953,16 @@ package body Schema.Schema_Readers is
                Handler.Contexts.Next.Type_Validator := Extension_Of
                  (Handler.Contexts.Extension_Base,
                   Handler.Contexts.Extension);
+               Set_Debug_Name (Handler.Contexts.Next.Type_Validator,
+                               Ada_Name (Handler.Contexts));
+
+               if Handler.Contexts.Extension /= null then
+                  Set_Debug_Name
+                    (Handler.Contexts.Extension,
+                     "extension_of_"
+                     & Get_Local_Name (Handler.Contexts.Extension_Base));
+               end if;
+
                Output (Ada_Name (Handler.Contexts) & " := Extension_Of ("
                        & Ada_Name (Handler.Contexts.Extension_Base)
                        & ", Validator);");
@@ -1055,6 +1146,9 @@ package body Schema.Schema_Readers is
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
+            Set_Debug_Name
+              (Handler.Contexts.Seq,
+               "seq_in_group_" & Get_Local_Name (Handler.Contexts.Next.Group));
 
          when Context_Schema | Context_Attribute | Context_Element
             | Context_Restriction | Context_All | Context_Union
@@ -1468,10 +1562,10 @@ package body Schema.Schema_Readers is
          Handled := False;
 
       elsif Local_Name = "redefine" then
-         null;
+         Set_Redefine_Mode (Handler.Target_NS, False);
 
       elsif Local_Name = "group" then
-         null;
+         Finish_Group (Handler);
 
       elsif Local_Name = "attributeGroup" then
          null;
