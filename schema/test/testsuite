@@ -681,6 +681,8 @@ expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.n00.xml" "<key> not su
 expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.n01.xml" "<key> not supported"
 expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.v00.xml" "<key> not supported"
 
+### SYN xsd001
+
 expect "$sun/xsd001.xsd" "$sun/xsd001.n00.xml" \
  "$sun/xsd001.n00.xml:6:12: Element \"child\" or its substitutionGroup must be specified"
 expect "$sun/xsd001.xsd" "$sun/xsd001.n01.xml" \
@@ -701,6 +703,9 @@ expect "$sun/xsd001.xsd" "$sun/xsd001.v00.xml" ""
 expect "$sun/xsd001.xsd" "$sun/xsd001.v01.xml" ""
 expect "$sun/xsd001.xsd" "$sun/xsd001.v02.xml" ""
 expect "$sun/xsd001.xsd" "$sun/xsd001.v03.xml" ""
+
+### SUN xsd002
+
 expect "$sun/xsd002.xsd" "$sun/xsd002.n00.xml" \
  "$sun/xsd002.n00.xml:3:11: Namespace specification not authorized in this context"
 expect "$sun/xsd002.xsd" "$sun/xsd002.n01.xml" \
@@ -709,6 +714,9 @@ expect "$sun/xsd002.xsd" "$sun/xsd002.n02.xml" \
  "$sun/xsd002.n02.xml:3:11: Namespace specification not authorized in this context"
 expect "$sun/xsd002.xsd" "$sun/xsd002.v00.xml" ""
 expect "$sun/xsd002.xsd" "$sun/xsd002.v01.xml" ""
+
+### SUN xsd003
+
 expect "$sun/xsd003-1.e.xsd" "" \
  "$sun/xsd003-1.e.xsd:10:30: Invalid choice: element"
 expect "$sun/xsd003-2.e.xsd" "" \
@@ -720,6 +728,9 @@ expect "$sun/xsd003b.xsd" "$sun/xsd003b.n01.xml" \
  "$sun/xsd003b.n01.xml:3:50: Attribute \"foo:gAtt\": Element's value not in the enumeration set"
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.v00.xml" ""
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.v01.xml" ""
+
+### SUN xsd004
+
 expect "$sun/xsd004.xsd" "$sun/xsd004.n00.xml" \
  "$sun/xsd004.n00.xml:11:15: Must be a simple type, no <illegal> child allowed"
 expect "$sun/xsd004.xsd" "$sun/xsd004.n01.xml" \
@@ -748,6 +759,10 @@ expect "$sun/xsd004.xsd" "$sun/xsd004.n12.xml" \
  "$sun/xsd004.n12.xml:8:18: Invalid namespace for this element: \"\" not in \"bar\""
 expect "$sun/xsd004.xsd" "$sun/xsd004.v00.xml" ""
 
+### SUN xsd005
+
+expect "$sun/xsd005.xsd" "$sun/xsd005.n00.xml" \
+ "$sun/xsd005.n00.xml:5:10: Expecting \"a\" or one in its substitutionGroup"
 expect "$sun/xsd005.xsd" "$sun/xsd005.n01.xml" \
  "$sun/xsd005.n01.xml:5:30: Unknown type \"undeclared\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n02.xml" \
@@ -761,6 +776,43 @@ expect "$sun/xsd005.xsd" "$sun/xsd005.n05.xml" \
 expect "$sun/xsd005.xsd" "$sun/xsd005.n06.xml" \
  "$sun/xsd005.n06.xml:7:9: Expecting \"d\" or one in its substitutionGroup"
 expect "$sun/xsd005.xsd" "$sun/xsd005.v00.xml" ""
+
+### SUN xsd006
+
+expect "$sun/xsd006.xsd" "$sun/xsd006.n00.xml" \
+ "$sun/xsd006.n00.xml:5:11: Too many occurrences of sequence. Expecting at most 1"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n01.xml" \
+ "$sun/xsd006.n01.xml:5:15: Too many occurrences of sequence. Expecting at most 1"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n02.xml" \
+ "$sun/xsd006.n02.xml:5:13: Expecting \"x\" or one in its substitutionGroup"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n03.xml" \
+ "$sun/xsd006.n03.xml:5:15: Too many occurrences of sequence. Expecting at most 1"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n04.xml" \
+ "$sun/xsd006.n04.xml:5:13: Expecting \"x\" or one in its substitutionGroup"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n05.xml" \
+ "$sun/xsd006.n05.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n06.xml" \
+ "$sun/xsd006.n06.xml:5:15: Too many occurrences of sequence. Expecting at most 1"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n07.xml" \
+ "$sun/xsd006.n07.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n08.xml" \
+ "$sun/xsd006.n08.xml:5:13: Expecting \"x\" or one in its substitutionGroup"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n09.xml" \
+ "$sun/xsd006.n09.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
+expect "$sun/xsd006.xsd" "$sun/xsd006.n10.xml" \
+ "$sun/xsd006.n10.xml:6:13: Element \"x\" or its substitutionGroup must be specified"
+expect "$sun/xsd006.xsd" "$sun/xsd006.v00.xml" ""
+
+### SUN xsd008
+
+expect "$sun/xsd008.xsd" "$sun/xsd008.n00.xml" \
+ "$sun/xsd008.n00.xml:4:27: \"facet\" is abstract"
+expect "$sun/xsd008.xsd" "$sun/xsd008.n01.xml" \
+ "$sun/xsd008.n01.xml:4:27: Expecting at least 1 occurrences of \"long\" or its substitutionGroup"
+expect "$sun/xsd008.xsd" "$sun/xsd008.n02.xml" \
+ "$sun/xsd008.n02.xml:4:25: Expecting at least 1 occurrences of \"long\" or its substitutionGroup"
+expect "$sun/xsd008.xsd" "$sun/xsd008.v00.xml" ""
+
 
 fi
 
