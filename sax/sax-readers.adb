@@ -1,3 +1,32 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2001-2002                     --
+--                            ACT-Europe                             --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Input_Sources.File;        use Input_Sources.File;
@@ -10,8 +39,8 @@ with Sax.Exceptions;            use Sax.Exceptions;
 with Sax.Locators;              use Sax.Locators;
 with Sax.Models;                use Sax.Models;
 with Unchecked_Deallocation;
-with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
 with Unicode.CES;               use Unicode.CES;
+with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Unicode;                   use Unicode;
 
@@ -370,7 +399,6 @@ package body Sax.Readers is
      (Input   : in out Input_Sources.Input_Source'Class;
       Parser  : in out Reader'Class;
       Result  : out Element_Model_Ptr;
-      Nmtokens : Boolean := False;
       Attlist : Boolean := False;
       Open_Was_Read : Boolean);
    --  Parse the following characters in the stream so as to create an
@@ -951,6 +979,7 @@ package body Sax.Readers is
       Input_A : Entity_Input_Source_Access;
    begin
       while Parser.Close_Inputs /= null loop
+         --  ??? Could use Input_Sources.Locator.Free
          Close (Parser.Close_Inputs.Input.all);
          Unchecked_Free (Parser.Close_Inputs.Input);
 
@@ -2050,7 +2079,6 @@ package body Sax.Readers is
      (Input   : in out Input_Source'Class;
       Parser  : in out Reader'Class;
       Result  : out Element_Model_Ptr;
-      Nmtokens : Boolean := False;
       Attlist : Boolean := False;
       Open_Was_Read : Boolean)
    is
@@ -2444,7 +2472,7 @@ package body Sax.Readers is
 
          Open (Val.Value, Encoding, Input_S);
          Next_Char (Input_S, Parser);
-         Parse_Element_Model (Input_S, Parser, M, False, Attlist, False);
+         Parse_Element_Model (Input_S, Parser, M, Attlist, False);
          Close (Input_S);
 
          Copy (Parser.Locator.all, Loc);
@@ -2904,8 +2932,7 @@ package body Sax.Readers is
             when Any    => M := new Element_Model (Anything);
             when Open_Paren =>
                Parse_Element_Model
-                 (Input, Parser, M, Nmtokens => False,
-                  Attlist => False, Open_Was_Read => True);
+                 (Input, Parser, M, Attlist => False, Open_Was_Read => True);
             when others =>
                Fatal_Error (Parser, "[WF] Invalid content model: expecting"
                             & " '(', 'EMPTY' or 'ANY'", Id);
@@ -3029,7 +3056,7 @@ package body Sax.Readers is
                         "[3.3.1] Space is required between NOTATION keyword"
                         & " and list of enumerated", Id);
                   end if;
-                  Parse_Element_Model (Input, Parser, M, True, True, False);
+                  Parse_Element_Model (Input, Parser, M, True, False);
 
                   if Parser.Feature_Validation then
                      for J in M.List'Range loop
@@ -3045,7 +3072,7 @@ package body Sax.Readers is
 
                when Open_Paren =>
                   Att_Type := Enumeration;
-                  Parse_Element_Model (Input, Parser, M, True, True, True);
+                  Parse_Element_Model (Input, Parser, M, True, True);
 
                when others =>
                   Fatal_Error (Parser, "[WF] Invalid type for attribute");
@@ -3789,6 +3816,10 @@ package body Sax.Readers is
          elsif Id.Typ /= End_Of_PI then
             Fatal_Error (Parser, "values must be separated by spaces", Id);
          end if;
+
+         --  Change the encoding for the streams, if needed
+         Set_Stream_Encoding
+           (Input, Parser.Buffer (Value_Start.First .. Value_End.Last));
       end Check_Encoding_Value;
 
       ----------------------------
@@ -4092,7 +4123,7 @@ package body Sax.Readers is
       Add_Namespace_No_Event
         (Parser, Xml_Sequence,
          Encodings.From_Utf32
-         (To_Utf32 ("http://www.w3.org/XML/1998/namespace")));
+         (Basic_8bit.To_Utf32 ("http://www.w3.org/XML/1998/namespace")));
       Add_Namespace_No_Event (Parser, Xmlns_Sequence, Xmlns_Sequence);
       Add_Namespace_No_Event (Parser, "", "");
 
@@ -4154,6 +4185,7 @@ package body Sax.Readers is
    --------------------
 
    function Attributes_Img (A : Attributes_Ptr) return String is
+      pragma Warnings (Off, A);
    begin
       return "<???>";
    end Attributes_Img;
@@ -4215,7 +4247,10 @@ package body Sax.Readers is
    -------------
 
    procedure Warning
-     (Handler : in out Reader; Except : Sax_Parse_Exception'Class) is
+     (Handler : in out Reader; Except : Sax_Parse_Exception'Class)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Except);
    begin
       null;
    end Warning;
@@ -4225,7 +4260,10 @@ package body Sax.Readers is
    -----------
 
    procedure Error
-     (Handler : in out Reader; Except : Sax_Parse_Exception'Class) is
+     (Handler : in out Reader; Except : Sax_Parse_Exception'Class)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Except);
    begin
       null;
    end Error;
@@ -4235,7 +4273,9 @@ package body Sax.Readers is
    -----------------
 
    procedure Fatal_Error
-     (Handler : in out Reader; Except : Sax_Parse_Exception'Class) is
+     (Handler : in out Reader; Except : Sax_Parse_Exception'Class)
+   is
+      pragma Warnings (Off, Handler);
    begin
       Raise_Exception
         (XML_Fatal_Error'Identity,
@@ -4247,7 +4287,10 @@ package body Sax.Readers is
    --------------------------
 
    procedure Set_Document_Locator
-     (Handler : in out Reader; Loc : access Sax.Locators.Locator'Class) is
+     (Handler : in out Reader; Loc : access Sax.Locators.Locator'Class)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Loc);
    begin
       null;
    end Set_Document_Locator;
@@ -4257,6 +4300,7 @@ package body Sax.Readers is
    --------------------
 
    procedure Start_Document (Handler : in out Reader) is
+      pragma Warnings (Off, Handler);
    begin
       null;
    end Start_Document;
@@ -4266,6 +4310,7 @@ package body Sax.Readers is
    ------------------
 
    procedure End_Document (Handler : in out Reader) is
+      pragma Warnings (Off, Handler);
    begin
       null;
    end End_Document;
@@ -4277,7 +4322,11 @@ package body Sax.Readers is
    procedure Start_Prefix_Mapping
      (Handler : in out Reader;
       Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence) is
+      URI     : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Prefix);
+      pragma Warnings (Off, URI);
    begin
       null;
    end Start_Prefix_Mapping;
@@ -4287,7 +4336,10 @@ package body Sax.Readers is
    ------------------------
 
    procedure End_Prefix_Mapping
-     (Handler : in out Reader; Prefix : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Reader; Prefix : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Prefix);
    begin
       null;
    end End_Prefix_Mapping;
@@ -4301,7 +4353,13 @@ package body Sax.Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class) is
+      Atts          : Sax.Attributes.Attributes'Class)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Namespace_URI);
+      pragma Warnings (Off, Local_Name);
+      pragma Warnings (Off, Qname);
+      pragma Warnings (Off, Atts);
    begin
       null;
    end Start_Element;
@@ -4314,7 +4372,12 @@ package body Sax.Readers is
      (Handler : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "") is
+      Qname         : Unicode.CES.Byte_Sequence := "")
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Namespace_URI);
+      pragma Warnings (Off, Local_Name);
+      pragma Warnings (Off, Qname);
    begin
       null;
    end End_Element;
@@ -4325,7 +4388,10 @@ package body Sax.Readers is
 
    procedure Characters
      (Handler : in out Reader;
-      Ch      : Unicode.CES.Byte_Sequence) is
+      Ch      : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Ch);
    begin
       null;
    end Characters;
@@ -4335,7 +4401,10 @@ package body Sax.Readers is
    --------------------------
 
    procedure Ignorable_Whitespace
-     (Handler : in out Reader; Ch : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Reader; Ch : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Ch);
    begin
       null;
    end Ignorable_Whitespace;
@@ -4347,7 +4416,11 @@ package body Sax.Readers is
    procedure Processing_Instruction
      (Handler : in out Reader;
       Target  : Unicode.CES.Byte_Sequence;
-      Data    : Unicode.CES.Byte_Sequence) is
+      Data    : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Target);
+      pragma Warnings (Off, Data);
    begin
       null;
    end Processing_Instruction;
@@ -4357,7 +4430,10 @@ package body Sax.Readers is
    --------------------
 
    procedure Skipped_Entity
-     (Handler : in out Reader; Name : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Reader; Name : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
    begin
       null;
    end Skipped_Entity;
@@ -4368,7 +4444,10 @@ package body Sax.Readers is
 
    procedure Comment
      (Handler : in out Reader;
-      Ch      : Unicode.CES.Byte_Sequence) is
+      Ch      : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Ch);
    begin
       null;
    end Comment;
@@ -4378,6 +4457,7 @@ package body Sax.Readers is
    -----------------
 
    procedure Start_Cdata (Handler : in out Reader) is
+      pragma Warnings (Off, Handler);
    begin
       null;
    end Start_Cdata;
@@ -4387,6 +4467,7 @@ package body Sax.Readers is
    ---------------
 
    procedure End_Cdata (Handler : in out Reader) is
+      pragma Warnings (Off, Handler);
    begin
       null;
    end End_Cdata;
@@ -4397,7 +4478,10 @@ package body Sax.Readers is
 
    procedure Start_Entity
      (Handler : in out Reader;
-      Name    : Unicode.CES.Byte_Sequence) is
+      Name    : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
    begin
       null;
    end Start_Entity;
@@ -4408,7 +4492,10 @@ package body Sax.Readers is
 
    procedure End_Entity
      (Handler : in out Reader;
-      Name    : Unicode.CES.Byte_Sequence) is
+      Name    : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
    begin
       null;
    end End_Entity;
@@ -4421,7 +4508,12 @@ package body Sax.Readers is
      (Handler   : in out Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence := "";
-      System_Id : Unicode.CES.Byte_Sequence := "") is
+      System_Id : Unicode.CES.Byte_Sequence := "")
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
+      pragma Warnings (Off, Public_Id);
+      pragma Warnings (Off, System_Id);
    begin
       null;
    end Start_DTD;
@@ -4431,6 +4523,7 @@ package body Sax.Readers is
    -------------
 
    procedure End_DTD (Handler : in out Reader) is
+      pragma Warnings (Off, Handler);
    begin
       null;
    end End_DTD;
@@ -4442,7 +4535,11 @@ package body Sax.Readers is
    procedure Internal_Entity_Decl
      (Handler : in out Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Value   : Unicode.CES.Byte_Sequence) is
+      Value   : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
+      pragma Warnings (Off, Value);
    begin
       null;
    end Internal_Entity_Decl;
@@ -4455,7 +4552,12 @@ package body Sax.Readers is
      (Handler   : in out Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence;
-      System_Id : Unicode.CES.Byte_Sequence) is
+      System_Id : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
+      pragma Warnings (Off, Public_Id);
+      pragma Warnings (Off, System_Id);
    begin
       null;
    end External_Entity_Decl;
@@ -4468,7 +4570,12 @@ package body Sax.Readers is
      (Handler       : in out Reader;
       Name          : Unicode.CES.Byte_Sequence;
       System_Id     : Unicode.CES.Byte_Sequence;
-      Notation_Name : Unicode.CES.Byte_Sequence) is
+      Notation_Name : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
+      pragma Warnings (Off, System_Id);
+      pragma Warnings (Off, Notation_Name);
    begin
       null;
    end Unparsed_Entity_Decl;
@@ -4480,7 +4587,11 @@ package body Sax.Readers is
    procedure Element_Decl
      (Handler : in out Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Element_Model_Ptr) is
+      Model   : Element_Model_Ptr)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
+      pragma Warnings (Off, Model);
    begin
       null;
    end Element_Decl;
@@ -4493,7 +4604,12 @@ package body Sax.Readers is
      (Handler       : in out Reader;
       Name          : Unicode.CES.Byte_Sequence;
       Public_Id     : Unicode.CES.Byte_Sequence;
-      System_Id     : Unicode.CES.Byte_Sequence) is
+      System_Id     : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Name);
+      pragma Warnings (Off, Public_Id);
+      pragma Warnings (Off, System_Id);
    begin
       null;
    end Notation_Decl;
@@ -4509,7 +4625,15 @@ package body Sax.Readers is
       Typ     : Sax.Attributes.Attribute_Type;
       Content : Sax.Models.Element_Model_Ptr;
       Value_Default : Sax.Attributes.Default_Declaration;
-      Value   : Unicode.CES.Byte_Sequence) is
+      Value   : Unicode.CES.Byte_Sequence)
+   is
+      pragma Warnings (Off, Handler);
+      pragma Warnings (Off, Ename);
+      pragma Warnings (Off, Aname);
+      pragma Warnings (Off, Typ);
+      pragma Warnings (Off, Content);
+      pragma Warnings (Off, Value_Default);
+      pragma Warnings (Off, Value);
    begin
       null;
    end Attribute_Decl;
