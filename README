@@ -27,6 +27,10 @@ You can also build a static version of your program by using:
 To run a command compiled with this library, you might need to edit the
 LD_LIBRARY_PATH environment variable so that ${PREFIX}/lib is included.
 
+Note that this library will not compile with GNU make 3.77 on some platforms,
+due to a bug in the handling of the wildcard command. It is recommended that
+you update to at least 3.78
+
 TESTING THE LIBRARY
 ===================
 
