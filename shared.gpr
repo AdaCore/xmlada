@@ -13,9 +13,12 @@ project Shared is
        case Mode is
           when "debug" => 
              for Default_Switches ("Ada") use ("-g", "-gnatVa");
-             --  for Global_Configuration_Pragmas use "../gnat.adc";
-          when others =>
+             for Global_Configuration_Pragmas use "gnat.adc";
+          when "optimize" =>
              for Default_Switches ("Ada") use ("-O2");
+             for Global_Configuration_Pragmas use "gnat_optimize.adc";
+          when others =>
+             for Default_Switches ("Ada") use ("-g", "-O2");
        end case;
    end Builder;
 
@@ -35,7 +38,7 @@ project Shared is
                & ("-O2", "-gnatN", "-gnatp");
 
          when "profile" =>
-            for Default_Switches ("Ada") use warnings & ("-pg");
+            for Default_Switches ("Ada") use warnings & ("-g", "-pg");
       end case;
    end compiler;
 
