@@ -331,6 +331,12 @@ package Schema.Validators is
    --  Whether the element is nillable (this only adds support for the
    --  attribute xsi:nil
 
+   procedure Set_Final
+     (Element : XML_Element;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean);
+   --  Set the final status of the lement
+
    ------------
    -- Groups --
    ------------
@@ -563,6 +569,11 @@ private
 
       Nillable    : Boolean;
       --  Whether the element is nillable
+
+      Final_Restriction : Boolean;
+      Final_Extension   : Boolean;
+      --  Whether this element is final for "restriction" or "extension" or
+      --  both
    end record;
    type XML_Element_Access is access all XML_Element_Record;
 
