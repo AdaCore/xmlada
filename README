@@ -6,6 +6,11 @@ If you are using GNAT version 3.13p or lower, swap the two COMPILER
 lines in the file Makefile.module, so that it only contains
 "gnatmake". The other switches are not supported in these versions.
 
+You also need to modify that line if your compiler is accessible through
+a command other than "gnatmake", for instance if you are using a cross
+compiler. In that case, substitute "gnatmake" with the name of the
+actual compiler, for instance "powerpc-wrs-vxworks-gnatmake".
+
 type:
    >  ./configure --prefix=<PREFIX>
    >  make install
