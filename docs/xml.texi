@@ -595,7 +595,7 @@ call them when certain conditions occur.
 
 This documentation is in no way a full documentation on SAX. Instead,
 you should refer to the standard itself, available at
-@url{http://www.megginson.com/SAX/}.
+@url{http://sax.sourceforge.net}.
 
 Some of the more useful callbacks are @code{Start_Document},
 @code{End_Document}, @code{Start_Element}, @code{End_Element},
