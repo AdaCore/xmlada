@@ -1,9 +1,12 @@
 with GNAT.Command_Line;  use GNAT.Command_Line;
+with Unicode.Encodings;  use Unicode.Encodings;
+with Unicode.CES;        use Unicode.CES;
 with Input_Sources;      use Input_Sources;
 with Input_Sources.File; use Input_Sources.File;
 with Input_Sources.Http; use Input_Sources.Http;
 with DOM.Readers;        use DOM.Readers;
 with Sax.Readers;        use Sax.Readers;
+with Sax.Encodings;      use Sax.Encodings;
 with DOM.Core.Nodes;     use DOM.Core.Nodes;
 with Ada.Exceptions;     use Ada.Exceptions;
 with Ada.Text_IO;        use Ada.Text_IO;
@@ -25,13 +28,32 @@ procedure Testxml is
    Validate : Boolean := False;
    Valid_Chars : Boolean := False;
    Must_Normalize : Boolean := False;
+   Encoding_Out : Unicode.Encodings.Unicode_Encoding := Get_By_Name ("utf-8");
+   EOL : Byte_Sequence_Access := new Byte_Sequence'(Sax.Encodings.Lf_Sequence);
+   Print_Comments : Boolean := False;
+   Print_XML_PI   : Boolean := False;
 
 begin
    --  Parse the command line
    loop
-      case Getopt ("silent uri normalize validate dump valid_chars") is
+      case Getopt
+        ("silent uri normalize validate dump valid_chars encoding-out: eol:"
+         & " comments xmlpi")
+      is
          when ASCII.Nul => exit;
-
+         when 'e' =>
+            if Full_Switch = "eol" then
+               Free (EOL);
+               if Parameter = "\n" then
+                  EOL := new String'("" & ASCII.LF);
+               else
+                  EOL := new String'(Parameter);
+               end if;
+            elsif Full_Switch = "encoding-out" then
+               Encoding_Out := Get_By_Name (Parameter);
+            end if;
+         when 'x' => Print_XML_PI := True;
+         when 'c' => Print_Comments := True;
          when 's' => Silent := True;
          when 'u' => With_URI := True;
          when 'v' =>
@@ -93,9 +115,11 @@ begin
          DOM.Core.Nodes.Dump (Get_Tree (My_Tree_Reader), With_URI => With_URI);
       else
          Print (Get_Tree (My_Tree_Reader),
-                Print_Comments => False,
-                Print_XML_PI => False,
-                With_URI => With_URI);
+                Print_Comments => Print_Comments,
+                Print_XML_PI   => Print_XML_PI,
+                With_URI       => With_URI,
+                EOL_Sequence   => EOL.all,
+                Encoding       => Encoding_Out);
       end if;
    end if;
 
