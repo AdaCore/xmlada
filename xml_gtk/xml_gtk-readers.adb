@@ -30,6 +30,7 @@
 with Sax.Attributes;        use Sax.Attributes;
 with Unicode;               use Unicode;
 with Unicode.CES;           use Unicode.CES;
+with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Glib;                  use Glib;
 with Input_Sources.File;    use Input_Sources.File;
@@ -140,22 +141,6 @@ package body XML_Gtk.Readers is
       end if;
    end Characters;
 
-   --------------------------
-   -- Ignorable_Whitespace --
-   --------------------------
-
-   procedure Ignorable_Whitespace
-     (Handler : in out Gtk_Reader; Ch : Unicode.CES.Byte_Sequence)
-   is
-      Tmp : Node;
-      pragma Unreferenced (Tmp);
-   begin
-      --  Ignore these white spaces at the toplevel
-      if Handler.Current_Node /= Handler.Tree then
-         Characters (Handler, Ch);
-      end if;
-   end Ignorable_Whitespace;
-
    --------------
    -- Get_Tree --
    --------------
@@ -213,22 +198,46 @@ package body XML_Gtk.Readers is
    -----------
 
    function Parse (File : String) return Glib_XML.Node_Ptr is
+      Tree  : Glib_XML.Node_Ptr;
+      Error : Unicode.CES.Byte_Sequence_Access;
+   begin
+      Parse (File, Tree, Error);
+      Free (Error);
+      return Tree;
+   end Parse;
+
+   -----------
+   -- Parse --
+   -----------
+
+   procedure Parse
+       (File  : String;
+        Tree  : out Glib_XML.Node_Ptr;
+        Error : out Unicode.CES.Byte_Sequence_Access)
+   is
       Input  : File_Input;
       Reader : Gtk_Reader;
-      Tree   : Glib_XML.Node_Ptr;
    begin
       Open (File, Input);
       Set_Public_Id (Input, File);
       Set_System_Id (Input, File);
       
+      Set_Warnings_As_Errors (Reader, True);
       Set_Feature (Reader, Validation_Feature, False);
       Set_Feature (Reader, Test_Valid_Chars_Feature, True);
 
       Parse (Reader, Input);
-      Tree := Get_Tree (Reader);
+      Tree  := Get_Tree (Reader);
+      Error := null;
 
       Close (Input);
-      return Tree;
+
+   exception
+      when E : XML_Fatal_Error =>
+         Free (Reader.Tree);
+         Free (Reader);
+         Error := new Byte_Sequence'(Exception_Message (E));
+         Tree := null;
    end Parse;
 
 end XML_Gtk.Readers;

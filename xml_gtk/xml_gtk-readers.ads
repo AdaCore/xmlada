@@ -49,7 +49,17 @@ package XML_Gtk.Readers is
    --  if you want to avoid memory leaks.
 
    function Parse (File : String) return Glib_XML.Node_Ptr;
-   --  Same as Glib.Xml.Parse, but uses XML/Ada as the XML parser instead
+   --  Same as Glib.Xml.Parse, but uses XML/Ada as the XML parser instead.
+   --  Errors in the XML file will return a null value, but the error itself
+   --  is no longer accessible.
+
+   procedure Parse
+       (File  : String;
+        Tree  : out Glib_XML.Node_Ptr;
+        Error : out Unicode.CES.Byte_Sequence_Access);
+   --  Same as above, except error messages are made available to the caller.
+   --  Both return value must be freed by the user.
+   --  If there is an error, Tree is always set to null.
 
    function Get_Tree (Read : Gtk_Reader) return Glib_XML.Node_Ptr;
    --  Get the tree that Read created
@@ -85,9 +95,6 @@ private
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "");
    procedure Characters
-     (Handler : in out Gtk_Reader;
-      Ch      : Unicode.CES.Byte_Sequence);
-   procedure Ignorable_Whitespace
      (Handler : in out Gtk_Reader;
       Ch      : Unicode.CES.Byte_Sequence);
    procedure Error
