@@ -54,7 +54,7 @@ ${MODULES}: force
 	${GNATMAKE} ${FPIC} -u -P$@/$@.gpr -XMODE=${MODE}
 
 ${MODULE_TEST}: force
-	${GNATMAKE} ${FPIC} -P${@:%_test=%}/${@:%_test=%}.gpr -XMODE=${MODE}
+	${GNATMAKE} ${FPIC} -P${@:%_test=%}/${@:%_test=%}.gpr -XMODE=test
 
 ${MODULE_INSTALL}: force
 	# Build the libraries themselves
