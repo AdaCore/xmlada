@@ -16,6 +16,9 @@ Make sure that you do not have a previous installation of XML/Ada in one
 of the directories given in ADA_OBJECTS_PATH, or some files will not be
 properly recompiled.
 
+Note that this library will not compile with GNU make 3.77 on some platforms,
+due to a bug in the handling of the wildcard command. It is recommended that
+you update to at least 3.78
 
 Compiling with GNAT 3.14p
 -------------------------
@@ -35,7 +38,7 @@ Configure and compile with the following commands:
    > make -f Makefile.314 install
 
 
-Compiling with GNAT 3.15a1 or GNAT 3.16w
+Compiling with GNAT 3.15a1 or GNAT 3.16a
 ----------------------------------------
 
 You might need to modify the following lines in the Makefile
@@ -62,30 +65,6 @@ Configure and compile with the following commands:
    >  ./configure --prefix=<PREFIX>
    >  make install
 to build and install the library.
-
-
-Using the library
------------------
-
-Files will be copied into ${PREFIX}/lib and ${PREFIX}/include/xmlada.
-
-To use this library, add the following arguments to the gnatmake
-command line:
-   -aI${PREFIX}/include/xmlada -largs -L${PREFIX}/lib -lxmlada
-
-Alternatively, a script is provided in ${PREFIX}/bin, that outputs all
-the command line arguments. You should compile with:
-   gnatmake test.adb `xmlada-config`
-
-You can also build a static version of your program by using:
-   gnatmake test.adb `xmlada-config --static`
-
-To run a command compiled with this library, you might need to edit the
-LD_LIBRARY_PATH environment variable so that ${PREFIX}/lib is included.
-
-Note that this library will not compile with GNU make 3.77 on some platforms,
-due to a bug in the handling of the wildcard command. It is recommended that
-you update to at least 3.78
 
 II - INSTALLING THIS LIBRARY ON VMS
 ===================================
@@ -147,8 +126,58 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
 5. If you have GNAT 3.14 or later, you can register the library as a
    standard library using the 'gnatreg' command.
 
-IV - TESTING THE LIBRARY
-========================
+IV - USING THE LIBRARY
+======================
+
+There are two ways to use this library. One solution is to use Makefiles to
+build your application, specifying all search patchs and libraries directly
+on the command line of the compiler.
+The other solution is to use the project files provided by GNAT. These have
+evolved a lot in recent versions of GNAT, and the provided project files
+might not work correctly with older versions of GNAT.
+
+One you have managed to build your application, you might need to edit the
+LD_LIBRARY_PATH environment variable on Unix systems, or the PATH variable
+on Windows systems to make the library visible to the dynamic linker. The
+directory ${PREFIX}/lib should be added to this path.
+
+Using the library through project files
+---------------------------------------
+
+If you are building your application with the help of GNAT project files (see
+the GNAT documentation for more information on these), you just have to add
+the following statement at the beginning of your project file:
+
+   with "xmlada";
+
+This assumes that the xmlada.gpr project file is visible through the
+environment variable ADA_PROJECT_PATH. You should add the directory ${PREFIX}
+to that path to be able to build your application.
+
+The statement above with automatically set the appropriate search paths for
+the compiler, as well as the proper linker arguments.
+
+
+Using the library through Makefiles
+-----------------------------------
+
+Files will be copied into ${PREFIX}/lib and ${PREFIX}/include/xmlada.
+
+To use this library, add the following arguments to the gnatmake
+command line:
+   -aI${PREFIX}/include/xmlada -largs -L${PREFIX}/lib -lxmlada_input_sources \
+   -lxmlada_unicode -lxmlada_dom -lxmlada_sax
+
+Alternatively, a script is provided in ${PREFIX}/bin, that outputs all
+the command line arguments. You should compile with:
+   gnatmake test.adb `xmlada-config`
+
+You can also build a static version of your program by using:
+   gnatmake test.adb `xmlada-config --static`
+
+
+V - TESTING THE LIBRARY
+=======================
 
 You need to download the official OASIS test suite for XML,
 from www.xml.org. The name of the current archive is
@@ -166,8 +195,8 @@ Execute the file
 This will report the number of errors found.
 
 
-V - CONTENTS OF THE LIBRARY
-===========================
+VI - CONTENTS OF THE LIBRARY
+============================
 
 The sources in this library are split into several subdirectories, each
 with its own README, sources, documentation and unit tests.
@@ -198,8 +227,8 @@ The list of subdirectories (aka modules) is:
   This contains the full documentation for this XML library
 
 
-VI - LICENSING
-==============
+VII - LICENSING
+===============
 
 This library is distributed under the GNAT-Modified GNU Public License.
 It has the following addition to the GPL:
@@ -211,8 +240,8 @@ It has the following addition to the GPL:
  exception does not however invalidate any other reasons why the
  executable file  might be covered by the  GNU Public License."
 
-VII - BUG REPORTS
-=================
+VIII - BUG REPORTS
+==================
 
 Please send questions and bug reports to report@gnat.com following
 the same procedures used to submit reports with the GNAT toolset itself.
