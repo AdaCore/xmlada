@@ -2,10 +2,11 @@ Index
 
 I   - INSTALLING THIS LIBRARY ON UNIX
 II  - INSTALLING THIS LIBRARY ON VMS
-III - TESTING THE LIBRARY
-IV  - CONTENTS OF THE LIBRARY
-V   - LICENSING
-VI  - BUG REPORTS
+III - INSTALLING THIS LIBRARY ON WINDOWS
+IV  - TESTING THE LIBRARY
+V   - CONTENTS OF THE LIBRARY
+VI  - LICENSING
+VII - BUG REPORTS
 
 
 I - INSTALLING THIS LIBRARY ON UNIX
@@ -97,8 +98,33 @@ Do the following, from the root directory of XML/Ada:
      This last step is only required if you want to build the test executables
      testsax and testdom which can be used to test the library on any XML file.
 
-III - TESTING THE LIBRARY
-=========================
+III - INSTALLING THIS LIBRARY ON WINDOWS
+========================================
+
+1. Due to the nature of GNU Make you need to have a UNIX-type shell and
+   utilities installed to build this library. If you do not have this,
+   you can download a set at:
+
+      http://www.weihenstephan.de/~syring/win32/UnxUtils.html
+
+2. Run 'configure' to generate the makefile.
+   An example copy is provided as Makefile.nt, rename it to makefile if you
+   cannot run configure. You also need to rename Makefile.module.nt to
+   Makefile.module
+
+3. Before building make sure to set the following values in 'Makefile':
+
+      PREFIX=C:/GNAT/XMLada
+
+   the makefile where to install the library. Note the slashes in the path!
+
+4. The best way to proceed is to do a 'make install'.
+
+5. If you have GNAT 3.14 or later, you can register the library as a
+   standard library using the 'gnatreg' command.
+
+IV - TESTING THE LIBRARY
+========================
 
 You need to download the official OASIS test suite for XML,
 from www.xml.org. The name of the current archive is
@@ -116,8 +142,8 @@ Execute the file
 This will report the number of errors found.
 
 
-IV - CONTENTS OF THE LIBRARY
-============================
+V - CONTENTS OF THE LIBRARY
+===========================
 
 The sources in this library are split into several subdirectories, each
 with its own README, sources, documentation and unit tests.
@@ -148,8 +174,8 @@ The list of subdirectories (aka modules) is:
   This contains the full documentation for this XML library
 
 
-V - LICENSING
-=============
+VI - LICENSING
+==============
 
 This library is distributed under the GNAT-Modified GNU Public License.
 It has the following addition to the GPL:
@@ -161,8 +187,8 @@ It has the following addition to the GPL:
  exception does not however invalidate any other reasons why the
  executable file  might be covered by the  GNU Public License."
 
-VI - BUG REPORTS
-================
+VII - BUG REPORTS
+=================
 
 Please send questions and bug reports to report@gnat.com following
 the same procedures used to submit reports with the GNAT toolset itself.
