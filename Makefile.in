@@ -62,7 +62,7 @@ docs: force
 	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
 	${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
 	${CP} $*/lib/libxmlada_* ${PREFIX}/include/xmlada/obj
-	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, ${LN} ../include/xmlada/obj/${lib} ${PREFIX}/lib;}
+	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, ${LN} ${PREFIX}/include/xmlada/obj/${lib} ${PREFIX}/lib;}
 	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
 	cd $*; ls *.ad[bs] > ${PREFIX}/projects/xmlada_$*.lgpr
 
