@@ -1,3 +1,8 @@
+Problems in 2.0:
+
+- E307-011: Invalid project file for xmlada_schema.gpr when installing static
+  libraries
+
 Problems fixed in 2.0
 
 - DB25-005 Incorrect value returned by DOM.Attributes.Owner_Element
