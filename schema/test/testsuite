@@ -1,0 +1,159 @@
+#!/bin/sh
+
+## Location of the testsuite's files for Schemas
+## You can download these from
+##   http://www.w3.org/XML/2001/05/xmlschema-test-collection
+
+xmltests=./xmltests
+
+debug=""
+
+while getopts "d" opt
+do 
+   case $opt in
+      d) debug="-debug";;
+      *) echo "Invalid command line switch: $opt"
+         exit 1
+         ;;
+   esac
+done
+
+
+XML="./testschema $debug"
+ms=$xmltests/msxsdtest
+
+total=0
+failed=0
+passed=0
+
+#######################################
+## summary ()
+#######################################
+
+summary() {
+  echo "Total: $total  Passed: $passed   Failed: $failed"
+}
+
+#######################################
+## expect()
+##   $1=schema file (can be empty)
+##   $2=test file (can be empty)
+##   $3=expected output
+#######################################
+
+expect() {
+   xsd_file="$1"
+   xml_file="$2"
+   expected="$3"
+
+   out=`eval $XML -xsd "$xsd_file" "$xml_file" 2>&1`
+   total=`expr $total + 1`
+
+   if [ x"$out" != x"$expected" ]; then
+      echo "#------------ Test failed ------------"
+      echo "   xsd: $1"
+      echo "   xml: $2"
+      echo "   output= $out"
+      echo "   expected= $expected"
+      failed=`expr $failed + 1`
+   else
+      passed=`expr $passed + 1`
+   fi
+}
+
+##################
+## Microsoft elements tests -- A serie  (name attribute tests)
+##################
+
+expect $ms/element/elemA001.xsd ""\
+ "$ms/element/elemA001.xsd:3:16: Attribute \"name\" is required in this context"
+expect $ms/element/elemA002.xsd "" ""
+expect $ms/element/elemA003.xsd "" ""
+expect $ms/element/elemA004.xsd "" ""
+expect $ms/element/elemA005.xsd "" ""
+expect $ms/element/elemA006.xsd "" \
+ "$ms/element/elemA006.xsd:4:27: Element \"foo\" has already been declared"
+expect $ms/element/elemA007.xsd "" ""
+expect $ms/element/elemA009.xsd "" \
+ "$ms/element/elemA009.xsd:3:31: Attribute \"name\": Invalid value: \"foo:bar\""
+expect $ms/element/elemA010.xsd "" \
+ "$ms/element/elemA010.xsd:3:28: Attribute \"name\": Invalid value: \":bar\""
+expect $ms/element/elemA011.xsd "" \
+ "$ms/element/elemA011.xsd:3:28: Attribute \"name\": Invalid value: \"foo:\""
+expect $ms/element/elemA012.xsd "" \
+ "$ms/element/elemA012.xsd:3:24: Attribute \"name\": Invalid value: \"\""
+expect $ms/element/elemA013.xsd "" \
+ "$ms/element/elemA013.xsd:3:25: Attribute \"name\": Invalid value: \"\""
+expect $ms/element/elemA014.xsd "" \
+ "$ms/element/elemA014.xsd:3:31: Attribute \"name\": Invalid value: \"-2.5foo\""
+expect $ms/element/elemA015.xsd "" ""
+expect $ms/element/elemA016.xsd "" ""
+expect $ms/element/elemA017.xsd "" ""
+
+
+##################
+## Microsoft elements tests -- B serie  (boolean tests)
+##################
+
+expect $ms/element/elemB001.xsd "" ""
+expect $ms/element/elemB002.xsd "" ""
+expect $ms/element/elemB003.xsd "" \
+ "$ms/element/elemB003.xsd:3:49: Attribute \"abstract\": Invalid value for boolean type: \"false true\""
+expect $ms/element/elemB004.xsd "" \
+ "$ms/element/elemB004.xsd:3:44: Attribute \"abstract\": Invalid value for boolean type: \"False\""
+expect $ms/element/elemB005.xsd "" \
+ "$ms/element/elemB005.xsd:3:39: Attribute \"abstract\": Invalid value for boolean type: \"\""
+expect $ms/element/elemB006.xsd "" \
+ "$ms/element/elemB006.xsd:3:46: Attribute \"abstract\": Invalid value for boolean type: \"boolean\""
+expect $ms/element/elemB007.xsd "" ""
+expect $ms/element/elemB008.xsd "" ""
+expect $ms/element/elemB009.xsd "" \
+ "$ms/element/elemB009.xsd:3:47: Attribute \"abstract\": Invalid value for boolean type: \"abstract\""
+expect $ms/element/elemB010.xsd "" \
+ "$ms/element/elemB010.xsd:3:49: Attribute \"abstract\": Invalid value for boolean type: \"true false\""
+
+
+##################
+## Microsoft elements tests -- C serie  (block attribute + list type)
+##################
+
+expect $ms/element/elemC001.xsd "" ""
+expect $ms/element/elemC002.xsd "" ""
+expect $ms/element/elemC003.xsd "" ""
+expect $ms/element/elemC004.xsd "" ""
+expect $ms/element/elemC005.xsd "" ""
+expect $ms/element/elemC006.xsd "" ""
+expect $ms/element/elemC007.xsd "" ""
+expect $ms/element/elemC008.xsd "" ""
+expect $ms/element/elemC009.xsd "" \
+ "$ms/element/elemC009.xsd:3:39: Attribute \"block\": Invalid value \"foo\""
+expect $ms/element/elemC010.xsd "" \
+ "$ms/element/elemC010.xsd:3:40: Attribute \"block\": Invalid value \"#All\""
+expect $ms/element/elemC011.xsd "" \
+ "$ms/element/elemC011.xsd:3:45: Attribute \"block\": Invalid value \"Extension\""
+expect $ms/element/elemC012.xsd "" \
+ "$ms/element/elemC012.xsd:3:47: Attribute \"block\": Invalid value \"Restriction\""
+expect $ms/element/elemC013.xsd "" \
+ "$ms/element/elemC013.xsd:3:48: Attribute \"block\": Invalid value \"Substitution\""
+expect $ms/element/elemC014.xsd "" \
+ "$ms/element/elemC014.xsd:3:75: Attribute \"block\": Invalid value \"#all extension restriction substitution\""
+expect $ms/element/elemC015.xsd "" \
+ "$ms/element/elemC015.xsd:3:49: Attribute \"block\": Invalid value \"extension foo\""
+expect $ms/element/elemC016.xsd "" \
+ "$ms/element/elemC016.xsd:3:51: Attribute \"block\": Invalid value \"restriction foo\""
+expect $ms/element/elemC017.xsd "" \
+ "$ms/element/elemC017.xsd:3:52: Attribute \"block\": Invalid value \"substitution foo\""
+expect $ms/element/elemC018.xsd "" ""
+expect $ms/element/elemC020.xsd "" ""
+
+##################
+## Microsoft elements tests -- D serie
+##################
+
+expect $ms/element/elemD001.xsd "" ""
+expect $ms/element/elemD002.xsd "" ""
+expect $ms/element/elemD003.xsd "" "failed"
+expect $ms/element/elemD004.xsd "" "failed"
+expect $ms/element/elemD005.xsd "" "failed"
+
+summary
