@@ -4,7 +4,7 @@ FORMATS=${addprefix xml.,ps html info txt}
 DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
 TEXI2HTML= @TEXI2HTML@
-TEX= tex
+TEX= @TEX@
 
 all: ${FORMATS}
 
