@@ -22,7 +22,12 @@ GTKADA_GPR=@GTKADA_GPR@
 ## Nothing to modify below this point
 #########################################################################
 
-MODULES=unicode input_sources sax dom xml_gtk
+MODULES=unicode input_sources sax dom
+
+ifneq (${GTKADA_GPR},)
+MODULES:=${MODULES} xml_gtk
+endif
+
 MODULE_INSTALL=${MODULES:%=%_inst}
 
 .PHONY: all obj clean install install_dirs
