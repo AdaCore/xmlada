@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
+--                       Copyright (C) 2001-2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
