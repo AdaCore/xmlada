@@ -5,7 +5,7 @@ PREFIX=@EXEC_PREFIX@
 
 # Set the following to True to build shared libraries. Note that this will
 # not work on most systems, you need to at least compile with -fPIC
-BUILD_SHARED=FALSE
+BUILD_SHARED=@BUILD_SHARED@
 
 GNATMAKE=gnatmake
 CC=gcc
@@ -82,6 +82,10 @@ install: obj install_dirs ${MODULE_INSTALL}
 	cd ${PREFIX}/include/xmlada; ${CHMOD} -w *.ali
 	${CP} xmlada-config ${PREFIX}/bin
 	${CP} xmlada.gpr ${PREFIX}
+	${CP} xmlada_unicode.gpr ${PREFIX}
+	${CP} xmlada_dom.gpr ${PREFIX}
+	${CP} xmlada_input.gpr ${PREFIX}
+	${CP} xmlada_sax.gpr ${PREFIX}
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 
 clean: force
