@@ -187,7 +187,9 @@ package body Schema.Validators.Extensions is
      (Validator : access Extension_XML_Validator; Typ : XML_Type)
       return Boolean is
    begin
-      return Validator.Base = Typ;
+      return Validator.Base = Typ
+        or else Is_Extension_Of (Get_Validator (Validator.Base), Typ)
+        or else Is_Restriction_Of (Get_Validator (Validator.Base), Typ);
    end Is_Extension_Of;
 
    ------------------------

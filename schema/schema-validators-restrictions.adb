@@ -166,7 +166,9 @@ package body Schema.Validators.Restrictions is
      (Validator : access Restriction_XML_Validator; Typ : XML_Type)
       return Boolean is
    begin
-      return Validator.Base = Typ;
+      return Validator.Base = Typ
+        or else Is_Restriction_Of (Get_Validator (Validator.Base), Typ)
+        or else Is_Extension_Of (Get_Validator (Validator.Base), Typ);
    end Is_Restriction_Of;
 
    --------------------
