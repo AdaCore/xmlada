@@ -34,6 +34,10 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Element);
+   procedure Lookup_With_NS
+     (Handler : in out Schema_Reader'Class;
+      QName   : Byte_Sequence;
+      Result  : out XML_Group);
    --  Lookup a type or element  with a possible namespace specification
 
    function Create_Repeat
@@ -306,6 +310,27 @@ package body Schema.Schema_Readers is
          & QName (Separator + 1 .. QName'Last) & """);");
    end Lookup_With_NS;
 
+   --------------------
+   -- Lookup_With_NS --
+   --------------------
+
+   procedure Lookup_With_NS
+     (Handler : in out Schema_Reader'Class;
+      QName   : Byte_Sequence;
+      Result  : out XML_Group)
+   is
+      Separator : constant Integer := Split_Qname (QName);
+      G         : XML_Grammar_NS;
+   begin
+      Get_Grammar_For_Namespace
+        (Handler, QName (QName'First .. Separator - 1), G);
+
+      Result := Lookup_Group (G, QName (Separator + 1 .. QName'Last));
+      Output
+        ("Group := Lookup_Group (G, """
+         & QName (Separator + 1 .. QName'Last) & """);");
+   end Lookup_With_NS;
+
    ------------------
    -- Create_Group --
    ------------------
@@ -318,8 +343,27 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "name");
       Ref_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "ref");
+      Min_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "minOccurs");
+      Max_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
       Tmp  : Context_Access;
+      Min_Occurs, Max_Occurs : Integer := 1;
    begin
+      if Min_Occurs_Index /= -1 then
+         Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
+      end if;
+
+      if Max_Occurs_Index /= -1 then
+         Max_Occurs := Max_Occurs_From_Value
+           (Get_Value (Atts, Max_Occurs_Index));
+
+         --  Imposed by test elemJ001.xsd, but not sure why
+         if Max_Occurs = 0 then
+            Min_Occurs := 0;
+         end if;
+      end if;
+
       Handler.Contexts := new Context'
         (Typ             => Context_Group,
          Group           => No_XML_Group,
@@ -364,13 +408,41 @@ package body Schema.Schema_Readers is
          end if;
 
          if Handler.Contexts.Group = No_XML_Group then
-            Handler.Contexts.Group := Lookup_Group
-              (Handler.Target_NS, Get_Value (Atts, Ref_Index));
-            Output (Ada_Name (Handler.Contexts) &
-                    " := Lookup_Group (Handler.Target_NS, """
-                    & Get_Value (Atts, Ref_Index) & """);");
+            Lookup_With_NS
+              (Handler, Get_Value (Atts, Ref_Index), Handler.Contexts.Group);
+            Output (Ada_Name (Handler.Contexts) & " := Group;");
          end if;
       end if;
+
+      case Handler.Contexts.Next.Typ is
+         when Context_Schema | Context_Redefine =>
+            null;
+
+         when Context_Type_Def =>
+               Handler.Contexts.Next.Type_Validator := Extension_Of
+                 (Lookup (Handler.Schema_NS, "anyType"),
+                  Handler.Contexts.Group, Min_Occurs, Max_Occurs);
+               Output ("Validator := Extension_Of (Lookup (Handler.Schema.NS,"
+                       & """anytype""), " & Ada_Name (Handler.Contexts)
+                    & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
+
+         when Context_Sequence =>
+            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Group,
+                          Min_Occurs, Max_Occurs);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts)
+                    & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
+
+         when Context_Choice =>
+            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Group,
+                          Min_Occurs, Max_Occurs);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts)
+                    & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
+
+         when others =>
+            Output ("Can't handle nested group decl");
+      end case;
    end Create_Group;
 
    ------------------
@@ -378,30 +450,9 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Finish_Group (Handler : in out Schema_Reader) is
+      pragma Unreferenced (Handler);
    begin
-      case Handler.Contexts.Next.Typ is
-         when Context_Schema | Context_Redefine =>
-            null;
-
-         when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator := Extension_Of
-              (Lookup (Handler.Schema_NS, "anyType"), Handler.Contexts.Group);
-            Output ("Validator := Extension_Of (Lookup (Handler.Schema.NS,"
-                    & """anytype""), " & Ada_Name (Handler.Contexts) & ");");
-
-         when Context_Sequence =>
-            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Group);
-            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
-                    & ", " & Ada_Name (Handler.Contexts) & ");");
-
-         when Context_Choice =>
-            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Group);
-            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
-                    & ", " & Ada_Name (Handler.Contexts) & ");");
-
-         when others =>
-            Output ("Can't handle nested group decl");
-      end case;
+      null;
    end Finish_Group;
 
    ----------------------------
@@ -1729,6 +1780,13 @@ package body Schema.Schema_Readers is
               XML_Validator (Handler.Contexts.All_Validator);
             Output ("Validator := XML_Validator ("
                     & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Group =>
+            Add_Particle
+              (Handler.Contexts.Next.Group,
+               Handler.Contexts.All_Validator);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
 
          when others =>
             Output ("Can't handled nested all");
