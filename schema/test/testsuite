@@ -16,7 +16,7 @@ show_expected_failure=0
 run_ms=1
 run_sun=1
 
-while getopts "ds" opt
+while getopts "dsm" opt
 do 
    case $opt in
       d) debug="-debug";;
@@ -418,7 +418,7 @@ fi
 
 if [ x$run_ms = x1 ]; then
 expect "" $ms/element/elemO001.xml \
- "$ms/element/elemO001.xml:4:11: \"parent\" is an abstract element"
+ "$ms/element/elemO001.xml:4:11: \"parent\" is abstract"
 expect "" $ms/element/elemO002.xml ""
 expect "" $ms/element/elemO003.xml ""
 expect "" $ms/element/elemO004.xml ""
@@ -682,6 +682,20 @@ expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.v00.xml" "<key> not su
 
 expect "$sun/xsd001.xsd" "$sun/xsd001.n00.xml" \
  "$sun/xsd001.n00.xml:6:12: Element must be repeated at least 3 times"
+expect "$sun/xsd001.xsd" "$sun/xsd001.n01.xml" \
+ "$sun/xsd001.n01.xml:10:9: Too many occurrences of sequence. Expecting at most 1"
+expect "$sun/xsd001.xsd" "$sun/xsd001.n02.xml" \
+ "$sun/xsd001.n02.xml:7:21: Attribute \"attr\": String is too short, minimum length is 5 characters"
+expect "$sun/xsd001.xsd" "$sun/xsd001.n03.xml" \
+ "$sun/xsd001.n03.xml:7:28: Attribute \"attr\": String too long, maximum length is 10 characters"
+expect "$sun/xsd001.xsd" "$sun/xsd001.n04.xml" \
+ "$sun/xsd001.n04.xml:4:11: String is too short, minimum length is 3 characters"
+expect "$sun/xsd001.xsd" "$sun/xsd001.n05.xml" \
+ "$sun/xsd001.n05.xml:3:20: String too long, maximum length is 10 characters"
+expect "$sun/xsd001.xsd" "$sun/xsd001.n06.xml" \
+ "$sun/xsd001.n06.xml:4:11: String is too short, minimum length is 3 characters"
+expect "$sun/xsd001.xsd" "$sun/xsd001.n07.xml" \
+ "$sun/xsd001.n07.xml:4:13: Elements other than global elements mustn't have explicit namespace specification in this schema"
 
 
 fi
