@@ -3,18 +3,14 @@ with "../shared.gpr";
 project Unicode is
 
    for Object_Dir use "obj/";
+   for Library_Dir  use "lib";
+   for Library_Name use "xmlada_unicode";
+   for Library_Kind use Shared.Library_Type;
 
    case Shared.Mode is
-      when "distrib" => for Main use ();
       when others    => 
          for Source_Dirs use (".", "test");
-         for Main use ("test_unicode");
    end case;
-
---   for Library_Dir  use "lib/";
---   for Library_Name use "unicode";
---   for Library_Kind use "relocatable";
---   for Library_Version use "libunicode" & ".so." & Shared.Version;
 
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;
