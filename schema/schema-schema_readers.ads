@@ -65,6 +65,8 @@ private
          when Context_Type_Def =>
             Type_Name      : Unicode.CES.Byte_Sequence_Access;
             Type_Validator : Schema.Validators.XML_Validator;
+            Redefined_Type : Schema.Validators.XML_Type;
+            --  Handling of <redefine>
          when Context_Element =>
             Element : Schema.Validators.XML_Element;
          when Context_Sequence =>
@@ -91,6 +93,8 @@ private
             Attribute_Is_Ref : Boolean;
          when Context_Group =>
             Group     : Schema.Validators.XML_Group;
+            Redefined_Group : Schema.Validators.XML_Group;
+            --  Handling of <redefine>
          when Context_Attribute_Group =>
             Attr_Group : Schema.Validators.XML_Attribute_Group;
       end case;

@@ -311,29 +311,57 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "name");
       Ref_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "ref");
-      Group     : XML_Group;
+      Tmp  : Context_Access;
    begin
-      if Name_Index /= -1 then
-         Group := Create_Group (Get_Value (Atts, Name_Index));
-
-      elsif Ref_Index /= -1 then
-         Group := Lookup_Group
-           (Handler.Target_NS, Get_Value (Atts, Ref_Index));
-      end if;
-
       Handler.Contexts := new Context'
-        (Typ            => Context_Group,
-         Group          => Group,
-         Level          => Handler.Contexts.Level + 1,
-         Next           => Handler.Contexts);
+        (Typ             => Context_Group,
+         Group           => No_XML_Group,
+         Redefined_Group => No_XML_Group,
+         Level           => Handler.Contexts.Level + 1,
+         Next            => Handler.Contexts);
 
       if Name_Index /= -1 then
+         Handler.Contexts.Group := Create_Group (Get_Value (Atts, Name_Index));
          Output (Ada_Name (Handler.Contexts) & " := Create_Group ("""
                  & Get_Value (Atts, Name_Index) & """);");
-      else
-         Output (Ada_Name (Handler.Contexts) &
-                 " := Lookup_Group (Handler.Target_NS, """
-                 & Get_Value (Atts, Ref_Index) & """);");
+
+      elsif Ref_Index /= -1 then
+         if In_Redefine_Context (Handler) then
+            Tmp := Handler.Contexts;
+            while Tmp /= null loop
+               if Tmp.Typ = Context_Group
+                 and then Tmp.Next.Typ = Context_Redefine
+                 and then Get_Local_Name (Tmp.Group) =
+                 Get_Value (Atts, Ref_Index)
+               then
+                  Handler.Contexts.Group := Tmp.Redefined_Group;
+                  Output
+                    (Ada_Name (Handler.Contexts)
+                     & " := <old definition of group>;");
+                  exit;
+               end if;
+               Tmp := Tmp.Next;
+            end loop;
+         end if;
+
+         if Handler.Contexts.Group = No_XML_Group then
+            Handler.Contexts.Group := Lookup_Group
+              (Handler.Target_NS, Get_Value (Atts, Ref_Index));
+            Output (Ada_Name (Handler.Contexts) &
+                    " := Lookup_Group (Handler.Target_NS, """
+                    & Get_Value (Atts, Ref_Index) & """);");
+         end if;
+      end if;
+
+      --  Do not use In_Redefine_Context, since this only applies for types
+      --  that are redefined
+      if Handler.Contexts.Next.Typ = Context_Redefine then
+         Handler.Contexts.Redefined_Group := Redefine_Group
+           (Handler.Target_NS,
+            Get_Local_Name (Handler.Contexts.Group));
+         Output (Ada_Name (Handler.Contexts)
+                 & " := Redefine_Group (Handler.Target_NS, """
+                 & Get_Local_Name (Handler.Contexts.Group) & """);");
       end if;
    end Create_Group;
 
@@ -358,6 +386,16 @@ package body Schema.Schema_Readers is
               (Lookup (Handler.Schema_NS, "anyType"), Handler.Contexts.Group);
             Output ("Validator := Extension_Of (Lookup (Handler.Schema.NS,"
                     & """anytype""), " & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Sequence =>
+            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Group);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Choice =>
+            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Group);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
 
          when others =>
             Output ("Can't handle nested group decl");
@@ -460,7 +498,7 @@ package body Schema.Schema_Readers is
    begin
       Parse_Grammar
         (Handler, Get_Value (Atts, Location_Index), Handler.Created_Grammar);
-      Set_Redefine_Mode (Handler.Target_NS, True);
+--      Set_Redefine_Mode (Handler.Target_NS, True);
 
       Handler.Contexts := new Context'
         (Typ            => Context_Redefine,
@@ -714,8 +752,18 @@ package body Schema.Schema_Readers is
         (Typ            => Context_Type_Def,
          Type_Name      => Name,
          Type_Validator => null,
+         Redefined_Type => No_Type,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
+
+      --  Do not use In_Redefine_Context, since this only applies for types
+      --  that are redefined
+      if Handler.Contexts.Next.Typ = Context_Redefine then
+         Handler.Contexts.Redefined_Type := Redefine_Type
+           (Handler.Target_NS, Name.all);
+         Output ("Validator := Redefine_Type (Handler.Target_NS, """
+                 & Name.all & """);");
+      end if;
    end Create_Complex_Type;
 
    -------------------------
@@ -786,11 +834,7 @@ package body Schema.Schema_Readers is
         and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
       then
          if In_Redefine_Context (Handler) then
-            Base := Redefine_Type
-              (Handler.Target_NS, Handler.Contexts.Type_Name.all);
-            Output (Ada_Name (Base)
-                    & " := Redefine_Type (Handler.Target_NS, """
-                    & Handler.Contexts.Type_Name.all & """);");
+            Base := Handler.Contexts.Redefined_Type;
          else
             Raise_Exception
               (XML_Validation_Error'Identity,
@@ -918,11 +962,7 @@ package body Schema.Schema_Readers is
         and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
       then
          if In_Redefine_Context (Handler) then
-            Base := Redefine_Type
-              (Handler.Target_NS, Handler.Contexts.Type_Name.all);
-            Output (Ada_Name (Base)
-                    & " := Redefine_Type (Handler.Target_NS, """
-                    & Handler.Contexts.Type_Name.all & """);");
+            Base := Handler.Contexts.Redefined_Type;
          else
             Raise_Exception
               (XML_Validation_Error'Identity,
@@ -1148,7 +1188,8 @@ package body Schema.Schema_Readers is
                     & ", " & Ada_Name (Handler.Contexts) & ");");
             Set_Debug_Name
               (Handler.Contexts.Seq,
-               "seq_in_group_" & Get_Local_Name (Handler.Contexts.Next.Group));
+               "seq_in_group__"
+               & Get_Local_Name (Handler.Contexts.Next.Group));
 
          when Context_Schema | Context_Attribute | Context_Element
             | Context_Restriction | Context_All | Context_Union
