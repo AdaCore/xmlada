@@ -104,10 +104,16 @@ package Sax.Attributes is
 
    function Get_Value (Attr : Attributes; Index : Natural)
       return Unicode.CES.Byte_Sequence;
-   --  Return an attribute's value by index
+   function Get_Value_As_Boolean
+     (Attr : Attributes; Index : Natural) return Boolean;
+   --  Return an attribute's value by index.
+   --  The second function will test the value's attribute against the standard
+   --  set of boolean values ("true", "1", "false", "0")
 
    function Get_Value (Attr : Attributes; Qname : Unicode.CES.Byte_Sequence)
       return Unicode.CES.Byte_Sequence;
+   function Get_Value_As_Boolean
+     (Attr : Attributes; Qname : Unicode.CES.Byte_Sequence) return Boolean;
    --  Return an attribute's value by XML 1.0 qualified name
 
    function Get_Value
@@ -115,6 +121,11 @@ package Sax.Attributes is
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence)
       return Unicode.CES.Byte_Sequence;
+   function Get_Value_As_Boolean
+     (Attr       : Attributes;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence)
+      return Boolean;
    --  Return an attribute's value by Namespace name
 
    function Get_Content

@@ -470,6 +470,18 @@ package body Sax.Attributes is
       return Get (Attr, Index).Value.all;
    end Get_Value;
 
+   --------------------------
+   -- Get_Value_As_Boolean --
+   --------------------------
+
+   function Get_Value_As_Boolean
+     (Attr : Attributes; Index : Natural) return Boolean
+   is
+      Val : constant Byte_Sequence_Access := Get (Attr, Index).Value;
+   begin
+      return Val.all = "true" or else Val.all = "1";
+   end Get_Value_As_Boolean;
+
    ---------------
    -- Get_Value --
    ---------------
@@ -485,6 +497,22 @@ package body Sax.Attributes is
       Get (Attr, Qname, J, Tmp);
       return Tmp.Value.all;
    end Get_Value;
+
+   --------------------------
+   -- Get_Value_As_Boolean --
+   --------------------------
+
+   function Get_Value_As_Boolean
+     (Attr : Attributes;
+      Qname : Unicode.CES.Byte_Sequence)
+      return Boolean
+   is
+      J : Integer;
+      Tmp : Attribute_Access;
+   begin
+      Get (Attr, Qname, J, Tmp);
+      return Tmp.Value.all = "true" or else Tmp.Value.all = "1";
+   end Get_Value_As_Boolean;
 
    ---------------
    -- Get_Value --
@@ -502,6 +530,23 @@ package body Sax.Attributes is
       Get (Attr, URI, Local_Name, J, Tmp);
       return Tmp.Value.all;
    end Get_Value;
+
+   --------------------------
+   -- Get_Value_As_Boolean --
+   --------------------------
+
+   function Get_Value_As_Boolean
+     (Attr       : Attributes;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence)
+      return Boolean
+   is
+      J : Integer;
+      Tmp : Attribute_Access;
+   begin
+      Get (Attr, URI, Local_Name, J, Tmp);
+      return Tmp.Value.all = "true" or else Tmp.Value.all = "1";
+   end Get_Value_As_Boolean;
 
    -----------------------------
    -- Get_Default_Declaration --
