@@ -122,7 +122,7 @@ package body Schema.Validators.UR_Type is
          for P in Process_Contents_Type loop
             Validator := new UR_Type_Validator;
             Validator.Process_Contents := P;
-            UR_Type_Element (P)  := Create_Element
+            UR_Type_Element (P)  := Create_Local_Element
               ("", Create_Type ("ur-Type", Validator), Qualified);
          end loop;
       end if;
