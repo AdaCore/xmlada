@@ -54,13 +54,13 @@ package body Sax.Readers is
    Debug_Input : constant Boolean := False;
    --  Set to True if you want to debug this package
 
+   Always_Test_Valid_Char : constant Boolean := True;
+   --  If True, XML/Ada will check that each character read from the input
+   --  streams is valid, which tends to slow done the parser. If False, this is
+   --  only tested for character inserted through character references
+
    Initial_Buffer_Length : constant := 10000;
    --  Initial length of the internal buffer that stores CDATA, tag names,...
-
-   Basic_Latin_Colon : constant Byte_Sequence := Encoding.Encode
-     (Unicode.Names.Basic_Latin.Colon);
-   Percent_Sign_Sequence : constant Byte_Sequence := Encoding.Encode
-     (Percent_Sign);
 
    ------------
    -- Tokens --
@@ -309,6 +309,9 @@ package body Sax.Readers is
    -- Internal subprograms --
    --------------------------
 
+   function Debug_Encode (C : Unicode_Char) return Byte_Sequence;
+   --  Return an encoded string matching C (matching Sax.Encodins.Encoding)
+
    function Is_Name_Char (C : Unicode_Char) return Boolean;
    --  Return True if C is a valid character to use in a Name.
 
@@ -334,6 +337,8 @@ package body Sax.Readers is
 
    procedure Put_In_Buffer
      (Parser : in out Reader'Class; Char : Unicode_Char);
+   pragma Inline (Put_In_Buffer);
+
    procedure Put_In_Buffer
      (Parser : in out Reader'Class; Str : Byte_Sequence);
    pragma Inline (Put_In_Buffer);
@@ -342,16 +347,19 @@ package body Sax.Readers is
    procedure Next_Token
      (Input  : in out Input_Sources.Input_Source'Class;
       Parser : in out Reader'Class;
-      Id     : out Token);
+      Id     : out Token;
+      Coalesce_Space : Boolean := False);
    --  Return the next identifier in the input stream.
-   --  Locator is modified accordingly (line and column)
+   --  Locator is modified accordingly (line and column).
+   --  If Coalesce_Space is True, then all the Name or Text tokens preceded or
+   --  followed by Space tokens are grouped together and returned as a single
+   --  Text token.
 
    procedure Next_Token_Skip_Spaces
      (Input  : in out Input_Sources.Input_Source'Class;
       Parser : in out Reader'Class;
       Id     : out Token;
       Must_Have : Boolean := False);
-   pragma Inline (Next_Token_Skip_Spaces);
    --  Same as Next_Token, except it skips spaces. If Must_Have is True,
    --  then the first token read must be a space, or an error is raised
 
@@ -360,11 +368,6 @@ package body Sax.Readers is
    --  Clears the internal buffer in Parser.
    --  If Id is not Null_Token, then only the characters starting from
    --  Id.First are removed
-
-   function Value (Parser : Reader'Class; From, To : Token)
-      return Unicode.CES.Byte_Sequence;
-   --  Return the text that starts at the beginning of From, and ends at
-   --  the end of To.
 
    procedure Set_State (Parser : in out Reader'Class; State : Parser_State);
    --  Set the current state for the parser
@@ -494,6 +497,18 @@ package body Sax.Readers is
    --  Start_Entity/End_Entity are properly nested, and error messages
    --  point to the right entity.
 
+   ------------------
+   -- Debug_Encode --
+   ------------------
+
+   function Debug_Encode (C : Unicode_Char) return Byte_Sequence is
+      Buffer : Byte_Sequence (1 .. 20);
+      Index  : Natural := Buffer'First - 1;
+   begin
+      Encoding.Encode (C, Buffer, Index);
+      return Buffer (Buffer'First .. Index);
+   end Debug_Encode;
+
    --------------
    -- Input_Id --
    --------------
@@ -534,13 +549,14 @@ package body Sax.Readers is
       System_Id : constant Byte_Sequence := Get_System_Id (Parser.Locator.all);
       Index : Natural := System_Id'First;
       Basename_Start : Natural := System_Id'First;
+      URI_Index : Positive := URI'First;
    begin
       pragma Assert (URI /= "");
       --  ??? Only resolve paths for now
-      if Encoding.Read (URI, URI'First) /= Slash then
+      Encoding.Read (URI, URI_Index, C);
+      if C /= Slash then
          while Index <= System_Id'Last loop
-            C := Encoding.Read (System_Id, Index);
-            Index := Index + Encoding.Width (C);
+            Encoding.Read (System_Id, Index, C);
             if C = Slash then
                Basename_Start := Index;
             end if;
@@ -670,7 +686,10 @@ package body Sax.Readers is
          else
             Parser.Previous_Char_Was_CR := False;
             Parser.Last_Read := C;
-            Test_Valid_Char (Parser, Parser.Last_Read, Null_Token);
+
+            if Always_Test_Valid_Char then
+               Test_Valid_Char (Parser, Parser.Last_Read, Null_Token);
+            end if;
          end if;
       end Internal;
 
@@ -729,7 +748,7 @@ package body Sax.Readers is
          Put ("++Input " & To_String (Parser.Locator.all)
               & "(" & Unicode_Char'Image (Parser.Last_Read) & ")= ");
          if Parser.Last_Read /= Line_Feed then
-            Put_Line (Encoding.Encode (Parser.Last_Read));
+            Put_Line (Debug_Encode (Parser.Last_Read));
          else
             Put_Line ("Line_Feed");
          end if;
@@ -743,7 +762,7 @@ package body Sax.Readers is
    procedure Put_In_Buffer
      (Parser : in out Reader'Class; Char : Unicode_Char) is
    begin
-      Put_In_Buffer (Parser, Encoding.Encode (Char));
+      Encoding.Encode (Char, Parser.Buffer.all, Parser.Buffer_Length);
    end Put_In_Buffer;
 
    -------------------
@@ -793,8 +812,7 @@ package body Sax.Readers is
       C, C2 : Unicode_Char;
       Index : Natural := Lang'First;
    begin
-      C2 := Encoding.Read (Lang, Index);
-      Index := Index + Encoding.Width (C2);
+      Encoding.Read (Lang, Index, C2);
 
       if not (C2 in Latin_Small_Letter_A .. Latin_Small_Letter_Z
               or else C2 in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
@@ -803,14 +821,12 @@ package body Sax.Readers is
          Fatal_Error (Parser, "[2.12] Invalid language specification");
       end if;
 
-      C := Encoding.Read (Lang, Index);
-      Index := Index + Encoding.Width (C);
+      Encoding.Read (Lang, Index, C);
       if C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
         or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
       then
          if Index <= Lang'Last then
-            C := Encoding.Read (Lang, Index);
-            Index := Index + Encoding.Width (C);
+            Encoding.Read (Lang, Index, C);
          end if;
 
       elsif C2 /= Latin_Small_Letter_I
@@ -833,8 +849,7 @@ package body Sax.Readers is
          end if;
 
          loop
-            C := Encoding.Read (Lang, Index);
-            Index := Index + Encoding.Width (C);
+            Encoding.Read (Lang, Index, C);
 
             exit when Index > Lang'Last
               or else not
@@ -930,11 +945,10 @@ package body Sax.Readers is
       Elem    : Element_Access;
       Prefix  : Token;
       NS      : out XML_NS;
-      Include_Default_NS : Boolean := True)
-   is
-      Name : constant Byte_Sequence := Value (Parser, Prefix, Prefix);
+      Include_Default_NS : Boolean := True) is
    begin
-      Find_NS (Parser, Elem, Name, NS, Include_Default_NS);
+      Find_NS (Parser, Elem, Parser.Buffer (Prefix.First .. Prefix.Last), NS,
+               Include_Default_NS);
    end Find_NS;
 
    -------------
@@ -987,11 +1001,11 @@ package body Sax.Readers is
       return Byte_Sequence is
    begin
       if Prefix = Null_Token then
-         return Value (Parser, Local_Name, Local_Name);
+         return Parser.Buffer (Local_Name.First .. Local_Name.Last);
       else
-         return Value (Parser, Prefix, Prefix)
-           & Basic_Latin_Colon
-           & Value (Parser, Local_Name, Local_Name);
+         return Parser.Buffer (Prefix.First .. Prefix.Last)
+           & Colon_Sequence
+           & Parser.Buffer (Local_Name.First .. Local_Name.Last);
       end if;
    end Qname_From_Name;
 
@@ -1002,14 +1016,14 @@ package body Sax.Readers is
    function Prefix_From_Qname (Qname : Byte_Sequence) return Byte_Sequence is
       Index : Natural := Qname'First;
       C : Unicode_Char;
+      Previous : Natural;
    begin
       while Index <= Qname'Last loop
-         C := Encoding.Read (Qname, Index);
+         Previous := Index;
+         Encoding.Read (Qname, Index, C);
          if C = Unicode.Names.Basic_Latin.Colon then
-            return Qname (Qname'First .. Index - 1);
+            return Qname (Qname'First .. Previous - 1);
          end if;
-
-         Index := Index + Encoding.Width (C);
       end loop;
       return "";
    end Prefix_From_Qname;
@@ -1048,8 +1062,8 @@ package body Sax.Readers is
       Add_Namespace
         (Parser       => Parser,
          Node         => Node,
-         Prefix       => Value (Parser, Prefix, Prefix),
-         URI          => Value (Parser, URI_Start, URI_End),
+         Prefix       => Parser.Buffer (Prefix.First .. Prefix.Last),
+         URI          => Parser.Buffer (URI_Start.First .. URI_End.Last),
          Report_Event => Report_Event);
    end Add_Namespace;
 
@@ -1123,7 +1137,8 @@ package body Sax.Readers is
    procedure Next_Token
      (Input   : in out Input_Source'Class;
       Parser  : in out Reader'Class;
-      Id      : out Token)
+      Id      : out Token;
+      Coalesce_Space : Boolean := False)
    is
       function Looking_At (Str : Byte_Sequence) return Boolean;
       --  True if the next characters read (including the current one) in the
@@ -1158,8 +1173,7 @@ package body Sax.Readers is
          Index : Natural := Str'First;
       begin
          while Index <= Str'Last loop
-            C := Encoding.Read (Str, Index);
-            Index := Index + Encoding.Width (C);
+            Encoding.Read (Str, Index, C);
 
             if C /= Parser.Last_Read or else Eof (Input) then
                return False;
@@ -1269,7 +1283,7 @@ package body Sax.Readers is
                   Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
                   Fatal_Error
                     (Parser, "[4.1] Invalid character '"
-                     & Encoding.Encode (Parser.Last_Read) & "' in"
+                     & Debug_Encode (Parser.Last_Read) & "' in"
                      & " character reference", Id);
                end if;
                Next_Char (Input, Parser);
@@ -1283,7 +1297,7 @@ package body Sax.Readers is
                   Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
                   Fatal_Error
                     (Parser, "[4.1] Invalid character '"
-                     & Encoding.Encode (Parser.Last_Read) & "' in"
+                     & Debug_Encode (Parser.Last_Read) & "' in"
                      & " character reference", Id);
                end if;
                Next_Char (Input, Parser);
@@ -1377,10 +1391,14 @@ package body Sax.Readers is
                        or else Parser.Last_Read = Percent_Sign
                      then
                         Next_Token (Input, Parser, Id2);
-                        if Value (Parser, Id2, Id2) = Include_Sequence then
+                        if Parser.Buffer (Id2.First .. Id2.Last) =
+                          Include_Sequence
+                        then
                            Reset_Buffer (Parser, Id2);
                            Id.Typ := Include;
-                        elsif Value (Parser, Id2, Id2)  = Ignore_Sequence then
+                        elsif Parser.Buffer (Id2.First .. Id2.Last) =
+                          Ignore_Sequence
+                        then
                            Reset_Buffer (Parser, Id2);
                            Id.Typ := Ignore;
                         else
@@ -1485,7 +1503,7 @@ package body Sax.Readers is
          else
             Fatal_Error
               (Parser, "[4.1] Invalid first letter in entity name '"
-               & Encoding.Encode (Parser.Last_Read) & "'", Id);
+               & Debug_Encode (Parser.Last_Read) & "'", Id);
          end if;
       end Handle_Entity_Ref;
 
@@ -1511,8 +1529,7 @@ package body Sax.Readers is
             begin
                Put (" --");
                while J <= Id.Last loop
-                  C := Encoding.Read (Parser.Buffer.all, J);
-                  J := J + Encoding.Width (C);
+                  Encoding.Read (Parser.Buffer.all, J, C);
                   Put (Unicode_Char'Image (C));
                end loop;
                Put ("--");
@@ -1938,14 +1955,18 @@ package body Sax.Readers is
             end if;
          end if;
 
-         if Id.Typ = Name then
+         if Id.Typ = Name and then not Coalesce_Space then
             while Is_Name_Char (Parser.Last_Read) loop
                Put_In_Buffer (Parser, Parser.Last_Read);
                Next_Char (Input, Parser);
             end loop;
 
-         elsif Id.Typ = Text and then Is_Entity_Ref = None then
-            while not Is_White_Space (Parser.Last_Read)
+         elsif Is_Entity_Ref = None
+           and then (Id.Typ = Text
+                     or else (Coalesce_Space and then Id.Typ = Name))
+         then
+            while (Coalesce_Space
+                   or else not Is_White_Space (Parser.Last_Read))
               and then (not Parser.State.Greater_Special
                         or else Parser.Last_Read /= Greater_Than_Sign)
               and then Parser.Last_Read /= Less_Than_Sign
@@ -1955,6 +1976,7 @@ package body Sax.Readers is
               and then Parser.Last_Read /= Equals_Sign
               and then Parser.Last_Read /= Quotation_Mark
               and then Parser.Last_Read /= Apostrophe
+              and then Parser.Last_Read /= Closing_Square_Bracket
               and then Parser.Last_Read /= Slash
               and then (Parser.Last_Read /= Question_Mark
                         or else not Parser.State.Detect_End_Of_PI)
@@ -1967,6 +1989,45 @@ package body Sax.Readers is
          Parser.Ignore_State_Special := False;
       end if;
 
+      if Coalesce_Space and then Id.Typ = Space then
+         --  First character is necessarily not a space, so we'll change the
+         --  type of the token to text
+         declare
+            Save_Length : constant Natural := Parser.Buffer_Length;
+         begin
+            while (not Parser.State.Greater_Special
+                   or else Parser.Last_Read /= Greater_Than_Sign)
+              and then Parser.Last_Read /= Less_Than_Sign
+              and then Parser.Last_Read /= Ampersand
+              and then (not Parser.State.Expand_Param_Entities
+
+                        or else Parser.Last_Read /= Percent_Sign)
+              and then Parser.Last_Read /= Equals_Sign
+              and then Parser.Last_Read /= Quotation_Mark
+              and then Parser.Last_Read /= Closing_Square_Bracket
+              and then Parser.Last_Read /= Apostrophe
+              and then Parser.Last_Read /= Slash
+              and then (Parser.Last_Read /= Question_Mark
+                        or else not Parser.State.Detect_End_Of_PI)
+            loop
+               Put_In_Buffer (Parser, Parser.Last_Read);
+               Next_Char (Input, Parser);
+            end loop;
+
+            --  Special case for ']': since the parser needs to detect whether
+            --  this is the beginning of ']]>', this will be done in the next
+            --  call to Next_Token. However, we shouldn't report the spaces as
+            --  Ignorable_Whitespace in this case.
+
+            if Parser.Last_Read = Closing_Square_Bracket
+              or else Parser.Buffer_Length /= Save_Length
+            then
+               Id.Typ := Text;
+            end if;
+         end;
+      end if;
+
+
       Id.Last := Parser.Buffer_Length;
 
       if Debug_Lexical then
@@ -1977,7 +2038,7 @@ package body Sax.Readers is
 
       if Is_Entity_Ref /= None then
          declare
-            N : constant Byte_Sequence := Value (Parser, Id, Id);
+            N : constant Byte_Sequence := Parser.Buffer (Id.First .. Id.Last);
             V : Entity_Entry_Access := Get (Parser.Entities, N);
             Null_Loc : Locator_Impl;
          begin
@@ -2156,21 +2217,6 @@ package body Sax.Readers is
    begin
       Parser.Buffer_Length := Id.First - 1;
    end Reset_Buffer;
-
-   -----------
-   -- Value --
-   -----------
-
-   function Value (Parser : Reader'Class; From, To : Token)
-      return Unicode.CES.Byte_Sequence is
-   begin
-      if To = Null_Token then
-         return "";
-      else
-         pragma Assert (Parser.Buffer_Length >= To.Last);
-         return Parser.Buffer (From.First .. To.Last);
-      end if;
-   end Value;
 
    ---------------
    -- Set_State --
@@ -2535,7 +2581,7 @@ package body Sax.Readers is
 
                   if Start_Sub > Parser.Buffer_Length then
                      Fatal_Error (Parser, "Invalid name in content model: "
-                                  & Encoding.Encode (Parser.Last_Read),
+                                  & Debug_Encode (Parser.Last_Read),
                                   Start_Token);
                   end if;
 
@@ -2791,13 +2837,13 @@ package body Sax.Readers is
                when others =>
                   if Normalize then
                      declare
-                        Str : constant Byte_Sequence := Value (Parser, Id, Id);
+                        Str : constant Byte_Sequence :=
+                          Parser.Buffer (Id.First .. Id.Last);
                      begin
                         Reset_Buffer (Parser, Id);
                         Index := Str'First;
                         while Index <= Str'Last loop
-                           C := Encoding.Read (Str, Index);
-                           Index := Index + Encoding.Width (C);
+                           Encoding.Read (Str, Index, C);
                            if Is_White_Space (C) then
                               if not Had_Space then
                                  Put_In_Buffer
@@ -2865,13 +2911,12 @@ package body Sax.Readers is
 
                Index := Public_Start.First;
                while Index <= Public_End.Last loop
-                  C := Encoding.Read (Parser.Buffer.all, Index);
-                  Index := Index + Encoding.Width (C);
+                  Encoding.Read (Parser.Buffer.all, Index, C);
 
                   if not Is_Pubid_Char (C) then
                      Fatal_Error
                        (Parser, "Invalid PubID character '"
-                        & Encoding.Encode (C) & "'", Public_Start);
+                        & Debug_Encode (C) & "'", Public_Start);
                   end if;
                end loop;
             end if;
@@ -2926,7 +2971,7 @@ package body Sax.Readers is
 
          if Id.Typ = Text then
             Fatal_Error
-              (Parser, "[3.1] '" & Value (Parser, Id, Id)
+              (Parser, "[3.1] '" & Parser.Buffer (Id.First .. Id.Last)
                & "' is not a valid name", Id);
          --  An empty namespace ? This seems to be useful only for the XML
          --  conformance suite, so we only handle the case of a single ':'
@@ -2971,7 +3016,7 @@ package body Sax.Readers is
          Next_Token_Skip_Spaces (Input, Parser, Name_Id, True);
 
          if Name_Id.Typ = Text
-           and then Value (Parser, Name_Id, Name_Id) =
+           and then Parser.Buffer (Name_Id.First .. Name_Id.Last) =
            Percent_Sign_Sequence
          then
             Is_Parameter := Name_Id;
@@ -3011,13 +3056,14 @@ package body Sax.Readers is
                else
                   if Parser.Feature_Validation
                     and then Get
-                      (Parser.Notations, Value (Parser, Ndata_Id, Ndata_Id)) /=
+                    (Parser.Notations,
+                     Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last)) /=
                     Null_Notation
                   then
                      Fatal_Error
                        (Parser, "[VC 4.2.2] Notation '"
-                        & Value (Parser, Ndata_Id, Ndata_Id) & "' must be"
-                        & " declared", Ndata_Id);
+                        & Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last)
+                        & "' must be declared", Ndata_Id);
                   end if;
 
                   Next_Token_Skip_Spaces (Input, Parser, Id);
@@ -3039,8 +3085,8 @@ package body Sax.Readers is
 
          --  Only report the first definition
          if Get (Parser.Entities,
-                 Value (Parser, Is_Parameter, Is_Parameter)
-                 & Value (Parser, Name_Id, Name_Id)) /= null
+                 Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
+                 & Parser.Buffer (Name_Id.First .. Name_Id.Last)) /= null
          then
             null;
 
@@ -3048,43 +3094,47 @@ package body Sax.Readers is
             Set (Parser.Entities,
                  new Entity_Entry'
                    (Name => new Byte_Sequence'
-                      (Value (Parser, Is_Parameter, Is_Parameter)
-                       & Value (Parser, Name_Id, Name_Id)),
+                      (Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
+                       & Parser.Buffer (Name_Id.First .. Name_Id.Last)),
                     Value => new Byte_Sequence'
-                    (Value (Parser, Def_Start, Def_End)),
+                      (Parser.Buffer (Def_Start.First .. Def_End.Last)),
                     External     => False,
                     Already_Read => False));
             Internal_Entity_Decl
               (Parser,
-               Name => Value (Parser, Is_Parameter, Is_Parameter)
-               & Value (Parser, Name_Id, Name_Id),
-               Value => Value (Parser, Def_Start, Def_End));
+               Name => Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
+               & Parser.Buffer (Name_Id.First .. Name_Id.Last),
+               Value => Parser.Buffer (Def_Start.First .. Def_End.Last));
 
          elsif Ndata_Id /= Null_Token then
             Unparsed_Entity_Decl
               (Parser,
-               Name => Value (Parser, Is_Parameter, Is_Parameter)
-               & Value (Parser, Name_Id, Name_Id),
-               System_Id => Value (Parser, System_Start, System_End),
-               Notation_Name => Value (Parser, Ndata_Id, Ndata_Id));
+               Name => Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
+               & Parser.Buffer (Name_Id.First .. Name_Id.Last),
+               System_Id =>
+                 Parser.Buffer (System_Start.First .. System_End.Last),
+               Notation_Name =>
+                 Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last));
 
          else
             Set
               (Parser.Entities,
                new Entity_Entry'
                  (Name => new Byte_Sequence'
-                    (Value (Parser, Is_Parameter, Is_Parameter)
-                     & Value (Parser, Name_Id, Name_Id)),
+                    (Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
+                     & Parser.Buffer (Name_Id.First .. Name_Id.Last)),
                   Value => new Byte_Sequence'
-                  (Value (Parser, System_Start, System_End)),
+                  (Parser.Buffer (System_Start.First .. System_End.Last)),
                   External => True,
                   Already_Read => False));
             External_Entity_Decl
               (Parser,
-               Name => Value (Parser, Is_Parameter, Is_Parameter)
-               & Value (Parser, Name_Id, Name_Id),
-               Public_Id => Value (Parser, Public_Start, Public_End),
-               System_Id => Value (Parser, System_Start, System_End));
+               Name => Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
+               & Parser.Buffer (Name_Id.First .. Name_Id.Last),
+               Public_Id => Parser.Buffer
+                 (Public_Start.First .. Public_End.Last),
+               System_Id => Parser.Buffer
+                 (System_Start.First .. System_End.Last));
          end if;
 
          if Is_Parameter /= Null_Token then
@@ -3127,7 +3177,8 @@ package body Sax.Readers is
             Fatal_Error (Parser, "[WF] Expecting end of ELEMENT definition");
          end if;
 
-         Element_Decl (Parser, Value (Parser, Name_Id, Name_Id), M);
+         Element_Decl
+           (Parser, Parser.Buffer (Name_Id.First .. Name_Id.Last), M);
          Free (M);
 
          Reset_Buffer (Parser, Name_Id);
@@ -3168,14 +3219,15 @@ package body Sax.Readers is
 
          Notation_Decl
            (Parser,
-            Name => Value (Parser, Name_Id, Name_Id),
-            Public_Id => Value (Parser, Public_Start, Public_End),
-            System_Id => Value (Parser, System_Start, System_End));
+            Name => Parser.Buffer (Name_Id.First .. Name_Id.Last),
+            Public_Id => Parser.Buffer (Public_Start.First .. Public_End.Last),
+            System_Id =>
+              Parser.Buffer (System_Start.First .. System_End.Last));
 
          if Parser.Feature_Validation then
             Set (Parser.Notations,
                  (Name => new Byte_Sequence'
-                    (Value (Parser, Name_Id, Name_Id))));
+                    (Parser.Buffer (Name_Id.First .. Name_Id.Last))));
          end if;
 
          Set_State (Parser, DTD_State);
@@ -3202,13 +3254,14 @@ package body Sax.Readers is
             Fatal_Error (Parser, "[WF] Expecting element name", Ename_Id);
          end if;
 
-         Attr := Get (Parser.Default_Atts,
-                      Value (Parser, Ename_Id, Ename_Id)).Attributes;
+         Attr := Get
+           (Parser.Default_Atts,
+            Parser.Buffer (Ename_Id.First .. Ename_Id.Last)).Attributes;
          if Attr = null then
             Attr := new Sax.Attributes.Attributes;
             Set (Parser.Default_Atts,
-                 (Element_Name =>
-                    new Byte_Sequence'(Value (Parser, Ename_Id, Ename_Id)),
+                 (Element_Name => new Byte_Sequence'
+                    (Parser.Buffer (Ename_Id.First .. Ename_Id.Last)),
                   Attributes => Attr));
          end if;
 
@@ -3231,6 +3284,7 @@ package body Sax.Readers is
             Next_Token (Input, Parser, Id);
 
             Type_Id := Id;
+            Default_Start := Null_Token;
             Default_End := Null_Token;
             case Type_Id.Typ is
                when Id_Type  => Att_Type := Sax.Attributes.Id;
@@ -3306,12 +3360,13 @@ package body Sax.Readers is
             --  overriden in the internal subset.
             Attribute_Decl
               (Parser,
-               Ename => Value (Parser, Ename_Id, Ename_Id),
+               Ename => Parser.Buffer (Ename_Id.First .. Ename_Id.Last),
                Aname => Qname_From_Name (Parser, NS_Id, Name_Id),
                Typ   => Att_Type,
                Content => M,
                Value_Default => Default_Decl,
-               Value => Value (Parser, Default_Start, Default_End));
+               Value => Parser.Buffer
+                 (Default_Start.First .. Default_End.Last));
 
             if Get_Index
               (Attr.all,
@@ -3324,11 +3379,11 @@ package body Sax.Readers is
                Add_Attribute
                  (Attr.all,
                   "",
-                  Value (Parser, Name_Id, Name_Id),
+                  Parser.Buffer (Name_Id.First .. Name_Id.Last),
                   Qname_From_Name (Parser, NS_Id, Name_Id),
                   Att_Type,
                   M,
-                  Value (Parser, Default_Start, Default_End),
+                  Parser.Buffer (Default_Start.First .. Default_End.Last),
                   Default_Decl);
 
                --  M will be freed automatically when the Default_Atts field is
@@ -3393,9 +3448,9 @@ package body Sax.Readers is
          Get_Name_NS (Id, Elem_NS_Id, Elem_Name_Id);
 
          Parser.Current_Node.NS := new Byte_Sequence'
-           (Value (Parser, Elem_NS_Id, Elem_NS_Id));
+           (Parser.Buffer (Elem_NS_Id.First .. Elem_NS_Id.Last));
          Parser.Current_Node.Name := new Byte_Sequence'
-           (Value (Parser, Elem_Name_Id, Elem_Name_Id));
+           (Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last));
 
          if Parser.Current_Node.Parent = null then
             Parser.Num_Toplevel_Elements := Parser.Num_Toplevel_Elements + 1;
@@ -3473,7 +3528,9 @@ package body Sax.Readers is
             Add_Attr := True;
 
             --  Is this a namespace declaration ?
-            if Value (Parser, Attr_NS_Id, Attr_NS_Id) = Xmlns_Sequence then
+            if Parser.Buffer (Attr_NS_Id.First .. Attr_NS_Id.Last) =
+              Xmlns_Sequence
+            then
                Add_Namespace
                  (Parser, Parser.Current_Node,
                   Attr_Name_Id, Value_Start, Value_End);
@@ -3481,8 +3538,8 @@ package body Sax.Readers is
 
             --  Is this the declaration of the default namesapce (xmlns="uri")
             elsif Attr_NS_Id = Null_Token
-              and then Value (Parser, Attr_Name_Id, Attr_Name_Id) =
-              Xmlns_Sequence
+              and then Parser.Buffer (Attr_Name_Id.First .. Attr_Name_Id.Last)
+              = Xmlns_Sequence
             then
                Add_Namespace
                  (Parser, Parser.Current_Node,
@@ -3496,14 +3553,16 @@ package body Sax.Readers is
                   declare
                      Atts : constant Attributes_Ptr := Get
                        (Parser.Default_Atts,
-                        Value (Parser, Elem_Name_Id, Elem_Name_Id)).Attributes;
+                        Parser.Buffer
+                        (Elem_Name_Id.First .. Elem_Name_Id.Last)).Attributes;
                      Index : Integer;
                      Att_Type : Attribute_Type;
                   begin
                      if Atts = null then
                         Fatal_Error
                           (Parser, "[VC] No attribute defined for element "
-                           & Value (Parser, Elem_Name_Id, Elem_Name_Id));
+                           & Parser.Buffer
+                             (Elem_Name_Id.First .. Elem_Name_Id.Last));
                      end if;
 
                      --  We must compare with Qnames, since we namespaces
@@ -3530,12 +3589,15 @@ package body Sax.Readers is
                   end;
                end if;
 
-               if Value (Parser, Attr_NS_Id, Attr_NS_Id) = Xml_Sequence
+               if Parser.Buffer (Attr_NS_Id.First .. Attr_NS_Id.Last) =
+                   Xml_Sequence
                  and then
-                 Value (Parser, Attr_Name_Id, Attr_Name_Id) = Lang_Sequence
+                 Parser.Buffer (Attr_Name_Id.First .. Attr_Name_Id.Last) =
+                   Lang_Sequence
                then
                   Test_Valid_Lang
-                    (Parser, Value (Parser, Value_Start, Value_End));
+                    (Parser,
+                     Parser.Buffer (Value_Start.First .. Value_End.Last));
                end if;
             end if;
 
@@ -3544,12 +3606,14 @@ package body Sax.Readers is
             if Add_Attr then
                Add_Attribute
                  (Attributes,
-                  URI => Value (Parser, Attr_NS_Id, Attr_NS_Id),
-                  Local_Name => Value (Parser, Attr_Name_Id, Attr_Name_Id),
+                  URI => Parser.Buffer (Attr_NS_Id.First .. Attr_NS_Id.Last),
+                  Local_Name => Parser.Buffer
+                    (Attr_Name_Id.First .. Attr_Name_Id.Last),
                   Qname => Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id),
                   Att_Type => Sax.Attributes.Cdata,
                   Content => null,
-                  Value => Value (Parser, Value_Start, Value_End));
+                  Value => Parser.Buffer
+                    (Value_Start.First .. Value_End.Last));
             end if;
 
             if Attr_NS_Id /= Null_Token then
@@ -3626,10 +3690,6 @@ package body Sax.Readers is
                  and then Get_Index (Attributes,
                                      Qname => Get_Qname (Attr.all, J)) = -1
                then
-                  --  Find_NS (Parser, Parser.Current_Node,
-                  --           Prefix_From_Qname (Get_Qname (Attr.all, J)),
-                  --           NS);
-
                   declare
                      Prefix : constant Byte_Sequence :=
                        Prefix_From_Qname (Get_Qname (Attr.all, J));
@@ -3683,7 +3743,8 @@ package body Sax.Readers is
          Start_Element
            (Parser,
             Namespace_URI => NS.URI.all,
-            Local_Name => Value (Parser, Elem_Name_Id, Elem_Name_Id),
+            Local_Name =>
+              Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last),
             Qname => Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
             Atts => Attributes);
 
@@ -3759,7 +3820,7 @@ package body Sax.Readers is
                      Fatal_Error
                        (Parser,  "[WF] Unexpected character in the DTD");
                   when Comment =>
-                     Comment (Parser, Value (Parser, Id, Id));
+                     Comment (Parser, Parser.Buffer (Id.First .. Id.Last));
                      Reset_Buffer (Parser, Id);
                   when Start_Of_PI =>
                      Parse_PI (Id);
@@ -3808,13 +3869,14 @@ package body Sax.Readers is
          end if;
          Start_DTD
            (Parser,
-            Name => Value (Parser, Name_Id, Name_Id),
-            Public_Id => Value (Parser, Public_Start, Public_End),
-            System_Id => Value (Parser, System_Start, System_End));
+            Name => Parser.Buffer (Name_Id.First .. Name_Id.Last),
+            Public_Id => Parser.Buffer (Public_Start.First .. Public_End.Last),
+            System_Id =>
+              Parser.Buffer (System_Start.First .. System_End.Last));
 
          if Parser.Feature_Validation then
             Parser.DTD_Name := new Byte_Sequence'
-              (Value (Parser, Name_Id, Name_Id));
+              (Parser.Buffer (Name_Id.First .. Name_Id.Last));
          end if;
 
          if Id.Typ = Internal_DTD_Start then
@@ -3834,7 +3896,8 @@ package body Sax.Readers is
             declare
                Loc : Locator_Impl;
                URI : constant Byte_Sequence := Resolve_URI
-                 (Parser, Value (Parser, System_Start, System_End));
+                 (Parser,
+                  Parser.Buffer (System_Start.First .. System_End.Last));
                In_External : constant Boolean := Parser.In_External_Entity;
                Last  : constant Unicode_Char := Parser.Last_Read;
                Input_F : File_Input;
@@ -3845,8 +3908,9 @@ package body Sax.Readers is
                Set_Column_Number
                  (Parser.Locator.all, 1 + Prolog_Size (Input_F));
                Set_System_Id (Parser.Locator.all, URI);
-               Set_Public_Id (Parser.Locator.all,
-                              Value (Parser, System_Start, System_End));
+               Set_Public_Id
+                 (Parser.Locator.all,
+                  Parser.Buffer (System_Start.First .. System_End.Last));
                Reset_Buffer (Parser, Name_Id);
 
                Parser.In_External_Entity := True;
@@ -3930,10 +3994,10 @@ package body Sax.Readers is
          end if;
 
          if Parser.Current_Node = null
-           or else
-           Value (Parser, NS_Id, NS_Id) /= Parser.Current_Node.NS.all
-           or else
-           Value (Parser, Name_Id, Name_Id) /= Parser.Current_Node.Name.all
+           or else Parser.Buffer (NS_Id.First .. NS_Id.Last) /=
+             Parser.Current_Node.NS.all
+           or else Parser.Buffer (Name_Id.First .. Name_Id.Last) /=
+             Parser.Current_Node.Name.all
          then
             --  Well-Formedness Constraint: Element Type Match
             Fatal_Error
@@ -3976,8 +4040,7 @@ package body Sax.Readers is
 
          J := Value_Start.First;
          while J <= Value_End.Last loop
-            C := Encoding.Read (Parser.Buffer.all, J);
-            J := J + Encoding.Width (C);
+            Encoding.Read (Parser.Buffer.all, J, C);
             if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
               and then
                  not (C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
@@ -4009,6 +4072,7 @@ package body Sax.Readers is
          C : Unicode_Char;
          J : Natural;
          Value_Start, Value_End : Token;
+         Tmp : Positive;
       begin
          Next_Token_Skip_Spaces (Input, Parser, Id);
          if Id.Typ /= Equal then
@@ -4027,20 +4091,20 @@ package body Sax.Readers is
             Fatal_Error
               (Parser, "[4.3.3] Empty value for encoding not allowed");
          else
-            C := Encoding.Read (Parser.Buffer.all, Value_Start.First);
+            Tmp := Value_Start.First;
+            Encoding.Read (Parser.Buffer.all, Tmp, C);
             if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
               and then not
                 (C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
             then
                Fatal_Error
                  (Parser, "[4.3.3] Illegal character '"
-                  & Encoding.Encode (C) & "' in encoding value", Value_Start);
+                  & Debug_Encode (C) & "' in encoding value", Value_Start);
             end if;
 
             J := Value_Start.First + Encoding.Width (C);
             while J <= Value_End.Last loop
-               C := Encoding.Read (Parser.Buffer.all, J);
-               J := J + Encoding.Width (C);
+               Encoding.Read (Parser.Buffer.all, J, C);
                if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
                  and then not
                    (C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
@@ -4051,7 +4115,7 @@ package body Sax.Readers is
                then
                   Fatal_Error
                     (Parser, "(4.3.3) Illegal character '"
-                     & Encoding.Encode (C) & "' in encoding value",
+                     & Debug_Encode (C) & "' in encoding value",
                      Value_Start);
                end if;
             end loop;
@@ -4092,8 +4156,9 @@ package body Sax.Readers is
          end if;
          Get_String (Id, Attr_Value_State, Value_Start, Value_End);
 
-         if Value (Parser, Value_Start, Value_End) /= Yes_Sequence
-           and then Value (Parser, Value_Start, Value_End) /= No_Sequence
+         if Parser.Buffer (Value_Start.First .. Value_End.Last) /= Yes_Sequence
+           and then Parser.Buffer (Value_Start.First .. Value_End.Last) /=
+             No_Sequence
          then
             Fatal_Error
               (Parser,
@@ -4137,7 +4202,7 @@ package body Sax.Readers is
          end if;
 
          --  Special handling for <?xml?>
-         if Value (Parser, Name_Id, Name_Id) = Xml_Sequence then
+         if Parser.Buffer (Name_Id.First .. Name_Id.Last) = Xml_Sequence then
 
             if Open_Id.Line /= 1
               or else Open_Id.Column /= 1 + Prolog_Size (Input)
@@ -4154,7 +4219,7 @@ package body Sax.Readers is
             --  entities)
             Set_State (Parser, Tag_State);
 
-            if Value (Parser, Id, Id) = Version_Sequence then
+            if Parser.Buffer (Id.First .. Id.Last) = Version_Sequence then
                Check_Version_Value (Id);
             elsif not Parser.In_External_Entity then
                Fatal_Error
@@ -4163,7 +4228,7 @@ package body Sax.Readers is
             end if;
 
             if Id.Typ = Name
-              and then Value (Parser, Id, Id) = Encoding_Sequence
+              and then Parser.Buffer (Id.First .. Id.Last) = Encoding_Sequence
             then
                Check_Encoding_Value (Id);
             elsif Parser.In_External_Entity then
@@ -4174,7 +4239,8 @@ package body Sax.Readers is
 
             if not Parser.In_External_Entity
               and then Id.Typ = Name
-              and then Value (Parser, Id, Id) = Standalone_Sequence
+              and then Parser.Buffer (Id.First .. Id.Last) =
+                Standalone_Sequence
             then
                Check_Standalone_Value (Id);
             end if;
@@ -4200,20 +4266,17 @@ package body Sax.Readers is
                C : Unicode_Char;
                J : Natural := Name_Id.First;
             begin
-               C := Encoding.Read (Parser.Buffer.all, J);
-               J := J + Encoding.Width (C);
+               Encoding.Read (Parser.Buffer.all, J, C);
 
                if C = Latin_Small_Letter_X
                  or else C = Latin_Capital_Letter_X
                then
-                  C := Encoding.Read (Parser.Buffer.all, J);
-                  J := J + Encoding.Width (C);
+                  Encoding.Read (Parser.Buffer.all, J, C);
 
                   if C = Latin_Capital_Letter_M
                     or else C = Latin_Small_Letter_M
                   then
-                     C := Encoding.Read (Parser.Buffer.all, J);
-                     J := J + Encoding.Width (C);
+                     Encoding.Read (Parser.Buffer.all, J, C);
 
                      if (C = Latin_Capital_Letter_L
                          or else C = Latin_Small_Letter_L)
@@ -4221,7 +4284,8 @@ package body Sax.Readers is
                      then
                         Fatal_Error
                           (Parser,
-                           "[2.6] '" & Value (Parser, Name_Id, Name_Id)
+                           "[2.6] '"
+                           & Parser.Buffer (Name_Id.First .. Name_Id.Last)
                            & "' is not a valid processing instruction target",
                            Name_Id);
                      end if;
@@ -4244,8 +4308,8 @@ package body Sax.Readers is
 
             Processing_Instruction
               (Parser,
-               Target => Value (Parser, Name_Id, Name_Id),
-               Data   => Value (Parser, Data_Start, Data_End));
+               Target => Parser.Buffer (Name_Id.First .. Name_Id.Last),
+               Data   => Parser.Buffer (Data_Start.First .. Data_End.Last));
          end if;
 
          Set_State (Parser, State);
@@ -4270,7 +4334,8 @@ package body Sax.Readers is
          pragma Assert (Parser.State.Ignore_Special
                         or else Parser.Buffer_Length = 0);
 
-         Next_Token (Input, Parser, Id);
+         Next_Token (Input, Parser, Id,
+                     Coalesce_Space => Parser.Current_Node /= null);
          exit when Id.Typ = End_Of_Input;
 
          case Id.Typ is
@@ -4283,7 +4348,7 @@ package body Sax.Readers is
                     (Parser, "[2.1] Non-white space found at top level", Id);
                end if;
                Start_Cdata (Parser);
-               Characters (Parser, Value (Parser, Id, Id));
+               Characters (Parser, Parser.Buffer (Id.First .. Id.Last));
                End_Cdata (Parser);
                Reset_Buffer (Parser, Id);
 
@@ -4292,15 +4357,16 @@ package body Sax.Readers is
                   Fatal_Error
                     (Parser, "[2.1] Non-white space found at top level", Id);
                end if;
-               Characters (Parser, Value (Parser, Id, Id));
+               Characters (Parser, Parser.Buffer (Id.First .. Id.Last));
                Reset_Buffer (Parser, Id);
 
             when Sax.Readers.Space =>
-               Ignorable_Whitespace (Parser, Value (Parser, Id, Id));
+               Ignorable_Whitespace
+                 (Parser, Parser.Buffer (Id.First .. Id.Last));
                Reset_Buffer (Parser, Id);
 
             when Comment =>
-               Comment (Parser, Value (Parser, Id, Id));
+               Comment (Parser, Parser.Buffer (Id.First .. Id.Last));
                Reset_Buffer (Parser, Id);
 
             when Start_Of_Tag =>
