@@ -1,6 +1,10 @@
 # Replace with the location for the installation directory
 PREFIX=@EXEC_PREFIX@
 
+## The type of library we want to build
+LIBRARY_TYPE=relocatable
+# LIBRARY_TYPE=static
+
 GNATMAKE=gnatmake
 CC=gcc
 
@@ -28,7 +32,7 @@ MODULE_INSTALL=${MODULES:%=%_inst}
 all: obj docs 
 
 obj: force
-	${GNATMAKE} -Pbuild_all.gpr -XMODE=${MODE}
+	${GNATMAKE} -Pbuild_all.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
  
 test: force
 	${GNATMAKE} -Punicode/test/unicode_test.gpr -XMODE=debug
@@ -40,11 +44,12 @@ docs: force
 
 # Rule for installing the modules
 %_inst: force
-	@${MKDIR}                ${PREFIX}/include/xmlada/$*
-	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada/$*
+	@${MKDIR}                ${PREFIX}/include/xmlada
+	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
 	${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
 	${CP} $*/lib/libxmlada_* ${PREFIX}/lib
 	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
+	cd $*; ls *.ad[bs] > ${PREFIX}/xmlada_$*.lgpr
 
 install_dirs: force
 	@${MKDIR} ${PREFIX}/bin
@@ -53,12 +58,8 @@ install_dirs: force
 	@${MKDIR} ${PREFIX}/include/xmlada/obj
 
 install: obj install_dirs ${MODULE_INSTALL}
+	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}
 	${CP} xmlada-config ${PREFIX}/bin
-	${CP} xmlada.gpr ${PREFIX}
-	${CP} xmlada_unicode.gpr ${PREFIX}
-	${CP} xmlada_dom.gpr ${PREFIX}
-	${CP} xmlada_input.gpr ${PREFIX}
-	${CP} xmlada_sax.gpr ${PREFIX}
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 
 clean: force
