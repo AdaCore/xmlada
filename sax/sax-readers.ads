@@ -337,6 +337,8 @@ package Sax.Readers is
    --  If the returned value is null, the standard algorithm is used. Otherwise
    --  the returend value is automatically freed by the parser when no longer
    --  needed.
+   --
+   --  Calls to this subprogram are nested within Start_Entity/End_Entity.
 
    ---------------------
    -- Lexical Handler --
@@ -644,7 +646,14 @@ private
    type Reader is tagged record
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
+
       Last_Read     : Unicode.Unicode_Char;
+      Last_Read_Is_Valid : Boolean := True;
+      --  Whether Last_Read is was actualy read, or whether it was set to null
+      --  because we encountered the end of an input stream.
+      --  (For instance, when an entity is parsed, its contents always ends
+      --  with ASCII.NUL and Last_Read_Is_Valid is set to False.
+
       State         : Parser_State;
       Locator       : Sax.Locators.Locator_Impl_Access;
       Current_Node  : Element_Access;
