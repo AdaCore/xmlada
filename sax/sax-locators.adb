@@ -50,8 +50,10 @@ package body Sax.Locators is
       procedure Internal is new Unchecked_Deallocation
         (Locator_Impl'Class, Locator_Impl_Access);
    begin
-      Free (Loc.all);
-      Internal (Loc);
+      if Loc /= null then
+         Free (Loc.all);
+         Internal (Loc);
+      end if;
    end Free;
 
    ----------
