@@ -11,6 +11,16 @@ with Sax.Encodings;  use Sax.Encodings;
 
 package body Debug_Readers is
 
+   ----------------
+   -- Set_Silent --
+   ----------------
+
+   procedure Set_Silent
+     (Handler : in out Debug_Reader; Silent : Boolean) is
+   begin
+      Handler.Silent := Silent;
+   end Set_Silent;
+
    -------------
    -- Warning --
    -------------
@@ -57,7 +67,9 @@ package body Debug_Readers is
      (Handler : in out Debug_Reader;
       Loc     : access Sax.Locators.Locator'Class) is
    begin
-      Put_Line ("Sax.Set_Document_Locator ()");
+      if not Handler.Silent then
+         Put_Line ("Sax.Set_Document_Locator ()");
+      end if;
       Handler.Locator := Locator_Access (Loc);
    end Set_Document_Locator;
 
@@ -67,7 +79,9 @@ package body Debug_Readers is
 
    procedure Start_Document (Handler : in out Debug_Reader) is
    begin
-      Put_Line ("Sax.Start_Document ()");
+      if not Handler.Silent then
+         Put_Line ("Sax.Start_Document ()");
+      end if;
    end Start_Document;
 
    ------------------
@@ -76,7 +90,9 @@ package body Debug_Readers is
 
    procedure End_Document (Handler : in out Debug_Reader) is
    begin
-      Put_Line ("Sax.End_Document ()");
+      if not Handler.Silent then
+         Put_Line ("Sax.End_Document ()");
+      end if;
    end End_Document;
 
    --------------------------
@@ -88,7 +104,9 @@ package body Debug_Readers is
       Prefix  : Unicode.CES.Byte_Sequence;
       URI     : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Start_Prefix_Mapping (" & Prefix & ", " & URI & ")");
+      if not Handler.Silent then
+         Put_Line ("Sax.Start_Prefix_Mapping (" & Prefix & ", " & URI & ")");
+      end if;
    end Start_Prefix_Mapping;
 
    ------------------------
@@ -98,8 +116,10 @@ package body Debug_Readers is
    procedure End_Prefix_Mapping
      (Handler : in out Debug_Reader; Prefix : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.End_Prefix_Mapping (" & Prefix & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.End_Prefix_Mapping (" & Prefix & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end End_Prefix_Mapping;
 
    -------------------
@@ -113,12 +133,14 @@ package body Debug_Readers is
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class) is
    begin
-      Put ("Sax.Start_Element ("
-           & Namespace_URI & ", " & Local_Name & ", " & Qname);
-      for J in 0 .. Get_Length (Atts) - 1 loop
-         Put (", " & Get_Qname (Atts, J) & "='" & Get_Value (Atts, J) & ''');
-      end loop;
-      Put_Line (") at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put ("Sax.Start_Element ("
+              & Namespace_URI & ", " & Local_Name & ", " & Qname);
+         for J in 0 .. Get_Length (Atts) - 1 loop
+            Put (", " & Get_Qname (Atts, J) & "='" & Get_Value (Atts, J) & ''');
+         end loop;
+         Put_Line (") at " & To_String (Handler.Locator.all));
+      end if;
    end Start_Element;
 
    -----------------
@@ -131,9 +153,11 @@ package body Debug_Readers is
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "") is
    begin
-      Put_Line ("Sax.End_Element (" & Namespace_URI & ", "
-                & Local_Name & ", " & Qname & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.End_Element (" & Namespace_URI & ", "
+                   & Local_Name & ", " & Qname & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end End_Element;
 
    ----------------
@@ -143,9 +167,11 @@ package body Debug_Readers is
    procedure Characters
      (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Characters (" & Ch & ','
-                & Integer'Image (Ch'Length) & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Characters (" & Ch & ','
+                   & Integer'Image (Ch'Length) & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end Characters;
 
    --------------------------
@@ -158,15 +184,17 @@ package body Debug_Readers is
       Index : Natural := Ch'First;
       C : Unicode_Char;
    begin
-      Put ("Sax.Ignorable_Whitespace (");
-      while Index <= Ch'Last loop
-         C := Encoding.Read (Ch, Index);
-         Index := Index + Encoding.Width (C);
-         Put (Unicode_Char'Image (C));
-      end loop;
-      Put_Line (','
-                & Integer'Image (Ch'Length) & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put ("Sax.Ignorable_Whitespace (");
+         while Index <= Ch'Last loop
+            C := Encoding.Read (Ch, Index);
+            Index := Index + Encoding.Width (C);
+            Put (Unicode_Char'Image (C));
+         end loop;
+         Put_Line (','
+                   & Integer'Image (Ch'Length) & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end Ignorable_Whitespace;
 
    ----------------------------
@@ -178,8 +206,10 @@ package body Debug_Readers is
       Target  : Unicode.CES.Byte_Sequence;
       Data    : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Processing instruction (" & Target & ", '" & Data
-                & "') at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Processing instruction (" & Target & ", '" & Data
+                   & "') at " & To_String (Handler.Locator.all));
+      end if;
    end Processing_Instruction;
 
    --------------------
@@ -189,8 +219,10 @@ package body Debug_Readers is
    procedure Skipped_Entity
      (Handler : in out Debug_Reader; Name : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Skipped_Entity (" & Name & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Skipped_Entity (" & Name & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end Skipped_Entity;
 
    -------------
@@ -200,8 +232,10 @@ package body Debug_Readers is
    procedure Comment
      (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Comment (" & Ch & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Comment (" & Ch & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end Comment;
 
    -----------------
@@ -210,7 +244,9 @@ package body Debug_Readers is
 
    procedure Start_Cdata (Handler : in out Debug_Reader) is
    begin
-      Put_Line ("Sax.Start_Cdata () at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Start_Cdata () at " & To_String (Handler.Locator.all));
+      end if;
    end Start_Cdata;
 
    ---------------
@@ -219,7 +255,9 @@ package body Debug_Readers is
 
    procedure End_Cdata (Handler : in out Debug_Reader) is
    begin
-      Put_Line ("Sax.End_Cdata () at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.End_Cdata () at " & To_String (Handler.Locator.all));
+      end if;
    end End_Cdata;
 
    ------------------
@@ -229,8 +267,10 @@ package body Debug_Readers is
    procedure Start_Entity
      (Handler : in out Debug_Reader; Name : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Start_Entity (" & Name & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Start_Entity (" & Name & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end Start_Entity;
 
    ----------------
@@ -240,8 +280,10 @@ package body Debug_Readers is
    procedure End_Entity
      (Handler : in out Debug_Reader; Name : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.End_Entity (" & Name & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.End_Entity (" & Name & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end End_Entity;
 
    ---------------
@@ -254,10 +296,12 @@ package body Debug_Readers is
       Public_Id : Unicode.CES.Byte_Sequence := "";
       System_Id : Unicode.CES.Byte_Sequence := "") is
    begin
-      Put_Line ("Sax.Start_DTD (" & Name
-                & ", " & Public_Id
-                & ", " & System_Id & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Start_DTD (" & Name
+                   & ", " & Public_Id
+                   & ", " & System_Id & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end Start_DTD;
 
    -------------
@@ -266,7 +310,9 @@ package body Debug_Readers is
 
    procedure End_DTD (Handler : in out Debug_Reader) is
    begin
-      Put_Line ("Sax.End_DTD () at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.End_DTD () at " & To_String (Handler.Locator.all));
+      end if;
    end End_DTD;
 
    --------------------------
@@ -278,9 +324,11 @@ package body Debug_Readers is
       Name    : Unicode.CES.Byte_Sequence;
       Value   : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Internal_Entity_Decl ("
-                & Name & ", " & Value
-                & ") at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Internal_Entity_Decl ("
+                   & Name & ", " & Value
+                   & ") at " & To_String (Handler.Locator.all));
+      end if;
    end Internal_Entity_Decl;
 
    --------------------------
@@ -293,10 +341,12 @@ package body Debug_Readers is
       Public_Id : Unicode.CES.Byte_Sequence;
       System_Id : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.External_Entity_Decl ("
-                & Name & ", " & Public_Id
-                & ", " & System_Id
-                & ") at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.External_Entity_Decl ("
+                   & Name & ", " & Public_Id
+                   & ", " & System_Id
+                   & ") at " & To_String (Handler.Locator.all));
+      end if;
    end External_Entity_Decl;
 
    --------------------------
@@ -309,10 +359,12 @@ package body Debug_Readers is
       System_Id     : Unicode.CES.Byte_Sequence;
       Notation_Name : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Unparsed_Entity_Decl ("
-                & Name & ", " & System_Id
-                & ", " & Notation_Name
-                & ") at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Unparsed_Entity_Decl ("
+                   & Name & ", " & System_Id
+                   & ", " & Notation_Name
+                   & ") at " & To_String (Handler.Locator.all));
+      end if;
    end Unparsed_Entity_Decl;
 
    ------------------
@@ -324,9 +376,11 @@ package body Debug_Readers is
       Name    : Unicode.CES.Byte_Sequence;
       Model   : Element_Model_Ptr) is
    begin
-      Put_Line ("Sax.Element_Decl ("
-                & Name & ", " & To_String (Model.all)
-                & ") at " & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Element_Decl ("
+                   & Name & ", " & To_String (Model.all)
+                   & ") at " & To_String (Handler.Locator.all));
+      end if;
    end Element_Decl;
 
    -------------------
@@ -339,10 +393,12 @@ package body Debug_Readers is
       Public_Id     : Unicode.CES.Byte_Sequence;
       System_Id     : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Notation_Decl ("
-                & Name & ", " & Public_Id
-                & ", " & System_Id & ") at "
-                & To_String (Handler.Locator.all));
+      if not Handler.Silent then
+         Put_Line ("Sax.Notation_Decl ("
+                   & Name & ", " & Public_Id
+                   & ", " & System_Id & ") at "
+                   & To_String (Handler.Locator.all));
+      end if;
    end Notation_Decl;
 
    --------------------
@@ -358,19 +414,21 @@ package body Debug_Readers is
       Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence) is
    begin
-      if Content /= null then
-         Put_Line ("Sax.Attribute_Decl ("
-                   & Ename & ", " & Aname
-                   & ", " & Attribute_Type'Image (Typ) & ", "
-                   & To_String (Content.all) & ", "
-                   & Default_Declaration'Image (Value_Default)
-                   & ", " & Value & ")");
-      else
-         Put_Line ("Sax.Attribute_Decl ("
-                   & Ename & ", " & Aname
-                   & ", " & Attribute_Type'Image (Typ) & ", "
-                   & Default_Declaration'Image (Value_Default)
-                   & ", " & Value & ")");
+      if not Handler.Silent then
+         if Content /= null then
+            Put_Line ("Sax.Attribute_Decl ("
+                      & Ename & ", " & Aname
+                      & ", " & Attribute_Type'Image (Typ) & ", "
+                      & To_String (Content.all) & ", "
+                      & Default_Declaration'Image (Value_Default)
+                      & ", " & Value & ")");
+         else
+            Put_Line ("Sax.Attribute_Decl ("
+                      & Ename & ", " & Aname
+                      & ", " & Attribute_Type'Image (Typ) & ", "
+                      & Default_Declaration'Image (Value_Default)
+                      & ", " & Value & ")");
+         end if;
       end if;
    end Attribute_Decl;
 

@@ -8,6 +8,11 @@ with Unicode.CES;
 package Debug_Readers is
    type Debug_Reader is new Sax.Readers.Reader with private;
 
+   procedure Set_Silent
+     (Handler : in out Debug_Reader; Silent : Boolean);
+   --  If Silent is True, then nothing will be output on the console, except
+   --  error messages
+
    procedure Warning
      (Handler : in out Debug_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class);
@@ -99,5 +104,6 @@ package Debug_Readers is
 private
    type Debug_Reader is new Sax.Readers.Reader with record
       Locator : Sax.Locators.Locator_Access;
+      Silent  : Boolean := False;
    end record;
 end Debug_Readers;
