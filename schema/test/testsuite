@@ -852,9 +852,12 @@ expect "$sun/xsd019.e.xsd" "" \
 
 expect "$sun/xsd020.e.xsd" "" \
  "$sun/xsd020.e.xsd:22:33: Type specified in a simpleContent context must not have a complexContent"
-expect "$sun/xsd020-2.e.xsd" "" "f"
-expect "$sun/xsd020-3.e.xsd" "" "f"
-expect "$sun/xsd020-4.e.xsd" "" "f"
+expect "$sun/xsd020-2.e.xsd" "" \
+ "$sun/xsd020-2.e.xsd:25:9: Attribute \"foo:abc\" is referenced, but not defined"
+expect "$sun/xsd020-3.e.xsd" "" \
+ "$sun/xsd020-3.e.xsd:28:9: Group \"foo:abc\" is referenced, but not defined"
+expect "$sun/xsd020-4.e.xsd" "" \
+ "$sun/xsd020-4.e.xsd:32:9: attributeGroup \"foo:abc\" is referenced, but not defined"
 
 
 
