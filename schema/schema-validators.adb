@@ -11,12 +11,19 @@ with Ada.Tags; use Ada.Tags;
 package body Schema.Validators is
 
    Debug : Boolean := False;
+   UR_Type_Validator_Instance : XML_Validator;
+   UR_Type_Element   : XML_Element;
+
+   procedure Create_UR_Type;
+   --  Create the ur-Type validator
 
    procedure Validation_Error (Message : String);
    --  Raise Validation_Error with a proper error message.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Element_List, Element_List_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (XML_Attribute_Group_Record, XML_Attribute_Group);
 
    procedure Initialize_Sequence
      (Seq  : access Sequence_Record'Class;
@@ -64,6 +71,28 @@ package body Schema.Validators is
    --  Run the nested group of Validator, if there is any.
    --  On exit, Element_Validator is set to No_Element if either the nested
    --  group didn't match, or there was no nested group.
+
+   -------------
+   -- UR_Type --
+   -------------
+
+   type UR_Type_Validator is new XML_Validator_Record with null record;
+   procedure Validate_End_Element
+     (Validator      : access UR_Type_Validator;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Data           : Validator_Data);
+   procedure Validate_Attributes
+     (Validator         : access UR_Type_Validator;
+      Atts              : Sax.Attributes.Attributes'Class;
+      Id_Table          : in out Id_Htable_Access;
+      Nillable          : Boolean;
+      Is_Nil            : out Boolean);
+   procedure Validate_Start_Element
+     (Validator         : access UR_Type_Validator;
+      Local_Name        : Unicode.CES.Byte_Sequence;
+      Data              : Validator_Data;
+      Element_Validator : out XML_Element);
+   --  See doc for inherited subprograms
 
    -------------------------
    --  Byte_Sequence_List --
@@ -207,6 +236,9 @@ package body Schema.Validators is
      (List      : in out Attribute_Validator_List_Access;
       Validator : access Attribute_Validator_Record'Class;
       Override  : Boolean);
+   procedure Append
+     (List      : in out Attribute_Validator_List_Access;
+      Group     : XML_Attribute_Group);
    --  Append a new value to List.
    --  If a similar attribute already exists in the list, Validator will either
    --  be ignored (Override is False), or replace the existing definition
@@ -763,7 +795,9 @@ package body Schema.Validators is
    begin
       if List /= null then
          for L in List'Range loop
-            Free (List (L));
+            if not List (L).Is_Group then
+               Free (List (L).Attr);
+            end if;
          end loop;
          Unchecked_Free (List);
       end if;
@@ -807,23 +841,57 @@ package body Schema.Validators is
    begin
       if List /= null then
          for A in List'Range loop
-            if Is_Equal (List (A).all, Validator.all) then
+            if not List (A).Is_Group
+              and then Is_Equal (List (A).Attr.all, Validator.all)
+            then
                if Override then
                   --  ??? Should we free the previous value => We are sharing
                   --  the attribute definition through Restriction_Of...
-                  List (A) := Attribute_Validator (Validator);
+                  List (A) :=
+                    (Is_Group => False,
+                     Attr     => Attribute_Validator (Validator));
                end if;
                return;
             end if;
          end loop;
 
          L := new Attribute_Validator_List'
-           (List.all & Attribute_Validator (Validator));
+           (List.all & Attribute_Or_Group'
+              (Is_Group => False,
+               Attr     => Attribute_Validator (Validator)));
          Unchecked_Free (List);
          List := L;
       else
          List := new Attribute_Validator_List'
-           (1 => Attribute_Validator (Validator));
+           (1 => Attribute_Or_Group'
+              (Is_Group => False, Attr => Attribute_Validator (Validator)));
+      end if;
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (List      : in out Attribute_Validator_List_Access;
+      Group     : XML_Attribute_Group)
+   is
+      L : Attribute_Validator_List_Access;
+   begin
+      if List /= null then
+         for A in List'Range loop
+            if List (A).Is_Group and then List (A).Group = Group then
+               return;
+            end if;
+         end loop;
+
+         L := new Attribute_Validator_List'
+           (List.all & Attribute_Or_Group'(Is_Group => True, Group => Group));
+         Unchecked_Free (List);
+         List := L;
+      else
+         List := new Attribute_Validator_List'
+           (1 => Attribute_Or_Group'(Is_Group => True, Group => Group));
       end if;
    end Append;
 
@@ -898,12 +966,7 @@ package body Schema.Validators is
      (Validator : access XML_Validator_Record;
       Group     : XML_Attribute_Group) is
    begin
-      if Group.Attributes /= null then
-         for A in Group.Attributes'Range loop
-            Append (Validator.Attributes, Group.Attributes (A),
-                    Override => True);
-         end loop;
-      end if;
+      Append (Validator.Attributes, Group);
    end Add_Attribute_Group;
 
    ----------------------------
@@ -913,7 +976,7 @@ package body Schema.Validators is
    function Create_Attribute_Group
      (Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group is
    begin
-      return XML_Attribute_Group'
+      return new XML_Attribute_Group_Record'
         (Local_Name => new Unicode.CES.Byte_Sequence'(Local_Name),
          Attributes => null);
    end Create_Attribute_Group;
@@ -985,6 +1048,19 @@ package body Schema.Validators is
       Validation_Error ("Don't know how to validate characters " & Ch);
    end Validate_Characters;
 
+   --------------------
+   -- Create_UR_Type --
+   --------------------
+
+   procedure Create_UR_Type is
+   begin
+      if UR_Type_Validator_Instance = null then
+         UR_Type_Validator_Instance := new UR_Type_Validator;
+         UR_Type_Element   := Create_Element
+           ("", Create_Type ("ur-Type", UR_Type_Validator_Instance));
+      end if;
+   end Create_UR_Type;
+
    ----------------------------
    -- Validate_Start_Element --
    ----------------------------
@@ -997,10 +1073,56 @@ package body Schema.Validators is
    is
       pragma Unreferenced (Validator, Data);
    begin
-      Validation_Error
-        ("Unknow tag in this context: """ & Local_Name & """");
+      Validation_Error ("No definition found for """ & Local_Name & """");
       Element_Validator := No_Element;
    end Validate_Start_Element;
+
+   ----------------------------
+   -- Validate_Start_Element --
+   ----------------------------
+
+   procedure Validate_Start_Element
+     (Validator         : access UR_Type_Validator;
+      Local_Name        : Unicode.CES.Byte_Sequence;
+      Data              : Validator_Data;
+      Element_Validator : out XML_Element)
+   is
+      pragma Unreferenced (Validator, Local_Name, Data);
+   begin
+      --  ur-Type and anyType accept anything
+      Create_UR_Type;
+      Element_Validator := UR_Type_Element;
+   end Validate_Start_Element;
+
+   -------------------------
+   -- Validate_Attributes --
+   -------------------------
+
+   procedure Validate_Attributes
+     (Validator         : access UR_Type_Validator;
+      Atts              : Sax.Attributes.Attributes'Class;
+      Id_Table          : in out Id_Htable_Access;
+      Nillable          : Boolean;
+      Is_Nil            : out Boolean)
+   is
+      pragma Unreferenced (Validator, Atts, Id_Table, Nillable);
+   begin
+      Is_Nil := False;
+   end Validate_Attributes;
+
+   --------------------------
+   -- Validate_End_Element --
+   --------------------------
+
+   procedure Validate_End_Element
+     (Validator      : access UR_Type_Validator;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Data           : Validator_Data)
+   is
+      pragma Unreferenced (Validator, Local_Name, Data);
+   begin
+      null;
+   end Validate_End_Element;
 
    -----------------------
    -- Set_Mixed_Content --
@@ -1040,6 +1162,7 @@ package body Schema.Validators is
       --  is an ID.
 
       procedure Recursive_Check (Validator : XML_Validator);
+      procedure Recursive_Check (List : Attribute_Or_Group);
       --  Check recursively the attributes provided by Validator
 
       procedure Check_Named_Attribute (Named : Named_Attribute_Validator);
@@ -1169,6 +1292,24 @@ package body Schema.Validators is
       -- Recursive_Check --
       ---------------------
 
+      procedure Recursive_Check (List : Attribute_Or_Group) is
+      begin
+         if List.Is_Group then
+            if List.Group.Attributes /= null then
+               for L in List.Group.Attributes'Range loop
+                  Recursive_Check (List.Group.Attributes (L));
+               end loop;
+            end if;
+
+         elsif List.Attr.all in Named_Attribute_Validator_Record'Class then
+            Check_Named_Attribute (Named_Attribute_Validator (List.Attr));
+         end if;
+      end Recursive_Check;
+
+      ---------------------
+      -- Recursive_Check --
+      ---------------------
+
       procedure Recursive_Check (Validator : XML_Validator) is
          List   : Attribute_Validator_List_Access;
          Dep1, Dep2 : XML_Validator;
@@ -1176,18 +1317,18 @@ package body Schema.Validators is
          Get_Attribute_Lists (Validator, List, Dep1, Dep2);
          if List /= null then
             for L in List'Range loop
-               if List (L).all in Named_Attribute_Validator_Record'Class then
-                  Check_Named_Attribute (Named_Attribute_Validator (List (L)));
-               end if;
+               Recursive_Check (List (L));
             end loop;
 
             for L in List'Range loop
-               if List (L).all in Any_Attribute_Validator'Class then
+               if not List (L).Is_Group
+                 and then List (L).Attr.all in Any_Attribute_Validator'Class
+               then
                   for A in 0 .. Length - 1 loop
                      if not Seen (A) then
                         Seen (A) := True;
                         Check_Any_Attribute
-                          (Any_Attribute_Validator (List (L).all), A);
+                          (Any_Attribute_Validator (List (L).Attr.all), A);
                      end if;
                   end loop;
                end if;
@@ -1228,7 +1369,7 @@ package body Schema.Validators is
             else
                if Debug then
                   Put_Line ("Invalid attribute "
-                            & Get_URI (Atts, S) & ':'
+                            & Get_URI (Atts, S) & " -> "
                             & Get_Qname (Atts, S));
                end if;
 
@@ -1629,6 +1770,11 @@ package body Schema.Validators is
         (Grammar.Elements.all, Local_Name);
    begin
       if Result = null then
+         if Debug then
+            Put_Line ("Lookup_Element: creating forward "
+                      & Grammar.Namespace_URI.all & " : "
+                      & Local_Name);
+         end if;
          return (Elem   => Register_Forward (Grammar, Local_Name).Elem,
                  Is_Ref => True);
       end if;
@@ -1661,9 +1807,12 @@ package body Schema.Validators is
    is
       Result : constant XML_Attribute_Group :=
         Attribute_Groups_Htable.Get (Grammar.Attribute_Groups.all, Local_Name);
+      Group : XML_Attribute_Group;
    begin
       if Result = Empty_Attribute_Group then
-         Validation_Error ("No such attribute group: " & Local_Name);
+         Group := Create_Attribute_Group (Local_Name);
+         Register (Grammar, Group);
+         return Group;
       end if;
 
       return Result;
@@ -1826,6 +1975,10 @@ package body Schema.Validators is
          Unchecked_Free (Tmp);
       end if;
 
+      if Debug then
+         Put_Line ("Create_NS_Grammar: " & Namespace_URI);
+      end if;
+
       Grammar.Grammars (Grammar.Grammars'Last) := new XML_Grammar_NS_Record'
         (Namespace_URI => new Byte_Sequence'(Namespace_URI),
          Types            => new Types_Htable.HTable (101),
@@ -1850,8 +2003,8 @@ package body Schema.Validators is
       Get_NS (Grammar, XML_Schema_URI,   Result => G);
       Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
 
-      Tmp2 := new XML_Validator_Record;
-      Register (G, Create_Type ("ur-Type", Tmp2));
+      Create_UR_Type;
+      Register (G, Create_Type ("ur-Type", UR_Type_Validator_Instance));
 
       Tmp2 := new XML_Validator_Record;
       Register (G, Create_Type ("anyType", Tmp2));
@@ -2224,18 +2377,23 @@ package body Schema.Validators is
    --------------
 
    procedure Register
-     (Grammar : XML_Grammar_NS; Group : XML_Attribute_Group) is
+     (Grammar : XML_Grammar_NS; Group : in out XML_Attribute_Group)
+   is
+      Old : constant XML_Attribute_Group := Attribute_Groups_Htable.Get
+        (Grammar.Attribute_Groups.all, Group.Local_Name.all);
    begin
-      if Attribute_Groups_Htable.Get
-        (Grammar.Attribute_Groups.all, Group.Local_Name.all) /=
-         Empty_Attribute_Group
-      then
-         Validation_Error
-           ("Attribute group has already been declared: "
-            & Group.Local_Name.all);
+      if Old /= Empty_Attribute_Group then
+         if Old.Attributes /= null then
+            Validation_Error
+              ("Attribute group has already been declared: "
+               & Group.Local_Name.all);
+         end if;
+         Old.all := Group.all;
+         Unchecked_Free (Group);
+         Group := Old;
+      else
+         Attribute_Groups_Htable.Set (Grammar.Attribute_Groups.all, Group);
       end if;
-
-      Attribute_Groups_Htable.Set (Grammar.Attribute_Groups.all, Group);
    end Register;
 
    ----------------------

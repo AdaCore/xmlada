@@ -509,7 +509,8 @@ package Schema.Validators is
    procedure Register (Grammar : XML_Grammar_NS; Element : in out XML_Element);
    procedure Register (Grammar : XML_Grammar_NS; Group   : XML_Group);
    procedure Register (Attr    : Attribute_Validator);
-   procedure Register (Grammar : XML_Grammar_NS; Group  : XML_Attribute_Group);
+   procedure Register (Grammar : XML_Grammar_NS;
+                       Group   : in out XML_Attribute_Group);
    --  Register a new type or element in the grammar
 
    function Register_Forward
@@ -652,8 +653,14 @@ private
       NS : XML_Grammar_NS;
    end record;
 
+   type Attribute_Or_Group (Is_Group : Boolean := False) is record
+      case Is_Group is
+         when True  => Group : XML_Attribute_Group;
+         when False => Attr  : Attribute_Validator;
+      end case;
+   end record;
    type Attribute_Validator_List
-     is array (Natural range <>) of Attribute_Validator;
+     is array (Natural range <>) of Attribute_Or_Group;
    type Attribute_Validator_List_Access is access Attribute_Validator_List;
 
    type Named_Attribute_Validator_Record is new Attribute_Validator_Record with
@@ -712,11 +719,12 @@ private
    -- Attribute_Group --
    ---------------------
 
-   type XML_Attribute_Group is record
+   type XML_Attribute_Group_Record is record
       Local_Name : Unicode.CES.Byte_Sequence_Access;
       Attributes : Attribute_Validator_List_Access;
    end record;
-   Empty_Attribute_Group : constant XML_Attribute_Group := (null, null);
+   type XML_Attribute_Group is access XML_Attribute_Group_Record;
+   Empty_Attribute_Group : constant XML_Attribute_Group := null;
 
    -------------------
    -- XML_Validator --
