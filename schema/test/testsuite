@@ -4,6 +4,11 @@
 ## You can download these from
 ##   http://www.w3.org/XML/2001/05/xmlschema-test-collection
 
+## IMPORTANT: BUG FIXES TO THE TESTSUITE:
+## msxsdtest/element/elemT074.xml
+##   - needs to be modified to point to right schema (not elemT074.xml)
+
+
 xmltests=./xmltests
 
 debug=""
@@ -21,6 +26,7 @@ done
 
 XML="./testschema $debug"
 ms=$xmltests/msxsdtest
+sun=$xmltests/suntest/SunTestsAll
 
 total=0
 failed=0
@@ -56,7 +62,7 @@ expect() {
    total=`expr $total + 1`
 
    if [ x"$out" != x"$expected" ]; then
-      quoted=`echo $out | sed -e 's/\"/\\\"/g' -e 's,'$ms',\$ms,'`
+      quoted=`echo $out | sed -e 's/\"/\\\"/g' -e 's,'$ms',\$ms,' -e 's,'$sun',\$sun,'`
       echo "#------------ Test failed ------------"
       echo "  cmd: $XML $xsd $xml_file"
       #echo "   output= $out"
@@ -76,6 +82,18 @@ expect() {
 
 notrun() {
   not_run=`expr $not_run + 1`
+}
+
+##################
+## expected_failured()
+##   $1=testname
+##   $2=why
+##################
+
+expected_failure() {
+  failed=`expr $failed + 1`
+  total=`expr $total + 1`
+  echo "$1: $2"
 }
 
 ##################
@@ -470,29 +488,134 @@ expect "" $ms/element/elemS007.xml ""
 expect "" $ms/element/elemS008.xml ""
 
 ##################
-## Microsoft elements tests -- T serie
+## Microsoft elements tests -- T serie (block)
 ##################
 
-expect "" $ms/element/elemT001.xml "f"
+expect "" $ms/element/elemT001.xml \
+ "$ms/element/elemT001.xml:3:29: Cannot use restriction of element's type in this context"
 expect "" $ms/element/elemT002.xml ""
 expect "" $ms/element/elemT003.xml ""
-expect "" $ms/element/elemT004.xml "f"
-expect "" $ms/element/elemT005.xml "f"
-expect "" $ms/element/elemT006.xml "f"
+expect "" $ms/element/elemT004.xml \
+ "$ms/element/elemT004.xml:3:29: Cannot use extension of element's type in this context"
+expect "" $ms/element/elemT005.xml \
+ "$ms/element/elemT005.xml:3:29: Cannot use restriction of element's type in this context"
+expect "" $ms/element/elemT006.xml \
+ "$ms/element/elemT006.xml:3:29: Cannot use extension of element's type in this context"
 expect "" $ms/element/elemT007.xml ""
 expect "" $ms/element/elemT008.xml ""
 expect $ms/element/elemT009.xsd "" \
  "$ms/element/elemT009.xsd:10:59: Attribute \"block\": Invalid value \"list\""
 expect $ms/element/elemT010.xsd "" \
  "$ms/element/elemT010.xsd:10:60: Attribute \"block\": Invalid value \"union\""
+expect "" $ms/element/elemT011.xml \
+ "$ms/element/elemT011.xml:2:29: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT012.xml \
+ "$ms/element/elemT012.xml:2:30: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT013.xml \
+ "$ms/element/elemT013.xml:2:30: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+notrun $ms/element/elemT014.xml "Test seems invalid, all parsers fail"
+notrun $ms/element/elemT015.xml "Test seems invalid, all parsers fail"
+expect "" $ms/element/elemT016.xml ""
+expect "" $ms/element/elemT017.xml \
+ "$ms/element/elemT017.xml:3:21: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT018.xml \
+ "$ms/element/elemT018.xml:2:23: Cannot use restriction of element's type in this context"
+expect "" $ms/element/elemT019.xml \
+ "$ms/element/elemT019.xml:2:26: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+notrun $ms/element/elemT022.xml "Test seems invalid, all parsers fail"
+expect "" $ms/element/elemT024.xml \
+ "$ms/element/elemT024.xml:2:24: Cannot use restriction of element's type in this context"
+expect "" $ms/element/elemT025.xml ""
+expect "" $ms/element/elemT026.xml ""
+expect "" $ms/element/elemT027.xml ""
+expect "" $ms/element/elemT028.xml ""
+expect "" $ms/element/elemT029.xml ""
+expect "" $ms/element/elemT030.xml ""
+expect "" $ms/element/elemT031.xml \
+ "$ms/element/elemT031.xml:2:21: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT032.xml ""
+expect "" $ms/element/elemT033.xml \
+ "$ms/element/elemT033.xml:2:26: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT038.xml ""
+expect "" $ms/element/elemT039.xml \
+ "$ms/element/elemT039.xml:2:25: Cannot use extension of element's type in this context"
+expect "" $ms/element/elemT040.xml ""
+expect "" $ms/element/elemT041.xml ""
+expect "" $ms/element/elemT042.xml ""
+expect "" $ms/element/elemT043.xml ""
+expect "" $ms/element/elemT044.xml ""
+expect "" $ms/element/elemT045.xml \
+ "$ms/element/elemT045.xml:2:21: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT046.xml \
+ "$ms/element/elemT046.xml:2:21: Cannot use restriction of element's type in this context"
+expect "" $ms/element/elemT047.xml \
+ "$ms/element/elemT047.xml:2:26: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT048.xml \
+ "$ms/element/elemT048.xml:2:27: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT049.xml \
+ "$ms/element/elemT049.xml:2:28: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT050.xml \
+ "$ms/element/elemT050.xml:2:26: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT051.xml \
+ "$ms/element/elemT051.xml:2:27: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+expect "" $ms/element/elemT052.xml \
+ "$ms/element/elemT052.xml:2:25: Cannot use restriction of element's type in this context"
+expect "" $ms/element/elemT053.xml \
+ "$ms/element/elemT053.xml:2:25: Cannot use extension of element's type in this context"
+notrun $ms/element/elemT054.xml "Should fail, but all parsers let pass"
+notrun $ms/element/elemT055.xml "Should fail, but all parsers let pass"
+notrun $ms/element/elemT056.xml "Should fail, but all parsers let pass"
+notrun $ms/element/elemT057.xml "Should fail, but all parsers let pass"
+expect "" $ms/element/elemT058.xml ""
+expect "" $ms/element/elemT074.xml \
+ "$ms/element/elemT074.xml:2:23: The type mentionned in the \"type\" attribute must derive from the element's type in the schema"
+
+##################
+## Microsoft elements tests -- U serie (restrictions and facets)
+##################
+
+expect "" $ms/element/elemU001.xml ""
+expect "" $ms/element/elemU002.xml ""
+expect "" $ms/element/elemU003.xml ""
+expect "" $ms/element/elemU004.xml ""
+expected_failure $ms/element/elemU005.xml "\p{LU} unsupported in pattern"
+expected_failure $ms/element/elemU006.xml "\p{IsGreek} unsupported in pattern"
+expected_failure $ms/element/elemU007.xml "\P{IsGreek} unsupported in pattern"
+expect "" $ms/element/elemU008.xml ""
+expect "" $ms/element/elemU009.xml ""
+expect "" $ms/element/elemU010.xml ""
+expect "" $ms/element/elemU011.xml ""
+expect "" $ms/element/elemU012.xml ""
+expect "" $ms/element/elemU013.xml ""
+expect "" $ms/element/elemU014.xml ""
+expect "" $ms/element/elemU015.xml ""
+expect "" $ms/element/elemU017.xml ""
+expect "" $ms/element/elemU018.xml ""
+expect "" $ms/element/elemU019.xml ""
+expect "" $ms/element/elemU020.xml ""
+expect "" $ms/element/elemU021.xml ""
+expect "" $ms/element/elemU022.xml ""
+expect "" $ms/element/elemU023.xml ""
+expect "" $ms/element/elemU024.xml ""
+expect "" $ms/element/elemU025.xml \
+ "$ms/element/elemU025.xml:2:14: string pattern not matched: Chapter \d"
+
+##################
+## Microsoft elements tests -- Z serie
+##################
+
+notrun $ms/element/elemZ001.xml "All parsers accept it"
+expected_failure $ms/element/elemZ002.xml "Improper handling of derivation for simpleType for xsi:type attribute"
+expect "" $ms/element/elemZ003.xml ""
+expected_failure $ms/element/elemZ004.xsd "maxInt can't be bigger than Long_Integer'Last"
+expect $ms/element/elemZ005.xsd ""
 
 
+##################
+## Sun tests
+##################
 
-
-
-
-
-
+expect "$sun/idc001.nogen.xsd" "$sun/idc001.nogen.n00.xml" "f"
 
 
 
