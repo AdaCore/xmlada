@@ -309,9 +309,21 @@ package body Schema.Schema_Readers is
          Level           => Handler.Contexts.Level + 1,
          Next            => Handler.Contexts);
 
+      --  Do not use In_Redefine_Context, since this only applies for types
+      --  that are redefined
+      if Handler.Contexts.Next.Typ = Context_Redefine then
+         Handler.Contexts.Redefined_Group := Redefine_Group
+           (Handler.Target_NS, Get_Value (Atts, Name_Index));
+         Output (Ada_Name (Handler.Contexts)
+                 & " := Redefine_Group (Handler.Target_NS, """
+                 & Get_Value (Atts, Name_Index) & """);");
+      end if;
+
       if Name_Index /= -1 then
-         Handler.Contexts.Group := Create_Group (Get_Value (Atts, Name_Index));
-         Output (Ada_Name (Handler.Contexts) & " := Create_Group ("""
+         Handler.Contexts.Group := Create_Global_Group
+           (Handler.Target_NS, Get_Value (Atts, Name_Index));
+         Output (Ada_Name (Handler.Contexts)
+                 & " := Create_Global_Group (Handler.Target_NS, """
                  & Get_Value (Atts, Name_Index) & """);");
 
       elsif Ref_Index /= -1 then
@@ -341,17 +353,6 @@ package body Schema.Schema_Readers is
                     & Get_Value (Atts, Ref_Index) & """);");
          end if;
       end if;
-
-      --  Do not use In_Redefine_Context, since this only applies for types
-      --  that are redefined
-      if Handler.Contexts.Next.Typ = Context_Redefine then
-         Handler.Contexts.Redefined_Group := Redefine_Group
-           (Handler.Target_NS,
-            Get_Local_Name (Handler.Contexts.Group));
-         Output (Ada_Name (Handler.Contexts)
-                 & " := Redefine_Group (Handler.Target_NS, """
-                 & Get_Local_Name (Handler.Contexts.Group) & """);");
-      end if;
    end Create_Group;
 
    ------------------
@@ -360,15 +361,9 @@ package body Schema.Schema_Readers is
 
    procedure Finish_Group (Handler : in out Schema_Reader) is
    begin
-      --  This must be done after the group has been fully defined, since when
-      --  we are in a <redefine>, we wouldn't have access to the old definition
-      --  otherwise.
-
       case Handler.Contexts.Next.Typ is
          when Context_Schema | Context_Redefine =>
-            Register (Handler.Target_NS, Handler.Contexts.Group);
-            Output ("Register (Handler.Target_NS, "
-                    & Ada_Name (Handler.Contexts) & ");");
+            null;
 
          when Context_Type_Def =>
             Handler.Contexts.Next.Type_Validator := Extension_Of
@@ -404,52 +399,41 @@ package body Schema.Schema_Readers is
       Ref_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "ref");
       In_Redefine : constant Boolean := In_Redefine_Context (Handler);
-      Group     : XML_Attribute_Group;
    begin
+      Handler.Contexts := new Context'
+        (Typ            => Context_Attribute_Group,
+         Attr_Group     => Empty_Attribute_Group,
+         Level          => Handler.Contexts.Level + 1,
+         Next           => Handler.Contexts);
+
       if In_Redefine then
          --  <redefine><attributeGroup>
          --     <attributeGroup ref="foo" />
          --     <attribute name="bar" />
          --  </attributeGroup></redefine>    <!--  xsd003b.xsd test -->
 
-         if Handler.Contexts /= null
-           and then Handler.Contexts.Typ = Context_Attribute_Group
-         then
+         if Handler.Contexts.Next.Typ = Context_Attribute_Group then
             --  Ignore, this is just to indicate which group we are redefining,
             --  but this was already taken into account for the enclosing tag
             return;
          end if;
 
-         Group := Lookup_Attribute_Group
+         Handler.Contexts.Attr_Group := Lookup_Attribute_Group
            (Handler.Target_NS, Get_Value (Atts, Name_Index));
-         Handler.Contexts := new Context'
-           (Typ            => Context_Attribute_Group,
-            Attr_Group     => Group,
-            Level          => Handler.Contexts.Level + 1,
-            Next           => Handler.Contexts);
-
-      elsif Name_Index /= -1 then
-         Group := Create_Attribute_Group (Get_Value (Atts, Name_Index));
-
-      elsif Ref_Index /= -1 then
-         Group := Lookup_Attribute_Group
-           (Handler.Target_NS, Get_Value (Atts, Ref_Index));
-      end if;
-
-      Handler.Contexts := new Context'
-        (Typ            => Context_Attribute_Group,
-         Attr_Group     => Group,
-         Level          => Handler.Contexts.Level + 1,
-         Next           => Handler.Contexts);
-
-      if In_Redefine then
          Output (Ada_Name (Handler.Contexts)
                  & " := Lookup_Attribute_Group (Handler.Target_NS, """
                  & Get_Value (Atts, Name_Index) & """);");
+
       elsif Name_Index /= -1 then
-         Output (Ada_Name (Handler.Contexts) & " := Create_Attribute_Group ("""
+         Handler.Contexts.Attr_Group := Create_Global_Attribute_Group
+           (Handler.Target_NS, Get_Value (Atts, Name_Index));
+         Output (Ada_Name (Handler.Contexts)
+                 & " := Create_Global_Attribute_Group (Handler.Target_NS, """
                  & Get_Value (Atts, Name_Index) & """);");
-      else
+
+      elsif Ref_Index /= -1 then
+         Handler.Contexts.Attr_Group := Lookup_Attribute_Group
+           (Handler.Target_NS, Get_Value (Atts, Ref_Index));
          Output (Ada_Name (Handler.Contexts) &
                  " := Lookup_Attribute_Group (Handler.Target_NS, """
                  & Get_Value (Atts, Ref_Index) & """);");
@@ -457,19 +441,20 @@ package body Schema.Schema_Readers is
 
       if not In_Redefine then
          case Handler.Contexts.Next.Typ is
-         when Context_Schema | Context_Redefine =>
-            Register (Handler.Target_NS, Handler.Contexts.Attr_Group);
-            Output ("Register (Handler.Target_NS, "
-                    & Ada_Name (Handler.Contexts) & ");");
+            when Context_Schema | Context_Redefine =>
+               null;
 
-         when Context_Type_Def =>
-            Add_Attribute_Group (Handler.Contexts.Next.Type_Validator, Group);
-            Output ("Add_Attribute_Group ("
-                    & Ada_Name (Handler.Contexts.Next)
-                    & ", " & Ada_Name (Handler.Contexts) & ");");
+            when Context_Type_Def =>
+               Ensure_Type (Handler, Handler.Contexts.Next);
+               Add_Attribute_Group
+                 (Handler.Contexts.Next.Type_Validator,
+                  Handler.Contexts.Attr_Group);
+               Output ("Add_Attribute_Group ("
+                       & Ada_Name (Handler.Contexts.Next)
+                       & ", " & Ada_Name (Handler.Contexts) & ");");
 
-         when others =>
-            Output ("Can't handle nested attribute group decl");
+            when others =>
+               Output ("Can't handle nested attribute group decl");
          end case;
       end if;
    end Create_Attribute_Group;
