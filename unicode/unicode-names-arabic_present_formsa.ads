@@ -2,6 +2,7 @@
 --  unicode web site (http://www.unicode.org)
 
 package Unicode.Names.Arabic_Present_FormsA is
+   pragma Style_Checks (Off);
    Hebrew_Ligature_Alef_Lamed              : constant Unicode_Char := 16#FB4F#;
    Arabic_Letter_Alef_Wasla_Isolated_Form  : constant Unicode_Char := 16#FB50#;
    Arabic_Letter_Alef_Wasla_Final_Form     : constant Unicode_Char := 16#FB51#;

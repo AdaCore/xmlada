@@ -27,7 +27,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Unicode.Names.Basic_Latin;  use Unicode.Names.Basic_Latin;
 with Unicode.CCS;                use Unicode.CCS;
 
 package body Unicode.CES.Utf32 is
