@@ -87,7 +87,7 @@ package body DOM.Core is
       Old : Node_Array_Access := List.Items;
    begin
       if Old = null or else Old'Last = List.Last then
-         List.Items := new Node_Array (0 .. List.Last + 5);
+         List.Items := new Node_Array (0 .. List.Last + Node_List_Growth_Rate);
          if Old /= null then
             List.Items (0 .. List.Last) := Old.all;
             Free (Old);

@@ -53,6 +53,13 @@ package DOM.Core is
    --  Whether the local_name+prefix+namespace are shared between nodes. This
    --  also results in memory usage reduction.
 
+   Node_List_Growth_Rate : constant Natural := 1;
+   --  How many empty items are added to a Node_List every time a node is
+   --  added to a full list. The higher this rate, the less memory allocations
+   --  will be required (and thus the faster your program will run).
+   --  Setting this to 1 will require more allocations, but will save memory,
+   --  since no empty node will remain in the final tree.
+
 
    subtype DOM_String is Unicode.CES.Byte_Sequence;
    --  A simple redefinition of the strings, to be compatible with the
