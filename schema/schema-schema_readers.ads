@@ -13,7 +13,16 @@ package Schema.Schema_Readers is
    --  An XML reader that parses an XML schema, and store the information in
    --  a grammar
 
-   function Get_Grammar
+   procedure Set_Created_Grammar
+     (Reader  : in out Schema_Reader;
+      Grammar : Schema.Validators.XML_Grammar);
+   --  Set the grammar.
+   --  When a schema file is parsed, a new XML_Grammar_NS will be created
+   --  based on the value of "targetNamespace" attribute. This should be used
+   --  to cumulate several schema files into one grammar.
+   --  If this isn't call, a new grammar will be created from scratch.
+
+   function Get_Created_Grammar
      (Reader : Schema_Reader) return Schema.Validators.XML_Grammar;
    --  Return the grammar parsed
 
@@ -32,11 +41,14 @@ private
    --  and a local prefix can override a more global one (so a hash table needs
    --  some special handling in any case).
 
-   type Context_Type is (Context_Complex_Type,
+   type Context_Type is (Context_Type_Def,
                          Context_Element,
                          Context_Sequence,
                          Context_Choice,
                          Context_Schema,
+                         Context_Restriction,
+                         Context_Extension,
+                         Context_All,
                          Context_Attribute);
 
    type Context (Typ : Context_Type);
@@ -45,9 +57,9 @@ private
       Next  : Context_Access;
       Level : Integer;
       case Typ is
-         when Context_Complex_Type =>
-            Complex_Type_Name      : Unicode.CES.Byte_Sequence_Access;
-            Complex_Type_Validator : Schema.Validators.XML_Validator;
+         when Context_Type_Def =>
+            Type_Name      : Unicode.CES.Byte_Sequence_Access;
+            Type_Validator : Schema.Validators.XML_Validator;
          when Context_Element =>
             Element : Schema.Validators.XML_Element;
          when Context_Sequence =>
@@ -56,20 +68,33 @@ private
             C       : Schema.Validators.Choice;
          when Context_Schema =>
             null;
+         when Context_All =>
+            All_Validator : Schema.Validators.XML_All;
+         when Context_Restriction =>
+            Restriction : Schema.Validators.XML_Validator;
+         when Context_Extension =>
+            Extension : Schema.Validators.XML_Validator;
          when Context_Attribute =>
             Attribute : Schema.Validators.Attribute_Validator;
       end case;
    end record;
 
+
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
-      Grammar         : Schema.Validators.XML_Grammar;
+      Grammar         : Schema.Validators.XML_Grammar :=
+        Schema.Validators.No_Grammar;
+      --  This is the grammar created by the Schema file. Do not mix up with
+      --  Schema.Readers.Validating_Reader.Grammar, which is in this case the
+      --  grammar used to validate the schema itself.
 
       Target_NS       : Schema.Validators.XML_Grammar_NS;
+      Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Prefixes        : Prefix_Mapping_Access;
       Contexts        : Context_Access;
    end record;
 
    procedure Start_Document (Handler : in out Schema_Reader);
+   procedure End_Document (Handler : in out Schema_Reader);
    procedure Start_Element
      (Handler       : in out Schema_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";

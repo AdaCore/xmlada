@@ -3,6 +3,7 @@ with Sax.Attributes;    use Sax.Attributes;
 with Schema.Validators; use Schema.Validators;
 with Schema.Readers;    use Schema.Readers;
 with Schema.Validators; use Schema.Validators;
+with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with GNAT.IO;           use GNAT.IO;
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;    use Ada.Exceptions;
@@ -11,19 +12,17 @@ package body Schema.Schema_Readers is
 
    Debug : Boolean := False;
 
-   function Create_Schema_Grammar return XML_Grammar;
-   --  Create the grammar to validate an XML Schema document
-
    procedure Free (Mapping : in out Prefix_Mapping_Access);
    --  Free the memory occupied by Mapping
 
    procedure Free (C : in out Context_Access);
    --  Free the memory occupied by C
 
-   function Get_Namespace
-     (Handler : Schema_Reader'Class;
-      Prefix  : Byte_Sequence) return Byte_Sequence;
-   --  Return the namespace corresponding to Prefix
+   procedure Get_Grammar_For_Namespace
+     (Handler : in out Schema_Reader'Class;
+      Prefix  : Byte_Sequence;
+      Grammar : out XML_Grammar_NS);
+   --  Return the grammar matching a given prefix
 
    function Split_Qname (Qname : Byte_Sequence) return Natural;
    --  Return the position of the ':' separate in Qname
@@ -42,8 +41,59 @@ package body Schema.Schema_Readers is
    --  Lookup a type or element  with a possible namespace specification
 
    function Ada_Name (Element : XML_Element) return String;
-   function Ada_Name (Typ : XML_Type) return String;
+   function Ada_Name (Typ : XML_Type)        return String;
+   function Ada_Name (C : Context_Access)    return String;
    --  Return the name of an Ada variable suitable to represent Element
+
+   procedure Create_Element
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Complex_Type
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Restriction
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_All
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Sequence
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Attribute
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Schema
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Extension
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_List
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   --  Create a new context for a specific tag:
+   --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
+   --  <attribute>, <schema>, <extension>, <list>
+
+   procedure Finish_Element (Handler : in out Schema_Reader);
+   procedure Finish_Complex_Type (Handler : in out Schema_Reader);
+   procedure Finish_Restriction (Handler : in out Schema_Reader);
+   procedure Finish_All (Handler : in out Schema_Reader);
+   procedure Finish_Sequence (Handler : in out Schema_Reader);
+   procedure Finish_Attribute (Handler : in out Schema_Reader);
+   procedure Finish_Extension (Handler : in out Schema_Reader);
+   --  Finish the handling of various tags:
+   --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
+   --  <extension>
+
+   function Max_Occurs_From_Value (Value : Byte_Sequence) return Integer;
+   --  Return the value of maxOccurs from the attributes'value. This properly
+   --  takes into account the "unbounded" case
+
+   ---------------------------
+   -- Max_Occurs_From_Value --
+   ---------------------------
+
+   function Max_Occurs_From_Value (Value : Byte_Sequence) return Integer is
+   begin
+      if Value = "unbounded" then
+         return Unbounded;
+      else
+         return Integer'Value (Value);
+      end if;
+   end Max_Occurs_From_Value;
 
    --------------
    -- Ada_Name --
@@ -78,900 +128,26 @@ package body Schema.Schema_Readers is
       return Qname'First - 1;
    end Split_Qname;
 
-   -----------------
-   -- Get_Grammar --
-   -----------------
+   -------------------------
+   -- Get_Created_Grammar --
+   -------------------------
 
-   function Get_Grammar
+   function Get_Created_Grammar
      (Reader : Schema_Reader) return Schema.Validators.XML_Grammar is
    begin
       return Reader.Grammar;
-   end Get_Grammar;
+   end Get_Created_Grammar;
 
-   ---------------------------
-   -- Create_Schema_Grammar --
-   ---------------------------
+   -------------------------
+   -- Set_Created_Grammar --
+   -------------------------
 
-   function Create_Schema_Grammar return XML_Grammar is
-      Grammar                    : XML_Grammar;
-      G, XML_G                   : XML_Grammar_NS;
-      Typ, Typ2                  : XML_Validator;
-      Seq1, Seq2                 : Sequence;
-      Choice1                    : Choice;
-      All_Validator              : XML_Type;
-      Unknown                    : XML_Type;
-      Elem                       : XML_Element;
-      Gr                         : XML_Group;
-      Union                      : XML_Union;
-      Attr                       : XML_Attribute_Group;
+   procedure Set_Created_Grammar
+     (Reader  : in out Schema_Reader;
+      Grammar : Schema.Validators.XML_Grammar) is
    begin
-      Initialize (Grammar);
-      Get_NS (Grammar, XML_Schema_URI, G);
-      Get_NS (Grammar, XML_URI, XML_G);
-
-      Unknown := Lookup (G, "debug");
-
-      --  The "formChoice" type of schema.xsd
-      Typ := Restriction_Of (Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ, "enumeration", "qualified");
-      Add_Facet (Typ, "enumeration", "unqualified");
-      Register (G, Create_Type ("formChoice", Typ));
-
-      --  The "derivationControl" type
-      Typ := Restriction_Of (Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ, "enumeration", "substitution");
-      Add_Facet (Typ, "enumeration", "extension");
-      Add_Facet (Typ, "enumeration", "restriction");
-      Register (G, Create_Type ("derivationControl", Typ));
-
-      --  The "blockSet" type
-      Typ := Restriction_Of (Lookup (G, "token"));
-      Add_Facet (Typ, "enumeration", "#all");
-      All_Validator := Create_Type ("#all", Typ);
-
-      Union := Create_Union;
-      Add_Union (Union, All_Validator);
-      Add_Union (Union, List_Of (Lookup (G, "derivationControl")));
-      Register (G, Create_Type ("blockSet", Union));
-
-      --  The "reducedDerivationControl" type
-      Typ := Restriction_Of (Lookup (G, "derivationControl"));
-      Add_Facet (Typ, "enumeration", "extension");
-      Add_Facet (Typ, "enumeration", "restriction");
-      Register (G, Create_Type ("reducedDerivationControl", Typ));
-
-      --  The "derivationSet" type
-      Union := Create_Union;
-      Add_Union (Union, All_Validator);
-      Add_Union (Union, List_Of (Lookup (G, "reducedDerivationControl")));
-      Register (G, Create_Type ("derivationSet", Union));
-
-      --  The "uriReference" type
-      Typ := Restriction_Of (Lookup (G, "anySimpleType"));
-      Add_Facet (Typ, "whiteSpace", "collapse");
-      Register (G, Create_Type ("uriReference", Typ));
-
-      --  The "openAttrs" type  --  ??? <anyAttribute>
-      Typ := Restriction_Of (Lookup (G, "anyType"));
-      Register (G, Create_Type ("openAttrs", Typ));
-
-      --  The "annotated" type
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Extension_Of (Lookup (G, "openAttrs"), Seq1);
-      Add_Attribute (Typ, Create_Attribute ("id", G, Lookup (G, "ID")));
-      Register (G, Create_Type ("annotated", Typ));
-
-      --  The "schemaTop" element  ??? Missing abstract
-      Register (G, Create_Element ("schemaTop", Lookup (G, "annotated")));
-
-      --  The "include" element
-      Typ := Restriction_Of (Lookup (G, "annotated"));
-      Add_Attribute
-        (Typ, Create_Attribute ("schemaLocation", G,
-                                Lookup (G, "uriReference"),
-                                Attribute_Use => Required));
-      Register (G, Create_Element ("include", Create_Type ("", Typ)));
-
-      --  The "import" element
-      Typ := Restriction_Of (Lookup (G, "annotated"));
-      Add_Attribute
-        (Typ, Create_Attribute ("namespace", G,
-                                Lookup (G, "uriReference")));
-      Add_Attribute
-        (Typ, Create_Attribute ("schemaLocation", G,
-                                Lookup (G, "uriReference")));
-      Register (G, Create_Element ("import", Create_Type ("", Typ)));
-
-      --  The "schema" element
-      Choice1 := Create_Choice (Min_Occurs => 0, Max_Occurs => Unbounded);
-      Set_Debug_Name (Choice1, "schema choice1");
-      Add_Particle (Choice1, Lookup_Element (G, "include"));
-      Add_Particle (Choice1, Lookup_Element (G, "import"));
-      Add_Particle (Choice1, Lookup_Element (G, "redefine"));
-      Add_Particle (Choice1, Lookup_Element (G, "annotation"));
-      Seq1    := Create_Sequence (Min_Occurs => 0, Max_Occurs => Unbounded);
-      Set_Debug_Name (Seq1, "schema seq1");
-      Add_Particle (Seq1, Lookup_Element (G, "schemaTop"));
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
-      Seq2    := Create_Sequence;
-      Set_Debug_Name (Seq2, "schema seq2");
-      Add_Particle (Seq2, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle (Seq2, Seq1, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Attribute
-        (Seq2, Create_Attribute
-           ("targetNamespace", G, Lookup (G, "uriReference")));
-      Add_Attribute
-        (Seq2, Create_Attribute ("version", G, Lookup (G, "token")));
-      Add_Attribute
-        (Seq2, Create_Attribute
-           ("finalDefault", G, Lookup (G, "derivationSet"),
-            Attribute_Use     => Default,
-            Value             => ""));
-      Add_Attribute
-        (Seq2, Create_Attribute
-           ("blockDefault", G, Lookup (G, "blockSet"),
-            Attribute_Use     => Default,
-            Value             => ""));
-      Add_Attribute
-        (Seq2, Create_Attribute
-           ("attributeFormDefault", G, Lookup (G, "formChoice"),
-            Attribute_Use  => Default,
-            Value          => "unqualified"));
-      Add_Attribute
-        (Seq2, Create_Attribute
-           ("elementFormDefault", G, Lookup (G, "formChoice"),
-            Attribute_Use     => Default,
-            Value             => "unqualified"));
-      Add_Attribute (Seq2, Create_Attribute ("id", G, Lookup (G, "ID")));
-      Register (G,
-                Create_Element ("schema", Create_Type ("schema type", Seq2)));
-
-      --  The "localComplexType" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "localComplexType seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "complexTypeModel"));
-      Typ := Restriction_Of (Lookup (G, "complexType"), XML_Validator (Seq1));
-      Add_Attribute
-        (Typ, Create_Attribute ("name", G, Attribute_Use => Prohibited));
-      Register (G, Create_Type ("localComplexType", Typ));
-
-      --  The "keybase" type
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "selector"));
-      Add_Particle (Seq1, Lookup_Element (G, "field"),
-                    Min_Occurs => 1, Max_Occurs => Unbounded);
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Add_Attribute
-        (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
-                              Attribute_Use => Required));
-      Register (G, Create_Type ("keybase", Typ));
-
-      --  The "identityConstraint" element  ??? abstract=true
-      Register
-        (G, Create_Element ("identityConstraint", Lookup (G, "keybase")));
-
-      --  The "key" element
-      Elem := Create_Element
-        ("key",
-         Get_Type (Lookup_Element (G, "identityConstraint")));
-      Set_Substitution_Group
-        (Elem, Lookup_Element (G, "identityConstraint"));
-      Register (G, Elem);
-
-      --  The "XPathExprApprox" type  Incorrect pattern
-      Typ := Restriction_Of (Lookup (G, "string"));
---    Add_Facet (Typ, "pattern", "(/|//|\.|\.\.|:|::|\||(\w-[.:/|])+)+");
-      Register (G, Create_Type ("XPathExprApprox", Typ));
-
-      --  The "XPathSpec" type"
-      Typ := Restriction_Of (Lookup (G, "annotated"));
-      Add_Attribute (Typ, Create_Attribute ("xpath", G,
-                                            Lookup (G, "XPathExprApprox")));
-      Register (G, Create_Type ("XPathSpec", Typ));
-
-      --  The "selector" element
-      Register (G, Create_Element ("selector", Lookup (G, "XPathSpec")));
-
-      --  The "field" element
-      Register (G, Create_Element ("field", Lookup (G, "XPathSpec")));
-
-      --  The "allNNI" type"
-      Union := Create_Union;
-      Add_Union (Union, Lookup (G, "nonNegativeInteger"));
-      Typ := Restriction_Of (Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ, "enumeration", "unbounded");
-      Add_Union (Union, Create_Type ("", Typ));
-      Register (G, Create_Type ("allNNI", Union));
-
-      --  The "occurs" AttributeGroup
-      Attr := Create_Attribute_Group ("occurs");
-      Add_Attribute (Attr,
-                     Create_Attribute ("minOccurs", G,
-                                       Lookup (G, "nonNegativeInteger"),
-                                       Attribute_Use => Default,
-                                       Value => "1"));
-      Add_Attribute (Attr,
-                     Create_Attribute ("maxOccurs", G,
-                                       Lookup (G, "allNNI"),
-                                       Attribute_Use => Default,
-                                       Value => "1"));
-      Register (G, Attr);
-
-      --  From AttributeGroup "defRef"
-      Attr := Create_Attribute_Group ("defRef");
-      Add_Attribute (Attr, Create_Attribute ("name", G, Lookup (G, "NCName")));
-      Add_Attribute (Attr, Create_Attribute ("ref", G, Lookup (G, "QName")));
-      Register (G, Attr);
-
-      --  The "element" type   ??? abstract=true
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "element seq");
-      Choice1 := Create_Choice (Min_Occurs => 0);
-      Add_Particle (Choice1, Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")));
-      Add_Particle (Choice1, Create_Element
-                      ("complexType", Lookup (G, "localComplexType")));
-      Add_Particle (Seq1, Choice1);
-      Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Set_Debug_Name (Typ, "element extension");
-      Register (G, Create_Type ("element", Typ));
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
-      Add_Attribute (Typ, Create_Attribute ("type", G, Lookup (G, "QName")));
-      Add_Attribute
-        (Typ, Create_Attribute ("substitutionGroup", G, Lookup (G, "QName")));
-      Add_Attribute
-        (Typ, Create_Attribute ("default", G, Lookup (G, "string")));
-      Add_Attribute (Typ, Create_Attribute ("fixed", G, Lookup (G, "string")));
-      Add_Attribute
-        (Typ, Create_Attribute ("nullable", G, Lookup (G, "boolean"),
-                                Attribute_Use => Default, Value => "false"));
-      Add_Attribute
-        (Typ, Create_Attribute ("abstract", G, Lookup (G, "boolean"),
-                                Attribute_Use => Default, Value => "false"));
-      Add_Attribute
-        (Typ, Create_Attribute ("final", G, Lookup (G, "derivationSet"),
-                                Attribute_Use => Default, Value => ""));
-      Add_Attribute
-        (Typ, Create_Attribute ("block", G, Lookup (G, "blockSet"),
-                                Attribute_Use => Default, Value => ""));
-      Add_Attribute
-        (Typ, Create_Attribute ("form", G, Lookup (G, "formChoice")));
-
-      --  The "appinfo" element"
-      Seq1 := Create_Sequence (Min_Occurs => 0, Max_Occurs => Unbounded);
-      --   <any processContents="lax" />
-      Add_Attribute
-        (Seq1, Create_Attribute ("source", G, Lookup (G, "uriReference")));
-      Set_Mixed_Content (Seq1, True);
-      Register
-        (G, Create_Element ("appinfo", Create_Type ("", Seq1)));
-
-      --  The "documentation" element
-      Seq1 := Create_Sequence (Min_Occurs => 0, Max_Occurs => Unbounded);
-      --   <any processContents="lax" />
-      Add_Attribute
-        (Seq1, Create_Attribute ("source", G, Lookup (G, "uriReference")));
-      Add_Attribute (Seq1, Lookup_Attribute (XML_G, "lang"));
-      Set_Mixed_Content (Seq1, True);
-      Register
-        (G, Create_Element ("documentation", Create_Type ("", Seq1)));
-
-      --  The "annotation" element  ??? invalid
-      Choice1 := Create_Choice (Min_Occurs => 0, Max_Occurs => Unbounded);
-      Set_Debug_Name (Choice1, "annotation choice");
-      Add_Particle (Choice1, Lookup_Element (G, "appinfo"));
-      Add_Particle (Choice1, Lookup_Element (G, "documentation"));
-      Register (G, Create_Element ("annotation", Create_Type ("", Choice1)));
-
-      --  The "topLevelElement" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "topLevelElement seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"));
-      Choice1 := Create_Choice (Min_Occurs => 0);
-      Add_Particle (Seq1, Choice1);
-      Add_Particle (Choice1, Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")));
-      Add_Particle (Choice1, Create_Element
-                      ("complexType", Lookup (G, "localComplexType")));
-      Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Restriction_Of (Lookup (G, "element"), XML_Validator (Seq1));
-      Set_Debug_Name (Typ, "topLevelElement restriction");
-      Add_Attribute
-        (Typ, Create_Attribute ("ref", G, Attribute_Use => Prohibited));
-      Add_Attribute
-        (Typ, Create_Attribute ("form", G, Attribute_Use => Prohibited));
-      Add_Attribute
-        (Typ, Create_Attribute ("minOccurs", G, Attribute_Use => Prohibited));
-      Add_Attribute
-        (Typ, Create_Attribute ("maxOccurs", G, Attribute_Use => Prohibited));
-      Add_Attribute
-        (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
-                                Attribute_Use => Required));
-      Register (G, Create_Type ("topLevelElement", Typ));
-
-      --  The "element" element
-      Elem := Create_Element ("element", Lookup (G, "topLevelElement"));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
-      Register (G, Elem);
-
-      --  The "attribute" element
-      Elem := Create_Element ("attribute", Lookup (G, "topLevelAttribute"));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
-      Register (G, Elem);
-
-      --  The "redefinable" element  --  abstract=true
-      Elem := Create_Element ("redefinable", Lookup (G, "anyType"));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
-      Register (G, Elem);
-
-      --  The "all" element
---        Seq1 := Create_Sequence;
---        Add_Particle (Seq1, Lookup (G, "annotation"), Min_Occurs => 0);
-      Register (G, Create_Element ("all", Unknown));
-
-      --  The "localElement" type
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Choice1 := Create_Choice;
-      Add_Particle (Seq1, Choice1, Min_Occurs => 0);
-      Add_Particle (Choice1, Create_Element ("simpleType",
-                                             Lookup (G, "localSimpleType")));
-      Add_Particle (Choice1, Create_Element ("complexType",
-                                             Lookup (G, "localComplexType")));
-      Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Attribute (Seq1, Create_Attribute ("substitutionGroup", G,
-                                             Attribute_Use => Prohibited));
-      Add_Attribute (Seq1, Create_Attribute ("final", G,
-                                             Attribute_Use => Prohibited));
-      Typ := Restriction_Of (Lookup (G, "element"), XML_Validator (Seq1));
-      Register (G, Create_Type ("localElement", Typ));
-
-      --  The "particle" group
-      Gr := Create_Group ("particle");
-      Register (G, Gr);
-      Choice1 := Create_Choice;
-      Add_Particle (Gr, Choice1);
-      Add_Particle
-        (Choice1, Create_Element ("element", Lookup (G, "localElement")));
-      Add_Particle
-        (Choice1, Create_Element ("group", Lookup (G, "groupRef")));
-      Add_Particle (Choice1, Lookup_Element (G, "all"));
-      Add_Particle (Choice1, Lookup_Element (G, "choice"));
-      Add_Particle (Choice1, Lookup_Element (G, "sequence"));
-      Add_Particle (Choice1, Lookup_Element (G, "any"));
-
-      --  "group" type
-      Typ := Extension_Of
-        (Lookup (G, "annotated"),
-         Lookup_Group (G, "particle"),
-         Min_Occurs => 0, Max_Occurs => Unbounded);
-      Set_Debug_Name (Typ, "group extension");
-      Register (G, Create_Type ("group", Typ));
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
-
-      --  The "nestedParticle" element
-      Gr := Create_Group ("nestedParticle");
-      Register (G, Gr);
-      Choice1 := Create_Choice;
-      Add_Particle (Gr, Choice1);
-      Set_Debug_Name (Choice1, "nestedParticle choice");
-      Add_Particle
-        (Choice1, Create_Element ("element", Lookup (G, "localElement")));
-      Add_Particle
-        (Choice1, Create_Element ("group", Lookup (G, "groupRef")));
-      Add_Particle (Choice1, Lookup_Element (G, "choice"));
-      Add_Particle (Choice1, Lookup_Element (G, "sequence"));
-      Add_Particle (Choice1, Lookup_Element (G, "any"));
-
-      --  "explicitGroup" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "explicitGroup seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"),
-                    Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "nestedParticle"),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Restriction_Of (Lookup (G, "group"), XML_Validator (Seq1));
-      Register (G, Create_Type ("explicitGroup", Typ));
-      Add_Attribute
-        (Typ, Create_Attribute
-           ("name", G, Lookup (G, "NCName"), Attribute_Use => Prohibited));
-      Add_Attribute
-        (Typ, Create_Attribute
-           ("ref", G, Lookup (G, "QName"), Attribute_Use => Prohibited));
-
-      --  The "choice" element
-      Register (G, Create_Element ("choice", Lookup (G, "explicitGroup")));
-
-      --  The "sequence" element
-      Register (G, Create_Element ("sequence", Lookup (G, "explicitGroup")));
-
-      --  "groupDefParticle" group
-      Gr := Create_Group ("groupDefParticle");
-      Register (G, Gr);
-      Choice1 := Create_Choice;
-      Add_Particle (Gr, Choice1);
-      Add_Particle (Choice1, Lookup_Element (G, "all"));
-      Add_Particle (Choice1, Lookup_Element (G, "choice"));
-      Add_Particle (Choice1, Lookup_Element (G, "sequence"));
-
-      --  The "realGroup" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "realGroup seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "groupDefParticle"),
-                    Min_Occurs => 0, Max_Occurs => 1);
-      Typ := Restriction_Of (Lookup (G, "group"), XML_Validator (Seq1));
-      Register (G, Create_Type ("realGroup", Typ));
-
-      --  The "groupRef" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "groupRef seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Restriction_Of (Lookup (G, "realGroup"), XML_Validator (Seq1));
-      Register (G, Create_Type ("groupRef", Typ));
-      Add_Attribute
-        (Typ, Create_Attribute
-           ("ref", G, Lookup (G, "QName"), Attribute_Use => Required));
-      Add_Attribute
-        (Typ, Create_Attribute ("name", G, Attribute_Use => Prohibited));
-
-      --  The "group" element
-      Elem := Create_Element ("group", Lookup (G, "namedGroup"));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
-      Register (G, Elem);
-
-      --  The "namedGroup" type
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "groupDefParticle"),
-                    Min_Occurs => 1, Max_Occurs => 1);
-      Typ := Restriction_Of (Lookup (G, "realGroup"), XML_Validator (Seq1));
-      Add_Attribute (Typ, Create_Attribute
-                       ("name", G, Lookup (G, "NCName"),
-                        Attribute_Use => Required));
-      Add_Attribute (Typ, Create_Attribute
-                       ("ref", G, Attribute_Use => Prohibited));
-      Add_Attribute (Typ, Create_Attribute
-                       ("minOccurs", G, Attribute_Use => Prohibited));
-      Add_Attribute (Typ, Create_Attribute
-                       ("maxOccurs", G, Attribute_Use => Prohibited));
-      Register (G, Create_Type ("namedGroup", Typ));
-
-      --  The "attributeGroup" type
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
-      Register (G, Create_Type ("attributeGroup", Typ));
-
-      --  The "namedAttributeGroup" type
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Restriction_Of
-        (Lookup (G, "attributeGroup"), XML_Validator (Seq1));
-      Add_Attribute
-        (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
-                                Attribute_Use => Required));
-      Add_Attribute
-        (Typ, Create_Attribute ("ref", G, Attribute_Use => Prohibited));
-      Register (G, Create_Type ("namedAttributeGroup", Typ));
-
-      --  The "attributeGroup" element
-      Elem := Create_Element ("attributeGroup",
-                              Lookup (G, "namedAttributeGroup"));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
-      Register (G, Elem);
-
-      --  The "typeDefParticle" group
-      Gr := Create_Group ("typeDefParticle");
-      Register (G, Gr);
-      Choice1 := Create_Choice;
-      Add_Particle (Gr, Choice1);
-      Set_Debug_Name (Choice1, "typeDefParticle choice");
-      Add_Particle (Choice1, Create_Element ("group", Lookup (G, "groupRef")));
-      Add_Particle (Choice1, Lookup_Element (G, "all"));
-      Add_Particle (Choice1, Lookup_Element (G, "choice"));
-      Add_Particle (Choice1, Lookup_Element (G, "sequence"));
-
-      --  The "attribute" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "attribute seq");
-      Add_Particle (Seq1, Create_Element ("simpleType",
-                                         Lookup (G, "localSimpleType")),
-                    Min_Occurs => 0);
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Set_Debug_Name (Typ, "attribute extension");
-      Register (G, Create_Type ("attribute", Typ));
-      Add_Attribute (Typ, Create_Attribute ("type", G, Lookup (G, "QName")));
-
-      Typ2 := Restriction_Of (Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ2, "enumeration", "prohibited");
-      Add_Facet (Typ2, "enumeration", "optional");
-      Add_Facet (Typ2, "enumeration", "required");
-      Add_Facet (Typ2, "enumeration", "default");
-      Add_Facet (Typ2, "enumeration", "fixed");
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
-      Add_Attribute (Typ, Create_Attribute
-                       ("use", G, Create_Type ("use_type", Typ2),
-                        Attribute_Use => Default,
-                        Value => "optional"));
-      Add_Attribute (Typ, Create_Attribute
-                       ("value", G, Lookup (G, "string"),
-                        Attribute_Use => Optional));
-      Add_Attribute
-        (Typ, Create_Attribute ("form", G, Lookup (G, "formChoice")));
-
-      --  The "topLevelAttribute" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "topLevelAttribute seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Create_Element ("simpleType",
-                                          Lookup (G, "localSimpleType")),
-                    Min_Occurs => 0);
-      Typ := Restriction_Of (Lookup (G, "attribute"), XML_Validator (Seq1));
-      Set_Debug_Name (Typ, "topLevelAttribute restriction");
-      Register (G, Create_Type ("topLevelAttribute", Typ));
-      Add_Attribute
-        (Typ, Create_Attribute ("ref", G, Attribute_Use => Prohibited));
-      Add_Attribute
-        (Typ, Create_Attribute ("form", G, Attribute_Use => Prohibited));
-      Add_Attribute
-        (Typ, Create_Attribute ("use", G, Attribute_Use => Prohibited));
-      Add_Attribute
-        (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
-                                Attribute_Use => Required));
-
-      --  The "anyAttributes" element
-      Register (G, Create_Element ("anyAttribute", Lookup (G, "wildcard")));
-
-      --  The "namespaceList" type   ??? Incomplete
-      Union := Create_Union;
-      Typ := Restriction_Of (Lookup (G, "token"));
-      Add_Facet (Typ, "enumeration", "##any");
-      Add_Facet (Typ, "enumeration", "##other");
-      Add_Union (Union, Create_Type ("", Typ));
-      Register (G, Create_Type ("namespaceList", Union));
-
-      --  The "wildcard" type
-      Typ := Restriction_Of (Lookup (G, "annotated"));
-      Add_Attribute (Typ, Create_Attribute ("namespace", G,
-                                            Lookup (G, "namespaceList"),
-                                            Attribute_Use => Default,
-                                            Value => "##any"));
-      Typ2 := Restriction_Of (Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ2, "enumeration", "skip");
-      Add_Facet (Typ2, "enumeration", "lax");
-      Add_Facet (Typ2, "enumeration", "strict");
-      Add_Attribute (Typ, Create_Attribute ("processContents", G,
-                                            Create_Type ("", Typ2),
-                                            Attribute_Use => Default,
-                                            Value => "strict"));
-      Register (G, Create_Type ("wildcard", Typ));
-
-      --  The "any" element   ??? Error if you put before "wildcard"
-      Typ := Restriction_Of (Lookup (G, "wildcard"));
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
-      Register (G, Create_Element ("any", Create_Type ("", Typ)));
-
-      --  The "attributeGroupRef"  ??? invalid
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Restriction_Of
-        (Lookup (G, "attributeGroup"), XML_Validator (Seq1));
-      Add_Attribute
-        (Typ, Create_Attribute ("ref", G, Lookup (G, "QName"),
-                                Attribute_Use => Required));
-      Add_Attribute
-        (Typ, Create_Attribute ("name", G, Attribute_Use => Prohibited));
-      Register (G, Create_Type ("attributeGroupRef", Typ));
-
-      --  The "attrDecls" group
-      Gr := Create_Group ("attrDecls");
-      Register (G, Gr);
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "attrDecls seq");
-      Add_Particle (Gr, Seq1);
-      Choice1 := Create_Choice;
-      Set_Debug_Name (Choice1, "attrDecls choice");
-      Add_Particle (Seq1, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle
-        (Choice1, Create_Element ("attribute", Lookup (G, "attribute")));
-      Add_Particle
-        (Choice1, Create_Element ("attributeGroup",
-                                  Lookup (G, "attributeGroupRef")));
-      Add_Particle
-        (Seq1, Lookup_Element (G, "anyAttribute"), Min_Occurs => 0);
-
-      --  The "extensionType" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "extensionType seq");
-      Add_Particle
-        (Seq1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
-      Add_Particle
-        (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Set_Debug_Name (Typ, "extensionType extension");
-      Add_Attribute (Typ, Create_Attribute ("base", G, Lookup (G, "QName")));
-      Register (G, Create_Type ("extensionType", Typ));
-
-      --  The "restrictionType" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "restrictionType seq");
-      Choice1 := Create_Choice;
-      Set_Debug_Name (Choice1, "restrictionType choice");
-      Add_Particle
-        (Choice1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
-      Add_Particle
-        (Choice1, Lookup_Group (G, "simpleRestrictionModel"), Min_Occurs => 0);
-      Add_Particle (Seq1, Choice1);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Add_Attribute (Typ, Create_Attribute ("base", G, Lookup (G, "QName"),
-                                             Attribute_Use => Required));
-      Register (G, Create_Type ("restrictionType", Typ));
-
-      --  The "simpleRestrictionModel" group
-      Gr := Create_Group ("simpleRestrictionModel");
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "simpleRestrictionModel seq");
-      Add_Particle (Seq1, Create_Element ("simpleType",
-                                          Lookup (G, "localSimpleType")),
-                    Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Element (G, "facet"),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle (Gr, Seq1);
-      Register (G, Gr);
-
-      --  The "simpleExtensionType"
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "simpleExtensionType seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Register (G, Create_Type
-                  ("simpleExtensionType",
-                   Restriction_Of (Lookup (G, "extensionType"),
-                                   XML_Validator (Seq1))));
-
-      --  The "simpleRestrictionType"
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "simpleRestrictionType seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "simpleRestrictionModel"),
-                    Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Register (G, Create_Type
-                  ("simpleRestrictionType",
-                   Restriction_Of (Lookup (G, "restrictionType"),
-                                   XML_Validator (Seq1))));
-
-      --  The "simpleContent" element
-      Choice1 := Create_Choice;
-      Set_Debug_Name (Choice1, "simpleContent choice");
-      Add_Particle (Choice1, Create_Element
-                      ("retriction",
-                       Lookup (G, "simpleRestrictionType")));
-      Add_Particle (Choice1, Create_Element
-                      ("extension",
-                       Lookup (G, "simpleExtensionType")));
-      Typ := Extension_Of (Lookup (G, "annotated"), Choice1);
-      Set_Debug_Name (Typ, "simpleContent extension");
-      Register (G, Create_Element ("simpleContent",
-                                   Create_Type ("simpleContent type", Typ)));
-
-      --  The "complexRestrictionType" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "complexRestrictionType seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle
-        (Seq1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Restriction_Of (Lookup (G, "restrictionType"),
-                             XML_Validator (Seq1));
-      Register (G, Create_Type ("complexRestrictionType", Typ));
-
-      --  The "complexContent" element
-      Choice1 := Create_Choice;
-      Set_Debug_Name (Choice1, "complexContent choice");
-      Add_Particle (Choice1,
-                    Create_Element ("restriction",
-                                    Lookup (G, "complexRestrictionType")));
-      Add_Particle (Choice1,
-                    Create_Element ("extension",
-                                    Lookup (G, "extensionType")));
-      Add_Attribute
-        (Choice1, Create_Attribute ("mixed", G, Lookup (G, "boolean")));
-      Typ := Extension_Of (Lookup (G, "annotated"), Choice1);
-      Register (G, Create_Element ("complexContent", Create_Type ("", Typ)));
-
-      --  The "complexTypeModel" group
-      Gr := Create_Group ("complexTypeModel");
-      Register (G, Gr);
-      Choice1 := Create_Choice;
-      Set_Debug_Name (Choice1, "complexTypeModel choice");
-      Add_Particle (Gr, Choice1);
-      Add_Particle (Choice1, Lookup_Element (G, "simpleContent"));
-      Add_Particle (Choice1, Lookup_Element (G, "complexContent"));
-      Seq1 := Create_Sequence;
-      Add_Particle (Choice1, Seq1);
-      Set_Debug_Name (Seq1, "complexTypeModel seq");
-      Add_Particle
-        (Seq1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-
-      --  The "complexType" type  ??? abstract=true
-      Typ := Extension_Of (Lookup (G, "annotated"),
-                           Lookup_Group (G, "complexTypeModel"));
-      Set_Debug_Name (Typ, "complexType extension");
-      Register (G, Create_Type ("complexType", Typ));
-      Add_Attribute (Typ, Create_Attribute ("name", G, Lookup (G, "NCName")));
-      Add_Attribute (Typ, Create_Attribute ("mixed", G, Lookup (G, "boolean"),
-                                            Attribute_Use => Default,
-                                            Value => "false"));
-      Add_Attribute (Typ, Create_Attribute
-                       ("abstract", G, Lookup (G, "boolean"),
-                        Attribute_Use => Default,
-                        Value => "false"));
-      Add_Attribute
-        (Typ, Create_Attribute ("final", G, Lookup (G, "derivationSet")));
-      Add_Attribute
-        (Typ, Create_Attribute ("block", G, Lookup (G, "derivationSet"),
-                                Attribute_Use => Default,
-                                Value => ""));
-
-
-      --  The "topLevelComplexType" type
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "topLevelComplexType seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "complexTypeModel"));
-      Typ := Restriction_Of (Lookup (G, "complexType"),
-                             XML_Validator (Seq1));
-      Add_Attribute (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
-                                            Attribute_Use => Required));
-      Register (G, Create_Type ("topLevelComplexType", Typ));
-
-      --  The "complexType" element
-      Elem := Create_Element
-        ("complexType", Lookup (G, "topLevelComplexType"));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
-      Register (G, Elem);
-
-      --  The "notation" element
-      Typ := Restriction_Of (Lookup (G, "annotated"));
-      Add_Attribute (Typ, Create_Attribute
-                       ("name", G, Lookup (G, "NCName"),
-                        Attribute_Use => Required));
-      Add_Attribute (Typ, Create_Attribute
-                       ("public", G, Lookup (G, "public"),
-                        Attribute_Use => Required));
-      Add_Attribute (Typ, Create_Attribute
-                       ("system", G, Lookup (G, "uriReference")));
-      Elem := Create_Element ("notation", Create_Type ("", Typ));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
-      Register (G, Elem);
-
-      --  The "public" type
-      Register
-        (G, Create_Type ("public", Get_Validator (Lookup (G, "token"))));
-
-
-      --  From datatypes.xsd
-
-      --  The "localSimpleType" type
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
-      Typ := Restriction_Of (Lookup (G, "simpleType"),
-                             XML_Validator (Seq1));
-      Add_Attribute (Typ, Create_Attribute
-                       ("name", G, Attribute_Use => Prohibited));
-      Register (G, Create_Type ("localSimpleType", Typ));
-
-      --  The "simpleDerivation" element  ??? abstract=true
-      Elem := Create_Element ("simpleDerivation", Lookup (G, "annotated"));
-      Register (G, Elem);
-
-      --  The "simpleType" type  ??? abstract=true
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
-      Add_Attribute
-        (Seq1, Create_Attribute ("name", G, Lookup (G, "NCName")));
-
-      --  The "topLevelSimpleType" type
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
-      Typ := Restriction_Of (Lookup (G, "simpleType"),
-                             XML_Validator (Seq1));
-      Register (G, Create_Type ("topLevelSimpleType", Typ));
-      Add_Attribute
-        (Typ, Create_Attribute ("name", G, Lookup (G, "NCName"),
-                                Attribute_Use => Required));
-
-      --  The "simpleType" element
-      Elem := Create_Element ("simpleType", Lookup (G, "topLevelSimpleType"));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
-      Register (G, Elem);
-
-      --  The "restriction" element
-      Seq1 := Create_Sequence;
-      Set_Debug_Name (Seq1, "restriction seq");
-      Add_Particle (Seq1, Lookup_Group (G, "simpleRestrictionModel"));
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Add_Attribute
-        (Typ, Create_Attribute ("base", G, Lookup (G, "QName"),
-                                 Attribute_Use => Optional));
-      Set_Debug_Name (Typ, "restriction extension");
-      Elem := Create_Element ("restriction", Create_Type ("", Typ));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
-      Register (G, Elem);
-
-      --  The "union" element
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1,
-                    Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Add_Attribute
-        (Typ, Create_Attribute ("memberTypes", G,
-                                List_Of (Lookup (G, "QName")),
-                                Attribute_Use => Optional));
-      Elem := Create_Element ("union", Create_Type ("", Typ));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
-      Register (G, Elem);
-
-      --  The "list" element
-      Seq1 := Create_Sequence;
-      Add_Particle (Seq1, Create_Element
-                      ("simpleType", Lookup (G, "localSimpleType")),
-                    Min_Occurs => 0);
-      Typ := Extension_Of (Lookup (G, "annotated"), Seq1);
-      Add_Attribute
-        (Typ, Create_Attribute ("itemType", G, Lookup (G, "QName"),
-                                Attribute_Use => Optional));
-      Elem := Create_Element ("list", Create_Type ("", Typ));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
-      Register (G, Elem);
-
-      --  The "facet" type
-      Typ := Restriction_Of (Lookup (G, "annotated"));
-      Add_Attribute
-        (Typ, Create_Attribute ("value", G,
-                                Lookup (G, "anySimpleType"),
-                                Attribute_Use => Required));
-      Add_Attribute
-        (Typ, Create_Attribute ("fixed", G, Lookup (G, "boolean"),
-                                Attribute_Use => Optional));
-      Register (G, Create_Type ("facet", Typ));
-
-      --  The "facet" element  ??? abstract=true
-      Register (G, Create_Element ("facet", Lookup (G, "facet")));
-
-      --  The "enumeration" element
-      Elem := Create_Element ("enumeration",
-                              Get_Type (Lookup_Element (G, "facet")));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
-      Register (G, Elem);
-
-      --  The "pattern" element
-      Elem := Create_Element ("pattern",
-                              Get_Type (Lookup_Element (G, "facet")));
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
-      Register (G, Elem);
-
-      return Grammar;
-   end Create_Schema_Grammar;
+      Reader.Grammar := Grammar;
+   end Set_Created_Grammar;
 
    --------------------
    -- Start_Document --
@@ -979,13 +155,22 @@ package body Schema.Schema_Readers is
 
    procedure Start_Document (Handler : in out Schema_Reader) is
    begin
-      Set_Grammar (Handler, Create_Schema_Grammar);
+      if Handler.Grammar = No_Grammar then
+         Handler.Grammar := Create_Schema_For_Schema;
+      end if;
 
-      Free (Handler.Grammar);
-      Initialize (Handler.Grammar);
-
-      Get_NS (Handler.Grammar, "", Handler.Target_NS);
+      Handler.Target_NS := null;
+      Get_NS (Handler.Grammar, XML_Schema_URI, Handler.Schema_NS);
    end Start_Document;
+
+   ------------------
+   -- End_Document --
+   ------------------
+
+   procedure End_Document (Handler : in out Schema_Reader) is
+   begin
+      Global_Check (Handler.Target_NS);
+   end End_Document;
 
    ----------------------
    -- Set_Debug_Output --
@@ -1020,24 +205,16 @@ package body Schema.Schema_Readers is
       G         : XML_Grammar_NS;
    begin
       if Separator < QName'First then
-         Result := Lookup (Handler.Target_NS, QName);
-         Output
-           (Ada_Name (Result) & " := Lookup (Handler.Target_NS, """
-            & QName & """);");
+         Get_Grammar_For_Namespace (Handler, "", G);
       else
-         Get_NS
-           (Handler.Grammar,
-            Get_Namespace (Handler, QName (QName'First .. Separator - 1)),
-            G);
-         Output
-           ("Get_NS (Handler.Grammar, """
-            & Get_Namespace (Handler, QName (QName'First .. Separator - 1))
-            & """, G);");
-         Result := Lookup (G, QName (Separator + 1 .. QName'Last));
-         Output
-           (Ada_Name (Result) & " := Lookup (G, """
-            & QName (Separator + 1 .. QName'Last) & """);");
+         Get_Grammar_For_Namespace
+           (Handler, QName (QName'First .. Separator - 1), G);
       end if;
+
+      Result := Lookup (G, QName (Separator + 1 .. QName'Last));
+      Output
+        (Ada_Name (Result) & " := Lookup (G, """
+         & QName (Separator + 1 .. QName'Last) & """);");
    end Lookup_With_NS;
 
    --------------------
@@ -1053,26 +230,600 @@ package body Schema.Schema_Readers is
       G         : XML_Grammar_NS;
    begin
       if Separator < QName'First then
-         Result := Lookup_Element (Handler.Target_NS, QName);
-         Output
-           (Ada_Name (Result)
-            & " := Lookup_Element (Handler.Target_NS, """ & QName & """);");
+         Get_Grammar_For_Namespace (Handler, "", G);
       else
-         Get_NS
-           (Handler.Grammar,
-            Get_Namespace (Handler, QName (QName'First .. Separator - 1)),
-            G);
-         Output
-           ("Get_NS (Handler.Grammar, """
-            & Get_Namespace (Handler, QName (QName'First .. Separator - 1))
-            & """, G);");
-         Result := Lookup_Element (G, QName (Separator + 1 .. QName'Last));
-         Output
-           (Ada_Name (Result)
-            & " := Lookup_Element (G, """
-            & QName (Separator + 1 .. QName'Last) & """);");
+         Get_Grammar_For_Namespace
+           (Handler, QName (QName'First .. Separator - 1), G);
       end if;
+
+      Result := Lookup_Element (G, QName (Separator + 1 .. QName'Last));
+      Output
+        (Ada_Name (Result)
+         & " := Lookup_Element (G, """
+         & QName (Separator + 1 .. QName'Last) & """);");
    end Lookup_With_NS;
+
+   --------------------
+   -- Create_Element --
+   --------------------
+
+   procedure Create_Element
+     (Handler  : in out Schema_Reader;
+      Atts     : Sax.Attributes.Attributes'Class)
+   is
+      Type_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "type");
+      Name_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "name");
+      Ref_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "ref");
+      Subst_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "substitutionGroup");
+      Default_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "default");
+      Fixed_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "fixed");
+      Min_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "minOccurs");
+      Max_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
+      Abstract_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "abstract");
+      Nillable_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "nillable");
+
+      Min_Occurs, Max_Occurs : Integer := 1;
+      Element : XML_Element;
+      Typ     : XML_Type := No_Type;
+      Group   : XML_Element;
+
+   begin
+      if Name_Index /= -1 then
+         if Type_Index /= -1 then
+            Lookup_With_NS
+              (Handler, Get_Value (Atts, Type_Index), Result => Typ);
+         end if;
+
+         Element := Create_Element (Get_Value (Atts, Name_Index), Typ);
+         Output
+           (Ada_Name (Element) & " := Create_Element ("""
+            & Get_Value (Atts, Name_Index) & """, " & Ada_Name (Typ) & ");");
+
+         if Ref_Index /= -1
+           and then Get_Value (Atts, Name_Index) =
+             Get_Value (Atts, Ref_Index)
+         then
+            Raise_Exception
+              (XML_Validation_Error'Identity,
+               """ref"" attribute cannot be self-referencing");
+         end if;
+
+      elsif Ref_Index = -1 then
+         Raise_Exception
+           (XML_Validation_Error'Identity,
+            "Either ""name"" or ""ref"" attribute must be present");
+
+      else
+         Lookup_With_NS
+           (Handler, Get_Value (Atts, Ref_Index), Result => Element);
+
+         --  Section 3.3.2, validity constraints 3.3.3
+         if Type_Index /= -1 then
+            Raise_Exception
+              (XML_Validation_Error'Identity,
+               """type"" attribute cannot be specified along with ""ref""");
+         end if;
+      end if;
+
+      if Subst_Index /= -1 then
+         Lookup_With_NS
+           (Handler, Get_Value (Atts, Subst_Index), Result => Group);
+         Set_Substitution_Group (Element, Group);
+         Output ("Set_Substitution_Group ("
+                 & Ada_Name (Element) & ", " & Ada_Name (Group) & ");");
+      end if;
+
+      if Default_Index /= -1 then
+         Set_Default (Element, Get_Value (Atts, Default_Index));
+         Output ("Set_Default ("
+                 & Ada_Name (Element) & ", """
+                 & Get_Value (Atts, Default_Index) & """);");
+      end if;
+
+      if Fixed_Index /= -1 then
+         Set_Fixed (Element, Get_Value (Atts, Fixed_Index));
+         Output ("Set_Fixed ("
+                 & Ada_Name (Element) & ", """
+                 & Get_Value (Atts, Fixed_Index) & """);");
+      end if;
+
+      if Abstract_Index /= -1 then
+         Set_Abstract (Element, Get_Value_As_Boolean (Atts, Abstract_Index));
+         Output ("Set_Abstract ("
+                 & Ada_Name (Element) & ", "
+                 & Boolean'Image
+                   (Get_Value_As_Boolean (Atts, Abstract_Index)) & ");");
+      end if;
+
+      if Nillable_Index /= -1 then
+         Set_Nillable (Element, Get_Value_As_Boolean (Atts, Nillable_Index));
+         Output ("Set_Nillable ("
+                 & Ada_Name (Element) & ", "
+                 & Boolean'Image
+                   (Get_Value_As_Boolean (Atts, Nillable_Index)) & ");");
+      end if;
+
+      if Min_Occurs_Index /= -1 then
+         Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
+      end if;
+
+      if Max_Occurs_Index /= -1 then
+         Max_Occurs := Max_Occurs_From_Value
+           (Get_Value (Atts, Max_Occurs_Index));
+
+         --  Imposed by test elemJ001.xsd, but not sure why
+         if Max_Occurs = 0 then
+            Min_Occurs := 0;
+         end if;
+      end if;
+
+      case Handler.Contexts.Typ is
+         when Context_Schema =>
+            Register (Handler.Target_NS, Element);
+            Output ("Register (Handler.Target_NS, "
+                    & Ada_Name (Element) & ");");
+         when Context_Sequence =>
+            Add_Particle
+              (Handler.Contexts.Seq, Element, Min_Occurs, Max_Occurs);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
+                    & ", " & Ada_Name (Element) & ','
+                    & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
+         when Context_Choice =>
+            Add_Particle (Handler.Contexts.C, Element, Min_Occurs, Max_Occurs);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
+                    & ", " & Ada_Name (Element) & ','
+                    & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
+         when Context_All =>
+            Add_Particle (Handler.Contexts.All_Validator, Element,
+                          Min_Occurs, Max_Occurs);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
+                    & ", " & Ada_Name (Element) & ','
+                    & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
+         when others =>
+            Output ("Can't handle nested element decl");
+      end case;
+
+
+      Handler.Contexts := new Context'
+        (Typ            => Context_Element,
+         Element        => Element,
+         Level          => Handler.Contexts.Level + 1,
+         Next           => Handler.Contexts);
+   end Create_Element;
+
+   --------------------
+   -- Finish_Element --
+   --------------------
+
+   procedure Finish_Element (Handler : in out Schema_Reader) is
+   begin
+      if Get_Type (Handler.Contexts.Element) = No_Type then
+         Set_Type (Handler.Contexts.Element,
+                   Lookup (Handler.Schema_NS, "anyType"));
+         Output ("Set_Type (" & Ada_Name (Handler.Contexts)
+                 & ", Lookup (Handler.Schema_NS, ""anyType"");");
+      end if;
+   end Finish_Element;
+
+   -------------------------
+   -- Create_Complex_Type --
+   -------------------------
+
+   procedure Create_Complex_Type
+     (Handler  : in out Schema_Reader;
+      Atts     : Sax.Attributes.Attributes'Class)
+   is
+      Name_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "name");
+      Name       : Byte_Sequence_Access;
+   begin
+      if Name_Index /= -1 then
+         Name := new Byte_Sequence'(Get_Value (Atts, Name_Index));
+      end if;
+
+      Handler.Contexts := new Context'
+        (Typ            => Context_Type_Def,
+         Type_Name      => Name,
+         Type_Validator => null,
+         Level          => Handler.Contexts.Level + 1,
+         Next           => Handler.Contexts);
+   end Create_Complex_Type;
+
+   -------------------------
+   -- Finish_Complex_Type --
+   -------------------------
+
+   procedure Finish_Complex_Type (Handler : in out Schema_Reader) is
+      C   : constant Context_Access := Handler.Contexts;
+      Typ : XML_Type;
+   begin
+      if C.Type_Name = null then
+         Typ := Create_Type ("", C.Type_Validator);
+         Output (Ada_Name (C) & " := Create_Type ("""", Validator);");
+      else
+         Typ := Create_Type (C.Type_Name.all, C.Type_Validator);
+         Output (Ada_Name (C)
+                 & " := Create_Type (""" & C.Type_Name.all
+                 & """, Validator);");
+      end if;
+
+      case Handler.Contexts.Next.Typ is
+         when Context_Schema =>
+            Register (Handler.Target_NS, Typ);
+            Output ("Register (Handler.Target_NS, " & Ada_Name (C) & ");");
+         when Context_Element =>
+            Set_Type (Handler.Contexts.Next.Element, Typ);
+            Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (C) & ");");
+         when Context_Attribute =>
+            Set_Type (Handler.Contexts.Next.Attribute, Typ);
+            Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Typ) & ");");
+         when others =>
+            Output ("Can't handle nested type decl");
+      end case;
+   end Finish_Complex_Type;
+
+   ------------------------
+   -- Create_Restriction --
+   ------------------------
+
+   procedure Create_Restriction
+     (Handler  : in out Schema_Reader;
+      Atts     : Sax.Attributes.Attributes'Class)
+   is
+      Base_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "base");
+      Base : XML_Type;
+   begin
+      if Handler.Contexts.Type_Name /= null
+        and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
+      then
+         Raise_Exception
+           (XML_Validation_Error'Identity,
+            "Self-referencing restriction not allowed");
+      end if;
+
+      Lookup_With_NS (Handler, Get_Value (Atts, Base_Index), Result => Base);
+
+      Handler.Contexts := new Context'
+        (Typ            => Context_Restriction,
+         Restriction    => Restriction_Of (Base, null),
+         Level          => Handler.Contexts.Level + 1,
+         Next           => Handler.Contexts);
+      Output (Ada_Name (Handler.Contexts)
+              & " := Restriction_Of (" & Ada_Name (Base) & ", null);");
+   end Create_Restriction;
+
+   ------------------------
+   -- Finish_Restriction --
+   ------------------------
+
+   procedure Finish_Restriction (Handler : in out Schema_Reader) is
+   begin
+      case Handler.Contexts.Next.Typ is
+         when Context_Type_Def =>
+            Handler.Contexts.Next.Type_Validator :=
+              Handler.Contexts.Restriction;
+
+         when others =>
+            Output ("Can't handler nested restrictions");
+      end case;
+   end Finish_Restriction;
+
+   ----------------------
+   -- Create_Extension --
+   ----------------------
+
+   procedure Create_Extension
+     (Handler  : in out Schema_Reader;
+      Atts     : Sax.Attributes.Attributes'Class)
+   is
+      Base_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "base");
+      Base : XML_Type;
+   begin
+      if Handler.Contexts.Type_Name /= null
+        and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
+      then
+         Raise_Exception
+           (XML_Validation_Error'Identity,
+            "Self-referencing restriction not allowed");
+      end if;
+
+      Lookup_With_NS (Handler, Get_Value (Atts, Base_Index), Result => Base);
+
+      Handler.Contexts := new Context'
+        (Typ            => Context_Extension,
+         Extension      => Extension_Of (Base, null),
+         Level          => Handler.Contexts.Level + 1,
+         Next           => Handler.Contexts);
+      Output (Ada_Name (Handler.Contexts)
+              & " := Extension_Of (" & Ada_Name (Base) & ", null);");
+   end Create_Extension;
+
+   ----------------------
+   -- Finish_Extension --
+   ----------------------
+
+   procedure Finish_Extension (Handler : in out Schema_Reader) is
+   begin
+      case Handler.Contexts.Next.Typ is
+         when Context_Type_Def =>
+            Handler.Contexts.Next.Type_Validator :=
+              Handler.Contexts.Extension;
+            Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
+
+         when others =>
+            Output ("Can't handle nested extensions");
+      end case;
+   end Finish_Extension;
+
+   -----------------
+   -- Create_List --
+   -----------------
+
+   procedure Create_List
+     (Handler : in out Schema_Reader;
+      Atts    : Sax.Attributes.Attributes'Class)
+   is
+      Item_Type_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "itemType");
+      Items : XML_Type;
+   begin
+      case Handler.Contexts.Typ is
+         when Context_Type_Def =>
+            Lookup_With_NS
+              (Handler, Get_Value (Atts, Item_Type_Index), Result => Items);
+            Handler.Contexts.Type_Validator :=
+              Get_Validator (List_Of (Items));
+         when others =>
+            Output ("Can't handle nested list");
+      end case;
+   end Create_List;
+
+   ---------------------
+   -- Create_Sequence --
+   ---------------------
+
+   procedure Create_Sequence
+     (Handler  : in out Schema_Reader;
+      Atts     : Sax.Attributes.Attributes'Class)
+   is
+      Min_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "minOccurs");
+      Max_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
+      Min_Occurs, Max_Occurs : Integer := 1;
+   begin
+      if Min_Occurs_Index /= -1 then
+         Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
+      end if;
+
+      if Max_Occurs_Index /= -1 then
+         Max_Occurs := Max_Occurs_From_Value
+           (Get_Value (Atts, Max_Occurs_Index));
+      end if;
+
+      Handler.Contexts := new Context'
+        (Typ      => Context_Sequence,
+         Seq      => Create_Sequence (Min_Occurs, Max_Occurs),
+         Level    => Handler.Contexts.Level + 1,
+         Next     => Handler.Contexts);
+      Output (Ada_Name (Handler.Contexts) & " := Create_Sequence ("
+              & Min_Occurs'Img & ',' & Max_Occurs'Img & ")");
+   end Create_Sequence;
+
+   ---------------------
+   -- Finish_Sequence --
+   ---------------------
+
+   procedure Finish_Sequence (Handler : in out Schema_Reader) is
+   begin
+      case Handler.Contexts.Next.Typ is
+         when Context_Type_Def =>
+            Handler.Contexts.Next.Type_Validator :=
+              XML_Validator (Handler.Contexts.Seq);
+            Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
+         when Context_Sequence =>
+            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Seq);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
+         when Context_Choice =>
+            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Seq);
+            Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
+                    & ", " & Ada_Name (Handler.Contexts) & ");");
+         when Context_Schema | Context_Attribute | Context_Element
+            | Context_Restriction | Context_Extension | Context_All =>
+            Output ("Can't handle nested sequence");
+      end case;
+   end Finish_Sequence;
+
+   ----------------------
+   -- Create_Attribute --
+   ----------------------
+
+   procedure Create_Attribute
+     (Handler  : in out Schema_Reader;
+      Atts     : Sax.Attributes.Attributes'Class)
+   is
+      Name_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "name");
+      Type_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "type");
+      Use_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "use");
+
+      Att : Attribute_Validator;
+      Typ : XML_Type := No_Type;
+      Use_Type : Attribute_Use_Type := Optional;
+   begin
+      if Type_Index /= -1 then
+         Lookup_With_NS
+           (Handler, Get_Value (Atts, Type_Index), Result => Typ);
+      end if;
+
+      if Use_Index /= -1 then
+         Use_Type := Optional;
+      end if;
+
+      Att := Create_Attribute
+        (Local_Name     => Get_Value (Atts, Name_Index),
+         NS             => Handler.Target_NS,
+         Attribute_Type => Typ,
+         Attribute_Use  => Use_Type,
+         Attribute_Form => Qualified,
+         Value          => "");
+
+      Handler.Contexts := new Context'
+        (Typ        => Context_Attribute,
+         Attribute  => Att,
+         Level      => Handler.Contexts.Level + 1,
+         Next       => Handler.Contexts);
+      Output (Ada_Name (Handler.Contexts) & " := Create_Attribute ("""
+              & Get_Value (Atts, Name_Index) & """);");
+   end Create_Attribute;
+
+   ----------------------
+   -- Finish_Attribute --
+   ----------------------
+
+   procedure Finish_Attribute (Handler : in out Schema_Reader) is
+   begin
+      case Handler.Contexts.Next.Typ is
+         when Context_Type_Def =>
+            Add_Attribute (Handler.Contexts.Next.Type_Validator,
+                           Handler.Contexts.Attribute);
+            Output ("Add_Attribute (Validator, "
+                    & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Schema =>
+            Register (Handler.Contexts.Attribute);
+            Output ("Register (Handler.Target_NS, "
+                    & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Extension =>
+            Add_Attribute (Handler.Contexts.Next.Extension,
+                           Handler.Contexts.Attribute);
+            Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
+                    & Ada_Name (Handler.Contexts) & ");");
+
+         when Context_Element | Context_Sequence | Context_Choice
+            | Context_Attribute | Context_Restriction | Context_All =>
+            Output ("Can't handle attribute decl in this context");
+      end case;
+   end Finish_Attribute;
+
+   -------------------
+   -- Create_Schema --
+   -------------------
+
+   procedure Create_Schema
+     (Handler  : in out Schema_Reader;
+      Atts     : Sax.Attributes.Attributes'Class)
+   is
+      Target_NS_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "targetNamespace");
+   begin
+      if Target_NS_Index /= -1 then
+         Get_NS (Handler.Grammar, Get_Value (Atts, Target_NS_Index),
+                 Handler.Target_NS);
+         if Debug then
+            Output ("Get_NS (Handler.Grammar, """
+                    & Get_Value (Atts, Target_NS_Index)
+                    & """, Handler.Target_NS)");
+         end if;
+      else
+         Get_NS (Handler.Grammar, "", Handler.Target_NS);
+         if Debug then
+            Output ("Get_NS (Handler.Grammar, """", Handler.Target_NS)");
+         end if;
+      end if;
+
+      Handler.Contexts := new Context'
+        (Typ         => Context_Schema,
+         Level       => 0,
+         Next        => null);
+   end Create_Schema;
+
+   ----------------
+   -- Create_All --
+   ----------------
+
+   procedure Create_All
+     (Handler  : in out Schema_Reader;
+      Atts     : Sax.Attributes.Attributes'Class)
+   is
+      pragma Unreferenced (Atts);
+   begin
+      Handler.Contexts := new Context'
+        (Typ          => Context_All,
+         All_Validator => Create_All,
+         Level         => Handler.Contexts.Level + 1,
+         Next          => Handler.Contexts);
+      Output (Ada_Name (Handler.Contexts) & " := Create_All;");
+   end Create_All;
+
+   ----------------
+   -- Finish_All --
+   ----------------
+
+   procedure Finish_All (Handler : in out Schema_Reader) is
+   begin
+      case Handler.Contexts.Next.Typ is
+         when Context_Type_Def =>
+            Handler.Contexts.Next.Type_Validator :=
+              XML_Validator (Handler.Contexts.All_Validator);
+            Output ("Validator := XML_Validator ("
+                    & Ada_Name (Handler.Contexts) & ");");
+
+         when others =>
+            Output ("Can't handled nested all");
+      end case;
+   end Finish_All;
+
+   --------------
+   -- Ada_Name --
+   --------------
+
+   function Ada_Name (C : Context_Access) return String is
+      L : constant String := Integer'Image (C.Level);
+   begin
+      case C.Typ is
+         when Context_Schema =>
+            return "";
+         when Context_Choice =>
+            return "Choice" & L (L'First + 1 .. L'Last);
+         when Context_Sequence =>
+            return "Seq" & L (L'First + 1 .. L'Last);
+         when Context_All =>
+            return "All" & L (L'First + 1 .. L'Last);
+         when Context_Element =>
+            return Ada_Name (C.Element);
+         when Context_Type_Def =>
+            if C.Type_Name = null then
+               return "T_" & L (L'First + 1 .. L'Last);
+            else
+               return "T_" & C.Type_Name.all;
+            end if;
+         when Context_Attribute =>
+            return "A_" & L (L'First + 1 .. L'Last);
+         when Context_Restriction =>
+            return "Valid" & L (L'First + 1 .. L'Last);
+         when Context_Extension =>
+            return "E_" & L (L'First + 1 .. L'Last);
+      end case;
+   end Ada_Name;
 
    -------------------
    -- Start_Element --
@@ -1085,66 +836,7 @@ package body Schema.Schema_Readers is
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class)
    is
-      procedure Push_In_Context (Element   : XML_Element);
-      --  Insert a new item in the parent context, depending on the latter's
-      --  type
-
-      function Ada_Name (C : Context_Access) return String;
-      --  Return the Ada_Image for that element
-
-      --------------
-      -- Ada_Name --
-      --------------
-
-      function Ada_Name (C : Context_Access) return String is
-         L : constant String := Integer'Image (C.Level);
-      begin
-         case C.Typ is
-            when Context_Schema =>
-               return "";
-            when Context_Choice =>
-               return "Choice" & L (L'First + 1 .. L'Last);
-            when Context_Sequence =>
-               return "Seq" & L (L'First + 1 .. L'Last);
-            when Context_Element =>
-               return Ada_Name (C.Element);
-            when Context_Complex_Type =>
-               return "T_" & C.Complex_Type_Name.all;
-            when Context_Attribute =>
-               return "A_" & Get_Local_Name (C.Attribute);
-         end case;
-      end Ada_Name;
-
-      ---------------------
-      -- Push_In_Context --
-      ---------------------
-
-      procedure Push_In_Context (Element : XML_Element) is
-      begin
-         case Handler.Contexts.Typ is
-            when Context_Schema =>
-               Register (Handler.Target_NS, Element);
-               Output ("Register (Handler.Target_NS, "
-                       & Ada_Name (Element) & ");");
-            when Context_Sequence =>
-               Add_Particle (Handler.Contexts.Seq, Element);
-               Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
-                       & ", " & Ada_Name (Element) & ");");
-            when Context_Choice =>
-               Add_Particle (Handler.Contexts.C, Element);
-               Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
-                       & ", " & Ada_Name (Element) & ");");
-            when others =>
-               Output ("Can't handle nested element decl");
-         end case;
-      end Push_In_Context;
-
-
-      Index  : Integer;
-      Element, Group : XML_Element;
-      Typ    : XML_Type;
       Min_Occurs, Max_Occurs : Integer;
---      Att    : Attribute_Validator;
    begin
       --  Check the grammar
       Start_Element (Validating_Reader (Handler),
@@ -1152,37 +844,6 @@ package body Schema.Schema_Readers is
                      Local_Name,
                      Qname,
                      Atts);
-
-      --  3.3 Element Declaration details:  Validation Rule 3.1
-      --  The "default" attribute of element must match the validation rule
-      --  for that element
-
-      if Local_Name = "element" then
-         Typ := No_Type;
-
-         Index := Get_Index (Atts, URI => "", Local_Name => "type");
-         if Index /= -1 then
-            Lookup_With_NS (Handler, Get_Value (Atts, Index), Result => Typ);
-         end if;
-
-         Index := Get_Index (Atts, URI => "", Local_Name => "default");
-         if Index /= -1 then
-            if Debug then
-               Put_Line ("Validate ""default"" attribute");
-            end if;
-
-            if Typ = No_Type then
-               Raise_Exception
-                 (XML_Validation_Error'Identity,
-                  "Element has not type declaration, ""default"" attribute"
-                  & " can't be validated");
-            end if;
-
-            Validate_Characters (Get_Validator (Typ), Get_Value (Atts, Index));
-         end if;
-      end if;
-
-
 
       --  Process the element
 
@@ -1193,101 +854,48 @@ package body Schema.Schema_Readers is
                "Root element must be <schema>");
          end if;
 
-         Handler.Contexts := new Context'
-           (Typ         => Context_Schema,
-            Level       => 0,
-            Next        => null);
+         Create_Schema (Handler, Atts);
 
       elsif Local_Name = "annotation" then
          null;
 
       elsif Local_Name = "element" then
-         Typ := No_Type;
+         Create_Element (Handler, Atts);
 
-         Index := Get_Index (Atts, URI => "", Local_Name => "type");
-         if Index /= -1 then
-            Lookup_With_NS (Handler, Get_Value (Atts, Index), Result => Typ);
---            Set_Type (Element, Typ);
---              Output ("Set_Type (" & Ada_Name (Element) & ", "
---                      & Ada_Name (Typ) & ");");
-         end if;
+      elsif Local_Name = "complexType"
+        or else Local_Name = "simpleType"
+      then
+         Create_Complex_Type (Handler, Atts);
 
-         Index   := Get_Index (Atts, URI => "", Local_Name => "name");
-         if Index /= -1 then
-            Element := Create_Element (Get_Value (Atts, Index), Typ);
-            Output
-              (Ada_Name (Element) & " := Create_Element ("""
-               & Get_Value (Atts, Index) & """, " & Ada_Name (Typ) & ");");
-            Push_In_Context (Element);
-         end if;
+      elsif Local_Name = "restriction" then
+         Create_Restriction (Handler, Atts);
 
-         Index := Get_Index
-           (Atts, URI => "", Local_Name => "substitutionGroup");
-         if Index /= -1 then
-            Lookup_With_NS (Handler, Get_Value (Atts, Index), Result => Group);
-            Set_Substitution_Group (Element, Group);
-            Output ("Set_Substitution_Group ("
-                    & Ada_Name (Element) & ", " & Ada_Name (Group) & ");");
-         end if;
+      elsif Local_Name = "extension" then
+         Create_Extension (Handler, Atts);
 
-         Handler.Contexts := new Context'
-           (Typ         => Context_Element,
-            Element     => Element,
-            Level       => Handler.Contexts.Level + 1,
-            Next        => Handler.Contexts);
+      elsif Local_Name = "maxLength"
+        or else Local_Name = "pattern"
+        or else Local_Name = "minLength"
+        or else Local_Name = "enumeration"
+        or else Local_Name = "whiteSpace"
+        or else Local_Name = "totalDigits"
+        or else Local_Name = "fractionDigits"
+        or else Local_Name = "maxInclusive"
+        or else Local_Name = "maxExclusive"
+        or else Local_Name = "minInclusive"
+        or else Local_Name = "minExclusive"
+      then
+         Add_Facet (Handler.Contexts.Restriction, Local_Name,
+                    Get_Value (Atts, URI => "", Local_Name => "value"));
 
-      elsif Local_Name = "complexType" then
-         null;
---           Index := Get_Index (Atts, URI => "", Local_Name => "name");
---
---           Handler.Contexts := new Context'
---             (Typ               => Context_Complex_Type,
---            Complex_Type_Name => new Byte_Sequence'(Get_Value (Atts, Index)),
---              Complex_Type_Validator => null,
---              Level                  => Handler.Contexts.Level + 1,
---              Next                   => Handler.Contexts);
+      elsif Local_Name = "all" then
+         Create_All (Handler, Atts);
 
       elsif Local_Name = "sequence" then
-         --  ??? Should get the default from the attributes definition
---           Index := Get_Index (Atts, URI => "", Local_Name => "minOccurs");
---           if Index /= -1 then
---              Min_Occurs := Integer'Value (Get_Value (Atts, Index));
---           else
-         Min_Occurs := 1;
---           end if;
+         Create_Sequence (Handler, Atts);
 
-         --  ??? Should get the default from the attributes definition
---           Index := Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
---           if Index /= -1 then
---              Max_Occurs := Integer'Value (Get_Value (Atts, Index));
---           else
-         Max_Occurs := 1;
---           end if;
-
-         Handler.Contexts := new Context'
-           (Typ      => Context_Sequence,
-            Seq      => Create_Sequence (Min_Occurs, Max_Occurs),
-            Level     => Handler.Contexts.Level + 1,
-            Next     => Handler.Contexts);
-         Output (Ada_Name (Handler.Contexts) & " := Create_Sequence ("
-                 & Min_Occurs'Img & ',' & Max_Occurs'Img & ")");
-
-         case Handler.Contexts.Next.Typ is
-            when Context_Complex_Type =>
-               Handler.Contexts.Next.Complex_Type_Validator :=
-                 XML_Validator (Handler.Contexts.Seq);
-               Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
-            when Context_Sequence =>
-               Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Seq);
-               Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
-                       & ", " & Ada_Name (Handler.Contexts) & ");");
-            when Context_Choice =>
-               Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Seq);
-               Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
-                       & ", " & Ada_Name (Handler.Contexts) & ");");
-            when Context_Schema | Context_Attribute | Context_Element =>
-               Output ("Can't handle nested sequence");
-         end case;
+      elsif Local_Name = "list" then
+         Create_List (Handler, Atts);
 
       elsif Local_Name = "choice" then
          --  ??? Should get the default from the attributes definition
@@ -1315,8 +923,8 @@ package body Schema.Schema_Readers is
                  & Min_Occurs'Img & ',' & Max_Occurs'Img & ")");
 
          case Handler.Contexts.Next.Typ is
-            when Context_Complex_Type =>
-               Handler.Contexts.Next.Complex_Type_Validator :=
+            when Context_Type_Def =>
+               Handler.Contexts.Next.Type_Validator :=
                  XML_Validator (Handler.Contexts.C);
                Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             when Context_Sequence =>
@@ -1327,47 +935,13 @@ package body Schema.Schema_Readers is
                Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.C);
                Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                        & ", " & Ada_Name (Handler.Contexts) & ");");
-            when Context_Schema | Context_Attribute | Context_Element =>
+            when Context_Schema | Context_Attribute | Context_Element
+               | Context_Restriction | Context_Extension | Context_All =>
                Output ("Can't handle nested sequence");
          end case;
 
       elsif Local_Name = "attribute" then
-         null;
---           Att := Create_Attribute
---            (Local_Name => Get_Value (Atts, URI => "", Local_Name => "name"),
---              NS         => Handler.Target_NS,
---              Attribute_Type => No_Type,
---              Attribute_Use  => Optional,
---              Attribute_Form => Qualified,
---              Value          => "");
---
---           Handler.Contexts := new Context'
---             (Typ        => Context_Attribute,
---              Attribute  => Att,
---              Level      => Handler.Contexts.Level + 1,
---              Next       => Handler.Contexts);
---           Output (Ada_Name (Handler.Contexts) & " := Create_Attribute ("""
---                   & Get_Value (Atts, URI => "", Local_Name => "name")
---                   & """);");
---
---           case Handler.Contexts.Next.Typ is
---              when Context_Complex_Type =>
---                 Add_Attribute
---                   (Handler.Contexts.Next.Complex_Type_Validator, Att);
---                 Output ("Add_Attribute ("
---                         & Ada_Name (Handler.Contexts.Next) & ", "
---                         & Ada_Name (Handler.Contexts));
---
---              when Context_Schema =>
---                 Register (Att);
---                 Output ("Register (Handler.Target_NS, "
---                         & Ada_Name (Handler.Contexts) & ");");
---
---              when Context_Element | Context_Sequence | Context_Choice
---                 | Context_Attribute =>
---                 Output ("Can't handle attribute decl in this context");
---           end case;
-
+         Create_Attribute (Handler, Atts);
 
       else
          Output ("Tag not handled yet: " & Local_Name);
@@ -1385,7 +959,6 @@ package body Schema.Schema_Readers is
       Qname         : Unicode.CES.Byte_Sequence := "")
    is
       C : Context_Access := Handler.Contexts;
---      Typ : XML_Type;
       Handled : Boolean := True;
    begin
       --  Check the grammar
@@ -1395,31 +968,35 @@ package body Schema.Schema_Readers is
                      Qname);
 
       --  Process the tag
-
       if Local_Name = "element" then
-         null;
+         Finish_Element (Handler);
 
       elsif Local_Name = "schema" then
          --  ??? Check there remains no undefined forward declaration
          null;
 
-      elsif Local_Name = "complexType" then
-         Handled := False;
---           Typ := Create_Type
---             (C.Complex_Type_Name.all, C.Complex_Type_Validator);
---           Register (Handler.Target_NS, Typ);
---
---           Output ("Typ := Create_Type ("""
---                   & C.Complex_Type_Name.all & ", Validator);");
---           Output ("Register (Handler.Target_NS, Typ);");
-
-      elsif Local_Name = "sequence"
-        or else Local_Name = "choice"
+      elsif Local_Name = "complexType"
+        or else Local_Name = "simpleType"
       then
+         Finish_Complex_Type (Handler);
+
+      elsif Local_Name = "all" then
+         Finish_All (Handler);
+
+      elsif Local_Name = "sequence" then
+         Finish_Sequence (Handler);
+
+      elsif Local_Name = "choice" then
          null;
 
+      elsif Local_Name = "restriction" then
+         Finish_Restriction (Handler);
+
+      elsif Local_Name = "extension" then
+         Finish_Extension (Handler);
+
       elsif Local_Name = "attribute" then
-         Handled := False;
+         Finish_Attribute (Handler);
 
       else
          Output ("Close tag not handled yet: " & Local_Name);
@@ -1443,10 +1020,10 @@ package body Schema.Schema_Readers is
    begin
       if C /= null then
          case C.Typ is
-         when Context_Complex_Type =>
-            Free (C.Complex_Type_Name);
-         when others =>
-            null;
+            when Context_Type_Def =>
+               Free (C.Type_Name);
+            when others =>
+               null;
          end case;
          Unchecked_Free (C);
       end if;
@@ -1524,23 +1101,29 @@ package body Schema.Schema_Readers is
       end if;
    end End_Prefix_Mapping;
 
-   -------------------
-   -- Get_Namespace --
-   -------------------
+   -------------------------------
+   -- Get_Grammar_For_Namespace --
+   -------------------------------
 
-   function Get_Namespace
-     (Handler : Schema_Reader'Class;
-      Prefix  : Byte_Sequence) return Byte_Sequence
+   procedure Get_Grammar_For_Namespace
+     (Handler : in out Schema_Reader'Class;
+      Prefix  : Byte_Sequence;
+      Grammar : out XML_Grammar_NS)
    is
       Tmp : Prefix_Mapping_Access := Handler.Prefixes;
    begin
-      while Tmp /= null loop
-         if Tmp.Prefix.all = Prefix then
-            return Tmp.Namespace.all;
-         end if;
+      while Tmp /= null and then Tmp.Prefix.all /= Prefix loop
          Tmp := Tmp.Next;
       end loop;
-      return "";
-   end Get_Namespace;
+
+      if Tmp = null then
+         Output ("G := Handler.Target_NS;");
+         Grammar := Handler.Target_NS;
+      else
+         Output
+           ("Get_NS (Handler.Grammar, """ & Tmp.Namespace.all & """, G);");
+         Get_NS (Handler.Grammar, Tmp.Namespace.all, Grammar);
+      end if;
+   end Get_Grammar_For_Namespace;
 
 end Schema.Schema_Readers;

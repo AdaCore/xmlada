@@ -11,11 +11,14 @@ package Schema.Readers is
 
    type Validating_Reader is new Sax.Readers.Reader with private;
 
-   procedure Set_Grammar
+   procedure Set_Validating_Grammar
      (Reader  : in out Validating_Reader;
       Grammar : Schema.Validators.XML_Grammar);
    --  Create an XML reader that will validate its input file. The grammar
    --  must have been parsed first.
+   --  If other schema files need to be parsed because of the presence of a
+   --  "targetNamespace" attribute, their corresponding grammars will be added
+   --  to grammar, in their own namespace of course.
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;
@@ -26,24 +29,24 @@ package Schema.Readers is
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether we should output debug traces
 
---     function Current_Type
---       (Reader : Validating_Reader) return Schema.Validators.XML_Type;
-   --  Return the type of the current element, used to check its
-   --  attributes and children
-
 private
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;
    type Validator_List_Record is record
-      Validator : Schema.Validators.XML_Type;
+      Element   : Schema.Validators.XML_Element;
       Data      : Schema.Validators.Validator_Data;
+      Is_Nil    : Boolean;          --  Whether the element has xsi:nil="true"
+      Had_Character_Data : Boolean; --  Whether some character data was given
       Next      : Validator_List;
    end record;
 
    type Validating_Reader is new Sax.Readers.Reader with record
-      Grammar    : Schema.Validators.XML_Grammar;
+      Grammar  : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar;
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator_Access;
+
+      Id_Validator : Schema.Validators.XML_Validator;
+      Ids          : Schema.Validators.Id_Htable_Access;
    end record;
 
    procedure Parse
