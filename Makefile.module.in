@@ -30,17 +30,17 @@ MINOR=@XMLADA_MINOR_VERSION@
 ##        >  make CFLAGS="-gnatf"
 ###########
 
+GNATMAKE=gnatmake
+CC= @CC@
+
 ############
 # Swap the two lines below if you are using a version of GNAT prior to 3.14
 ############
 
-COMPILER=gnatmake
-COMPILER=gnatmake -u -gnatwua -gnaty
-
-
+COMPILER=${GNATMAKE}
+COMPILER=${GNATMAKE} -u -gnatwua -gnaty
 
 RANLIB= @RANLIB@
-CC= @CC@
 ARFLAGS=cr
 MKDIR=mkdir -p
 CFLAGS=
@@ -92,7 +92,7 @@ ${OBJ}: force
 ifeq (${WIN32}, TRUE)
 	@cd obj; ${COMPILER} ${DEP_SRC} ${DEP_OBJ} -I.. -I../.. ${@:%.o=%} ${GNATMAKE_FLAGS}
 else
-ifneq (${COMPILER}, gnatmake)
+ifneq (${COMPILER}, ${GNATMAKE}) 
 	@cd obj; \
 	exec 3>&1; \
 	status=`((${COMPILER} ${DEP_SRC} ${DEP_OBJ} -I.. -I../..\
@@ -105,7 +105,7 @@ endif
 endif
 
 ${TEST_PROGS}: force
-	cd test; gnatmake ${DEP_SRC} ${DEP_OBJ} \
+	cd test; ${GNATMAKE} ${DEP_SRC} ${DEP_OBJ} \
 	  -aI.. -aI../.. -aO../obj ${@:test/%=%} ${GNATMAKE_FLAGS} \
           -bargs ${BIND_FLAGS} 
 
