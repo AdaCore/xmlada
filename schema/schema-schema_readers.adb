@@ -1665,13 +1665,15 @@ package body Schema.Schema_Readers is
             Add_Particle (Handler.Contexts.Seq, Any, Min_Occurs, Max_Occurs);
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts)
-                    & ", Validator);");
+                    & ", Validator," & Min_Occurs'Img & ","
+                    & Max_Occurs'Img & ");");
 
          when Context_Choice =>
             Add_Particle (Handler.Contexts.C, Any, Min_Occurs, Max_Occurs);
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts)
-                    & ", Validator);");
+                    & ", Validator," & Min_Occurs'Img & ","
+                    & Max_Occurs'Img & ");");
 
          when others =>
             Output ("Can't handled nested <any>");
@@ -1686,14 +1688,28 @@ package body Schema.Schema_Readers is
      (Handler  : in out Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Atts);
+      Min_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "minOccurs");
+      Max_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
+      Min_Occurs, Max_Occurs : Integer := 1;
    begin
+      if Min_Occurs_Index /= -1 then
+         Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
+      end if;
+
+      if Max_Occurs_Index /= -1 then
+         Max_Occurs := Max_Occurs_From_Value
+           (Get_Value (Atts, Max_Occurs_Index));
+      end if;
+
       Handler.Contexts := new Context'
         (Typ          => Context_All,
-         All_Validator => Create_All,
+         All_Validator => Create_All (Min_Occurs, Max_Occurs),
          Level         => Handler.Contexts.Level + 1,
          Next          => Handler.Contexts);
-      Output (Ada_Name (Handler.Contexts) & " := Create_All;");
+      Output (Ada_Name (Handler.Contexts) & " := Create_All ("
+              & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
    end Create_All;
 
    ----------------
