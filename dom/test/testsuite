@@ -1820,5 +1820,16 @@ if [ $optional_errors = 1 ]; then
     [ $VALIDATING = 1 ] && expect_japanese "pr-xml-shift_jis"
 fi
 
+#########################
+## Internal testsuite
+#########################
+
+if [ -d act_testsuite/ ]; then
+  (cd act_testsuite
+   echo "-- Running ACT testsuite"
+   ./run
+  )
+fi
+ 
 
 print_result
