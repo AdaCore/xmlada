@@ -1,0 +1,19 @@
+#!/bin/sh
+
+testsax() {
+   xml=$1
+   out=$2
+
+   ../testsax $1 > tmp
+   if diff $2 tmp >/dev/null; then
+      true;
+   else
+      echo "----- $1 ------"
+      diff $2 tmp
+   fi
+}
+
+testsax not_found.xml not_found.xml.out
+
+
+rm tmp
