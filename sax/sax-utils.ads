@@ -38,5 +38,9 @@ package Sax.Utils is
    --  Hash-code used for all htables indexed on strings
 
 
+   function Split_Qname (Qname : Unicode.CES.Byte_Sequence) return Integer;
+   --  Return an index so that:
+   --     Qname (Qname'First .. Result - 1) = <prefix>
+   --     Qname (Result + 1 .. Qname'Last) = <local_name>
 
 end Sax.Utils;

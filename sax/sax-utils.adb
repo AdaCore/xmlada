@@ -190,4 +190,19 @@ package body Sax.Utils is
       return Interfaces.Unsigned_32 (Tmp);
    end Hash;
 
+   -----------------
+   -- Split_Qname --
+   -----------------
+
+   function Split_Qname (Qname : Unicode.CES.Byte_Sequence) return Integer is
+   begin
+      --  ??? This function assumes we are using UTF8 internally
+      for Q in Qname'Range loop
+         if Qname (Q) = ':' then
+            return Q;
+         end if;
+      end loop;
+      return Qname'First - 1;
+   end Split_Qname;
+
 end Sax.Utils;
