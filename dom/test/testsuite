@@ -1675,7 +1675,7 @@ if [ $run_not_wf_tests = 1 ]; then
     expect_oasis_not_wf "p60fail4" \
            "p60fail4.xml:4:31: Expecting a space"
     expect_oasis_not_wf "p60fail5" \
-           "p60fail5.xml:4:34: Expecting a name"
+           "p60fail5.xml:4:34: [3.1] '#REQUIRED' is not a valid name"
     expect_oasis_not_wf "p61fail1" \
            "p61fail1.dtd:2:8: [WF] Unexpected character in the DTD"
     expect_oasis_not_wf "p62fail1" \
