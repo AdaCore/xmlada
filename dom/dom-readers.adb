@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
+--                       Copyright (C) 2001-2003                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -33,6 +33,7 @@ with Unicode.CES;          use Unicode.CES;
 with DOM.Core.Nodes;       use DOM.Core.Nodes;
 with DOM.Core.Documents;   use DOM.Core.Documents;
 with DOM.Core.Elements;    use DOM.Core.Elements;
+with DOM.Core.Character_Datas; use DOM.Core.Character_Datas;
 
 package body DOM.Readers is
    --------------------
@@ -100,9 +101,18 @@ package body DOM.Readers is
      (Handler : in out Tree_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
       Tmp : Node;
+      pragma Unreferenced (Tmp);
    begin
-      Tmp := Append_Child
-        (Handler.Current_Node, Create_Text_Node (Handler.Tree, Ch));
+      --  If previous child is already a text node, we should just concatenate
+      --  the two, as required in DOM specifications (in Text node description)
+      if Last_Child (Handler.Current_Node) /= null
+        and then Node_Type (Last_Child (Handler.Current_Node)) = Text_Node
+      then
+         Append_Data (Last_Child (Handler.Current_Node), Ch);
+      else
+         Tmp := Append_Child
+           (Handler.Current_Node, Create_Text_Node (Handler.Tree, Ch));
+      end if;
    end Characters;
 
    --------------------------
@@ -113,6 +123,7 @@ package body DOM.Readers is
      (Handler : in out Tree_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
       Tmp : Node;
+      pragma Unreferenced (Tmp);
    begin
       --  Ignore these white spaces at the toplevel
       if Handler.Current_Node /= Handler.Tree then
@@ -131,6 +142,7 @@ package body DOM.Readers is
       Data    : Unicode.CES.Byte_Sequence)
    is
       Tmp : Node;
+      pragma Unreferenced (Tmp);
    begin
       if not Handler.In_DTD then
          Tmp := Append_Child
