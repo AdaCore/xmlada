@@ -6,7 +6,7 @@ package Sax.Encodings is
    Encoding : constant Unicode.CES.Encoding_Scheme :=
      Unicode.CES.Utf8.Utf8_Encoding;
    --  The default encoding used internally by XML/Ada, in particular in the
-   --  DOM tree.
+   --  DOM tree. All characters are unicode.
    --  The default value of UTF8 is economical in terms of memory, supports the
    --  whole unicode range of characters, but is slightly slower to process.
    --
