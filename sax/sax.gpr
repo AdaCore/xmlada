@@ -1,0 +1,21 @@
+with "../shared.gpr";
+with "../unicode/unicode.gpr";
+with "../input_sources/input_sources.gpr";
+
+project Sax is
+
+   for Object_Dir use "obj/";
+
+   case Shared.Mode is
+      when "distrib" => for Main use ();
+      when others    => 
+         for Source_Dirs use (".", "test");
+         for Main use ("testsax.adb");
+   end case;
+
+   package Builder  renames Shared.Builder;
+   package Compiler renames Shared.Compiler;
+   package Binder   renames Shared.Binder;
+   package Linker   renames Shared.Linker;
+ 
+end Sax;
