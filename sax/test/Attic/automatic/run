@@ -16,7 +16,7 @@ testsax_internal() {
    if diff $out tmp >/dev/null 2>&1; then
       true;
    else
-      echo "----- $xml ------"
+      echo "----- $dir $xml ------"
       diff $out tmp
    fi
    rm tmp
