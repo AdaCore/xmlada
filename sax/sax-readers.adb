@@ -774,13 +774,14 @@ package body Sax.Readers is
    is
       Tmp : Byte_Sequence_Access;
    begin
-      if Parser.Buffer_Length + Str'Length > Parser.Buffer'Last then
+      --  Loop until we have enough memory to store the string
+      while Parser.Buffer_Length + Str'Length > Parser.Buffer'Last loop
          Tmp := Parser.Buffer;
          Parser.Buffer := new Byte_Sequence
            (1 .. Tmp'Length * 2);
          Parser.Buffer (1 .. Tmp'Length) := Tmp.all;
          Free (Tmp);
-      end if;
+      end loop;
 
       Parser.Buffer
         (Parser.Buffer_Length + 1 .. Parser.Buffer_Length + Str'Length) := Str;
