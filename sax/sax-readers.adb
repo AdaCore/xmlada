@@ -381,15 +381,29 @@ package body Sax.Readers is
      (Parser  : in out Reader'Class;
       Elem    : Element_Access;
       Prefix  : Token;
-      NS      : out XML_NS);
+      NS      : out XML_NS;
+      Include_Default_NS : Boolean := True);
    --  Search the namespace associated with a given prefix in the scope of
    --  Elem or its parents. Use the empty string to get the default namespace.
    --  Fatal_Error is raised if no such namespace was found (and null is
    --  returned, in case Fatal_Error didn't raise an exception)
+   --  The default namespace is not resolved if Include_Default_NS is False.
+
+   procedure Find_NS
+     (Parser  : in out Reader'Class;
+      Elem    : Element_Access;
+      Prefix  : Byte_Sequence;
+      NS      : out XML_NS;
+      Include_Default_NS : Boolean := True);
+   --  Same as above, from a Byte_Sequence
 
    function Qname_From_Name (Parser : Reader'Class; Prefix, Local_Name : Token)
       return Byte_Sequence;
    --  Create the qualified name from the namespace URI and the local name.
+
+   function Prefix_From_Qname (Qname : Byte_Sequence) return Byte_Sequence;
+   --  Return the prefix part of Qname, or the empty string if no explicit
+   --  prefix is defined.
 
    procedure Add_Namespace
      (Parser : in out Reader'Class;
@@ -398,6 +412,14 @@ package body Sax.Readers is
       Report_Event : Boolean := True);
    --  Create a new prefix mapping (an XML namespace). If Node is null, then
    --  the mapping is added as a default namespace
+
+   procedure Add_Namespace
+     (Parser : in out Reader'Class;
+      Node   : Element_Access;
+      Prefix : Byte_Sequence;
+      URI    : Byte_Sequence;
+      Report_Event : Boolean := True);
+   --  Same as above, with strings
 
    procedure Add_Namespace_No_Event
      (Parser : in out Reader'Class;
@@ -432,16 +454,6 @@ package body Sax.Readers is
    --  been read already and is automatically inserted into the stack.
    --  Attlist should be set to true if this is the model in <!ELEMENT>
 
-   procedure Parse_Element_Model_From_Entity
-     (Parser : in out Reader'Class;
-      Name   : Byte_Sequence;
-      M      : out Element_Model_Ptr;
-      Attlist : Boolean := False;
-      Open_Was_Read : Boolean := False);
-   --  Same as above, but the model is contained in the entity Name.
-   --  If Open_Was_Read, then the opening parenthesis is considered to have
-   --  been read already and is automatically inserted into the stack.
-
    procedure Fatal_Error
      (Parser : in out Reader'Class;
       Msg    : String;
@@ -457,6 +469,12 @@ package body Sax.Readers is
       Msg    : String;
       Id     : Token := Null_Token);
    --  Same as Fatal_Error, but reports an error instead
+
+   procedure Warning
+     (Parser : in out Reader'Class;
+      Msg    : String;
+      Id     : Token := Null_Token);
+   --  Same as Fatal_Error, but reports a warning instead
 
    function Location (Parser : Reader'Class; Id : Token) return Byte_Sequence;
    --  Return the location of the start of Id as a string.
@@ -592,6 +610,25 @@ package body Sax.Readers is
       Error (Parser, Create (Location (Parser, Id2) & ": " & Msg,
                              Parser.Locator));
    end Error;
+
+   -------------
+   -- Warning --
+   -------------
+
+   procedure Warning
+     (Parser : in out Reader'Class;
+      Msg    : String;
+      Id     : Token := Null_Token)
+   is
+      Id2 : Token := Id;
+   begin
+      if Id = Null_Token then
+         Id2.Line := Get_Line_Number (Parser.Locator.all);
+         Id2.Column := Get_Column_Number (Parser.Locator.all);
+      end if;
+      Warning (Parser, Create (Location (Parser, Id2) & ": " & Msg,
+                             Parser.Locator));
+   end Warning;
 
    ---------------
    -- Next_Char --
@@ -892,9 +929,25 @@ package body Sax.Readers is
      (Parser  : in out Reader'Class;
       Elem    : Element_Access;
       Prefix  : Token;
-      NS      : out XML_NS)
+      NS      : out XML_NS;
+      Include_Default_NS : Boolean := True)
    is
       Name : constant Byte_Sequence := Value (Parser, Prefix, Prefix);
+   begin
+      Find_NS (Parser, Elem, Name, NS, Include_Default_NS);
+   end Find_NS;
+
+   -------------
+   -- Find_NS --
+   -------------
+
+   procedure Find_NS
+     (Parser  : in out Reader'Class;
+      Elem    : Element_Access;
+      Prefix  : Byte_Sequence;
+      NS      : out XML_NS;
+      Include_Default_NS : Boolean := True)
+   is
       E : Element_Access := Elem;
    begin
       loop
@@ -906,7 +959,11 @@ package body Sax.Readers is
          end if;
 
          while NS /= null loop
-            if NS.Prefix.all = Name then
+            if (Include_Default_NS
+                or else E = null
+                or else NS.Prefix.all /= "")
+              and then NS.Prefix.all = Prefix
+            then
                return;
             end if;
             NS := NS.Next;
@@ -917,7 +974,8 @@ package body Sax.Readers is
       end loop;
 
       Fatal_Error
-        (Parser, "[WF] Prefix '" & Name & "' must be declared before its use");
+        (Parser,
+         "[WF] Prefix '" & Prefix & "' must be declared before its use");
       NS := null;
    end Find_NS;
 
@@ -936,6 +994,25 @@ package body Sax.Readers is
            & Value (Parser, Local_Name, Local_Name);
       end if;
    end Qname_From_Name;
+
+   -----------------------
+   -- Prefix_From_Qname --
+   -----------------------
+
+   function Prefix_From_Qname (Qname : Byte_Sequence) return Byte_Sequence is
+      Index : Natural := Qname'First;
+      C : Unicode_Char;
+   begin
+      while Index <= Qname'Last loop
+         C := Encoding.Read (Qname, Index);
+         if C = Unicode.Names.Basic_Latin.Colon then
+            return Qname (Qname'First .. Index - 1);
+         end if;
+
+         Index := Index + Encoding.Width (C);
+      end loop;
+      return "";
+   end Prefix_From_Qname;
 
    ----------------------------
    -- Add_Namespace_No_Event --
@@ -966,13 +1043,32 @@ package body Sax.Readers is
      (Parser : in out Reader'Class;
       Node   : Element_Access;
       Prefix, URI_Start, URI_End : Token;
+      Report_Event : Boolean := True) is
+   begin
+      Add_Namespace
+        (Parser       => Parser,
+         Node         => Node,
+         Prefix       => Value (Parser, Prefix, Prefix),
+         URI          => Value (Parser, URI_Start, URI_End),
+         Report_Event => Report_Event);
+   end Add_Namespace;
+
+   -------------------
+   -- Add_Namespace --
+   -------------------
+
+   procedure Add_Namespace
+     (Parser : in out Reader'Class;
+      Node   : Element_Access;
+      Prefix : Byte_Sequence;
+      URI    : Byte_Sequence;
       Report_Event : Boolean := True)
    is
       NS : XML_NS;
    begin
       NS := new XML_NS_Record'
-        (Prefix => new Byte_Sequence'(Value (Parser, Prefix, Prefix)),
-         URI    => new Byte_Sequence'(Value (Parser, URI_Start, URI_End)),
+        (Prefix => new Byte_Sequence'(Prefix),
+         URI    => new Byte_Sequence'(URI),
          Next   => null);
 
       if Node = null then
@@ -2112,403 +2208,455 @@ package body Sax.Readers is
       Operand_Index : Natural := Operand_Stack'First;
       Operator_Stack : array (1 .. Stack_Size) of Unicode_Char;
       Operator_Index : Natural := Operator_Stack'First;
-      Num_Items : Positive;
-      Current_Item, Current_Operand : Natural;
       Expect_Operator : Boolean := not Open_Was_Read;
-      Start_Sub : Natural;
-      M : Element_Model_Ptr;
-      Found : Boolean;
-      Start_Id : constant Natural := Input_Id (Parser);
-      Start_Token : Token;
-      Test_Multiplier : Boolean;
-      Can_Be_Mixed : Boolean;
 
-   begin
-      Start_Token.Line := Get_Line_Number (Parser.Locator.all);
-      Start_Token.Column := Get_Column_Number (Parser.Locator.all) - 1;
+      procedure Parse_Element_Model_From_Entity (Name : Byte_Sequence);
+      --  Parse the element model defined in the entity Name, and leave the
+      --  contents on the stacks.
 
-      if Open_Was_Read then
-         --  Insert the opening parenthesis into the operators stack
-         Operator_Stack (Operator_Stack'First) := Opening_Parenthesis;
-         Operator_Index := Operator_Index + 1;
-         Start_Token.Column := Start_Token.Column - 1;
-      end if;
+      procedure Parse
+        (Input         : in out Input_Source'Class;
+         Result        : out Element_Model_Ptr;
+         Open_Was_Read : Boolean;
+         Is_Recursive_Call : Boolean);
+      --  Parse the content model read in Input
+      --  Is_Recursive_Call should be true when called from itself or from
+      --  Parse_Element_Model_From_Entity.
 
-      while Is_White_Space (Parser.Last_Read) loop
-         Next_Char (Input, Parser);
-      end loop;
+      -------------------------------------
+      -- Parse_Element_Model_From_Entity --
+      -------------------------------------
 
-      loop
-         if Input_Id (Parser) /= Start_Id then
-            Fatal_Error (Parser, "[4.5] Entity values must be self-contained",
-                         Start_Token);
+      procedure Parse_Element_Model_From_Entity (Name : Byte_Sequence) is
+         Loc : Locator_Impl;
+         Last : constant Unicode_Char := Parser.Last_Read;
+         Input_S : String_Input;
+         Val : constant Entity_Entry_Access := Get (Parser.Entities, Name);
+         M : Element_Model_Ptr;
+      begin
+         if Val = null then
+            Fatal_Error (Parser, "Unknown entity " & Name);
+
+         elsif Val.Value.all = "" then
+            return;
+
+         else
+            Copy (Loc, Parser.Locator.all);
+            Set_Line_Number (Parser.Locator.all, 1);
+            Set_Column_Number (Parser.Locator.all, 1);
+            Set_Public_Id (Parser.Locator.all, "entity " & Name);
+
+            Open (Val.Value, Encoding, Input_S);
+            Next_Char (Input_S, Parser);
+            Parse (Input_S, M, False, True);
+            --  Parse_Element_Model (Input_S, Parser, M, Attlist, False);
+            Close (Input_S);
+
+            Copy (Parser.Locator.all, Loc);
+            Free (Loc);
+            Parser.Last_Read := Last;
+         end if;
+      end Parse_Element_Model_From_Entity;
+
+      -----------
+      -- Parse --
+      -----------
+
+      procedure Parse
+        (Input : in out Input_Source'Class;
+         Result : out Element_Model_Ptr;
+         Open_Was_Read : Boolean;
+         Is_Recursive_Call : Boolean)
+      is
+         Num_Items : Positive;
+         Current_Item, Current_Operand : Natural;
+         Start_Sub : Natural;
+         M : Element_Model_Ptr;
+         Found : Boolean;
+         Start_Id : constant Natural := Input_Id (Parser);
+         Start_Token : Token;
+         Test_Multiplier : Boolean;
+         Can_Be_Mixed : Boolean;
+         Num_Parenthesis : Integer := 0;
+
+      begin
+         Start_Token.Line := Get_Line_Number (Parser.Locator.all);
+         Start_Token.Column := Get_Column_Number (Parser.Locator.all) - 1;
+
+         if Open_Was_Read then
+            Start_Token.Column := Start_Token.Column - 1;
          end if;
 
-         Test_Multiplier := False;
+         while Is_White_Space (Parser.Last_Read) loop
+            Next_Char (Input, Parser);
+         end loop;
 
-         --  Process the operator
-         case Parser.Last_Read is
-            when Opening_Parenthesis =>
-               Operator_Stack (Operator_Index) := Parser.Last_Read;
-               Operator_Index := Operator_Index + 1;
-               Expect_Operator := False;
-               Next_Char (Input, Parser);
+         loop
+            if Input_Id (Parser) /= Start_Id then
+               Fatal_Error
+                 (Parser, "[4.5] Entity values must be self-contained",
+                  Start_Token);
+            end if;
 
-            when Closing_Parenthesis =>
-               Num_Items := 1;
-               Current_Item := Operator_Index - 1;
-               Current_Operand := Operand_Index - 1;
-               Can_Be_Mixed :=  Current_Operand >= Operand_Stack'First and then
-                 (Operand_Stack (Current_Operand).Content = Character_Data
-                  or else Operand_Stack (Current_Operand).Content
-                  = Element_Ref);
+            Test_Multiplier := False;
 
-               if Current_Operand >= Operand_Stack'First
-                 and then Is_Mixed (Operand_Stack (Current_Operand))
-               then
-                  Fatal_Error
-                    (Parser, "[3.2.1] Mixed contents can not be used in"
-                     & " a list or a sequence");
-               end if;
+            --  Process the operator
+            case Parser.Last_Read is
+               when Opening_Parenthesis =>
+                  Operator_Stack (Operator_Index) := Parser.Last_Read;
+                  Operator_Index := Operator_Index + 1;
+                  Expect_Operator := False;
+                  Next_Char (Input, Parser);
+                  Num_Parenthesis := Num_Parenthesis + 1;
 
-               while Current_Item >= Operator_Stack'First
-                 and then Operator_Stack (Current_Item) /= Opening_Parenthesis
-               loop
-                  if Operator_Stack (Current_Item) /= Comma
-                    and then Operator_Stack (Current_Item) /= Vertical_Line
-                  then
-                     Fatal_Error
-                       (Parser, "Invalid content model", Start_Token);
-                  end if;
-
-                  Current_Operand := Current_Operand - 1;
-
-                  if Operand_Stack (Current_Operand).Content /= Character_Data
+               when Closing_Parenthesis =>
+                  Num_Parenthesis := Num_Parenthesis - 1;
+                  Num_Items := 1;
+                  Current_Item := Operator_Index - 1;
+                  Current_Operand := Operand_Index - 1;
+                  Can_Be_Mixed :=  Current_Operand >= Operand_Stack'First
                     and then
-                    Operand_Stack (Current_Operand).Content /= Element_Ref
-                  then
-                     Can_Be_Mixed := False;
-                  end if;
+                    (Operand_Stack (Current_Operand).Content = Character_Data
+                     or else Operand_Stack (Current_Operand).Content
+                     = Element_Ref);
 
-                  if Is_Mixed (Operand_Stack (Current_Operand)) then
+                  if Current_Operand >= Operand_Stack'First
+                    and then Is_Mixed (Operand_Stack (Current_Operand))
+                  then
                      Fatal_Error
                        (Parser, "[3.2.1] Mixed contents can not be used in"
                         & " a list or a sequence");
                   end if;
 
-                  Num_Items := Num_Items + 1;
-                  Current_Item := Current_Item - 1;
-               end loop;
-               if Current_Item < Operator_Stack'First then
-                  Fatal_Error (Parser, "Invalid content model", Start_Token);
-               end if;
-               if Current_Operand < Operand_Stack'First then
-                  Fatal_Error
-                    (Parser, "Invalid content model: "
-                     & "List of choices cannot be empty", Start_Token);
-               end if;
+                  while Current_Item >= Operator_Stack'First
+                    and then
+                      Operator_Stack (Current_Item) /= Opening_Parenthesis
+                  loop
+                     if Operator_Stack (Current_Item) /= Comma
+                       and then Operator_Stack (Current_Item) /= Vertical_Line
+                     then
+                        Fatal_Error
+                          (Parser, "Invalid content model", Start_Token);
+                     end if;
 
-               if Operator_Stack (Operator_Index - 1) = Comma then
-                  M := new Element_Model (Sequence);
-               else
-                  if not Can_Be_Mixed
-                    and then Operand_Stack (Current_Operand).Content
-                     = Character_Data
-                  then
+                     Current_Operand := Current_Operand - 1;
+
+                     if Current_Operand < Operand_Stack'First then
+                        Fatal_Error
+                          (Parser, "Invalid content model", Start_Token);
+                     end if;
+
+                     if Operand_Stack (Current_Operand).Content
+                       /= Character_Data and then
+                       Operand_Stack (Current_Operand).Content /= Element_Ref
+                     then
+                        Can_Be_Mixed := False;
+                     end if;
+
+                     if Is_Mixed (Operand_Stack (Current_Operand)) then
+                        Fatal_Error
+                          (Parser, "[3.2.1] Mixed contents can not be used in"
+                           & " a list or a sequence");
+                     end if;
+
+                     Num_Items := Num_Items + 1;
+                     Current_Item := Current_Item - 1;
+                  end loop;
+
+                  if Current_Item < Operator_Stack'First then
                      Fatal_Error
-                       (Parser, "[3.2.2] Nested groups and occurence operators"
-                        & " not allowed in mixed content");
+                       (Parser, "Invalid content model", Start_Token);
+                  end if;
+                  if Current_Operand < Operand_Stack'First then
+                     Fatal_Error
+                       (Parser, "Invalid content model: "
+                        & "List of choices cannot be empty", Start_Token);
                   end if;
 
-                  M := new Element_Model (Any_Of);
-               end if;
-               M.List := new Element_Model_Array (1 .. Num_Items);
-               for J in Current_Operand .. Operand_Index - 1 loop
-                  M.List (J - Current_Operand + 1) := Operand_Stack (J);
-               end loop;
-               Operand_Index := Current_Operand + 1;
-               Operand_Stack (Current_Operand) := M;
-               Operator_Index := Current_Item;
-               Expect_Operator := False;
-               Next_Char (Input, Parser);
-               Test_Multiplier := True;
+                  if Operator_Stack (Operator_Index - 1) = Comma then
+                     M := new Element_Model (Sequence);
+                  else
+                     if not Can_Be_Mixed
+                       and then Operand_Stack (Current_Operand).Content
+                       = Character_Data
+                     then
+                        Fatal_Error
+                          (Parser, "[3.2.2] Nested groups and occurence"
+                           & " operators not allowed in mixed content");
+                     end if;
 
-            when Comma | Vertical_Line =>
-               if Attlist and then Parser.Last_Read = Comma then
-                  Fatal_Error
-                    (Parser,
-                     "[3.3.1] Invalid character ',' in ATTLIST enumeration");
-               end if;
-
-               if Parser.Last_Read = Comma
-                 and then Operator_Stack (Operator_Index - 1)
-                   = Opening_Parenthesis
-                 and then Operand_Stack (Operand_Index - 1).Content
-                   = Character_Data
-               then
-                  Fatal_Error
-                    (Parser,
-                     "[3.2.2] #PCDATA can only be used with '|' connectors");
-               end if;
-
-               if Operator_Index = Operator_Stack'First
-                 or else
-                 (Operator_Stack (Operator_Index - 1) /= Parser.Last_Read
-                  and then
-                  Operator_Stack (Operator_Index - 1) /= Opening_Parenthesis)
-               then
-                  Fatal_Error
-                    (Parser, "Can't mix ',' and '|' in content model");
-               end if;
-               Operator_Stack (Operator_Index) := Parser.Last_Read;
-               Operator_Index := Operator_Index + 1;
-               Expect_Operator := False;
-               Next_Char (Input, Parser);
-
-            when Star | Question_Mark | Plus_Sign =>
-               Fatal_Error
-                 (Parser, "[3.2.1] Invalid location '+', '?' or '*' "
-                  & "operator", Start_Token);
-
-            when Number_Sign =>
-               if Expect_Operator then
-                  Fatal_Error
-                    (Parser, "Invalid content model, cannot start with #",
-                     Start_Token);
-               end if;
-               Expect_Operator := True;
-
-               --  #PCDATA can only be the first element of a choice list
-               --  ??? Note that in that case the Choice model can only be a
-               --  list of names, not a parenthesis expression.
-               Start_Sub := Parser.Buffer_Length + 1;
-
-               Next_Char (Input, Parser);
-               Found := (Parser.Last_Read = Latin_Capital_Letter_P);
-               if Found then
+                     M := new Element_Model (Any_Of);
+                  end if;
+                  M.List := new Element_Model_Array (1 .. Num_Items);
+                  for J in Current_Operand .. Operand_Index - 1 loop
+                     M.List (J - Current_Operand + 1) := Operand_Stack (J);
+                  end loop;
+                  Operand_Index := Current_Operand + 1;
+                  Operand_Stack (Current_Operand) := M;
+                  Operator_Index := Current_Item;
+                  Expect_Operator := False;
+                  Test_Multiplier := True;
                   Next_Char (Input, Parser);
-                  Found := (Parser.Last_Read = Latin_Capital_Letter_C);
+
+               when Comma | Vertical_Line =>
+                  if Attlist and then Parser.Last_Read = Comma then
+                     Fatal_Error
+                       (Parser,
+                        "[3.3.1] Invalid character ','"
+                        & " in ATTLIST enumeration");
+                  end if;
+
+                  if Parser.Last_Read = Comma
+                    and then Operator_Stack (Operator_Index - 1)
+                    = Opening_Parenthesis
+                    and then Operand_Stack (Operand_Index - 1).Content
+                    = Character_Data
+                  then
+                     Fatal_Error
+                       (Parser,
+                        "[3.2.2] #PCDATA can only be used with"
+                        & " '|' connectors");
+                  end if;
+
+                  if Operator_Index = Operator_Stack'First
+                    or else
+                    (Operator_Stack (Operator_Index - 1) /= Parser.Last_Read
+                     and then
+                     Operator_Stack (Operator_Index - 1) /=
+                       Opening_Parenthesis)
+                  then
+                     Fatal_Error
+                       (Parser, "Can't mix ',' and '|' in content model");
+                  end if;
+                  Operator_Stack (Operator_Index) := Parser.Last_Read;
+                  Operator_Index := Operator_Index + 1;
+                  Expect_Operator := False;
+                  Next_Char (Input, Parser);
+
+               when Star | Question_Mark | Plus_Sign =>
+                  Fatal_Error
+                    (Parser, "[3.2.1] Invalid location '+', '?' or '*' "
+                     & "operator", Start_Token);
+
+               when Number_Sign =>
+                  if Expect_Operator then
+                     Fatal_Error
+                       (Parser, "Invalid content model, cannot start with #",
+                        Start_Token);
+                  end if;
+                  Expect_Operator := True;
+
+                  --  #PCDATA can only be the first element of a choice list
+                  --  ??? Note that in that case the Choice model can only be a
+                  --  list of names, not a parenthesis expression.
+                  Start_Sub := Parser.Buffer_Length + 1;
+
+                  Next_Char (Input, Parser);
+                  Found := (Parser.Last_Read = Latin_Capital_Letter_P);
                   if Found then
                      Next_Char (Input, Parser);
-                     Found := (Parser.Last_Read = Latin_Capital_Letter_D);
+                     Found := (Parser.Last_Read = Latin_Capital_Letter_C);
                      if Found then
                         Next_Char (Input, Parser);
-                        Found := (Parser.Last_Read = Latin_Capital_Letter_A);
+                        Found := (Parser.Last_Read = Latin_Capital_Letter_D);
                         if Found then
                            Next_Char (Input, Parser);
-                           Found :=
-                             (Parser.Last_Read = Latin_Capital_Letter_T);
+                           Found := Parser.Last_Read = Latin_Capital_Letter_A;
                            if Found then
                               Next_Char (Input, Parser);
                               Found :=
-                                (Parser.Last_Read = Latin_Capital_Letter_A);
+                                (Parser.Last_Read = Latin_Capital_Letter_T);
+                              if Found then
+                                 Next_Char (Input, Parser);
+                                 Found :=
+                                   (Parser.Last_Read = Latin_Capital_Letter_A);
+                              end if;
                            end if;
                         end if;
                      end if;
                   end if;
-               end if;
 
-               if not Found then
-                  Fatal_Error
-                    (Parser, "[WF] Invalid sequence in content model",
-                     Start_Token);
-               end if;
+                  if not Found then
+                     Fatal_Error
+                       (Parser, "[WF] Invalid sequence in content model",
+                        Start_Token);
+                  end if;
 
-               if Operator_Stack (Operator_Index - 1)
-                 /= Opening_Parenthesis
-               then
-                  Fatal_Error
-                    (Parser, "[3.2.2] #PCDATA must be first in list");
-               end if;
+                  if Operator_Stack (Operator_Index - 1)
+                    /= Opening_Parenthesis
+                  then
+                     Fatal_Error
+                       (Parser, "[3.2.2] #PCDATA must be first in list");
+                  end if;
 
-               Next_Char (Input, Parser);
-               Operand_Stack (Operand_Index) :=
-                 new Element_Model (Character_Data);
-               Operand_Index := Operand_Index + 1;
-               Parser.Buffer_Length := Start_Sub - 1;
-
-            when Percent_Sign =>
-               if not Parser.In_External_Entity
-                 and then Parser.State.Name /= DTD_State.Name
-               then
-                  Fatal_Error
-                    (Parser, "[WF PE in internal subset] Parameter entities"
-                     & " cannot occur in attribute values");
-               end if;
-
-               Expect_Operator := True;
-               Start_Sub := Parser.Buffer_Length + 1;
-
-               while Parser.Last_Read /= Semicolon loop
-                  Put_In_Buffer (Parser, Parser.Last_Read);
-                  Next_Char (Input, Parser);
-               end loop;
-               Next_Char (Input, Parser);
-
-               Parse_Element_Model_From_Entity
-                    (Parser, Parser.Buffer (Start_Sub .. Parser.Buffer_Length),
-                     Operand_Stack (Operand_Index), Attlist, Open_Was_Read);
-               if Operand_Stack (Operand_Index) /= null then
+                  Operand_Stack (Operand_Index) :=
+                    new Element_Model (Character_Data);
                   Operand_Index := Operand_Index + 1;
-               end if;
-               Parser.Buffer_Length := Start_Sub - 1;
-               Test_Multiplier := True;
-
-            when others =>
-               if Expect_Operator then
-                  Fatal_Error  (Parser, "Expecting operator in content model");
-               end if;
-               Expect_Operator := True;
-
-               --  ??? Should test Is_Nmtoken
-               Start_Sub := Parser.Buffer_Length + 1;
-
-               while Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
-                 or else Is_Name_Char (Parser.Last_Read)
-               loop
-                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Parser.Buffer_Length := Start_Sub - 1;
                   Next_Char (Input, Parser);
+
+               when Percent_Sign =>
+                  if not Parser.In_External_Entity
+                    and then Parser.State.Name /= DTD_State.Name
+                  then
+                     Fatal_Error
+                       (Parser, "[WF PE in internal subset] Parameter entities"
+                        & " cannot occur in attribute values");
+                  end if;
+
+                  Start_Sub := Parser.Buffer_Length + 1;
+
+                  while Parser.Last_Read /= Semicolon loop
+                     Put_In_Buffer (Parser, Parser.Last_Read);
+                     Next_Char (Input, Parser);
+                  end loop;
+
+                  Parse_Element_Model_From_Entity
+                    (Parser.Buffer (Start_Sub .. Parser.Buffer_Length));
+                  Parser.Buffer_Length := Start_Sub - 1;
+                  Next_Char (Input, Parser);
+
+               when others =>
+                  if Expect_Operator then
+                     Fatal_Error
+                       (Parser, "Expecting operator in content model");
+                  end if;
+                  Expect_Operator := True;
+
+                  --  ??? Should test Is_Nmtoken
+                  Start_Sub := Parser.Buffer_Length + 1;
+
+                  while Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
+                    or else Is_Name_Char (Parser.Last_Read)
+                  loop
+                     Put_In_Buffer (Parser, Parser.Last_Read);
+                     Next_Char (Input, Parser);
+                  end loop;
+
+                  if Start_Sub > Parser.Buffer_Length then
+                     Fatal_Error (Parser, "Invalid name in content model: "
+                                  & Encoding.Encode (Parser.Last_Read),
+                                  Start_Token);
+                  end if;
+
+                  Operand_Stack (Operand_Index) :=
+                    new Element_Model (Element_Ref);
+                  Operand_Stack (Operand_Index).Name := new Byte_Sequence'
+                    (Parser.Buffer (Start_Sub .. Parser.Buffer_Length));
+                  Operand_Index := Operand_Index + 1;
+                  Parser.Buffer_Length := Start_Sub - 1;
+                  Test_Multiplier := True;
+
+            end case;
+
+            if Test_Multiplier then
+               case Parser.Last_Read is
+                  when Star =>
+                     if Operand_Index = Operand_Stack'First then
+                        Fatal_Error
+                          (Parser, "'*' must follow a name or list");
+                     end if;
+                     Operand_Stack (Operand_Index - 1) := new Element_Model'
+                       (Repeat, 0, Positive'Last,
+                        Operand_Stack (Operand_Index - 1));
+                     Expect_Operator := True;
+                     Next_Char (Input, Parser);
+
+                  when Plus_Sign =>
+                     if Operand_Index = Operand_Stack'First then
+                        Fatal_Error
+                          (Parser, "'+' must follow a name or list");
+                     end if;
+                     if Is_Mixed (Operand_Stack (Operand_Index - 1)) then
+                        Fatal_Error
+                          (Parser, "[3.2.2] Occurence on #PCDATA must be '*'");
+                     end if;
+
+                     Operand_Stack (Operand_Index - 1) := new Element_Model'
+                       (Repeat, 1,
+                        Positive'Last, Operand_Stack (Operand_Index - 1));
+                     Expect_Operator := True;
+                     Next_Char (Input, Parser);
+
+                  when Question_Mark =>
+                     if Operand_Index = Operand_Stack'First then
+                        Fatal_Error
+                          (Parser, "'?' must follow a name or list");
+                     end if;
+                     if Is_Mixed (Operand_Stack (Operand_Index - 1)) then
+                        Fatal_Error
+                          (Parser, "[3.2.2] Occurence on #PCDATA must be '*'");
+                     end if;
+                     Operand_Stack (Operand_Index - 1) := new Element_Model'
+                       (Repeat, 0, 1, Operand_Stack (Operand_Index - 1));
+                     Expect_Operator := True;
+                     Next_Char (Input, Parser);
+
+                  when others => null;
+               end case;
+            end if;
+
+            exit when Operator_Index = Operator_Stack'First
+              and then Operand_Index = Operand_Stack'First + 1;
+
+            while Is_White_Space (Parser.Last_Read) loop
+               Next_Char (Input, Parser);
+            end loop;
+         end loop;
+
+         if not Is_Recursive_Call then
+            if Operator_Index /= Operator_Stack'First
+              or else Operand_Index /= Operand_Stack'First + 1
+            then
+               Fatal_Error (Parser, "Invalid content model", Start_Token);
+            end if;
+
+            Result := Operand_Stack (Operand_Stack'First);
+
+         elsif Num_Parenthesis /= 0 then
+            Fatal_Error (Parser, "[3.2.1] Replacement text for entities must"
+                         & " be properly nested", Start_Token);
+         end if;
+
+      exception
+         when Input_Ended =>
+            if not Is_Recursive_Call then
+               for J in Operand_Stack'First .. Operand_Index - 1 loop
+                  Free (Operand_Stack (J));
                end loop;
 
-               if Start_Sub > Parser.Buffer_Length then
-                  Fatal_Error (Parser, "Invalid name in content model: "
-                               & Encoding.Encode (Parser.Last_Read),
-                               Start_Token);
-               end if;
+            elsif Num_Parenthesis /= 0 then
+               Fatal_Error
+                 (Parser, "[3.2.1] Replacement text for entities must"
+                  & " be properly nested", Start_Token);
 
+            elsif Parser.Buffer_Length >= Start_Sub then
                Operand_Stack (Operand_Index) :=
                  new Element_Model (Element_Ref);
                Operand_Stack (Operand_Index).Name := new Byte_Sequence'
                  (Parser.Buffer (Start_Sub .. Parser.Buffer_Length));
                Operand_Index := Operand_Index + 1;
                Parser.Buffer_Length := Start_Sub - 1;
-               Test_Multiplier := True;
+            end if;
 
-         end case;
-
-         if Test_Multiplier then
-            case Parser.Last_Read is
-               when Star =>
-                  if Operand_Index = Operand_Stack'First then
-                     Fatal_Error
-                       (Parser, "'*' must follow a name or list");
-                  end if;
-                  Operand_Stack (Operand_Index - 1) := new Element_Model'
-                    (Repeat, 0, Positive'Last,
-                     Operand_Stack (Operand_Index - 1));
-                  Expect_Operator := True;
-                  Next_Char (Input, Parser);
-
-               when Plus_Sign =>
-                  if Operand_Index = Operand_Stack'First then
-                     Fatal_Error
-                       (Parser, "'+' must follow a name or list");
-                  end if;
-                  if Is_Mixed (Operand_Stack (Operand_Index - 1)) then
-                     Fatal_Error
-                       (Parser, "[3.2.2] Occurence on #PCDATA must be '*'");
-                  end if;
-
-                  Operand_Stack (Operand_Index - 1) := new Element_Model'
-                    (Repeat, 1,
-                     Positive'Last, Operand_Stack (Operand_Index - 1));
-                  Expect_Operator := True;
-                  Next_Char (Input, Parser);
-
-               when Question_Mark =>
-                  if Operand_Index = Operand_Stack'First then
-                     Fatal_Error
-                       (Parser, "'?' must follow a name or list");
-                  end if;
-                  if Is_Mixed (Operand_Stack (Operand_Index - 1)) then
-                     Fatal_Error
-                       (Parser, "[3.2.2] Occurence on #PCDATA must be '*'");
-                  end if;
-                  Operand_Stack (Operand_Index - 1) := new Element_Model'
-                    (Repeat, 0, 1, Operand_Stack (Operand_Index - 1));
-                  Expect_Operator := True;
-                  Next_Char (Input, Parser);
-
-               when others => null;
-            end case;
-         end if;
-
-         exit when Operator_Index = Operator_Stack'First
-           and then Operand_Index = Operand_Stack'First + 1;
-
-         while Is_White_Space (Parser.Last_Read) loop
-            Next_Char (Input, Parser);
-         end loop;
-      end loop;
-
-      if Operator_Index /= Operator_Stack'First
-        or else Operand_Index /= Operand_Stack'First + 1
-      then
-         Fatal_Error (Parser, "Invalid content model", Start_Token);
-      end if;
-
-      Result := Operand_Stack (Operand_Stack'First);
-
-   exception
-      when Input_Ended =>
-         if not Open_Was_Read then
-            if Operator_Index /= Operator_Stack'First
-              or else Operand_Index /= Operand_Stack'First + 1
-            then
+         when others =>
+            if not Is_Recursive_Call then
                for J in Operand_Stack'First .. Operand_Index - 1 loop
                   Free (Operand_Stack (J));
                end loop;
-               Fatal_Error (Parser, "Invalid content model", Start_Token);
             end if;
-         end if;
-         Result := Operand_Stack (Operand_Stack'First);
+            raise;
+      end Parse;
 
-      when others =>
-         for J in Operand_Stack'First .. Operand_Index - 1 loop
-            Free (Operand_Stack (J));
-         end loop;
-         raise;
-   end Parse_Element_Model;
-
-   -------------------------------------
-   -- Parse_Element_Model_From_Entity --
-   -------------------------------------
-
-   procedure Parse_Element_Model_From_Entity
-     (Parser : in out Reader'Class;
-      Name   : Byte_Sequence;
-      M      : out Element_Model_Ptr;
-      Attlist : Boolean := False;
-      Open_Was_Read : Boolean := False)
-   is
-      Loc : Locator_Impl;
-      Last : constant Unicode_Char := Parser.Last_Read;
-      Input_S : String_Input;
-      Val : constant Entity_Entry_Access := Get (Parser.Entities, Name);
    begin
-      if Val = null then
-         Put_Line ("Unknown entity " & Name);
-         M := null;
-
-      elsif Val.Value.all = "" then
-         M := null;
-
-      else
-         Copy (Loc, Parser.Locator.all);
-         Set_Line_Number (Parser.Locator.all, 1);
-         Set_Column_Number (Parser.Locator.all, 1);
-         Set_Public_Id (Parser.Locator.all, "entity " & Name);
-
-         Open (Val.Value, Encoding, Input_S);
-         Next_Char (Input_S, Parser);
-         Parse_Element_Model (Input_S, Parser, M, Attlist, Open_Was_Read);
-         Close (Input_S);
-
-         Copy (Parser.Locator.all, Loc);
-         Free (Loc);
-         Parser.Last_Read := Last;
+      if Open_Was_Read then
+         --  Insert the opening parenthesis into the operators stack
+         Operator_Stack (Operator_Stack'First) := Opening_Parenthesis;
+         Operator_Index := Operator_Index + 1;
       end if;
-   end Parse_Element_Model_From_Entity;
+
+      Parse (Input, Result, Open_Was_Read, False);
+   end Parse_Element_Model;
 
    ---------------------
    -- Syntactic_Parse --
@@ -3044,10 +3192,8 @@ package body Sax.Readers is
          Ename_Id, Name_Id, NS_Id, Type_Id : Token;
          Default_Id : Token;
          Attr : Attributes_Ptr;
-         NS : XML_NS;
          Default_Decl : Default_Declaration;
          Att_Type : Attribute_Type;
-         Is_New : Boolean;
       begin
          Set_State (Parser, Element_Def_State);
          Next_Token_Skip_Spaces (Input, Parser, Ename_Id);
@@ -3059,10 +3205,11 @@ package body Sax.Readers is
          Attr := Get (Parser.Default_Atts,
                       Value (Parser, Ename_Id, Ename_Id)).Attributes;
          if Attr = null then
-            Is_New := True;
             Attr := new Sax.Attributes.Attributes;
-         else
-            Is_New := False;
+            Set (Parser.Default_Atts,
+                 (Element_Name =>
+                    new Byte_Sequence'(Value (Parser, Ename_Id, Ename_Id)),
+                  Attributes => Attr));
          end if;
 
          loop
@@ -3166,13 +3313,17 @@ package body Sax.Readers is
                Value_Default => Default_Decl,
                Value => Value (Parser, Default_Start, Default_End));
 
-            Find_NS (Parser, Parser.Current_Node, NS_Id, NS);
             if Get_Index
-              (Attr.all, NS.URI.all, Value (Parser, Name_Id, Name_Id)) = -1
+              (Attr.all,
+               Qname => Qname_From_Name (Parser, NS_Id, Name_Id)) = -1
             then
+               --  The URI cannot be resolved at this point, since it will
+               --  depend on the contents of the document at the place where
+               --  the attribute is used.
+
                Add_Attribute
                  (Attr.all,
-                  NS.URI.all,
+                  "",
                   Value (Parser, Name_Id, Name_Id),
                   Qname_From_Name (Parser, NS_Id, Name_Id),
                   Att_Type,
@@ -3198,14 +3349,6 @@ package body Sax.Readers is
 
          if Id.Typ /= End_Of_Tag then
             Fatal_Error (Parser, "[WF] Expecting end of ATTLIST definition");
-         end if;
-
-         --  Store the default attributes
-         if Is_New then
-            Set (Parser.Default_Atts,
-                 (Element_Name =>
-                    new Byte_Sequence'(Value (Parser, Ename_Id, Ename_Id)),
-                  Attributes => Attr));
          end if;
 
          Set_State (Parser, DTD_State);
@@ -3363,6 +3506,8 @@ package body Sax.Readers is
                            & Value (Parser, Elem_Name_Id, Elem_Name_Id));
                      end if;
 
+                     --  We must compare with Qnames, since we namespaces
+                     --  haven't been resolved for default attributes
                      Index := Get_Index
                        (Atts.all,
                         Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id));
@@ -3395,6 +3540,7 @@ package body Sax.Readers is
             end if;
 
             --  Register the attribute
+            --  URI are resolved later on, we currently only store the prefix
             if Add_Attr then
                Add_Attribute
                  (Attributes,
@@ -3472,22 +3618,65 @@ package body Sax.Readers is
          if Attr /= null then
             for J in 0 .. Get_Length (Attr.all) - 1 loop
                --  ??? This could/should be more efficient.
+
+               --  We must compare qnames, since namespaces haven't been
+               --  resolved in the default attributes.
                if Get_Default_Declaration (Attr.all, J) /=
                    Sax.Attributes.Implied
                  and then Get_Index (Attributes,
-                                     Get_URI (Attr.all, J),
-                                     Get_Local_Name (Attr.all, J)) = -1
+                                     Qname => Get_Qname (Attr.all, J)) = -1
                then
-                  Add_Attribute (Attributes,
-                                 Get_URI (Attr.all, J),
-                                 Get_Local_Name (Attr.all, J),
-                                 Get_Qname (Attr.all, J),
-                                 Get_Type (Attr.all, J),
-                                 Get_Content (Attr.all, J),
-                                 Get_Value (Attr.all, J));
+                  --  Find_NS (Parser, Parser.Current_Node,
+                  --           Prefix_From_Qname (Get_Qname (Attr.all, J)),
+                  --           NS);
+
+                  declare
+                     Prefix : constant Byte_Sequence :=
+                       Prefix_From_Qname (Get_Qname (Attr.all, J));
+                     Is_Xmlns : constant Boolean := Prefix = Xmlns_Sequence;
+                  begin
+                     if Parser.Feature_Namespace_Prefixes
+                       or else not Is_Xmlns
+                     then
+                        Add_Attribute (Attributes,
+                                       Prefix,
+                                       Get_Local_Name (Attr.all, J),
+                                       Get_Qname (Attr.all, J),
+                                       Get_Type (Attr.all, J),
+                                       Get_Content (Attr.all, J),
+                                       Get_Value (Attr.all, J));
+                     end if;
+
+                     --  Is this a namespace declaration ?
+                     if Is_Xmlns then
+                        --  Following warning is because for parser that don't
+                        --  read external DTDs, the behavior would be different
+                        --  for the same document.
+                        Warning
+                          (Parser,
+                           "namespace-declaring attribute inserted via "
+                           & "DTD defaulting mechanisms are not good style");
+                        Add_Namespace
+                          (Parser, Parser.Current_Node,
+                           Prefix => Get_Local_Name (Attr.all, J),
+                           URI    => Get_Value (Attr.all, J));
+                     end if;
+                  end;
                end if;
             end loop;
          end if;
+
+         --  We now need to resolve all the namespaces for the attribute
+         --  namespaces
+
+         for J in 0 .. Get_Length (Attributes) - 1 loop
+            Find_NS (Parser, Parser.Current_Node,
+                     Get_URI (Attributes, J), NS,
+                     Include_Default_NS => False);
+            Set_URI (Attributes, J, NS.URI.all);
+         end loop;
+
+         --  And report the elements to the callbacks
 
          Set_State (Parser, Default_State);
          Find_NS (Parser, Parser.Current_Node,  Elem_NS_Id, NS);
