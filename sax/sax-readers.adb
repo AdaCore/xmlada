@@ -23,6 +23,9 @@ package body Sax.Readers is
    Debug_Input : constant Boolean := False;
    --  Set to True if you want to debug this package
 
+   Initial_Buffer_Length : constant := 10000;
+   --  Initial length of the internal buffer that stores CDATA, tag names,...
+
    ------------
    -- Tokens --
    ------------
@@ -658,9 +661,18 @@ package body Sax.Readers is
    -------------------
 
    procedure Put_In_Buffer
-     (Parser : in out Reader'Class; Str : Byte_Sequence) is
+     (Parser : in out Reader'Class; Str : Byte_Sequence)
+   is
+      Tmp : Byte_Sequence_Access;
    begin
-      pragma Assert (Parser.Buffer_Length + Str'Length <= Parser.Buffer'Last);
+      if Parser.Buffer_Length + Str'Length > Parser.Buffer'Last then
+         Tmp := Parser.Buffer;
+         Parser.Buffer := new Byte_Sequence
+           (1 .. Tmp'Length * 2);
+         Parser.Buffer (1 .. Tmp'Length) := Tmp.all;
+         Free (Tmp);
+      end if;
+
       Parser.Buffer
         (Parser.Buffer_Length + 1 .. Parser.Buffer_Length + Str'Length) := Str;
       Parser.Buffer_Length := Parser.Buffer_Length + Str'Length;
@@ -1349,7 +1361,7 @@ package body Sax.Readers is
             begin
                Put (" --");
                while J <= Id.Last loop
-                  C := Encoding.Read (Parser.Buffer, J);
+                  C := Encoding.Read (Parser.Buffer.all, J);
                   J := J + Encoding.Width (C);
                   Put (Unicode_Char'Image (C));
                end loop;
@@ -2648,7 +2660,7 @@ package body Sax.Readers is
 
                Index := Public_Start.First;
                while Index <= Public_End.Last loop
-                  C := Encoding.Read (Parser.Buffer, Index);
+                  C := Encoding.Read (Parser.Buffer.all, Index);
                   Index := Index + Encoding.Width (C);
 
                   if not Is_Pubid_Char (C) then
@@ -3688,7 +3700,7 @@ package body Sax.Readers is
 
          J := Value_Start.First;
          while J <= Value_End.Last loop
-            C := Encoding.Read (Parser.Buffer, J);
+            C := Encoding.Read (Parser.Buffer.all, J);
             J := J + Encoding.Width (C);
             if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
               and then
@@ -3739,7 +3751,7 @@ package body Sax.Readers is
             Fatal_Error
               (Parser, "[4.3.3] Empty value for encoding not allowed");
          else
-            C := Encoding.Read (Parser.Buffer, Value_Start.First);
+            C := Encoding.Read (Parser.Buffer.all, Value_Start.First);
             if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
               and then not
                 (C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
@@ -3751,7 +3763,7 @@ package body Sax.Readers is
 
             J := Value_Start.First + Encoding.Width (C);
             while J <= Value_End.Last loop
-               C := Encoding.Read (Parser.Buffer, J);
+               C := Encoding.Read (Parser.Buffer.all, J);
                J := J + Encoding.Width (C);
                if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
                  and then not
@@ -3908,19 +3920,19 @@ package body Sax.Readers is
                C : Unicode_Char;
                J : Natural := Name_Id.First;
             begin
-               C := Encoding.Read (Parser.Buffer, J);
+               C := Encoding.Read (Parser.Buffer.all, J);
                J := J + Encoding.Width (C);
 
                if C = Latin_Small_Letter_X
                  or else C = Latin_Capital_Letter_X
                then
-                  C := Encoding.Read (Parser.Buffer, J);
+                  C := Encoding.Read (Parser.Buffer.all, J);
                   J := J + Encoding.Width (C);
 
                   if C = Latin_Capital_Letter_M
                     or else C = Latin_Small_Letter_M
                   then
-                     C := Encoding.Read (Parser.Buffer, J);
+                     C := Encoding.Read (Parser.Buffer.all, J);
                      J := J + Encoding.Width (C);
 
                      if (C = Latin_Capital_Letter_L
@@ -4039,6 +4051,7 @@ package body Sax.Readers is
       Free (Parser.Default_Namespaces);
       Free (Parser.Locator);
       Free (Parser.DTD_Name);
+      Free (Parser.Buffer);
 
       --  Free all the entities that were declared in the DTD.
       --  ??? Probably not the most efficient, but we would need another
@@ -4073,6 +4086,7 @@ package body Sax.Readers is
       Parser.Previous_Char_Was_CR := False;
       Parser.Ignore_State_Special := False;
       Parser.In_External_Entity := False;
+      Parser.Buffer := new Byte_Sequence (1 .. Initial_Buffer_Length);
       Set_State (Parser, Default_State);
 
       Add_Namespace_No_Event

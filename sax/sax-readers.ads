@@ -394,10 +394,6 @@ package Sax.Readers is
    XML_Fatal_Error : exception;
 
 private
-   Max_Buffer_Length : constant := 10000;
-   --  Length of internal buffer.
-   --  This is also the maximum length of tag names.
-
    Entities_Table_Size : constant := 50;
    --  Size of the hash-table used to store entities.
    --  This is not a hard limit on the number of entities that can be defined.
@@ -539,7 +535,7 @@ private
 
    type Reader is tagged record
       Buffer_Length : Natural := 0;
-      Buffer        : Unicode.CES.Byte_Sequence (1 .. Max_Buffer_Length);
+      Buffer        : Unicode.CES.Byte_Sequence_Access;
       Last_Read     : Unicode.Unicode_Char;
       State         : Parser_State;
       Locator       : Sax.Locators.Locator_Impl_Access;
