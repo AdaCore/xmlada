@@ -181,6 +181,8 @@ package Sax.Readers is
    --  Receive an object for locating the origin of SAX document events.
    --  SAX parsers are strongly encouraged but not required to give this
    --  information. This callback will always be called before any other.
+   --  This locator is no longer valid after the end of Parse (even if it
+   --  terminated with an exception), unless you explicitely Ref the locator.
 
    procedure Start_Document (Handler : in out Reader);
    --  Receive notification of the beginning of a document.
