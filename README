@@ -23,20 +23,11 @@ you update to at least 3.78
 Compiling with GNAT 3.14p
 -------------------------
 
-You might need to modify Makefile.module.314 to replace the GNATMAKE=
-and CC= lines, in case you are using a compiler other than gnatmake,
-or in case the compiler is called gnatgcc (debian systems for instance).
+The setup for building this library will no longer work with GNAT 3.14p,
+although the library itself might still work. 
 
-You might also want to change the variable BUILD_SHARED if you want to get
-shared libraries. However, on some systems this means you'll also need to
-set the line
-    FPIC=-fPIC
-This is for instance the case on HPUX.
-
-Configure and compile with the following commands:
-   > ./configure --prefix=<PREFIX>
-   > make -f Makefile.314 install
-
+It depends on GNAT project files for building this library, and these
+didn't exist with the 3.14p version.
 
 Compiling with GNAT 3.15a1 or GNAT 3.16a
 ----------------------------------------
@@ -49,17 +40,6 @@ you are using a cross-compiler for powerpc/vxworks, you would set them
 to
     GNATMAKE= powerpc-wrs-vxworks-gnatmake
     CC= powerpc-wrs-vxworks-gcc
-
-On some architectures, most notably Solaris, you need to compile the
-library with -fPIC to get relocatable code. To do this, replace the line
-that defines FPIC in the Makefile with
-    FPIC=-fPIC
-
-You might also want to change the variable BUILD_SHARED if you want to get
-shared libraries. However, on some systems this means you'll also need to
-set the line
-    FPIC=-fPIC
-This is for instance the case on HPUX.
 
 Configure and compile with the following commands:
    >  ./configure --prefix=<PREFIX>
