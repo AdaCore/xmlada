@@ -1,0 +1,6 @@
+with "unicode/unicode", "input_sources/input_sources", "sax/sax", "dom/dom";
+
+project Build_All is
+   for Source_Dirs use (".");
+   for Main use ("build_all.adb");
+end Build_All;
