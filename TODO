@@ -1,3 +1,8 @@
+
+
+Put the contents of the README into the documentation. 
+  First, we need to distribute a pre-compiled documentation
+
 xml module:
 ============
 
@@ -30,9 +35,6 @@ xml module:
 
 Release 0.7
 ===========
-* Add configure script for -FPIC on HPUX
-* Support for external entities, including EntityResolver in SAX
-* Add elaboration pragmas
 * Parse_Element_Model_From_Entity should use Next_Token (for entitites)
 * File_Input shouldn't store the whole file in memory (have a buffer of 64k
   instead).
