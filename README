@@ -1,4 +1,5 @@
-Index
+
+XML/Ada: A XML parser for Ada95
 
 I   - INSTALLING THIS LIBRARY ON UNIX
 II  - INSTALLING THIS LIBRARY ON VMS
@@ -16,19 +17,32 @@ Make sure that you do not have a previous installation of XML/Ada in one
 of the directories given in ADA_OBJECTS_PATH, or some files will not be
 properly recompiled.
 
-Compiling with GNAT 3.14p
--------------------------
-
-The setup for building this library will no longer work with GNAT 3.14p,
-although the library itself might still work. 
-
-It depends on GNAT project files for building this library, and these
-didn't exist with the 3.14p version.
-
-Compiling with GNAT 3.15a1 or GNAT 3.16a
+Compiling with GNAT 3.14p and GNAT 3.15p
 ----------------------------------------
 
-You might need to modify the following lines in the Makefile
+Compilation with these older versions of GNAT is done differently than
+with more versions, since the GNAT project files were lacking some important
+features at that point.
+
+To compile with such versions, do the following:
+  >  ./configure --prefix=<PREFIX>
+  > <possible Makefile.module.314 modification, as documented below>
+  >  make -f Makefile.314 install
+
+This will compile and install XML/Ada in the <PREFIX> directory. The resulting
+installation can only be used through xmlada-config, as documented below,
+and not with project files.
+
+If your system requires -fPIC when compiling source files for shared
+libraries, modify the Makefile.module.314 file to change
+   FPIC=
+to
+   FPIC=-fPIC
+
+Compiling with GNAT 3.16a or newer versions of GNAT
+---------------------------------------------------
+
+You might need to modify the following lines in the Makefile.in:
     GNATMAKE= gnatmake
     CC= gcc
 if you are using a compiler other than native GNAT. For instance, if 
@@ -41,7 +55,7 @@ You can also chose the type of library you want to build. The default is
 to build relocatable libraries, although you can chose to build static
 libraries as well. This is done by changing the value of
    LIBRARY_TYPE=relocatable
-in the Makefile.
+in the Makefile.in.
 
 Note that if you wish to build both types of libraries, you should first build
 and install the static libraries, then clean the build directory with
@@ -54,6 +68,13 @@ Configure and compile with the following commands:
    >  ./configure --prefix=<PREFIX>
    >  make install
 to build and install the library.
+
+Compiling with other Ada compilers
+----------------------------------
+
+This library has been reported as being compilable with other compilers than
+GNAT. No build script is provided however, but take a look at
+Makefile.314 and Makefile.module.314 to get ideas on how this could be done.
 
 II - INSTALLING THIS LIBRARY ON VMS
 ===================================
