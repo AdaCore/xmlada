@@ -1,9 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001                          --
+--                       Copyright (C) 2001-2002                     --
 --                            ACT-Europe                             --
---                       Author: Emmanuel Briot                      --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -71,18 +70,29 @@ package Unicode.CES is
       Utf16_BE,  --  Utf16 big-endian encoding
       Utf32_LE,  --  Utf32 little-endian encoding
       Utf32_BE,  --  Utf32 big-endian encoding
-      Unknown);
+      Ucs4_BE,   --  UCS-4, big endian machine (1234 order)
+      Ucs4_LE,   --  UCS-4, little endian machine (4321 order)
+      Ucs4_2143, --  UCS-4, unusual byte order (2143 order)
+      Ucs4_3412, --  UCS-4, unusual byte order (3412 order)
+      Unknown);  --  Unknown, assumed to be ASCII compatible
    --  the type of encoding used for a string, that can be deduced from the
    --  BOM.
 
    subtype Bom_Type_Utf16 is Bom_Type range Utf16_LE .. Utf16_BE;
    subtype Bom_Type_Utf32 is Bom_Type range Utf32_LE .. Utf32_BE;
 
-   procedure Read_Bom (Str : String; Len : out Natural; BOM : out Bom_Type);
+   procedure Read_Bom
+     (Str : String;
+      Len : out Natural;
+      BOM : out Bom_Type;
+      XML_Support : Boolean := True);
    --  Read the optional Byte-Order-Mark at the beginning of the byte
    --  sequence Str.
    --  Len will contain the number of characters that made up that BOM, and
    --  that should be ignored when reading Str.
+   --  If XML_Support is True, then the first four bytes of Str are also
+   --  checked to recognize "<?xml", and thus distinguish in case there is no
+   --  Byte-Order-Mark strictly speaking.
 
    -----------------------
    -- Parsing functions --

@@ -1,9 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001                          --
+--                       Copyright (C) 2001-2002                     --
 --                            ACT-Europe                             --
---                       Author: Emmanuel Briot                      --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -34,7 +33,11 @@ package body Unicode.CES is
    -- Read_Bom --
    --------------
 
-   procedure Read_Bom (Str : String; Len : out Natural; BOM : out Bom_Type) is
+   procedure Read_Bom
+     (Str : String;
+      Len : out Natural;
+      BOM : out Bom_Type;
+      XML_Support : Boolean := True) is
    begin
       if Str'Length >= 2
         and then Str (Str'First) = Character'Val (16#FE#)
@@ -75,6 +78,77 @@ package body Unicode.CES is
       then
          Len := 3;
          BOM := Utf8_All;
+
+      elsif XML_Support
+        and then Str'Length >= 4
+        and then Str (Str'First)     = Character'Val (16#00#)
+        and then Str (Str'First + 1) = Character'Val (16#00#)
+        and then Str (Str'First + 2) = Character'Val (16#00#)
+        and then Str (Str'First + 3) = Character'Val (16#3C#)
+      then
+         Len := 0;
+         BOM := Ucs4_BE;
+
+      elsif XML_Support
+        and then Str'Length >= 4
+        and then Str (Str'First)     = Character'Val (16#3C#)
+        and then Str (Str'First + 1) = Character'Val (16#00#)
+        and then Str (Str'First + 2) = Character'Val (16#00#)
+        and then Str (Str'First + 3) = Character'Val (16#00#)
+      then
+         Len := 0;
+         BOM := Ucs4_LE;
+
+      elsif XML_Support
+        and then Str'Length >= 4
+        and then Str (Str'First)     = Character'Val (16#00#)
+        and then Str (Str'First + 1) = Character'Val (16#00#)
+        and then Str (Str'First + 2) = Character'Val (16#3C#)
+        and then Str (Str'First + 3) = Character'Val (16#00#)
+      then
+         Len := 0;
+         BOM := Ucs4_2143;
+
+      elsif XML_Support
+        and then Str'Length >= 4
+        and then Str (Str'First)     = Character'Val (16#00#)
+        and then Str (Str'First + 1) = Character'Val (16#3C#)
+        and then Str (Str'First + 2) = Character'Val (16#00#)
+        and then Str (Str'First + 3) = Character'Val (16#00#)
+      then
+         Len := 0;
+         BOM := Ucs4_3412;
+
+      elsif XML_Support
+        and then Str'Length >= 4
+        and then Str (Str'First)     = Character'Val (16#00#)
+        and then Str (Str'First + 1) = Character'Val (16#3C#)
+        and then Str (Str'First + 2) = Character'Val (16#00#)
+        and then Str (Str'First + 3) = Character'Val (16#3F#)
+      then
+         Len := 0;
+         BOM := Utf16_BE;
+
+      elsif XML_Support
+        and then Str'Length >= 4
+        and then Str (Str'First)     = Character'Val (16#3C#)
+        and then Str (Str'First + 1) = Character'Val (16#00#)
+        and then Str (Str'First + 2) = Character'Val (16#3F#)
+        and then Str (Str'First + 3) = Character'Val (16#00#)
+      then
+         Len := 0;
+         BOM := Utf16_LE;
+
+      elsif XML_Support
+        and then Str'Length >= 4
+        and then Str (Str'First)     = Character'Val (16#3C#)
+        and then Str (Str'First + 1) = Character'Val (16#3F#)
+        and then Str (Str'First + 2) = Character'Val (16#78#)
+        and then Str (Str'First + 3) = Character'Val (16#6D#)
+      then
+         --  Utf8, ASCII, some part of ISO8859, Shift-JIS, EUC,...
+         Len := 0;
+         BOM := Unknown;
 
       else
          Len := 0;
