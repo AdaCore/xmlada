@@ -1,0 +1,313 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2002-2003                     --
+--                            ACT-Europe                             --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
+with Unicode.CES;        use Unicode.CES;
+with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
+with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
+with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
+
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with GNAT.Sockets;       use GNAT.Sockets;
+with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Streams; use Ada.Streams;
+
+package body Input_Sources.Http is
+
+   ----------
+   -- Open --
+   ----------
+
+   procedure Open
+     (Hostname : String;
+      Port     : Positive := 80;
+      Filename : String;
+      Input    : out Http_Input)
+   is
+      Length  : Natural;
+      BOM     : Bom_Type;
+      Socket  : Socket_Type;
+      Addr    : Sock_Addr_Type;
+      Channel : Stream_Access;
+      Image_Port : constant String := Positive'Image (Port);
+
+      HTTP_Token_OK        : constant String := "HTTP/1.1 200 OK";
+      Content_Length_Token : constant String := "CONTENT-LENGTH: ";
+      --  These must be upper-cased.
+
+      Buffer  : Stream_Element_Array (1 .. 2048);
+      Buffer_Last : Stream_Element_Count := 0;
+      Index   : Stream_Element_Count := Buffer'First;
+
+      function Parse_Header return Natural;
+      --  Parse the headers of the http message, and return the length of the
+      --  message.
+
+      procedure Update_Buffer;
+      --  Read the next stream of bytes from the socket
+
+      function Get_Char return Character;
+      --  Return the next character from the buffer
+
+      --------------
+      -- Get_Char --
+      --------------
+
+      function Get_Char return Character is
+      begin
+         if Index >= Buffer_Last then
+            Update_Buffer;
+         end if;
+
+         if Index >= Buffer_Last then
+            return ASCII.NUL;
+         else
+            Index := Index + 1;
+            return Character'Val (Buffer (Index - 1));
+         end if;
+      end Get_Char;
+
+      -------------------
+      -- Update_Buffer --
+      -------------------
+
+      procedure Update_Buffer is
+      begin
+         GNAT.Sockets.Receive_Socket (Socket, Buffer, Buffer_Last);
+         Index := Buffer'First;
+      end Update_Buffer;
+
+      ------------------
+      -- Parse_Header --
+      ------------------
+
+      function Parse_Header return Natural is
+         Line        : String (1 .. 2048);
+         Line_Index  : Natural;
+         Length : Natural := 0;
+         C      : Character;
+         Ok : Boolean := False;
+      begin
+         loop
+            Line_Index := Line'First;
+            loop
+               C := Get_Char;
+               exit when C = ASCII.LF
+                 or else C = ASCII.NUL;
+
+               Line (Line_Index) := To_Upper (C);
+               Line_Index := Line_Index + 1;
+               exit when Line_Index > Line'Last;
+            end loop;
+
+            if Line_Index > Line'First
+              and then Line (Line_Index - 1) = ASCII.CR
+            then
+               Line_Index := Line_Index - 1;
+            end if;
+
+            exit when Line_Index = Line'First;
+
+            if Line_Index > HTTP_Token_OK'Length
+              and then Line (1 .. HTTP_Token_OK'Length) = HTTP_Token_OK
+            then
+               Ok := True;
+
+            elsif Line_Index > Content_Length_Token'Length
+              and then Line (1 .. Content_Length_Token'Length) =
+                Content_Length_Token
+            then
+               begin
+                  Length := Natural'Value
+                    (Line (Content_Length_Token'Length + 1 .. Line_Index - 1));
+               exception
+                  when others =>
+                     Length := 0;
+               end;
+            end if;
+         end loop;
+
+         if Ok then
+            return Length;
+         else
+            return 0;
+         end if;
+      end Parse_Header;
+
+   begin
+      Addr := (GNAT.Sockets.Family_Inet,
+               Addresses (Get_Host_By_Name (Hostname), 1),
+               Port_Type (Port));
+
+      Create_Socket (Socket);
+      Set_Socket_Option (Socket, Socket_Level, (Reuse_Address, True));
+      Set_Socket_Option (Socket, Option => (Receive_Buffer, 3000));
+      Connect_Socket (Socket, Addr);
+
+      Channel := Stream (Socket);
+
+      String'Write (Channel, "GET http://"
+                     & Hostname & ":"
+                     & Image_Port (Image_Port'First + 1 .. Image_Port'Last)
+                     & "/" & Filename & " HTTP/1.1" & ASCII.LF);
+      String'Write (Channel, "" & ASCII.LF);
+
+      Length := Parse_Header;
+      if Length = 0 then
+         Put_Line ("Nothing to read");
+         raise Http_Error;
+      end if;
+
+      Input.Buffer := new String (1 .. Length - 1);
+
+      Input.Index := 1;
+      for A in 1 .. Length - 1 loop
+         Input.Buffer (A) := Get_Char;
+      end loop;
+
+      Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
+      case BOM is
+         when Utf32_LE =>
+            Set_Encoding (Input, Utf32_LE_Encoding);
+         when Utf32_BE =>
+            Set_Encoding (Input, Utf32_BE_Encoding);
+         when Utf16_LE =>
+            Set_Encoding (Input, Utf16_LE_Encoding);
+         when Utf16_BE =>
+            Set_Encoding (Input, Utf16_BE_Encoding);
+         when others =>
+            Set_Encoding (Input, Utf8_Encoding);
+      end case;
+
+      Input.Index := Input.Buffer'First + Input.Prolog_Size;
+
+      Close_Socket (Socket);
+   end Open;
+
+   ----------
+   -- Open --
+   ----------
+
+   procedure Open (URL : String; Input : out Http_Input) is
+      Host_Start, Host_End : Natural;
+      Port : Integer := 80;
+      File_Start : Integer;
+   begin
+      if URL'Length > 6
+        and then URL (URL'First .. URL'First + 6) = "http://"
+      then
+         Host_Start := URL'First + 7;
+         Host_End := Host_Start;
+
+         while Host_End <= URL'Last
+           and then URL (Host_End) /= '/'
+           and then URL (Host_End) /= ':'
+         loop
+            Host_End := Host_End + 1;
+         end loop;
+
+         if Host_End > URL'Last then
+            --  Invalid URL
+            Put_Line ("Invalid URL");
+            raise Http_Error;
+         end if;
+
+         if URL (Host_End) = ':' then
+            File_Start := Host_End + 1;
+            while File_Start <= URL'Last
+              and then URL (File_Start) /= '/'
+            loop
+               File_Start := File_Start + 1;
+            end loop;
+
+            if File_Start > URL'Last then
+               --  Invalid URL
+               Put_Line ("Invalid URL");
+               raise Http_Error;
+            end if;
+
+            begin
+               Port := Integer'Value (URL (Host_End + 1 .. File_Start - 1));
+            exception
+               when others =>
+                  Port := 80;
+            end;
+
+            File_Start := File_Start + 1;
+         else
+            File_Start := Host_End + 1;
+         end if;
+
+         Open (Hostname => URL (Host_Start .. Host_End - 1),
+               Port     => Port,
+               Filename => URL (File_Start .. URL'Last),
+               Input    => Input);
+
+      else
+         --  Invalid URL
+         Put_Line ("Invalid URL");
+         raise Http_Error;
+      end if;
+   end Open;
+
+   -----------
+   -- Close --
+   -----------
+
+   procedure Close (Input : in out Http_Input) is
+   begin
+      Input_Sources.Close (Input_Source (Input));
+      Free (Input.Buffer);
+      Input.Index := Natural'Last;
+   end Close;
+
+   ---------------
+   -- Next_Char --
+   ---------------
+
+   procedure Next_Char
+     (From : in out Http_Input;
+      C    : out Unicode.Unicode_Char) is
+   begin
+      From.Es.Read (From.Buffer.all, From.Index, C);
+      C := From.Cs.To_Unicode (C);
+   end Next_Char;
+
+   ---------
+   -- Eof --
+   ---------
+
+   function Eof (From : Http_Input) return Boolean is
+   begin
+      return From.Buffer = null
+        or else From.Index > From.Buffer'Length;
+   end Eof;
+
+begin
+   GNAT.Sockets.Initialize (Process_Blocking_IO => False);
+end Input_Sources.Http;
