@@ -1,5 +1,6 @@
 with Unicode.CES.Utf8;
 with Unicode.CES.Utf32;
+use Unicode.CES;
 
 package Sax.Encodings is
    Encoding : constant Unicode.CES.Encoding_Scheme :=
@@ -19,64 +20,98 @@ package Sax.Encodings is
    --  byte_sequence (no memory allocation).
    --  These strings must be encoded with the default encoding.
 
-   Amp_Sequence           : constant Unicode.CES.Byte_Sequence := "amp";
-   Amp_DOM_Sequence       : constant Unicode.CES.Byte_Sequence := "&amp;";
-   Any_Sequence           : constant Unicode.CES.Byte_Sequence := "ANY";
-   Apos_Sequence          : constant Unicode.CES.Byte_Sequence := "apos";
-   Attlist_Sequence       : constant Unicode.CES.Byte_Sequence := "ATTLIST";
-   Cdata_Sequence         : constant Unicode.CES.Byte_Sequence := "CDATA";
-   Cr_Sequence            : constant Unicode.CES.Byte_Sequence := "&#13;";
-   Doctype_Sequence       : constant Unicode.CES.Byte_Sequence := "DOCTYPE";
-   Element_Sequence       : constant Unicode.CES.Byte_Sequence := "LEMENT";
-   Empty_Sequence         : constant Unicode.CES.Byte_Sequence := "EMPTY";
-   Encoding_Sequence      : constant Unicode.CES.Byte_Sequence := "encoding";
-   Entit_Sequence         : constant Unicode.CES.Byte_Sequence := "ENTIT";
-   Id_Sequence            : constant Unicode.CES.Byte_Sequence := "ID";
-   Ies_Sequence           : constant Unicode.CES.Byte_Sequence := "IES";
-   Fixed_Sequence         : constant Unicode.CES.Byte_Sequence := "FIXED";
-   Gt_Sequence            : constant Unicode.CES.Byte_Sequence := "gt";
-   Gt_DOM_Sequence        : constant Unicode.CES.Byte_Sequence := "&gt;";
-   Implied_Sequence       : constant Unicode.CES.Byte_Sequence := "IMPLIED";
-   Include_Sequence       : constant Unicode.CES.Byte_Sequence := "INCLUDE";
-   Ignore_Sequence        : constant Unicode.CES.Byte_Sequence := "IGNORE";
-   Lang_Sequence          : constant Unicode.CES.Byte_Sequence := "lang";
-   Lf_Sequence            : constant Unicode.CES.Byte_Sequence := "&#10;";
-   Lt_Sequence            : constant Unicode.CES.Byte_Sequence := "lt";
-   Lt_DOM_Sequence        : constant Unicode.CES.Byte_Sequence := "&lt;";
-   Mtoken_Sequence        : constant Unicode.CES.Byte_Sequence := "MTOKEN";
-   Ndata_Sequence         : constant Unicode.CES.Byte_Sequence := "NDATA";
-   Otation_Sequence       : constant Unicode.CES.Byte_Sequence := "OTATION";
-   No_Sequence            : constant Unicode.CES.Byte_Sequence := "no";
-   Notation_Sequence      : constant Unicode.CES.Byte_Sequence := "NOTATION";
-   Ntity_Sequence         : constant Unicode.CES.Byte_Sequence := "NTITY";
-   Pcdata_Sequence        : constant Unicode.CES.Byte_Sequence := "#PCDATA";
-   Public_Sequence        : constant Unicode.CES.Byte_Sequence := "PUBLIC";
-   Quot_Sequence          : constant Unicode.CES.Byte_Sequence := "quot";
-   Quot_DOM_Sequence      : constant Unicode.CES.Byte_Sequence := "&quot;";
-   Ref_Sequence           : constant Unicode.CES.Byte_Sequence := "REF";
-   Required_Sequence      : constant Unicode.CES.Byte_Sequence := "REQUIRED";
-   Standalone_Sequence    : constant Unicode.CES.Byte_Sequence := "standalone";
-   Tab_Sequence           : constant Unicode.CES.Byte_Sequence := "&#9;";
-   System_Sequence        : constant Unicode.CES.Byte_Sequence := "SYSTEM";
-   Version_Sequence       : constant Unicode.CES.Byte_Sequence := "version";
-   Xml_Sequence           : constant Unicode.CES.Byte_Sequence := "xml";
-   Xmlns_Sequence         : constant Unicode.CES.Byte_Sequence := "xmlns";
-   Yes_Sequence           : constant Unicode.CES.Byte_Sequence := "yes";
-   Vertical_Line_Sequence : constant Unicode.CES.Byte_Sequence := "|";
-   Comma_Sequence         : constant Unicode.CES.Byte_Sequence := ",";
-   Closing_Parenthesis_Sequence : constant Unicode.CES.Byte_Sequence := ")";
-   Opening_Parenthesis_Sequence : constant Unicode.CES.Byte_Sequence := "(";
-   Star_Sequence          : constant Unicode.CES.Byte_Sequence := "*";
-   Question_Mark_Sequence : constant Unicode.CES.Byte_Sequence := "?";
-   Plus_Sign_Sequence     : constant Unicode.CES.Byte_Sequence := "+";
-   Colon_Sequence         : constant Unicode.CES.Byte_Sequence := ":";
-   Percent_Sign_Sequence  : constant Unicode.CES.Byte_Sequence := "%";
-   Space_Sequence         : constant Unicode.CES.Byte_Sequence := " ";
-   Less_Than_Sequence     : constant Unicode.CES.Byte_Sequence := "<";
-   Greater_Than_Sequence  : constant Unicode.CES.Byte_Sequence := ">";
-   Equals_Sign_Sequence   : constant Unicode.CES.Byte_Sequence := "=";
-   Quotation_Mark_Sequence      : constant Unicode.CES.Byte_Sequence := """";
-   Slash_Sequence         : constant Unicode.CES.Byte_Sequence := "/";
+   Amp_Sequence           : constant Byte_Sequence := "amp";
+   Amp_DOM_Sequence       : constant Byte_Sequence := "&amp;";
+   Any_Sequence           : constant Byte_Sequence := "ANY";
+   Apos_Sequence          : constant Byte_Sequence := "apos";
+   Attlist_Sequence       : constant Byte_Sequence := "ATTLIST";
+   Cdata_Sequence         : constant Byte_Sequence := "CDATA";
+   Cr_Sequence            : constant Byte_Sequence := "&#13;";
+   Doctype_Sequence       : constant Byte_Sequence := "DOCTYPE";
+   Element_Sequence       : constant Byte_Sequence := "LEMENT";
+   Empty_Sequence         : constant Byte_Sequence := "EMPTY";
+   Encoding_Sequence      : constant Byte_Sequence := "encoding";
+   Entit_Sequence         : constant Byte_Sequence := "ENTIT";
+   Id_Sequence            : constant Byte_Sequence := "ID";
+   Ies_Sequence           : constant Byte_Sequence := "IES";
+   Fixed_Sequence         : constant Byte_Sequence := "FIXED";
+   Gt_Sequence            : constant Byte_Sequence := "gt";
+   Gt_DOM_Sequence        : constant Byte_Sequence := "&gt;";
+   Implied_Sequence       : constant Byte_Sequence := "IMPLIED";
+   Include_Sequence       : constant Byte_Sequence := "INCLUDE";
+   Ignore_Sequence        : constant Byte_Sequence := "IGNORE";
+   Lang_Sequence          : constant Byte_Sequence := "lang";
+   Lf_Sequence            : constant Byte_Sequence := "&#10;";
+   Lt_Sequence            : constant Byte_Sequence := "lt";
+   Lt_DOM_Sequence        : constant Byte_Sequence := "&lt;";
+   Mtoken_Sequence        : constant Byte_Sequence := "MTOKEN";
+   Ndata_Sequence         : constant Byte_Sequence := "NDATA";
+   Otation_Sequence       : constant Byte_Sequence := "OTATION";
+   No_Sequence            : constant Byte_Sequence := "no";
+   Notation_Sequence      : constant Byte_Sequence := "NOTATION";
+   Ntity_Sequence         : constant Byte_Sequence := "NTITY";
+   Pcdata_Sequence        : constant Byte_Sequence := "#PCDATA";
+   Public_Sequence        : constant Byte_Sequence := "PUBLIC";
+   Quot_Sequence          : constant Byte_Sequence := "quot";
+   Quot_DOM_Sequence      : constant Byte_Sequence := "&quot;";
+   Ref_Sequence           : constant Byte_Sequence := "REF";
+   Required_Sequence      : constant Byte_Sequence := "REQUIRED";
+   Standalone_Sequence    : constant Byte_Sequence := "standalone";
+   Tab_Sequence           : constant Byte_Sequence := "&#9;";
+   System_Sequence        : constant Byte_Sequence := "SYSTEM";
+   Version_Sequence       : constant Byte_Sequence := "version";
+   Xml_Sequence           : constant Byte_Sequence := "xml";
+   Xmlns_Sequence         : constant Byte_Sequence := "xmlns";
+   Yes_Sequence           : constant Byte_Sequence := "yes";
+   Vertical_Line_Sequence : constant Byte_Sequence := "|";
+   Comma_Sequence         : constant Byte_Sequence := ",";
+   Closing_Parenthesis_Sequence : constant Byte_Sequence := ")";
+   Opening_Parenthesis_Sequence : constant Byte_Sequence := "(";
+   Star_Sequence          : constant Byte_Sequence := "*";
+   Question_Mark_Sequence : constant Byte_Sequence := "?";
+   Plus_Sign_Sequence     : constant Byte_Sequence := "+";
+   Colon_Sequence         : constant Byte_Sequence := ":";
+   Percent_Sign_Sequence  : constant Byte_Sequence := "%";
+   Space_Sequence         : constant Byte_Sequence := " ";
+   Less_Than_Sequence     : constant Byte_Sequence := "<";
+   Greater_Than_Sequence  : constant Byte_Sequence := ">";
+   Equals_Sign_Sequence   : constant Byte_Sequence := "=";
+   Quotation_Mark_Sequence      : constant Byte_Sequence := """";
+   Slash_Sequence         : constant Byte_Sequence := "/";
+   Namespaces_URI_Sequence : constant Byte_Sequence :=
+     "http://www.w3.org/XML/1998/namespace";
+   Xmlns_URI_Sequence : constant Byte_Sequence :=
+     "http://www.w3.org/2000/xmlns/";
+   Cdata_Section_Name_Sequence : constant Byte_Sequence :=
+     "#cdata-section";
+   Comment_Name_Sequence : constant Byte_Sequence := "#comment";
+   Document_Name_Sequence : constant Byte_Sequence := "#document";
+   Document_Fragment_Name_Sequence : constant Byte_Sequence :=
+     "#document-fragment";
+   Text_Name_Sequence : constant Byte_Sequence := "#text";
+
+   Error_Handler_Sequence  : constant Byte_Sequence := "error-handler";
+   Canonical_Form_Sequence : constant Byte_Sequence := "canonical-form";
+   Cdata_Sections_Sequence : constant Byte_Sequence := "cdata-sections";
+   Comments_Sequence       : constant Byte_Sequence := "comments";
+   Datatype_Normalization_Sequence  : constant Byte_Sequence :=
+     "datatype-normalization";
+   Discard_Default_Content_Sequence : constant Byte_Sequence :=
+     "discard-default-content";
+   Entities_Sequence : constant Byte_Sequence := "entities";
+   Infoset_Sequence : constant Byte_Sequence := "infoset";
+   Namespaces_Sequence : constant Byte_Sequence := "namespaces";
+   Namespace_Declarations_Sequence : constant Byte_Sequence :=
+     "namespace-declarations";
+   Normalize_Characters_Sequence : constant Byte_Sequence :=
+     "normalize-characters";
+   Split_Cdata_Sections_Sequence : constant Byte_Sequence :=
+     "split-cdata-sections";
+   Validate_Sequence : constant Byte_Sequence := "validate";
+   Validate_If_Schema_Sequence : constant Byte_Sequence :=
+     "validate-if-schema";
+   Whitespace_In_Element_Sequence : constant Byte_Sequence :=
+     "whitespace-in-element-content";
 
 end Sax.Encodings;
 
