@@ -1,4 +1,5 @@
 with Schema.Readers;        use Schema.Readers;
+with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 with Schema.Validators;     use Schema.Validators;
 with Input_Sources.File;    use Input_Sources.File;
@@ -12,7 +13,6 @@ procedure TestSchema is
    Read      : File_Input;
    My_Reader : Validating_Reader;
    Schema    : Schema_Reader;
-   Grammar   : XML_Grammar;
    Xsd_File  : String_Access := null;
    Xml_File  : String_Access := null;
 
@@ -37,15 +37,13 @@ begin
       Open (Xsd_File.all, Read);
       Set_Public_Id (Read, Xsd_File.all);
       Set_System_Id (Read, Xsd_File.all);
+      Set_Validating_Grammar (Schema, Create_Schema_For_Schema);
       Parse (Schema, Read);
       Close (Read);
-      Grammar := Get_Grammar (Schema);
-   else
-      Initialize (Grammar);
+      Set_Validating_Grammar (My_Reader, Get_Created_Grammar (Schema));
    end if;
 
    if Xml_File.all /= "" then
-      Set_Grammar (My_Reader, Grammar);
       Open (Xml_File.all, Read);
       Set_Public_Id (Read, Xml_File.all);
       Set_System_Id (Read, Xml_File.all);
