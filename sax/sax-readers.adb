@@ -2799,11 +2799,15 @@ package body Sax.Readers is
         (Id : in out Token;
          State : Parser_State;
          Str_Start, Str_End : out Token;
-         Normalize : Boolean := False);
+         Normalize         : Boolean := False;
+         Normalize_Leading : Boolean := False);
       --  Get all the character till the end of the string. Id should contain
       --  the initial quote that starts the string.
       --  On exit, Str_Start is set to the first token of the string, and
       --  Str_End to the last token.
+      --  If Normalize is True, then all space characters are converted to
+      --  ' ', duplicate spaces are removed. A leading space (if there's any)
+      --  is left only if Normalize_Leading is False.
 
       procedure Get_Name_NS (Id : in out Token; NS_Id, Name_Id : out Token);
       --  Read the next tokens so as to match either a single name or
@@ -2842,7 +2846,8 @@ package body Sax.Readers is
         (Id : in out Token;
          State : Parser_State;
          Str_Start, Str_End : out Token;
-         Normalize : Boolean := False)
+         Normalize : Boolean := False;
+         Normalize_Leading : Boolean := False)
       is
          T : constant Token := Id;
          Saved_State : constant Parser_State := Get_State (Parser);
@@ -2850,7 +2855,7 @@ package body Sax.Readers is
          C : Unicode_Char;
          Index : Natural;
          Last_Space : Natural := 0;
-         Had_Space : Boolean := Normalize;  --  Avoid leading spaces
+         Had_Space : Boolean := Normalize_Leading; --  Avoid leading spaces
 
       begin
          Set_State (Parser, State);
@@ -3401,7 +3406,7 @@ package body Sax.Readers is
                then
                   Get_String
                     (Id, Attlist_Str_Def_State, Default_Start, Default_End,
-                     Normalize => True);
+                     Normalize => True, Normalize_Leading => True);
                else
                   Fatal_Error
                     (Parser, "[WF] Invalid default value for attribute");
@@ -3545,7 +3550,6 @@ package body Sax.Readers is
                Id);
          end if;
 
-         --  ??? Should we support comments in tag_start
          while Id.Typ /= End_Of_Tag
            and then Id.Typ /= End_Of_Input
            and then Id.Typ /= End_Of_Start_Tag
@@ -3577,7 +3581,9 @@ package body Sax.Readers is
                  (Parser, "[3.1] Attribute values must be quoted", Id);
             end if;
             Get_String (Id, Attr_Value_State, Value_Start, Value_End,
-                        Normalize => True); --  ??? All considered as CDATA
+                        Normalize => True,
+                        Normalize_Leading => True);
+            --  ??? All considered as CDATA
 
             Add_Attr := True;
 
