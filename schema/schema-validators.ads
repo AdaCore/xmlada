@@ -203,8 +203,11 @@ package Schema.Validators is
    --  validator. Data is the result of Create_Validator_Data.
    --
    --  Element_Validator is set, on exit, to the validator that should be used
-   --  to validate the next element. It can safely be left to null if the
-   --  element is declared at a global level in the Schema
+   --  to validate the next element.
+   --  Element_Validator should be set to null if no validation could be
+   --  performed and the control should be given back to the caller (for
+   --  instance in the case of nested sequences and choices).
+   --
    --  Raise XML_Validation_Error in case of error
 
    procedure Validate_Attributes
@@ -887,11 +890,8 @@ private
    end record;
    type Group_Model_Data is access all Group_Model_Data_Record'Class;
 
-   procedure Nested_Group_Terminated
-     (Group : access Group_Model_Record;
-      Data  : Validator_Data);
-   --  Called when the nested group terminated. By default, this resets the
-   --  nested pointer in Data.
+   procedure Free_Nested_Group (Data : Group_Model_Data);
+   --  Free the nested group and its data, if any
 
    function Applies_To_Tag
      (Group      : access Group_Model_Record;
@@ -961,9 +961,6 @@ private
       Data              : Validator_Data);
    function Create_Validator_Data
      (Validator : access Sequence_Record) return Validator_Data;
-   procedure Nested_Group_Terminated
-     (Group : access Sequence_Record;
-      Data  : Validator_Data);
    function Applies_To_Tag
      (Group      : access Sequence_Record;
       Local_Name : Unicode.CES.Byte_Sequence) return Boolean;
@@ -987,9 +984,6 @@ private
       Data              : Validator_Data);
    function Create_Validator_Data
      (Validator : access Choice_Record) return Validator_Data;
-   procedure Nested_Group_Terminated
-     (Group : access Choice_Record;
-      Data  : Validator_Data);
    function Applies_To_Tag
      (Group      : access Choice_Record;
       Local_Name : Unicode.CES.Byte_Sequence) return Boolean;

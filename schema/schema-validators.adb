@@ -35,6 +35,14 @@ package body Schema.Validators is
    procedure Free (Element : in out XML_Element_Record);
    --  Free Element
 
+   function Move_To_Next_Sequence_Particle
+     (Seq  : access Sequence_Record'Class;
+      Data : Sequence_Data_Access;
+      Force_Next : Boolean := False) return Boolean;
+   --  Move to the next particle to match in the sequence, or stay on the
+   --  current one if it still can match (its maxOccurs hasn't been reached
+   --  for instance).
+
    -------------------------
    --  Byte_Sequence_List --
    -------------------------
@@ -2621,11 +2629,58 @@ package body Schema.Validators is
       if Seq.Max_Occurs /= Unbounded
         and then Data.Num_Occurs > Seq.Max_Occurs
       then
+         if Debug then
+            Put_Line ("Too many occurrences of " & Get_Name (Seq));
+         end if;
+
          Validation_Error
            ("Too many occurrences of sequence. Expecting at most"
             & Integer'Image (Seq.Max_Occurs));
       end if;
    end Initialize_Sequence;
+
+   ------------------------------------
+   -- Move_To_Next_Sequence_Particle --
+   ------------------------------------
+
+   function Move_To_Next_Sequence_Particle
+     (Seq  : access Sequence_Record'Class;
+      Data : Sequence_Data_Access;
+      Force_Next : Boolean := False) return Boolean
+   is
+      Curr : XML_Particle_Access;
+   begin
+      Free_Nested_Group (Group_Model_Data (Data));
+
+      Data.Num_Occurs_Of_Current := Data.Num_Occurs_Of_Current + 1;
+
+      Curr := Get (Data.Current);
+      if Force_Next
+        or else
+          (Get_Max_Occurs (Data.Current) /= Unbounded
+           and then Data.Num_Occurs_Of_Current >=
+             Get_Max_Occurs (Data.Current))
+      then
+         if Debug then
+            Put_Line ("Goto next particle in sequence " & Get_Name (Seq)
+                      & " Num_Occurs_Of_Current="
+                      & Data.Num_Occurs_Of_Current'Img);
+         end if;
+
+         Next (Data.Current);
+         Data.Num_Occurs_Of_Current := 0;
+
+         --  No more element possible in this sequence ?
+         return not
+           (Get (Data.Current) = null
+            and then Data.Parent /= null
+            and then Data.Num_Occurs >= Seq.Min_Occurs
+            and then (Seq.Max_Occurs /= Unbounded
+                      and then Data.Num_Occurs <= Seq.Max_Occurs));
+      end if;
+
+      return True;
+   end Move_To_Next_Sequence_Particle;
 
    ----------------------------
    -- Validate_Start_Element --
@@ -2642,13 +2697,27 @@ package body Schema.Validators is
       First_Iter : Boolean := True;
       Valid      : Boolean;
       Curr       : XML_Particle_Access;
+      Tmp        : Boolean;
+      pragma Unreferenced (Tmp);
    begin
       --  If we have a nested group_model somewhere, it is its responsability
       --  to check for the current item
       if D.Nested /= null then
+         if Debug then
+            Put_Line ("++ Going into nested of " & Get_Name (Validator)
+                      & ", ie " & Get_Name (D.Nested));
+         end if;
+
          Validate_Start_Element
            (D.Nested, Local_Name, D.Nested_Data, Element_Validator);
-         if Element_Validator /= No_Element then
+
+         --  If we either managed to match the current particle or there are
+         --  no more possible match for this sequence, then go back to the
+         --  parent.
+
+         if Element_Validator /= No_Element
+           or else not Move_To_Next_Sequence_Particle (Validator, D)
+         then
             return;
          end if;
       end if;
@@ -2704,7 +2773,6 @@ package body Schema.Validators is
                end if;
 
                if Valid then
-                  Nested_Group_Terminated (Validator, Data);
                   if Debug then
                      if Element_Validator.Elem.Of_Type /= No_Type then
                         Put_Line
@@ -2717,6 +2785,8 @@ package body Schema.Validators is
                                   & " No_Type");
                      end if;
                   end if;
+
+                  Tmp := Move_To_Next_Sequence_Particle (Validator, D);
                   exit;
                end if;
 
@@ -2730,11 +2800,13 @@ package body Schema.Validators is
                   Group_Model_Data (D.Nested_Data).Parent :=
                     Group_Model (Validator);
                   Group_Model_Data (D.Nested_Data).Parent_Data := Data;
+
                   Validate_Start_Element
                     (D.Nested, Local_Name, D.Nested_Data, Element_Validator);
+
                   --  Do not move to next, this will be done when the nested
                   --  terminates, through a call to Nested_Group_Terminated
-                  if Debug then
+                  if Debug and then Element_Validator /= No_Element then
                      if D.Nested = null then
                         Put_Line ("++ nested Matched, and called"
                                   & " Nested_Group_Terminated, back to"
@@ -2749,10 +2821,15 @@ package body Schema.Validators is
                                   & " No_Type");
                      end if;
                   end if;
-                  exit;
+
+                  if Element_Validator /= No_Element then
+                     return;
+                  end if;
+
                else
                   if Debug then
-                     Put_Line ("Nested doesn't apply to " & Local_Name);
+                     Put_Line ("Nested of sequence " & Get_Name (Validator)
+                               & " doesn't apply to " & Local_Name);
                   end if;
                end if;
 
@@ -2773,47 +2850,21 @@ package body Schema.Validators is
             return;
          end if;
 
-         --  The current element was in fact optional
+         --  The current element was in fact optional at this point
 
-         D.Num_Occurs_Of_Current := -1;
-         Nested_Group_Terminated (Validator, Data);
+         if Debug then
+            Put_Line ("Skip optional current particle in "
+                      & Get_Name (Validator));
+         end if;
+
+         if not Move_To_Next_Sequence_Particle
+           (Validator, D, Force_Next => True)
+         then
+            Element_Validator := No_Element;
+            return;
+         end if;
       end loop;
    end Validate_Start_Element;
-
-   -----------------------------
-   -- Nested_Group_Terminated --
-   -----------------------------
-
-   procedure Nested_Group_Terminated
-     (Group : access Sequence_Record; Data  : Validator_Data)
-   is
-      D   : constant Sequence_Data_Access := Sequence_Data_Access (Data);
-      Curr : XML_Particle_Access;
-   begin
-      Nested_Group_Terminated (Group_Model_Record (Group.all)'Access, Data);
-
-      D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
-
-      Curr := Get (D.Current);
-      if D.Num_Occurs_Of_Current = 0
-        or else
-          (Get_Max_Occurs (D.Current) /= Unbounded
-           and then D.Num_Occurs_Of_Current >= Get_Max_Occurs (D.Current))
-      then
-         Next (D.Current);
-         D.Num_Occurs_Of_Current := 0;
-
-         if Get (D.Current) = null then
-            if D.Parent /= null
-              and then D.Num_Occurs >= Group.Min_Occurs
-              and then (Group.Max_Occurs /= Unbounded
-                        and then D.Num_Occurs <= Group.Max_Occurs)
-            then
-               Nested_Group_Terminated (D.Parent, D.Parent_Data);
-            end if;
-         end if;
-      end if;
-   end Nested_Group_Terminated;
 
    --------------------------
    -- Validate_End_Element --
@@ -2836,12 +2887,11 @@ package body Schema.Validators is
                exit when Get (D.Current) = null
                  or else Get_Min_Occurs (D.Current) /= 0;
             end loop;
+         else
+            Validation_Error
+              ("Element must be repeated at least"
+               & Integer'Image (Get_Min_Occurs (D.Current)) & " times");
          end if;
-      end if;
-
-      if Get (D.Current) /= null then
-         Validation_Error
-           ("Unexpected end of sequence " & Get_Name (Validator));
       end if;
 
       if D.Num_Occurs < Validator.Min_Occurs then
@@ -2849,6 +2899,11 @@ package body Schema.Validators is
            ("Not enough occurrences of sequence, expecting at least"
             & Integer'Image (Validator.Min_Occurs)
             & ", got" & Integer'Image (D.Num_Occurs));
+      end if;
+
+      if Get (D.Current) /= null then
+         Validation_Error
+           ("Unexpected end of sequence " & Get_Name (Validator));
       end if;
    end Validate_End_Element;
 
@@ -3011,6 +3066,17 @@ package body Schema.Validators is
          if Element_Validator /= No_Element then
             return;
          end if;
+
+         Free_Nested_Group (Group_Model_Data (D));
+      end if;
+
+      --  No more match to be had from this choice
+      if D.Parent /= null
+        and then (Validator.Max_Occurs /= Unbounded
+                  and then D.Num_Occurs >= Validator.Max_Occurs)
+      then
+         Element_Validator := No_Element;
+         return;
       end if;
 
       if Debug then
@@ -3071,12 +3137,11 @@ package body Schema.Validators is
                Put_Line ("Terminating nested choice, since no longer matches");
             end if;
 
-            Nested_Group_Terminated (D.Parent, D.Parent_Data);
             Element_Validator := No_Element;
+            return;
          else
             Validation_Error ("Invalid choice: " & Local_Name);
          end if;
-         return;
       end if;
 
       D.Num_Occurs := D.Num_Occurs + 1;
@@ -3098,36 +3163,33 @@ package body Schema.Validators is
             Put_Line ("+++ Tested nested for choice " & Get_Name (Validator)
                       & ": " & Get_Name (D.Nested));
          end if;
+
          Validate_Start_Element
            (D.Nested, Local_Name, D.Nested_Data, Element_Validator);
+
          if Debug then
             Put_Line ("+++ Done testing nested for choice "
                       & Get_Name (Validator) & ": " & Get_Name (D.Nested));
          end if;
+
+         if Element_Validator = No_Element then
+            Free_Nested_Group (Group_Model_Data (D));
+         end if;
+
          --  The nested element will call Nested_Group_Terminated if needed,
          --  otherwise it remains the current element
 
-      else
-         if D.Parent /= null
-           and then D.Num_Occurs >= Validator.Min_Occurs
-           and then (Validator.Max_Occurs /= Unbounded
-                     and then D.Num_Occurs >= Validator.Max_Occurs)
-         then
-            Nested_Group_Terminated (D.Parent, D.Parent_Data);
-         end if;
+--        else
+--           if D.Parent /= null
+--             and then D.Num_Occurs >= Validator.Min_Occurs
+--             and then (Validator.Max_Occurs /= Unbounded
+--                       and then D.Num_Occurs >= Validator.Max_Occurs)
+--           then
+--              Element_Validator := No_Element;
+--              return;
+--           end if;
       end if;
    end Validate_Start_Element;
-
-   -----------------------------
-   -- Nested_Group_Terminated --
-   -----------------------------
-
-   procedure Nested_Group_Terminated
-     (Group : access Choice_Record;
-      Data  : Validator_Data) is
-   begin
-      Nested_Group_Terminated (Group_Model_Record (Group.all)'Access, Data);
-   end Nested_Group_Terminated;
 
    --------------------------
    -- Validate_End_Element --
@@ -3281,21 +3343,6 @@ package body Schema.Validators is
          Unchecked_Free (Data);
       end if;
    end Free;
-
-   -----------------------------
-   -- Nested_Group_Terminated --
-   -----------------------------
-
-   procedure Nested_Group_Terminated
-     (Group : access Group_Model_Record;
-      Data  : Validator_Data)
-   is
-      pragma Unreferenced (Group);
-      D : constant Group_Model_Data := Group_Model_Data (Data);
-   begin
-      D.Nested := null;
-      Free (D.Nested_Data);
-   end Nested_Group_Terminated;
 
    --------------------
    -- Applies_To_Tag --
@@ -3561,8 +3608,13 @@ package body Schema.Validators is
             D.Restriction_Data, Element_Validator);
 
          if Debug then
-            Put_Line ("Validate_Start_Element: end of restriction, result="
-                      & Element_Validator.Elem.Local_Name.all);
+            if Element_Validator /= No_Element then
+               Put_Line ("Validate_Start_Element: end of restriction, result="
+                         & Element_Validator.Elem.Local_Name.all);
+            else
+               Put_Line ("Validate_Start_Element: end of restriction, no"
+                         & " match from restriction");
+            end if;
          end if;
       else
          Validate_Start_Element
@@ -4221,5 +4273,15 @@ package body Schema.Validators is
    begin
       return Validator.Base = Typ;
    end Is_Extension_Of;
+
+   -----------------------
+   -- Free_Nested_Group --
+   -----------------------
+
+   procedure Free_Nested_Group (Data : Group_Model_Data) is
+   begin
+      Data.Nested := null;
+      Free (Data.Nested_Data);
+   end Free_Nested_Group;
 
 end Schema.Validators;
