@@ -310,6 +310,34 @@ package Sax.Readers is
    --  The following functions are defined in the Entity_Resolver interface
    --  in the SAX standard.
 
+   function Resolve_Entity
+     (Handler   : Reader;
+      Public_Id : Unicode.CES.Byte_Sequence;
+      System_Id : Unicode.CES.Byte_Sequence)
+      return Input_Sources.Input_Source_Access;
+   --  Allow the application to resolve external entities.
+   --  The parser will call this method before opening any external entity
+   --  except the top-level document entity. Such entities include the external
+   --  DTD subset and external parameter entities referenced within the DTD (in
+   --  either case, only if the parser reads external parameter entities), and
+   --  external general entities referenced within the document element (if the
+   --  parser reads external general entities). The application may request
+   --  that the parser locate the entity itself, that it use an alternative
+   --  URI, or that it use data provided by the application (as a character or
+   --  byte input stream).
+   --  Application writers can use this method to redirect external system
+   --  identifiers to secure and/or local URIs, to look up public identifiers
+   --  in a catalogue, or to read an entity from a database or other input
+   --  source (including, for example, a dialog box). Neither XML nor SAX
+   --  specifies a preferred policy for using public or system IDs to resolve
+   --  resources. However, SAX specifies how to interpret any InputSource
+   --  returned by this method, and that if none is returned, then the system
+   --  ID will be dereferenced as a URL.
+   --
+   --  If the returned value is null, the standard algorithm is used. Otherwise
+   --  the returend value is automatically freed by the parser when no longer
+   --  needed.
+
    ---------------------
    -- Lexical Handler --
    ---------------------
@@ -460,6 +488,7 @@ private
    type Entity_Entry is record
       Name         : Unicode.CES.Byte_Sequence_Access;
       Value        : Unicode.CES.Byte_Sequence_Access;
+      Public       : Unicode.CES.Byte_Sequence_Access;
       External     : Boolean;
       Already_Read : Boolean := False;
       --  True if the value of the entity was already read. This is used to
