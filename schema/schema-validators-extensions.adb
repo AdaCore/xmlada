@@ -21,6 +21,7 @@ package body Schema.Validators.Extensions is
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator      : access Extension_XML_Validator;
@@ -96,6 +97,7 @@ package body Schema.Validators.Extensions is
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
+      Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element)
    is
       D : constant Extension_Data_Access := Extension_Data_Access (Data);
@@ -114,7 +116,7 @@ package body Schema.Validators.Extensions is
             Debug_Output ("Validating base part of the extension");
             Validate_Start_Element
               (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
-               D.Base_Data, Element_Validator);
+               D.Base_Data, Schema_Target_NS, Element_Validator);
          exception
             when XML_Validation_Error =>
                Debug_Output ("Validation error in base, testing extension");
@@ -128,7 +130,7 @@ package body Schema.Validators.Extensions is
             Debug_Output ("Validating extension part of the extension");
             Validate_Start_Element
               (Validator.Extension, Local_Name, Namespace_URI, NS,
-               D.Extension_Data, Element_Validator);
+               D.Extension_Data, Schema_Target_NS, Element_Validator);
          end if;
       end if;
    end Validate_Start_Element;
