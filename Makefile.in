@@ -62,17 +62,18 @@ docs: force
 	${CP} $*/lib/libxmlada_* ${PREFIX}/include/xmlada/obj
 	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, ${LN} ../include/xmlada/obj/${lib} ${PREFIX}/lib;}
 	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
-	cd $*; ls *.ad[bs] > ${PREFIX}/xmlada_$*.lgpr
+	cd $*; ls *.ad[bs] > ${PREFIX}/projects/xmlada_$*.lgpr
 
 install_dirs: force
 	@${MKDIR} ${PREFIX}/bin
 	@${MKDIR} ${PREFIX}/lib
+	@${MKDIR} ${PREFIX}/projects
 	@${MKDIR} ${PREFIX}/doc/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada/obj
 
 install: obj docs install_dirs ${MODULE_INSTALL}
-	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}
+	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/projects/
 	${CP} xmlada-config ${PREFIX}/bin
 	-${CP} docs/xml.ps ${PREFIX}/doc/xmlada
 	-${CP} docs/xml.html ${PREFIX}/doc/xmlada
