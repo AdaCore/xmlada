@@ -121,6 +121,13 @@ package Sax.Readers is
    --  True if the SAX parser will reports parameter entities through its
    --  Lexical_Handler.
 
+   Test_Valid_Chars_Feature : constant String :=
+     "http://act-europe.fr/sax/features/test_valid_chars";
+   --  True if the SAX parser will check for each character read from the
+   --  input streams whether it is valid. This might slow done the parser,
+   --  but will provide better validation.
+   --  This is False by default.
+
    -------------------
    -- Error handler --
    -------------------
@@ -714,6 +721,7 @@ private
       Feature_External_General_Entities   : Boolean := True;
       Feature_External_Parameter_Entities : Boolean := True;
       Feature_Validation                  : Boolean := False;
+      Feature_Test_Valid_Chars            : Boolean := False;
    end record;
 
 end Sax.Readers;

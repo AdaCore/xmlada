@@ -54,11 +54,6 @@ package body Sax.Readers is
    Debug_Input : constant Boolean := False;
    --  Set to True if you want to debug this package
 
-   Always_Test_Valid_Char : constant Boolean := True;
-   --  If True, XML/Ada will check that each character read from the input
-   --  streams is valid, which tends to slow done the parser. If False, this is
-   --  only tested for character inserted through character references
-
    Initial_Buffer_Length : constant := 10000;
    --  Initial length of the internal buffer that stores CDATA, tag names,...
 
@@ -663,6 +658,7 @@ package body Sax.Readers is
       Parser  : in out Reader'Class)
    is
       procedure Internal (Stream : in out Input_Source'Class);
+      pragma Inline (Internal);
 
       --------------
       -- Internal --
@@ -683,11 +679,11 @@ package body Sax.Readers is
          elsif C = Line_Feed and then Parser.Previous_Char_Was_CR then
             Parser.Previous_Char_Was_CR := False;
             Next_Char (Stream, Parser);
+
          else
-            Parser.Previous_Char_Was_CR := False;
             Parser.Last_Read := C;
 
-            if Always_Test_Valid_Char then
+            if Parser.Feature_Test_Valid_Chars then
                Test_Valid_Char (Parser, Parser.Last_Read, Null_Token);
             end if;
          end if;
@@ -738,8 +734,6 @@ package body Sax.Readers is
          Input_A.Next := null;
       end if;
 
-      Parser.Last_Read_Is_Valid := True;
-
       --  Read the text of the entity if there is any
 
       if Parser.Inputs /= null then
@@ -755,6 +749,7 @@ package body Sax.Readers is
             return;
          end if;
 
+         Parser.Last_Read_Is_Valid := True;
          Set_Column_Number
            (Parser.Locator.all, Get_Column_Number (Parser.Locator.all) + 1);
          Internal (Parser.Inputs.Input.all);
@@ -769,6 +764,7 @@ package body Sax.Readers is
          raise Input_Ended;
 
       else
+         Parser.Last_Read_Is_Valid := True;
          Set_Column_Number
            (Parser.Locator.all, Get_Column_Number (Parser.Locator.all) + 1);
          Internal (Input);
@@ -783,7 +779,6 @@ package body Sax.Readers is
             Put_Line ("Line_Feed");
          end if;
       end if;
-
    end Next_Char;
 
    -------------------
@@ -820,8 +815,7 @@ package body Sax.Readers is
       --  Loop until we have enough memory to store the string
       while Parser.Buffer_Length + Str'Length > Parser.Buffer'Last loop
          Tmp := Parser.Buffer;
-         Parser.Buffer := new Byte_Sequence
-           (1 .. Tmp'Length * 2);
+         Parser.Buffer := new Byte_Sequence (1 .. Tmp'Length * 2);
          Parser.Buffer (1 .. Tmp'Length) := Tmp.all;
          Free (Tmp);
       end loop;
@@ -4717,6 +4711,9 @@ package body Sax.Readers is
 
       elsif Name = Parameter_Entities_Feature then
          return False;  --  ??? Unsupported for now
+
+      elsif Name = Test_Valid_Chars_Feature then
+         return Parser.Feature_Test_Valid_Chars;
       end if;
 
       return False;
@@ -4743,6 +4740,9 @@ package body Sax.Readers is
 
       elsif Name = Validation_Feature then
          Parser.Feature_Validation := Value;
+
+      elsif Name = Test_Valid_Chars_Feature then
+         Parser.Feature_Test_Valid_Chars := Value;
       end if;
    end Set_Feature;
 
