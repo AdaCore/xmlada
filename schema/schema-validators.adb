@@ -2,24 +2,20 @@ with Unicode;         use Unicode;
 with Unicode.CES;     use Unicode.CES;
 with Sax.Attributes;  use Sax.Attributes;
 with Sax.Encodings;   use Sax.Encodings;
-with GNAT.Regpat;     use GNAT.Regpat;
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;  use Ada.Exceptions;
 with Sax.Utils;       use Sax.Utils;
 with GNAT.IO; use GNAT.IO;
 with Ada.Tags; use Ada.Tags;
+with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
+with Schema.Validators.Facets;       use Schema.Validators.Facets;
+with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
+with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
+with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 
 package body Schema.Validators is
 
    Debug : Boolean := False;
-   UR_Type_Validator_Instance : XML_Validator;
-   UR_Type_Element   : array (Process_Contents_Type) of XML_Element;
-
-   procedure Create_UR_Type;
-   --  Create the ur-Type validator
-
-   procedure Validation_Error (Message : String);
-   --  Raise Validation_Error with a proper error message.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Element_List, Element_List_Access);
@@ -30,10 +26,6 @@ package body Schema.Validators is
      (Seq  : access Sequence_Record'Class;
       Data : Sequence_Data_Access);
    --  Reset the sequence to point to its first item
-
-   function Get_Name
-     (Validator : access XML_Validator_Record'Class) return String;
-   --  Return a string "(rule "name")" if the name of the validator is defined
 
    procedure Create_NS_Grammar
      (Grammar       : in out XML_Grammar;
@@ -97,52 +89,6 @@ package body Schema.Validators is
    --  The definition must be provided before the grammar is fully filled, or
    --  this is an error.
 
-   -------------
-   -- UR_Type --
-   -------------
-
-   type UR_Type_Validator is new XML_Validator_Record with record
-      Process_Contents : Process_Contents_Type := Process_Strict;
-   end record;
-   type UR_Type_Access is access all UR_Type_Validator'Class;
-   procedure Validate_End_Element
-     (Validator      : access UR_Type_Validator;
-      Local_Name     : Unicode.CES.Byte_Sequence;
-      Data           : Validator_Data);
-   procedure Validate_Attributes
-     (Validator         : access UR_Type_Validator;
-      Atts              : Sax.Attributes.Attributes'Class;
-      Id_Table          : in out Id_Htable_Access;
-      Nillable          : Boolean;
-      Is_Nil            : out Boolean);
-   procedure Validate_Start_Element
-     (Validator         : access UR_Type_Validator;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
-   --  See doc for inherited subprograms
-
-   -------------------------
-   --  Byte_Sequence_List --
-   -------------------------
-
-   type Byte_Sequence_List is array (Natural range <>)
-      of Unicode.CES.Byte_Sequence_Access;
-   type Byte_Sequence_List_Access is access Byte_Sequence_List;
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Byte_Sequence_List, Byte_Sequence_List_Access);
-
-   procedure Free (List : in out Byte_Sequence_List_Access);
-   --  Free the contents of List, including contained sequences
-
-   procedure Append
-     (List  : in out Byte_Sequence_List_Access;
-      Value : Unicode.CES.Byte_Sequence);
-   --  Append a new value to List
-
    function Check_Substitution_Groups
      (Element    : XML_Element;
       Local_Name : Unicode.CES.Byte_Sequence;
@@ -153,87 +99,22 @@ package body Schema.Validators is
    --  This also raises an XML_Validator_Record if the matching element is
    --  in fact abstract
 
-   ------------
-   -- Facets --
-   ------------
+   function Extension_Of
+     (Base      : XML_Type;
+      Extension : XML_Validator := null) return XML_Validator
+     renames Schema.Validators.Extensions.Create_Extension_Of;
 
-   type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Pattern_Matcher, Pattern_Matcher_Access);
+   function Extension_Of
+     (Base       : XML_Type;
+      Group      : XML_Group;
+      Min_Occurs : Natural := 1;
+      Max_Occurs : Integer := 1) return XML_Validator
+      renames Schema.Validators.Extensions.Create_Extension_Of;
 
-   type Whitespace_Restriction is (Preserve, Replace, Collapse);
-
-   type Value_Validator is access function
-     (Str : Byte_Sequence) return Boolean;
-   --  Return True if Str is a valid value.
-   --  Str is encoded with Sax.Encodings.Encoding
-
-   pragma Warnings (Off);
-   type All_Facets is (Facet_Whitespace,
-                       Facet_Pattern,
-                       Facet_Enumeration,
-                       Facet_Implicit_Enumeration,
-                       Facet_Length,
-                       Facet_Min_Length,
-                       Facet_Max_Length,
-                       Facet_Total_Digits,
-                       Facet_Fraction_Digits,
-                       Facet_Min_Inclusive,
-                       Facet_Min_Exclusive,
-                       Facet_Max_Exclusive,
-                       Facet_Max_Inclusive);
-   pragma Warnings (On);
-
-   type Facets_Mask is array (All_Facets) of Boolean;
-   pragma Pack (Facets_Mask);
-
-   No_Facets : constant Facets_Mask := (others => False);
-
-   String_Facets : constant Facets_Mask :=
-     (Facet_Whitespace | Facet_Pattern | Facet_Enumeration
-      | Facet_Length | Facet_Min_Length | Facet_Max_Length => True,
-      others => False);
-   Integer_Facets : constant Facets_Mask :=
-     (Facet_Whitespace | Facet_Pattern | Facet_Total_Digits
-      | Facet_Fraction_Digits | Facet_Min_Inclusive
-      | Facet_Max_Inclusive | Facet_Min_Exclusive
-      | Facet_Max_Exclusive => True,
-      others => False);
-
-   type Facets_Value is record
-      Settable             : Facets_Mask := No_Facets;
-      --  List of facets than can be set
-
-      Mask                 : Facets_Mask := No_Facets;
-      Whitespace           : Whitespace_Restriction    := Preserve;
-      Pattern              : Pattern_Matcher_Access    := null;
-      Pattern_String       : Byte_Sequence_Access      := null;
-      Enumeration          : Byte_Sequence_List_Access := null;
-      --  ??? Could use a htable here for faster access
-      Implicit_Enumeration : Value_Validator           := null;
-      Length               : Natural                   := Natural'Last;
-      Min_Length           : Natural                   := 0;
-      Max_Length           : Natural                   := Natural'Last;
-      Total_Digits         : Positive                  := Positive'Last;
-      Fraction_Digits      : Natural                   := Natural'Last;
-      Max_Inclusive        : Long_Long_Integer;
-      Max_Exclusive        : Long_Long_Integer;
-      Min_Inclusive        : Long_Long_Integer;
-      Min_Exclusive        : Long_Long_Integer;
-   end record;
-
-   procedure Free (Facets : in out Facets_Value);
-   --  Free the contents of the facets
-
-   procedure Check_Facet (Facets : in out Facets_Value; Value : Byte_Sequence);
-   --  Check whether Value matches all the facets.
-   --  raises XML_Validation_Error in case of error
-
-   procedure Add_Facet
-     (Facets      : in out Facets_Value;
-      Facet_Name  : Byte_Sequence;
-      Facet_Value : Byte_Sequence);
-   --  Raises Invalid_Restriction in case of error
+   function Restriction_Of
+     (Base        : XML_Type;
+      Restriction : XML_Validator := null) return XML_Validator
+      renames Schema.Validators.Restrictions.Create_Restriction_Of;
 
    ---------------------
    -- Debug_Validator --
@@ -292,495 +173,6 @@ package body Schema.Validators is
       Empty_Element : Boolean);
    --  See doc from inherited subprogram
 
-
-   -----------------------------------
-   --  Common_Simple_XML_Validator --
-   -----------------------------------
-   --  For all simple types with pattern, enumeration and whitespace faces
-
-   type Common_Simple_XML_Validator is new Any_Simple_XML_Validator_Record
-   with record
-      Facets : Facets_Value;
-   end record;
-   type Common_Simple_Validator
-     is access all Common_Simple_XML_Validator'Class;
-
-   procedure Validate_Characters
-     (Validator     : access Common_Simple_XML_Validator;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
-   procedure Free
-     (Validator : in out Common_Simple_XML_Validator);
-   procedure Add_Facet
-     (Validator   : access Common_Simple_XML_Validator;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence);
-   function Is_Simple_Type
-     (Validator : access Common_Simple_XML_Validator) return Boolean;
-   --  See doc from inherited subprogram
-
-   -----------------------
-   -- Boolean_Validator --
-   -----------------------
-
-   type Boolean_Validator_Record is new Common_Simple_XML_Validator with
-     null record;
-   procedure Validate_Characters
-     (Validator     : access Boolean_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
-   procedure Add_Facet
-     (Validator   : access Boolean_Validator_Record;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence);
-   --   See doc from inherited subprograms
-
-   ------------------------------
-   -- Extension_XML_Validator --
-   ------------------------------
-
-   type Extension_XML_Validator is new XML_Validator_Record with record
-      Base      : XML_Type;
-      Extension : XML_Validator;
-   end record;
-   type Extension_Type is access Extension_XML_Validator'Class;
-   type Extension_Data is new Validator_Data_Record with record
-      Base_Data      : Validator_Data;
-      Extension_Data : Validator_Data;
-   end record;
-   type Extension_Data_Access is access all Extension_Data'Class;
-
-   procedure Free (Data : in out Extension_Data);
-   function Create_Validator_Data
-     (Validator : access Extension_XML_Validator) return Validator_Data;
-   procedure Validate_Start_Element
-     (Validator         : access Extension_XML_Validator;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
-   procedure Validate_Characters
-     (Validator     : access Extension_XML_Validator;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
-   procedure Get_Attribute_Lists
-     (Validator   : access Extension_XML_Validator;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Dependency2 : out XML_Validator);
-   function Is_Extension_Of
-     (Validator : access Extension_XML_Validator; Typ : XML_Type)
-      return Boolean;
-   function Is_Simple_Type
-     (Validator : access Extension_XML_Validator) return Boolean;
-   --  See doc from inherited subprograms
-
-   -------------------------------
-   -- Restriction_XML_Validator --
-   -------------------------------
-
-   type Restriction_XML_Validator is new XML_Validator_Record with record
-      Base              : XML_Type;
-      Restriction       : XML_Validator;
-      Facets            : Facets_Value;
-   end record;
-   type Restriction_Type is access Restriction_XML_Validator'Class;
-   type Restriction_Data is new Validator_Data_Record with record
-      Restriction_Data : Validator_Data;
-   end record;
-   type Restriction_Data_Access is access all Restriction_Data'Class;
-
-   procedure Free (Data : in out Restriction_Data);
-   function Create_Validator_Data
-     (Validator : access Restriction_XML_Validator) return Validator_Data;
-   procedure Validate_Start_Element
-     (Validator         : access Restriction_XML_Validator;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element);
-   procedure Validate_Characters
-     (Validator     : access Restriction_XML_Validator;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
-   procedure Get_Attribute_Lists
-     (Validator   : access Restriction_XML_Validator;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Dependency2 : out XML_Validator);
-   procedure Add_Facet
-     (Validator   : access Restriction_XML_Validator;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence);
-   function Is_Restriction_Of
-     (Validator : access Restriction_XML_Validator; Typ : XML_Type)
-      return Boolean;
-   function Is_Simple_Type
-     (Validator : access Restriction_XML_Validator) return Boolean;
-   --  See doc from inherited subprograms
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Facets : in out Facets_Value) is
-   begin
-      if Facets.Pattern /= null then
-         Unchecked_Free (Facets.Pattern);
-         Free (Facets.Pattern_String);
-      end if;
-
-      if Facets.Enumeration /= null then
-         Free (Facets.Enumeration);
-      end if;
-   end Free;
-
-   -----------------
-   -- Check_Facet --
-   -----------------
-
-   procedure Check_Facet
-     (Facets : in out Facets_Value; Value : Byte_Sequence)
-   is
-      Found  : Boolean;
-      Length : Integer;
-      Val    : Long_Long_Integer;
-   begin
-      if Facets.Mask (Facet_Pattern) then
-         if Facets.Pattern = null then
-            Facets.Pattern := new Pattern_Matcher '
-              (Compile (Facets.Pattern_String.all));
-         end if;
-         if not Match (Facets.Pattern.all, String (Value)) then
-            Validation_Error ("string pattern not matched: "
-                              & Facets.Pattern_String.all);
-         end if;
-      end if;
-
-      if Facets.Mask (Facet_Enumeration) then
-         Found := False;
-         for E in Facets.Enumeration'Range loop
-            if Value = Facets.Enumeration (E).all then
-               Found := True;
-            end if;
-         end loop;
-
-         if not Found then
-            Validation_Error ("Element's value not in the enumeration set");
-         end if;
-      end if;
-
-      if Facets.Mask (Facet_Implicit_Enumeration) then
-         if not Facets.Implicit_Enumeration (Value) then
-            Validation_Error ("Invalid value: """ & Value & """");
-         end if;
-      end if;
-
-      if Facets.Mask (Facet_Whitespace) then
-         case Facets.Whitespace is
-            when Preserve =>
-               null; --  Always valid
-
-            when Replace =>
-               for C in Value'Range loop
-                  if Value (C) = ASCII.HT
-                    or else Value (C) = ASCII.LF
-                    or else Value (C) = ASCII.CR
-                  then
-                     Validation_Error ("HT, LF and CR characters not allowed");
-                  end if;
-               end loop;
-
-            when Collapse =>
-               for C in Value'Range loop
-                  if Value (C) = ASCII.HT
-                    or else Value (C) = ASCII.LF
-                    or else Value (C) = ASCII.CR
-                  then
-                     Validation_Error ("HT, LF and CR characters not allowed");
-
-                  elsif Value (C) = ' '
-                    and then C < Value'Last
-                    and then Value (C + 1) = ' '
-                  then
-                     Validation_Error
-                       ("Duplicate space characters not allowed");
-                  end if;
-               end loop;
-
-               --  Leading or trailing white spaces are also forbidden
-               if Value'Length /= 0 then
-                  if Value (Value'First) = ' ' then
-                     Validation_Error ("Leading whitespaces not allowed");
-                  elsif Value (Value'Last) = ' ' then
-                     Validation_Error ("Trailing whitespaces not allowed");
-                  end if;
-               end if;
-         end case;
-      end if;
-
-      if Facets.Mask (Facet_Length)
-        or Facets.Mask (Facet_Min_Length)
-        or Facets.Mask (Facet_Max_Length)
-      then
-         Length := Sax.Encodings.Encoding.Length (Value);
-
-         if Facets.Mask (Facet_Length) and then Length /= Facets.Length then
-            Validation_Error ("Invalid length");
-         end if;
-
-         if Facets.Mask (Facet_Min_Length)
-           and then Length < Facets.Min_Length
-         then
-            Validation_Error ("String is too short, minimum length is"
-                              & Integer'Image (Facets.Min_Length)
-                              & " characters");
-         end if;
-
-         if Facets.Mask (Facet_Max_Length)
-           and then Length > Facets.Max_Length
-         then
-            Validation_Error ("String too long, maximum length is"
-                              & Integer'Image (Facets.Max_Length)
-                              & " characters");
-         end if;
-      end if;
-
-      --  If we have a
-      if Facets.Mask (Facet_Total_Digits)
-        or Facets.Mask (Facet_Fraction_Digits)
-        or Facets.Mask (Facet_Max_Exclusive)
-        or Facets.Mask (Facet_Max_Inclusive)
-        or Facets.Mask (Facet_Min_Exclusive)
-        or Facets.Mask (Facet_Min_Inclusive)
-      then
-         if Facets.Mask (Facet_Total_Digits)
-           and then Value'Length /= Facets.Total_Digits
-         then
-            Validation_Error
-              ("The maximum number of digits is"
-               & Integer'Image (Facets.Total_Digits));
-         end if;
-
-         if Facets.Mask (Facet_Fraction_Digits) then
-            for V in Value'Range loop
-               if Value (V) = '.' then
-                  if Value'Last - V > Facets.Fraction_Digits then
-                     Validation_Error
-                       ("Too many digits in the fractional part");
-                  end if;
-               end if;
-            end loop;
-
-            if Facets.Fraction_Digits /= 0 then
-               declare
-                  FVal : Long_Long_Float;
-               begin
-                  FVal := Long_Long_Float'Value (Value);
-
-                  --  ??? Incorrect, obviously
-                  Val := Long_Long_Integer (FVal);
-               exception
-                  when Constraint_Error =>
-                     Validation_Error ("Must have a decimal value");
-               end;
-            else
-               begin
-                  Val := Long_Long_Integer'Value (Value);
-               exception
-                  when Constraint_Error =>
-                     Validation_Error ("Value must be an integer");
-               end;
-            end if;
-
-         else
-            begin
-               Val := Long_Long_Integer'Value (Value);
-            exception
-               when Constraint_Error =>
-                  Validation_Error ("Value must be an integer");
-            end;
-         end if;
-
-         if Facets.Mask (Facet_Max_Inclusive)
-           and then Facets.Max_Inclusive < Val
-         then
-            Validation_Error
-              ("maxInclusive is set to"
-               & Long_Long_Integer'Image (Facets.Max_Inclusive));
-         end if;
-
-         if Facets.Mask (Facet_Max_Exclusive)
-           and then Facets.Max_Exclusive <= Val
-         then
-            Validation_Error
-              ("maxExclusive is set to"
-               & Long_Long_Integer'Image (Facets.Max_Exclusive));
-         end if;
-
-         if Facets.Mask (Facet_Min_Inclusive)
-           and then Facets.Min_Inclusive > Val
-         then
-            Validation_Error
-              ("minInclusive is set to"
-               & Long_Long_Integer'Image (Facets.Min_Inclusive));
-         end if;
-
-         if Facets.Mask (Facet_Min_Exclusive)
-           and then Facets.Min_Exclusive >= Val
-         then
-            Validation_Error
-              ("minExclusive is set to"
-               & Long_Long_Integer'Image (Facets.Min_Exclusive));
-         end if;
-      end if;
-   end Check_Facet;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Facets      : in out Facets_Value;
-      Facet_Name  : Byte_Sequence;
-      Facet_Value : Byte_Sequence) is
-   begin
-      if Facet_Name = "enumeration" then
-         if not Facets.Settable (Facet_Enumeration) then
-            Validation_Error ("Enumeration facet can't be set for this type");
-         end if;
-         Append (Facets.Enumeration, Facet_Value);
-         Facets.Mask (Facet_Enumeration) := True;
-
-      elsif Facet_Name = "whiteSpace" then
-         if not Facets.Settable (Facet_Whitespace) then
-            Validation_Error ("whiteSpace facet can't be set for this type");
-         end if;
-         if Facet_Value = "preserve" then
-            Facets.Whitespace := Preserve;
-         elsif Facet_Value = "replace" then
-            Facets.Whitespace := Replace;
-         elsif Facet_Value = "collapse" then
-            Facets.Whitespace := Collapse;
-         else
-            Raise_Exception
-              (Invalid_Restriction'Identity,
-               "Invalid value for whiteSpace facet: " & Facet_Value);
-         end if;
-         Facets.Mask (Facet_Whitespace) := True;
-
-      elsif Facet_Name = "pattern" then
-         if not Facets.Settable (Facet_Pattern) then
-            Validation_Error ("pattern facet can't be set for this type");
-         end if;
-         Unchecked_Free (Facets.Pattern);
-         Free (Facets.Pattern_String);
-         Facets.Pattern := null;
-         Facets.Pattern_String := new Byte_Sequence'(Facet_Value);
-         Facets.Mask (Facet_Pattern) := True;
-
-      elsif Facet_Name = "length" then
-         if not Facets.Settable (Facet_Length) then
-            Validation_Error ("length facet can't be set for this type");
-         end if;
-         Facets.Length := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Length) := True;
-
-      elsif Facet_Name = "minLength" then
-         if not Facets.Settable (Facet_Min_Length) then
-            Validation_Error ("minLength facet can't be set for this type");
-         end if;
-         Facets.Min_Length := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Min_Length) := True;
-
-      elsif Facet_Name = "maxLength" then
-         if not Facets.Settable (Facet_Max_Length) then
-            Validation_Error ("maxLength facet can't be set for this type");
-         end if;
-         Facets.Max_Length := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Max_Length) := True;
-
-      elsif Facet_Name = "totalDigits" then
-         if not Facets.Settable (Facet_Total_Digits) then
-            Validation_Error ("totalDigits facet can't be set for this type");
-         end if;
-         Facets.Total_Digits := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Total_Digits) := True;
-
-      elsif Facet_Name = "fractionDigits" then
-         if not Facets.Settable (Facet_Fraction_Digits) then
-            Validation_Error
-              ("fractionDigits facet can't be set for this type");
-         end if;
-         Facets.Fraction_Digits := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Fraction_Digits) := True;
-
-      elsif Facet_Name = "maxInclusive" then
-         if not Facets.Settable (Facet_Max_Inclusive) then
-            Validation_Error ("maxInclusive facet can't be set for this type");
-         end if;
-         Facets.Max_Inclusive := Long_Long_Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Max_Inclusive) := True;
-
-      elsif Facet_Name = "maxExclusive" then
-         if not Facets.Settable (Facet_Max_Exclusive) then
-            Validation_Error ("maxExclusive facet can't be set for this type");
-         end if;
-         Facets.Max_Exclusive := Long_Long_Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Max_Exclusive) := True;
-
-      elsif Facet_Name = "minInclusive" then
-         if not Facets.Settable (Facet_Min_Inclusive) then
-            Validation_Error ("minInclusive facet can't be set for this type");
-         end if;
-         Facets.Min_Inclusive := Long_Long_Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Min_Inclusive) := True;
-
-      elsif Facet_Name = "minExclusive" then
-         if not Facets.Settable (Facet_Min_Exclusive) then
-            Validation_Error ("minExclusive facet can't be set for this type");
-         end if;
-         Facets.Min_Exclusive := Long_Long_Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Min_Exclusive) := True;
-
-      else
-         Raise_Exception
-           (Invalid_Restriction'Identity, "Invalid facet: " & Facet_Name);
-      end if;
-   end Add_Facet;
-
-   -------------------------
-   -- Get_Attribute_Lists --
-   -------------------------
-
-   procedure Get_Attribute_Lists
-     (Validator   : access Extension_XML_Validator;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Dependency2 : out XML_Validator) is
-   begin
-      List := Validator.Attributes;
-      Dependency1 := Validator.Extension;
-      Dependency2 := Validator.Base.Validator;
-   end Get_Attribute_Lists;
-
-   -------------------------
-   -- Get_Attribute_Lists --
-   -------------------------
-
-   procedure Get_Attribute_Lists
-     (Validator   : access Restriction_XML_Validator;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Dependency2 : out XML_Validator) is
-   begin
-      List := Validator.Attributes;
-      Dependency1 := Validator.Restriction;
-      Dependency2 := Validator.Base.Validator;
-   end Get_Attribute_Lists;
-
    -------------------------
    -- Get_Attribute_Lists --
    -------------------------
@@ -812,40 +204,6 @@ package body Schema.Validators is
    procedure Validation_Error (Message : String) is begin
       Raise_Exception (XML_Validation_Error'Identity, Message);
    end Validation_Error;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (List  : in out Byte_Sequence_List_Access;
-      Value : Unicode.CES.Byte_Sequence)
-   is
-      L : Byte_Sequence_List_Access := List;
-   begin
-      if List /= null then
-         L := new Byte_Sequence_List'(List.all & new Byte_Sequence'(Value));
-         Unchecked_Free (List);
-         List := L;
-      else
-         List := new Byte_Sequence_List'(1 => new Byte_Sequence'(Value));
-      end if;
-   end Append;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Byte_Sequence_List_Access) is
-   begin
-      if List /= null then
-         for L in List'Range loop
-            Free (List (L));
-         end loop;
-
-         Unchecked_Free (List);
-      end if;
-   end Free;
 
    ----------
    -- Free --
@@ -1088,9 +446,9 @@ package body Schema.Validators is
    is
       pragma Unreferenced (Validator, Data, Namespace_URI, Grammar);
    begin
-      Put_Line (ASCII.ESC & "[36m"
-                & "****** Start_Element: DebugType validator for "
-                & Local_Name & ASCII.ESC & "[39m");
+      Debug_Output (ASCII.ESC & "[36m"
+                    & "****** Start_Element: DebugType validator for "
+                    & Local_Name & ASCII.ESC & "[39m");
       Element_Validator := No_Element;
       Validation_Error ("Don't know how to validate " & Local_Name);
    end Validate_Start_Element;
@@ -1106,32 +464,11 @@ package body Schema.Validators is
    is
       pragma Unreferenced (Validator, Empty_Element);
    begin
-      Put_Line (ASCII.ESC & "[36m"
-                & "****** Charactes: DebugType validator for " & Ch
-                & ASCII.ESC & "[39m");
+      Debug_Output (ASCII.ESC & "[36m"
+                    & "****** Charactes: DebugType validator for " & Ch
+                    & ASCII.ESC & "[39m");
       Validation_Error ("Don't know how to validate characters " & Ch);
    end Validate_Characters;
-
-   --------------------
-   -- Create_UR_Type --
-   --------------------
-
-   procedure Create_UR_Type is
-      Validator : UR_Type_Access;
-   begin
-      if UR_Type_Validator_Instance = null then
-         for P in Process_Contents_Type loop
-            Validator := new UR_Type_Validator;
-            Validator.Process_Contents := P;
-            UR_Type_Element (P)  := Create_Element
-              ("", Create_Type ("ur-Type", Validator));
-
-            if P = Process_Skip then
-               UR_Type_Validator_Instance := XML_Validator (Validator);
-            end if;
-         end loop;
-      end if;
-   end Create_UR_Type;
 
    ----------------------------
    -- Validate_Start_Element --
@@ -1150,88 +487,6 @@ package body Schema.Validators is
       Validation_Error ("No definition found for """ & Local_Name & """");
       Element_Validator := No_Element;
    end Validate_Start_Element;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator         : access UR_Type_Validator;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element)
-   is
-      pragma Unreferenced (Data);
-      G : XML_Grammar_NS;
-   begin
-      if Debug then
-         Put_Line ("Validate_Start_Element UR_Type Process_Contents="
-                   & Validator.Process_Contents'Img);
-      end if;
-
-      --  ur-Type and anyType accept anything
-      Create_UR_Type;
-
-      case Validator.Process_Contents is
-         when Process_Strict =>
-            Get_NS (Grammar, Namespace_URI, G);
-            Element_Validator := Lookup_Element
-              (G, Local_Name, Create_If_Needed => False);
-            if Element_Validator = No_Element then
-               Validation_Error
-                 ("No definition provided for """ & Local_Name & """");
-            end if;
-
-         when Process_Lax =>
-            Get_NS (Grammar, Namespace_URI, G);
-            Element_Validator := Lookup_Element
-              (G, Local_Name, Create_If_Needed => False);
-            if Element_Validator = No_Element then
-               if Debug then
-                  Put_Line ("Definition not found for " & Local_Name);
-               end if;
-               Element_Validator :=
-                 UR_Type_Element (Validator.Process_Contents);
-            elsif Debug then
-               Put_Line ("Definition found for " & Local_Name);
-            end if;
-
-         when Process_Skip =>
-            Element_Validator := UR_Type_Element (Validator.Process_Contents);
-      end case;
-   end Validate_Start_Element;
-
-   -------------------------
-   -- Validate_Attributes --
-   -------------------------
-
-   procedure Validate_Attributes
-     (Validator         : access UR_Type_Validator;
-      Atts              : Sax.Attributes.Attributes'Class;
-      Id_Table          : in out Id_Htable_Access;
-      Nillable          : Boolean;
-      Is_Nil            : out Boolean)
-   is
-      pragma Unreferenced (Validator, Atts, Id_Table, Nillable);
-   begin
-      Is_Nil := False;
-   end Validate_Attributes;
-
-   --------------------------
-   -- Validate_End_Element --
-   --------------------------
-
-   procedure Validate_End_Element
-     (Validator      : access UR_Type_Validator;
-      Local_Name     : Unicode.CES.Byte_Sequence;
-      Data           : Validator_Data)
-   is
-      pragma Unreferenced (Validator, Local_Name, Data);
-   begin
-      null;
-   end Validate_End_Element;
 
    -----------------------
    -- Set_Mixed_Content --
@@ -1360,11 +615,9 @@ package body Schema.Validators is
         (Named : Named_Attribute_Validator) return Integer is
       begin
          for A in 0 .. Length - 1 loop
-            if Debug then
-               Put_Line ("Check attribute: "
-                         & Named.NS.Namespace_URI.all
-                         & ':' & Named.Local_Name.all);
-            end if;
+            Debug_Output ("Check attribute: "
+                          & Named.NS.Namespace_URI.all
+                          & ':' & Named.Local_Name.all);
             if not Seen (A)
               and then Get_Local_Name (Atts, A) = Named.Local_Name.all
               and then (Get_URI (Atts, A) = ""
@@ -1459,9 +712,7 @@ package body Schema.Validators is
       end Recursive_Check;
 
    begin
-      if Debug then
-         Put_Line ("Validate_Attributes " & Get_Name (Validator));
-      end if;
+      Debug_Output ("Validate_Attributes " & Get_Name (Validator));
 
       Recursive_Check (XML_Validator (Validator));
 
@@ -1481,11 +732,9 @@ package body Schema.Validators is
                null;
 
             else
-               if Debug then
-                  Put_Line ("Invalid attribute "
-                            & Get_URI (Atts, S) & " -> "
-                            & Get_Qname (Atts, S));
-               end if;
+               Debug_Output ("Invalid attribute "
+                             & Get_URI (Atts, S) & " -> "
+                             & Get_Qname (Atts, S));
 
                Validation_Error
                  ("Attribute """ & Get_Qname (Atts, S) & """ invalid for this"
@@ -1532,55 +781,8 @@ package body Schema.Validators is
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean) is
    begin
-      if Debug then
-         Put_Line ("Validate_Character for unknown " & Get_Name (Validator)
-                   & " --" & Ch & "--" & Boolean'Image (Empty_Element));
-      end if;
-   end Validate_Characters;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access Common_Simple_XML_Validator;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
-   is
-      pragma Unreferenced (Empty_Element);
-   begin
-      if Debug then
-         Put_Line ("Validate_Character for common: --" & Ch & "--"
-                   & Get_Name (Validator));
-      end if;
-
-      Check_Facet (Validator.Facets, Ch);
-   end Validate_Characters;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access Boolean_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean) is
-   begin
-      if Debug then
-         Put_Line ("Validate_Characters for boolean --" & Ch & "--"
-                   & Get_Name (Validator));
-      end if;
-
-      if Ch /= "true"
-        and then Ch /= "false"
-        and then Ch /= "0"
-        and then Ch /= "1"
-      then
-         Validation_Error ("Invalid value for boolean type: """ & Ch & """");
-      end if;
-      Validate_Characters
-        (Common_Simple_XML_Validator (Validator.all)'Access, Ch,
-         Empty_Element);
+      Debug_Output ("Validate_Character for unknown " & Get_Name (Validator)
+                    & " --" & Ch & "--" & Boolean'Image (Empty_Element));
    end Validate_Characters;
 
    -------------------------
@@ -1594,10 +796,8 @@ package body Schema.Validators is
    is
       Start : Integer := Ch'First;
    begin
-      if Debug then
-         Put_Line ("Validate_Characters for list --" & Ch & "--"
-                   & Get_Name (Validator));
-      end if;
+      Debug_Output ("Validate_Characters for list --" & Ch & "--"
+                    & Get_Name (Validator));
 
       --  Ch has already been normalized by the SAX parser
       for C in Ch'Range loop
@@ -1668,10 +868,8 @@ package body Schema.Validators is
       Iter : Particle_Iterator;
       Valid : XML_Validator;
    begin
-      if Debug then
-         Put_Line ("Validate_Characters for union --" & Ch & "--"
-                   & Get_Name (Union));
-      end if;
+      Debug_Output ("Validate_Characters for union --" & Ch & "--"
+                    & Get_Name (Union));
 
       if Union.Unions = null then
          if Empty_Element then
@@ -1716,49 +914,11 @@ package body Schema.Validators is
    begin
       if Facet_Name = "whiteSpace" then
          if Facet_Value /= "collapse" then
-            Raise_Exception
-              (Invalid_Restriction'Identity,
-               "Invalid value for restriction whiteSpace: " & Facet_Value);
+            Validation_Error
+              ("Invalid value for restriction whiteSpace: " & Facet_Value);
          end if;
       else
-         Raise_Exception
-           (Invalid_Restriction'Identity,
-            "Invalid restriction: " & Facet_Name);
-      end if;
-   end Add_Facet;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access Common_Simple_XML_Validator;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence) is
-   begin
-      Add_Facet (Validator.Facets, Facet_Name, Facet_Value);
-   end Add_Facet;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access Boolean_Validator_Record;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence)
-   is
-   begin
-      if Facet_Name /= "whiteSpace"
-        and then Facet_Name /= "pattern"
-      then
-         Raise_Exception
-           (Invalid_Restriction'Identity,
-            "Invalid restriction for boolean type: " & Facet_Name);
-      else
-         Add_Facet
-           (Common_Simple_XML_Validator (Validator.all)'Access,
-            Facet_Name, Facet_Value);
+         Validation_Error ("Invalid restriction: " & Facet_Name);
       end if;
    end Add_Facet;
 
@@ -1796,11 +956,9 @@ package body Schema.Validators is
       Atts      : Sax.Attributes.Attributes'Class;
       Index     : Natural) is
    begin
-      if Debug then
-         Put_Line ("Checking attribute "
-                   & Validator.Local_Name.all
-                   & "=" & Get_Value (Atts, Index) & "--");
-      end if;
+      Debug_Output ("Checking attribute "
+                    & Validator.Local_Name.all
+                    & "=" & Get_Value (Atts, Index) & "--");
 
       if Validator.Attribute_Type /= No_Type then
          Validate_Characters (Get_Validator (Validator.Attribute_Type),
@@ -1808,17 +966,6 @@ package body Schema.Validators is
                               Empty_Element => False);
       end if;
    end Validate_Attribute;
-
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out Common_Simple_XML_Validator) is
-   begin
-      Free (Validator.Facets);
-      Free (Any_Simple_XML_Validator_Record (Validator));
-   end Free;
 
    ----------
    -- Free --
@@ -1886,11 +1033,9 @@ package body Schema.Validators is
    begin
       if Result = null then
          if Create_If_Needed then
-            if Debug then
-               Put_Line ("Lookup_Element: creating forward "
-                         & Grammar.Namespace_URI.all & " : "
-                         & Local_Name);
-            end if;
+            Debug_Output ("Lookup_Element: creating forward "
+                          & Grammar.Namespace_URI.all & " : "
+                          & Local_Name);
             return (Elem   => Register_Forward (Grammar, Local_Name).Elem,
                     Is_Ref => True);
          else
@@ -2094,9 +1239,7 @@ package body Schema.Validators is
          Unchecked_Free (Tmp);
       end if;
 
-      if Debug then
-         Put_Line ("Create_NS_Grammar: " & Namespace_URI);
-      end if;
+      Debug_Output ("Create_NS_Grammar: " & Namespace_URI);
 
       Grammar.Grammars (Grammar.Grammars'Last) := new XML_Grammar_NS_Record'
         (Namespace_URI    => new Byte_Sequence'(Namespace_URI),
@@ -2123,8 +1266,7 @@ package body Schema.Validators is
       Get_NS (Grammar, XML_Schema_URI,   Result => G);
       Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
 
-      Create_UR_Type;
-      Created := Create_Type ("ur-Type", UR_Type_Validator_Instance);
+      Created := Get_Type (Get_UR_Type_Element (Process_Skip));
       Register (G, Created);
 
       Tmp2 := new XML_Validator_Record;
@@ -2465,10 +1607,8 @@ package body Schema.Validators is
                & """ has already been declared");
          end if;
 
-         if Debug then
-            Put_Line ("Overriding forward decl for element "
-                      & Element.Elem.Local_Name.all);
-         end if;
+         Debug_Output ("Overriding forward decl for element "
+                       & Element.Elem.Local_Name.all);
 
          Free (Old.all);
          Old.all := Element.Elem.all;
@@ -2495,9 +1635,7 @@ package body Schema.Validators is
                & Typ.Local_Name.all);
          end if;
 
-         if Debug then
-            Put_Line ("Overriding forward type " & Typ.Local_Name.all);
-         end if;
+         Debug_Output ("Overriding forward type " & Typ.Local_Name.all);
 
          Old.Validator := Typ.Validator;
       else
@@ -2618,9 +1756,7 @@ package body Schema.Validators is
          end if;
       end if;
 
-      if Debug then
-         Put_Line ("Forward type decl: " & Local_Name);
-      end if;
+      Debug_Output ("Forward type decl: " & Local_Name);
 
       Typ := Create_Type (Local_Name, Get_Validator (Invalid));
       Types_Htable.Set (Grammar.Types.all, Typ);
@@ -2653,9 +1789,7 @@ package body Schema.Validators is
          end if;
       end if;
 
-      if Debug then
-         Put_Line ("Forward element decl: " & Local_Name);
-      end if;
+      Debug_Output ("Forward element decl: " & Local_Name);
 
       Elem := Create_Element (Local_Name, Invalid);
       Register (Grammar, Elem);
@@ -2688,9 +1822,7 @@ package body Schema.Validators is
          end if;
       end if;
 
-      if Debug then
-         Put_Line ("Forward attribute decl: " & Local_Name);
-      end if;
+      Debug_Output ("Forward attribute decl: " & Local_Name);
 
       Attr := Create_Attribute (Local_Name, Grammar, Invalid);
       Register (Attr);
@@ -2707,9 +1839,7 @@ package body Schema.Validators is
    is
       Gr : XML_Group := Create_Group (Local_Name);
    begin
-      if Debug then
-         Put_Line ("Forward group decl: " & Local_Name);
-      end if;
+      Debug_Output ("Forward group decl: " & Local_Name);
 
       Register (Grammar, Gr);
       return Gr;
@@ -3008,21 +2138,17 @@ package body Schema.Validators is
         Element.Elem.Substitution_Groups;
       Result : XML_Element := No_Element;
    begin
-      if Debug then
-         Put_Line ("++ Testing element xsd=" & Element.Elem.Local_Name.all
-                   & " xml=" & Local_Name);
-      end if;
+      Debug_Output ("++ Testing element xsd=" & Element.Elem.Local_Name.all
+                    & " xml=" & Local_Name);
 
       if Element.Elem.Local_Name.all = Local_Name then
          Result := Element;
 
       elsif Groups /= null then
          for S in Groups'Range loop
-            if Debug then
-               Put_Line ("Check_Substitution group: "
-                         & Element.Elem.Local_Name.all & " -> "
-                         & Groups (S).Elem.Local_Name.all);
-            end if;
+            Debug_Output ("Check_Substitution group: "
+                          & Element.Elem.Local_Name.all & " -> "
+                          & Groups (S).Elem.Local_Name.all);
 
             Result := Check_Substitution_Groups
               (Groups (S), Local_Name, Namespace_URI);
@@ -3058,9 +2184,7 @@ package body Schema.Validators is
       if Seq.Max_Occurs /= Unbounded
         and then Data.Num_Occurs > Seq.Max_Occurs
       then
-         if Debug then
-            Put_Line ("Too many occurrences of " & Get_Name (Seq));
-         end if;
+         Debug_Output ("Too many occurrences of " & Get_Name (Seq));
 
          Validation_Error
            ("Too many occurrences of sequence. Expecting at most"
@@ -3088,11 +2212,9 @@ package body Schema.Validators is
            and then Data.Num_Occurs_Of_Current >=
              Get_Max_Occurs (Data.Current))
       then
-         if Debug then
-            Put_Line ("Goto next particle in " & Get_Name (Seq)
-                      & " Occurs of Current="
-                      & Data.Num_Occurs_Of_Current'Img);
-         end if;
+         Debug_Output ("Goto next particle in " & Get_Name (Seq)
+                       & " Occurs of Current="
+                       & Data.Num_Occurs_Of_Current'Img);
 
          Next (Data.Current);
          Data.Num_Occurs_Of_Current := 0;
@@ -3125,9 +2247,7 @@ package body Schema.Validators is
    is
       Applies : Boolean;
    begin
-      if Debug then
-         Put_Line ("++ Testing nested " & Get_Name (Nested));
-      end if;
+      Debug_Output ("++ Testing nested " & Get_Name (Nested));
 
       Applies_To_Tag
         (Nested, Local_Name, Namespace_URI, Grammar, Applies, Skip_Current);
@@ -3142,14 +2262,10 @@ package body Schema.Validators is
             Data.Nested_Data, Grammar, Element_Validator);
 
          if Element_Validator /= No_Element then
-            if Debug then
-               Put_Line
-                 ("++ nested Matched " & Get_Name (Data.Nested) & ' '
-                  & Get_Local_Name (Element_Validator.Elem.Of_Type));
-            end if;
+            Debug_Output
+              ("++ nested Matched " & Get_Name (Data.Nested) & ' '
+               & Get_Local_Name (Element_Validator.Elem.Of_Type));
          else
-
-            Put_Line ("MANU: Ending current nested1");
             Validate_End_Element (Nested, Local_Name, Data.Nested_Data);
 
             Free_Nested_Group (Group_Model_Data (Data));
@@ -3171,10 +2287,8 @@ package body Schema.Validators is
       Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element) is
    begin
-      if Debug then
-         Put_Line ("++ Executing nested: " & Get_Name (Validator)
-                   & " -> " & Get_Name (Data.Nested));
-      end if;
+      Debug_Output ("++ Executing nested: " & Get_Name (Validator)
+                    & " -> " & Get_Name (Data.Nested));
 
       Validate_Start_Element
         (Data.Nested, Local_Name, Namespace_URI,
@@ -3219,12 +2333,10 @@ package body Schema.Validators is
 
       Start_Elem := Get (D.Current);
 
-      if Debug then
-         Put_Line ("++ Start sequence " & Get_Name (Validator)
-                   & " occurs=(" & Validator.Min_Occurs'Img
-                   & " <=" & D.Num_Occurs'Img & " <="
-                   & Validator.Max_Occurs'Img & ')');
-      end if;
+      Debug_Output ("++ Start sequence " & Get_Name (Validator)
+                    & " occurs=(" & Validator.Min_Occurs'Img
+                    & " <=" & D.Num_Occurs'Img & " <="
+                    & Validator.Max_Occurs'Img & ')');
 
       while First_Iter or else Get (D.Current) /= Start_Elem loop
          First_Iter := False;
@@ -3241,12 +2353,10 @@ package body Schema.Validators is
                  (Curr.Element, Local_Name, Namespace_URI);
 
                if Element_Validator /= No_Element then
-                  if Debug then
-                     Put_Line
-                       ("++ element Matched: "
-                        & Element_Validator.Elem.Local_Name.all & ' '
-                        & Get_Local_Name (Element_Validator.Elem.Of_Type));
-                  end if;
+                  Debug_Output
+                    ("++ element Matched: "
+                     & Element_Validator.Elem.Local_Name.all & ' '
+                     & Get_Local_Name (Element_Validator.Elem.Of_Type));
 
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
@@ -3290,9 +2400,7 @@ package body Schema.Validators is
 
          --  The current element was in fact optional at this point
 
-         if Debug then
-            Put_Line ("Skip optional particle in " & Get_Name (Validator));
-         end if;
+         Debug_Output ("Skip optional particle in " & Get_Name (Validator));
 
          if not Move_To_Next_Particle (Validator, D, Force => True) then
             Element_Validator := No_Element;
@@ -3516,11 +2624,9 @@ package body Schema.Validators is
          return;
       end if;
 
-      if Debug then
-         Put_Line ("++ Start choice " & Get_Name (Validator)
-                   & " minOccurs=" & Validator.Min_Occurs'Img
-                   & " maxOccurs=" & Validator.Max_Occurs'Img);
-      end if;
+      Debug_Output ("++ Start choice " & Get_Name (Validator)
+                    & " minOccurs=" & Validator.Min_Occurs'Img
+                    & " maxOccurs=" & Validator.Max_Occurs'Img);
 
       --  Check whether the current item is valid
 
@@ -3533,10 +2639,8 @@ package body Schema.Validators is
                exit when Element_Validator /= No_Element;
 
             when Particle_Nested =>
-               if Debug then
-                  Put_Line ("++ Choice Testing nested "
-                            & Get_Name (It.Validator));
-               end if;
+               Debug_Output
+                 ("++ Choice Testing nested " & Get_Name (It.Validator));
 
                Check_Nested
                  (Validator, It.Validator, D, Local_Name, Namespace_URI,
@@ -3561,9 +2665,8 @@ package body Schema.Validators is
          if D.Parent /= null
            and then D.Num_Occurs >= Validator.Min_Occurs
          then
-            if Debug then
-               Put_Line ("Terminating nested choice, since no longer matches");
-            end if;
+            Debug_Output
+              ("Terminating nested choice, since no longer matches");
 
             Element_Validator := No_Element;
             return;
@@ -3912,23 +3015,30 @@ package body Schema.Validators is
    ----------------------------
 
    procedure Set_Substitution_Group
-     (Element : XML_Element; Head : XML_Element) is
+     (Element : XML_Element; Head : XML_Element)
+   is
+      Is_Extension, Is_Restriction : Boolean;
    begin
       if Get_Type (Element) /= No_Type then
-         if Head.Elem.Final_Restriction
-           and then Get_Validator (Get_Type (Element)).all in
-           Restriction_XML_Validator'Class
-         then
+         Is_Extension := Is_Extension_Of
+           (Get_Validator (Get_Type (Element)), Get_Type (Head));
+         Is_Restriction := Is_Restriction_Of
+           (Get_Validator (Get_Type (Element)), Get_Type (Head));
+
+--           if not Is_Extension and not Is_Restriction then
+--              Validation_Error
+--                ("substitutionGroup can only be used for restrictions or"
+--                 & " extensions of the head element");
+--           end if;
+
+         if Head.Elem.Final_Restriction and then Is_Restriction then
             Validation_Error
               ("""" & Head.Elem.Local_Name.all
                & """ is final for restrictions, and cannot be substituted by"
                & """" & Element.Elem.Local_Name.all & """");
          end if;
 
-         if Head.Elem.Final_Extension
-           and then Get_Validator (Get_Type (Element)).all in
-           Extension_XML_Validator'Class
-         then
+         if Head.Elem.Final_Extension and then Is_Extension then
             Validation_Error
               ("""" & Head.Elem.Local_Name.all
                & """ is final for extensions, and cannot be substituted by"
@@ -3938,56 +3048,6 @@ package body Schema.Validators is
 
       Append (Head.Elem.Substitution_Groups, Element);
    end Set_Substitution_Group;
-
-   ------------------
-   -- Extension_Of --
-   ------------------
-
-   function Extension_Of
-     (Base      : XML_Type;
-      Extension : XML_Validator := null) return XML_Validator
-   is
-      Result : constant Extension_Type := new Extension_XML_Validator;
-   begin
-      Result.Base      := Base;
-      Result.Extension := Extension;
-      return XML_Validator (Result);
-   end Extension_Of;
-
-   ------------------
-   -- Extension_Of --
-   ------------------
-
-   function Extension_Of
-     (Base       : XML_Type;
-      Group      : XML_Group;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return XML_Validator
-   is
-      Result : constant Extension_Type := new Extension_XML_Validator;
-      C      : Choice;
-   begin
-      Result.Base      := Base;
-      C := Create_Choice (Min_Occurs => Min_Occurs, Max_Occurs => Max_Occurs);
-      Add_Particle (C, Group);
-      Result.Extension := XML_Validator (C);
-      return XML_Validator (Result);
-   end Extension_Of;
-
-   --------------------
-   -- Restriction_Of --
-   --------------------
-
-   function Restriction_Of
-     (Base        : XML_Type;
-      Restriction : XML_Validator := null) return XML_Validator
-   is
-      Result : constant Restriction_Type := new Restriction_XML_Validator;
-   begin
-      Result.Base        := Base;
-      Result.Restriction := Restriction;
-      return XML_Validator (Result);
-   end Restriction_Of;
 
    -------------------------
    -- Empty_Particle_List --
@@ -4062,109 +3122,6 @@ package body Schema.Validators is
             Max_Occurs => 1));
    end Add_Particle;
 
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator         : access Restriction_XML_Validator;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element)
-   is
-      D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
-   begin
-      if Validator.Restriction /= null then
-         Validate_Start_Element
-           (Validator.Restriction, Local_Name, Namespace_URI,
-            D.Restriction_Data, Grammar, Element_Validator);
-
-         if Debug then
-            if Element_Validator /= No_Element then
-               Put_Line ("Validate_Start_Element: end of restriction, result="
-                         & Element_Validator.Elem.Local_Name.all);
-            else
-               Put_Line ("Validate_Start_Element: end of restriction, no"
-                         & " match from restriction");
-            end if;
-         end if;
-      else
-         Validate_Start_Element
-           (Get_Validator (Validator.Base), Local_Name, Namespace_URI,
-            D.Restriction_Data, Grammar, Element_Validator);
-      end if;
-   end Validate_Start_Element;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access Restriction_XML_Validator;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence) is
-   begin
-      --  We won't allow to set a facet that the ancestor doesn't know.
-      --  ??? Problem: The ancestor might not be known yet at that point...
-      if Validator.Restriction = null then
-         Validator.Facets.Settable := (others => True);
---           Validator.Facets.Settable := Common_Simple_XML_Validator
---             (Validator.Base.Validator.all).Facets.Settable;
-      else
-         Validator.Facets.Settable := (others => False);
-      end if;
-      Add_Facet (Validator.Facets, Facet_Name, Facet_Value);
-   end Add_Facet;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access Restriction_XML_Validator;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean) is
-   begin
-      if Debug then
-         Put_Line ("Validate_Characters for restriction --" & Ch & "--"
-                   & Get_Name (Validator));
-      end if;
-
-      Check_Facet (Validator.Facets, Ch);
-      if Validator.Restriction /= null then
-         Validate_Characters (Validator.Restriction, Ch, Empty_Element);
-      end if;
-   end Validate_Characters;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Restriction_Data) is
-   begin
-      Free (Data.Restriction_Data);
-   end Free;
-
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   function Create_Validator_Data
-     (Validator : access Restriction_XML_Validator) return Validator_Data
-   is
-      D : constant Restriction_Data_Access := new Restriction_Data;
-   begin
-      if Validator.Restriction /= null then
-         D.Restriction_Data := Create_Validator_Data (Validator.Restriction);
-      else
-         D.Restriction_Data := Create_Validator_Data
-           (Get_Validator (Validator.Base));
-      end if;
-      return Validator_Data (D);
-   end Create_Validator_Data;
-
    --------------------
    -- Set_Debug_Name --
    --------------------
@@ -4212,9 +3169,9 @@ package body Schema.Validators is
    begin
       if Iter.In_Group /= null then
          Iter.In_Group := Iter.In_Group.Next;
-         if Debug and then Iter.In_Group = null then
-            Put_Line ("---> End of group "
-                     & Iter.Current.Group.Local_Name.all);
+         if Iter.In_Group = null then
+            Debug_Output ("---> End of group "
+                          & Iter.Current.Group.Local_Name.all);
          end if;
       end if;
 
@@ -4224,9 +3181,8 @@ package body Schema.Validators is
          if Iter.Current /= null
            and then Iter.Current.Typ = Particle_Group
          then
-            if Debug then
-               Put_Line ("---> in group " & Iter.Current.Group.Local_Name.all);
-            end if;
+            Debug_Output
+              ("---> in group " & Iter.Current.Group.Local_Name.all);
             Iter.In_Group := Iter.Current.Group.Particles.First;
 
             if Iter.In_Group = null then
@@ -4266,113 +3222,6 @@ package body Schema.Validators is
    begin
       return Iter.Current.Max_Occurs;
    end Get_Max_Occurs;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Extension_Data) is
-   begin
-      Free (Data.Base_Data);
-      Free (Data.Extension_Data);
-   end Free;
-
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   function Create_Validator_Data
-     (Validator : access Extension_XML_Validator) return Validator_Data
-   is
-      D : constant Extension_Data_Access := new Extension_Data;
-   begin
-      if Validator.Extension /= null then
-         D.Extension_Data := Create_Validator_Data (Validator.Extension);
-      end if;
-      D.Base_Data   := Create_Validator_Data (Get_Validator (Validator.Base));
-      return Validator_Data (D);
-   end Create_Validator_Data;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator         : access Extension_XML_Validator;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data;
-      Grammar           : in out XML_Grammar;
-      Element_Validator : out XML_Element)
-   is
-      D : constant Extension_Data_Access := Extension_Data_Access (Data);
-   begin
-      if Debug then
-         Put_Line ("Validate_Start_Element for extension "
-                   & Get_Name (Validator));
-      end if;
-
-      Element_Validator := No_Element;
-
-      --  If we have a sequence with optional elements, it is possible that
-      --  none of these matched, but this isn't an error. In this case, we keep
-      --  looking in the base type
-
-      Validate_Start_Element
-        (Get_Validator (Validator.Base), Local_Name, Namespace_URI,
-         D.Base_Data, Grammar, Element_Validator);
-
-      if Element_Validator = No_Element then
-         if Validator.Extension /= null then
-            Validate_Start_Element
-              (Validator.Extension, Local_Name, Namespace_URI,
-               D.Extension_Data, Grammar, Element_Validator);
-         end if;
-      end if;
-
-   exception
-      when E : XML_Validation_Error =>
-         if Debug then
-            Put_Line ("Validation error in extension: "
-                      & Exception_Message (E) & ", testing extension");
-         end if;
-
-         if Validator.Extension /= null then
-            Validate_Start_Element
-              (Validator.Extension, Local_Name, Namespace_URI,
-               D.Extension_Data, Grammar, Element_Validator);
-         else
-            raise;
-         end if;
-   end Validate_Start_Element;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access Extension_XML_Validator;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean) is
-   begin
-      if Debug then
-         Put_Line ("Validate_Characters for extension "
-                   & Get_Name (Validator));
-      end if;
-
-      if Validator.Extension /= null then
-         Validate_Characters (Validator.Extension, Ch, Empty_Element);
-      end if;
-
-   exception
-      when E : XML_Validation_Error =>
-         if Debug then
-            Put_Line ("Validation error in extension: "
-                      & Exception_Message (E) & ", testing base");
-         end if;
-         Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element);
-   end Validate_Characters;
 
    ------------------
    -- Global_Check --
@@ -4631,11 +3480,9 @@ package body Schema.Validators is
          end if;
       end if;
 
-      Create_UR_Type;
-
       Validate_Start_Element
         (Get_Validator
-           (Get_Type (UR_Type_Element (Validator.Process_Contents))),
+           (Get_Type (Get_UR_Type_Element (Validator.Process_Contents))),
          Local_Name, Namespace_URI, null, Grammar, Element_Validator);
    end Validate_Start_Element;
 
@@ -4828,28 +3675,6 @@ package body Schema.Validators is
    end Is_Restriction_Of;
 
    -----------------------
-   -- Is_Restriction_Of --
-   -----------------------
-
-   function Is_Restriction_Of
-     (Validator : access Restriction_XML_Validator; Typ : XML_Type)
-      return Boolean is
-   begin
-      return Validator.Base = Typ;
-   end Is_Restriction_Of;
-
-   ---------------------
-   -- Is_Extension_Of --
-   ---------------------
-
-   function Is_Extension_Of
-     (Validator : access Extension_XML_Validator; Typ : XML_Type)
-      return Boolean is
-   begin
-      return Validator.Base = Typ;
-   end Is_Extension_Of;
-
-   -----------------------
    -- Free_Nested_Group --
    -----------------------
 
@@ -4864,43 +3689,11 @@ package body Schema.Validators is
    --------------------
 
    function Is_Simple_Type
-     (Validator : access Common_Simple_XML_Validator) return Boolean
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return True;
-   end Is_Simple_Type;
-
-   --------------------
-   -- Is_Simple_Type --
-   --------------------
-
-   function Is_Simple_Type
      (Validator : access XML_Validator_Record) return Boolean
    is
       pragma Unreferenced (Validator);
    begin
       return False;
-   end Is_Simple_Type;
-
-   --------------------
-   -- Is_Simple_Type --
-   --------------------
-
-   function Is_Simple_Type
-     (Validator : access Extension_XML_Validator) return Boolean is
-   begin
-      return Is_Simple_Type (Get_Validator (Validator.Base));
-   end Is_Simple_Type;
-
-   --------------------
-   -- Is_Simple_Type --
-   --------------------
-
-   function Is_Simple_Type
-     (Validator : access Restriction_XML_Validator) return Boolean is
-   begin
-      return Is_Simple_Type (Get_Validator (Validator.Base));
    end Is_Simple_Type;
 
    ------------------------------
@@ -4954,5 +3747,16 @@ package body Schema.Validators is
    begin
       return Element.Elem.Is_Global;
    end Is_Global;
+
+   ------------------
+   -- Debug_Output --
+   ------------------
+
+   procedure Debug_Output (Str : String) is
+   begin
+      if Debug then
+         Put_Line (Str);
+      end if;
+   end Debug_Output;
 
 end Schema.Validators;

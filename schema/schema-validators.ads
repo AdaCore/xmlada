@@ -12,9 +12,6 @@ package Schema.Validators is
    XML_Instance_URI : constant Unicode.CES.Byte_Sequence :=
      "http://www.w3.org/2001/XMLSchema-instance";
 
-   Invalid_Restriction : exception;
-   --  Raised when an invalid restriction is set on a type
-
    XML_Validation_Error : exception;
    --  Raised in case of error in the validation process. The exception message
    --  contains the error, but not its location
@@ -583,6 +580,10 @@ package Schema.Validators is
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether we should output debug traces
 
+   procedure Validation_Error (Message : String);
+   --  Raise Validation_Error with a proper error message.
+
+
 private
 
    ---------
@@ -1148,5 +1149,15 @@ private
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean);
    --  See doc from inherited subprograms
+
+
+   procedure Debug_Output (Str : String);
+   pragma Inline (Debug_Output);
+   --  Display a string for debugging purposes
+
+   function Get_Name
+     (Validator : access XML_Validator_Record'Class) return String;
+   --  Return a string "(rule "name")" if the name of the validator is defined.
+   --  This is for debug purposes only
 
 end Schema.Validators;
