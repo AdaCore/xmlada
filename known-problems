@@ -1,4 +1,4 @@
-Problems fixed in 1.x
+Problems fixed in 1.1
 
 - DB25-005 Incorrect value returned by DOM.Attributes.Owner_Element
 - D714-002 Attribute quotes are no longer present in a processing-instruction
