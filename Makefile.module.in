@@ -40,6 +40,10 @@ CC= @CC@
 COMPILER=${GNATMAKE}
 COMPILER=${GNATMAKE} -u -gnatwua -gnaty
 
+# Set the following to True to build shared libraries. Note that this will
+# not work on most systems, you need to at least compile with -fPIC
+BUILD_SHARED=FALSE
+
 RANLIB= @RANLIB@
 ARFLAGS=cr
 MKDIR=mkdir -p
@@ -127,7 +131,9 @@ else
 	@if [ -f /usr/bin/$(RANLIB) -o -f /bin/$(RANLIB) ]; then \
 	   cd obj; ${RANLIB} ${libname}.a; \
 	fi
+ifeq (${BUILD_SHARED}, TRUE)
 	cd obj; ${CC} -shared -o ${soname}.so ${OBJ}
+endif
 endif
 
 
