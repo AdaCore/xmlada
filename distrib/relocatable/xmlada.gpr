@@ -6,5 +6,5 @@
 with "xmlada_unicode", "xmlada_sax", "xmlada_input", "xmlada_dom", "xmlada_gtk";
 project Xmlada is
    for Source_Dirs use ();
-   for Object_Dir use "include/xmlada/obj";
+   for Object_Dir use "../include/xmlada/obj";
 end Xmlada;
