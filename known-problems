@@ -1,4 +1,4 @@
-Problems fixed in 0.8
+Problems fixed in 1.0
 
 - SAX: Ignorable_Whitespace is now only called when there are only spaces
   between two tags. If there is at least a letter, the spaces are concatenated
