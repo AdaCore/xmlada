@@ -34,9 +34,9 @@ obj: force
 	${GNATMAKE} -Pdom/dom.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
  
 test: force
-	${GNATMAKE} -Punicode/test/unicode_test.gpr -XMODE=debug
-	${GNATMAKE} -Psax/test/sax_test.gpr -XMODE=debug
-	${GNATMAKE} -Pdom/test/dom_test.gpr -XMODE=debug
+	${GNATMAKE} -Punicode/test/unicode_test.gpr -XMODE=${MODE}
+	${GNATMAKE} -Psax/test/sax_test.gpr -XMODE=${MODE}
+	${GNATMAKE} -Pdom/test/dom_test.gpr -XMODE=${MODE}
 
 docs: force
 	${MAKE} -e -C docs
