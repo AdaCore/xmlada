@@ -65,7 +65,7 @@ while test $# -gt 0; do
       ;;
     --version|-v)
       echo XmlAda ${MAJOR}.${MINOR}
-      exit 1
+      exit 0
       ;;
     --libs)
       output_type=libs
