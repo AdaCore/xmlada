@@ -1,81 +1,50 @@
-# Generated automatically from Makefile.in by configure.
-
 # Replace with the location for the installation directory
 PREFIX=@EXEC_PREFIX@
-
-# Set the following to True to build shared libraries. Note that this will
-# not work on most systems, you need to at least compile with -fPIC
-BUILD_SHARED=@BUILD_SHARED@
 
 GNATMAKE=gnatmake
 CC=gcc
 
-
-  
-# List of all modules to compile
-# You can remove "dom" if you don't intend to use the DOM interface
-MODULES=unicode input_sources sax dom
-
-# Version of the library
-MAJOR=0
-MINOR=8.1
+# Version of the library. This must be synchronized with shared.gpr
+MAJOR=1
+MINOR=0
 
 # Compiler mode: one of "distrib", "debug", "optimize", "profile"
 MODE=distrib
 
-FPIC=
 CHMOD=chmod
 CP=cp -p -f
 MKDIR=mkdir -p
-RANLIB= @RANLIB@
-ARFLAGS=cr
-CFLAGS=
-CP=cp -p -f
-CHMOD=chmod
 LN=ln -f -s
 
 #########################################################################
 ## Nothing to modify below this point
 #########################################################################
 
-MODULE_TEST=${MODULES:%=%_test}
+MODULES=unicode input_sources sax dom
 MODULE_INSTALL=${MODULES:%=%_inst}
 
 .PHONY: all obj clean install install_dirs
 
 all: obj docs 
-obj: ${MODULES}
-test: ${MODULE_TEST}
+
+obj: force
+	${GNATMAKE} -Pbuild_all.gpr -XMODE=${MODE}
+ 
+test: force
+	${GNATMAKE} -Pdom/dom.gpr -XMODE=test
+	${GNATMAKE} -Psax/sax.gpr -XMODE=test
 
 docs: force
 	${MAKE} -e -C docs
 
-${MODULES}: force
-	${GNATMAKE} ${FPIC} -u -P$@/$@.gpr -XMODE=${MODE}
-
-${MODULE_TEST}: force
-	${GNATMAKE} ${FPIC} -P${@:%_test=%}/${@:%_test=%}.gpr -XMODE=debug
-
 ${MODULE_INSTALL}: force
-	# Build the libraries themselves
-	cd ${@:%_inst=%}/obj; ${AR} ${ARFLAGS} libxmlada_${@:%_inst=%}.a *.o
-ifneq (${RANLIB}, "")
-	cd ${@:%_inst=%}/obj; ${RANLIB} libxmlada_${@:%_inst=%}.a
-endif
-ifeq (${BUILD_SHARED}, TRUE)
-	cd ${@:%_inst=%}/obj; ${CC} -shared -o libxmlada_${@:%_install=%}-${MAJOR}.${MINOR}.so *.o
-endif
-	#Install the libraries
-	${CP} ${@:%_inst=%}/obj/*.ali ${PREFIX}/include/xmlada
-	${CP} ${@:%_inst=%}/*.ad[bs]  ${PREFIX}/include/xmlada
-	${CP} ${@:%_inst=%}/obj/libxmlada_* ${PREFIX}/lib
-ifeq (${BUILD_SHARED}, TRUE)
-	cd ${PREFIX}/lib; ${LN} libxmlada_${@:%_inst=%}-${MAJOR}.${MINOR}.so libxmlada_${@:%_inst=%}.so
-endif
+	${CP} ${@:%_inst=%}/*.ad[bs]        ${PREFIX}/include/xmlada
+	${CP} ${@:%_inst=%}/lib/*.ali       ${PREFIX}/include/xmlada
+	${CP} ${@:%_inst=%}/lib/libxmlada_* ${PREFIX}/lib
 
 install_dirs: force
-	@${MKDIR} ${PREFIX}/lib
 	@${MKDIR} ${PREFIX}/bin
+	@${MKDIR} ${PREFIX}/lib
 	@${MKDIR} ${PREFIX}/include/xmlada
 
 install: obj install_dirs ${MODULE_INSTALL}
@@ -89,7 +58,11 @@ install: obj install_dirs ${MODULE_INSTALL}
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 
 clean: force
-	-${RM} ${MODULES:%=%/obj/*}  2>/dev/null
+	gnat clean -r -Pbuild_all.gpr
 	cd docs; ${MAKE} -e clean
+
+dist_clean: clean
+	${RM} dom/test/default.gpr
+	${RM} Makefile
 
 force:
