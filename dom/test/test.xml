@@ -7,7 +7,7 @@
       a1="  a  b  " a2=" &#x20; &#x20; a  b&#x20;  " />
    <xml:img 	xml:src='&#65;&amp;toto.gif' />
 		    <!-- an invalid comment  -->
-   <empty_tag xmlns="foons" attr='foo' />
+   <empty_tag xmlns="http://foons" attr='foo' />
    <![CDATA[<greeting]]>
    <full_tag attr="foo">full</full_tag>
 
