@@ -1,5 +1,9 @@
 New features in version 0.8
 
+- Builds are now based on GNAT project files
+  Users of GNAT 3.15 and later will now use GNAT project files to build the
+  library, which is easier to configure.
+
 - More efficient parser
   The API in the unicode module has been changed to avoid functions returning
   unconstrained types, resulting in a much faster parser.
