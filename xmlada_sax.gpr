@@ -1,9 +1,0 @@
-with "xmlada_unicode";
-with "xmlada_input";
-project XmlAda_Sax is
-    for Source_Dirs use ("include/xmlada/sax");
-    for Object_Dir use "include/xmlada/obj";
-    for Library_Dir use "lib/";
-    for Library_Name use "xmlada_sax";
-    for Library_Kind use "relocatable";
-end XmlAda_Sax;

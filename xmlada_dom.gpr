@@ -1,9 +1,0 @@
-with "xmlada_sax";
-with "xmlada_unicode";
-project XmlAda_Dom is
-    for Source_Dirs use ("include/xmlada/dom");
-    for Object_Dir use "include/xmlada/obj";
-    for Library_Dir use "lib/";
-    for Library_Name use "xmlada_dom";
-    for Library_Kind use "relocatable";
-end XmlAda_Dom;
