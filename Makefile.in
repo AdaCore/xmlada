@@ -28,7 +28,10 @@ MODULE_INSTALL=${MODULES:%=%_inst}
 all: obj docs 
 
 obj: force
-	${GNATMAKE} -Pbuild_all.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
+	${GNATMAKE} -Punicode/unicode.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
+	${GNATMAKE} -Pinput_sources/input_sources.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
+	${GNATMAKE} -Psax/sax.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
+	${GNATMAKE} -Pdom/dom.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
  
 test: force
 	${GNATMAKE} -Punicode/test/unicode_test.gpr -XMODE=debug
@@ -63,9 +66,12 @@ install: obj install_dirs ${MODULE_INSTALL}
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
 
 clean: force
-	gnat clean -r -Pbuild_all.gpr
-	gnat clean -Pdom/test/dom_test.gpr
-	gnat clean -Psax/test/sax_test.gpr
+	gnat clean -q -r -Punicode/unicode.gpr
+	gnat clean -q -r -Pinput_sources/input_sources.gpr
+	gnat clean -q -r -Psax/sax.gpr
+	gnat clean -q -r -Pdom/dom.gpr
+	gnat clean -q -Pdom/test/dom_test.gpr
+	gnat clean -q -Psax/test/sax_test.gpr
 	cd docs; ${MAKE} -e clean
 
 distclean: clean
