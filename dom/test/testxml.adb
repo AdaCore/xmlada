@@ -1,6 +1,6 @@
 with GNAT.Command_Line;  use GNAT.Command_Line;
 with Input_Sources.File; use Input_Sources.File;
-with Tree_Readers;       use Tree_Readers;
+with DOM.Readers;        use DOM.Readers;
 with Sax.Readers;        use Sax.Readers;
 with DOM.Core.Nodes;     use DOM.Core.Nodes;
 with Ada.Exceptions;     use Ada.Exceptions;

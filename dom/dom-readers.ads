@@ -33,7 +33,7 @@ with Sax.Exceptions;
 with Unicode.CES;
 with DOM.Core;             use DOM.Core;
 
-package Tree_Readers is
+package DOM.Readers is
 
    type Tree_Reader is new Reader with private;
    type Tree_Reader_Access is access all Tree_Reader'Class;
@@ -97,4 +97,4 @@ private
    procedure Warning
      (Handler : in out Tree_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class);
-end Tree_Readers;
+end DOM.Readers;

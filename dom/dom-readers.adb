@@ -34,7 +34,7 @@ with DOM.Core.Nodes;       use DOM.Core.Nodes;
 with DOM.Core.Documents;   use DOM.Core.Documents;
 with DOM.Core.Elements;    use DOM.Core.Elements;
 
-package body Tree_Readers is
+package body DOM.Readers is
    --------------------
    -- Start_Document --
    --------------------
@@ -218,4 +218,4 @@ package body Tree_Readers is
       Read.Warnings_As_Error := Warnings_As_Error;
    end Set_Warnings_As_Errors;
 
-end Tree_Readers;
+end DOM.Readers;
