@@ -3731,7 +3731,7 @@ package body Sax.Readers is
          if Id.Typ /= Double_String_Delimiter
            and then Id.Typ /= Single_String_Delimiter
          then
-            Fatal_Error (Parser, "[WF] Expecting version value");
+            Fatal_Error (Parser, "[WF] Expecting encoding value");
          end if;
          Get_String (Id, Attr_Value_State, Value_Start, Value_End);
 
