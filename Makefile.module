@@ -1,9 +1,19 @@
+# Generated automatically from Makefile.module.in by configure.
 ## General Makefile used to compile the modules
 ## This is included by all Makefiles, after they have defined the
 ## three variables
 ##    DEPENDENCIES: list of modules we depend on
 ##    MODULE:       name of the module (to build libraires)
 ##    WIN32:        'TRUE' if building on Windows, 'FALSE' otherwise
+
+
+# Modify the line below to reflect the location where
+# you want to install the library
+
+PREFIX=NONE
+
+MAJOR=0
+MINOR=7
 
 ###########
 ## Five Makefile targets will be available from the command line:
@@ -12,6 +22,7 @@
 ##  all_obj:    build all objects, but not tests
 ##  clean:      remove all object and temporary files
 ##  test:       build the test programs found in the subdirectory test/
+##  lib:        build the dynamic and static libraries for the module
 ##
 ##  This makefile will not work with make other that GNU make
 ##
@@ -28,11 +39,21 @@ COMPILER=gnatmake
 COMPILER=gnatmake -u -gnatwua -gnaty
 
 
+
+RANLIB= ranlib
+CC= gcc
+ARFLAGS=cr
+MKDIR=mkdir -p
 CFLAGS=
 BIND_FLAGS=-E
 FPIC=
 DEBUG=-g -gnata
+CP=cp -p -f
+CHMOD=chmod
+LN=ln -f -s
 
+libname=libxmlada_${MODULE}
+soname=libxmlada_${MODULE}-${MAJOR}.${MINOR}
 
 # Test programs to build
 # These are all the programs in the test/ directory, whose name is test*.adb
@@ -98,5 +119,26 @@ clean: force
 	-cd test; ${RM} *.exe
 	-${RM} ${TEST_PROGS}
 	@-rmdir obj
+
+lib: ${OBJ}
+	cd obj; ${AR} ${ARFLAGS} ${libname}.a ${OBJ}
+ifeq (${WIN32}, TRUE)
+	cd obj; ${RANLIB} ${libname}.a
+else
+	@if [ -f /usr/bin/$(RANLIB) -o -f /bin/$(RANLIB) ]; then \
+	   cd obj; ${RANLIB} ${libname}.a; \
+	fi
+	cd obj; ${CC} -shared -o ${soname}.so ${OBJ}
+endif
+
+
+install: lib
+	@${MKDIR} ${PREFIX}/lib
+	@${MKDIR} ${PREFIX}/include/xmlada
+	cd obj; ${CP} *.ali ${PREFIX}/include/xmlada
+	cd ${PREFIX}/include/xmlada; ${CHMOD} -w *.ali
+	${CP} *.ad[bs] ${PREFIX}/include/xmlada
+	cd obj; ${CP} ${libname}.a ${soname}.so ${PREFIX}/lib
+	cd ${PREFIX}/lib; ${LN} ${soname}.so ${libname}.so
 
 force:

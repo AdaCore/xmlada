@@ -40,6 +40,7 @@ COMPILER=gnatmake -u -gnatwua -gnaty
 
 
 RANLIB= @RANLIB@
+CC= @CC@
 ARFLAGS=cr
 MKDIR=mkdir -p
 CFLAGS=
