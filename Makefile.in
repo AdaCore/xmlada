@@ -39,6 +39,7 @@ obj: force
 	${GNATMAKE} -Pinput_sources/input_sources.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
 	${GNATMAKE} -Psax/sax.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
 	${GNATMAKE} -Pdom/dom.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
+	${GNATMAKE} -Pschema/schema.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
 ifneq (${GTKADA_GPR},)
 	${GNATMAKE} -Pxml_gtk/xml_gtk.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
 endif
@@ -47,6 +48,7 @@ test: force
 	${GNATMAKE} -Punicode/test/unicode_test.gpr -XMODE=${MODE}
 	${GNATMAKE} -Psax/test/sax_test.gpr -XMODE=${MODE}
 	${GNATMAKE} -Pdom/test/dom_test.gpr -XMODE=${MODE}
+	${GNATMAKE} -Pschema/test/schema_test.gpr -XMODE=${MODE}
 ifneq (${GTKADA_GPR},)
 	${MAKE} -C xml_gtk/test MODE=${MODE}
 endif
@@ -91,6 +93,7 @@ clean: force
 	gnat clean -q -Punicode/test/unicode_test.gpr
 	gnat clean -q -Pdom/test/dom_test.gpr
 	gnat clean -q -Psax/test/sax_test.gpr
+	gnat clean -q -Pschema/test/schema_test.gpr
 ifneq (${GTKADA_GPR},)
 	gnat clean -q -r -Pxml_gtk/xml_gtk.gpr
 	gnat clean -q -Pxml_gtk/test/xml_gtk_test.gpr

@@ -2,7 +2,8 @@ with "input_sources/input_sources";
 with "unicode/unicode", "unicode/test/unicode_test";
 with "sax/sax",         "sax/test/sax_test";
 with "dom/dom",         "dom/test/dom_test";
-with "xml_gtk/xml_gtk";
+with "schema/schema",   "schema/test/schema_test";
+with "xml_gtk/xml_gtk", "xml_gtk/test/xml_gtk_test";
 
 project Build_All is
    for Source_Files use ();
