@@ -388,6 +388,7 @@ package Schema.Validators is
    type Group_Model is access all Group_Model_Record'Class;
 
    type XML_Group is private;
+   No_XML_Group : constant XML_Group;
    --  A group of elements
 
    function Create_Group
@@ -526,6 +527,9 @@ package Schema.Validators is
    function Redefine_Type
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Type;
+   function Redefine_Group
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
    --  Indicate that a given type or element is being redefined inside a
    --  <redefine> tag. The old definition is returned, and all types that
    --  were referencing it will now refer to a new, invalid type. You need to
@@ -757,7 +761,7 @@ private
 
    type XML_Group_Record;
    type XML_Group is access all XML_Group_Record;
-   No_Group : constant XML_Group := null;
+   No_XML_Group : constant XML_Group := null;
 
    ---------------
    -- Particles --
@@ -860,7 +864,7 @@ private
 
    package Groups_Htable is new Sax.HTable
      (Element       => XML_Group,
-      Empty_Element => No_Group,
+      Empty_Element => No_XML_Group,
       Free          => Free,
       Key           => Unicode.CES.Byte_Sequence,
       Get_Key       => Get_Key,
@@ -948,12 +952,20 @@ private
    procedure Free_Nested_Group (Data : Group_Model_Data);
    --  Free the nested group and its data, if any
 
-   function Applies_To_Tag
-     (Group      : access Group_Model_Record;
-      Local_Name : Unicode.CES.Byte_Sequence) return Boolean;
+   procedure Applies_To_Tag
+     (Group        : access Group_Model_Record;
+      Local_Name   : Unicode.CES.Byte_Sequence;
+      Applies      : out Boolean;
+      Skip_Current : out Boolean);
    --  Whether Group can process Local_Name. This is used for group_models
    --  nested in a choice, so that we can find out which one should be applied
    --  (given the restrictions in schema, only one of them can apply).
+   --  If Group should be called to validate Local_Name, Applies is set to
+   --  True.
+   --  If Local_Name is not handled by Group, Applies is set to False.
+   --  However, if Skip_Current is then set to true, then the group
+   --  matches in fact an empty item, and Local_Name should be passed over to
+   --  the successor of Group in its parent sequence or choice.
 
    procedure Validate_Characters
      (Validator     : access Group_Model_Record;
@@ -1018,9 +1030,11 @@ private
       Data              : Validator_Data);
    function Create_Validator_Data
      (Validator : access Sequence_Record) return Validator_Data;
-   function Applies_To_Tag
-     (Group      : access Sequence_Record;
-      Local_Name : Unicode.CES.Byte_Sequence) return Boolean;
+   procedure Applies_To_Tag
+     (Group        : access Sequence_Record;
+      Local_Name   : Unicode.CES.Byte_Sequence;
+      Applies      : out Boolean;
+      Skip_Current : out Boolean);
    --  See doc for inherited subprograms
 
    -------------------
@@ -1041,9 +1055,11 @@ private
       Data              : Validator_Data);
    function Create_Validator_Data
      (Validator : access Choice_Record) return Validator_Data;
-   function Applies_To_Tag
-     (Group      : access Choice_Record;
-      Local_Name : Unicode.CES.Byte_Sequence) return Boolean;
+   procedure Applies_To_Tag
+     (Group        : access Choice_Record;
+      Local_Name   : Unicode.CES.Byte_Sequence;
+      Applies      : out Boolean;
+      Skip_Current : out Boolean);
    --  See doc for inherited subprograms
 
    -------------------------------

@@ -55,13 +55,17 @@ package body Schema.Validators is
       Nested      : access Group_Model_Record'Class;
       Data        : access Group_Model_Data_Record'Class;
       Local_Name  : Byte_Sequence;
-      Element_Validator : out XML_Element);
+      Element_Validator : out XML_Element;
+      Skip_Current      : out Boolean);
    --  Check whether Nested matches Local_Name.
    --  If Nested should match but there is an error, XML_Validator_Record is
    --  raised.
    --  If Nested cannot match Local_Name, Element_Validator is set to null on
    --  exit.
-   --  Data should be the parent's data
+   --  Data should be the parent's data.
+   --  Skip_Current is set to True if Nested didn't match Local_Name, but
+   --  if it should be considered as terminated successfully (and thus we
+   --  should hand out Local_Name to the next validator in the list)
 
    procedure Run_Nested
      (Validator         : access Group_Model_Record'Class;
@@ -553,27 +557,35 @@ package body Schema.Validators is
                end if;
             end loop;
 
-            declare
-               Val : Long_Long_Float;
-               pragma Unreferenced (Val);
+            if Facets.Fraction_Digits /= 0 then
+               declare
+                  FVal : Long_Long_Float;
+               begin
+                  FVal := Long_Long_Float'Value (Value);
+
+                  --  ??? Incorrect, obviously
+                  Val := Long_Long_Integer (FVal);
+               exception
+                  when Constraint_Error =>
+                     Validation_Error ("Must have a decimal value");
+               end;
+            else
+               begin
+                  Val := Long_Long_Integer'Value (Value);
+               exception
+                  when Constraint_Error =>
+                     Validation_Error ("Value must be an integer");
+               end;
+            end if;
+
+         else
             begin
-               Val := Long_Long_Float'Value (Value);
+               Val := Long_Long_Integer'Value (Value);
             exception
                when Constraint_Error =>
-                  Validation_Error ("Must have a decimal value");
+                  Validation_Error ("Value must be an integer");
             end;
-
-            --  ??? Should check over properties, but Min_* and Max_* are
-            --  stored as integers
-            return;
          end if;
-
-         begin
-            Val := Long_Long_Integer'Value (Value);
-         exception
-            when Constraint_Error =>
-               Validation_Error ("Value must be an integer");
-         end;
 
          if Facets.Mask (Facet_Max_Inclusive)
            and then Facets.Max_Inclusive < Val
@@ -1827,7 +1839,7 @@ package body Schema.Validators is
    is
       Result : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
    begin
-      if Result = No_Group then
+      if Result = No_XML_Group then
          Result := Register_Forward (Grammar, Local_Name);
       end if;
       return Result;
@@ -2332,6 +2344,47 @@ package body Schema.Validators is
       return Result;
    end Create_Element;
 
+   -------------------
+   -- Redefine_Type --
+   -------------------
+
+   function Redefine_Type
+     (Grammar : XML_Grammar_NS; Local_Name : Byte_Sequence) return XML_Type
+   is
+      Old : constant XML_Type := Types_Htable.Get
+        (Grammar.Types.all, Local_Name);
+      Result : XML_Type;
+   begin
+      if Old /= No_Type then
+         Result := Create_Type
+           ("@redefine_" & Local_Name, Get_Validator (Old));
+         Old.Validator := new Debug_Validator_Record;
+         return Result;
+      end if;
+      return No_Type;
+   end Redefine_Type;
+
+   --------------------
+   -- Redefine_Group --
+   --------------------
+
+   function Redefine_Group
+     (Grammar : XML_Grammar_NS; Local_Name : Byte_Sequence) return XML_Group
+   is
+      Old : constant XML_Group := Groups_Htable.Get
+        (Grammar.Groups.all, Local_Name);
+      Result : XML_Group;
+   begin
+      if Old /= No_XML_Group then
+         Result := Create_Group ("@redefine_" & Local_Name);
+         Result.all := Old.all;
+         Old.all := (Local_Name => Old.Local_Name,
+                     Particles  => Empty_Particle_List);
+         return Result;
+      end if;
+      return No_XML_Group;
+   end Redefine_Group;
+
    --------------
    -- Register --
    --------------
@@ -2367,26 +2420,6 @@ package body Schema.Validators is
       Element.Elem.Is_Global := True;
    end Register;
 
-   -------------------
-   -- Redefine_Type --
-   -------------------
-
-   function Redefine_Type
-     (Grammar : XML_Grammar_NS; Local_Name : Byte_Sequence) return XML_Type
-   is
-      Old : constant XML_Type := Types_Htable.Get
-        (Grammar.Types.all, Local_Name);
-      Result : XML_Type;
-   begin
-      if Old /= No_Type then
-         Result := Create_Type
-           ("@redefine_" & Local_Name, Get_Validator (Old));
-         Old.Validator := new Debug_Validator_Record;
-         return Result;
-      end if;
-      return No_Type;
-   end Redefine_Type;
-
    --------------
    -- Register --
    --------------
@@ -2396,12 +2429,6 @@ package body Schema.Validators is
         (Grammar.Types.all, Typ.Local_Name.all);
    begin
       if Old /= No_Type then
---           if Grammar.Redefine then
---              --  ??? Free Typ
---              Old.Validator := Typ.Validator;
---              Typ := Old;
---
---           else
          if Get_Validator (Old).all not in Debug_Validator_Record'Class then
             Validation_Error
               ("Type has already been declared: "
@@ -2413,7 +2440,6 @@ package body Schema.Validators is
          end if;
 
          Old.Validator := Typ.Validator;
---         end if;
       else
          Types_Htable.Set (Grammar.Types.all, Typ);
 
@@ -2466,22 +2492,16 @@ package body Schema.Validators is
       Old : constant XML_Group :=
         Groups_Htable.Get (Grammar.Groups.all, Group.Local_Name.all);
    begin
-      if Old /= No_Group then
-         if Grammar.Redefine then
-            Old.Particles := Group.Particles;
-            --  ??? Free Group
-            Group := Old;
-         else
-            if Old.Particles.First /= null then
-               Validation_Error
-                 ("Group has already been declared: "
-                  & Group.Local_Name.all);
-            end if;
-            Old.Particles := Group.Particles;
-
-            --  ??? Free Group
-            Group := Old;
+      if Old /= No_XML_Group then
+         if Old.Particles.First /= null then
+            Validation_Error
+              ("Group has already been declared: " & Group.Local_Name.all);
          end if;
+
+         Old.Particles := Group.Particles;
+
+         --  ??? Free Group
+         Group := Old;
       else
          Groups_Htable.Set (Grammar.Groups.all, Group);
       end if;
@@ -3036,13 +3056,18 @@ package body Schema.Validators is
       Nested            : access Group_Model_Record'Class;
       Data              : access Group_Model_Data_Record'Class;
       Local_Name        : Byte_Sequence;
-      Element_Validator : out XML_Element) is
+      Element_Validator : out XML_Element;
+      Skip_Current      : out Boolean)
+   is
+      Applies : Boolean;
    begin
       if Debug then
          Put_Line ("++ Testing nested " & Get_Name (Nested));
       end if;
 
-      if Applies_To_Tag (Nested, Local_Name) then
+      Applies_To_Tag (Nested, Local_Name, Applies, Skip_Current);
+
+      if Applies then
          Data.Nested      := Group_Model (Nested);
          Data.Nested_Data := Create_Validator_Data (Nested);
          Group_Model_Data (Data.Nested_Data).Parent := Group_Model (Parent);
@@ -3057,6 +3082,10 @@ package body Schema.Validators is
                   & Get_Local_Name (Element_Validator.Elem.Of_Type));
             end if;
          else
+
+            Put_Line ("MANU: Ending current nested1");
+            Validate_End_Element (Nested, Local_Name, Data.Nested_Data);
+
             Free_Nested_Group (Group_Model_Data (Data));
          end if;
       else
@@ -3103,6 +3132,7 @@ package body Schema.Validators is
       Curr       : XML_Particle_Access;
       Tmp        : Boolean;
       pragma Unreferenced (Tmp);
+      Skip_Current : Boolean;
 
    begin
       if D.Nested /= null then
@@ -3119,6 +3149,7 @@ package body Schema.Validators is
       if Debug then
          Put_Line ("++ Start sequence " & Get_Name (Validator)
                    & " occurs=(" & Validator.Min_Occurs'Img
+                   & " <=" & D.Num_Occurs'Img & " <="
                    & Validator.Max_Occurs'Img & ')');
       end if;
 
@@ -3145,11 +3176,27 @@ package body Schema.Validators is
                   end if;
 
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
+
+               elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
+                  Validation_Error
+                    ("Expecting at least"
+                     & Integer'Image (Get_Min_Occurs (D.Current))
+                     & " occurrences of current particle");
+                  return;
                end if;
 
             when Particle_Nested =>
                Check_Nested
-                 (Validator, Curr.Validator, D, Local_Name, Element_Validator);
+                 (Validator, Curr.Validator, D, Local_Name, Element_Validator,
+                  Skip_Current);
+
+               if Element_Validator = No_Element
+                 and then not Skip_Current
+               then
+                  Validation_Error
+                    ("Expecting at least 1 occurrence of a nested Schema "
+                     & " sequence");
+               end if;
 
             when Particle_Group | Particle_XML_Type =>
                --  Not possible, since the iterator doesn't return those
@@ -3157,14 +3204,6 @@ package body Schema.Validators is
          end case;
 
          if Element_Validator /= No_Element then
-            return;
-         end if;
-
-         if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
-            Validation_Error
-              ("Expecting at least"
-               & Integer'Image (Get_Min_Occurs (D.Current))
-               & " occurrences of current particle");
             return;
          end if;
 
@@ -3374,6 +3413,7 @@ package body Schema.Validators is
       D     : constant Choice_Data_Access := Choice_Data_Access (Data);
       Item  : Particle_Iterator := Start (Validator.Particles);
       It    : XML_Particle_Access;
+      Skip_Current : Boolean;
    begin
       if D.Nested /= null then
          Run_Nested (Validator, D, Local_Name, Element_Validator);
@@ -3414,7 +3454,8 @@ package body Schema.Validators is
                end if;
 
                Check_Nested
-                 (Validator, It.Validator, D, Local_Name, Element_Validator);
+                 (Validator, It.Validator, D, Local_Name, Element_Validator,
+                  Skip_Current);
                exit when Element_Validator /= No_Element;
 
             when Particle_Group | Particle_XML_Type =>
@@ -3608,26 +3649,30 @@ package body Schema.Validators is
    -- Applies_To_Tag --
    --------------------
 
-   function Applies_To_Tag
-     (Group      : access Group_Model_Record;
-      Local_Name : Unicode.CES.Byte_Sequence) return Boolean
+   procedure Applies_To_Tag
+     (Group        : access Group_Model_Record;
+      Local_Name   : Unicode.CES.Byte_Sequence;
+      Applies      : out Boolean;
+      Skip_Current : out Boolean)
    is
       pragma Unreferenced (Group, Local_Name);
    begin
-      return False;
+      Applies := False;
+      Skip_Current := False;
    end Applies_To_Tag;
 
    --------------------
    -- Applies_To_Tag --
    --------------------
 
-   function Applies_To_Tag
-     (Group      : access Sequence_Record;
-      Local_Name : Unicode.CES.Byte_Sequence) return Boolean
+   procedure Applies_To_Tag
+     (Group        : access Sequence_Record;
+      Local_Name   : Unicode.CES.Byte_Sequence;
+      Applies      : out Boolean;
+      Skip_Current : out Boolean)
    is
       Iter : Particle_Iterator := Start (Group.Particles);
       Item : XML_Particle_Access;
-      Applies : Boolean := False;
 
    begin
       loop
@@ -3636,15 +3681,12 @@ package body Schema.Validators is
 
          case Item.Typ is
             when Particle_Element =>
-               if Debug then
-                  Put_Line ("Testing " & Item.Element.Elem.Local_Name.all);
-               end if;
-
                Applies := Check_Substitution_Groups
                  (Item.Element, Local_Name) /= No_Element;
 
             when Particle_Nested =>
-               Applies := Applies_To_Tag (Item.Validator, Local_Name);
+               Applies_To_Tag
+                 (Item.Validator, Local_Name, Applies, Skip_Current);
 
             when Particle_Group | Particle_XML_Type =>
                --  Not possible since hidden by the iterator
@@ -3652,24 +3694,29 @@ package body Schema.Validators is
          end case;
 
          if Applies then
-            return True;
+            return;
          elsif Item.Min_Occurs > 0 then
-            return False;
+            Skip_Current := False;
+            Applies := False;
+            return;
          end if;
          Next (Iter);
       end loop;
-      return False;
+
+      Skip_Current := True;
+      Applies := False;
    end Applies_To_Tag;
 
    --------------------
    -- Applies_To_Tag --
    --------------------
 
-   function Applies_To_Tag
-     (Group      : access Choice_Record;
-      Local_Name : Unicode.CES.Byte_Sequence) return Boolean
+   procedure Applies_To_Tag
+     (Group        : access Choice_Record;
+      Local_Name   : Unicode.CES.Byte_Sequence;
+      Applies      : out Boolean;
+      Skip_Current : out Boolean)
    is
-      T   : XML_Element;
       Item : Particle_Iterator := Start (Group.Particles);
       It   : XML_Particle_Access;
    begin
@@ -3677,24 +3724,27 @@ package body Schema.Validators is
          It := Get (Item);
          case It.Typ is
             when Particle_Element =>
-               T := Check_Substitution_Groups (It.Element, Local_Name);
-               if T /= No_Element then
-                  return True;
-               end if;
+               Applies := Check_Substitution_Groups (It.Element, Local_Name) /=
+                 No_Element;
 
             when Particle_Nested =>
-               if Applies_To_Tag (It.Validator, Local_Name) then
-                  return True;
-               end if;
+               Applies_To_Tag
+                 (It.Validator, Local_Name, Applies, Skip_Current);
 
             when Particle_Group | Particle_XML_Type =>
                --  Not possible since hidden by the iterator
                raise Program_Error;
          end case;
 
+         if Applies then
+            return;
+         end if;
+
          Next (Item);
       end loop;
-      return False;
+
+      Applies := False;
+      Skip_Current := Group.Min_Occurs = 0;
    end Applies_To_Tag;
 
    ----------------------------
