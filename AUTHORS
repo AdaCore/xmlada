@@ -4,4 +4,6 @@ Unicode, SAX, DOM implementations:
 Initial Http input:
  Christophe Baillon (ITRIS) <cbaillon at ifrance.com>
 
+ISO 8859-15 support:
+ Martin Krischik
 
