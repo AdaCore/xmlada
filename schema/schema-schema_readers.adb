@@ -215,6 +215,7 @@ package body Schema.Schema_Readers is
       Grammar : Schema.Validators.XML_Grammar) is
    begin
       Reader.Created_Grammar := Grammar;
+      Reader.Check_Undefined := False;
    end Set_Created_Grammar;
 
    --------------------
@@ -225,6 +226,7 @@ package body Schema.Schema_Readers is
    begin
       if Handler.Created_Grammar = No_Grammar then
          Handler.Created_Grammar := Create_Schema_For_Schema;
+         Handler.Check_Undefined := True;
       end if;
 
       Handler.Target_NS := null;
@@ -237,7 +239,9 @@ package body Schema.Schema_Readers is
 
    procedure End_Document (Handler : in out Schema_Reader) is
    begin
-      Global_Check (Handler.Created_Grammar);
+      if Handler.Check_Undefined then
+         Global_Check (Handler.Created_Grammar);
+      end if;
    end End_Document;
 
    ----------------------
@@ -630,12 +634,13 @@ package body Schema.Schema_Readers is
                end if;
             when others =>
                Element := Create_Local_Element
-                 (Get_Value (Atts, Name_Index), Typ, Form => Form);
+                 (Get_Value (Atts, Name_Index),
+                  Handler.Target_NS, Typ, Form => Form);
                Is_Ref := False;
                Output
                  (Ada_Name (Element) & " := Create_Local_Element ("""
-                  & Get_Value (Atts, Name_Index) & """, " & Ada_Name (Typ)
-                  & ", " & Form'Img & ");");
+                  & Get_Value (Atts, Name_Index) & """, Handler.Target_NS, "
+                  & Ada_Name (Typ) & ", " & Form'Img & ");");
          end case;
 
          if Ref_Index /= -1

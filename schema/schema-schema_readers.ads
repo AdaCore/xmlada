@@ -21,6 +21,11 @@ package Schema.Schema_Readers is
    --  based on the value of "targetNamespace" attribute. This should be used
    --  to cumulate several schema files into one grammar.
    --  If this isn't call, a new grammar will be created from scratch.
+   --
+   --  Calling this subprogram will also disable the checks, at the end of the
+   --  parsing, that ensure that any entity (element, type, attribute,...) that
+   --  has been referenced was correctly declared.
+
 
    function Get_Created_Grammar
      (Reader : Schema_Reader) return Schema.Validators.XML_Grammar;
@@ -28,6 +33,7 @@ package Schema.Schema_Readers is
 
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether extra debug output should be displayed
+
 
 private
    type Context_Type is (Context_Type_Def,
@@ -103,6 +109,8 @@ private
       --  This is the grammar created by the Schema file. Do not mix up with
       --  Schema.Readers.Validating_Reader.Grammar, which is in this case the
       --  grammar used to validate the schema itself.
+
+      Check_Undefined : Boolean := True;
 
       Target_NS       : Schema.Validators.XML_Grammar_NS;
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
