@@ -48,6 +48,7 @@ package Schema.Validators is
    --  To indicate that a Max_Occurs is set to unbounded
 
    type Form_Type is (Qualified, Unqualified, Form_Default);
+   type Process_Contents_Type is (Process_Strict, Process_Lax, Process_Skip);
 
    --------------------
    -- Validator_Data --
@@ -198,7 +199,9 @@ package Schema.Validators is
    procedure Validate_Start_Element
      (Validator         : access XML_Validator_Record;
       Local_Name        : Unicode.CES.Byte_Sequence;
+      Namespace_URI     : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data;
+      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
    --  Check whether this Start_Element event is valid in the context of the
    --  validator. Data is the result of Create_Validator_Data.
@@ -380,6 +383,19 @@ package Schema.Validators is
    --         <sequence>
    --           <element name="local" />
 
+   -------------
+   -- XML_Any --
+   -------------
+
+   type XML_Any_Record is new XML_Validator_Record with private;
+   type XML_Any is access all XML_Any_Record'Class;
+
+   function Create_Any
+     (Process_Contents : Process_Contents_Type := Process_Strict;
+      Namespace        : Unicode.CES.Byte_Sequence;
+      Target_NS        : XML_Grammar_NS) return XML_Any;
+   --  Create a new validator for <any>
+
    ------------
    -- Groups --
    ------------
@@ -436,6 +452,9 @@ package Schema.Validators is
    procedure Add_Particle (Seq : access Sequence_Record; Item : Sequence);
    procedure Add_Particle (Seq : access Sequence_Record; Item : Choice);
    procedure Add_Particle
+     (Seq : access Sequence_Record; Item : XML_Any;
+      Min_Occurs : Integer := 1; Max_Occurs : Integer := 1);
+   procedure Add_Particle
      (Seq : access Sequence_Record; Item : XML_Group;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
 
@@ -454,6 +473,9 @@ package Schema.Validators is
    procedure Add_Particle (C : access Choice_Record; Item : Sequence);
    procedure Add_Particle (C : access Choice_Record; Item : Choice);
    procedure Add_Particle
+     (C : access Choice_Record; Item : XML_Any;
+      Min_Occurs : Integer := 1; Max_Occurs : Integer := 1);
+   procedure Add_Particle
      (C : access Choice_Record; Item : XML_Group;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
 
@@ -463,7 +485,6 @@ package Schema.Validators is
 
    type XML_All_Record is new XML_Validator_Record with private;
    type XML_All is access all XML_All_Record'Class;
-
 
    function Create_All return XML_All;
    --  Return a new validator that checks that all its elements appear the
@@ -488,7 +509,8 @@ package Schema.Validators is
 
    function Lookup_Element
      (Grammar       : XML_Grammar_NS;
-      Local_Name    : Unicode.CES.Byte_Sequence) return XML_Element;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Create_If_Needed : Boolean := True) return XML_Element;
    function Lookup
      (Grammar       : XML_Grammar_NS;
       Local_Name    : Unicode.CES.Byte_Sequence) return XML_Type;
@@ -764,6 +786,7 @@ private
    type Particle_Type is (Particle_Element,
                           Particle_Nested,
                           Particle_Group,
+                          Particle_Any,
                           Particle_XML_Type);
    type XML_Particle;
    type XML_Particle_Access is access XML_Particle;
@@ -776,6 +799,7 @@ private
          when Particle_Nested   => Validator  : Group_Model;
          when Particle_Group    => Group      : XML_Group;
          when Particle_XML_Type => Type_Descr : XML_Type;
+         when Particle_Any      => Any        : XML_Any;
       end case;
    end record;
 
@@ -946,10 +970,12 @@ private
    --  Free the nested group and its data, if any
 
    procedure Applies_To_Tag
-     (Group        : access Group_Model_Record;
-      Local_Name   : Unicode.CES.Byte_Sequence;
-      Applies      : out Boolean;
-      Skip_Current : out Boolean);
+     (Group         : access Group_Model_Record;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Grammar       : in out XML_Grammar;
+      Applies       : out Boolean;
+      Skip_Current  : out Boolean);
    --  Whether Group can process Local_Name. This is used for group_models
    --  nested in a choice, so that we can find out which one should be applied
    --  (given the restrictions in schema, only one of them can apply).
@@ -965,6 +991,29 @@ private
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean);
    --  See doc for inherited subprograms
+
+   --------------------
+   -- XML_Any_Record --
+   --------------------
+
+   type XML_Any_Record is new XML_Validator_Record with record
+      Process_Contents : Process_Contents_Type;
+      Namespace        : Unicode.CES.Byte_Sequence_Access;
+      Target_NS        : XML_Grammar_NS;
+   end record;
+
+   procedure Validate_Start_Element
+     (Validator         : access XML_Any_Record;
+      Local_Name        : Unicode.CES.Byte_Sequence;
+      Namespace_URI     : Unicode.CES.Byte_Sequence;
+      Data              : Validator_Data;
+      Grammar           : in out XML_Grammar;
+      Element_Validator : out XML_Element);
+   procedure Validate_Characters
+     (Validator     : access XML_Any_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
+
 
    --------------------
    -- XML_All_Record --
@@ -984,7 +1033,9 @@ private
    procedure Validate_Start_Element
      (Validator         : access XML_All_Record;
       Local_Name        : Unicode.CES.Byte_Sequence;
+      Namespace_URI     : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data;
+      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access XML_All_Record;
@@ -1015,7 +1066,9 @@ private
    procedure Validate_Start_Element
      (Validator         : access Sequence_Record;
       Local_Name        : Unicode.CES.Byte_Sequence;
+      Namespace_URI     : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data;
+      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access Sequence_Record;
@@ -1026,6 +1079,8 @@ private
    procedure Applies_To_Tag
      (Group        : access Sequence_Record;
       Local_Name   : Unicode.CES.Byte_Sequence;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Grammar      : in out XML_Grammar;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
    --  See doc for inherited subprograms
@@ -1040,7 +1095,9 @@ private
    procedure Validate_Start_Element
      (Validator         : access Choice_Record;
       Local_Name        : Unicode.CES.Byte_Sequence;
+      Namespace_URI     : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data;
+      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access Choice_Record;
@@ -1051,6 +1108,8 @@ private
    procedure Applies_To_Tag
      (Group        : access Choice_Record;
       Local_Name   : Unicode.CES.Byte_Sequence;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Grammar      : in out XML_Grammar;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
    --  See doc for inherited subprograms
@@ -1067,7 +1126,9 @@ private
    procedure Validate_Start_Element
      (Validator         : access Any_Simple_XML_Validator_Record;
       Local_Name        : Unicode.CES.Byte_Sequence;
+      Namespace_URI     : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data;
+      Grammar           : in out XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator  : access Any_Simple_XML_Validator_Record;
