@@ -433,6 +433,14 @@ package body Schema.Readers is
       Validate_Attributes
         (Get_Validator (Typ), Atts, Handler.Ids,
          Is_Nillable (Element), Is_Nil);
+
+      if Handler.Validators /= null
+        and then Handler.Validators.Is_Nil
+      then
+         Validation_Error
+           ("Element is set as nil, and doesn't accept any child element");
+      end if;
+
       Push (Handler.Validators, Element, Typ, G, Data, Is_Nil);
    end Start_Element;
 
@@ -459,10 +467,14 @@ package body Schema.Readers is
             Internal_Characters (Handler, "", Empty_Element => True);
          end if;
 
-         Validate_End_Element
-           (Get_Validator (Handler.Validators.Typ),
-            Qname,
-            Handler.Validators.Data);
+         --  Do not check if the element is nil, since no child is expected
+         --  anyway, and some validators (sequence,...) will complain
+         if not Handler.Validators.Is_Nil then
+            Validate_End_Element
+              (Get_Validator (Handler.Validators.Typ),
+               Qname,
+               Handler.Validators.Data);
+         end if;
       end if;
       Pop (Handler.Validators);
    end End_Element;
@@ -480,7 +492,7 @@ package body Schema.Readers is
          Handler.Validators.Had_Character_Data := True;
 
          if Handler.Validators.Is_Nil then
-            if Ch /= "" then
+            if not Empty_Element then
                Validation_Error
                  ("Element has character data, but is declared as nil");
             end if;
