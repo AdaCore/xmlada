@@ -37,7 +37,10 @@ package body DOM.Core is
      (Implementation : DOM_Implementation;
       NameSpace_URI  : DOM_String := "";
       Qualified_Name : DOM_String := "";
-      Doc_Type       : Node := null) return Node is
+      Doc_Type       : Node := null) return Node
+   is
+      pragma Warnings (Off, NameSpace_URI);
+      pragma Warnings (Off, Qualified_Name);
    begin
       pragma Assert
         (Doc_Type = null or else Doc_Type.Node_Type = Document_Type_Node);
@@ -56,7 +59,9 @@ package body DOM.Core is
    function Has_Feature
      (Implementation : DOM_Implementation;
       Feature        : DOM_String;
-      Version        : String := "2.0") return Boolean is
+      Version        : String := "2.0") return Boolean
+   is
+      pragma Warnings (Off, Implementation);
    begin
       return Feature = "XML" and then Version = "2.0";
    end Has_Feature;

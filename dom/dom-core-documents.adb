@@ -74,7 +74,9 @@ package body DOM.Core.Documents is
    --------------------
 
    function Create_Element (Doc : Document; Tag_Name : DOM_String)
-      return Element is
+      return Element
+   is
+      pragma Warnings (Off, Doc);
    begin
       --  ??? Test for Invalid_Character_Err
       --  ??? Must convert Tag_Name to uppercase for HTML documents
@@ -82,7 +84,7 @@ package body DOM.Core.Documents is
         (Node_Type  => Element_Node,
          Parent     => null,
          Prefix     => null,
-         Local_Name => new DOM_String' (Tag_Name),
+         Local_Name => new DOM_String'(Tag_Name),
          Namespace  => null,
          Children   => Null_List,
          Attributes => Null_Node_Map);
@@ -97,6 +99,7 @@ package body DOM.Core.Documents is
       Namespace_URI : DOM_String;
       Qualified_Name : DOM_String) return Element
    is
+      pragma Warnings (Off, Doc);
       Colon_Pos : Integer := Qualified_Name'First;
       C : Unicode_Char;
       Prefix : DOM_String_Access;
@@ -113,12 +116,12 @@ package body DOM.Core.Documents is
       end loop;
 
       if Colon_Pos <= Qualified_Name'Last then
-         Prefix := new DOM_String' (Qualified_Name
+         Prefix := new DOM_String'(Qualified_Name
             (Qualified_Name'First .. Colon_Pos - 1));
-         Local := new DOM_String' (Qualified_Name
+         Local := new DOM_String'(Qualified_Name
            (Colon_Pos + Encoding.Width (Colon) .. Qualified_Name'Last));
       else
-         Local := new DOM_String' (Qualified_Name);
+         Local := new DOM_String'(Qualified_Name);
       end if;
 
       return new Node_Record'
@@ -126,7 +129,7 @@ package body DOM.Core.Documents is
          Parent     => null,
          Prefix     => Prefix,
          Local_Name => Local,
-         Namespace  => new DOM_String' (Namespace_URI),
+         Namespace  => new DOM_String'(Namespace_URI),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element_NS;
@@ -137,6 +140,7 @@ package body DOM.Core.Documents is
 
    function Create_Document_Fragment (Doc : Document) return Document_Fragment
    is
+      pragma Warnings (Off, Doc);
    begin
       return new Node_Record'
         (Node_Type         => Document_Fragment_Node,
@@ -149,12 +153,14 @@ package body DOM.Core.Documents is
    ----------------------
 
    function Create_Text_Node (Doc : Document; Data : DOM_String)
-      return Text is
+      return Text
+   is
+      pragma Warnings (Off, Doc);
    begin
       return new Node_Record'
         (Node_Type => Text_Node,
          Parent    => null,
-         Text      => new DOM_String' (Data));
+         Text      => new DOM_String'(Data));
    end Create_Text_Node;
 
    --------------------
@@ -162,12 +168,14 @@ package body DOM.Core.Documents is
    --------------------
 
    function Create_Comment (Doc : Document; Data : DOM_String)
-      return Comment is
+      return Comment
+   is
+      pragma Warnings (Off, Doc);
    begin
       return new Node_Record'
         (Node_Type => Comment_Node,
          Parent    => null,
-         Comment   => new DOM_String' (Data));
+         Comment   => new DOM_String'(Data));
    end Create_Comment;
 
    --------------------------
@@ -175,13 +183,15 @@ package body DOM.Core.Documents is
    --------------------------
 
    function Create_Cdata_Section (Doc : Document; Data : DOM_String)
-      return Cdata_Section is
+      return Cdata_Section
+   is
+      pragma Warnings (Off, Doc);
    begin
       --  ??? Must raise Not_Supported_Err for HTML documents
       return new Node_Record'
         (Node_Type => Cdata_Section_Node,
          Parent    => null,
-         Cdata     => new DOM_String' (Data));
+         Cdata     => new DOM_String'(Data));
    end Create_Cdata_Section;
 
    -----------------------------------
@@ -190,15 +200,17 @@ package body DOM.Core.Documents is
 
    function Create_Processing_Instruction
      (Doc : Document; Target : DOM_String; Data : DOM_String)
-      return Processing_Instruction is
+      return Processing_Instruction
+   is
+      pragma Warnings (Off, Doc);
    begin
       --  ??? Test for Invalid_Character_Err
       --  ??? Must raise Not_Supported_Err for HTML documents
       return new Node_Record'
         (Node_Type => Processing_Instruction_Node,
          Parent    => null,
-         Target    => new DOM_String' (Target),
-         Pi_Data   => new DOM_String' (Data));
+         Target    => new DOM_String'(Target),
+         Pi_Data   => new DOM_String'(Data));
    end Create_Processing_Instruction;
 
    ----------------------
@@ -206,7 +218,9 @@ package body DOM.Core.Documents is
    ----------------------
 
    function Create_Attribute (Doc : Document; Name : DOM_String)
-      return Attr is
+      return Attr
+   is
+      pragma Warnings (Off, Doc);
    begin
       --  ??? Test for Invalid_Character_Err
       return new Node_Record'
@@ -214,7 +228,7 @@ package body DOM.Core.Documents is
          Parent          => null,
          Specified       => False,
          Attr_Prefix     => null,
-         Attr_Local_Name => new DOM_String' (Name),
+         Attr_Local_Name => new DOM_String'(Name),
          Attr_Value      => null,
          Attr_Namespace  => null);
    end Create_Attribute;
@@ -228,6 +242,7 @@ package body DOM.Core.Documents is
       Namespace_URI : DOM_String;
       Qualified_Name : DOM_String) return Attr
    is
+      pragma Warnings (Off, Doc);
       Colon_Pos : Natural := Qualified_Name'First;
       C : Unicode_Char;
       Prefix : DOM_String_Access;
@@ -244,12 +259,12 @@ package body DOM.Core.Documents is
       end loop;
 
       if Colon_Pos <= Qualified_Name'Last then
-         Prefix := new DOM_String' (Qualified_Name
+         Prefix := new DOM_String'(Qualified_Name
             (Qualified_Name'First .. Colon_Pos - 1));
-         Local := new DOM_String' (Qualified_Name
+         Local := new DOM_String'(Qualified_Name
            (Colon_Pos + Encoding.Width (Colon) .. Qualified_Name'Last));
       else
-         Local := new DOM_String' (Qualified_Name);
+         Local := new DOM_String'(Qualified_Name);
       end if;
 
       return new Node_Record'
@@ -259,7 +274,7 @@ package body DOM.Core.Documents is
          Attr_Prefix     => Prefix,
          Attr_Local_Name => Local,
          Attr_Value      => null,
-         Attr_Namespace  =>  new DOM_String' (Namespace_URI));
+         Attr_Namespace  => new DOM_String'(Namespace_URI));
    end Create_Attribute_NS;
 
    -----------------------------
@@ -267,7 +282,9 @@ package body DOM.Core.Documents is
    -----------------------------
 
    function Create_Entity_Reference (Doc : Document; Name : DOM_String)
-      return Entity_Reference is
+      return Entity_Reference
+   is
+      pragma Warnings (Off, Doc);
    begin
       --  ??? Test for Invalid_Character_Err
       --  ??? Must raise Not_Supported_Err for HTML documents
@@ -275,7 +292,7 @@ package body DOM.Core.Documents is
       return new Node_Record'
         (Node_Type => Entity_Reference_Node,
          Parent    => null,
-         Entity_Reference_Name => new DOM_String' (Name));
+         Entity_Reference_Name => new DOM_String'(Name));
    end Create_Entity_Reference;
 
    ------------------------------
@@ -309,7 +326,8 @@ package body DOM.Core.Documents is
    function Import_Node (Doc : Document; Import_Node : Node; Deep : Boolean)
       return Node
    is
-      N : Node := Clone_Node (Import_Node, Deep);
+      pragma Warnings (Off, Doc);
+      N : constant Node := Clone_Node (Import_Node, Deep);
    begin
       pragma Assert (False); --  ??? Unimplemented
       case N.Node_Type is
@@ -335,7 +353,10 @@ package body DOM.Core.Documents is
    -----------------------
 
    function Get_Element_By_Id
-     (Doc : Document; Element_Id : DOM_String) return Node is
+     (Doc : Document; Element_Id : DOM_String) return Node
+   is
+      pragma Warnings (Off, Doc);
+      pragma Warnings (Off, Element_Id);
    begin
       --  ??? Unimplemented
       return null;

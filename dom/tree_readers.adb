@@ -55,7 +55,9 @@ package body Tree_Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class) is
+      Atts          : Sax.Attributes.Attributes'Class)
+   is
+      pragma Warnings (Off, Local_Name);
    begin
       Handler.Current_Node := Append_Child
         (Handler.Current_Node,
@@ -81,7 +83,11 @@ package body Tree_Readers is
      (Handler : in out Tree_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "") is
+      Qname         : Unicode.CES.Byte_Sequence := "")
+   is
+      pragma Warnings (Off, Namespace_URI);
+      pragma Warnings (Off, Local_Name);
+      pragma Warnings (Off, Qname);
    begin
       Handler.Current_Node := Parent_Node (Handler.Current_Node);
    end End_Element;
@@ -150,7 +156,11 @@ package body Tree_Readers is
      (Handler   : in out Tree_Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence := "";
-      System_Id : Unicode.CES.Byte_Sequence := "") is
+      System_Id : Unicode.CES.Byte_Sequence := "")
+   is
+      pragma Warnings (Off, Name);
+      pragma Warnings (Off, Public_Id);
+      pragma Warnings (Off, System_Id);
    begin
       Handler.In_DTD := True;
    end Start_DTD;

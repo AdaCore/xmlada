@@ -36,6 +36,11 @@ package body DOM.Core.Document_Types is
       System_Id       : DOM_String;
       Internal_Subset : DOM_String) return Document_Type
    is
+      pragma Warnings (Off, Implementation);
+      pragma Warnings (Off, Qualified_Name);
+      pragma Warnings (Off, Public_Id);
+      pragma Warnings (Off, System_Id);
+      pragma Warnings (Off, Internal_Subset);
    begin
       return null;
    end Create_Document_Type;

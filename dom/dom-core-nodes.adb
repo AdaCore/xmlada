@@ -195,24 +195,24 @@ package body DOM.Core.Nodes is
             --  ??? If Specified is False, we should make a copy and assign
             --  it to the owner element
             Free (N.Attr_Value);
-            N.Attr_Value := new DOM_String' (Value);
+            N.Attr_Value := new DOM_String'(Value);
             N.Specified := True;
 
          when Text_Node =>
             Free (N.Text);
-            N.Text := new DOM_String' (Value);
+            N.Text := new DOM_String'(Value);
 
          when Cdata_Section_Node =>
             Free (N.Cdata);
-            N.Cdata := new DOM_String' (Value);
+            N.Cdata := new DOM_String'(Value);
 
          when Processing_Instruction_Node =>
             Free (N.Pi_Data);
-            N.Pi_Data := new DOM_String' (Value);
+            N.Pi_Data := new DOM_String'(Value);
 
          when Comment_Node =>
             Free (N.Comment);
-            N.Comment := new DOM_String' (Value);
+            N.Comment := new DOM_String'(Value);
 
          when others =>
             null;
@@ -239,7 +239,7 @@ package body DOM.Core.Nodes is
    -----------------
 
    function First_Child (N : Node) return Node is
-      List : Node_List := Child_Nodes (N);
+      List : constant Node_List := Child_Nodes (N);
    begin
       if List.Items = null then
          return null;
@@ -253,7 +253,7 @@ package body DOM.Core.Nodes is
    ----------------
 
    function Last_Child (N : Node) return Node is
-      List : Node_List := Child_Nodes (N);
+      List : constant Node_List := Child_Nodes (N);
    begin
       if List.Items = null then
          return null;
@@ -404,11 +404,11 @@ package body DOM.Core.Nodes is
       case N.Node_Type is
          when Element_Node =>
             Free (N.Prefix);
-            N.Prefix := new DOM_String' (Prefix);
+            N.Prefix := new DOM_String'(Prefix);
 
          when Attribute_Node =>
             Free (N.Attr_Prefix);
-            N.Attr_Prefix := new DOM_String' (Prefix);
+            N.Attr_Prefix := new DOM_String'(Prefix);
 
          when others => null;
       end case;
@@ -517,7 +517,7 @@ package body DOM.Core.Nodes is
       New_Child : Node;
       Old_Child : Node) return Node
    is
-      List : Node_List := Child_Nodes (N);
+      List : constant Node_List := Child_Nodes (N);
    begin
       pragma Assert (Child_Is_Valid (N, New_Child));
       --  ??? Case where New_Child is a document_fragment
@@ -577,7 +577,7 @@ package body DOM.Core.Nodes is
       L : Node_List := Null_List;
    begin
       if Deep then
-         L := (Items => new Node_Array' (List.Items.all), Last  => List.Last);
+         L := (Items => new Node_Array'(List.Items.all), Last  => List.Last);
          for J in 0 .. L.Last loop
             L.Items (J) := List.Items (J);
          end loop;
@@ -598,14 +598,14 @@ package body DOM.Core.Nodes is
       case N.Node_Type is
          when Element_Node =>
             if N.Prefix /= null then
-               Clone.Prefix := new DOM_String' (N.Prefix.all);
+               Clone.Prefix := new DOM_String'(N.Prefix.all);
             end if;
 
             pragma Assert (N.Local_Name /= null);
-            Clone.Local_Name := new DOM_String' (N.Local_Name.all);
+            Clone.Local_Name := new DOM_String'(N.Local_Name.all);
 
             if N.Namespace /= null then
-               Clone.Namespace := new DOM_String' (N.Namespace.all);
+               Clone.Namespace := new DOM_String'(N.Namespace.all);
             end if;
 
             Clone.Children := Clone_List (N.Children, Deep);
@@ -614,54 +614,54 @@ package body DOM.Core.Nodes is
 
          when Attribute_Node =>
             if N.Attr_Prefix /= null then
-               Clone.Attr_Prefix := new DOM_String' (N.Attr_Prefix.all);
+               Clone.Attr_Prefix := new DOM_String'(N.Attr_Prefix.all);
             end if;
 
             pragma Assert (N.Attr_Local_Name /= null);
             Clone.Attr_Local_Name :=
-              new DOM_String' (N.Attr_Local_Name.all);
+              new DOM_String'(N.Attr_Local_Name.all);
 
             if N.Attr_Value /= null then
-               Clone.Attr_Value := new DOM_String' (N.Attr_Value.all);
+               Clone.Attr_Value := new DOM_String'(N.Attr_Value.all);
             end if;
 
             if N.Attr_Namespace /= null then
-               Clone.Attr_Namespace := new DOM_String' (N.Attr_Namespace.all);
+               Clone.Attr_Namespace := new DOM_String'(N.Attr_Namespace.all);
             end if;
 
          when Text_Node =>
             if N.Text /= null then
-               Clone.Text := new DOM_String' (N.Text.all);
+               Clone.Text := new DOM_String'(N.Text.all);
             end if;
 
          when Cdata_Section_Node =>
             if N.Cdata /= null then
-               Clone.Cdata := new DOM_String' (N.Cdata.all);
+               Clone.Cdata := new DOM_String'(N.Cdata.all);
             end if;
 
          when Entity_Reference_Node =>
             pragma Assert (N.Entity_Reference_Name /= null);
             Clone.Entity_Reference_Name :=
-              new DOM_String' (N.Entity_Reference_Name.all);
+              new DOM_String'(N.Entity_Reference_Name.all);
 
          when Entity_Node =>
             pragma Assert (N.Entity_Name /= null);
-            Clone.Entity_Name := new DOM_String' (N.Entity_Name.all);
+            Clone.Entity_Name := new DOM_String'(N.Entity_Name.all);
 
          when Processing_Instruction_Node =>
-            Clone.Target := new DOM_String' (N.Target.all);
-            Clone.Pi_Data := new DOM_String' (N.Pi_Data.all);
+            Clone.Target := new DOM_String'(N.Target.all);
+            Clone.Pi_Data := new DOM_String'(N.Pi_Data.all);
 
          when Comment_Node =>
             pragma Assert (N.Comment /= null);
-            Clone.Comment := new DOM_String' (N.Comment.all);
+            Clone.Comment := new DOM_String'(N.Comment.all);
 
          when Document_Node =>
             Clone.Doc_Children := Clone_List (N.Doc_Children, Deep);
 
          when Document_Type_Node =>
             Clone.Document_Type_Name :=
-              new DOM_String' (N.Document_Type_Name.all);
+              new DOM_String'(N.Document_Type_Name.all);
             Clone.Doc_Type_Children := Clone_List (N.Doc_Type_Children, Deep);
 
          when Document_Fragment_Node =>
@@ -669,11 +669,11 @@ package body DOM.Core.Nodes is
 
          when Notation_Node =>
             if N.Public_ID /= null then
-               Clone.Public_ID := new DOM_String' (N.Public_ID.all);
+               Clone.Public_ID := new DOM_String'(N.Public_ID.all);
             end if;
 
             if N.System_ID /= null then
-               Clone.System_ID := new DOM_String' (N.System_ID.all);
+               Clone.System_ID := new DOM_String'(N.System_ID.all);
             end if;
       end case;
       return Clone;
@@ -728,7 +728,11 @@ package body DOM.Core.Nodes is
    function Supports
      (N : Node;
       Feature : DOM_String;
-      Version : DOM_String) return Boolean is
+      Version : DOM_String) return Boolean
+   is
+      pragma Warnings (Off, N);
+      pragma Warnings (Off, Feature);
+      pragma Warnings (Off, Version);
    begin
       return False;
    end Supports;

@@ -40,7 +40,7 @@ package body DOM.Core.Elements is
    function Get_Attribute (Elem : Element; Name : DOM_String)
       return DOM_String
    is
-      Att : Attr := Get_Named_Item (Elem.Attributes, Name);
+      Att : constant Attr := Get_Named_Item (Elem.Attributes, Name);
    begin
       if Att /= null then
          return Node_Value (Att);
@@ -57,7 +57,7 @@ package body DOM.Core.Elements is
      (Elem : Element; Namespace_URI : DOM_String; Local_Name : DOM_String)
       return DOM_String
    is
-      Att : Attr := Get_Named_Item_NS
+      Att : constant Attr := Get_Named_Item_NS
         (Elem.Attributes, Namespace_URI, Local_Name);
    begin
       if Att /= null then
@@ -74,7 +74,7 @@ package body DOM.Core.Elements is
    procedure Set_Attribute
      (Elem : Element; Name : DOM_String; Value : DOM_String)
    is
-      Att : Attr := Create_Attribute (Parent_Node (Elem), Name);
+      Att : constant Attr := Create_Attribute (Parent_Node (Elem), Name);
    begin
       Set_Value (Att, Value);
       Set_Named_Item (Elem.Attributes, Att);
@@ -90,7 +90,7 @@ package body DOM.Core.Elements is
       Qualified_Name : DOM_String;
       Value : DOM_String)
    is
-      Att : Attr := Create_Attribute_NS
+      Att : constant Attr := Create_Attribute_NS
         (Owner_Document (Elem), Namespace_URI, Qualified_Name);
    begin
       Set_Value (Att, Value);
@@ -198,7 +198,7 @@ package body DOM.Core.Elements is
       ----------------------------
 
       procedure Get_Elements_From_Node (N : Node; List : in out Node_List) is
-         L : Node_List := Child_Nodes (N);
+         L : constant Node_List := Child_Nodes (N);
       begin
          if N.Node_Type = Element_Node
            and then (Name = "*" or else Node_Name (N) = Name)
@@ -235,7 +235,7 @@ package body DOM.Core.Elements is
       ----------------------------
 
       procedure Get_Elements_From_Node (N : Node; List : in out Node_List) is
-         L : Node_List := Child_Nodes (N);
+         L : constant Node_List := Child_Nodes (N);
       begin
          if N.Node_Type = Element_Node
            and then (Namespace_URI = "*"
