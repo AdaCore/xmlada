@@ -101,6 +101,16 @@ package Sax.Readers is
    --  If True (not the default), a number of additional tests are performed
    --  while parsing the document, most notably that the document matches
    --  the DTD (internal and external subset).
+   --  In such a case, the DTD must be present.
+   --
+   --  XML/Ada doesn't currently support validating against a DTD.
+
+   Schema_Validation_Feature : constant String :=
+     "http://www.adacore.com/sax/features/schema_validation";
+   --  If True (not the default), XML/Ada will attempt to validate the XML
+   --  document against an XML schema. However, your reader must also extend
+   --  the Schema.Readers.Validating_Reader class (see comments in that
+   --  package).
 
    External_General_Entities_Feature : constant String :=
      "http://xml.org/sax/features/external-general-entities";
@@ -473,7 +483,69 @@ package Sax.Readers is
    --  Return the prefix part of Qname, or the empty string if no explicit
    --  prefix is defined.
 
+   -----------
+   -- Hooks --
+   -----------
+   --  A parser will call some hooks before it calls the primitive operations
+   --  like Start_Element,...
+   --  These hooks are meant for internal use only at this point, since it is
+   --  cleaner for the user to simply extend the primitive operation.
+   --  These are currently used to plug in an XML validator while limiting the
+   --  dependencies between the SAX and Schema modules.
+
+   type Start_Element_Hook is access procedure
+     (Handler       : in out Reader'Class;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence;
+      Atts          : Sax.Attributes.Attributes'Class);
+   type End_Element_Hook is access procedure
+     (Handler       : in out Reader'Class;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence);
+   type Characters_Hook is access procedure
+     (Handler       : in out Reader'Class;
+      Ch            : Unicode.CES.Byte_Sequence);
+   type Whitespace_Hook is access procedure
+     (Handler       : in out Reader'Class;
+      Ch            : Unicode.CES.Byte_Sequence);
+   type Start_Prefix_Hook is access procedure
+     (Handler       : in out Reader'Class;
+      Prefix        : Unicode.CES.Byte_Sequence;
+      URI           : Unicode.CES.Byte_Sequence);
+   type End_Prefix_Hook is access procedure
+     (Handler       : in out Reader'Class;
+      Prefix        : Unicode.CES.Byte_Sequence);
+   type Set_Doc_Locator_Hook is access procedure
+     (Handler       : in out Reader'Class;
+      Loc           : access Sax.Locators.Locator'Class);
+
+   procedure Set_Hooks
+     (Handler       : in out Reader;
+      Start_Element : Start_Element_Hook   := null;
+      End_Element   : End_Element_Hook     := null;
+      Characters    : Characters_Hook      := null;
+      Whitespace    : Whitespace_Hook      := null;
+      Start_Prefix  : Start_Prefix_Hook    := null;
+      End_Prefix    : End_Prefix_Hook      := null;
+      Doc_Locator   : Set_Doc_Locator_Hook := null);
+   --  Set a list of hooks to be called before calling the usual primitive
+   --  operations. These override hooks that were defined previously.
+
+
 private
+   type Parser_Hooks is record
+      Start_Element : Start_Element_Hook   := null;
+      End_Element   : End_Element_Hook     := null;
+      Characters    : Characters_Hook      := null;
+      Whitespace    : Whitespace_Hook      := null;
+      Start_Prefix  : Start_Prefix_Hook    := null;
+      End_Prefix    : End_Prefix_Hook      := null;
+      Doc_Locator   : Set_Doc_Locator_Hook := null;
+   end record;
+
+
    Entities_Table_Size : constant := 50;
    --  Size of the hash-table used to store entities.
    --  This is not a hard limit on the number of entities that can be defined.
@@ -715,12 +787,16 @@ private
       --  Id of the current element. All elements created will have a
       --  different Id
 
+      Hooks  : Parser_Hooks;
+      --  Hooks to be called before the primitive operations
+
       Feature_Namespace                   : Boolean := True;
       Feature_Namespace_Prefixes          : Boolean := False;
       Feature_External_General_Entities   : Boolean := True;
       Feature_External_Parameter_Entities : Boolean := True;
       Feature_Validation                  : Boolean := False;
       Feature_Test_Valid_Chars            : Boolean := False;
+      Feature_Schema_Validation           : Boolean := False;
    end record;
 
 end Sax.Readers;

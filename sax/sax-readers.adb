@@ -1080,6 +1080,11 @@ package body Sax.Readers is
 
       --  Report the event, except for the default namespace
       if Report_Event then
+         if Parser.Hooks.Start_Prefix /= null then
+            Parser.Hooks.Start_Prefix
+              (Parser, NS.Prefix.all, NS.URI.all);
+         end if;
+
          Start_Prefix_Mapping
            (Parser,
             Prefix => NS.Prefix.all,
@@ -3809,6 +3814,14 @@ package body Sax.Readers is
          Set_State (Parser, Default_State);
          Find_NS (Parser, Parser.Current_Node,  Elem_NS_Id, NS);
 
+         if Parser.Hooks.Start_Element /= null then
+            Parser.Hooks.Start_Element
+              (Parser, NS.URI.all,
+               Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last),
+               Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
+               Attributes);
+         end if;
+
          Start_Element
            (Parser,
             Namespace_URI => NS.URI.all,
@@ -4022,6 +4035,13 @@ package body Sax.Readers is
          NS : XML_NS;
       begin
          Find_NS (Parser, Parser.Current_Node, NS_Id, NS);
+
+         if Parser.Hooks.End_Element /= null then
+            Parser.Hooks.End_Element
+              (Parser, NS.URI.all, Parser.Current_Node.Name.all,
+               Qname_From_Name (Parser, NS_Id, Name_Id));
+         end if;
+
          End_Element
            (Parser,
             Namespace_URI => NS.URI.all,
@@ -4037,6 +4057,10 @@ package body Sax.Readers is
          --  Close all the namespaces
          NS := Parser.Current_Node.Namespaces;
          while NS /= null loop
+            if Parser.Hooks.End_Prefix /= null then
+               Parser.Hooks.End_Prefix (Parser, NS.Prefix.all);
+            end if;
+
             End_Prefix_Mapping (Parser, NS.Prefix.all);
             NS := NS.Next;
          end loop;
@@ -4449,6 +4473,12 @@ package body Sax.Readers is
                     (Parser, "[2.1] Non-white space found at top level", Id);
                end if;
                Start_Cdata (Parser);
+
+               if Parser.Hooks.Characters /= null then
+                  Parser.Hooks.Characters
+                    (Parser, Parser.Buffer (Id.First .. Id.Last));
+               end if;
+
                Characters (Parser, Parser.Buffer (Id.First .. Id.Last));
                End_Cdata (Parser);
                Reset_Buffer (Parser, Id);
@@ -4458,10 +4488,21 @@ package body Sax.Readers is
                   Fatal_Error
                     (Parser, "[2.1] Non-white space found at top level", Id);
                end if;
+
+               if Parser.Hooks.Characters /= null then
+                  Parser.Hooks.Characters
+                    (Parser, Parser.Buffer (Id.First .. Id.Last));
+               end if;
+
                Characters (Parser, Parser.Buffer (Id.First .. Id.Last));
                Reset_Buffer (Parser, Id);
 
             when Sax.Readers.Space =>
+               if Parser.Hooks.Whitespace /= null then
+                  Parser.Hooks.Whitespace
+                    (Parser, Parser.Buffer (Id.First .. Id.Last));
+               end if;
+
                Ignorable_Whitespace
                  (Parser, Parser.Buffer (Id.First .. Id.Last));
                Reset_Buffer (Parser, Id);
@@ -4526,6 +4567,30 @@ package body Sax.Readers is
       Reset (Parser.Notations);
    end Free;
 
+   ---------------
+   -- Set_Hooks --
+   ---------------
+
+   procedure Set_Hooks
+     (Handler       : in out Reader;
+      Start_Element : Start_Element_Hook := null;
+      End_Element   : End_Element_Hook   := null;
+      Characters    : Characters_Hook    := null;
+      Whitespace    : Whitespace_Hook    := null;
+      Start_Prefix  : Start_Prefix_Hook  := null;
+      End_Prefix    : End_Prefix_Hook    := null;
+      Doc_Locator   : Set_Doc_Locator_Hook := null) is
+   begin
+      Handler.Hooks :=
+        (Start_Element => Start_Element,
+         End_Element   => End_Element,
+         Characters    => Characters,
+         Whitespace    => Whitespace,
+         Start_Prefix  => Start_Prefix,
+         End_Prefix    => End_Prefix,
+         Doc_Locator   => Doc_Locator);
+   end Set_Hooks;
+
    -----------
    -- Parse --
    -----------
@@ -4555,6 +4620,10 @@ package body Sax.Readers is
       Add_Namespace_No_Event (Parser, Xmlns_Sequence, Xmlns_Sequence);
       Add_Namespace_No_Event (Parser, "", "");
 
+      if Parser.Hooks.Doc_Locator /= null then
+         Parser.Hooks.Doc_Locator (Parser, Parser.Locator);
+      end if;
+
       Set_Document_Locator (Reader'Class (Parser), Parser.Locator);
 
       Start_Document (Reader'Class (Parser));
@@ -4568,6 +4637,10 @@ package body Sax.Readers is
             if NS.Prefix.all /= ""
               and then NS.Prefix.all /= Xmlns_Sequence
             then
+               if Parser.Hooks.End_Prefix /= null then
+                  Parser.Hooks.End_Prefix (Parser, NS.Prefix.all);
+               end if;
+
                End_Prefix_Mapping (Reader'Class (Parser), NS.Prefix.all);
             end if;
             NS := NS.Next;
@@ -4698,6 +4771,9 @@ package body Sax.Readers is
 
       elsif Name = Test_Valid_Chars_Feature then
          return Parser.Feature_Test_Valid_Chars;
+
+      elsif Name = Schema_Validation_Feature then
+         return Parser.Feature_Schema_Validation;
       end if;
 
       return False;
@@ -4727,6 +4803,9 @@ package body Sax.Readers is
 
       elsif Name = Test_Valid_Chars_Feature then
          Parser.Feature_Test_Valid_Chars := Value;
+
+      elsif Name = Schema_Validation_Feature then
+         Parser.Feature_Schema_Validation := Value;
       end if;
    end Set_Feature;
 
