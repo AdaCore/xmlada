@@ -19,10 +19,18 @@
 -- License along with this library; if not, write to the             --
 -- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
 -- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Unicode.CES;  use Unicode.CES;
 with Unchecked_Deallocation;
+with Sax.Models;   use Sax.Models;
 
 package body Sax.Attributes is
 
@@ -35,17 +43,17 @@ package body Sax.Attributes is
      (Attribute, Attribute_Access);
 
    function Get
-     (Attr : Attributes_Impl; Index : Natural) return Attribute_Access;
+     (Attr : Attributes'Class; Index : Natural) return Attribute_Access;
    --  Return the Index-th attribute in the list, or raise Out_Of_Bounds if
    --  Index is too big
 
-   procedure Get (Attr : Attributes_Impl;
+   procedure Get (Attr : Attributes'Class;
                   Qname : Byte_Sequence;
                   Index : out Integer;
                   Att   : out Attribute_Access);
    --  Return the first attribute whose Qname matches
 
-   procedure Get (Attr       : Attributes_Impl;
+   procedure Get (Attr       : Attributes'Class;
                   URI        : Byte_Sequence;
                   Local_Name : Byte_Sequence;
                   Index      : out Integer;
@@ -60,16 +68,16 @@ package body Sax.Attributes is
    begin
       Free (Attr.URI);
       Free (Attr.Local_Name);
-      Free (Attr.Att_Type);
       Free (Attr.Value);
       Free (Attr.Qname);
+      Free (Attr.Content);
    end Free;
 
    ---------
    -- Get --
    ---------
 
-   function Get (Attr : Attributes_Impl; Index : in Natural)
+   function Get (Attr : Attributes'Class; Index : in Natural)
       return Attribute_Access
    is
       Tmp : Attribute_Access := Attr.First;
@@ -89,7 +97,7 @@ package body Sax.Attributes is
    -- Get --
    ---------
 
-   procedure Get (Attr : Attributes_Impl;
+   procedure Get (Attr : Attributes'Class;
                   Qname : Byte_Sequence;
                   Index : out Integer;
                   Att   : out Attribute_Access) is
@@ -110,7 +118,7 @@ package body Sax.Attributes is
    -- Get --
    ---------
 
-   procedure Get (Attr       : Attributes_Impl;
+   procedure Get (Attr       : Attributes'Class;
                   URI        : Byte_Sequence;
                   Local_Name : Byte_Sequence;
                   Index      : out Integer;
@@ -135,13 +143,14 @@ package body Sax.Attributes is
    -------------------
 
    procedure Add_Attribute
-     (Attr       : in out Attributes_Impl;
+     (Attr       : in out Attributes;
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence;
       Qname      : Unicode.CES.Byte_Sequence;
-      Att_Type   : Unicode.CES.Byte_Sequence;
-      Value      : Unicode.CES.Byte_Sequence)
-   is
+      Att_Type   : Attribute_Type;
+      Content    : Sax.Models.Element_Model_Ptr;
+      Value      : Unicode.CES.Byte_Sequence;
+      Default_Decl : Default_Declaration := Default) is
    begin
       if Attr.Last = null then
          Attr.First := new Attribute;
@@ -153,9 +162,11 @@ package body Sax.Attributes is
 
       Attr.Last.URI := new Byte_Sequence' (URI);
       Attr.Last.Local_Name := new Byte_Sequence' (Local_Name);
-      Attr.Last.Att_Type := new Byte_Sequence' (Att_Type);
+      Attr.Last.Att_Type := Att_Type;
       Attr.Last.Value := new Byte_Sequence' (Value);
       Attr.Last.Qname := new Byte_Sequence' (Qname);
+      Attr.Last.Default_Decl := Default_Decl;
+      Attr.Last.Content := Content;
       Attr.Length := Attr.Length + 1;
    end Add_Attribute;
 
@@ -163,7 +174,7 @@ package body Sax.Attributes is
    -- Clear --
    -----------
 
-   procedure Clear (Attr : in out Attributes_Impl) is
+   procedure Clear (Attr : in out Attributes) is
       Tmp : Attribute_Access;
    begin
       while Attr.First /= null loop
@@ -181,7 +192,7 @@ package body Sax.Attributes is
    ----------------------
 
    procedure Remove_Attribute
-     (Attr : in out Attributes_Impl;
+     (Attr : in out Attributes;
       Index : Natural)
    is
       Tmp : Attribute_Access;
@@ -216,22 +227,26 @@ package body Sax.Attributes is
    -------------------
 
    procedure Set_Attribute
-     (Attr       : in out Attributes_Impl;
+     (Attr       : in out Attributes;
       Index      : Natural;
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence;
       Qname      : Unicode.CES.Byte_Sequence;
-      Att_Type   : Unicode.CES.Byte_Sequence;
-      Value      : Unicode.CES.Byte_Sequence)
+      Att_Type   : Attribute_Type;
+      Content    : Sax.Models.Element_Model_Ptr;
+      Value      : Unicode.CES.Byte_Sequence;
+      Default_Decl : Default_Declaration := Default)
    is
       Att : Attribute_Access := Get (Attr, Index);
    begin
       Free (Att.all);
       Att.URI := new Byte_Sequence' (URI);
       Att.Local_Name := new Byte_Sequence' (Local_Name);
-      Att.Att_Type := new Byte_Sequence' (Att_Type);
+      Att.Att_Type := Att_Type;
       Att.Value := new Byte_Sequence' (Value);
       Att.Qname := new Byte_Sequence' (Qname);
+      Att.Default_Decl := Default_Decl;
+      Att.Content := Content;
    end Set_Attribute;
 
    --------------------
@@ -239,18 +254,21 @@ package body Sax.Attributes is
    --------------------
 
    procedure Set_Attributes
-     (Attr : in out Attributes_Impl;
+     (Attr : in out Attributes;
       From : Attributes'Class)
    is
       Length : Natural := Get_Length (From);
+      Att : Attribute_Access;
    begin
       for J in 0 .. Length - 1 loop
+         Att := Get (From, J);
          Add_Attribute (Attr,
-                        URI        => Get_URI (From, J),
-                        Local_Name => Get_Local_Name (From, J),
-                        Qname      => Get_Qname (From, J),
-                        Att_Type   => Get_Type (From, J),
-                        Value      => Get_Value (From, J));
+                        URI        => Att.URI.all,
+                        Local_Name => Att.Local_Name.all,
+                        Qname      => Att.Qname.all,
+                        Att_Type   => Att.Att_Type,
+                        Content    => Att.Content,
+                        Value      => Att.Value.all);
       end loop;
    end Set_Attributes;
 
@@ -259,7 +277,7 @@ package body Sax.Attributes is
    --------------------
 
    procedure Set_Local_Name
-     (Attr       : in out Attributes_Impl;
+     (Attr       : in out Attributes;
       Index      : Natural;
       Local_Name : Unicode.CES.Byte_Sequence)
    is
@@ -274,7 +292,7 @@ package body Sax.Attributes is
    ---------------
 
    procedure Set_Qname
-     (Attr  : in out Attributes_Impl;
+     (Attr  : in out Attributes;
       Index : Natural;
       Qname : Unicode.CES.Byte_Sequence)
    is
@@ -289,14 +307,11 @@ package body Sax.Attributes is
    --------------
 
    procedure Set_Type
-     (Attr     : in out Attributes_Impl;
+     (Attr     : in out Attributes;
       Index    : Natural;
-      Att_Type : Unicode.CES.Byte_Sequence)
-   is
-      Tmp : Attribute_Access := Get (Attr, Index);
+      Att_Type : Attribute_Type) is
    begin
-      Free (Tmp.Att_Type);
-      Tmp.Att_Type := new Byte_Sequence' (Att_Type);
+      Get (Attr, Index).Att_Type := Att_Type;
    end Set_Type;
 
    -------------
@@ -304,7 +319,7 @@ package body Sax.Attributes is
    -------------
 
    procedure Set_URI
-     (Attr  : in out Attributes_Impl;
+     (Attr  : in out Attributes;
       Index : Natural;
       URI   : Unicode.CES.Byte_Sequence)
    is
@@ -319,7 +334,7 @@ package body Sax.Attributes is
    ---------------
 
    procedure Set_Value
-     (Attr  : in out Attributes_Impl;
+     (Attr  : in out Attributes;
       Index : Natural;
       Value : Unicode.CES.Byte_Sequence)
    is
@@ -335,7 +350,7 @@ package body Sax.Attributes is
    ---------------
 
    function Get_Index
-     (Attr  : Attributes_Impl;
+     (Attr  : Attributes;
       Qname : Unicode.CES.Byte_Sequence) return Integer
    is
       J : Integer;
@@ -350,7 +365,7 @@ package body Sax.Attributes is
    ---------------
 
    function Get_Index
-     (Attr       : Attributes_Impl;
+     (Attr       : Attributes;
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence)
       return Integer
@@ -366,7 +381,7 @@ package body Sax.Attributes is
    -- Get_Length --
    ----------------
 
-   function Get_Length (Attr : Attributes_Impl) return Natural is
+   function Get_Length (Attr : Attributes) return Natural is
    begin
       return Attr.Length;
    end Get_Length;
@@ -375,7 +390,7 @@ package body Sax.Attributes is
    -- Get_Local_Name --
    --------------------
 
-   function Get_Local_Name (Attr : Attributes_Impl; Index : Natural)
+   function Get_Local_Name (Attr : Attributes; Index : Natural)
       return Unicode.CES.Byte_Sequence is
    begin
       return Get (Attr, Index).Local_Name.all;
@@ -385,7 +400,7 @@ package body Sax.Attributes is
    -- Get_Qname --
    ---------------
 
-   function Get_Qname (Attr : Attributes_Impl; Index : Natural)
+   function Get_Qname (Attr : Attributes; Index : Natural)
       return Unicode.CES.Byte_Sequence is
    begin
       return Get (Attr, Index).Qname.all;
@@ -395,10 +410,10 @@ package body Sax.Attributes is
    -- Get_Type --
    --------------
 
-   function Get_Type (Attr : Attributes_Impl; Index : Natural)
-      return Unicode.CES.Byte_Sequence is
+   function Get_Type (Attr : Attributes; Index : Natural)
+      return Attribute_Type is
    begin
-      return Get (Attr, Index).Att_Type.all;
+      return Get (Attr, Index).Att_Type;
    end Get_Type;
 
    --------------
@@ -406,15 +421,15 @@ package body Sax.Attributes is
    --------------
 
    function Get_Type
-     (Attr : Attributes_Impl;
+     (Attr : Attributes;
       Qname : Unicode.CES.Byte_Sequence)
-      return Unicode.CES.Byte_Sequence
+      return Attribute_Type
    is
       J : Integer;
       Tmp : Attribute_Access;
    begin
       Get (Attr, Qname, J, Tmp);
-      return Tmp.Att_Type.all;
+      return Tmp.Att_Type;
    end Get_Type;
 
    --------------
@@ -422,23 +437,23 @@ package body Sax.Attributes is
    --------------
 
    function Get_Type
-     (Attr       : Attributes_Impl;
+     (Attr       : Attributes;
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence)
-      return Unicode.CES.Byte_Sequence
+      return Attribute_Type
    is
       J : Integer;
       Tmp : Attribute_Access;
    begin
       Get (Attr, URI, Local_Name, J, Tmp);
-      return Tmp.Att_Type.all;
+      return Tmp.Att_Type;
    end Get_Type;
 
    -------------
    -- Get_URI --
    -------------
 
-   function Get_URI (Attr : Attributes_Impl; Index : Natural)
+   function Get_URI (Attr : Attributes; Index : Natural)
       return Unicode.CES.Byte_Sequence is
    begin
       return Get (Attr, Index).URI.all;
@@ -448,7 +463,7 @@ package body Sax.Attributes is
    -- Get_Value --
    ---------------
 
-   function Get_Value (Attr : Attributes_Impl; Index : Natural)
+   function Get_Value (Attr : Attributes; Index : Natural)
       return Unicode.CES.Byte_Sequence is
    begin
       return Get (Attr, Index).Value.all;
@@ -459,7 +474,7 @@ package body Sax.Attributes is
    ---------------
 
    function Get_Value
-     (Attr : Attributes_Impl;
+     (Attr : Attributes;
       Qname : Unicode.CES.Byte_Sequence)
       return Unicode.CES.Byte_Sequence
    is
@@ -475,7 +490,7 @@ package body Sax.Attributes is
    ---------------
 
    function Get_Value
-     (Attr       : Attributes_Impl;
+     (Attr       : Attributes;
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence)
       return Unicode.CES.Byte_Sequence
@@ -486,4 +501,25 @@ package body Sax.Attributes is
       Get (Attr, URI, Local_Name, J, Tmp);
       return Tmp.Value.all;
    end Get_Value;
+
+   -----------------------------
+   -- Get_Default_Declaration --
+   -----------------------------
+
+   function Get_Default_Declaration
+     (Attr : Attributes; Index : Natural) return Default_Declaration is
+   begin
+      return Get (Attr, Index).Default_Decl;
+   end Get_Default_Declaration;
+
+   -----------------
+   -- Get_Content --
+   -----------------
+
+   function Get_Content (Attr : Attributes; Index : Natural)
+      return Sax.Models.Element_Model_Ptr is
+   begin
+      return Get (Attr, Index).Content;
+   end Get_Content;
+
 end Sax.Attributes;

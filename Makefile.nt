@@ -1,13 +1,17 @@
+# Generated automatically from Makefile.in by configure.
 
 # Modify the line below to reflect the location where
 # you want to install the library
 
-PREFIX=
+PREFIX=D:/xmlada
 
-
+# Set WIN32 on the line below to 'TRUE' if building on Windows, otherwise
+# set it to 'FALSE'
+export WIN32=TRUE
+  
 # List of all modules to compile
 # You can remove "dom" if you don't intend to use the DOM interface
-MODULES=unicode input_sources state_machine sax dom
+MODULES=unicode input_sources sax dom
 
 ##############################
 ##  Main Makefile: three targets are available:
@@ -23,7 +27,7 @@ MODULE_SRC=${MODULES:%=-aI%}
 MODULE_CLEAN=${MODULES:%=%_clean}
 MODULE_TEST=${MODULES:%=%_test}
 
-RANLIB=ranlib
+RANLIB= :
 CHMOD=chmod
 ARFLAGS=cr
 CP=cp -p -f
@@ -35,40 +39,47 @@ all: obj test docs
 obj: ${MODULES}
 
 docs: force
-	${MAKE} -C docs
+	${MAKE} -e -C docs
 
 ${MODULES}: force
-	${MAKE} -C $@ all_obj
+	${MAKE} -e -C $@ all_obj
 
 ${MODULE_CLEAN}: force
-	${MAKE} -C ${@:%_clean=%} clean
+	${MAKE} -e -C ${@:%_clean=%} clean
 
 ${MODULE_TEST}: force
-	${MAKE} -C ${@:%_test=%} test
+	${MAKE} -e -C ${@:%_test=%} test
 
 ${MODULE_INSTALL}: force
-	${MAKE} -C ${@:%_install=%} install
+	${MAKE} -e -C ${@:%_install=%} install
 
 install: ${MODULES}
 	@${MKDIR} ${PREFIX}/lib
 	@${MKDIR} ${PREFIX}/include/xmlada
 	# Building the libraries
-	${AR} ${ARFLAGS} ${PREFIX}/lib/libxml.a ${MODULES:%=%/obj/*.o}
+	${AR} ${ARFLAGS} ${PREFIX}/lib/libxmlada.a ${MODULES:%=%/obj/*.o}
+ifeq (${WIN32}, TRUE)
+	${RANLIB} ${PREFIX}/lib/libxmlada.a;
+else
 	@if [ -f /usr/bin/$(RANLIB) -o -f /bin/$(RANLIB) ]; then \
-	  ${RANLIB} ${PREFIX}/lib/libxml.a; \
+	  ${RANLIB} ${PREFIX}/lib/libxmlada.a; \
         fi
-	gcc -shared -o ${PREFIX}/lib/libxml.so ${MODULES:%=%/obj/*.o}
+	gcc -shared -o ${PREFIX}/lib/libxmlada.so ${MODULES:%=%/obj/*.o}
+endif
 	# Installing the files
 	${CP} ${MODULES:%=%/obj/*.ali} ${PREFIX}/lib/
 	cd ${PREFIX}/lib; ${CHMOD} -w *.ali
 	${CP} ${MODULES:%=%/*.ad[bs]} ${PREFIX}/include/xmlada/
 
 test: force
-	${MAKE} ${MODULE_TEST}
+	${MAKE} -e ${MODULE_TEST}
 
 clean: force
-	${RM} *.o *.ali testxml b~*
-	${MAKE} ${MODULE_CLEAN}
-	cd docs; make clean
+	-${RM} *.o
+	-${RM} *.ali
+	-${RM} textxml
+	-${RM} b~*
+	${MAKE} -e ${MODULE_CLEAN}
+	cd docs; ${MAKE} -e clean
 
 force:

@@ -19,6 +19,13 @@
 -- License along with this library; if not, write to the             --
 -- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
 -- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Unicode.CES;  use Unicode.CES;
@@ -42,11 +49,10 @@ package body Sax.Locators is
    procedure Copy
      (Loc : in out Locator_Impl; Loc_I : in Locator'Class) is
    begin
-      Free (Loc);
       Set_Line_Number (Loc, Get_Line_Number (Loc_I));
       Set_Column_Number (Loc, Get_Column_Number (Loc_I));
       Set_Public_Id (Loc, Get_Public_Id (Loc_I));
-      Set_System_Id (Loc, Get_Public_Id (Loc_I));
+      Set_System_Id (Loc, Get_System_Id (Loc_I));
    end Copy;
 
    ---------------------

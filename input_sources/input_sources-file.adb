@@ -19,6 +19,13 @@
 -- License along with this library; if not, write to the             --
 -- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
 -- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Ada.Direct_IO;
@@ -64,6 +71,7 @@ package body Input_Sources.File is
    begin
       Dir.Open (F, Dir.In_File, Filename);
       Length := Natural (Dir.Size (F));
+      Dir.Close (F);
 
       --  If the file is empty, we just create a reader that will not return
       --  any character. This will fail later on when the XML document is
@@ -75,7 +83,6 @@ package body Input_Sources.File is
       end if;
 
       Input.Buffer := new String (1 .. Length);
-      Dir.Close (F);
       Fast_Read (Filename, Input.Buffer);
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
@@ -101,7 +108,7 @@ package body Input_Sources.File is
 
    procedure Close (Input : in out File_Input) is
    begin
-      Input_Sources.Free (Input_Source (Input));
+      Input_Sources.Close (Input_Source (Input));
       Free (Input.Buffer);
       Input.Index := Natural'Last;
    end Close;

@@ -1,0 +1,18 @@
+Problems fixed in 0.6
+
+- Library renamed to libxmlada
+  The previous name was libxml, which was too general and interfered
+  with other libraries like the C libxml
+  Problem reported by Jurgen Pfeifer
+
+- Build procedures didn't work on NT
+  Due to the UNIX-oriented Makefile, the build procedures didn't work
+  correctly on NT and required a lot of adaptation.
+  Contributed by Jerry Van Dijk
+
+- Installation was missing some files
+  Some of the source files, like encodings.ads, were not copied to the
+  installation directory.
+  Reported by D. Anisimkov
+
+- Several parser problems fixed

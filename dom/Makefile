@@ -1,4 +1,4 @@
-
+WIN32=
 MODULE=dom
-DEPENDENCIES= unicode state_machine sax input_sources
+DEPENDENCIES= unicode sax input_sources
 include ../Makefile.module

@@ -1,0 +1,34 @@
+Before building this library on Windows, please read the general README !
+
+Windows Specifics
+-----------------
+
+1. Due to the nature of GNU Make you need to have a UNIX-type shell and
+   utilities installed to build this library. If you do not have this,
+   you can download an excellent set at:
+
+      http://www.weihenstephan.de/~syring/win32/UnxUtils.html
+
+   Strongly recommended! Especially if you are an Emacs user...
+
+2. Run 'configure' to generate the makefile.
+   An example copy is provided as Makefile.nt, rename it to makefile if you
+   cannot run configure
+
+3. Before building make sure to set the following values in 'Makefile':
+
+      export WIN32=TRUE
+
+   to tell the makefile we are building on windows and:
+
+      PREFIX=C:/GNAT/XMLada
+
+   to tell the makefile where to install the library. Note the slashes
+   in the path!
+
+4. The best way to proceed is to do a 'make' then 'make install'.
+
+5. If you have GNAT 3.14 or later, you can register the library as an
+   standard library using the 'gnatreg' command.
+
+success!

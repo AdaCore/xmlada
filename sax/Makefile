@@ -1,4 +1,4 @@
-
+WIN32=
 MODULE=sax
-DEPENDENCIES=unicode input_sources state_machine
+DEPENDENCIES=unicode input_sources
 include ../Makefile.module

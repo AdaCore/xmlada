@@ -1,0 +1,26 @@
+(cd ..; make CFLAGS="-O2 -gnatN")
+
+
+On ot.xml (old testament):
+  3487163 bytes
+  number of opening tags: 15933
+
+Old parser (no optimization)
+  ./testsax ot.xml > /dev/null  78.62s user 2.31s system 99% cpu 1:21.11 total
+
+Old parser (compiled with -O2 -gnatN)
+  ./testsax ot.xml > /dev/null  62.49s user 2.53s system 98% cpu 1:06.03 total
+
+Old parser (compiled with -O2 -gnatN, no "debug_reader")
+  ./testsax ot.xml > /dev/null  29.99s user 0.19s system 96% cpu 31.174 total
+
+New parser (no optimization)
+  ./testsax2 ot.xml > /dev/null  70.33s user 2.61s system 98% cpu 1:13.75 total
+  ./testsax2 ot.xml > /dev/null  69.94s user 2.77s system 96% cpu 1:15.09 total
+
+New parser (compiled with -O2 -gnatN)
+  ./testsax2 ot.xml > /dev/null  52.93s user 1.95s system 99% cpu 55.255 total
+ 
+New parser (compiled with -O2 -gnatN, no "debug_reader")
+  ./testsax2 ot.xml > /dev/null  15.69s user 0.18s system 100% cpu 15.851 total
+

@@ -1,42 +1,33 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001                          --
---                            ACT-Europe                             --
---                       Author: Emmanuel Briot                      --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
------------------------------------------------------------------------
-
-with Sax.Attributes;
-with Sax.Exceptions;
-with Sax.Locators;
 with Input_Sources;
-with Char_Automaton;
+with Sax.Locators;
+with Sax.Exceptions;
+with Sax.Attributes;
+with Sax.Models;
+with Unicode;
 with Unicode.CES;
 with GNAT.Spitbol;
 
 package Sax.Readers is
 
-   type Reader is tagged limited private;
-   type Reader_Access is access all Reader'Class;
+   type Reader is tagged private;
 
-   type Element_Model;
-   type Element_Model_Ptr is access Element_Model;
-   --  See below for a full declaration
+   procedure Parse
+     (Parser : in out Reader;
+      Input  : in out Input_Sources.Input_Source'Class);
+   --  Parse an XML stream, and calls the appropriate SAX callbacks for each
+   --  event.
+   --  This is not re-entrant: you can not call Parse with the same Parser
+   --  argument in one of the SAX callbacks. This has undefined behavior.
+
+   function Get_Feature (Parser : Reader; Name : String) return Boolean;
+   --  lookup the value of a feature
+   --  Name is a fully qualified URI.
+   --  All XML_Readers must recognize the two features Namespace_Feature
+   --  and Namespace_Prefix_Feature
+
+   procedure Set_Feature
+     (Parser : in out Reader; Name : String; Value : Boolean);
+   --  Set the state of a feature
 
    -------------------------
    -- Recognized features --
@@ -76,9 +67,9 @@ package Sax.Readers is
 
    Validation_Feature : constant String :=
      "http://www.xml.org/sax/features/validation";
-   --  This attribute is optional, and might be recognized by some parsers
-   --  It is true if the associated SAX parser is validating (ie reads the
-   --  external subset of the DTD).
+   --  If True (not the default), a number of additional tests are performed
+   --  while parsing the document, most notably that the document matches
+   --  the DTD (internal and external subset).
 
    External_General_Entities_Feature : constant String :=
      "http://xml.org/sax/features/external-general-entities";
@@ -134,7 +125,8 @@ package Sax.Readers is
    --  For example, a parser would use this callback to report the violation
    --  of a well-Formedness constraint.
    --  The application must assume that the document is unusable after the
-   --  parser has invoked this method.
+   --  parser has invoked this method. Thus, a Program_Error will be raised
+   --  if your callback returns. You should always raise an exception.
    --  Default action is to raise an exception Fatal_Error;
 
    ----------------------
@@ -369,8 +361,7 @@ package Sax.Readers is
    procedure Element_Decl
      (Handler : in out Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Unicode.CES.Byte_Sequence;
-      Parsed_Model : Element_Model_Ptr);
+      Model   : Sax.Models.Element_Model_Ptr);
    --  Report an element type declaration.
    --  The content model will consist of the string "EMPTY", the string "ANY",
    --  or a parenthesised group, optionally followed by an occurrence
@@ -386,117 +377,130 @@ package Sax.Readers is
      (Handler : in out Reader;
       Ename   : Unicode.CES.Byte_Sequence;
       Aname   : Unicode.CES.Byte_Sequence;
-      Typ     : Unicode.CES.Byte_Sequence;
-      Value_Default : Unicode.CES.Byte_Sequence;
+      Typ     : Sax.Attributes.Attribute_Type;
+      Content : Sax.Models.Element_Model_Ptr;
+      Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence);
    --  Report an attribute type declaration.
    --  Only the first declaration for an attribute will be reported.
-   --  Typ will be one of "CDATA", "ID", "IDREF", "IDREFS", "NMTOKEN",
-   --  "NMTOKENS", "ENTITY", "ENTITIES", a parenthesized token group with
-   --  the separator "|" and all whitespace removed, or the word "NOTATION"
-   --  followed by a space followed by a parenthesized token group with all
-   --  whitespace removed.
-   --  Value_Default is a string representing the attribute default
-   --  ("#IMPLIED", "#REQUIRED", or "#FIXED") or "" if none of these applies.
+   --  If Typ is Notation or Enumeration, then Content will contain the
+   --  description model for the attribute. Otherwise Content is null.
+   --  Content might be freed when returning from this call.
+   --  Value_Default represents the attribute default requirements
+   --  ("#IMPLIED", "#REQUIRED", or "#FIXED").
    --  Value is a string representing the attribute's default value, or ""
    --  if there is none
 
-   -------------------------------
-   -- Element models in the DTD --
-   -------------------------------
+   XML_Fatal_Error : exception;
 
-   type Content_Spec is
-     (Character_Data,   --  Characters, but no child node
-      Element_Ref,      --  A specific child
-      Any_Of,           --  child is one of many choices
-      Sequence,         --  a sequence of elements (order is imposed)
-      Repeat,           --  A repeated element
-      Empty,            --  Element must be empty
-      Anything          --  Content is not described, and can be anything
-     );
-
-   type Element_Model_Array is array (Natural range <>) of Element_Model_Ptr;
-   type Element_Model_Array_Ptr is access Element_Model_Array;
-
-   type Element_Model (Content : Content_Spec) is record
-      case Content is
-         when Character_Data | Empty | Anything => null;
-
-         when Element_Ref =>
-            Name : Unicode.CES.Byte_Sequence_Access; --  Name of the element
-
-         when Any_Of | Sequence =>
-            List : Element_Model_Array_Ptr; --  all the possible choices
-
-         when Repeat =>
-            Min : Natural;
-            Max : Positive;
-            Elem : Element_Model_Ptr;
-
-      end case;
-   end record;
-   --  Type used to describe the model used for an element, as described in
-   --  the DTD (see 3.2.* in XML specifications). For instance, the following
-   --  model "(#PCDATA|emph)*" is translated to:
-   --     (Content => Repeat,
-   --      Min     => 0,
-   --      Max     => Positive'Last,
-   --      Elem    => (Content => Any_Of,
-   --                  Choices => (0 => (Content => Character_Data),
-   --                              1 => (Content => Element,
-   --                                    Name    => "emp"))))
-
-   function Parse_Element_Model (Model : Unicode.CES.Byte_Sequence)
-      return Element_Model_Ptr;
-   --  Parse the model, as defined in XML specifications (3.2)
-   --  It is your responsability to free the model with Free.
-   --  It raised Invalid_Content_Model if Model is invalid
-
-   procedure Free (Model : in out Element_Model_Ptr);
-   --  Free the memory allocated for the model.
-
-   function To_String (Model : Element_Model) return Unicode.CES.Byte_Sequence;
-   --  Return the string to put in an XML file to describe Model
-   --  Invalid_Content_Model is raised if Model can not be described in a
-   --  DTD.
-
-   -------------------------
-   -- Parsing subprograms --
-   -------------------------
-
-   procedure Parse
-     (Read : in out Reader; Input : access Input_Sources.Input_Source'Class);
-   --  Parse an XML stream, and calls the appropriate callbacks for each
-   --  event.
-
-   function Get_Feature (Read : Reader; Name : String) return Boolean;
-   --  lookup the value of a feature
-   --  Name is a fully qualified URI.
-   --  All XML_Readers must recognize the two features Namespace_Feature
-   --  and Namespace_Prefix_Feature
-
-   procedure Set_Feature
-     (Read : in out Reader; Name : String; Value : Boolean);
-   --  Set the state of a feature
-
-   Max_Buffer_Length : constant := 50000;
+private
+   Max_Buffer_Length : constant := 10000;
    --  Length of internal buffer.
    --  This is also the maximum length of tag names.
 
-   XML_Fatal_Error : exception;
+   Entities_Table_Size : constant := 50;
+   --  Size of the hash-table used to store entities.
+   --  This is not a hard limit on the number of entities that can be defined.
+   --  However, if this number is too small with regards to the number of
+   --  entities, there will be conflicts in the hash-table that will slow
+   --  down the lookup.
 
-   No_Such_Entity : exception;
-   --  Raised when an entity could not be found
+   Default_Atts_Table_Size : constant := 50;
+   --  Size of the hash-table used to store the default attributes
 
-   Invalid_Content_Model : exception;
-   --  Raised by Parse_Element_Model, when the model is invalid
+   --------------
+   -- Entities --
+   --------------
+   --  We need to memorize all the declared entities, so as to do the
+   --  substitution ourselves.
 
-private
-
-   type File_Locator is new Sax.Locators.Locator_Impl with record
-      Char_Number : Natural := 1;
+   type Entity_Entry is record
+      Value        : Unicode.CES.Byte_Sequence_Access;
+      External     : Boolean;
+      Already_Read : Boolean := False;
+      --  True if the value of the entity was already read. This is used to
+      --  detect entities referencing themselves.
    end record;
-   type File_Locator_Access is access all File_Locator'Class;
+   Null_Entity : constant Entity_Entry := (null, False, False);
+   function Entity_Img (A : Entity_Entry) return String;
+   package Entity_Table is new GNAT.Spitbol.Table
+     (Value_Type => Entity_Entry,
+      Null_Value => Null_Entity,
+      Img        => Entity_Img);
+
+   type Entity_Input_Source;
+   type Entity_Input_Source_Access is access Entity_Input_Source;
+   type Entity_Input_Source is record
+      External : Boolean;
+      Next  : Entity_Input_Source_Access;
+      Name  : Unicode.CES.Byte_Sequence_Access;
+      --  Name of the entity
+
+      Handle_Strings : Boolean := True;
+      --  True if " and ' should be recognized as special characters.
+      --  This is used so that a string started in one stream isn't terminated
+      --  in another entity or stream.
+
+      Id : Natural;
+      --  Uniq ID for each input source
+
+      Input    : Input_Sources.Input_Source_Access;
+      Save_Loc : Sax.Locators.Locator_Impl;
+   end record;
+
+   type Parser_State is record
+      Name : String (1 .. 3);
+      --  Name of the state (debugging purposes)
+
+      Ignore_Special : Boolean := False;
+      --  True if special characters should be ignored (as is the case in
+      --  strings).  ??? Could be ignored, duplicates Greater_Special,
+      --  Less_Special, ..
+
+      Detect_End_Of_PI : Boolean := False;
+      --  Whether ?> should be reported as end of PI
+
+      Greater_Special : Boolean := False;
+      --  Whether > is considered a special character
+
+      Less_Special : Boolean := False;
+      --  Should be true if < should be reported separately. Note that in that
+      --  case it won't even be associated with the following character if
+      --  it is '!', '?',...
+
+      Expand_Param_Entities : Boolean := False;
+      --  True if %...; param entities should be recognized, as is the case in
+      --  the DTD
+
+      Expand_Entities : Boolean := True;
+      --  True if &...; should be recognized
+
+      Expand_Character_Ref : Boolean := True;
+      --  True if character references &#...; should be recognized
+
+      In_DTD : Boolean := False;
+      --  True if we are parsing the DTD, and '['. ']' and '<!' should be
+      --  recognized as special tags
+
+      Recognize_External : Boolean := False;
+      --  True if PUBLIC, SYSTEM and NDATA should be recognized as special
+      --  tokens
+
+      In_Attlist : Boolean := False;
+      --  True if we are in an <!ATTLIST, and we should recognize special
+      --  keywords like ID, NMTOKEN,...
+
+      Handle_Strings : Boolean := False;
+      --  True if " and ' should be recognized as special characters
+      --  ??? Should be merged with a In_String field, that would also replace
+      --  Ignore_Special.
+
+      In_Tag : Boolean := False;
+      --  True if = and : should be recognized as special characters
+
+      Report_Parenthesis : Boolean := False;
+      --  True if Opening_Parenthesis should be reported separately
+   end record;
 
    type XML_NS_Record;
    type XML_NS is access XML_NS_Record;
@@ -506,52 +510,18 @@ private
       Next   : XML_NS;
    end record;
 
-   type Space_Attribute_Enum is (Preserve, Ignorable);
-
    type Element;
    type Element_Access is access Element;
    type Element is record
-      NS           : Unicode.CES.Byte_Sequence_Access;
-      --  Prefix associated with the element. The resolution of this prefix
-      --  into an URI is left to when the callback is emitted, so that any
-      --  xmlns:* attribute in that element can be used.
-
-      Name         : Unicode.CES.Byte_Sequence_Access;
-      Parent       : Element_Access;
-      Id           : Natural;
-
-      Space_Handling : Space_Attribute_Enum := Ignorable;
-      --  This value is set based on the xml:space attribute defined for this
-      --  element in the DTD.
-
-      Namespaces   : XML_NS;
+      NS             : Unicode.CES.Byte_Sequence_Access;
+      Name           : Unicode.CES.Byte_Sequence_Access;
+      Parent         : Element_Access;
+      Start_Id       : Natural;
+      --  Id of the Input source for the start tag. End tag must end on the
+      --  same entity.
+      Namespaces     : XML_NS;
       --  Namespaces defined for that element and its children
    end record;
-
-   type Processing_Item is
-     (Attr_Value, Comment, Entity, PI, Declaration, None);
-   --  What type of entity we are currently processing (in some cases, an
-   --  error in the document is in fact because an PI, Comment,... wasn't
-   --  correctly finished, and we want to report the error at the beginning
-   --  of that entity).
-
-   type Entity_Def is record
-      Str : Unicode.CES.Byte_Sequence_Access;
-      External : Boolean;
-
-      Already_Read : Boolean := False;
-      --  True if the value of the entity was already read. This is used to
-      --  avoid entities referencing themselves.
-   end record;
-   Null_Entity : constant Entity_Def := (null, False, False);
-   function Entity_Img (A : Entity_Def) return String;
-   function Entity_Equality (A, B : Entity_Def) return Boolean;
-
-   package Entity_Table is new GNAT.Spitbol.Table
-     (Value_Type => Entity_Def,
-      Null_Value => Null_Entity,
-      Img        => Entity_Img,
-      "="        => Entity_Equality);
 
    type Attributes_Ptr is access all Sax.Attributes.Attributes'Class;
    function Attributes_Img (A : Attributes_Ptr) return String;
@@ -560,63 +530,76 @@ private
       Null_Value => null,
       Img        => Attributes_Img);
 
-   type Reader is new Char_Automaton.Character_State_Machine with record
-      Current_Node : Element_Access;
-      Current_NS   : Unicode.CES.Byte_Sequence_Access;
-      Attributes   : Sax.Attributes.Attributes_Impl;
-      Entities     : Entity_Table.Table (50); --  ??? Hard-coded
-      --  ??? Entities should be freed on destruction
-      DTD          : Attributes_Table.Table (50); --  ??? Hard-coded
+   package Notations_Table is new GNAT.Spitbol.Table
+     (Value_Type => Boolean,
+      Null_Value => False,
+      Img        => Boolean'Image);
+   --  For notations, we simply store whether they have been defined or not,
+   --  and then only for validating parsers
+
+   type Reader is tagged record
+      Buffer_Length : Natural := 0;
+      Buffer        : Unicode.CES.Byte_Sequence (1 .. Max_Buffer_Length);
+      Last_Read     : Unicode.Unicode_Char;
+      State         : Parser_State;
+      Locator       : Sax.Locators.Locator_Impl_Access;
+      Current_Node  : Element_Access;
+
+      Inputs        : Entity_Input_Source_Access;
+      --  Entities and parameter entities are processed inline (if we
+      --  temporarily substitute the input stream with the replacement text
+      --  for the entity).
+      --  When Inputs is null, the characters are read from the input stream
+      --  given in the call to Parser.
+
+      Close_Inputs  : Entity_Input_Source_Access;
+      --  List of entities to be closed at the next call to Next_Token
+
+      In_External_Entity : Boolean;
+      --  Whether we are parsing an external entity
+
+      Previous_Char_Was_CR : Boolean;
+      --  True if the previous character read from the stream was a
+      --  Carriage_Return (needed since XML parsers must convert these to
+      --  one single Line_Feed).
+
+      Default_Atts : Attributes_Table.Table (Default_Atts_Table_Size);
+      --  This table contains the list of default attributes defined for
+      --  each element in the DTD. Index is the name of the elements
       --  ??? Should be freed
 
-      Num_Items    : Natural := 0;
-      --  Number of items at the top-level
+      Notations : Notations_Table.Table (Default_Atts_Table_Size);
+      --  List of notations defined in the XML document. This is left empty
+      --  if the parser isn't configured to do validation.
+
+      Entities : Entity_Table.Table (Entities_Table_Size);
+      --  ??? Entities should be freed on destruction
+
+      DTD_Name : Unicode.CES.Byte_Sequence_Access;
+      --  Name of the DTD, and also name of the root element (in case we have
+      --  a validating parser). This is left to null for non-validating
+      --  parsers.
+
+      Ignore_State_Special : Boolean;
+      --  If True, ignore the State.Ignore_Special flag in the next call
+      --  to Next_Token. This is used for handling of special characters
+      --  withing strings.
 
       Default_Namespaces : XML_NS;
       --  All the namespaces defined by default
 
-      Num_Elements : Natural := 0;
-      --  Number of elements at the top-level (this only includes <...>
-      --  elements, not characters).
-
-      Entity_Start : Natural := 0;
-      Declaration_Start : Natural := 0;
-      --  Memorize the position in Buffer where the current entity started,
-      --  so that we can substitue its value at the end.
-
-      Processing_Attribute_Value : Boolean := False;
-      --  Set to True if we are processing an attribute value.
-
-      Locator : File_Locator_Access;
-
-      Recursive_Depth : Natural := 1;
-      --  Number of nested call to Main_Loop. Main_Loop is called when
-      --  parsing the contents of external entities.
+      Num_Toplevel_Elements : Natural;
+      --  Number of elements at the toplevel
 
       Element_Id : Natural := 0;
       --  Id of the current element. All elements created will have a
       --  different Id
 
-      --  The buffer to memorize the contents of the input file
-      Buffer_Length : Natural := 0;
-      Buffer        : Unicode.CES.Byte_Sequence (1 .. Max_Buffer_Length);
-      --  Internally, all XML documents are represented as UTF8-encoded
-      --  strings, so that we can easily compare between any two document.
-
-      Processing : Processing_Item := None;
-      --  What entity we are currently processing.
-
-      Processing_Start : File_Locator_Access;
-      --  The location of the entity's start. For attribute values, this
-      --  is in fact the location of the possible end for the entity.
-
-      Parsing_DTD : Integer := 0;
-      --  Positive while we are parsing a <!DOCTYPE...> section.
-      --  This is the number of open square brackets that haven't been closed.
-
       Feature_Namespace                   : Boolean := True;
       Feature_Namespace_Prefixes          : Boolean := False;
       Feature_External_General_Entities   : Boolean := True;
       Feature_External_Parameter_Entities : Boolean := True;
+      Feature_Validation                  : Boolean := False;
    end record;
+
 end Sax.Readers;

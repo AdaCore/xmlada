@@ -19,6 +19,13 @@
 -- License along with this library; if not, write to the             --
 -- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
 -- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;  use Ada.Exceptions;
@@ -87,14 +94,15 @@ package body Sax.Exceptions is
    ------------
 
    function Create (Message : Unicode.CES.Byte_Sequence;
-                    Loc     : access Locators.Locator'Class)
-      return Sax_Parse_Exception'Class is
+                    Loc     : Sax.Locators.Locator_Impl)
+      return Sax_Parse_Exception'Class
+   is
+      Pe : Sax_Parse_Exception (Message'Length);
    begin
-      return Sax_Parse_Exception'
-        (Length  => Message'Length,
-         Message => Message,
-         Loc     => Locator_Access (Loc),
-         Except  => Null_Id);
+      Pe.Message := Message;
+      Copy (Pe.Loc, Loc);
+      Pe.Except := Null_Id;
+      return Pe;
    end Create;
 
    ------------
@@ -104,14 +112,15 @@ package body Sax.Exceptions is
    function Create
      (Message       : Unicode.CES.Byte_Sequence;
       Ada_Exception : Ada.Exceptions.Exception_Id;
-      Loc           : access Locators.Locator'Class)
-      return Sax_Exception'Class is
+      Loc           : Locators.Locator_Impl)
+      return Sax_Exception'Class
+   is
+      Pe : Sax_Parse_Exception (Message'Length);
    begin
-      return Sax_Parse_Exception'
-        (Length  => Message'Length,
-         Message => Message,
-         Loc     => Locator_Access (Loc),
-         Except  => Ada_Exception);
+      Pe.Message := Message;
+      Copy (Pe.Loc, Loc);
+      Pe.Except := Ada_Exception;
+      return Pe;
    end Create;
 
    -----------------
@@ -121,7 +130,7 @@ package body Sax.Exceptions is
    function Get_Locator (Except : Sax_Parse_Exception)
       return Locators.Locator'Class is
    begin
-      return Except.Loc.all;
+      return Except.Loc;
    end Get_Locator;
 
 end Sax.Exceptions;

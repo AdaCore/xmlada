@@ -8,7 +8,7 @@ xml module:
 
 * Unicode: Add conversion to Wide_Char and Wide_String
 
-* Support for xml:* attributes (space, lang, ...)
+* Support for xml:* attributes (space, ...)
   Note that xml:space means that we must use the Ignorable_Whitespace callback
   in SAX.
 
@@ -17,12 +17,6 @@ xml module:
 * Unicode: http://www.unicode.org/unicode/standard/versions/Unicode3.0.html
 
 * DOM: Finish implementation for the few remaining cases
-
-* XML says that entity *references* appearing in attribute values, like this:
-        <FOO bar="this is a &baz; value">
-  must be internal: "baz" has to be an internal parsed entity, not
-  an external entity.
-  => We must distinguish between internal and external entities
 
 * SAX: Should have a feature to specify whether entity refs in attribute
   values should be expanded or not
@@ -34,7 +28,30 @@ xml module:
   have a function to automatically convert them to a deterministic automaton.
   Of course, this makes debugging much more difficult...
 
-* Parser: Maybe we could add to the error message when we are re-entering
-  the main loop to parse entity values (like "while parsing the value of...")
+* Parser: Checking of self-contained entities could be cleaner (ie done at
+  a more general level). For instance, directly at the end of Next_Token,
+  but we must exclude Text from the tests.
 
-* Parser: Error message are not really clear when we are parsing an entity.
+* Can we implement the lexical parser as a state machine (Next_Char called
+  at a single place). This might might it shorter (but probably not more
+  efficient)
+
+Release 0.6
+===========
+* Document the XML conformance suite
+* Add configure script for -FPIC on HPUX
+* Support for external entities, including EntityResolver in SAX
+* While recursively parsing entities, we should report error messages at the
+  correct location ("while parsing entity .. at 1:2")
+* Sax.Exceptions leaks memory with the exception location. We should just
+  remove the locator for now.
+* Add elaboration pragmas
+* Parse_Element_Model_From_Entity should use Next_Token (for entitites)
+* File_Input shouldn't store the whole file in memory (have a buffer of 64k
+  instead).
+* No need to return Id in Next_Token, should be stored directly in
+  Parser.Id. This would be more efficient. This allows for a simplification
+  in Parse_Element_Model.
+* For efficiency, Sax.Attributes should be an array
+* We must normalize PublicID (see 4.2.2)
+* Group all DTD-related field into a separate record (Entities, Default_Atts)

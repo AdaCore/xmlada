@@ -3,11 +3,14 @@ with Sax.Readers;    use Sax.Readers;
 with Sax.Exceptions; use Sax.Exceptions;
 with Sax.Locators;   use Sax.Locators;
 with Sax.Attributes; use Sax.Attributes;
+with Sax.Models;     use Sax.Models;
 with Unicode.CES;    use Unicode.CES;
 with Unicode;        use Unicode;
+with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Encodings;      use Encodings;
 
 package body Debug_Readers is
+
    -------------
    -- Warning --
    -------------
@@ -42,9 +45,7 @@ package body Debug_Readers is
      (Handler : in out Debug_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is
    begin
-      Put_Line ("Sax.Fatal_Error ("
-                & Get_Message (Except) & ", at "
-                & To_String (Get_Locator (Except)) & ')');
+      Put_Line ("Sax.Fatal_Error (" & Get_Message (Except) & ')');
       Fatal_Error (Reader (Handler), Except);
    end Fatal_Error;
 
@@ -321,11 +322,10 @@ package body Debug_Readers is
    procedure Element_Decl
      (Handler : in out Debug_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Unicode.CES.Byte_Sequence;
-      Parsed_Model : Element_Model_Ptr) is
+      Model   : Element_Model_Ptr) is
    begin
       Put_Line ("Sax.Element_Decl ("
-                & Name & ", " & Model
+                & Name & ", " & To_String (Model.all)
                 & ") at " & To_String (Handler.Locator.all));
    end Element_Decl;
 
@@ -353,14 +353,25 @@ package body Debug_Readers is
      (Handler : in out Debug_Reader;
       Ename   : Unicode.CES.Byte_Sequence;
       Aname   : Unicode.CES.Byte_Sequence;
-      Typ     : Unicode.CES.Byte_Sequence;
-      Value_Default : Unicode.CES.Byte_Sequence;
+      Typ     : Attribute_Type;
+      Content : Element_Model_Ptr;
+      Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence) is
    begin
-      Put_Line ("Sax.Attribute_Decl ("
-                & Ename & ", " & Aname
-                & ", " & Typ & ", " & Value_Default
-                & ", " & Value & ")");
+      if Content /= null then
+         Put_Line ("Sax.Attribute_Decl ("
+                   & Ename & ", " & Aname
+                   & ", " & Attribute_Type'Image (Typ) & ", "
+                   & To_String (Content.all) & ", "
+                   & Default_Declaration'Image (Value_Default)
+                   & ", " & Value & ")");
+      else
+         Put_Line ("Sax.Attribute_Decl ("
+                   & Ename & ", " & Aname
+                   & ", " & Attribute_Type'Image (Typ) & ", "
+                   & Default_Declaration'Image (Value_Default)
+                   & ", " & Value & ")");
+      end if;
    end Attribute_Decl;
 
 end Debug_Readers;

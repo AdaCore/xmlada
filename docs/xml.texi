@@ -44,7 +44,6 @@ unmodified in any copy.
 @menu
 * Introduction::
 * The Unicode module::
-* The State Machine module::
 * The Input module::
 * The SAX module::
 * The DOM module::
@@ -59,12 +58,6 @@ The Unicode module
 * Character sets::
 * Character encoding schemes::
 * Misc. functions::
-
-The State Machine module
-
-* Callbacks::
-* States and Events::
-* Sub-automatons::
 
 The Input module
 
@@ -487,195 +480,6 @@ Asian languages.
 @end table
 
 @c -------------------------------------------------------------------
-@node The State Machine module
-@chapter The State Machine module
-@c -------------------------------------------------------------------
-
-@noindent
-The XML parser used in this set of packages is based on a finite-state
-machine, that can parse XML documents one at a time and doesn't need
-to go backward.
-
-A generic state-machine package has been written, that can be reused in
-other applications as well.
-
-@menu
-* Callbacks::
-* States and Events::
-* Sub-automatons::
-@end menu
-
-@c -------------------------------------------------------------------
-@node States and Events
-@section States and Events
-@c -------------------------------------------------------------------
-
-@noindent
-The machine can support any number of @b{states}, all known through an
-integer index. The transition between these states can be based on any
-type, called @b{events}, although a pre-instanciated version of this
-package is given for unicode character based transitions.
-
-For each state, you can define any number of transitions, but all of them
-need to be associated with a different event. You can define a general
-event that matches every time no other event does.
-
-@smallexample
-Given the following transition diagram:
-
-   /-<--*--<-\--- * ---\
-  /           |         \
- 1    --a-->  2  --b-->  3 
-    \       /
-     \>-b->/
-
-@end smallexample
-
-The above example is a diagram with three states ("1", "2" and "3").
-It defines five transitions between those states, associates with
-two possible events ("a" and "b"), as well as the general event ("*")
-that matches whatever the input character is.
-
-@smallexample
-Initial state:  1
-Input string:  aabb
-
-The following states are reaches, one after the other:
-     1  (initial)
-then 2  (transition on "a")
-then 1  (transition on "a", matched again "*")
-then 2  (transition on "b")
-then 3  (transition on "b")
-@end smallexample
-
-There exist several ways to create a new state machine, although the
-simplest is to create an array that explicitely defines all the possible
-transitions, and that implicitely defines the states. See the example
-below. Note that some of the parameters associated with the transitions
-will be explained only in the following sections.
-
-@smallexample
-The above machine would be define by the following variable.
-
-@b{package} Char_Machine @b{is new} Generic_State_Machine
-  (Event_Type   => Character,
-   Is_Any_Event => Is_Star,  --  test if event is '*'
-   Equal        => "=");
-  
-State : @b{constant} Char_Machine.Automaton_Def :=
-  ((1, 'a', 2, null),  --  From state 1 to 2, through event 'a'
-   (1, 'b', 2, null),
-   (2, 'b', 3, null),
-   (2, '*', 1, null),
-   (3, '*', 1, null));
-@end smallexample
-
-This array then needs to be compiled and optimized to create the finite
-state machine itself, through the @code{Compile} function. As documented
-in the specs of the @file{generic_state_machine.ads} file itself, this
-@code{Compile} function must be called at least once to initialize
-internal data, even if you pass it an empty definition array.
-
-It is always possible to add new transitions later on, by calling the
-@code{Add_Transition} subprogram.
-
-Finally, two subprograms @code{Set_Current_State} and
-@code{Get_Current_State} are available to change and query the current
-state in the state machine.
-
-However, the prefered method to change the state is to send an event
-to the machine with the @code{Send_Event} procedure. This automatically
-computes the list of possible transitions from the current state, and
-the computes the resulting state given the event you sent. If no
-transition was possible, an exception is raised.
-
-@c -------------------------------------------------------------------
-@node Callbacks
-@section Callbacks
-@c -------------------------------------------------------------------
-
-@noindent
-@b{Callbacks} can be specified for each transition. These are standard
-Ada functions that are called every time that transition is taken. These
-callbacks are implemented through the @code{Transition_Function} type in
-Ada.
-
-@smallexample
- @b{type} Transition_Function @b{is access procedure}
-     (Automaton : @b{in out} State_Machine'@b{Class};
-      Event     : Event_Type);
-@end smallexample
-
-They take two parameters, that are the state machine itself and the
-event that triggered that transition (in case the callbacks is shared
-between several events).
-
-However, the use of callbacks is completely optional, and you can simply
-leave the default @code{null} value.
-
-This module doesn't provide a way to define chains of callbacks, ie
-multiple functions that would be called on each transition. This can be
-easily emulated by having a standard callback that calls several others,
-and this makes the interface in this package much cleaner and easy to
-understand.
-
-@c -------------------------------------------------------------------
-@node Sub-automatons
-@section Sub-automatons
-@c -------------------------------------------------------------------
-
-@noindent
-It is often very useful to define a set of states that accomplish a
-simple task, and can be called from multiple places inside a larger
-automaton. For instance, if you wanted to implement a parser for a
-language, you would probably define a @b{sub-automaton} to parse
-entities, and this would be reused to parse both keywords and variables.
-
-Using sub-automatons tends to make state machines simpler and smaller, but
-above all much easier to maintain and enhance.
-
-The idea is that when the machine enters the sub-automaton, it saves the
-current state. When the sub-automaton exists, that state is restored. This
-is in fact just like calling a subprogram in a standard programming
-language.
-
-You don't need to explicitely declare a sub-automaton. Instead, you simply
-define the place where you enter that automaton, and the machine should save
-the current state for later restoration. This is easily done simply by
-specifying a negative final state for the transition. As a result, the
-machine saves the state and the new state becomes the absolute value of
-the final state you defined.
-
-You then indicate that you are leaving the sub-automaton by specifing
-a final state of @code{Exit_Sub_Automaton} for one of the transitions.
-
-@smallexample
-  /<-- b --\             sub-automaton:
- /          \ 
-1   --b-->   2               3 --b-->  exit
- \            \            /  \
-  a            a          /<a<-\
-   \sub         \sub
-
-State : @b{constant} Char_Machine.Automaton_Def :=
-  ((1, 'b',  2, null),
-   (1, 'a', -3, null),  --  Defines a sub-automaton starting
-                        --  on state 3
-   (2, 'b',  1, null),
-   (2, 'a', -3, null),  --  Also transitions to sub-automaton
-   
-   --  The sub-automaton to skip "aaa..." strings
-   (3, 'a',  3, null),
-   (3, 'b', -1, null)); --  Exit the subautomaton
-
-@end smallexample
-
-There exists a limit on the number of nested sub-automaton (ie one
-automaton calling a sub-automaton, itself calling another one, and so on).
-There can be more than @code{Max_Automaton_Depth} nested called (by
-default 64).
-
-@c -------------------------------------------------------------------
 @node The Input module
 @chapter The Input module
 @c -------------------------------------------------------------------
@@ -766,7 +570,7 @@ The @b{Simple API for XML} is an other method that can be used for parsing.
 It is based on a callbacks mechanism, and doesn't store any data in memory
 (unless of course you choose to do so in your callbacks). It can thus be
 more efficient to use SAX than DOM for some specialized algorithms.
-In fact, this whole Ada XML library is based on such a SAX parser, than
+In fact, this whole Ada XML library is based on such a SAX parser, then
 creates the DOM tree through callbacks.
 
 Note that this module supports the second release of SAX (SAX2), that fully

@@ -1,87 +1,37 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001                          --
---                            ACT-Europe                             --
---                       Author: Emmanuel Briot                      --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
------------------------------------------------------------------------
-
---  The parsing of the XML file is done through a finite-state machine, so
---  that we can create the XML document by reading only one character at a
---  time (useful when reading data from streams when one can not peek
---  forward at characters).
---  The algorithm in this package is inspired from thotlib.
-
 with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Unchecked_Conversion;
-with Unchecked_Deallocation;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-
-with Char_Automaton;            use Char_Automaton;
-with Input_Sources;             use Input_Sources;
-with Input_Sources.Strings;     use Input_Sources.Strings;
-with Input_Sources.File;        use Input_Sources.File;
-
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
-with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
-
-with Sax.Attributes;            use Sax.Attributes;
+with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
 with Sax.Exceptions;            use Sax.Exceptions;
+with Sax.Attributes;            use Sax.Attributes;
+with Sax.Models;                use Sax.Models;
+with Input_Sources;             use Input_Sources;
 with Sax.Locators;              use Sax.Locators;
-
 with Encodings;                 use Encodings;
+with Input_Sources.Strings;     use Input_Sources.Strings;
+with Input_Sources.File;        use Input_Sources.File;
+with Sax.Attributes;            use Sax.Attributes;
+with Unchecked_Deallocation;
 
 package body Sax.Readers is
 
-   use Char_Automaton.Character_Automaton;
-   use Entity_Table;
-   use Attributes_Table;
+   use Entity_Table, Attributes_Table, Notations_Table;
 
-   Debug : constant Boolean := False;
-   --  Set this to watch all the callbacks
-
-   Top_State : constant Automaton_State := 0;
-
-   Xml_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_X)
-     & Encoding.Encode (Latin_Small_Letter_M)
-     & Encoding.Encode (Latin_Small_Letter_L);
-
-   Xmlns_Sequence : constant Byte_Sequence :=
-     Xml_Sequence
-     & Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_S);
-
-   Lt_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_L)
-     & Encoding.Encode (Latin_Small_Letter_T);
-
-   Gt_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_G)
-     & Encoding.Encode (Latin_Small_Letter_T);
+   Debug_Lexical : constant Boolean := False;
+   Debug_Input : constant Boolean := False;
+   --  Set to True if you want to debug this package
 
    Amp_Sequence : constant Byte_Sequence :=
      Encoding.Encode (Latin_Small_Letter_A)
      & Encoding.Encode (Latin_Small_Letter_M)
      & Encoding.Encode (Latin_Small_Letter_P);
+
+   Any_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_A)
+     & Encoding.Encode (Latin_Capital_Letter_N)
+     & Encoding.Encode (Latin_Capital_Letter_Y);
 
    Apos_Sequence : constant Byte_Sequence :=
      Encoding.Encode (Latin_Small_Letter_A)
@@ -89,28 +39,24 @@ package body Sax.Readers is
      & Encoding.Encode (Latin_Small_Letter_O)
      & Encoding.Encode (Latin_Small_Letter_S);
 
-   Quot_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_Q)
-     & Encoding.Encode (Latin_Small_Letter_U)
-     & Encoding.Encode (Latin_Small_Letter_O)
-     & Encoding.Encode (Latin_Small_Letter_T);
+   Attlist_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_A)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_L)
+     & Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_S)
+     & Encoding.Encode (Latin_Capital_Letter_T);
 
-   Cdata_Attlist_Sequence : constant Byte_Sequence :=
+   Cdata_Sequence : constant Byte_Sequence :=
      Encoding.Encode (Latin_Capital_Letter_C)
      & Encoding.Encode (Latin_Capital_Letter_D)
      & Encoding.Encode (Latin_Capital_Letter_A)
      & Encoding.Encode (Latin_Capital_Letter_T)
      & Encoding.Encode (Latin_Capital_Letter_A);
 
-   Cdata_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Exclamation_Mark)
-     & Encoding.Encode (Left_Square_Bracket)
-     & Cdata_Attlist_Sequence
-     & Encoding.Encode (Left_Square_Bracket);
-
    Doctype_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Exclamation_Mark)
-     & Encoding.Encode (Latin_Capital_Letter_D)
+     Encoding.Encode (Latin_Capital_Letter_D)
      & Encoding.Encode (Latin_Capital_Letter_O)
      & Encoding.Encode (Latin_Capital_Letter_C)
      & Encoding.Encode (Latin_Capital_Letter_T)
@@ -118,23 +64,20 @@ package body Sax.Readers is
      & Encoding.Encode (Latin_Capital_Letter_P)
      & Encoding.Encode (Latin_Capital_Letter_E);
 
-   Yes_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_Y)
-     & Encoding.Encode (Latin_Small_Letter_E)
-     & Encoding.Encode (Latin_Small_Letter_S);
+   Element_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_L)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_M)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_N)
+     & Encoding.Encode (Latin_Capital_Letter_T);
 
-   No_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_N)
-     & Encoding.Encode (Latin_Small_Letter_O);
-
-   Version_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Small_Letter_V)
-     & Encoding.Encode (Latin_Small_Letter_E)
-     & Encoding.Encode (Latin_Small_Letter_R)
-     & Encoding.Encode (Latin_Small_Letter_S)
-     & Encoding.Encode (Latin_Small_Letter_I)
-     & Encoding.Encode (Latin_Small_Letter_O)
-     & Encoding.Encode (Latin_Small_Letter_N);
+   Empty_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_M)
+     & Encoding.Encode (Latin_Capital_Letter_P)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_Y);
 
    Encoding_Sequence : constant Byte_Sequence :=
      Encoding.Encode (Latin_Small_Letter_E)
@@ -145,6 +88,137 @@ package body Sax.Readers is
      & Encoding.Encode (Latin_Small_Letter_I)
      & Encoding.Encode (Latin_Small_Letter_N)
      & Encoding.Encode (Latin_Small_Letter_G);
+
+   Entit_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_N)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_T);
+
+   Id_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_D);
+
+   Ies_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_S);
+
+   Fixed_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_F)
+     & Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_X)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_D);
+
+   Gt_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Small_Letter_G)
+     & Encoding.Encode (Latin_Small_Letter_T);
+
+   Implied_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_M)
+     & Encoding.Encode (Latin_Capital_Letter_P)
+     & Encoding.Encode (Latin_Capital_Letter_L)
+     & Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_D);
+
+   Include_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_N)
+     & Encoding.Encode (Latin_Capital_Letter_C)
+     & Encoding.Encode (Latin_Capital_Letter_L)
+     & Encoding.Encode (Latin_Capital_Letter_U)
+     & Encoding.Encode (Latin_Capital_Letter_D)
+     & Encoding.Encode (Latin_Capital_Letter_E);
+
+   Ignore_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_G)
+     & Encoding.Encode (Latin_Capital_Letter_N)
+     & Encoding.Encode (Latin_Capital_Letter_O)
+     & Encoding.Encode (Latin_Capital_Letter_R)
+     & Encoding.Encode (Latin_Capital_Letter_E);
+
+   Lang_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Small_Letter_L)
+     & Encoding.Encode (Latin_Small_Letter_A)
+     & Encoding.Encode (Latin_Small_Letter_N)
+     & Encoding.Encode (Latin_Small_Letter_G);
+
+   Lt_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Small_Letter_L)
+     & Encoding.Encode (Latin_Small_Letter_T);
+
+   Mtoken_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_M)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_O)
+     & Encoding.Encode (Latin_Capital_Letter_K)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_N);
+
+   Ndata_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_N)
+     & Encoding.Encode (Latin_Capital_Letter_D)
+     & Encoding.Encode (Latin_Capital_Letter_A)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_A);
+
+   Otation_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_O)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_A)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_O)
+     & Encoding.Encode (Latin_Capital_Letter_N);
+
+   No_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Small_Letter_N)
+     & Encoding.Encode (Latin_Small_Letter_O);
+
+   Notation_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_N)
+     & Otation_Sequence;
+
+   Ntity_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_N)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_T)
+     & Encoding.Encode (Latin_Capital_Letter_Y);
+
+   Public_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_P)
+     & Encoding.Encode (Latin_Capital_Letter_U)
+     & Encoding.Encode (Latin_Capital_Letter_B)
+     & Encoding.Encode (Latin_Capital_Letter_L)
+     & Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_C);
+
+   Quot_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Small_Letter_Q)
+     & Encoding.Encode (Latin_Small_Letter_U)
+     & Encoding.Encode (Latin_Small_Letter_O)
+     & Encoding.Encode (Latin_Small_Letter_T);
+
+   Ref_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_R)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_F);
+
+   Required_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Capital_Letter_R)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_Q)
+     & Encoding.Encode (Latin_Capital_Letter_U)
+     & Encoding.Encode (Latin_Capital_Letter_I)
+     & Encoding.Encode (Latin_Capital_Letter_R)
+     & Encoding.Encode (Latin_Capital_Letter_E)
+     & Encoding.Encode (Latin_Capital_Letter_D);
 
    Standalone_Sequence : constant Byte_Sequence :=
      Encoding.Encode (Latin_Small_Letter_S)
@@ -166,1000 +240,434 @@ package body Sax.Readers is
      & Encoding.Encode (Latin_Capital_Letter_E)
      & Encoding.Encode (Latin_Capital_Letter_M);
 
-   Public_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_P)
-     & Encoding.Encode (Latin_Capital_Letter_U)
-     & Encoding.Encode (Latin_Capital_Letter_B)
-     & Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_C);
+   Version_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Small_Letter_V)
+     & Encoding.Encode (Latin_Small_Letter_E)
+     & Encoding.Encode (Latin_Small_Letter_R)
+     & Encoding.Encode (Latin_Small_Letter_S)
+     & Encoding.Encode (Latin_Small_Letter_I)
+     & Encoding.Encode (Latin_Small_Letter_O)
+     & Encoding.Encode (Latin_Small_Letter_N);
 
-   Entity_Attlist_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_Y);
+   Xml_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Small_Letter_X)
+     & Encoding.Encode (Latin_Small_Letter_M)
+     & Encoding.Encode (Latin_Small_Letter_L);
 
-   Entity_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Exclamation_Mark) & Entity_Attlist_Sequence;
+   Xmlns_Sequence : constant Byte_Sequence :=
+     Xml_Sequence
+     & Encoding.Encode (Latin_Small_Letter_N)
+     & Encoding.Encode (Latin_Small_Letter_S);
 
-   Attlist_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Exclamation_Mark)
-     & Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_S)
-     & Encoding.Encode (Latin_Capital_Letter_T);
+   Yes_Sequence : constant Byte_Sequence :=
+     Encoding.Encode (Latin_Small_Letter_Y)
+     & Encoding.Encode (Latin_Small_Letter_E)
+     & Encoding.Encode (Latin_Small_Letter_S);
 
-   Notation_Attlist_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_O)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_O)
-     & Encoding.Encode (Latin_Capital_Letter_N);
+   ------------
+   -- Tokens --
+   ------------
 
-   Notation_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Exclamation_Mark) & Notation_Attlist_Sequence;
+   type Token_Type is
+     (Double_String_Delimiter, --  "
+      Single_String_Delimiter, --  '
+      Comment,                 --  <!--...--> (Data is the comment)
+      Start_Of_Tag,            --  <
+      Start_Of_End_Tag,        --  </
+      End_Of_Start_Tag,        --  />
+      Start_Of_PI,             --  <?
+      End_Of_PI,               --  ?>
+      End_Of_Tag,              --  >
+      Equal,                   --  =  (in tags)
+      Colon,                   --  :  (in tags)
+      Open_Paren,              --  (  (while parsing content model in ATTLIST)
+      Internal_DTD_Start,      --  [  (while in DTD)
+      Internal_DTD_End,        --  ]  (while in DTD)
+      Include,                 --  <![INCLUDE[
+      Ignore,                  --  <![IGNORE[
+      Start_Conditional,       --  <![
+      End_Conditional,         --  ]]>
+      Space,                   --  Any number of spaces (Data is the spaces)
+      Text,                    --  any text  (Data is the identifier)
+      Name,                    --  same as text, but contains only valid
+      --  name characters
+      Cdata_Section,           --  <![CDATA
+      Doctype_Start,           --  <!DOCTYPE
+      System,                  --  SYSTEM  (while in DTD)
+      Public,                  --  PUBLIC  (while in DTD)
+      Ndata,                   --  NDATA   (while in DTD)
+      Any,                     --  ANY (while in DTD)
+      Empty,                   --  EMPTY (while in DTD)
+      Notation,                --  NOTATION (while in DTD or ATTLIST)
+      Entity_Def,              --  <!ENTITY (while in DTD)
+      Element_Def,             --  <!ELEMENT (while in DTD)
+      Attlist_Def,             --  <!ATTLIST (while in DTD)
+      Id_Type,                 --  ID (while in ATTLIST)      Data is "ID"
+      Idref,                   --  IDREF (while in ATTLIST)   Data is "IDREF"
+      Idrefs,                  --  IDREFS (while in ATTLIST)  Data is "IDREFS"
+      Cdata,                   --  CDATA (while in ATTLIST)   Data is "CDATA"
+      Entity,                  --  ENTITY (while in ATTLIST)  Data is "ENTITY"
+      Entities,                --  ENTITIES (while in ATTLIST) Data="ENTITIES"
+      Nmtoken,                 --  NMTOKEN (while in ATTLIST) Data="NMTOKEN"
+      Nmtokens,                --  NMTOKENS (while in ATTLIST) Data="NMTOKENS"
+      Required,                --  REQUIRED (while in ATTLIST) Data="#REQUIRED"
+      Implied,                 --  IMPLIED (while in ATTLIST) Data="#IMPLIED"
+      Fixed,                   --  FIXED (while in ATTLIST) Data="#FIXED"
+      End_Of_Input             --  End of input was seen.
+     );
 
-   Element_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Exclamation_Mark)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_M)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_T);
+   type Token is record
+      Typ : Token_Type;
+      First, Last : Natural;  --   Indexes in the buffer
+      Line, Column : Natural; --   Line and col within the current stream
+      Input_Id : Natural;     --   Id of the input source in which Token was
+                              --   read.
+   end record;
 
-   Ndata_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_D)
-     & Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_A);
+   Null_Token : constant Token := (End_Of_Input, 1, 0, 0, 0, 0);
 
-   Comment_End_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Hyphen_Minus)
-     & Encoding.Encode (Hyphen_Minus);
+   Default_State : constant Parser_State :=
+     (Name => "Def",
+      Ignore_Special => False,
+      Detect_End_Of_PI => False,
+      Greater_Special => False,
+      Less_Special => False,
+      Expand_Param_Entities => False,
+      Expand_Entities => True,
+      Expand_Character_Ref => True,
+      In_DTD => False,
+      Recognize_External => False,
+      Handle_Strings => False,
+      In_Tag => False,
+      Report_Parenthesis => False,
+      In_Attlist => False);
+   Attr_Value_State : constant Parser_State :=
+     (Name => "Att",
+      Ignore_Special => True,
+      Detect_End_Of_PI => False,
+      Greater_Special => False,
+      Less_Special => True,
+      Expand_Param_Entities => False,
+      Expand_Entities => True,
+      Expand_Character_Ref => True,
+      In_DTD => False,
+      Recognize_External => False,
+      Handle_Strings => True,
+      In_Tag => False,
+      Report_Parenthesis => False,
+      In_Attlist => False);
+   Non_Interpreted_String_State : constant Parser_State :=
+     (Name => "Str",
+      Ignore_Special => True,
+      Detect_End_Of_PI => False,
+      Greater_Special => False,
+      Less_Special => False,
+      Expand_Param_Entities => False,
+      Expand_Entities => False,
+      Expand_Character_Ref => False,
+      In_DTD => False,
+      Recognize_External => False,
+      Handle_Strings => True,
+      In_Tag => False,
+      Report_Parenthesis => False,
+      In_Attlist => False);
+   DTD_State : constant Parser_State :=
+     (Name => "DTD",
+      Ignore_Special => False,
+      Detect_End_Of_PI => False,
+      Greater_Special => True,
+      Less_Special => False,
+      Expand_Param_Entities => True,
+      Expand_Entities => True,
+      Expand_Character_Ref => True,
+      In_DTD => True,
+      Recognize_External => True,
+      Handle_Strings => True,
+      In_Tag => False,
+      Report_Parenthesis => False,
+      In_Attlist => False);
+   PI_State : constant Parser_State :=
+     (Name => "PI ",
+      Ignore_Special => True,
+      Detect_End_Of_PI => True,
+      Greater_Special => False,
+      Less_Special => False,
+      Expand_Param_Entities => False,
+      Expand_Entities => False,
+      Expand_Character_Ref => False,
+      In_DTD => False,
+      Recognize_External => False,
+      Handle_Strings => True,
+      In_Tag => False,
+      Report_Parenthesis => False,
+      In_Attlist => False);
+   Entity_Def_State : constant Parser_State :=
+     (Name => "Ent",
+      Ignore_Special => False,
+      Detect_End_Of_PI => False,
+      Greater_Special => True,
+      Less_Special => False,
+      Expand_Param_Entities => False,
+      Expand_Entities => False,
+      Expand_Character_Ref => True,
+      In_DTD => True,
+      Recognize_External => True,
+      Handle_Strings => True,
+      In_Tag => False,
+      Report_Parenthesis => False,
+      In_Attlist => False);
+   Element_Def_State : constant Parser_State :=
+     (Name => "Ele",
+      Ignore_Special => False,
+      Detect_End_Of_PI => False,
+      Greater_Special => True,
+      Less_Special => False,
+      Expand_Param_Entities => True,
+      Expand_Entities => False,
+      Expand_Character_Ref => True,
+      In_DTD => True,
+      Recognize_External => True,
+      Handle_Strings => True,
+      In_Tag => False,
+      Report_Parenthesis => True,
+      In_Attlist => False);
+   Attribute_Def_State : constant Parser_State :=
+     (Name => "AtD",
+      Ignore_Special => False,
+      Detect_End_Of_PI => False,
+      Greater_Special => True,
+      Less_Special => False,
+      Expand_Param_Entities => True,
+      Expand_Entities => False,
+      Expand_Character_Ref => True,
+      In_DTD => True,
+      Recognize_External => False,
+      Handle_Strings => True,
+      In_Tag => True,
+      Report_Parenthesis => True,
+      In_Attlist => True);
+   Entity_Str_Def_State : constant Parser_State :=
+     (Name => "EtS",
+      Ignore_Special => True,
+      Detect_End_Of_PI => False,
+      Greater_Special => False,
+      Less_Special => False,
+      Expand_Param_Entities => True,
+      Expand_Entities => False,
+      Expand_Character_Ref => True,
+      In_DTD => True,
+      Recognize_External => False,
+      Handle_Strings => True,
+      In_Tag => False,
+      Report_Parenthesis => False,
+      In_Attlist => False);
+   Attlist_Str_Def_State : constant Parser_State :=
+     (Name => "AtS",
+      Ignore_Special => True,
+      Detect_End_Of_PI => False,
+      Greater_Special => False,
+      Less_Special => False,
+      Expand_Param_Entities => True,
+      Expand_Entities => True,
+      Expand_Character_Ref => True,
+      In_DTD => True,
+      Recognize_External => False,
+      Handle_Strings => True,
+      In_Tag => False,
+      Report_Parenthesis => False,
+      In_Attlist => False);
+   Tag_State : constant Parser_State :=
+     (Name => "Tag",
+      Ignore_Special => False,
+      Greater_Special => True,
+      Less_Special => False,
+      Detect_End_Of_PI => False,
+      Expand_Param_Entities => False,
+      Expand_Entities => False,
+      Expand_Character_Ref => True,
+      In_DTD => False,
+      Recognize_External => False,
+      Handle_Strings => True,
+      In_Tag => True,
+      Report_Parenthesis => False,
+      In_Attlist => False);
 
-   Comment_Start_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Exclamation_Mark) & Comment_End_Sequence;
+   --------------------------
+   -- Internal subprograms --
+   --------------------------
 
-   Empty_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_M)
-     & Encoding.Encode (Latin_Capital_Letter_P)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_Y);
+   function Is_Name_Char (C : Unicode_Char) return Boolean;
+   --  Return True if C is a valid character to use in a Name.
 
-   Any_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_A)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_Y);
+   procedure Test_Valid_Char
+     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token);
+   --  Raise an error if C is not valid in XML. The error is reported at
+   --  location Loc.
 
-   Pcdata_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Pound_Sign)
-     & Encoding.Encode (Latin_Capital_Letter_P)
-     & Cdata_Attlist_Sequence;
+   function Is_Pubid_Char (C : Unicode_Char) return Boolean;
+   --  Return True if C is a valid character for a Public ID (2.3 specs)
 
-   Id_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_D);
+   procedure Test_Valid_Lang
+     (Parser : in out Reader'Class; Lang : Byte_Sequence);
+   --  Return True if Lang matches the rules for languages
 
-   Idref_Sequence : constant Byte_Sequence :=
-     Id_Sequence
-     & Encoding.Encode (Latin_Capital_Letter_R)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_F);
+   Input_Ended : exception;
 
-   Idrefs_Sequence : constant Byte_Sequence :=
-     Idref_Sequence & Encoding.Encode (Latin_Capital_Letter_S);
+   procedure Next_Char
+     (Input   : in out Input_Source'Class;
+      Parser  : in out Reader'Class);
+   --  Return the next character, and increments the locators
+   --  Input_Ended is raised at the end
 
-   Entities_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_S);
+   procedure Put_In_Buffer
+     (Parser : in out Reader'Class; Char : Unicode_Char);
+   procedure Put_In_Buffer
+     (Parser : in out Reader'Class; Str : Byte_Sequence);
+   pragma Inline (Put_In_Buffer);
+   --  Put the last character read in the internal buffer
 
-   Nmtoken_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Latin_Capital_Letter_N)
-     & Encoding.Encode (Latin_Capital_Letter_M)
-     & Encoding.Encode (Latin_Capital_Letter_T)
-     & Encoding.Encode (Latin_Capital_Letter_O)
-     & Encoding.Encode (Latin_Capital_Letter_K)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_N);
+   procedure Next_Token
+     (Input  : in out Input_Sources.Input_Source'Class;
+      Parser : in out Reader'Class;
+      Id     : out Token);
+   --  Return the next identifier in the input stream.
+   --  Locator is modified accordingly (line and column)
 
-   Required_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Number_Sign)
-     & Encoding.Encode (Latin_Capital_Letter_R)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_Q)
-     & Encoding.Encode (Latin_Capital_Letter_U)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_R)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_D);
+   procedure Next_Token_Skip_Spaces
+     (Input  : in out Input_Sources.Input_Source'Class;
+      Parser : in out Reader'Class;
+      Id     : out Token;
+      Must_Have : Boolean := False);
+   pragma Inline (Next_Token_Skip_Spaces);
+   --  Same as Next_Token, except it skips spaces. If Must_Have is True,
+   --  then the first token read must be a space, or an error is raised
 
-   Implied_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Number_Sign)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_M)
-     & Encoding.Encode (Latin_Capital_Letter_P)
-     & Encoding.Encode (Latin_Capital_Letter_L)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_D);
+   procedure Reset_Buffer
+     (Parser : in out Reader'Class; Id : Token := Null_Token);
+   --  Clears the internal buffer in Parser.
+   --  If Id is not Null_Token, then only the characters starting from
+   --  Id.First are removed
 
-   Fixed_Sequence : constant Byte_Sequence :=
-     Encoding.Encode (Number_Sign)
-     & Encoding.Encode (Latin_Capital_Letter_F)
-     & Encoding.Encode (Latin_Capital_Letter_I)
-     & Encoding.Encode (Latin_Capital_Letter_X)
-     & Encoding.Encode (Latin_Capital_Letter_E)
-     & Encoding.Encode (Latin_Capital_Letter_D);
+   function Value (Parser : Reader'Class; From, To : Token)
+      return Unicode.CES.Byte_Sequence;
+   --  Return the text that starts at the beginning of From, and ends at
+   --  the end of To.
 
-   Nmtokens_Sequence : constant Byte_Sequence :=
-     Nmtoken_Sequence & Encoding.Encode (Latin_Capital_Letter_S);
+   procedure Set_State (Parser : in out Reader'Class; State : Parser_State);
+   --  Set the current state for the parser
 
-   Invalid_Character : exception;
-   --  Raised by Skip_Name
+   function Get_State (Parser : Reader'Class) return Parser_State;
+   --  Return the current state.
 
-   ---------------------------------------------
-   -- Specifications for internal subprograms --
-   ---------------------------------------------
-
-   procedure Free (NS : in out XML_NS);
-   --  Free the memory occupied by the namespace list (NS and its siblings)
-
-   procedure Free (Elem : in out Element_Access);
-   --  Free the contents of the element, but doesn't remove the element itself.
-
-   procedure Free_Memory (Machine : in out Reader'Class);
-   --  Free all the memory allocated for the machine.
-
-   procedure Free_NS is new Unchecked_Deallocation (XML_NS_Record, XML_NS);
-   procedure Free_Element is new Unchecked_Deallocation
-     (Element, Element_Access);
-
-   ---------------------------------------
-   -- Redefine the transition functions --
-   ---------------------------------------
-
-   type Xml_Transition_Function is access procedure
-     (Automaton : in out Reader'Class; Last_Char_Read : Unicode_Char);
-
-   function Conv is new Unchecked_Conversion
-     (Xml_Transition_Function, Character_Automaton.Transition_Function);
-
-   ----------
-   -- Misc --
-   ----------
-
-   function Is_Valid_Name (Str : Unicode.CES.Byte_Sequence) return Boolean;
-   --  True if Str matches the rule for names (XML specifications 2.3, [5])
-
-   function Is_Name_Char (C : Unicode.Unicode_Char) return Boolean;
-   --  True if C is a NameChar (XML specifications 2.3, [4])
-
-   function Is_Pubid_Char (C : Unicode.Unicode_Char) return Boolean;
-   --  True if C is a PubidChar (XML specifications 2.3, [13])
-
-   procedure Add_Namespace
-     (Machine : in out Reader'Class;
-      Node    : Element_Access;
-      Prefix  : Byte_Sequence;
-      URI     : Byte_Sequence);
-   --  Create a new prefix mapping (an XML namespace). If Node is null, then
-   --  the mapping is added as a default namespace
-
-   function Get_Entity_Replacement
-     (Machine       : Reader'Class;
-      Entity        : Byte_Sequence;
-      Is_Std_Entity : access Boolean;
-      Def           : access Entity_Def) return Byte_Sequence;
-   --  Get the string that should replace an entity.
-   --  Is_Std_Entity is set to True if Entity is one of the five predefined
-   --  entity in the XML specifications.
-   --  Def will contain the entity definition.
+   procedure Syntactic_Parse
+     (Parser : in out Reader'Class;
+      Input  : in out Input_Sources.Input_Source'Class);
+   --  Internal syntactical parser.
 
    procedure Find_NS
-     (Machine : in out Reader'Class;
+     (Parser  : in out Reader'Class;
       Elem    : Element_Access;
-      Prefix  : Byte_Sequence := "";
+      Prefix  : Token;
       NS      : out XML_NS);
    --  Search the namespace associated with a given prefix in the scope of
    --  Elem or its parents. Use the empty string to get the default namespace.
    --  Fatal_Error is raised if no such namespace was found (and null is
    --  returned, in case Fatal_Error didn't raise an exception)
 
-   procedure Main_Loop
-     (Machine : in out Reader'Class;
-      Input   : in out Input_Sources.Input_Source'Class;
-      Increment_Locator : Boolean := True);
-   --  Execute the main loop (ie read all the characters from the input,
-   --  and process them). This procedure finished only when there is no more
-   --  character to read from input.
-   --  If Increment_Locator is True, then the locator associated with the
-   --  Machine is also incremented as characters are read.
-   --  If Self_Contained is true, then the text in Input must be
-   --  self-contained, ie all tags and entities must be closed at the end.
-   --  Otherwise, an error is raised
-
-   procedure Skip_Spaces (Str : Byte_Sequence; Index : in out Natural);
-   --  Skip all the spaces that start at Index, and leaves Index at the first
-   --  non-white space character.
-
-   procedure Skip_String
-     (Str         : Byte_Sequence;
-      Index       : in out Natural;
-      Machine     : in out Reader'Class;
-      Value_Start : out Natural;
-      Value_End   : out Natural;
-      Error_Msg   : String);
-   --  Skip the string that starts at Index (either with single quote or
-   --  double quotes). At the end, Index points after the closing quote.
-   --  Error_Msg is the error raised if the first character is not a quote,
-   --  but no error is raised if Error_Msg is the empty string.
-
-   function Looking_At
-     (Machine : Reader'Class; Index : Natural; Str : Byte_Sequence)
-      return Boolean;
-   --  Return True if a string Str starts at Index in the buffer, and is
-   --  either followed by a white space or terminates the buffer.
-
-   procedure Skip_Name
-     (Str        : Byte_Sequence;
-      Index      : in out Natural;
-      Name_Start : out Natural;
-      Name_End   : out Natural;
-      Is_Nmtoken : Boolean := False);
-   --  Skips the Name starting at Index. On return, Index will point to the
-   --  first character following the name.
-   --  All characters must correct with regard to Is_Name_Char.
-   --  If Is_Nmtoken is False, then the first character must be a letter, ie
-   --  match the [5] rule in the XML grammar.
-
-   procedure Check_XML_PI_Syntax
-     (Machine : in out Reader'Class;
-      Target  : Byte_Sequence;
-      Data    : Byte_Sequence);
-   --  Check the syntax of the <?xml?> processing instruction
-
-   function Qname_From_Name
-     (URI : Byte_Sequence_Access;
-      Local_Name : Byte_Sequence) return Byte_Sequence;
+   function Qname_From_Name (Parser : Reader'Class; Prefix, Local_Name : Token)
+      return Byte_Sequence;
    --  Create the qualified name from the namespace URI and the local name.
 
+   procedure Add_Namespace
+     (Parser : in out Reader'Class;
+      Node   : Element_Access;
+      Prefix, URI_Start, URI_End : Token;
+      Report_Event : Boolean := True);
+   --  Create a new prefix mapping (an XML namespace). If Node is null, then
+   --  the mapping is added as a default namespace
+
+   procedure Add_Namespace_No_Event
+     (Parser : in out Reader'Class;
+      Prefix : Byte_Sequence;
+      Str    : Byte_Sequence);
+   --  Create a new default namespace in the parser
+
+   procedure Free (NS : in out XML_NS);
+   --  Free NS and its successors in the list
+
+   procedure Parse_Element_Model
+     (Input   : in out Input_Sources.Input_Source'Class;
+      Parser  : in out Reader'Class;
+      Result  : out Element_Model_Ptr;
+      Nmtokens : Boolean := False;
+      Attlist : Boolean := False;
+      Open_Was_Read : Boolean);
+   --  Parse the following characters in the stream so as to create an
+   --  element or attribute contents model, ie the tree matching an
+   --  expression like "(foo|bar)+".
+   --  Nmtokens should be true if the names in the model should follow the
+   --  Nmtoken rule in XML specifications rather than the Name rule.
+   --  If Open_Was_Read, then the opening parenthesis is considered to have
+   --  been read already and is automatically inserted into the stack.
+   --  Attlist should be set to true if this is the model in <!ELEMENT>
+
+   procedure Parse_Element_Model_From_Entity
+     (Parser : in out Reader'Class;
+      Name   : Byte_Sequence;
+      M      : out Element_Model_Ptr;
+      Attlist : Boolean := False);
+   --  Same as above, but the model is contained in the entity Name.
+
    procedure Fatal_Error
-     (Machine : in out Reader'Class;
-      Message : Byte_Sequence;
-      Loc     : File_Locator_Access := null);
-   --  Raise a fatal error exception.
-   --  The exception is reported at the location given in Machine. Note that
-   --  in some cases (for instance if we were processing a comment), a
-   --  different error message might be substituted automatically.
-   --  If Loc is null, the location of the error is extracted automatically
-   --  either from the current location or the start of the entity we are
-   --  currently processing
+     (Parser : in out Reader'Class;
+      Msg    : String;
+      Id     : Token := Null_Token);
+   --  Raises a fatal error.
+   --  The error is reported at location Id (or the current parser location
+   --  if Id is Null_Token).
+   --  The user application should not return from this call. Thus, a
+   --  Program_Error is raised if it does return.
 
-   procedure Put_In_Buffer
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Save the character for a future use
+   procedure Error
+     (Parser : in out Reader'Class;
+      Msg    : String;
+      Id     : Token := Null_Token);
+   --  Same as Fatal_Error, but reports an error instead
 
-   procedure Put_In_Buffer_No_Multiple_Space
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Put the character of a processing instruction into the buffer.
-   --  Note that XML parsers are required to strip multiple white-space
-   --  characters to a single one in a processing instruction. This procedure
-   --  takes care of that.
+   function Location (Parser : Reader'Class; Id : Token) return Byte_Sequence;
+   --  Return the location of the start of Id as a string.
 
-   procedure Put_In_Buffer_No_Multiple_Space_Nor_Newline
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Like above, but also changes newlines to space
-
-   procedure Put_In_Buffer_Space
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  Insert a space and Last_Read in the buffer.
-
-   procedure Put_In_Buffer_Force
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   procedure Put_In_Buffer_Force
-     (Machine : in out Reader'Class; S : Byte_Sequence);
-   pragma Inline (Put_In_Buffer_Force);
-   --  Copy a string directly into the buffer
-
-   procedure Check_Cdata_End
-     (Machine   : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Put Last_Read in the buffer, in the context of Text, but checks that
-   --  the invalid sequence ']]>' doesn't appear in the text.
-
-   procedure Put_Question_Mark
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Put a question mark character, followed by last_read
-
-   procedure Xml_Text_To_Document (Machine : in out Reader'Class);
-   --  Creates a new text element in the XML tree with the contents of the
-   --  buffer.
-
-   procedure Xml_Error
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  An syntactic error was detected while parsing the XML file. This is
-   --  not called for semantic errors (different names for opening or closing
-   --  tags).
-
-   procedure Must_Have_Space_In_Attr
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Attributes must be separated by spaces
-
-   procedure Must_Have_Equal_After_Attr
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Attribute names must be followed by equal sign
-
-   procedure Attr_Need_Value
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Attributes must have an explicit value
-
-   procedure Debug_Put (Machine : Reader'Class; Str : Byte_Sequence);
-   --  Print Str in debug mode, along with location information
-
-   function Resolve_URI (Machine : Reader'Class; URI : Byte_Sequence)
+   function Resolve_URI (Parser : Reader'Class; URI : Byte_Sequence)
       return Byte_Sequence;
    --  Return a fully resolved URI, based on the system identifier set for
    --  Machine, and URI.
 
-   ---------
-   -- DTD --
-   ---------
-
-   procedure Start_Of_DTD
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  Called when the buffer contains the beginning of a DTD declaration,
-   --  ie something matching the rule "<!DOCTYPE name (S* ExternalID)?".
-
-   procedure End_Of_Entity_Declaration (Machine : in out Reader'Class);
-   --  Called when the buffer contains an entity declaration, starting with
-   --  "!ENTITY".
-
-   procedure End_Of_Element_Declaration (Machine : in out Reader'Class);
-   --  Called when the buffer contains an element declaration, starting with
-   --  "!ELEMENT".
-
-   procedure End_Of_Notation_Declaration (Machine : in out Reader'Class);
-   --  Called when the buffer contains a notation, starting with
-   --  "!NOTATION".
-
-   procedure End_Of_Attlist_Declaration (Machine : in out Reader'Class);
-   --  Called when the buffer contains an element declaration, starting with
-   --  "!ATTLIST".
-
-   procedure Parse_External_Id
-     (Machine                  : in out Reader'Class;
-      Index                    : in out Natural;
-      Public_Start, Public_End : out Natural;
-      System_Start, System_End : out Natural);
-   --  Parses the external id that starts at Index (see rule [75] in XML
-   --  specifications).
-
-   procedure Cancel_Entity
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  If we are processing the declaration of an entity <!ENTITY>, then
-   --  cancel the entity reference currently processed. It puts the
-   --  characters read back in the buffer.
-
-   procedure Parse_Element_Model
-     (Model  : Unicode.CES.Byte_Sequence;
-      Index  : in out Natural;
-      Result : out Element_Model_Ptr;
-      Nmtokens : Boolean := False);
-   --  Internal version of Parse_Element_Model. This stops as soon as the
-   --  model is parsed, even if there are some characters left. Index is left
-   --  on the first character following the model.
-   --  If Nmtokens is False, then any enumeration in the model must token
-   --  items that match the [5] Name rule in the XML specifications.
+   function Input_Id (Parser : Reader'Class) return Natural;
+   pragma Inline (Input_Id);
+   --  Return the current input id.
 
    --------------
-   -- Entities --
+   -- Input_Id --
    --------------
 
-   procedure Start_Of_Entity
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  A character '&' has been encountered.
-
-   procedure End_Of_Entity
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  End of an Xml entity name.
-   --  Search that entity in the entity tables and put the corresponding
-   --  content in the input buffer, since a XML processor is supposed to
-   --  substitute these values.
-
-   procedure End_Of_Num_Entity
-     (Machine   : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  End of a numerical entity.
-   --  Convert the string read into a number and put the character
-   --  having that code in the input buffer.
-
-   procedure Num_Entity_Char
-     (Machine   : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  A character belonging to an XML numerical entity has been read.
-
-   procedure End_Of_Declaration
-     (Machine   : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  End of a <!...> has been met
-
-   procedure Start_Of_Declaration
-     (Machine   : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  '<!' has just been read in the buffer
-
-   procedure End_Of_PI
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char);
-   --  End of a <? ..?> processing instruction has been found.
-   --  The buffer contains the all declaration, including attributes.
-
-   procedure Start_Of_PI
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  Start of a <?...?> processing instruction has been found
-
-   function Entity_Length (Machine : Reader'Class) return Natural;
-   pragma Inline (Entity_Length);
-   --  Return the length of the current entity.
-   --  This assumes that you are indeed processing an entity
-
-   procedure Delete_Entity (Machine : in out Reader'Class);
-   pragma Inline (Delete_Entity);
-   --  Remove the current entity from the buffer.
-
-   ----------
-   -- Tags --
-   ----------
-
-   procedure Start_Of_Tag
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  Beginning of a Xml tag (start or end tag).
-   --  Put the preceding text in the Thot document.
-
-   procedure End_Of_Start_Tag
-     (Machine   : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  A ">" or a "/" has been read. It indicates the end of a start tag.
-   --  This is called only when there was at least a space after the element
-   --  type.
-
-   procedure End_Of_Start_Gi
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  The name of an element type has been read in a start tag.
-   --  This function is called when there is a list of attributes after the
-   --  element type, or at least a space. End_Of_Start_Tag will be called
-   --  when > is read.
-
-   procedure End_Of_Prefix
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  End of a tag prefix (namespace handling).
-   --  For instance, for a tag name "html:h1", the prefix is "html"
-
-   procedure End_Of_Start_Gi_And_Tag
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  A ">" has been read. It indicates the end of an element name and the
-   --  end of a start tag.
-
-   procedure End_Of_Empty_Tag
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  "/>" has just been read for an empty tag.
-
-   procedure End_Of_XML_End_Tag
-     (Machine   : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  The end ('>') of an end tag has been read. This is called when
-   --  when the name was followed by a space character for instance.
-
-   procedure End_Of_Name_And_Closing_Tag
-     (Machine   : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  An element name followed by a '>' has been read in a closing tag.
-
-   procedure End_Of_Closing_Tag_Name
-     (Machine   : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  An element name has been read in a closing tag.
-   --  Check that it closes the right element.
-
-   ----------------
-   -- Attributes --
-   ----------------
-
-   procedure End_Of_Attr_Prefix
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char)
-     renames End_Of_Prefix;
-   --  The end of an attribute prefix (":") has been read. If the attribute
-   --  is "html:src", the prefix is "html".
-
-   procedure End_Of_Attr_Value
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  The end of an attribute value has been found (the text between double
-   --  or single quotes). Note that the quotes are not found in the buffer.
-
-   procedure Start_Of_Attr_Value
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  The beginning of an attribute value was found.
-
-   procedure End_Of_Attr_Name_And_Tag
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  A ">" or a "/" (XML) has been read. It indicates the end of an attribute
-   --  name and the end of a start tag.
-
-   procedure End_Of_Attr_Name
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  An XML attribute name has been read.
-
-   procedure Attr_Quote_Error
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  An attribute value wasn't properly quoted
-
-   procedure Illegal_Char_In_Attr_Value
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  An illegal character was met in an attribute value
-
-   procedure Invalid_Ampersand
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  Report an error ('&' illegal in attribute value)
-
-   procedure Seen_Quote_In_Attr_Value
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  Insert Last_Read in buffer, and save the current position.
-   --  This is called while parsing an attribute value, when we meet a quote
-   --  that is different from the opening quote
-
-   --------------
-   -- Comments --
-   --------------
-
-   procedure End_Of_Comment
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  The end of a comment has been read, the text of the comment is
-   --  available in the input buffer.
-
-   procedure Start_Of_Comment
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  Registers the start of a comment
-
-   procedure Double_Dash_In_Comment
-     (Machine : in out Reader'Class; Last_Read : Unicode.Unicode_Char);
-   --  Error: The sequence '--' is not authorized in comments
-
-   -------------------
-   -- The automaton --
-   -------------------
-
-   Xml_Automaton : constant Character_Automaton.Automaton_Def :=
-     (
-      --  State 0: reading character data
-      (Top_State,  Less_Than_Sign,    1,   Conv (Start_Of_Tag'Access)),
-      (Top_State,  Ampersand,         -22, Conv (Start_Of_Entity'Access)),
-      (Top_State,  Percent_Sign,      -22, Conv (Start_Of_Entity'Access)),
-      (Top_State,  Greater_Than_Sign, 0,   Conv (Check_Cdata_End'Access)),
-      (Top_State,  Any_Char,          0,   Conv (Put_In_Buffer'Access)),
-
-      --  State 1: < has just been read
-      (1,  Slash,             3,   null),
-      (1,  Ampersand,         -22, Conv (Start_Of_Entity'Access)),
-      (1,  Exclamation_Mark,  10,  Conv (Start_Of_Declaration'Access)),
-      (1,  Question_Mark,     19,  Conv (Start_Of_PI'Access)),
-      (1,  Space,             1,   Conv (Xml_Error'Access)),
-      (1,  Less_Than_Sign,    Top_State, Conv (Xml_Error'Access)),
-      (1,  Any_Char,          2,   Conv (Put_In_Buffer'Access)),
-
-      --  State 2: reading the element name in a start tag
-      (2,  Colon,             2,   Conv (End_Of_Prefix'Access)),
-      (2,  Ampersand,         -22, Conv (Start_Of_Entity'Access)),
-      (2,  Slash,             18,  Conv (End_Of_Start_Gi_And_Tag'Access)),
-      (2,  Greater_Than_Sign, Top_State,
-       Conv (End_Of_Start_Gi_And_Tag'Access)),
-      (2,  Space,             16,  Conv (End_Of_Start_Gi'Access)),
-      (2,  Any_Char,          2,   Conv (Put_In_Buffer'Access)),
-
-      --  State 3: reading the element name in an end tag
-      (3,  Colon,             3,   Conv (End_Of_Prefix'Access)),
-      (3,  Greater_Than_Sign, Top_State,
-       Conv (End_Of_Name_And_Closing_Tag'Access)),
-      (3,  Space,             7,   Conv (End_Of_Closing_Tag_Name'Access)),
-      (3,  Any_Char,          3,   Conv (Put_In_Buffer'Access)),
-
-      --  State 4: reading an attribute name
-      (4,  Colon,             4,   Conv (End_Of_Attr_Prefix'Access)),
-      (4,  Equals_Sign,       5,   Conv (End_Of_Attr_Name'Access)),
-      (4,  Space,             17,  Conv (End_Of_Attr_Name'Access)),
-      (4,  Slash,             18,  Conv (Attr_Need_Value'Access)),
-      (4,  Greater_Than_Sign, Top_State,   Conv (Attr_Need_Value'Access)),
-      (4,  Any_Char,          4,   Conv (Put_In_Buffer'Access)),
-
-      --  State 5: Begin of attribute value
-      (5,  Quotation_Mark,    6,   Conv (Start_Of_Attr_Value'Access)),
-      (5,  Apostrophe,        9,   Conv (Start_Of_Attr_Value'Access)),
-      (5,  Space,             5,   null),
-      (5,  Any_Char,          Top_State,   Conv (Attr_Quote_Error'Access)),
-
-      --  State 6: Reading an attribute value between double quotes
-      (6,  Quotation_Mark,    8,   Conv (End_Of_Attr_Value'Access)),
-      (6,  Apostrophe,        6,   Conv (Seen_Quote_In_Attr_Value'Access)),
-      (6,  Less_Than_Sign,    8,   Conv (Illegal_Char_In_Attr_Value'Access)),
-      (6,  Ampersand,         -28, Conv (Start_Of_Entity'Access)),
-      (6,  Any_Char,          6,
-       Conv (Put_In_Buffer_No_Multiple_Space_Nor_Newline'Access)),
-
-      --  State 7: Reading spaces and expecting end of end tag
-      --  No need to signal the end of the tag at this level, it was already
-      --  reported when the first space was met.
-      (7,  Greater_Than_Sign, Top_State,   null),
-      (7,  Space,             7,   null),
-
-      --  State 8: End of attribute value
-      (8,  Question_Mark,     18,  Conv (End_Of_Start_Gi_And_Tag'Access)),
-      (8,  Slash,             18,  Conv (End_Of_Start_Tag'Access)),
-      (8,  Greater_Than_Sign, Top_State, Conv (End_Of_Start_Tag'Access)),
-      (8,  Space,             16,  null),
-      (8,  Any_Char,         Top_State, Conv (Must_Have_Space_In_Attr'Access)),
-
-      --  State 9: Reading an attribute value between simple quotes
-      (9,  Apostrophe,        8,   Conv (End_Of_Attr_Value'Access)),
-      (9,  Quotation_Mark,    9,   Conv (Seen_Quote_In_Attr_Value'Access)),
-      (9,  Less_Than_Sign,    9,   Conv (Illegal_Char_In_Attr_Value'Access)),
-      (9,  Ampersand,         -28, Conv (Start_Of_Entity'Access)),
-      (9,  Any_Char,          9,
-       Conv (Put_In_Buffer_No_Multiple_Space_Nor_Newline'Access)),
-
-      --  State 10: <! has been read  (could be <![CDATA)
-      (10, Hyphen_Minus,      11,  null),
-      (10, Opening_Square_Bracket, 25,  Conv (Put_In_Buffer'Access)),
-      (10, Greater_Than_Sign, Top_State,   Conv (End_Of_Declaration'Access)),
-      (10, Any_Char,          15,  Conv (Put_In_Buffer'Access)),
-
-      --  State 11: <!- has been read, probably a comment
-      (11, Hyphen_Minus,      12,  Conv (Start_Of_Comment'Access)),
-
-      --  State 12: reading a comment
-      (12, Hyphen_Minus,      13,  null),
-      (12, Any_Char,          12,  Conv (Put_In_Buffer'Access)),
-
-      --  State 13: a dash has been read within a comment
-      (13, Hyphen_Minus,      14,  null),
-      (13, Any_Char,          12,  Conv (Put_In_Buffer'Access)),
-
-      --  State 14: A double dash has been read within a comment
-      (14, Greater_Than_Sign, Top_State, Conv (End_Of_Comment'Access)),
-      (14, Any_Char,          Top_State, Conv (Double_Dash_In_Comment'Access)),
-
-      --  State 15: Reading the prologue <!X ..., probably a DOCTYPE
-      --  or one of the  declarations inside the DTD).
-      (15, Opening_Square_Bracket, Top_State,  Conv (Start_Of_DTD'Access)),
-      (15, Greater_Than_Sign, Top_State, Conv (End_Of_Declaration'Access)),
-      (15, Quotation_Mark,   -29, Conv (Put_In_Buffer'Access)),
-      (15, Apostrophe,       -30, Conv (Put_In_Buffer'Access)),
-      (15, Any_Char,          15, Conv (Put_In_Buffer'Access)),
-
-      --  State 16: Expecting an attribute name or an end of start tag
-      (16, Space,             16,  null),
-      (16, Slash,             18,  Conv (End_Of_Start_Tag'Access)),
-      (16, Greater_Than_Sign, Top_State,   Conv (End_Of_Start_Tag'Access)),
-      (16, Any_Char,          4,   Conv (Put_In_Buffer'Access)),
-
-      --  State 17: Expecting = after an attribute name
-      (17, Space,             17,  null),
-      (17, Equals_Sign,       5,   null),
-      (17, Any_Char,      Top_State, Conv (Must_Have_Equal_After_Attr'Access)),
-
-      --  State 18: a / has been read withing a start tag. except a > which
-      --  indicates the end of the start tag for an empty element
-      (18, Greater_Than_Sign, Top_State,   Conv (End_Of_Empty_Tag'Access)),
-      (18, Any_Char,          Top_State,   Conv (Xml_Error'Access)),
-
-      --  State 19: <? has been read
-      (19, Space,             19,  null), --  Ignore spaces at beginning
-      (19, Question_Mark,     21,  null),
-      (19, Any_Char,          20,  Conv (Put_In_Buffer'Access)),
-
-      --  State 20: Reading a processing instruction
-      (20, Question_Mark,     21,  null),
-      (20, Any_Char,        20, Conv (Put_In_Buffer_No_Multiple_Space'Access)),
-
-      --  state 21: A ? has been read in a processing instruction
-      (21, Greater_Than_Sign, Top_State,   Conv (End_Of_PI'Access)),
-      (21, Question_Mark,     21,  Conv (Put_In_Buffer'Access)), -- <? .. ??>
-      (21, Any_Char,          20,  Conv (Put_Question_Mark'Access)),
-
-      --  Sub automaton for reading entities in various contexts
-      --  State 22: a '&' has been read
-      (22, Number_Sign,       24,  Conv (Put_In_Buffer'Access)),
-      (22, Space,             Exit_Sub_Automaton,
-       Conv (Invalid_Ampersand'Access)),
-      (22, Any_Char,          23,  Conv (Put_In_Buffer'Access)),
-
-      --  State 23: reading a name entity
-      --  In some cases, we just give up since we didn't encounter the end of
-      --  the entity
-      (23, Semicolon,         Exit_Sub_Automaton, Conv (End_Of_Entity'Access)),
-      (23, Less_Than_Sign,    Exit_Sub_Automaton,
-       Conv (Invalid_Ampersand'Access)),
-      (23, Greater_Than_Sign, Exit_Sub_Automaton,
-       Conv (Invalid_Ampersand'Access)),
-      (23, Slash,             Exit_Sub_Automaton,
-       Conv (Invalid_Ampersand'Access)),
-      (23, Quotation_Mark,    Exit_Sub_Automaton,
-       Conv (Invalid_Ampersand'Access)),
-      (23, Apostrophe,        Exit_Sub_Automaton,
-       Conv (Invalid_Ampersand'Access)),
-      (23, Space,             Exit_Sub_Automaton,
-       Conv (Invalid_Ampersand'Access)),
-      (23, Any_Char,          23,  Conv (Put_In_Buffer'Access)),
-
-      --  State 24: reading a numerical entity
-      (24, Semicolon,         Exit_Sub_Automaton,
-       Conv (End_Of_Num_Entity'Access)),
-      (24, Any_Char,          24,  Conv (Num_Entity_Char'Access)),
-
-      --  States 25, 26 and 27 are used to parse the contents of CDATA
-
-      --  State 25: reading the contents of a <![... section (probably CDATA)
-      (25, Closing_Square_Bracket, 26,   Conv (Put_In_Buffer'Access)),
-      (25, Any_Char,          25,   Conv (Put_In_Buffer'Access)),
-
-      --  State 26: read ] in a CDATA section
-      (26, Closing_Square_Bracket, 27,   Conv (Put_In_Buffer'Access)),
-      (26, Any_Char,          25,   Conv (Put_In_Buffer'Access)),
-
-      --  State 27: read ]] in a CDATA section
-      (27, Greater_Than_Sign, Top_State,    Conv (End_Of_Declaration'Access)),
-      (27, Closing_Square_Bracket, 27,   Conv (Put_In_Buffer'Access)), --  ]]]>
-      (27, Any_Char,          25,   Conv (Put_In_Buffer'Access)),
-
-      --  State 28: Reading an entity while in a attribute value context
-      --  If we didn't really have an entity, then this is an error since
-      --  '&' is not allowed in char context
-      --  Note also that named entities are not expanded in attribute values,
-      --  since SAX expect string values to be passed as an unparsed value.
-      --  (XML specifications 3.3.1). To change this behavior, uncomment the
-      --  line below and comment the following ones.
-      (28, Number_Sign,       24,  Conv (Put_In_Buffer'Access)),
-      (28, Space,             Exit_Sub_Automaton,
-       Conv (Invalid_Ampersand'Access)),
-      (28, Any_Char,          23,  Conv (Put_In_Buffer'Access)),
---    (28, Semicolon,         Exit_Sub_Automaton, Conv (Put_In_Buffer'Access)),
---        (28, Less_Than_Sign,    Exit_Sub_Automaton,
---         Conv (Invalid_Ampersand'Access)),
---        (28, Greater_Than_Sign, Exit_Sub_Automaton,
---         Conv (Invalid_Ampersand'Access)),
---        (28, Slash,             Exit_Sub_Automaton,
---         Conv (Invalid_Ampersand'Access)),
---        (28, Quotation_Mark,    Exit_Sub_Automaton,
---         Conv (Invalid_Ampersand'Access)),
---        (28, Apostrophe,        Exit_Sub_Automaton,
---         Conv (Invalid_Ampersand'Access)),
---        (28, Any_Char,          28,  Conv (Put_In_Buffer'Access)),
-
-      --  State 29: Parsing a double-quoted string inside the DTD
-      (29, Quotation_Mark,   Exit_Sub_Automaton, Conv (Put_In_Buffer'Access)),
-      (29, Ampersand,        -31, Conv (Start_Of_Entity'Access)),
-      (29, Any_Char,         29,
-       Conv (Put_In_Buffer_No_Multiple_Space_Nor_Newline'Access)),
-
-      --  State 30: Parsing a single-quoted string inside the DTD
-      (30, Apostrophe,       Exit_Sub_Automaton, Conv (Put_In_Buffer'Access)),
-      (30, Ampersand,        -31, Conv (Start_Of_Entity'Access)),
-      (30, Any_Char,         30,
-       Conv (Put_In_Buffer_No_Multiple_Space_Nor_Newline'Access)),
-
-      --  State 31: Handling character references in entity declarations
-      (31, Number_Sign,      24, Conv (Put_In_Buffer_Force'Access)),
-      (31, Any_Char,         23, Conv (Cancel_Entity'Access))
-     );
-
-
-   -----------------
-   -- Free_Memory --
-   -----------------
-
-   procedure Free_Memory (Machine : in out Reader'Class) is
-      procedure Free_Internal is new Unchecked_Deallocation
-        (File_Locator'Class, File_Locator_Access);
-      Elem : Element_Access := Machine.Current_Node;
-      Tmp  : Element_Access;
+   function Input_Id (Parser : Reader'Class) return Natural is
    begin
-      Clear (Machine.Attributes);
-      Free (Machine.Default_Namespaces);
-      Free (Machine.Locator.all);
-      Free_Internal (Machine.Locator);
-      Free (Machine.Processing_Start.all);
-      Free_Internal (Machine.Processing_Start);
-      Free (Machine.Current_NS);
-
-      while Elem /= null loop
-         Tmp := Elem.Parent;
-         Free (Elem);
-         Free_Element (Elem);
-         Elem := Tmp;
-      end loop;
-      Reset (Machine);
-   end Free_Memory;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Elem : in out Element_Access) is
-   begin
-      Free (Elem.NS);
-      Free (Elem.Name);
-      Free (Elem.Namespaces);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (NS : in out XML_NS) is
-      Tmp : XML_NS;
-   begin
-      while NS /= null loop
-         Tmp := NS.Next;
-         Free (NS.Prefix);
-         Free (NS.URI);
-         Free_NS (NS);
-         NS := Tmp;
-      end loop;
-   end Free;
-
-   ---------------
-   -- Debug_Put --
-   ---------------
-
-   procedure Debug_Put
-     (Machine : Reader'Class; Str : Byte_Sequence) is
-   begin
-      Put_Line ("++("
-                & Get_Current_State (Machine)'Img
-                & ')' & To_String (Machine.Locator.all) & ' ' & Str & "--");
-   end Debug_Put;
-
-   -------------
-   -- Find_NS --
-   -------------
-
-   procedure Find_NS
-     (Machine : in out Reader'Class;
-      Elem    : Element_Access;
-      Prefix  : Byte_Sequence := "";
-      NS      : out XML_NS) is
-   begin
-      --  Search in the default namespaces
-      if Elem = null then
-         NS := Machine.Default_Namespaces;
+      if Parser.Inputs = null then
+         return 0;
       else
-         NS := Elem.Namespaces;
+         return Parser.Inputs.Id;
       end if;
-
-      while NS /= null loop
-         if NS.Prefix.all = Prefix then
-            return;
-         end if;
-         NS := NS.Next;
-      end loop;
-
-      --  Search either in the parent or in the default namespaces
-      if Elem /= null then
-         Find_NS (Machine, Elem.Parent, Prefix, NS);
-         return;
-      end if;
-
-      Fatal_Error (Machine, "No such namespace '" & Prefix & "'");
-      NS := null;
-   end Find_NS;
-
-   ------------------
-   -- Is_Name_Char --
-   ------------------
-
-   function Is_Name_Char (C : Unicode_Char) return Boolean is
-   begin
-      return C = Period
-        or else C = Hyphen_Minus
-        or else C = Spacing_Underscore
-        or else C = Colon
-        or else Is_Digit (C)
-        or else Is_Letter (C)
-        or else Is_Combining_Char (C)
-        or else Is_Extender (C);
-   end Is_Name_Char;
-
-   -------------------
-   -- Is_Pubid_Char --
-   -------------------
-
-   function Is_Pubid_Char (C : Unicode.Unicode_Char) return Boolean is
-   begin
-      return C = Space
-        or else C = Carriage_Return
-        or else C = Line_Feed
-        or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
-        or else C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
-        or else C in Digit_Zero .. Digit_Nine
-        or else C = Hyphen_Or_Minus_Sign
-        or else C = Apostrophe
-        or else C = Opening_Parenthesis
-        or else C = Closing_Parenthesis
-        or else C = Plus_Sign
-        or else C = Comma
-        or else C = Dot
-        or else C = Slash
-        or else C = Colon
-        or else C = Question_Mark
-        or else C = Equals_Sign
-        or else C = Semicolon
-        or else C = Exclamation_Mark
-        or else C = Star
-        or else C = Pound_Sign
-        or else C = Commercial_At
-        or else C = Dollar_Sign
-        or else C = Spacing_Underscore
-        or else C = Percent_Sign;
-   end Is_Pubid_Char;
-
-   -------------------
-   -- Is_Valid_Name --
-   -------------------
-
-   function Is_Valid_Name (Str : Unicode.CES.Byte_Sequence) return Boolean is
-      C : Unicode_Char := Encoding.Read (Str, Str'First);
-      J : Natural := Str'First;
-   begin
-      if not (C = Colon
-              or else C = Spacing_Underscore
-              or else Is_Letter (C))
-      then
-         return False;
-      end if;
-
-      J := J + Encoding.Width (C);
-      while J <= Str'Last loop
-         C := Encoding.Read (Str, J);
-         if not Is_Name_Char (C) then
-            return False;
-         end if;
-         J := J + Encoding.Width (C);
-      end loop;
-      return True;
-   end Is_Valid_Name;
-
-   ----------------
-   -- Looking_At --
-   ----------------
-
-   function Looking_At
-     (Machine : Reader'Class; Index : Natural; Str : Byte_Sequence)
-      return Boolean is
-   begin
-      return Index + Str'Length - 1 <= Machine.Buffer_Length
-        and then Machine.Buffer (Index .. Index + Str'Length - 1) = Str
-        and then (Index + Str'Length >= Machine.Buffer_Length
-                  or else Is_White_Space (Encoding.Read
-                         (Machine.Buffer, Index + Str'Length)));
-   end Looking_At;
+   end Input_Id;
 
    -----------------
    -- Resolve_URI --
    -----------------
 
-   function Resolve_URI (Machine : Reader'Class; URI : Byte_Sequence)
+   function Resolve_URI (Parser : Reader'Class; URI : Byte_Sequence)
       return Byte_Sequence
    is
       C : Unicode_Char;
-      System_Id : constant Byte_Sequence :=
-        Get_System_Id (Machine.Locator.all);
+      System_Id : constant Byte_Sequence := Get_System_Id (Parser.Locator.all);
       Index : Natural := System_Id'First;
       Basename_Start : Natural := System_Id'First;
    begin
@@ -1177,1113 +685,1578 @@ package body Sax.Readers is
       return System_Id (System_Id'First .. Basename_Start - 1) & URI;
    end Resolve_URI;
 
-   ---------------------
-   -- Qname_From_Name --
-   ---------------------
+   --------------
+   -- Location --
+   --------------
 
-   function Qname_From_Name
-     (URI : Byte_Sequence_Access; Local_Name : Byte_Sequence)
-      return Byte_Sequence is
+   function Location (Parser : Reader'Class; Id : Token)
+      return Byte_Sequence
+   is
+      Line : constant Byte_Sequence := Natural'Image (Id.Line);
+      Col : constant Byte_Sequence := Natural'Image (Id.Column);
    begin
-      if URI = null or else URI.all = "" then
-         return Local_Name;
+      if Parser.Close_Inputs = null then
+         return Get_Public_Id (Parser.Locator.all) & ':'
+           & Line (Line'First + 1 .. Line'Last)
+           & ':' & Col (Col'First + 1 .. Col'Last);
       else
-         return URI.all & Encoding.Encode (Colon) & Local_Name;
+         return Get_Public_Id (Parser.Close_Inputs.Input.all) & ':'
+           & Line (Line'First + 1 .. Line'Last)
+           & ':' & Col (Col'First + 1 .. Col'Last);
       end if;
-   end Qname_From_Name;
-
-   ---------------------
-   -- Start_Of_Entity --
-   ---------------------
-
-   procedure Start_Of_Entity (Machine   : in out Reader'Class;
-                              Last_Read : Unicode.Unicode_Char) is
-   begin
-      if Debug then
-         Debug_Put (Machine, "Start_Of_Entity");
-      end if;
-
-      --  '%' can not start an entity except in the DTD.
-      if Last_Read = Percent_Sign
-        and then Machine.Parsing_DTD <= 0
-      then
-         Set_Current_State (Machine, Exit_Sub_Automaton);
-         Put_In_Buffer (Machine, Last_Read);
-         return;
-      end if;
-
-      --  (2.1[1], 2.8[27]): References are not allowed in Misc
-      --  Entities can not be referenced at the top-level
-      if Last_Read = Ampersand
-        and then Machine.Current_Node = null
-        and then Machine.Parsing_DTD <= 0
-      then
-         Fatal_Error
-           (Machine,
-            "(2.1) Entity references can not appear at the top-level");
-      end if;
-
-      Machine.Processing := Entity;
-      Copy (Machine.Processing_Start.all, Machine.Locator.all);
-      Machine.Entity_Start := Machine.Buffer_Length + 1;
-      Put_In_Buffer (Machine, Last_Read);
-   end Start_Of_Entity;
-
-   -------------------
-   -- Entity_Length --
-   -------------------
-
-   function Entity_Length (Machine : Reader'Class) return Natural is
-   begin
-      return Machine.Buffer_Length + 1 - Machine.Entity_Start;
-   end Entity_Length;
-
-   -------------------
-   -- Delete_Entity --
-   -------------------
-
-   procedure Delete_Entity (Machine : in out Reader'Class) is
-   begin
-      Machine.Buffer_Length := Machine.Entity_Start - 1;
-   end Delete_Entity;
+   end Location;
 
    -----------------
    -- Fatal_Error --
    -----------------
 
    procedure Fatal_Error
-     (Machine : in out Reader'Class;
-      Message : Byte_Sequence;
-      Loc     : File_Locator_Access := null)
+     (Parser  : in out Reader'Class;
+      Msg     : String;
+      Id      : Token := Null_Token)
    is
-      Loc2 : File_Locator_Access := Loc;
+      Id2 : Token := Id;
    begin
-      if Loc2 = null then
-         Loc2 := Machine.Processing_Start;
+      if Id = Null_Token then
+         Id2.Line := Get_Line_Number (Parser.Locator.all);
+         Id2.Column := Get_Column_Number (Parser.Locator.all) - 1;
       end if;
-
-      if Debug then
-         Debug_Put (Machine, "Fatal_Error: " & Message);
-      end if;
-
-      case Machine.Processing is
-         when PI =>
-            Fatal_Error
-              (Machine,
-               Create ("(2.6) Processing instruction must end with ?>", Loc2));
-
-         when Comment =>
-            Fatal_Error
-              (Machine,
-               Create ("(2.5) Comment must end with -->", Loc2));
-
-         when Declaration =>
-            Fatal_Error
-              (Machine,
-               Create ("(2.7, 2.8) Declaration must be terminated", Loc2));
-
-         when Attr_Value =>
-            Fatal_Error
-              (Machine,
-               Create ("(2.3) Attribute value unterminated. possible end",
-                       Loc2));
-
-         when Entity =>
-            Fatal_Error
-              (Machine,
-               Create ("(2.3, 2.4) Entity is not terminated."
-                       & " Did you want to use &amp;", Loc2));
-
-         when others =>
-            if Loc = null then
-               Fatal_Error
-                 (Machine, Create (Message, Machine.Locator));
-            else
-               Fatal_Error
-                 (Machine, Create (Message, Loc));
-            end if;
-      end case;
+      Parser.Buffer_Length := 0;
+      Fatal_Error
+        (Parser, Create (Location (Parser, Id2) & ": " & Msg,
+                         Locator_Impl (Parser.Locator.all)));
+      raise Program_Error;
    end Fatal_Error;
 
-   ---------------------
-   -- Num_Entity_Char --
-   ---------------------
+   -----------
+   -- Error --
+   -----------
 
-   procedure Num_Entity_Char (Machine   : in out Reader'Class;
-                              Last_Read : Unicode.Unicode_Char)
+   procedure Error
+     (Parser  : in out Reader'Class;
+      Msg     : String;
+      Id      : Token := Null_Token)
    is
-      Prefix_Width : constant Natural := Encoding.Width (Ampersand)
-        + Encoding.Width (Number_Sign);
+      Id2 : Token := Id;
    begin
-      if (Last_Read >= Digit_Zero and then Last_Read <= Digit_Nine)
-        or else
-        (Entity_Length (Machine) = Prefix_Width
-         and then Last_Read = Latin_Small_Letter_X)
-        or else
-        (Entity_Length (Machine) > Prefix_Width
-         and then Encoding.Read
-            (Machine.Buffer, Machine.Entity_Start + Prefix_Width) =
-            Latin_Small_Letter_X
-         and then
-            (Last_Read in Latin_Capital_Letter_A .. Latin_Capital_Letter_F
-            or else Last_Read in Latin_Small_Letter_A .. Latin_Small_Letter_F))
-      then
-         Put_In_Buffer_Force (Machine, Last_Read);
-      else
-         --  Don't report the error at the beginning of the entity, but at the
-         --  current location
-         Machine.Processing := None;
-         Fatal_Error
-           (Machine, "(4.1) Invalid character '"
-            & Encoding.Encode (Last_Read) & "'");
+      if Id = Null_Token then
+         Id2.Line := Get_Line_Number (Parser.Locator.all);
+         Id2.Column := Get_Column_Number (Parser.Locator.all);
       end if;
-   end Num_Entity_Char;
+      Error (Parser, Create (Location (Parser, Id2) & ": " & Msg,
+                             Locator_Impl (Parser.Locator.all)));
+   end Error;
 
-   ----------------------------
-   -- Get_Entity_Replacement --
-   ----------------------------
+   ---------------
+   -- Next_Char --
+   ---------------
 
-   function Get_Entity_Replacement
-     (Machine       : Reader'Class;
-      Entity        : Byte_Sequence;
-      Is_Std_Entity : access Boolean;
-      Def           : access Entity_Def) return Byte_Sequence is
-   begin
-      if Entity = Lt_Sequence then
-         Is_Std_Entity.all := True;
-         return Encoding.Encode (Less_Than_Sign);
-      elsif Entity = Gt_Sequence then
-         Is_Std_Entity.all := True;
-         return Encoding.Encode (Greater_Than_Sign);
-      elsif Entity = Amp_Sequence then
-         Is_Std_Entity.all := True;
-         return Encoding.Encode (Ampersand);
-      elsif Entity = Apos_Sequence then
-         Is_Std_Entity.all := True;
-         return Encoding.Encode (Apostrophe);
-      elsif Entity = Quot_Sequence then
-         Is_Std_Entity.all := True;
-         return Encoding.Encode (Quotation_Mark);
-      end if;
+   procedure Next_Char
+     (Input   : in out Input_Source'Class;
+      Parser  : in out Reader'Class)
+   is
+      procedure Internal (Stream : in out Input_Source'Class);
 
-      Is_Std_Entity.all := False;
+      --------------
+      -- Internal --
+      --------------
 
-      declare
-         Value : Entity_Def := Get (Machine.Entities, Entity);
+      procedure Internal (Stream : in out Input_Source'Class) is
+         C : Unicode_Char;
       begin
-         if Value /= Null_Entity then
-            Def.all := Value;
-            return Value.Str.all;
-         end if;
-      end;
-
-      if Machine.Feature_External_General_Entities
-        and then Machine.Feature_External_Parameter_Entities
-      then
-         --  ??? Look in the DTD otherwise
-         null;
-      end if;
-
-      raise No_Such_Entity;
-   end Get_Entity_Replacement;
-
-   -------------------
-   -- End_Of_Entity --
-   -------------------
-
-   procedure End_Of_Entity (Machine   : in out Reader'Class;
-                            Last_Read : Unicode.Unicode_Char)
-   is
-      Initial : Natural := Machine.Entity_Start;
-   begin
-      --  If first character is '%', keep is in the name
-      if Encoding.Read (Machine.Buffer, Initial) = Ampersand then
-         Initial := Machine.Entity_Start + Encoding.Width (Ampersand);
-      end if;
-
-      Machine.Processing := None;
-
-      declare
-         Name : constant Byte_Sequence := Machine.Buffer
-           (Initial .. Machine.Buffer_Length);
-      begin
-
-         --  Check that the name is correct. We systematically skip the first
-         --  character, since it is either Ampersand or Percent_Sign, and is
-         --  always invalid in names
-         if not Is_Valid_Name
-           (Machine.Buffer (Machine.Entity_Start + Encoding.Width (Ampersand)
-                            .. Machine.Buffer_Length))
-         then
-            Fatal_Error
-              (Machine, "(4.1) Invalid name '" & Name & "' for an entity");
-         end if;
-
-         declare
-            Is_Std_Entity : aliased Boolean;
-            Def           : aliased Entity_Def;
-            Value : constant Byte_Sequence := Get_Entity_Replacement
-              (Machine, Name, Is_Std_Entity'Access, Def'Access);
-            Input   : String_Input;
-            Input_F : File_Input;
-            State : constant Automaton_State := Get_Current_State (Machine);
-            Current_Id : Natural := 0;
-         begin
-            Delete_Entity (Machine);
-
-            --  SAX2 gives only one string value for attributes, so we can't
-            --  emit a separate event. We simply substibute the entity name
-            --  by its value.
-            if Machine.Processing_Attribute_Value
-              or else Looking_At
-               (Machine, Machine.Buffer'First, Attlist_Sequence)
-            then
-               if Def.External then
-                  Fatal_Error
-                    (Machine, "(3.1) Attribute values can not reference"
-                     & " external entities");
-               end if;
-
-               Put_In_Buffer_Force (Machine, Value);
-
-            else
-               --  SAX2 says that the characters for the entity must be emitted
-               --  as a separate callback, thus we emit what is currently in
-               --  the buffer, and then the characters for the entity itself.
-
-               Xml_Text_To_Document (Machine);
-               Start_Entity (Machine, Name);
-
-               --  Note that we must also substitute the value of entities
-               --  inside the replacement text for the entity. Thus, we call a
-               --  recursive main loop that will act on the entity value, but
-               --  will not increment the locator of the machine.
-               --  This shouldn't be done for standard entities, since the
-               --  special meaning of their substitution must be ignored.
-               if not Is_Std_Entity then
-                  if Debug then
-                     Debug_Put (Machine, "Recursive main loop --"
-                                & Value & "--");
-                  end if;
-
-                  if Machine.Current_Node /= null then
-                     Current_Id := Machine.Current_Node.Id;
-                  end if;
-
-                  Set_Current_State (Machine, Top_State);
-
-                  if Def.Already_Read then
-                     Fatal_Error
-                       (Machine, "(4.1) Entity can not reference itself");
-                  end if;
-
-                  Def.Already_Read := True;
-                  Set (Machine.Entities, Name, Def);
-
-                  if Def.External then
-                     --  ??? Should test Feature_External_General_Entities
-                     declare
-                        URI : constant Byte_Sequence :=
-                          Resolve_URI (Machine, Value);
-                        Loc : File_Locator;
-                        Pub_Id : Byte_Sequence := Get_Public_Id
-                          (Machine.Locator.all);
-                        Sys_Id : Byte_Sequence := Get_System_Id
-                          (Machine.Locator.all);
-                     begin
-                        Open (URI, Input_F);
-                        Copy (Loc, Machine.Locator.all);
-
-                        Set_System_Id (Machine.Locator.all, URI);
-                        Set_Public_Id (Machine.Locator.all, URI);
-                        Set_Line_Number (Machine.Locator.all, 1);
-                        Set_Column_Number (Machine.Locator.all, 1);
-
-                        Machine.Recursive_Depth := Machine.Recursive_Depth + 1;
-                        Main_Loop (Machine, Input_F, False);
-                        Close (Input_F);
-
-                        Machine.Recursive_Depth := Machine.Recursive_Depth - 1;
-                        Copy (Machine.Locator.all, Loc);
-                        Set_System_Id (Machine.Locator.all, Sys_Id);
-                        Set_Public_Id (Machine.Locator.all, Pub_Id);
-                     exception
-                        when Name_Error =>
-                           Skipped_Entity (Machine, Name);
-                           Put_In_Buffer_Force (Machine, Value);
-                           Set_Current_State (Machine, State);
-                     end;
-                  else
-                     Open (Value, Encoding, Input);
-                     Main_Loop (Machine, Input, False);
-                     Close (Input);
-                  end if;
-
-                  Def.Already_Read := False;
-                  Set (Machine.Entities, Name, Def);
-
-                  if Debug then
-                     Debug_Put (Machine, "End of main loop");
-                  end if;
-
-                  if Get_Current_State (Machine) /= Top_State
-                    or else (Current_Id = 0
-                             and then Machine.Current_Node /= null)
-                    or else (Machine.Current_Node /= null
-                             and then Machine.Current_Node.Id /= Current_Id)
-                  then
-                     Fatal_Error
-                       (Machine, "(4.5) Entity values must be self-contained");
-                  end if;
-
-                  Set_Current_State (Machine, State);
-               else
-                  Put_In_Buffer_Force (Machine, Value);
-               end if;
-
-               Xml_Text_To_Document (Machine);
-               End_Entity (Machine, Name);
-            end if;
-         end;
-
-      exception
-         when No_Such_Entity =>
-            --  ??? Only for standalone documents (WF: Entity declared 4.1)
-            --  Name should start with % for parameter entities, or be [dtd]
-            --  for the external subset.
-            Skipped_Entity (Machine, Name);
-            Error (Machine,
-                   Create ("(4.1) Undefined entity '" & Name & ''',
-                           Machine.Processing_Start));
-            Delete_Entity (Machine);
-            Put_In_Buffer_Force
-              (Machine,
-               Encoding.Encode (Ampersand) & Name
-               & Encoding.Encode (Semicolon));
-      end;
-   end End_Of_Entity;
-
-   -----------------------
-   -- End_Of_Num_Entity --
-   -----------------------
-
-   procedure End_Of_Num_Entity (Machine   : in out Reader'Class;
-                                Last_Read : Unicode.Unicode_Char)
-   is
-      Val      : Unicode_Char := 0;
-      C        : Unicode_Char;
-      A_Pos    : constant Unicode_Char := Latin_Capital_Letter_A - 10;
-      Lc_A_Pos : constant Unicode_Char := Latin_Small_Letter_A - 10;
-      Name     : constant Byte_Sequence := Machine.Buffer
-        (Machine.Entity_Start + Encoding.Width (Ampersand)
-         + Encoding.Width (Number_Sign) .. Machine.Buffer_Length);
-      J : Natural := Name'First;
-
-   begin
-      if Encoding.Read (Name, J) = Latin_Small_Letter_X then
-         J := Name'First + Encoding.Width (Latin_Small_Letter_X);
-         while J <= Name'Last loop
-            C := Encoding.Read (Name, J);
-            J := J + Encoding.Width (C);
-            if C in Latin_Capital_Letter_A .. Latin_Capital_Letter_F then
-               Val := Val * 16 + C - A_Pos;
-            elsif C in Latin_Small_Letter_A .. Latin_Small_Letter_F then
-               Val := Val * 16 + C - Lc_A_Pos;
-            else
-               Val := Val * 16 + C - Digit_Zero;
-            end if;
-         end loop;
-      else
-         while J <= Name'Last loop
-            C := Encoding.Read (Name, J);
-            Val := Val * 10 + C - Digit_Zero;
-            J := J + Encoding.Width (C);
-         end loop;
-      end if;
-      Delete_Entity (Machine);
-
-      if Debug then
-         Debug_Put
-           (Machine,
-            "End_Of_Num_Entity --" & Name & "--" & Encoding.Encode (Val));
-      end if;
-
-      Put_In_Buffer (Machine, Val);
-      Machine.Processing := None;
-   end End_Of_Num_Entity;
-
-   --------------------------
-   -- Xml_Text_To_Document --
-   --------------------------
-
-   procedure Xml_Text_To_Document (Machine : in out Reader'Class) is
-      Index : Natural := Machine.Buffer'First;
-      Start : Natural := Index;
-      Must_Be_Space : Boolean := True;
-      C     : Unicode_Char;
-   begin
-      if Machine.Buffer_Length > 0 then
-         if Debug then
-            Debug_Put (Machine, "Xml_Text_To_Document "
-                       & Machine.Buffer (1 .. Machine.Buffer_Length));
-         end if;
-
-         --  If the white spaces must be preserved, we emit one single event.
-         --  Otherwise, we have to emit separate events for white space chunks.
-         if (Machine.Current_Node /= null and then
-             Machine.Current_Node.Space_Handling = Preserve)
-           or else Machine.Processing_Attribute_Value
-         then
-            Characters (Machine, Machine.Buffer (1 .. Machine.Buffer_Length));
-
+         Next_Char (Stream, C);
+         if C = Line_Feed then
+            Set_Column_Number (Parser.Locator.all, 1);
+            Set_Line_Number
+              (Parser.Locator.all, Get_Line_Number (Parser.Locator.all) + 1);
          else
-            while Index <= Machine.Buffer_Length loop
-               C := Encoding.Read (Machine.Buffer, Index);
+            Set_Column_Number
+              (Parser.Locator.all, Get_Column_Number (Parser.Locator.all) + 1);
+         end if;
 
-               if Is_White_Space (C) /= Must_Be_Space then
-                  if Index - 1 >= Start then
-                     if Must_Be_Space then
-                        Ignorable_Whitespace
-                          (Machine, Machine.Buffer (Start .. Index - 1));
-                     else
-                        Characters
-                          (Machine, Machine.Buffer (Start .. Index - 1));
-                     end if;
-                  end if;
-                  Must_Be_Space := not Must_Be_Space;
-                  Start := Index;
-               end if;
+         --  XML specs say that #xD#xA must be converted to one single #xA.
+         --  A single #xD must be converted to one single #xA
 
-               Index := Index + Encoding.Width (C);
+         if C = Carriage_Return then
+            Parser.Previous_Char_Was_CR := True;
+            Parser.Last_Read := Line_Feed;
+
+         elsif C = Line_Feed and then Parser.Previous_Char_Was_CR then
+            Parser.Previous_Char_Was_CR := False;
+            Next_Char (Input, Parser);
+         else
+            Parser.Previous_Char_Was_CR := False;
+            Parser.Last_Read := C;
+            Test_Valid_Char (Parser, Parser.Last_Read, Null_Token);
+         end if;
+      end Internal;
+
+      Input_A : Entity_Input_Source_Access;
+   begin
+      while Parser.Inputs /= null and then Eof (Parser.Inputs.Input.all) loop
+         Copy (Parser.Locator.all, Parser.Inputs.Save_Loc);
+         Free (Parser.Inputs.Save_Loc);
+
+         if Parser.Inputs.External then
+            Parser.In_External_Entity := False;
+            --  ??? Should test whether we are still in an external entity.
+            --  However, this is only used for the <?xml?> PI, and at this
+            --  point we have already read and discarded it, so it doesn't
+            --  really matter.
+         end if;
+
+         --  Insert the closed input at the end of the Close_Input list, so
+         --  that the next call to Next_Token properly closes the entity.
+         --  This can not be done here, otherwise End_Entity is called too
+         --  early, and the error messages do not point to the right entity.
+         if Parser.Close_Inputs = null then
+            Parser.Close_Inputs := Parser.Inputs;
+         else
+            Input_A := Parser.Close_Inputs;
+            while Input_A.Next /= null loop
+               Input_A := Input_A.Next;
             end loop;
-
-            if Index - 1 >= Start then
-               if Must_Be_Space then
-                  Ignorable_Whitespace
-                    (Machine, Machine.Buffer (Start .. Index - 1));
-               else
-                  Characters (Machine, Machine.Buffer (Start .. Index - 1));
-               end if;
-            end if;
+            Input_A.Next := Parser.Inputs;
          end if;
 
-         Machine.Buffer_Length := 0;
-      end if;
-   end Xml_Text_To_Document;
-
-   ------------------
-   -- Start_Of_Tag --
-   ------------------
-
-   procedure Start_Of_Tag (Machine   : in out Reader'Class;
-                           Last_Read : Unicode.Unicode_Char) is
-   begin
-      if Debug then
-         Debug_Put (Machine, "Start_Of_Tag");
-      end if;
-      Xml_Text_To_Document (Machine);
-   end Start_Of_Tag;
-
-   ----------------------
-   -- End_Of_Start_Tag --
-   ----------------------
-
-   procedure End_Of_Start_Tag (Machine   : in out Reader'Class;
-                               Last_Read : Unicode.Unicode_Char)
-   is
-      NS : XML_NS;
-      Pos : constant Natural := Get_Length (Machine.Attributes);
-      Old_Attr : Integer;
-      Attr : Attributes_Ptr;
-   begin
-      if Debug then
-         Debug_Put (Machine, "Start_Of_Start_Tag");
-      end if;
-
-      --  Report the event
-      pragma Assert (Machine.Current_Node /= null);
-      pragma Assert (Machine.Current_Node.Name /= null);
-
-      --  Resolve the attributes' namespaces now.
-      --  Note that the default namespace doesn't apply to attributes (XML
-      --  namespaces specification)
-      for J in 0 .. Pos - 1 loop
-         if Get_URI (Machine.Attributes, J) = "" then
-            Set_Qname
-              (Machine.Attributes, J,
-               Get_Local_Name (Machine.Attributes, J));
-
-         else
-            Find_NS
-              (Machine, Machine.Current_Node,
-               Get_URI (Machine.Attributes, J), NS);
-            Set_URI (Machine.Attributes, J, NS.URI.all);
-            Set_Qname
-              (Machine.Attributes, J,
-               Qname_From_Name
-               (NS.Prefix, Get_Local_Name (Machine.Attributes, J)));
-         end if;
-
-         --  The attribute name must be unique. Note that we must compare
-         --  with the namespaces expanded to their URI (5.3 XML namespaces
-         --  specification)
-         Old_Attr := Get_Index
-           (Machine.Attributes, Get_Qname (Machine.Attributes, J));
-         if Old_Attr /= -1 and then Old_Attr < J then
-            Fatal_Error
-              (Machine, "(3.1) Attributes must have a unique value, for "
-               & Get_Qname (Machine.Attributes, J));
-         end if;
+         Input_A := Parser.Inputs;
+         Parser.Inputs := Parser.Inputs.Next;
+         Input_A.Next := null;
       end loop;
 
-      --  Resolve the element's namespace now
-      Find_NS
-        (Machine, Machine.Current_Node, Machine.Current_Node.NS.all, NS);
+      --  Read the text of the entity if there is any
 
-      --  Add all the default attributes to the element
-      --  We shouldn't add an attribute if it was overriden by the user
-      Attr := Get (Machine.DTD, Qname_From_Name
-                   (NS.Prefix, Machine.Current_Node.Name.all));
+      if Parser.Inputs /= null then
+         Internal (Parser.Inputs.Input.all);
 
-      if Attr /= null then
-         for J in 0 .. Get_Length (Attr.all) - 1 loop
-            --  ??? This could/should be more efficient.
-            if Get_Index (Machine.Attributes,
-                          Get_URI (Attr.all, J),
-                          Get_Local_Name (Attr.all, J)) = -1
-            then
-               Add_Attribute (Machine.Attributes,
-                              Get_URI (Attr.all, J),
-                              Get_Local_Name (Attr.all, J),
-                              Get_Qname (Attr.all, J),
-                              Get_Type (Attr.all, J),
-                              Get_Value (Attr.all, J));
-            end if;
-         end loop;
+      --  Else read from the initial input stream
+      elsif Eof (Input) then
+         if Debug_Input then
+            Put_Line
+              ("++Input " & To_String (Parser.Locator.all) & " END_OF_INPUT");
+         end if;
+         Parser.Last_Read := 16#FFFF#;
+         raise Input_Ended;
+
+      else
+         Internal (Input);
       end if;
 
-      Start_Element
-        (Handler => Machine,
-         Namespace_URI => NS.URI.all,
-         Local_Name => Machine.Current_Node.Name.all,
-         Qname => Qname_From_Name
-           (NS.Prefix,  Machine.Current_Node.Name.all),
-         Atts => Machine.Attributes);
-
-      Machine.Buffer_Length := 0;
-      Clear (Machine.Attributes);
-   end End_Of_Start_Tag;
-
-   ---------------------
-   -- End_Of_Start_Gi --
-   ---------------------
-
-   procedure End_Of_Start_Gi (Machine   : in out Reader'Class;
-                              Last_Read : Unicode.Unicode_Char)
-   is
-      Name : constant Byte_Sequence :=
-        Machine.Buffer (1 .. Machine.Buffer_Length);
-   begin
-      --  (2.3)[5] Check the syntax of the name for the element
-      if not Is_Valid_Name (Name) then
-         Fatal_Error (Machine, "(2.3) '" & Name & "' is not a valid name");
-      end if;
-
-      --  (2.1)[1] A single root element
-      if Machine.Current_Node = null then
-         Machine.Num_Items := Machine.Num_Items + 1;
-         Machine.Num_Elements := Machine.Num_Elements + 1;
-
-         if Machine.Num_Elements /= 1 then
-            Fatal_Error
-              (Machine,
-               "(2.1) Too many children for top-level node, when adding <"
-               & Name & ">");
+      if Debug_Input then
+         Put ("++Input " & To_String (Parser.Locator.all)
+              & "(" & Unicode_Char'Image (Parser.Last_Read) & ")= ");
+         if Parser.Last_Read /= Line_Feed then
+            Put_Line (Encoding.Encode (Parser.Last_Read));
+         else
+            Put_Line ("Line_Feed");
          end if;
       end if;
-
-      --  Create an internal structure to memorize the node
-      Machine.Element_Id := Machine.Element_Id + 1;
-      Machine.Current_Node := new Element'
-        (NS             => Machine.Current_NS,
-         Name           => new Byte_Sequence' (Name),
-         Namespaces     => null,
-         Space_Handling => Ignorable,
-         Id             => Machine.Element_Id,
-         Parent         => Machine.Current_Node);
-
-      Machine.Buffer_Length := 0;
-      Machine.Current_NS := new String' ("");
-   end End_Of_Start_Gi;
-
-   -------------------
-   -- End_Of_Prefix --
-   -------------------
-
-   procedure End_Of_Prefix (Machine   : in out Reader'Class;
-                            Last_Read : Unicode.Unicode_Char)
-   is
-      Name : constant Byte_Sequence :=
-        Machine.Buffer (1 .. Machine.Buffer_Length);
-   begin
-      if Debug then
-         Debug_Put (Machine, "End_Of_Prefix " & Name);
-      end if;
-      Free (Machine.Current_NS);
-      Machine.Current_NS := new String' (Name);
-      Machine.Buffer_Length := 0;
-   end End_Of_Prefix;
-
-   -------------------
-   -- Cancel_Entity --
-   -------------------
-
-   procedure Cancel_Entity
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char)
-   is
-      Name : constant Byte_Sequence := Machine.Buffer
-        (Machine.Entity_Start .. Machine.Buffer_Length);
-   begin
-      pragma Assert (Machine.Processing = Entity);
-      if Looking_At (Machine, Machine.Buffer'First, Entity_Sequence) then
-         Delete_Entity (Machine);
-         Put_In_Buffer_Force (Machine, Name);
-         Put_In_Buffer_Force (Machine, Last_Read);
-         Machine.Processing := None;
-         Set_Current_State (Machine, Exit_Sub_Automaton);
-      else
-         Put_In_Buffer_Force (Machine, Last_Read);
-      end if;
-   end Cancel_Entity;
+   end Next_Char;
 
    -------------------
    -- Put_In_Buffer --
    -------------------
 
-   procedure Put_In_Buffer (Machine   : in out Reader'Class;
-                            Last_Read : Unicode.Unicode_Char) is
+   procedure Put_In_Buffer
+     (Parser : in out Reader'Class; Char : Unicode_Char) is
    begin
-      --  Check rule 2.4 about character validity (note that this can not
-      --  be done in Main_Loop, since numeric entities have not been
-      --  substituted then)
-      if not (Is_White_Space (Last_Read)
-              or else Last_Read in Space .. 16#D7FF#
-              or else Last_Read in 16#E000# .. 16#FFFD#
-              or else Last_Read in 16#10000# .. 16#10FFFF#)
-      then
-         Machine.Processing := None;
-         Fatal_Error (Machine, "(2.2) Illegal character (code"
-                      & Unicode_Char'Image (Last_Read) & ")");
-      end if;
-
-      --  Check the nesting of square brackets in the DTD
-      if Machine.Parsing_DTD > 1
-        and then Last_Read = Closing_Square_Bracket
-      then
-         Machine.Parsing_DTD := Machine.Parsing_DTD - 1;
-
-      --  ??? Nesting of [...] isn't authorized in DTDs. This might still
-      --  be needed when parsing conditional sections, though
---        elsif Machine.Parsing_DTD > 1
---          and then Last_Read = Opening_Square_Bracket
---        then
---           Machine.Parsing_DTD := Machine.Parsing_DTD + 1;
-
-      --  Only white spaces can be encountered at top-level
-      --  And in fact we simply ignore then.
-      elsif Machine.Current_Node = null
-        and then Get_Current_State (Machine) = Top_State
-        and then Machine.Processing /= Entity
-      then
-         if not Is_White_Space (Last_Read) then
-            Machine.Processing := None;
-            Fatal_Error (Machine, "(2.1) Non-white space found at top level");
-         end if;
-
-      elsif Machine.Parsing_DTD = 1 then
-         Machine.Processing := None;
-         Fatal_Error (Machine, "(2.8) Invalid character in the DTD");
-
-      else
-         Put_In_Buffer_Force (Machine, Encoding.Encode (Last_Read));
-      end if;
+      Put_In_Buffer (Parser, Encoding.Encode (Char));
    end Put_In_Buffer;
 
-   -------------------------
-   -- Put_In_Buffer_Space --
-   -------------------------
+   -------------------
+   -- Put_In_Buffer --
+   -------------------
 
-   procedure Put_In_Buffer_Space
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char)
+   procedure Put_In_Buffer
+     (Parser : in out Reader'Class; Str : Byte_Sequence) is
+   begin
+      pragma Assert (Parser.Buffer_Length + Str'Length <= Parser.Buffer'Last);
+      Parser.Buffer
+        (Parser.Buffer_Length + 1 .. Parser.Buffer_Length + Str'Length) := Str;
+      Parser.Buffer_Length := Parser.Buffer_Length + Str'Length;
+   end Put_In_Buffer;
+
+   ------------------
+   -- Is_Name_Char --
+   ------------------
+
+   function Is_Name_Char (C : Unicode_Char) return Boolean is
+   begin
+      return C = Period
+        or else C = Hyphen_Minus
+        or else C = Spacing_Underscore
+        or else Is_Digit (C)
+        or else Is_Letter (C)
+        or else Is_Combining_Char (C)
+        or else Is_Extender (C);
+   end Is_Name_Char;
+
+   ---------------------
+   -- Test_Valid_Lang --
+   ---------------------
+
+   procedure Test_Valid_Lang
+     (Parser : in out Reader'Class; Lang : Byte_Sequence)
    is
+      C, C2 : Unicode_Char;
+      Index : Natural := Lang'First;
    begin
-      Put_In_Buffer_Force (Machine, Space);
-      Put_In_Buffer (Machine, Last_Read);
-   end Put_In_Buffer_Space;
+      C2 := Encoding.Read (Lang, Index);
+      Index := Index + Encoding.Width (C2);
 
-   -------------------------
-   -- Put_In_Buffer_Force --
-   -------------------------
-
-   procedure Put_In_Buffer_Force
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char) is
-   begin
-      --  Check rule 2.4 about character validity (note that this can not
-      --  be done in Main_Loop, since numeric entities have not been
-      --  substituted then)
-      if not (Is_White_Space (Last_Read)
-              or else Last_Read in Space .. 16#D7FF#
-              or else Last_Read in 16#E000# .. 16#FFFD#
-              or else Last_Read in 16#10000# .. 16#10FFFF#)
+      if not (C2 in Latin_Small_Letter_A .. Latin_Small_Letter_Z
+              or else C2 in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
+        or else Index > Lang'Last
       then
-         Machine.Processing := None;
-         Fatal_Error (Machine, "(2.2) Illegal character (code"
-                      & Unicode_Char'Image (Last_Read) & ")");
+         Fatal_Error (Parser, "[2.12] Invalid language specification");
       end if;
 
-      Put_In_Buffer_Force (Machine, Encoding.Encode (Last_Read));
-   end Put_In_Buffer_Force;
+      C := Encoding.Read (Lang, Index);
+      Index := Index + Encoding.Width (C);
+      if C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
+        or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
+      then
+         if Index <= Lang'Last then
+            C := Encoding.Read (Lang, Index);
+            Index := Index + Encoding.Width (C);
+         end if;
 
-   -------------------------
-   -- Put_In_Buffer_Force --
-   -------------------------
+      elsif C2 /= Latin_Small_Letter_I
+        and then C2 /= Latin_Capital_Letter_I
+        and then C2 /= Latin_Small_Letter_X
+        and then C2 /= Latin_Capital_Letter_X
+      then
+         Fatal_Error (Parser, "[2.12] Invalid language specification");
+      end if;
 
-   procedure Put_In_Buffer_Force
-     (Machine   : in out Reader'Class; S : Byte_Sequence) is
+      if C = Hyphen_Minus and then Index > Lang'Last then
+         Fatal_Error (Parser, "[2.12] Invalid language specification");
+      end if;
+
+      while Index <= Lang'Last loop
+         if C /= Hyphen_Minus
+           or else Index > Lang'Last
+         then
+            Fatal_Error (Parser, "[2.12] Invalid language specification");
+         end if;
+
+         loop
+            C := Encoding.Read (Lang, Index);
+            Index := Index + Encoding.Width (C);
+
+            exit when Index > Lang'Last
+              or else not
+              (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
+               or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z);
+         end loop;
+      end loop;
+   end Test_Valid_Lang;
+
+   -------------------
+   -- Is_Pubid_Char --
+   -------------------
+
+   function Is_Pubid_Char (C : Unicode_Char) return Boolean is
    begin
-      --  ??? Should handle buffer overflow
-      pragma Assert (Machine.Buffer_Length + S'Length <= Machine.Buffer'Last);
-      Machine.Buffer
-        (Machine.Buffer_Length + 1 .. Machine.Buffer_Length + S'Length) := S;
-      Machine.Buffer_Length := Machine.Buffer_Length + S'Length;
-   end Put_In_Buffer_Force;
+      return C = Unicode.Names.Basic_Latin.Space
+        or else C = Line_Feed
+        or else C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
+        or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
+        or else C in Digit_Zero .. Digit_Nine
+        or else C = Hyphen_Minus
+        or else C = Apostrophe
+        or else C = Opening_Parenthesis
+        or else C = Closing_Parenthesis
+        or else C = Plus_Sign
+        or else C = Comma
+        or else C = Dot
+        or else C = Slash
+        or else C = Unicode.Names.Basic_Latin.Colon
+        or else C = Equals_Sign
+        or else C = Question_Mark
+        or else C = Semicolon
+        or else C = Exclamation_Mark
+        or else C = Star
+        or else C = Number_Sign
+        or else C = Commercial_At
+        or else C = Dollar_Sign
+        or else C = Spacing_Underscore
+        or else C = Percent_Sign;
+   end Is_Pubid_Char;
 
    ---------------------
-   -- Check_Cdata_End --
+   -- Test_Valid_Char --
    ---------------------
 
-   procedure Check_Cdata_End (Machine   : in out Reader'Class;
-                              Last_Read : Unicode.Unicode_Char)
+   procedure Test_Valid_Char
+     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token)
    is
-      W : constant Natural := Encoding.Width (Right_Square_Bracket);
+      Id : Token;
    begin
-      --  Do we have the invalid sequence ]]> outside of a CDATA ?
-      if Machine.Buffer_Length >= 2 * W
-        and then Last_Read = Greater_Than_Sign
-        and then Encoding.Read
-         (Machine.Buffer, Machine.Buffer_Length - W + 1) = Right_Square_Bracket
-        and then Encoding.Read
-           (Machine.Buffer, Machine.Buffer_Length - 2 * W + 1) =
-           Right_Square_Bracket
+      if not (C = 16#9#
+              or else C = 16#A#
+              or else C = 16#D#
+              or else C in Unicode.Names.Basic_Latin.Space .. 16#D7FF#
+              or else C in 16#E000# .. 16#FFFD#
+              or else C in 16#10000# .. 16#10FFFF#)
       then
-         Fatal_Error (Machine, "(2.4) Text may not contain the literal ']]>'");
+         if Loc /= Null_Token then
+            Id := Loc;
+         else
+            Id.Line := Get_Line_Number (Parser.Locator.all);
+            Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
+         end if;
+         Fatal_Error
+           (Parser, "[2.2] Invalid character (code"
+            & Unicode_Char'Image (C) & ")", Id);
+      end if;
+   end Test_Valid_Char;
 
-      --  Do we have the end of the DTD ?
-      elsif Last_Read = Greater_Than_Sign
-        and then Machine.Parsing_DTD >= 1
-      then
-         End_Of_Declaration (Machine, Last_Read);
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (NS : in out XML_NS) is
+      Tmp : XML_NS;
+      procedure Free_NS is new Unchecked_Deallocation (XML_NS_Record, XML_NS);
+   begin
+      while NS /= null loop
+         Tmp := NS.Next;
+         Free (NS.Prefix);
+         Free (NS.URI);
+         Free_NS (NS);
+         NS := Tmp;
+      end loop;
+   end Free;
+
+   -------------
+   -- Find_NS --
+   -------------
+
+   procedure Find_NS
+     (Parser  : in out Reader'Class;
+      Elem    : Element_Access;
+      Prefix  : Token;
+      NS      : out XML_NS)
+   is
+      Name : constant Byte_Sequence := Value (Parser, Prefix, Prefix);
+      E : Element_Access := Elem;
+   begin
+      loop
+         --  Search in the default namespaces
+         if E = null then
+            NS := Parser.Default_Namespaces;
+         else
+            NS := E.Namespaces;
+         end if;
+
+         while NS /= null loop
+            if NS.Prefix.all = Name then
+               return;
+            end if;
+            NS := NS.Next;
+         end loop;
+
+         exit when E = null;
+         E := E.Parent;
+      end loop;
+
+      Fatal_Error
+        (Parser, "[WF] Prefix '" & Name & "' must be declared before its use");
+      NS := null;
+   end Find_NS;
+
+   ---------------------
+   -- Qname_From_Name --
+   ---------------------
+
+   function Qname_From_Name (Parser : Reader'Class; Prefix, Local_Name : Token)
+      return Byte_Sequence is
+   begin
+      if Prefix = Null_Token then
+         return Value (Parser, Local_Name, Local_Name);
+      else
+         return Value (Parser, Prefix, Prefix)
+           & Encoding.Encode (Unicode.Names.Basic_Latin.Colon)
+           & Value (Parser, Local_Name, Local_Name);
+      end if;
+   end Qname_From_Name;
+
+   ----------------------------
+   -- Add_Namespace_No_Event --
+   ----------------------------
+
+   procedure Add_Namespace_No_Event
+     (Parser : in out Reader'Class;
+      Prefix : Byte_Sequence;
+      Str    : Byte_Sequence)
+   is
+      Pref, URI : Token;
+   begin
+      Pref.First := Parser.Buffer_Length + 1;
+      Put_In_Buffer (Parser, Prefix);
+      Pref.Last := Parser.Buffer_Length;
+      URI.First := Parser.Buffer_Length + 1;
+      Put_In_Buffer (Parser, Str);
+      URI.Last := Parser.Buffer_Length;
+      Add_Namespace (Parser, null, Pref, URI, URI, Report_Event => False);
+      Reset_Buffer (Parser, Pref);
+   end Add_Namespace_No_Event;
+
+   -------------------
+   -- Add_Namespace --
+   -------------------
+
+   procedure Add_Namespace
+     (Parser : in out Reader'Class;
+      Node   : Element_Access;
+      Prefix, URI_Start, URI_End : Token;
+      Report_Event : Boolean := True)
+   is
+      NS : XML_NS;
+   begin
+      NS := new XML_NS_Record'
+        (Prefix => new Byte_Sequence' (Value (Parser, Prefix, Prefix)),
+         URI    => new Byte_Sequence' (Value (Parser, URI_Start, URI_End)),
+         Next   => null);
+
+      if Node = null then
+         NS.Next := Parser.Default_Namespaces;
+         Parser.Default_Namespaces := NS;
+      else
+         NS.Next := Node.Namespaces;
+         Node.Namespaces := NS;
+      end if;
+
+      --  Report the event, except for the default namespace
+      if Report_Event then
+         Start_Prefix_Mapping
+           (Parser,
+            Prefix => NS.Prefix.all,
+            URI    => NS.URI.all);
+      end if;
+   end Add_Namespace;
+
+   ----------------
+   -- Next_Token --
+   ----------------
+
+   procedure Next_Token
+     (Input   : in out Input_Source'Class;
+      Parser  : in out Reader'Class;
+      Id      : out Token)
+   is
+      function Looking_At (Str : Byte_Sequence) return Boolean;
+      --  True if the next characters read (including the current one) in the
+      --  stream match Str. Characters read are stored in the buffer
+
+      procedure Handle_Comments;
+      --  <!- has been seen in the buffer, check if this is a comment and
+      --  handle it appropriately
+
+      procedure Handle_Character_Ref;
+      --  '&#' has been seen in the buffer, check if this is a character
+      --  entity reference and handle it appropriately
+
+      procedure Handle_Less_Than_Sign;
+      --  Handle '<', '<!', '<!--', '<![',... sequences
+
+      procedure Debug_Print;
+      --  Print the returned token
+
+      procedure Close_Inputs;
+      --  Close the inputs that have been completely read. This should be
+      --  called every time one starts an entity, so that calls to
+      --  Start_Entity/End_Entity are properly nested, and error messages
+      --  point to the right entity.
+
+      procedure Handle_Entity_Ref;
+      --  '&' has been read (as well as the following character). Skips till
+      --  the end of the entity, ie ';'. Saves the name of the entity in the
+      --  buffer.
+      --  Parser.Last_Read is left to ';', but it is not put in the buffer.
+
+      ----------------
+      -- Looking_At --
+      ----------------
+
+      function Looking_At (Str : Byte_Sequence) return Boolean is
+         C : Unicode_Char;
+         Index : Natural := Str'First;
+      begin
+         while Index <= Str'Last loop
+            C := Encoding.Read (Str, Index);
+            Index := Index + Encoding.Width (C);
+
+            if C /= Parser.Last_Read or else Eof (Input) then
+               return False;
+            end if;
+            Put_In_Buffer (Parser, Parser.Last_Read);
+            Next_Char (Input, Parser);
+         end loop;
+         return True;
+      end Looking_At;
+
+      ---------------------
+      -- Handle_Comments --
+      ---------------------
+
+      procedure Handle_Comments is
+      begin
+         if not Eof (Input) then
+            Next_Char (Input, Parser);
+            if Parser.Last_Read = Hyphen_Minus then
+               Id.Typ := Comment;  --  In case we reach the eof in the loop
+               --  Note that if the file ends exactly with '<!--', we get
+               --  an empty text. But at least we will detect the error.
+               --  It also fails if we have a non-terminated comment and the
+               --  last character in the file is '-'. Doesn't seem worth
+               --  paying the cost for some extra tests to handle this.
+               loop
+                  Next_Char (Input, Parser);
+                  if Parser.Last_Read = Hyphen_Minus then
+                     Next_Char (Input, Parser);
+                     if Parser.Last_Read = Hyphen_Minus then
+                        if not Eof (Input) then
+                           Next_Char (Input, Parser);
+                           if Parser.Last_Read = Greater_Than_Sign then
+                              exit;
+                           end if;
+                        end if;
+                        Parser.Buffer_Length := Id.First - 1;
+                        Id.Line := Get_Line_Number (Parser.Locator.all);
+                        Id.Column :=
+                          Get_Column_Number (Parser.Locator.all) - 3;
+                        --  3 = 2 * Hyphen_Minus + Parser.Last_Read
+                        Fatal_Error
+                          (Parser, "[2.5] '--' cannot appear in comments", Id);
+                     else
+                        Put_In_Buffer (Parser, Hyphen_Minus);
+                        Put_In_Buffer (Parser, Parser.Last_Read);
+                     end if;
+                  else
+                     Put_In_Buffer (Parser, Parser.Last_Read);
+                  end if;
+               end loop;
+
+               if Input_Id (Parser) /= Id.Input_Id then
+                  Fatal_Error
+                    (Parser, "[4.5] Entity values must be self-contained", Id);
+               end if;
+
+               if not Eof (Input) then
+                  Next_Char (Input, Parser);
+               end if;
+               return;
+            end if;
+         end if;
+         Fatal_Error (Parser, "[WF] Invalid characters '<!-' in stream");
+         Id.Typ := End_Of_Input;
+      end Handle_Comments;
+
+      --------------------------
+      -- Handle_Character_Ref --
+      --------------------------
+
+      procedure Handle_Character_Ref is
+         Val : Unicode_Char := 0;
+      begin
+         Id.Typ := Text;
+
+         if Parser.Current_Node = null
+           and then Parser.State.Name = Default_State.Name
+         then
+            Fatal_Error
+              (Parser,
+               "[2.1] Character references can not appear at top-level",  Id);
+         end if;
+
+         Next_Char (Input, Parser);
+         if Parser.Last_Read = Latin_Small_Letter_X then
+            Next_Char (Input, Parser);
+
+            while Parser.Last_Read /= Semicolon loop
+               if Parser.Last_Read in Digit_Zero .. Digit_Nine then
+                  Val := Val * 16 + Parser.Last_Read - Digit_Zero;
+
+               elsif Parser.Last_Read in
+                 Latin_Capital_Letter_A .. Latin_Capital_Letter_F
+               then
+                  Val := Val * 16 + Parser.Last_Read - Latin_Capital_Letter_A
+                    + 10;
+
+               elsif Parser.Last_Read in
+                 Latin_Small_Letter_A .. Latin_Small_Letter_F
+               then
+                  Val := Val * 16 + Parser.Last_Read - Latin_Small_Letter_A
+                    + 10;
+
+               else
+                  Id.Line := Get_Line_Number (Parser.Locator.all);
+                  Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
+                  Fatal_Error
+                    (Parser, "[4.1] Invalid character '"
+                     & Encoding.Encode (Parser.Last_Read) & "' in"
+                     & " character reference", Id);
+               end if;
+               Next_Char (Input, Parser);
+            end loop;
+         else
+            while Parser.Last_Read /= Semicolon loop
+               if Parser.Last_Read in Digit_Zero .. Digit_Nine then
+                  Val := Val * 10 + Parser.Last_Read - Digit_Zero;
+               else
+                  Id.Line := Get_Line_Number (Parser.Locator.all);
+                  Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
+                  Fatal_Error
+                    (Parser, "[4.1] Invalid character '"
+                     & Encoding.Encode (Parser.Last_Read) & "' in"
+                     & " character reference", Id);
+               end if;
+               Next_Char (Input, Parser);
+            end loop;
+         end if;
+
+         Test_Valid_Char (Parser, Val, Id);
+         Put_In_Buffer (Parser, Val);
+         Next_Char (Input, Parser);
+      end Handle_Character_Ref;
+
+      ---------------------------
+      -- Handle_Less_Than_Sign --
+      ---------------------------
+
+      procedure Handle_Less_Than_Sign is
+         Num_Closing_Bracket : Natural;
+         Id2 : Token;
+      begin
+         Id.Typ := Start_Of_Tag;
+         Next_Char (Input, Parser);
+         case Parser.Last_Read is
+            when Slash =>
+               Id.Typ := Start_Of_End_Tag;
+               Next_Char (Input, Parser);
+
+            when Exclamation_Mark =>
+               Next_Char (Input, Parser);
+               if Parser.Last_Read = Hyphen_Minus then
+                  Handle_Comments;
+
+               elsif Looking_At (Doctype_Sequence) then
+                  Reset_Buffer (Parser, Id);
+                  Id.Typ := Doctype_Start;
+
+               elsif Parser.Last_Read = Opening_Square_Bracket then
+                  Next_Char (Input, Parser);
+
+                  if Parser.Last_Read = Latin_Capital_Letter_C then
+
+                     if not Looking_At (Cdata_Sequence) then
+                        Fatal_Error (Parser, "Invalid declaration", Id);
+                     end if;
+
+                     if Parser.Last_Read /= Opening_Square_Bracket then
+                        Fatal_Error
+                          (Parser,
+                           "CDATA must be followed immediately by '['", Id);
+                     end if;
+
+                     Reset_Buffer (Parser, Id);
+                     Id.Typ := Cdata_Section;
+                     Num_Closing_Bracket := 1;
+                     loop
+                        Next_Char (Input, Parser);
+                        Put_In_Buffer (Parser, Parser.Last_Read);
+
+                        if Parser.Last_Read = Closing_Square_Bracket then
+                           Num_Closing_Bracket := Num_Closing_Bracket + 1;
+
+                        elsif Parser.Last_Read = Greater_Than_Sign
+                          and then Num_Closing_Bracket >= 2
+                        then
+                           Parser.Buffer_Length := Parser.Buffer_Length
+                             - 2 * Encoding.Width (Closing_Square_Bracket)
+                             - Encoding.Width (Greater_Than_Sign);
+                           exit;
+
+                        else
+                           Num_Closing_Bracket := 0;
+                        end if;
+                     end loop;
+                     if Id.Input_Id /= Input_Id (Parser) then
+                        Fatal_Error
+                          (Parser, "[4.3.2] Entity must be self-contained",
+                           Id);
+                     end if;
+
+                     if not Eof (Input) then
+                        Next_Char (Input, Parser);
+                     else
+                        Parser.Last_Read := 16#FFFF#;
+                     end if;
+
+                  else
+                     while Is_White_Space (Parser.Last_Read) loop
+                        Next_Char (Input, Parser);
+                     end loop;
+
+                     if Parser.Last_Read = Latin_Capital_Letter_I
+                       or else Parser.Last_Read = Percent_Sign
+                     then
+                        Next_Token (Input, Parser, Id2);
+                        if Value (Parser, Id2, Id2) = Include_Sequence then
+                           Reset_Buffer (Parser, Id2);
+                           Id.Typ := Include;
+                        elsif Value (Parser, Id2, Id2)  = Ignore_Sequence then
+                           Reset_Buffer (Parser, Id2);
+                           Id.Typ := Ignore;
+                        else
+                           Fatal_Error (Parser, "Invalid declaration", Id);
+                        end if;
+
+                        if not Parser.State.In_DTD
+                          or else not Parser.In_External_Entity
+                        then
+                           Fatal_Error
+                             (Parser, "[3.4] INCLUDE and IGNORE sections only"
+                              & " authorized in the external DTD subset", Id);
+                        end if;
+
+                        Next_Token_Skip_Spaces (Input, Parser, Id2);
+                        if Id2.Typ /= Internal_DTD_Start then
+                           Fatal_Error
+                             (Parser,
+                              "(3.4) Conditional sections need a '[' after the"
+                              & " INCLUDE or IGNORE", Id2);
+                        end if;
+
+                     elsif Parser.State.In_DTD then
+                        Id.Typ := Start_Conditional;
+                     else
+                        Fatal_Error
+                          (Parser,
+                           "No declaration starting with '<!' outside of DTD",
+                           Id);
+                     end if;
+                  end if;
+
+               elsif not Parser.State.In_DTD then
+                  Fatal_Error
+                    (Parser,
+                     "No declaration starting with '<!' outside of DTD", Id);
+                  Id.Typ := End_Of_Input;
+
+               elsif Looking_At (Attlist_Sequence) then
+                  Reset_Buffer (Parser, Id);
+                  Id.Typ := Attlist_Def;
+
+               elsif Parser.Last_Read = Latin_Capital_Letter_E then
+                  Next_Char (Input, Parser);
+                  if Looking_At (Ntity_Sequence) then
+                     Reset_Buffer (Parser, Id);
+                     Id.Typ := Entity_Def;
+
+                  elsif Looking_At (Element_Sequence) then
+                     Reset_Buffer (Parser, Id);
+                     Id.Typ := Element_Def;
+
+                  else
+                     Fatal_Error (Parser, "[WF] Unknown declaration in DTD");
+                  end if;
+
+               elsif Looking_At (Notation_Sequence) then
+                  Reset_Buffer (Parser, Id);
+                  Id.Typ := Notation;
+
+               else
+                  Put_In_Buffer (Parser, Less_Than_Sign);
+                  Put_In_Buffer (Parser, Exclamation_Mark);
+                  Id.Typ := Text;
+               end if;
+
+            when Question_Mark =>
+               Id.Typ := Start_Of_PI;
+               Next_Char (Input, Parser);
+
+            when others => null;
+         end case;
+      end Handle_Less_Than_Sign;
+
+      -----------------------
+      -- Handle_Entity_Ref --
+      -----------------------
+
+      procedure Handle_Entity_Ref is
+      begin
+         if Is_Letter (Parser.Last_Read)
+           or else Parser.Last_Read = Spacing_Underscore
+         then
+            while Parser.Last_Read /= Semicolon
+              and then Is_Name_Char (Parser.Last_Read)
+            loop
+               Put_In_Buffer (Parser, Parser.Last_Read);
+               Next_Char (Input, Parser);
+            end loop;
+
+            if Parser.Last_Read /= Semicolon then
+               Fatal_Error
+                 (Parser, "[4.1] Entity references must end with ';'."
+                  & ASCII.LF & "Did you want to use &amp; ?", Id);
+            end if;
+
+            if Input_Id (Parser) /= Id.Input_Id then
+               Fatal_Error
+                 (Parser, "[4.3.2] Entity must be self-contained", Id);
+            end if;
+
+         else
+            Fatal_Error
+              (Parser, "[4.1] Invalid first letter in entity name '"
+               & Encoding.Encode (Parser.Last_Read) & "'", Id);
+         end if;
+      end Handle_Entity_Ref;
+
+      -----------------
+      -- Debug_Print --
+      -----------------
+
+      procedure Debug_Print is
+         L : Locator_Impl := Locator_Impl (Parser.Locator.all);
+      begin
+         Set_Line_Number (L, Id.Line);
+         Set_Column_Number (L, Id.Column);
+         Put ("++Lex (" & Parser.State.Name & ") at "
+              & To_String (L) & " (" & Id.Typ'Img & ")");
+         if Parser.State.Ignore_Special then
+            Put (" (in string)");
+         end if;
+
+         if Id.Typ = Space then
+            declare
+               J : Natural := Id.First;
+               C : Unicode_Char;
+            begin
+               Put (" --");
+               while J <= Id.Last loop
+                  C := Encoding.Read (Parser.Buffer, J);
+                  J := J + Encoding.Width (C);
+                  Put (Unicode_Char'Image (C));
+               end loop;
+               Put ("--");
+            end;
+
+         elsif Id.Last >= Id.First then
+            Put (" --" & Parser.Buffer (Id.First .. Id.Last) & "--");
+         end if;
+
+         Put_Line
+           (" buffer="
+            & Parser.Buffer (Parser.Buffer'First .. Parser.Buffer_Length)
+            & "--");
+      end Debug_Print;
+
+      ------------------
+      -- Close_Inputs --
+      ------------------
+
+      procedure Close_Inputs is
+         procedure Free is new Unchecked_Deallocation
+           (Entity_Input_Source, Entity_Input_Source_Access);
+         procedure Unchecked_Free is new Unchecked_Deallocation
+           (Input_Source'Class, Input_Source_Access);
+         Input_A : Entity_Input_Source_Access;
+      begin
+         while Parser.Close_Inputs /= null loop
+            Close (Parser.Close_Inputs.Input.all);
+            Unchecked_Free (Parser.Close_Inputs.Input);
+
+            --  not in string context
+            if not Parser.State.Ignore_Special then
+               End_Entity (Parser, Parser.Close_Inputs.Name.all);
+            end if;
+
+            Input_A := Parser.Close_Inputs;
+            Parser.Close_Inputs := Parser.Close_Inputs.Next;
+            Free (Input_A.Name);
+            Free (Input_A);
+         end loop;
+      end Close_Inputs;
+
+      type Entity_Ref is (None, Entity, Param_Entity);
+      Is_Entity_Ref : Entity_Ref := None;
+   begin
+      Id.First := Parser.Buffer_Length + 1;
+      Id.Last := Parser.Buffer_Length;
+      Id.Typ := End_Of_Input;
+      Id.Line := Get_Line_Number (Parser.Locator.all);
+      Id.Column := Get_Column_Number (Parser.Locator.all) - 1;
+      Id.Input_Id := Input_Id (Parser);
+      Close_Inputs;
+
+      if Eof (Input) and then Parser.Last_Read = 16#FFFF# then
+         Id.Column := Id.Column + 1;
          return;
       end if;
 
-      Put_In_Buffer (Machine, Last_Read);
-   end Check_Cdata_End;
+      if Is_White_Space (Parser.Last_Read) then
+         Id.Typ := Space;
+         loop
+            Put_In_Buffer (Parser, Parser.Last_Read);
+            Next_Char (Input, Parser);
+            exit when not Is_White_Space (Parser.Last_Read);
+         end loop;
 
-   -------------------------------------------------
-   -- Put_In_Buffer_No_Multiple_Space_Nor_Newline --
-   -------------------------------------------------
+      --  If we are ignoring special characters
+      elsif Id.Typ = End_Of_Input
+        and then not Parser.Ignore_State_Special
+        and then Parser.State.Ignore_Special
+        and then not Parser.State.Detect_End_Of_PI
+      then
+         Id.Typ := Text;
+         Parser.Ignore_State_Special := True;
+         loop
+            exit when Parser.Last_Read = Ampersand
+              and then (Parser.State.Expand_Entities
+                        or else Parser.State.Expand_Character_Ref);
+            exit when Parser.Last_Read = Percent_Sign
+              and then Parser.State.Expand_Param_Entities;
+            exit when (Parser.Last_Read = Apostrophe
+                       or else Parser.Last_Read = Quotation_Mark)
+              and then Parser.State.Handle_Strings
+              and then (Parser.Inputs = null
+                        or else Parser.Inputs.Handle_Strings);
+            exit when Parser.Last_Read = Less_Than_Sign
+              and then Parser.State.Less_Special;
+            Put_In_Buffer (Parser, Parser.Last_Read);
+            Next_Char (Input, Parser);
+         end loop;
+      end if;
 
-   procedure Put_In_Buffer_No_Multiple_Space_Nor_Newline
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      if Is_White_Space (Last_Read) then
-         --  Don't insert at the beginning of the attribute, nor if we already
-         --  have a space character already.
-         --  ??? This assumes that Space is encoded on a single byte...
-         if Machine.Buffer_Length >= Machine.Buffer'First
-           and then not Is_White_Space (Encoding.Read
-             (Machine.Buffer, Machine.Buffer_Length))
-         then
-            Put_In_Buffer_Force (Machine, Space);
+      --  If we haven't found a non-empty token yet
+      if Id.Typ = End_Of_Input
+        or else Id.First > Parser.Buffer_Length
+      then
+         case Parser.Last_Read is
+            when Less_Than_Sign =>
+               if Parser.State.Less_Special then
+                  Id.Typ := Start_Of_Tag;
+                  Next_Char (Input, Parser);
+               elsif Parser.State.Detect_End_Of_PI then
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Id.Typ := Text;
+                  Next_Char (Input, Parser);
+               else
+                  Handle_Less_Than_Sign;
+               end if;
+
+            when Question_Mark =>
+               if Eof (Input) then
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Id.Typ := Text;
+               else
+                  Next_Char (Input, Parser);
+                  if Parser.Last_Read = Greater_Than_Sign then
+                     Id.Typ := End_Of_PI;
+                     Next_Char (Input, Parser);
+                  elsif Parser.Last_Read = Question_Mark then
+                     Put_In_Buffer (Parser, Question_Mark);
+                     Id.Typ := Text;
+                  else
+                     Put_In_Buffer (Parser, Question_Mark);
+                     Id.Typ := Text;
+                  end if;
+               end if;
+
+            when Greater_Than_Sign =>
+               if Parser.State.Greater_Special then
+                  Id.Typ := End_Of_Tag;
+               else
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Id.Typ := Text;
+               end if;
+               Next_Char (Input, Parser);
+
+            when Equals_Sign =>
+               if Parser.State.In_Tag then
+                  Id.Typ := Equal;
+               else
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Id.Typ := Text;
+               end if;
+               Next_Char (Input, Parser);
+
+            when Unicode.Names.Basic_Latin.Colon =>
+               if Parser.State.In_Tag then
+                  Id.Typ := Colon;
+               else
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Id.Typ := Text;
+               end if;
+               Next_Char (Input, Parser);
+
+            when Ampersand =>
+               Id.Typ := Text; --  So that eof would at least report an error
+               if Eof (Input)
+                 and then Parser.State.Expand_Entities
+               then
+                  Fatal_Error
+                    (Parser, "[4.1] Entity references must end with ';'."
+                     & ASCII.LF & "Did you want to use &amp; ?", Id);
+               end if;
+
+               Next_Char (Input, Parser);
+               if Parser.Last_Read = Number_Sign
+                 and then Parser.State.Expand_Character_Ref
+               then
+                  Handle_Character_Ref;
+                  if Input_Id (Parser) /= Id.Input_Id then
+                     Fatal_Error
+                       (Parser, "[4.3.2] Entity must be self-contained",
+                        Id);
+                  end if;
+
+               elsif Parser.Last_Read /= Number_Sign
+                 and then Parser.State.Expand_Entities
+               then
+                  Handle_Entity_Ref;
+                  Is_Entity_Ref := Entity;
+
+               elsif Parser.Last_Read /= Number_Sign
+                 and then Parser.State.Ignore_Special   --  string context
+                 and then not Parser.State.Detect_End_Of_PI  --  not in PI
+               then
+                  --  Inside a string (entity value), we still need to check
+                  --  that the '&' marks the beginning of an entity reference.
+                  Put_In_Buffer (Parser, Ampersand);
+                  Handle_Entity_Ref;
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Next_Char (Input, Parser);
+
+               else
+                  Put_In_Buffer (Parser, Ampersand);
+               end if;
+
+            when Percent_Sign =>
+               Put_In_Buffer (Parser, Parser.Last_Read);
+               Id.Typ := Text;
+
+               Next_Char (Input, Parser);
+               if Parser.State.Expand_Param_Entities then
+                  while Parser.Last_Read /= Semicolon
+                    and then Is_Name_Char (Parser.Last_Read)
+                  loop
+                     Put_In_Buffer (Parser, Parser.Last_Read);
+                     Next_Char (Input, Parser);
+                  end loop;
+
+                  if Parser.Last_Read /= Semicolon then
+                     Fatal_Error (Parser, "[WF] Unterminated entity");
+                  end if;
+                  Is_Entity_Ref := Param_Entity;
+               end if;
+
+            when Quotation_Mark =>
+               if Parser.State.Handle_Strings then
+                  Id.Typ := Double_String_Delimiter;
+                  Next_Char (Input, Parser);
+               else
+                  Id.Typ := Text;
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Next_Char (Input, Parser);
+               end if;
+
+            when Apostrophe =>
+               if Parser.State.Handle_Strings then
+                  Id.Typ := Single_String_Delimiter;
+                  Next_Char (Input, Parser);
+               else
+                  Id.Typ := Text;
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Next_Char (Input, Parser);
+               end if;
+
+            when Opening_Square_Bracket =>
+               if Parser.State.In_DTD then
+                  Id.Typ := Internal_DTD_Start;
+               else
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Id.Typ := Text;
+               end if;
+               Next_Char (Input, Parser);
+
+            when Closing_Square_Bracket =>
+               if Parser.State.In_DTD
+                 and then not Parser.In_External_Entity
+               then
+                  Id.Typ := Internal_DTD_End;
+                  loop
+                     Next_Char (Input, Parser);
+                     exit when Parser.Last_Read = Greater_Than_Sign;
+                     if not Is_White_Space (Parser.Last_Read) then
+                        Fatal_Error
+                          (Parser, "[2.8] Unexpected character between ']'"
+                           & " and '>' in the DTD", Id);
+                     end if;
+                  end loop;
+                  Next_Char (Input, Parser);
+
+               --  In string context ?
+               elsif Parser.State.Ignore_Special then
+                  Id.Typ := Text;
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Next_Char (Input, Parser);
+
+               else
+                  declare
+                     Num_Bracket : Natural := 1;
+                  begin
+                     Id.Typ := Text;
+
+                     loop
+                        Put_In_Buffer (Parser, Parser.Last_Read);
+                        Next_Char (Input, Parser);
+
+                        if Parser.Last_Read = Closing_Square_Bracket then
+                           Num_Bracket := Num_Bracket + 1;
+
+                        elsif Num_Bracket >= 2
+                          and Parser.Last_Read = Greater_Than_Sign
+                        then
+                           if Parser.State.In_DTD
+                             and then Parser.In_External_Entity
+                           then
+                              Id.Typ := End_Conditional;
+                              Reset_Buffer (Parser, Id);
+                              Next_Char (Input, Parser);
+                              exit;
+                           else
+                              Id.Column := Id.Column + Num_Bracket - 2;
+                              Fatal_Error
+                                (Parser,
+                                 "[2.4] Text may not contain the litteral"
+                                 & " ']]>'", Id);
+                           end if;
+                        else
+                           exit;
+                        end if;
+                     end loop;
+                  end;
+               end if;
+
+            when Slash =>
+               Id.Typ := Text;
+               Next_Char (Input, Parser);
+               if Parser.State.Greater_Special
+                 and then Parser.Last_Read = Greater_Than_Sign
+               then
+                  Id.Typ := End_Of_Start_Tag;
+                  Next_Char (Input, Parser);
+               else
+                  Put_In_Buffer (Parser, Slash);
+               end if;
+
+            when others =>
+               if Parser.State.Recognize_External then
+
+                  if Parser.Last_Read = Latin_Capital_Letter_A then
+                     if Looking_At (Any_Sequence) then
+                        Reset_Buffer (Parser, Id);
+                        Id.Typ := Any;
+                     else
+                        Id.Typ := Name;
+                     end if;
+
+                  elsif Parser.Last_Read = Latin_Capital_Letter_E then
+                     if Looking_At (Empty_Sequence) then
+                        Reset_Buffer (Parser, Id);
+                        Id.Typ := Empty;
+                     else
+                        Id.Typ := Name;
+                     end if;
+
+                  elsif Parser.Last_Read = Latin_Capital_Letter_N then
+                     if Looking_At (Ndata_Sequence) then
+                        Reset_Buffer (Parser, Id);
+                        Id.Typ := Ndata;
+                     else
+                        Id.Typ := Name;
+                     end if;
+
+                  elsif Parser.Last_Read = Latin_Capital_Letter_P then
+                     if Looking_At (Public_Sequence) then
+                        Reset_Buffer (Parser, Id);
+                        Id.Typ := Public;
+                     else
+                        Id.Typ := Name;
+                     end if;
+
+                  elsif Parser.Last_Read = Latin_Capital_Letter_S then
+                     if Looking_At (System_Sequence) then
+                        Reset_Buffer (Parser, Id);
+                        Id.Typ := System;
+                     else
+                        Id.Typ := Name;
+                     end if;
+                  end if;
+               end if;
+
+               if Parser.State.Report_Parenthesis
+                 and then Parser.Last_Read = Opening_Parenthesis
+               then
+                  Reset_Buffer (Parser, Id);
+                  Id.Typ := Open_Paren;
+                  Next_Char (Input, Parser);
+               end if;
+
+               if Parser.State.In_Attlist then
+                  if Parser.Last_Read = Latin_Capital_Letter_C then
+                     if Looking_At (Cdata_Sequence) then
+                        Id.Typ := Cdata;
+                     else
+                        Id.Typ := Name;
+                     end if;
+
+                  elsif Parser.Last_Read = Latin_Capital_Letter_E
+                    and then Looking_At (Entit_Sequence)
+                  then
+                     if Looking_At (Ies_Sequence) then
+                        Id.Typ := Entities;
+                     elsif Parser.Last_Read = Latin_Capital_Letter_Y then
+                        Id.Typ := Entity;
+                        Put_In_Buffer (Parser, Parser.Last_Read);
+                        Next_Char (Input, Parser);
+                     else
+                        Fatal_Error
+                          (Parser, "[WF] Unexpected type in ATTLIST");
+                     end if;
+
+                  elsif Parser.Last_Read = Latin_Capital_Letter_I
+                    and then Looking_At (Id_Sequence)
+                  then
+                     if Looking_At (Ref_Sequence) then
+                        if Parser.Last_Read = Latin_Capital_Letter_S then
+                           Id.Typ := Idrefs;
+                           Put_In_Buffer (Parser, Parser.Last_Read);
+                           Next_Char (Input, Parser);
+                        else
+                           Id.Typ := Idref;
+                        end if;
+                     else
+                        Id.Typ := Id_Type;
+                     end if;
+
+                  elsif Parser.Last_Read = Latin_Capital_Letter_N then
+                     Next_Char (Input, Parser);
+                     if Looking_At (Mtoken_Sequence) then
+                        if Parser.Last_Read = Latin_Capital_Letter_S then
+                           Id.Typ := Nmtokens;
+                           Next_Char (Input, Parser);
+                        else
+                           Id.Typ := Nmtoken;
+                        end if;
+                     elsif Looking_At (Otation_Sequence) then
+                        Id.Typ := Notation;
+                     else
+                        Fatal_Error
+                          (Parser, "[WF] Invalid type for attribute");
+                     end if;
+
+                  elsif Parser.Last_Read = Number_Sign then
+                     Put_In_Buffer (Parser, Parser.Last_Read);
+                     Next_Char (Input, Parser);
+                     if Looking_At (Implied_Sequence) then
+                        Id.Typ := Implied;
+                     elsif Looking_At (Required_Sequence) then
+                        Id.Typ := Required;
+                     elsif Looking_At (Fixed_Sequence) then
+                        Id.Typ := Fixed;
+                     else
+                        Fatal_Error (Parser, "[WF] Invalid keyword");
+                     end if;
+                  end if;
+               end if;
+         end case;
+
+         --  try to coalesce as many things as possible into a single
+         --  text event
+         if Id.Typ = End_Of_Input then
+            if Is_Letter (Parser.Last_Read)
+              or else Parser.Last_Read = Spacing_Underscore
+            then
+               Id.Typ := Name;
+               Put_In_Buffer (Parser, Parser.Last_Read);
+               Next_Char (Input, Parser);
+            else
+               Id.Typ := Text;
+            end if;
          end if;
-      else
-         Put_In_Buffer_Force (Machine, Last_Read);
+
+         if Id.Typ = Name then
+            while Is_Name_Char (Parser.Last_Read) loop
+               Put_In_Buffer (Parser, Parser.Last_Read);
+               Next_Char (Input, Parser);
+            end loop;
+
+         elsif Id.Typ = Text and then Is_Entity_Ref = None then
+            while not Is_White_Space (Parser.Last_Read)
+              and then (not Parser.State.Greater_Special
+                        or else Parser.Last_Read /= Greater_Than_Sign)
+              and then Parser.Last_Read /= Less_Than_Sign
+              and then Parser.Last_Read /= Ampersand
+              and then (not Parser.State.Expand_Param_Entities
+                        or else Parser.Last_Read /= Percent_Sign)
+              and then Parser.Last_Read /= Equals_Sign
+              and then Parser.Last_Read /= Quotation_Mark
+              and then Parser.Last_Read /= Apostrophe
+              and then Parser.Last_Read /= Slash
+              and then (Parser.Last_Read /= Question_Mark
+                        or else not Parser.State.Detect_End_Of_PI)
+            loop
+               Put_In_Buffer (Parser, Parser.Last_Read);
+               Next_Char (Input, Parser);
+            end loop;
+         end if;
+
+         Parser.Ignore_State_Special := False;
+      end if;
+
+      Id.Last := Parser.Buffer_Length;
+
+      if Debug_Lexical then
+         Debug_Print;
+      end if;
+
+      --  Internal entities should be processes inline
+
+      if Is_Entity_Ref /= None then
+         declare
+            N : constant Byte_Sequence := Value (Parser, Id, Id);
+            V : Entity_Entry := Get (Parser.Entities, N);
+            Null_Loc : Locator_Impl;
+         begin
+            Reset_Buffer (Parser, Id);
+            if N = Lt_Sequence then
+               Put_In_Buffer (Parser, Less_Than_Sign);
+               Id.Typ := Text;
+               Id.Last := Parser.Buffer_Length;
+               Next_Char (Input, Parser);
+
+            elsif N = Gt_Sequence then
+               Put_In_Buffer (Parser, Greater_Than_Sign);
+               Id.Typ := Text;
+               Id.Last := Parser.Buffer_Length;
+               Next_Char (Input, Parser);
+
+            elsif N = Amp_Sequence then
+               Put_In_Buffer (Parser, Ampersand);
+               Id.Typ := Text;
+               Id.Last := Parser.Buffer_Length;
+               Next_Char (Input, Parser);
+
+            elsif N = Apos_Sequence then
+               Put_In_Buffer (Parser, Apostrophe);
+               Id.Typ := Text;
+               Id.Last := Parser.Buffer_Length;
+               Next_Char (Input, Parser);
+
+            elsif N = Quot_Sequence then
+               Put_In_Buffer (Parser, Quotation_Mark);
+               Id.Typ := Text;
+               Id.Last := Parser.Buffer_Length;
+               Next_Char (Input, Parser);
+
+            elsif V = Null_Entity then
+               Skipped_Entity (Parser, N);
+               Error (Parser, "[4.1] Undefined entity '" & N & ''', Id);
+               Id.Typ := Text;
+               Id.Last := Id.First - 1;
+               Next_Char (Input, Parser);
+
+            else
+               if Is_Entity_Ref = Entity
+                 and then Parser.Current_Node = null
+                 and then not Parser.State.In_DTD
+               then
+                  Fatal_Error
+                    (Parser,
+                     "[2.1] Entity references can not appear at top-level",
+                     Id);
+
+               --  Else if we are in the internal subset of the DTD, and in
+               --  a context other than a declaration
+               elsif Is_Entity_Ref = Param_Entity
+                 and then not Parser.In_External_Entity
+                 and then Parser.State.Name /= DTD_State.Name
+               then
+                  Fatal_Error
+                    (Parser, "[WF PE in internal subset] Parameter entities"
+                     & " cannot occur in attribute values", Id);
+               end if;
+
+               Close_Inputs;
+
+               --  not in string context
+               if not Parser.State.Ignore_Special then
+                  Start_Entity (Parser, N);
+               end if;
+
+               if V.Already_Read then
+                  Fatal_Error
+                    (Parser, "(4.1) Entity can not reference itself", Id);
+               end if;
+
+               V.Already_Read := True;
+               Set (Parser.Entities, N, V);
+
+               Parser.Element_Id := Parser.Element_Id + 1;
+               Parser.Inputs := new Entity_Input_Source'
+                 (External       => V.External,
+                  Name           => new Byte_Sequence' (N),
+                  Input          => null,
+                  Save_Loc       => Null_Loc,
+                  Id             => Parser.Element_Id,
+                  Handle_Strings => not Parser.State.Ignore_Special,
+                  Next           => Parser.Inputs);
+               Copy (Parser.Inputs.Save_Loc, Parser.Locator.all);
+
+               if V.External then
+                  if Parser.State.Name = Attlist_Str_Def_State.Name
+                    or else Parser.State.Name = Attr_Value_State.Name
+                  then
+                     Fatal_Error
+                       (Parser, "[3.1] Attribute values can not reference"
+                        & " external entities", Id);
+                  end if;
+
+                  declare
+                     URI : constant Byte_Sequence :=
+                       Resolve_URI (Parser, V.Value.all);
+                  begin
+                     Parser.Inputs.Input := new File_Input;
+                     Open (URI, File_Input (Parser.Inputs.Input.all));
+                     Set_System_Id (Parser.Locator.all, URI);
+                     Set_Public_Id (Parser.Locator.all, V.Value.all);
+                     Parser.In_External_Entity := True;
+                  exception
+                     when Name_Error =>
+                        Error (Parser,
+                               "External entity not found: " & URI, Id);
+                  end;
+               else
+                  Parser.Inputs.Input := new String_Input;
+                  Open (V.Value, Encoding,
+                        String_Input (Parser.Inputs.Input.all));
+                  Set_Public_Id (Parser.Locator.all, "entity " & N);
+               end if;
+
+               Set_Public_Id
+                 (Parser.Inputs.Input.all, Get_Public_Id (Parser.Locator.all));
+               Set_Line_Number (Parser.Locator.all, 1);
+               Set_Column_Number
+                 (Parser.Locator.all,
+                  1 + Prolog_Size (Parser.Inputs.Input.all));
+
+               Next_Char (Input, Parser);
+               Next_Token (Input, Parser, Id);
+
+               V.Already_Read := False;
+               Set (Parser.Entities, N, V);
+            end if;
+         end;
       end if;
 
    exception
-      --  ??? Temporary kludge when Space is not encoded on a single byte
-      when Invalid_Encoding =>
-         Put_In_Buffer_Force (Machine, Last_Read);
-   end Put_In_Buffer_No_Multiple_Space_Nor_Newline;
-
-   -------------------------------------
-   -- Put_In_Buffer_No_Multiple_Space --
-   -------------------------------------
-
-   procedure Put_In_Buffer_No_Multiple_Space
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      if Last_Read = Space or else Last_Read = Horizontal_Tabulation then
-         if Machine.Buffer_Length >= Machine.Buffer'First
-           and then Encoding.Read
-              (Machine.Buffer, Machine.Buffer_Length) /= Space
-         then
-            Put_In_Buffer_Force (Machine, Space);
+      when Input_Ended =>
+            --  Make sure we always emit the last characters in the buffer
+         Id.Last := Parser.Buffer_Length;
+         if Debug_Lexical then
+            Debug_Print;
          end if;
-      else
-         Put_In_Buffer (Machine, Last_Read);
-      end if;
-   end Put_In_Buffer_No_Multiple_Space;
 
-   ---------------
-   -- Xml_Error --
-   ---------------
-
-   procedure Xml_Error (Machine   : in out Reader'Class;
-                        Last_Read : Unicode.Unicode_Char) is
-   begin
-      Fatal_Error
-        (Machine, "Invalid character '"
-         & Encoding.Encode (Last_Read) & "'");
-      --  Could also be because we saw a '<' in a text context, when it should
-      --  have been quoted
-   end Xml_Error;
-
-   -----------------------------
-   -- Must_Have_Space_In_Attr --
-   -----------------------------
-
-   procedure Must_Have_Space_In_Attr
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      Fatal_Error (Machine, "(3.1) Attributes must be separated by spaces");
-   end Must_Have_Space_In_Attr;
-
-   --------------------------------
-   -- Must_Have_Equal_After_Attr --
-   --------------------------------
-
-   procedure Must_Have_Equal_After_Attr
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      Fatal_Error (Machine, "(3.1) Attribute names must be followed by '='");
-   end Must_Have_Equal_After_Attr;
-
-   ---------------------
-   -- Attr_Need_Value --
-   ---------------------
-
-   procedure Attr_Need_Value
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char)
-   is
-      Name : constant Byte_Sequence :=
-        Machine.Buffer (1 .. Machine.Buffer_Length);
-   begin
-      --  Test whether what we have so far for the name is valid, since we
-      --  should always report the first error that happened
-      if not Is_Valid_Name (Name) then
-         Fatal_Error (Machine, "(2.3) '" & Name
-                      & "' is not a valid attribute name");
-      end if;
-
-      --  Else there was indeed no value, and we report it
-      Fatal_Error (Machine, "(3.1) Attributes must have an explicit value");
-   end Attr_Need_Value;
-
-   --------------------------------
-   -- Illegal_Char_In_Attr_Value --
-   --------------------------------
-
-   procedure Illegal_Char_In_Attr_Value
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      Fatal_Error (Machine, "(2.3) Attribute values may not contain literal '"
-                   & Encoding.Encode (Last_Read) & "'");
-   end Illegal_Char_In_Attr_Value;
-
-   --------------------------
-   -- Invalid_Ampersand --
-   --------------------------
-
-   procedure Invalid_Ampersand
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      Fatal_Error
-        (Machine,
-         "(2.3, 2.4) literal '&' invalid in this context. Use &amp; instead");
-   end Invalid_Ampersand;
-
-   ------------------------------
-   -- Seen_Quote_In_Attr_Value --
-   ------------------------------
-
-   procedure Seen_Quote_In_Attr_Value
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      Put_In_Buffer (Machine, Last_Read);
-      Machine.Processing := Attr_Value;
-      Copy (Machine.Processing_Start.all, Machine.Locator.all);
-   end Seen_Quote_In_Attr_Value;
-
-   ----------------------
-   -- Attr_Quote_Error --
-   ----------------------
-
-   procedure Attr_Quote_Error (Machine   : in out Reader'Class;
-                               Last_Read : Unicode.Unicode_Char) is
-   begin
-      Fatal_Error (Machine, "(2.3) Attribute values must be quoted");
-   end Attr_Quote_Error;
-
-   -----------------------------
-   -- End_Of_Start_Gi_And_Tag --
-   -----------------------------
-
-   procedure End_Of_Start_Gi_And_Tag (Machine : in out Reader'Class;
-                                      Last_Read : Unicode.Unicode_Char) is
-   begin
-      End_Of_Start_Gi (Machine, Last_Read);
-      End_Of_Start_Tag (Machine, Last_Read);
-   end End_Of_Start_Gi_And_Tag;
-
-   --------------------
-   -- End_Of_Comment --
-   --------------------
-
-   procedure End_Of_Comment (Machine   : in out Reader'Class;
-                             Last_Read : Unicode.Unicode_Char) is
-   begin
-      --  Report the comment (and ignore the ! character at the beginning
-      --  of the buffer).
-      Comment (Machine, Machine.Buffer (2 .. Machine.Buffer_Length));
-
-      Machine.Processing := None;
-      Machine.Buffer_Length := 0;
-
-      --  Register the PI if at the top-level, so that we can correctly
-      --  report that <?xml?> must be first in the document
-      if Machine.Current_Node = null then
-         Machine.Num_Items := Machine.Num_Items + 1;
-      end if;
-   end End_Of_Comment;
-
-   ----------------------
-   -- Start_Of_Comment --
-   ----------------------
-
-   procedure Start_Of_Comment (Machine   : in out Reader'Class;
-                               Last_Read : Unicode.Unicode_Char) is
-   begin
-      --  Point to the opening < instead of the current <!--, necessarily on
-      --  the same line
-      Machine.Processing := Comment;
-      Copy (Machine.Processing_Start.all, Machine.Locator.all);
-      Set_Column_Number (Machine.Processing_Start.all,
-                         Get_Column_Number (Machine.Processing_Start.all) - 3);
-   end Start_Of_Comment;
+         if Id.Typ = Cdata_Section then
+            Fatal_Error
+              (Parser, "[2.7] CDATA sections must end with ']]>'", Id);
+         elsif Id.Typ = Comment then
+            Fatal_Error
+              (Parser, "[2.5] Comments must end with '-->'", Id);
+         end if;
+   end Next_Token;
 
    ----------------------------
-   -- Double_Dash_In_Comment --
+   -- Next_Token_Skip_Spaces --
    ----------------------------
 
-   procedure Double_Dash_In_Comment
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
+   procedure Next_Token_Skip_Spaces
+     (Input  : in out Input_Sources.Input_Source'Class;
+      Parser : in out Reader'Class;
+      Id     : out Token;
+      Must_Have : Boolean := False) is
    begin
-      Machine.Processing := None;
-      Fatal_Error (Machine, "(2.5) '--' is not valid inside comments");
-   end Double_Dash_In_Comment;
-
-   --------------------------
-   -- Start_Of_Declaration --
-   --------------------------
-
-   procedure Start_Of_Declaration
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      Machine.Declaration_Start := Machine.Buffer_Length + 1;
-      Put_In_Buffer (Machine, Last_Read);
-      Machine.Processing := Declaration;
-
-      --  Point to the opening < instead of the current !, necessarily on the
-      --  same line
-      Copy (Machine.Processing_Start.all, Machine.Locator.all);
-      Set_Column_Number (Machine.Processing_Start.all,
-                         Get_Column_Number (Machine.Processing_Start.all) - 1);
-   end Start_Of_Declaration;
-
-   ---------------
-   -- Skip_Name --
-   ---------------
-
-   procedure Skip_Name
-     (Str        : Byte_Sequence;
-      Index      : in out Natural;
-      Name_Start : out Natural;
-      Name_End   : out Natural;
-      Is_Nmtoken : Boolean := False)
-   is
-      C : Unicode_Char := Encoding.Read (Str, Index);
-   begin
-      Name_Start := Index;
-      if not Is_Nmtoken
-        and then not (C = Colon
-                      or else C = Spacing_Underscore
-                      or else Is_Letter (C))
-      then
-         raise Invalid_Character;
+      Next_Token (Input, Parser, Id);
+      if Must_Have and then Id.Typ /= Space then
+         Fatal_Error (Parser, "Expecting a space", Id);
       end if;
-      Index := Index + Encoding.Width (C);
-
-      while Index <= Str'Last loop
-         C := Encoding.Read (Str, Index);
-         exit when not Is_Name_Char (C);
-         Index := Index + Encoding.Width (C);
+      while Id.Typ = Space loop
+         Reset_Buffer (Parser, Id);
+         Next_Token (Input, Parser, Id);
       end loop;
+   end Next_Token_Skip_Spaces;
 
-      Name_End := Index - 1;
-   end Skip_Name;
+   ------------------
+   -- Reset_Buffer --
+   ------------------
 
-   -------------------------
-   -- Parse_Element_Model --
-   -------------------------
-
-   function Parse_Element_Model (Model : Unicode.CES.Byte_Sequence)
-      return Element_Model_Ptr
-   is
-      Parsed : Element_Model_Ptr;
-      Index : Natural := Model'First;
+   procedure Reset_Buffer
+     (Parser : in out Reader'Class; Id : Token := Null_Token) is
    begin
-      Parse_Element_Model (Model, Index, Parsed);
+      Parser.Buffer_Length := Id.First - 1;
+   end Reset_Buffer;
 
-      --  Error if there are some remaining characters at the end
-      if Index < Model'Last then
-         Free (Parsed);
-         raise Invalid_Content_Model;
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Parser : Reader'Class; From, To : Token)
+      return Unicode.CES.Byte_Sequence is
+   begin
+      if To = Null_Token then
+         return "";
+      else
+         pragma Assert (Parser.Buffer_Length >= To.Last);
+         return Parser.Buffer (From.First .. To.Last);
       end if;
+   end Value;
 
-      return Parsed;
-   end Parse_Element_Model;
+   ---------------
+   -- Set_State --
+   ---------------
+
+   procedure Set_State
+     (Parser : in out Reader'Class; State : Parser_State) is
+   begin
+      Parser.State := State;
+   end Set_State;
+
+   ---------------
+   -- Get_State --
+   ---------------
+
+   function Get_State (Parser : Reader'Class) return Parser_State is
+   begin
+      return Parser.State;
+   end Get_State;
 
    -------------------------
    -- Parse_Element_Model --
    -------------------------
 
    procedure Parse_Element_Model
-     (Model  : Unicode.CES.Byte_Sequence;
-      Index  : in out Natural;
-      Result : out Element_Model_Ptr;
-      Nmtokens : Boolean := False)
+     (Input   : in out Input_Source'Class;
+      Parser  : in out Reader'Class;
+      Result  : out Element_Model_Ptr;
+      Nmtokens : Boolean := False;
+      Attlist : Boolean := False;
+      Open_Was_Read : Boolean)
    is
       --  ??? Would be nice to get rid of this hard-coded limitation in stacks
       Stack_Size : constant Natural := 64;
@@ -2293,51 +2266,112 @@ package body Sax.Readers is
       Operator_Index : Natural := Operator_Stack'First;
       Num_Items : Positive;
       Current_Item, Current_Operand : Natural;
-      Expect_Operator : Boolean := True;
-      C : Unicode_Char;
-      Start_Sub, End_Sub : Natural;
+      Expect_Operator : Boolean := not Open_Was_Read;
+      Start_Sub : Natural;
       M : Element_Model_Ptr;
+      Found : Boolean;
+      Start_Id : constant Natural := Input_Id (Parser);
+      Start_Token : Token;
+      Test_Multiplier : Boolean;
+      Can_Be_Mixed : Boolean;
 
    begin
-      Skip_Spaces (Model, Index);
-      C := Encoding.Read (Model, Index);
-      if C /= Opening_Parenthesis then
-         raise Invalid_Content_Model;
+      Start_Token.Line := Get_Line_Number (Parser.Locator.all);
+      Start_Token.Column := Get_Column_Number (Parser.Locator.all) - 1;
+
+      if Open_Was_Read then
+         --  Insert the opening parenthesis into the operators stack
+         Operator_Stack (Operator_Stack'First) := Opening_Parenthesis;
+         Operator_Index := Operator_Index + 1;
+         Start_Token.Column := Start_Token.Column - 1;
       end if;
 
+      while Is_White_Space (Parser.Last_Read) loop
+         Next_Char (Input, Parser);
+      end loop;
+
       loop
+         if Input_Id (Parser) /= Start_Id then
+            Fatal_Error (Parser, "[4.5] Entity values must be self-contained",
+                         Start_Token);
+         end if;
+
+         Test_Multiplier := False;
+
          --  Process the operator
-         case C is
+         case Parser.Last_Read is
             when Opening_Parenthesis =>
-               Operator_Stack (Operator_Index) := C;
+               Operator_Stack (Operator_Index) := Parser.Last_Read;
                Operator_Index := Operator_Index + 1;
                Expect_Operator := False;
-               Index := Index + Encoding.Width (C);
+               Next_Char (Input, Parser);
 
             when Closing_Parenthesis =>
                Num_Items := 1;
                Current_Item := Operator_Index - 1;
                Current_Operand := Operand_Index - 1;
+               Can_Be_Mixed :=  Current_Operand >= Operand_Stack'First and then
+                 (Operand_Stack (Current_Operand).Content = Character_Data
+                  or else Operand_Stack (Current_Operand).Content
+                  = Element_Ref);
+
+               if Current_Operand >= Operand_Stack'First
+                 and then Is_Mixed (Operand_Stack (Current_Operand))
+               then
+                  Fatal_Error
+                    (Parser, "[3.2.1] Mixed contents can not be used in"
+                     & " a list or a sequence");
+               end if;
+
                while Current_Item >= Operator_Stack'First
                  and then Operator_Stack (Current_Item) /= Opening_Parenthesis
                loop
                   if Operator_Stack (Current_Item) /= Comma
                     and then Operator_Stack (Current_Item) /= Vertical_Line
                   then
-                     raise Invalid_Content_Model;
+                     Fatal_Error
+                       (Parser, "Invalid content model", Start_Token);
+                  end if;
+
+                  Current_Operand := Current_Operand - 1;
+
+                  if Operand_Stack (Current_Operand).Content /= Character_Data
+                    and then
+                    Operand_Stack (Current_Operand).Content /= Element_Ref
+                  then
+                     Can_Be_Mixed := False;
+                  end if;
+
+                  if Is_Mixed (Operand_Stack (Current_Operand)) then
+                     Fatal_Error
+                       (Parser, "[3.2.1] Mixed contents can not be used in"
+                        & " a list or a sequence");
                   end if;
 
                   Num_Items := Num_Items + 1;
                   Current_Item := Current_Item - 1;
-                  Current_Operand := Current_Operand - 1;
                end loop;
                if Current_Item < Operator_Stack'First then
-                  raise Invalid_Content_Model;
+                  Fatal_Error (Parser, "Invalid content model", Start_Token);
+               end if;
+               if Current_Operand < Operand_Stack'First then
+                  Fatal_Error
+                    (Parser, "Invalid content model: "
+                     & "List of choices cannot be empty", Start_Token);
                end if;
 
                if Operator_Stack (Operator_Index - 1) = Comma then
                   M := new Element_Model (Sequence);
                else
+                  if not Can_Be_Mixed
+                    and then Operand_Stack (Current_Operand).Content
+                     = Character_Data
+                  then
+                     Fatal_Error
+                       (Parser, "[3.2.2] Nested groups and occurence operators"
+                        & " not allowed in mixed content");
+                  end if;
+
                   M := new Element_Model (Any_Of);
                end if;
                M.List := new Element_Model_Array (1 .. Num_Items);
@@ -2348,100 +2382,235 @@ package body Sax.Readers is
                Operand_Stack (Current_Operand) := M;
                Operator_Index := Current_Item;
                Expect_Operator := False;
-               Index := Index + Encoding.Width (C);
+               Next_Char (Input, Parser);
+               Test_Multiplier := True;
 
             when Comma | Vertical_Line =>
+               if Attlist and then Parser.Last_Read = Comma then
+                  Fatal_Error
+                    (Parser,
+                     "[3.3.1] Invalid character ',' in ATTLIST enumeration");
+               end if;
+
+               if Parser.Last_Read = Comma
+                 and then Operator_Stack (Operator_Index - 1)
+                   = Opening_Parenthesis
+                 and then Operand_Stack (Operand_Index - 1).Content
+                   = Character_Data
+               then
+                  Fatal_Error
+                    (Parser,
+                     "[3.2.2] #PCDATA can only be used with '|' connectors");
+               end if;
+
                if Operator_Index = Operator_Stack'First
                  or else
-                 (Operator_Stack (Operator_Index - 1) /= C
+                 (Operator_Stack (Operator_Index - 1) /= Parser.Last_Read
                   and then
                   Operator_Stack (Operator_Index - 1) /= Opening_Parenthesis)
                then
-                  raise Invalid_Content_Model;
+                  Fatal_Error
+                    (Parser, "Can't mix ',' and '|' in content model");
                end if;
-               Operator_Stack (Operator_Index) := C;
+               Operator_Stack (Operator_Index) := Parser.Last_Read;
                Operator_Index := Operator_Index + 1;
                Expect_Operator := False;
-               Index := Index + Encoding.Width (C);
+               Next_Char (Input, Parser);
 
-            when Star =>
-               if Operand_Index = Operand_Stack'First then
-                  raise Invalid_Content_Model;
-               end if;
-               Operand_Stack (Operand_Index - 1) := new Element_Model'
-                 (Repeat, 0, Positive'Last, Operand_Stack (Operand_Index - 1));
-               Expect_Operator := False;
-               Index := Index + Encoding.Width (C);
+            when Star | Question_Mark | Plus_Sign =>
+               Fatal_Error
+                 (Parser, "[3.2.1] Invalid location '+', '?' or '*' "
+                  & "operator", Start_Token);
 
-            when Plus_Sign =>
-               if Operand_Index = Operand_Stack'First then
-                  raise Invalid_Content_Model;
-               end if;
-               Operand_Stack (Operand_Index - 1) := new Element_Model'
-                 (Repeat, 1, Positive'Last, Operand_Stack (Operand_Index - 1));
-               Expect_Operator := False;
-               Index := Index + Encoding.Width (C);
-
-            when Question_Mark =>
-               if Operand_Index = Operand_Stack'First then
-                  raise Invalid_Content_Model;
-               end if;
-               Operand_Stack (Operand_Index - 1) := new Element_Model'
-                 (Repeat, 0, 1, Operand_Stack (Operand_Index - 1));
-               Expect_Operator := False;
-               Index := Index + Encoding.Width (C);
-
-            when others =>
+            when Number_Sign =>
                if Expect_Operator then
-                  raise Invalid_Content_Model;
+                  Fatal_Error (Parser, "Invalid content model", Start_Token);
                end if;
                Expect_Operator := True;
 
                --  #PCDATA can only be the first element of a choice list
-               --  ??? Note that in the case the Choice model can only be a
+               --  ??? Note that in that case the Choice model can only be a
                --  list of names, not a parenthesis expression.
-               if Operator_Index > Operator_Stack'First
-                 and then Operator_Stack (Operator_Index - 1)
-                 = Opening_Parenthesis
-                 and then Index + Pcdata_Sequence'Length - 1 <= Model'Last
-                 and then Model (Index .. Index + Pcdata_Sequence'Length - 1)
-                 = Pcdata_Sequence
+               Start_Sub := Parser.Buffer_Length + 1;
+
+               Next_Char (Input, Parser);
+               Found := (Parser.Last_Read = Latin_Capital_Letter_P);
+               if Found then
+                  Next_Char (Input, Parser);
+                  Found := (Parser.Last_Read = Latin_Capital_Letter_C);
+                  if Found then
+                     Next_Char (Input, Parser);
+                     Found := (Parser.Last_Read = Latin_Capital_Letter_D);
+                     if Found then
+                        Next_Char (Input, Parser);
+                        Found := (Parser.Last_Read = Latin_Capital_Letter_A);
+                        if Found then
+                           Next_Char (Input, Parser);
+                           Found :=
+                             (Parser.Last_Read = Latin_Capital_Letter_T);
+                           if Found then
+                              Next_Char (Input, Parser);
+                              Found :=
+                                (Parser.Last_Read = Latin_Capital_Letter_A);
+                           end if;
+                        end if;
+                     end if;
+                  end if;
+               end if;
+
+               if not Found then
+                  Fatal_Error
+                    (Parser, "[WF] Invalid sequence in content model",
+                     Start_Token);
+               end if;
+
+               if Operator_Stack (Operator_Index - 1)
+                 /= Opening_Parenthesis
                then
-                  Index := Index + Pcdata_Sequence'Length;
-                  Operand_Stack (Operand_Index) :=
-                    new Element_Model (Character_Data);
-                  Operand_Index := Operand_Index + 1;
-               else
-                  Skip_Name (Model, Index, Start_Sub, End_Sub, Nmtokens);
-                  Operand_Stack (Operand_Index) :=
-                    new Element_Model (Element_Ref);
-                  Operand_Stack (Operand_Index).Name :=
-                    new Byte_Sequence' (Model (Start_Sub .. End_Sub));
+                  Fatal_Error
+                    (Parser, "[3.2.2] #PCDATA must be first in list");
+               end if;
+
+               Next_Char (Input, Parser);
+               Operand_Stack (Operand_Index) :=
+                 new Element_Model (Character_Data);
+               Operand_Index := Operand_Index + 1;
+               Parser.Buffer_Length := Start_Sub - 1;
+
+            when Percent_Sign =>
+               if not Parser.In_External_Entity
+                 and then Parser.State.Name /= DTD_State.Name
+               then
+                  Fatal_Error
+                    (Parser, "[WF PE in internal subset] Parameter entities"
+                     & " cannot occur in attribute values");
+               end if;
+
+               Expect_Operator := True;
+               Start_Sub := Parser.Buffer_Length + 1;
+
+               while Parser.Last_Read /= Semicolon loop
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Next_Char (Input, Parser);
+               end loop;
+               Next_Char (Input, Parser);
+
+               Parse_Element_Model_From_Entity
+                    (Parser, Parser.Buffer (Start_Sub .. Parser.Buffer_Length),
+                     Operand_Stack (Operand_Index), Attlist);
+               if Operand_Stack (Operand_Index) /= null then
                   Operand_Index := Operand_Index + 1;
                end if;
+               Parser.Buffer_Length := Start_Sub - 1;
+               Test_Multiplier := True;
+
+            when others =>
+               if Expect_Operator then
+                  Fatal_Error  (Parser, "Expecting operator in content model");
+               end if;
+               Expect_Operator := True;
+
+               --  ??? Should test Is_Nmtoken
+               Start_Sub := Parser.Buffer_Length + 1;
+
+               while Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
+                 or else Is_Name_Char (Parser.Last_Read)
+               loop
+                  Put_In_Buffer (Parser, Parser.Last_Read);
+                  Next_Char (Input, Parser);
+               end loop;
+
+               if Start_Sub > Parser.Buffer_Length then
+                  Fatal_Error (Parser, "Invalid name in content model: "
+                               & Encoding.Encode (Parser.Last_Read),
+                               Start_Token);
+               end if;
+
+               Operand_Stack (Operand_Index) :=
+                 new Element_Model (Element_Ref);
+               Operand_Stack (Operand_Index).Name := new Byte_Sequence'
+                 (Parser.Buffer (Start_Sub .. Parser.Buffer_Length));
+               Operand_Index := Operand_Index + 1;
+               Parser.Buffer_Length := Start_Sub - 1;
+               Test_Multiplier := True;
+
          end case;
 
-         Skip_Spaces (Model, Index);
+         if Test_Multiplier then
+            case Parser.Last_Read is
+               when Star =>
+                  if Operand_Index = Operand_Stack'First then
+                     Fatal_Error
+                       (Parser, "'*' must follow a name or list");
+                  end if;
+                  Operand_Stack (Operand_Index - 1) := new Element_Model'
+                    (Repeat, 0, Positive'Last,
+                     Operand_Stack (Operand_Index - 1));
+                  Expect_Operator := True;
+                  Next_Char (Input, Parser);
 
-         exit when Index > Model'Last;
+               when Plus_Sign =>
+                  if Operand_Index = Operand_Stack'First then
+                     Fatal_Error
+                       (Parser, "'+' must follow a name or list");
+                  end if;
+                  if Is_Mixed (Operand_Stack (Operand_Index - 1)) then
+                     Fatal_Error
+                       (Parser, "[3.2.2] Occurence on #PCDATA must be '*'");
+                  end if;
 
-         C := Encoding.Read (Model, Index);
+                  Operand_Stack (Operand_Index - 1) := new Element_Model'
+                    (Repeat, 1,
+                     Positive'Last, Operand_Stack (Operand_Index - 1));
+                  Expect_Operator := True;
+                  Next_Char (Input, Parser);
+
+               when Question_Mark =>
+                  if Operand_Index = Operand_Stack'First then
+                     Fatal_Error
+                       (Parser, "'?' must follow a name or list");
+                  end if;
+                  if Is_Mixed (Operand_Stack (Operand_Index - 1)) then
+                     Fatal_Error
+                       (Parser, "[3.2.2] Occurence on #PCDATA must be '*'");
+                  end if;
+                  Operand_Stack (Operand_Index - 1) := new Element_Model'
+                    (Repeat, 0, 1, Operand_Stack (Operand_Index - 1));
+                  Expect_Operator := True;
+                  Next_Char (Input, Parser);
+
+               when others => null;
+            end case;
+         end if;
+
          exit when Operator_Index = Operator_Stack'First
-           and then Operand_Index = Operand_Stack'First + 1
-           and then C /= Star
-           and then C /= Plus_Sign
-           and then C /= Question_Mark;
+           and then Operand_Index = Operand_Stack'First + 1;
+
+         while Is_White_Space (Parser.Last_Read) loop
+            Next_Char (Input, Parser);
+         end loop;
       end loop;
 
       if Operator_Index /= Operator_Stack'First
         or else Operand_Index /= Operand_Stack'First + 1
       then
-         raise Invalid_Content_Model;
+         Fatal_Error (Parser, "Invalid content model", Start_Token);
       end if;
 
       Result := Operand_Stack (Operand_Stack'First);
 
    exception
+      when Input_Ended =>
+         if Operator_Index /= Operator_Stack'First
+           or else Operand_Index /= Operand_Stack'First + 1
+         then
+            for J in Operand_Stack'First .. Operand_Index - 1 loop
+               Free (Operand_Stack (J));
+            end loop;
+            Fatal_Error (Parser, "Invalid content model", Start_Token);
+         end if;
+         Result := Operand_Stack (Operand_Stack'First);
+
       when others =>
          for J in Operand_Stack'First .. Operand_Index - 1 loop
             Free (Operand_Stack (J));
@@ -2449,828 +2618,1301 @@ package body Sax.Readers is
          raise;
    end Parse_Element_Model;
 
-   ---------------
-   -- To_String --
-   ---------------
+   -------------------------------------
+   -- Parse_Element_Model_From_Entity --
+   -------------------------------------
 
-   function To_String (Model : Element_Model)
-      return Unicode.CES.Byte_Sequence
+   procedure Parse_Element_Model_From_Entity
+     (Parser : in out Reader'Class;
+      Name   : Byte_Sequence;
+      M      : out Element_Model_Ptr;
+      Attlist : Boolean := False)
    is
-      Str : Unbounded_String;
+      Loc : Locator_Impl;
+      Last : constant Unicode_Char := Parser.Last_Read;
+      Input_S : String_Input;
+      Val : Entity_Entry := Get (Parser.Entities, Name);
    begin
-      case Model.Content is
-         when Character_Data =>
-            return Pcdata_Sequence;
+      if Val = Null_Entity then
+         Put_Line ("Unknown entity " & Name);
+         M := null;
 
-         when Empty =>
-            return Empty_Sequence;
+      elsif Val.Value.all = "" then
+         M := null;
 
-         when Anything =>
-            return Any_Sequence;
-
-         when Element_Ref =>
-            return Model.Name.all;
-
-         when Any_Of | Sequence =>
-            for J in Model.List'Range loop
-               if Model.List (J).Content = Character_Data
-                 and then (Model.Content = Sequence
-                           or else J /= Model.List'First)
-               then
-                  raise Invalid_Content_Model;
-               end if;
-
-               if Model.List (J).Content = Anything
-                 or else Model.List (J).Content = Empty
-               then
-                  raise Invalid_Content_Model;
-               end if;
-
-               Append (Str, To_String (Model.List (J).all));
-               if J /= Model.List'Last then
-                  if Model.Content = Any_Of then
-                     Append (Str, Encoding.Encode (Vertical_Line));
-                  else
-                     Append (Str, Encoding.Encode (Comma));
-                  end if;
-               end if;
-            end loop;
-            return Encoding.Encode (Opening_Parenthesis)
-              & To_String (Str) & Encoding.Encode (Closing_Parenthesis);
-
-         when Repeat =>
-            if Model.Elem.Content = Anything
-              or else Model.Elem.Content = Empty
-            then
-               raise Invalid_Content_Model;
-            end if;
-
-            if Model.Min = 0 and then Model.Max = Positive'Last then
-               return To_String (Model.Elem.all) & Encoding.Encode (Star);
-            elsif Model.Min = 0 and then Model.Max = 1 then
-               return To_String (Model.Elem.all)
-                 & Encoding.Encode (Question_Mark);
-            elsif Model.Min = 1 and then Model.Max = Positive'Last then
-               return To_String (Model.Elem.all) & Encoding.Encode (Plus_Sign);
-            else
-               raise Invalid_Content_Model;
-            end if;
-      end case;
-   end To_String;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Model : in out Element_Model_Ptr) is
-      procedure Free is new Unchecked_Deallocation
-        (Element_Model_Array, Element_Model_Array_Ptr);
-      procedure Internal is new Unchecked_Deallocation
-        (Element_Model, Element_Model_Ptr);
-   begin
-      case Model.Content is
-         when Character_Data | Anything | Empty => null;
-         when Element_Ref =>
-            Free (Model.Name);
-         when Any_Of | Sequence =>
-            for J in Model.List'Range loop
-               Free (Model.List (J));
-            end loop;
-            Free (Model.List);
-         when Repeat =>
-            Free (Model.Elem);
-      end case;
-      Internal (Model);
-   end Free;
-
-   --------------------------------
-   -- End_Of_Element_Declaration --
-   --------------------------------
-
-   procedure End_Of_Element_Declaration (Machine : in out Reader'Class) is
-      Index : Natural := Machine.Buffer'First + Element_Sequence'Length;
-      Name_Start, Name_End : Natural;
-      Model_Start, Model_End : Natural;
-      Model : Element_Model_Ptr;
-
-   begin
-      Skip_Spaces (Machine.Buffer, Index);
-      Skip_Name (Machine.Buffer (Index .. Machine.Buffer_Length), Index,
-                 Name_Start, Name_End);
-      if not Is_White_Space (Encoding.Read (Machine.Buffer, Index)) then
-         Fatal_Error (Machine, "(4.2) Invalid character in name");
-      end if;
-      Skip_Spaces (Machine.Buffer, Index);
-
-      --  Is model EMPTY (following by space or end-of-string) ?
-      if Looking_At (Machine, Index, Empty_Sequence) then
-         Model_Start := Index;
-         Index := Index + Empty_Sequence'Length;
-         Model_End := Index - 1;
-         Model := new Element_Model (Empty);
-
-      --  Is model ANY (following by space or end-of-string) ?
-      elsif Looking_At (Machine, Index, Any_Sequence) then
-         Model_Start := Index;
-         Index := Index + Any_Sequence'Length;
-         Model_End := Index - 1;
-         Model := new Element_Model (Anything);
-
-      --  Is the model a parenthesis expression ?
       else
-         Model := Parse_Element_Model
-           (Machine.Buffer (Index .. Machine.Buffer_Length));
+         Copy (Loc, Parser.Locator.all);
+         Set_Line_Number (Parser.Locator.all, 1);
+         Set_Column_Number (Parser.Locator.all, 1);
+         Set_Public_Id (Parser.Locator.all, "entity " & Name);
+
+         Open (Val.Value, Encoding, Input_S);
+         Next_Char (Input_S, Parser);
+         Parse_Element_Model (Input_S, Parser, M, False, Attlist, False);
+         Close (Input_S);
+
+         Copy (Parser.Locator.all, Loc);
+         Free (Loc);
+         Parser.Last_Read := Last;
       end if;
+   end Parse_Element_Model_From_Entity;
 
-      if Model.Content = Empty or else Model.Content = Anything then
-         Skip_Spaces (Machine.Buffer, Index);
-         if Index <= Machine.Buffer_Length then
-            Fatal_Error
-              (Machine, "(3.2) Unexpected characters in declaration");
-         end if;
-      end if;
+   ---------------------
+   -- Syntactic_Parse --
+   ---------------------
 
-      Element_Decl
-        (Machine,
-         Machine.Buffer (Name_Start .. Name_End),
-         To_String (Model.all),
-         Model);
-      Free (Model);
+   procedure Syntactic_Parse
+     (Parser : in out Reader'Class;
+      Input  : in out Input_Sources.Input_Source'Class)
+   is
+      Id  : Token := Null_Token;
 
-   exception
-      when Invalid_Content_Model =>
-         Fatal_Error
-           (Machine, "(3.2) Invalid model for <!ELEMENT> declaration");
-   end End_Of_Element_Declaration;
+      procedure Parse_Start_Tag;
+      --  Process an element start and its attributes   <!name name="value"..>
 
-   ---------------------------------
-   -- End_Of_Notation_Declaration --
-   ---------------------------------
+      procedure Parse_End_Tag;
+      --  Process an element end   </name>
 
-   procedure End_Of_Notation_Declaration (Machine : in out Reader'Class) is
-      Index : Natural := Machine.Buffer'First + Notation_Sequence'Length;
-      Name_Start, Name_End : Natural;
-      System_Start, System_End : Natural;
-      Public_Start, Public_End : Natural;
-   begin
-      Skip_Spaces (Machine.Buffer, Index);
-      Skip_Name (Machine.Buffer (Index .. Machine.Buffer_Length), Index,
-                 Name_Start, Name_End);
-      Parse_External_Id
-        (Machine, Index, Public_Start, Public_End, System_Start, System_End);
-      Notation_Decl
-        (Machine,
-         Machine.Buffer (Name_Start .. Name_End),
-         Machine.Buffer (Public_Start .. Public_End),
-         Machine.Buffer (System_Start .. System_End));
-   end End_Of_Notation_Declaration;
+      procedure Parse_Doctype;
+      --  Process the DTD declaration
 
-   --------------------------------
-   -- End_Of_Attlist_Declaration --
-   --------------------------------
+      procedure Parse_Doctype_Contents;
+      --  Process the DTD's contents
 
-   procedure End_Of_Attlist_Declaration (Machine : in out Reader'Class) is
-      Index : Natural := Machine.Buffer'First + Attlist_Sequence'Length;
-      Element_Start, Element_End : Natural;
-      Name_Start, Name_End : Natural;
-      Type_Start, Type_End : Natural;
-      Default_Type_Start, Default_Type_End : Natural;
-      Default_Start, Default_End : Natural;
-      Model : Element_Model_Ptr;
-      Has_Notation : Boolean := False;
-      Attr : Attributes_Ptr;
-   begin
-      Skip_Spaces (Machine.Buffer, Index);
-      Skip_Name (Machine.Buffer (Index .. Machine.Buffer_Length), Index,
-                 Element_Start, Element_End);
+      procedure Parse_Entity_Def (Id : in out Token);
+      --  Parse an <!ENTITY declaration
 
-      while Index < Machine.Buffer_Length loop
-         Skip_Spaces (Machine.Buffer, Index);
-         exit when Index >= Machine.Buffer_Length;
+      procedure Parse_Element_Def (Id : in out Token);
+      --  Parse an <!ELEMENT declaration
 
-         Skip_Name (Machine.Buffer (Index .. Machine.Buffer_Length), Index,
-                    Name_Start, Name_End);
-         Skip_Spaces (Machine.Buffer, Index);
-         Type_Start := Index;
+      procedure Parse_Notation_Def (Id : in out Token);
+      --  Parse an <!NOTATION declaration
 
-         if Looking_At (Machine, Index, Cdata_Attlist_Sequence) then
-            Index := Index + Cdata_Attlist_Sequence'Length;
-         elsif Looking_At (Machine, Index, Idrefs_Sequence) then
-            Index := Index + Idrefs_Sequence'Length;
-         elsif Looking_At (Machine, Index, Idref_Sequence) then
-            Index := Index + Idref_Sequence'Length;
-         elsif Looking_At (Machine, Index, Id_Sequence) then
-            Index := Index + Id_Sequence'Length;
-         elsif Looking_At (Machine, Index, Entities_Sequence) then
-            Index := Index + Entities_Sequence'Length;
-         elsif Looking_At (Machine, Index, Entity_Attlist_Sequence) then
-            Index := Index + Entity_Attlist_Sequence'Length;
-         elsif Looking_At (Machine, Index, Nmtokens_Sequence) then
-            Index := Index + Nmtokens_Sequence'Length;
-         elsif Looking_At (Machine, Index, Nmtoken_Sequence) then
-            Index := Index + Nmtoken_Sequence'Length;
-         else
-            if Looking_At (Machine, Index, Notation_Attlist_Sequence) then
-               Index := Index + Notation_Attlist_Sequence'Length;
-               Skip_Spaces
-                 (Machine.Buffer (Index .. Machine.Buffer_Length), Index);
-               Has_Notation := True;
-            end if;
+      procedure Parse_Attlist_Def (Id : in out Token);
+      --  Parse an <!ATTLIST declaration
 
-            if Encoding.Read (Machine.Buffer, Index) = Opening_Parenthesis then
-               Parse_Element_Model
-                 (Machine.Buffer (Index .. Machine.Buffer_Length),
-                  Index, Model,
-                 Nmtokens => not Has_Notation);
+      procedure Parse_PI (Id : in out Token);
+      --  Parse a <?...?> processing instruction
 
-               if Model.Content /= Any_Of then
-                  Free (Model);
-                  Fatal_Error
-                    (Machine,
-                     "(3.3.1) Expecting an enumeration for attribute");
-               end if;
+      procedure End_Element (NS_Id, Name_Id : Token);
+      --  End the current element. Its namespace prefix and local_name are
+      --  given in the parameters.
 
-               for J in Model.List'Range loop
-                  if Model.List (J).Content /= Element_Ref then
-                     Free (Model);
+      procedure Get_String
+        (Id : in out Token;
+         State : Parser_State;
+         Str_Start, Str_End : out Token;
+         Normalize : Boolean := False);
+      --  Get all the character till the end of the string. Id should contain
+      --  the initial quote that starts the string.
+      --  On exit, Str_Start is set to the first token of the string, and
+      --  Str_End to the last token.
+
+      procedure Get_Name_NS (Id : in out Token; NS_Id, Name_Id : out Token);
+      --  Read the next tokens so as to match either a single name or
+      --  a "ns:name" name.
+      --  Id should initially point to the candidate token for the name, and
+      --  will be left on the token following that name.
+      --  An error is raised if we can't even match a Name.
+
+      procedure Get_External
+        (Id : in out Token;
+         System_Start, System_End, Public_Start, Public_End : out Token;
+         Allow_Publicid : Boolean := False);
+      --  Parse a PUBLIC or SYSTEM definition and its arguments.
+      --  Id should initially point to the keyword itself, and will be set to
+      --  the first identifier following the full definition
+      --  If Allow_Publicid is True, then PUBLIC might be followed by a single
+      --  string, as in rule [83] of the XML specifications.
+
+      procedure Check_Standalone_Value;
+      procedure Check_Encoding_Value;
+      procedure Check_Version_Value;
+      --  Check the arguments for the <?xml?> processing instruction.
+      --  Each of this procedures gets the arguments from Next_Token, up to,
+      --  and including, the following space or End_Of_PI character.
+      --  They raise errors appropriately
+
+      procedure Check_Model;
+      --  Check that the last element inserted matches the model. This
+      --  procedure should not be called for the root element.
+
+      ----------------
+      -- Get_String --
+      ----------------
+
+      procedure Get_String
+        (Id : in out Token;
+         State : Parser_State;
+         Str_Start, Str_End : out Token;
+         Normalize : Boolean := False)
+      is
+         T : constant Token := Id;
+         Saved_State : constant Parser_State := Get_State (Parser);
+         Possible_End : Token := Null_Token;
+         C : Unicode_Char;
+         Index : Natural;
+         Last_Space : Natural := 0;
+         Had_Space : Boolean := Normalize;  --  Avoid leading spaces
+
+      begin
+         Set_State (Parser, State);
+         Next_Token (Input, Parser, Id);
+         Str_Start := Id;
+         Str_End := Id;
+
+         while Id.Typ /= T.Typ and then Id.Typ /= End_Of_Input loop
+            Str_End := Id;
+            case Id.Typ is
+               when Double_String_Delimiter =>
+                  Str_End.First := Parser.Buffer_Length + 1;
+                  Put_In_Buffer (Parser, Quotation_Mark);
+                  Str_End.Last := Parser.Buffer_Length;
+                  Possible_End := Str_End;
+                  Had_Space := False;
+               when Single_String_Delimiter =>
+                  Str_End.First := Parser.Buffer_Length + 1;
+                  Put_In_Buffer (Parser, Apostrophe);
+                  Str_End.Last := Parser.Buffer_Length;
+                  Possible_End := Str_End;
+                  Had_Space := False;
+               when Start_Of_Tag =>
+                  if Possible_End = Null_Token then
                      Fatal_Error
-                       (Machine,
-                        "(3.3.1) Expecting names only in an enumeration");
+                       (Parser, "[2.3] '<' not authorized in attribute values",
+                        Id);
+                  else
+                     Fatal_Error
+                       (Parser, "[2.3] '<' not authorized in attribute values."
+                        & " Possible end of attribute value at "
+                        & Location (Parser, Possible_End), Id);
+                  end if;
+               when others =>
+                  if Normalize then
+                     declare
+                        Str : constant Byte_Sequence := Value (Parser, Id, Id);
+                     begin
+                        Reset_Buffer (Parser, Id);
+                        Index := Str'First;
+                        while Index <= Str'Last loop
+                           C := Encoding.Read (Str, Index);
+                           Index := Index + Encoding.Width (C);
+                           if Is_White_Space (C) then
+                              if not Had_Space then
+                                 Put_In_Buffer
+                                   (Parser, Unicode.Names.Basic_Latin.Space);
+                              end if;
+                              Had_Space := True;
+                              Last_Space := Parser.Buffer_Length;
+                           else
+                              Had_Space := False;
+                              Put_In_Buffer (Parser, C);
+                           end if;
+                        end loop;
+                     end;
+                     Str_End.Last := Parser.Buffer_Length;
+                  end if;
+            end case;
+            Next_Token (Input, Parser, Id);
+         end loop;
+
+         if Normalize and then Had_Space and then Last_Space /= 0 then
+            Str_End.Last := Last_Space - 1;
+         end if;
+
+         if Id.Typ = End_Of_Input then
+            if Possible_End = Null_Token then
+               Fatal_Error
+                 (Parser, "[2.3] Unterminated string");
+            else
+               Fatal_Error
+                 (Parser, "[2.3] Unterminated string, possible end at "
+                  & Location (Parser, Possible_End), T);
+            end if;
+         end if;
+         Set_State (Parser, Saved_State);
+      end Get_String;
+
+      ------------------
+      -- Get_External --
+      ------------------
+
+      procedure Get_External
+        (Id : in out Token;
+         System_Start, System_End, Public_Start, Public_End : out Token;
+         Allow_Publicid : Boolean := False)
+      is
+         Had_Space : Boolean;
+         C : Unicode_Char;
+         Index : Natural;
+      begin
+         System_Start := Null_Token;
+         System_End := Null_Token;
+         Public_Start := Null_Token;
+         Public_End := Null_Token;
+
+         --  Check the arguments for PUBLIC
+         if Id.Typ = Public then
+            Next_Token_Skip_Spaces (Input, Parser, Id, Must_Have => True);
+            if Id.Typ /= Double_String_Delimiter
+              and then Id.Typ /= Single_String_Delimiter
+            then
+               Fatal_Error (Parser, "[WF] Expecting string after PUBLIC");
+            else
+               Get_String
+                 (Id, Non_Interpreted_String_State, Public_Start, Public_End);
+
+               Index := Public_Start.First;
+               while Index <= Public_End.Last loop
+                  C := Encoding.Read (Parser.Buffer, Index);
+                  Index := Index + Encoding.Width (C);
+
+                  if not Is_Pubid_Char (C) then
+                     Fatal_Error
+                       (Parser, "Invalid PubID character '"
+                        & Encoding.Encode (C) & "'", Public_Start);
                   end if;
                end loop;
-
-            else
-               Fatal_Error (Machine, "(3.3.1) Invalid type for the attribute");
-            end if;
-         end if;
-
-         Type_End := Index - 1;
-         Skip_Spaces (Machine.Buffer, Index);
-
-         Default_Type_Start := Index;
-         Default_Start := Index;
-         Default_End := Index - 1;
-         if Looking_At (Machine, Index, Required_Sequence) then
-            Index := Index + Required_Sequence'Length;
-            Default_Type_End := Index - 1;
-         elsif Looking_At (Machine, Index, Implied_Sequence) then
-            Index := Index + Implied_Sequence'Length;
-            Default_Type_End := Index - 1;
-         else
-            if Looking_At (Machine, Index, Fixed_Sequence) then
-               Index := Index + Fixed_Sequence'Length;
-               Default_Type_End := Index - 1;
-               Skip_Spaces (Machine.Buffer, Index);
-            else
-               Default_Type_End := Default_Type_Start - 1;
             end if;
 
-            Skip_String
-              (Machine.Buffer (Index .. Machine.Buffer_Length),
-               Index, Machine, Default_Start, Default_End,
-               "(3.3.2) Expecting a default value for the attribute");
+            Next_Token (Input, Parser, Id);
+            Had_Space := (Id.Typ = Space);
+            if Had_Space then
+               Next_Token (Input, Parser, Id);
+            elsif Allow_Publicid then
+               return;
+            end if;
 
-            --  Normalize the value: ignore any leading white space
-            Skip_Spaces (Machine.Buffer (Default_Start .. Default_End),
-                         Default_Start);
-
-            --  Remove trailing spaces
-            declare
-               C : Unicode_Char;
-               W : Natural;
-               Tmp_Index : Natural := Default_Start;
-            begin
-               while Tmp_Index <= Default_End loop
-                  C := Encoding.Read (Machine.Buffer, Tmp_Index);
-                  W := Encoding.Width (C);
-                  Tmp_Index := Tmp_Index + W;
-               end loop;
-
-               if Tmp_Index >= Default_Start + W
-                 and then Is_White_Space (C)
-               then
-                  Default_End := Default_End - W;
+            if Id.Typ /= Double_String_Delimiter
+              and then Id.Typ /= Single_String_Delimiter
+            then
+               if not Allow_Publicid then
+                  Fatal_Error (Parser, "[WF] Expecting SystemID after PUBLIC");
                end if;
-            end;
+            else
+               if not Had_Space then
+                  Fatal_Error
+                    (Parser, "[4.2.2] Require whitespace between public and"
+                     & " system IDs", Id);
+               end if;
+               Get_String
+                 (Id, Non_Interpreted_String_State, System_Start, System_End);
+               Next_Token (Input, Parser, Id);
+            end if;
+
+            --  Check the arguments for SYSTEM
+         elsif Id.Typ = System then
+            Next_Token_Skip_Spaces (Input, Parser, Id, Must_Have => True);
+            if Id.Typ /= Double_String_Delimiter
+              and then Id.Typ /= Single_String_Delimiter
+            then
+               Fatal_Error (Parser, "[WF] Expecting string after SYSTEM");
+            else
+               Get_String
+                 (Id, Non_Interpreted_String_State, System_Start, System_End);
+               Next_Token (Input, Parser, Id);
+            end if;
          end if;
+      end Get_External;
+
+      -----------------
+      -- Get_Name_NS --
+      -----------------
+
+      procedure Get_Name_NS (Id : in out Token; NS_Id, Name_Id : out Token) is
+      begin
+         Name_Id := Id;
+
+         if Id.Typ = Text then
+            Fatal_Error
+              (Parser, "[3.1] '" & Value (Parser, Id, Id)
+               & "' is not a valid name", Id);
+         --  An empty namespace ? This seems to be useful only for the XML
+         --  conformance suite, so we only handle the case of a single ':'
+         --  to mean both an empty prefix and empty local name.
+         elsif Name_Id.Typ = Colon then
+            Name_Id.Typ := Text;
+            NS_Id := Name_Id;
+            Next_Token (Input, Parser, Id);
+
+         elsif Id.Typ /= Name then
+            Fatal_Error (Parser, "Expecting a name", Id);
+
+         else
+            Next_Token (Input, Parser, Id);
+            if Id.Typ = Colon then
+               NS_Id := Name_Id;
+               Next_Token (Input, Parser, Name_Id);
+               if Name_Id.Typ /= Name then
+                  Fatal_Error (Parser, "[WF] Expecting name after namespace");
+               end if;
+               Next_Token (Input, Parser, Id);
+            else
+               NS_Id := Null_Token;
+            end if;
+         end if;
+      end Get_Name_NS;
+
+      ----------------------
+      -- Parse_Entity_Def --
+      ----------------------
+
+      procedure Parse_Entity_Def (Id : in out Token) is
+         Is_Parameter : Token := Null_Token;
+         Name_Id : Token;
+         Def_Start, Def_End : Token := Null_Token;
+         Ndata_Id : Token := Null_Token;
+         Public_Start, Public_End : Token := Null_Token;
+         System_Start, System_End : Token := Null_Token;
+         Had_Space : Boolean;
+      begin
+         Set_State (Parser, Entity_Def_State);
+         Next_Token_Skip_Spaces (Input, Parser, Name_Id, True);
+
+         if Name_Id.Typ = Text
+           and then Value (Parser, Name_Id, Name_Id) =
+           Encoding.Encode (Percent_Sign)
+         then
+            Is_Parameter := Name_Id;
+            Next_Token_Skip_Spaces (Input, Parser, Name_Id);
+         end if;
+
+         if Name_Id.Typ /= Name then
+            Fatal_Error (Parser, "[WF] Expecting entity name");
+         end if;
+
+         Next_Token_Skip_Spaces (Input, Parser, Id, Must_Have => True);
+
+         if Id.Typ = Public or else Id.Typ = System then
+            Get_External
+              (Id, System_Start, System_End, Public_Start, Public_End);
+
+            Had_Space := (Id.Typ = Space);
+            if Had_Space then
+               Next_Token (Input, Parser, Id);
+            end if;
+
+            if Id.Typ = Ndata then
+               if not Had_Space then
+                  Fatal_Error
+                    (Parser,
+                     "[4.2.2] Expecting space before NDATA declaration", Id);
+               end if;
+
+               if Is_Parameter /= Null_Token then
+                  Fatal_Error
+                    (Parser, "[4.2] NDATA annotation not allowed for parameter"
+                     & " entities", Id);
+               end if;
+               Next_Token_Skip_Spaces (Input, Parser, Ndata_Id, True);
+               if Ndata_Id.Typ /= Text and then Ndata_Id.Typ /= Name then
+                  Fatal_Error (Parser, "[WF] Expecting string after NDATA");
+               else
+                  if Parser.Feature_Validation
+                    and then not Get (Parser.Notations,
+                                      Value (Parser, Ndata_Id, Ndata_Id))
+                  then
+                     Fatal_Error
+                       (Parser, "[VC 4.2.2] Notation '"
+                        & Value (Parser, Ndata_Id, Ndata_Id) & "' must be"
+                        & " declared", Ndata_Id);
+                  end if;
+
+                  Next_Token_Skip_Spaces (Input, Parser, Id);
+               end if;
+            end if;
+
+         elsif Id.Typ = Double_String_Delimiter
+           or else Id.Typ = Single_String_Delimiter
+         then
+            Get_String (Id, Entity_Str_Def_State, Def_Start, Def_End);
+            Next_Token_Skip_Spaces (Input, Parser, Id);
+         else
+            Fatal_Error (Parser, "[WF] Invalid definition for ENTITY");
+         end if;
+
+         if Id.Typ /= End_Of_Tag then
+            Fatal_Error (Parser, "[WF] Expecting end of ENTITY definition");
+         end if;
+
+         --  Only report the first definition
+         if Get (Parser.Entities,
+                 Value (Parser, Is_Parameter, Is_Parameter)
+                 & Value (Parser, Name_Id, Name_Id)) /= Null_Entity
+         then
+            null;
+
+         elsif Def_End /= Null_Token then
+            Set (Parser.Entities,
+                 Value (Parser, Is_Parameter, Is_Parameter)
+                 & Value (Parser, Name_Id, Name_Id),
+                 (new Byte_Sequence' (Value (Parser, Def_Start, Def_End)),
+                  External     => False,
+                  Already_Read => False));
+            Internal_Entity_Decl
+              (Parser,
+               Name => Value (Parser, Is_Parameter, Is_Parameter)
+               & Value (Parser, Name_Id, Name_Id),
+               Value => Value (Parser, Def_Start, Def_End));
+
+         elsif Ndata_Id /= Null_Token then
+            Unparsed_Entity_Decl
+              (Parser,
+               Name => Value (Parser, Is_Parameter, Is_Parameter)
+               & Value (Parser, Name_Id, Name_Id),
+               System_Id => Value (Parser, System_Start, System_End),
+               Notation_Name => Value (Parser, Ndata_Id, Ndata_Id));
+
+         else
+            Set
+              (Parser.Entities,
+               Value (Parser, Is_Parameter, Is_Parameter)
+               & Value (Parser, Name_Id, Name_Id),
+               (new Byte_Sequence' (Value (Parser, System_Start, System_End)),
+                External => True,
+                Already_Read => False));
+            External_Entity_Decl
+              (Parser,
+               Name => Value (Parser, Is_Parameter, Is_Parameter)
+               & Value (Parser, Name_Id, Name_Id),
+               Public_Id => Value (Parser, Public_Start, Public_End),
+               System_Id => Value (Parser, System_Start, System_End));
+         end if;
+
+         if Is_Parameter /= Null_Token then
+            Reset_Buffer (Parser, Is_Parameter);
+         else
+            Reset_Buffer (Parser, Name_Id);
+         end if;
+         Set_State (Parser, DTD_State);
+      end Parse_Entity_Def;
+
+      -----------------------
+      -- Parse_Element_Def --
+      -----------------------
+
+      procedure Parse_Element_Def (Id : in out Token) is
+         Name_Id : Token;
+         M : Element_Model_Ptr;
+      begin
+         Set_State (Parser, Element_Def_State);
+         Next_Token_Skip_Spaces (Input, Parser, Name_Id);
+
+         if Name_Id.Typ /= Name then
+            Fatal_Error (Parser, "[WF] Expecting element name");
+         end if;
+
+         Next_Token_Skip_Spaces (Input, Parser, Id, True);
+         case Id.Typ is
+            when Empty  => M := new Element_Model (Empty);
+            when Any    => M := new Element_Model (Anything);
+            when Open_Paren =>
+               Parse_Element_Model
+                 (Input, Parser, M, Nmtokens => False,
+                  Attlist => False, Open_Was_Read => True);
+            when others =>
+               Fatal_Error (Parser, "[WF] Invalid content model: expecting"
+                            & " '(', 'EMPTY' or 'ANY'", Id);
+         end case;
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+
+         if Id.Typ /= End_Of_Tag then
+            Fatal_Error (Parser, "[WF] Expecting end of ELEMENT definition");
+         end if;
+
+         Element_Decl (Parser, Value (Parser, Name_Id, Name_Id), M);
+         Free (M);
+
+         Reset_Buffer (Parser, Name_Id);
+         Set_State (Parser, DTD_State);
+      end Parse_Element_Def;
+
+      ------------------------
+      -- Parse_Notation_Def --
+      ------------------------
+
+      procedure Parse_Notation_Def (Id : in out Token) is
+         Public_Start, Public_End : Token := Null_Token;
+         System_Start, System_End : Token := Null_Token;
+         Name_Id : Token;
+      begin
+         Set_State (Parser, Element_Def_State);
+         Next_Token_Skip_Spaces (Input, Parser, Name_Id);
+
+         if Name_Id.Typ /= Name then
+            Fatal_Error (Parser, "[WF] Expecting notation name");
+         end if;
+
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+
+         if Id.Typ = Public or else Id.Typ = System then
+            Get_External
+              (Id, System_Start, System_End, Public_Start, Public_End, True);
+            if Id.Typ = Space then
+               Next_Token (Input, Parser, Id);
+            end if;
+         else
+            Fatal_Error (Parser, "[WF] Invalid notation declaration");
+         end if;
+
+         if Id.Typ /= End_Of_Tag then
+            Fatal_Error (Parser, "[WF] Expecting end of NOTATION definition");
+         end if;
+
+         Notation_Decl
+           (Parser,
+            Name => Value (Parser, Name_Id, Name_Id),
+            Public_Id => Value (Parser, Public_Start, Public_End),
+            System_Id => Value (Parser, System_Start, System_End));
+
+         if Parser.Feature_Validation then
+            Set (Parser.Notations, Value (Parser, Name_Id, Name_Id), True);
+         end if;
+
+         Set_State (Parser, DTD_State);
+         Reset_Buffer (Parser, Name_Id);
+      end Parse_Notation_Def;
+
+      -----------------------
+      -- Parse_Attlist_Def --
+      -----------------------
+
+      procedure Parse_Attlist_Def (Id : in out Token) is
+         M : Element_Model_Ptr;
+         Default_Start, Default_End : Token;
+         Ename_Id, Name_Id, NS_Id, Type_Id : Token;
+         Default_Id : Token;
+         Attr : Attributes_Ptr;
+         NS : XML_NS;
+         Default_Decl : Default_Declaration;
+         Att_Type : Attribute_Type;
+      begin
+         Set_State (Parser, Element_Def_State);
+         Next_Token_Skip_Spaces (Input, Parser, Ename_Id);
+
+         if Ename_Id.Typ /= Name then
+            Fatal_Error (Parser, "[WF] Expecting element name", Ename_Id);
+         end if;
+
+         Attr := Get (Parser.Default_Atts, Value (Parser, Ename_Id, Ename_Id));
+         if Attr = null then
+            Attr := new Sax.Attributes.Attributes;
+         end if;
+
+         loop
+            Set_State (Parser, Attribute_Def_State);
+            Next_Token_Skip_Spaces (Input, Parser, Id);
+            exit when Id.Typ = End_Of_Tag or else Id.Typ = End_Of_Input;
+
+            Get_Name_NS (Id, NS_Id, Name_Id);
+
+            if Id.Typ /= Space then
+               Fatal_Error
+                 (Parser, "[3.3] Expecting space between attribute name"
+                  & " and type", Id);
+            end if;
+            Next_Token (Input, Parser, Id);
+
+            Type_Id := Id;
+            Default_End := Null_Token;
+            case Type_Id.Typ is
+               when Id_Type  => Att_Type := Sax.Attributes.Id;
+               when Idref    => Att_Type := Sax.Attributes.Idref;
+               when Idrefs   => Att_Type := Sax.Attributes.Idrefs;
+               when Cdata    => Att_Type := Sax.Attributes.Cdata;
+               when Nmtoken  => Att_Type := Sax.Attributes.Nmtoken;
+               when Nmtokens => Att_Type := Sax.Attributes.Nmtokens;
+               when Entity   => Att_Type := Sax.Attributes.Entity;
+               when Entities => Att_Type := Sax.Attributes.Entities;
+               when Notation =>
+                  Att_Type := Notation;
+                  Next_Token (Input, Parser, Id);
+                  if Id.Typ /= Space then
+                     Fatal_Error
+                       (Parser,
+                        "[3.3.1] Space is required between NOTATION keyword"
+                        & " and list of enumerated", Id);
+                  end if;
+                  Parse_Element_Model (Input, Parser, M, True, True, False);
+
+                  if Parser.Feature_Validation then
+                     for J in M.List'Range loop
+                        if not Get (Parser.Notations, M.List (J).Name.all) then
+                           Fatal_Error
+                             (Parser,
+                              "[VC 3.3.1] Notation '"
+                              & M.List (J).Name.all & "' must be defined",
+                              Id);
+                        end if;
+                     end loop;
+                  end if;
+
+               when Open_Paren =>
+                  Att_Type := Enumeration;
+                  Parse_Element_Model (Input, Parser, M, True, True, True);
+
+               when others =>
+                  Fatal_Error (Parser, "[WF] Invalid type for attribute");
+            end case;
+
+            Next_Token_Skip_Spaces (Input, Parser, Default_Id, True);
+            if Default_Id.Typ = Implied then
+               Default_Decl := Sax.Attributes.Implied;
+            elsif Default_Id.Typ = Required then
+               Default_Decl := Sax.Attributes.Required;
+            else
+               Id := Default_Id;
+               if Default_Id.Typ = Fixed then
+                  Next_Token_Skip_Spaces (Input, Parser, Id, True);
+                  Default_Decl := Sax.Attributes.Fixed;
+               else
+                  Default_Decl := Sax.Attributes.Default;
+               end if;
+
+               if Id.Typ = Double_String_Delimiter
+                 or else Id.Typ = Single_String_Delimiter
+               then
+                  Get_String
+                    (Id, Attlist_Str_Def_State, Default_Start, Default_End,
+                     Normalize => True);
+               else
+                  Fatal_Error
+                    (Parser, "[WF] Invalid default value for attribute");
+               end if;
+            end if;
+
+            --  Always report the attribute, even when we know the value
+            --  won't be used. We can't do it coherently otherwise, in case
+            --  an attribute is seen in the external subset, and then
+            --  overriden in the internal subset.
+            Attribute_Decl
+              (Parser,
+               Ename => Value (Parser, Ename_Id, Ename_Id),
+               Aname => Qname_From_Name (Parser, NS_Id, Name_Id),
+               Typ   => Att_Type,
+               Content => M,
+               Value_Default => Default_Decl,
+               Value => Value (Parser, Default_Start, Default_End));
+
+            Find_NS (Parser, Parser.Current_Node, NS_Id, NS);
+            if Get_Index
+              (Attr.all, NS.URI.all, Value (Parser, Name_Id, Name_Id)) = -1
+            then
+               Add_Attribute
+                 (Attr.all,
+                  NS.URI.all,
+                  Value (Parser, Name_Id, Name_Id),
+                  Qname_From_Name (Parser, NS_Id, Name_Id),
+                  Att_Type,
+                  M,
+                  Value (Parser, Default_Start, Default_End),
+                  Default_Decl);
+            else
+               Free (M);
+            end if;
+
+            if NS_Id /= Null_Token then
+               Reset_Buffer (Parser, NS_Id);
+            else
+               Reset_Buffer (Parser, Name_Id);
+            end if;
+            Set_State (Parser, Element_Def_State);
+         end loop;
+
+         if Id.Typ /= End_Of_Tag then
+            Fatal_Error (Parser, "[WF] Expecting end of ATTLIST definition");
+         end if;
+
+         --  Store the default attributes
+         Set (Parser.Default_Atts, Value (Parser, Ename_Id, Ename_Id), Attr);
+
+         Set_State (Parser, DTD_State);
+         Reset_Buffer (Parser, Ename_Id);
+      end Parse_Attlist_Def;
+
+      -----------------
+      -- Check_Model --
+      -----------------
+
+      procedure Check_Model is
+      begin
+         null;
+      end Check_Model;
+
+      ---------------------
+      -- Parse_Start_Tag --
+      ---------------------
+
+      procedure Parse_Start_Tag is
+         Open_Id : constant Token := Id;
+         Value_Start, Value_End : Token;
+         Elem_Name_Id, Elem_NS_Id : Token;
+         Attr_Name_Id, Attr_NS_Id : Token;
+         Add_Attr : Boolean;
+         Attributes : Sax.Attributes.Attributes;
+         NS : XML_NS;
+         Attr : Attributes_Ptr;
+         Found : Boolean;
+
+      begin
+         Set_State (Parser, Tag_State);
+
+         Parser.Current_Node := new Element'
+           (NS             => null,
+            Name           => null,
+            Namespaces     => null,
+            Start_Id       => Id.Input_Id,
+            Parent         => Parser.Current_Node);
+
+         Next_Token (Input, Parser, Id);
+         Get_Name_NS (Id, Elem_NS_Id, Elem_Name_Id);
+
+         Parser.Current_Node.NS := new Byte_Sequence'
+           (Value (Parser, Elem_NS_Id, Elem_NS_Id));
+         Parser.Current_Node.Name := new Byte_Sequence'
+           (Value (Parser, Elem_Name_Id, Elem_Name_Id));
+
+         if Parser.Current_Node.Parent = null then
+            Parser.Num_Toplevel_Elements := Parser.Num_Toplevel_Elements + 1;
+            if Parser.Num_Toplevel_Elements > 1 then
+               Fatal_Error
+                 (Parser, "(2.1) Too many children for top-level node,"
+                  & " when adding <"
+                  & Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id)
+                  & ">", Open_Id);
+            end if;
+
+            if Parser.Feature_Validation
+              and then Parser.DTD_Name = null
+            then
+               Fatal_Error
+                 (Parser, "[VC 2.8] No DTD defined for this document", Id);
+            end if;
+
+            if Parser.Feature_Validation
+              and then Parser.DTD_Name.all /= Parser.Current_Node.Name.all
+            then
+               Fatal_Error
+                 (Parser, "[VC 2.8] Name of root element doesn't match name"
+                  & " of DTD ('" & Parser.DTD_Name.all & "')", Id);
+            end if;
+
+         elsif Parser.Feature_Validation then
+            Check_Model;
+         end if;
+
+         if Id.Typ = Space then
+            Next_Token (Input, Parser, Id);
+         elsif Id.Typ /= End_Of_Tag
+           and then Id.Typ /= End_Of_Start_Tag
+         then
+            Fatal_Error
+              (Parser, "[3] Must have spaces between tag name and attributes",
+               Id);
+         end if;
+
+         --  ??? Should we support comments in tag_start
+         while Id.Typ /= End_Of_Tag
+           and then Id.Typ /= End_Of_Input
+           and then Id.Typ /= End_Of_Start_Tag
+         loop
+            Get_Name_NS (Id, Attr_NS_Id, Attr_Name_Id);
+            if Id.Typ = Space then
+               Next_Token (Input, Parser, Id);
+            end if;
+
+            if Get_Index
+              (Attributes,
+               Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)) /= -1
+            then
+               Fatal_Error
+                 (Parser, "(3.1) Attributes must have a unique name",
+                  Attr_Name_Id);
+            end if;
+
+            if Id.Typ /= Equal then
+               Fatal_Error
+                 (Parser, "[3.1] Attributes must have an explicit value", Id);
+            end if;
+
+            Next_Token_Skip_Spaces (Input, Parser, Id);
+            if Id.Typ /= Double_String_Delimiter
+              and then Id.Typ /= Single_String_Delimiter
+            then
+               Fatal_Error
+                 (Parser, "[3.1] Attribute values must be quoted", Id);
+            end if;
+            Get_String (Id, Attr_Value_State, Value_Start, Value_End,
+                        Normalize => True); --  ??? All considered as CDATA
+
+            Add_Attr := True;
+
+            --  Is this a namespace declaration ?
+            if Value (Parser, Attr_NS_Id, Attr_NS_Id) = Xmlns_Sequence then
+               Add_Namespace
+                 (Parser, Parser.Current_Node,
+                  Attr_Name_Id, Value_Start, Value_End);
+               Add_Attr := Parser.Feature_Namespace_Prefixes;
+
+            --  Is this the declaration of the default namesapce (xmlns="uri")
+            elsif Attr_NS_Id = Null_Token
+              and then Value (Parser, Attr_Name_Id, Attr_Name_Id) =
+              Xmlns_Sequence
+            then
+               Add_Namespace
+                 (Parser, Parser.Current_Node,
+                  Null_Token, Value_Start, Value_End);
+               Add_Attr := Parser.Feature_Namespace_Prefixes;
+
+            else
+               --  All attributes must be defined (including xml:lang, that
+               --  requires additional testing afterwards
+               if Parser.Feature_Validation then
+                  declare
+                     Atts : constant Attributes_Ptr := Get
+                       (Parser.Default_Atts,
+                        Value (Parser, Elem_Name_Id, Elem_Name_Id));
+                     Index : Natural;
+                     Att_Type : Attribute_Type;
+                  begin
+                     if Atts = null then
+                        Fatal_Error
+                          (Parser, "[VC] No attribute defined for element "
+                           & Value (Parser, Elem_Name_Id, Elem_Name_Id));
+                     end if;
+
+                     Index := Get_Index
+                       (Atts.all,
+                        Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id));
+                     if Index = -1 then
+                        Fatal_Error
+                          (Parser, "[VC] Attribute not declared in DTD: "
+                           & Qname_From_Name
+                           (Parser, Attr_NS_Id, Attr_Name_Id));
+                     end if;
+
+                     Att_Type := Get_Type (Atts.all, Index);
+                     if (Att_Type = Idrefs or else Att_Type = Nmtokens)
+                       and then Value_Start.First > Value_End.Last
+                     then
+                        Fatal_Error
+                          (Parser,
+                           "[VC 3.3.1] requires at least one name in IDREFS"
+                           & " and NMTOKENS", Value_Start);
+                     end if;
+                  end;
+               end if;
+
+               if Value (Parser, Attr_NS_Id, Attr_NS_Id) = Xml_Sequence
+                 and then
+                 Value (Parser, Attr_Name_Id, Attr_Name_Id) = Lang_Sequence
+               then
+                  Test_Valid_Lang
+                    (Parser, Value (Parser, Value_Start, Value_End));
+               end if;
+            end if;
+
+            --  Register the attribute
+            if Add_Attr then
+               Add_Attribute
+                 (Attributes,
+                  URI => Value (Parser, Attr_NS_Id, Attr_NS_Id),
+                  Local_Name => Value (Parser, Attr_Name_Id, Attr_Name_Id),
+                  Qname => Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id),
+                  Att_Type => Sax.Attributes.Cdata,
+                  Content => null,
+                  Value => Value (Parser, Value_Start, Value_End));
+            end if;
+
+            if Attr_NS_Id /= Null_Token then
+               Reset_Buffer (Parser, Attr_NS_Id);
+            else
+               Reset_Buffer (Parser, Attr_Name_Id);
+            end if;
+
+            Next_Token (Input, Parser, Id);
+            if Id.Typ = Space then
+               Next_Token (Input, Parser, Id);
+            elsif Id.Typ /= End_Of_Tag and then Id.Typ /= End_Of_Start_Tag then
+               Fatal_Error
+                 (Parser, "[3.1] Attributes must be separated by spaces", Id);
+            end if;
+         end loop;
 
          Attr := Get
-           (Machine.DTD, Machine.Buffer (Element_Start .. Element_End));
-         if Attr = null then
-            Attr := new Attributes_Impl;
-         end if;
+           (Parser.Default_Atts,
+            Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id));
 
-         if Model /= null and then Has_Notation then
-            Attribute_Decl
-              (Machine,
-               Machine.Buffer (Element_Start .. Element_End),
-               Machine.Buffer (Name_Start .. Name_End),
-               Notation_Attlist_Sequence & Encoding.Encode (Space)
-               & To_String (Model.all),
-               Machine.Buffer (Default_Type_Start .. Default_Type_End),
-               Machine.Buffer (Default_Start .. Default_End));
-            if Machine.Buffer (Default_Type_Start .. Default_Type_End) /=
-              Implied_Sequence
-            then
-               Add_Attribute
-                 (Attributes_Impl'Class (Attr.all),
-                  "", --  ???
-                  Machine.Buffer (Name_Start .. Name_End),
-                  Machine.Buffer (Name_Start .. Name_End),
-                  Notation_Attlist_Sequence & Encoding.Encode (Space)
-                  & To_String (Model.all),
-                  Machine.Buffer (Default_Start .. Default_End));
-            end if;
+         --  Check that all #REQUIRED attributes are defined
+         --  and that #FIXED attributes have the defined value
+         if Parser.Feature_Validation and then Attr /= null then
+            for J in 0 .. Get_Length (Attr.all) - 1 loop
+               if Get_Default_Declaration (Attr.all, J) = Required then
+                  Found := False;
+                  for K in 0 .. Get_Length (Attributes) - 1 loop
+                     if Get_Qname (Attributes, K)
+                       = Get_Qname (Attr.all, J)
+                     then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
 
-            Free (Model);
+                  if not Found then
+                     Fatal_Error
+                       (Parser, "[VC 3.3.2] Required attribute '"
+                        & Get_Qname (Attr.all, J) & "' must be defined", Id);
+                  end if;
 
-         elsif Model /= null then
-            Attribute_Decl
-              (Machine,
-               Machine.Buffer (Element_Start .. Element_End),
-               Machine.Buffer (Name_Start .. Name_End),
-               To_String (Model.all),
-               Machine.Buffer (Default_Type_Start .. Default_Type_End),
-               Machine.Buffer (Default_Start .. Default_End));
-            if Machine.Buffer (Default_Type_Start .. Default_Type_End) /=
-              Implied_Sequence
-            then
-               Add_Attribute
-                 (Attributes_Impl'Class (Attr.all),
-                  "",  --  ???
-                  Machine.Buffer (Name_Start .. Name_End),
-                  Machine.Buffer (Name_Start .. Name_End),
-                  To_String (Model.all),
-                  Machine.Buffer (Default_Start .. Default_End));
-            end if;
-            Free (Model);
-
-         else
-            Attribute_Decl
-              (Machine,
-               Machine.Buffer (Element_Start .. Element_End),
-               Machine.Buffer (Name_Start .. Name_End),
-               Machine.Buffer (Type_Start .. Type_End),
-               Machine.Buffer (Default_Type_Start .. Default_Type_End),
-               Machine.Buffer (Default_Start .. Default_End));
-            if Machine.Buffer (Default_Type_Start .. Default_Type_End) /=
-              Implied_Sequence
-            then
-               Add_Attribute
-                 (Attributes_Impl'Class (Attr.all),
-                  "",  --  ???
-                  Machine.Buffer (Name_Start .. Name_End),
-                  Machine.Buffer (Name_Start .. Name_End),
-                  Machine.Buffer (Type_Start .. Type_End),
-                  Machine.Buffer (Default_Start .. Default_End));
-            end if;
-         end if;
-
-         Set (Machine.DTD,
-              Machine.Buffer (Element_Start .. Element_End),
-              Attr);
-      end loop;
-   end End_Of_Attlist_Declaration;
-
-   -------------------------------
-   -- End_Of_Entity_Declaration --
-   -------------------------------
-
-   procedure End_Of_Entity_Declaration (Machine : in out Reader'Class) is
-      Index : Natural := Machine.Buffer'First + Entity_Sequence'Length;
-      Prefix_Start, Prefix_End : Natural;
-      Name_Start, Name_End : Natural;
-      Value_Start, Value_End : Natural;
-      System_Start, System_End : Natural;
-      Ndata_Start, Ndata_End : Natural;
-      C : Unicode_Char;
-   begin
-      Skip_Spaces (Machine.Buffer, Index);
-      Prefix_Start := Index;
-      if Encoding.Read (Machine.Buffer, Index) = Percent_Sign then
-         Index := Index + Encoding.Width (Percent_Sign);
-         Prefix_End := Index - 1;
-         if not Is_White_Space (Encoding.Read (Machine.Buffer, Index)) then
-            Fatal_Error (Machine, "(4.2) Expecting space character after %");
-         end if;
-         Skip_Spaces (Machine.Buffer, Index);
-      else
-         Prefix_End := Index - 1;
-      end if;
-
-      Skip_Name (Machine.Buffer (Index .. Machine.Buffer_Length), Index,
-                 Name_Start, Name_End);
-      if not Is_White_Space (Encoding.Read (Machine.Buffer, Index)) then
-         Fatal_Error (Machine, "(4.2) Must specify a value for the entity");
-      end if;
-
-      Skip_Spaces
-        (Machine.Buffer (1 .. Machine.Buffer_Length), Index);
-      Skip_String (Machine.Buffer (1 .. Machine.Buffer_Length),
-                   Index, Machine, Value_Start, Value_End, "");
-
-      --  Only report the first definition
-      if Get (Machine.Entities,
-              Machine.Buffer (Prefix_Start .. Prefix_End)
-              & Machine.Buffer (Name_Start .. Name_End)) = Null_Entity
-      then
-
-         --  ??? Shouldn't report the second declaration of an entity...
-         if Value_Start /= Index then
-            Internal_Entity_Decl
-              (Machine,
-               Machine.Buffer (Prefix_Start .. Prefix_End)
-               & Machine.Buffer (Name_Start .. Name_End),
-               Machine.Buffer (Value_Start .. Value_End));
-            Set
-              (Machine.Entities,
-               Machine.Buffer (Prefix_Start .. Prefix_End)
-               & Machine.Buffer (Name_Start .. Name_End),
-               (new Byte_Sequence'
-                (Machine.Buffer (Value_Start .. Value_End)),
-                External => False,
-                Already_Read => False));
-
-         else
-            Parse_External_Id
-              (Machine, Index, Value_Start, Value_End,
-               System_Start, System_End);
-
-            if Index + Ndata_Sequence'Length <= Machine.Buffer_Length
-              and then Machine.Buffer
-              (Index .. Index + Ndata_Sequence'Length - 1) = Ndata_Sequence
-            then
-               Index := Index + Ndata_Sequence'Length;
-               Ndata_Start := Index;
-               Skip_Spaces (Machine.Buffer, Index);
-
-               while Index <= Machine.Buffer_Length loop
-                  C := Encoding.Read (Machine.Buffer, Index);
-                  exit when C = Space;
-                  Index := Index + Encoding.Width (C);
-               end loop;
-
-               Ndata_End := Index - 1;
-               Skip_Spaces (Machine.Buffer, Index);
-            else
-               Ndata_Start := Index;
-               Ndata_End := Index - 1;
-            end if;
-
-            if Index <= Machine.Buffer_Length then
-               Fatal_Error
-                 (Machine, "(4.2) Expecting end of entity declaration");
-            end if;
-
-            if Ndata_Start > Ndata_End then
-               External_Entity_Decl
-                 (Machine,
-                  Machine.Buffer (Prefix_Start .. Prefix_End)
-                  & Machine.Buffer (Name_Start .. Name_End),
-                  Machine.Buffer (Value_Start .. Value_End),
-                  Machine.Buffer (System_Start .. System_End));
-               Set
-                 (Machine.Entities,
-                  Machine.Buffer (Prefix_Start .. Prefix_End)
-                  & Machine.Buffer (Name_Start .. Name_End),
-                  (new Byte_Sequence'
-                   (Machine.Buffer (System_Start .. System_End)),
-                   External => True,
-                   Already_Read => False));
-            else
-               Unparsed_Entity_Decl
-                 (Machine,
-                  Machine.Buffer (Prefix_Start .. Prefix_End)
-                  & Machine.Buffer (Name_Start .. Name_End),
-                  Machine.Buffer (System_Start .. System_End),
-                  Machine.Buffer (Ndata_Start .. Ndata_End));
-            end if;
-         end if;
-      end if;
-
-   exception
-      when Invalid_Character =>
-         Fatal_Error (Machine, "(4.2) Invalid character "
-                      & Encoding.Encode (C) & " in name");
-   end End_Of_Entity_Declaration;
-
-   -----------------------
-   -- Parse_External_Id --
-   -----------------------
-
-   procedure Parse_External_Id
-     (Machine                  : in out Reader'Class;
-      Index                    : in out Natural;
-      Public_Start, Public_End : out Natural;
-      System_Start, System_End : out Natural)
-   is
-      procedure Parse_Id (Public_Id : Boolean; Start, Last : out Natural);
-      --  Parse the system Id (ie after the SYSTEM keyword, or the second
-      --  argument of PUBLIC)
-
-      C : Unicode_Char;
-
-      --------------
-      -- Parse_Id --
-      --------------
-
-      procedure Parse_Id (Public_Id : Boolean; Start, Last : out Natural) is
-         J : Natural;
-      begin
-         Skip_Spaces (Machine.Buffer (1 .. Machine.Buffer_Length), Index);
-         Skip_String
-           (Machine.Buffer (1 .. Machine.Buffer_Length), Index, Machine,
-            Start, Last,  "(2.3) Invalid SystemId, expecting string");
-
-         if Public_Id then
-            J := Start;
-            while Index <= Last loop
-               C := Encoding.Read (Machine.Buffer, Index);
-               if not Is_Pubid_Char (C) then
-                  Fatal_Error (Machine, "(2.3) Invalid PublicID");
+               elsif Get_Default_Declaration (Attr.all, J) = Fixed then
+                  for K in 0 .. Get_Length (Attributes) - 1 loop
+                     if Get_Qname (Attributes, K)
+                       = Get_Qname (Attr.all, J)
+                     then
+                        if Get_Value (Attributes, K)
+                          /= Get_Value (Attr.all, J)
+                        then
+                           Fatal_Error
+                             (Parser, "[VC 3.3.2] Fixed attribute '"
+                              & Get_Qname (Attr.all, J) & "' must have the"
+                              & " defined value", Id);
+                        end if;
+                        exit;
+                     end if;
+                  end loop;
                end if;
-               Index := Index + Encoding.Width (C);
             end loop;
          end if;
 
-         Skip_Spaces (Machine.Buffer (1 .. Machine.Buffer_Length), Index);
-      end Parse_Id;
+         --  Add all the default attributes to the element
+         --  We shouldn't add an attribute if it was overriden by the user
 
-   begin
-      Machine.Processing := None;
-      Public_Start := Index;
-      Public_End := Index - 1;
-      System_Start := Index;
-      System_End := Index - 1;
-
-      Skip_Spaces (Machine.Buffer (1 .. Machine.Buffer_Length), Index);
-
-      if Looking_At (Machine, Index, System_Sequence) then
-         Index := Index + System_Sequence'Length;
-         Parse_Id (False, System_Start, System_End);
-
-      elsif Looking_At (Machine, Index, Public_Sequence) then
-         Index := Index + Public_Sequence'Length;
-         Parse_Id (True, Public_Start, Public_End);
-         Parse_Id (False, System_Start, System_End);
-      end if;
-   end Parse_External_Id;
-
-   ------------------
-   -- Start_Of_DTD --
-   ------------------
-
-   procedure Start_Of_DTD
-     (Machine : in out Reader'Class; Last_Read : Unicode_Char)
-   is
-      Index : Natural := Doctype_Sequence'Length + Machine.Buffer'First;
-      Start_Name, End_Name,
-      System_Start, Public_Start,
-      System_End, Public_End   : Natural;
-
-   begin
-      Skip_Spaces (Machine.Buffer, Index);
-      Skip_Name (Machine.Buffer (Index .. Machine.Buffer_Length), Index,
-                 Start_Name, End_Name);
-      if not Is_White_Space (Encoding.Read (Machine.Buffer, Index)) then
-         Fatal_Error (Machine, "(4.2) Invalid character in name");
-      end if;
-      Parse_External_Id
-        (Machine, Index, Public_Start, Public_End, System_Start, System_End);
-
-      if Index <= Machine.Buffer_Length then
-         Fatal_Error (Machine, "(4.2.2) Expected '[' character");
-      end if;
-
-      Start_DTD
-        (Machine,
-         Name => Machine.Buffer (Start_Name .. End_Name),
-         Public_Id => Machine.Buffer (Public_Start .. Public_End),
-         System_Id => Machine.Buffer (System_Start .. System_End));
-
-      if Last_Read = Opening_Square_Bracket then
-         Machine.Parsing_DTD := 2;
-      else
-         Machine.Parsing_DTD := 1;
-      end if;
-      Copy (Machine.Processing_Start.all, Machine.Locator.all);
-      Machine.Buffer_Length := 0;
-   end Start_Of_DTD;
-
-   ------------------------
-   -- End_Of_Declaration --
-   ------------------------
-
-   procedure End_Of_Declaration (Machine   : in out Reader'Class;
-                                 Last_Read : Unicode.Unicode_Char)
-   is
-      S : constant Byte_Sequence :=
-        Machine.Buffer (Machine.Declaration_Start .. Machine.Buffer_Length);
-   begin
-      Machine.Processing := None;
-
-      --  <!CDATA ...> sequence
-      if Cdata_Sequence'Length <= Machine.Buffer_Length
-        and then Machine.Buffer (1 .. Cdata_Sequence'Length) = Cdata_Sequence
-      then
-         if Machine.Current_Node = null then
-            Fatal_Error (Machine, "(2.7) Invalid placement of CDATA section",
-                         Machine.Processing_Start);
+         if Attr /= null then
+            for J in 0 .. Get_Length (Attr.all) - 1 loop
+               --  ??? This could/should be more efficient.
+               if Get_Default_Declaration (Attr.all, J) /=
+                   Sax.Attributes.Implied
+                 and then Get_Index (Attributes,
+                                     Get_URI (Attr.all, J),
+                                     Get_Local_Name (Attr.all, J)) = -1
+               then
+                  Add_Attribute (Attributes,
+                                 Get_URI (Attr.all, J),
+                                 Get_Local_Name (Attr.all, J),
+                                 Get_Qname (Attr.all, J),
+                                 Get_Type (Attr.all, J),
+                                 Get_Content (Attr.all, J),
+                                 Get_Value (Attr.all, J));
+               end if;
+            end loop;
          end if;
 
-         Machine.Buffer_Length := Machine.Declaration_Start - 1;
-         Xml_Text_To_Document (Machine);
-         Start_Cdata (Machine);
-         Put_In_Buffer_Force
-           (Machine,
-            S (S'First + Cdata_Sequence'Length
-               .. S'Last - 2 * Encoding.Width (Right_Square_Bracket)));
-         Xml_Text_To_Document (Machine);
-         End_Cdata (Machine);
-         Machine.Processing := None;
-         return;
+         Set_State (Parser, Default_State);
+         Find_NS (Parser, Parser.Current_Node,  Elem_NS_Id, NS);
+         Start_Element
+           (Parser,
+            Namespace_URI => NS.URI.all,
+            Local_Name => Value (Parser, Elem_Name_Id, Elem_Name_Id),
+            Qname => Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
+            Atts => Attributes);
 
-      --  Should we handle the start of a DTD ? This is true only if we
-      --  have a DTD with no internal subset (<!DOCTYPE foo SYSTEM "..">),
-      --  since otherwise Start_Of_DTD is called independently.
-      elsif Looking_At (Machine, Machine.Buffer'First, Doctype_Sequence) then
-         if Machine.Parsing_DTD > 0 then
-            Fatal_Error (Machine, "Can't have nested DTDs");
+         Clear (Attributes);
+
+         if Id.Typ = End_Of_Start_Tag then
+            End_Element (Elem_NS_Id, Elem_Name_Id);
          end if;
-         Start_Of_DTD (Machine, Last_Read);
-      end if;
 
-      --  Check the possible DTD elements
-
-      if Machine.Parsing_DTD > 0 then
-         --  <!ENTITY...>
-         if Looking_At (Machine, Machine.Buffer'First, Entity_Sequence) then
-            End_Of_Entity_Declaration (Machine);
-
-         --  <!ELEMENT...>
-         elsif Looking_At
-           (Machine, Machine.Buffer'First, Element_Sequence)
-         then
-            End_Of_Element_Declaration (Machine);
-
-         --  <!ATTLIST...>
-         elsif Looking_At
-           (Machine, Machine.Buffer'First, Attlist_Sequence)
-         then
-            End_Of_Attlist_Declaration (Machine);
-
-            --  <!NOTATION...>
-         elsif Looking_At
-           (Machine, Machine.Buffer'First, Notation_Sequence)
-         then
-            End_Of_Notation_Declaration (Machine);
-
-         --  Check that there remains exactly one open square bracket
-         elsif Machine.Parsing_DTD = 1 then
-            End_DTD (Machine);
-            Machine.Parsing_DTD := 0;
-
+         if Elem_NS_Id /= Null_Token then
+            Reset_Buffer (Parser, Elem_NS_Id);
          else
-            Fatal_Error (Machine, "(2.8) Invalid element in DTD declaration");
+            Reset_Buffer (Parser, Elem_Name_Id);
          end if;
 
-      else
-         Fatal_Error
-           (Machine, "(2.7) Invalid declaration", Machine.Processing_Start);
-      end if;
+         if Id.Typ = End_Of_Input then
+            Fatal_Error (Parser, "[WF] Unexpected end of stream");
+         end if;
+      end Parse_Start_Tag;
 
-      Machine.Buffer_Length := 0;
-   end End_Of_Declaration;
+      ----------------------------
+      -- Parse_Doctype_Contents --
+      ----------------------------
 
-   ----------------------
-   -- End_Of_Empty_Tag --
-   ----------------------
+      procedure Parse_Doctype_Contents is
+         Start_Id : Natural;
 
-   procedure End_Of_Empty_Tag (Machine   : in out Reader'Class;
-                               Last_Read : Unicode.Unicode_Char) is
-   begin
-      End_Of_XML_End_Tag (Machine, Last_Read);
-   end End_Of_Empty_Tag;
+         Num_Include : Natural := 0;
+         --  Number of <![INCLUDE[ sections at the top of the external
+         --  subset.
 
-   -----------------
-   -- Start_Of_PI --
-   -----------------
+         Num_Ignore : Natural := 0;
+         --  Number of <![IGNORE[ and <![INCLUDE[ sections, starting at the
+         --  first ignore section.
+      begin
+         loop
+            Next_Token_Skip_Spaces (Input, Parser, Id);
+            Start_Id := Id.Input_Id;
 
-   procedure Start_Of_PI (Machine : in out Reader'Class;
-                          Last_Read : Unicode.Unicode_Char)
-   is
-   begin
-      if Debug then
-         Debug_Put (Machine, "Start_Of_PI");
-      end if;
-      Machine.Processing := PI;
+            if Id.Typ = Ignore then
+               Num_Ignore := Num_Ignore + 1;
 
-      --  Point to the opening < instead of the current ? in the location. It
-      --  is necessarily on the same line
-      Copy (Machine.Processing_Start.all, Machine.Locator.all);
-      Set_Column_Number (Machine.Processing_Start.all,
-                         Get_Column_Number (Machine.Processing_Start.all) - 1);
-      Machine.Processing_Start.Char_Number := Machine.Locator.Char_Number - 1;
-   end Start_Of_PI;
+            elsif Id.Typ = Include or else Id.Typ = Start_Conditional then
+               if Num_Ignore > 0 then
+                  Num_Ignore := Num_Ignore + 1;
+               else
+                  Num_Include := Num_Include + 1;
+               end if;
 
-   -----------------
-   -- Skip_Spaces --
-   -----------------
+            elsif Id.Typ = End_Conditional then
+               if Num_Include + Num_Ignore = 0 then
+                  Fatal_Error
+                    (Parser,
+                     "[2.4] Text may not contain the litteral ']]>'", Id);
+               elsif Num_Ignore > 0 then
+                  Num_Ignore := Num_Ignore - 1;
+               else
+                  Num_Include := Num_Include  - 1;
+               end if;
 
-   procedure Skip_Spaces (Str : Byte_Sequence; Index : in out Natural) is
-      C : Unicode_Char;
-   begin
-      while Index <= Str'Last loop
-         C := Encoding.Read (Str, Index);
-         exit when not Is_White_Space (C);
-         Index := Index + Encoding.Width (C);
-      end loop;
-   end Skip_Spaces;
+            elsif Id.Typ = End_Of_Input then
+               exit;
 
-   -----------------
-   -- Skip_String --
-   -----------------
+            elsif Num_Ignore = 0 then
+               case Id.Typ is
+                  when End_Of_Tag | Internal_DTD_End =>
+                     exit;
+                  when Entity_Def => Parse_Entity_Def (Id);
+                  when Element_Def => Parse_Element_Def (Id);
+                  when Notation => Parse_Notation_Def (Id);
+                  when Attlist_Def => Parse_Attlist_Def (Id);
+                  when Text | Name =>
+                     Fatal_Error
+                       (Parser,  "[WF] Unexpected character in the DTD");
+                  when Comment =>
+                     Comment (Parser, Value (Parser, Id, Id));
+                     Reset_Buffer (Parser, Id);
+                  when Start_Of_PI =>
+                     Parse_PI (Id);
+                  when others =>
+                     Fatal_Error
+                       (Parser, "[2.8] Element not allowed in the DTD", Id);
+               end case;
 
-   procedure Skip_String
-     (Str         : Byte_Sequence;
-      Index       : in out Natural;
-      Machine     : in out Reader'Class;
-      Value_Start : out Natural;
-      Value_End   : out Natural;
-      Error_Msg   : String)
-   is
-      Quote, C : Unicode_Char;
-   begin
-      if Index >= Str'Last then
-         Value_Start := Index;
-         Value_End := Index - 1;
-         return;
-      end if;
+            else
+               Reset_Buffer (Parser, Id);
+            end if;
 
-      --  Current character must be ' or "
-      Quote := Encoding.Read (Str, Index);
-      if Quote /= Apostrophe and then Quote /= Quotation_Mark then
-         if Error_Msg = "" then
-            Value_Start := Index;
-            Value_End := Index - 1;
-            return;
+            if Start_Id /= Id.Input_Id then
+               Fatal_Error
+                 (Parser, "[4.5] Entity values must be self-contained", Id);
+            end if;
+         end loop;
+
+         if Num_Ignore + Num_Include /= 0 then
+            Fatal_Error
+              (Parser, "[3.4] Conditional section must be properly terminated",
+               Id);
+         end if;
+      end Parse_Doctype_Contents;
+
+      -------------------
+      -- Parse_Doctype --
+      -------------------
+
+      procedure Parse_Doctype is
+         Public_Start, Public_End : Token := Null_Token;
+         System_Start, System_End : Token := Null_Token;
+         Name_Id : Token;
+      begin
+         Set_State (Parser, DTD_State);
+
+         Next_Token_Skip_Spaces (Input, Parser, Name_Id);
+         if Name_Id.Typ /= Name then
+            Fatal_Error (Parser, "[WF] Expecting name after <!DOCTYPE");
+         end if;
+
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+         Get_External (Id, System_Start, System_End, Public_Start, Public_End);
+         if Id.Typ = Space then
+            Next_Token (Input, Parser, Id);
+         end if;
+         Start_DTD
+           (Parser,
+            Name => Value (Parser, Name_Id, Name_Id),
+            Public_Id => Value (Parser, Public_Start, Public_End),
+            System_Id => Value (Parser, System_Start, System_End));
+
+         if Parser.Feature_Validation then
+            Parser.DTD_Name := new Byte_Sequence'
+              (Value (Parser, Name_Id, Name_Id));
+         end if;
+
+         if Id.Typ = Internal_DTD_Start then
+            Parse_Doctype_Contents;
+            if Id.Typ /= Internal_DTD_End then
+               Fatal_Error
+                 (Parser, "[2.8] Expecting end of internal subset ']>'", Id);
+            end if;
+         elsif Id.Typ /= End_Of_Tag then
+            Fatal_Error (Parser, "[WF] Expecting end of DTD");
+         end if;
+
+         --  Read the external subset if required. This needs to be read
+         --  after the internal subset only, so that the latter gets
+         --  priority (XML specifications 2.8)
+         if System_End.Last >= System_Start.First then
+            declare
+               Loc : Locator_Impl;
+               URI : constant Byte_Sequence := Resolve_URI
+                 (Parser, Value (Parser, System_Start, System_End));
+               In_External : constant Boolean := Parser.In_External_Entity;
+               Last  : constant Unicode_Char := Parser.Last_Read;
+               Input_F : File_Input;
+            begin
+               Copy (Loc, Parser.Locator.all);
+               Set_Line_Number (Parser.Locator.all, 1);
+               Set_Column_Number
+                 (Parser.Locator.all, 1 + Prolog_Size (Input_F));
+               Set_System_Id (Parser.Locator.all, URI);
+               Set_Public_Id (Parser.Locator.all,
+                              Value (Parser, System_Start, System_End));
+               Reset_Buffer (Parser, Name_Id);
+
+               Parser.In_External_Entity := True;
+               Open (URI, Input_F);
+
+               Syntactic_Parse (Parser, Input_F);
+               Close (Input_F);
+               Parser.In_External_Entity := In_External;
+               Copy (Parser.Locator.all, Loc);
+               Free (Loc);
+               Parser.Last_Read := Last;
+            exception
+               when Name_Error =>
+                  Error (Parser,
+                         "External subset not found: " & URI, Id);
+            end;
          else
-            Fatal_Error (Machine, Error_Msg, Machine.Processing_Start);
+            Reset_Buffer (Parser, Name_Id);
          end if;
-      end if;
 
-      Index := Index + Encoding.Width (Quote);
-      Value_Start := Index;
+         Parser.In_External_Entity := False;
+         End_DTD (Parser);
+         Set_State (Parser, Default_State);
+      end Parse_Doctype;
 
-      --  Find the end quote
-      while Index <= Str'Last loop
-         C := Encoding.Read (Str, Index);
-         exit when C = Quote;
-         Index := Index + Encoding.Width (C);
-      end loop;
+      -----------------
+      -- End_Element --
+      -----------------
 
-      Value_End := Index - 1;
-      Index := Index + Encoding.Width (C);
-   end Skip_String;
+      procedure End_Element (NS_Id, Name_Id : Token) is
+         NS : XML_NS;
+         Tmp : Element_Access;
+         procedure Free_Element is new Unchecked_Deallocation
+           (Element, Element_Access);
+      begin
+         Find_NS (Parser, Parser.Current_Node, NS_Id, NS);
+         End_Element
+           (Parser,
+            Namespace_URI => NS.URI.all,
+            Local_Name => Parser.Current_Node.Name.all,
+            Qname => Qname_From_Name (Parser, NS_Id, Name_Id));
 
-   -------------------------
-   -- Check_XML_PI_Syntax --
-   -------------------------
+         --  Tag must end in the same entity
+         if Id.Input_Id /= Parser.Current_Node.Start_Id then
+            Fatal_Error
+              (Parser, "[4.5] Entity values must be self-contained", Id);
+         end if;
 
-   procedure Check_XML_PI_Syntax
-     (Machine : in out Reader'Class;
-      Target  : Byte_Sequence;
-      Data    : Byte_Sequence)
-   is
-      procedure Parse_PI_Argument
-        (Index : in out Natural;
-         Name_End : out Natural;
-         Value_Start, Value_End : out Natural);
-      --  Check the argument that starts at Index, and return the first
-      --  character following it (a space)
-      --  Raises an exception if there is an error
-      --  Index is left on the first character following the last parsed one.
+         --  Close all the namespaces
+         NS := Parser.Current_Node.Namespaces;
+         while NS /= null loop
+            End_Prefix_Mapping (Parser, NS.Prefix.all);
+            NS := NS.Next;
+         end loop;
 
-      procedure Check_Standalone_Value (Value : Byte_Sequence);
-      --  Raise an exception if Value is not valid for the standalone parameter
+         --  Move back to the parent node (after freeing the current node)
+         Tmp := Parser.Current_Node;
+         Parser.Current_Node := Parser.Current_Node.Parent;
+         Free (Tmp.NS);
+         Free (Tmp.Name);
+         Free (Tmp.Namespaces);
+         Free_Element (Tmp);
+      end End_Element;
 
-      procedure Check_Encoding_Value (Value : Byte_Sequence);
-      --  Raise an exception if Value is not valid for the encoding
-      --  parameter
+      -------------------
+      -- Parse_End_Tag --
+      -------------------
 
-      procedure Check_Version_Value (Value : Byte_Sequence);
-      --  Raise an exception if Value is not valid for the version parameter
+      procedure Parse_End_Tag is
+         Open_Id : constant Token := Id;
+         NS_Id, Name_Id : Token := Null_Token;
+      begin
+         Set_State (Parser, Tag_State);
+
+         Next_Token (Input, Parser, Id);
+         Get_Name_NS (Id, NS_Id, Name_Id);
+         if Id.Typ = Space then
+            Next_Token (Input, Parser, Id);
+         end if;
+
+         if Id.Typ /= End_Of_Tag then
+            Fatal_Error (Parser, "[3.1] Tags must end with a '>' symbol", Id);
+         end if;
+
+         --  Tag must end in the same entity
+         if Id.Input_Id /= Parser.Current_Node.Start_Id then
+            Fatal_Error
+              (Parser, "[4.5] Entity values must be self-contained", Id);
+         end if;
+
+         if Parser.Current_Node = null
+           or else
+           Value (Parser, NS_Id, NS_Id) /= Parser.Current_Node.NS.all
+           or else
+           Value (Parser, Name_Id, Name_Id) /= Parser.Current_Node.Name.all
+         then
+            --  Well-Formedness Constraint: Element Type Match
+            Fatal_Error
+              (Parser,
+               "[WF-Element Type Match] Name differ for closing tag",
+               Open_Id);
+         end if;
+
+         End_Element (NS_Id, Name_Id);
+
+         Set_State (Parser, Default_State);
+         if NS_Id /= Null_Token then
+            Reset_Buffer (Parser, NS_Id);
+         else
+            Reset_Buffer (Parser, Name_Id);
+         end if;
+      end Parse_End_Tag;
 
       -------------------------
       -- Check_Version_Value --
       -------------------------
 
-      procedure Check_Version_Value (Value : Byte_Sequence) is
+      procedure Check_Version_Value is
          C : Unicode_Char;
-         J : Natural := Value'First;
+         J : Natural;
+         Value_Start, Value_End : Token;
       begin
-         while J <= Value'Last loop
-            C := Encoding.Read (Value, J);
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+         if Id.Typ /= Equal then
+            Fatal_Error (Parser, "Expecting '=' sign", Id);
+         end if;
+
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+         if Id.Typ /= Double_String_Delimiter
+           and then Id.Typ /= Single_String_Delimiter
+         then
+            Fatal_Error (Parser, "[WF] Expecting version value", Id);
+         end if;
+         Get_String (Id, Attr_Value_State, Value_Start, Value_End);
+
+         J := Value_Start.First;
+         while J <= Value_End.Last loop
+            C := Encoding.Read (Parser.Buffer, J);
             J := J + Encoding.Width (C);
             if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
               and then
@@ -3278,45 +3920,62 @@ package body Sax.Readers is
               and then not (C in Digit_Zero .. Digit_Nine)
               and then C /= Low_Line
               and then C /= Period
-              and then C /= Colon
+              and then C /= Unicode.Names.Basic_Latin.Colon
               and then C /= Hyphen_Minus
             then
                Fatal_Error
-                 (Machine,
-                  "(2.8) Illegal version number in <?xml?> processing"
-                  & " instruction",
-                  Machine.Processing_Start);
+                 (Parser, "[2.8] Illegal version number in <?xml?> processing"
+                  & " instruction", Value_Start);
             end if;
          end loop;
+
+         Next_Token (Input, Parser, Id);
+         if Id.Typ = Space then
+            Next_Token (Input, Parser, Id);
+         elsif Id.Typ /= End_Of_PI then
+            Fatal_Error (Parser, "values must be separated by spaces", Id);
+         end if;
       end Check_Version_Value;
 
       --------------------------
       -- Check_Encoding_Value --
       --------------------------
 
-      procedure Check_Encoding_Value (Value : Byte_Sequence) is
+      procedure Check_Encoding_Value is
          C : Unicode_Char;
          J : Natural;
+         Value_Start, Value_End : Token;
       begin
-         if Value'Length = 0 then
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+         if Id.Typ /= Equal then
+            Fatal_Error (Parser, "Expecting '=' sign");
+         end if;
+
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+         if Id.Typ /= Double_String_Delimiter
+           and then Id.Typ /= Single_String_Delimiter
+         then
+            Fatal_Error (Parser, "[WF] Expecting version value");
+         end if;
+         Get_String (Id, Attr_Value_State, Value_Start, Value_End);
+
+         if Value_End.Last < Value_Start.First then
             Fatal_Error
-              (Machine, "(4.3.3) Empty value for encoding not allowed");
+              (Parser, "[4.3.3] Empty value for encoding not allowed");
          else
-            C := Encoding.Read (Value, Value'First);
+            C := Encoding.Read (Parser.Buffer, Value_Start.First);
             if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
               and then not
                 (C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
             then
                Fatal_Error
-                 (Machine,
-                  "(4.3.3) Illegal character '" & Data (Value'First)
-                  & "' in encoding value",
-                  Machine.Processing_Start);
+                 (Parser, "[4.3.3] Illegal character '"
+                  & Encoding.Encode (C) & "' in encoding value", Value_Start);
             end if;
 
-            J := Value'First + Encoding.Width (C);
-            while J <= Value'Last loop
-               C := Encoding.Read (Value, J);
+            J := Value_Start.First + Encoding.Width (C);
+            while J <= Value_End.Last loop
+               C := Encoding.Read (Parser.Buffer, J);
                J := J + Encoding.Width (C);
                if not (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z)
                  and then not
@@ -3327,12 +3986,20 @@ package body Sax.Readers is
                  and then C /= Hyphen_Minus
                then
                   Fatal_Error
-                    (Machine,
-                     "(4.3.3) Illegal character '"
+                    (Parser, "(4.3.3) Illegal character '"
                      & Encoding.Encode (C) & "' in encoding value",
-                     Machine.Processing_Start);
+                     Value_Start);
                end if;
             end loop;
+         end if;
+
+         --  Check we indeed have a following space
+
+         Next_Token (Input, Parser, Id);
+         if Id.Typ = Space then
+            Next_Token (Input, Parser, Id);
+         elsif Id.Typ /= End_Of_PI then
+            Fatal_Error (Parser, "values must be separated by spaces", Id);
          end if;
       end Check_Encoding_Value;
 
@@ -3340,725 +4007,354 @@ package body Sax.Readers is
       -- Check_Standalone_Value --
       ----------------------------
 
-      procedure Check_Standalone_Value (Value : Byte_Sequence) is
+      procedure Check_Standalone_Value is
+         Value_Start, Value_End : Token;
       begin
-         if Value /= Yes_Sequence and then Value /= No_Sequence then
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+         if Id.Typ /= Equal then
+            Fatal_Error (Parser, "Expecting '=' sign");
+         end if;
+
+         Next_Token_Skip_Spaces (Input, Parser, Id);
+         if Id.Typ /= Double_String_Delimiter
+           and then Id.Typ /= Single_String_Delimiter
+         then
             Fatal_Error
-              (Machine,
-               "(2.9 [32]) Invalid value for standalone parameter in <?xml?>",
-               Machine.Processing_Start);
+              (Parser, "Parameter to 'standalone' must be quoted", Id);
+         end if;
+         Get_String (Id, Attr_Value_State, Value_Start, Value_End);
+
+         if Value (Parser, Value_Start, Value_End) /= Yes_Sequence
+           and then Value (Parser, Value_Start, Value_End) /= No_Sequence
+         then
+            Fatal_Error
+              (Parser,
+               "[2.9 [32]] Invalid value for standalone parameter in <?xml?>",
+               Value_Start);
+         end if;
+
+         Next_Token (Input, Parser, Id);
+         if Id.Typ = Space then
+            Next_Token (Input, Parser, Id);
+         elsif Id.Typ /= End_Of_PI then
+            Fatal_Error (Parser, "values must be separated by spaces", Id);
          end if;
       end Check_Standalone_Value;
 
-      -----------------------
-      -- Parse_PI_Argument --
-      -----------------------
+      --------------
+      -- Parse_PI --
+      --------------
 
-      procedure Parse_PI_Argument
-        (Index                  : in out Natural;
-         Name_End               : out Natural;
-         Value_Start, Value_End : out Natural)
-      is
-         C : Unicode_Char;
-         W : Natural := 0;
+      procedure Parse_PI (Id : in out Token) is
+         State : constant Parser_State := Get_State (Parser);
+         Open_Id : constant Token := Id;
+         Name_Id, Data_Start : Token;
+         Data_End : Token := Null_Token;
       begin
-         --  Get the target name
-         while Index <= Data'Last loop
-            C := Encoding.Read (Data, Index);
-            exit when C = Equals_Sign or else Is_White_Space (C);
-            W := Encoding.Width (C);
-            Index := Index + W;
-         end loop;
+         Set_State (Parser, PI_State);
 
-         Name_End := Index - 1;
-
-         --  Skip the spaces if any
-         Skip_Spaces (Data, Index);
-
-         --  If we found the end of the string, or a character other than '='
-         if Index > Data'Last
-           or else Encoding.Read (Data, Index) /= Equals_Sign
-         then
+         Next_Token (Input, Parser, Name_Id);
+         if Name_Id.Typ /= Name then
             Fatal_Error
-              (Machine,
-               "(2.8) Badly formed parameter in <?xml?> PI: no '=' sign",
-               Machine.Processing_Start);
+              (Parser,
+               "[2.6] Processing Instruction must specify a target name",
+               Name_Id);
          end if;
 
-         --  Skip '=' and the spaces, if any
-         Index := Index + Encoding.Width (Equals_Sign);
-         Skip_Spaces (Data, Index);
-
-         --  Current character should be ' or "
-         Skip_String
-           (Data, Index, Machine, Value_Start, Value_End,
-            "(2.8) Badly formed parameter in <?xml?> PI: no quote sign");
-
-         if Index < Data'Last then
-            C := Encoding.Read (Data, Index);
-            if C = Greater_Than_Sign then
-               Fatal_Error
-                 (Machine,
-                  "(2.8) Processing instruction <?xml?> must end with '?>'",
-                  Machine.Processing_Start);
-            end if;
-
-            if not Is_White_Space (C) then
-               Fatal_Error
-                 (Machine,
-                  "(2.8) Parameters in <?xml?> must be separated by spaces",
-                  Machine.Processing_Start);
-            end if;
+         Next_Token (Input, Parser, Id);
+         if Id.Typ /= Space and then Id.Typ /= End_Of_PI then
+            Fatal_Error (Parser, "Must have space betwee target and data");
+         elsif Id.Typ = Space then
+            Next_Token (Input, Parser, Id);
          end if;
-      end Parse_PI_Argument;
 
-      First_Arg_Index, Second_Arg_Index, Third_Arg_Index : Natural;
-      First_End_Name, Second_End_Name, Third_End_Name : Natural;
-      Index : Natural := Data'First;
-      Value_Start, Value_End : Natural;
+         --  Special handling for <?xml?>
+         if Value (Parser, Name_Id, Name_Id) = Xml_Sequence then
 
-   begin
-      --  Parse the first argument
-      Skip_Spaces (Data, Index);
-      First_Arg_Index := Index;
-      Parse_PI_Argument (Index, First_End_Name, Value_Start, Value_End);
-
-      --  (2.8) <?xml?> declaration must contain the version="" string
-      --  as its first parameter
-
-      if Data (First_Arg_Index .. First_End_Name) /= Version_Sequence then
-         Fatal_Error
-           (Machine,
-            "(2.8) <?xml?> prolog must have the 'version=' string as its "
-            & "first parameter",
-            Machine.Processing_Start);
-      end if;
-
-      --  (2.8) Check the version number string
-      Check_Version_Value (Data (Value_Start .. Value_End));
-
-      --  Parse the second argument
-      Skip_Spaces (Data, Index);
-      if Index <= Data'Last then
-         Second_Arg_Index := Index;
-         Parse_PI_Argument (Index, Second_End_Name, Value_Start, Value_End);
-
-         --  Check standalone value
-         if Data (Second_Arg_Index .. Second_End_Name) =
-           Standalone_Sequence
-         then
-            Check_Standalone_Value (Data (Value_Start .. Value_End));
-
-         --  Check encoding value
-         elsif Data (Second_Arg_Index .. Second_End_Name) =
-           Encoding_Sequence
-         then
-            Check_Encoding_Value (Data (Value_Start .. Value_End));
-
-         --  (2.8) Second argument to <?xml?> can be "encoding" or "standalone"
-         elsif Data (Second_Arg_Index .. Second_End_Name) /= "" then
-            Fatal_Error
-              (Machine,
-               "(2.8) <?xml?> arguments can only be 'version', 'encoding' or"
-               & " 'standalone', in that order",
-               Machine.Processing_Start);
-         end if;
-      end if;
-
-      --  Parse third argument
-      Skip_Spaces (Data, Index);
-      if Index <= Data'Last then
-         Third_Arg_Index := Index;
-         Parse_PI_Argument (Index, Third_End_Name, Value_Start, Value_End);
-
-         --  (2.8) Third argument must be "standalone", and then only if the
-         --  second was "encoding"
-
-         if Data (Third_Arg_Index .. Third_End_Name) /= "" then
-            if Data (Third_Arg_Index .. Third_End_Name) /= Standalone_Sequence
-              or else Data (Second_Arg_Index .. Second_End_Name) /=
-              Encoding_Sequence
+            if Open_Id.Line /= 1
+              or else Open_Id.Column /= 1 + Prolog_Size (Input)
+              or else (Parser.Inputs /= null
+                       and then not Parser.Inputs.External)
             then
                Fatal_Error
-                 (Machine,
-                  "(2.8) <?xml..?> arguments can only be 'version', 'encoding'"
-                  & " or 'standalone', in that order",
-                  Machine.Processing_Start);
+                 (Parser,
+                  "[2.8] <?xml?> instruction must be first in document",
+                  Open_Id);
             end if;
 
-            --  Check standalone value
-            Check_Standalone_Value (Data (Value_Start .. Value_End));
-         end if;
-      end if;
+            --  ??? No true for text declaratinos 4.3.1 (external parsed
+            --  entities)
+            Set_State (Parser, Tag_State);
 
-      --  Do we have any other argument: if yes, this is an error (2.8)
-      Skip_Spaces (Data, Index);
-      if Index <= Data'Last then
-         Fatal_Error
-           (Machine,
-            "(2.8) <?xml..?> arguments can only be 'version', 'encoding' or"
-            & "'standalone', in that order",
-            Machine.Processing_Start);
-      end if;
-   end Check_XML_PI_Syntax;
-
-   ---------------
-   -- End_Of_PI --
-   ---------------
-
-   procedure End_Of_PI (Machine : in out Reader'Class;
-                        Last_Read : Unicode.Unicode_Char)
-   is
-      Old_Start : constant Natural := Machine.Processing_Start.Char_Number;
-      End_Of_Target : Natural;
-      Index : Natural := 1;
-   begin
-      if Debug then
-         Debug_Put (Machine, "End_Of_PI");
-      end if;
-
-      Machine.Processing := None;
-
-      --  Get the target of the processing instruction
-      while Index <= Machine.Buffer_Length
-        and then not Is_White_Space (To_Unicode (Machine.Buffer (Index)))
-      loop
-         Index := Index + Encoding.Width
-           (Encoding.Read (Machine.Buffer, Index));
-      end loop;
-      End_Of_Target := Index - 1;
-
-      --  Check that the processing instruction has a target (2.6)
-      if Index = 1 then
-         Fatal_Error
-           (Machine,
-            "(2.6) Processing Instruction must specify a target name",
-           Machine.Processing_Start);
-      end if;
-
-      --  (2.6)[17] The target must match the Name rule.
-      if not Is_Valid_Name (Machine.Buffer (1 .. End_Of_Target)) then
-         Fatal_Error
-           (Machine, "(2.6) Invalid target name for processing instruction",
-            Machine.Processing_Start);
-      end if;
-
-      --  (2.8)[23] the <?xml?> declaration must be first in the document
-      if Machine.Buffer (1 .. End_Of_Target) = Xml_Sequence then
-
-         --  Ignore this while parsing the contents of external entities
-         if Machine.Recursive_Depth = 1 then
-
-            --  (3.1 [43]) <?xml?> declaration can not be within element
-            --  contents
-            if Machine.Current_Node /= null then
+            if Value (Parser, Id, Id) = Version_Sequence then
+               Check_Version_Value;
+            elsif not Parser.In_External_Entity then
                Fatal_Error
-                 (Machine,
-                  "(2.8) <?xml?> prolog can not appear within an element",
-                  Machine.Processing_Start);
+                 (Parser, "'version' must be the first argument to <?xml?>",
+                  Id);
             end if;
 
-            --  Can't have anything before the prolog <?xml ... ?>
-
-            if Machine.Num_Items /= 0 then
+            if Id.Typ = Name
+              and then Value (Parser, Id, Id) = Encoding_Sequence
+            then
+               Check_Encoding_Value;
+            elsif Parser.In_External_Entity then
                Fatal_Error
-                 (Machine,
-                  "(2.8) <?xml?> prolog must be first in the document",
-                  Machine.Processing_Start);
-
-               --  ??? This test is incorrect since it ignores any BOM.
-            elsif Old_Start /= 1 then
-               Fatal_Error
-                 (Machine,
-                  "(2.8) Spaces must not occur before <?xml?> instruction",
-                  Machine.Processing_Start);
+                 (Parser, "'encoding' must be specified for <?xml?> in"
+                  & " external entities", Id);
             end if;
-         end if;
 
-         Check_XML_PI_Syntax
-           (Machine,
-            Machine.Buffer (1 .. End_Of_Target),
-            Machine.Buffer (End_Of_Target + 1 .. Machine.Buffer_Length));
+            if not Parser.In_External_Entity
+              and then Id.Typ = Name
+              and then Value (Parser, Id, Id) = Standalone_Sequence
+            then
+               Check_Standalone_Value;
+            end if;
 
-      --  (2.6)[17]: Name can not be 'xml' (case insensitive)
-      else
-         declare
-            C : Unicode_Char;
-            J : Natural := Machine.Buffer'First;
-         begin
-            C := Encoding.Read (Machine.Buffer, J);
-            J := J + Encoding.Width (C);
-
-            if C = Latin_Small_Letter_X or else C = Latin_Capital_Letter_X then
-               C := Encoding.Read (Machine.Buffer, J);
-               J := J + Encoding.Width (C);
-
-               if C = Latin_Capital_Letter_M
-                 or else C = Latin_Small_Letter_M
-               then
-                  C := Encoding.Read (Machine.Buffer, J);
-                  J := J + Encoding.Width (C);
-
-                  if (C = Latin_Capital_Letter_L
-                      or else C = Latin_Small_Letter_L)
-                    and then J = End_Of_Target + 1
-                  then
-                     Fatal_Error
-                       (Machine,
-                        "(2.6) '" & Machine.Buffer (1 .. J - 1)
-                        & "' is not a valid processing instruction target",
-                        Machine.Processing_Start);
-                  end if;
+            if Id.Typ /= End_Of_PI then
+               if Parser.In_External_Entity then
+                  Fatal_Error
+                    (Parser,
+                     "Text declarations <?xml?> in external entity can not"
+                     & " specify parameters other than 'version' and"
+                     & " 'encoding'", Id);
+               else
+                  Fatal_Error
+                    (Parser,
+                     "<?xml..?> arguments can only be 'version', 'encoding' or"
+                     & " 'standalone', in that order", Id);
                end if;
             end if;
-         end;
-      end if;
 
-      --  Report the event (SAX says that <?xml?> shouldn't be reported)
-      if Machine.Buffer (1 .. End_Of_Target) /= Xml_Sequence then
-         Processing_Instruction
-           (Machine,
-            Machine.Buffer (1 .. End_Of_Target),
-            Machine.Buffer (End_Of_Target + 2 .. Machine.Buffer_Length));
-      end if;
-
-      Machine.Buffer_Length := 0;
-      Free (Machine.Current_NS);
-      Machine.Current_NS := new String' ("");
-
-      --  Register the PI if at the top-level, so that we can correctly
-      --  report that <?xml?> must be first in the document
-      if Machine.Current_Node = null then
-         Machine.Num_Items := Machine.Num_Items + 1;
-      end if;
-   end End_Of_PI;
-
-   -----------------------
-   -- Put_Question_Mark --
-   -----------------------
-
-   procedure Put_Question_Mark (Machine   : in out Reader'Class;
-                                Last_Read : Unicode.Unicode_Char)
-   is
-   begin
-      Put_In_Buffer_Force (Machine, Question_Mark);
-      Put_In_Buffer (Machine, Last_Read);
-   end Put_Question_Mark;
-
-   ----------------------
-   -- End_Of_Attr_Name --
-   ----------------------
-
-   procedure End_Of_Attr_Name (Machine   : in out Reader'Class;
-                               Last_Read : Unicode.Unicode_Char)
-   is
-      Name : constant Byte_Sequence :=
-        Machine.Buffer (1 .. Machine.Buffer_Length);
-   begin
-      if Debug then
-         Debug_Put (Machine, "End_Of_Attr_Name --"
-                    & Qname_From_Name (Machine.Current_NS, Name));
-      end if;
-
-      --  (2.3)[5] Check the syntax of the attribute name
-      if Name = "" or else not Is_Valid_Name (Name) then
-         Fatal_Error (Machine, "(2.3) '" & Name & "' is not a valid name");
-      end if;
-
-      --  The attribute name must be unique. Note that we must compare with
-      --  the namespaces expanded to their URI (5.3 XML namespaces
-      --  specification).
-      --  Note that this is again tested when emitting Start_Element, once the
-      --  namespaces have been expanded. However, we test it here so that we
-      --  can report the error at the correct location.
-      if (Machine.Current_NS.all /= ""
-          or else Machine.Current_Node.Parent = null)
-        and then Get_Index
-        (Machine.Attributes,
-         Qname_From_Name (Machine.Current_NS, Name)) /= -1
-      then
-         Fatal_Error (Machine, "(3.1) Attributes must have a unique value");
-      end if;
-
-      --  Create a new attribute. The value will be specified later on,
-      --  when it is known.
-      --  ??? The type should be read from the DTD.
-      Add_Attribute
-        (Machine.Attributes,
-         URI => Machine.Current_NS.all,
-         Local_Name => Name,
-         Qname => Qname_From_Name (Machine.Current_NS, Name),
-         Att_Type => "CDATA",
-         Value => "");
-      Machine.Buffer_Length := 0;
-      Free (Machine.Current_NS);
-      Machine.Current_NS := new String' ("");
-   end End_Of_Attr_Name;
-
-   -------------------------
-   -- Start_Of_Attr_Value --
-   -------------------------
-
-   procedure Start_Of_Attr_Value (Machine   : in out Reader'Class;
-                                  Last_Read : Unicode.Unicode_Char) is
-   begin
-      if Debug then
-         Debug_Put (Machine, "Start_Of_Attr_Value");
-      end if;
-      Machine.Processing_Attribute_Value := True;
-   end Start_Of_Attr_Value;
-
-   -----------------------
-   -- End_Of_Attr_Value --
-   -----------------------
-
-   procedure End_Of_Attr_Value (Machine   : in out Reader'Class;
-                                Last_Read : Unicode.Unicode_Char)
-   is
-      Pos          : constant Natural := Get_Length (Machine.Attributes) - 1;
-      S            : String (1 .. Machine.Buffer_Length);
-      S_Index      : Natural := S'First;
-      Buffer_Index : Natural := Machine.Buffer'First;
-      C            : Unicode_Char;
-      W            : Natural := 0;
-
-   begin
-      if Debug then
-         Debug_Put
-           (Machine, "End_Of_Attr_Value --"
-            & Machine.Buffer (1 .. Machine.Buffer_Length));
-      end if;
-
-      Machine.Processing_Attribute_Value := False;
-
-      --  Normalize the value: ignore any leading white space
-      Skip_Spaces (Machine.Buffer, Buffer_Index);
-
-      --  Then merge several spaces into one
-      while Buffer_Index <= Machine.Buffer_Length loop
-         C := Encoding.Read (Machine.Buffer, Buffer_Index);
-         W := Encoding.Width (C);
-         if Is_White_Space (C) then
-            W := Encoding.Width (Space);
-            S (S_Index .. S_Index + W - 1) := Encoding.Encode (Space);
-            S_Index := S_Index + W;
-            Skip_Spaces (Machine.Buffer, Buffer_Index);
          else
-            S (S_Index .. S_Index + W - 1) :=
-              Machine.Buffer (Buffer_Index .. Buffer_Index + W - 1);
-            S_Index := S_Index + W;
-            Buffer_Index := Buffer_Index + W;
-         end if;
-      end loop;
+            --  (2.6)[17]: Name can not be 'xml' (case insensitive)
+            declare
+               C : Unicode_Char;
+               J : Natural := Name_Id.First;
+            begin
+               C := Encoding.Read (Parser.Buffer, J);
+               J := J + Encoding.Width (C);
 
-      --  Then remove the trailing spaces
-      if S_Index >= S'First + W and then Is_White_Space (C) then
-         S_Index := S_Index - W;
-      end if;
+               if C = Latin_Small_Letter_X
+                 or else C = Latin_Capital_Letter_X
+               then
+                  C := Encoding.Read (Parser.Buffer, J);
+                  J := J + Encoding.Width (C);
 
-      Machine.Buffer_Length := 0;
+                  if C = Latin_Capital_Letter_M
+                    or else C = Latin_Small_Letter_M
+                  then
+                     C := Encoding.Read (Parser.Buffer, J);
+                     J := J + Encoding.Width (C);
 
-      --  Is this a namespace declaration ?  (xmlns:prefix="uri")
+                     if (C = Latin_Capital_Letter_L
+                         or else C = Latin_Small_Letter_L)
+                       and then J = Name_Id.Last + 1
+                     then
+                        Fatal_Error
+                          (Parser,
+                           "[2.6] '" & Value (Parser, Name_Id, Name_Id)
+                           & "' is not a valid processing instruction target",
+                           Name_Id);
+                     end if;
+                  end if;
+               end if;
+            end;
 
-      if Get_URI (Machine.Attributes, Pos) = Xmlns_Sequence then
-         Add_Namespace
-           (Machine, Machine.Current_Node,
-            Prefix => Get_Local_Name (Machine.Attributes, Pos),
-            URI    => S (S'First .. S_Index - 1));
+            Data_Start := Id;
 
-         --  If we shouldn't send events for namespaces attributes
-         if not Get_Feature (Machine, Namespace_Prefixes_Feature) then
-            Remove_Attribute (Machine.Attributes, Pos);
-            return;
-         end if;
+            while Id.Typ /= End_Of_PI and then Id.Typ /= End_Of_Input loop
+               Data_End := Id;
+               Next_Token (Input, Parser, Id);
+            end loop;
 
-      --  Is it the declaration of the default namespace (xmlns="uri")
-      elsif Get_URI (Machine.Attributes, Pos)'Length = 0
-        and then Get_Local_Name (Machine.Attributes, Pos) = Xmlns_Sequence
-      then
-         Add_Namespace
-           (Machine, Machine.Current_Node,
-            Prefix => "",
-            URI    => S (S'First .. S_Index - 1));
-
-         --  If we shouldn't send events for namespaces attributes
-         if not Get_Feature (Machine, Namespace_Prefixes_Feature) then
-            Remove_Attribute (Machine.Attributes, Pos);
-            return;
-         end if;
-      end if;
-
-      Set_Value (Machine.Attributes, Pos, S (S'First .. S_Index - 1));
-   end End_Of_Attr_Value;
-
-   ------------------------
-   -- End_Of_XML_End_Tag --
-   ------------------------
-
-   procedure End_Of_XML_End_Tag (Machine   : in out Reader'Class;
-                                 Last_Read : Unicode.Unicode_Char)
-   is
-      Tmp : Element_Access := Machine.Current_Node;
-      NS  : XML_NS;
-   begin
-      --  Note: we already checked, when necessary, that the name we found
-      --  in the closing tag was the same as the one associated with the
-      --  opening tag.
-
-      --  Close the element
-      Find_NS
-        (Machine, Machine.Current_Node, Machine.Current_Node.NS.all, NS);
-      End_Element
-        (Handler => Machine,
-         Namespace_URI => NS.URI.all,
-         Local_Name => Machine.Current_Node.Name.all,
-         Qname => Qname_From_Name (Machine.Current_Node.NS,
-                                   Machine.Current_Node.Name.all));
-
-      --  Close all the namespaces
-      NS := Machine.Current_Node.Namespaces;
-      while NS /= null loop
-         End_Prefix_Mapping (Machine, NS.Prefix.all);
-         NS := NS.Next;
-      end loop;
-
-      --  Move back to the parent node (after freeing the current node)
-      Machine.Current_Node := Machine.Current_Node.Parent;
-      Free (Tmp);
-      Free_Element (Tmp);
-
-      --  Empty the buffer
-      Machine.Buffer_Length := 0;
-      Free (Machine.Current_NS);
-      Machine.Current_NS := new String' ("");
-   end End_Of_XML_End_Tag;
-
-   ------------------------------
-   -- End_Of_Attr_Name_And_Tag --
-   ------------------------------
-
-   procedure End_Of_Attr_Name_And_Tag
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      if Debug then
-         Debug_Put (Machine, "End_Of_Attr_Name_And_Tag");
-      end if;
-      End_Of_Attr_Name (Machine, Last_Read);
-      End_Of_Start_Tag (Machine, Last_Read);
-   end End_Of_Attr_Name_And_Tag;
-
-   ---------------------------------
-   -- End_Of_Name_And_Closing_Tag --
-   ---------------------------------
-
-   procedure End_Of_Name_And_Closing_Tag
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char)
-   is
-   begin
-      if Debug then
-         Debug_Put (Machine, "End_Of_Name_And_Closing_Tag --"
-                    & Machine.Buffer (1 .. Machine.Buffer_Length));
-      end if;
-      End_Of_Closing_Tag_Name (Machine, Last_Read);
-   end End_Of_Name_And_Closing_Tag;
-
-   -----------------------------
-   -- End_Of_Closing_Tag_Name --
-   -----------------------------
-
-   procedure End_Of_Closing_Tag_Name
-     (Machine   : in out Reader'Class;
-      Last_Read : Unicode.Unicode_Char) is
-   begin
-      if Debug then
-         Debug_Put (Machine, "End_Of_Closing_Tag_Name --"
-                    & Machine.Buffer (1 .. Machine.Buffer_Length));
-      end if;
-      if Machine.Current_Node = null
-        or else Machine.Current_Node.Name.all /=
-        Machine.Buffer (1 .. Machine.Buffer_Length)
-      then
-         Fatal_Error (Machine, "(3) Names differ for closing tag");
-      end if;
-
-      End_Of_XML_End_Tag (Machine, Last_Read);
-   end End_Of_Closing_Tag_Name;
-
-   -------------------
-   -- Add_Namespace --
-   -------------------
-
-   procedure Add_Namespace
-     (Machine : in out Reader'Class;
-      Node    : Element_Access;
-      Prefix  : Byte_Sequence;
-      URI     : Byte_Sequence) is
-   begin
-      if Node = null then
-         Machine.Default_Namespaces := new XML_NS_Record'
-           (Prefix => new Byte_Sequence' (Prefix),
-            URI => new Byte_Sequence' (URI),
-            Next => Machine.Default_Namespaces);
-
-      else
-         Node.Namespaces := new XML_NS_Record'
-           (Prefix => new Byte_Sequence' (Prefix),
-            URI => new Byte_Sequence' (URI),
-            Next => Node.Namespaces);
-      end if;
-
-      --  Report the event, except for the default namespace
-      if Prefix /= "" and then Prefix /= "xmlns" then
-         Start_Prefix_Mapping
-           (Machine,
-            Prefix => Prefix,
-            URI    => URI);
-      end if;
-   end Add_Namespace;
-
-   ---------------
-   -- Main_Loop --
-   ---------------
-
-   procedure Main_Loop
-     (Machine : in out Reader'Class;
-      Input   : in out Input_Sources.Input_Source'Class;
-      Increment_Locator : Boolean := True)
-   is
-      C         : Unicode_Char;
-      Last_Char : Unicode_Char := Nul;
-   begin
-      while not Eof (Input) loop
-
-         --  Increment now, rather than after reading the character, for proper
-         --  handling of force entries (they should still relate to the
-         --  previous location)
-         if Increment_Locator and then Last_Char /= Nul then
-            if Last_Char = Line_Feed then
-               Set_Column_Number (Machine.Locator.all, 1);
-               Set_Line_Number
-                 (Machine.Locator.all,
-                  Get_Line_Number (Machine.Locator.all) + 1);
-            else
-               Set_Column_Number
-                 (Machine.Locator.all,
-                  Get_Column_Number (Machine.Locator.all) + 1);
+            if Id.Typ = End_Of_Input then
+               Fatal_Error
+                 (Parser, "[2.6] Processing instruction must end with '?>'",
+                  Open_Id);
             end if;
-            Machine.Locator.Char_Number := Machine.Locator.Char_Number + 1;
+
+            Processing_Instruction
+              (Parser,
+               Target => Value (Parser, Name_Id, Name_Id),
+               Data   => Value (Parser, Data_Start, Data_End));
          end if;
 
-         --  Normalize the end of line characters: CR & LF => LF, CR =>
-         --  LF
-         Next_Char (Input, C);
-         if Debug then
-            Debug_Put (Machine, "Main_Loop: Input " & Encoding.Encode (C)
-                       & " (" & C'Img & ")");
-         end if;
+         Set_State (Parser, State);
+         Reset_Buffer (Parser, Name_Id);
+      end Parse_PI;
 
-         if Last_Char = Carriage_Return and then C /= Line_Feed then
-            Send_Event (Machine, Line_Feed);
-         end if;
-         if C /= Carriage_Return then
-            Send_Event (Machine, C);
-         end if;
+   begin
+      --  Initialize the parser with the first character of the stream.
+      if Eof (Input) then
+         return;
+      end if;
+      Next_Char (Input, Parser);
 
-         Last_Char := C;
+      if Parser.State.In_DTD then
+         Parse_Doctype_Contents;
+      end if;
+
+      loop
+         --  Unless in string, buffer should be empty at this point. Strings
+         --  are special-cased just in case we are currently substituting
+         --  entities while in a string.
+         pragma Assert (Parser.State.Ignore_Special
+                        or else Parser.Buffer_Length = 0);
+
+         Next_Token (Input, Parser, Id);
+         exit when Id.Typ = End_Of_Input;
+
+         case Id.Typ is
+            when Start_Of_PI =>
+               Parse_PI (Id);
+
+            when Cdata_Section =>
+               if Parser.Current_Node = null then
+                  Fatal_Error
+                    (Parser, "[2.1] Non-white space found at top level", Id);
+               end if;
+               Start_Cdata (Parser);
+               Characters (Parser, Value (Parser, Id, Id));
+               End_Cdata (Parser);
+               Reset_Buffer (Parser, Id);
+
+            when Text | Name =>
+               if Parser.Current_Node = null then
+                  Fatal_Error
+                    (Parser, "[2.1] Non-white space found at top level", Id);
+               end if;
+               Characters (Parser, Value (Parser, Id, Id));
+               Reset_Buffer (Parser, Id);
+
+            when Sax.Readers.Space =>
+               Ignorable_Whitespace (Parser, Value (Parser, Id, Id));
+               Reset_Buffer (Parser, Id);
+
+            when Comment =>
+               Comment (Parser, Value (Parser, Id, Id));
+               Reset_Buffer (Parser, Id);
+
+            when Start_Of_Tag =>
+               Parse_Start_Tag;
+
+            when Start_Of_End_Tag =>
+               Parse_End_Tag;
+
+            when Doctype_Start =>
+               Parse_Doctype;
+
+            when others =>
+               Fatal_Error (Parser, "[WF] Currently ignored: " & Id.Typ'Img);
+         end case;
       end loop;
-   end Main_Loop;
+   end Syntactic_Parse;
 
    -----------
    -- Parse --
    -----------
 
-   procedure Parse (Read : in out Reader; Input : access Input_Source'Class) is
+   procedure Parse
+     (Parser : in out Reader;
+      Input  : in out Input_Sources.Input_Source'Class) is
    begin
-      --  Reinitialize the variables (leave the default namespace first)
-      Read.Current_Node := null;
-      Read.Locator := new File_Locator;
-      Read.Processing_Start := new File_Locator;
-      Set_Public_Id (Read.Locator.all, Get_Public_Id (Input.all));
-      Set_System_Id (Read.Locator.all, Get_System_Id (Input.all));
-      Set_Column_Number (Read.Locator.all, 1 + Prolog_Size (Input.all));
+      Parser.Locator := new Locator_Impl;
+      Set_Public_Id (Parser.Locator.all, Get_Public_Id (Input));
+      Set_System_Id (Parser.Locator.all, Get_System_Id (Input));
+      Set_Column_Number (Parser.Locator.all, 1 + Prolog_Size (Input));
+      Set_Line_Number (Parser.Locator.all, 1);
+      Parser.Current_Node := null;
+      Parser.Num_Toplevel_Elements := 0;
+      Parser.Previous_Char_Was_CR := False;
+      Parser.Ignore_State_Special := False;
+      Parser.In_External_Entity := False;
+      Set_State (Parser, Default_State);
 
-      Compile
-        (Read,
-         Highest_State  => Xml_Automaton (Xml_Automaton'Last).Initial_State,
-         Initial_State  => Top_State,
-         Def            => Xml_Automaton);
-
-      Set_Document_Locator (Reader'Class (Read), Read.Locator);
-      Start_Document (Reader'Class (Read));
-
-      --  Create the default namespaces (must be done after we have sent the
-      --  Start_Document event).
-      Add_Namespace
-        (Read, null, Xml_Sequence,
+      Add_Namespace_No_Event
+        (Parser, Xml_Sequence,
          Encodings.From_Utf32
          (To_Utf32 ("http://www.w3.org/XML/1998/namespace")));
-      Add_Namespace (Read, null, Xmlns_Sequence, Xmlns_Sequence);
-      Add_Namespace (Read, null, "", "");
-      Read.Current_NS := new String' ("");
+      Add_Namespace_No_Event (Parser, Xmlns_Sequence, Xmlns_Sequence);
+      Add_Namespace_No_Event (Parser, "", "");
 
-      Main_Loop (Read, Input.all);
+      Set_Document_Locator (Reader'Class (Parser), Parser.Locator);
+
+      Start_Document (Reader'Class (Parser));
+      Syntactic_Parse (Parser, Input);
 
       --  Close all the namespaces
       declare
-         NS : XML_NS := Read.Default_Namespaces;
+         NS : XML_NS := Parser.Default_Namespaces;
       begin
          while NS /= null loop
-            if NS.Prefix.all /= "" and then NS.Prefix.all /= "xmlns" then
-               End_Prefix_Mapping (Reader'Class (Read), NS.Prefix.all);
+            if NS.Prefix.all /= ""
+              and then NS.Prefix.all /= Xmlns_Sequence
+            then
+               End_Prefix_Mapping (Reader'Class (Parser), NS.Prefix.all);
             end if;
             NS := NS.Next;
          end loop;
       end;
-      End_Document (Reader'Class (Read));
-
-      --  A valid XML document must have a root element to be well-formed (2.1)
-      if Read.Num_Elements /= 1 then
-         Fatal_Error (Read, "(2.1) No root element specified");
-      end if;
 
       --  All the nodes must have been closed at the end of the document
-      if Read.Current_Node /= null then
+      if Parser.Current_Node /= null then
          Fatal_Error
-           (Read, "(2.1) Node <" & Read.Current_Node.Name.all
+           (Parser, "[2.1] Node <" & Parser.Current_Node.Name.all
             & "> is not closed");
       end if;
 
-      --  We should be parsing the DTD
-      if Read.Parsing_DTD > 0 then
-         Fatal_Error (Read, "(2.8) DTD must be terminated by ']>'");
+      if Parser.Num_Toplevel_Elements = 0 then
+         Fatal_Error (Parser, "[2.1] No root element specified");
       end if;
 
-      --  Free the allocated memory that we no longer need
-      Free_Memory (Read);
+      End_Document (Reader'Class (Parser));
 
-   exception
-      when others =>
-         Free_Memory (Read);
-         raise;
+      --  ??? Free (Parser.Locator);
+      --  ??? Should also free Entities
    end Parse;
+
+   ----------------
+   -- Entity_Img --
+   ----------------
+
+   function Entity_Img (A : Entity_Entry) return String is
+   begin
+      if A.Value /= null then
+         return A.Value.all;
+      else
+         return "<null>";
+      end if;
+   end Entity_Img;
+
+   --------------------
+   -- Attributes_Img --
+   --------------------
+
+   function Attributes_Img (A : Attributes_Ptr) return String is
+   begin
+      return "<???>";
+   end Attributes_Img;
 
    -----------------
    -- Get_Feature --
    -----------------
 
-   function Get_Feature (Read : Reader; Name : String) return Boolean is
+   function Get_Feature (Parser : Reader; Name : String) return Boolean is
    begin
       if Name = Namespace_Feature then
-         return Read.Feature_Namespace;
+         return Parser.Feature_Namespace;
 
       elsif Name = Namespace_Prefixes_Feature then
-         return Read.Feature_Namespace_Prefixes;
+         return Parser.Feature_Namespace_Prefixes;
 
       elsif Name = External_General_Entities_Feature then
-         return Read.Feature_External_General_Entities;
+         return Parser.Feature_External_General_Entities;
 
       elsif Name = External_Parameter_Entities_Feature then
-         return Read.Feature_External_Parameter_Entities;
+         return Parser.Feature_External_Parameter_Entities;
+
+      elsif Name = Validation_Feature then
+         return Parser.Feature_Validation;
 
       elsif Name = Parameter_Entities_Feature then
          return False;  --  ??? Unsupported for now
@@ -4072,19 +4368,22 @@ package body Sax.Readers is
    -----------------
 
    procedure Set_Feature
-     (Read : in out Reader; Name : String; Value : Boolean) is
+     (Parser : in out Reader; Name : String; Value : Boolean) is
    begin
       if Name = Namespace_Feature then
-         Read.Feature_Namespace := Value;
+         Parser.Feature_Namespace := Value;
 
       elsif Name = Namespace_Prefixes_Feature then
-         Read.Feature_Namespace_Prefixes := Value;
+         Parser.Feature_Namespace_Prefixes := Value;
 
       elsif Name = External_General_Entities_Feature then
-         Read.Feature_External_General_Entities := Value;
+         Parser.Feature_External_General_Entities := Value;
 
       elsif Name = External_Parameter_Entities_Feature then
-         Read.Feature_External_Parameter_Entities := Value;
+         Parser.Feature_External_Parameter_Entities := Value;
+
+      elsif Name = Validation_Feature then
+         Parser.Feature_Validation := Value;
       end if;
    end Set_Feature;
 
@@ -4117,7 +4416,7 @@ package body Sax.Readers is
    begin
       Raise_Exception
         (XML_Fatal_Error'Identity,
-         Get_Message (Except) & ", at " & To_String (Get_Locator (Except)));
+         Get_Message (Except));
    end Fatal_Error;
 
    --------------------------
@@ -4358,8 +4657,7 @@ package body Sax.Readers is
    procedure Element_Decl
      (Handler : in out Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Unicode.CES.Byte_Sequence;
-      Parsed_Model : Element_Model_Ptr) is
+      Model   : Element_Model_Ptr) is
    begin
       null;
    end Element_Decl;
@@ -4385,45 +4683,11 @@ package body Sax.Readers is
      (Handler : in out Reader;
       Ename   : Unicode.CES.Byte_Sequence;
       Aname   : Unicode.CES.Byte_Sequence;
-      Typ     : Unicode.CES.Byte_Sequence;
-      Value_Default : Unicode.CES.Byte_Sequence;
+      Typ     : Sax.Attributes.Attribute_Type;
+      Content : Sax.Models.Element_Model_Ptr;
+      Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence) is
    begin
       null;
    end Attribute_Decl;
-
-   ----------------
-   -- Entity_Img --
-   ----------------
-
-   function Entity_Img (A : Entity_Def) return String is
-   begin
-      if A.Str /= null then
-         return A.Str.all;
-      else
-         return "<null>";
-      end if;
-   end Entity_Img;
-
-   ---------------------
-   -- Entity_Equality --
-   ---------------------
-
-   function Entity_Equality (A, B : Entity_Def) return Boolean is
-   begin
-      return A.External = B.External
-        and then A.Str /= null
-        and then B.Str /= null
-        and then A.Str.all = B.Str.all;
-   end Entity_Equality;
-
-   --------------------
-   -- Attributes_Img --
-   --------------------
-
-   function Attributes_Img (A : Attributes_Ptr) return String is
-   begin
-      return "<???>";
-   end Attributes_Img;
-
 end Sax.Readers;

@@ -1,0 +1,10 @@
+AC_REVISION($Revision$)
+AC_INIT(dom/dom.ads)
+
+AC_PROG_RANLIB
+AC_CHECK_PROGS(DVIPS, dvips)
+AC_CHECK_PROGS(MAKEINFO, makeinfo)
+AC_CHECK_PROGS(TEXI2HTML, texi2html)
+AC_CHECK_PROGS(TEX, tex)
+
+AC_OUTPUT(Makefile docs/Makefile)

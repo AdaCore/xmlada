@@ -10,6 +10,7 @@ COMPILER line in the file Makefile.module, so that it only contains
 "gnatmake". The other switches are not supported in these versions.
 
 type:
+   >  ./configure
    >  make install
 to build and install the library.
 
@@ -17,7 +18,24 @@ Files will be copied into ${PREFIX}/lib and ${PREFIX}/include/xmlada.
 
 To use this library, add the following arguments to the gnatmake
 command line:
-   -aI${PREFIX}/include/xmlada -largs -L${PREFIX}/lib -lxml
+   -aI${PREFIX}/include/xmlada -largs -L${PREFIX}/lib -lxmlada
+
+TESTING THE LIBRARY
+===================
+
+You need to download the official OASIS test suite for XML,
+from www.xml.org. The name of the current archive is
+     xmlconf-19990712.tar.Z.
+
+Uncompress it somewhere on your disk, then edit the file dom/test/testsuite to
+reflect the location of that testsuite (BASE should point to the directory
+containing these official tests)
+
+Execute the file
+    cd dom/test
+    ./testsuite
+
+This will report the number of errors found.
 
 
 CONTENTS OF THE LIBRARY
@@ -27,10 +45,6 @@ The sources in this library are split into several subdirectories, each
 with its own README, sources, documentation and unit tests.
 
 The list of subdirectories (aka modules) is:
-
-- state_machine:
-  provides a generic state machine, that can be instantiated to transition on
-  any type of event
 
 - unicode:
   provides a full support for Unicode and Utf8/Utf16/Utf32 encodings. It also
@@ -55,6 +69,19 @@ The list of subdirectories (aka modules) is:
 - docs
   This contains the full documentation for this XML library
 
+
+LICENSING
+=========
+
+This library is distributed under the GNAT-Modified GNU Public License.
+It has the following addition to the GPL:
+
+"As a special exception, if other files instantiate generics from
+ this unit, or you link this unit with other files to produce an
+ executable, this  unit  does not  by itself cause  the resulting
+ executable to be covered by the GNU General Public License. This
+ exception does not however invalidate any other reasons why the
+ executable file  might be covered by the  GNU Public License."
 
 BUG REPORTS
 ===========

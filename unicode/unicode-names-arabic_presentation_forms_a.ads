@@ -164,13 +164,15 @@ package Unicode.Names.Arabic_Presentation_Forms_A is
    Arabic_Ligature_Yeh_With_Hamza_Above_With_E_Final_Form :
       constant Unicode_Char := 16#FBF7#;
    Arabic_Ligature_Yeh_With_Hamza_Above_With_E_Initial_Form :
-      constant Unicode_Char := 16#FBF8#;
+     constant Unicode_Char := 16#FBF8#;
+pragma Warnings (Off);
    Arabic_Ligature_Uighur_Kirghiz_Yeh_With_Hamza_Above_With_Alef_Maksura_Isolated_Form :
       constant Unicode_Char := 16#FBF9#;
    Arabic_Ligature_Uighur_Kirghiz_Yeh_With_Hamza_Above_With_Alef_Maksura_Final_Form :
       constant Unicode_Char := 16#FBFA#;
    Arabic_Ligature_Uighur_Kirghiz_Yeh_With_Hamza_Above_With_Alef_Maksura_Initial_Form :
       constant Unicode_Char := 16#FBFB#;
+pragma Warnings (On);
    Arabic_Letter_Farsi_Yeh_Isolated_Form   : constant Unicode_Char := 16#FBFC#;
    Arabic_Letter_Farsi_Yeh_Final_Form      : constant Unicode_Char := 16#FBFD#;
    Arabic_Letter_Farsi_Yeh_Initial_Form    : constant Unicode_Char := 16#FBFE#;

@@ -19,6 +19,13 @@
 -- License along with this library; if not, write to the             --
 -- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
 -- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Unicode;                   use Unicode;
@@ -31,7 +38,10 @@ with Ada.Text_IO;               use Ada.Text_IO;
 package body DOM.Core.Nodes is
 
    procedure Print_String (Str : DOM_String);
-   --  Print a string on standard output, in XML
+   --  Print a string on standard output, in XML.
+   --  If Normalize is True, then adjoining spaces will be concatenated into
+   --  one single space character, except for leading and trailing spaces
+   --  which are discarded.
 
    function Clone_List (List : Node_List; Deep : Boolean) return Node_List;
    --  Return a clone of List. If Deep is True, then each item in the list
@@ -42,6 +52,10 @@ package body DOM.Core.Nodes is
 
    function Child_Is_Valid (Parent : Node; Child : Node) return Boolean;
    --  Return True if Child can be added to Parent
+
+   procedure Sort (Map : in out Named_Node_Map);
+   --  Sort alphabetically the contents of Map (this is based on the value
+   --  of Node_Name).
 
    XML_Sequence : constant DOM_String :=
      Encoding.Encode (Latin_Small_Letter_X)
@@ -635,31 +649,55 @@ package body DOM.Core.Nodes is
 
       case N.Node_Type is
          when Element_Node =>
-            Clone.Prefix := new DOM_String' (N.Prefix.all);
+            if N.Prefix /= null then
+               Clone.Prefix := new DOM_String' (N.Prefix.all);
+            end if;
+
+            pragma Assert (N.Local_Name /= null);
             Clone.Local_Name := new DOM_String' (N.Local_Name.all);
-            Clone.Namespace := new DOM_String' (N.Namespace.all);
+
+            if N.Namespace /= null then
+               Clone.Namespace := new DOM_String' (N.Namespace.all);
+            end if;
+
             Clone.Children := Clone_List (N.Children, Deep);
             Clone.Attributes := Named_Node_Map
               (Clone_List (Node_List (N.Attributes), True));
 
          when Attribute_Node =>
-            Clone.Attr_Prefix := new DOM_String' (N.Attr_Prefix.all);
+            if N.Attr_Prefix /= null then
+               Clone.Attr_Prefix := new DOM_String' (N.Attr_Prefix.all);
+            end if;
+
+            pragma Assert (N.Attr_Local_Name /= null);
             Clone.Attr_Local_Name :=
               new DOM_String' (N.Attr_Local_Name.all);
-            Clone.Attr_Value := new DOM_String' (N.Attr_Value.all);
-            Clone.Attr_Namespace := new DOM_String' (N.Attr_Namespace.all);
+
+            if N.Attr_Value /= null then
+               Clone.Attr_Value := new DOM_String' (N.Attr_Value.all);
+            end if;
+
+            if N.Attr_Namespace /= null then
+               Clone.Attr_Namespace := new DOM_String' (N.Attr_Namespace.all);
+            end if;
 
          when Text_Node =>
-            Clone.Text := new DOM_String' (N.Text.all);
+            if N.Text /= null then
+               Clone.Text := new DOM_String' (N.Text.all);
+            end if;
 
          when Cdata_Section_Node =>
-            Clone.Cdata := new DOM_String' (N.Cdata.all);
+            if N.Cdata /= null then
+               Clone.Cdata := new DOM_String' (N.Cdata.all);
+            end if;
 
          when Entity_Reference_Node =>
+            pragma Assert (N.Entity_Reference_Name /= null);
             Clone.Entity_Reference_Name :=
               new DOM_String' (N.Entity_Reference_Name.all);
 
          when Entity_Node =>
+            pragma Assert (N.Entity_Name /= null);
             Clone.Entity_Name := new DOM_String' (N.Entity_Name.all);
 
          when Processing_Instruction_Node =>
@@ -667,6 +705,7 @@ package body DOM.Core.Nodes is
             Clone.Pi_Data := new DOM_String' (N.Pi_Data.all);
 
          when Comment_Node =>
+            pragma Assert (N.Comment /= null);
             Clone.Comment := new DOM_String' (N.Comment.all);
 
          when Document_Node =>
@@ -681,8 +720,13 @@ package body DOM.Core.Nodes is
             Clone.Doc_Frag_Children := Clone_List (N.Doc_Frag_Children, Deep);
 
          when Notation_Node =>
-            Clone.Public_ID := new DOM_String' (N.Public_ID.all);
-            Clone.System_ID := new DOM_String' (N.System_ID.all);
+            if N.Public_ID /= null then
+               Clone.Public_ID := new DOM_String' (N.Public_ID.all);
+            end if;
+
+            if N.System_ID /= null then
+               Clone.System_ID := new DOM_String' (N.System_ID.all);
+            end if;
       end case;
       return Clone;
    end Clone_Node;
@@ -1010,6 +1054,36 @@ package body DOM.Core.Nodes is
       Internal_Free (N);
    end Free;
 
+   ----------
+   -- Sort --
+   ----------
+
+   procedure Sort (Map : in out Named_Node_Map) is
+      Arr : Node_Array (0 .. Map.Last + 1) := (others => null);
+      Index : Natural;
+   begin
+      --  ??? The algorithm is not efficient, we use Insertion_Sort.
+      for J in 0 .. Map.Last loop
+         Index := 0;
+         loop
+            if Arr (Index) = null then
+               Arr (Index) := Map.Items (J);
+               exit;
+            end if;
+
+            if Node_Name (Map.Items (J)) <= Node_Name (Arr (Index)) then
+               Arr (Index + 1 .. Arr'Last) := Arr (Index .. Arr'Last - 1);
+               Arr (Index) := Map.Items (J);
+               exit;
+            end if;
+            Index := Index + 1;
+         end loop;
+      end loop;
+      for J in 0 .. Map.Last loop
+         Map.Items (J) := Arr (J);
+      end loop;
+   end Sort;
+
    ------------------
    -- Print_String --
    ------------------
@@ -1025,7 +1099,7 @@ package body DOM.Core.Nodes is
             when Less_Than_Sign        => Put (Lt_Sequence);
             when Greater_Than_Sign     => Put (Gt_Sequence);
             when Quotation_Mark        => Put (Quot_Sequence);
-            --  when Apostrophe            => Put ("&apos;");
+               --  when Apostrophe            => Put ("&apos;");
             when Horizontal_Tabulation => Put (Tab_Sequence);
             when Line_Feed             => Put (Lf_Sequence);
             when Carriage_Return       => Put (Cr_Sequence);
@@ -1086,6 +1160,10 @@ package body DOM.Core.Nodes is
          when Element_Node =>
             Put (Encoding.Encode (Less_Than_Sign));
             Print_Name (N);
+
+            --  Sort the XML attributes as required for canonical XML
+            Sort (N.Attributes);
+
             for J in 0 .. N.Attributes.Last loop
                Put (Encoding.Encode (Space));
                Print (N.Attributes.Items (J),

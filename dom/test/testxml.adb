@@ -9,18 +9,20 @@ with Ada.Text_IO;        use Ada.Text_IO;
 procedure Testxml is
    Silent : Boolean := False;
    With_URI : Boolean := False;
-   Read : File_Input_Access := new File_Input;
+   Read : File_Input;
    My_Tree_Reader : Tree_Reader;
    Name_Start : Natural;
+   Validate : Boolean := False;
 
 begin
    --  Parse the command line
    loop
-      case Getopt ("silent uri") is
+      case Getopt ("silent uri validate") is
          when ASCII.Nul => exit;
 
          when 's' => Silent := True;
          when 'u' => With_URI := True;
+         when 'v' => Validate := True;
 
          when others => null;
       end case;
@@ -35,20 +37,22 @@ begin
          while Name_Start >= S'First  and then S (Name_Start) /= '/' loop
             Name_Start := Name_Start - 1;
          end loop;
-         Set_Public_Id (Read.all, S (Name_Start + 1 .. S'Last));
-         Open (S, Read.all);
+         Set_Public_Id (Read, S (Name_Start + 1 .. S'Last));
+         Open (S, Read);
 
          --  Full name is used as the system id
-         Set_System_Id (Read.all, S);
+         Set_System_Id (Read, S);
       else
-         Set_Public_Id (Read.all, "test.xml");
-         Set_System_Id (Read.all, "test.xml");
-         Open ("test.xml", Read.all);
+         Set_Public_Id (Read, "test.xml");
+         Set_System_Id (Read, "test.xml");
+         Open ("test.xml", Read);
       end if;
    end;
 
+   Set_Feature (My_Tree_Reader, Validation_Feature, Validate);
+
    Parse (My_Tree_Reader, Read);
-   Close (Read.all);
+   Close (Read);
 
    if not Silent then
       Print (Get_Tree (My_Tree_Reader),

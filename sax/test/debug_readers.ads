@@ -2,6 +2,7 @@ with Sax.Exceptions;
 with Sax.Locators;
 with Sax.Readers;
 with Sax.Attributes;
+with Sax.Models;
 with Unicode.CES;
 
 package Debug_Readers is
@@ -80,8 +81,7 @@ package Debug_Readers is
    procedure Element_Decl
      (Handler : in out Debug_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Unicode.CES.Byte_Sequence;
-      Parsed_Model : Sax.Readers.Element_Model_Ptr);
+      Model   : Sax.Models.Element_Model_Ptr);
    procedure Notation_Decl
      (Handler       : in out Debug_Reader;
       Name          : Unicode.CES.Byte_Sequence;
@@ -91,8 +91,9 @@ package Debug_Readers is
      (Handler : in out Debug_Reader;
       Ename   : Unicode.CES.Byte_Sequence;
       Aname   : Unicode.CES.Byte_Sequence;
-      Typ     : Unicode.CES.Byte_Sequence;
-      Value_Default : Unicode.CES.Byte_Sequence;
+      Typ     : Sax.Attributes.Attribute_Type;
+      Content : Sax.Models.Element_Model_Ptr;
+      Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence);
 
 private

@@ -19,6 +19,13 @@
 -- License along with this library; if not, write to the             --
 -- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
 -- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Unicode.CES;  use Unicode.CES;
@@ -122,13 +129,13 @@ package body Input_Sources is
       end if;
    end Get_Public_Id;
 
-   ----------
-   -- Free --
-   ----------
+   -----------
+   -- Close --
+   -----------
 
-   procedure Free (Input : in out Input_Source) is
+   procedure Close (Input : in out Input_Source) is
    begin
       Free (Input.Public_Id);
       Free (Input.System_Id);
-   end Free;
+   end Close;
 end Input_Sources;

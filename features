@@ -1,0 +1,14 @@
+New features in version 0.6
+
+- Parser twice as fast
+  The SAX parser has been completely rewritten, and is now about twice
+  as fast as the previous one.
+
+- Support for validation (partial)
+  A partial support for validation has been added. This means that some of
+  the validity constraints defined in the XML specifications are now tested
+  (root element type, tests on attributes, ...).
+  However, XML/Ada still doesn't test that the XML document matches its DTD.
+
+- New licence
+  This library is now distributed under the GNAT-Modified GPL.
