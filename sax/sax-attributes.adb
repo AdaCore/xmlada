@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
+--                       Copyright (C) 2001-2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -238,7 +238,7 @@ package body Sax.Attributes is
       Value      : Unicode.CES.Byte_Sequence;
       Default_Decl : Default_Declaration := Default)
    is
-      Att : Attribute_Access := Get (Attr, Index);
+      Att : constant Attribute_Access := Get (Attr, Index);
    begin
       Free (Att.all);
       Att.URI := new Byte_Sequence'(URI);
@@ -282,7 +282,7 @@ package body Sax.Attributes is
       Index      : Natural;
       Local_Name : Unicode.CES.Byte_Sequence)
    is
-      Tmp : Attribute_Access := Get (Attr, Index);
+      Tmp : constant Attribute_Access := Get (Attr, Index);
    begin
       Free (Tmp.Local_Name);
       Tmp.Local_Name := new Byte_Sequence'(Local_Name);
@@ -297,7 +297,7 @@ package body Sax.Attributes is
       Index : Natural;
       Qname : Unicode.CES.Byte_Sequence)
    is
-      Tmp : Attribute_Access := Get (Attr, Index);
+      Tmp : constant Attribute_Access := Get (Attr, Index);
    begin
       Free (Tmp.Qname);
       Tmp.Qname := new Byte_Sequence'(Qname);
@@ -324,7 +324,7 @@ package body Sax.Attributes is
       Index : Natural;
       URI   : Unicode.CES.Byte_Sequence)
    is
-      Tmp : Attribute_Access := Get (Attr, Index);
+      Tmp : constant Attribute_Access := Get (Attr, Index);
    begin
       Free (Tmp.URI);
       Tmp.URI := new Byte_Sequence'(URI);
@@ -339,7 +339,7 @@ package body Sax.Attributes is
       Index : Natural;
       Value : Unicode.CES.Byte_Sequence)
    is
-      Tmp : Attribute_Access := Get (Attr, Index);
+      Tmp : constant Attribute_Access := Get (Attr, Index);
    begin
       pragma Assert (Tmp /= null, "Unexpected null attribute");
       Free (Tmp.Value);
