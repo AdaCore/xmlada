@@ -695,8 +695,25 @@ expect "$sun/xsd001.xsd" "$sun/xsd001.n05.xml" \
 expect "$sun/xsd001.xsd" "$sun/xsd001.n06.xml" \
  "$sun/xsd001.n06.xml:4:11: String is too short, minimum length is 3 characters"
 expect "$sun/xsd001.xsd" "$sun/xsd001.n07.xml" \
- "$sun/xsd001.n07.xml:4:13: Elements other than global elements mustn't have explicit namespace specification in this schema"
+ "$sun/xsd001.n07.xml:4:13: Namespace specification not authorized in this context"
+expect "$sun/xsd001.xsd" "$sun/xsd001.v00.xml" ""
+expect "$sun/xsd001.xsd" "$sun/xsd001.v01.xml" ""
+expect "$sun/xsd001.xsd" "$sun/xsd001.v02.xml" ""
+expect "$sun/xsd001.xsd" "$sun/xsd001.v03.xml" ""
+expect "$sun/xsd002.xsd" "$sun/xsd002.n00.xml" \
+ "$sun/xsd002.n00.xml:3:11: Namespace specification not authorized in this context"
+expect "$sun/xsd002.xsd" "$sun/xsd002.n01.xml" \
+ "$sun/xsd002.n01.xml:3:9: Namespace specification is mandatory in this context"
+expect "$sun/xsd002.xsd" "$sun/xsd002.n02.xml" \
+ "$sun/xsd002.n02.xml:3:11: Namespace specification not authorized in this context"
+expect "$sun/xsd002.xsd" "$sun/xsd002.v00.xml" ""
+expect "$sun/xsd002.xsd" "$sun/xsd002.v01.xml" ""
 
+expect "$sun/xsd003-1.e.xsd" "" \
+ "$sun/xsd003-1.e.xsd:10:30: Invalid choice: element"
+expect "$sun/xsd003-2.e.xsd" "" \
+ "$sun/xsd003-2.e.xsd:10:50: Invalid choice: attribute"
+expect "$sun/xsd003a.xsd" "$sun/xsd003a.v00.xml" ""
 
 fi
 
