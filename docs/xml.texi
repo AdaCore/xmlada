@@ -76,6 +76,7 @@ The SAX module
 * Understanding SAX error messages::
 
 The DOM module
+* Using DOM::
 
 The XML_GTK module
 
@@ -86,6 +87,10 @@ Using the library
 @end menu
 
 @end ifinfo
+
+@ifnotinfo
+@contents
+@end ifnotinfo
 
 @c -------------------------------------------------------------------
 @node Introduction
@@ -1028,39 +1033,99 @@ name of the root element.
 @c -------------------------------------------------------------------
 
 @noindent
+DOM is another standard associated with XML, in which the XML stream is
+represented as a tree in memory. This tree can be manipulated at will, to
+add new nodes, remove existing nodes, change attributes,...
 
-A default SAX implementation is provided in the dom.readers file, through
-its Parse function. This reads an XML stream and creates a tree in memory.
-The tree can then be manipulated through the DOM module.
+Since it contains the whole XML information, it can then in turn be dump to a
+stream.
 
-Note that the encodings.ads file specifies the encoding to use to store
+As an example, most modern web browsers provide a DOM interface to the
+document currently loaded in the browser. Using javascript, one can thus
+modify dynamically the document. The calls to do so are similar to the ones
+provided by XML/Ada for manipulating a DOM tree, and all are defined in the
+DOM standard.
+
+The W3C commitee (@url{http://www.w3c.org}) has defined several version of
+the DOM, each building on the previous one and adding several enhancements.
+
+XML/Ada currently supports the second revision of DOM (DOM 2.0), which
+mostly adds namespaces over the first revision. The third revision is not
+supported at this point, and it adds support for loading and saving XML
+streams in a standardized fashion.
+
+Although it doesn't support DOM 3.0, XML/Ada provides subprograms for doing
+similar things.
+
+Only the Core module of the DOM standard is currently implemented, other
+modules will follow.
+
+Note that the @file{encodings.ads} file specifies the encoding to use to store
 the tree in memory. Full compatibility with the XML standard requires that
 this be UTF16, however, it is generally much more memory-efficient for European
 languages to use UTF8. You can freely change this and recompile.
 
+@menu
+* Using DOM::
+@end menu
 
-What is the Document Object Model?
+@c ------------------------------------------------------------------
+@node Using DOM
+@section Using DOM
+@c ------------------------------------------------------------------
 
-            The Document Object Model is a platform- and language-neutral interface that will allow programs and scripts to dynamically access and update the
-            content, structure and style of documents. The document can be further processed and the results of that processing can be incorporated back into the
-            presented page. This is an overview of DOM-related materials here at W3C and around the web. 
+@noindent
+In XML/Ada, the DOM tree is build through a special implementation of a
+SAX parser, provided in the @code{DOM.Readers} package.
 
-         Why the Document Object Model?
+Using DOM to read an XML document is similar to using SAX: one must setup
+an input stream, then parse the document and get the tree. This is done
+with a code similar to the following:
 
-            "Dynamic HTML" is a term used by some vendors to describe the combination of HTML, style sheets and scripts that allows documents to be
-            animated. The W3C has received several submissions from members companies on the way in which the object model of HTML documents should be
-            exposed to scripts. These submissions do not propose any new HTML tags or style sheet technology. The W3C DOM WG is working hard to make
-            sure interoperable and scripting-language neutral solutions are agreed upon. 
+@smallexample
+@include dom/domexample.adb
+@end smallexample
 
+This code is almost exactly the same as the code that was used when
+demonstrating the use of SAX (@pxref{Using SAX}).
 
+The main two differences are:
 
-The DOM (Document Object Model) is a set of subprograms to create and
-manipulate XML trees in memory.
+@itemize @bullet
+@item We no longer need to define our own XML reader, and we simply use the
+ one provided in @code{DOM.Readers}.
+@item We therefore do not add our own callbacks to react to the XML events.
+ Instead, the last instruction of the program gets a handle on the tree that
+ was created in memory.
+@end itemize
 
-You can create such a tree through the tree_readers.Parse function.
+The tree can now be manipulated to get access to the value stored.
+If we want to implement the same thing we did for SAX, the code would look
+like:
 
-Only the Core module of the DOM standard is currently implemented, other
-modules will follow.
+@smallexample
+@include dom/domexample2.adb
+@end smallexample
+
+The code is much simpler than with SAX, since most of the work is done
+internally by XML/Ada. In particular, for SAX we had to take into account
+the fact that the textual contents of a node could be reported in several
+events. For DOM, the tree is initially normalized, ie all text nodes are
+collapsed together when possible.
+
+This added simplicity has one drawback, which is the amount of memory
+required to represent even a simple tree.
+
+XML/Ada optimizes the memory necessary to represent a tree by sharing
+the strings as much as possible (this is under control of constants at
+the beginning of @file{dom-core.ads}). Still, DOM requires a significant
+amount of information to be kept for each node.
+
+For really big XML streams, it might prove impossible to keep the whole
+tree in memory, in which case add-hoc storage might be implemented through
+the use of a SAX parser. The implementation of @code{dom-readers.adb} will
+prove helpful in creating such a parser.
+
 
 @c -------------------------------------------------------------------
 @node The XML_GTK module
@@ -1223,5 +1288,4 @@ so that the dynamic libraries are correctly found.
 
 This is not needed if you build XML/Ada as a static directory.
 
-@contents
 @bye
