@@ -16,16 +16,11 @@ Windows Specifics
 
 3. Before building make sure to set the following values in 'Makefile':
 
-      export WIN32=TRUE
-
-   to tell the makefile we are building on windows and:
-
       PREFIX=C:/GNAT/XMLada
 
-   in 'Makefile.module' to tell the makefile where to install the library.
-   Note the slashes in the path!
+   the makefile where to install the library. Note the slashes in the path!
 
-4. The best way to proceed is to do a 'make' then 'make install'.
+4. The best way to proceed is to do a 'make install'.
 
 5. If you have GNAT 3.14 or later, you can register the library as a
    standard library using the 'gnatreg' command.
