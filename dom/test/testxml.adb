@@ -19,17 +19,23 @@ procedure Testxml is
    My_Tree_Reader : Tree_Reader;
    Name_Start : Natural;
    Validate : Boolean := False;
+   Valid_Chars : Boolean := False;
    Must_Normalize : Boolean := False;
 
 begin
    --  Parse the command line
    loop
-      case Getopt ("silent uri normalize validate dump") is
+      case Getopt ("silent uri normalize validate dump valid_chars") is
          when ASCII.Nul => exit;
 
          when 's' => Silent := True;
          when 'u' => With_URI := True;
-         when 'v' => Validate := True;
+         when 'v' =>
+            if Full_Switch = "validate" then
+               Validate := True;
+            elsif Full_Switch = "valid_chars" then
+               Valid_Chars := True;
+            end if;
          when 'd' => Dump := True;
          when 'n' => Must_Normalize := True;
 
@@ -68,6 +74,7 @@ begin
    end;
 
    Set_Feature (My_Tree_Reader, Validation_Feature, Validate);
+   Set_Feature (My_Tree_Reader, Test_Valid_Chars_Feature, Valid_Chars);
 
    Parse (My_Tree_Reader, Read.all);
    Close (Read.all);
