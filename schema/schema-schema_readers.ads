@@ -73,7 +73,11 @@ private
          when Context_Restriction =>
             Restriction : Schema.Validators.XML_Validator;
          when Context_Extension =>
-            Extension : Schema.Validators.XML_Validator;
+            Extension_Base : Schema.Validators.XML_Type;
+            Extension      : Schema.Validators.XML_Validator;
+            --  Extension_Base set to null if Extension is the result of the
+            --  call to Extension_Of already
+
          when Context_Attribute =>
             Attribute : Schema.Validators.Attribute_Validator;
       end case;

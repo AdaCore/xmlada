@@ -271,6 +271,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "abstract");
       Nillable_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "nillable");
+      Final_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "final");
 
       Min_Occurs, Max_Occurs : Integer := 1;
       Element : XML_Element;
@@ -351,6 +353,24 @@ package body Schema.Schema_Readers is
                  & Ada_Name (Element) & ", "
                  & Boolean'Image
                    (Get_Value_As_Boolean (Atts, Nillable_Index)) & ");");
+      end if;
+
+      if Final_Index /= -1 then
+         declare
+            Final : constant Byte_Sequence := Get_Value (Atts, Final_Index);
+            On_Restriction : constant Boolean :=
+              Final = "restriction" or else Final = "#all";
+            On_Extension : constant Boolean :=
+              Final = "extension" or else Final = "#all";
+         begin
+            Set_Final (Element,
+                       On_Restriction => On_Restriction,
+                       On_Extension   => On_Extension);
+            Output ("Set_Final ("
+                    & Ada_Name (Element) & ", "
+                    & Boolean'Image (On_Restriction) & ", "
+                    & Boolean'Image (On_Extension) & ");");
+         end;
       end if;
 
       if Min_Occurs_Index /= -1 then
@@ -545,11 +565,10 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ            => Context_Extension,
-         Extension      => Extension_Of (Base, null),
+         Extension_Base => Base,
+         Extension      => null,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
-      Output (Ada_Name (Handler.Contexts)
-              & " := Extension_Of (" & Ada_Name (Base) & ", null);");
    end Create_Extension;
 
    ----------------------
@@ -560,9 +579,18 @@ package body Schema.Schema_Readers is
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator :=
-              Handler.Contexts.Extension;
-            Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
+            if Handler.Contexts.Extension_Base /= No_Type then
+               Handler.Contexts.Next.Type_Validator := Extension_Of
+                 (Handler.Contexts.Extension_Base,
+                  Handler.Contexts.Extension);
+               Output (Ada_Name (Handler.Contexts) & " := Extension_Of ("
+                       & Ada_Name (Handler.Contexts.Extension_Base)
+                       & ", Validator);");
+            else
+               Handler.Contexts.Next.Type_Validator :=
+                 Handler.Contexts.Extension;
+               Output (Ada_Name (Handler.Contexts) & " := Validator;");
+            end if;
 
          when others =>
             Output ("Can't handle nested extensions");
@@ -643,8 +671,13 @@ package body Schema.Schema_Readers is
             Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Seq);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
+         when Context_Extension =>
+            Handler.Contexts.Next.Extension :=
+              XML_Validator (Handler.Contexts.Seq);
+            Output ("Validator := " & Ada_Name (Handler.Contexts));
+
          when Context_Schema | Context_Attribute | Context_Element
-            | Context_Restriction | Context_Extension | Context_All =>
+            | Context_Restriction | Context_All =>
             Output ("Can't handle nested sequence");
       end case;
    end Finish_Sequence;
@@ -713,6 +746,17 @@ package body Schema.Schema_Readers is
                     & Ada_Name (Handler.Contexts) & ");");
 
          when Context_Extension =>
+            --  If there is no extension at this point, there won't be any as
+            --  per the XML schema, since the attributes come last
+            if Handler.Contexts.Next.Extension = null then
+               Handler.Contexts.Next.Extension := Extension_Of
+                 (Handler.Contexts.Next.Extension_Base, null);
+               Output (Ada_Name (Handler.Contexts.Next) & " := Extension_Of ("
+                       & Ada_Name (Handler.Contexts.Next.Extension_Base)
+                       & ", null);");
+               Handler.Contexts.Next.Extension_Base := No_Type;
+            end if;
+
             Add_Attribute (Handler.Contexts.Next.Extension,
                            Handler.Contexts.Attribute);
             Output ("Add_Attribute (" & Ada_Name (Handler.Contexts.Next) & ", "
