@@ -1,5 +1,7 @@
 Problems fixed in 1.x
 
+- Constraint_Error raised when an external entity doesn't reference an
+  existing file
 - D213-012: Constraint_Error when using the same parser twice
 - SAX: End_Document() is called even in case of a fatal error
 - DOM: There is now initially a single Text node per block of text, as required
