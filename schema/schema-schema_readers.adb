@@ -43,6 +43,10 @@ package body Schema.Schema_Readers is
    --  Repeat Validator a number of times, by including it in a sequence if
    --  needed
 
+   procedure Ensure_Type (Handler : in out Schema_Reader; C : Context_Access);
+   --  Make sure the context (of type Context_Type_Def) has a proper
+   --  type validator defined
+
    function Ada_Name (Element : XML_Element) return String;
    function Ada_Name (Typ : XML_Type)        return String;
    function Ada_Name (C : Context_Access)    return String;
@@ -797,6 +801,22 @@ package body Schema.Schema_Readers is
       end if;
    end Create_Complex_Type;
 
+   -----------------
+   -- Ensure_Type --
+   -----------------
+
+   procedure Ensure_Type
+     (Handler : in out Schema_Reader; C : Context_Access)
+   is
+      XML_G : XML_Grammar_NS;
+   begin
+      if C.Type_Validator = null then
+         Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
+         C.Type_Validator := Get_Validator (Lookup (XML_G, "ur-Type"));
+         Output ("Validator := Lookup (G, ""ur-Type"");");
+      end if;
+   end Ensure_Type;
+
    -------------------------
    -- Finish_Complex_Type --
    -------------------------
@@ -804,23 +824,11 @@ package body Schema.Schema_Readers is
    procedure Finish_Complex_Type (Handler : in out Schema_Reader) is
       C   : constant Context_Access := Handler.Contexts;
       Typ : XML_Type;
-      XML_G : XML_Grammar_NS;
    begin
-      if C.Type_Validator = null then
-         Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
-         Typ := Lookup (XML_G, "ur-Type");
-
-         if C.Type_Name /= null then
-            Typ := Create_Global_Type
-              (Handler.Target_NS, C.Type_Name.all, Get_Validator (Typ));
-         end if;
-
-         Output (Ada_Name (C) & " := Lookup (G, ""ur-Type"");");
-
-      elsif C.Type_Name = null then
+      Ensure_Type (Handler, C);
+      if C.Type_Name = null then
          Typ := Create_Local_Type (C.Type_Validator);
          Output (Ada_Name (C) & " := Create_Local_Type (Validator);");
-
       else
          Typ := Create_Global_Type
            (Handler.Target_NS, C.Type_Name.all, C.Type_Validator);
@@ -834,7 +842,7 @@ package body Schema.Schema_Readers is
       Set_Mixed_Content (Get_Validator (Typ), Handler.Contexts.Mixed_Content);
       Output ("Set_Mixed_Content ("
               & Ada_Name (Typ) & ", "
-              & Boolean'Image (Handler.Contexts.Mixed_Content));
+              & Boolean'Image (Handler.Contexts.Mixed_Content) & ");");
 
       case Handler.Contexts.Next.Typ is
          when Context_Schema | Context_Redefine =>
@@ -1334,62 +1342,62 @@ package body Schema.Schema_Readers is
          Use_Type := Optional;
       end if;
 
+      Handler.Contexts := new Context'
+        (Typ              => Context_Attribute,
+         Attribute        => null,
+         Attribute_Is_Ref => Name_Index = -1,
+         Level            => Handler.Contexts.Level + 1,
+         Next             => Handler.Contexts);
+
       if Name_Index /= -1 then
-         Att := Create_Attribute
-           (Local_Name     => Get_Value (Atts, Name_Index),
-            NS             => Handler.Target_NS,
-            Attribute_Type => Typ,
-            Attribute_Use  => Use_Type,
-            Attribute_Form => Qualified,
-            Value          => "");
+         case Handler.Contexts.Next.Typ is
+            when Context_Schema | Context_Redefine =>
+               Att := Create_Global_Attribute
+                 (Local_Name     => Get_Value (Atts, Name_Index),
+                  NS             => Handler.Target_NS,
+                  Attribute_Type => Typ);
+               Output (Ada_Name (Handler.Contexts)
+                       & " := Create_Global_Attribute ("""
+                       & Get_Value (Atts, Name_Index)
+                       & """, Handler.Target_NS, "
+                       & Ada_Name (Typ) & ");");
+
+            when others =>
+               Att := Create_Local_Attribute
+                 (Local_Name     => Get_Value (Atts, Name_Index),
+                  NS             => Handler.Target_NS,
+                  Attribute_Type => Typ,
+                  Attribute_Use  => Use_Type,
+                  Attribute_Form => Qualified,
+                  Value          => "");
+               Output (Ada_Name (Handler.Contexts)
+                       & " := Create_Local_Attribute ("""
+                       & Get_Value (Atts, Name_Index)
+                       & """, Handler.Target_NS, "
+                       & Ada_Name (Typ)
+                       & ", " & Use_Type'Img & ", Qualified);");
+         end case;
       else
          Att := Lookup_Attribute
            (Handler.Target_NS, Get_Value (Atts, Ref_Index));
-      end if;
-
-      Handler.Contexts := new Context'
-        (Typ        => Context_Attribute,
-         Attribute  => Att,
-         Attribute_Is_Ref => Name_Index = -1,
-         Level      => Handler.Contexts.Level + 1,
-         Next       => Handler.Contexts);
-
-      if Name_Index /= -1 then
-         Output (Ada_Name (Handler.Contexts) & " := Create_Attribute ("""
-                 & Get_Value (Atts, Name_Index) & """);");
-      else
          Output (Ada_Name (Handler.Contexts)
                  & " := Lookup_Attribute (Handler.Target_NS, """
                  & Get_Value (Atts, Ref_Index) & """);");
       end if;
-   end Create_Attribute;
 
-   ----------------------
-   -- Finish_Attribute --
-   ----------------------
-
-   procedure Finish_Attribute (Handler : in out Schema_Reader) is
-   begin
-      if Get_Type (Handler.Contexts.Attribute) = No_Type then
-         Set_Type (Handler.Contexts.Attribute,
-                   Lookup (Handler.Schema_NS, "ur-Type"));
-         Output ("Set_Type (" & Ada_Name (Handler.Contexts)
-                 & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
-      end if;
+      Handler.Contexts.Attribute := Att;
 
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
+            --  ??? Incorrect, since we are adding the attribute to ur-Type
+            Ensure_Type (Handler, Handler.Contexts.Next);
             Add_Attribute (Handler.Contexts.Next.Type_Validator,
                            Handler.Contexts.Attribute);
             Output ("Add_Attribute (Validator, "
                     & Ada_Name (Handler.Contexts) & ");");
 
          when Context_Schema | Context_Redefine =>
-            if not Handler.Contexts.Attribute_Is_Ref then
-               Output ("Register (Handler.Target_NS, "
-                       & Ada_Name (Handler.Contexts) & ");");
-               Register (Handler.Contexts.Attribute);
-            end if;
+            null;
 
          when Context_Extension =>
             --  If there is no extension at this point, there won't be any as
@@ -1426,6 +1434,22 @@ package body Schema.Schema_Readers is
             | Context_Union | Context_List | Context_Group =>
             Output ("Can't handle attribute decl in this context");
       end case;
+   end Create_Attribute;
+
+   ----------------------
+   -- Finish_Attribute --
+   ----------------------
+
+   procedure Finish_Attribute (Handler : in out Schema_Reader) is
+   begin
+      if not Handler.Contexts.Attribute_Is_Ref
+        and then Get_Type (Handler.Contexts.Attribute) = No_Type
+      then
+         Set_Type (Handler.Contexts.Attribute,
+                   Lookup (Handler.Schema_NS, "ur-Type"));
+         Output ("Set_Type (" & Ada_Name (Handler.Contexts)
+                 & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
+      end if;
    end Finish_Attribute;
 
    -------------------

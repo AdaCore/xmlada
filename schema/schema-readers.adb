@@ -153,18 +153,18 @@ package body Schema.Readers is
 
       Add_Attribute
         (Validator,
-         Create_Attribute ("type", XML_IG, Lookup (XML_G, "string")));
+         Create_Local_Attribute ("type", XML_IG, Lookup (XML_G, "string")));
       Add_Attribute
         (Validator,
-         Create_Attribute ("nil", XML_IG, Lookup (XML_G, "boolean")));
+         Create_Local_Attribute ("nil", XML_IG, Lookup (XML_G, "boolean")));
       Add_Attribute
         (Validator,
-         Create_Attribute ("schemaLocation", XML_IG,
-                           List_Of (Lookup (XML_G, "string"))));
+         Create_Local_Attribute ("schemaLocation", XML_IG,
+                                 List_Of (Lookup (XML_G, "string"))));
       Add_Attribute
         (Validator,
-         Create_Attribute ("noNamespaceSchemaLocation", XML_IG,
-                           Lookup (XML_G, "string")));
+         Create_Local_Attribute ("noNamespaceSchemaLocation", XML_IG,
+                                 Lookup (XML_G, "string")));
    end Add_XML_Instance_Attributes;
 
    -------------------
