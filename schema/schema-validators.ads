@@ -298,11 +298,18 @@ package Schema.Validators is
    --  Whether character data is allowed within that element, in addition to
    --  children nodes
 
-   function Is_Extension_Of
-     (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean;
-   function Is_Restriction_Of
-     (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean;
-   --  Whether Validator is an extension or a restriction of Typ
+   procedure Check_Replacement
+     (Validator         : access XML_Validator_Record;
+      Typ               : XML_Type;
+      Had_Restriction   : in out Boolean;
+      Had_Extension     : in out Boolean);
+   --  Check whether Validator is a valid replacement for Typ (either an
+   --  extension or a restriction, and not blocked by a "block" attribute).
+   --  If there is an error, an XML_Validation_Error is raised.
+   --  Otherwise, this function returns the type of replacement that is done.
+   --
+   --  Had_* Indicate whether a restriction or extension was encountered while
+   --  going up the inheritance tree so far.
 
    procedure Check_Content_Type
      (Validator        : access XML_Validator_Record;

@@ -2952,30 +2952,25 @@ package body Schema.Validators is
    procedure Set_Substitution_Group
      (Element : XML_Element; Head : XML_Element)
    is
-      Is_Extension, Is_Restriction : Boolean;
+      Had_Restriction, Had_Extension : Boolean := False;
    begin
-      if Get_Type (Element) /= No_Type
-        and then Get_Validator (Get_Type (Element)) /= null
+      if Get_Validator (Get_Type (Element)) /= null
+        and then Get_Validator (Get_Type (Element)) /=
+           Get_Validator (Get_Type (Head))
       then
-         Is_Extension := Is_Extension_Of
-           (Get_Validator (Get_Type (Element)), Get_Type (Head));
-         Is_Restriction := Is_Restriction_Of
-           (Get_Validator (Get_Type (Element)), Get_Type (Head));
+         Check_Replacement
+           (Get_Validator (Get_Type (Element)), Get_Type (Head),
+            Had_Restriction => Had_Restriction,
+            Had_Extension   => Had_Extension);
 
---           if not Is_Extension and not Is_Restriction then
---              Validation_Error
---                ("substitutionGroup can only be used for restrictions or"
---                 & " extensions of the head element");
---           end if;
-
-         if Head.Elem.Final_Restriction and then Is_Restriction then
+         if Head.Elem.Final_Restriction and then Had_Restriction then
             Validation_Error
               ("""" & Head.Elem.Local_Name.all
                & """ is final for restrictions, and cannot be substituted by"
                & """" & Element.Elem.Local_Name.all & """");
          end if;
 
-         if Head.Elem.Final_Extension and then Is_Extension then
+         if Head.Elem.Final_Extension and then Had_Extension then
             Validation_Error
               ("""" & Head.Elem.Local_Name.all
                & """ is final for extensions, and cannot be substituted by"
@@ -3695,29 +3690,26 @@ package body Schema.Validators is
       return Element.Elem.Block_Extension;
    end Get_Block_On_Extension;
 
-   ---------------------
-   -- Is_Extension_Of --
-   ---------------------
-
-   function Is_Extension_Of
-     (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean
-   is
-      pragma Unreferenced (Validator, Typ);
-   begin
-      return False;
-   end Is_Extension_Of;
-
    -----------------------
-   -- Is_Restriction_Of --
+   -- Check_Replacement --
    -----------------------
 
-   function Is_Restriction_Of
-     (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean
+   procedure Check_Replacement
+     (Validator       : access XML_Validator_Record;
+      Typ             : XML_Type;
+      Had_Restriction : in out Boolean;
+      Had_Extension   : in out Boolean)
    is
-      pragma Unreferenced (Validator, Typ);
+      pragma Unreferenced (Had_Restriction, Had_Extension);
    begin
-      return False;
-   end Is_Restriction_Of;
+      if Get_Local_Name (Typ) /= "ur-Type" then
+         Debug_Output ("Check_Replacement "
+                       & Get_Name (Validator)
+                       & " " & Get_Local_Name (Typ));
+         Validation_Error ("Type is not a valid replacement for """
+                           & Get_Local_Name (Typ) & """");
+      end if;
+   end Check_Replacement;
 
    -----------------------
    -- Free_Nested_Group --
