@@ -1118,7 +1118,6 @@ private
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean);
 
-
    --------------------
    -- XML_All_Record --
    --------------------

@@ -31,16 +31,16 @@ package body Schema.Validators is
    procedure Free (Element : in out XML_Element_Record);
    --  Free Element
 
-   function Get_Name (Particle : XML_Particle_Access) return String;
-   --  Return a debug name
-
    function Move_To_Next_Particle
      (Seq   : access Sequence_Record'Class;
       Data  : Sequence_Data_Access;
-      Force : Boolean := False) return Boolean;
+      Force : Boolean := False;
+      Increase_Count : Boolean := True) return Boolean;
    --  Move to the next particle to match in the sequence, or stay on the
    --  current one if it still can match (its maxOccurs hasn't been reached
    --  for instance).
+   --  If Increase_Count is true, the current particle will be considered as
+   --  matched
 
    procedure Check_Nested
      (Nested      : access Group_Model_Record'Class;
@@ -111,6 +111,14 @@ package body Schema.Validators is
      (Iter       : Particle_Iterator;
       First_Only : Boolean) return Byte_Sequence;
    --  Return the content model describes by Particle.
+
+   function Is_Optional (Iterator : Particle_Iterator) return Boolean;
+   pragma Inline (Is_Optional);
+   --  Whether the current optional can be omitted
+
+--     function Occurred_Enough
+--       (Iter : Particle_Iterator; Num_Occurs : Natural) return Boolean;
+   --  Whether Num_Occurs is greater than the max_occurs of Iter;
 
    Debug_Prefixes_Level : Natural := 0;
    procedure Debug_Push_Prefix (Append : String);
@@ -394,25 +402,6 @@ package body Schema.Validators is
    begin
       Append (Validator.Attributes, Group);
    end Add_Attribute_Group;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Particle : XML_Particle_Access) return String is
-   begin
-      case Particle.Typ is
-         when Particle_Element => return Get_Local_Name (Particle.Element);
-         when Particle_Nested  =>
-            return Type_Model (Particle.Validator, First_Only => False);
-         when Particle_Group =>
-            return "<group>";
-         when Particle_XML_Type =>
-            return Get_Local_Name (Particle.Type_Descr);
-         when Particle_Any =>
-            return "<any>";
-      end case;
-   end Get_Name;
 
    --------------
    -- Get_Name --
@@ -2142,13 +2131,16 @@ package body Schema.Validators is
    ---------------------------
 
    function Move_To_Next_Particle
-     (Seq   : access Sequence_Record'Class;
-      Data  : Sequence_Data_Access;
-      Force : Boolean := False) return Boolean is
+     (Seq            : access Sequence_Record'Class;
+      Data           : Sequence_Data_Access;
+      Force          : Boolean := False;
+      Increase_Count : Boolean := True) return Boolean is
    begin
-      Data.Num_Occurs_Of_Current := Data.Num_Occurs_Of_Current + 1;
-      Debug_Output ("Num_Occurs_Of_Current="
-                      & Data.Num_Occurs_Of_Current'Img);
+      if Increase_Count then
+         Data.Num_Occurs_Of_Current := Data.Num_Occurs_Of_Current + 1;
+         Debug_Output ("Num_Occurs_Of_Current="
+                       & Data.Num_Occurs_Of_Current'Img);
+      end if;
 
       if Get (Data.Current) /= null then
          if Force
@@ -2158,7 +2150,6 @@ package body Schema.Validators is
                 Get_Max_Occurs (Data.Current))
          then
             Debug_Output ("Goto next particle in " & Get_Name (Seq));
-
             Next (Data.Current);
             Data.Num_Occurs_Of_Current := 0;
             return Get (Data.Current) /= null;
@@ -2301,8 +2292,9 @@ package body Schema.Validators is
             --  the sequence initially, not when encountering the end of the
             --  sequence
 
-            D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current - 1;
-            if not Move_To_Next_Particle (Validator, D, Force => False) then
+            if not Move_To_Next_Particle
+              (Validator, D, Force => False, Increase_Count => False)
+            then
                Debug_Pop_Prefix;
                return;
             end if;
@@ -2327,14 +2319,13 @@ package body Schema.Validators is
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
+                  Debug_Pop_Prefix;
                   Validation_Error
                     ("Expecting at least"
                      & Integer'Image (Get_Min_Occurs (D.Current))
                      & " occurrences of """
                      & Curr.Element.Elem.Local_Name.all
                      & """ or its substitutionGroup");
-                  Debug_Pop_Prefix;
-                  return;
                end if;
 
             when Particle_Any =>
@@ -2353,21 +2344,16 @@ package body Schema.Validators is
                  (Curr.Validator, D, Local_Name,
                   Namespace_URI, Grammar, Element_Validator, Skip_Current);
 
-               if Element_Validator = No_Element then
-                  if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current)
-                    and then not Skip_Current
-                  then
-                     Debug_Output
-                       ("Nested " & Get_Name (Curr.Validator)
-                        & " didn't match, and is mandatory");
-                     Validation_Error
-                       ("Expecting at least 1 occurrence of a nested"
-                        & " sequence");
-                  end if;
-                  Debug_Output ("Nested " & Get_Name (Curr.Validator)
-                                & " didn't match, but is optional");
-               else
+               if Element_Validator /= No_Element then
                   D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
+
+               elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current)
+                 and then not Skip_Current
+               then
+                  Debug_Pop_Prefix;
+                  Validation_Error
+                    ("Expecting "
+                     & Type_Model (D.Current, First_Only => True));
                end if;
 
             when Particle_Group | Particle_XML_Type =>
@@ -2383,13 +2369,8 @@ package body Schema.Validators is
 
          --  The current element was in fact optional at this point
 
-         if Curr.Typ = Particle_Element then
-            Debug_Output ("Skip optional particle in " & Get_Name (Validator)
-                          & ':' & Curr.Element.Elem.Local_Name.all);
-         else
-            Debug_Output ("Skip optional particle in " & Get_Name (Validator)
-                          & ' ' & Curr.Typ'Img);
-         end if;
+         Debug_Output ("Skip optional particle in " & Get_Name (Validator)
+                       & ':' & Type_Model (D.Current, First_Only => True));
 
          if not Move_To_Next_Particle (Validator, D, Force => True) then
             Element_Validator := No_Element;
@@ -2401,6 +2382,17 @@ package body Schema.Validators is
       Debug_Pop_Prefix;
    end Validate_Start_Element;
 
+   -----------------
+   -- Is_Optional --
+   -----------------
+
+   function Is_Optional (Iterator : Particle_Iterator) return Boolean is
+   begin
+      return Get_Min_Occurs (Iterator) = 0
+        or else (Get (Iterator).Typ = Particle_Nested
+                 and then Can_Be_Empty (Get (Iterator).Validator));
+   end Is_Optional;
+
    --------------------------
    -- Validate_End_Element --
    --------------------------
@@ -2410,78 +2402,33 @@ package body Schema.Validators is
       Local_Name        : Unicode.CES.Byte_Sequence;
       Data              : Validator_Data)
    is
-      D   : constant Sequence_Data_Access := Sequence_Data_Access (Data);
-      Curr : XML_Particle_Access;
+      pragma Unreferenced (Local_Name);
+      D : constant Sequence_Data_Access := Sequence_Data_Access (Data);
    begin
-      --  If the only remaining elements are optional, ignore them
+      Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator));
 
-      Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator)
-                         & " " & Local_Name);
+      if Get (D.Current) /= null
+        and then (D.Num_Occurs_Of_Current >= Get_Min_Occurs (D.Current)
+                 or else Is_Optional (D.Current))
+      then
+         Next (D.Current);
 
-      if Get (D.Current) /= null then
-         if D.Num_Occurs_Of_Current >= Get_Min_Occurs (D.Current)
-           or else (Get (D.Current).Typ = Particle_Nested
-                    and then Can_Be_Empty (Get (D.Current).Validator))
-         then
-            Debug_Output ("Skipping current, since occurred enough times, "
-                          & Type_Model (D.Current, First_Only => False));
-            Next (D.Current);
-         else
-            Debug_Output ("Current element occurred "
-                          & D.Num_Occurs_Of_Current'Img & " times, minimum is"
-                          & Get_Min_Occurs (D.Current)'Img);
-            Validation_Error
-              ("Unexpected end of sequence, expecting """
-               & Type_Model (D.Current, First_Only => True) & """");
-         end if;
-
-         loop
-            Curr := Get (D.Current);
-            exit when Curr = null;
-
-            case Curr.Typ is
-               when Particle_Element =>
-                  if Get_Min_Occurs (D.Current) /= 0 then
-                     Validation_Error
-                       ("Element """ & Get_Local_Name (Curr.Element)
-                        & """ or its substitutionGroup must be specified");
-                  end if;
-                  Debug_Output ("Skipping element "
-                                & Curr.Element.Elem.Local_Name.all
-                                & " since optional");
-               when Particle_Any =>
-                  if Get_Min_Occurs (D.Current) /= 0 then
-                     Validation_Error
-                       ("At least one child is expected in this context");
-                  end if;
-
-               when Particle_Nested =>
-                  --  Is an empty sequence valid ?
-                  if Get_Min_Occurs (D.Current) /= 0
-                    and then not Can_Be_Empty (Curr.Validator)
-                  then
-                     Debug_Output ("Nested cannot be empty: "
-                                   & Get_Name (Curr.Validator));
-                     Validation_Error
-                       ("Unexpected end of sequence, expecting """
-                       & Type_Model (D.Current, True) & """");
-                  else
-                     Debug_Output ("Skipping nested, since optional");
-                  end if;
-               when Particle_XML_Type | Particle_Group =>
-                  raise Program_Error;
-            end case;
+         while Get (D.Current) /= null loop
+            if not Is_Optional (D.Current) then
+               Validation_Error
+                 ("Expecting " & Type_Model (D.Current, First_Only => True));
+            end if;
 
             Next (D.Current);
          end loop;
       end if;
 
       if Get (D.Current) /= null then
-         Debug_Output ("Unexpected end of sequence " & Get_Name (Validator)
-                       & Get (D.Current).Typ'Img
+         Debug_Output ("Current element occurred "
+                       & D.Num_Occurs_Of_Current'Img & " times, minimum is"
                        & Get_Min_Occurs (D.Current)'Img);
          Validation_Error ("Unexpected end of sequence, expecting """
-                          & Type_Model (D.Current, True) & """");
+                           & Type_Model (D.Current, True) & """");
       end if;
 
       Debug_Pop_Prefix;
@@ -4079,14 +4026,11 @@ package body Schema.Validators is
 
       Current := Start (Group.Particles);
       while Get (Current) /= null loop
-         if Get_Min_Occurs (Current) /= 0 then
-            if Get (Current).Typ /= Particle_Nested
-              or else not Can_Be_Empty (Get (Current).Validator)
-            then
-               Debug_Output ("Cannot be empty");
-               Debug_Pop_Prefix;
-               return False;
-            end if;
+         if not Is_Optional (Current) then
+            Free (Current);
+            Debug_Output ("Cannot be empty");
+            Debug_Pop_Prefix;
+            return False;
          end if;
          Next (Current);
       end loop;
@@ -4109,10 +4053,8 @@ package body Schema.Validators is
 
       Current := Start (Group.Particles);
       while Get (Current) /= null loop
-         if Get_Min_Occurs (Current) = 0
-           or else (Get (Current).Typ = Particle_Nested
-                    and then Can_Be_Empty (Get (Current).Validator))
-         then
+         if Is_Optional (Current) then
+            Free (Current);
             Debug_Output ("Can be empty");
             Debug_Pop_Prefix;
             return True;
