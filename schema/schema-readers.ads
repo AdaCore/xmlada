@@ -23,6 +23,9 @@ package Schema.Readers is
    --  Called when a validation error occurs.
    --  By default, this raises XML_Validation_Error
 
+   procedure Set_Debug_Output (Output : Boolean);
+   --  Whether we should output debug traces
+
 private
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;

@@ -5,6 +5,11 @@ with Interfaces;
 
 package Schema.Validators is
 
+   XML_Schema_URI : constant Unicode.CES.Byte_Sequence :=
+     "http://www.w3.org/2001/XMLSchema";
+   XML_URI : constant Unicode.CES.Byte_Sequence :=
+     "http://www.w3.org/XML/1998/namespace";
+
    Invalid_Restriction : exception;
    --  Raised when an invalid restriction is set on a type
 
@@ -18,6 +23,15 @@ package Schema.Validators is
    --  and is in charge of checking the contents and attributes of that
    --  element.
    --  The default implementation always validates.
+
+   type XML_Grammar is private;
+   type XML_Grammar_NS is private;
+   --  The part of a grammar specialized for a given namespace.
+   --  A grammar can contain the definition for multiple namespaces (generally
+   --  the standard XML Schema namespace for predefined types, and the
+   --  namespace we are defining). Each of these is accessed by a separate
+   --  XML_Grammar_NS object
+
 
    Unbounded : constant Integer := -1;
    --  To indicate that a Max_Occurs is set to unbounded
@@ -49,8 +63,8 @@ package Schema.Validators is
    --  with a name and stored in the grammar), or anonymous.
 
    function Create_Type
-     (Qname     : Unicode.CES.Byte_Sequence;
-      Validator : access XML_Validator_Record'Class) return XML_Type;
+     (Local_Name : Unicode.CES.Byte_Sequence;
+      Validator  : access XML_Validator_Record'Class) return XML_Type;
    --  Create a new named type.
 
    function Get_Validator (Typ : XML_Type) return XML_Validator;
@@ -81,6 +95,9 @@ package Schema.Validators is
    --  Base doesn't need to be a Clone of some other type, since it isn't
    --  altered
 
+   function Get_Local_Name (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
+   --  Return the local name of the type
+
    -------------------------
    -- Attribute_Validator --
    -------------------------
@@ -93,10 +110,11 @@ package Schema.Validators is
    type Attribute_Form_Type is (Qualified, Unqualified);
 
    function Create_Attribute
-     (Name           : Unicode.CES.Byte_Sequence;
+     (Local_Name     : Unicode.CES.Byte_Sequence;
+      NS             : XML_Grammar_NS;
       Attribute_Type : XML_Type                  := No_Type;
       Attribute_Form : Attribute_Form_Type       := Qualified;
-      Attribute_Use  : Attribute_Use_Type        := Required;
+      Attribute_Use  : Attribute_Use_Type        := Optional;
       Value          : Unicode.CES.Byte_Sequence := "")
       return Attribute_Validator;
    --  Create a new attribute validator
@@ -110,6 +128,26 @@ package Schema.Validators is
    procedure Free (Validator : in out Attribute_Validator_Record);
    procedure Free (Validator : in out Attribute_Validator);
    --  Free the memory occupied by the validator
+
+   function Get_Local_Name
+     (Validator : access Attribute_Validator_Record)
+      return Unicode.CES.Byte_Sequence;
+   --  Return the local name
+
+   ----------------------
+   -- Attribute groups --
+   ----------------------
+
+   type XML_Attribute_Group is private;
+
+   function Create_Attribute_Group
+     (Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
+   --  Create a new empty attribute group
+
+   procedure Add_Attribute
+     (Group : in out XML_Attribute_Group;
+      Attr  : access Attribute_Validator_Record'Class);
+   --  Add a new attribute to the group
 
    ---------------------
    -- Type validators --
@@ -188,8 +226,29 @@ package Schema.Validators is
       Attribute : access Attribute_Validator_Record'Class);
    --  Add a valid attribute to Validator.
 
+   procedure Add_Attribute_Group
+     (Validator : access XML_Validator_Record;
+      Group     : XML_Attribute_Group);
+   --  Add a new group of attributes
+
+   procedure Set_Mixed_Content
+     (Validator : access XML_Validator_Record;
+      Mixed     : Boolean);
+   --  Whether character data is allowed within that element, in addition to
+   --  children nodes
+
+   ------------
+   -- Unions --
+   ------------
+
+   type XML_Union_Record is new XML_Validator_Record with private;
+   type XML_Union is access all XML_Union_Record'Class;
+
+   function Create_Union return XML_Union;
+   --  Create a new empty union
+
    procedure Add_Union
-     (Validator : access XML_Validator_Record; Part : XML_Type);
+     (Validator : access XML_Union_Record; Part : XML_Type);
    --  Add a new element to the union in Validator
 
    --------------
@@ -199,8 +258,8 @@ package Schema.Validators is
    type XML_Element is private;
 
    function Create_Element
-     (Qname   : Unicode.CES.Byte_Sequence;
-      Of_Type : XML_Type) return XML_Element;
+     (Local_Name : Unicode.CES.Byte_Sequence;
+      Of_Type    : XML_Type) return XML_Element;
    --  Create a new element, with a specific type
 
    procedure Set_Substitution_Group
@@ -210,8 +269,13 @@ package Schema.Validators is
    --  Anywhere Head is referenced, Validator can be used
    --  instead.
 
-   function Get_Type (Element : XML_Element) return XML_Type;
+   function Get_Type  (Element : XML_Element) return XML_Type;
+   procedure Set_Type (Element : XML_Element; Element_Type : XML_Type);
    --  Return the type validator for this element
+
+   function Get_Local_Name
+     (Element : XML_Element) return Unicode.CES.Byte_Sequence;
+   --  Return the local name of Element
 
    ------------
    -- Groups --
@@ -223,7 +287,8 @@ package Schema.Validators is
    type XML_Group is private;
    --  A group of elements
 
-   function Create_Group (Qname : Unicode.CES.Byte_Sequence) return XML_Group;
+   function Create_Group
+     (Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
    --  Return a new empty group
 
    procedure Add_Particle
@@ -297,18 +362,29 @@ package Schema.Validators is
    -- Grammars --
    --------------
 
-   type XML_Grammar is private;
+   procedure Get_NS
+     (Grammar       : in out XML_Grammar;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Result        : out XML_Grammar_NS);
+   --  Return the part of the grammar specialized for a given namespace.
+   --  If no such namespace exists yet in the grammar, it is created.
 
    function Lookup_Element
-     (Grammar : XML_Grammar;
-      Qname   : Unicode.CES.Byte_Sequence) return XML_Element;
+     (Grammar       : XML_Grammar_NS;
+      Local_Name    : Unicode.CES.Byte_Sequence) return XML_Element;
    function Lookup
-     (Grammar : XML_Grammar;
-      Qname   : Unicode.CES.Byte_Sequence) return XML_Type;
+     (Grammar       : XML_Grammar_NS;
+      Local_Name    : Unicode.CES.Byte_Sequence) return XML_Type;
    function Lookup_Group
-     (Grammar : XML_Grammar;
-      Qname   : Unicode.CES.Byte_Sequence) return XML_Group;
-   --  Return the type validator to use for elements with name Qname.
+     (Grammar       : XML_Grammar_NS;
+      Local_Name    : Unicode.CES.Byte_Sequence) return XML_Group;
+   function Lookup_Attribute
+     (Grammar       : XML_Grammar_NS;
+      Local_Name    : Unicode.CES.Byte_Sequence) return Attribute_Validator;
+   function Lookup_Attribute_Group
+     (Grammar       : XML_Grammar_NS;
+      Local_Name    : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
+   --  Return the type validator to use for elements with name Local_Name.
    --  "null" is returned if there is no validator defined for these elements.
    --  The returned value must be freed by the user.
    --  If you are going to modify the returned value in any way (adding new
@@ -317,20 +393,25 @@ package Schema.Validators is
    --  If the element doesn't exist yet, a forward declaration is created for
    --  it, that must be overriden later on.
 
-   procedure Register (Grammar : XML_Grammar; Typ     : XML_Type);
-   procedure Register (Grammar : XML_Grammar; Element : XML_Element);
-   procedure Register (Grammar : XML_Grammar; Group   : XML_Group);
+   procedure Register (Grammar : XML_Grammar_NS; Typ     : XML_Type);
+   procedure Register (Grammar : XML_Grammar_NS; Element : XML_Element);
+   procedure Register (Grammar : XML_Grammar_NS; Group   : XML_Group);
+   procedure Register (Attr    : Attribute_Validator);
+   procedure Register (Grammar : XML_Grammar_NS; Group  : XML_Attribute_Group);
    --  Register a new type or element in the grammar
 
    function Register_Forward
-     (Grammar : XML_Grammar;
-      Qname   : Unicode.CES.Byte_Sequence) return XML_Type;
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Type;
    function Register_Forward
-     (Grammar : XML_Grammar;
-      Qname   : Unicode.CES.Byte_Sequence) return XML_Element;
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Element;
    function Register_Forward
-     (Grammar : XML_Grammar;
-      Qname   : Unicode.CES.Byte_Sequence) return XML_Group;
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
+   function Register_Forward
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return Attribute_Validator;
    --  Register a type, the definition of which is not know at that point.
    --  The definition must be provided before the grammar is fully filled, or
    --  this is an error.
@@ -346,28 +427,20 @@ package Schema.Validators is
      (Typ : access XML_Validator_Record'Class; Name : String);
    --  Will be removed
 
+   procedure Set_Debug_Output (Output : Boolean);
+   --  Whether we should output debug traces
+
 private
    --------------
    -- XML_Type --
    --------------
 
    type XML_Type_Record is record
-      Qname     : Unicode.CES.Byte_Sequence_Access;
-      Validator : XML_Validator;
+      Local_Name : Unicode.CES.Byte_Sequence_Access;
+      Validator  : XML_Validator;
    end record;
    type XML_Type is access all XML_Type_Record;
    No_Type : constant XML_Type := null;
-
-   -----------------
-   -- XML_Element --
-   -----------------
-
-   type XML_Element_Record is record
-      Qname   : Unicode.CES.Byte_Sequence_Access;
-      Of_Type : XML_Type;
-   end record;
-   type XML_Element is access all XML_Element_Record;
-   No_Element : constant XML_Element := null;
 
    ------------------
    -- Element_List --
@@ -378,6 +451,20 @@ private
 
    procedure Append
      (List    : in out Element_List_Access; Element : XML_Element);
+
+   -----------------
+   -- XML_Element --
+   -----------------
+
+   type XML_Element_Record is record
+      Local_Name : Unicode.CES.Byte_Sequence_Access;
+      Of_Type    : XML_Type;
+
+      Substitution_Groups : Element_List_Access;
+      --  List of all validators in the same substitution group
+   end record;
+   type XML_Element is access all XML_Element_Record;
+   No_Element : constant XML_Element := null;
 
    -------------------------
    -- Attribute_Validator --
@@ -395,26 +482,51 @@ private
 
    type Attribute_Validator_Record is tagged record
       Local_Name     : Unicode.CES.Byte_Sequence_Access;
+      NS             : XML_Grammar_NS;
       Attribute_Type : XML_Type;
       Attribute_Form : Attribute_Form_Type;
       Attribute_Use  : Attribute_Use_Type;
       Value          : Unicode.CES.Byte_Sequence_Access;
    end record;
 
-   --------------
+   procedure Get_Attribute_Lists
+     (Validator   : access XML_Validator_Record;
+      List        : out Attribute_Validator_List_Access;
+      Dependency1 : out XML_Validator;
+      Dependency2 : out XML_Validator);
+   --  Return the list of attributes that need to be checked for this
+   --  validator, and a set of other validators whose list of attributes also
+   --  need to be checked (they in turn will be called through this subprogram
+   --  to get their own lists of attributes).
+   --  There is generally a single list, although restrictions and
+   --  extensions will have two or more.
+   --  The lists are checked in turn, and any attribute already encountered
+   --  will not be checked again.
+
+   ---------------------
+   -- Attribute_Group --
+   ---------------------
+
+   type XML_Attribute_Group is record
+      Local_Name : Unicode.CES.Byte_Sequence_Access;
+      Attributes : Attribute_Validator_List_Access;
+   end record;
+   Empty_Attribute_Group : constant XML_Attribute_Group := (null, null);
+
+   -------------------
    -- XML_Validator --
-   --------------
+   -------------------
 
    type XML_Validator_Record is tagged record
       Debug_Name : Unicode.CES.Byte_Sequence_Access;
       --  Temporary, will be removed
 
-      Substitution_Groups : Element_List_Access;
-      --  List of all validators in the same substitution group
-
       Attributes : Attribute_Validator_List_Access;
       --  The list of valid attributes registered for this validator.
       --  ??? Could be implemented more efficiently through a htable
+
+      Mixed_Content : Boolean;
+      --  Whether character data is allowed in addition to children nodes
    end record;
 
    ---------------
@@ -429,7 +541,10 @@ private
    -- Particles --
    ---------------
 
-   type Particle_Type is (Particle_Element, Particle_Nested, Particle_Group);
+   type Particle_Type is (Particle_Element,
+                          Particle_Nested,
+                          Particle_Group,
+                          Particle_XML_Type);
    type XML_Particle;
    type XML_Particle_Access is access XML_Particle;
    type XML_Particle (Typ : Particle_Type) is record
@@ -437,9 +552,10 @@ private
       Max_Occurs : Integer;
       Next       : XML_Particle_Access;
       case Typ is
-         when Particle_Element => Element   : XML_Element;
-         when Particle_Nested  => Validator : Group_Model;
-         when Particle_Group   => Group     : XML_Group;
+         when Particle_Element  => Element    : XML_Element;
+         when Particle_Nested   => Validator  : Group_Model;
+         when Particle_Group    => Group      : XML_Group;
+         when Particle_XML_Type => Type_Descr : XML_Type;
       end case;
    end record;
 
@@ -479,8 +595,8 @@ private
    ----------------------
 
    type XML_Group_Record is record
-      Qname     : Unicode.CES.Byte_Sequence_Access;
-      Particles : Particle_List;
+      Local_Name : Unicode.CES.Byte_Sequence_Access;
+      Particles  : Particle_List;
    end record;
 
    -------------
@@ -532,14 +648,54 @@ private
       Equal         => "=");
    type Groups_Htable_Access is access Groups_Htable.HTable;
 
-   type XML_Grammar is record
-      Types    : Types_Htable_Access;
-      Elements : Elements_Htable_Access;
-      Groups   : Groups_Htable_Access;
+   function Get_Key
+     (Att : Attribute_Validator) return Unicode.CES.Byte_Sequence;
+   procedure Do_Nothing (Att : in out Attribute_Validator);
 
-      Forward_Type : XML_Type;
-      --  Common type to use for all forward declarations. This needs to be
-      --  cloned when we are declaring a new type.
+   package Attributes_Htable is new Sax.HTable
+     (Element       => Attribute_Validator,
+      Empty_Element => null,
+      Free          => Do_Nothing,
+      Key           => Unicode.CES.Byte_Sequence,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => "=");
+   type Attributes_Htable_Access is access Attributes_Htable.HTable;
+
+   function Get_Key
+     (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence;
+   procedure Free (Att : in out XML_Attribute_Group);
+
+   package Attribute_Groups_Htable is new Sax.HTable
+     (Element       => XML_Attribute_Group,
+      Empty_Element => Empty_Attribute_Group,
+      Free          => Free,
+      Key           => Unicode.CES.Byte_Sequence,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => "=");
+   type Attribute_Groups_Htable_Access
+     is access Attribute_Groups_Htable.HTable;
+
+   type XML_Grammar_NS_Record is record
+      Namespace_URI : Unicode.CES.Byte_Sequence_Access;
+      Types         : Types_Htable_Access;
+      Elements      : Elements_Htable_Access;
+      Groups        : Groups_Htable_Access;
+      Attributes    : Attributes_Htable_Access;
+      Attribute_Groups : Attribute_Groups_Htable_Access;
+   end record;
+   type XML_Grammar_NS is access all XML_Grammar_NS_Record;
+
+   procedure Free (Grammar : in out XML_Grammar_NS);
+   --  Free the memory occupied by Grammar
+
+   type Grammar_NS_Array is array (Natural range <>) of XML_Grammar_NS;
+   type Grammar_NS_Array_Access is access all Grammar_NS_Array;
+
+   type XML_Grammar is record
+      Grammars : Grammar_NS_Array_Access;
+      --  All the namespaces known for that grammar
    end record;
 
    ------------------------
@@ -648,5 +804,38 @@ private
      (Group      : access Choice_Record;
       Local_Name : Unicode.CES.Byte_Sequence) return Boolean;
    --  See doc for inherited subprograms
+
+   -------------------------------
+   -- Any_Simple_XML_Validator --
+   -------------------------------
+
+   type Any_Simple_XML_Validator_Record is new XML_Validator_Record
+   with null record;
+   --  Validates a "SimpleType" XML datatype, ie accepts any contents but
+   --  elements and attributes
+
+   procedure Validate_Start_Element
+     (Validator         : access Any_Simple_XML_Validator_Record;
+      Local_Name        : Unicode.CES.Byte_Sequence;
+      Data              : Validator_Data;
+      Element_Validator : out XML_Type);
+   procedure Validate_End_Element
+     (Validator  : access Any_Simple_XML_Validator_Record;
+      Local_Name : Unicode.CES.Byte_Sequence;
+      Data       : Validator_Data);
+   --  See doc from inherited subprograms
+
+   ---------------
+   -- XML_Union --
+   ---------------
+
+   type XML_Union_Record is new Any_Simple_XML_Validator_Record with record
+      Unions : Particle_List := Empty_Particle_List;
+   end record;
+   procedure Validate_Characters
+     (Union       : access XML_Union_Record;
+      Ch          : Unicode.CES.Byte_Sequence;
+      Data        : Validator_Data);
+   --  See doc from inherited subprograms
 
 end Schema.Validators;

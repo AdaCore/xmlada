@@ -10,6 +10,8 @@ with GNAT.IO; use GNAT.IO;
 
 package body Schema.Readers is
 
+   Debug : Boolean := False;
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Validator_List_Record, Validator_List);
 
@@ -21,6 +23,15 @@ package body Schema.Readers is
    --  Push or remove validators from the list
 
    pragma Unreferenced (Clear);
+
+   ----------------------
+   -- Set_Debug_Output --
+   ----------------------
+
+   procedure Set_Debug_Output (Output : Boolean) is
+   begin
+      Debug := Output;
+   end Set_Debug_Output;
 
    -----------------
    -- Set_Grammar --
@@ -85,30 +96,34 @@ package body Schema.Readers is
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Namespace_URI, Qname);
+      pragma Unreferenced (Qname);
       Validator : XML_Type;
       Data      : Validator_Data;
+      G         : XML_Grammar_NS;
    begin
-      Put_Line (ASCII.ESC & "[33m"
-                & "MANU Start_Element: " & Local_Name
-                & ASCII.ESC & "[39m");
+      if Debug then
+         Put_Line (ASCII.ESC & "[33m"
+                   & "Start_Element: " & Local_Name
+                   & ASCII.ESC & "[39m");
+      end if;
 
       if Handler.Validators /= null then
          Validate_Start_Element
            (Get_Validator (Handler.Validators.Validator), Local_Name,
             Handler.Validators.Data, Validator);
       else
-         Put_Line ("No current validator");
-      end if;
-
-      if Validator = No_Type then
-         Validator := Get_Type (Lookup_Element (Handler.Grammar, Local_Name));
+         if Debug then
+            Put_Line ("MANU: Getting element definition from grammar "
+                      & Namespace_URI & " " & Local_Name);
+         end if;
+         Get_NS (Handler.Grammar, Namespace_URI, Result => G);
+         Validator := Get_Type (Lookup_Element (G, Local_Name));
       end if;
 
       if Validator = No_Type then
          Raise_Exception
            (XML_Validation_Error'Identity,
-            "No data type definition for elements " & String (Local_Name));
+            "No data type definition for element " & String (Local_Name));
       end if;
 
       Data := Create_Validator_Data (Get_Validator (Validator));
