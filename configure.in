@@ -31,4 +31,4 @@ else
 fi
 echo "--------------------------------------------------"
 
-AC_OUTPUT(Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config)
+AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config)
