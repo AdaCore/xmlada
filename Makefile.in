@@ -43,7 +43,7 @@ MODULE_INSTALL=${MODULES:%=%_inst}
 
 .PHONY: all obj clean install install_dirs
 
-all: obj test docs 
+all: obj docs 
 obj: ${MODULES}
 test: ${MODULE_TEST}
 
@@ -70,7 +70,7 @@ endif
 	${CP} ${@:%_inst=%}/*.ad[bs]  ${PREFIX}/include/xmlada
 	${CP} ${@:%_inst=%}/obj/libxmlada_* ${PREFIX}/lib
 ifeq (${BUILD_SHARED}, TRUE)
-	cd ${PREFIX}/lib; ${LN} libxmlada_${@:%_inst=%}-${MAJOR}.${MINOR}.so libxmlada_${@:%_install=%}.so
+	cd ${PREFIX}/lib; ${LN} libxmlada_${@:%_inst=%}-${MAJOR}.${MINOR}.so libxmlada_${@:%_inst=%}.so
 endif
 
 install_dirs: force
@@ -78,7 +78,7 @@ install_dirs: force
 	@${MKDIR} ${PREFIX}/bin
 	@${MKDIR} ${PREFIX}/include/xmlada
 
-install: clean obj install_dirs ${MODULE_INSTALL}
+install: obj install_dirs ${MODULE_INSTALL}
 	cd ${PREFIX}/include/xmlada; ${CHMOD} -w *.ali
 	${CP} xmlada-config ${PREFIX}/bin
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
