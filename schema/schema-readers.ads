@@ -45,6 +45,9 @@ private
       --  Typ will most often be the type of Element, but if the instance has
       --  specified a xsi:type attribute, this could point to some other type.
 
+      Grammar   : Schema.Validators.XML_Grammar_NS;
+      --  The grammar to which Element belongs
+
       Data      : Schema.Validators.Validator_Data;
       Is_Nil    : Boolean;          --  Whether the element has xsi:nil="true"
       Had_Character_Data : Boolean; --  Whether some character data was given

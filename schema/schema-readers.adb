@@ -24,6 +24,7 @@ package body Schema.Readers is
    procedure Push  (List    : in out Validator_List;
                     Element : XML_Element;
                     Typ     : XML_Type;
+                    G       : XML_Grammar_NS;
                     Data    : Validator_Data;
                     Is_Nil  : Boolean);
    procedure Pop   (List : in out Validator_List);
@@ -78,12 +79,14 @@ package body Schema.Readers is
      (List    : in out Validator_List;
       Element : XML_Element;
       Typ     : XML_Type;
+      G       : XML_Grammar_NS;
       Data    : Validator_Data;
       Is_Nil  : Boolean) is
    begin
       List := new Validator_List_Record'
         (Element => Element,
          Typ     => Typ,
+         Grammar => G,
          Data    => Data,
          Is_Nil  => Is_Nil,
          Had_Character_Data => False,
@@ -260,17 +263,13 @@ package body Schema.Readers is
       pragma Unreferenced (Qname);
       Element   : XML_Element := No_Element;
       Data      : Validator_Data;
-      G         : XML_Grammar_NS;
       Typ       : XML_Type;
       Is_Nil    : Boolean;
 
       procedure Get_Grammar_From_Attributes;
       --  Parse the grammar, reading its name from the attributes
 
-      procedure Check_Qualification;
-      --  Check whether the element should have been qualified or not
-
-      procedure Compute_Type;
+      procedure Compute_Type (G : XML_Grammar_NS);
       --  Compute the type to use, depending on whether the xsi:type attribute
       --  was specified
 
@@ -294,32 +293,11 @@ package body Schema.Readers is
          end if;
       end Get_Grammar_From_Attributes;
 
-      -------------------------
-      -- Check_Qualification --
-      -------------------------
-
-      procedure Check_Qualification is
-      begin
-         if not Is_Global (Element)
-           and then Get_Form (Element, G) = Unqualified
-           and then Namespace_URI /= ""
-         then
-            Validation_Error
-              ("Namespace specification not authorized in this context");
-
-         elsif Get_Form (Element, G) = Qualified
-           and then Namespace_URI = ""
-         then
-            Validation_Error
-              ("Namespace specification is mandatory in this context");
-         end if;
-      end Check_Qualification;
-
       ------------------
       -- Compute_Type --
       ------------------
 
-      procedure Compute_Type is
+      procedure Compute_Type (G : XML_Grammar_NS) is
          Type_Index : constant Integer := Get_Index
            (Atts, URI => XML_Instance_URI, Local_Name => "type");
          Derives_By_Extension, Derives_By_Restriction : Boolean;
@@ -365,6 +343,7 @@ package body Schema.Readers is
          end if;
       end Compute_Type;
 
+      G : XML_Grammar_NS;
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
@@ -390,7 +369,8 @@ package body Schema.Readers is
          Validate_Start_Element
            (Get_Validator (Handler.Validators.Typ),
             Local_Name, Namespace_URI,
-            Handler.Validators.Data, Handler.Grammar, Element);
+            Handler.Validators.Data,
+            Handler.Grammar, Element);
       else
          if Debug then
             Put_Line ("Getting element definition from grammar: "
@@ -409,13 +389,12 @@ package body Schema.Readers is
            ("No data type definition for element " & String (Local_Name));
       end if;
 
-      Check_Qualification;
-      Compute_Type;
+      Compute_Type (G);
       Data := Create_Validator_Data (Get_Validator (Typ));
       Validate_Attributes
         (Get_Validator (Typ), Atts, Handler.Ids,
          Is_Nillable (Element), Is_Nil);
-      Push (Handler.Validators, Element, Typ, Data, Is_Nil);
+      Push (Handler.Validators, Element, Typ, G, Data, Is_Nil);
    end Start_Element;
 
    -----------------
