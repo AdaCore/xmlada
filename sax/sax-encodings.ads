@@ -5,6 +5,20 @@ use Unicode.CES;
 package Sax.Encodings is
    Encoding : constant Unicode.CES.Encoding_Scheme :=
      Unicode.CES.Utf8.Utf8_Encoding;
+   --  The default encoding used internally by XML/Ada, in particular in the
+   --  DOM tree.
+   --  The default value of UTF8 is economical in terms of memory, supports the
+   --  whole unicode range of characters, but is slightly slower to process.
+   --
+   --  You can change this to Basic_8bit, which is both very fast and with
+   --  reduced memory usage, but will only apply to Latin-1 documents.
+   --
+   --  You can also change this to UTF32 for instance, which will use more
+   --  memory, but is faster to process.
+   --
+   --  In all cases, if you modify this value, you will need to reencode all
+   --  the strings below in the new encoding.
+
 
    function From_Utf32
      (Str : Unicode.CES.Utf32.Utf32_LE_String)
