@@ -62,8 +62,8 @@ docs: force
 %_inst: force
 	@${MKDIR}                ${PREFIX}/include/xmlada
 	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
-	${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
-	${CP} $*/lib/libxmlada_* ${PREFIX}/include/xmlada/obj
+	-${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
+	-${CP} $*/lib/libxmlada_* ${PREFIX}/include/xmlada/obj
 	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
            ${LN} ${PREFIX}/include/xmlada/obj/${lib} ${PREFIX}/lib/${lib};}
 	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
