@@ -14,18 +14,48 @@
 xmltests=./xmltests
 
 debug=""
+verbose=0
 show_expected_failure=0
-run_ms_element=1
-run_ms_particle=1
-run_sun=1
 
-while getopts "dseu" opt
+run_all_tests=1
+run_ms_element=0
+run_ms_particle=0
+run_sun=0
+run_nist_time=0
+run_nist_boolean=0
+run_nist_float=0
+run_act=0
+
+while getopts "vhdseuan:m:" opt
 do 
    case $opt in
       d) debug="-debug";;
+      v) verbose=1;;
       s) show_expected_failure=1;;
-      e) run_ms_element=0;;
-      u) run_sun=0;;
+      u) run_sun=1; run_all_tests=0;;
+      n) case $OPTARG in
+           t) run_nist_time=1; run_all_tests=0;;
+           b) run_nist_boolean=1; run_all_tests=0;;
+           f) run_nist_float=1; run_all_tests=0;;
+         esac;;
+      m) case $OPTARG in
+           e) run_ms_element=1; run_all_tests=0;;
+           p) run_ms_particle=1; run_all_tests=0;;
+         esac;;
+      a) run_act=1; run_all_tests=0;;
+      h) cat <<EOF
+ -d   : debug mode ON
+ -v   : verbose mode ON: list the tests are they are passed
+ -s   : show output for expected failures
+ -a   : run only ACT tests
+ -u   : run only SUN tests
+ -m e : run only Microsoft elements tests
+ -m p : run only Microsoft particles tests
+ -n b : run only NIST boolean tests
+ -n t : run only NIST time tests
+ -n f : run only NIST float tests
+EOF
+         exit 1;;
       *) echo "Invalid command line switch: $opt"
          exit 1
          ;;
@@ -36,7 +66,10 @@ done
 XML="./testschema $debug"
 ms=$xmltests/msxsdtest
 sun=$xmltests/suntest/SunTestsAll
+nist=$xmltests/nisttest/NISTTestsAll
+act="act_testsuite"
 
+msi=$ms/identityConstraint/idc_datatypes
 mse=$ms/element
 msp=$ms/Particles
 
@@ -88,6 +121,10 @@ expect() {
       failed=`expr $failed + 1`
    else
       passed=`expr $passed + 1`
+      if [ x$verbose = x1 ]; then
+         echo "#+++++ Test passed +++++"
+         echo "  cmd: $XML $xsd $xml_file"
+      fi
    fi
 }
 
@@ -119,7 +156,7 @@ expected_failure() {
 ## Microsoft elements tests -- A serie  (name attribute tests)
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemA001.xsd ""\
  "$mse/elemA001.xsd:3:16: Attribute \"name\" is required in this context"
 expect $mse/elemA002.xsd "" ""
@@ -150,7 +187,7 @@ fi
 ## Microsoft elements tests -- B serie  (boolean tests)
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemB001.xsd "" ""
 expect $mse/elemB002.xsd "" ""
 expect $mse/elemB003.xsd "" \
@@ -173,7 +210,7 @@ fi
 ## Microsoft elements tests -- C serie  (block attribute + list type)
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemC001.xsd "" ""
 expect $mse/elemC002.xsd "" ""
 expect $mse/elemC003.xsd "" ""
@@ -208,7 +245,7 @@ fi
 ## Microsoft elements tests -- D serie (default)
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemD001.xsd "" ""
 expect $mse/elemD002.xsd "" ""
 expect $mse/elemD003.xsd "" \
@@ -224,7 +261,7 @@ fi
 ## Microsoft elements tests -- E serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemE001.xsd "" ""
 expect $mse/elemE002.xsd "" ""
 expect $mse/elemE003.xsd "" ""
@@ -244,7 +281,7 @@ fi
 ## Microsoft elements tests -- F serie (final)
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemF001.xsd "" ""
 expect $mse/elemF002.xsd "" ""
 expect $mse/elemF003.xsd "" ""
@@ -282,7 +319,7 @@ fi
 ## Microsoft elements tests -- G serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemG001.xsd "" ""
 expect $mse/elemG002.xsd "" ""
 expect $mse/elemG003.xsd "" \
@@ -296,7 +333,7 @@ fi
 ## Microsoft elements tests -- H serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemH001.xsd "" ""
 expect $mse/elemH002.xsd "" ""
 expect $mse/elemH003.xsd "" \
@@ -313,7 +350,7 @@ fi
 ## Microsoft elements tests -- I serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemI001.xsd "" ""
 expect $mse/elemI002.xsd "" ""
 expect $mse/elemI003.xsd "" \
@@ -328,7 +365,7 @@ fi
 ## Microsoft elements tests -- J serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 notrun $mse/elemJ001.xsd "" "test incorrect, since minOccurs > maxOccurs. See description of changes J.8 in the standard"
 expect $mse/elemJ002.xsd "" ""
 expect $mse/elemJ003.xsd "" ""
@@ -349,7 +386,7 @@ expect $mse/elemJ013.xsd "" ""
 expect $mse/elemJ014.xsd "" \
  "$mse/elemJ014.xsd:6:43: Attribute \"minOccurs\": Value must be an integer"
 expect $mse/elemJ015.xsd "" \
- "$mse/elemJ015.xsd:6:45: Attribute \"minOccurs\": minInclusive is set to 0"
+ "$mse/elemJ015.xsd:6:45: Attribute \"minOccurs\": -1 is too small, minInclusive is set to 0"
 expect $mse/elemJ016.xsd "" \
  "$mse/elemJ016.xsd:6:52: Attribute \"minOccurs\": Value must be an integer"
 expect $mse/elemJ017.xsd "" ""
@@ -365,7 +402,7 @@ fi
 ## Microsoft elements tests -- K serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemK001.xsd "" ""
 expect $mse/elemK002.xsd "" ""
 expect $mse/elemK003.xsd "" \
@@ -384,7 +421,7 @@ fi
 ## Microsoft elements tests -- L serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemL001.xsd "" ""
 expect $mse/elemL002.xsd "" \
  "$mse/elemL002.xsd:10: Element \"foo\" from namespace \"\" was referenced, but never declared"
@@ -398,7 +435,7 @@ fi
 ## Microsoft elements tests -- M serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemM001.xsd "" ""
 expect $mse/elemM002.xsd "" \
  "$mse/elemM002.xsd:6: Type \"foo\" from namespace \"\" was referenced, but never declared"
@@ -413,7 +450,7 @@ fi
 ## Microsoft elements tests -- N serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemN001.xsd "" ""
 expect $mse/elemN002.xsd "" ""
 expect $mse/elemN003.xsd "" ""
@@ -427,7 +464,7 @@ fi
 ## Microsoft elements tests -- O serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect "" $mse/elemO001.xml \
  "$mse/elemO001.xml:4:11: \"parent\" is abstract"
 expect "" $mse/elemO002.xml ""
@@ -450,7 +487,7 @@ fi
 ## Microsoft elements tests -- P serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemP001.xsd "" \
  "$mse/elemP001.xsd:3:90: Attributes \"fixed\" and \"default\" conflict with each other"
 expect $mse/elemP002.xsd "" \
@@ -473,7 +510,7 @@ fi
 ## Microsoft elements tests -- Q serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemQ001.xsd "" ""
 expect $mse/elemQ002.xsd "" ""
 expect $mse/elemQ003.xsd "" ""
@@ -511,7 +548,7 @@ fi
 ## Microsoft elements tests -- R serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect "" $mse/elemR001.xml ""
 expect "" $mse/elemR002.xml ""
 notrun $mse/elemR003.xsd "test seems wrong, all parsers fail"
@@ -524,7 +561,7 @@ fi
 ## Microsoft elements tests -- S serie (final)
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect $mse/elemS001.xsd "" \
  "$mse/elemS001.xsd:36:84: \"fr_invalid\" is final for restrictions, and cannot be substituted by\"fr1_invalid\""
 expect "" $mse/elemS002.xml ""
@@ -543,7 +580,7 @@ fi
 ## Microsoft elements tests -- T serie (block)
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect "" $mse/elemT001.xml \
  "$mse/elemT001.xml:3:29: Element \"fooTest\" blocks the use of restrictions of the type"
 expect "" $mse/elemT002.xml ""
@@ -628,7 +665,7 @@ fi
 ## Microsoft elements tests -- U serie (restrictions and facets)
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 expect "" $mse/elemU001.xml ""
 expect "" $mse/elemU002.xml ""
 expect "" $mse/elemU003.xml ""
@@ -660,7 +697,7 @@ fi
 ## Microsoft elements tests -- Z serie
 ##################
 
-if [ x$run_ms_element = x1 ]; then
+if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
 notrun $mse/elemZ001.xml "All parsers accept it"
 expected_failure $mse/elemZ002.xml "Improper handling of derivation for simpleType for xsi:type attribute"
 expect "" $mse/elemZ003.xml ""
@@ -672,7 +709,7 @@ fi
 ## Sun tests
 ##################
 
-if [ x$run_sun = x1 ]; then
+if [ x$run_sun = x1 -o $run_all_tests = 1 ]; then
 expected_failure "$sun/idc001.nogen.n00.xml" "XPath not support => <unique> not supported"
 expect "$sun/idc001.nogen.xsd" "$sun/idc001.nogen.v00.xml" ""
 expect "$sun/idc001.nogen.xsd" "$sun/idc001.nogen.v01.xml" ""
@@ -832,7 +869,7 @@ expect "$sun/xsd011.xsd" "$sun/xsd011.n01.xml" \
 expect "$sun/xsd011.xsd" "$sun/xsd011.n02.xml" \
  "$sun/xsd011.n02.xml:7:7: Element is set as nil, and doesn't accept any child element"
 expect "$sun/xsd011.xsd" "$sun/xsd011.n03.xml" \
- "$sun/xsd011.n03.xml:7:14: String is too short, minimum length is 2 characters"
+ "$sun/xsd011.n03.xml:7:2: Invalid number of elements in list, expecting at least 2"
 expect "$sun/xsd011.xsd" "$sun/xsd011.v00.xml" ""
 
 ### SUN xsd012
@@ -1035,7 +1072,7 @@ fi
 ## Microsoft particles tests
 ###########################################
 
-if [ x$run_ms_particle = x1 ]; then
+if [ x$run_ms_particle = x1 -o $run_all_tests = 1 ]; then
 expect "" "$msp/particlesA001.xml" \
  "$msp/particlesA001.xml:3:7: Element \"elem\" must appear at least 1 times"
 expect "" "$msp/particlesA002.xml" ""
@@ -1208,6 +1245,8 @@ expect "" "$msp/particlesDc007.xml" ""
 expect "" "$msp/particlesDc008.xml" ""
 expect "" "$msp/particlesDc009.xml" ""
 
+
+
 expect "" "$msp/particlesEa001.xml" ""
 expect "" "$msp/particlesEa002.xml" \
  "$msp/particlesEa002.xml:4:9: Element \"a2\" must appear at least 1 times"
@@ -1247,6 +1286,8 @@ expect "$msp/particlesEa023.xsd" "" \
 expect "$msp/particlesEa024.xsd" "" \
  "$msp/particlesEa024.xsd:11:53: minOccurs > maxOccurs when creating particle"
 notrun "$msp/particlesEa025.xsd" "" "all parsers fail, test seems correct"
+
+
 
 expect "" "$msp/particlesEb001.xml" ""
 expect "" "$msp/particlesEb002.xml" \
@@ -1317,11 +1358,549 @@ expect "" "$msp/particlesEb038.xml" ""
 expect "" "$msp/particlesEb039.xml" \
  "$msp/particlesEb039.xml:3:6: Expecting (a1)"
 
+expect "" "$msp/particlesEc001.xml" ""
+expect "" "$msp/particlesEc002.xml" ""
+expect "" "$msp/particlesEc003.xml" \
+ "$msp/particlesEc003.xml:4:8: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEc004.xml" \
+ "$msp/particlesEc004.xml:3:6: Unexpected element: \"x\""
+expect "" "$msp/particlesEc005.xml" \
+ "$msp/particlesEc005.xml:3:9: Unexpected end of sequence, expecting \"(a1|a2)\""
+expect "" "$msp/particlesEc006.xml" ""
+expect "" "$msp/particlesEc007.xml" \
+ "$msp/particlesEc007.xml:4:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEc008.xml" \
+ "$msp/particlesEc008.xml:3:10: Expecting (a1|a2)"
+expect "$msp/particlesEc009.xsd" "" \
+ "$msp/particlesEc009.xsd:4:29: minOccurs > maxOccurs when creating particle"
+expected_failure "" "$msp/particlesEc010.xml" "Test applies to old handling of minOccurs and maxOccurs"
+expect "" "$msp/particlesEc011.xml" \
+ "$msp/particlesEc011.xml:3:9: Unexpected end of sequence, expecting \"(a1|a2)\""
+expect "" "$msp/particlesEc012.xml" ""
+expect "" "$msp/particlesEc013.xml" \
+ "$msp/particlesEc013.xml:4:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEc014.xml" \
+ "$msp/particlesEc014.xml:3:6: Expecting (a1|a2)"
+expect "" "$msp/particlesEc015.xml" \
+ "$msp/particlesEc015.xml:3:9: Unexpected end of sequence, expecting \"(a1|a2)\""
+expect "" "$msp/particlesEc016.xml" ""
+expect "" "$msp/particlesEc017.xml" ""
+expect "" "$msp/particlesEc018.xml" ""
+expect "" "$msp/particlesEc019.xml" ""
+expect "" "$msp/particlesEc020.xml" ""
+expect "" "$msp/particlesEc021.xml" ""
+expect "" "$msp/particlesEc022.xml" \
+ "$msp/particlesEc022.xml:5:8: Too many occurrences of current element, expecting at most 2"
+expect "" "$msp/particlesEc023.xml" \
+ "$msp/particlesEc023.xml:5:8: Too many occurrences of current element, expecting at most 2"
+expect "" "$msp/particlesEc024.xml" \
+ "$msp/particlesEc024.xml:5:8: Unexpected element: \"x\""
+expect "" "$msp/particlesEc025.xml" \
+ "$msp/particlesEc025.xml:3:8: Expecting (a|b)"
+expect "" "$msp/particlesEc026.xml" \
+ "$msp/particlesEc026.xml:3:9: Unexpected end of sequence, expecting \"(a|b)\""
+expect "" "$msp/particlesEc027.xml" \
+ "$msp/particlesEc027.xml:4:9: Unexpected end of sequence, expecting \"(a|b)\""
+expect "" "$msp/particlesEc028.xml" \
+ "$msp/particlesEc028.xml:4:9: Unexpected end of sequence, expecting \"(a|b)\""
+expect "" "$msp/particlesEc029.xml" ""
+expect "" "$msp/particlesEc030.xml" ""
+expect "" "$msp/particlesEc031.xml" ""
+expect "" "$msp/particlesEc032.xml" ""
+expect "" "$msp/particlesEc033.xml" ""
+expect "" "$msp/particlesEc034.xml" ""
+expect "" "$msp/particlesEc035.xml" ""
+expect "" "$msp/particlesEc036.xml" ""
+expect "" "$msp/particlesEc037.xml" ""
+expect "" "$msp/particlesEc038.xml" \
+ "$msp/particlesEc038.xml:7:8: Too many occurrences of current element, expecting at most 4"
+expect "" "$msp/particlesEc039.xml" \
+ "$msp/particlesEc039.xml:7:8: Too many occurrences of current element, expecting at most 4"
+expect "" "$msp/particlesEc040.xml" \
+ "$msp/particlesEc040.xml:7:6: Unexpected element: \"x\""
+expect "" "$msp/particlesEc041.xml" \
+ "$msp/particlesEc041.xml:3:6: Expecting (a|b)"
+
+
+expect "$msp/particlesEd001.xsd" "" \
+ "$msp/particlesEd001.xsd:8:12: Too many occurrences of current element, expecting at most 1"
+
+
+expect "" "$msp/particlesFa001.xml" ""
+expect "" "$msp/particlesFa002.xml" ""
+expect "" "$msp/particlesFa003.xml" ""
+expect "" "$msp/particlesFa004.xml" ""
+expect "" "$msp/particlesFa005.xml" ""
+
+
+expect "" "$msp/particlesFb001.xml" ""
+expected_failure "$msp/particlesFb002.xsd" "" "test seems valid"
+expect "$msp/particlesFb003.xsd" "" "f"
+expect "" "$msp/particlesFb004.xml" ""
+expect "$msp/particlesFb005.xsd" "" \
+ "$msp/particlesFb005.xsd:15:20: Too many occurrences of current element, expecting at most 1"
+expect "$msp/particlesFb006.xsd" "" \
+ "$msp/particlesFb006.xsd:16:18: Too many occurrences of current element, expecting at most 1"
+
+# expect "" "$msp/particlesHa001.xml" ""
+# expect "" "$msp/particlesHa002.xml" ""
+# expect "" "$msp/particlesHa003.xml" ""
+# expect "" "$msp/particlesHa004.xml" ""
+# expect "" "$msp/particlesHa005.xml" ""
+# expect "" "$msp/particlesHa006.xml" ""
+# expect "" "$msp/particlesHa007.xml" ""
+# expect "$msp/particlesHa008.xsd" "" "f"
+# expect "" "$msp/particlesHa009.xml" ""
+# expect "" "$msp/particlesHa010.xml" ""
+# expect "" "$msp/particlesHa011.xml" ""
+# expect "" "$msp/particlesHa012.xml" ""
+# expect "" "$msp/particlesHa013.xml" ""
+# expect "" "$msp/particlesHa014.xml" ""
+# expect "" "$msp/particlesHa015.xml" ""
+# expect "" "$msp/particlesHa016.xml" ""
+# expect "" "$msp/particlesHa017.xml" ""
+# expect "" "$msp/particlesHa018.xml" ""
+
+
+# expect "$msp/particlesHb001.xsd" "" "f"
+# expect "$msp/particlesHb002.xsd" "" "f"
+# expect "$msp/particlesHb003.xsd" "" "f"
+# expect "$msp/particlesHb004.xsd" "" "f"
+# expect "$msp/particlesHb005.xsd" "" "f"
+# expect "$msp/particlesHb006.xsd" "" "f"
+# expect "$msp/particlesHb007.xsd" "" "f"
+# expect "$msp/particlesHb008.xsd" "" "f"
+# expect "$msp/particlesHb009.xsd" "" "f"
+# expect "$msp/particlesHb010.xsd" "" "f"
+# expect "$msp/particlesHb011.xsd" "" "f"
+
+
+# expect "" "$msp/particlesIa001.xml" ""
+# expect "" "$msp/particlesIa002.xml" ""
+# expect "" "$msp/particlesIa003.xml" ""
+# expect "" "$msp/particlesIa004.xml" ""
+# expect "" "$msp/particlesIa005.xml" ""
+# expect "$msp/particlesIa006.xsd" "" "f"
+# expect "$msp/particlesIa008.xsd" "" "f"
+
+
+# expect "" "$msp/particlesIb001.xml" ""
+# expect "$msp/particlesIb002.xsd" "" "f"
+# expect "" "$msp/particlesIb003.xml" ""
+# expect "$msp/particlesIb004.xsd" "" "f"
+# expect "" "$msp/particlesIb005.xml" ""
+# expect "$msp/particlesIb006.xsd" "" "f"
+# expect "$msp/particlesIb007.xsd" "" "f"
+
+
+# expect "" "$msp/particlesIc001.xml" ""
+# expect "$msp/particlesIc002.xsd" "" "f"
+# expect "$msp/particlesIc003.xsd" "" "f"
+# expect "$msp/particlesIc004.xsd" "" "f"
+# expect "" "$msp/particlesIc005.xml" ""
+# expect "" "$msp/particlesIc006.xml" ""
+# expect "" "$msp/particlesIc007.xml" ""
+
+
+# expect "" "$msp/particlesId001.xml" ""
+# expect "" "$msp/particlesId002.xml" ""
+# expect "$msp/particlesId003.xsd" "" "f"
+# expect "" "$msp/particlesId004.xml" ""
+# expect "" "$msp/particlesId005.xml" ""
+# expect "$msp/particlesId006.xsd" "" "f"
+# expect "" "$msp/particlesId007.xml" ""
+# expect "" "$msp/particlesId008.xml" ""
+# expect "" "$msp/particlesId009.xml" ""
+# expect "" "$msp/particlesId010.xml" ""
+# expect "" "$msp/particlesId011.xml" ""
+# expected_failure "$msp/particlesId012.xsd" "" "Test is valid"
 
 
 
+#### Not finished ####
+fi
 
 
+######################################
+## NIST tests for time
+######################################
+
+if [ x$run_nist_time = x1 -o $run_all_tests = 1 ]; then
+   expect "$nist/NISTSchema-time-minExclusive-1.xsd" "$nist/NISTXML-time-minExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-1.xsd" "$nist/NISTXML-time-minExclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-1.xsd" "$nist/NISTXML-time-minExclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-1.xsd" "$nist/NISTXML-time-minExclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-1.xsd" "$nist/NISTXML-time-minExclusive-1-5.xml" ""
+
+   expect "$nist/NISTSchema-time-minExclusive-2.xsd" "$nist/NISTXML-time-minExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-2.xsd" "$nist/NISTXML-time-minExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-2.xsd" "$nist/NISTXML-time-minExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-2.xsd" "$nist/NISTXML-time-minExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-2.xsd" "$nist/NISTXML-time-minExclusive-2-5.xml" ""
+
+   expect "$nist/NISTSchema-time-minExclusive-3.xsd" "$nist/NISTXML-time-minExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-3.xsd" "$nist/NISTXML-time-minExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-3.xsd" "$nist/NISTXML-time-minExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-3.xsd" "$nist/NISTXML-time-minExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-3.xsd" "$nist/NISTXML-time-minExclusive-3-5.xml" ""
+
+   expect "$nist/NISTSchema-time-minExclusive-4.xsd" "$nist/NISTXML-time-minExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-4.xsd" "$nist/NISTXML-time-minExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-4.xsd" "$nist/NISTXML-time-minExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-4.xsd" "$nist/NISTXML-time-minExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-time-minExclusive-4.xsd" "$nist/NISTXML-time-minExclusive-4-5.xml" ""
+
+   expect "$nist/NISTSchema-time-minExclusive-5.xsd" "$nist/NISTXML-time-minExclusive-5-1.xml" ""
+
+   expect "$nist/NISTSchema-time-minInclusive-1.xsd" "$nist/NISTXML-time-minInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-1.xsd" "$nist/NISTXML-time-minInclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-1.xsd" "$nist/NISTXML-time-minInclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-1.xsd" "$nist/NISTXML-time-minInclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-1.xsd" "$nist/NISTXML-time-minInclusive-1-5.xml" ""
+
+   expect "$nist/NISTSchema-time-minInclusive-2.xsd" "$nist/NISTXML-time-minInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-2.xsd" "$nist/NISTXML-time-minInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-2.xsd" "$nist/NISTXML-time-minInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-2.xsd" "$nist/NISTXML-time-minInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-2.xsd" "$nist/NISTXML-time-minInclusive-2-5.xml" ""
+
+   expect "$nist/NISTSchema-time-minInclusive-3.xsd" "$nist/NISTXML-time-minInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-3.xsd" "$nist/NISTXML-time-minInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-3.xsd" "$nist/NISTXML-time-minInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-3.xsd" "$nist/NISTXML-time-minInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-3.xsd" "$nist/NISTXML-time-minInclusive-3-5.xml" ""
+
+   expect "$nist/NISTSchema-time-minInclusive-4.xsd" "$nist/NISTXML-time-minInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-4.xsd" "$nist/NISTXML-time-minInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-4.xsd" "$nist/NISTXML-time-minInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-4.xsd" "$nist/NISTXML-time-minInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-time-minInclusive-4.xsd" "$nist/NISTXML-time-minInclusive-4-5.xml" ""
+
+   expect "$nist/NISTSchema-time-minInclusive-5.xsd" "$nist/NISTXML-time-minInclusive-5-1.xml" ""
+
+   expect "$nist/NISTSchema-time-maxExclusive-1.xsd" "$nist/NISTXML-time-maxExclusive-1-1.xml" ""
+
+   expect "$nist/NISTSchema-time-maxExclusive-2.xsd" "$nist/NISTXML-time-maxExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-2.xsd" "$nist/NISTXML-time-maxExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-2.xsd" "$nist/NISTXML-time-maxExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-2.xsd" "$nist/NISTXML-time-maxExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-2.xsd" "$nist/NISTXML-time-maxExclusive-2-5.xml" ""
+
+   expect "$nist/NISTSchema-time-maxExclusive-3.xsd" "$nist/NISTXML-time-maxExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-3.xsd" "$nist/NISTXML-time-maxExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-3.xsd" "$nist/NISTXML-time-maxExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-3.xsd" "$nist/NISTXML-time-maxExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-3.xsd" "$nist/NISTXML-time-maxExclusive-3-5.xml" ""
+
+   expect "$nist/NISTSchema-time-maxExclusive-4.xsd" "$nist/NISTXML-time-maxExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-4.xsd" "$nist/NISTXML-time-maxExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-4.xsd" "$nist/NISTXML-time-maxExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-4.xsd" "$nist/NISTXML-time-maxExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-4.xsd" "$nist/NISTXML-time-maxExclusive-4-5.xml" ""
+
+   expect "$nist/NISTSchema-time-maxExclusive-5.xsd" "$nist/NISTXML-time-maxExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-5.xsd" "$nist/NISTXML-time-maxExclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-5.xsd" "$nist/NISTXML-time-maxExclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-5.xsd" "$nist/NISTXML-time-maxExclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-time-maxExclusive-5.xsd" "$nist/NISTXML-time-maxExclusive-5-5.xml" ""
+
+   expect "$nist/NISTSchema-time-maxInclusive-1.xsd" "$nist/NISTXML-time-maxInclusive-1-1.xml" ""
+
+   expect "$nist/NISTSchema-time-maxInclusive-2.xsd" "$nist/NISTXML-time-maxInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-2.xsd" "$nist/NISTXML-time-maxInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-2.xsd" "$nist/NISTXML-time-maxInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-2.xsd" "$nist/NISTXML-time-maxInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-2.xsd" "$nist/NISTXML-time-maxInclusive-2-5.xml" ""
+
+   expect "$nist/NISTSchema-time-maxInclusive-3.xsd" "$nist/NISTXML-time-maxInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-3.xsd" "$nist/NISTXML-time-maxInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-3.xsd" "$nist/NISTXML-time-maxInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-3.xsd" "$nist/NISTXML-time-maxInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-3.xsd" "$nist/NISTXML-time-maxInclusive-3-5.xml" ""
+
+   expect "$nist/NISTSchema-time-maxInclusive-4.xsd" "$nist/NISTXML-time-maxInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-4.xsd" "$nist/NISTXML-time-maxInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-4.xsd" "$nist/NISTXML-time-maxInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-4.xsd" "$nist/NISTXML-time-maxInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-4.xsd" "$nist/NISTXML-time-maxInclusive-4-5.xml" ""
+
+   expect "$nist/NISTSchema-time-maxInclusive-5.xsd" "$nist/NISTXML-time-maxInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-5.xsd" "$nist/NISTXML-time-maxInclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-5.xsd" "$nist/NISTXML-time-maxInclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-5.xsd" "$nist/NISTXML-time-maxInclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-time-maxInclusive-5.xsd" "$nist/NISTXML-time-maxInclusive-5-5.xml" ""
+
+   expect "$nist/NISTSchema-time-pattern-1.xsd" "$nist/NISTXML-time-pattern-1-1.xml" ""
+   expect "$nist/NISTSchema-time-pattern-1.xsd" "$nist/NISTXML-time-pattern-1-2.xml" ""
+   expect "$nist/NISTSchema-time-pattern-1.xsd" "$nist/NISTXML-time-pattern-1-3.xml" ""
+   expect "$nist/NISTSchema-time-pattern-1.xsd" "$nist/NISTXML-time-pattern-1-4.xml" ""
+   expect "$nist/NISTSchema-time-pattern-1.xsd" "$nist/NISTXML-time-pattern-1-5.xml" ""
+
+
+   expect "$nist/NISTSchema-time-pattern-2.xsd" "$nist/NISTXML-time-pattern-2-1.xml" ""
+   expect "$nist/NISTSchema-time-pattern-2.xsd" "$nist/NISTXML-time-pattern-2-2.xml" ""
+   expect "$nist/NISTSchema-time-pattern-2.xsd" "$nist/NISTXML-time-pattern-2-3.xml" ""
+   expect "$nist/NISTSchema-time-pattern-2.xsd" "$nist/NISTXML-time-pattern-2-4.xml" ""
+   expect "$nist/NISTSchema-time-pattern-2.xsd" "$nist/NISTXML-time-pattern-2-5.xml" ""
+
+   expect "$nist/NISTSchema-time-pattern-3.xsd" "$nist/NISTXML-time-pattern-3-1.xml" ""
+   expect "$nist/NISTSchema-time-pattern-3.xsd" "$nist/NISTXML-time-pattern-3-2.xml" ""
+   expect "$nist/NISTSchema-time-pattern-3.xsd" "$nist/NISTXML-time-pattern-3-3.xml" ""
+   expect "$nist/NISTSchema-time-pattern-3.xsd" "$nist/NISTXML-time-pattern-3-4.xml" ""
+   expect "$nist/NISTSchema-time-pattern-3.xsd" "$nist/NISTXML-time-pattern-3-5.xml" ""
+
+   expect "$nist/NISTSchema-time-pattern-4.xsd" "$nist/NISTXML-time-pattern-4-1.xml" ""
+   expect "$nist/NISTSchema-time-pattern-4.xsd" "$nist/NISTXML-time-pattern-4-2.xml" ""
+   expect "$nist/NISTSchema-time-pattern-4.xsd" "$nist/NISTXML-time-pattern-4-3.xml" ""
+   expect "$nist/NISTSchema-time-pattern-4.xsd" "$nist/NISTXML-time-pattern-4-4.xml" ""
+   expect "$nist/NISTSchema-time-pattern-4.xsd" "$nist/NISTXML-time-pattern-4-5.xml" ""
+
+   expect "$nist/NISTSchema-time-pattern-5.xsd" "$nist/NISTXML-time-pattern-5-1.xml" ""
+   expect "$nist/NISTSchema-time-pattern-5.xsd" "$nist/NISTXML-time-pattern-5-2.xml" ""
+   expect "$nist/NISTSchema-time-pattern-5.xsd" "$nist/NISTXML-time-pattern-5-3.xml" ""
+   expect "$nist/NISTSchema-time-pattern-5.xsd" "$nist/NISTXML-time-pattern-5-4.xml" ""
+   expect "$nist/NISTSchema-time-pattern-5.xsd" "$nist/NISTXML-time-pattern-5-5.xml" ""
+
+   expect "$nist/NISTSchema-time-enumeration-1.xsd" "$nist/NISTXML-time-enumeration-1-1.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-1.xsd" "$nist/NISTXML-time-enumeration-1-2.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-1.xsd" "$nist/NISTXML-time-enumeration-1-3.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-1.xsd" "$nist/NISTXML-time-enumeration-1-4.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-1.xsd" "$nist/NISTXML-time-enumeration-1-5.xml" ""
+
+   expect "$nist/NISTSchema-time-enumeration-2.xsd" "$nist/NISTXML-time-enumeration-2-1.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-2.xsd" "$nist/NISTXML-time-enumeration-2-2.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-2.xsd" "$nist/NISTXML-time-enumeration-2-3.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-2.xsd" "$nist/NISTXML-time-enumeration-2-4.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-2.xsd" "$nist/NISTXML-time-enumeration-2-5.xml" ""
+
+   expect "$nist/NISTSchema-time-enumeration-3.xsd" "$nist/NISTXML-time-enumeration-3-1.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-3.xsd" "$nist/NISTXML-time-enumeration-3-2.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-3.xsd" "$nist/NISTXML-time-enumeration-3-3.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-3.xsd" "$nist/NISTXML-time-enumeration-3-4.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-3.xsd" "$nist/NISTXML-time-enumeration-3-5.xml" ""
+   
+   expect "$nist/NISTSchema-time-enumeration-4.xsd" "$nist/NISTXML-time-enumeration-4-1.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-4.xsd" "$nist/NISTXML-time-enumeration-4-2.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-4.xsd" "$nist/NISTXML-time-enumeration-4-3.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-4.xsd" "$nist/NISTXML-time-enumeration-4-4.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-4.xsd" "$nist/NISTXML-time-enumeration-4-5.xml" ""
+
+   expect "$nist/NISTSchema-time-enumeration-5.xsd" "$nist/NISTXML-time-enumeration-5-1.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-5.xsd" "$nist/NISTXML-time-enumeration-5-2.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-5.xsd" "$nist/NISTXML-time-enumeration-5-3.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-5.xsd" "$nist/NISTXML-time-enumeration-5-4.xml" ""
+   expect "$nist/NISTSchema-time-enumeration-5.xsd" "$nist/NISTXML-time-enumeration-5-5.xml" ""
+
+   expect "$nist/NISTSchema-time-whiteSpace-1.xsd" "$nist/NISTXML-time-whiteSpace-1-1.xml" ""
+   expect "$nist/NISTSchema-time-whiteSpace-1.xsd" "$nist/NISTXML-time-whiteSpace-1-2.xml" ""
+   expect "$nist/NISTSchema-time-whiteSpace-1.xsd" "$nist/NISTXML-time-whiteSpace-1-3.xml" ""
+   expect "$nist/NISTSchema-time-whiteSpace-1.xsd" "$nist/NISTXML-time-whiteSpace-1-4.xml" ""
+   expect "$nist/NISTSchema-time-whiteSpace-1.xsd" "$nist/NISTXML-time-whiteSpace-1-5.xml" ""
+fi
+
+########################
+## NIST boolean tests ##
+########################
+
+if [ x$run_nist_boolean = x1 -o $run_all_tests = 1 ]; then
+expect "$nist/NISTSchema-boolean-pattern-1.xsd" "$nist/NISTXML-boolean-pattern-1-1.xml" ""
+expect "$nist/NISTSchema-boolean-pattern-2.xsd" "$nist/NISTXML-boolean-pattern-2-1.xml" ""
+expect "$nist/NISTSchema-boolean-pattern-3.xsd" "$nist/NISTXML-boolean-pattern-3-1.xml" ""
+expect "$nist/NISTSchema-boolean-pattern-4.xsd" "$nist/NISTXML-boolean-pattern-4-1.xml" ""
+expect "$nist/NISTSchema-boolean-whiteSpace-1.xsd" "$nist/NISTXML-boolean-whiteSpace-1-1.xml" ""
+expect "$nist/NISTSchema-boolean-whiteSpace-1.xsd" "$nist/NISTXML-boolean-whiteSpace-1-2.xml" ""
+expect "$nist/NISTSchema-boolean-whiteSpace-1.xsd" "$nist/NISTXML-boolean-whiteSpace-1-3.xml" ""
+expect "$nist/NISTSchema-boolean-whiteSpace-1.xsd" "$nist/NISTXML-boolean-whiteSpace-1-4.xml" ""
+expect "$nist/NISTSchema-boolean-whiteSpace-1.xsd" "$nist/NISTXML-boolean-whiteSpace-1-5.xml" ""
+fi
+
+######################
+## NIST float tests ##
+######################
+
+if [ x$run_nist_float = x1 -o $run_all_tests = 1 ]; then
+expect "$nist/NISTSchema-float-minExclusive-1.xsd" "$nist/NISTXML-float-minExclusive-1-1.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-1.xsd" "$nist/NISTXML-float-minExclusive-1-2.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-1.xsd" "$nist/NISTXML-float-minExclusive-1-3.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-1.xsd" "$nist/NISTXML-float-minExclusive-1-4.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-1.xsd" "$nist/NISTXML-float-minExclusive-1-5.xml" ""
+
+expect "$nist/NISTSchema-float-minExclusive-2.xsd" "$nist/NISTXML-float-minExclusive-2-1.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-2.xsd" "$nist/NISTXML-float-minExclusive-2-2.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-2.xsd" "$nist/NISTXML-float-minExclusive-2-3.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-2.xsd" "$nist/NISTXML-float-minExclusive-2-4.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-2.xsd" "$nist/NISTXML-float-minExclusive-2-5.xml" ""
+
+expect "$nist/NISTSchema-float-minExclusive-3.xsd" "$nist/NISTXML-float-minExclusive-3-1.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-3.xsd" "$nist/NISTXML-float-minExclusive-3-2.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-3.xsd" "$nist/NISTXML-float-minExclusive-3-3.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-3.xsd" "$nist/NISTXML-float-minExclusive-3-4.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-3.xsd" "$nist/NISTXML-float-minExclusive-3-5.xml" ""
+
+expect "$nist/NISTSchema-float-minExclusive-4.xsd" "$nist/NISTXML-float-minExclusive-4-1.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-4.xsd" "$nist/NISTXML-float-minExclusive-4-2.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-4.xsd" "$nist/NISTXML-float-minExclusive-4-3.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-4.xsd" "$nist/NISTXML-float-minExclusive-4-4.xml" ""
+expect "$nist/NISTSchema-float-minExclusive-4.xsd" "$nist/NISTXML-float-minExclusive-4-5.xml" ""
+
+expect "$nist/NISTSchema-float-minExclusive-5.xsd" "$nist/NISTXML-float-minExclusive-5-1.xml" ""
+
+expect "$nist/NISTSchema-float-minInclusive-1.xsd" "$nist/NISTXML-float-minInclusive-1-1.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-1.xsd" "$nist/NISTXML-float-minInclusive-1-2.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-1.xsd" "$nist/NISTXML-float-minInclusive-1-3.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-1.xsd" "$nist/NISTXML-float-minInclusive-1-4.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-1.xsd" "$nist/NISTXML-float-minInclusive-1-5.xml" ""
+
+expect "$nist/NISTSchema-float-minInclusive-2.xsd" "$nist/NISTXML-float-minInclusive-2-1.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-2.xsd" "$nist/NISTXML-float-minInclusive-2-2.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-2.xsd" "$nist/NISTXML-float-minInclusive-2-3.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-2.xsd" "$nist/NISTXML-float-minInclusive-2-4.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-2.xsd" "$nist/NISTXML-float-minInclusive-2-5.xml" ""
+
+expect "$nist/NISTSchema-float-minInclusive-3.xsd" "$nist/NISTXML-float-minInclusive-3-1.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-3.xsd" "$nist/NISTXML-float-minInclusive-3-2.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-3.xsd" "$nist/NISTXML-float-minInclusive-3-3.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-3.xsd" "$nist/NISTXML-float-minInclusive-3-4.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-3.xsd" "$nist/NISTXML-float-minInclusive-3-5.xml" ""
+
+expect "$nist/NISTSchema-float-minInclusive-4.xsd" "$nist/NISTXML-float-minInclusive-4-1.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-4.xsd" "$nist/NISTXML-float-minInclusive-4-2.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-4.xsd" "$nist/NISTXML-float-minInclusive-4-3.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-4.xsd" "$nist/NISTXML-float-minInclusive-4-4.xml" ""
+expect "$nist/NISTSchema-float-minInclusive-4.xsd" "$nist/NISTXML-float-minInclusive-4-5.xml" ""
+
+expect "$nist/NISTSchema-float-minInclusive-5.xsd" "$nist/NISTXML-float-minInclusive-5-1.xml" ""
+
+expect "$nist/NISTSchema-float-maxExclusive-1.xsd" "$nist/NISTXML-float-maxExclusive-1-1.xml" ""
+
+expect "$nist/NISTSchema-float-maxExclusive-2.xsd" "$nist/NISTXML-float-maxExclusive-2-1.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-2.xsd" "$nist/NISTXML-float-maxExclusive-2-2.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-2.xsd" "$nist/NISTXML-float-maxExclusive-2-3.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-2.xsd" "$nist/NISTXML-float-maxExclusive-2-4.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-2.xsd" "$nist/NISTXML-float-maxExclusive-2-5.xml" ""
+
+expect "$nist/NISTSchema-float-maxExclusive-3.xsd" "$nist/NISTXML-float-maxExclusive-3-1.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-3.xsd" "$nist/NISTXML-float-maxExclusive-3-2.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-3.xsd" "$nist/NISTXML-float-maxExclusive-3-3.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-3.xsd" "$nist/NISTXML-float-maxExclusive-3-4.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-3.xsd" "$nist/NISTXML-float-maxExclusive-3-5.xml" ""
+
+expect "$nist/NISTSchema-float-maxExclusive-4.xsd" "$nist/NISTXML-float-maxExclusive-4-1.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-4.xsd" "$nist/NISTXML-float-maxExclusive-4-2.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-4.xsd" "$nist/NISTXML-float-maxExclusive-4-3.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-4.xsd" "$nist/NISTXML-float-maxExclusive-4-4.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-4.xsd" "$nist/NISTXML-float-maxExclusive-4-5.xml" ""
+
+expect "$nist/NISTSchema-float-maxExclusive-5.xsd" "$nist/NISTXML-float-maxExclusive-5-1.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-5.xsd" "$nist/NISTXML-float-maxExclusive-5-2.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-5.xsd" "$nist/NISTXML-float-maxExclusive-5-3.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-5.xsd" "$nist/NISTXML-float-maxExclusive-5-4.xml" ""
+expect "$nist/NISTSchema-float-maxExclusive-5.xsd" "$nist/NISTXML-float-maxExclusive-5-5.xml" ""
+
+expect "$nist/NISTSchema-float-maxInclusive-1.xsd" "$nist/NISTXML-float-maxInclusive-1-1.xml" ""
+
+expect "$nist/NISTSchema-float-maxInclusive-2.xsd" "$nist/NISTXML-float-maxInclusive-2-1.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-2.xsd" "$nist/NISTXML-float-maxInclusive-2-2.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-2.xsd" "$nist/NISTXML-float-maxInclusive-2-3.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-2.xsd" "$nist/NISTXML-float-maxInclusive-2-4.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-2.xsd" "$nist/NISTXML-float-maxInclusive-2-5.xml" ""
+
+expect "$nist/NISTSchema-float-maxInclusive-3.xsd" "$nist/NISTXML-float-maxInclusive-3-1.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-3.xsd" "$nist/NISTXML-float-maxInclusive-3-2.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-3.xsd" "$nist/NISTXML-float-maxInclusive-3-3.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-3.xsd" "$nist/NISTXML-float-maxInclusive-3-4.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-3.xsd" "$nist/NISTXML-float-maxInclusive-3-5.xml" ""
+
+expect "$nist/NISTSchema-float-maxInclusive-4.xsd" "$nist/NISTXML-float-maxInclusive-4-1.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-4.xsd" "$nist/NISTXML-float-maxInclusive-4-2.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-4.xsd" "$nist/NISTXML-float-maxInclusive-4-3.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-4.xsd" "$nist/NISTXML-float-maxInclusive-4-4.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-4.xsd" "$nist/NISTXML-float-maxInclusive-4-5.xml" ""
+
+expect "$nist/NISTSchema-float-maxInclusive-5.xsd" "$nist/NISTXML-float-maxInclusive-5-1.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-5.xsd" "$nist/NISTXML-float-maxInclusive-5-2.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-5.xsd" "$nist/NISTXML-float-maxInclusive-5-3.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-5.xsd" "$nist/NISTXML-float-maxInclusive-5-4.xml" ""
+expect "$nist/NISTSchema-float-maxInclusive-5.xsd" "$nist/NISTXML-float-maxInclusive-5-5.xml" ""
+
+expect "$nist/NISTSchema-float-pattern-1.xsd" "$nist/NISTXML-float-pattern-1-1.xml" ""
+expect "$nist/NISTSchema-float-pattern-1.xsd" "$nist/NISTXML-float-pattern-1-2.xml" ""
+expect "$nist/NISTSchema-float-pattern-1.xsd" "$nist/NISTXML-float-pattern-1-3.xml" ""
+expect "$nist/NISTSchema-float-pattern-1.xsd" "$nist/NISTXML-float-pattern-1-4.xml" ""
+expect "$nist/NISTSchema-float-pattern-1.xsd" "$nist/NISTXML-float-pattern-1-5.xml" ""
+
+expect "$nist/NISTSchema-float-pattern-2.xsd" "$nist/NISTXML-float-pattern-2-1.xml" ""
+expect "$nist/NISTSchema-float-pattern-2.xsd" "$nist/NISTXML-float-pattern-2-2.xml" ""
+expect "$nist/NISTSchema-float-pattern-2.xsd" "$nist/NISTXML-float-pattern-2-3.xml" ""
+expect "$nist/NISTSchema-float-pattern-2.xsd" "$nist/NISTXML-float-pattern-2-4.xml" ""
+expect "$nist/NISTSchema-float-pattern-2.xsd" "$nist/NISTXML-float-pattern-2-5.xml" ""
+
+expect "$nist/NISTSchema-float-pattern-3.xsd" "$nist/NISTXML-float-pattern-3-1.xml" ""
+expect "$nist/NISTSchema-float-pattern-3.xsd" "$nist/NISTXML-float-pattern-3-2.xml" ""
+expect "$nist/NISTSchema-float-pattern-3.xsd" "$nist/NISTXML-float-pattern-3-3.xml" ""
+expect "$nist/NISTSchema-float-pattern-3.xsd" "$nist/NISTXML-float-pattern-3-4.xml" ""
+expect "$nist/NISTSchema-float-pattern-3.xsd" "$nist/NISTXML-float-pattern-3-5.xml" ""
+
+expect "$nist/NISTSchema-float-pattern-4.xsd" "$nist/NISTXML-float-pattern-4-1.xml" ""
+expect "$nist/NISTSchema-float-pattern-4.xsd" "$nist/NISTXML-float-pattern-4-2.xml" ""
+expect "$nist/NISTSchema-float-pattern-4.xsd" "$nist/NISTXML-float-pattern-4-3.xml" ""
+expect "$nist/NISTSchema-float-pattern-4.xsd" "$nist/NISTXML-float-pattern-4-4.xml" ""
+expect "$nist/NISTSchema-float-pattern-4.xsd" "$nist/NISTXML-float-pattern-4-5.xml" ""
+
+expect "$nist/NISTSchema-float-pattern-5.xsd" "$nist/NISTXML-float-pattern-5-1.xml" ""
+expect "$nist/NISTSchema-float-pattern-5.xsd" "$nist/NISTXML-float-pattern-5-2.xml" ""
+expect "$nist/NISTSchema-float-pattern-5.xsd" "$nist/NISTXML-float-pattern-5-3.xml" ""
+expect "$nist/NISTSchema-float-pattern-5.xsd" "$nist/NISTXML-float-pattern-5-4.xml" ""
+expect "$nist/NISTSchema-float-pattern-5.xsd" "$nist/NISTXML-float-pattern-5-5.xml" ""
+
+expect "$nist/NISTSchema-float-enumeration-1.xsd" "$nist/NISTXML-float-enumeration-1-1.xml" ""
+expect "$nist/NISTSchema-float-enumeration-1.xsd" "$nist/NISTXML-float-enumeration-1-2.xml" ""
+expect "$nist/NISTSchema-float-enumeration-1.xsd" "$nist/NISTXML-float-enumeration-1-3.xml" ""
+expect "$nist/NISTSchema-float-enumeration-1.xsd" "$nist/NISTXML-float-enumeration-1-4.xml" ""
+expect "$nist/NISTSchema-float-enumeration-1.xsd" "$nist/NISTXML-float-enumeration-1-5.xml" ""
+
+expect "$nist/NISTSchema-float-enumeration-2.xsd" "$nist/NISTXML-float-enumeration-2-1.xml" ""
+expect "$nist/NISTSchema-float-enumeration-2.xsd" "$nist/NISTXML-float-enumeration-2-2.xml" ""
+expect "$nist/NISTSchema-float-enumeration-2.xsd" "$nist/NISTXML-float-enumeration-2-3.xml" ""
+expect "$nist/NISTSchema-float-enumeration-2.xsd" "$nist/NISTXML-float-enumeration-2-4.xml" ""
+expect "$nist/NISTSchema-float-enumeration-2.xsd" "$nist/NISTXML-float-enumeration-2-5.xml" ""
+
+expect "$nist/NISTSchema-float-enumeration-3.xsd" "$nist/NISTXML-float-enumeration-3-1.xml" ""
+expect "$nist/NISTSchema-float-enumeration-3.xsd" "$nist/NISTXML-float-enumeration-3-2.xml" ""
+expect "$nist/NISTSchema-float-enumeration-3.xsd" "$nist/NISTXML-float-enumeration-3-3.xml" ""
+expect "$nist/NISTSchema-float-enumeration-3.xsd" "$nist/NISTXML-float-enumeration-3-4.xml" ""
+expect "$nist/NISTSchema-float-enumeration-3.xsd" "$nist/NISTXML-float-enumeration-3-5.xml" ""
+
+expect "$nist/NISTSchema-float-enumeration-4.xsd" "$nist/NISTXML-float-enumeration-4-1.xml" ""
+expect "$nist/NISTSchema-float-enumeration-4.xsd" "$nist/NISTXML-float-enumeration-4-2.xml" ""
+expect "$nist/NISTSchema-float-enumeration-4.xsd" "$nist/NISTXML-float-enumeration-4-3.xml" ""
+expect "$nist/NISTSchema-float-enumeration-4.xsd" "$nist/NISTXML-float-enumeration-4-4.xml" ""
+expect "$nist/NISTSchema-float-enumeration-4.xsd" "$nist/NISTXML-float-enumeration-4-5.xml" ""
+
+expect "$nist/NISTSchema-float-enumeration-5.xsd" "$nist/NISTXML-float-enumeration-5-1.xml" ""
+expect "$nist/NISTSchema-float-enumeration-5.xsd" "$nist/NISTXML-float-enumeration-5-2.xml" ""
+expect "$nist/NISTSchema-float-enumeration-5.xsd" "$nist/NISTXML-float-enumeration-5-3.xml" ""
+expect "$nist/NISTSchema-float-enumeration-5.xsd" "$nist/NISTXML-float-enumeration-5-4.xml" ""
+expect "$nist/NISTSchema-float-enumeration-5.xsd" "$nist/NISTXML-float-enumeration-5-5.xml" ""
+
+expect "$nist/NISTSchema-float-whiteSpace-1.xsd" "$nist/NISTXML-float-whiteSpace-1-1.xml" ""
+expect "$nist/NISTSchema-float-whiteSpace-1.xsd" "$nist/NISTXML-float-whiteSpace-1-2.xml" ""
+expect "$nist/NISTSchema-float-whiteSpace-1.xsd" "$nist/NISTXML-float-whiteSpace-1-3.xml" ""
+expect "$nist/NISTSchema-float-whiteSpace-1.xsd" "$nist/NISTXML-float-whiteSpace-1-4.xml" ""
+expect "$nist/NISTSchema-float-whiteSpace-1.xsd" "$nist/NISTXML-float-whiteSpace-1-5.xml" ""
+fi
+
+###############
+## ACT tests ##
+###############
+
+if [ x$run_act = x1 -o $run_all_tests = 1 ]; then
+   expect "" "$act/basic_types-1.xml" \
+     "act_testsuite/basic_types-1.xml:11:28: 03:01:03 is too late, maxExclusive is set to 03:01:03.500"
+   expect "" "$act/basic_types-2.xml" \
+     "act_testsuite/basic_types-2.xml:10:28: 04:01:02 is too late, maxInclusive is set to 03:01:02.000"
+   expect "" "$act/basic_types-3.xml" \
+     "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive"
 fi
 
 summary
