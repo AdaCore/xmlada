@@ -20,9 +20,7 @@ package body Schema.Validators is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Element_List, Element_List_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (XML_Attribute_Group_Record, XML_Attribute_Group);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Particle_Iterator_Record, Particle_Iterator);
+     (Particle_Iterator_Record, Particle_Iterator);
 
    procedure Create_NS_Grammar
      (Grammar       : in out XML_Grammar;
@@ -68,13 +66,6 @@ package body Schema.Validators is
    --  Run the nested group of Validator, if there is any.
    --  On exit, Element_Validator is set to No_Element if either the nested
    --  group didn't match, or there was no nested group.
-
-   function Register_Forward
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
-   --  Register a type, the definition of which is not know at that point.
-   --  The definition must be provided before the grammar is fully filled, or
-   --  this is an error.
 
    function Check_Substitution_Groups
      (Element    : XML_Element_Access;
@@ -290,6 +281,11 @@ package body Schema.Validators is
    is
       L : Attribute_Validator_List_Access;
    begin
+      if Group = null then
+         Validation_Error
+           ("Cannot add null attribute group");
+      end if;
+
       if List /= null then
          for A in List'Range loop
             if List (A).Is_Group and then List (A).Group = Group then
@@ -380,18 +376,6 @@ package body Schema.Validators is
    begin
       Append (Validator.Attributes, Group);
    end Add_Attribute_Group;
-
-   ----------------------------
-   -- Create_Attribute_Group --
-   ----------------------------
-
-   function Create_Attribute_Group
-     (Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group is
-   begin
-      return new XML_Attribute_Group_Record'
-        (Local_Name => new Unicode.CES.Byte_Sequence'(Local_Name),
-         Attributes => null);
-   end Create_Attribute_Group;
 
    --------------
    -- Get_Name --
@@ -1058,7 +1042,8 @@ package body Schema.Validators is
       Result : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
    begin
       if Result = No_XML_Group then
-         Result := Register_Forward (Grammar, Local_Name);
+         Result := Create_Global_Group (Grammar, Local_Name);
+         Result.Is_Forward_Decl := True;
       end if;
       return Result;
    end Lookup_Group;
@@ -1071,16 +1056,13 @@ package body Schema.Validators is
      (Grammar       : XML_Grammar_NS;
       Local_Name    : Unicode.CES.Byte_Sequence) return XML_Attribute_Group
    is
-      Result : constant XML_Attribute_Group :=
+      Result : XML_Attribute_Group :=
         Attribute_Groups_Htable.Get (Grammar.Attribute_Groups.all, Local_Name);
-      Group : XML_Attribute_Group;
    begin
       if Result = Empty_Attribute_Group then
-         Group := Create_Attribute_Group (Local_Name);
-         Register (Grammar, Group);
-         return Group;
+         Result := Create_Global_Attribute_Group (Grammar, Local_Name);
+         Result.Is_Forward_Decl := True;
       end if;
-
       return Result;
    end Lookup_Attribute_Group;
 
@@ -1574,10 +1556,10 @@ package body Schema.Validators is
       Result : XML_Group;
    begin
       if Old /= No_XML_Group then
-         Result := Create_Group ("@redefine_" & Local_Name);
-         Result.all := Old.all;
-         Old.all := (Local_Name => Old.Local_Name,
-                     Particles  => Empty_Particle_List);
+         Result := new XML_Group_Record'(Old.all);
+         Old.all := (Particles       => Empty_Particle_List,
+                     Local_Name      => new Byte_Sequence'(Local_Name),
+                     Is_Forward_Decl => True);
          return Result;
       end if;
       return No_XML_Group;
@@ -1726,68 +1708,61 @@ package body Schema.Validators is
       return Attribute_Validator (Old);
    end Create_Global_Attribute;
 
-   --------------
-   -- Register --
-   --------------
+   -------------------------
+   -- Create_Global_Group --
+   -------------------------
 
-   procedure Register (Grammar : XML_Grammar_NS; Group : in out XML_Group) is
-      Old : constant XML_Group :=
-        Groups_Htable.Get (Grammar.Groups.all, Group.Local_Name.all);
-   begin
-      if Old /= No_XML_Group then
-         if Old.Particles.First /= null then
-            Validation_Error
-              ("Group has already been declared: " & Group.Local_Name.all);
-         end if;
-
-         Old.Particles := Group.Particles;
-
-         --  ??? Free Group
-         Group := Old;
-      else
-         Groups_Htable.Set (Grammar.Groups.all, Group);
-      end if;
-   end Register;
-
-   --------------
-   -- Register --
-   --------------
-
-   procedure Register
-     (Grammar : XML_Grammar_NS; Group : in out XML_Attribute_Group)
-   is
-      Old : constant XML_Attribute_Group := Attribute_Groups_Htable.Get
-        (Grammar.Attribute_Groups.all, Group.Local_Name.all);
-   begin
-      if Old /= Empty_Attribute_Group then
-         if Old.Attributes /= null then
-            Validation_Error
-              ("Attribute group has already been declared: "
-               & Group.Local_Name.all);
-         end if;
-         Old.all := Group.all;
-         Unchecked_Free (Group);
-         Group := Old;
-      else
-         Attribute_Groups_Htable.Set (Grammar.Attribute_Groups.all, Group);
-      end if;
-   end Register;
-
-   ----------------------
-   -- Register_Forward --
-   ----------------------
-
-   function Register_Forward
+   function Create_Global_Group
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Group
    is
-      Gr : XML_Group := Create_Group (Local_Name);
+      Group : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
    begin
-      Debug_Output ("Forward group decl: " & Local_Name);
+      if Group /= No_XML_Group then
+         if not Group.Is_Forward_Decl then
+            Validation_Error
+              ("Group has already been declared: " & Local_Name);
+         end if;
 
-      Register (Grammar, Gr);
-      return Gr;
-   end Register_Forward;
+         Group.Is_Forward_Decl := False;
+      else
+         Group := new XML_Group_Record'
+           (Local_Name      => new Byte_Sequence'(Local_Name),
+            Particles       => Empty_Particle_List,
+            Is_Forward_Decl => False);
+         Groups_Htable.Set (Grammar.Groups.all, Group);
+      end if;
+      return Group;
+   end Create_Global_Group;
+
+   -----------------------------------
+   -- Create_Global_Attribute_Group --
+   -----------------------------------
+
+   function Create_Global_Attribute_Group
+     (NS         : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group
+   is
+      Group : XML_Attribute_Group := Attribute_Groups_Htable.Get
+        (NS.Attribute_Groups.all, Local_Name);
+   begin
+      if Group /= Empty_Attribute_Group then
+         if not Group.Is_Forward_Decl then
+            Validation_Error
+              ("Attribute group has already been declared: " & Local_Name);
+         end if;
+
+         Group.Is_Forward_Decl := False;
+      else
+         Group := new XML_Attribute_Group_Record'
+           (Local_Name => new Unicode.CES.Byte_Sequence'(Local_Name),
+            Attributes => null,
+            Is_Forward_Decl => False);
+         Attribute_Groups_Htable.Set (NS.Attribute_Groups.all, Group);
+      end if;
+
+      return Group;
+   end Create_Global_Attribute_Group;
 
    ----------
    -- Free --
@@ -2988,18 +2963,6 @@ package body Schema.Validators is
       return new Particle_List_Record;
    end Empty_Particle_List;
 
-   ------------------
-   -- Create_Group --
-   ------------------
-
-   function Create_Group
-     (Local_Name : Unicode.CES.Byte_Sequence) return XML_Group is
-   begin
-      return new XML_Group_Record'
-        (Local_Name => new String'(Local_Name),
-         Particles  => Empty_Particle_List);
-   end Create_Group;
-
    --------------------
    -- Get_Local_Name --
    --------------------
@@ -3198,14 +3161,21 @@ package body Schema.Validators is
       --  Check missing definitions in Grammar
 
       procedure Local_Check (Grammar : XML_Grammar_NS) is
-         use Elements_Htable, Types_Htable, Attributes_Htable;
+         use Elements_Htable, Types_Htable, Attributes_Htable, Groups_Htable;
+         use Attribute_Groups_Htable;
          Elem_Iter : Elements_Htable.Iterator := First (Grammar.Elements.all);
          Type_Iter : Types_Htable.Iterator := First (Grammar.Types.all);
          Attr_Iter : Attributes_Htable.Iterator :=
            First (Grammar.Attributes.all);
+         Group_Iter : Groups_Htable.Iterator := First (Grammar.Groups.all);
+         Attr_Group_Iter : Attribute_Groups_Htable.Iterator :=
+           First (Grammar.Attribute_Groups.all);
+
          Elem : XML_Element_Access;
          Typ  : XML_Type;
          Attr : Named_Attribute_Validator;
+         Group : XML_Group;
+         Attr_Group : XML_Attribute_Group;
       begin
          while Type_Iter /= Types_Htable.No_Iterator loop
             Typ := Current (Type_Iter);
@@ -3244,6 +3214,26 @@ package body Schema.Validators is
             Next (Grammar.Attributes.all, Attr_Iter);
          end loop;
 
+         while Group_Iter /= Groups_Htable.No_Iterator loop
+            Group := Current (Group_Iter);
+            if Group.Is_Forward_Decl then
+               Validation_Error
+                 ("Group """ & Group.Local_Name.all
+                  & """ is referenced, but not defined");
+            end if;
+            Next (Grammar.Groups.all, Group_Iter);
+         end loop;
+
+         while Attr_Group_Iter /= Attribute_Groups_Htable.No_Iterator loop
+            Attr_Group := Current (Attr_Group_Iter);
+            if Attr_Group.Is_Forward_Decl then
+               Validation_Error
+                 ("attributeGroup """ & Attr_Group.Local_Name.all
+                  & """ is referenced, but not defined");
+            end if;
+
+            Next (Grammar.Attribute_Groups.all, Attr_Group_Iter);
+         end loop;
       end Local_Check;
 
    begin

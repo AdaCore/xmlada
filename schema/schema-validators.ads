@@ -179,10 +179,8 @@ package Schema.Validators is
    ----------------------
 
    type XML_Attribute_Group is private;
-
-   function Create_Attribute_Group
-     (Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
-   --  Create a new empty attribute group
+   Empty_Attribute_Group : constant XML_Attribute_Group;
+   --  Created through calls to Create_Global_Attribute_Group below
 
    procedure Add_Attribute
      (Group : in out XML_Attribute_Group;
@@ -420,11 +418,7 @@ package Schema.Validators is
 
    type XML_Group is private;
    No_XML_Group : constant XML_Group;
-   --  A group of elements
-
-   function Create_Group
-     (Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
-   --  Return a new empty group
+   --  A group of elements, Create through a call to Create_Global_Group
 
    procedure Add_Particle
      (Group : in out XML_Group; Particle : access Group_Model_Record'Class;
@@ -561,21 +555,18 @@ package Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence;
       Form       : Form_Type) return XML_Element;
-   procedure Register (Grammar : XML_Grammar_NS; Group   : in out XML_Group);
+   function Create_Global_Group
+     (Grammar    : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence;
       Attribute_Type : XML_Type;
       Is_ID          : Boolean := False) return Attribute_Validator;
-   procedure Register (Grammar : XML_Grammar_NS;
-                       Group   : in out XML_Attribute_Group);
+   function Create_Global_Attribute_Group
+     (NS             : XML_Grammar_NS;
+      Local_Name     : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
    --  Register a new type or element in the grammar.
-   --  Whenever we are overriding a previous definition (either because we are
-   --  in a <redefine> context, or because the type for forward-referenced),
-   --  it is possible that the parameter is changed to point to the old one
-   --  instead, and freed as appropriate. You should always either use
-   --  the output value of the parameter, or do a Lookup again to get access
-   --  to the new definition.
 
    procedure Create_Global_Type
      (Grammar    : XML_Grammar_NS;
@@ -811,6 +802,7 @@ private
    type XML_Attribute_Group_Record is record
       Local_Name : Unicode.CES.Byte_Sequence_Access;
       Attributes : Attribute_Validator_List_Access;
+      Is_Forward_Decl : Boolean;
    end record;
    type XML_Attribute_Group is access XML_Attribute_Group_Record;
    Empty_Attribute_Group : constant XML_Attribute_Group := null;
@@ -904,6 +896,9 @@ private
    type XML_Group_Record is record
       Local_Name : Unicode.CES.Byte_Sequence_Access;
       Particles  : Particle_List;
+      Is_Forward_Decl : Boolean;
+      --  Set to true if the group was defined as a call to Lookup, but never
+      --  through Create_Global_Group
    end record;
 
    -------------
