@@ -12,6 +12,11 @@ AC_CHECK_PROGS(TEXI2HTML, texi2html)
 AC_CHECK_PROGS(TEX, tex)
 
 EXEC_PREFIX="$prefix"
+
+## ??? Should be automatically detected or through --enable-shared
+BUILD_SHARED="FALSE" 
+
+AC_SUBST(BUILD_SHARED)
 AC_SUBST(EXEC_PREFIX)
 AC_SUBST(CC)
 AC_SUBST(XMLADA_MAJOR_VERSION)
