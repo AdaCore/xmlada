@@ -1165,6 +1165,11 @@ package body Schema.Validators is
             then
                Is_Nil := Get_Value_As_Boolean (Atts, S);
 
+            elsif Get_URI (Atts, S) = XML_Instance_URI
+              and then Get_Local_Name (Atts, S) = "type"
+            then
+               null;
+
             else
                if Debug then
                   Put_Line ("Invalid attribute "
@@ -2004,6 +2009,8 @@ package body Schema.Validators is
             Default             => null,
             Is_Abstract         => False,
             Nillable            => False,
+            Final_Restriction   => False,
+            Final_Extension     => False,
             Fixed               => null),
          Is_Ref => False);
       return Result;
@@ -3383,6 +3390,28 @@ package body Schema.Validators is
    procedure Set_Substitution_Group
      (Element : XML_Element; Head : XML_Element) is
    begin
+      if Get_Type (Element) /= No_Type then
+         if Head.Elem.Final_Restriction
+           and then Get_Validator (Get_Type (Element)).all in
+           Restriction_XML_Validator'Class
+         then
+            Validation_Error
+              ("""" & Head.Elem.Local_Name.all
+               & """ is final for restrictions, and cannot be substituted by"
+               & """" & Element.Elem.Local_Name.all & """");
+         end if;
+
+         if Head.Elem.Final_Extension
+           and then Get_Validator (Get_Type (Element)).all in
+           Extension_XML_Validator'Class
+         then
+            Validation_Error
+              ("""" & Head.Elem.Local_Name.all
+               & """ is final for extensions, and cannot be substituted by"
+               & """" & Element.Elem.Local_Name.all & """");
+         end if;
+      end if;
+
       Append (Head.Elem.Substitution_Groups, Element);
    end Set_Substitution_Group;
 
@@ -3741,31 +3770,36 @@ package body Schema.Validators is
 
       Element_Validator := No_Element;
 
-      if Validator.Extension /= null then
-         Validate_Start_Element
-           (Validator.Extension, Local_Name,
-            D.Extension_Data, Element_Validator);
-      end if;
-
       --  If we have a sequence with optional elements, it is possible that
       --  none of these matched, but this isn't an error. In this case, we keep
       --  looking in the base type
 
+      Validate_Start_Element
+        (Get_Validator (Validator.Base), Local_Name,
+         D.Base_Data, Element_Validator);
+
       if Element_Validator = No_Element then
-         Validate_Start_Element
-           (Get_Validator (Validator.Base), Local_Name,
-            D.Base_Data, Element_Validator);
+         if Validator.Extension /= null then
+            Validate_Start_Element
+              (Validator.Extension, Local_Name,
+               D.Extension_Data, Element_Validator);
+         end if;
       end if;
 
    exception
       when E : XML_Validation_Error =>
          if Debug then
             Put_Line ("Validation error in extension: "
-                      & Exception_Message (E) & ", testing base");
+                      & Exception_Message (E) & ", testing extension");
          end if;
-         Validate_Start_Element
-           (Get_Validator (Validator.Base), Local_Name,
-            D.Base_Data, Element_Validator);
+
+         if Validator.Extension /= null then
+            Validate_Start_Element
+              (Validator.Extension, Local_Name,
+               D.Extension_Data, Element_Validator);
+         else
+            raise;
+         end if;
    end Validate_Start_Element;
 
    -------------------------
@@ -4082,5 +4116,18 @@ package body Schema.Validators is
    begin
       return Element.Elem.Nillable;
    end Is_Nillable;
+
+   ---------------
+   -- Set_Final --
+   ---------------
+
+   procedure Set_Final
+     (Element : XML_Element;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean) is
+   begin
+      Element.Elem.Final_Restriction := On_Restriction;
+      Element.Elem.Final_Extension   := On_Extension;
+   end Set_Final;
 
 end Schema.Validators;
