@@ -760,8 +760,20 @@ package body Sax.Readers is
    -------------------
 
    procedure Put_In_Buffer
-     (Parser : in out Reader'Class; Char : Unicode_Char) is
+     (Parser : in out Reader'Class; Char : Unicode_Char)
+   is
+      W : constant Natural := Encoding.Width (Char);
+      Tmp : Byte_Sequence_Access;
    begin
+      --  Loop until we have enough memory to store the string
+      while Parser.Buffer_Length + W > Parser.Buffer'Last loop
+         Tmp := Parser.Buffer;
+         Parser.Buffer := new Byte_Sequence
+           (1 .. Tmp'Length * 2);
+         Parser.Buffer (1 .. Tmp'Length) := Tmp.all;
+         Free (Tmp);
+      end loop;
+
       Encoding.Encode (Char, Parser.Buffer.all, Parser.Buffer_Length);
    end Put_In_Buffer;
 
