@@ -5,6 +5,8 @@ Problems fixed in 1.x
 - DOM: Missing function DOM.Core.Nodes.Node_Type added
 - CC01-006: In some cases, the handling of entities like &amp; results in
   duplicates when getting the Node_Value through DOM
+- CC01-002: Handling of big files (multi-mega bytes) was generating a
+  Storage_Error in Direct_IO.
 
 Problems fixed in 1.0
 
