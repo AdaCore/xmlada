@@ -36,6 +36,7 @@ with DOM.Core.Elements;    use DOM.Core.Elements;
 with DOM.Core.Character_Datas; use DOM.Core.Character_Datas;
 
 package body DOM.Readers is
+
    --------------------
    -- Start_Document --
    --------------------
@@ -114,6 +115,21 @@ package body DOM.Readers is
            (Handler.Current_Node, Create_Text_Node (Handler.Tree, Ch));
       end if;
    end Characters;
+
+   -------------
+   -- Comment --
+   -------------
+
+   procedure Comment
+     (Handler : in out Tree_Reader;
+      Comment : Unicode.CES.Byte_Sequence)
+   is
+      Tmp : Node;
+      pragma Unreferenced (Tmp);
+   begin
+      Tmp := Append_Child
+        (Handler.Current_Node, Create_Comment (Handler.Tree, Comment));
+   end Comment;
 
    --------------------------
    -- Ignorable_Whitespace --

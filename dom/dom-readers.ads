@@ -91,6 +91,9 @@ private
       Public_Id : Unicode.CES.Byte_Sequence := "";
       System_Id : Unicode.CES.Byte_Sequence := "");
    procedure End_DTD (Handler : in out Tree_Reader);
+   procedure Comment
+     (Handler : in out Tree_Reader;
+      Comment : Unicode.CES.Byte_Sequence);
    procedure Error
      (Handler : in out Tree_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
