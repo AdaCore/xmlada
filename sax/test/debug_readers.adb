@@ -187,8 +187,7 @@ package body Debug_Readers is
       if not Handler.Silent then
          Put ("Sax.Ignorable_Whitespace (");
          while Index <= Ch'Last loop
-            C := Encoding.Read (Ch, Index);
-            Index := Index + Encoding.Width (C);
+            Encoding.Read (Ch, Index, C);
             Put (Unicode_Char'Image (C));
          end loop;
          Put_Line (','
