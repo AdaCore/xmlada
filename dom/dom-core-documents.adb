@@ -100,26 +100,27 @@ package body DOM.Core.Documents is
       Qualified_Name : DOM_String) return Element
    is
       pragma Warnings (Off, Doc);
-      Colon_Pos : Integer := Qualified_Name'First;
+      Colon_Pos : Integer;
       C : Unicode_Char;
       Prefix : DOM_String_Access;
       Local : DOM_String_Access;
+      Index : Positive := Qualified_Name'First;
    begin
       --  ??? Test for Invalid_Character_Err
       --  ??? Must convert Tag_Name to uppercase for HTML documents
       --  ??? Test for Namespace_Err
 
-      while Colon_Pos <= Qualified_Name'Last loop
-         C := Encoding.Read (Qualified_Name, Colon_Pos);
+      while Index <= Qualified_Name'Last loop
+         Colon_Pos := Index;
+         Encoding.Read (Qualified_Name, Index, C);
          exit when C = Colon;
-         Colon_Pos := Colon_Pos + Encoding.Width (C);
       end loop;
 
-      if Colon_Pos <= Qualified_Name'Last then
+      if C = Colon then
          Prefix := new DOM_String'(Qualified_Name
             (Qualified_Name'First .. Colon_Pos - 1));
          Local := new DOM_String'(Qualified_Name
-           (Colon_Pos + Encoding.Width (Colon) .. Qualified_Name'Last));
+           (Index .. Qualified_Name'Last));
       else
          Local := new DOM_String'(Qualified_Name);
       end if;
@@ -243,7 +244,8 @@ package body DOM.Core.Documents is
       Qualified_Name : DOM_String) return Attr
    is
       pragma Warnings (Off, Doc);
-      Colon_Pos : Natural := Qualified_Name'First;
+      Index : Natural := Qualified_Name'First;
+      Colon_Pos : Natural;
       C : Unicode_Char;
       Prefix : DOM_String_Access;
       Local : DOM_String_Access;
@@ -252,17 +254,17 @@ package body DOM.Core.Documents is
       --  ??? Must convert Tag_Name to uppercase for HTML documents
       --  ??? Test for Namespace_Err
 
-      while Colon_Pos <= Qualified_Name'Last loop
-         C := Encoding.Read (Qualified_Name, Colon_Pos);
+      while Index <= Qualified_Name'Last loop
+         Colon_Pos := Index;
+         Encoding.Read (Qualified_Name, Index, C);
          exit when C = Colon;
-         Colon_Pos := Colon_Pos + Encoding.Width (C);
       end loop;
 
-      if Colon_Pos <= Qualified_Name'Last then
+      if C = Colon then
          Prefix := new DOM_String'(Qualified_Name
             (Qualified_Name'First .. Colon_Pos - 1));
          Local := new DOM_String'(Qualified_Name
-           (Colon_Pos + Encoding.Width (Colon) .. Qualified_Name'Last));
+           (Index .. Qualified_Name'Last));
       else
          Local := new DOM_String'(Qualified_Name);
       end if;
