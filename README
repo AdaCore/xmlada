@@ -45,7 +45,10 @@ in the Makefile.
 
 Note that if you wish to build both types of libraries, you should first build
 and install the static libraries, then clean the build directory with
-"make clean", and then build and install the shared libraries.
+"make clean", and then build and install the shared libraries. The installation
+directories should be different, since the generated code might not be the
+same in both cases, and the second set of project files (see below) would
+overwrite the ones previously installed.
 
 Configure and compile with the following commands:
    >  ./configure --prefix=<PREFIX>
