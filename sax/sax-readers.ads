@@ -36,6 +36,7 @@ with Sax.Models;
 with Unicode;
 with Unicode.CES;
 with Sax.HTable;
+pragma Elaborate_All (Sax.HTable);
 
 package Sax.Readers is
 
