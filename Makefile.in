@@ -83,11 +83,7 @@ install: obj docs install_dirs ${MODULE_INSTALL}
 	-${CP} docs/xml.html ${PREFIX}/doc/xmlada
 	-${CP} docs/xml.info ${PREFIX}/doc/xmlada
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
-ifeq (${GTKADA_GPR},)
-	cp distrib/xmlada_no_gtk.gpr ${PREFIX}/lib/gnat/xmlada.gpr
-else
 	cp distrib/xmlada.gpr ${PREFIX}/lib/gnat/xmlada.gpr
-endif
 
 clean: force
 	gnat clean -q -r -Punicode/unicode.gpr

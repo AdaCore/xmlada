@@ -3,7 +3,7 @@
 --  variable. Then, in our own project file, add a "with" dependency on
 --  "xmlada.gpr".
 
-with "xmlada_unicode", "xmlada_sax", "xmlada_input", "xmlada_dom", "xmlada_gtk";
+with "xmlada_unicode", "xmlada_sax", "xmlada_input", "xmlada_dom";
 with "xmlada_schema";
 
 project Xmlada is
