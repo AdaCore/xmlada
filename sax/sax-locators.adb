@@ -32,29 +32,43 @@ with Unchecked_Deallocation;
 
 package body Sax.Locators is
 
-   ----------
-   -- Free --
-   ----------
+   ---------
+   -- Ref --
+   ---------
 
-   procedure Free (Loc : in out Locator_Impl) is
+   procedure Ref (Loc : in out Locator_Impl) is
    begin
-      Free (Loc.Public_Id);
-      Free (Loc.System_Id);
-   end Free;
+      Loc.Ref_Count := Loc.Ref_Count + 1;
+   end Ref;
 
-   ----------
-   -- Free --
-   ----------
+   -----------
+   -- Unref --
+   -----------
 
-   procedure Free (Loc : in out Locator_Impl_Access) is
+   procedure Unref (Loc : in out Locator_Impl) is
+   begin
+      Loc.Ref_Count := Loc.Ref_Count - 1;
+      if Loc.Ref_Count = 0 then
+         Free (Loc.Public_Id);
+         Free (Loc.System_Id);
+      end if;
+   end Unref;
+
+   procedure Unref (Loc : in out Locator_Impl_Access) is
       procedure Internal is new Unchecked_Deallocation
         (Locator_Impl'Class, Locator_Impl_Access);
+      Count : Integer;
    begin
       if Loc /= null then
-         Free (Loc.all);
-         Internal (Loc);
+         Count := Loc.Ref_Count;
+         Unref (Loc.all);
+         if Count = 1 then
+            Internal (Loc);
+         else
+            Loc := null;
+         end if;
       end if;
-   end Free;
+   end Unref;
 
    ---------------------
    -- Get_Line_Number --

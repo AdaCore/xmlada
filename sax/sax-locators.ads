@@ -52,6 +52,15 @@ package Sax.Locators is
       is abstract;
    --  Return the public id for the current document (see input_sources.ads)
 
+   procedure Ref   (Loc : in out Locator) is abstract;
+   procedure Unref (Loc : in out Locator) is abstract;
+   --  Memory management for the locator. If you want to preserve the validity
+   --  of a locator for instance after the call to Sax.Readers.Parse, you need
+   --  to Ref it.
+   --  A Locator is automatically created with a reference count of 1, so the
+   --  first call to Unref will actually deallooate the memory for it, unless
+   --  there has been a call to Ref in-between.
+
    --------------------
    -- Added features --
    --------------------
@@ -71,8 +80,11 @@ package Sax.Locators is
    type Locator_Impl is new Locator with private;
    type Locator_Impl_Access is access all Locator_Impl'Class;
 
-   procedure Free (Loc : in out Locator_Impl);
-   procedure Free (Loc : in out Locator_Impl_Access);
+   procedure Ref   (Loc : in out Locator_Impl);
+   procedure Unref (Loc : in out Locator_Impl);
+   --  See doc from inherited subprogram
+
+   procedure Unref (Loc : in out Locator_Impl_Access);
    --  Free the memory allocated internally for the strings.
    --  For the second subprogram, we also free the memory allocated for the
    --  access type itself
@@ -116,6 +128,7 @@ private
       Column : Natural := 1;
       Public_Id : Unicode.CES.Byte_Sequence_Access;
       System_Id : Unicode.CES.Byte_Sequence_Access;
+      Ref_Count : Natural := 1;
    end record;
 
    pragma Inline (Get_Line_Number);
