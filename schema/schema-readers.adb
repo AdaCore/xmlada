@@ -38,11 +38,6 @@ package body Schema.Readers is
    --  Add the standard attributes from the XMLSchema-Instance namespace to
    --  Tmp.
 
-   procedure Parse_Grammar
-     (Handler  : in out Validating_Reader;
-      Xsd_File : Byte_Sequence);
-   --  Parse the grammar to use from an XSD file
-
    procedure Parse_Grammars
      (Handler  : in out Validating_Reader;
       Schema_Location : Byte_Sequence);
@@ -156,7 +151,8 @@ package body Schema.Readers is
 
    procedure Parse_Grammar
      (Handler  : in out Validating_Reader;
-      Xsd_File : Byte_Sequence)
+      Xsd_File : Byte_Sequence;
+      Add_To   : in out XML_Grammar)
    is
       File     : File_Input;
       Schema   : Schema_Reader;
@@ -186,10 +182,10 @@ package body Schema.Readers is
          Set_System_Id (File, Xsd_File);
       end if;
 
-      Set_Created_Grammar (Schema, Handler.Grammar);
+      Set_Created_Grammar (Schema, Add_To);
       Parse (Schema, File);
       Close (File);
-      Handler.Grammar := Get_Created_Grammar (Schema);
+      Add_To := Get_Created_Grammar (Schema);
 
       if Debug then
          Put_Line ("Done parsing new grammar: " & Xsd_File);
@@ -239,7 +235,8 @@ package body Schema.Readers is
                       & "XSD=" & Schema_Location (Start_XSD .. Last_XSD - 1));
          end if;
 
-         Parse_Grammar (Handler, Schema_Location (Start_XSD .. Last_XSD - 1));
+         Parse_Grammar (Handler, Schema_Location (Start_XSD .. Last_XSD - 1),
+                        Add_To => Handler.Grammar);
 
          while Index <= Schema_Location'Last loop
             Start_NS := Index;
@@ -290,7 +287,8 @@ package body Schema.Readers is
             Local_Name => "schemaLocation");
       begin
          if No_Index /= -1 then
-            Parse_Grammar (Handler, Get_Value (Atts, No_Index));
+            Parse_Grammar (Handler, Get_Value (Atts, No_Index),
+                           Add_To => Handler.Grammar);
          elsif Location_Index /= -1 then
             Parse_Grammars (Handler, Get_Value (Atts, Location_Index));
          end if;
@@ -308,16 +306,14 @@ package body Schema.Readers is
          then
             Raise_Exception
               (XML_Validation_Error'Identity,
-               "Elements other than global elements mustn't have explicit"
-               & " namespace specification in this schema");
+               "Namespace specification not authorized in this context");
 
          elsif Get_Form (Element, G) = Qualified
            and then Namespace_URI = ""
          then
             Raise_Exception
               (XML_Validation_Error'Identity,
-               "All elements must have namespace specification in this"
-               & " schema");
+               "Namespace specification is mandatory in this context");
          end if;
       end Check_Qualification;
 
