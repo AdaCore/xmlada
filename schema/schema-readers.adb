@@ -304,16 +304,14 @@ package body Schema.Readers is
            and then Get_Form (Element, G) = Unqualified
            and then Namespace_URI /= ""
          then
-            Raise_Exception
-              (XML_Validation_Error'Identity,
-               "Namespace specification not authorized in this context");
+            Validation_Error
+              ("Namespace specification not authorized in this context");
 
          elsif Get_Form (Element, G) = Qualified
            and then Namespace_URI = ""
          then
-            Raise_Exception
-              (XML_Validation_Error'Identity,
-               "Namespace specification is mandatory in this context");
+            Validation_Error
+              ("Namespace specification is mandatory in this context");
          end if;
       end Check_Qualification;
 
@@ -347,25 +345,22 @@ package body Schema.Readers is
               and then Typ /= Get_Type (Element)
               and then Get_Local_Name (Get_Type (Element)) /= "ur-Type"
             then
-               Raise_Exception
-                 (XML_Validation_Error'Identity,
-                  "The type mentionned in the ""type"" attribute must"
+               Validation_Error
+                 ("The type mentionned in the ""type"" attribute must"
                   & " derive from the element's type in the schema");
             end if;
 
             if Derives_By_Restriction
               and then Get_Block_On_Restriction (Element)
             then
-               Raise_Exception
-                 (XML_Validation_Error'Identity,
-                  "Cannot use restriction of element's type in this context");
+               Validation_Error
+                 ("Cannot use restriction of element's type in this context");
 
             elsif Derives_By_Extension
               and then Get_Block_On_Extension (Element)
             then
-               Raise_Exception
-                 (XML_Validation_Error'Identity,
-                  "Cannot use extension of element's type in this context");
+               Validation_Error
+                 ("Cannot use extension of element's type in this context");
             end if;
          end if;
       end Compute_Type;
@@ -410,9 +405,8 @@ package body Schema.Readers is
       --  If not: this is a validation error
 
       if Element = No_Element then
-         Raise_Exception
-           (XML_Validation_Error'Identity,
-            "No data type definition for element " & String (Local_Name));
+         Validation_Error
+           ("No data type definition for element " & String (Local_Name));
       end if;
 
       Check_Qualification;
@@ -447,16 +441,6 @@ package body Schema.Readers is
             Internal_Characters (Handler, "", Empty_Element => True);
          end if;
 
---           if Has_Fixed (Handler.Validators.Element)
---             and then not Handler.Validators.Had_Character_Data
---             and then Get_Fixed (Handler.Validators.Element).all /= ""
---           then
---              Raise_Exception
---                (XML_Validation_Error'Identity,
---                 "Element's value must be """
---                 & Get_Fixed (Handler.Validators.Element).all & """");
---           end if;
-
          Validate_End_Element
            (Get_Validator (Handler.Validators.Typ),
             Qname,
@@ -479,16 +463,14 @@ package body Schema.Readers is
 
          if Handler.Validators.Is_Nil then
             if Ch /= "" then
-               Raise_Exception
-                 (XML_Validation_Error'Identity,
-                  "Element has character data, but is declared as nil");
+               Validation_Error
+                 ("Element has character data, but is declared as nil");
             end if;
 
          elsif Has_Fixed (Handler.Validators.Element) then
             if Ch /= Get_Fixed (Handler.Validators.Element).all then
-               Raise_Exception
-                 (XML_Validation_Error'Identity,
-                  "Element's value must be """
+               Validation_Error
+                 ("Element's value must be """
                   & Get_Fixed (Handler.Validators.Element).all & """");
             end if;
 
@@ -555,11 +537,12 @@ package body Schema.Readers is
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;
-      Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class)
+   is
+      pragma Unreferenced (Reader);
    begin
-      Raise_Exception
-        (XML_Validation_Error'Identity,
-         To_String (Get_Locator (Except)) & ": "
+      Validation_Error
+        (To_String (Get_Locator (Except)) & ": "
          & String (Get_Message (Except)));
    end Validation_Error;
 

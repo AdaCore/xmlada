@@ -8,7 +8,6 @@ with Schema.Validators; use Schema.Validators;
 with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with GNAT.IO;           use GNAT.IO;
 with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;    use Ada.Exceptions;
 
 package body Schema.Schema_Readers is
 
@@ -584,15 +583,13 @@ package body Schema.Schema_Readers is
            and then Get_Value (Atts, Name_Index) = Get_Value (Atts, Ref_Index)
            and then not In_Redefine_Context (Handler)
          then
-            Raise_Exception
-              (XML_Validation_Error'Identity,
-               """ref"" attribute cannot be self-referencing");
+            Validation_Error
+              ("""ref"" attribute cannot be self-referencing");
          end if;
 
       elsif Ref_Index = -1 then
-         Raise_Exception
-           (XML_Validation_Error'Identity,
-            "Either ""name"" or ""ref"" attribute must be present");
+         Validation_Error
+           ("Either ""name"" or ""ref"" attribute must be present");
 
       else
          Lookup_With_NS
@@ -600,9 +597,8 @@ package body Schema.Schema_Readers is
 
          --  Section 3.3.2, validity constraints 3.3.3
          if Type_Index /= -1 then
-            Raise_Exception
-              (XML_Validation_Error'Identity,
-               """type"" attribute cannot be specified along with ""ref""");
+            Validation_Error
+              ("""type"" attribute cannot be specified along with ""ref""");
          end if;
       end if;
 
@@ -856,9 +852,8 @@ package body Schema.Schema_Readers is
          if In_Redefine_Context (Handler) then
             Base := Handler.Contexts.Redefined_Type;
          else
-            Raise_Exception
-              (XML_Validation_Error'Identity,
-               "Self-referencing restriction not allowed");
+            Validation_Error
+              ("Self-referencing restriction not allowed");
          end if;
 
       elsif Base_Index /= -1 then
@@ -984,9 +979,8 @@ package body Schema.Schema_Readers is
          if In_Redefine_Context (Handler) then
             Base := Handler.Contexts.Redefined_Type;
          else
-            Raise_Exception
-              (XML_Validation_Error'Identity,
-               "Self-referencing extension not allowed");
+            Validation_Error
+              ("Self-referencing extension not allowed");
          end if;
       else
          Lookup_With_NS
@@ -1554,9 +1548,7 @@ package body Schema.Schema_Readers is
 
       if Handler.Contexts = null then
          if Local_Name /= "schema" then
-            Raise_Exception
-              (XML_Validation_Error'Identity,
-               "Root element must be <schema>");
+            Validation_Error ("Root element must be <schema>");
          end if;
 
          Create_Schema (Handler, Atts);
