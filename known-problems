@@ -3,6 +3,8 @@ Problems fixed in 1.x
 - DOM: There is now initially a single Text node per block of text, as required
   by DOM specifications
 - DOM: Missing function DOM.Core.Nodes.Node_Type added
+- CC01-006: In some cases, the handling of entities like &amp; results in
+  duplicates when getting the Node_Value through DOM
 
 Problems fixed in 1.0
 
