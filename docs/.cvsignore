@@ -3,3 +3,15 @@ xml.ps
 *.html
 *.info
 xml.txt
+xml.aux
+xml.cp
+xml.cps
+xml.dvi
+xml.fn
+xml.ky
+xml.log
+xml.pdf
+xml.pg
+xml.toc
+xml.tp
+xml.vr
