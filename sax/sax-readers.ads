@@ -1,11 +1,41 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2001-2002                     --
+--                            ACT-Europe                             --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Input_Sources;
+with Interfaces;
 with Sax.Locators;
 with Sax.Exceptions;
 with Sax.Attributes;
 with Sax.Models;
 with Unicode;
 with Unicode.CES;
-with GNAT.Spitbol;
+with HTable;
 
 package Sax.Readers is
 
@@ -385,7 +415,8 @@ package Sax.Readers is
    --  Only the first declaration for an attribute will be reported.
    --  If Typ is Notation or Enumeration, then Content will contain the
    --  description model for the attribute. Otherwise Content is null.
-   --  Content might be freed when returning from this call.
+   --  Content might be freed when returning from this call, so you should make
+   --  copies of it if needed.
    --  Value_Default represents the attribute default requirements
    --  ("#IMPLIED", "#REQUIRED", or "#FIXED").
    --  Value is a string representing the attribute's default value, or ""
@@ -404,6 +435,9 @@ private
    Default_Atts_Table_Size : constant := 50;
    --  Size of the hash-table used to store the default attributes
 
+   function Hash (Str : String) return Interfaces.Unsigned_32;
+   --  Compute hash function for given String
+
    --------------
    -- Entities --
    --------------
@@ -411,18 +445,26 @@ private
    --  substitution ourselves.
 
    type Entity_Entry is record
+      Name         : Unicode.CES.Byte_Sequence_Access;
       Value        : Unicode.CES.Byte_Sequence_Access;
       External     : Boolean;
       Already_Read : Boolean := False;
       --  True if the value of the entity was already read. This is used to
       --  detect entities referencing themselves.
    end record;
-   Null_Entity : constant Entity_Entry := (null, False, False);
-   function Entity_Img (A : Entity_Entry) return String;
-   package Entity_Table is new GNAT.Spitbol.Table
-     (Value_Type => Entity_Entry,
-      Null_Value => Null_Entity,
-      Img        => Entity_Img);
+   type Entity_Entry_Access is access Entity_Entry;
+
+   procedure Free (Entity : in out Entity_Entry_Access);
+   function Get_Key (Entity : Entity_Entry_Access) return String;
+
+   package Entity_Table is new HTable
+     (Element       => Entity_Entry_Access,
+      Empty_Element => null,
+      Free          => Free,
+      Key           => String,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => Standard."=");
 
    type Entity_Input_Source;
    type Entity_Input_Source_Access is access Entity_Input_Source;
@@ -520,16 +562,40 @@ private
    end record;
 
    type Attributes_Ptr is access all Sax.Attributes.Attributes'Class;
-   function Attributes_Img (A : Attributes_Ptr) return String;
-   package Attributes_Table is new GNAT.Spitbol.Table
-     (Value_Type => Attributes_Ptr,
-      Null_Value => null,
-      Img        => Attributes_Img);
+   type Attributes_Entry is record
+      Element_Name : Unicode.CES.Byte_Sequence_Access;
+      Attributes   : Attributes_Ptr;
+   end record;
+   Null_Attribute : constant Attributes_Entry := (null, null);
 
-   package Notations_Table is new GNAT.Spitbol.Table
-     (Value_Type => Boolean,
-      Null_Value => False,
-      Img        => Boolean'Image);
+   procedure Free (Att : in out Attributes_Entry);
+   function Get_Key (Att : Attributes_Entry) return String;
+
+   package Attributes_Table is new HTable
+     (Element       => Attributes_Entry,
+      Empty_Element => Null_Attribute,
+      Free          => Free,
+      Key           => String,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => Standard."=");
+
+   type Notation_Entry is record
+      Name : Unicode.CES.Byte_Sequence_Access;
+   end record;
+   Null_Notation : constant Notation_Entry := (Name => null);
+
+   procedure Free (Notation : in out Notation_Entry);
+   function Get_Key (Notation : Notation_Entry) return String;
+
+   package Notations_Table is new HTable
+     (Element       => Notation_Entry,
+      Empty_Element => Null_Notation,
+      Free          => Free,
+      Key           => String,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => Standard."=");
    --  For notations, we simply store whether they have been defined or not,
    --  and then only for validating parsers
 
@@ -559,17 +625,18 @@ private
       --  Carriage_Return (needed since XML parsers must convert these to
       --  one single Line_Feed).
 
-      Default_Atts : Attributes_Table.Table (Default_Atts_Table_Size);
+      Default_Atts : Attributes_Table.HTable (Default_Atts_Table_Size);
       --  This table contains the list of default attributes defined for
-      --  each element in the DTD. Index is the name of the elements
-      --  ??? Should be freed
+      --  each element in the DTD. Index is the name of the elements.
+      --  Note that the namespaces haven't been resolved for these default
+      --  attributes, since in some cases the namespace itself could be defined
+      --  as a default attribute.
 
-      Notations : Notations_Table.Table (Default_Atts_Table_Size);
+      Notations : Notations_Table.HTable (Default_Atts_Table_Size);
       --  List of notations defined in the XML document. This is left empty
       --  if the parser isn't configured to do validation.
 
-      Entities : Entity_Table.Table (Entities_Table_Size);
-      --  ??? Entities should be freed on destruction
+      Entities : Entity_Table.HTable (Entities_Table_Size);
 
       DTD_Name : Unicode.CES.Byte_Sequence_Access;
       --  Name of the DTD, and also name of the root element (in case we have
