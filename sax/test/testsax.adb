@@ -8,7 +8,18 @@ procedure TestSAX is
    Read       : File_Input;
    My_Reader  : Debug_Reader;
    Name_Start : Natural;
+   Silent     : Boolean := False;
+
 begin
+   loop
+      case Getopt ("silent") is
+         when 's' => Silent := True;
+         when others => exit;
+      end case;
+   end loop;
+
+   Set_Silent (My_Reader, Silent);
+
    declare
       S : constant String := Get_Argument;
    begin
@@ -30,7 +41,7 @@ begin
 
    --  If True, xmlns:* attributes will be reported in Start_Element
    Set_Feature (My_Reader, Namespace_Prefixes_Feature, False);
-   Set_Feature (My_Reader, Validation_Feature, True);
+   Set_Feature (My_Reader, Validation_Feature, False);
 
    Parse (My_Reader, Read);
    Close (Read);
