@@ -29,6 +29,13 @@ package Schema.Readers is
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether we should output debug traces
 
+   procedure Parse_Grammar
+     (Handler  : in out Validating_Reader;
+      Xsd_File : Unicode.CES.Byte_Sequence;
+      Add_To   : in out Schema.Validators.XML_Grammar);
+   --  Parse the grammar to use from an XSD file, and add it to the grammar
+   --  currently defined by Handled.
+
 private
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;
