@@ -1,5 +1,8 @@
 New features in version 0.8
 
+- Some file names were shorten in the unicode module, for compatibility with
+  VMS systems. See the Perl script unicode/convert.pl for the exact list.
+
 - tree_readers.ads renamed to dom-readers.ads
   This way, only the XML/Ada namespace is used, without conflicts with files
   that may come from the user's code.
