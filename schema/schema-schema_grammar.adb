@@ -1064,6 +1064,54 @@ package body Schema.Schema_Grammar is
       Set_Type (Elem, Lookup (G, "numFacet"));
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
 
+      --  The "minBound" element
+      Elem := Create_Global_Element (G, "minBound", Qualified);
+      Set_Type (Elem, Lookup (G, "facet"));
+      Set_Abstract (Elem, True);
+      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+
+      --  The "minExclusive" element
+      Elem := Create_Global_Element (G, "minExclusive", Qualified);
+      Set_Type (Elem, Lookup (G, "facet"));
+      Set_Substitution_Group (Elem, Lookup_Element (G, "minBound"));
+
+      --  The "minInclusive" element
+      Elem := Create_Global_Element (G, "minInclusive", Qualified);
+      Set_Type (Elem, Lookup (G, "facet"));
+      Set_Substitution_Group (Elem, Lookup_Element (G, "minBound"));
+
+      --  The "maxBound" element
+      Elem := Create_Global_Element (G, "maxBound", Qualified);
+      Set_Type (Elem, Lookup (G, "facet"));
+      Set_Abstract (Elem, True);
+      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+
+      --  The "maxExclusive" element
+      Elem := Create_Global_Element (G, "maxExclusive", Qualified);
+      Set_Type (Elem, Lookup (G, "facet"));
+      Set_Substitution_Group (Elem, Lookup_Element (G, "maxBound"));
+
+      --  The "maxInclusive" element
+      Elem := Create_Global_Element (G, "maxInclusive", Qualified);
+      Set_Type (Elem, Lookup (G, "facet"));
+      Set_Substitution_Group (Elem, Lookup_Element (G, "maxBound"));
+
+      --  The "whiteSpace" element
+      Elem := Create_Global_Element (G, "whiteSpace", Qualified);
+      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+
+      Seq1 := Create_Sequence;
+      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
+      Typ := Restriction_Of (Lookup (G, "facet"), XML_Validator (Seq1));
+      Typ2 := Restriction_Of (Lookup (G, "NMTOKEN"));
+      Add_Facet (Typ2, "enumeration", "preserve");
+      Add_Facet (Typ2, "enumeration", "replace");
+      Add_Facet (Typ2, "enumeration", "collapse");
+      Add_Attribute
+        (Typ, Create_Local_Attribute ("value", G,
+                                      Create_Local_Type (Typ2)));
+      Set_Type (Elem, Create_Local_Type (Typ));
+
       return Grammar;
    end Create_Schema_For_Schema;
 
