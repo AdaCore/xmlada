@@ -85,8 +85,8 @@ Using the library
 @c -------------------------------------------------------------------
 
 @noindent
-The Extensible Markup Language (XML) is a subset of SGML that is
-completely described in this document. Its goal is to enable generic
+The Extensible Markup Language (XML) is a subset of SGML
+Its goal is to enable generic
 SGML to be served, received, and processed on the Web in the way that is
 now possible with HTML. XML has been designed for ease of implementation
 and for interoperability with both SGML and HTML.
@@ -257,12 +257,12 @@ Another character set is the JIS X 0208, used to encode Japanese characters.
 
 Note that a character set is different from a repertoire. For instance, the
 same character C with cedilla doesn't have the same integer value in the
-ISO/8859-1 character set and the ISO/8859-1 character set.
+ISO/8859-1 character set and the ISO/8859-2 character set.
 
 Unicode is also such a character set, that contains all the possible
 characters and associate a standard integer with them. A similar and
 fully compatible character set is ISO/10646. The only addition that Unicode
-does other ISO/10646 is that it also specifies algorithms for rendering
+does to ISO/10646 is that it also specifies algorithms for rendering
 presentation forms of some scripts (say Arabic), handling of bi-directional
 texts that mix for instance Latin and Hebrew, algorithms for sorting and
 string comparison, and much more.
@@ -700,7 +700,7 @@ However, there are also a number of drawbacks to using SAX:
 
  Note however than in this Ada implementation, the DOM tree is built through
  a set of SAX callbacks anyway, so you do not lose any power or speed by using
- SAX.
+ DOM instead of SAX.
 @end itemize
 
 @c -------------------------------------------------------------------
@@ -811,7 +811,7 @@ module to visualize the SAX events that are generated for a given XML file.
 
 @noindent
 
-A default SAX implementation is provided in the tree_readers file, through
+A default SAX implementation is provided in the dom.readers file, through
 its Parse function. This reads an XML stream and creates a tree in memory.
 The tree can then be manipulated through the DOM module.
 
