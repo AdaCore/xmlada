@@ -1,5 +1,6 @@
 with "xmlada_unicode";
 with "xmlada_input";
+with "xmlada_sax";
 project XmlAda_Gtk is
     for Source_Dirs use ("include/xmlada");
     for Source_List_File use "xmlada_xml_gtk.lgpr";
