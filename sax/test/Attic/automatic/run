@@ -1,19 +1,37 @@
 #!/bin/sh
 
-testsax() {
-   xml=$1
-   out=$2
+PATH=`pwd`/..:$PATH
+export PATH
 
-   ../testsax $1 > tmp
-   if diff $2 tmp >/dev/null; then
+
+testsax_internal() {
+   cmd=$1
+   dir=$2
+   xml=$3
+   out=$4
+   
+   (
+   cd $dir
+   eval $cmd $xml > tmp 2>&1
+   if diff $out tmp >/dev/null 2>&1; then
       true;
    else
-      echo "----- $1 ------"
-      diff $2 tmp
+      echo "----- $xml ------"
+      diff $out tmp
    fi
+   rm tmp
+   )
 }
 
-testsax not_found.xml not_found.xml.out
+testsax_silent() {
+   testsax_internal "testsax -silent" "$@"
+}
+
+testsax_verbose() {
+   testsax_internal "testsax" "$@"
+} 
 
 
-rm tmp
+testsax_verbose . not_found.xml not_found.xml.out
+testsax_silent  external/ SetworksParams.XML test.out
+

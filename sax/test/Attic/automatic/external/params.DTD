@@ -1,0 +1,56 @@
+<!-- Type definition for SetworksParams.XML -->
+<!ELEMENT datasource (datatables,group)>
+<!ATTLIST datasource label CDATA #REQUIRED>
+<!ELEMENT datatables (plctable+,plcnotify?)>
+<!ELEMENT plctable EMPTY>
+<!ATTLIST plctable block CDATA #REQUIRED
+                   words CDATA #REQUIRED
+                   first CDATA #REQUIRED
+                   notifyword CDATA ""
+                   notifymask CDATA "">
+<!ELEMENT plcnotify EMPTY>
+<!ATTLIST plcnotify block CDATA #REQUIRED
+                    words CDATA #REQUIRED
+                    first CDATA #REQUIRED>
+<!ELEMENT group (table|group)+>
+<!ATTLIST group label    CDATA ""
+                mnemonic CDATA #REQUIRED
+                hidden ( false | true ) "false" >
+<!ELEMENT table (field)+>
+<!ATTLIST table label CDATA ""
+                nbrecords CDATA "1"
+                mnemonic CDATA #REQUIRED
+                secure ( false | true ) "false"
+                flip   ( false | true ) "false"
+                hidden ( false | true ) "false"
+                semipermanent ( false | true ) "false"
+                readonly ( false | true ) "false"
+                showindex ( false | true ) "false" >
+<!ELEMENT field (desc,(address|text)+)>
+<!ATTLIST field label CDATA "-"
+                mnemonic CDATA #REQUIRED
+                secure ( false | true ) "false"
+                readonly ( false | true ) "false"
+                noscroll ( false | true ) "false"
+                xrefheading ( false | true ) "false"
+                semiperm ( false | true ) "false"
+                heading ( false | true ) "false"
+                crossrefbasezero ( false | true ) "false"
+                crossrefbasezeronone ( false | true ) "false">
+<!ELEMENT desc EMPTY>
+<!ATTLIST desc type ( label | int16 | uint16 | int32 ) #REQUIRED
+               width CDATA #REQUIRED
+               precision CDATA ""
+               mod CDATA "0">
+<!ELEMENT address EMPTY>
+<!ATTLIST address record CDATA #REQUIRED
+                  block  CDATA ""
+                  offset CDATA ""
+                  mswblock CDATA ""
+                  lswblock CDATA ""
+                  mswoffset CDATA ""
+                  lswoffset CDATA "" >
+<!ELEMENT text EMPTY>
+<!ATTLIST text record CDATA #REQUIRED
+               label  CDATA #REQUIRED>
+
