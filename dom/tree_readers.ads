@@ -47,6 +47,11 @@ package Tree_Readers is
    procedure Free (Read : in out Tree_Reader);
    --  Free the memory associated with the reader, in particular the tree.
 
+   procedure Set_Warnings_As_Errors
+     (Read : in out Tree_Reader; Warnings_As_Error : Boolean);
+   --  iF Warnings_As_Error is True, then all warnings will raise a fatal error
+   --  exception, just like a fatal error. Otherwise, warnings are ignored.
+
 private
 
    type Tree_Reader is new Reader with record
@@ -54,6 +59,8 @@ private
       Current_Node               : Node;
       Internal_Encoding          : Unicode.CES.Encoding_Scheme;
       In_DTD                     : Boolean := False;
+
+      Warnings_As_Error          : Boolean := False;
    end record;
 
    procedure Start_Document (Handler : in out Tree_Reader);

@@ -193,7 +193,9 @@ package body Tree_Readers is
      (Handler : in out Tree_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class) is
    begin
-      Fatal_Error (Handler, Except);
+      if Handler.Warnings_As_Error then
+         Fatal_Error (Handler, Except);
+      end if;
    end Warning;
 
    ----------
@@ -205,5 +207,15 @@ package body Tree_Readers is
       Free (Read.Tree);
       Read.Tree := null;
    end Free;
+
+   ----------------------------
+   -- Set_Warnings_As_Errors --
+   ----------------------------
+
+   procedure Set_Warnings_As_Errors
+     (Read : in out Tree_Reader; Warnings_As_Error : Boolean) is
+   begin
+      Read.Warnings_As_Error := Warnings_As_Error;
+   end Set_Warnings_As_Errors;
 
 end Tree_Readers;
