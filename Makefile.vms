@@ -48,7 +48,7 @@ obj: ${MODULES}
 test: ${MODULE_TEST}
 
 docs: force
-	${MAKE} -e -C docs
+	${MAKE} -e -C docs -f Makefile.vms
 
 ${MODULES}: force
 	${GNATMAKE} ${FPIC} -u -P$@/$@.gpr -XMODE=${MODE}
