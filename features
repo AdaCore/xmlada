@@ -1,4 +1,4 @@
-New features in version 1.1
+New features in version 2.0
 
 - Initial support for schema validation is now provided.
 
@@ -36,52 +36,3 @@ New features in version 1.1
 - Better integration with GtkAda: A special SAX reader is provided that can
   generate an XML tree in the format expected by Glib.XML
 
-New features in version 1.0
-
-- Some file names were shorten in the unicode module, for compatibility with
-  VMS systems. See the Perl script unicode/convert.pl for the exact list.
-
-- tree_readers.ads renamed to dom-readers.ads
-  This way, only the XML/Ada namespace is used, without conflicts with files
-  that may come from the user's code.
-
-- Builds are now based on GNAT project files
-  Users of GNAT 3.15 and later will now use GNAT project files to build the
-  library, which is easier to configure.
-
-- More efficient parser
-  The API in the unicode module has been changed to avoid functions returning
-  unconstrained types, resulting in a much faster parser.
-
-- Independence from GNAT
-  XML/Ada should now be compilable with other compilers. The GNAT-specific
-  packages and attributes have been replaced by equivalents.
-
-- Better support for encodings
-  XML/Ada now has a better auto-detection of the encoding (for Utf16 and Utf8
-  documents, even when they don't have a Byte-Order-Mark).
-  It will also fully process the "<?xml encoding=...?>" declaration at the
-  beginning of the documents. The following encodings are currently supported:
-    UTF-8
-    UTF-16
-    ISO-8859-1    LATIN-1
-    ISO-8859-2    LATIN-2
-    ISO-8859-3
-    ISO-8859-4
-
-- Memory leaks fixed
-
-New features in version 0.6
-
-- Parser twice as fast
-  The SAX parser has been completely rewritten, and is now about twice
-  as fast as the previous one.
-
-- Support for validation (partial)
-  A partial support for validation has been added. This means that some of
-  the validity constraints defined in the XML specifications are now tested
-  (root element type, tests on attributes, ...).
-  However, XML/Ada still doesn't test that the XML document matches its DTD.
-
-- New licence
-  This library is now distributed under the GNAT-Modified GPL.

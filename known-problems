@@ -1,4 +1,4 @@
-Problems fixed in 1.1
+Problems fixed in 2.0
 
 - DB25-005 Incorrect value returned by DOM.Attributes.Owner_Element
 - D714-002 Attribute quotes are no longer present in a processing-instruction
@@ -15,50 +15,3 @@ Problems fixed in 1.1
 - CC01-002: Handling of big files (multi-mega bytes) was generating a
   Storage_Error in Direct_IO.
 
-Problems fixed in 1.0
-
-- SAX: Ignorable_Whitespace is now only called when there are only spaces
-  between two tags. If there is at least a letter, the spaces are concatenated
-  and the Character callback is called with the resulting string.
-  This is more conform to the SAX specifications, even if the old behavior
-  was valid.
-
-- DOM: adding attributes to element other than the root element resulted
-  in a Constraint_Error.
-- Parameter entities used to defined element models no longer have
-  to be encapsulated in parenthesis (e.g  "A|B" is a valid value for %ent,
-  which can be used in a content model as "(%ent;)").
-- URI were incorrectly reported for attributes with namespace.
-- URI are correctly resolved for attributes even if the xmlns:... is 
-  found after the attribute (but in the same element start tag)
-- Some random failures on some systems. Patch sent by J.C. Groult
-- Error when an external DTD wasn't found. An Assert_Failure was raised
-- Bug in handling of DTD models, for attributes with default values.
-  Patch sent by S. Doiel
-- Constraint_Error when validating a document that contained invalid
-  attributes. Patch sent by S. Doiel
-
-Problems fixed in 0.7
-
-- Dom.Core.Nodes.Normalize now processes the full subtree, as it should.
-
-- Several memory leaks fixed (all of them, according to gnatmem)
-
-Problems fixed in 0.6
-
-- Library renamed to libxmlada
-  The previous name was libxml, which was too general and interfered
-  with other libraries like the C libxml
-  Problem reported by Jurgen Pfeifer
-
-- Build procedures didn't work on NT
-  Due to the UNIX-oriented Makefile, the build procedures didn't work
-  correctly on NT and required a lot of adaptation.
-  Contributed by Jerry Van Dijk
-
-- Installation was missing some files
-  Some of the source files, like encodings.ads, were not copied to the
-  installation directory.
-  Reported by D. Anisimkov
-
-- Several parser problems fixed
