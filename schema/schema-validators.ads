@@ -90,14 +90,14 @@ package Schema.Validators is
       Extension : XML_Validator := null) return XML_Validator;
    --  Create an extension of Base.
    --  Base doesn't need to be a Clone of some other type, since it isn't
-   --  altered
+   --  altered. See also Is_Extension_Of below
 
    function Restriction_Of
      (Base        : XML_Type;
       Restriction : XML_Validator := null) return XML_Validator;
    --  Create a restriction of Base
    --  Base doesn't need to be a Clone of some other type, since it isn't
-   --  altered
+   --  altered. See also Is_Restriction_Of below
 
    function Get_Local_Name (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
    --  Return the local name of the type
@@ -264,6 +264,12 @@ package Schema.Validators is
    --  Whether character data is allowed within that element, in addition to
    --  children nodes
 
+   function Is_Extension_Of
+     (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean;
+   function Is_Restriction_Of
+     (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean;
+   --  Whether Validator is an extension or a restriction of Typ
+
    ------------
    -- Unions --
    ------------
@@ -335,7 +341,15 @@ package Schema.Validators is
      (Element : XML_Element;
       On_Restriction : Boolean;
       On_Extension   : Boolean);
-   --  Set the final status of the lement
+   --  Set the final status of the element
+
+   procedure Set_Block
+     (Element        : XML_Element;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean);
+   function Get_Block_On_Restriction (Element : XML_Element) return Boolean;
+   function Get_Block_On_Extension (Element : XML_Element) return Boolean;
+   --  Set the "block" status of the element
 
    ------------
    -- Groups --
@@ -574,6 +588,11 @@ private
       Final_Extension   : Boolean;
       --  Whether this element is final for "restriction" or "extension" or
       --  both
+
+      Block_Restriction : Boolean;
+      Block_Extension   : Boolean;
+      --  The value for the "block" attribute of the element
+
    end record;
    type XML_Element_Access is access all XML_Element_Record;
 

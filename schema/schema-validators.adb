@@ -262,6 +262,9 @@ package body Schema.Validators is
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
       Dependency2 : out XML_Validator);
+   function Is_Extension_Of
+     (Validator : access Extension_XML_Validator; Typ : XML_Type)
+      return Boolean;
    --  See doc from inherited subprograms
 
    -------------------------------
@@ -299,6 +302,9 @@ package body Schema.Validators is
      (Validator   : access Restriction_XML_Validator;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence);
+   function Is_Restriction_Of
+     (Validator : access Restriction_XML_Validator; Typ : XML_Type)
+      return Boolean;
    --  See doc from inherited subprograms
 
    ----------
@@ -1778,6 +1784,9 @@ package body Schema.Validators is
       Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
 
       Tmp2 := new XML_Validator_Record;
+      Register (G, Create_Type ("ur-Type", Tmp2));
+
+      Tmp2 := new XML_Validator_Record;
       Register (G, Create_Type ("anyType", Tmp2));
 
       Tmp2 := new Any_Simple_XML_Validator_Record;
@@ -1871,6 +1880,10 @@ package body Schema.Validators is
       Tmp.Facets.Mask (Facet_Implicit_Enumeration) := True;
       Tmp.Facets.Implicit_Enumeration := Is_Valid_NCname'Access;
       Register (G, Create_Type ("ENTITY", Tmp));
+
+      Tmp := new Common_Simple_XML_Validator;
+      Tmp.Facets.Settable := Integer_Facets;
+      Register (G, Create_Type ("decimal", Tmp));
 
       Tmp := new Common_Simple_XML_Validator;
       Tmp.Facets.Settable := Integer_Facets;
@@ -2011,6 +2024,8 @@ package body Schema.Validators is
             Nillable            => False,
             Final_Restriction   => False,
             Final_Extension     => False,
+            Block_Restriction   => False,
+            Block_Extension     => False,
             Fixed               => null),
          Is_Ref => False);
       return Result;
@@ -4129,5 +4144,82 @@ package body Schema.Validators is
       Element.Elem.Final_Restriction := On_Restriction;
       Element.Elem.Final_Extension   := On_Extension;
    end Set_Final;
+
+   ---------------
+   -- Set_Block --
+   ---------------
+
+   procedure Set_Block
+     (Element        : XML_Element;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean) is
+   begin
+      Element.Elem.Block_Restriction := On_Restriction;
+      Element.Elem.Block_Extension   := On_Extension;
+   end Set_Block;
+
+   ------------------------------
+   -- Get_Block_On_Restriction --
+   ------------------------------
+
+   function Get_Block_On_Restriction (Element : XML_Element) return Boolean is
+   begin
+      return Element.Elem.Block_Restriction;
+   end Get_Block_On_Restriction;
+
+   ----------------------------
+   -- Get_Block_On_Extension --
+   ----------------------------
+
+   function Get_Block_On_Extension (Element : XML_Element) return Boolean is
+   begin
+      return Element.Elem.Block_Extension;
+   end Get_Block_On_Extension;
+
+   ---------------------
+   -- Is_Extension_Of --
+   ---------------------
+
+   function Is_Extension_Of
+     (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean
+   is
+      pragma Unreferenced (Validator, Typ);
+   begin
+      return False;
+   end Is_Extension_Of;
+
+   -----------------------
+   -- Is_Restriction_Of --
+   -----------------------
+
+   function Is_Restriction_Of
+     (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean
+   is
+      pragma Unreferenced (Validator, Typ);
+   begin
+      return False;
+   end Is_Restriction_Of;
+
+   -----------------------
+   -- Is_Restriction_Of --
+   -----------------------
+
+   function Is_Restriction_Of
+     (Validator : access Restriction_XML_Validator; Typ : XML_Type)
+      return Boolean is
+   begin
+      return Validator.Base = Typ;
+   end Is_Restriction_Of;
+
+   ---------------------
+   -- Is_Extension_Of --
+   ---------------------
+
+   function Is_Extension_Of
+     (Validator : access Extension_XML_Validator; Typ : XML_Type)
+      return Boolean is
+   begin
+      return Validator.Base = Typ;
+   end Is_Extension_Of;
 
 end Schema.Validators;
