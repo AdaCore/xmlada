@@ -2,7 +2,7 @@
 INSTALLING THIS LIBRARY ON UNIX
 ===============================
 
-If you are using GNAT version 3.13p or lower, swap the two COMPILER
+If you are using GNAT version 3.13 or lower, swap the two COMPILER
 lines in the file Makefile.module, so that it only contains
 "gnatmake". The other switches are not supported in these versions.
 
@@ -108,4 +108,5 @@ It has the following addition to the GPL:
 BUG REPORTS
 ===========
 
-Please send questions and bug reports to Emmanuel Briot <briot@act-europe.fr>
+Please send questions and bug reports to report@gnat.com following
+the same procedures used to submit reports with the GNAT toolset itself.
