@@ -13,6 +13,7 @@ project XML_Gtk is
    case Shared.Library_Type is
       when "relocatable" =>
          for Library_Version use "libxmlada_gtk.so." & Shared.Version;
+      when "static" =>
    end case;
 
    package Builder  renames Shared.Builder;

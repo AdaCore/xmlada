@@ -12,6 +12,7 @@ project Sax is
    case Shared.Library_Type is
       when "relocatable" =>
          for Library_Version use "libxmlada_sax.so." & Shared.Version;
+      when "static" =>
    end case;
 
    package Builder  renames Shared.Builder;

@@ -10,6 +10,7 @@ project Unicode is
    case Shared.Library_Type is
       when "relocatable" =>
          for Library_Version use "libxmlada_unicode.so." & Shared.Version;
+      when "static" =>
    end case;
 
    package Builder  renames Shared.Builder;
