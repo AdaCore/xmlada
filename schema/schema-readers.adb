@@ -200,7 +200,6 @@ package body Schema.Readers is
       Start_NS, Last_NS, Index : Integer;
       Start_XSD, Last_XSD : Integer;
       C : Unicode_Char;
-      G : XML_Grammar_NS;
    begin
       Index    := Schema_Location'First;
       Start_NS := Schema_Location'First;
