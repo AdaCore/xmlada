@@ -1746,6 +1746,7 @@ package body Sax.Readers is
                   Reset_Buffer (Parser, Id);
                   Id.Typ := Open_Paren;
                   Next_Char (Input, Parser);
+                  return;
                end if;
 
                if Parser.State.In_Attlist then
