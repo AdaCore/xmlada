@@ -81,10 +81,14 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Attribute_Group
      (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Any
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+   procedure Create_Import
+     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    --  Create a new context for a specific tag:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
    --  <attribute>, <schema>, <extension>, <list>, <union>, <choice>,
-   --  <redefine>, <group>, <attributeGroup>
+   --  <redefine>, <group>, <attributeGroup>, <any>, <import>
 
    procedure Finish_Element (Handler : in out Schema_Reader);
    procedure Finish_Complex_Type (Handler : in out Schema_Reader);
@@ -504,6 +508,23 @@ package body Schema.Schema_Readers is
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
    end Create_Redefine;
+
+   -------------------
+   -- Create_Import --
+   -------------------
+
+   procedure Create_Import
+     (Handler : in out Schema_Reader;
+      Atts    : Sax.Attributes.Attributes'Class)
+   is
+      Location_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
+--        Namespace_Index : constant Integer :=
+--          Get_Index (Atts, URI => "", Local_Name => "namespace");
+   begin
+      Parse_Grammar
+        (Handler, Get_Value (Atts, Location_Index), Handler.Created_Grammar);
+   end Create_Import;
 
    --------------------
    -- Create_Element --
@@ -1345,8 +1366,12 @@ package body Schema.Schema_Readers is
       if Form_Default_Index /= -1 then
          if Get_Value (Atts, Form_Default_Index) = "qualified" then
             Set_Element_Form_Default (Handler.Target_NS, Qualified);
+            Output
+              ("Set_Element_Form_Default (Handler.Target_NS, Qualified);");
          else
             Set_Element_Form_Default (Handler.Target_NS, Unqualified);
+            Output
+              ("Set_Element_Form_Default (Handler.Target_NS, Unqualified);");
          end if;
       end if;
 
@@ -1355,6 +1380,80 @@ package body Schema.Schema_Readers is
          Level       => 0,
          Next        => null);
    end Create_Schema;
+
+   ----------------
+   -- Create_Any --
+   ----------------
+
+   procedure Create_Any
+     (Handler : in out Schema_Reader;
+      Atts    : Sax.Attributes.Attributes'Class)
+   is
+      Process_Contents_Index : constant Integer :=
+        Get_Index (Atts, "processContents");
+      Namespace_Index : constant Integer := Get_Index (Atts, "namespace");
+      Min_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "minOccurs");
+      Max_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
+      Min_Occurs, Max_Occurs : Integer := 1;
+      Process_Contents : Process_Contents_Type;
+      Any : XML_Any;
+   begin
+      if Min_Occurs_Index /= -1 then
+         Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
+      end if;
+
+      if Max_Occurs_Index /= -1 then
+         Max_Occurs := Max_Occurs_From_Value
+           (Get_Value (Atts, Max_Occurs_Index));
+      end if;
+
+      if Process_Contents_Index = -1 then
+         Process_Contents := Process_Strict;
+      elsif Get_Value (Atts, Process_Contents_Index) = "lax" then
+         Process_Contents := Process_Lax;
+      elsif Get_Value (Atts, Process_Contents_Index) = "strict" then
+         Process_Contents := Process_Strict;
+      else
+         Process_Contents := Process_Skip;
+      end if;
+
+      if Namespace_Index /= -1 then
+         Any := Create_Any
+           (Process_Contents => Process_Contents,
+            Namespace        => Get_Value (Atts, Namespace_Index),
+            Target_NS        => Handler.Target_NS);
+         Output
+           ("Validator := Create_Any (" & Process_Contents'Img & ", "
+            & Get_Value (Atts, Namespace_Index) & ", Handler.Target_NS);");
+      else
+         Any := Create_Any
+           (Process_Contents => Process_Contents,
+            Namespace        => "##any",
+            Target_NS        => Handler.Target_NS);
+         Output
+           ("Validator := Create_Any (" & Process_Contents'Img
+            & ", ""##any"", Handler.Target_NS);");
+      end if;
+
+      case Handler.Contexts.Typ is
+         when Context_Sequence =>
+            Add_Particle (Handler.Contexts.Seq, Any, Min_Occurs, Max_Occurs);
+            Output ("Add_Particle ("
+                    & Ada_Name (Handler.Contexts)
+                    & ", Validator);");
+
+         when Context_Choice =>
+            Add_Particle (Handler.Contexts.C, Any, Min_Occurs, Max_Occurs);
+            Output ("Add_Particle ("
+                    & Ada_Name (Handler.Contexts)
+                    & ", Validator);");
+
+         when others =>
+            Output ("Can't handled nested <any>");
+      end case;
+   end Create_Any;
 
    ----------------
    -- Create_All --
@@ -1523,8 +1622,14 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "attributeGroup" then
          Create_Attribute_Group (Handler, Atts);
 
+      elsif Local_Name = "any" then
+         Create_Any (Handler, Atts);
+
       elsif Local_Name = "redefine" then
          Create_Redefine (Handler, Atts);
+
+      elsif Local_Name = "import" then
+         Create_Import (Handler, Atts);
 
       else
          Output ("Tag not handled yet: " & Local_Name);
@@ -1609,6 +1714,12 @@ package body Schema.Schema_Readers is
 
       elsif Local_Name = "attributeGroup" then
          null;
+
+      elsif Local_Name = "any" then
+         Handled := False;
+
+      elsif Local_Name = "import" then
+         Handled := False;
 
       else
          Output ("Close tag not handled yet: " & Local_Name);
