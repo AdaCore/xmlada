@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2004                     --
+--                       Copyright (C) 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -27,42 +27,19 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Unicode.CCS.Iso_8859_1;
-with Unicode.CCS.Iso_8859_2;
-with Unicode.CCS.Iso_8859_3;
-with Unicode.CCS.Iso_8859_4;
-with Unicode.CCS.Iso_8859_15;
+--  This package provides support for the ISO/8859-15 (aka Latin-15)
+--  encoding.
+--  This is a superset of ISO/8859-1, but also includes the Euro symbol
 
-package body Unicode.CCS is
+package Unicode.CCS.Iso_8859_15 is
 
-   -----------------------
-   -- Get_Character_Set --
-   -----------------------
+   Name1 : constant String := "ISO-8859-15";
 
-   function Get_Character_Set (Name : String) return Character_Set is
-   begin
-      if Name = Iso_8859_1.Name1 or else Name = Iso_8859_1.Name2 then
-         return Iso_8859_1.Iso_8859_1_Character_Set;
-      elsif Name = Iso_8859_2.Name1 or else Name = Iso_8859_2.Name2 then
-         return Iso_8859_2.Iso_8859_2_Character_Set;
-      elsif Name = Iso_8859_3.Name1 then
-         return Iso_8859_3.Iso_8859_3_Character_Set;
-      elsif Name = Iso_8859_4.Name1 then
-         return Iso_8859_4.Iso_8859_4_Character_Set;
-      elsif Name = Iso_8859_15.Name1 then
-         return Iso_8859_15.Iso_8859_15_Character_Set;
-      else
-         raise Unknown_Character_Set;
-      end if;
-   end Get_Character_Set;
+   function To_Unicode     (Char : Unicode_Char) return Unicode_Char;
+   function To_Iso_8859_15 (Char : Unicode_Char) return Unicode_Char;
 
-   --------------
-   -- Identity --
-   --------------
+   Iso_8859_15_Character_Set : constant Character_Set :=
+     (To_Unicode => To_Unicode'Access,
+      To_Cs      => To_Iso_8859_15'Access);
 
-   function Identity (Char : Unicode_Char) return Unicode_Char is
-   begin
-      return Char;
-   end Identity;
-
-end Unicode.CCS;
+end Unicode.CCS.Iso_8859_15;
