@@ -4,7 +4,6 @@ AC_INIT(dom/dom.ads)
 XMLADA_MAJOR_VERSION=1
 XMLADA_MINOR_VERSION=0
 
-AC_PROG_RANLIB
 AC_PROG_CC
 AC_CHECK_PROGS(DVIPS, dvips)
 AC_CHECK_PROGS(MAKEINFO, makeinfo)
@@ -13,12 +12,8 @@ AC_CHECK_PROGS(TEX, tex)
 
 EXEC_PREFIX="$prefix"
 
-## ??? Should be automatically detected or through --enable-shared
-BUILD_SHARED="FALSE" 
-
-AC_SUBST(BUILD_SHARED)
 AC_SUBST(EXEC_PREFIX)
 AC_SUBST(CC)
 AC_SUBST(XMLADA_MAJOR_VERSION)
 AC_SUBST(XMLADA_MINOR_VERSION)
-AC_OUTPUT(Makefile Makefile.314 docs/Makefile xmlada-config)
+AC_OUTPUT(Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config)
