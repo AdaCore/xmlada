@@ -109,7 +109,7 @@ package DOM.Core is
    subtype Notation is Node (Notation_Node);
 
    type Node_List is private;
-   --  A simple ordered list of nodes
+   --  A simple ordered list of nodes (see DOM.Core.Nodes for subprograms)
 
    type Named_Node_Map is private;
    --  A collection of nodes accessible by their names.
