@@ -486,7 +486,7 @@ expect "" $mse/elemQ007.xml \
  "$mse/elemQ007.xml:3:8: Unexpected end of sequence, expecting \"fooTest\""
 expect "" $mse/elemQ008.xml ""
 expect "" $mse/elemQ009.xml \
- "$mse/elemQ009.xml:5:8: <all> element was repeated too many times, expecting at most 1 times"
+ "$mse/elemQ009.xml:4:11: Unexpected element: \"fooTest\""
 expect "" $mse/elemQ010.xml \
  "$mse/elemQ010.xml:3:8: Unexpected end of sequence, expecting \"fooTest\""
 expect "" $mse/elemQ011.xml ""
@@ -865,7 +865,7 @@ expect "$sun/xsd020.e.xsd" "" \
 expect "$sun/xsd020-2.e.xsd" "" \
  "$sun/xsd020-2.e.xsd:25:9: Attribute \"foo:abc\" is referenced, but not defined"
 expect "$sun/xsd020-3.e.xsd" "" \
- "$sun/xsd020-3.e.xsd:28:9: Group \"foo:abc\" is referenced, but not defined"
+ "$sun/xsd020-3.e.xsd:28:9: Group \"abc\" is referenced, but not defined"
 expect "$sun/xsd020-4.e.xsd" "" \
  "$sun/xsd020-4.e.xsd:32:9: attributeGroup \"foo:abc\" is referenced, but not defined"
 
@@ -1040,7 +1040,7 @@ expect "" "$msp/particlesA001.xml" \
  "$msp/particlesA001.xml:3:7: Element \"elem\" must appear at least 1 times"
 expect "" "$msp/particlesA002.xml" ""
 expect "" "$msp/particlesA003.xml" \
- "$msp/particlesA003.xml:7:7: <all> element was repeated too many times, expecting at most 1 times"
+ "$msp/particlesA003.xml:5:10: Unexpected element: \"elem1\""
 expect "" "$msp/particlesA004.xml" \
  "$msp/particlesA004.xml:4:9: Unexpected end of sequence, expecting \"(e1)\""
 expect "" "$msp/particlesA005.xml" \
@@ -1064,7 +1064,7 @@ expect "" "$msp/particlesB001.xml" \
  "$msp/particlesB001.xml:4:9: Element \"e1\" must appear at least 1 times"
 expect "" "$msp/particlesB002.xml" ""
 expect "" "$msp/particlesB003.xml" \
- "$msp/particlesB003.xml:8:9: <all> element was repeated too many times, expecting at most 1 times"
+ "$msp/particlesB003.xml:6:8: Unexpected element: \"e1\""
 expect "" "$msp/particlesB004.xml" \
  "$msp/particlesB004.xml:4:9: Unexpected end of sequence, expecting \"(e1)\""
 expect "" "$msp/particlesB005.xml" ""
@@ -1208,7 +1208,113 @@ expect "" "$msp/particlesDc007.xml" ""
 expect "" "$msp/particlesDc008.xml" ""
 expect "" "$msp/particlesDc009.xml" ""
 
+expect "" "$msp/particlesEa001.xml" ""
+expect "" "$msp/particlesEa002.xml" \
+ "$msp/particlesEa002.xml:4:9: Element \"a2\" must appear at least 1 times"
+expect "" "$msp/particlesEa003.xml" ""
+expect "" "$msp/particlesEa004.xml" ""
+expect "" "$msp/particlesEa005.xml" \
+ "$msp/particlesEa005.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEa006.xml" \
+ "$msp/particlesEa006.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEa007.xml" \
+ "$msp/particlesEa007.xml:3:10: Expecting (a1&a2)"
+expect "" "$msp/particlesEa008.xml" ""
+expect "" "$msp/particlesEa009.xml" \
+ "$msp/particlesEa009.xml:4:9: Element \"a2\" must appear at least 1 times"
+expect "" "$msp/particlesEa010.xml" ""
+expect "" "$msp/particlesEa011.xml" ""
+expect "" "$msp/particlesEa012.xml" \
+ "$msp/particlesEa012.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEa013.xml" \
+ "$msp/particlesEa013.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEa014.xml" \
+ "$msp/particlesEa014.xml:5:10: Unexpected element: \"foo\""
+expect "" "$msp/particlesEa015.xml" ""
+expect "" "$msp/particlesEa016.xml" \
+ "$msp/particlesEa016.xml:4:9: Element \"a2\" must appear at least 1 times"
+expect "" "$msp/particlesEa017.xml" ""
+expect "" "$msp/particlesEa018.xml" ""
+expect "" "$msp/particlesEa019.xml" \
+ "$msp/particlesEa019.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEa020.xml" \
+ "$msp/particlesEa020.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEa021.xml" \
+ "$msp/particlesEa021.xml:3:10: Expecting (a1&a2)"
+expect "$msp/particlesEa022.xsd" "" "f"
+expect "$msp/particlesEa023.xsd" "" \
+ "$msp/particlesEa023.xsd:11:39: minOccurs > maxOccurs when creating particle"
+expect "$msp/particlesEa024.xsd" "" "f"
+expect "$msp/particlesEa025.xsd" "" "f"
 
+expect "" "$msp/particlesEb001.xml" ""
+expect "" "$msp/particlesEb002.xml" \
+ "$msp/particlesEb002.xml:4:9: Unexpected end of sequence, expecting \"a2\""
+expect "" "$msp/particlesEb003.xml" ""
+expect "" "$msp/particlesEb004.xml" \
+ "$msp/particlesEb004.xml:3:9: Unexpected element: \"a2\""
+expect "" "$msp/particlesEb005.xml" \
+ "$msp/particlesEb005.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEb006.xml" \
+ "$msp/particlesEb006.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEb007.xml" \
+ "$msp/particlesEb007.xml:3:24: Unexpected element: \"foo\""
+expect "" "$msp/particlesEb008.xml" \
+ "$msp/particlesEb008.xml:3:9: Unexpected end of sequence, expecting \"(a1)\""
+expect "" "$msp/particlesEb009.xml" \
+ "$msp/particlesEb009.xml:4:9: Unexpected end of sequence, expecting \"a2\""
+expect "" "$msp/particlesEb010.xml" ""
+expect "" "$msp/particlesEb011.xml" \
+ "$msp/particlesEb011.xml:3:9: Expecting (a1)"
+expect "" "$msp/particlesEb012.xml" \
+ "$msp/particlesEb012.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEb013.xml" \
+ "$msp/particlesEb013.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEb014.xml" \
+ "$msp/particlesEb014.xml:3:8: Expecting (a1)"
+notrun "$msp/particlesEb015.xsd" "" "Test is invalid, Xerces confirmed this"
+expect "" "$msp/particlesEb016.xml" ""
+expect "" "$msp/particlesEb017.xml" \
+ "$msp/particlesEb017.xml:3:9: Unexpected end of sequence, expecting \"(a1)\""
+expect "" "$msp/particlesEb018.xml" \
+ "$msp/particlesEb018.xml:4:9: Unexpected end of sequence, expecting \"a2\""
+expect "" "$msp/particlesEb019.xml" ""
+expect "" "$msp/particlesEb020.xml" \
+ "$msp/particlesEb020.xml:3:9: Expecting (a1)"
+expect "" "$msp/particlesEb021.xml" \
+ "$msp/particlesEb021.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEb022.xml" \
+ "$msp/particlesEb022.xml:5:9: Too many occurrences of current element, expecting at most 1"
+expect "" "$msp/particlesEb023.xml" \
+ "$msp/particlesEb023.xml:3:6: Expecting (a1)"
+expect "" "$msp/particlesEb024.xml" \
+ "$msp/particlesEb024.xml:3:9: Unexpected end of sequence, expecting \"(a1)\""
+expect "" "$msp/particlesEb025.xml" \
+ "$msp/particlesEb025.xml:6:9: Unexpected end of sequence, expecting \"a2\""
+expect "" "$msp/particlesEb026.xml" ""
+expect "" "$msp/particlesEb027.xml" ""
+expect "" "$msp/particlesEb028.xml" \
+ "$msp/particlesEb028.xml:3:9: Expecting (a1)"
+expect "" "$msp/particlesEb029.xml" \
+ "$msp/particlesEb029.xml:6:9: Unexpected end of sequence, expecting \"a2\""
+expect "" "$msp/particlesEb030.xml" \
+ "$msp/particlesEb030.xml:7:9: Too many occurrences of current element, expecting at most 2"
+expect "" "$msp/particlesEb031.xml" \
+ "$msp/particlesEb031.xml:3:15: Expecting (a1)"
+expect "" "$msp/particlesEb032.xml" \
+ "$msp/particlesEb032.xml:3:9: Unexpected end of sequence, expecting \"(a1)\""
+expect "" "$msp/particlesEb033.xml" \
+ "$msp/particlesEb033.xml:5:9: Unexpected end of sequence, expecting \"(a1)\""
+expect "" "$msp/particlesEb034.xml" \
+ "$msp/particlesEb034.xml:3:9: Expecting (a1)"
+expect "" "$msp/particlesEb035.xml" \
+ "$msp/particlesEb035.xml:6:9: Unexpected end of sequence, expecting \"a2\""
+expect "" "$msp/particlesEb036.xml" ""
+expect "" "$msp/particlesEb037.xml" \
+ "$msp/particlesEb037.xml:8:9: Unexpected end of sequence, expecting \"a2\""
+expect "" "$msp/particlesEb038.xml" ""
+expect "" "$msp/particlesEb039.xml" \
+ "$msp/particlesEb039.xml:3:6: Expecting (a1)"
 
 
 
