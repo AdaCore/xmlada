@@ -595,9 +595,21 @@ package body Sax.Readers is
          Id2.Column := Get_Column_Number (Parser.Locator.all) - 1;
       end if;
       Parser.Buffer_Length := 0;
-      Fatal_Error
-        (Parser, Create (Location (Parser, Id2) & ": " & Msg,
-                         Parser.Locator));
+
+      --  So that when calling Close_Inputs, we do generate an End_Entity
+      Parser.State.Ignore_Special := True;
+
+      begin
+         Fatal_Error
+           (Parser, Create (Location (Parser, Id2) & ": " & Msg,
+                            Parser.Locator));
+         End_Document (Parser);
+      exception
+         when others =>
+            End_Document (Parser);
+            raise;
+      end;
+
       raise Program_Error;
    end Fatal_Error;
 
