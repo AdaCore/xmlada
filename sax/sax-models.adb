@@ -1,6 +1,5 @@
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
-with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Unchecked_Deallocation;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Sax.Encodings;             use Sax.Encodings;
@@ -58,14 +57,14 @@ package body Sax.Models is
                Append (Str, To_String (Model.List (J).all));
                if J /= Model.List'Last then
                   if Model.Content = Any_Of then
-                     Append (Str, Encoding.Encode (Vertical_Line));
+                     Append (Str, Vertical_Line_Sequence);
                   else
-                     Append (Str, Encoding.Encode (Comma));
+                     Append (Str, Comma_Sequence);
                   end if;
                end if;
             end loop;
-            return Encoding.Encode (Opening_Parenthesis)
-              & To_String (Str) & Encoding.Encode (Closing_Parenthesis);
+            return Opening_Parenthesis_Sequence
+              & To_String (Str) & Closing_Parenthesis_Sequence;
 
          when Repeat =>
             if Model.Elem.Content = Anything
@@ -75,14 +74,11 @@ package body Sax.Models is
             end if;
 
             if Model.Min = 0 and then Model.Max = Positive'Last then
-               return To_String (Model.Elem.all)
-                 & Encoding.Encode (Star);
+               return To_String (Model.Elem.all) & Star_Sequence;
             elsif Model.Min = 0 and then Model.Max = 1 then
-               return To_String (Model.Elem.all)
-                 & Encoding.Encode (Question_Mark);
+               return To_String (Model.Elem.all) & Question_Mark_Sequence;
             elsif Model.Min = 1 and then Model.Max = Positive'Last then
-               return To_String (Model.Elem.all)
-                 & Encoding.Encode (Plus_Sign);
+               return To_String (Model.Elem.all) & Plus_Sign_Sequence;
             else
                raise Invalid_Content_Model;
             end if;
