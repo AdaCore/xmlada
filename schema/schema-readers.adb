@@ -532,8 +532,7 @@ package body Schema.Readers is
       Ch      : Unicode.CES.Byte_Sequence) is
    begin
       if Handler.Validators /= null
-        and then Is_Simple_Type
-          (Get_Validator (Get_Type (Handler.Validators.Element)))
+        and then Is_Simple_Type (Get_Type (Handler.Validators.Element))
       then
          Internal_Characters (Handler, Ch, Empty_Element => False);
       end if;

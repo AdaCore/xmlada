@@ -881,11 +881,7 @@ package body Schema.Schema_Readers is
       end if;
 
       if Handler.Contexts.Simple_Content then
-         if not Is_Simple_Type (Get_Validator (Base)) then
-            Validation_Error
-              ("Type """ & Get_Local_Name (Base) & """ specified as the base"
-               & " in a simpleContent element must not have complexContent");
-         end if;
+         Check_Content_Type (Base, Should_Be_Simple => True);
       end if;
 
       Handler.Contexts := new Context'

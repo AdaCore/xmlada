@@ -87,17 +87,21 @@ package body Schema.Validators.Simple_Types is
       Free (Any_Simple_XML_Validator_Record (Validator));
    end Free;
 
-   --------------------
-   -- Is_Simple_Type --
-   --------------------
+   ------------------------
+   -- Check_Content_Type --
+   ------------------------
 
-   function Is_Simple_Type
-     (Validator : access Common_Simple_XML_Validator) return Boolean
+   procedure Check_Content_Type
+     (Validator        : access Common_Simple_XML_Validator;
+      Should_Be_Simple : Boolean)
    is
       pragma Unreferenced (Validator);
    begin
-      return True;
-   end Is_Simple_Type;
+      if not Should_Be_Simple then
+         Validation_Error
+           ("Expecting simple type, got complex type");
+      end if;
+   end Check_Content_Type;
 
 end Schema.Validators.Simple_Types;
 

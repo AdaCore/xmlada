@@ -39,8 +39,9 @@ package body Schema.Validators.Restrictions is
    function Is_Restriction_Of
      (Validator : access Restriction_XML_Validator; Typ : XML_Type)
       return Boolean;
-   function Is_Simple_Type
-     (Validator : access Restriction_XML_Validator) return Boolean;
+   procedure Check_Content_Type
+     (Validator        : access Restriction_XML_Validator;
+      Should_Be_Simple : Boolean);
    --  See doc from inherited subprograms
 
    -------------------------
@@ -172,11 +173,12 @@ package body Schema.Validators.Restrictions is
    -- Is_Simple_Type --
    --------------------
 
-   function Is_Simple_Type
-     (Validator : access Restriction_XML_Validator) return Boolean is
+   procedure Check_Content_Type
+     (Validator        : access Restriction_XML_Validator;
+      Should_Be_Simple : Boolean) is
    begin
-      return Is_Simple_Type (Get_Validator (Validator.Base));
-   end Is_Simple_Type;
+      Check_Content_Type (Validator.Base, Should_Be_Simple);
+   end Check_Content_Type;
 
    ---------------------------
    -- Create_Restriction_Of --

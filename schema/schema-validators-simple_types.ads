@@ -24,8 +24,9 @@ private package Schema.Validators.Simple_Types is
      (Validator   : access Common_Simple_XML_Validator;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence);
-   function Is_Simple_Type
-     (Validator : access Common_Simple_XML_Validator) return Boolean;
+   procedure Check_Content_Type
+     (Validator        : access Common_Simple_XML_Validator;
+      Should_Be_Simple : Boolean);
    --  See doc from inherited subprogram
 
    -----------------------

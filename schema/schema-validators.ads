@@ -103,6 +103,17 @@ package Schema.Validators is
    function Get_Local_Name (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
    --  Return the local name of the type
 
+   procedure Check_Content_Type
+     (Typ : XML_Type; Should_Be_Simple : Boolean);
+   --  Check whether Typ is a simpleType or a complexType. See the description
+   --  of the homonym for validators.
+   --  When in doubt, use this one instead of the one for validators, since
+   --  this one properly handles No_Type and types whose definition has not yet
+   --  been parsed in the Schema.
+
+   function Is_Simple_Type (Typ : XML_Type) return Boolean;
+   --  Whether Typ is a simple type
+
    -------------------------
    -- Attribute_Validator --
    -------------------------
@@ -281,9 +292,12 @@ package Schema.Validators is
      (Validator : access XML_Validator_Record; Typ : XML_Type) return Boolean;
    --  Whether Validator is an extension or a restriction of Typ
 
-   function Is_Simple_Type
-     (Validator : access XML_Validator_Record) return Boolean;
-   --  Whether Validator describes a simple Type (versus a Complex Type);
+   procedure Check_Content_Type
+     (Validator        : access XML_Validator_Record;
+      Should_Be_Simple : Boolean);
+   --  Check whether Validator describes a simple Type (or a complex Type with
+   --  simpleContent), if Should_Be_Simple is true, or the opposite otherwise.
+   --  Raises XML_Validator_Error in case of error.
 
    ------------
    -- Unions --
@@ -637,9 +651,12 @@ private
    -- XML_Type --
    --------------
 
+   type Content_Type is (Simple_Content, Complex_Content, Unknown_Content);
+
    type XML_Type_Record is record
       Local_Name : Unicode.CES.Byte_Sequence_Access;
       Validator  : XML_Validator;
+      Simple_Type : Content_Type;
    end record;
    type XML_Type is access all XML_Type_Record;
    No_Type : constant XML_Type := null;

@@ -1009,8 +1009,9 @@ package body Schema.Validators is
    begin
       if Typ = No_Type and then Create_If_Needed then
          Typ := new XML_Type_Record'
-           (Local_Name => new Byte_Sequence'(Local_Name),
-            Validator  => null);
+           (Local_Name  => new Byte_Sequence'(Local_Name),
+            Validator   => null,
+            Simple_Type => Unknown_Content);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Debug_Output ("Forward type decl: " & Local_Name);
       end if;
@@ -1639,10 +1640,17 @@ package body Schema.Validators is
 
          Debug_Output ("Overriding forward type " & Local_Name);
          Typ.Validator := XML_Validator (Validator);
+
+         if Typ.Simple_Type /= Unknown_Content then
+            Check_Content_Type
+              (Validator, Typ.Simple_Type = Simple_Content);
+         end if;
+
       else
          Typ := new XML_Type_Record'
-           (Local_Name => new Byte_Sequence'(Local_Name),
-            Validator  => XML_Validator (Validator));
+           (Local_Name  => new Byte_Sequence'(Local_Name),
+            Validator   => XML_Validator (Validator),
+            Simple_Type => Unknown_Content);
          Types_Htable.Set (Grammar.Types.all, Typ);
 
          if Debug and then Typ.Validator.Debug_Name = null then
@@ -3087,8 +3095,9 @@ package body Schema.Validators is
      (Validator  : access XML_Validator_Record'Class) return XML_Type is
    begin
       return new XML_Type_Record'
-        (Local_Name => null,
-         Validator  => XML_Validator (Validator));
+        (Local_Name  => null,
+         Validator   => XML_Validator (Validator),
+         Simple_Type => Unknown_Content);
    end Create_Local_Type;
 
    -------------------
@@ -3705,17 +3714,22 @@ package body Schema.Validators is
       Free (Data.Nested_Data);
    end Free_Nested_Group;
 
-   --------------------
-   -- Is_Simple_Type --
-   --------------------
+   ------------------------
+   -- Check_Content_Type --
+   ------------------------
 
-   function Is_Simple_Type
-     (Validator : access XML_Validator_Record) return Boolean
+   procedure Check_Content_Type
+     (Validator        : access XML_Validator_Record;
+      Should_Be_Simple : Boolean)
    is
       pragma Unreferenced (Validator);
    begin
-      return False;
-   end Is_Simple_Type;
+      if Should_Be_Simple then
+         Validation_Error
+           ("Type specified in a simpleContent context must not have a "
+            & "complexContent");
+      end if;
+   end Check_Content_Type;
 
    ------------------------------
    -- Set_Element_Form_Default --
@@ -3817,5 +3831,60 @@ package body Schema.Validators is
 
       return True;
    end Can_Be_Empty;
+
+   ------------------------
+   -- Check_Content_Type --
+   ------------------------
+
+   procedure Check_Content_Type
+     (Typ : XML_Type; Should_Be_Simple : Boolean) is
+   begin
+      Debug_Output ("Check_Content_Type: " & Get_Local_Name (Typ)
+                    & " " & Typ.Simple_Type'Img
+                    & " Expect_simple=" & Should_Be_Simple'Img);
+
+      if Typ.Simple_Type = Unknown_Content then
+         if Typ.Validator /= null then
+            Check_Content_Type (Typ.Validator, Should_Be_Simple);
+         end if;
+
+         --  If we matched, we now know the content type
+         if Should_Be_Simple then
+            Typ.Simple_Type := Simple_Content;
+         else
+            Typ.Simple_Type := Complex_Content;
+         end if;
+
+      elsif Should_Be_Simple and Typ.Simple_Type = Complex_Content then
+         if Typ.Local_Name /= null then
+            Validation_Error
+              (Get_Local_Name (Typ) & " specified in a simpleContent context"
+               & " must not have a complexContext");
+         else
+            Validation_Error ("Expecting simple type, got complex type");
+         end if;
+      elsif not Should_Be_Simple and Typ.Simple_Type = Simple_Content then
+         Validation_Error ("Expecting complex type, got simple type");
+      end if;
+   end Check_Content_Type;
+
+   --------------------
+   -- Is_Simple_Type --
+   --------------------
+
+   function Is_Simple_Type (Typ : XML_Type) return Boolean is
+   begin
+      if Typ.Simple_Type = Unknown_Content then
+         begin
+            Check_Content_Type (Typ.Validator, Should_Be_Simple => True);
+            Typ.Simple_Type := Simple_Content;
+         exception
+            when XML_Validation_Error =>
+               Typ.Simple_Type := Complex_Content;
+         end;
+      end if;
+
+      return Typ.Simple_Type = Simple_Content;
+   end Is_Simple_Type;
 
 end Schema.Validators;
