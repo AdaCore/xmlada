@@ -1,6 +1,15 @@
+Index
 
-INSTALLING THIS LIBRARY ON UNIX
-===============================
+I   - INSTALLING THIS LIBRARY ON UNIX
+II  - INSTALLING THIS LIBRARY ON VMS
+III - TESTING THE LIBRARY
+IV  - CONTENTS OF THE LIBRARY
+V   - LICENSING
+VI  - BUG REPORTS
+
+
+I - INSTALLING THIS LIBRARY ON UNIX
+===================================
 
 Make sure that you do not have a previous installation of XML/Ada in one
 of the directories given in ADA_OBJECTS_PATH, or some files will not be
@@ -72,8 +81,24 @@ Note that this library will not compile with GNU make 3.77 on some platforms,
 due to a bug in the handling of the wildcard command. It is recommended that
 you update to at least 3.78
 
-TESTING THE LIBRARY
-===================
+II - INSTALLING THIS LIBRARY ON VMS
+===================================
+
+On VMS, you should have a recent version of GNAT (3.15 or more recent), since
+the makefile is set up to use the GNAT project files that are now available.
+
+Do the following, from the root directory of XML/Ada:
+
+   - Edit makefile.vms, and change the PREFIX variable to reflect the directory
+     where you want to install XML/Ada
+   - make -f makefile.vms
+   - make -f makefile.vms install
+   - (optional) make -f makefile.vms test
+     This last step is only required if you want to build the test executables
+     testsax and testdom which can be used to test the library on any XML file.
+
+III - TESTING THE LIBRARY
+=========================
 
 You need to download the official OASIS test suite for XML,
 from www.xml.org. The name of the current archive is
@@ -91,8 +116,8 @@ Execute the file
 This will report the number of errors found.
 
 
-CONTENTS OF THE LIBRARY
-=======================
+IV - CONTENTS OF THE LIBRARY
+============================
 
 The sources in this library are split into several subdirectories, each
 with its own README, sources, documentation and unit tests.
@@ -123,8 +148,8 @@ The list of subdirectories (aka modules) is:
   This contains the full documentation for this XML library
 
 
-LICENSING
-=========
+V - LICENSING
+=============
 
 This library is distributed under the GNAT-Modified GNU Public License.
 It has the following addition to the GPL:
@@ -136,8 +161,8 @@ It has the following addition to the GPL:
  exception does not however invalidate any other reasons why the
  executable file  might be covered by the  GNU Public License."
 
-BUG REPORTS
-===========
+VI - BUG REPORTS
+================
 
 Please send questions and bug reports to report@gnat.com following
 the same procedures used to submit reports with the GNAT toolset itself.
