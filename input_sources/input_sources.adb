@@ -168,13 +168,13 @@ package body Input_Sources is
          Set_Character_Set (Input, Unicode_Character_Set);
 
       elsif Upper = Unicode.CCS.Iso_8859_1.Name1
-        or else Upper = Unicode.CCS.Iso_8859_1.Name2
+        or else Upper = To_Upper (Unicode.CCS.Iso_8859_1.Name2)
       then
          Set_Encoding      (Input, Basic_8bit_Encoding);
          Set_Character_Set (Input, Iso_8859_1_Character_Set);
 
       elsif Upper = Unicode.CCS.Iso_8859_2.Name1
-        or else Upper = Unicode.CCS.Iso_8859_2.Name2
+        or else Upper = To_Upper (Unicode.CCS.Iso_8859_2.Name2)
       then
          Set_Encoding      (Input, Basic_8bit_Encoding);
          Set_Character_Set (Input, Iso_8859_2_Character_Set);
