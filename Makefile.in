@@ -26,9 +26,11 @@ MODULES=unicode input_sources sax dom
 
 ifneq (${GTKADA_GPR},)
 MODULES:=${MODULES} xml_gtk
+MODULE_INSTALL=${MODULES:%=%_inst}
+else
+MODULE_INSTALL=${MODULES:%=%_inst} xml_gtk_inst
 endif
 
-MODULE_INSTALL=${MODULES:%=%_inst}
 
 .PHONY: all obj clean install install_dirs
 
