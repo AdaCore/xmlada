@@ -56,19 +56,6 @@ package body Sax.Locators is
       end if;
    end Free;
 
-   ----------
-   -- Copy --
-   ----------
-
-   procedure Copy
-     (Loc : in out Locator_Impl; Loc_I : in Locator'Class) is
-   begin
-      Set_Line_Number (Loc, Get_Line_Number (Loc_I));
-      Set_Column_Number (Loc, Get_Column_Number (Loc_I));
-      Set_Public_Id (Loc, Get_Public_Id (Loc_I));
-      Set_System_Id (Loc, Get_System_Id (Loc_I));
-   end Copy;
-
    ---------------------
    -- Get_Line_Number --
    ---------------------
@@ -134,6 +121,19 @@ package body Sax.Locators is
    begin
       Loc.Line := Line;
    end Set_Line_Number;
+
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy
+     (Loc : in out Locator_Impl; Loc_I : in Locator'Class) is
+   begin
+      Set_Line_Number (Loc, Get_Line_Number (Loc_I));
+      Set_Column_Number (Loc, Get_Column_Number (Loc_I));
+      Set_Public_Id (Loc, Get_Public_Id (Loc_I));
+      Set_System_Id (Loc, Get_System_Id (Loc_I));
+   end Copy;
 
    -------------------
    -- Set_Public_Id --
