@@ -1,3 +1,4 @@
+with "xmlada_unicode";
 project XmlAda_Input is
     for Source_Dirs use ("include/xmlada/input_sources");
     for Object_Dir use "include/xmlada/obj";
