@@ -130,9 +130,10 @@ package body DOM.Core is
    -- Force_Free --
    ----------------
 
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Shared_String, Shared_String_Access);
+
    procedure Force_Free (Str : in out Shared_String_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Shared_String, Shared_String_Access);
    begin
       if Str /= No_String then
          Unicode.CES.Free (Str.Str);
