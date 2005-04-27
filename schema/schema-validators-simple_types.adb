@@ -794,4 +794,3 @@ package body Schema.Validators.Simple_Types is
    end Get_Facets_Description;
 
 end Schema.Validators.Simple_Types;
-
