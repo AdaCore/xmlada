@@ -24,11 +24,11 @@ project Shared is
    end Builder;
 
    package compiler is
-      warnings := ("-gnatwua", "-gnaty", "-gnatQ");
+      warnings := ("-gnatwua", "-gnaty", "-gnatQ", "-gnatg");
 
       case Mode is
          when "distrib" =>
-            for Default_Switches ("Ada") use ("-O2", "-gnatN");
+            for Default_Switches ("Ada") use ("-O2", "-gnatN", "-gnatg");
 
          when "debug" =>
             for Default_Switches ("Ada") use warnings
