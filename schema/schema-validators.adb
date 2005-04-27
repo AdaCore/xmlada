@@ -121,6 +121,27 @@ package body Schema.Validators is
 
    Debug_Prefixes_Level : Natural := 0;
 
+   --  Provide Debug_Output body early to allow it to be inlined
+
+   ------------------
+   -- Debug_Output --
+   ------------------
+
+   procedure Debug_Output (Str : String) is
+   begin
+      if Debug then
+         for Prefix in 1 .. Debug_Prefixes_Level loop
+            declare
+               Str : constant String := Integer'Image (Prefix);
+            begin
+               Put ("#" & Str (Str'First + 1 .. Str'Last) & ' ');
+            end;
+         end loop;
+
+         Put_Line (Str);
+      end if;
+   end Debug_Output;
+
    ------------------------------
    -- Attribute_Validator_List --
    ------------------------------
@@ -1625,9 +1646,11 @@ package body Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence;
       Validator  : access XML_Validator_Record'Class)
    is
-      Typ : XML_Type;
+      Typ : constant XML_Type :=
+              Create_Global_Type (Grammar, Local_Name, Validator);
+      pragma Unreferenced (Typ);
    begin
-      Typ := Create_Global_Type (Grammar, Local_Name, Validator);
+      null;
    end Create_Global_Type;
 
    -----------------------------
@@ -1640,9 +1663,11 @@ package body Schema.Validators is
       Attribute_Type : XML_Type;
       Is_ID          : Boolean := False)
    is
-      Att : Attribute_Validator;
+      Att : constant Attribute_Validator :=
+              Create_Global_Attribute (NS, Local_Name, Attribute_Type, Is_ID);
+      pragma Unreferenced (Att);
    begin
-      Att := Create_Global_Attribute (NS, Local_Name, Attribute_Type, Is_ID);
+      null;
    end Create_Global_Attribute;
 
    -----------------------------
@@ -3926,25 +3951,6 @@ package body Schema.Validators is
    begin
       return Element.Elem.Is_Global;
    end Is_Global;
-
-   ------------------
-   -- Debug_Output --
-   ------------------
-
-   procedure Debug_Output (Str : String) is
-   begin
-      if Debug then
-         for Prefix in 1 .. Debug_Prefixes_Level loop
-            declare
-               Str : constant String := Integer'Image (Prefix);
-            begin
-               Put ("#" & Str (Str'First + 1 .. Str'Last) & ' ');
-            end;
-         end loop;
-
-         Put_Line (Str);
-      end if;
-   end Debug_Output;
 
    -----------------------
    -- Debug_Push_Prefix --
