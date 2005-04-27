@@ -297,15 +297,13 @@ private
    function Get_Prefix (N : Node_Name_Def) return DOM_String;
    procedure Set_Prefix
      (Doc : Document; N : in out Node_Name_Def; Prefix : DOM_String);
-   pragma Inline (Get_Prefix, Set_Prefix);
+   pragma Inline (Set_Prefix);
    --  Return or set the prefix of N
 
    function Get_Local_Name (N : Node_Name_Def) return DOM_String;
-   pragma Inline (Get_Local_Name);
    --  Return the local name of N
 
    function Get_Namespace_URI (N : Node_Name_Def) return DOM_String;
-   pragma Inline (Get_Namespace_URI);
    --  Return the namespace of N
 
    procedure Clone (Dest : out Node_Name_Def; Source : Node_Name_Def);
