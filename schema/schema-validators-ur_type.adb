@@ -3,7 +3,6 @@ package body Schema.Validators.UR_Type is
    UR_Type_Element   : array (Process_Contents_Type) of XML_Element :=
      (others => No_Element);
 
-
    type UR_Type_Validator is new XML_Validator_Record with record
       Process_Contents : Process_Contents_Type := Process_Strict;
    end record;
@@ -29,7 +28,6 @@ package body Schema.Validators.UR_Type is
       Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element);
    --  See doc for inherited subprograms
-
 
    ----------------------------
    -- Validate_Start_Element --

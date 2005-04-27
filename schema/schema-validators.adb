@@ -1399,8 +1399,6 @@ package body Schema.Validators is
       Tmp := new Time_Validator_Record;
       Create_Global_Type (G, "date", Tmp);
 
-
-
       Create_Global_Attribute (XML_IG, "nil", Lookup (G, "boolean"));
       Create_Global_Attribute (XML_IG, "type", Lookup (G, "QName"));
       Create_Global_Attribute (XML_IG, "schemaLocation",
@@ -1882,7 +1880,6 @@ package body Schema.Validators is
          Validate_Characters (Get_Validator (Element.Elem.Of_Type), Fixed,
                               Empty_Element => False);
       end if;
-
 
       Free (Element.Elem.Fixed);
       Element.Elem.Fixed := new Byte_Sequence'(Fixed);
@@ -3232,7 +3229,6 @@ package body Schema.Validators is
 --        end loop;
 --        Debug_Pop_Prefix;
 
-
       if Iter.Current.Typ = Particle_Nested
         and then Iter.Parent /= null
         and then Iter.Parent.Current.Typ = Particle_Group
@@ -4331,6 +4327,5 @@ package body Schema.Validators is
    begin
       return Grammar.Target_NS;
    end Get_Target_NS;
-
 
 end Schema.Validators;

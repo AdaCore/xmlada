@@ -75,7 +75,6 @@ private
    --  and a local prefix can override a more global one (so a hash table needs
    --  some special handling in any case).
 
-
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;
    type Validator_List_Record is record

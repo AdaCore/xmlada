@@ -19,7 +19,6 @@ package Sax.Encodings is
    --  In all cases, if you modify this value, you will need to reencode all
    --  the strings below in the new encoding.
 
-
    function From_Utf32
      (Str : Unicode.CES.Utf32.Utf32_LE_String)
       return Unicode.CES.Utf8.Utf8_String
@@ -128,4 +127,3 @@ package Sax.Encodings is
      "whitespace-in-element-content";
 
 end Sax.Encodings;
-

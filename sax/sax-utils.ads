@@ -32,11 +32,9 @@ package Sax.Utils is
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
    --  Whether Name is valid QName as per 3 in the XML specifications
 
-
    function Hash
      (Key : Unicode.CES.Byte_Sequence) return Interfaces.Unsigned_32;
    --  Hash-code used for all htables indexed on strings
-
 
    function Split_Qname (Qname : Unicode.CES.Byte_Sequence) return Integer;
    --  Return an index so that:

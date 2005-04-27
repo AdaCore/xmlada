@@ -60,7 +60,6 @@ package DOM.Core is
    --  Setting this to 1 will require more allocations, but will save memory,
    --  since no empty node will remain in the final tree.
 
-
    subtype DOM_String is Unicode.CES.Byte_Sequence;
    --  A simple redefinition of the strings, to be compatible with the
    --  standard DOM interface
@@ -226,7 +225,6 @@ private
    --  generally short lists anyway (attributes,...)
    type Named_Node_Map is new Node_List;
    Null_Node_Map : constant Named_Node_Map := (null, -1);
-
 
    ---------------------
    --  Shared_Strings --
@@ -430,9 +428,5 @@ private
    procedure Remove (List : in out Node_List; N : Node);
    --  Remove N from the list
    --  N must be an element of List, this is not checked.
-
-
-
-
 
 end DOM.Core;

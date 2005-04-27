@@ -37,7 +37,6 @@ private package Schema.Validators.Simple_Types is
    procedure Free (Facets : in out Integer_Facets_Description);
    --  See doc for inherited subprograms
 
-
    type Integer_Validator_Record is new Any_Simple_XML_Validator_Record with
       record
          Facets : Integer_Facets_Description;
@@ -84,7 +83,6 @@ private package Schema.Validators.Simple_Types is
       Value  : Unicode.CES.Byte_Sequence);
    procedure Free (Facets : in out String_Facets_Description);
    --  See doc for inherited subprograms
-
 
    type String_Validator_Record is new Any_Simple_XML_Validator_Record with
       record
@@ -154,7 +152,6 @@ private package Schema.Validators.Simple_Types is
    procedure Free (Facets : in out Time_Facets_Description);
    --  See doc for inherited subprograms
 
-
    type Time_Validator_Record is new Any_Simple_XML_Validator_Record with
       record
          Facets : Time_Facets_Description;
@@ -220,7 +217,5 @@ private package Schema.Validators.Simple_Types is
      (Validator : access Float_Validator_Record)
       return Facets_Description;
    --  See doc from inherited subprograms
-
-
 
 end Schema.Validators.Simple_Types;

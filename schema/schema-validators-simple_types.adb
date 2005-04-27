@@ -793,6 +793,5 @@ package body Schema.Validators.Simple_Types is
       return new Float_Facets_Description;
    end Get_Facets_Description;
 
-
 end Schema.Validators.Simple_Types;
 

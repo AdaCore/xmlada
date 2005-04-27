@@ -25,7 +25,6 @@ package body Schema.Validators.Lists is
       Value  : Unicode.CES.Byte_Sequence);
    procedure Free (Facets : in out List_Facets_Description);
 
-
    type List_Validator_Record is new Any_Simple_XML_Validator_Record with
       record
          Facets : List_Facets_Description;

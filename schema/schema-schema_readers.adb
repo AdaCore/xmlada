@@ -691,7 +691,6 @@ package body Schema.Schema_Readers is
          Form := Get_Element_Form_Default (Handler.Target_NS);
       end if;
 
-
       if Name_Index /= -1 then
          if Type_Index /= -1 then
             Lookup_With_NS

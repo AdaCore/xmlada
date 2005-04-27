@@ -876,7 +876,6 @@ package body Schema.Schema_Grammar is
                                 Attribute_Use => Default,
                                 Value => ""));
 
-
       --  The "topLevelComplexType" type
       Seq1 := Create_Sequence;
       Set_Debug_Name (Seq1, "topLevelComplexType_seq");
@@ -926,7 +925,6 @@ package body Schema.Schema_Grammar is
       Typ := Extension_Of (Lookup (G, "openAttrs"), XML_Validator (Seq1));
       Set_Type (Create_Global_Element (G, "redefine", Qualified),
                 Create_Local_Type (Typ));
-
 
       --  From datatypes.xsd
 

@@ -593,7 +593,6 @@ package body DOM.Core.Nodes is
                Clone.Attr_Value := new DOM_String'(N.Attr_Value.all);
             end if;
 
-
          when Text_Node =>
             if N.Text /= null then
                Clone.Text := new DOM_String'(N.Text.all);
@@ -1193,7 +1192,7 @@ package body DOM.Core.Nodes is
 
          when Document_Node =>
             if Print_XML_PI then
-               Put (Write_BOM (Encoding.Encoding_Scheme.BOM));
+               Put (Write_Bom (Encoding.Encoding_Scheme.BOM));
                Put
                  ("<?xml version=""1.0"" encoding="""
                   & Encoding.Name.all & """?>", Encoding);

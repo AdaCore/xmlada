@@ -35,11 +35,9 @@ package Schema.Validators is
    No_Grammar : constant XML_Grammar;
    --  No Grammar has been defined
 
-
    type XML_Element is private;
    No_Element : constant XML_Element;
    --  An element of an XML stream (associated with a start-tag)
-
 
    Unbounded : constant Integer := -1;
    --  To indicate that a Max_Occurs is set to unbounded
@@ -146,7 +144,6 @@ package Schema.Validators is
    function Get_Block_On_Extension (Typ : XML_Type) return Boolean;
    --  Set the "block" status of the type.
    --  This can also be done at the element's level
-
 
    -------------------------
    -- Attribute_Validator --
@@ -535,7 +532,6 @@ package Schema.Validators is
      (Seq : access Sequence_Record; Item : XML_Group;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
 
-
    function Create_Choice return Choice;
    --  Create a new empty choice.
    --  (Min_Occurs, Max_Occurs) indicate the number of repetition allowed for
@@ -691,7 +687,6 @@ package Schema.Validators is
      (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence;
    --  Return the namespace URI associated with Grammar
 
-
    procedure Set_Debug_Name
      (Typ : access XML_Validator_Record'Class; Name : String);
    --  Will be removed
@@ -701,7 +696,6 @@ package Schema.Validators is
 
    procedure Validation_Error (Message : String);
    --  Raise Validation_Error with a proper error message.
-
 
 private
 
@@ -874,7 +868,6 @@ private
      (Attribute : Any_Attribute_Validator;
       Attr2     : Attribute_Validator_Record'Class)
      return Boolean;
-
 
    procedure Get_Attribute_Lists
      (Validator   : access XML_Validator_Record;
@@ -1327,7 +1320,6 @@ private
       return Facets_Description;
    --  See doc from inherited subprograms
 
-
    ---------------
    -- XML_Union --
    ---------------
@@ -1340,7 +1332,6 @@ private
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean);
    --  See doc from inherited subprograms
-
 
    procedure Debug_Output (Str : String);
    pragma Inline (Debug_Output);

@@ -533,7 +533,6 @@ package Sax.Readers is
    --  Set a list of hooks to be called before calling the usual primitive
    --  operations. These override hooks that were defined previously.
 
-
 private
    type Parser_Hooks is record
       Start_Element : Start_Element_Hook   := null;
@@ -544,7 +543,6 @@ private
       End_Prefix    : End_Prefix_Hook      := null;
       Doc_Locator   : Set_Doc_Locator_Hook := null;
    end record;
-
 
    Entities_Table_Size : constant := 50;
    --  Size of the hash-table used to store entities.

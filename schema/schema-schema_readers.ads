@@ -101,7 +101,6 @@ private
       end case;
    end record;
 
-
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
       Created_Grammar : Schema.Validators.XML_Grammar :=
         Schema.Validators.No_Grammar;
