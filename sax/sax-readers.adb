@@ -2027,7 +2027,8 @@ package body Sax.Readers is
          declare
             Save_Length : constant Natural := Parser.Buffer_Length;
          begin
-            while (not Parser.State.Greater_Special
+            while Parser.Last_Read_Is_Valid
+              and then (not Parser.State.Greater_Special
                    or else Parser.Last_Read /= Greater_Than_Sign)
               and then Parser.Last_Read /= Less_Than_Sign
               and then Parser.Last_Read /= Ampersand
@@ -2229,7 +2230,7 @@ package body Sax.Readers is
 
    exception
       when Input_Ended =>
-            --  Make sure we always emit the last characters in the buffer
+         --  Make sure we always emit the last characters in the buffer
          Id.Last := Parser.Buffer_Length;
          if Debug_Lexical then
             Debug_Print;
