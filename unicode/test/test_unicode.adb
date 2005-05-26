@@ -129,9 +129,9 @@ begin
         & Encode (Character'Pos ('t'), Utf16_LE_Encoding)
         & Encode (16#E9#, Utf16_LE_Encoding); --  e_Acute
       Latin_2_Utf16 : constant String :=
-        Encode (16#F9#, Utf16_LE_Encoding)    --  u_dot  
+        Encode (16#F9#, Utf16_LE_Encoding)    --  u_dot
         & Encode (Character'Pos ('t'), Utf16_LE_Encoding)
-        & Encode (16#E8#, Utf16_LE_Encoding); --  c carron  
+        & Encode (16#E8#, Utf16_LE_Encoding); --  c carron
       Latin_1_8bit : constant String :=
         Character'Val (16#E9#)    --  e_Acute
         & 't'
