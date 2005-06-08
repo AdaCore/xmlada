@@ -61,7 +61,7 @@ ifneq (${GTKADA_GPR},)
 endif
 
 docs: force
-	${MAKE} -e -C docs
+	-${MAKE} -e -C docs
 
 # Rule for installing the modules
 %_inst: force
