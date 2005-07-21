@@ -1,4 +1,5 @@
-\input texiplus   @c -*-texinfo-*-
+\input texinfo
+@input texiplus 
 @c %**start of header
 @setfilename xml.info
 @settitle The Ada95 XML Library
