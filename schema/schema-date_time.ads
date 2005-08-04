@@ -26,7 +26,8 @@ package Schema.Date_Time is
    --  schema standard, that is:
    --      yyyy-mm-ddThh:mm:ss.sss+tz:tz
    --  (year, month, day, hour, minutes, seconds, subseconds and timezone).
-   --  The subsecond field is only displayed as milliseconds.
+   --  The subsecond field's precision is given by the precision of the
+   --  Duration type in Ada
 
    function Image (Duration : Duration_T) return String;
    --  Return the string representation of Duration, as defined in the XML

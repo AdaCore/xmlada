@@ -36,6 +36,10 @@ package body Schema.Date_Time is
    function Image (Value : Integer; Num_Digits : Natural := 2) return String;
    --  Return the image of Value, in a string of Num_Digits characters long
 
+   function MS_Image (Sub_Second : Day_Range) return String;
+   --  Return the image to use for milliseconds (nothing if 0, or the minimal
+   --  number of digits)
+
    generic
       Field : Integer;
       Char  : Character;
@@ -120,30 +124,48 @@ package body Schema.Date_Time is
       return Image (Date.Date) & Image (Date.TZ);
    end Image;
 
+   --------------
+   -- MS_Image --
+   --------------
+
+   function MS_Image (Sub_Second : Day_Range) return String is
+      Sub : constant String := Day_Range'Image (Sub_Second);
+      Last : Natural := Sub'Last;
+   begin
+      if Sub_Second = 0.0 then
+         return "";
+      else
+         while Last >= Sub'First and Sub (Last) = '0' loop
+            Last := Last - 1;
+         end loop;
+
+         --  Skip '0.' in the subseconds image
+         return Sub (Sub'First + 2 .. Last);
+      end if;
+   end MS_Image;
+
    -----------
    -- Image --
    -----------
 
    function Image (Time : Time_NZ_T) return String is
-      T    : constant Float := Float (abs (Time));
-      Hour : constant Integer := Integer (Float'Floor (T / 3600.0));
-      Dur_Less_Hour : constant Float := T - Float (Hour) * 3600.0;
-      Min  : constant Integer := Integer (Float'Floor (Dur_Less_Hour / 60.0));
-      Dur_Less_Min : constant Float :=
-        Dur_Less_Hour - Float (Min) * 60.0;
-      Sec  : constant Integer := Integer (Float'Floor (Dur_Less_Min));
-      MSec : constant Integer :=
-        Integer (Float'Floor ((Dur_Less_Min - Float (Sec)) * 1000.0));
-
-      Im : constant String := Image (Hour, 2)
-        & ':' & Image (Min, 2) & ':'
-        & Image (Sec, 2);
+      Hour, Min, Secs : Natural;
+      Sub_Second      : Time_NZ_T;
    begin
-      if MSec /= 0 then
-         return Im & '.' & Image (MSec, 3);
+      if Time = 0.0 then
+         Secs := 0;
       else
-         return Im;
+         Secs := Natural (abs (Time) - 0.5);
       end if;
+
+      Sub_Second := abs (Time) - Time_NZ_T (Secs);
+      Hour       := Integer (Secs / 3600);
+      Secs       := Secs mod 3600;
+      Min        := Integer (Secs / 60);
+      Secs       := Secs mod 60;
+
+      return Image (Hour, 2) & ':' & Image (Min, 2)
+        & ':' & Image (Secs, 2) & MS_Image (Sub_Second);
    end Image;
 
    -----------
@@ -160,52 +182,57 @@ package body Schema.Date_Time is
    -----------
 
    function Image (Duration : Duration_T) return String is
-      T    : constant Ada.Calendar.Day_Duration := abs (Duration.Seconds);
-      Hour : constant Integer := Integer (T / 3600.0);
-      Dur_Less_Hour : constant Day_Range := T - Day_Range (Hour) * 3600.0;
-      Min  : constant Integer := Integer (Dur_Less_Hour / 60.0);
-      Dur_Less_Min : constant Day_Range :=
-        Dur_Less_Hour - Day_Range (Min) * 60.0;
-      Sec  : constant Integer := Integer (Dur_Less_Min);
-      MSec : constant Integer :=
-        Integer ((Dur_Less_Min - Day_Range (Sec)) * 1000);
+      Hour, Min, Secs : Natural;
+      Sub_Second      : Time_NZ_T;
 
       function Year_Image  is new Component_Image (Duration.Year, 'Y');
       function Month_Image is new Component_Image (Duration.Month, 'M');
       function Day_Image   is new Component_Image (Duration.Day, 'D');
-      function Hour_Image  is new Component_Image (Hour, 'H');
-      function Min_Image   is new Component_Image (Min, 'M');
-      function Sec_Image return String;
+      function Secs_Image return String;
 
-      function Sec_Image return String is
+      function Secs_Image return String is
+         Im : constant String := Image (Secs, 1) & MS_Image (Sub_Second) & 'S';
       begin
-         if Sec = 0 and then MSec = 0 then
-            return "";
-         elsif MSec = 0 then
-            return Image (Sec, 1) & 'S';
+         if Im /= "0S" then
+            return Im;
          else
-            --  ??? Should support less than milliseconds
-            return Image (Sec, 1) & '.' & Image (MSec, 3) & 'S';
+            return "";
          end if;
-      end Sec_Image;
-
-      Date_Img : constant String := Year_Image & Month_Image & Day_Image;
-      Time_Img : constant String := Hour_Image & Min_Image & Sec_Image;
+      end Secs_Image;
 
    begin
-      if Duration.Sign < 0 then
-         if Time_Img'Length /= 0 then
-            return "-P" & Date_Img & 'T' & Time_Img;
-         else
-            return "-P" & Date_Img;
-         end if;
+      if Duration.Seconds = 0.0 then
+         Secs := 0;
       else
-         if Time_Img'Length /= 0 then
-            return 'P' & Date_Img & 'T' & Time_Img;
-         else
-            return 'P' & Date_Img;
-         end if;
+         Secs := Natural (abs (Duration.Seconds) - 0.5);
       end if;
+
+      Sub_Second := abs (Duration.Seconds) - Time_NZ_T (Secs);
+      Hour       := Integer (Secs / 3600);
+      Secs       := Secs mod 3600;
+      Min        := Integer (Secs / 60);
+      Secs       := Secs mod 60;
+
+      declare
+         function Hour_Image  is new Component_Image (Hour, 'H');
+         function Min_Image   is new Component_Image (Min, 'M');
+         Date_Img : constant String := Year_Image & Month_Image & Day_Image;
+         Time_Img : constant String := Hour_Image & Min_Image & Secs_Image;
+      begin
+         if Duration.Sign < 0 then
+            if Time_Img'Length /= 0 then
+               return "-P" & Date_Img & 'T' & Time_Img;
+            else
+               return "-P" & Date_Img;
+            end if;
+         else
+            if Time_Img'Length /= 0 then
+               return 'P' & Date_Img & 'T' & Time_Img;
+            else
+               return 'P' & Date_Img;
+            end if;
+         end if;
+      end;
    end Image;
 
    -----------
