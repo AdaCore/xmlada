@@ -253,7 +253,7 @@ expect $mse/elemD003.xsd "" \
 expect $mse/elemD004.xsd "" \
  "$mse/elemD004.xsd:9:56: No character data allowed by content model"
 expect $mse/elemD005.xsd "" \
- "$mse/elemD005.xsd:3:58: string pattern not matched: \d\d\d\d-\d\d-\d\d"
+ "$mse/elemD005.xsd:3:58: Invalid time: \"foo\""
 expect $mse/elemD006.xsd "" ""
 fi
 
@@ -381,20 +381,20 @@ expect $mse/elemJ009.xsd "" ""
 expect $mse/elemJ010.xsd "" ""
 expect $mse/elemJ011.xsd "" ""
 expect $mse/elemJ012.xsd "" \
- "$mse/elemJ012.xsd:6:52: Attribute \"minOccurs\": Value must be an integer"
+ "$mse/elemJ012.xsd:6:52: Attribute \"minOccurs\": Invalid integer: \"unbounded\""
 expect $mse/elemJ013.xsd "" ""
 expect $mse/elemJ014.xsd "" \
- "$mse/elemJ014.xsd:6:43: Attribute \"minOccurs\": Value must be an integer"
+ "$mse/elemJ014.xsd:6:43: Attribute \"minOccurs\": Invalid integer: \"\""
 expect $mse/elemJ015.xsd "" \
- "$mse/elemJ015.xsd:6:45: Attribute \"minOccurs\": -1 is too small, minInclusive is set to 0"
+ "$mse/elemJ015.xsd:6:45: Attribute \"minOccurs\": -1 is smaller than minInclusive ( 0)"
 expect $mse/elemJ016.xsd "" \
- "$mse/elemJ016.xsd:6:52: Attribute \"minOccurs\": Value must be an integer"
+ "$mse/elemJ016.xsd:6:52: Attribute \"minOccurs\": Invalid integer: \"Unbounded\""
 expect $mse/elemJ017.xsd "" ""
 expect $mse/elemJ018.xsd "" ""
 expect $mse/elemJ019.xsd "" \
  "$mse/elemJ019.xsd:6:58: minOccurs > maxOccurs when creating particle"
 expect $mse/elemJ020.xsd "" \
- "$mse/elemJ020.xsd:6:74: Attribute \"minOccurs\": Value must be an integer"
+ "$mse/elemJ020.xsd:6:74: Attribute \"minOccurs\": Invalid integer: \"unbounded\""
 expect $mse/elemJ021.xsd "" ""
 fi
 
@@ -770,7 +770,7 @@ expect "$sun/xsd003-2.e.xsd" "" \
  "$sun/xsd003-2.e.xsd:10:50: Unexpected element: \"attribute\""
 expect "$sun/xsd003a.xsd" "$sun/xsd003a.v00.xml" ""
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.n00.xml" \
- "$sun/xsd003b.n00.xml:3:29: Attribute \"add\": Must have a decimal value"
+ "$sun/xsd003b.n00.xml:3:29: Attribute \"add\": Invalid integer: \"abc\""
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.n01.xml" \
  "$sun/xsd003b.n01.xml:3:50: Attribute \"foo:gAtt\": Element's value not in the enumeration set"
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.v00.xml" ""
@@ -909,13 +909,13 @@ expect "$sun/xsd020-4.e.xsd" "" \
 ### SUN xsd021
 
 expect "$sun/xsd021.xsd" "$sun/xsd021.n00.xml" \
- "$sun/xsd021.n00.xml:8:28: Attribute \"f:a\": Value must be an integer"
+ "$sun/xsd021.n00.xml:8:28: Attribute \"f:a\": Invalid integer: \"invalid\""
 expect "$sun/xsd021.xsd" "$sun/xsd021.n01.xml" \
- "$sun/xsd021.n01.xml:8:27: Attribute \"z:c\": Value must be an integer"
+ "$sun/xsd021.n01.xml:8:27: Attribute \"z:c\": Invalid integer: \"not ok\""
 expect "$sun/xsd021.xsd" "$sun/xsd021.n02.xml" \
  "$sun/xsd021.n02.xml:8:38: Attribute \"u:undeclared\": No definition provided"
 expect "$sun/xsd021.xsd" "$sun/xsd021.n03.xml" \
- "$sun/xsd021.n03.xml:8:31: Attribute \"f:b\": Value must be an integer"
+ "$sun/xsd021.n03.xml:8:31: Attribute \"f:b\": Invalid integer: \"invalid\""
 expect "$sun/xsd021.xsd" "$sun/xsd021.n04.xml" \
  "$sun/xsd021.n04.xml:8:33: Attribute \"f:a\": Invalid namespace in this context, must be different from \"foo\""
 expect "$sun/xsd021.xsd" "$sun/xsd021.n05.xml" \
@@ -927,7 +927,7 @@ expect "$sun/xsd021.xsd" "$sun/xsd021.n07.xml" \
 expect "$sun/xsd021.xsd" "$sun/xsd021.n08.xml" \
  "$sun/xsd021.n08.xml:8:35: Attribute \"local\": Invalid namespace in this context, must be \"foo\""
 expect "$sun/xsd021.xsd" "$sun/xsd021.n09.xml" \
- "$sun/xsd021.n09.xml:8:34: Attribute \"f:a\": Value must be an integer"
+ "$sun/xsd021.n09.xml:8:34: Attribute \"f:a\": Invalid integer: \"invalid\""
 expect "$sun/xsd021.xsd" "$sun/xsd021.n10.xml" \
  "$sun/xsd021.n10.xml:8:30: Attribute \"local\": Invalid namespace in this context, must be \"bar\""
 expect "$sun/xsd021.xsd" "$sun/xsd021.n11.xml" \
@@ -1896,11 +1896,11 @@ fi
 
 if [ x$run_act = x1 -o $run_all_tests = 1 ]; then
    expect "" "$act/basic_types-1.xml" \
-     "act_testsuite/basic_types-1.xml:11:28: 03:01:03 is too late, maxExclusive is set to 03:01:03.500"
+     "act_testsuite/basic_types-1.xml:11:28: 03:01:03 is greater than maxExclusive (03:01:02.500)"
    expect "" "$act/basic_types-2.xml" \
-     "act_testsuite/basic_types-2.xml:10:28: 04:01:02 is too late, maxInclusive is set to 03:01:02.000"
+     "act_testsuite/basic_types-2.xml:10:28: 04:01:02 is greater than maxInclusive (03:01:02)"
    expect "" "$act/basic_types-3.xml" \
-     "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive"
+     "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.25200000000000000E+04)"
 fi
 
 summary
