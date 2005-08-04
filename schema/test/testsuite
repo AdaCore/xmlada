@@ -2075,6 +2075,7 @@ if [ x$run_act = x1 -o $run_all_tests = 1 ]; then
      "act_testsuite/basic_types-2.xml:10:28: 04:01:02 is greater than maxInclusive (03:01:02)"
    expect "" "$act/basic_types-3.xml" \
      "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.25200000000000000E+04)"
+   expect "" "$act/E802-003.xml" ""
 fi
 
 summary
