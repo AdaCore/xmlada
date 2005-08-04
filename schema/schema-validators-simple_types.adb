@@ -1,20 +1,326 @@
 with Schema.Validators.Facets; use Schema.Validators.Facets;
-with Ada.Calendar;             use Ada.Calendar;
 with Sax.Encodings;            use Sax.Encodings;
+with Sax.Utils;                use Sax.Utils;
+with Schema.Date_Time;         use Schema.Date_Time;
 
 package body Schema.Validators.Simple_Types is
 
-   function Time_Image
-     (Value : Day_Duration) return Unicode.CES.Byte_Sequence;
-   --  Convert Value to a string representation
+   ------------------------------------
+   --  Facets used for ranged values --
+   ------------------------------------
 
-   function Time_Value
-     (Ch : Unicode.CES.Byte_Sequence) return Ada.Calendar.Day_Duration;
-   --  Convert ch to a Time
+   generic
+      Type_Name : String;
+      type T is private;
+      with function Value (Ch : Unicode.CES.Byte_Sequence) return T is <>;
+      with function Image (T1 : T) return Unicode.CES.Byte_Sequence is <>;
+      with function "<=" (T1, T2 : T) return Boolean is <>;
+      with function "<" (T1, T2 : T) return Boolean is <>;
+      with function ">=" (T1, T2 : T) return Boolean is <>;
+      with function ">" (T1, T2 : T) return Boolean is <>;
+   package Generic_Range_Facets is
+      type Range_Facets_Description is new Common_Facets_Description with
+         record
+            Max_Inclusive  : T;
+            Min_Inclusive  : T;
+            Max_Exclusive  : T;
+            Min_Exclusive  : T;
+         end record;
+   private
+      procedure Add_Facet
+        (Facets      : in out Range_Facets_Description;
+         Facet_Name  : Unicode.CES.Byte_Sequence;
+         Facet_Value : Unicode.CES.Byte_Sequence;
+         Applied     : out Boolean);
+      procedure Check_Facet
+        (Facets     : in out Range_Facets_Description;
+         Node_Value : Unicode.CES.Byte_Sequence);
+      --  See doc for inherited subprograms
+   end Generic_Range_Facets;
 
-   function Time_Component_Image
-     (Value : Integer; Num_Digits : Natural := 2) return String;
-   --  Return the image of Value, in a string of Num_Digits characters long
+   -----------------------
+   -- Generic validator --
+   -----------------------
+   --  This validator can be used to implement several other validators
+   --  when they all delegate their work to their facets checker.
+   --  It can be used for all types which have no children nodes.
+
+   generic
+      type Facets_Type is new Facets_Description_Record with private;
+   package Generic_Simple_Validator is
+      type Validator_Record is new Any_Simple_XML_Validator_Record with record
+         Facets : Facets_Type;
+      end record;
+      type Validator is access all Validator_Record'Class;
+
+   private
+      procedure Validate_Characters
+        (Validator     : access Validator_Record;
+         Ch            : Unicode.CES.Byte_Sequence;
+         Empty_Element : Boolean);
+      procedure Add_Facet
+        (Validator   : access Validator_Record;
+         Facet_Name  : Unicode.CES.Byte_Sequence;
+         Facet_Value : Unicode.CES.Byte_Sequence);
+      procedure Free (Validator : in out Validator_Record);
+      function Get_Facets_Description
+        (Validator : access Validator_Record) return Facets_Description;
+      --  See doc for inherited subprograms
+   end Generic_Simple_Validator;
+
+   --------------------------
+   -- Generic_Range_Facets --
+   --------------------------
+
+   package body Generic_Range_Facets is
+
+      -----------------
+      -- Check_Facet --
+      -----------------
+
+      procedure Check_Facet
+        (Facets : in out Range_Facets_Description;
+         Node_Value  : Unicode.CES.Byte_Sequence)
+
+      is
+         Val : T;
+      begin
+         Val := Value (Node_Value);
+
+         Check_Facet (Common_Facets_Description (Facets), Node_Value);
+
+         if Facets.Mask (Facet_Max_Exclusive)
+           and then Facets.Max_Exclusive <= Val
+         then
+            Validation_Error
+              (Node_Value & " is greater than maxExclusive ("
+               & Image (Facets.Max_Exclusive) & ")");
+         end if;
+
+         if Facets.Mask (Facet_Max_Inclusive)
+           and then Facets.Max_Inclusive < Val
+         then
+            Validation_Error
+              (Node_Value & " is greater than maxInclusive ("
+               & Image (Facets.Max_Inclusive) & ")");
+         end if;
+
+         if Facets.Mask (Facet_Min_Inclusive)
+           and then Facets.Min_Inclusive > Val
+         then
+            Validation_Error
+              (Node_Value & " is smaller than minInclusive ("
+               & Image (Facets.Min_Inclusive) & ")");
+         end if;
+
+         if Facets.Mask (Facet_Min_Exclusive)
+           and then Facets.Min_Exclusive >= Val
+         then
+            Validation_Error
+              (Node_Value & " is smaller than minExclusive ("
+               & Image (Facets.Min_Exclusive) & ")");
+         end if;
+      exception
+         when Constraint_Error =>
+            Validation_Error
+              ("Invalid " & Type_Name & ": """ & Node_Value & """");
+      end Check_Facet;
+
+      ---------------
+      -- Add_Facet --
+      ---------------
+
+      procedure Add_Facet
+        (Facets      : in out Range_Facets_Description;
+         Facet_Name  : Unicode.CES.Byte_Sequence;
+         Facet_Value : Unicode.CES.Byte_Sequence;
+         Applied     : out Boolean) is
+      begin
+         Add_Facet
+           (Common_Facets_Description (Facets), Facet_Name, Facet_Value,
+            Applied);
+         if Applied then
+            null;
+         elsif Facet_Name = "maxInclusive" then
+            Facets.Max_Inclusive := Value (Facet_Value);
+            Facets.Mask (Facet_Max_Inclusive) := True;
+            Applied := True;
+         elsif Facet_Name = "maxExclusive" then
+            Facets.Max_Exclusive := Value (Facet_Value);
+            Facets.Mask (Facet_Max_Exclusive) := True;
+            Applied := True;
+         elsif Facet_Name = "minInclusive" then
+            Facets.Min_Inclusive := Value (Facet_Value);
+            Facets.Mask (Facet_Min_Inclusive) := True;
+            Applied := True;
+         elsif Facet_Name = "minExclusive" then
+            Facets.Min_Exclusive := Value (Facet_Value);
+            Facets.Mask (Facet_Min_Exclusive) := True;
+            Applied := True;
+         else
+            Applied := False;
+         end if;
+      end Add_Facet;
+
+   end Generic_Range_Facets;
+
+   ------------------------------
+   -- Generic_Simple_Validator --
+   ------------------------------
+
+   package body Generic_Simple_Validator is
+
+      -------------------------
+      -- Validate_Characters --
+      -------------------------
+
+      procedure Validate_Characters
+        (Validator     : access Validator_Record;
+         Ch            : Unicode.CES.Byte_Sequence;
+         Empty_Element : Boolean)
+      is
+         pragma Unreferenced (Empty_Element);
+      begin
+         Debug_Output ("Validate_Characters for --" & Ch & "--"
+                       & Get_Name (Validator));
+         Check_Facet (Validator.Facets, Ch);
+      end Validate_Characters;
+
+      ---------------
+      -- Add_Facet --
+      ---------------
+
+      procedure Add_Facet
+        (Validator   : access Validator_Record;
+         Facet_Name  : Unicode.CES.Byte_Sequence;
+         Facet_Value : Unicode.CES.Byte_Sequence)
+      is
+         Applies : Boolean;
+      begin
+         Add_Facet (Validator.Facets, Facet_Name, Facet_Value, Applies);
+         if not Applies then
+            Validation_Error ("Invalid facet: " & Facet_Name);
+         end if;
+      end Add_Facet;
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (Validator : in out Validator_Record) is
+      begin
+         Free (Validator.Facets);
+      end Free;
+
+      ----------------------------
+      -- Get_Facets_Description --
+      ----------------------------
+
+      function Get_Facets_Description
+        (Validator : access Validator_Record) return Facets_Description
+      is
+         pragma Unreferenced (Validator);
+      begin
+         return new Facets_Type;
+      end Get_Facets_Description;
+
+   end Generic_Simple_Validator;
+
+   ------------------
+   -- Simple types --
+   ------------------
+
+   package Time_Facets_Package is new Generic_Range_Facets ("time", Time_T);
+   package Time_Validators is new Generic_Simple_Validator
+     (Time_Facets_Package.Range_Facets_Description);
+
+   package Date_Time_Facets_Package is new Generic_Range_Facets
+     ("dateTime", Time_T);
+   package Date_Time_Validators is new Generic_Simple_Validator
+     (Date_Time_Facets_Package.Range_Facets_Description);
+
+   package Float_Facets_Package is new Generic_Range_Facets
+     ("float", Long_Long_Float, Long_Long_Float'Value, Long_Long_Float'Image);
+   type Float_Facets_Description is
+     new Float_Facets_Package.Range_Facets_Description with null record;
+   procedure Check_Facet
+     (Facets      : in out Float_Facets_Description;
+      Facet_Value : Unicode.CES.Byte_Sequence);
+   package Float_Validators is new Generic_Simple_Validator
+     (Float_Facets_Description);
+
+   package Integer_Facets_Package is new Generic_Range_Facets
+     ("integer",
+      Long_Long_Integer, Long_Long_Integer'Value, Long_Long_Integer'Image);
+   type Integer_Facets_Description is new
+     Integer_Facets_Package.Range_Facets_Description
+   with record
+      Total_Digits    : Positive := Positive'Last;
+      Fraction_Digits : Natural  := Natural'Last;
+   end record;
+   procedure Add_Facet
+     (Facets      : in out Integer_Facets_Description;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence;
+      Applied     : out Boolean);
+   procedure Check_Facet
+     (Facets      : in out Integer_Facets_Description;
+      Facet_Value : Unicode.CES.Byte_Sequence);
+   package Integer_Validators is new Generic_Simple_Validator
+     (Integer_Facets_Description);
+
+   type Boolean_Validator_Record is new Any_Simple_XML_Validator_Record with
+      record
+         Facets : Common_Facets_Description;
+      end record;
+   procedure Validate_Characters
+     (Validator     : access Boolean_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
+   procedure Add_Facet
+     (Validator   : access Boolean_Validator_Record;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence);
+   procedure Free (Validator : in out Boolean_Validator_Record);
+   --   See doc from inherited subprograms
+
+   ----------------------
+   -- String_Validator --
+   ----------------------
+
+   type String_Facets_Description is new Common_Facets_Description with record
+      Length      : Natural            := Natural'Last;
+      Min_Length  : Natural            := 0;
+      Max_Length  : Natural            := Natural'Last;
+   end record;
+   procedure Add_Facet
+     (Facets      : in out String_Facets_Description;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence;
+      Applied     : out Boolean);
+   procedure Check_Facet
+     (Facets : in out String_Facets_Description;
+      Value  : Unicode.CES.Byte_Sequence);
+   --  See doc for inherited subprograms
+
+   type String_Validator_Record is new Any_Simple_XML_Validator_Record with
+      record
+         Facets : String_Facets_Description;
+      end record;
+   type String_Validator is access all String_Validator_Record'Class;
+   procedure Validate_Characters
+     (Validator     : access String_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
+   procedure Add_Facet
+     (Validator   : access String_Validator_Record;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence);
+   procedure Free (Validator : in out String_Validator_Record);
+   function Get_Facets_Description
+     (Validator : access String_Validator_Record)
+      return Facets_Description;
+   --  See doc from inherited subprograms
 
    -----------------
    -- Check_Facet --
@@ -22,15 +328,17 @@ package body Schema.Validators.Simple_Types is
 
    procedure Check_Facet
      (Facets : in out Integer_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence)
+      Facet_Value  : Unicode.CES.Byte_Sequence)
    is
+      use Integer_Facets_Package;
       Val    : Long_Long_Integer;
       ValF   : Long_Long_Float;
+      pragma Unreferenced (Val);
    begin
-      Check_Facet (Facets.Facets, Value);
+      Check_Facet (Range_Facets_Description (Facets), Facet_Value);
 
       if Facets.Mask (Facet_Total_Digits)
-        and then Value'Length /= Facets.Total_Digits
+        and then Facet_Value'Length /= Facets.Total_Digits
       then
          Validation_Error
            ("The maximum number of digits is"
@@ -38,9 +346,9 @@ package body Schema.Validators.Simple_Types is
       end if;
 
       if Facets.Mask (Facet_Fraction_Digits) then
-         for V in Value'Range loop
-            if Value (V) = '.' then
-               if Value'Last - V > Facets.Fraction_Digits then
+         for V in Facet_Value'Range loop
+            if Facet_Value (V) = '.' then
+               if Facet_Value'Last - V > Facets.Fraction_Digits then
                   Validation_Error ("Too many digits in the fractional part");
                end if;
             end if;
@@ -48,14 +356,14 @@ package body Schema.Validators.Simple_Types is
 
          if Facets.Fraction_Digits = 0 then
             begin
-               Val := Long_Long_Integer'Value (Value);
+               Val := Long_Long_Integer'Value (Facet_Value);
             exception
                when Constraint_Error =>
                   Validation_Error ("Value must be an integer");
             end;
          else
             begin
-               ValF := Long_Long_Float'Value (Value);
+               ValF := Long_Long_Float'Value (Facet_Value);
                Val  := Long_Long_Integer (ValF);
             exception
                when Constraint_Error =>
@@ -65,60 +373,14 @@ package body Schema.Validators.Simple_Types is
 
       else
          begin
-            ValF := Long_Long_Float'Value (Value);
+            ValF := Long_Long_Float'Value (Facet_Value);
             Val  := Long_Long_Integer (ValF);
          exception
             when Constraint_Error =>
                Validation_Error ("Must have a decimal value");
          end;
       end if;
-
-      if Facets.Mask (Facet_Max_Inclusive)
-        and then Facets.Max_Inclusive < Val
-      then
-         Validation_Error
-           (Value & " is too big, maxInclusive is set to"
-            & Long_Long_Integer'Image (Facets.Max_Inclusive));
-      end if;
-
-      if Facets.Mask (Facet_Max_Exclusive)
-        and then Facets.Max_Exclusive <= Val
-      then
-         Validation_Error
-           (Value & " is too big, maxExclusive is set to"
-            & Long_Long_Integer'Image (Facets.Max_Exclusive));
-      end if;
-
-      if Facets.Mask (Facet_Min_Inclusive)
-        and then Facets.Min_Inclusive > Val
-      then
-         Validation_Error
-           (Value & " is too small, minInclusive is set to"
-            & Long_Long_Integer'Image (Facets.Min_Inclusive));
-      end if;
-
-      if Facets.Mask (Facet_Min_Exclusive)
-        and then Facets.Min_Exclusive >= Val
-      then
-         Validation_Error
-           (Value & " is too small, minExclusive is set to"
-            & Long_Long_Integer'Image (Facets.Min_Exclusive));
-      end if;
    end Check_Facet;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access Integer_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
-   is
-      pragma Unreferenced (Empty_Element);
-   begin
-      Check_Facet (Validator.Facets, Ch);
-   end Validate_Characters;
 
    ---------------
    -- Add_Facet --
@@ -128,9 +390,13 @@ package body Schema.Validators.Simple_Types is
      (Facets      : in out Integer_Facets_Description;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
-      Applied     : out Boolean) is
+      Applied     : out Boolean)
+   is
+      use Integer_Facets_Package;
    begin
-      Add_Facet (Facets.Facets, Facet_Name, Facet_Value, Applied);
+      Add_Facet
+        (Integer_Facets_Package.Range_Facets_Description (Facets), Facet_Name,
+         Facet_Value, Applied);
       if Applied then
          null;
       elsif Facet_Name = "totalDigits" then
@@ -141,45 +407,12 @@ package body Schema.Validators.Simple_Types is
          Facets.Fraction_Digits := Integer'Value (Facet_Value);
          Facets.Mask (Facet_Fraction_Digits) := True;
          Applied := True;
-      elsif Facet_Name = "maxInclusive" then
-         Facets.Max_Inclusive := Long_Long_Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Max_Inclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "maxExclusive" then
-         Facets.Max_Exclusive := Long_Long_Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Max_Exclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "minInclusive" then
-         Facets.Min_Inclusive := Long_Long_Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Min_Inclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "minExclusive" then
-         Facets.Min_Exclusive := Long_Long_Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Min_Exclusive) := True;
-         Applied := True;
       else
          Applied := False;
       end if;
    exception
       when Constraint_Error =>
          Applied := False;
-   end Add_Facet;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access Integer_Validator_Record;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence)
-   is
-      Applies : Boolean;
-   begin
-      Add_Facet (Validator.Facets, Facet_Name, Facet_Value, Applies);
-      if not Applies then
-         Validation_Error ("Invalid facet: " & Facet_Name);
-      end if;
    end Add_Facet;
 
    -------------------------
@@ -229,19 +462,6 @@ package body Schema.Validators.Simple_Types is
    ----------------------------
 
    function Get_Facets_Description
-     (Validator : access Integer_Validator_Record)
-      return Facets_Description
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return new Integer_Facets_Description;
-   end Get_Facets_Description;
-
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
-
-   function Get_Facets_Description
      (Validator : access String_Validator_Record)
       return Facets_Description
    is
@@ -249,37 +469,6 @@ package body Schema.Validators.Simple_Types is
    begin
       return new String_Facets_Description;
    end Get_Facets_Description;
-
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
-
-   function Get_Facets_Description
-     (Validator : access Time_Validator_Record)
-      return Facets_Description
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return new Time_Facets_Description;
-   end Get_Facets_Description;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out Integer_Validator_Record) is
-   begin
-      Free (Validator.Facets);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Facets : in out Integer_Facets_Description) is
-   begin
-      Free (Facets.Facets);
-   end Free;
 
    ----------
    -- Free --
@@ -294,36 +483,9 @@ package body Schema.Validators.Simple_Types is
    -- Free --
    ----------
 
-   procedure Free (Validator : in out Time_Validator_Record) is
-   begin
-      Free (Validator.Facets);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Facets : in out Time_Facets_Description) is
-   begin
-      Free (Facets.Facets);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
    procedure Free (Validator : in out String_Validator_Record) is
    begin
       Free (Validator.Facets);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Facets : in out String_Facets_Description) is
-   begin
-      Free (Facets.Facets);
    end Free;
 
    -----------------
@@ -336,7 +498,7 @@ package body Schema.Validators.Simple_Types is
    is
       Length : Integer;
    begin
-      Check_Facet (Facets.Facets, Value);
+      Check_Facet (Common_Facets_Description (Facets), Value);
 
       if Facets.Mask (Facet_Length)
         or else Facets.Mask (Facet_Min_Length)
@@ -394,7 +556,8 @@ package body Schema.Validators.Simple_Types is
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean) is
    begin
-      Add_Facet (Facets.Facets, Facet_Name, Facet_Value, Applied);
+      Add_Facet (Common_Facets_Description (Facets), Facet_Name, Facet_Value,
+                 Applied);
       if Applied then
          null;
       elsif Facet_Name = "length" then
@@ -431,249 +594,17 @@ package body Schema.Validators.Simple_Types is
       end if;
    end Add_Facet;
 
-   ----------------
-   -- Time_Value --
-   ----------------
-
-   function Time_Value
-     (Ch : Unicode.CES.Byte_Sequence) return Ada.Calendar.Day_Duration
-   is
-      --  Format is "hh:mm:ss.sss[+-]hh:mm"
-      Dur : Day_Duration := 0.0;
-      Tmp : Integer;
-   begin
-      Tmp := Integer'Value (Ch (Ch'First .. Ch'First + 1));
-      Dur := Dur + Day_Duration (Tmp) * 3600.0;
-
-      if Ch (Ch'First + 2) /= ':' then
-         Validation_Error ("Invalid Time format: """ & Ch & """");
-      end if;
-
-      Tmp := Integer'Value (Ch (Ch'First + 3 .. Ch'First + 4));
-      Dur := Dur + Day_Duration (Tmp) * 60.0;
-
-      if Ch (Ch'First + 5) /= ':' then
-         Validation_Error ("Invalid Time format: """ & Ch & """");
-      end if;
-
-      Tmp := Integer'Value (Ch (Ch'First + 6 .. Ch'First + 7));
-      Dur := Dur + Day_Duration (Tmp);
-
-      if Ch'Length > 8 then
-         if Ch (Ch'First + 8) = '.' then
-            Tmp := Integer'Value (Ch (Ch'First + 9 .. Ch'First + 11));
-            Dur := Dur + Day_Duration (Tmp) / 1000.0;
-         end if;
-         --  ??? Timezones ignored
-      end if;
-
-      return Dur;
-
-   exception
-      when Constraint_Error =>
-         Validation_Error ("Invalid Time format: """ & Ch & """");
-         return 0.0;
-   end Time_Value;
-
-   --------------------------
-   -- Time_Component_Image --
-   --------------------------
-
-   function Time_Component_Image
-     (Value : Integer; Num_Digits : Natural := 2) return String
-   is
-      Str : constant String := Integer'Image (Value);
-      Padding : constant String (1 .. Num_Digits) := (others => '0');
-   begin
-      return Padding (1 .. Num_Digits - Str'Last + Str'First)
-        & Str (Str'First + 1 .. Str'Last);
-   end Time_Component_Image;
-
-   ----------------
-   -- Time_Image --
-   ----------------
-
-   function Time_Image
-     (Value : Day_Duration) return Unicode.CES.Byte_Sequence
-   is
-      Hour : constant Integer := Integer
-        (Float (Value) / 3600.0 - 0.5);
-      Min  : constant Integer :=
-        Integer ((Float (Value) - Float (Hour) * 3600.0) / 60.0 - 0.5);
-      Sec  : constant Integer := Integer
-        (Float (Value) - Float (Hour) * 3600.0 - Float (Min) * 60.0);
-      Sub_Sec : constant Integer := Integer
-        ((Float (Value) - Float (Hour) * 3600.0 - Float (Min) * 60.0
-         - Float (Sec)) * 1000.0);
-   begin
-      return Time_Component_Image (Hour) & ':'
-        & Time_Component_Image (Min) & ':'
-        & Time_Component_Image (Sec) & '.'
-        & Time_Component_Image (Sub_Sec, 3);
-   end Time_Image;
-
    -----------------
    -- Check_Facet --
    -----------------
 
    procedure Check_Facet
-     (Facets : in out Time_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence)
-   is
-      Val : Ada.Calendar.Day_Duration;
-   begin
-      Check_Facet (Facets.Facets, Value);
-
-      Val := Time_Value (Value);
-
-      if Facets.Mask (Facet_Max_Exclusive)
-        and then Facets.Max_Exclusive <= Val
-      then
-         Validation_Error
-           (Value & " is too late, maxExclusive is set to "
-            & Time_Image (Facets.Max_Exclusive));
-      end if;
-
-      if Facets.Mask (Facet_Max_Inclusive)
-        and then Facets.Max_Inclusive < Val
-      then
-         Validation_Error
-           (Value & " is too late, maxInclusive is set to "
-            & Time_Image (Facets.Max_Inclusive));
-      end if;
-
-      if Facets.Mask (Facet_Min_Inclusive)
-        and then Facets.Min_Inclusive > Val
-      then
-         Validation_Error
-           (Value & " is too early, minInclusive is set to "
-            & Time_Image (Facets.Min_Inclusive));
-      end if;
-
-      if Facets.Mask (Facet_Min_Exclusive)
-        and then Facets.Min_Exclusive > Val
-      then
-         Validation_Error
-           (Value & " is too early, minExclusive is set to "
-            & Time_Image (Facets.Min_Exclusive));
-      end if;
-   end Check_Facet;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access Time_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
-   is
-      pragma Unreferenced (Empty_Element);
-   begin
-      Check_Facet (Validator.Facets, Ch);
-   end Validate_Characters;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Facets      : in out Time_Facets_Description;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence;
-      Applied     : out Boolean) is
-   begin
-      Add_Facet (Facets.Facets, Facet_Name, Facet_Value, Applied);
-      if Applied then
-         null;
-      elsif Facet_Name = "maxInclusive" then
-         Facets.Max_Inclusive := Time_Value (Facet_Value);
-         Facets.Mask (Facet_Max_Inclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "maxExclusive" then
-         Facets.Max_Exclusive := Time_Value (Facet_Value);
-         Facets.Mask (Facet_Max_Exclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "minInclusive" then
-         Facets.Min_Inclusive := Time_Value (Facet_Value);
-         Facets.Mask (Facet_Min_Inclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "minExclusive" then
-         Facets.Min_Exclusive := Time_Value (Facet_Value);
-         Facets.Mask (Facet_Min_Exclusive) := True;
-         Applied := True;
-      else
-         Applied := False;
-      end if;
-   end Add_Facet;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access Time_Validator_Record;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+     (Facets      : in out Float_Facets_Description;
       Facet_Value : Unicode.CES.Byte_Sequence)
    is
-      Applies : Boolean;
+      use Float_Facets_Package;
    begin
-      Add_Facet (Validator.Facets, Facet_Name, Facet_Value, Applies);
-      if not Applies then
-         Validation_Error ("Invalid facet: " & Facet_Name);
-      end if;
-   end Add_Facet;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Facets      : in out Float_Facets_Description;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence;
-      Applied     : out Boolean) is
-   begin
-      Add_Facet (Facets.Common, Facet_Name, Facet_Value, Applied);
-      if Applied then
-         null;
-      elsif Facet_Name = "minInclusive" then
-         Facets.Min_Inclusive := Long_Long_Float'Value (Facet_Value);
-         Facets.Mask (Facet_Min_Inclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "maxInclusive" then
-         Facets.Max_Inclusive := Long_Long_Float'Value (Facet_Value);
-         Facets.Mask (Facet_Max_Inclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "minExclusive" then
-         Facets.Min_Exclusive := Long_Long_Float'Value (Facet_Value);
-         Facets.Mask (Facet_Min_Exclusive) := True;
-         Applied := True;
-      elsif Facet_Name = "maxExclusive" then
-         Facets.Max_Exclusive := Long_Long_Float'Value (Facet_Value);
-         Facets.Mask (Facet_Max_Exclusive) := True;
-         Applied := True;
-      else
-         Applied := False;
-      end if;
-   exception
-      when Constraint_Error =>
-         Applied := False;
-   end Add_Facet;
-
-   -----------------
-   -- Check_Facet --
-   -----------------
-
-   procedure Check_Facet
-     (Facets : in out Float_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence)
-   is
-      Val : Long_Long_Float;
-   begin
-      Check_Facet (Facets.Common, Value);
-
-      if Value = "NaN" then
+      if Facet_Value = "NaN" then
          if Facets.Mask (Facet_Max_Inclusive)
            or Facets.Mask (Facet_Max_Exclusive)
          then
@@ -681,7 +612,7 @@ package body Schema.Validators.Simple_Types is
               ("NaN is greater than all numbers, and too big in this context");
          end if;
 
-      elsif Value = "INF" then
+      elsif Facet_Value = "INF" then
          if Facets.Mask (Facet_Max_Inclusive)
            or Facets.Mask (Facet_Max_Exclusive)
          then
@@ -689,108 +620,345 @@ package body Schema.Validators.Simple_Types is
               ("INF is greater than maxInclusive and maxExclusive");
          end if;
 
-      elsif Value = "-INF" then
+      elsif Facet_Value = "-INF" then
          if Facets.Mask (Facet_Min_Inclusive)
            or Facets.Mask (Facet_Min_Exclusive)
          then
             Validation_Error
               ("-INF is smaller than minInclusive and minExclusive");
          end if;
-
-      else
-         begin
-            Val := Long_Long_Float'Value (Value);
-         exception
-            when Constraint_Error =>
-               Validation_Error ("Expecting a floating number");
-         end;
-
-         if Facets.Mask (Facet_Min_Inclusive)
-           and then Facets.Min_Inclusive > Val
-         then
-            Validation_Error (Value & " is smaller than minInclusive");
-         end if;
-
-         if Facets.Mask (Facet_Min_Exclusive)
-           and then Facets.Min_Exclusive >= Val
-         then
-            Validation_Error (Value & " is smaller than minExclusive");
-         end if;
-
-         if Facets.Mask (Facet_Max_Inclusive)
-           and then Facets.Max_Inclusive < Val
-         then
-            Validation_Error (Value & " is greater than maxInclusive");
-         end if;
-
-         if Facets.Mask (Facet_Max_Exclusive)
-           and then Facets.Max_Exclusive <= Val
-         then
-            Validation_Error (Value & " is greater than maxExclusive");
-         end if;
       end if;
+
+      Check_Facet
+        (Float_Facets_Package.Range_Facets_Description (Facets), Facet_Value);
    end Check_Facet;
 
-   ----------
-   -- Free --
-   ----------
+   -------------------------------
+   -- Register_Predefined_Types --
+   -------------------------------
 
-   procedure Free (Facets : in out Float_Facets_Description) is
+   procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS) is
+      use Integer_Validators;
+      Tmp     : XML_Validator;
+      Str     : String_Validator;
+      Int     : Integer_Validators.Validator;
+      Created : XML_Type;
    begin
-      Free (Facets.Common);
-   end Free;
+      Tmp := new Boolean_Validator_Record;
+      Create_Global_Type (G, "boolean", Tmp);
+
+      Str := new String_Validator_Record;
+      Create_Global_Type (G, "string", Str);
+
+      Str := new String_Validator_Record;
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_QName'Access);
+      Create_Global_Type (G, "QName", Str);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Replace);
+      Create_Global_Type (G, "normalizeString", Str);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Create_Global_Type (G, "token", Str);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_Language_Name'Access);
+      Created := Create_Global_Type (G, "language", Str);
+      Create_Global_Attribute (XML_G, "lang", Created);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_Nmtoken'Access);
+      Create_Global_Type (G, "NMTOKEN", Str);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_Name'Access);
+      Create_Global_Type (G, "Name", Str);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
+      Create_Global_Type (G, "NCName", Str);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
+      Create_Global_Type (G, "ID", Str);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
+      Create_Global_Type (G, "IDREF", Str);
+
+      Str := new String_Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
+      Create_Global_Type (G, "ENTITY", Str);
+
+      Int := new Integer_Validators.Validator_Record;
+      Create_Global_Type (G, "decimal", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Create_Global_Type (G, "integer", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Max_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive := 0;
+      Create_Global_Type (G, "nonPositiveInteger", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Max_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive   := -1;
+      Create_Global_Type (G, "negativeInteger", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Max_Inclusive   => True,
+                          Facet_Min_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive   := +9_223_372_036_854_775_807;
+      Int.Facets.Min_Inclusive   := -9_223_372_036_854_775_808;
+      Create_Global_Type (G, "long", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Max_Inclusive   => True,
+                          Facet_Min_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive := +2_147_483_647;
+      Int.Facets.Min_Inclusive := -2_147_483_648;
+      Create_Global_Type (G, "int", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Max_Inclusive   => True,
+                          Facet_Min_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive := +32_767;
+      Int.Facets.Min_Inclusive := -32_768;
+      Create_Global_Type (G, "short", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Max_Inclusive   => True,
+                          Facet_Min_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive := +127;
+      Int.Facets.Min_Inclusive := -128;
+      Create_Global_Type (G, "byte", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Min_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Min_Inclusive := 0;
+      Create_Global_Type (G, "nonNegativeInteger", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Min_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Min_Inclusive := 1;
+      Create_Global_Type (G, "positiveInteger", Int);
+
+--        Tmp := new Common_Simple_XML_Validator;
+--        Tmp.Facets.Settable := Integer_Facets;
+--        Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
+--        Tmp.Facets.Fraction_Digits := 0;
+--        Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
+--        Tmp.Facets.Max_Inclusive := +18_446_744_073_709_551_615;
+--        Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
+--        Tmp.Facets.Min_Inclusive := 0;
+--        Create_Global_Type (G, Create_Type ("unsignedLong", Tmp));
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Min_Inclusive   => True,
+                          Facet_Max_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive := +4_294_967_295;
+      Int.Facets.Min_Inclusive := 0;
+      Create_Global_Type (G, "unsignedInt", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Min_Inclusive   => True,
+                          Facet_Max_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive := +65_535;
+      Int.Facets.Min_Inclusive := 0;
+      Create_Global_Type (G, "unsignedShort", Int);
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+                          Facet_Min_Inclusive   => True,
+                          Facet_Max_Inclusive   => True,
+                          others                => False);
+      Int.Facets.Fraction_Digits := 0;
+      Int.Facets.Max_Inclusive := +255;
+      Int.Facets.Min_Inclusive := 0;
+      Create_Global_Type (G, "unsignedByte", Int);
+
+      Tmp := new Time_Validators.Validator_Record;
+      Create_Global_Type (G, "time", Tmp);
+
+      Tmp := new Float_Validators.Validator_Record;
+      Create_Global_Type (G, "float", Tmp);
+
+      Tmp := new Date_Time_Validators.Validator_Record;
+      Create_Global_Type (G, "dateTime", Tmp);
+
+      --  ??? Incorrect below
+
+      Tmp := new Time_Validators.Validator_Record;
+      Create_Global_Type (G, "date", Tmp);
+
+   end Register_Predefined_Types;
+
+   ----------------------------
+   -- Validate_Start_Element --
+   ----------------------------
+
+   procedure Validate_Start_Element
+     (Validator             : access Any_Simple_XML_Validator_Record;
+      Local_Name             : Unicode.CES.Byte_Sequence;
+      Namespace_URI          : Unicode.CES.Byte_Sequence;
+      NS                     : XML_Grammar_NS;
+      Data                   : Validator_Data;
+      Schema_Target_NS       : XML_Grammar_NS;
+      Element_Validator      : out XML_Element)
+   is
+      pragma Unreferenced
+        (Validator, Data, Namespace_URI, NS, Schema_Target_NS);
+   begin
+      Validation_Error
+        ("Must be a simple type, no <" & Local_Name & "> child allowed");
+      Element_Validator := No_Element;
+   end Validate_Start_Element;
+
+   --------------------------
+   -- Validate_End_Element --
+   --------------------------
+
+   procedure Validate_End_Element
+     (Validator      : access Any_Simple_XML_Validator_Record;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Data           : Validator_Data)
+   is
+      pragma Unreferenced (Validator, Local_Name, Data);
+   begin
+      null;
+   end Validate_End_Element;
+
+   ---------------
+   -- Add_Union --
+   ---------------
+
+   procedure Add_Union
+     (Validator : access XML_Union_Record;
+      Part      : XML_Type) is
+   begin
+      Append
+        (Validator.Unions, XML_Particle'
+           (Typ        => Particle_XML_Type,
+            Type_Descr => Part,
+            Next       => null,
+            Min_Occurs => 1,
+            Max_Occurs => 1));
+   end Add_Union;
 
    -------------------------
    -- Validate_Characters --
    -------------------------
 
    procedure Validate_Characters
-     (Validator     : access Float_Validator_Record;
+     (Union         : access XML_Union_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean)
    is
-      pragma Unreferenced (Empty_Element);
+      Iter : Particle_Iterator;
+      Valid : XML_Validator;
    begin
-      Check_Facet (Validator.Facets, Ch);
-   end Validate_Characters;
+      Debug_Output ("Validate_Characters for union --" & Ch & "--"
+                    & Get_Name (Union));
 
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access Float_Validator_Record;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence)
-   is
-      Applies : Boolean;
-   begin
-      Add_Facet (Validator.Facets, Facet_Name, Facet_Value, Applies);
-      if not Applies then
-         Validation_Error ("Invalid facet: " & Facet_Name);
+      if Union.Unions = null then
+         if Empty_Element then
+            return;
+         else
+            Validation_Error ("No content allowed for this union");
+         end if;
       end if;
-   end Add_Facet;
 
-   ----------
-   -- Free --
-   ----------
+      Iter := Start (Union.Unions);
+      while Get (Iter) /= null loop
+         begin
+            Valid := Get_Validator (Get (Iter).Type_Descr);
+            if Valid /= null then
+               Validate_Characters (Valid, Ch, Empty_Element);
+            end if;
 
-   procedure Free (Validator : in out Float_Validator_Record) is
-   begin
-      Free (Validator.Facets);
-   end Free;
+            --  No error ? => Everything is fine
+            return;
+
+         exception
+            when XML_Validation_Error =>
+               null;
+         end;
+
+         Next (Iter);
+      end loop;
+
+      Validation_Error ("Invalid value """ & Ch & """");
+   end Validate_Characters;
 
    ----------------------------
    -- Get_Facets_Description --
    ----------------------------
 
    function Get_Facets_Description
-     (Validator : access Float_Validator_Record)
+     (Validator : access Any_Simple_XML_Validator_Record)
       return Facets_Description
    is
       pragma Unreferenced (Validator);
    begin
-      return new Float_Facets_Description;
+      return new Common_Facets_Description;
    end Get_Facets_Description;
+
+   ------------------------
+   -- Check_Content_Type --
+   ------------------------
+
+   procedure Check_Content_Type
+     (Validator        : access Any_Simple_XML_Validator_Record;
+      Should_Be_Simple : Boolean)
+   is
+      pragma Unreferenced (Validator);
+   begin
+      if not Should_Be_Simple then
+         Validation_Error
+           ("Expecting simple type, got complex type");
+      end if;
+   end Check_Content_Type;
 
 end Schema.Validators.Simple_Types;
