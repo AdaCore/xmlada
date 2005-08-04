@@ -1,3 +1,8 @@
+New features in New version
+
+- E802-003 Added support for time-related types, like dateTime, time, date,...
+
+
 New features in version 2.0
 
 - Initial support for schema validation is now provided.
