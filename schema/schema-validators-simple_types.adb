@@ -244,6 +244,11 @@ package body Schema.Validators.Simple_Types is
    package Date_Validators is new Generic_Simple_Validator
      (Date_Facets_Package.Range_Facets_Description);
 
+   package Duration_Facets_Package is new Generic_Range_Facets
+     ("duration", Duration_T);
+   package Duration_Validators is new Generic_Simple_Validator
+     (Duration_Facets_Package.Range_Facets_Description);
+
    package Float_Facets_Package is new Generic_Range_Facets
      ("float", Long_Long_Float, Long_Long_Float'Value, Long_Long_Float'Image);
    type Float_Facets_Description is
@@ -835,6 +840,9 @@ package body Schema.Validators.Simple_Types is
 
       Tmp := new Date_Validators.Validator_Record;
       Create_Global_Type (G, "date", Tmp);
+
+      Tmp := new Duration_Validators.Validator_Record;
+      Create_Global_Type (G, "duration", Tmp);
    end Register_Predefined_Types;
 
    ----------------------------
