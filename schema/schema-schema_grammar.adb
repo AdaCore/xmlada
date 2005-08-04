@@ -13,7 +13,7 @@ package body Schema.Schema_Grammar is
       All_Validator              : XML_Type;
       Elem                       : XML_Element;
       Gr                         : XML_Group;
-      Union, Union2              : XML_Union;
+      Union, Union2              : XML_Validator;
       Attr                       : XML_Attribute_Group;
    begin
       Initialize (Grammar);

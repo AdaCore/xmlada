@@ -86,7 +86,7 @@ private
             --  Extension_Base set to null if Extension is the result of the
             --  call to Extension_Of already
          when Context_Union =>
-            Union : Schema.Validators.XML_Union;
+            Union : Schema.Validators.XML_Validator;
          when Context_List =>
             List_Items : Schema.Validators.XML_Type;
          when Context_Attribute =>
