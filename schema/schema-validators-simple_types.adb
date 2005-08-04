@@ -235,7 +235,7 @@ package body Schema.Validators.Simple_Types is
      (Time_Facets_Package.Range_Facets_Description);
 
    package Date_Time_Facets_Package is new Generic_Range_Facets
-     ("dateTime", Time_T);
+     ("dateTime", Date_Time_T);
    package Date_Time_Validators is new Generic_Simple_Validator
      (Date_Time_Facets_Package.Range_Facets_Description);
 
