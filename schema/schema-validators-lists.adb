@@ -1,16 +1,9 @@
-with Schema.Validators.Facets; use Schema.Validators.Facets;
+with Schema.Validators.Facets;       use Schema.Validators.Facets;
+with Schema.Validators.Simple_Types; use  Schema.Validators.Simple_Types;
 
 package body Schema.Validators.Lists is
 
-   type List_Facets_Names is (Facet_Length,
-                              Facet_Min_Length,
-                              Facet_Max_Length);
-   type List_Facets_Mask is array (List_Facets_Names) of Boolean;
-   pragma Pack (List_Facets_Mask);
-
-   type List_Facets_Description is new Facets_Description_Record with record
-      Common     : Common_Facets_Description;
-      Mask       : List_Facets_Mask := (others => False);
+   type List_Facets_Description is new Common_Facets_Description with record
       Length     : Natural;
       Min_Length : Natural;
       Max_Length : Natural;
@@ -23,7 +16,6 @@ package body Schema.Validators.Lists is
    procedure Check_Facet
      (Facets : in out List_Facets_Description;
       Value  : Unicode.CES.Byte_Sequence);
-   procedure Free (Facets : in out List_Facets_Description);
 
    type List_Validator_Record is new Any_Simple_XML_Validator_Record with
       record
@@ -51,7 +43,8 @@ package body Schema.Validators.Lists is
       Applied     : out Boolean)
    is
    begin
-      Add_Facet (Facets.Common, Facet_Name, Facet_Value, Applied);
+      Add_Facet
+        (Common_Facets_Description (Facets), Facet_Name, Facet_Value, Applied);
       if Applied then
          null;
       elsif Facet_Name = "length" then
@@ -81,7 +74,7 @@ package body Schema.Validators.Lists is
    is
       Length : Natural := 1;
    begin
-      Check_Facet (Facets.Common, Value);
+      Check_Facet (Common_Facets_Description (Facets), Value);
 
       --  Ch has already been normalized by the SAX parser
       for C in Value'Range loop
@@ -113,15 +106,6 @@ package body Schema.Validators.Lists is
             & Integer'Image (Facets.Max_Length));
       end if;
    end Check_Facet;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Facets : in out List_Facets_Description) is
-   begin
-      Free (Facets.Common);
-   end Free;
 
    ----------
    -- Free --
