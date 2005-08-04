@@ -124,6 +124,13 @@ procedure Test_Date_Time is
    Time14_Image : constant String := "2000-01-16T12:00:00Z";
    T14          : constant Date_Time_T := Value (Time14_Image);
 
+   --  From E802-003
+   T15_Image    : constant String := "2001-12-17T09:30:47-05:00";
+   T15          : constant Date_Time_T := Value (T15_Image);
+
+   T16_Image    : constant String := "03:58:02.5";
+   T16          : constant Time_T := Value (T16_Image);
+
    Duration1_Image : constant String := "P1Y3M5DT7H10M3.3S";
    Duration2_Image : constant String := "-P1Y";
    Duration3_Image : constant String := "-PT1H";
@@ -160,20 +167,19 @@ begin
    Assert (Time1_Image, Image (Time1));
    Assert (Time2_Image, Image (Time2));
    Assert (Time3_Image, Image (Date_Time_T'(Value (Time3_Image))));
-
-   --  This one could be better, but the standard only requires support for
-   --  milliseconds.
-   Assert ("2002-01-12T12:13:14.123-05:02",
+   Assert (T15_Image, Image (T15));
+   Assert (T16_Image, Image (T16));
+   Assert ("2002-01-12T12:13:14.1234-05:02",
            Image (Date_Time_T'(Value (Time4_Image))));
 
-   Assert ("P1Y3M5DT7H10M3.300S", Image (Dur1));
+   Assert ("P1Y3M5DT7H10M3.3S", Image (Dur1));
    Assert ("-P1Y", Image (Duration_T'(Value (Duration2_Image))));
    Assert ("-PT1H", Image (Duration_T'(Value (Duration3_Image))));
    Assert ("-P1M", Image (Duration_T'(Value (Duration4_Image))));
    Assert ("-P1M1D", Image (Duration_T'(Value (Duration5_Image))));
 
-   Assert ("2001-04-17T19:23:17.300Z", Image (Time1 + Dur1));
-   Assert ("12346-04-17T19:23:17.300", Image (Time2 + Dur1));
+   Assert ("2001-04-17T19:23:17.3Z", Image (Time1 + Dur1));
+   Assert ("12346-04-17T19:23:17.3", Image (Time2 + Dur1));
 
    --  Basic comparison tests
    Assert (Time1, Time2, '<');

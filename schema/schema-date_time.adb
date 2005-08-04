@@ -284,7 +284,7 @@ package body Schema.Date_Time is
 
       if Ch (Pos) /= '-'
         or else Ch (Pos + 3) /= '-'
-        or else Ch (Pos + 6) /= 'T'
+        or else (Pos + 6 <= Ch'Last and then Ch (Pos + 6) /= 'T')
       then
          Validation_Error ("Invalid separator in date value """ & Ch & """");
          Date := No_Date_NZ;
@@ -306,7 +306,7 @@ package body Schema.Date_Time is
       when Constraint_Error =>
          Validation_Error ("Invalid date """ & Ch & """");
          Date := No_Date_NZ;
-         Eos      := Ch'Last + 1;
+         Eos  := Ch'Last + 1;
    end Parse;
 
    -----------

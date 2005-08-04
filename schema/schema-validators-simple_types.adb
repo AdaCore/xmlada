@@ -239,6 +239,11 @@ package body Schema.Validators.Simple_Types is
    package Date_Time_Validators is new Generic_Simple_Validator
      (Date_Time_Facets_Package.Range_Facets_Description);
 
+   package Date_Facets_Package is new Generic_Range_Facets
+     ("date", Date_T);
+   package Date_Validators is new Generic_Simple_Validator
+     (Date_Facets_Package.Range_Facets_Description);
+
    package Float_Facets_Package is new Generic_Range_Facets
      ("float", Long_Long_Float, Long_Long_Float'Value, Long_Long_Float'Image);
    type Float_Facets_Description is
@@ -819,20 +824,17 @@ package body Schema.Validators.Simple_Types is
       Int.Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "unsignedByte", Int);
 
-      Tmp := new Time_Validators.Validator_Record;
-      Create_Global_Type (G, "time", Tmp);
-
       Tmp := new Float_Validators.Validator_Record;
       Create_Global_Type (G, "float", Tmp);
+
+      Tmp := new Time_Validators.Validator_Record;
+      Create_Global_Type (G, "time", Tmp);
 
       Tmp := new Date_Time_Validators.Validator_Record;
       Create_Global_Type (G, "dateTime", Tmp);
 
-      --  ??? Incorrect below
-
-      Tmp := new Time_Validators.Validator_Record;
+      Tmp := new Date_Validators.Validator_Record;
       Create_Global_Type (G, "date", Tmp);
-
    end Register_Predefined_Types;
 
    ----------------------------
