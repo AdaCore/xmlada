@@ -862,6 +862,9 @@ package body Schema.Validators.Simple_Types is
       Tmp := new Float_Validators.Validator_Record;
       Create_Global_Type (G, "float", Tmp);
 
+      Tmp := new Float_Validators.Validator_Record;
+      Create_Global_Type (G, "double", Tmp);
+
       Tmp := new Time_Validators.Validator_Record;
       Create_Global_Type (G, "time", Tmp);
 
