@@ -266,7 +266,7 @@ package body Schema.Validators.Simple_Types is
      Decimal_Facets_Package.Range_Facets_Description with
       record
          Total_Digits    : Positive := Positive'Last;
-         Fraction_Digits : Positive := Positive'Last;
+         Fraction_Digits : Natural := Natural'Last;
       end record;
    procedure Add_Facet
      (Facets      : in out Decimal_Facets_Description;
@@ -450,6 +450,8 @@ package body Schema.Validators.Simple_Types is
       end if;
    exception
       when Constraint_Error =>
+         Debug_Output ("Constraint_Error when setting facet "
+                       & Facet_Name & " " & Facet_Value);
          Applied := False;
    end Add_Facet;
 
