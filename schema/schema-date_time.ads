@@ -20,6 +20,7 @@ package Schema.Date_Time is
    type Date_Time_T is private;  --  A date and time, with timezone
    type Date_T      is private;  --  A date, with timezone
    type Time_T      is private;  --  A time, with timezone
+   type GDay_T      is private;  --  A day in a month
 
    function Image (Date : Date_Time_T) return String;
    --  Return the string representation of Date, as defined in the XML
@@ -30,15 +31,10 @@ package Schema.Date_Time is
    --  Duration type in Ada
 
    function Image (Duration : Duration_T) return String;
-   --  Return the string representation of Duration, as defined in the XML
-   --  schema standard, that is:
-   --       -PyyyyYmmM
-
    function Image (Time : Time_T) return String;
-   --  Return the string representation of the time
-
    function Image (Date : Date_T) return String;
-   --  Return the string representation of the date
+   function Image (Day  : GDay_T) return String;
+   --  Return the string representation of the argument
 
    function Value (Ch : String) return Duration_T;
    --  Return the duration stored in Ch. It should contain a string of the
@@ -52,6 +48,10 @@ package Schema.Date_Time is
    function Value (Ch : String) return Time_T;
    --  Return the time stored in Ch, which should contain a string with the
    --  format:   hh:mm:ss.sss+tz:tz
+
+   function Value (Ch : String) return GDay_T;
+   --  Return the day stored in Ch. This is a string with the format
+   --    --dd
 
    function Value (Ch : String) return Date_T;
    --  Return the date stored in Ch, which should contain a string with the
@@ -94,6 +94,14 @@ package Schema.Date_Time is
    --  Raises Not_Comparable if the two times are not comparable according
    --  to the XML Schema standard.
 
+   function "<"  (Day1, Day2 : GDay_T) return Boolean;
+   function "<=" (Day1, Day2 : GDay_T) return Boolean;
+   function "="  (Day1, Day2 : GDay_T) return Boolean;
+   function ">"  (Day1, Day2 : GDay_T) return Boolean;
+   function ">=" (Day1, Day2 : GDay_T) return Boolean;
+   --  Raises Not_Comparable if the two times are not comparable according
+   --  to the XML Schema standard.
+
    Not_Comparable : exception;
 
 private
@@ -109,6 +117,12 @@ private
    end record;
    No_Date_NZ : constant Date_NZ_T := (0, 0, 0);
    --  A non-timezoned date.
+
+   type GDay_T is record
+      Day : Integer;
+      TZ  : Timezone_T;
+   end record;
+   No_Gday : constant GDay_T := (0, 0);
 
    subtype Time_NZ_T is Day_Range;
    No_Time_NZ : constant Time_NZ_T := 0.0;

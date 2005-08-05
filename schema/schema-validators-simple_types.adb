@@ -240,6 +240,11 @@ package body Schema.Validators.Simple_Types is
    package Date_Time_Validators is new Generic_Simple_Validator
      (Date_Time_Facets_Package.Range_Facets_Description);
 
+   package GDay_Facets_Package is new Generic_Range_Facets
+     ("gDay", GDay_T);
+   package GDay_Validators is new Generic_Simple_Validator
+     (GDay_Facets_Package.Range_Facets_Description);
+
    package Date_Facets_Package is new Generic_Range_Facets
      ("date", Date_T);
    package Date_Validators is new Generic_Simple_Validator
@@ -870,6 +875,9 @@ package body Schema.Validators.Simple_Types is
 
       Tmp := new Date_Time_Validators.Validator_Record;
       Create_Global_Type (G, "dateTime", Tmp);
+
+      Tmp := new GDay_Validators.Validator_Record;
+      Create_Global_Type (G, "gDay", Tmp);
 
       Tmp := new Date_Validators.Validator_Record;
       Create_Global_Type (G, "date", Tmp);

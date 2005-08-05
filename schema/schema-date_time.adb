@@ -9,6 +9,8 @@ package body Schema.Date_Time is
    --  Parse the various components of dates.
    --  On exit, Eos is set to the first unused character in Ch, except for the
    --  timezone which must finish on the last character in Ch.
+   --  The No_* parameter indicate that the corresponding part should not be
+   --  found in Ch.
 
    function Image (Date : Date_NZ_T) return String;
    function Image (TZ : Timezone_T)  return String;
@@ -113,6 +115,15 @@ package body Schema.Date_Time is
       return Image (Date.Year, 4)
         & '-' & Image (abs (Date.Month), 2) & '-'
         & Image (abs (Date.Day), 2);
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Day  : GDay_T) return String is
+   begin
+      return "---" & Image (Day.Day, 2) & Image (Day.TZ);
    end Image;
 
    -----------
@@ -553,6 +564,28 @@ package body Schema.Date_Time is
       Parse (Ch, Result.Date, Eos);
       Parse (Ch (Eos .. Ch'Last), Result.TZ);
       return Result;
+   end Value;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Ch : String) return GDay_T is
+      Result : GDay_T;
+   begin
+      if Ch (Ch'First) /= '-'
+        or else Ch (Ch'First + 1) /= '-'
+        or else Ch (Ch'First + 2) /= '-'
+      then
+         Validation_Error ("Invalid date """ & Ch & """");
+      end if;
+      Result.Day := Integer'Value (Ch (Ch'First + 3 .. Ch'First + 4));
+      Parse (Ch (Ch'First + 5 .. Ch'Last), Result.TZ);
+      return Result;
+   exception
+      when Constraint_Error =>
+         Validation_Error ("Invalid date """ & Ch & """");
+         return No_Gday;
    end Value;
 
    -----------
@@ -1010,6 +1043,57 @@ package body Schema.Date_Time is
       return Date_Time_T'(Date1.Date, No_Time_NZ, Date1.TZ)
         >= Date_Time_T'(Date2.Date, No_Time_NZ, Date2.TZ);
    end ">=";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<"  (Day1, Day2 : GDay_T) return Boolean is
+   begin
+      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
+        < Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
+   end "<";
+
+   ----------
+   -- "<=" --
+   ----------
+
+   function "<="  (Day1, Day2 : GDay_T) return Boolean is
+   begin
+      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
+        <= Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
+   end "<=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "="  (Day1, Day2 : GDay_T) return Boolean is
+   begin
+      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
+        = Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
+   end "=";
+
+   ---------
+   -- ">" --
+   ---------
+
+   function ">"  (Day1, Day2 : GDay_T) return Boolean is
+   begin
+      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
+        > Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
+   end ">";
+
+   ----------
+   -- ">=" --
+   ----------
+
+   function ">="  (Day1, Day2 : GDay_T) return Boolean is
+   begin
+      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
+        >= Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
+   end ">=";
+
 
    package Date_Time_T_Comp is new Comparators (Date_Time_T);
    function "<" (Time1, Time2 : Date_Time_T)  return Boolean
