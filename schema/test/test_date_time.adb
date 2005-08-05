@@ -93,7 +93,6 @@ procedure Test_Date_Time is
       end if;
    end Assert;
 
-
    Time1_Image : constant String := "2000-01-12T12:13:14Z";
    Time2_Image : constant String := "12345-01-12T12:13:14";
    Time3_Image : constant String := "2002-01-12T12:13:14.123+05:02";
