@@ -88,7 +88,14 @@ private
 
       Data      : Schema.Validators.Validator_Data;
       Is_Nil    : Boolean;          --  Whether the element has xsi:nil="true"
-      Had_Character_Data : Boolean; --  Whether some character data was given
+
+      Start_Loc  : Sax.Locators.Locator_Impl_Access;
+      --  Set when starting a sequence of Characters call from the SAX parser
+      Characters : Unicode.CES.Byte_Sequence_Access;
+      --  The current stream of characters we have seen. We need to collapse
+      --  adjacent characters, so that we can validate the full contents of a
+      --  tag at once, and not by parts.
+
       Next      : Validator_List;
    end record;
 

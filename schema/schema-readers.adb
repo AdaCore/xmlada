@@ -48,10 +48,13 @@ package body Schema.Readers is
 
    procedure Internal_Characters
      (Handler : in out Validating_Reader;
-      Ch      : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
-   --  Internal version of Characters, that can deal with empty content for
-   --  elements
+      Ch      : Unicode.CES.Byte_Sequence);
+   --  Store Ch in the current sequence of characters. This is needed to
+   --  collapse multiple calls to Characters and Ignorable_Whitespace into a
+   --  single string, for validation purposes.
+
+   procedure Validate_Current_Characters (Handler : Validating_Reader'Class);
+   --  Validate the current set of characters
 
    procedure Free (Mapping : in out Prefix_Mapping_Access);
    --  Free the memory occupied by Mapping
@@ -138,7 +141,8 @@ package body Schema.Readers is
          Grammar => G,
          Data    => Data,
          Is_Nil  => Is_Nil,
-         Had_Character_Data => False,
+         Start_Loc  => null,
+         Characters => null,
          Next    => List);
    end Push;
 
@@ -150,6 +154,14 @@ package body Schema.Readers is
       Tmp : Validator_List := List;
    begin
       if List /= null then
+         if List.Start_Loc /= null then
+            Unref (List.Start_Loc);
+         end if;
+
+         if List.Characters /= null then
+            Free (List.Characters);
+         end if;
+
          Free (List.Data);
          List := List.Next;
 
@@ -298,6 +310,62 @@ package body Schema.Readers is
       end loop;
    end Parse_Grammars;
 
+   ---------------------------------
+   -- Validate_Current_Characters --
+   ---------------------------------
+
+   procedure Validate_Current_Characters (Handler : Validating_Reader'Class) is
+      Empty_Element : Boolean := False;
+   begin
+      --  If we were in the middle of a series of Characters callback, we need
+      --  to process them now
+
+      if Handler.Validators /= null then
+         if Handler.Validators.Characters = null
+           and then not Handler.Validators.Is_Nil
+         then
+            --  No character data => behave as an empty element, but we need to
+            --  test explicitely. For instance, the "minLength" facet might or
+            --  the "fixed" attribute need to test whether the empty string is
+            --  valid.
+            Handler.Validators.Characters := new Byte_Sequence'("");
+            Empty_Element := True;
+         end if;
+
+         if Handler.Validators.Characters /= null then
+            if Handler.Validators.Is_Nil then
+               if not Empty_Element then
+                  Free (Handler.Validators.Characters);
+                  Validation_Error
+                    ("Element has character data, but is declared as nil");
+               end if;
+
+            elsif Has_Fixed (Handler.Validators.Element) then
+               if Handler.Validators.Characters.all /=
+                 Get_Fixed (Handler.Validators.Element).all
+               then
+                  Free (Handler.Validators.Characters);
+                  Validation_Error
+                    ("Element's value must be """
+                     & Get_Fixed (Handler.Validators.Element).all & """");
+               end if;
+
+            else
+               Validate_Characters
+                 (Get_Validator (Get_Type (Handler.Validators.Element)),
+                  Handler.Validators.Characters.all,
+                  Empty_Element => Empty_Element);
+            end if;
+
+            Free (Handler.Validators.Characters);
+         end if;
+
+         if Handler.Validators.Start_Loc /= null then
+            Unref (Handler.Validators.Start_Loc);
+         end if;
+      end if;
+   end Validate_Current_Characters;
+
    ------------------------
    -- Hook_Start_Element --
    ------------------------
@@ -422,6 +490,8 @@ package body Schema.Readers is
                    & ASCII.ESC & "[39m");
       end if;
 
+      Validate_Current_Characters (Validating_Reader (Handler));
+
       --  Get the name of the grammar to use from the element's attributes
 
       if Validating_Reader (Handler).Grammar = No_Grammar then
@@ -510,16 +580,7 @@ package body Schema.Readers is
       end if;
 
       if Validating_Reader (Handler).Validators /= null then
-         --  No character data => behave as an empty element, but we need to
-         --  test explicitely. For instance, the "minLength" facet might or
-         --  the "fixed" attribute need to test whether the empty string is
-         --  valid.
-         if not Validating_Reader (Handler).Validators.Had_Character_Data
-           and then not Validating_Reader (Handler).Validators.Is_Nil
-         then
-            Internal_Characters
-              (Validating_Reader (Handler), "", Empty_Element => True);
-         end if;
+         Validate_Current_Characters (Validating_Reader (Handler));
 
          --  Do not check if the element is nil, since no child is expected
          --  anyway, and some validators (sequence,...) will complain
@@ -539,29 +600,22 @@ package body Schema.Readers is
 
    procedure Internal_Characters
      (Handler : in out Validating_Reader;
-      Ch      : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean) is
+      Ch      : Unicode.CES.Byte_Sequence)
+   is
+      Tmp : Byte_Sequence_Access;
    begin
       if Handler.Validators /= null then
-         Handler.Validators.Had_Character_Data := True;
-
-         if Handler.Validators.Is_Nil then
-            if not Empty_Element then
-               Validation_Error
-                 ("Element has character data, but is declared as nil");
-            end if;
-
-         elsif Has_Fixed (Handler.Validators.Element) then
-            if Ch /= Get_Fixed (Handler.Validators.Element).all then
-               Validation_Error
-                 ("Element's value must be """
-                  & Get_Fixed (Handler.Validators.Element).all & """");
-            end if;
-
+         if Debug then
+            Put_Line ("Appending characters --" & Ch & "--");
+         end if;
+         if Handler.Validators.Characters = null then
+            Handler.Validators.Characters := new String'(Ch);
+            Handler.Validators.Start_Loc := new Locator_Impl;
+            Copy (Handler.Validators.Start_Loc.all, Handler.Locator.all);
          else
-            Validate_Characters
-              (Get_Validator (Get_Type (Handler.Validators.Element)), Ch,
-               Empty_Element => Empty_Element);
+            Tmp := new String'(Handler.Validators.Characters.all & Ch);
+            Free (Handler.Validators.Characters);
+            Handler.Validators.Characters := Tmp;
          end if;
       end if;
    end Internal_Characters;
@@ -574,8 +628,7 @@ package body Schema.Readers is
      (Handler : in out Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence) is
    begin
-      Internal_Characters
-        (Validating_Reader (Handler), Ch, Empty_Element => False);
+      Internal_Characters (Validating_Reader (Handler), Ch);
    end Hook_Characters;
 
    -------------------------------
@@ -591,8 +644,7 @@ package body Schema.Readers is
           (Get_Type (Validating_Reader (Handler).Validators.Element))
         and then not Validating_Reader (Handler).Validators.Is_Nil
       then
-         Internal_Characters
-           (Validating_Reader (Handler), Ch, Empty_Element => False);
+         Internal_Characters (Validating_Reader (Handler), Ch);
       end if;
    end Hook_Ignorable_Whitespace;
 
@@ -634,7 +686,13 @@ package body Schema.Readers is
 
    exception
       when E : XML_Validation_Error =>
-         Copy (Loc, Parser.Locator.all);
+         if Parser.Validators /= null
+           and then Parser.Validators.Start_Loc /= null
+         then
+            Copy (Loc, Parser.Validators.Start_Loc.all);
+         else
+            Copy (Loc, Parser.Locator.all);
+         end if;
          Validation_Error
            (Parser, Create (Byte_Sequence (Exception_Message (E)),
                             Loc'Unchecked_Access));
