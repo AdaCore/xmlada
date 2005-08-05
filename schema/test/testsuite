@@ -30,6 +30,7 @@ run_nist_date=0
 run_nist_duration=0
 run_nist_datetime=0
 run_nist_anyuri=0
+run_nist_decimal=0
 run_act=0
 
 while getopts "vhdseuan:m:" opt
@@ -40,14 +41,16 @@ do
       s) show_expected_failure=1;;
       u) run_sun=1; run_all_tests=0;;
       n) case $OPTARG in
+           anyuri)   run_nist_anyuri=1; run_all_tests=0;;
            boolean)  run_nist_boolean=1; run_all_tests=0;;
-           float)    run_nist_float=1; run_all_tests=0;;
            byte)     run_nist_byte=1; run_all_tests=0;;
+           datetime) run_nist_datetime=1; run_all_tests=0;;
            date)     run_nist_date=1; run_all_tests=0;;
+           decimal)  run_nist_decimal=1; run_all_tests=0;;
+
+           float)    run_nist_float=1; run_all_tests=0;;
            time)     run_nist_time=1; run_all_tests=0;;
            duration) run_nist_duration=1; run_all_test=0;;
-           datetime) run_nist_datetime=1; run_all_tests=0;;
-           anyuri)   run_nist_anyuri=1; run_all_tests=0;;
          esac;;
       m) case $OPTARG in
            e) run_ms_element=1; run_all_tests=0;;
@@ -2787,6 +2790,243 @@ expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpa
 expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpace-1-3.xml" ""
 expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpace-1-4.xml" ""
 expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpace-1-5.xml" ""
+fi
+
+########################
+## NIST decimal tests ##
+########################
+
+if [ x$run_nist_decimal = x1 -o $run_all_tests = 1 ]; then
+   expect "$nist/NISTSchema-decimal-minExclusive-1.xsd" "$nist/NISTXML-decimal-minExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-1.xsd" "$nist/NISTXML-decimal-minExclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-1.xsd" "$nist/NISTXML-decimal-minExclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-1.xsd" "$nist/NISTXML-decimal-minExclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-1.xsd" "$nist/NISTXML-decimal-minExclusive-1-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-minExclusive-2.xsd" "$nist/NISTXML-decimal-minExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-2.xsd" "$nist/NISTXML-decimal-minExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-2.xsd" "$nist/NISTXML-decimal-minExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-2.xsd" "$nist/NISTXML-decimal-minExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-2.xsd" "$nist/NISTXML-decimal-minExclusive-2-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-minExclusive-3.xsd" "$nist/NISTXML-decimal-minExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-3.xsd" "$nist/NISTXML-decimal-minExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-3.xsd" "$nist/NISTXML-decimal-minExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-3.xsd" "$nist/NISTXML-decimal-minExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-3.xsd" "$nist/NISTXML-decimal-minExclusive-3-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-minExclusive-4.xsd" "$nist/NISTXML-decimal-minExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-4.xsd" "$nist/NISTXML-decimal-minExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-4.xsd" "$nist/NISTXML-decimal-minExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-4.xsd" "$nist/NISTXML-decimal-minExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-decimal-minExclusive-4.xsd" "$nist/NISTXML-decimal-minExclusive-4-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-minExclusive-5.xsd" "$nist/NISTXML-decimal-minExclusive-5-1.xml" ""
+
+   expect "$nist/NISTSchema-decimal-minInclusive-1.xsd" "$nist/NISTXML-decimal-minInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-decimal-minInclusive-1.xsd" "$nist/NISTXML-decimal-minInclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-decimal-minInclusive-1.xsd" "$nist/NISTXML-decimal-minInclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-decimal-minInclusive-1.xsd" "$nist/NISTXML-decimal-minInclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-decimal-minInclusive-1.xsd" "$nist/NISTXML-decimal-minInclusive-1-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-minInclusive-2.xsd" "$nist/NISTXML-decimal-minInclusive-2-1.xml" ""  
+   expect "$nist/NISTSchema-decimal-minInclusive-2.xsd" "$nist/NISTXML-decimal-minInclusive-2-2.xml" ""  
+   expect "$nist/NISTSchema-decimal-minInclusive-2.xsd" "$nist/NISTXML-decimal-minInclusive-2-3.xml" ""  
+   expect "$nist/NISTSchema-decimal-minInclusive-2.xsd" "$nist/NISTXML-decimal-minInclusive-2-4.xml" ""  
+   expect "$nist/NISTSchema-decimal-minInclusive-2.xsd" "$nist/NISTXML-decimal-minInclusive-2-5.xml" ""  
+
+   expect "$nist/NISTSchema-decimal-minInclusive-3.xsd" "$nist/NISTXML-decimal-minInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-decimal-minInclusive-3.xsd" "$nist/NISTXML-decimal-minInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-decimal-minInclusive-3.xsd" "$nist/NISTXML-decimal-minInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-decimal-minInclusive-3.xsd" "$nist/NISTXML-decimal-minInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-decimal-minInclusive-3.xsd" "$nist/NISTXML-decimal-minInclusive-3-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-minInclusive-4.xsd" "$nist/NISTXML-decimal-minInclusive-4-1.xml" "" 
+   expect "$nist/NISTSchema-decimal-minInclusive-4.xsd" "$nist/NISTXML-decimal-minInclusive-4-2.xml" "" 
+   expect "$nist/NISTSchema-decimal-minInclusive-4.xsd" "$nist/NISTXML-decimal-minInclusive-4-3.xml" "" 
+   expect "$nist/NISTSchema-decimal-minInclusive-4.xsd" "$nist/NISTXML-decimal-minInclusive-4-4.xml" "" 
+   expect "$nist/NISTSchema-decimal-minInclusive-4.xsd" "$nist/NISTXML-decimal-minInclusive-4-5.xml" "" 
+
+   expect "$nist/NISTSchema-decimal-minInclusive-5.xsd" "$nist/NISTXML-decimal-minInclusive-5-1.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxExclusive-1.xsd" "$nist/NISTXML-decimal-maxExclusive-1-1.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxExclusive-2.xsd" "$nist/NISTXML-decimal-maxExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-2.xsd" "$nist/NISTXML-decimal-maxExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-2.xsd" "$nist/NISTXML-decimal-maxExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-2.xsd" "$nist/NISTXML-decimal-maxExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-2.xsd" "$nist/NISTXML-decimal-maxExclusive-2-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxExclusive-3.xsd" "$nist/NISTXML-decimal-maxExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-3.xsd" "$nist/NISTXML-decimal-maxExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-3.xsd" "$nist/NISTXML-decimal-maxExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-3.xsd" "$nist/NISTXML-decimal-maxExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-3.xsd" "$nist/NISTXML-decimal-maxExclusive-3-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxExclusive-4.xsd" "$nist/NISTXML-decimal-maxExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-4.xsd" "$nist/NISTXML-decimal-maxExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-4.xsd" "$nist/NISTXML-decimal-maxExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-4.xsd" "$nist/NISTXML-decimal-maxExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-4.xsd" "$nist/NISTXML-decimal-maxExclusive-4-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxExclusive-5.xsd" "$nist/NISTXML-decimal-maxExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-5.xsd" "$nist/NISTXML-decimal-maxExclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-5.xsd" "$nist/NISTXML-decimal-maxExclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-5.xsd" "$nist/NISTXML-decimal-maxExclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-decimal-maxExclusive-5.xsd" "$nist/NISTXML-decimal-maxExclusive-5-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxInclusive-1.xsd" "$nist/NISTXML-decimal-maxInclusive-1-1.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxInclusive-2.xsd" "$nist/NISTXML-decimal-maxInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-2.xsd" "$nist/NISTXML-decimal-maxInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-2.xsd" "$nist/NISTXML-decimal-maxInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-2.xsd" "$nist/NISTXML-decimal-maxInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-2.xsd" "$nist/NISTXML-decimal-maxInclusive-2-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxInclusive-3.xsd" "$nist/NISTXML-decimal-maxInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-3.xsd" "$nist/NISTXML-decimal-maxInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-3.xsd" "$nist/NISTXML-decimal-maxInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-3.xsd" "$nist/NISTXML-decimal-maxInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-3.xsd" "$nist/NISTXML-decimal-maxInclusive-3-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxInclusive-4.xsd" "$nist/NISTXML-decimal-maxInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-4.xsd" "$nist/NISTXML-decimal-maxInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-4.xsd" "$nist/NISTXML-decimal-maxInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-4.xsd" "$nist/NISTXML-decimal-maxInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-4.xsd" "$nist/NISTXML-decimal-maxInclusive-4-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-maxInclusive-5.xsd" "$nist/NISTXML-decimal-maxInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-5.xsd" "$nist/NISTXML-decimal-maxInclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-5.xsd" "$nist/NISTXML-decimal-maxInclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-5.xsd" "$nist/NISTXML-decimal-maxInclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-decimal-maxInclusive-5.xsd" "$nist/NISTXML-decimal-maxInclusive-5-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-fractionDigits-1.xsd" "$nist/NISTXML-decimal-fractionDigits-1-1.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-1.xsd" "$nist/NISTXML-decimal-fractionDigits-1-2.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-1.xsd" "$nist/NISTXML-decimal-fractionDigits-1-3.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-1.xsd" "$nist/NISTXML-decimal-fractionDigits-1-4.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-1.xsd" "$nist/NISTXML-decimal-fractionDigits-1-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-fractionDigits-2.xsd" "$nist/NISTXML-decimal-fractionDigits-2-1.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-2.xsd" "$nist/NISTXML-decimal-fractionDigits-2-2.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-2.xsd" "$nist/NISTXML-decimal-fractionDigits-2-3.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-2.xsd" "$nist/NISTXML-decimal-fractionDigits-2-4.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-2.xsd" "$nist/NISTXML-decimal-fractionDigits-2-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-fractionDigits-3.xsd" "$nist/NISTXML-decimal-fractionDigits-3-1.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-3.xsd" "$nist/NISTXML-decimal-fractionDigits-3-2.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-3.xsd" "$nist/NISTXML-decimal-fractionDigits-3-3.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-3.xsd" "$nist/NISTXML-decimal-fractionDigits-3-4.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-3.xsd" "$nist/NISTXML-decimal-fractionDigits-3-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-fractionDigits-4.xsd" "$nist/NISTXML-decimal-fractionDigits-4-1.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-4.xsd" "$nist/NISTXML-decimal-fractionDigits-4-2.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-4.xsd" "$nist/NISTXML-decimal-fractionDigits-4-3.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-4.xsd" "$nist/NISTXML-decimal-fractionDigits-4-4.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-4.xsd" "$nist/NISTXML-decimal-fractionDigits-4-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-fractionDigits-5.xsd" "$nist/NISTXML-decimal-fractionDigits-5-1.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-5.xsd" "$nist/NISTXML-decimal-fractionDigits-5-2.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-5.xsd" "$nist/NISTXML-decimal-fractionDigits-5-3.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-5.xsd" "$nist/NISTXML-decimal-fractionDigits-5-4.xml" ""
+   expect "$nist/NISTSchema-decimal-fractionDigits-5.xsd" "$nist/NISTXML-decimal-fractionDigits-5-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-totalDigits-1.xsd" "$nist/NISTXML-decimal-totalDigits-1-1.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-1.xsd" "$nist/NISTXML-decimal-totalDigits-1-2.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-1.xsd" "$nist/NISTXML-decimal-totalDigits-1-3.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-1.xsd" "$nist/NISTXML-decimal-totalDigits-1-4.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-1.xsd" "$nist/NISTXML-decimal-totalDigits-1-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-totalDigits-2.xsd" "$nist/NISTXML-decimal-totalDigits-2-1.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-2.xsd" "$nist/NISTXML-decimal-totalDigits-2-2.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-2.xsd" "$nist/NISTXML-decimal-totalDigits-2-3.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-2.xsd" "$nist/NISTXML-decimal-totalDigits-2-4.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-2.xsd" "$nist/NISTXML-decimal-totalDigits-2-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-totalDigits-3.xsd" "$nist/NISTXML-decimal-totalDigits-3-1.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-3.xsd" "$nist/NISTXML-decimal-totalDigits-3-2.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-3.xsd" "$nist/NISTXML-decimal-totalDigits-3-3.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-3.xsd" "$nist/NISTXML-decimal-totalDigits-3-4.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-3.xsd" "$nist/NISTXML-decimal-totalDigits-3-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-totalDigits-4.xsd" "$nist/NISTXML-decimal-totalDigits-4-1.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-4.xsd" "$nist/NISTXML-decimal-totalDigits-4-2.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-4.xsd" "$nist/NISTXML-decimal-totalDigits-4-3.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-4.xsd" "$nist/NISTXML-decimal-totalDigits-4-4.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-4.xsd" "$nist/NISTXML-decimal-totalDigits-4-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-totalDigits-5.xsd" "$nist/NISTXML-decimal-totalDigits-5-1.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-5.xsd" "$nist/NISTXML-decimal-totalDigits-5-2.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-5.xsd" "$nist/NISTXML-decimal-totalDigits-5-3.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-5.xsd" "$nist/NISTXML-decimal-totalDigits-5-4.xml" ""
+   expect "$nist/NISTSchema-decimal-totalDigits-5.xsd" "$nist/NISTXML-decimal-totalDigits-5-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-pattern-1.xsd" "$nist/NISTXML-decimal-pattern-1-1.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-1.xsd" "$nist/NISTXML-decimal-pattern-1-2.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-1.xsd" "$nist/NISTXML-decimal-pattern-1-3.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-1.xsd" "$nist/NISTXML-decimal-pattern-1-4.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-1.xsd" "$nist/NISTXML-decimal-pattern-1-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-pattern-2.xsd" "$nist/NISTXML-decimal-pattern-2-1.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-2.xsd" "$nist/NISTXML-decimal-pattern-2-2.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-2.xsd" "$nist/NISTXML-decimal-pattern-2-3.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-2.xsd" "$nist/NISTXML-decimal-pattern-2-4.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-2.xsd" "$nist/NISTXML-decimal-pattern-2-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-pattern-3.xsd" "$nist/NISTXML-decimal-pattern-3-1.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-3.xsd" "$nist/NISTXML-decimal-pattern-3-2.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-3.xsd" "$nist/NISTXML-decimal-pattern-3-3.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-3.xsd" "$nist/NISTXML-decimal-pattern-3-4.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-3.xsd" "$nist/NISTXML-decimal-pattern-3-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-pattern-4.xsd" "$nist/NISTXML-decimal-pattern-4-1.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-4.xsd" "$nist/NISTXML-decimal-pattern-4-2.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-4.xsd" "$nist/NISTXML-decimal-pattern-4-3.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-4.xsd" "$nist/NISTXML-decimal-pattern-4-4.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-4.xsd" "$nist/NISTXML-decimal-pattern-4-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-pattern-5.xsd" "$nist/NISTXML-decimal-pattern-5-1.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-5.xsd" "$nist/NISTXML-decimal-pattern-5-2.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-5.xsd" "$nist/NISTXML-decimal-pattern-5-3.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-5.xsd" "$nist/NISTXML-decimal-pattern-5-4.xml" ""
+   expect "$nist/NISTSchema-decimal-pattern-5.xsd" "$nist/NISTXML-decimal-pattern-5-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-enumeration-1.xsd" "$nist/NISTXML-decimal-enumeration-1-1.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-1.xsd" "$nist/NISTXML-decimal-enumeration-1-2.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-1.xsd" "$nist/NISTXML-decimal-enumeration-1-3.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-1.xsd" "$nist/NISTXML-decimal-enumeration-1-4.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-1.xsd" "$nist/NISTXML-decimal-enumeration-1-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-enumeration-2.xsd" "$nist/NISTXML-decimal-enumeration-2-1.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-2.xsd" "$nist/NISTXML-decimal-enumeration-2-2.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-2.xsd" "$nist/NISTXML-decimal-enumeration-2-3.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-2.xsd" "$nist/NISTXML-decimal-enumeration-2-4.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-2.xsd" "$nist/NISTXML-decimal-enumeration-2-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-enumeration-3.xsd" "$nist/NISTXML-decimal-enumeration-3-1.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-3.xsd" "$nist/NISTXML-decimal-enumeration-3-2.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-3.xsd" "$nist/NISTXML-decimal-enumeration-3-3.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-3.xsd" "$nist/NISTXML-decimal-enumeration-3-4.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-3.xsd" "$nist/NISTXML-decimal-enumeration-3-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-enumeration-4.xsd" "$nist/NISTXML-decimal-enumeration-4-1.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-4.xsd" "$nist/NISTXML-decimal-enumeration-4-2.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-4.xsd" "$nist/NISTXML-decimal-enumeration-4-3.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-4.xsd" "$nist/NISTXML-decimal-enumeration-4-4.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-4.xsd" "$nist/NISTXML-decimal-enumeration-4-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-enumeration-5.xsd" "$nist/NISTXML-decimal-enumeration-5-1.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-5.xsd" "$nist/NISTXML-decimal-enumeration-5-2.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-5.xsd" "$nist/NISTXML-decimal-enumeration-5-3.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-5.xsd" "$nist/NISTXML-decimal-enumeration-5-4.xml" ""
+   expect "$nist/NISTSchema-decimal-enumeration-5.xsd" "$nist/NISTXML-decimal-enumeration-5-5.xml" ""
+
+   expect "$nist/NISTSchema-decimal-whiteSpace-1.xsd" "$nist/NISTXML-decimal-whiteSpace-1-1.xml" ""
+   expect "$nist/NISTSchema-decimal-whiteSpace-1.xsd" "$nist/NISTXML-decimal-whiteSpace-1-2.xml" ""
+   expect "$nist/NISTSchema-decimal-whiteSpace-1.xsd" "$nist/NISTXML-decimal-whiteSpace-1-3.xml" ""
+   expect "$nist/NISTSchema-decimal-whiteSpace-1.xsd" "$nist/NISTXML-decimal-whiteSpace-1-4.xml" ""
+   expect "$nist/NISTSchema-decimal-whiteSpace-1.xsd" "$nist/NISTXML-decimal-whiteSpace-1-5.xml" ""
+
 fi
 
 ###############
