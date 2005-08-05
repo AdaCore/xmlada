@@ -553,6 +553,8 @@ package body Schema.Validators.Simple_Types is
    is
       pragma Unreferenced (Empty_Element);
    begin
+      Debug_Output ("Validate_Characters for string --" & Ch & "--"
+                    & Get_Name (Validator));
       Check_Facet (Validator.Facets, Ch);
    end Validate_Characters;
 
@@ -707,6 +709,10 @@ package body Schema.Validators.Simple_Types is
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ENTITY", Str);
+
+      Str := new String_Validator_Record;
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_URI'Access);
+      Create_Global_Type (G, "anyURI", Str);
 
       Int := new Integer_Validators.Validator_Record;
       Create_Global_Type (G, "decimal", Int);
