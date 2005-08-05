@@ -348,7 +348,7 @@ package body Schema.Validators.Simple_Types is
       Check_Facet (Range_Facets_Description (Facets), Facet_Value);
 
       if Facets.Mask (Facet_Total_Digits)
-        and then Facet_Value'Length /= Facets.Total_Digits
+        and then Facet_Value'Length > Facets.Total_Digits
       then
          Validation_Error
            ("The maximum number of digits is"
