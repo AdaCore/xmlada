@@ -1130,7 +1130,6 @@ package body Schema.Schema_Grammar is
       Set_Type (Elem, Lookup (G, "numFacet"));
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
 
-
       return Grammar;
    end Create_Schema_For_Schema;
 

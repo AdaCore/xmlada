@@ -777,7 +777,6 @@ package body Schema.Validators.Simple_Types is
 --      Dec.Facets.Fraction_Digits := 0;
       Create_Global_Type (G, "integer", Dec);
 
-
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Max_Inclusive   => True,
                           others                => False);
