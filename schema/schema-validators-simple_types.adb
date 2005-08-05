@@ -2,6 +2,7 @@ with Schema.Validators.Facets; use Schema.Validators.Facets;
 with Sax.Encodings;            use Sax.Encodings;
 with Sax.Utils;                use Sax.Utils;
 with Schema.Date_Time;         use Schema.Date_Time;
+with Schema.Decimal;           use Schema.Decimal;
 
 package body Schema.Validators.Simple_Types is
 
@@ -259,6 +260,25 @@ package body Schema.Validators.Simple_Types is
    package Float_Validators is new Generic_Simple_Validator
      (Float_Facets_Description);
 
+   package Decimal_Facets_Package is new Generic_Range_Facets
+     ("decimal", Arbitrary_Precision_Number, Value, Image);
+   type Decimal_Facets_Description is new
+     Decimal_Facets_Package.Range_Facets_Description with
+      record
+         Total_Digits    : Positive := Positive'Last;
+         Fraction_Digits : Positive := Positive'Last;
+      end record;
+   procedure Add_Facet
+     (Facets      : in out Decimal_Facets_Description;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence;
+      Applied     : out Boolean);
+   procedure Check_Facet
+     (Facets      : in out Decimal_Facets_Description;
+      Facet_Value : Unicode.CES.Byte_Sequence);
+   package Decimal_Validators is new Generic_Simple_Validator
+     (Decimal_Facets_Description);
+
    package Integer_Facets_Package is new Generic_Range_Facets
      ("integer",
       Long_Long_Integer, Long_Long_Integer'Value, Long_Long_Integer'Image);
@@ -266,7 +286,6 @@ package body Schema.Validators.Simple_Types is
      Integer_Facets_Package.Range_Facets_Description
    with record
       Total_Digits    : Positive := Positive'Last;
-      Fraction_Digits : Natural  := Natural'Last;
    end record;
    procedure Add_Facet
      (Facets      : in out Integer_Facets_Description;
@@ -341,9 +360,6 @@ package body Schema.Validators.Simple_Types is
       Facet_Value  : Unicode.CES.Byte_Sequence)
    is
       use Integer_Facets_Package;
-      Val    : Long_Long_Integer;
-      ValF   : Long_Long_Float;
-      pragma Unreferenced (Val);
    begin
       Check_Facet (Range_Facets_Description (Facets), Facet_Value);
 
@@ -353,42 +369,6 @@ package body Schema.Validators.Simple_Types is
          Validation_Error
            ("The maximum number of digits is"
             & Integer'Image (Facets.Total_Digits));
-      end if;
-
-      if Facets.Mask (Facet_Fraction_Digits) then
-         for V in Facet_Value'Range loop
-            if Facet_Value (V) = '.' then
-               if Facet_Value'Last - V > Facets.Fraction_Digits then
-                  Validation_Error ("Too many digits in the fractional part");
-               end if;
-            end if;
-         end loop;
-
-         if Facets.Fraction_Digits = 0 then
-            begin
-               Val := Long_Long_Integer'Value (Facet_Value);
-            exception
-               when Constraint_Error =>
-                  Validation_Error ("Value must be an integer");
-            end;
-         else
-            begin
-               ValF := Long_Long_Float'Value (Facet_Value);
-               Val  := Long_Long_Integer (ValF);
-            exception
-               when Constraint_Error =>
-                  Validation_Error ("Must have a decimal value");
-            end;
-         end if;
-
-      else
-         begin
-            ValF := Long_Long_Float'Value (Facet_Value);
-            Val  := Long_Long_Integer (ValF);
-         exception
-            when Constraint_Error =>
-               Validation_Error ("Must have a decimal value");
-         end;
       end if;
    end Check_Facet;
 
@@ -403,6 +383,7 @@ package body Schema.Validators.Simple_Types is
       Applied     : out Boolean)
    is
       use Integer_Facets_Package;
+      Val : Integer;
    begin
       Add_Facet
         (Integer_Facets_Package.Range_Facets_Description (Facets), Facet_Name,
@@ -414,8 +395,10 @@ package body Schema.Validators.Simple_Types is
          Facets.Mask (Facet_Total_Digits) := True;
          Applied := True;
       elsif Facet_Name = "fractionDigits" then
-         Facets.Fraction_Digits := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Fraction_Digits) := True;
+         Val := Integer'Value (Facet_Value);
+         if Val /= 0 then
+            Validation_Error ("fractionDigits must be 0 for integers");
+         end if;
          Applied := True;
       else
          Applied := False;
@@ -424,6 +407,66 @@ package body Schema.Validators.Simple_Types is
       when Constraint_Error =>
          Applied := False;
    end Add_Facet;
+
+   ---------------
+   -- Add_Facet --
+   ---------------
+
+   procedure Add_Facet
+     (Facets      : in out Decimal_Facets_Description;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence;
+      Applied     : out Boolean)
+   is
+      use Decimal_Facets_Package;
+   begin
+      Add_Facet
+        (Decimal_Facets_Package.Range_Facets_Description (Facets), Facet_Name,
+         Facet_Value, Applied);
+      if Applied then
+         null;
+      elsif Facet_Name = "totalDigits" then
+         Facets.Total_Digits := Integer'Value (Facet_Value);
+         Facets.Mask (Facet_Total_Digits) := True;
+         if Facets.Mask (Facet_Fraction_Digits)
+           and then Facets.Fraction_Digits > Facets.Total_Digits
+         then
+            Validation_Error
+              ("fractionDigits cannot be greater than totalDigits");
+         end if;
+
+         Applied := True;
+      elsif Facet_Name = "fractionDigits" then
+         Facets.Fraction_Digits := Integer'Value (Facet_Value);
+         if Facets.Mask (Facet_Total_Digits)
+           and then Facets.Fraction_Digits > Facets.Total_Digits
+         then
+            Validation_Error
+              ("fractionDigits cannot be greater than totalDigits");
+         end if;
+         Applied := True;
+      else
+         Applied := False;
+      end if;
+   exception
+      when Constraint_Error =>
+         Applied := False;
+   end Add_Facet;
+
+   -----------------
+   -- Check_Facet --
+   -----------------
+
+   procedure Check_Facet
+     (Facets      : in out Decimal_Facets_Description;
+      Facet_Value : Unicode.CES.Byte_Sequence)
+   is
+      use Decimal_Facets_Package;
+   begin
+      Check_Digits (Value (Facet_Value), Facets.Fraction_Digits,
+                    Facets.Total_Digits);
+      Check_Facet (Range_Facets_Description (Facets), Facet_Value);
+   end Check_Facet;
 
    -------------------------
    -- Validate_Characters --
@@ -654,6 +697,7 @@ package body Schema.Validators.Simple_Types is
       Tmp     : XML_Validator;
       Str     : String_Validator;
       Int     : Integer_Validators.Validator;
+      Dec     : Decimal_Validators.Validator;
       Created : XML_Type;
    begin
       Tmp := new Boolean_Validator_Record;
@@ -714,123 +758,102 @@ package body Schema.Validators.Simple_Types is
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_URI'Access);
       Create_Global_Type (G, "anyURI", Str);
 
-      Int := new Integer_Validators.Validator_Record;
-      Create_Global_Type (G, "decimal", Int);
+      Dec := new Decimal_Validators.Validator_Record;
+      Create_Global_Type (G, "decimal", Dec);
 
-      Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          others                => False);
-      Int.Facets.Fraction_Digits := 0;
-      Create_Global_Type (G, "integer", Int);
-
-      Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
+      Dec := new Decimal_Validators.Validator_Record;
+      Dec.Facets.Mask := (Facet_Fraction_Digits => True,
                           Facet_Max_Inclusive   => True,
+                          Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
+--      Dec.Facets.Fraction_Digits := 0;
+      Dec.Facets.Max_Inclusive := Value ("+18446744073709551615");
+      Dec.Facets.Min_Inclusive := Value ("0");
+      Create_Global_Type (G, "unsignedLong", Dec);
+
+      Dec := new Decimal_Validators.Validator_Record;
+      Dec.Facets.Mask := (Facet_Fraction_Digits => True,
+                          others                => False);
+--      Dec.Facets.Fraction_Digits := 0;
+      Create_Global_Type (G, "integer", Dec);
+
+
+      Int := new Integer_Validators.Validator_Record;
+      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
+                          others                => False);
       Int.Facets.Max_Inclusive := 0;
       Create_Global_Type (G, "nonPositiveInteger", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Max_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Max_Inclusive   := -1;
       Create_Global_Type (G, "negativeInteger", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Max_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
                           Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Max_Inclusive   := +9_223_372_036_854_775_807;
       Int.Facets.Min_Inclusive   := -9_223_372_036_854_775_808;
       Create_Global_Type (G, "long", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Max_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
                           Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Max_Inclusive := +2_147_483_647;
       Int.Facets.Min_Inclusive := -2_147_483_648;
       Create_Global_Type (G, "int", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Max_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
                           Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Max_Inclusive := +32_767;
       Int.Facets.Min_Inclusive := -32_768;
       Create_Global_Type (G, "short", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Max_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
                           Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Max_Inclusive := +127;
       Int.Facets.Min_Inclusive := -128;
       Create_Global_Type (G, "byte", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Min_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "nonNegativeInteger", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Min_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Min_Inclusive := 1;
       Create_Global_Type (G, "positiveInteger", Int);
 
---        Tmp := new Common_Simple_XML_Validator;
---        Tmp.Facets.Settable := Integer_Facets;
---        Tmp.Facets.Mask (Facet_Fraction_Digits) := True;
---        Tmp.Facets.Fraction_Digits := 0;
---        Tmp.Facets.Mask (Facet_Max_Inclusive) := True;
---        Tmp.Facets.Max_Inclusive := +18_446_744_073_709_551_615;
---        Tmp.Facets.Mask (Facet_Min_Inclusive) := True;
---        Tmp.Facets.Min_Inclusive := 0;
---        Create_Global_Type (G, Create_Type ("unsignedLong", Tmp));
-
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Min_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
                           Facet_Max_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Max_Inclusive := +4_294_967_295;
       Int.Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "unsignedInt", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Min_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
                           Facet_Max_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Max_Inclusive := +65_535;
       Int.Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "unsignedShort", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Min_Inclusive   => True,
+      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
                           Facet_Max_Inclusive   => True,
                           others                => False);
-      Int.Facets.Fraction_Digits := 0;
       Int.Facets.Max_Inclusive := +255;
       Int.Facets.Min_Inclusive := 0;
       Create_Global_Type (G, "unsignedByte", Int);
