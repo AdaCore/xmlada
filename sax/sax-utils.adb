@@ -205,4 +205,30 @@ package body Sax.Utils is
       return Qname'First - 1;
    end Split_Qname;
 
+   ------------------
+   -- Is_Valid_URI --
+   ------------------
+
+   function Is_Valid_URI
+     (Name : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Index    : Integer := Name'First;
+      Previous : Integer;
+      C   : Unicode_Char;
+   begin
+      while Index <= Name'Last loop
+         Previous := Index;
+         Encoding.Read (Name, Index, C);
+         if C = Character'Pos ('/') then
+            Encoding.Read (Name, Index, C);
+            if C = Character'Pos ('/') then
+               return Is_Valid_Name (Name (Name'First .. Previous - 1));
+            else
+               return False;
+            end if;
+         end if;
+      end loop;
+      return False;
+   end Is_Valid_URI;
+
 end Sax.Utils;
