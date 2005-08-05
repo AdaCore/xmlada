@@ -226,6 +226,12 @@ package body Schema.Decimal is
                else
                   return Greater_Than;
                end if;
+            elsif Num1 (Pos1) < Num2 (Pos2) then
+               if Num1_Negative then
+                  return Greater_Than;
+               else
+                  return Less_Than;
+               end if;
             end if;
 
             To_Next_Digit (Num1, Pos1);
@@ -316,6 +322,9 @@ package body Schema.Decimal is
       --  Now count the significant digits (including fractional part)
       Pos := Num.Value'First;
       if Num.Value (Pos) = '-' or Num.Value (Pos) = '+' then
+         Pos := Pos + 1;
+      end if;
+      if Num.Value (Pos) = '.' then
          Pos := Pos + 1;
       end if;
 
