@@ -2568,6 +2568,8 @@ package body Schema.Validators is
 
    begin
       Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
+      Skip_Current := False;
+
       loop
          Item := Get (Iter);
          exit when Item = null;
@@ -2602,7 +2604,7 @@ package body Schema.Validators is
          end case;
 
          Debug_Output ("Applies= " & Applies'Img
-                       & " minOccurs=" & Item.Min_Occurs'Img);
+                       & " Item.minOccurs=" & Item.Min_Occurs'Img);
 
          if Applies then
             Debug_Pop_Prefix;
