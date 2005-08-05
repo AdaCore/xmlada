@@ -29,6 +29,7 @@ run_nist_time=0
 run_nist_date=0
 run_nist_duration=0
 run_nist_datetime=0
+run_nist_anyuri=0
 run_act=0
 
 while getopts "vhdseuan:m:" opt
@@ -46,6 +47,7 @@ do
            time)     run_nist_time=1; run_all_tests=0;;
            duration) run_nist_duration=1; run_all_test=0;;
            datetime) run_nist_datetime=1; run_all_tests=0;;
+           anyuri)   run_nist_anyuri=1; run_all_tests=0;;
          esac;;
       m) case $OPTARG in
            e) run_ms_element=1; run_all_tests=0;;
@@ -60,9 +62,7 @@ do
  -u   : run only SUN tests
  -m e : run only Microsoft elements tests
  -m p : run only Microsoft particles tests
- -n b : run only NIST boolean tests
- -n t : run only NIST time tests
- -n f : run only NIST float tests
+ -n ... : run only NIST tests (param is "boolean", "float", ...)
 EOF
          exit 1;;
       *) echo "Invalid command line switch: $opt"
@@ -2628,6 +2628,167 @@ expect "$nist/NISTSchema-duration-whiteSpace-1.xsd" "$nist/NISTXML-duration-whit
 expect "$nist/NISTSchema-duration-whiteSpace-1.xsd" "$nist/NISTXML-duration-whiteSpace-1-5.xml" ""
 fi
 
+#######################
+## NIST anyURI tests ##
+#######################
+
+if [ x$run_nist_anyuri = x1 -o $run_all_tests = 1 ]; then
+expect "$nist/NISTSchema-anyURI-maxLength-1.xsd" "$nist/NISTXML-anyURI-maxLength-1-1.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-1.xsd" "$nist/NISTXML-anyURI-maxLength-1-2.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-1.xsd" "$nist/NISTXML-anyURI-maxLength-1-3.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-1.xsd" "$nist/NISTXML-anyURI-maxLength-1-4.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-1.xsd" "$nist/NISTXML-anyURI-maxLength-1-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-maxLength-2.xsd" "$nist/NISTXML-anyURI-maxLength-2-1.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-2.xsd" "$nist/NISTXML-anyURI-maxLength-2-2.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-2.xsd" "$nist/NISTXML-anyURI-maxLength-2-3.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-2.xsd" "$nist/NISTXML-anyURI-maxLength-2-4.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-2.xsd" "$nist/NISTXML-anyURI-maxLength-2-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-maxLength-3.xsd" "$nist/NISTXML-anyURI-maxLength-3-1.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-3.xsd" "$nist/NISTXML-anyURI-maxLength-3-2.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-3.xsd" "$nist/NISTXML-anyURI-maxLength-3-3.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-3.xsd" "$nist/NISTXML-anyURI-maxLength-3-4.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-3.xsd" "$nist/NISTXML-anyURI-maxLength-3-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-maxLength-4.xsd" "$nist/NISTXML-anyURI-maxLength-4-1.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-4.xsd" "$nist/NISTXML-anyURI-maxLength-4-2.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-4.xsd" "$nist/NISTXML-anyURI-maxLength-4-3.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-4.xsd" "$nist/NISTXML-anyURI-maxLength-4-4.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-4.xsd" "$nist/NISTXML-anyURI-maxLength-4-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-maxLength-5.xsd" "$nist/NISTXML-anyURI-maxLength-5-1.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-5.xsd" "$nist/NISTXML-anyURI-maxLength-5-2.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-5.xsd" "$nist/NISTXML-anyURI-maxLength-5-3.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-5.xsd" "$nist/NISTXML-anyURI-maxLength-5-4.xml" ""
+expect "$nist/NISTSchema-anyURI-maxLength-5.xsd" "$nist/NISTXML-anyURI-maxLength-5-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-minLength-1.xsd" "$nist/NISTXML-anyURI-minLength-1-1.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-1.xsd" "$nist/NISTXML-anyURI-minLength-1-2.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-1.xsd" "$nist/NISTXML-anyURI-minLength-1-3.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-1.xsd" "$nist/NISTXML-anyURI-minLength-1-4.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-1.xsd" "$nist/NISTXML-anyURI-minLength-1-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-minLength-2.xsd" "$nist/NISTXML-anyURI-minLength-2-1.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-2.xsd" "$nist/NISTXML-anyURI-minLength-2-2.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-2.xsd" "$nist/NISTXML-anyURI-minLength-2-3.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-2.xsd" "$nist/NISTXML-anyURI-minLength-2-4.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-2.xsd" "$nist/NISTXML-anyURI-minLength-2-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-minLength-3.xsd" "$nist/NISTXML-anyURI-minLength-3-1.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-3.xsd" "$nist/NISTXML-anyURI-minLength-3-2.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-3.xsd" "$nist/NISTXML-anyURI-minLength-3-3.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-3.xsd" "$nist/NISTXML-anyURI-minLength-3-4.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-3.xsd" "$nist/NISTXML-anyURI-minLength-3-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-minLength-4.xsd" "$nist/NISTXML-anyURI-minLength-4-1.xml"
+expect "$nist/NISTSchema-anyURI-minLength-4.xsd" "$nist/NISTXML-anyURI-minLength-4-2.xml"
+expect "$nist/NISTSchema-anyURI-minLength-4.xsd" "$nist/NISTXML-anyURI-minLength-4-3.xml"
+expect "$nist/NISTSchema-anyURI-minLength-4.xsd" "$nist/NISTXML-anyURI-minLength-4-4.xml"
+
+expect "$nist/NISTSchema-anyURI-minLength-5.xsd" "$nist/NISTXML-anyURI-minLength-5-1.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-5.xsd" "$nist/NISTXML-anyURI-minLength-5-2.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-5.xsd" "$nist/NISTXML-anyURI-minLength-5-3.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-5.xsd" "$nist/NISTXML-anyURI-minLength-5-4.xml" ""
+expect "$nist/NISTSchema-anyURI-minLength-5.xsd" "$nist/NISTXML-anyURI-minLength-5-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-length-1.xsd" "$nist/NISTXML-anyURI-length-1-1.xml" ""
+expect "$nist/NISTSchema-anyURI-length-1.xsd" "$nist/NISTXML-anyURI-length-1-2.xml" ""
+expect "$nist/NISTSchema-anyURI-length-1.xsd" "$nist/NISTXML-anyURI-length-1-3.xml" ""
+expect "$nist/NISTSchema-anyURI-length-1.xsd" "$nist/NISTXML-anyURI-length-1-4.xml" ""
+expect "$nist/NISTSchema-anyURI-length-1.xsd" "$nist/NISTXML-anyURI-length-1-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-length-2.xsd" "$nist/NISTXML-anyURI-length-2-1.xml" ""
+expect "$nist/NISTSchema-anyURI-length-2.xsd" "$nist/NISTXML-anyURI-length-2-2.xml" ""
+expect "$nist/NISTSchema-anyURI-length-2.xsd" "$nist/NISTXML-anyURI-length-2-3.xml" ""
+expect "$nist/NISTSchema-anyURI-length-2.xsd" "$nist/NISTXML-anyURI-length-2-4.xml" ""
+expect "$nist/NISTSchema-anyURI-length-2.xsd" "$nist/NISTXML-anyURI-length-2-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-length-3.xsd" "$nist/NISTXML-anyURI-length-3-1.xml" ""
+expect "$nist/NISTSchema-anyURI-length-3.xsd" "$nist/NISTXML-anyURI-length-3-2.xml" ""
+expect "$nist/NISTSchema-anyURI-length-3.xsd" "$nist/NISTXML-anyURI-length-3-3.xml" ""
+expect "$nist/NISTSchema-anyURI-length-3.xsd" "$nist/NISTXML-anyURI-length-3-4.xml" ""
+expect "$nist/NISTSchema-anyURI-length-3.xsd" "$nist/NISTXML-anyURI-length-3-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-length-4.xsd" "$nist/NISTXML-anyURI-length-4-1.xml" ""
+expect "$nist/NISTSchema-anyURI-length-4.xsd" "$nist/NISTXML-anyURI-length-4-2.xml" ""
+expect "$nist/NISTSchema-anyURI-length-4.xsd" "$nist/NISTXML-anyURI-length-4-3.xml" ""
+expect "$nist/NISTSchema-anyURI-length-4.xsd" "$nist/NISTXML-anyURI-length-4-4.xml" ""
+expect "$nist/NISTSchema-anyURI-length-4.xsd" "$nist/NISTXML-anyURI-length-4-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-length-5.xsd" "$nist/NISTXML-anyURI-length-5-1.xml" ""
+expect "$nist/NISTSchema-anyURI-length-5.xsd" "$nist/NISTXML-anyURI-length-5-2.xml" ""
+expect "$nist/NISTSchema-anyURI-length-5.xsd" "$nist/NISTXML-anyURI-length-5-3.xml" ""
+expect "$nist/NISTSchema-anyURI-length-5.xsd" "$nist/NISTXML-anyURI-length-5-4.xml" ""
+expect "$nist/NISTSchema-anyURI-length-5.xsd" "$nist/NISTXML-anyURI-length-5-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-pattern-1.xsd" "$nist/NISTXML-anyURI-pattern-1-1.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-1.xsd" "$nist/NISTXML-anyURI-pattern-1-2.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-1.xsd" "$nist/NISTXML-anyURI-pattern-1-3.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-1.xsd" "$nist/NISTXML-anyURI-pattern-1-4.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-1.xsd" "$nist/NISTXML-anyURI-pattern-1-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-pattern-2.xsd" "$nist/NISTXML-anyURI-pattern-2-1.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-2.xsd" "$nist/NISTXML-anyURI-pattern-2-2.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-2.xsd" "$nist/NISTXML-anyURI-pattern-2-3.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-2.xsd" "$nist/NISTXML-anyURI-pattern-2-4.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-2.xsd" "$nist/NISTXML-anyURI-pattern-2-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-pattern-3.xsd" "$nist/NISTXML-anyURI-pattern-3-1.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-3.xsd" "$nist/NISTXML-anyURI-pattern-3-2.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-3.xsd" "$nist/NISTXML-anyURI-pattern-3-3.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-3.xsd" "$nist/NISTXML-anyURI-pattern-3-4.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-3.xsd" "$nist/NISTXML-anyURI-pattern-3-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-pattern-4.xsd" "$nist/NISTXML-anyURI-pattern-4-1.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-4.xsd" "$nist/NISTXML-anyURI-pattern-4-2.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-4.xsd" "$nist/NISTXML-anyURI-pattern-4-3.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-4.xsd" "$nist/NISTXML-anyURI-pattern-4-4.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-4.xsd" "$nist/NISTXML-anyURI-pattern-4-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-pattern-5.xsd" "$nist/NISTXML-anyURI-pattern-5-1.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-5.xsd" "$nist/NISTXML-anyURI-pattern-5-2.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-5.xsd" "$nist/NISTXML-anyURI-pattern-5-3.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-5.xsd" "$nist/NISTXML-anyURI-pattern-5-4.xml" ""
+expect "$nist/NISTSchema-anyURI-pattern-5.xsd" "$nist/NISTXML-anyURI-pattern-5-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-enumeration-1.xsd" "$nist/NISTXML-anyURI-enumeration-1-1.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-1.xsd" "$nist/NISTXML-anyURI-enumeration-1-2.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-1.xsd" "$nist/NISTXML-anyURI-enumeration-1-3.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-1.xsd" "$nist/NISTXML-anyURI-enumeration-1-4.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-1.xsd" "$nist/NISTXML-anyURI-enumeration-1-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-enumeration-2.xsd" "$nist/NISTXML-anyURI-enumeration-2-1.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-2.xsd" "$nist/NISTXML-anyURI-enumeration-2-2.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-2.xsd" "$nist/NISTXML-anyURI-enumeration-2-3.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-2.xsd" "$nist/NISTXML-anyURI-enumeration-2-4.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-2.xsd" "$nist/NISTXML-anyURI-enumeration-2-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-enumeration-3.xsd" "$nist/NISTXML-anyURI-enumeration-3-1.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-3.xsd" "$nist/NISTXML-anyURI-enumeration-3-2.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-3.xsd" "$nist/NISTXML-anyURI-enumeration-3-3.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-3.xsd" "$nist/NISTXML-anyURI-enumeration-3-4.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-3.xsd" "$nist/NISTXML-anyURI-enumeration-3-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-enumeration-4.xsd" "$nist/NISTXML-anyURI-enumeration-4-1.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-4.xsd" "$nist/NISTXML-anyURI-enumeration-4-2.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-4.xsd" "$nist/NISTXML-anyURI-enumeration-4-3.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-4.xsd" "$nist/NISTXML-anyURI-enumeration-4-4.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-4.xsd" "$nist/NISTXML-anyURI-enumeration-4-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-enumeration-5.xsd" "$nist/NISTXML-anyURI-enumeration-5-1.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-5.xsd" "$nist/NISTXML-anyURI-enumeration-5-2.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-5.xsd" "$nist/NISTXML-anyURI-enumeration-5-3.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-5.xsd" "$nist/NISTXML-anyURI-enumeration-5-4.xml" ""
+expect "$nist/NISTSchema-anyURI-enumeration-5.xsd" "$nist/NISTXML-anyURI-enumeration-5-5.xml" ""
+
+expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpace-1-1.xml" ""
+expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpace-1-2.xml" ""
+expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpace-1-3.xml" ""
+expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpace-1-4.xml" ""
+expect "$nist/NISTSchema-anyURI-whiteSpace-1.xsd" "$nist/NISTXML-anyURI-whiteSpace-1-5.xml" ""
+fi
+
 ###############
 ## ACT tests ##
 ###############
@@ -2640,6 +2801,7 @@ if [ x$run_act = x1 -o $run_all_tests = 1 ]; then
    expect "" "$act/basic_types-3.xml" \
      "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.25200000000000000E+04)"
    expect "" "$act/E802-003.xml" ""
+   expect "" "$act/uri.xml" ""
 fi
 
 summary
