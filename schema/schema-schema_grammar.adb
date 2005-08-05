@@ -1097,7 +1097,6 @@ package body Schema.Schema_Grammar is
       --  The "whiteSpace" element
       Elem := Create_Global_Element (G, "whiteSpace", Qualified);
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
-
       Seq1 := Create_Sequence;
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Typ := Restriction_Of (Lookup (G, "facet"), XML_Validator (Seq1));
@@ -1109,6 +1108,28 @@ package body Schema.Schema_Grammar is
         (Typ, Create_Local_Attribute ("value", G,
                                       Create_Local_Type (Typ2)));
       Set_Type (Elem, Create_Local_Type (Typ));
+
+      --  The "totalDigits" element
+      Elem := Create_Global_Element (G, "totalDigits", Qualified);
+      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Seq1 := Create_Sequence;
+      Set_Debug_Name (Seq1, "totalDigits_seq");
+      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
+      Typ := Restriction_Of (Lookup (G, "numFacet"), XML_Validator (Seq1));
+      Add_Attribute
+        (Typ, Create_Local_Attribute
+           ("value", G, Lookup (G, "positiveInteger"),
+           Attribute_Use => Required));
+      Add_Attribute
+        (Typ, Create_Any_Attribute
+           (Process_Lax, NS => G, Kind => Namespace_Other));
+      Set_Type (Elem, Create_Local_Type (Typ));
+
+      --  The "fractionDigits" element
+      Elem := Create_Global_Element (G, "fractionDigits", Qualified);
+      Set_Type (Elem, Lookup (G, "numFacet"));
+      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+
 
       return Grammar;
    end Create_Schema_For_Schema;
