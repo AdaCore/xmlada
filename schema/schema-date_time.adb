@@ -1094,7 +1094,6 @@ package body Schema.Date_Time is
         >= Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
    end ">=";
 
-
    package Date_Time_T_Comp is new Comparators (Date_Time_T);
    function "<" (Time1, Time2 : Date_Time_T)  return Boolean
      renames Date_Time_T_Comp."<";
