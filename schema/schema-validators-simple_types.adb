@@ -39,6 +39,31 @@ package body Schema.Validators.Simple_Types is
       --  See doc for inherited subprograms
    end Generic_Range_Facets;
 
+   ------------------------------------
+   --  Facets used for length values --
+   ------------------------------------
+
+   generic
+      with function Get_Length
+        (Value : Unicode.CES.Byte_Sequence) return Natural;
+   package Length_Facets is
+      type Length_Facets_Description is new Common_Facets_Description with
+         record
+            Length      : Natural := Natural'Last;
+            Min_Length  : Natural := 0;
+            Max_Length  : Natural := Natural'Last;
+         end record;
+   private
+      procedure Add_Facet
+        (Facets      : in out Length_Facets_Description;
+         Facet_Name  : Unicode.CES.Byte_Sequence;
+         Facet_Value : Unicode.CES.Byte_Sequence;
+         Applied     : out Boolean);
+      procedure Check_Facet
+        (Facets : in out Length_Facets_Description;
+         Value  : Unicode.CES.Byte_Sequence);
+   end Length_Facets;
+
    -----------------------
    -- Generic validator --
    -----------------------
@@ -162,8 +187,89 @@ package body Schema.Validators.Simple_Types is
             Applied := False;
          end if;
       end Add_Facet;
-
    end Generic_Range_Facets;
+
+   -------------------
+   -- Length_Facets --
+   -------------------
+
+   package body Length_Facets is
+
+      ---------------
+      -- Add_Facet --
+      ---------------
+
+      procedure Add_Facet
+        (Facets      : in out Length_Facets_Description;
+         Facet_Name  : Unicode.CES.Byte_Sequence;
+         Facet_Value : Unicode.CES.Byte_Sequence;
+         Applied     : out Boolean) is
+      begin
+         Add_Facet (Common_Facets_Description (Facets), Facet_Name,
+                    Facet_Value, Applied);
+         if Applied then
+            null;
+         elsif Facet_Name = "length" then
+            Facets.Length := Integer'Value (Facet_Value);
+            Facets.Mask (Facet_Length) := True;
+            Applied := True;
+         elsif Facet_Name = "minLength" then
+            Facets.Min_Length := Integer'Value (Facet_Value);
+            Facets.Mask (Facet_Min_Length) := True;
+            Applied := True;
+         elsif Facet_Name = "maxLength" then
+            Facets.Max_Length := Integer'Value (Facet_Value);
+            Facets.Mask (Facet_Max_Length) := True;
+            Applied := True;
+         else
+            Applied := False;
+         end if;
+      end Add_Facet;
+
+      -----------------
+      -- Check_Facet --
+      -----------------
+
+      procedure Check_Facet
+        (Facets : in out Length_Facets_Description;
+         Value  : Unicode.CES.Byte_Sequence)
+      is
+         Length : Integer;
+      begin
+         Check_Facet (Common_Facets_Description (Facets), Value);
+
+         if Facets.Mask (Facet_Length)
+           or else Facets.Mask (Facet_Min_Length)
+           or else Facets.Mask (Facet_Max_Length)
+         then
+            Length := Get_Length (Value);
+
+            if Facets.Mask (Facet_Length)
+              and then Facets.Length /= Length
+            then
+               Validation_Error
+                 ("Invalid length, must be" & Integer'Image (Facets.Length)
+                  & " characters");
+            end if;
+
+            if Facets.Mask (Facet_Min_Length)
+              and then Length < Facets.Min_Length
+            then
+               Validation_Error ("String is too short, minimum length is"
+                                 & Integer'Image (Facets.Min_Length)
+                                 & " characters");
+            end if;
+
+            if Facets.Mask (Facet_Max_Length)
+              and then Length > Facets.Max_Length
+            then
+               Validation_Error ("String too long, maximum length is"
+                                 & Integer'Image (Facets.Max_Length)
+                                 & " characters");
+            end if;
+         end if;
+      end Check_Facet;
+   end Length_Facets;
 
    ------------------------------
    -- Generic_Simple_Validator --
@@ -342,39 +448,17 @@ package body Schema.Validators.Simple_Types is
    -- String_Validator --
    ----------------------
 
-   type String_Facets_Description is new Common_Facets_Description with record
-      Length      : Natural            := Natural'Last;
-      Min_Length  : Natural            := 0;
-      Max_Length  : Natural            := Natural'Last;
-   end record;
-   procedure Add_Facet
-     (Facets      : in out String_Facets_Description;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence;
-      Applied     : out Boolean);
-   procedure Check_Facet
-     (Facets : in out String_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence);
-   --  See doc for inherited subprograms
+   function String_Get_Length
+     (Value : Unicode.CES.Byte_Sequence) return Natural;
+   package String_Facets is new Length_Facets (String_Get_Length);
+   package String_Validators is new Generic_Simple_Validator
+     (String_Facets.Length_Facets_Description);
 
-   type String_Validator_Record is new Any_Simple_XML_Validator_Record with
-      record
-         Facets : String_Facets_Description;
-      end record;
-   type String_Validator is access all String_Validator_Record'Class;
-   procedure Validate_Characters
-     (Validator     : access String_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
-   procedure Add_Facet
-     (Validator   : access String_Validator_Record;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence);
-   procedure Free (Validator : in out String_Validator_Record);
-   function Get_Facets_Description
-     (Validator : access String_Validator_Record)
-      return Facets_Description;
-   --  See doc from inherited subprograms
+   function HexBinary_Get_Length
+     (Value : Unicode.CES.Byte_Sequence) return Natural;
+   package HexBinary_Facets is new Length_Facets (HexBinary_Get_Length);
+   package HexBinary_Validators is new Generic_Simple_Validator
+     (HexBinary_Facets.Length_Facets_Description);
 
    -----------------
    -- Check_Facet --
@@ -537,19 +621,6 @@ package body Schema.Validators.Simple_Types is
       end if;
    end Add_Facet;
 
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
-
-   function Get_Facets_Description
-     (Validator : access String_Validator_Record)
-      return Facets_Description
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return new String_Facets_Description;
-   end Get_Facets_Description;
-
    ----------
    -- Free --
    ----------
@@ -559,122 +630,25 @@ package body Schema.Validators.Simple_Types is
       Free (Validator.Facets);
    end Free;
 
-   ----------
-   -- Free --
-   ----------
+   -----------------------
+   -- String_Get_Length --
+   -----------------------
 
-   procedure Free (Validator : in out String_Validator_Record) is
+   function String_Get_Length
+     (Value : Unicode.CES.Byte_Sequence) return Natural is
    begin
-      Free (Validator.Facets);
-   end Free;
+      return Sax.Encodings.Encoding.Length (Value);
+   end String_Get_Length;
 
-   -----------------
-   -- Check_Facet --
-   -----------------
+   --------------------------
+   -- HexBinary_Get_Length --
+   --------------------------
 
-   procedure Check_Facet
-     (Facets : in out String_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence)
-   is
-      Length : Integer;
+   function HexBinary_Get_Length
+     (Value : Unicode.CES.Byte_Sequence) return Natural is
    begin
-      Check_Facet (Common_Facets_Description (Facets), Value);
-
-      if Facets.Mask (Facet_Length)
-        or else Facets.Mask (Facet_Min_Length)
-        or else Facets.Mask (Facet_Max_Length)
-      then
-         Length := Sax.Encodings.Encoding.Length (Value);
-
-         if Facets.Mask (Facet_Length)
-           and then Facets.Length /= Length
-         then
-            Validation_Error
-              ("Invalid length, must be" & Integer'Image (Facets.Length)
-               & " characters");
-         end if;
-
-         if Facets.Mask (Facet_Min_Length)
-           and then Length < Facets.Min_Length
-         then
-            Validation_Error ("String is too short, minimum length is"
-                              & Integer'Image (Facets.Min_Length)
-                              & " characters");
-         end if;
-
-         if Facets.Mask (Facet_Max_Length)
-           and then Length > Facets.Max_Length
-         then
-            Validation_Error ("String too long, maximum length is"
-                              & Integer'Image (Facets.Max_Length)
-                              & " characters");
-         end if;
-      end if;
-   end Check_Facet;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access String_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
-   is
-      pragma Unreferenced (Empty_Element);
-   begin
-      Debug_Output ("Validate_Characters for string --" & Ch & "--"
-                    & Get_Name (Validator));
-      Check_Facet (Validator.Facets, Ch);
-   end Validate_Characters;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Facets      : in out String_Facets_Description;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence;
-      Applied     : out Boolean) is
-   begin
-      Add_Facet (Common_Facets_Description (Facets), Facet_Name, Facet_Value,
-                 Applied);
-      if Applied then
-         null;
-      elsif Facet_Name = "length" then
-         Facets.Length := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Length) := True;
-         Applied := True;
-      elsif Facet_Name = "minLength" then
-         Facets.Min_Length := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Min_Length) := True;
-         Applied := True;
-      elsif Facet_Name = "maxLength" then
-         Facets.Max_Length := Integer'Value (Facet_Value);
-         Facets.Mask (Facet_Max_Length) := True;
-         Applied := True;
-      else
-         Applied := False;
-      end if;
-   end Add_Facet;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access String_Validator_Record;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence)
-   is
-      Applies : Boolean;
-   begin
-      Add_Facet (Validator.Facets, Facet_Name, Facet_Value, Applies);
-      if not Applies then
-         Validation_Error ("Invalid facet: " & Facet_Name);
-      end if;
-   end Add_Facet;
+      return Sax.Encodings.Encoding.Length (Value) / 2;
+   end HexBinary_Get_Length;
 
    -----------------
    -- Check_Facet --
@@ -721,8 +695,10 @@ package body Schema.Validators.Simple_Types is
 
    procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS) is
       use Integer_Validators;
+      use String_Facets, HexBinary_Facets;
       Tmp     : XML_Validator;
-      Str     : String_Validator;
+      Str     : String_Validators.Validator;
+      Hex     : HexBinary_Validators.Validator;
       Int     : Integer_Validators.Validator;
       Dec     : Decimal_Validators.Validator;
       Created : XML_Type;
@@ -730,60 +706,64 @@ package body Schema.Validators.Simple_Types is
       Tmp := new Boolean_Validator_Record;
       Create_Global_Type (G, "boolean", Tmp);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Create_Global_Type (G, "string", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_QName'Access);
       Create_Global_Type (G, "QName", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Replace);
       Create_Global_Type (G, "normalizeString", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Create_Global_Type (G, "token", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Language_Name'Access);
       Created := Create_Global_Type (G, "language", Str);
       Create_Global_Attribute (XML_G, "lang", Created);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Nmtoken'Access);
       Create_Global_Type (G, "NMTOKEN", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Name'Access);
       Create_Global_Type (G, "Name", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "NCName", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ID", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "IDREF", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ENTITY", Str);
 
-      Str := new String_Validator_Record;
+      Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_URI'Access);
       Create_Global_Type (G, "anyURI", Str);
+
+      Hex := new HexBinary_Validators.Validator_Record;
+      Set_Implicit_Enumeration (Hex.Facets, Is_Valid_HexBinary'Access);
+      Create_Global_Type (G, "hexBinary", Hex);
 
       Dec := new Decimal_Validators.Validator_Record;
       Create_Global_Type (G, "decimal", Dec);
@@ -793,7 +773,7 @@ package body Schema.Validators.Simple_Types is
                           Facet_Max_Inclusive   => True,
                           Facet_Min_Inclusive   => True,
                           others                => False);
---      Dec.Facets.Fraction_Digits := 0;
+      Dec.Facets.Fraction_Digits := 0;
       Dec.Facets.Max_Inclusive := Value ("+18446744073709551615");
       Dec.Facets.Min_Inclusive := Value ("0");
       Create_Global_Type (G, "unsignedLong", Dec);
