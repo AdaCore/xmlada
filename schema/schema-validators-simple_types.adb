@@ -245,6 +245,26 @@ package body Schema.Validators.Simple_Types is
    package GDay_Validators is new Generic_Simple_Validator
      (GDay_Facets_Package.Range_Facets_Description);
 
+   package GMonth_Day_Facets_Package is new Generic_Range_Facets
+     ("gMonthDay", GMonth_Day_T);
+   package GMonth_Day_Validators is new Generic_Simple_Validator
+     (GMonth_Day_Facets_Package.Range_Facets_Description);
+
+   package GMonth_Facets_Package is new Generic_Range_Facets
+     ("gMonth", GMonth_T);
+   package GMonth_Validators is new Generic_Simple_Validator
+     (GMonth_Facets_Package.Range_Facets_Description);
+
+   package GYear_Facets_Package is new Generic_Range_Facets
+     ("gYear", GYear_T);
+   package GYear_Validators is new Generic_Simple_Validator
+     (GYear_Facets_Package.Range_Facets_Description);
+
+   package GYear_Month_Facets_Package is new Generic_Range_Facets
+     ("gYearMonth", GYear_Month_T);
+   package GYear_Month_Validators is new Generic_Simple_Validator
+     (GYear_Month_Facets_Package.Range_Facets_Description);
+
    package Date_Facets_Package is new Generic_Range_Facets
      ("date", Date_T);
    package Date_Validators is new Generic_Simple_Validator
@@ -878,6 +898,18 @@ package body Schema.Validators.Simple_Types is
 
       Tmp := new GDay_Validators.Validator_Record;
       Create_Global_Type (G, "gDay", Tmp);
+
+      Tmp := new GMonth_Day_Validators.Validator_Record;
+      Create_Global_Type (G, "gMonthDay", Tmp);
+
+      Tmp := new GMonth_Validators.Validator_Record;
+      Create_Global_Type (G, "gMonth", Tmp);
+
+      Tmp := new GYear_Month_Validators.Validator_Record;
+      Create_Global_Type (G, "gYearMonth", Tmp);
+
+      Tmp := new GYear_Validators.Validator_Record;
+      Create_Global_Type (G, "gYear", Tmp);
 
       Tmp := new Date_Validators.Validator_Record;
       Create_Global_Type (G, "date", Tmp);

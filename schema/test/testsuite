@@ -33,6 +33,10 @@ run_nist_anyuri=0
 run_nist_decimal=0
 run_nist_double=0
 run_nist_gday=0
+run_nist_gmonth_day=0
+run_nist_gmonth=0
+run_nist_gyear=0
+run_nist_gyear_month=0
 run_act=0
 
 while getopts "vhdseuan:m:" opt
@@ -43,18 +47,22 @@ do
       s) show_expected_failure=1;;
       u) run_sun=1; run_all_tests=0;;
       n) case $OPTARG in
-           anyuri)   run_nist_anyuri=1;   run_all_tests=0;;
-           boolean)  run_nist_boolean=1;  run_all_tests=0;;
-           byte)     run_nist_byte=1;     run_all_tests=0;;
-           datetime) run_nist_datetime=1; run_all_tests=0;;
-           date)     run_nist_date=1;     run_all_tests=0;;
-           decimal)  run_nist_decimal=1;  run_all_tests=0;;
-           double)   run_nist_double=1;   run_all_tests=0;;
-           duration) run_nist_duration=1; run_all_tests=0;;
-           float)    run_nist_float=1;    run_all_tests=0;;
-           gday)     run_nist_gday=1;     run_all_tests=0;;
+           anyuri)      run_nist_anyuri=1;         run_all_tests=0;;
+           boolean)     run_nist_boolean=1;        run_all_tests=0;;
+           byte)        run_nist_byte=1;           run_all_tests=0;;
+           datetime)    run_nist_datetime=1;       run_all_tests=0;;
+           date)        run_nist_date=1;           run_all_tests=0;;
+           decimal)     run_nist_decimal=1;        run_all_tests=0;;
+           double)      run_nist_double=1;         run_all_tests=0;;
+           duration)    run_nist_duration=1;       run_all_tests=0;;
+           float)       run_nist_float=1;          run_all_tests=0;;
+           gday)        run_nist_gday=1;           run_all_tests=0;;
+           gmonth_day)  run_nist_gmonth_day=1;     run_all_tests=0;;
+           gmonth)      run_nist_gmonth=1;         run_all_tests=0;;
+           gyear)       run_nist_gyear=1;          run_all_tests=0;;
+           gyear_month) run_nist_gyear_month=1;    run_all_tests=0;;
 
-           time)     run_nist_time=1;     run_all_tests=0;;
+           time)        run_nist_time=1;           run_all_tests=0;;
          esac;;
       m) case $OPTARG in
            e) run_ms_element=1; run_all_tests=0;;
@@ -172,7 +180,7 @@ expected_failure() {
 ## Microsoft elements tests -- A serie  (name attribute tests)
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemA001.xsd ""\
  "$mse/elemA001.xsd:3:16: Attribute \"name\" is required in this context"
 expect $mse/elemA002.xsd "" ""
@@ -203,7 +211,7 @@ fi
 ## Microsoft elements tests -- B serie  (boolean tests)
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemB001.xsd "" ""
 expect $mse/elemB002.xsd "" ""
 expect $mse/elemB003.xsd "" \
@@ -226,7 +234,7 @@ fi
 ## Microsoft elements tests -- C serie  (block attribute + list type)
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemC001.xsd "" ""
 expect $mse/elemC002.xsd "" ""
 expect $mse/elemC003.xsd "" ""
@@ -261,7 +269,7 @@ fi
 ## Microsoft elements tests -- D serie (default)
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemD001.xsd "" ""
 expect $mse/elemD002.xsd "" ""
 expect $mse/elemD003.xsd "" \
@@ -269,7 +277,7 @@ expect $mse/elemD003.xsd "" \
 expect $mse/elemD004.xsd "" \
  "$mse/elemD004.xsd:9:56: No character data allowed by content model"
 expect $mse/elemD005.xsd "" \
- "$mse/elemD005.xsd:3:58: Invalid date \"foo\""
+ "$mse/elemD005.xsd:3:58: Invalid year in \"foo\""
 expect $mse/elemD006.xsd "" ""
 fi
 
@@ -277,7 +285,7 @@ fi
 ## Microsoft elements tests -- E serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemE001.xsd "" ""
 expect $mse/elemE002.xsd "" ""
 expect $mse/elemE003.xsd "" ""
@@ -297,7 +305,7 @@ fi
 ## Microsoft elements tests -- F serie (final)
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemF001.xsd "" ""
 expect $mse/elemF002.xsd "" ""
 expect $mse/elemF003.xsd "" ""
@@ -335,7 +343,7 @@ fi
 ## Microsoft elements tests -- G serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemG001.xsd "" ""
 expect $mse/elemG002.xsd "" ""
 expect $mse/elemG003.xsd "" \
@@ -349,7 +357,7 @@ fi
 ## Microsoft elements tests -- H serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemH001.xsd "" ""
 expect $mse/elemH002.xsd "" ""
 expect $mse/elemH003.xsd "" \
@@ -366,7 +374,7 @@ fi
 ## Microsoft elements tests -- I serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemI001.xsd "" ""
 expect $mse/elemI002.xsd "" ""
 expect $mse/elemI003.xsd "" \
@@ -381,7 +389,7 @@ fi
 ## Microsoft elements tests -- J serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 notrun $mse/elemJ001.xsd "" "test incorrect, since minOccurs > maxOccurs. See description of changes J.8 in the standard"
 expect $mse/elemJ002.xsd "" ""
 expect $mse/elemJ003.xsd "" ""
@@ -418,7 +426,7 @@ fi
 ## Microsoft elements tests -- K serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemK001.xsd "" ""
 expect $mse/elemK002.xsd "" ""
 expect $mse/elemK003.xsd "" \
@@ -437,7 +445,7 @@ fi
 ## Microsoft elements tests -- L serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemL001.xsd "" ""
 expect $mse/elemL002.xsd "" \
  "$mse/elemL002.xsd:10: Element \"foo\" from namespace \"\" was referenced, but never declared"
@@ -451,7 +459,7 @@ fi
 ## Microsoft elements tests -- M serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemM001.xsd "" ""
 expect $mse/elemM002.xsd "" \
  "$mse/elemM002.xsd:6: Type \"foo\" from namespace \"\" was referenced, but never declared"
@@ -466,7 +474,7 @@ fi
 ## Microsoft elements tests -- N serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemN001.xsd "" ""
 expect $mse/elemN002.xsd "" ""
 expect $mse/elemN003.xsd "" ""
@@ -480,7 +488,7 @@ fi
 ## Microsoft elements tests -- O serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect "" $mse/elemO001.xml \
  "$mse/elemO001.xml:4:11: \"parent\" is abstract"
 expect "" $mse/elemO002.xml ""
@@ -503,7 +511,7 @@ fi
 ## Microsoft elements tests -- P serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemP001.xsd "" \
  "$mse/elemP001.xsd:3:90: Attributes \"fixed\" and \"default\" conflict with each other"
 expect $mse/elemP002.xsd "" \
@@ -526,7 +534,7 @@ fi
 ## Microsoft elements tests -- Q serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemQ001.xsd "" ""
 expect $mse/elemQ002.xsd "" ""
 expect $mse/elemQ003.xsd "" ""
@@ -564,7 +572,7 @@ fi
 ## Microsoft elements tests -- R serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect "" $mse/elemR001.xml ""
 expect "" $mse/elemR002.xml ""
 notrun $mse/elemR003.xsd "test seems wrong, all parsers fail"
@@ -577,7 +585,7 @@ fi
 ## Microsoft elements tests -- S serie (final)
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemS001.xsd "" \
  "$mse/elemS001.xsd:36:84: \"fr_invalid\" is final for restrictions, and cannot be substituted by\"fr1_invalid\""
 expect "" $mse/elemS002.xml ""
@@ -596,7 +604,7 @@ fi
 ## Microsoft elements tests -- T serie (block)
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect "" $mse/elemT001.xml \
  "$mse/elemT001.xml:3:29: Element \"fooTest\" blocks the use of restrictions of the type"
 expect "" $mse/elemT002.xml ""
@@ -681,7 +689,7 @@ fi
 ## Microsoft elements tests -- U serie (restrictions and facets)
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect "" $mse/elemU001.xml ""
 expect "" $mse/elemU002.xml ""
 expect "" $mse/elemU003.xml ""
@@ -713,7 +721,7 @@ fi
 ## Microsoft elements tests -- Z serie
 ##################
 
-if [ x$run_ms_element = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 notrun $mse/elemZ001.xml "All parsers accept it"
 expected_failure $mse/elemZ002.xml "Improper handling of derivation for simpleType for xsi:type attribute"
 expect "" $mse/elemZ003.xml ""
@@ -725,7 +733,7 @@ fi
 ## Sun tests
 ##################
 
-if [ x$run_sun = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_sun = x1            -o $run_all_tests = 1 ]; then
 expected_failure "$sun/idc001.nogen.n00.xml" "XPath not support => <unique> not supported"
 expect "$sun/idc001.nogen.xsd" "$sun/idc001.nogen.v00.xml" ""
 expect "$sun/idc001.nogen.xsd" "$sun/idc001.nogen.v01.xml" ""
@@ -1088,7 +1096,7 @@ fi
 ## Microsoft particles tests
 ###########################################
 
-if [ x$run_ms_particle = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_ms_particle = x1    -o $run_all_tests = 1 ]; then
 expect "" "$msp/particlesA001.xml" \
  "$msp/particlesA001.xml:3:7: Element \"elem\" must appear at least 1 times"
 expect "" "$msp/particlesA002.xml" ""
@@ -1541,7 +1549,7 @@ fi
 ## NIST tests for time
 ######################################
 
-if [ x$run_nist_time = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_time = x1      -o $run_all_tests = 1 ]; then
    expect "$nist/NISTSchema-time-minExclusive-1.xsd" "$nist/NISTXML-time-minExclusive-1-1.xml" ""
    expect "$nist/NISTSchema-time-minExclusive-1.xsd" "$nist/NISTXML-time-minExclusive-1-2.xml" ""
    expect "$nist/NISTSchema-time-minExclusive-1.xsd" "$nist/NISTXML-time-minExclusive-1-3.xml" ""
@@ -1718,7 +1726,7 @@ fi
 ## NIST byte tests ##
 #####################
 
-if [ x$run_nist_byte = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_byte = x1      -o $run_all_tests = 1 ]; then
 expect "$nist/NISTSchema-byte-minExclusive-1.xsd" "$nist/NISTXML-byte-minExclusive-1-1.xml" ""
 expect "$nist/NISTSchema-byte-minExclusive-1.xsd" "$nist/NISTXML-byte-minExclusive-1-2.xml" ""
 expect "$nist/NISTSchema-byte-minExclusive-1.xsd" "$nist/NISTXML-byte-minExclusive-1-3.xml" ""
@@ -1919,7 +1927,7 @@ fi
 ## NIST boolean tests ##
 ########################
 
-if [ x$run_nist_boolean = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_boolean = x1   -o $run_all_tests = 1 ]; then
 expect "$nist/NISTSchema-boolean-pattern-1.xsd" "$nist/NISTXML-boolean-pattern-1-1.xml" ""
 expect "$nist/NISTSchema-boolean-pattern-2.xsd" "$nist/NISTXML-boolean-pattern-2-1.xml" ""
 expect "$nist/NISTSchema-boolean-pattern-3.xsd" "$nist/NISTXML-boolean-pattern-3-1.xml" ""
@@ -1935,7 +1943,7 @@ fi
 ## NIST float tests ##
 ######################
 
-if [ x$run_nist_float = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_float = x1     -o $run_all_tests = 1 ]; then
 expect "$nist/NISTSchema-float-minExclusive-1.xsd" "$nist/NISTXML-float-minExclusive-1-1.xml" ""
 expect "$nist/NISTSchema-float-minExclusive-1.xsd" "$nist/NISTXML-float-minExclusive-1-2.xml" ""
 expect "$nist/NISTSchema-float-minExclusive-1.xsd" "$nist/NISTXML-float-minExclusive-1-3.xml" ""
@@ -2111,7 +2119,7 @@ fi
 ## NIST dateTime tests ##
 #########################
 
-if [ x$run_nist_datetime = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_datetime = x1  -o $run_all_tests = 1 ]; then
 expect "$nist/NISTSchema-dateTime-minExclusive-1.xsd" "$nist/NISTXML-dateTime-minExclusive-1-1.xml" ""
 expect "$nist/NISTSchema-dateTime-minExclusive-1.xsd" "$nist/NISTXML-dateTime-minExclusive-1-2.xml" ""
 expect "$nist/NISTSchema-dateTime-minExclusive-1.xsd" "$nist/NISTXML-dateTime-minExclusive-1-3.xml" ""
@@ -2287,7 +2295,7 @@ fi
 ## NIST date tests ##
 #####################
 
-if [ x$run_nist_date = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_date = x1      -o $run_all_tests = 1 ]; then
 expect "$nist/NISTSchema-date-minExclusive-1.xsd" "$nist/NISTXML-date-minExclusive-1-1.xml" ""
 expect "$nist/NISTSchema-date-minExclusive-1.xsd" "$nist/NISTXML-date-minExclusive-1-2.xml" ""
 expect "$nist/NISTSchema-date-minExclusive-1.xsd" "$nist/NISTXML-date-minExclusive-1-3.xml" ""
@@ -2463,7 +2471,7 @@ fi
 ## NIST duration tests ##
 #########################
 
-if [ x$run_nist_duration = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_duration = x1  -o $run_all_tests = 1 ]; then
 expect "$nist/NISTSchema-duration-minExclusive-1.xsd" "$nist/NISTXML-duration-minExclusive-1-1.xml" ""
 expect "$nist/NISTSchema-duration-minExclusive-1.xsd" "$nist/NISTXML-duration-minExclusive-1-2.xml" ""
 expect "$nist/NISTSchema-duration-minExclusive-1.xsd" "$nist/NISTXML-duration-minExclusive-1-3.xml" ""
@@ -2639,7 +2647,7 @@ fi
 ## NIST anyURI tests ##
 #######################
 
-if [ x$run_nist_anyuri = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_anyuri = x1    -o $run_all_tests = 1 ]; then
 expect "$nist/NISTSchema-anyURI-maxLength-1.xsd" "$nist/NISTXML-anyURI-maxLength-1-1.xml" ""
 expect "$nist/NISTSchema-anyURI-maxLength-1.xsd" "$nist/NISTXML-anyURI-maxLength-1-2.xml" ""
 expect "$nist/NISTSchema-anyURI-maxLength-1.xsd" "$nist/NISTXML-anyURI-maxLength-1-3.xml" ""
@@ -2800,7 +2808,7 @@ fi
 ## NIST decimal tests ##
 ########################
 
-if [ x$run_nist_decimal = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_decimal = x1   -o $run_all_tests = 1 ]; then
    expect "$nist/NISTSchema-decimal-minExclusive-1.xsd" "$nist/NISTXML-decimal-minExclusive-1-1.xml" ""
    expect "$nist/NISTSchema-decimal-minExclusive-1.xsd" "$nist/NISTXML-decimal-minExclusive-1-2.xml" ""
    expect "$nist/NISTSchema-decimal-minExclusive-1.xsd" "$nist/NISTXML-decimal-minExclusive-1-3.xml" ""
@@ -3037,7 +3045,7 @@ fi
 ## NIST double tests ##
 #######################
 
-if [ x$run_nist_double = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_nist_double = x1    -o $run_all_tests = 1 ]; then
    expect "$nist/NISTSchema-double-minExclusive-1.xsd" "$nist/NISTXML-double-minExclusive-1-1.xml" ""
    expect "$nist/NISTSchema-double-minExclusive-1.xsd" "$nist/NISTXML-double-minExclusive-1-2.xml" ""
    expect "$nist/NISTSchema-double-minExclusive-1.xsd" "$nist/NISTXML-double-minExclusive-1-3.xml" ""
@@ -3183,8 +3191,7 @@ fi
 ## NIST gday tests ##
 #####################
 
-if [ x$run_nist_gday = x1 -o $run_all_tests = 1 ]; then
-   
+if [ x$run_nist_gday = x1      -o $run_all_tests = 1 ]; then
    expect "$nist/NISTSchema-gDay-minExclusive-1.xsd" "$nist/NISTXML-gDay-minExclusive-1-1.xml" ""
    expect "$nist/NISTSchema-gDay-minExclusive-1.xsd" "$nist/NISTXML-gDay-minExclusive-1-2.xml" ""
    expect "$nist/NISTSchema-gDay-minExclusive-1.xsd" "$nist/NISTXML-gDay-minExclusive-1-3.xml" ""
@@ -3322,11 +3329,591 @@ if [ x$run_nist_gday = x1 -o $run_all_tests = 1 ]; then
    expect "$nist/NISTSchema-gDay-whiteSpace-1.xsd" "$nist/NISTXML-gDay-whiteSpace-1-5.xml" ""
 fi
 
+##########################
+## NIST gMonthDay tests ##
+##########################
+
+if [ $run_nist_gmonth_day = 1  -o $run_all_tests = 1 ]; then
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-1.xsd" "$nist/NISTXML-gMonthDay-minExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-1.xsd" "$nist/NISTXML-gMonthDay-minExclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-1.xsd" "$nist/NISTXML-gMonthDay-minExclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-1.xsd" "$nist/NISTXML-gMonthDay-minExclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-1.xsd" "$nist/NISTXML-gMonthDay-minExclusive-1-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-2.xsd" "$nist/NISTXML-gMonthDay-minExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-2.xsd" "$nist/NISTXML-gMonthDay-minExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-2.xsd" "$nist/NISTXML-gMonthDay-minExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-2.xsd" "$nist/NISTXML-gMonthDay-minExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-2.xsd" "$nist/NISTXML-gMonthDay-minExclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-3.xsd" "$nist/NISTXML-gMonthDay-minExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-3.xsd" "$nist/NISTXML-gMonthDay-minExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-3.xsd" "$nist/NISTXML-gMonthDay-minExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-3.xsd" "$nist/NISTXML-gMonthDay-minExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-3.xsd" "$nist/NISTXML-gMonthDay-minExclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-4.xsd" "$nist/NISTXML-gMonthDay-minExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-4.xsd" "$nist/NISTXML-gMonthDay-minExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-4.xsd" "$nist/NISTXML-gMonthDay-minExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-4.xsd" "$nist/NISTXML-gMonthDay-minExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-4.xsd" "$nist/NISTXML-gMonthDay-minExclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minExclusive-5.xsd" "$nist/NISTXML-gMonthDay-minExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-1.xsd" "$nist/NISTXML-gMonthDay-minInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-1.xsd" "$nist/NISTXML-gMonthDay-minInclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-1.xsd" "$nist/NISTXML-gMonthDay-minInclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-1.xsd" "$nist/NISTXML-gMonthDay-minInclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-1.xsd" "$nist/NISTXML-gMonthDay-minInclusive-1-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-2.xsd" "$nist/NISTXML-gMonthDay-minInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-2.xsd" "$nist/NISTXML-gMonthDay-minInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-2.xsd" "$nist/NISTXML-gMonthDay-minInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-2.xsd" "$nist/NISTXML-gMonthDay-minInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-2.xsd" "$nist/NISTXML-gMonthDay-minInclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-3.xsd" "$nist/NISTXML-gMonthDay-minInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-3.xsd" "$nist/NISTXML-gMonthDay-minInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-3.xsd" "$nist/NISTXML-gMonthDay-minInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-3.xsd" "$nist/NISTXML-gMonthDay-minInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-3.xsd" "$nist/NISTXML-gMonthDay-minInclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-4.xsd" "$nist/NISTXML-gMonthDay-minInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-4.xsd" "$nist/NISTXML-gMonthDay-minInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-4.xsd" "$nist/NISTXML-gMonthDay-minInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-4.xsd" "$nist/NISTXML-gMonthDay-minInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-4.xsd" "$nist/NISTXML-gMonthDay-minInclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-minInclusive-5.xsd" "$nist/NISTXML-gMonthDay-minInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-1.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxExclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxExclusive-5-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-1.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-2.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-3.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-4.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-maxInclusive-5.xsd" "$nist/NISTXML-gMonthDay-maxInclusive-5-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-1.xsd" "$nist/NISTXML-gMonthDay-pattern-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-1.xsd" "$nist/NISTXML-gMonthDay-pattern-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-1.xsd" "$nist/NISTXML-gMonthDay-pattern-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-1.xsd" "$nist/NISTXML-gMonthDay-pattern-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-1.xsd" "$nist/NISTXML-gMonthDay-pattern-1-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-2.xsd" "$nist/NISTXML-gMonthDay-pattern-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-2.xsd" "$nist/NISTXML-gMonthDay-pattern-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-2.xsd" "$nist/NISTXML-gMonthDay-pattern-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-2.xsd" "$nist/NISTXML-gMonthDay-pattern-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-2.xsd" "$nist/NISTXML-gMonthDay-pattern-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-3.xsd" "$nist/NISTXML-gMonthDay-pattern-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-3.xsd" "$nist/NISTXML-gMonthDay-pattern-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-3.xsd" "$nist/NISTXML-gMonthDay-pattern-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-3.xsd" "$nist/NISTXML-gMonthDay-pattern-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-3.xsd" "$nist/NISTXML-gMonthDay-pattern-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-4.xsd" "$nist/NISTXML-gMonthDay-pattern-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-4.xsd" "$nist/NISTXML-gMonthDay-pattern-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-4.xsd" "$nist/NISTXML-gMonthDay-pattern-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-4.xsd" "$nist/NISTXML-gMonthDay-pattern-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-4.xsd" "$nist/NISTXML-gMonthDay-pattern-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-5.xsd" "$nist/NISTXML-gMonthDay-pattern-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-5.xsd" "$nist/NISTXML-gMonthDay-pattern-5-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-5.xsd" "$nist/NISTXML-gMonthDay-pattern-5-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-5.xsd" "$nist/NISTXML-gMonthDay-pattern-5-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-pattern-5.xsd" "$nist/NISTXML-gMonthDay-pattern-5-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-1.xsd" "$nist/NISTXML-gMonthDay-enumeration-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-1.xsd" "$nist/NISTXML-gMonthDay-enumeration-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-1.xsd" "$nist/NISTXML-gMonthDay-enumeration-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-1.xsd" "$nist/NISTXML-gMonthDay-enumeration-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-1.xsd" "$nist/NISTXML-gMonthDay-enumeration-1-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-2.xsd" "$nist/NISTXML-gMonthDay-enumeration-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-2.xsd" "$nist/NISTXML-gMonthDay-enumeration-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-2.xsd" "$nist/NISTXML-gMonthDay-enumeration-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-2.xsd" "$nist/NISTXML-gMonthDay-enumeration-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-2.xsd" "$nist/NISTXML-gMonthDay-enumeration-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-3.xsd" "$nist/NISTXML-gMonthDay-enumeration-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-3.xsd" "$nist/NISTXML-gMonthDay-enumeration-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-3.xsd" "$nist/NISTXML-gMonthDay-enumeration-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-3.xsd" "$nist/NISTXML-gMonthDay-enumeration-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-3.xsd" "$nist/NISTXML-gMonthDay-enumeration-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-4.xsd" "$nist/NISTXML-gMonthDay-enumeration-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-4.xsd" "$nist/NISTXML-gMonthDay-enumeration-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-4.xsd" "$nist/NISTXML-gMonthDay-enumeration-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-4.xsd" "$nist/NISTXML-gMonthDay-enumeration-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-4.xsd" "$nist/NISTXML-gMonthDay-enumeration-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-5.xsd" "$nist/NISTXML-gMonthDay-enumeration-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-5.xsd" "$nist/NISTXML-gMonthDay-enumeration-5-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-5.xsd" "$nist/NISTXML-gMonthDay-enumeration-5-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-5.xsd" "$nist/NISTXML-gMonthDay-enumeration-5-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-enumeration-5.xsd" "$nist/NISTXML-gMonthDay-enumeration-5-5.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-whiteSpace-1.xsd" "$nist/NISTXML-gMonthDay-whiteSpace-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-whiteSpace-1.xsd" "$nist/NISTXML-gMonthDay-whiteSpace-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-whiteSpace-1.xsd" "$nist/NISTXML-gMonthDay-whiteSpace-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-whiteSpace-1.xsd" "$nist/NISTXML-gMonthDay-whiteSpace-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonthDay-whiteSpace-1.xsd" "$nist/NISTXML-gMonthDay-whiteSpace-1-5.xml" ""
+fi
+
+#######################
+## NIST gMonth tests ##
+#######################
+
+if [ $run_nist_gmonth = 1      -o $run_all_tests = 1 ]; then
+   expect "$nist/NISTSchema-gMonth-minExclusive-1.xsd" "$nist/NISTXML-gMonth-minExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-1.xsd" "$nist/NISTXML-gMonth-minExclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-1.xsd" "$nist/NISTXML-gMonth-minExclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-1.xsd" "$nist/NISTXML-gMonth-minExclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-1.xsd" "$nist/NISTXML-gMonth-minExclusive-1-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-2.xsd" "$nist/NISTXML-gMonth-minExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-2.xsd" "$nist/NISTXML-gMonth-minExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-2.xsd" "$nist/NISTXML-gMonth-minExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-2.xsd" "$nist/NISTXML-gMonth-minExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-2.xsd" "$nist/NISTXML-gMonth-minExclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-3.xsd" "$nist/NISTXML-gMonth-minExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-3.xsd" "$nist/NISTXML-gMonth-minExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-3.xsd" "$nist/NISTXML-gMonth-minExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-3.xsd" "$nist/NISTXML-gMonth-minExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-3.xsd" "$nist/NISTXML-gMonth-minExclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-4.xsd" "$nist/NISTXML-gMonth-minExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-4.xsd" "$nist/NISTXML-gMonth-minExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-4.xsd" "$nist/NISTXML-gMonth-minExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-4.xsd" "$nist/NISTXML-gMonth-minExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-4.xsd" "$nist/NISTXML-gMonth-minExclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-minExclusive-5.xsd" "$nist/NISTXML-gMonth-minExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-1.xsd" "$nist/NISTXML-gMonth-minInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-1.xsd" "$nist/NISTXML-gMonth-minInclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-1.xsd" "$nist/NISTXML-gMonth-minInclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-1.xsd" "$nist/NISTXML-gMonth-minInclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-1.xsd" "$nist/NISTXML-gMonth-minInclusive-1-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-2.xsd" "$nist/NISTXML-gMonth-minInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-2.xsd" "$nist/NISTXML-gMonth-minInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-2.xsd" "$nist/NISTXML-gMonth-minInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-2.xsd" "$nist/NISTXML-gMonth-minInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-2.xsd" "$nist/NISTXML-gMonth-minInclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-3.xsd" "$nist/NISTXML-gMonth-minInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-3.xsd" "$nist/NISTXML-gMonth-minInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-3.xsd" "$nist/NISTXML-gMonth-minInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-3.xsd" "$nist/NISTXML-gMonth-minInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-3.xsd" "$nist/NISTXML-gMonth-minInclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-4.xsd" "$nist/NISTXML-gMonth-minInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-4.xsd" "$nist/NISTXML-gMonth-minInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-4.xsd" "$nist/NISTXML-gMonth-minInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-4.xsd" "$nist/NISTXML-gMonth-minInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-4.xsd" "$nist/NISTXML-gMonth-minInclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-minInclusive-5.xsd" "$nist/NISTXML-gMonth-minInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-1.xsd" "$nist/NISTXML-gMonth-maxExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-2.xsd" "$nist/NISTXML-gMonth-maxExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-2.xsd" "$nist/NISTXML-gMonth-maxExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-2.xsd" "$nist/NISTXML-gMonth-maxExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-2.xsd" "$nist/NISTXML-gMonth-maxExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-2.xsd" "$nist/NISTXML-gMonth-maxExclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-3.xsd" "$nist/NISTXML-gMonth-maxExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-3.xsd" "$nist/NISTXML-gMonth-maxExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-3.xsd" "$nist/NISTXML-gMonth-maxExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-3.xsd" "$nist/NISTXML-gMonth-maxExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-3.xsd" "$nist/NISTXML-gMonth-maxExclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-4.xsd" "$nist/NISTXML-gMonth-maxExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-4.xsd" "$nist/NISTXML-gMonth-maxExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-4.xsd" "$nist/NISTXML-gMonth-maxExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-4.xsd" "$nist/NISTXML-gMonth-maxExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-4.xsd" "$nist/NISTXML-gMonth-maxExclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-5.xsd" "$nist/NISTXML-gMonth-maxExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-5.xsd" "$nist/NISTXML-gMonth-maxExclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-5.xsd" "$nist/NISTXML-gMonth-maxExclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-5.xsd" "$nist/NISTXML-gMonth-maxExclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxExclusive-5.xsd" "$nist/NISTXML-gMonth-maxExclusive-5-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-1.xsd" "$nist/NISTXML-gMonth-maxInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-2.xsd" "$nist/NISTXML-gMonth-maxInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-2.xsd" "$nist/NISTXML-gMonth-maxInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-2.xsd" "$nist/NISTXML-gMonth-maxInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-2.xsd" "$nist/NISTXML-gMonth-maxInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-2.xsd" "$nist/NISTXML-gMonth-maxInclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-3.xsd" "$nist/NISTXML-gMonth-maxInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-3.xsd" "$nist/NISTXML-gMonth-maxInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-3.xsd" "$nist/NISTXML-gMonth-maxInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-3.xsd" "$nist/NISTXML-gMonth-maxInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-3.xsd" "$nist/NISTXML-gMonth-maxInclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-4.xsd" "$nist/NISTXML-gMonth-maxInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-4.xsd" "$nist/NISTXML-gMonth-maxInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-4.xsd" "$nist/NISTXML-gMonth-maxInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-4.xsd" "$nist/NISTXML-gMonth-maxInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-4.xsd" "$nist/NISTXML-gMonth-maxInclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-5.xsd" "$nist/NISTXML-gMonth-maxInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-5.xsd" "$nist/NISTXML-gMonth-maxInclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-5.xsd" "$nist/NISTXML-gMonth-maxInclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-5.xsd" "$nist/NISTXML-gMonth-maxInclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-maxInclusive-5.xsd" "$nist/NISTXML-gMonth-maxInclusive-5-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-1.xsd" "$nist/NISTXML-gMonth-pattern-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-1.xsd" "$nist/NISTXML-gMonth-pattern-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-1.xsd" "$nist/NISTXML-gMonth-pattern-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-1.xsd" "$nist/NISTXML-gMonth-pattern-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-1.xsd" "$nist/NISTXML-gMonth-pattern-1-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-2.xsd" "$nist/NISTXML-gMonth-pattern-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-2.xsd" "$nist/NISTXML-gMonth-pattern-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-2.xsd" "$nist/NISTXML-gMonth-pattern-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-2.xsd" "$nist/NISTXML-gMonth-pattern-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-2.xsd" "$nist/NISTXML-gMonth-pattern-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-3.xsd" "$nist/NISTXML-gMonth-pattern-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-3.xsd" "$nist/NISTXML-gMonth-pattern-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-3.xsd" "$nist/NISTXML-gMonth-pattern-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-3.xsd" "$nist/NISTXML-gMonth-pattern-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-3.xsd" "$nist/NISTXML-gMonth-pattern-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-4.xsd" "$nist/NISTXML-gMonth-pattern-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-4.xsd" "$nist/NISTXML-gMonth-pattern-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-4.xsd" "$nist/NISTXML-gMonth-pattern-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-4.xsd" "$nist/NISTXML-gMonth-pattern-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-4.xsd" "$nist/NISTXML-gMonth-pattern-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-5.xsd" "$nist/NISTXML-gMonth-pattern-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-5.xsd" "$nist/NISTXML-gMonth-pattern-5-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-5.xsd" "$nist/NISTXML-gMonth-pattern-5-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-5.xsd" "$nist/NISTXML-gMonth-pattern-5-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-pattern-5.xsd" "$nist/NISTXML-gMonth-pattern-5-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-1.xsd" "$nist/NISTXML-gMonth-enumeration-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-1.xsd" "$nist/NISTXML-gMonth-enumeration-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-1.xsd" "$nist/NISTXML-gMonth-enumeration-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-1.xsd" "$nist/NISTXML-gMonth-enumeration-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-1.xsd" "$nist/NISTXML-gMonth-enumeration-1-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-2.xsd" "$nist/NISTXML-gMonth-enumeration-2-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-2.xsd" "$nist/NISTXML-gMonth-enumeration-2-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-2.xsd" "$nist/NISTXML-gMonth-enumeration-2-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-2.xsd" "$nist/NISTXML-gMonth-enumeration-2-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-2.xsd" "$nist/NISTXML-gMonth-enumeration-2-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-3.xsd" "$nist/NISTXML-gMonth-enumeration-3-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-3.xsd" "$nist/NISTXML-gMonth-enumeration-3-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-3.xsd" "$nist/NISTXML-gMonth-enumeration-3-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-3.xsd" "$nist/NISTXML-gMonth-enumeration-3-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-3.xsd" "$nist/NISTXML-gMonth-enumeration-3-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-4.xsd" "$nist/NISTXML-gMonth-enumeration-4-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-4.xsd" "$nist/NISTXML-gMonth-enumeration-4-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-4.xsd" "$nist/NISTXML-gMonth-enumeration-4-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-4.xsd" "$nist/NISTXML-gMonth-enumeration-4-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-4.xsd" "$nist/NISTXML-gMonth-enumeration-4-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-5.xsd" "$nist/NISTXML-gMonth-enumeration-5-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-5.xsd" "$nist/NISTXML-gMonth-enumeration-5-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-5.xsd" "$nist/NISTXML-gMonth-enumeration-5-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-5.xsd" "$nist/NISTXML-gMonth-enumeration-5-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-enumeration-5.xsd" "$nist/NISTXML-gMonth-enumeration-5-5.xml" ""
+   expect "$nist/NISTSchema-gMonth-whiteSpace-1.xsd" "$nist/NISTXML-gMonth-whiteSpace-1-1.xml" ""
+   expect "$nist/NISTSchema-gMonth-whiteSpace-1.xsd" "$nist/NISTXML-gMonth-whiteSpace-1-2.xml" ""
+   expect "$nist/NISTSchema-gMonth-whiteSpace-1.xsd" "$nist/NISTXML-gMonth-whiteSpace-1-3.xml" ""
+   expect "$nist/NISTSchema-gMonth-whiteSpace-1.xsd" "$nist/NISTXML-gMonth-whiteSpace-1-4.xml" ""
+   expect "$nist/NISTSchema-gMonth-whiteSpace-1.xsd" "$nist/NISTXML-gMonth-whiteSpace-1-5.xml" ""
+fi
+
+###########################
+## NIST gYearMonth tests ##
+###########################
+
+if [ $run_nist_gyear_month = 1 -o $run_all_tests = 1 ]; then
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-1.xsd" "$nist/NISTXML-gYearMonth-minExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-1.xsd" "$nist/NISTXML-gYearMonth-minExclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-1.xsd" "$nist/NISTXML-gYearMonth-minExclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-1.xsd" "$nist/NISTXML-gYearMonth-minExclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-1.xsd" "$nist/NISTXML-gYearMonth-minExclusive-1-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-2.xsd" "$nist/NISTXML-gYearMonth-minExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-2.xsd" "$nist/NISTXML-gYearMonth-minExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-2.xsd" "$nist/NISTXML-gYearMonth-minExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-2.xsd" "$nist/NISTXML-gYearMonth-minExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-2.xsd" "$nist/NISTXML-gYearMonth-minExclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-3.xsd" "$nist/NISTXML-gYearMonth-minExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-3.xsd" "$nist/NISTXML-gYearMonth-minExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-3.xsd" "$nist/NISTXML-gYearMonth-minExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-3.xsd" "$nist/NISTXML-gYearMonth-minExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-3.xsd" "$nist/NISTXML-gYearMonth-minExclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-4.xsd" "$nist/NISTXML-gYearMonth-minExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-4.xsd" "$nist/NISTXML-gYearMonth-minExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-4.xsd" "$nist/NISTXML-gYearMonth-minExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-4.xsd" "$nist/NISTXML-gYearMonth-minExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-4.xsd" "$nist/NISTXML-gYearMonth-minExclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minExclusive-5.xsd" "$nist/NISTXML-gYearMonth-minExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-1.xsd" "$nist/NISTXML-gYearMonth-minInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-1.xsd" "$nist/NISTXML-gYearMonth-minInclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-1.xsd" "$nist/NISTXML-gYearMonth-minInclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-1.xsd" "$nist/NISTXML-gYearMonth-minInclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-1.xsd" "$nist/NISTXML-gYearMonth-minInclusive-1-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-2.xsd" "$nist/NISTXML-gYearMonth-minInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-2.xsd" "$nist/NISTXML-gYearMonth-minInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-2.xsd" "$nist/NISTXML-gYearMonth-minInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-2.xsd" "$nist/NISTXML-gYearMonth-minInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-2.xsd" "$nist/NISTXML-gYearMonth-minInclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-3.xsd" "$nist/NISTXML-gYearMonth-minInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-3.xsd" "$nist/NISTXML-gYearMonth-minInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-3.xsd" "$nist/NISTXML-gYearMonth-minInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-3.xsd" "$nist/NISTXML-gYearMonth-minInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-3.xsd" "$nist/NISTXML-gYearMonth-minInclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-4.xsd" "$nist/NISTXML-gYearMonth-minInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-4.xsd" "$nist/NISTXML-gYearMonth-minInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-4.xsd" "$nist/NISTXML-gYearMonth-minInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-4.xsd" "$nist/NISTXML-gYearMonth-minInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-4.xsd" "$nist/NISTXML-gYearMonth-minInclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-minInclusive-5.xsd" "$nist/NISTXML-gYearMonth-minInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-1.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxExclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxExclusive-5-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-1.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-2.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-3.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-4.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-maxInclusive-5.xsd" "$nist/NISTXML-gYearMonth-maxInclusive-5-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-1.xsd" "$nist/NISTXML-gYearMonth-pattern-1-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-1.xsd" "$nist/NISTXML-gYearMonth-pattern-1-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-1.xsd" "$nist/NISTXML-gYearMonth-pattern-1-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-1.xsd" "$nist/NISTXML-gYearMonth-pattern-1-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-1.xsd" "$nist/NISTXML-gYearMonth-pattern-1-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-2.xsd" "$nist/NISTXML-gYearMonth-pattern-2-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-2.xsd" "$nist/NISTXML-gYearMonth-pattern-2-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-2.xsd" "$nist/NISTXML-gYearMonth-pattern-2-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-2.xsd" "$nist/NISTXML-gYearMonth-pattern-2-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-2.xsd" "$nist/NISTXML-gYearMonth-pattern-2-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-3.xsd" "$nist/NISTXML-gYearMonth-pattern-3-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-3.xsd" "$nist/NISTXML-gYearMonth-pattern-3-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-3.xsd" "$nist/NISTXML-gYearMonth-pattern-3-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-3.xsd" "$nist/NISTXML-gYearMonth-pattern-3-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-3.xsd" "$nist/NISTXML-gYearMonth-pattern-3-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-4.xsd" "$nist/NISTXML-gYearMonth-pattern-4-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-4.xsd" "$nist/NISTXML-gYearMonth-pattern-4-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-4.xsd" "$nist/NISTXML-gYearMonth-pattern-4-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-4.xsd" "$nist/NISTXML-gYearMonth-pattern-4-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-4.xsd" "$nist/NISTXML-gYearMonth-pattern-4-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-5.xsd" "$nist/NISTXML-gYearMonth-pattern-5-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-5.xsd" "$nist/NISTXML-gYearMonth-pattern-5-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-5.xsd" "$nist/NISTXML-gYearMonth-pattern-5-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-5.xsd" "$nist/NISTXML-gYearMonth-pattern-5-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-pattern-5.xsd" "$nist/NISTXML-gYearMonth-pattern-5-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-1.xsd" "$nist/NISTXML-gYearMonth-enumeration-1-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-1.xsd" "$nist/NISTXML-gYearMonth-enumeration-1-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-1.xsd" "$nist/NISTXML-gYearMonth-enumeration-1-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-1.xsd" "$nist/NISTXML-gYearMonth-enumeration-1-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-1.xsd" "$nist/NISTXML-gYearMonth-enumeration-1-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-2.xsd" "$nist/NISTXML-gYearMonth-enumeration-2-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-2.xsd" "$nist/NISTXML-gYearMonth-enumeration-2-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-2.xsd" "$nist/NISTXML-gYearMonth-enumeration-2-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-2.xsd" "$nist/NISTXML-gYearMonth-enumeration-2-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-2.xsd" "$nist/NISTXML-gYearMonth-enumeration-2-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-3.xsd" "$nist/NISTXML-gYearMonth-enumeration-3-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-3.xsd" "$nist/NISTXML-gYearMonth-enumeration-3-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-3.xsd" "$nist/NISTXML-gYearMonth-enumeration-3-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-3.xsd" "$nist/NISTXML-gYearMonth-enumeration-3-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-3.xsd" "$nist/NISTXML-gYearMonth-enumeration-3-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-4.xsd" "$nist/NISTXML-gYearMonth-enumeration-4-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-4.xsd" "$nist/NISTXML-gYearMonth-enumeration-4-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-4.xsd" "$nist/NISTXML-gYearMonth-enumeration-4-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-4.xsd" "$nist/NISTXML-gYearMonth-enumeration-4-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-4.xsd" "$nist/NISTXML-gYearMonth-enumeration-4-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-5.xsd" "$nist/NISTXML-gYearMonth-enumeration-5-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-5.xsd" "$nist/NISTXML-gYearMonth-enumeration-5-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-5.xsd" "$nist/NISTXML-gYearMonth-enumeration-5-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-5.xsd" "$nist/NISTXML-gYearMonth-enumeration-5-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-enumeration-5.xsd" "$nist/NISTXML-gYearMonth-enumeration-5-5.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-whiteSpace-1.xsd" "$nist/NISTXML-gYearMonth-whiteSpace-1-1.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-whiteSpace-1.xsd" "$nist/NISTXML-gYearMonth-whiteSpace-1-2.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-whiteSpace-1.xsd" "$nist/NISTXML-gYearMonth-whiteSpace-1-3.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-whiteSpace-1.xsd" "$nist/NISTXML-gYearMonth-whiteSpace-1-4.xml" ""
+   expect "$nist/NISTSchema-gYearMonth-whiteSpace-1.xsd" "$nist/NISTXML-gYearMonth-whiteSpace-1-5.xml" ""
+fi
+
+######################
+## NIST gYear tests ##
+######################
+
+if [ $run_nist_gyear = 1       -o $run_all_tests = 1 ]; then
+   expect "$nist/NISTSchema-gYear-minExclusive-1.xsd" "$nist/NISTXML-gYear-minExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-1.xsd" "$nist/NISTXML-gYear-minExclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-1.xsd" "$nist/NISTXML-gYear-minExclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-1.xsd" "$nist/NISTXML-gYear-minExclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-1.xsd" "$nist/NISTXML-gYear-minExclusive-1-5.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-2.xsd" "$nist/NISTXML-gYear-minExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-2.xsd" "$nist/NISTXML-gYear-minExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-2.xsd" "$nist/NISTXML-gYear-minExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-2.xsd" "$nist/NISTXML-gYear-minExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-2.xsd" "$nist/NISTXML-gYear-minExclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-3.xsd" "$nist/NISTXML-gYear-minExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-3.xsd" "$nist/NISTXML-gYear-minExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-3.xsd" "$nist/NISTXML-gYear-minExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-3.xsd" "$nist/NISTXML-gYear-minExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-3.xsd" "$nist/NISTXML-gYear-minExclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-4.xsd" "$nist/NISTXML-gYear-minExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-4.xsd" "$nist/NISTXML-gYear-minExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-4.xsd" "$nist/NISTXML-gYear-minExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-4.xsd" "$nist/NISTXML-gYear-minExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-4.xsd" "$nist/NISTXML-gYear-minExclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gYear-minExclusive-5.xsd" "$nist/NISTXML-gYear-minExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-1.xsd" "$nist/NISTXML-gYear-minInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-1.xsd" "$nist/NISTXML-gYear-minInclusive-1-2.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-1.xsd" "$nist/NISTXML-gYear-minInclusive-1-3.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-1.xsd" "$nist/NISTXML-gYear-minInclusive-1-4.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-1.xsd" "$nist/NISTXML-gYear-minInclusive-1-5.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-2.xsd" "$nist/NISTXML-gYear-minInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-2.xsd" "$nist/NISTXML-gYear-minInclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-2.xsd" "$nist/NISTXML-gYear-minInclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-2.xsd" "$nist/NISTXML-gYear-minInclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-2.xsd" "$nist/NISTXML-gYear-minInclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-3.xsd" "$nist/NISTXML-gYear-minInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-3.xsd" "$nist/NISTXML-gYear-minInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-3.xsd" "$nist/NISTXML-gYear-minInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-3.xsd" "$nist/NISTXML-gYear-minInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-3.xsd" "$nist/NISTXML-gYear-minInclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-4.xsd" "$nist/NISTXML-gYear-minInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-4.xsd" "$nist/NISTXML-gYear-minInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-4.xsd" "$nist/NISTXML-gYear-minInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-4.xsd" "$nist/NISTXML-gYear-minInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-4.xsd" "$nist/NISTXML-gYear-minInclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gYear-minInclusive-5.xsd" "$nist/NISTXML-gYear-minInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-1.xsd" "$nist/NISTXML-gYear-maxExclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-2.xsd" "$nist/NISTXML-gYear-maxExclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-2.xsd" "$nist/NISTXML-gYear-maxExclusive-2-2.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-2.xsd" "$nist/NISTXML-gYear-maxExclusive-2-3.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-2.xsd" "$nist/NISTXML-gYear-maxExclusive-2-4.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-2.xsd" "$nist/NISTXML-gYear-maxExclusive-2-5.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-3.xsd" "$nist/NISTXML-gYear-maxExclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-3.xsd" "$nist/NISTXML-gYear-maxExclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-3.xsd" "$nist/NISTXML-gYear-maxExclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-3.xsd" "$nist/NISTXML-gYear-maxExclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-3.xsd" "$nist/NISTXML-gYear-maxExclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-4.xsd" "$nist/NISTXML-gYear-maxExclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-4.xsd" "$nist/NISTXML-gYear-maxExclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-4.xsd" "$nist/NISTXML-gYear-maxExclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-4.xsd" "$nist/NISTXML-gYear-maxExclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-4.xsd" "$nist/NISTXML-gYear-maxExclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-5.xsd" "$nist/NISTXML-gYear-maxExclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-5.xsd" "$nist/NISTXML-gYear-maxExclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-5.xsd" "$nist/NISTXML-gYear-maxExclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-5.xsd" "$nist/NISTXML-gYear-maxExclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-gYear-maxExclusive-5.xsd" "$nist/NISTXML-gYear-maxExclusive-5-5.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-1.xsd" "$nist/NISTXML-gYear-maxInclusive-1-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-2.xsd" "$nist/NISTXML-gYear-maxInclusive-2-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-3.xsd" "$nist/NISTXML-gYear-maxInclusive-3-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-3.xsd" "$nist/NISTXML-gYear-maxInclusive-3-2.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-3.xsd" "$nist/NISTXML-gYear-maxInclusive-3-3.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-3.xsd" "$nist/NISTXML-gYear-maxInclusive-3-4.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-3.xsd" "$nist/NISTXML-gYear-maxInclusive-3-5.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-4.xsd" "$nist/NISTXML-gYear-maxInclusive-4-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-4.xsd" "$nist/NISTXML-gYear-maxInclusive-4-2.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-4.xsd" "$nist/NISTXML-gYear-maxInclusive-4-3.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-4.xsd" "$nist/NISTXML-gYear-maxInclusive-4-4.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-4.xsd" "$nist/NISTXML-gYear-maxInclusive-4-5.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-5.xsd" "$nist/NISTXML-gYear-maxInclusive-5-1.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-5.xsd" "$nist/NISTXML-gYear-maxInclusive-5-2.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-5.xsd" "$nist/NISTXML-gYear-maxInclusive-5-3.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-5.xsd" "$nist/NISTXML-gYear-maxInclusive-5-4.xml" ""
+   expect "$nist/NISTSchema-gYear-maxInclusive-5.xsd" "$nist/NISTXML-gYear-maxInclusive-5-5.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-1.xsd" "$nist/NISTXML-gYear-pattern-1-1.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-1.xsd" "$nist/NISTXML-gYear-pattern-1-2.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-1.xsd" "$nist/NISTXML-gYear-pattern-1-3.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-1.xsd" "$nist/NISTXML-gYear-pattern-1-4.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-1.xsd" "$nist/NISTXML-gYear-pattern-1-5.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-2.xsd" "$nist/NISTXML-gYear-pattern-2-1.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-2.xsd" "$nist/NISTXML-gYear-pattern-2-2.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-2.xsd" "$nist/NISTXML-gYear-pattern-2-3.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-2.xsd" "$nist/NISTXML-gYear-pattern-2-4.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-2.xsd" "$nist/NISTXML-gYear-pattern-2-5.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-3.xsd" "$nist/NISTXML-gYear-pattern-3-1.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-3.xsd" "$nist/NISTXML-gYear-pattern-3-2.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-3.xsd" "$nist/NISTXML-gYear-pattern-3-3.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-3.xsd" "$nist/NISTXML-gYear-pattern-3-4.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-3.xsd" "$nist/NISTXML-gYear-pattern-3-5.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-4.xsd" "$nist/NISTXML-gYear-pattern-4-1.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-4.xsd" "$nist/NISTXML-gYear-pattern-4-2.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-4.xsd" "$nist/NISTXML-gYear-pattern-4-3.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-4.xsd" "$nist/NISTXML-gYear-pattern-4-4.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-4.xsd" "$nist/NISTXML-gYear-pattern-4-5.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-5.xsd" "$nist/NISTXML-gYear-pattern-5-1.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-5.xsd" "$nist/NISTXML-gYear-pattern-5-2.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-5.xsd" "$nist/NISTXML-gYear-pattern-5-3.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-5.xsd" "$nist/NISTXML-gYear-pattern-5-4.xml" ""
+   expect "$nist/NISTSchema-gYear-pattern-5.xsd" "$nist/NISTXML-gYear-pattern-5-5.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-1.xsd" "$nist/NISTXML-gYear-enumeration-1-1.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-1.xsd" "$nist/NISTXML-gYear-enumeration-1-2.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-1.xsd" "$nist/NISTXML-gYear-enumeration-1-3.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-1.xsd" "$nist/NISTXML-gYear-enumeration-1-4.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-1.xsd" "$nist/NISTXML-gYear-enumeration-1-5.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-2.xsd" "$nist/NISTXML-gYear-enumeration-2-1.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-2.xsd" "$nist/NISTXML-gYear-enumeration-2-2.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-2.xsd" "$nist/NISTXML-gYear-enumeration-2-3.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-2.xsd" "$nist/NISTXML-gYear-enumeration-2-4.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-2.xsd" "$nist/NISTXML-gYear-enumeration-2-5.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-3.xsd" "$nist/NISTXML-gYear-enumeration-3-1.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-3.xsd" "$nist/NISTXML-gYear-enumeration-3-2.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-3.xsd" "$nist/NISTXML-gYear-enumeration-3-3.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-3.xsd" "$nist/NISTXML-gYear-enumeration-3-4.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-3.xsd" "$nist/NISTXML-gYear-enumeration-3-5.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-4.xsd" "$nist/NISTXML-gYear-enumeration-4-1.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-4.xsd" "$nist/NISTXML-gYear-enumeration-4-2.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-4.xsd" "$nist/NISTXML-gYear-enumeration-4-3.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-4.xsd" "$nist/NISTXML-gYear-enumeration-4-4.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-4.xsd" "$nist/NISTXML-gYear-enumeration-4-5.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-5.xsd" "$nist/NISTXML-gYear-enumeration-5-1.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-5.xsd" "$nist/NISTXML-gYear-enumeration-5-2.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-5.xsd" "$nist/NISTXML-gYear-enumeration-5-3.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-5.xsd" "$nist/NISTXML-gYear-enumeration-5-4.xml" ""
+   expect "$nist/NISTSchema-gYear-enumeration-5.xsd" "$nist/NISTXML-gYear-enumeration-5-5.xml" ""
+   expect "$nist/NISTSchema-gYear-whiteSpace-1.xsd" "$nist/NISTXML-gYear-whiteSpace-1-1.xml" ""
+   expect "$nist/NISTSchema-gYear-whiteSpace-1.xsd" "$nist/NISTXML-gYear-whiteSpace-1-2.xml" ""
+   expect "$nist/NISTSchema-gYear-whiteSpace-1.xsd" "$nist/NISTXML-gYear-whiteSpace-1-3.xml" ""
+   expect "$nist/NISTSchema-gYear-whiteSpace-1.xsd" "$nist/NISTXML-gYear-whiteSpace-1-4.xml" ""
+   expect "$nist/NISTSchema-gYear-whiteSpace-1.xsd" "$nist/NISTXML-gYear-whiteSpace-1-5.xml" ""
+fi
+
 ###############
 ## ACT tests ##
 ###############
 
-if [ x$run_act = x1 -o $run_all_tests = 1 ]; then
+if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "" "$act/basic_types-1.xml" \
      "act_testsuite/basic_types-1.xml:11:28: 03:01:03 is greater than maxExclusive (03:01:02.5)"
    expect "" "$act/basic_types-2.xml" \

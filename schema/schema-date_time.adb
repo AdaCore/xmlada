@@ -6,6 +6,7 @@ package body Schema.Date_Time is
    procedure Parse (Ch : String; Date     : out Date_NZ_T;  Eos : out Natural);
    procedure Parse (Ch : String; Time     : out Time_NZ_T;  Eos : out Natural);
    procedure Parse (Ch : String; TZ       : out Timezone_T);
+   procedure Parse_Year (Ch : String; Year : out Integer; Eos : out Natural);
    --  Parse the various components of dates.
    --  On exit, Eos is set to the first unused character in Ch, except for the
    --  timezone which must finish on the last character in Ch.
@@ -25,6 +26,15 @@ package body Schema.Date_Time is
    function Compare (Duration1, Duration2 : Duration_T) return Compare_Result;
    --  Compare the two parameters. The parameters must have been normalized
    --  prior to the call. Timezones are taken into account if present
+
+   function To_Date_Time (Time  : Time_T)        return Date_Time_T;
+   function To_Date_Time (Date  : Date_T)        return Date_Time_T;
+   function To_Date_Time (Day   : GDay_T)        return Date_Time_T;
+   function To_Date_Time (Day   : GMonth_Day_T)  return Date_Time_T;
+   function To_Date_Time (Month : GMonth_T)      return Date_Time_T;
+   function To_Date_Time (Year  : GYear_T)       return Date_Time_T;
+   function To_Date_Time (Month : GYear_Month_T) return Date_Time_T;
+   --  Convert the parameter to a Date_Time
 
    function Normalize (Date : Date_Time_T)    return Date_Time_T;
    function Normalize (Duration : Duration_T) return Duration_T;
@@ -66,6 +76,56 @@ package body Schema.Date_Time is
       function ">=" (T1, T2 : T) return Boolean;
    end Comparators;
    --  Generate the comparison functions for various types
+
+   generic
+      type T is private;
+      with function To_Date_Time (T1 : T) return Date_Time_T is <>;
+   package DT_Comparators is
+      function "<"  (T1, T2 : T) return Boolean;
+      function "<=" (T1, T2 : T) return Boolean;
+      function "="  (T1, T2 : T) return Boolean;
+      function ">"  (T1, T2 : T) return Boolean;
+      function ">=" (T1, T2 : T) return Boolean;
+   end DT_Comparators;
+
+   ------------------
+   -- To_Date_Time --
+   ------------------
+
+   function To_Date_Time (Time  : Time_T) return Date_Time_T  is
+   begin
+      return Date_Time_T'(No_Date_NZ, Time.Time, Time.TZ);
+   end To_Date_Time;
+
+   function To_Date_Time (Day   : GDay_T) return Date_Time_T is
+   begin
+      return Date_Time_T'((2001, 01, Day.Day), No_Time_NZ, Day.TZ);
+   end To_Date_Time;
+
+   function To_Date_Time (Day   : GMonth_Day_T)  return Date_Time_T is
+   begin
+      return Date_Time_T'((2001, Day.Month, Day.Day), No_Time_NZ, Day.TZ);
+   end To_Date_Time;
+
+   function To_Date_Time (Month : GMonth_T) return Date_Time_T is
+   begin
+      return Date_Time_T'((2001, Month.Month, 1), No_Time_NZ, Month.TZ);
+   end To_Date_Time;
+
+   function To_Date_Time (Year  : GYear_T) return Date_Time_T is
+   begin
+      return Date_Time_T'((Year.Year, 01, 15), No_Time_NZ, Year.TZ);
+   end To_Date_Time;
+
+   function To_Date_Time (Month : GYear_Month_T) return Date_Time_T is
+   begin
+      return Date_Time_T'((Month.Year, Month.Month, 01), No_Time_NZ, Month.TZ);
+   end To_Date_Time;
+
+   function To_Date_Time (Date  : Date_T) return Date_Time_T is
+   begin
+      return Date_Time_T'(Date.Date, No_Time_NZ, Date.TZ);
+   end To_Date_Time;
 
    -----------
    -- Image --
@@ -117,22 +177,46 @@ package body Schema.Date_Time is
         & Image (abs (Date.Day), 2);
    end Image;
 
-   -----------
-   -- Image --
-   -----------
-
    function Image (Day  : GDay_T) return String is
    begin
       return "---" & Image (Day.Day, 2) & Image (Day.TZ);
    end Image;
 
-   -----------
-   -- Image --
-   -----------
+   function Image (Day  : GMonth_Day_T) return String is
+   begin
+      return "--" & Image (Day.Month, 2) & '-' & Image (Day.Day, 2)
+        & Image (Day.TZ);
+   end Image;
+
+   function Image (Month : GMonth_T) return String is
+   begin
+      return "--" & Image (Month.Month, 2) & "--" & Image (Month.TZ);
+   end Image;
+
+   function Image (Year  : GYear_T) return String is
+   begin
+      return Image (Year.Year, 4) & Image (Year.TZ);
+   end Image;
+
+   function Image (Month : GYear_Month_T) return String is
+   begin
+      return Image (Month.Year, 4) & '-' & Image (Month.Month, 2)
+        & Image (Month.TZ);
+   end Image;
 
    function Image (Date : Date_T) return String is
    begin
       return Image (Date.Date) & Image (Date.TZ);
+   end Image;
+
+   function Image (Date : Date_Time_T) return String is
+   begin
+      return Image (Date.Date) & 'T' & Image (Date.Time) & Image (Date.TZ);
+   end Image;
+
+   function Image (Time : Time_T) return String is
+   begin
+      return Image (Time.Time) & Image (Time.TZ);
    end Image;
 
    --------------
@@ -177,15 +261,6 @@ package body Schema.Date_Time is
 
       return Image (Hour, 2) & ':' & Image (Min, 2)
         & ':' & Image (Secs, 2) & MS_Image (Sub_Second);
-   end Image;
-
-   -----------
-   -- Image --
-   -----------
-
-   function Image (Time : Time_T) return String is
-   begin
-      return Image (Time.Time) & Image (Time.TZ);
    end Image;
 
    -----------
@@ -265,14 +340,40 @@ package body Schema.Date_Time is
       end if;
    end Image;
 
-   -----------
-   -- Image --
-   -----------
+   ----------------
+   -- Parse_Year --
+   ----------------
 
-   function Image (Date : Date_Time_T) return String is
+   procedure Parse_Year
+     (Ch   : String;
+      Year : out Integer;
+      Eos  : out Natural)
+   is
+      Pos : Integer := Ch'First;
    begin
-      return Image (Date.Date) & 'T' & Image (Date.Time) & Image (Date.TZ);
-   end Image;
+      if Ch (Pos) = '-' then
+         Pos := Pos + 1;
+      end if;
+
+      while Pos <= Ch'Last and then Ch (Pos) /= '-' loop
+         Pos := Pos + 1;
+      end loop;
+
+      Year := Integer'Value (Ch (Ch'First .. Pos - 1));
+
+      if Year = 0 then
+         Validation_Error ("Year cannot be null in: """ & Ch & """");
+         Eos  := Ch'Last;
+         return;
+      end if;
+
+      Eos := Pos;
+   exception
+      when Constraint_Error =>
+         Validation_Error ("Invalid year in """ & Ch & """");
+         Year := 0;
+         Eos  := Ch'Last + 1;
+   end Parse_Year;
 
    -----------
    -- Parse --
@@ -283,15 +384,9 @@ package body Schema.Date_Time is
       Date : out Date_NZ_T;
       Eos  : out Natural)
    is
-      Pos  : Integer := Ch'First;
+      Pos  : Integer;
    begin
-      if Ch (Pos) = '-' then
-         Pos := Pos + 1;
-      end if;
-
-      while Pos <= Ch'Last and then Ch (Pos) /= '-' loop
-         Pos := Pos + 1;
-      end loop;
+      Parse_Year (Ch, Date.Year, Pos);
 
       if Ch (Pos) /= '-'
         or else Ch (Pos + 3) /= '-'
@@ -302,16 +397,9 @@ package body Schema.Date_Time is
          return;
       end if;
 
-      Date.Year   := Integer'Value (Ch (Ch'First .. Pos - 1));
       Date.Month  := Integer'Value (Ch (Pos +  1 .. Pos +  2));
       Date.Day    := Integer'Value (Ch (Pos +  4 .. Pos +  5));
       Eos := Pos + 6;
-
-      if Date.Year = 0 then
-         Validation_Error ("Year cannot be null in: """ & Ch & """");
-         Date := No_Date_NZ;
-         return;
-      end if;
 
    exception
       when Constraint_Error =>
@@ -586,6 +674,83 @@ package body Schema.Date_Time is
       when Constraint_Error =>
          Validation_Error ("Invalid date """ & Ch & """");
          return No_Gday;
+   end Value;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Ch : String) return GMonth_Day_T is
+      Result : GMonth_Day_T;
+   begin
+      if Ch (Ch'First .. Ch'First + 1) /= "--"
+        or else Ch (Ch'First + 4) /= '-'
+      then
+         Validation_Error ("Invalid gMonthDay: """ & Ch & """");
+      end if;
+      Result.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
+      Result.Day   := Integer'Value (Ch (Ch'First + 5 .. Ch'First + 6));
+      Parse (Ch (Ch'First + 7 .. Ch'Last),  Result.TZ);
+      return Result;
+   exception
+      when Constraint_Error =>
+         Validation_Error ("Invalid gMonthDay: """ & Ch & """");
+         return No_Month_Day;
+   end Value;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Ch : String) return GMonth_T is
+      Result : GMonth_T;
+   begin
+      if Ch (Ch'First .. Ch'First + 1) /= "--"
+        or else Ch (Ch'First + 4 .. Ch'First + 5) /= "--"
+      then
+         Validation_Error ("Invalid gMonth: """ & Ch & """");
+      end if;
+      Result.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
+      Parse (Ch (Ch'First + 6 .. Ch'Last), Result.TZ);
+      return Result;
+   exception
+      when Constraint_Error =>
+         Validation_Error ("Invalid gMonth: """ & Ch & """");
+         return No_Month;
+   end Value;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Ch : String) return GYear_T is
+      Result : GYear_T;
+      Eos    : Integer;
+   begin
+      Parse_Year (Ch, Result.Year, Eos);
+      Parse (Ch (Eos .. Ch'Last), Result.TZ);
+      return Result;
+   end Value;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Ch : String) return GYear_Month_T is
+      Result : GYear_Month_T;
+      Eos    : Integer;
+   begin
+      Parse_Year (Ch, Result.Year, Eos);
+      if Ch (Eos) /= '-' then
+         Validation_Error ("Invalid gYearMonth: """ & Ch & """");
+      end if;
+      Result.Month := Integer'Value (Ch (Eos + 1 .. Eos + 2));
+      Parse (Ch (Eos + 3 .. Ch'Last), Result.TZ);
+      return Result;
+   exception
+      when Constraint_Error =>
+         Validation_Error ("Invalid gYearMonth: """ & Ch & """");
+         return No_Year_Month;
    end Value;
 
    -----------
@@ -944,155 +1109,127 @@ package body Schema.Date_Time is
       end ">=";
    end Comparators;
 
-   ---------
-   -- "<" --
-   ---------
+   --------------------
+   -- DT_Comparators --
+   --------------------
 
-   function "<"  (Time1, Time2 : Time_T) return Boolean is
-   begin
-      return Date_Time_T'(No_Date_NZ, Time1.Time, Time1.TZ)
-        < Date_Time_T'(No_Date_NZ, Time2.Time, Time2.TZ);
-   end "<";
+   package body DT_Comparators is
 
-   ----------
-   -- "<=" --
-   ----------
+      ---------
+      -- "<" --
+      ---------
 
-   function "<=" (Time1, Time2 : Time_T) return Boolean is
-   begin
-      return Date_Time_T'(No_Date_NZ, Time1.Time, Time1.TZ)
-        <= Date_Time_T'(No_Date_NZ, Time2.Time, Time2.TZ);
-   end "<=";
+      function "<"  (T1, T2 : T) return Boolean is
+      begin
+         return To_Date_Time (T1) < To_Date_Time  (T2);
+      end "<";
 
-   ---------
-   -- "=" --
-   ---------
+      ----------
+      -- "<=" --
+      ----------
 
-   function "="  (Time1, Time2 : Time_T) return Boolean is
-   begin
-      return Date_Time_T'(No_Date_NZ, Time1.Time, Time1.TZ)
-        = Date_Time_T'(No_Date_NZ, Time2.Time, Time2.TZ);
-   end "=";
+      function "<=" (T1, T2 : T) return Boolean is
+      begin
+         return To_Date_Time (T1) <= To_Date_Time (T2);
+      end "<=";
 
-   ---------
-   -- ">" --
-   ---------
+      ---------
+      -- "=" --
+      ---------
 
-   function ">"  (Time1, Time2 : Time_T) return Boolean is
-   begin
-      return Date_Time_T'(No_Date_NZ, Time1.Time, Time1.TZ)
-        > Date_Time_T'(No_Date_NZ, Time2.Time, Time2.TZ);
-   end ">";
+      function "="  (T1, T2 : T) return Boolean is
+      begin
+         return To_Date_Time (T1) = To_Date_Time (T2);
+      end "=";
 
-   ----------
-   -- ">=" --
-   ----------
+      ---------
+      -- ">" --
+      ---------
 
-   function ">=" (Time1, Time2 : Time_T) return Boolean is
-   begin
-      return Date_Time_T'(No_Date_NZ, Time1.Time, Time1.TZ)
-        >= Date_Time_T'(No_Date_NZ, Time2.Time, Time2.TZ);
-   end ">=";
+      function ">"  (T1, T2 : T) return Boolean is
+      begin
+         return To_Date_Time (T1) > To_Date_Time (T2);
+      end ">";
 
-   ---------
-   -- "<" --
-   ---------
+      ----------
+      -- ">=" --
+      ----------
 
-   function "<"  (Date1, Date2 : Date_T) return Boolean is
-   begin
-      return Date_Time_T'(Date1.Date, No_Time_NZ, Date1.TZ)
-        < Date_Time_T'(Date2.Date, No_Time_NZ, Date2.TZ);
-   end "<";
+      function ">=" (T1, T2 : T) return Boolean is
+      begin
+         return To_Date_Time (T1) >= To_Date_Time (T2);
+      end ">=";
 
-   ----------
-   -- "<=" --
-   ----------
+   end DT_Comparators;
 
-   function "<=" (Date1, Date2 : Date_T) return Boolean is
-   begin
-      return Date_Time_T'(Date1.Date, No_Time_NZ, Date1.TZ)
-        <= Date_Time_T'(Date2.Date, No_Time_NZ, Date2.TZ);
-   end "<=";
+   package Date_Comp is new DT_Comparators (Date_T);
+   function "<"  (Date1, Date2 : Date_T) return Boolean renames Date_Comp."<";
+   function "<=" (Date1, Date2 : Date_T) return Boolean renames Date_Comp."<=";
+   function "="  (Date1, Date2 : Date_T) return Boolean renames Date_Comp."=";
+   function ">"  (Date1, Date2 : Date_T) return Boolean renames Date_Comp.">";
+   function ">=" (Date1, Date2 : Date_T) return Boolean renames Date_Comp.">=";
 
-   ---------
-   -- "=" --
-   ---------
+   package Time_Comp is new DT_Comparators (Time_T);
+   function "<"  (Time1, Time2 : Time_T) return Boolean renames Time_Comp."<";
+   function "<=" (Time1, Time2 : Time_T) return Boolean renames Time_Comp."<=";
+   function "="  (Time1, Time2 : Time_T) return Boolean renames Time_Comp."=";
+   function ">"  (Time1, Time2 : Time_T) return Boolean renames Time_Comp.">";
+   function ">=" (Time1, Time2 : Time_T) return Boolean renames Time_Comp.">=";
 
-   function "="  (Date1, Date2 : Date_T) return Boolean is
-   begin
-      return Date_Time_T'(Date1.Date, No_Time_NZ, Date1.TZ)
-        = Date_Time_T'(Date2.Date, No_Time_NZ, Date2.TZ);
-   end "=";
+   package Day_T_Comp is new DT_Comparators (GDay_T);
+   function "<"  (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp."<";
+   function "<=" (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp."<=";
+   function "="  (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp."=";
+   function ">"  (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp.">";
+   function ">=" (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp.">=";
 
-   ---------
-   -- ">" --
-   ---------
+   package Month_Day_T_Comp is new DT_Comparators (GMonth_Day_T);
+   function "<"  (Day1, Day2 : GMonth_Day_T) return Boolean
+                  renames Month_Day_T_Comp."<";
+   function "<=" (Day1, Day2 : GMonth_Day_T) return Boolean
+                  renames Month_Day_T_Comp."<=";
+   function "="  (Day1, Day2 : GMonth_Day_T) return Boolean
+                  renames Month_Day_T_Comp."=";
+   function ">"  (Day1, Day2 : GMonth_Day_T) return Boolean
+                  renames Month_Day_T_Comp.">";
+   function ">=" (Day1, Day2 : GMonth_Day_T) return Boolean
+                  renames Month_Day_T_Comp.">=";
 
-   function ">"  (Date1, Date2 : Date_T) return Boolean is
-   begin
-      return Date_Time_T'(Date1.Date, No_Time_NZ, Date1.TZ)
-        > Date_Time_T'(Date2.Date, No_Time_NZ, Date2.TZ);
-   end ">";
+   package Month_T_Comp is new DT_Comparators (GMonth_T);
+   function "<"  (Month1, Month2 : GMonth_T) return Boolean
+                  renames Month_T_Comp."<";
+   function "<=" (Month1, Month2 : GMonth_T) return Boolean
+                  renames Month_T_Comp."<=";
+   function "="  (Month1, Month2 : GMonth_T) return Boolean
+                  renames Month_T_Comp."=";
+   function ">"  (Month1, Month2 : GMonth_T) return Boolean
+                  renames Month_T_Comp.">";
+   function ">=" (Month1, Month2 : GMonth_T) return Boolean
+                  renames Month_T_Comp.">=";
 
-   ----------
-   -- ">=" --
-   ----------
+   package Year_Month_T_Comp is new DT_Comparators (GYear_Month_T);
+   function "<"  (Month1, Month2 : GYear_Month_T) return Boolean
+                  renames Year_Month_T_Comp."<";
+   function "<=" (Month1, Month2 : GYear_Month_T) return Boolean
+                  renames Year_Month_T_Comp."<=";
+   function "="  (Month1, Month2 : GYear_Month_T) return Boolean
+                  renames Year_Month_T_Comp."=";
+   function ">"  (Month1, Month2 : GYear_Month_T) return Boolean
+                  renames Year_Month_T_Comp.">";
+   function ">=" (Month1, Month2 : GYear_Month_T) return Boolean
+                  renames Year_Month_T_Comp.">=";
 
-   function ">=" (Date1, Date2 : Date_T) return Boolean is
-   begin
-      return Date_Time_T'(Date1.Date, No_Time_NZ, Date1.TZ)
-        >= Date_Time_T'(Date2.Date, No_Time_NZ, Date2.TZ);
-   end ">=";
-
-   ---------
-   -- "<" --
-   ---------
-
-   function "<"  (Day1, Day2 : GDay_T) return Boolean is
-   begin
-      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
-        < Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
-   end "<";
-
-   ----------
-   -- "<=" --
-   ----------
-
-   function "<="  (Day1, Day2 : GDay_T) return Boolean is
-   begin
-      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
-        <= Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
-   end "<=";
-
-   ---------
-   -- "=" --
-   ---------
-
-   function "="  (Day1, Day2 : GDay_T) return Boolean is
-   begin
-      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
-        = Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
-   end "=";
-
-   ---------
-   -- ">" --
-   ---------
-
-   function ">"  (Day1, Day2 : GDay_T) return Boolean is
-   begin
-      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
-        > Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
-   end ">";
-
-   ----------
-   -- ">=" --
-   ----------
-
-   function ">="  (Day1, Day2 : GDay_T) return Boolean is
-   begin
-      return Date_Time_T'((2000, 01, Day1.Day), No_Time_NZ, Day1.TZ)
-        >= Date_Time_T'((2000, 01, Day2.Day), No_Time_NZ, Day2.TZ);
-   end ">=";
+   package Year_T_Comp is new DT_Comparators (GYear_T);
+   function "<"  (Year1, Year2 : GYear_T) return Boolean
+                  renames Year_T_Comp."<";
+   function "<=" (Year1, Year2 : GYear_T) return Boolean
+                  renames Year_T_Comp."<=";
+   function "="  (Year1, Year2 : GYear_T) return Boolean
+                  renames Year_T_Comp."=";
+   function ">"  (Year1, Year2 : GYear_T) return Boolean
+                  renames Year_T_Comp.">";
+   function ">=" (Year1, Year2 : GYear_T) return Boolean
+                  renames Year_T_Comp.">=";
 
    package Date_Time_T_Comp is new Comparators (Date_Time_T);
    function "<" (Time1, Time2 : Date_Time_T)  return Boolean

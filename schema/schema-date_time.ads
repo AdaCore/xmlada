@@ -16,11 +16,15 @@ with Ada.Calendar;
 
 package Schema.Date_Time is
 
-   type Duration_T  is private;  --  A duration, no timezone
-   type Date_Time_T is private;  --  A date and time, with timezone
-   type Date_T      is private;  --  A date, with timezone
-   type Time_T      is private;  --  A time, with timezone
-   type GDay_T      is private;  --  A day in a month
+   type Duration_T    is private;  --  A duration, no timezone
+   type Date_Time_T   is private;  --  A date and time, with timezone
+   type Date_T        is private;  --  A date, with timezone
+   type Time_T        is private;  --  A time, with timezone
+   type GDay_T        is private;  --  A day in a month, with timezone
+   type GMonth_Day_T  is private;  --  A month/day combination, with timezone
+   type GMonth_T      is private;  --  A month, with timezone
+   type GYear_T       is private;  --  A year, with timezone
+   type GYear_Month_T is private;  --  A year/month combination, with timezone
 
    function Image (Date : Date_Time_T) return String;
    --  Return the string representation of Date, as defined in the XML
@@ -31,9 +35,13 @@ package Schema.Date_Time is
    --  Duration type in Ada
 
    function Image (Duration : Duration_T) return String;
-   function Image (Time : Time_T) return String;
-   function Image (Date : Date_T) return String;
-   function Image (Day  : GDay_T) return String;
+   function Image (Time : Time_T)         return String;
+   function Image (Date : Date_T)         return String;
+   function Image (Day  : GDay_T)         return String;
+   function Image (Day  : GMonth_Day_T)   return String;
+   function Image (Month : GMonth_T)      return String;
+   function Image (Year  : GYear_T)       return String;
+   function Image (Month : GYear_Month_T) return String;
    --  Return the string representation of the argument
 
    function Value (Ch : String) return Duration_T;
@@ -46,16 +54,14 @@ package Schema.Date_Time is
    --  Any number of digits is supported for the date and the subseconds field
 
    function Value (Ch : String) return Time_T;
-   --  Return the time stored in Ch, which should contain a string with the
-   --  format:   hh:mm:ss.sss+tz:tz
-
    function Value (Ch : String) return GDay_T;
-   --  Return the day stored in Ch. This is a string with the format
-   --    --dd
-
+   function Value (Ch : String) return GMonth_Day_T;
+   function Value (Ch : String) return GMonth_T;
+   function Value (Ch : String) return GYear_T;
+   function Value (Ch : String) return GYear_Month_T;
    function Value (Ch : String) return Date_T;
-   --  Return the date stored in Ch, which should contain a string with the
-   --  format:  yyyy-mm-dd+tz:tz
+   --  Return the date stored in Ch. The format of the string is specified in
+   --  the XML Schema specifications
 
    function "+"
      (Date : Date_Time_T; Duration : Duration_T) return Date_Time_T;
@@ -102,6 +108,38 @@ package Schema.Date_Time is
    --  Raises Not_Comparable if the two times are not comparable according
    --  to the XML Schema standard.
 
+   function "<"  (Day1, Day2 : GMonth_Day_T) return Boolean;
+   function "<=" (Day1, Day2 : GMonth_Day_T) return Boolean;
+   function "="  (Day1, Day2 : GMonth_Day_T) return Boolean;
+   function ">"  (Day1, Day2 : GMonth_Day_T) return Boolean;
+   function ">=" (Day1, Day2 : GMonth_Day_T) return Boolean;
+   --  Raises Not_Comparable if the two times are not comparable according
+   --  to the XML Schema standard.
+
+   function "<"  (Month1, Month2 : GMonth_T) return Boolean;
+   function "<=" (Month1, Month2 : GMonth_T) return Boolean;
+   function "="  (Month1, Month2 : GMonth_T) return Boolean;
+   function ">"  (Month1, Month2 : GMonth_T) return Boolean;
+   function ">=" (Month1, Month2 : GMonth_T) return Boolean;
+   --  Raises Not_Comparable if the two times are not comparable according
+   --  to the XML Schema standard.
+
+   function "<"  (Month1, Month2 : GYear_Month_T) return Boolean;
+   function "<=" (Month1, Month2 : GYear_Month_T) return Boolean;
+   function "="  (Month1, Month2 : GYear_Month_T) return Boolean;
+   function ">"  (Month1, Month2 : GYear_Month_T) return Boolean;
+   function ">=" (Month1, Month2 : GYear_Month_T) return Boolean;
+   --  Raises Not_Comparable if the two times are not comparable according
+   --  to the XML Schema standard.
+
+   function "<"  (Year1, Year2 : GYear_T) return Boolean;
+   function "<=" (Year1, Year2 : GYear_T) return Boolean;
+   function "="  (Year1, Year2 : GYear_T) return Boolean;
+   function ">"  (Year1, Year2 : GYear_T) return Boolean;
+   function ">=" (Year1, Year2 : GYear_T) return Boolean;
+   --  Raises Not_Comparable if the two times are not comparable according
+   --  to the XML Schema standard.
+
    Not_Comparable : exception;
 
 private
@@ -122,7 +160,31 @@ private
       Day : Integer;
       TZ  : Timezone_T;
    end record;
-   No_Gday : constant GDay_T := (0, 0);
+   No_Gday : constant GDay_T := (0, No_Timezone);
+
+   type GMonth_Day_T is record
+      Month, Day : Integer;
+      TZ         : Timezone_T;
+   end record;
+   No_Month_Day : constant GMonth_Day_T := (0, 0, No_Timezone);
+
+   type GMonth_T is record
+      Month : Integer;
+      TZ    : Timezone_T;
+   end record;
+   No_Month : constant GMonth_T := (0, No_Timezone);
+
+   type GYear_T is record
+      Year : Integer;
+      TZ   : Timezone_T;
+   end record;
+   No_Year : constant GYear_T := (0, No_Timezone);
+
+   type GYear_Month_T is record
+      Year, Month : Integer;
+      TZ          : Timezone_T;
+   end record;
+   No_Year_Month : constant GYear_Month_T := (0, 0, No_Timezone);
 
    subtype Time_NZ_T is Day_Range;
    No_Time_NZ : constant Time_NZ_T := 0.0;
