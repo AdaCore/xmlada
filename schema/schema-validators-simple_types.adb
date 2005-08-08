@@ -715,7 +715,7 @@ package body Schema.Validators.Simple_Types is
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Replace);
-      Create_Global_Type (G, "normalizeString", Str);
+      Create_Global_Type (G, "normalizedString", Str);
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
@@ -781,20 +781,32 @@ package body Schema.Validators.Simple_Types is
       Dec := new Decimal_Validators.Validator_Record;
       Dec.Facets.Mask := (Facet_Fraction_Digits => True,
                           others                => False);
---      Dec.Facets.Fraction_Digits := 0;
+      Dec.Facets.Fraction_Digits := 0;
       Create_Global_Type (G, "integer", Dec);
 
-      Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
+      Dec := new Decimal_Validators.Validator_Record;
+      Dec.Facets.Mask := (Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Max_Inclusive := 0;
-      Create_Global_Type (G, "nonPositiveInteger", Int);
+      Dec.Facets.Min_Inclusive := Value ("0");
+      Create_Global_Type (G, "nonNegativeInteger", Dec);
 
-      Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
+      Dec := new Decimal_Validators.Validator_Record;
+      Dec.Facets.Mask := (Facet_Min_Inclusive   => True,
                           others                => False);
-      Int.Facets.Max_Inclusive   := -1;
-      Create_Global_Type (G, "negativeInteger", Int);
+      Dec.Facets.Min_Inclusive := Value ("1");
+      Create_Global_Type (G, "positiveInteger", Dec);
+
+      Dec := new Decimal_Validators.Validator_Record;
+      Dec.Facets.Mask := (Facet_Max_Inclusive   => True,
+                          others                => False);
+      Dec.Facets.Max_Inclusive := Value ("0");
+      Create_Global_Type (G, "nonPositiveInteger", Dec);
+
+      Dec := new Decimal_Validators.Validator_Record;
+      Dec.Facets.Mask := (Facet_Max_Inclusive   => True,
+                          others                => False);
+      Dec.Facets.Max_Inclusive   := Value ("-1");
+      Create_Global_Type (G, "negativeInteger", Dec);
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Max_Inclusive   => True,
@@ -827,18 +839,6 @@ package body Schema.Validators.Simple_Types is
       Int.Facets.Max_Inclusive := +127;
       Int.Facets.Min_Inclusive := -128;
       Create_Global_Type (G, "byte", Int);
-
-      Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Min_Inclusive := 0;
-      Create_Global_Type (G, "nonNegativeInteger", Int);
-
-      Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Min_Inclusive := 1;
-      Create_Global_Type (G, "positiveInteger", Int);
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Min_Inclusive   => True,
