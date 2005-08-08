@@ -26,7 +26,10 @@ nist_tests=('anyURI' 'boolean' 'byte' 'dateTime' 'date'
             'decimal' 'double' 'duration' 'float' 'gDay'
             'gMonthDay' 'gMonth' 'gYear' 'gYearMonth' 'hexBinary' 'ID'
             'integer' 'int' 'language' 'long' 'Name' 'NCName'
-            'time');
+            'negativeInteger' 'NMTOKEN' 'nonNegativeInteger'
+            'nonPositiveInteger' 'normalizedString' 'positiveInteger'
+            'QName' 'short' 'string' 'time' 'token' 'unsignedByte'
+            'unsignedInt' 'unsignedLong' 'unsignedShort');
 
 while getopts "vhdseuan:m:" opt
 do 
@@ -380,9 +383,9 @@ expect $mse/elemJ012.xsd "" \
  "$mse/elemJ012.xsd:6:52: Attribute \"minOccurs\": Invalid integer: \"unbounded\""
 expect $mse/elemJ013.xsd "" ""
 expect $mse/elemJ014.xsd "" \
- "$mse/elemJ014.xsd:6:43: Attribute \"minOccurs\": Invalid integer: \"\""
+ "$mse/elemJ014.xsd:6:43: Attribute \"minOccurs\": Invalid: empty string used as a number"
 expect $mse/elemJ015.xsd "" \
- "$mse/elemJ015.xsd:6:45: Attribute \"minOccurs\": -1 is smaller than minInclusive ( 0)"
+ "$mse/elemJ015.xsd:6:45: Attribute \"minOccurs\": -1 is smaller than minInclusive (0)"
 expect $mse/elemJ016.xsd "" \
  "$mse/elemJ016.xsd:6:52: Attribute \"minOccurs\": Invalid integer: \"Unbounded\""
 expect $mse/elemJ017.xsd "" ""
@@ -1521,7 +1524,7 @@ fi
 
 num=0
 while [ $num -lt ${#nist_tests[*]} ]; do
-#   echo "Running NIST test: ${nist_tests[$num]}"
+   echo "Running NIST test: ${nist_tests[$num]}"
    eval `./extract.pl ${nist_tests[$num]}`
    num=`expr $num + 1`
 done
