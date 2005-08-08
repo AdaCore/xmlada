@@ -37,6 +37,10 @@ package Sax.Utils is
    --  True if Name is a valid URL, as per RFC2396.
    --  See http://www.ietf.org/rfc/rfc2396.txt
 
+   function Is_Valid_HexBinary
+     (Str  : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether Str only contains valid hexadecimal digits
+
    function Hash
      (Key : Unicode.CES.Byte_Sequence) return Interfaces.Unsigned_32;
    --  Hash-code used for all htables indexed on strings

@@ -231,4 +231,27 @@ package body Sax.Utils is
       return False;
    end Is_Valid_URI;
 
+   ------------------------
+   -- Is_Valid_HexBinary --
+   ------------------------
+
+   function Is_Valid_HexBinary
+     (Str  : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Index : Integer := Str'First;
+      C     : Unicode_Char;
+   begin
+      while Index <= Str'Last loop
+         Encoding.Read (Str, Index, C);
+         if C not in Character'Pos ('0') .. Character'Pos ('9')
+           and then C not in Character'Pos ('a') .. Character'Pos ('f')
+           and then C not in Character'Pos ('A') .. Character'Pos ('F')
+         then
+            return False;
+         end if;
+      end loop;
+      return True;
+   end Is_Valid_HexBinary;
+
+
 end Sax.Utils;
