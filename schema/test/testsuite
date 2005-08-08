@@ -1524,7 +1524,7 @@ fi
 
 num=0
 while [ $num -lt ${#nist_tests[*]} ]; do
-   echo "Running NIST test: ${nist_tests[$num]}"
+#   echo "Running NIST test: ${nist_tests[$num]}"
    eval `./extract.pl ${nist_tests[$num]}`
    num=`expr $num + 1`
 done
