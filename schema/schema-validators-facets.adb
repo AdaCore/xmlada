@@ -1,6 +1,44 @@
-with Unicode.CES;   use Unicode.CES;
+with Unicode.CES;           use Unicode.CES;
+with Ada.Strings.Unbounded;
 
 package body Schema.Validators.Facets is
+
+   function Convert_Regexp (Regexp : String) return String;
+   --  Return a regular expresssion that converts the XML-specification
+   --  regexp Regexp to a GNAT.Regpat compatible one
+
+   --------------------
+   -- Convert_Regexp --
+   --------------------
+
+   function Convert_Regexp (Regexp : String) return String is
+      use Ada.Strings.Unbounded;
+      Result : Unbounded_String;
+      Pos    : Integer := Regexp'First;
+   begin
+      while Pos <= Regexp'Last loop
+         if Regexp (Pos) = '\' then
+            case Regexp (Pos + 1) is
+               when 'i' =>
+                  Result := Result & "[A-Za-z:_]";
+                  Pos := Pos + 1;
+
+               when 'c' =>
+                  Result := Result & "[:a-zA-Z0-9._-]";
+                  Pos    := Pos + 1;
+
+               when others =>
+                  Result := Result & Regexp (Pos);
+            end case;
+         else
+            Result := Result & Regexp  (Pos);
+         end if;
+
+         Pos := Pos + 1;
+      end loop;
+
+      return To_String (Result);
+   end Convert_Regexp;
 
    ----------
    -- Free --
@@ -27,13 +65,17 @@ package body Schema.Validators.Facets is
       Value  : Unicode.CES.Byte_Sequence)
    is
       Found : Boolean;
+      Matched : Match_Array (0 .. 0);
    begin
       if Facets.Mask (Facet_Pattern) then
          if Facets.Pattern = null then
             Facets.Pattern := new Pattern_Matcher '
-              (Compile (Facets.Pattern_String.all));
+              (Compile (Convert_Regexp (Facets.Pattern_String.all)));
          end if;
-         if Match (Facets.Pattern.all, String (Value)) < Value'First then
+         Match (Facets.Pattern.all, String (Value), Matched);
+         if Matched (0).First /= Value'First
+           or else Matched (0).Last /= Value'Last
+         then
             Validation_Error ("string pattern not matched: "
                               & Facets.Pattern_String.all);
          end if;
