@@ -253,5 +253,4 @@ package body Sax.Utils is
       return True;
    end Is_Valid_HexBinary;
 
-
 end Sax.Utils;
