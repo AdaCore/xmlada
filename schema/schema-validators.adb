@@ -1926,9 +1926,20 @@ package body Schema.Validators is
                   return;
                end if;
 
-               Validation_Error
-                 ("Too many occurrences of current element, expecting at most"
-                  & Integer'Image (Get_Max_Occurs (D.Current)));
+               --  We cannot raise a Validation_Error here, since there might
+               --  be other valid occurrences of this element. For instance
+               --    <choice maxOccurs="unbounded">
+               --      <sequence>
+               --          <element ref="shell" minOccurs="1" maxOccurs="1" />
+               --  and the following instance
+               --     <shell><shell>
+
+               Debug_Output
+                 ("Giving up on sequence, since repeated too often (maxOccurs="
+                  & Integer'Image (Get_Max_Occurs (D.Current)) & ")");
+               Element_Validator := No_Element;
+               Debug_Pop_Prefix;
+               return;
             end if;
 
             --  The number of calls should only be incremented when we start
@@ -2980,8 +2991,8 @@ package body Schema.Validators is
             Typ := Current (Type_Iter);
             if Get_Validator (Typ) = null then
                Validation_Error
-                 ("Type ""{" & Grammar.Namespace_URI.all & '}'
-                  & Typ.Local_Name.all
+                 ("Type """
+                  & To_QName (Grammar.Namespace_URI.all, Typ.Local_Name.all)
                   & """ was referenced but never declared");
             end if;
             Next (Grammar.Types.all, Type_Iter);
@@ -2992,8 +3003,8 @@ package body Schema.Validators is
 
             if Elem.Of_Type = No_Type then
                Validation_Error
-                 ("Element ""{" & Grammar.Namespace_URI.all
-                  & '}' & Elem.Local_Name.all
+                 ("Element """
+                  & To_QName (Grammar.Namespace_URI.all, Elem.Local_Name.all)
                   & """ was referenced but never declared");
             end if;
 
@@ -4037,5 +4048,18 @@ package body Schema.Validators is
    begin
       Schema.Validators.Simple_Types.Add_Union (XML_Union (Validator), Part);
    end Add_Union;
+
+   --------------
+   -- To_QName --
+   --------------
+
+   function To_QName (Namespace_URI, Local_Name : String) return String is
+   begin
+      if Namespace_URI = "" then
+         return Local_Name;
+      else
+         return '{' & Namespace_URI & '}' & Local_Name;
+      end if;
+   end To_QName;
 
 end Schema.Validators;

@@ -694,6 +694,9 @@ package Schema.Validators is
    procedure Validation_Error (Message : String);
    --  Raise Validation_Error with a proper error message.
 
+   function To_QName (Namespace_URI, Local_Name : String) return String;
+   --  Return the name as it should be displayed in error messages
+
 private
 
    procedure Debug_Push_Prefix (Append : String);
