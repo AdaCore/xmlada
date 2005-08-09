@@ -1,3 +1,9 @@
+Problems in 2.0.1:
+
+- Validating a not well-formed document results in an validation error instead
+  of a well-formedness error. It is therefore harder to understand such error
+  messages
+
 Problems in 2.0:
 
 - E307-011: Invalid project file for xmlada_schema.gpr when installing static
