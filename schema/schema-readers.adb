@@ -486,7 +486,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
-                   & "Start_Element: " & Local_Name
+                   & "Start_Element: " & Namespace_URI & ':' & Local_Name
                    & ASCII.ESC & "[39m");
       end if;
 
