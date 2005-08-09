@@ -162,14 +162,22 @@ type_not_declared () {
  file="$1"
  ns="$2" 
  local="$3"
- echo "$file: Type \"{$ns}$local\" was referenced but never declared"
+ if [ x"$ns" = x ]; then
+   echo "$file: Type \"$local\" was referenced but never declared"
+ else
+   echo "$file: Type \"{$ns}$local\" was referenced but never declared"
+ fi
 }
 
 elem_not_declared () {
  file="$1"
  ns="$2"
  local="$3"
- echo "$file: Element \"{$ns}$local\" was referenced but never declared"
+ if [ x"$ns" = x ]; then
+   echo "$file: Element \"$local\" was referenced but never declared"
+ else
+   echo "$file: Element \"{$ns}$local\" was referenced but never declared"
+ fi
 }
 
 ##################
