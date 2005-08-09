@@ -1318,7 +1318,7 @@ however, you will need to derive from that tagged type to override
 the primitive operations and do something useful as we did for SAX.
 
 Note the activationg of the @code{Schema_Validation_Feature} feature,
-withouth which no validation takes place
+without which no validation takes place
 
 @smallexample
 @include schema/schemaexample.adb
