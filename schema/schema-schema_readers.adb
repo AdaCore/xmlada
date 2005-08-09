@@ -537,8 +537,28 @@ package body Schema.Schema_Readers is
                        & Ada_Name (Handler.Contexts.Next)
                        & ", " & Ada_Name (Handler.Contexts) & ");");
 
+            when Context_Extension =>
+               if Handler.Contexts.Next.Extension = null then
+                  Handler.Contexts.Next.Extension := Extension_Of
+                    (Handler.Contexts.Next.Extension_Base, null);
+                  Output (Ada_Name (Handler.Contexts.Next)
+                          & " := Extension_Of ("
+                          & Ada_Name (Handler.Contexts.Next.Extension_Base)
+                          & ", null);");
+                  Handler.Contexts.Next.Extension_Base := No_Type;
+               end if;
+
+               Add_Attribute_Group
+                 (Handler.Contexts.Next.Extension,
+                  Handler.Contexts.Attr_Group);
+               Output ("Add_Attribute_Group ("
+                       & Ada_Name (Handler.Contexts.Next)
+                       & ", " & Ada_Name (Handler.Contexts) & ");");
+
             when others =>
-               Output ("Can't handle nested attribute group decl");
+               Output ("Context is " & Handler.Contexts.Next.Typ'Img);
+               Validation_Error
+                 ("Can't handle attributeGroup in this context");
          end case;
       end if;
    end Create_Attribute_Group;
