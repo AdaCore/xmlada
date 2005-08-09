@@ -31,7 +31,7 @@ nist_tests=('anyURI' 'boolean' 'byte' 'dateTime' 'date'
             'QName' 'short' 'string' 'time' 'token' 'unsignedByte'
             'unsignedInt' 'unsignedLong' 'unsignedShort');
 
-while getopts "vhdseuan:m:" opt
+while getopts "vhdseuan:m:N" opt
 do 
    case $opt in
       d) debug="-debug";;
@@ -39,6 +39,7 @@ do
       s) show_expected_failure=1;;
       u) run_sun=1; run_all_tests=0;;
       n) nist_tests=( "$OPTARG" );  run_all_tests=0;;
+      N) nist_tests=();;
       m) case $OPTARG in
            e) run_ms_element=1; run_all_tests=0;;
            p) run_ms_particle=1; run_all_tests=0;;
@@ -114,7 +115,6 @@ expect() {
                               -e 's,'$sun',\$sun,'`
       echo "#------------ Test failed ------------"
       echo "  cmd: $XML $xsd $xml_file"
-      #echo "   output= $out"
       echo "  quoted= $quoted"
       echo "  expected= $expected"
       failed=`expr $failed + 1`
@@ -149,6 +149,26 @@ expected_failure() {
   if [ x$show_expected_failure = x1 ]; then
      echo "$1: $2"
   fi
+}
+
+##################
+## Error messages
+##################
+
+schema_ns="http://www.w3.org/2001/XMLSchema"
+
+type_not_declared () {
+ file="$1"
+ ns="$2" 
+ local="$3"
+ echo "$file: Type \"{$ns}$local\" was referenced but never declared"
+}
+
+elem_not_declared () {
+ file="$1"
+ ns="$2"
+ local="$3"
+ echo "$file: Element \"{$ns}$local\" was referenced but never declared"
 }
 
 ##################
@@ -271,9 +291,9 @@ expect $mse/elemE006.xsd "" \
 expect $mse/elemE007.xsd "" \
  "$mse/elemE007.xsd:4:50: Attribute \"substitutionGroup\": Invalid value: \"\""
 expect $mse/elemE008.xsd "" \
- "$mse/elemE008.xsd:11: Element \"foo\" from namespace \"\" was referenced, but never declared"
+   "`elem_not_declared "$mse/elemE008.xsd:11" "" foo`"
 expect $mse/elemE009.xsd "" \
- "$mse/elemE009.xsd:16: Element \"foo\" from namespace \"\" was referenced, but never declared"
+   "`elem_not_declared "$mse/elemE009.xsd:16" "" foo`"
 fi
 
 ##################
@@ -423,7 +443,7 @@ fi
 if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemL001.xsd "" ""
 expect $mse/elemL002.xsd "" \
- "$mse/elemL002.xsd:10: Element \"foo\" from namespace \"\" was referenced, but never declared"
+ "`elem_not_declared "$mse/elemL002.xsd:10" "" foo`"
 expect $mse/elemL003.xsd "" \
  "$mse/elemL003.xsd:5:39: \"ref\" attribute cannot be self-referencing"
 expect $mse/elemL004.xsd "" ""
@@ -437,7 +457,7 @@ fi
 if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemM001.xsd "" ""
 expect $mse/elemM002.xsd "" \
- "$mse/elemM002.xsd:6: Type \"foo\" from namespace \"\" was referenced, but never declared"
+ "`type_not_declared "$mse/elemM002.xsd:6" "" foo`"
 expect $mse/elemM003.xsd "" \
  "$mse/elemM003.xsd:5:31: Self-referencing restriction not allowed"
 expect $mse/elemM004.xsd "" ""
@@ -880,19 +900,19 @@ expect "$sun/xsd012.xsd" "$sun/xsd012.v00.xml" ""
 ### SUN xsd013
 
 expect "$sun/xsd013.e.xsd" "" \
- "$sun/xsd013.e.xsd:20:9: Element \"root\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+ "`elem_not_declared "$sun/xsd013.e.xsd:20:9" $schema_ns root`"
 expect "$sun/xsd014.e.xsd" "" \
- "$sun/xsd014.e.xsd:19:9: Element \"undef\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+ "`elem_not_declared "$sun/xsd014.e.xsd:19:9" $schema_ns undef`"
 expect "$sun/xsd015.e.xsd" "" \
- "$sun/xsd015.e.xsd:22:9: Type \"abc\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+ "`type_not_declared "$sun/xsd015.e.xsd:22:9" $schema_ns abc`"
 expect "$sun/xsd016.e.xsd" "" \
- "$sun/xsd016.e.xsd:15:9: Type \"abc\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+ "`type_not_declared "$sun/xsd016.e.xsd:15:9" $schema_ns abc`"
 expect "$sun/xsd017.e.xsd" "" \
- "$sun/xsd017.e.xsd:29:9: Type \"def\" from namespace \"foo\" was referenced, but never declared"
+ "`type_not_declared "$sun/xsd017.e.xsd:29:9" foo def`"
 expect "$sun/xsd018.e.xsd" "" \
- "$sun/xsd018.e.xsd:29:9: Type \"abc\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+ "`type_not_declared "$sun/xsd018.e.xsd:29:9" $schema_ns abc`"
 expect "$sun/xsd019.e.xsd" "" \
- "$sun/xsd019.e.xsd:28:9: Type \"abc\" from namespace \"http://www.w3.org/2001/XMLSchema\" was referenced, but never declared"
+ "`type_not_declared "$sun/xsd019.e.xsd:28:9" $schema_ns abc`"
 
 ### SUN xsd020
 
