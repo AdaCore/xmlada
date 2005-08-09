@@ -125,7 +125,14 @@ package body Schema.Validators.Restrictions is
       end if;
 
       if Validator.Facets = null then
-         Validation_Error ("No facet overridable for this type");
+         if Validator.Base.Validator = null then
+            Validation_Error
+              ("The type """ & Get_Local_Name (Validator.Base)
+               & """ isn't known at this point. Please check the name and"
+               & " namespace");
+         else
+            Validation_Error ("No facet overridable for this type");
+         end if;
       end if;
 
       Add_Facet (Validator.Facets.all, Facet_Name, Facet_Value, Applies);
