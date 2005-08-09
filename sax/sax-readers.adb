@@ -601,14 +601,21 @@ package body Sax.Readers is
       Parser.State.Ignore_Special := True;
 
       begin
+         --  Must be called before End_Document, as per the SAX standard
          Fatal_Error
            (Parser, Create (Location (Parser, Id2) & ": " & Msg,
                             Parser.Locator));
          End_Document (Parser);
       exception
-         when others =>
-            End_Document (Parser);
-            raise;
+         when E : others =>
+            begin
+               End_Document (Parser);
+            exception
+               when others =>
+                  --  Priority is given to the Fatal_Error, whatever
+                  --  End_Document raises
+                  Reraise_Occurrence (E);
+            end;
       end;
 
       raise Program_Error;
