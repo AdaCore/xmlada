@@ -611,11 +611,12 @@ package body Sax.Readers is
             begin
                End_Document (Parser);
             exception
-               when others =>
-                  --  Priority is given to the Fatal_Error, whatever
-                  --  End_Document raises
-                  Reraise_Occurrence (E);
+               when others => null;
             end;
+
+            --  Priority is given to the Fatal_Error, whatever
+            --  End_Document raises
+            Reraise_Occurrence (E);
       end;
 
       raise Program_Error;
