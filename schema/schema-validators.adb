@@ -837,7 +837,10 @@ package body Schema.Validators is
             Block_Extension   => Grammar.Block_Extension,
             Block_Restriction => Grammar.Block_Restriction);
          Types_Htable.Set (Grammar.Types.all, Typ);
-         Debug_Output ("Forward type decl: " & Local_Name);
+         Debug_Output ("Forward type decl: {"
+                         & Get_Namespace_URI (Grammar) & "}" & Local_Name);
+      elsif Typ = No_Type then
+         Debug_Output ("Type not found: " & Local_Name);
       end if;
 
       return Typ;
@@ -1307,6 +1310,9 @@ package body Schema.Validators is
             Block_Extension   => Grammar.Block_Extension,
             Block_Restriction => Grammar.Block_Restriction);
          Types_Htable.Set (Grammar.Types.all, Typ);
+         Debug_Output ("Creating global type {"
+                       & Get_Namespace_URI (Grammar) & '}'
+                       & Local_Name);
 
          if Debug and then Typ.Validator.Debug_Name = null then
             Set_Debug_Name (Typ.Validator, Local_Name);
@@ -2974,10 +2980,9 @@ package body Schema.Validators is
             Typ := Current (Type_Iter);
             if Get_Validator (Typ) = null then
                Validation_Error
-                 ("Type """ & Typ.Local_Name.all & """ from namespace """
-                  & Grammar.Namespace_URI.all
-                  & """ was referenced, but"
-                  & " never declared");
+                 ("Type ""{" & Grammar.Namespace_URI.all & '}'
+                  & Typ.Local_Name.all
+                  & """ was referenced but never declared");
             end if;
             Next (Grammar.Types.all, Type_Iter);
          end loop;
@@ -2987,10 +2992,9 @@ package body Schema.Validators is
 
             if Elem.Of_Type = No_Type then
                Validation_Error
-                 ("Element """ & Elem.Local_Name.all
-                  & """ from namespace """ & Grammar.Namespace_URI.all
-                  & """ was referenced, but"
-                  & " never declared");
+                 ("Element ""{" & Grammar.Namespace_URI.all
+                  & '}' & Elem.Local_Name.all
+                  & """ was referenced but never declared");
             end if;
 
             Next (Grammar.Elements.all, Elem_Iter);
