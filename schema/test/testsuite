@@ -1577,6 +1577,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "" "$act/E802-003.xml" ""
    expect "" "$act/uri.xml" ""
    expect "" "$act/wf.xml" "$act/wf.xml:7:86: [WF-Element Type Match] Name differ for closing tag (expecting test)"
+   expect "$act/ns1.xsd" "" "$act/ns1.xsd:5:30: Unexpected element \"element\""
 fi
 
 summary
