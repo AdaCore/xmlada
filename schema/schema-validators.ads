@@ -249,7 +249,7 @@ package Schema.Validators is
    --  Check whether this Start_Element event is valid in the context of the
    --  validator. Data is the result of Create_Validator_Data.
    --
-   --  NS is the *apparent* namespace, ie for local elements is it
+   --  NS is the *apparent* namespace, ie for local elements it is
    --  resolved to the parent element's namespace automatically.
    --  Namespace_URI is the actual namespace found in the XML file, possibly
    --  the empty string for an unqualified element.
