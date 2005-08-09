@@ -74,9 +74,11 @@ package body Schema.Validators is
    --  group didn't match, or there was no nested group.
 
    function Check_Substitution_Groups
-     (Element       : XML_Element_Access;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : XML_Grammar_NS) return XML_Element;
+     (Element          : XML_Element_Access;
+      Local_Name       : Unicode.CES.Byte_Sequence;
+      Namespace_URI    : Unicode.CES.Byte_Sequence;
+      Parent_NS        : XML_Grammar_NS;
+      Schema_Target_NS : XML_Grammar_NS) return XML_Element;
    --  Check whether any element in the substitution group of Validator can
    --  be used to match Local_Name. This also check whether Element itself
    --  matches.
@@ -1714,29 +1716,52 @@ package body Schema.Validators is
    -------------------------------
 
    function Check_Substitution_Groups
-     (Element       : XML_Element_Access;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : XML_Grammar_NS) return XML_Element
+     (Element          : XML_Element_Access;
+      Local_Name       : Unicode.CES.Byte_Sequence;
+      Namespace_URI    : Unicode.CES.Byte_Sequence;
+      Parent_NS        : XML_Grammar_NS;
+      Schema_Target_NS : XML_Grammar_NS) return XML_Element
    is
       Groups : constant Element_List_Access :=
         Element.Substitution_Groups;
       Result : XML_Element := No_Element;
+      Local_Matches : constant Boolean :=
+        Element.Local_Name.all = Local_Name;
    begin
-      Debug_Output ("Test " & Element.Local_Name.all);
+      Debug_Output ("Test " & Namespace_URI
+                    & " : " & Get_Namespace_URI (Parent_NS)
+                    & " : " & Local_Name);
 
-      if Element.Local_Name.all = Local_Name
-        and then Element.NS = Namespace_URI
+      if Local_Matches
+        and then Get_Namespace_URI (Element.NS) = Namespace_URI
       then
          Result := (Elem => Element, Is_Ref => True);
+         Check_Qualification (Schema_Target_NS, Result, Namespace_URI);
 
-      elsif Groups /= null then
+      elsif Get_Element_Form_Default (Parent_NS) = Unqualified
+        and then Namespace_URI = ""
+        and then Local_Matches
+        and then Element.NS = Parent_NS
+      then
+         Result := (Elem => Element, Is_Ref => True);
+         Check_Qualification (Schema_Target_NS, Result, Namespace_URI);
+
+      elsif Local_Matches and then Namespace_URI = "" then
+         Check_Qualification
+           (Schema_Target_NS, (Element, True), Namespace_URI);
+      end if;
+
+      if Result = No_Element
+        and then Groups /= null
+      then
          for S in Groups'Range loop
             Debug_Output ("Check_Substitution group: "
                           & Element.Local_Name.all & " -> "
                           & Groups (S).Local_Name.all);
 
             Result := Check_Substitution_Groups
-              (Groups (S), Local_Name, Namespace_URI);
+              (Groups (S), Local_Name, Namespace_URI, Parent_NS,
+               Schema_Target_NS);
             exit when Result /= No_Element;
          end loop;
       end if;
@@ -1815,6 +1840,8 @@ package body Schema.Validators is
    begin
       Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
 
+      Debug_Output ("MANU Check_Nested Testing "
+                    & Namespace_URI & ':' & Local_Name);
       Applies_To_Tag
         (Nested, Local_Name, Namespace_URI, NS,
          Schema_Target_NS, Applies, Skip_Current);
@@ -1962,15 +1989,14 @@ package body Schema.Validators is
          case Curr.Typ is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
-                 (Curr.Element.Elem, Local_Name, NS);
+                 (Curr.Element.Elem, Local_Name, Namespace_URI, NS,
+                  Schema_Target_NS);
 
                if Element_Validator /= No_Element then
                   Debug_Output
                     ("Element Matched: "
                      & Element_Validator.Elem.Local_Name.all & ' '
                      & Get_Local_Name (Element_Validator.Elem.Of_Type));
-                  Check_Qualification
-                    (Schema_Target_NS, Element_Validator, Namespace_URI);
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
@@ -2246,11 +2272,8 @@ package body Schema.Validators is
          case It.Typ is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
-                 (It.Element.Elem, Local_Name, NS);
-               if Element_Validator /= No_Element then
-                  Check_Qualification
-                    (Schema_Target_NS, Element_Validator, Namespace_URI);
-               end if;
+                 (It.Element.Elem, Local_Name, Namespace_URI, NS,
+                  Schema_Target_NS);
 
             when Particle_Nested =>
                Check_Nested
@@ -2271,7 +2294,8 @@ package body Schema.Validators is
    begin
       Debug_Push_Prefix ("Validate_Start_Element choice "
                          & Get_Name (Validator)
-                         & " occurs=" & D.Num_Occurs_Of_Current'Img);
+                         & " occurs=" & D.Num_Occurs_Of_Current'Img
+                         & ' ' & Namespace_URI & ':' & Local_Name);
 
       if D.Nested /= null then
          Run_Nested
@@ -2594,7 +2618,8 @@ package body Schema.Validators is
          case Item.Typ is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
-                 (Item.Element.Elem, Local_Name, NS) /= No_Element;
+                 (Item.Element.Elem, Local_Name, Namespace_URI, NS,
+                  Schema_Target_NS) /= No_Element;
 
             when Particle_Nested =>
                Applies_To_Tag
@@ -2659,12 +2684,15 @@ package body Schema.Validators is
       It   : XML_Particle_Access;
    begin
       Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
+      Debug_Output ("MANU Applies_To_Tag for choice "
+                    & Namespace_URI & ':' & Local_Name);
       while Get (Item) /= null loop
          It := Get (Item);
          case It.Typ is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
-                 (It.Element.Elem, Local_Name, NS) /= No_Element;
+                 (It.Element.Elem, Local_Name, Namespace_URI, NS,
+                  Schema_Target_NS) /= No_Element;
 
             when Particle_Nested =>
                Applies_To_Tag
@@ -3144,7 +3172,8 @@ package body Schema.Validators is
 
       while Get (Tmp) /= null loop
          Element_Validator := Check_Substitution_Groups
-           (Get (Tmp).Element.Elem, Local_Name, NS);
+           (Get (Tmp).Element.Elem, Local_Name, Namespace_URI, NS,
+            Schema_Target_NS);
 
          if Element_Validator /= No_Element then
             D.All_Elements (Count) := D.All_Elements (Count) + 1;
@@ -3163,11 +3192,6 @@ package body Schema.Validators is
       end loop;
 
       Free (Tmp);
-
-      if Element_Validator /= No_Element then
-         Check_Qualification
-           (Schema_Target_NS, Element_Validator, Namespace_URI);
-      end if;
 
       Debug_Pop_Prefix;
    end Validate_Start_Element;
