@@ -545,7 +545,8 @@ package body Schema.Readers is
 
       if Element = No_Element then
          Validation_Error
-           ("Unexpected element: """ & String (Local_Name) & """");
+           ("Unexpected element """ &
+            To_QName (Namespace_URI, Local_Name) & """");
       end if;
 
       Compute_Type;
