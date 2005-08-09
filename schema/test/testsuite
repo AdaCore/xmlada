@@ -44,7 +44,7 @@ do
            e) run_ms_element=1; run_all_tests=0;;
            p) run_ms_particle=1; run_all_tests=0;;
          esac;;
-      a) run_act=1; run_all_tests=0;;
+      a) run_act=1; run_all_tests=0; nist_tests=();;
       h) cat <<EOF
  -d   : debug mode ON
  -v   : verbose mode ON: list the tests are they are passed
@@ -54,6 +54,7 @@ do
  -m e : run only Microsoft elements tests
  -m p : run only Microsoft particles tests
  -n ... : run only NIST tests (param is "boolean", "float", ...)
+ -N     : do not run NIST tests
 EOF
          exit 1;;
       *) echo "Invalid command line switch: $opt"
@@ -1562,6 +1563,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
      "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.25200000000000000E+04)"
    expect "" "$act/E802-003.xml" ""
    expect "" "$act/uri.xml" ""
+   expect "" "$act/wf.xml" "$act/wf.xml:7:86: [WF-Element Type Match] Name differ for closing tag (expecting test)"
 fi
 
 summary
