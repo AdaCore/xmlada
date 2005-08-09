@@ -157,27 +157,35 @@ expected_failure() {
 ##################
 
 schema_ns="http://www.w3.org/2001/XMLSchema"
+xsdtesting_ns="http://xsdtesting"
+importedxsd_ns="http://importedXSD"
+
+to_qname () {
+ ns="$1"
+ local="$2"
+ if [ x"$ns" = x ]; then
+   qname="$local"
+ else
+   qname="{$ns}$local"
+ fi
+}
 
 type_not_declared () {
  file="$1"
- ns="$2" 
- local="$3"
- if [ x"$ns" = x ]; then
-   echo "$file: Type \"$local\" was referenced but never declared"
- else
-   echo "$file: Type \"{$ns}$local\" was referenced but never declared"
- fi
+ to_qname "$2" "$3"
+ echo "$file: Type \"$qname\" was referenced but never declared"
 }
 
 elem_not_declared () {
  file="$1"
- ns="$2"
- local="$3"
- if [ x"$ns" = x ]; then
-   echo "$file: Element \"$local\" was referenced but never declared"
- else
-   echo "$file: Element \"{$ns}$local\" was referenced but never declared"
- fi
+ to_qname "$2" "$3"
+ echo "$file: Element \"$qname\" was referenced but never declared"
+}
+
+elem_unexpected () {
+ file="$1"
+ to_qname "$2" "$3"
+ echo "$file: Unexpected element \"$qname\""
 }
 
 ##################
@@ -543,23 +551,23 @@ expect $mse/elemQ001.xsd "" ""
 expect $mse/elemQ002.xsd "" ""
 expect $mse/elemQ003.xsd "" ""
 expect $mse/elemQ004.xsd "" \
- "$mse/elemQ004.xsd:7:19: Unexpected element: \"annotation\""
+ "`elem_unexpected $mse/elemQ004.xsd:7:19 $schema_ns annotation`"
 expect $mse/elemQ005.xsd "" ""
 expect $mse/elemQ006.xsd "" \
- "$mse/elemQ006.xsd:10:19: Unexpected element: \"annotation\""
+ "`elem_unexpected $mse/elemQ006.xsd:10:19 $schema_ns annotation`"
 expect "" $mse/elemQ007.xml \
  "$mse/elemQ007.xml:3:8: Unexpected end of sequence, expecting \"fooTest\""
 expect "" $mse/elemQ008.xml ""
 expect "" $mse/elemQ009.xml \
- "$mse/elemQ009.xml:4:11: Unexpected element: \"fooTest\""
+ "`elem_unexpected $mse/elemQ009.xml:4:11 "" fooTest`"
 expect "" $mse/elemQ010.xml \
  "$mse/elemQ010.xml:3:8: Unexpected end of sequence, expecting \"fooTest\""
 expect "" $mse/elemQ011.xml ""
 expect "" $mse/elemQ012.xml \
- "$mse/elemQ012.xml:4:11: Unexpected element: \"fooTest\""
+ "`elem_unexpected $mse/elemQ012.xml:4:11 "" fooTest`"
 expect "" $mse/elemQ013.xml ""
 expect "" $mse/elemQ014.xml \
- "$mse/elemQ014.xml:5:11: Unexpected element: \"fooTest\""
+ "`elem_unexpected $mse/elemQ014.xml:5:11 "" fooTest`"
 expect "" $mse/elemQ015.xml ""
 expect $mse/elemQ016.xsd "" ""
 expect "" $mse/elemQ017.xml ""
@@ -761,7 +769,7 @@ expected_failure "$sun/idc006.nogen.xsd $sun/idc006.nogen.v00.xml" "<key> not su
 expect "$sun/xsd001.xsd" "$sun/xsd001.n00.xml" \
  "$sun/xsd001.n00.xml:6:12: Unexpected end of sequence, expecting \"child\""
 expect "$sun/xsd001.xsd" "$sun/xsd001.n01.xml" \
- "$sun/xsd001.n01.xml:10:9: Unexpected element: \"child\""
+ "`elem_unexpected $sun/xsd001.n01.xml:10:9 "" child`"
 expect "$sun/xsd001.xsd" "$sun/xsd001.n02.xml" \
  "$sun/xsd001.n02.xml:7:21: Attribute \"attr\": String is too short, minimum length is 5 characters"
 expect "$sun/xsd001.xsd" "$sun/xsd001.n03.xml" \
@@ -793,9 +801,9 @@ expect "$sun/xsd002.xsd" "$sun/xsd002.v01.xml" ""
 ### SUN xsd003
 
 expect "$sun/xsd003-1.e.xsd" "" \
- "$sun/xsd003-1.e.xsd:10:30: Unexpected element: \"element\""
+ "`elem_unexpected $sun/xsd003-1.e.xsd:10:30 $schema_ns element`"
 expect "$sun/xsd003-2.e.xsd" "" \
- "$sun/xsd003-2.e.xsd:10:50: Unexpected element: \"attribute\""
+ "`elem_unexpected $sun/xsd003-2.e.xsd:10:50 $schema_ns attribute`"
 expect "$sun/xsd003a.xsd" "$sun/xsd003a.v00.xml" ""
 expect "$sun/xsd003b.xsd" "$sun/xsd003b.n00.xml" \
  "$sun/xsd003b.n00.xml:3:29: Attribute \"add\": Invalid integer: \"abc\""
@@ -845,7 +853,7 @@ expect "$sun/xsd005.xsd" "$sun/xsd005.n02.xml" \
 expect "$sun/xsd005.xsd" "$sun/xsd005.n03.xml" \
  "$sun/xsd005.n03.xml:6:11: Expecting at least 1 occurrences of \"c\" from namespace \"foo\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n04.xml" \
- "$sun/xsd005.n04.xml:6:15: Unexpected element: \"d\""
+ "`elem_unexpected $sun/xsd005.n04.xml:6:15 foo d`"
 expect "$sun/xsd005.xsd" "$sun/xsd005.n05.xml" \
  "$sun/xsd005.n05.xml:6:18: Unknown type \"ext\""
 expect "$sun/xsd005.xsd" "$sun/xsd005.n06.xml" \
@@ -855,19 +863,19 @@ expect "$sun/xsd005.xsd" "$sun/xsd005.v00.xml" ""
 ### SUN xsd006
 
 expect "$sun/xsd006.xsd" "$sun/xsd006.n00.xml" \
- "$sun/xsd006.n00.xml:5:11: Unexpected element: \"x\""
+ "`elem_unexpected $sun/xsd006.n00.xml:5:11 foo x`"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n01.xml" \
- "$sun/xsd006.n01.xml:5:15: Unexpected element: \"x\""
+ "`elem_unexpected $sun/xsd006.n01.xml:5:15 foo x`"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n02.xml" \
  "$sun/xsd006.n02.xml:5:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n03.xml" \
- "$sun/xsd006.n03.xml:5:15: Unexpected element: \"x\""
+ "`elem_unexpected $sun/xsd006.n03.xml:5:15 foo x`"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n04.xml" \
  "$sun/xsd006.n04.xml:5:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n05.xml" \
  "$sun/xsd006.n05.xml:6:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n06.xml" \
- "$sun/xsd006.n06.xml:5:15: Unexpected element: \"x\""
+ "`elem_unexpected $sun/xsd006.n06.xml:5:15 foo x`"
 expect "$sun/xsd006.xsd" "$sun/xsd006.n07.xml" \
  "$sun/xsd006.n07.xml:6:13: Unexpected end of sequence, expecting \"x\""
 expect "$sun/xsd006.xsd" "$sun/xsd006.n08.xml" \
@@ -1093,7 +1101,6 @@ expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n31.xml" \
  "$sun/type-and-subst-1.n31.xml:2:27: Type is not a valid replacement for \"Dee\""
 expect "$sun/type-and-subst-1.xsd" "$sun/type-and-subst-1.n32.xml" \
  "$sun/type-and-subst-1.n32.xml:2:27: Type is not a valid replacement for \"Dee\""
-
 fi
 
 ###########################################
@@ -1105,7 +1112,7 @@ expect "" "$msp/particlesA001.xml" \
  "$msp/particlesA001.xml:3:7: Element \"elem\" must appear at least 1 times"
 expect "" "$msp/particlesA002.xml" ""
 expect "" "$msp/particlesA003.xml" \
- "$msp/particlesA003.xml:5:10: Unexpected element: \"elem1\""
+ "`elem_unexpected $msp/particlesA003.xml:5:10 "" elem1`"
 expect "" "$msp/particlesA004.xml" \
  "$msp/particlesA004.xml:4:9: Unexpected end of sequence, expecting \"(e1)\""
 expect "" "$msp/particlesA005.xml" \
@@ -1129,25 +1136,25 @@ expect "" "$msp/particlesB001.xml" \
  "$msp/particlesB001.xml:4:9: Element \"e1\" must appear at least 1 times"
 expect "" "$msp/particlesB002.xml" ""
 expect "" "$msp/particlesB003.xml" \
- "$msp/particlesB003.xml:6:8: Unexpected element: \"e1\""
+ "`elem_unexpected $msp/particlesB003.xml:6:8 "" e1`"
 expect "" "$msp/particlesB004.xml" \
  "$msp/particlesB004.xml:4:9: Unexpected end of sequence, expecting \"(e1)\""
 expect "" "$msp/particlesB005.xml" ""
 expect "" "$msp/particlesB006.xml" ""
 expect "" "$msp/particlesB007.xml" \
- "$msp/particlesB007.xml:5:7: Too many occurrences of current element, expecting at most 2"
+ "`elem_unexpected $msp/particlesB007.xml:5:7 "" e1`"
 expect "" "$msp/particlesB008.xml" \
  "$msp/particlesB008.xml:4:9: Unexpected end of sequence, expecting \"(e1|e2|e3|e4)\""
 expect "" "$msp/particlesB009.xml" ""
 expect "" "$msp/particlesB010.xml" ""
 expect "" "$msp/particlesB011.xml" \
- "$msp/particlesB011.xml:4:18: Too many occurrences of current element, expecting at most 2"
+ "`elem_unexpected $msp/particlesB011.xml:4:18 "" e1`"
 expect "" "$msp/particlesB012.xml" \
  "$msp/particlesB012.xml:4:9: Expecting one of \"<any>\""
 expect "" "$msp/particlesB013.xml" ""
 expect "" "$msp/particlesB014.xml" ""
 expect "" "$msp/particlesB015.xml" \
- "$msp/particlesB015.xml:6:19: Unexpected element: \"c\""
+ "`elem_unexpected $msp/particlesB015.xml:6:19 foo c`"
 
 expect "" "$msp/particlesC001.xml" ""
 expect "" "$msp/particlesC002.xml" ""
@@ -1222,7 +1229,7 @@ expect "" "$msp/particlesC048.xml" \
  "$msp/particlesC048.xml:4:25: Invalid namespace for this element: \"xyz\" not in \"foo ##targetNamespace bar ##local\""
 
 expect "" "$msp/particlesDa001.xml" \
- "$msp/particlesDa001.xml:5:39: Unexpected element: \"a1\""
+ "`elem_unexpected $msp/particlesDa001.xml:5:39 $importedxsd_ns a1`"
 expect "" "$msp/particlesDa002.xml" ""
 expect "" "$msp/particlesDa003.xml" \
  "$msp/particlesDa003.xml:4:10: Namespace specification is required in this context"
@@ -1231,7 +1238,7 @@ expect "" "$msp/particlesDa004.xml" \
 expect "" "$msp/particlesDa005.xml" \
  "$msp/particlesDa005.xml:4:10: Expecting at least 1 occurrences of \"elem2\" from namespace \"http://xsdtesting\""
 expect "" "$msp/particlesDa006.xml" \
- "$msp/particlesDa006.xml:5:39: Unexpected element: \"a1\""
+ "`elem_unexpected $msp/particlesDa006.xml:5:39 $importedxsd_ns a1`"
 expect "" "$msp/particlesDa007.xml" ""
 expect "" "$msp/particlesDa008.xml" \
  "$msp/particlesDa008.xml:4:10: Namespace specification is required in this context"
@@ -1281,9 +1288,9 @@ expect "" "$msp/particlesEa002.xml" \
 expect "" "$msp/particlesEa003.xml" ""
 expect "" "$msp/particlesEa004.xml" ""
 expect "" "$msp/particlesEa005.xml" \
- "$msp/particlesEa005.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEa005.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEa006.xml" \
- "$msp/particlesEa006.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEa006.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEa007.xml" \
  "$msp/particlesEa007.xml:3:10: Expecting (a1&a2)"
 expect "" "$msp/particlesEa008.xml" ""
@@ -1292,20 +1299,20 @@ expect "" "$msp/particlesEa009.xml" \
 expect "" "$msp/particlesEa010.xml" ""
 expect "" "$msp/particlesEa011.xml" ""
 expect "" "$msp/particlesEa012.xml" \
- "$msp/particlesEa012.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEa012.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEa013.xml" \
- "$msp/particlesEa013.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEa013.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEa014.xml" \
- "$msp/particlesEa014.xml:5:10: Unexpected element: \"foo\""
+ "`elem_unexpected $msp/particlesEa014.xml:5:10 $xsdtesting_ns foo`"
 expect "" "$msp/particlesEa015.xml" ""
 expect "" "$msp/particlesEa016.xml" \
  "$msp/particlesEa016.xml:4:9: Element \"a2\" must appear at least 1 times"
 expect "" "$msp/particlesEa017.xml" ""
 expect "" "$msp/particlesEa018.xml" ""
 expect "" "$msp/particlesEa019.xml" \
- "$msp/particlesEa019.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEa019.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEa020.xml" \
- "$msp/particlesEa020.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEa020.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEa021.xml" \
  "$msp/particlesEa021.xml:3:10: Expecting (a1&a2)"
 notrun "$msp/particlesEa022.xsd" "" "all parsers fail, test seems correct"
@@ -1322,13 +1329,13 @@ expect "" "$msp/particlesEb002.xml" \
  "$msp/particlesEb002.xml:4:9: Unexpected end of sequence, expecting \"a2\""
 expect "" "$msp/particlesEb003.xml" ""
 expect "" "$msp/particlesEb004.xml" \
- "$msp/particlesEb004.xml:3:9: Unexpected element: \"a2\""
+ "`elem_unexpected $msp/particlesEb004.xml:3:9 $xsdtesting_ns a2`"
 expect "" "$msp/particlesEb005.xml" \
- "$msp/particlesEb005.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEb005.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEb006.xml" \
- "$msp/particlesEb006.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEb006.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEb007.xml" \
- "$msp/particlesEb007.xml:3:24: Unexpected element: \"foo\""
+ "`elem_unexpected $msp/particlesEb007.xml:3:24 foo foo`"
 expect "" "$msp/particlesEb008.xml" \
  "$msp/particlesEb008.xml:3:9: Unexpected end of sequence, expecting \"(a1)\""
 expect "" "$msp/particlesEb009.xml" \
@@ -1337,9 +1344,9 @@ expect "" "$msp/particlesEb010.xml" ""
 expect "" "$msp/particlesEb011.xml" \
  "$msp/particlesEb011.xml:3:9: Expecting (a1)"
 expect "" "$msp/particlesEb012.xml" \
- "$msp/particlesEb012.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEb012.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEb013.xml" \
- "$msp/particlesEb013.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEb013.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEb014.xml" \
  "$msp/particlesEb014.xml:3:8: Expecting (a1)"
 notrun "$msp/particlesEb015.xsd" "" "Test is invalid, Xerces confirmed this"
@@ -1352,9 +1359,9 @@ expect "" "$msp/particlesEb019.xml" ""
 expect "" "$msp/particlesEb020.xml" \
  "$msp/particlesEb020.xml:3:9: Expecting (a1)"
 expect "" "$msp/particlesEb021.xml" \
- "$msp/particlesEb021.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEb021.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEb022.xml" \
- "$msp/particlesEb022.xml:5:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEb022.xml:5:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEb023.xml" \
  "$msp/particlesEb023.xml:3:6: Expecting (a1)"
 expect "" "$msp/particlesEb024.xml" \
@@ -1368,7 +1375,7 @@ expect "" "$msp/particlesEb028.xml" \
 expect "" "$msp/particlesEb029.xml" \
  "$msp/particlesEb029.xml:6:9: Unexpected end of sequence, expecting \"a2\""
 expect "" "$msp/particlesEb030.xml" \
- "$msp/particlesEb030.xml:7:9: Too many occurrences of current element, expecting at most 2"
+ "`elem_unexpected $msp/particlesEb030.xml:7:9 $xsdtesting_ns a1`"
 expect "" "$msp/particlesEb031.xml" \
  "$msp/particlesEb031.xml:3:15: Expecting (a1)"
 expect "" "$msp/particlesEb032.xml" \
@@ -1389,14 +1396,14 @@ expect "" "$msp/particlesEb039.xml" \
 expect "" "$msp/particlesEc001.xml" ""
 expect "" "$msp/particlesEc002.xml" ""
 expect "" "$msp/particlesEc003.xml" \
- "$msp/particlesEc003.xml:4:8: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEc003.xml:4:8 $xsdtesting_ns b`"
 expect "" "$msp/particlesEc004.xml" \
- "$msp/particlesEc004.xml:3:6: Unexpected element: \"x\""
+ "`elem_unexpected $msp/particlesEc004.xml:3:6 "" x`"
 expect "" "$msp/particlesEc005.xml" \
  "$msp/particlesEc005.xml:3:9: Unexpected end of sequence, expecting \"(a1|a2)\""
 expect "" "$msp/particlesEc006.xml" ""
 expect "" "$msp/particlesEc007.xml" \
- "$msp/particlesEc007.xml:4:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEc007.xml:4:9 $xsdtesting_ns a2`"
 expect "" "$msp/particlesEc008.xml" \
  "$msp/particlesEc008.xml:3:10: Expecting (a1|a2)"
 expect "$msp/particlesEc009.xsd" "" \
@@ -1406,7 +1413,7 @@ expect "" "$msp/particlesEc011.xml" \
  "$msp/particlesEc011.xml:3:9: Unexpected end of sequence, expecting \"(a1|a2)\""
 expect "" "$msp/particlesEc012.xml" ""
 expect "" "$msp/particlesEc013.xml" \
- "$msp/particlesEc013.xml:4:9: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesEc013.xml:4:9 $xsdtesting_ns a2`"
 expect "" "$msp/particlesEc014.xml" \
  "$msp/particlesEc014.xml:3:6: Expecting (a1|a2)"
 expect "" "$msp/particlesEc015.xml" \
@@ -1418,11 +1425,11 @@ expect "" "$msp/particlesEc019.xml" ""
 expect "" "$msp/particlesEc020.xml" ""
 expect "" "$msp/particlesEc021.xml" ""
 expect "" "$msp/particlesEc022.xml" \
- "$msp/particlesEc022.xml:5:8: Too many occurrences of current element, expecting at most 2"
+ "`elem_unexpected $msp/particlesEc022.xml:5:8 $xsdtesting_ns a`"
 expect "" "$msp/particlesEc023.xml" \
- "$msp/particlesEc023.xml:5:8: Too many occurrences of current element, expecting at most 2"
+ "`elem_unexpected $msp/particlesEc023.xml:5:8 $xsdtesting_ns b`"
 expect "" "$msp/particlesEc024.xml" \
- "$msp/particlesEc024.xml:5:8: Unexpected element: \"x\""
+ "`elem_unexpected $msp/particlesEc024.xml:5:8 $xsdtesting_ns x`"
 expect "" "$msp/particlesEc025.xml" \
  "$msp/particlesEc025.xml:3:8: Expecting (a|b)"
 expect "" "$msp/particlesEc026.xml" \
@@ -1441,18 +1448,17 @@ expect "" "$msp/particlesEc035.xml" ""
 expect "" "$msp/particlesEc036.xml" ""
 expect "" "$msp/particlesEc037.xml" ""
 expect "" "$msp/particlesEc038.xml" \
- "$msp/particlesEc038.xml:7:8: Too many occurrences of current element, expecting at most 4"
+ "`elem_unexpected $msp/particlesEc038.xml:7:8 $xsdtesting_ns a`"
 expect "" "$msp/particlesEc039.xml" \
- "$msp/particlesEc039.xml:7:8: Too many occurrences of current element, expecting at most 4"
+ "`elem_unexpected $msp/particlesEc039.xml:7:8 $xsdtesting_ns a`"
 expect "" "$msp/particlesEc040.xml" \
- "$msp/particlesEc040.xml:7:6: Unexpected element: \"x\""
+ "`elem_unexpected $msp/particlesEc040.xml:7:6 "" x`"
 expect "" "$msp/particlesEc041.xml" \
  "$msp/particlesEc041.xml:3:6: Expecting (a|b)"
 
 
 expect "$msp/particlesEd001.xsd" "" \
- "$msp/particlesEd001.xsd:8:12: Too many occurrences of current element, expecting at most 1"
-
+ "`elem_unexpected $msp/particlesEd001.xsd:8:12 $schema_ns all`"
 
 expect "" "$msp/particlesFa001.xml" ""
 expect "" "$msp/particlesFa002.xml" ""
@@ -1460,15 +1466,14 @@ expect "" "$msp/particlesFa003.xml" ""
 expect "" "$msp/particlesFa004.xml" ""
 expect "" "$msp/particlesFa005.xml" ""
 
-
 expect "" "$msp/particlesFb001.xml" ""
 expected_failure "$msp/particlesFb002.xsd" "" "test seems valid"
 expect "$msp/particlesFb003.xsd" "" "f"
 expect "" "$msp/particlesFb004.xml" ""
 expect "$msp/particlesFb005.xsd" "" \
- "$msp/particlesFb005.xsd:15:20: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesFb005.xsd:15:20 $schema_ns sequence`"
 expect "$msp/particlesFb006.xsd" "" \
- "$msp/particlesFb006.xsd:16:18: Too many occurrences of current element, expecting at most 1"
+ "`elem_unexpected $msp/particlesFb006.xsd:16:18 $schema_ns choice`"
 
 # expect "" "$msp/particlesHa001.xml" ""
 # expect "" "$msp/particlesHa002.xml" ""
