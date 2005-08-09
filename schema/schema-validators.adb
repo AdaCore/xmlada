@@ -1840,8 +1840,6 @@ package body Schema.Validators is
    begin
       Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
 
-      Debug_Output ("MANU Check_Nested Testing "
-                    & Namespace_URI & ':' & Local_Name);
       Applies_To_Tag
         (Nested, Local_Name, Namespace_URI, NS,
          Schema_Target_NS, Applies, Skip_Current);
@@ -2684,8 +2682,6 @@ package body Schema.Validators is
       It   : XML_Particle_Access;
    begin
       Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
-      Debug_Output ("MANU Applies_To_Tag for choice "
-                    & Namespace_URI & ':' & Local_Name);
       while Get (Item) /= null loop
          It := Get (Item);
          case It.Typ is
