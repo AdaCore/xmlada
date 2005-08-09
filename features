@@ -1,7 +1,11 @@
 New features in New version
-
-- E802-003 Added support for time-related types, like dateTime, time, date,...
-
+ Schema validation:
+  - E802-003 Added support for time-related types, like dateTime, time, date,...
+  - Added support for totalDigits and fractionDigits facets for integer types
+  - Add support for anyURI type
+  - Improve support for arbitrary precision types like decimal and integer
+  - Add support for double type
+  - Add support for hexBinary type
 
 New features in version 2.0
 
