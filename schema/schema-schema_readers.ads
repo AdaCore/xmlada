@@ -1,6 +1,6 @@
 
 --  This package provides a SAX Reader that parses an XML Schema file, and
---  creates the appropri
+--  creates the appropriate data structure
 
 with Sax.Attributes;
 with Schema.Readers;
