@@ -529,7 +529,13 @@ package body Schema.Readers is
             Put_Line ("Getting element definition from grammar: "
                       & Namespace_URI & " " & Local_Name);
          end if;
-         Element := Lookup_Element (G, Local_Name);
+         Element := Lookup_Element (G, Local_Name, False);
+
+         if Element = No_Element then
+            Validation_Error
+              ("Element """ & To_QName (Namespace_URI, Local_Name)
+               & """: No matching declaration available");
+         end if;
 
          Add_XML_Instance_Attributes
            (Validating_Reader (Handler), Get_Validator (Get_Type (Element)));
