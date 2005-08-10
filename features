@@ -2,10 +2,10 @@ New features in New version
  Schema validation:
   - E802-003 Added support for time-related types, like dateTime, time, date,...
   - Added support for totalDigits and fractionDigits facets for integer types
-  - Add support for anyURI type
+  - Added support for all missing simple types: anyURI, hexBinary, double, ...
   - Improve support for arbitrary precision types like decimal and integer
-  - Add support for double type
-  - Add support for hexBinary type
+  - Add support for using an attributeGroup reference when defining a local
+    type for an element
 
 New features in version 2.0
 
