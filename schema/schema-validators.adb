@@ -703,7 +703,14 @@ package body Schema.Validators is
       Empty_Element  : Boolean) is
    begin
       Debug_Output ("Validate_Character for unknown " & Get_Name (Validator)
-                    & " --" & Ch & "--" & Boolean'Image (Empty_Element));
+                    & " --" & Ch & "--empty=" & Boolean'Image (Empty_Element)
+                    & " mixed=" & Boolean'Image (Validator.Mixed_Content));
+      if not Validator.Mixed_Content
+        and then not Empty_Element
+      then
+         Validation_Error
+           ("Mixed content is not allowed for this element");
+      end if;
    end Validate_Characters;
 
    -------------
