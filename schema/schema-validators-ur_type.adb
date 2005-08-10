@@ -27,7 +27,27 @@ package body Schema.Validators.UR_Type is
       Data              : Validator_Data;
       Schema_Target_NS  : XML_Grammar_NS;
       Element_Validator : out XML_Element);
+   procedure Validate_Characters
+     (Validator      : access UR_Type_Validator;
+      Ch             : Unicode.CES.Byte_Sequence;
+      Empty_Element  : Boolean);
    --  See doc for inherited subprograms
+
+   -------------------------
+   -- Validate_Characters --
+   -------------------------
+
+   procedure Validate_Characters
+     (Validator      : access UR_Type_Validator;
+      Ch             : Unicode.CES.Byte_Sequence;
+      Empty_Element  : Boolean)
+   is
+   begin
+      Debug_Output
+        ("Validate_Characters for UR_Type Process_Contents="
+         & Validator.Process_Contents'Img & ' ' & Ch
+         & ' ' & Empty_Element'Img);
+   end Validate_Characters;
 
    ----------------------------
    -- Validate_Start_Element --
