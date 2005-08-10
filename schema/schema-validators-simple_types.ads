@@ -23,6 +23,10 @@ private package Schema.Validators.Simple_Types is
       Data                   : Validator_Data;
       Schema_Target_NS       : XML_Grammar_NS;
       Element_Validator      : out XML_Element);
+   procedure Validate_Characters
+     (Validator      : access Any_Simple_XML_Validator_Record;
+      Ch             : Unicode.CES.Byte_Sequence;
+      Empty_Element  : Boolean);
    procedure Validate_End_Element
      (Validator  : access Any_Simple_XML_Validator_Record;
       Local_Name : Unicode.CES.Byte_Sequence;

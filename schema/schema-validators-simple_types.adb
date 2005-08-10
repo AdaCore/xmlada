@@ -1024,4 +1024,18 @@ package body Schema.Validators.Simple_Types is
       end if;
    end Check_Content_Type;
 
+   -------------------------
+   -- Validate_Characters --
+   -------------------------
+
+   procedure Validate_Characters
+     (Validator      : access Any_Simple_XML_Validator_Record;
+      Ch             : Unicode.CES.Byte_Sequence;
+      Empty_Element  : Boolean) is
+   begin
+      Debug_Output ("Validate_Character for Any_Simple_XML_Validator "
+                    & Get_Name (Validator) & ' '
+                    & Ch & ' ' & Boolean'Image (Empty_Element));
+   end Validate_Characters;
+
 end Schema.Validators.Simple_Types;
