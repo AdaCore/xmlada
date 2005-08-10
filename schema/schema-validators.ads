@@ -907,7 +907,7 @@ private
       --  The list of valid attributes registered for this validator.
       --  ??? Could be implemented more efficiently through a htable
 
-      Mixed_Content : Boolean;
+      Mixed_Content : Boolean := False;
       --  Whether character data is allowed in addition to children nodes
    end record;
 
