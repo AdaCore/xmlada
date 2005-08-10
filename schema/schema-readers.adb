@@ -352,7 +352,7 @@ package body Schema.Readers is
 
             else
                Validate_Characters
-                 (Get_Validator (Get_Type (Handler.Validators.Element)),
+                 (Get_Validator (Handler.Validators.Typ),
                   Handler.Validators.Characters.all,
                   Empty_Element => Empty_Element);
             end if;
