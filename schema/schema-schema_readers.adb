@@ -947,6 +947,7 @@ package body Schema.Schema_Readers is
          C.Next.Restriction_Base := Typ;
          Output ("Setting base type for restriction");
       else
+         Handler.Contexts.Mixed_Content := True;
          Finish_Complex_Type (Handler);
       end if;
    end Finish_Simple_Type;
@@ -1022,8 +1023,8 @@ package body Schema.Schema_Readers is
          --  Create an extension, instead of a simple ur-Type, so that we can
          --  add attributes to it without impacting ur-Type itself
          Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
-         C.Type_Validator := Extension_Of (Lookup (XML_G, "ur-Type"));
-         Output ("Validator := Extension_Of (Lookup (G, ""ur-Type""));");
+         C.Type_Validator := Extension_Of (Lookup (XML_G, "anyType"));
+         Output ("Validator := Extension_Of (Lookup (G, ""anyType""));");
       end if;
    end Ensure_Type;
 
@@ -1062,7 +1063,7 @@ package body Schema.Schema_Readers is
 
       Set_Mixed_Content (Get_Validator (Typ), Handler.Contexts.Mixed_Content);
       Output ("Set_Mixed_Content ("
-              & Ada_Name (Typ) & ", "
+              & Ada_Name (C) & ", "
               & Boolean'Image (Handler.Contexts.Mixed_Content) & ");");
 
       case Handler.Contexts.Next.Typ is
