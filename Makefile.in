@@ -39,7 +39,7 @@ endif
 
 .PHONY: all obj clean install install_dirs
 
-all: obj docs 
+all: obj 
 
 obj: force
 	${GNATMAKE} -Punicode/unicode.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
