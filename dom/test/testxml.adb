@@ -93,8 +93,6 @@ begin
          Set_System_Id (Read.all, S);
       else
          Read := new File_Input;
-         Set_Public_Id (Read.all, "test.xml");
-         Set_System_Id (Read.all, "test.xml");
          Open ("test.xml", File_Input (Read.all));
       end if;
    end;

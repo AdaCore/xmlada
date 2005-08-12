@@ -105,7 +105,9 @@ package Input_Sources is
       Id    : Unicode.CES.Byte_Sequence);
    --  Set the system ID associated with the input source.
    --  Although this is optional, it is still useful since it can be used to
-   --  resolve relative URI's from documents.
+   --  resolve relative URI's from documents. In most cases, this is set
+   --  automatically when you Open the input, and you can override it after the
+   --  call to Open.
 
    function Get_System_Id (Input : Input_Source)
       return Unicode.CES.Byte_Sequence;
@@ -115,7 +117,8 @@ package Input_Sources is
      (Input : in out Input_Source;
       Id    : Unicode.CES.Byte_Sequence);
    --  This will be provided as part of the location information, if it is
-   --  given.
+   --  given. In most cases, this is done automatically when you Open the
+   --  input, and you can override it after the call to Open.
 
    function Get_Public_Id (Input : Input_Source)
       return Unicode.CES.Byte_Sequence;

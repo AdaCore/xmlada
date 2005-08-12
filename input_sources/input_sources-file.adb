@@ -67,7 +67,7 @@ package body Input_Sources.File is
       package Dir is new Ada.Direct_IO (Character);
       F : Dir.File_Type;
       Length : Natural;
-      BOM : Bom_Type;
+      BOM    : Bom_Type;
    begin
       Dir.Open (F, Dir.In_File, Filename);
       Length := Natural (Dir.Size (F));
@@ -102,6 +102,10 @@ package body Input_Sources.File is
       end case;
 
       Input.Index := Input.Buffer'First + Input.Prolog_Size;
+
+      --  Base file name should be used as the public Id
+      Set_Public_Id (Input, Filename);
+      Set_System_Id (Input, Filename);
    end Open;
 
    -----------

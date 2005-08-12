@@ -33,7 +33,6 @@ begin
             Name_Start := Name_Start - 1;
          end loop;
          Set_Public_Id (Read, S (Name_Start + 1 .. S'Last));
-         Set_System_Id (Read, S);
          Open (S, Read);
 
       else
