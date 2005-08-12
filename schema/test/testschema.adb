@@ -13,6 +13,7 @@ procedure TestSchema is
    Read      : File_Input;
    My_Reader : Validating_Reader;
    Schema    : Schema_Reader;
+   Grammar   : XML_Grammar := No_Grammar;
    Xsd_File  : String_Access := null;
    Xml_File  : String_Access := null;
 
@@ -35,22 +36,21 @@ begin
 
    if Xsd_File /= null then
       Open (Xsd_File.all, Read);
-      Set_Public_Id (Read, Xsd_File.all);
-      Set_System_Id (Read, Xsd_File.all);
       Set_Validating_Grammar (Schema, Create_Schema_For_Schema);
       Parse (Schema, Read);
       Close (Read);
-      Set_Validating_Grammar (My_Reader, Get_Created_Grammar (Schema));
+      Grammar := Get_Created_Grammar (Schema);
    end if;
 
    if Xml_File.all /= "" then
+      Set_Validating_Grammar (My_Reader, Grammar);
       Set_Feature (My_Reader, Schema_Validation_Feature, True);
       Open (Xml_File.all, Read);
-      Set_Public_Id (Read, Xml_File.all);
-      Set_System_Id (Read, Xml_File.all);
       Parse (My_Reader, Read);
       Close (Read);
    end if;
+
+   Free (Grammar);
 
 exception
    when E : XML_Validation_Error | XML_Fatal_Error =>
