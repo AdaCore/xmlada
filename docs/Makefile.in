@@ -3,7 +3,6 @@ FORMATS=${addprefix xml.,pdf ps html info txt}
 
 DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
-TEXI2HTML= @TEXI2HTML@
 TEXI2DVI= @TEXI2DVI@
 PDFTEX= @PDFTEX@
 TEX= @TEX@
@@ -46,8 +45,8 @@ else
 endif
 
 %.html: %.texi
-ifneq (${TEXI2HTML},)
-	-${TEXI2HTML} -menu -split_chapter -number $<
+ifneq (${MAKEINFO},)
+	-${MAKEINFO} --html --css-include=xml.css $<
 else
 	@echo "----------------------------------------------------"
 	@echo "texi2html not found, cannot build HTML documentation"
