@@ -38,6 +38,7 @@ package Schema.Readers is
    --  If other schema files need to be parsed because of the presence of a
    --  "targetNamespace" attribute, their corresponding grammars will be added
    --  to grammar, in their own namespace of course.
+   --  If this is not called, no validation will take place.
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;
