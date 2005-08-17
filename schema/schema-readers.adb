@@ -9,7 +9,6 @@ with Sax.Readers;       use Sax.Readers;
 with Schema.Validators; use Schema.Validators;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with Schema.Validators; use Schema.Validators;
 with GNAT.IO;               use GNAT.IO;
 with Input_Sources.File;    use Input_Sources.File;
 with Schema.Schema_Readers; use Schema.Schema_Readers;

@@ -6,7 +6,6 @@ with Sax.Readers;
 with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
 with Schema.Readers;    use Schema.Readers;
-with Schema.Validators; use Schema.Validators;
 with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with GNAT.IO;           use GNAT.IO;
 with Ada.Unchecked_Deallocation;
