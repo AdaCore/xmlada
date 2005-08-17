@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2004                     --
+--                       Copyright (C) 2001-2005                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -34,7 +34,6 @@ with Input_Sources.File;        use Input_Sources.File;
 with Input_Sources.Strings;     use Input_Sources.Strings;
 with Input_Sources;             use Input_Sources;
 with Interfaces;                use Interfaces;
-with Sax.Attributes;            use Sax.Attributes;
 with Sax.Attributes;            use Sax.Attributes;
 with Sax.Encodings;             use Sax.Encodings;
 with Sax.Exceptions;            use Sax.Exceptions;
