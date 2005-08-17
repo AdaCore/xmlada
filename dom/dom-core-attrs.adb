@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
+--                       Copyright (C) 2001-2005                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -27,9 +27,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with DOM.Core.Nodes; use DOM.Core.Nodes;
-
 package body DOM.Core.Attrs is
+
    ---------------
    -- Specified --
    ---------------
