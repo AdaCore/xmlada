@@ -11,7 +11,13 @@ AC_CHECK_PROGS(MAKEINFO, makeinfo, "")
 AC_CHECK_PROGS(TEXI2DVI, texi2dvi, "")
 AC_CHECK_PROGS(PDFTEX, pdftex, "")
 AC_CHECK_PROGS(TEX, tex, "")
-AC_CHECK_PROGS(GTKADA_GPR, gtkada.gpr, "", $ADA_PROJECT_PATH)
+
+## Check for gtkada.gpr either in the predefined path or in
+## ADA_PROJECT_PATH
+
+project_path=`gnatls -v | awk '/Current_Directory/ {if (p) printf ".:"; next} /^ *(.*)/ {if (p) printf "%s:",$1} /Project Search Path/ {p=1}'`
+AC_CHECK_PROGS(GTKADA_GPR, gtkada.gpr, "", $project_path)
+
 IFS=' '
 
 EXEC_PREFIX="$prefix"
