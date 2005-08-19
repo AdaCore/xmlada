@@ -12,7 +12,7 @@ CC=gcc
 MODE=distrib
 
 CHMOD=chmod
-CP=cp -p -f
+CP=cp -p -f -d
 MKDIR=mkdir -p
 
 ifeq (${OS}, Windows_NT)
@@ -68,7 +68,8 @@ docs: force
 	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
 	-${CP} $*/lib/*.ali       ${PREFIX}/lib/xmlada/
 	-${CP} $*/lib/*xmlada_* ${PREFIX}/lib/xmlada/
-	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
+	${RM} ${PREFIX}/lib/libxmlada_$**
+	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*.so}}, \
 	   ${RM} ${PREFIX}/lib/${lib}; \
            ${LN} xmlada/${lib} ${PREFIX}/lib/${lib};}
 	cd ${PREFIX}/lib/xmlada; ${CHMOD} -w *.ali
@@ -80,7 +81,6 @@ install_dirs: force
 	@${MKDIR} ${PREFIX}/lib/xmlada
 	@${MKDIR} ${PREFIX}/doc/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada
-	@${MKDIR} ${PREFIX}/include/xmlada/obj
 	@${MKDIR} ${PREFIX}/lib/gnat
 
 install: obj install_dirs ${MODULE_INSTALL}
