@@ -66,23 +66,24 @@ docs: force
 # Rule for installing the modules
 %_inst: force
 	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
-	-${CP} $*/lib/*.ali       ${PREFIX}/include/xmlada/obj
-	-${CP} $*/lib/*xmlada_* ${PREFIX}/include/xmlada/obj
+	-${CP} $*/lib/*.ali       ${PREFIX}/lib/xmlada/
+	-${CP} $*/lib/*xmlada_* ${PREFIX}/lib/xmlada/
 	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
 	   ${RM} ${PREFIX}/lib/${lib}; \
-           ${LN} ${PREFIX}/include/xmlada/obj/${lib} ${PREFIX}/lib/${lib};}
-	cd ${PREFIX}/include/xmlada/obj; ${CHMOD} -w *.ali
+           ${LN} xmlada/${lib} ${PREFIX}/lib/${lib};}
+	cd ${PREFIX}/lib/xmlada; ${CHMOD} -w *.ali
 	cd $*; ls *.ad[bs] > ${PREFIX}/lib/gnat/xmlada_$*.lgpr
 
 install_dirs: force
 	@${MKDIR} ${PREFIX}/bin
 	@${MKDIR} ${PREFIX}/lib
+	@${MKDIR} ${PREFIX}/lib/xmlada
 	@${MKDIR} ${PREFIX}/doc/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada/obj
 	@${MKDIR} ${PREFIX}/lib/gnat
 
-install: obj docs install_dirs ${MODULE_INSTALL}
+install: obj install_dirs ${MODULE_INSTALL}
 	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/lib/gnat
 	${CP} xmlada-config ${PREFIX}/bin
 	-${CP} docs/xml.ps ${PREFIX}/doc/xmlada
