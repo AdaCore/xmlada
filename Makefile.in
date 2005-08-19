@@ -87,6 +87,7 @@ install: obj install_dirs ${MODULE_INSTALL}
 	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/lib/gnat
 	${CP} xmlada-config ${PREFIX}/bin
 	-${CP} docs/xml.ps ${PREFIX}/doc/xmlada
+	-${CP} docs/xml.pdf ${PREFIX}/doc/xmlada
 	-${CP} docs/xml.html ${PREFIX}/doc/xmlada
 	-${CP} docs/xml.info ${PREFIX}/doc/xmlada
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
