@@ -12,7 +12,7 @@ CC=gcc
 MODE=distrib
 
 CHMOD=chmod
-CP=cp -p -f -d
+CP=cp -p -f 
 MKDIR=mkdir -p
 
 ifeq (${OS}, Windows_NT)
