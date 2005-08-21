@@ -46,7 +46,7 @@ endif
 
 %.html: %.texi
 ifneq (${MAKEINFO},)
-	-${MAKEINFO} --html --css-include=xml.css $<
+	-${MAKEINFO} --html --no-split --css-include=xml.css $<
 else
 	@echo "----------------------------------------------------"
 	@echo "texi2html not found, cannot build HTML documentation"
