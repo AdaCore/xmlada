@@ -15,7 +15,6 @@ procedure TestNumbers is
 
    procedure Assert_Nan (Num : String) is
       N : Arbitrary_Precision_Number;
-      pragma Unreferenced (N);
    begin
       N := Value (Num);
       Put_Line (Num & " should not be authorized");
