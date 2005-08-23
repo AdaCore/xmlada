@@ -33,6 +33,16 @@ unmodified in any copy.
 @node Top, Introduction, (dir), (dir)
 @top The Ada95 Unicode and XML Library
 
+@ifhtml
+@html
+<hr>
+Download other versions of the documentation
+<a href='xml.pdf'>[PDF]</a>
+<a href='xml.info'>[Info]</a>
+<hr>
+@end html
+@end ifhtml
+
 The Ada95 XML Library
 
 Version @value{XMLVersion}
