@@ -69,7 +69,7 @@ docs: force
 	-${CP} $*/lib/*.ali       ${PREFIX}/lib/xmlada/
 	-${CP} $*/lib/*xmlada_* ${PREFIX}/lib/xmlada/
 	${RM} ${PREFIX}/lib/libxmlada_$**
-	${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
+	cd ${PREFIX}; ${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
 	   ${RM} ${PREFIX}/lib/${lib}; \
            ${LN} xmlada/${lib} ${PREFIX}/lib/${lib};}
 	cd ${PREFIX}/lib/xmlada; ${CHMOD} -w *.ali
