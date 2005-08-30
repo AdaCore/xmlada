@@ -12,7 +12,7 @@ CC=gcc
 MODE=distrib
 
 CHMOD=chmod
-CP=cp -p -f 
+CP=cp -p -f
 MKDIR=mkdir -p
 
 ifeq (${OS}, Windows_NT)
@@ -39,7 +39,7 @@ endif
 
 .PHONY: all obj clean install install_dirs
 
-all: obj 
+all: obj
 
 obj: force
 	${GNATMAKE} -Punicode/unicode.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
@@ -68,8 +68,8 @@ docs: force
 	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
 	-${CP} $*/lib/*.ali       ${PREFIX}/lib/xmlada/
 	-${CP} $*/lib/*xmlada_* ${PREFIX}/lib/xmlada/
-	${RM} ${PREFIX}/lib/libxmlada_$**
-	cd ${PREFIX}; ${foreach lib, ${notdir ${wildcard $*/lib/libxmlada_*}}, \
+	${RM} ${PREFIX}/lib/*xmlada_$**
+	cd ${PREFIX}/lib; ${foreach lib, ${notdir ${wildcard $*/lib/*xmlada_*}}, \
 	   ${RM} ${PREFIX}/lib/${lib}; \
            ${LN} xmlada/${lib} ${PREFIX}/lib/${lib};}
 	cd ${PREFIX}/lib/xmlada; ${CHMOD} -w *.ali
