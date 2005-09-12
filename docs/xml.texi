@@ -1138,7 +1138,7 @@ the beginning of @file{dom-core.ads}). Still, DOM requires a significant
 amount of information to be kept for each node.
 
 For really big XML streams, it might prove impossible to keep the whole
-tree in memory, in which case add-hoc storage might be implemented through
+tree in memory, in which case ad hoc storage might be implemented through
 the use of a SAX parser. The implementation of @code{dom-readers.adb} will
 prove helpful in creating such a parser.
 
@@ -1203,7 +1203,7 @@ XML files:
 
  @item Make sure the contents of the XML file is semantically valid.
 
-       Depending on the application domain, we must ensure that the contents of
+       Depending on the application domain, we must ensure that the content of
        the file makes sense. This step is highly application dependent, and a
        file that is usable in one application might not be usable in another
        one.
@@ -1223,11 +1223,11 @@ The first phase is mandatory, and necessarily enforced by XML/Ada. You will not
 be able to access the contents of the XML file if it isn't well-formed.
 
 The second phase is provided by the Schema module in XML/Ada. Although such
-constraints can be checked at the application level, with add-hoc
+constraints can be checked at the application level, with ad hoc
 code, it is generally easier to maintain a separate file that describes the
 valid semantic contents of the file, that maintain specific code when the
 semantic changes. It is also difficult not to forget special cases when doing
-the validating through a set of @code{if} statemetns in the Ada core.
+the validating through a set of @code{if} statements in the Ada core.
 
 XML provides two ways to describe additional constraints that a file
 must satisfy in order to be considered as valid.
@@ -1279,7 +1279,7 @@ a tutorial (@url{http://www.w3.org/TR/xmlschema-0/}).
 The typical extension for a schema file is @file{.xsd}.
 
 A schema file must be a valid XML file, and thus start with the usual
-@code{<?xml version="1.0" />} line. The root node must be named @code{schema},
+@code{<?xml version="1.0" ?>} line. The root node must be named @code{schema},
 and belong to the namespace (@url{http://www.w3.org/2001/XMLSchema/}). The
 handling of namespaces is fairly powerful, but also complex. A given XML
 document might have nodes belonging to several namespaces, and thus several
@@ -1348,10 +1348,11 @@ and
 
  @item Through an inline type definition
 
-       If the element must accept child elements, or if further constraint
+       If the element must accept child elements, or if a further constraint
        needs to be enforced on the list of valid values, one must create the
-       type. As mentioned above, this can be done by creating a type separately,
-       and referencing it by name, or through an inline type definition.
+       type. As mentioned above, this can be done by creating a type 
+       separately and referencing it by name, or through an inline type 
+       definition.
 
        The syntax is mostly the same in both cases. Schemas distinguish between
        the notion of simple types (that accept no child element) and
@@ -1389,7 +1390,7 @@ and
         Complex types allow elements to have child nodes, as well as
         attributes. The list of valid attributes is created by a set of
         @code{<xsd:attribute>} tags, and the list of valid child nodes is
-        generall defined either through a @code{<xsd:choice>} or a
+        generally defined either through a @code{<xsd:choice>} or a
         @code{<xsd:sequence>} node (although it is possible to indicate that
         any child node is authorized, among other things).
 
@@ -1429,7 +1430,7 @@ and
 @end smallexample
 
          If you need an element with no child element (just a string value),
-         but that accepts attributes, this also must be defined through as a
+         but that accepts attributes, this also must be defined through a
          complex type, as in:
 
 @smallexample
@@ -1464,7 +1465,7 @@ declare them, and reference them in the element declaration later on.
 @c -------------------------------------------------------------------
 
 @noindent
-There are several ways that XML/Ada will find what schema to use when
+There are several ways that XML/Ada uses to find what schema to use when
 validating a file.
 
 @itemize @bullet
@@ -1484,7 +1485,7 @@ validating a file.
        access to a grammar, that can then be given to another instance of a
        @code{Schema.Readers.Validating_Reader}.
 
-       This technics will generally be used when you need to validate several
+       This technique will generally be used when you need to validate several
        XML files with the same grammar: you parse the grammar only once, and
        then reuse its instance, instead of reparsing the @file{.xsd} file every
        time.
@@ -1509,7 +1510,7 @@ validating a file.
       In the example above, the schema file itself is validated against the
       official schema for schema files. This slows down the process slightly,
       obviously, and is in fact not needed if you know that the file is valid.
-      In this case, you can commented out the line containing the call to
+      In this case, you can comment out the line containing the call to
       @code{Set_Validating_Grammar}.
 
       The resulting grammar object is in fact a collection of parsed schema
@@ -1571,8 +1572,8 @@ XML/Ada is quite unique in the category of XML parsers, since it allows
 the validation of XML files when you are using an event-based parser with SAX.
 Most other XML parsers only work on DOM trees.
 
-Basing the validating on SAX is more efficient, since there is no need to read
-the whole XML stream (or event the grammar) in memory before starting the
+Basing the validation on SAX is more efficient, since there is no need to read
+the whole XML stream (or even the grammar) in memory before starting the
 validation, and errors can be reported immediatly.
 
 It also requires less memory to run, and thus can validate large XML
