@@ -1219,7 +1219,7 @@ XML files:
 
 @end itemize
 
-The first phase is mandatory, and necessarily enfored by XML/Ada. You will not
+The first phase is mandatory, and necessarily enforced by XML/Ada. You will not
 be able to access the contents of the XML file if it isn't well-formed.
 
 The second phase is provided by the Schema module in XML/Ada. Although such
