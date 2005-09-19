@@ -608,11 +608,16 @@ package body Schema.Schema_Readers is
    is
       Location_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
+      Location : constant Byte_Sequence := Get_Value (Atts, Location_Index);
+      Absolute : constant Byte_Sequence := To_Absolute_URI
+        (Handler, Location);
 --        Namespace_Index : constant Integer :=
 --          Get_Index (Atts, URI => "", Local_Name => "namespace");
    begin
-      Parse_Grammar
-        (Handler, Get_Value (Atts, Location_Index), Handler.Created_Grammar);
+      if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
+         Set_Parsed_URI (Handler.Created_Grammar, Absolute);
+         Parse_Grammar (Handler, Location, Handler.Created_Grammar);
+      end if;
    end Create_Import;
 
    --------------------------
