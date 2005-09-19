@@ -49,6 +49,12 @@ package Schema.Readers is
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether we should output debug traces
 
+   function To_Absolute_URI
+     (Handler : Validating_Reader;
+      URI     : Unicode.CES.Byte_Sequence) return Unicode.CES.Byte_Sequence;
+   --  Convert a URI read in the input stream of Handler to an absolute URI.
+   --  This is used for instance to find the location of a schema file,...
+
    procedure Parse_Grammar
      (Handler  : in out Validating_Reader;
       Xsd_File : Unicode.CES.Byte_Sequence;

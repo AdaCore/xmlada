@@ -208,6 +208,23 @@ package body Schema.Readers is
                                  Lookup (XML_G, "string")));
    end Add_XML_Instance_Attributes;
 
+   ---------------------
+   -- To_Absolute_URI --
+   ---------------------
+
+   function To_Absolute_URI
+     (Handler : Validating_Reader;
+      URI     : Byte_Sequence) return Byte_Sequence is
+   begin
+      if URI (URI'First) /= '/'
+        and then URI (URI'First) /= '\'
+      then
+         return Dir_Name (Get_System_Id (Handler.Locator.all)) & URI;
+      else
+         return URI;
+      end if;
+   end To_Absolute_URI;
+
    -------------------
    -- Parse_Grammar --
    -------------------
@@ -219,31 +236,15 @@ package body Schema.Readers is
    is
       File     : File_Input;
       Schema   : Schema_Reader;
+      Xsd_File_Full : constant Byte_Sequence :=
+        To_Absolute_URI (Handler, Xsd_File);
    begin
-      if Xsd_File (Xsd_File'First) /= '/'
-        and then Xsd_File (Xsd_File'First) /= '\'
-      then
-         declare
-            Current  : constant Byte_Sequence :=
-              Get_System_Id (Handler.Locator.all);
-            Xsd_File_Full : constant Byte_Sequence :=
-              Dir_Name (Current) & Xsd_File;
-         begin
-            if Debug then
-               Put_Line ("Parsing new grammar: " & Xsd_File_Full);
-            end if;
-            Open (Xsd_File_Full, File);
-            Set_Public_Id (File, Xsd_File_Full);
-            Set_System_Id (File, Xsd_File_Full);
-         end;
-      else
-         if Debug then
-            Put_Line ("Parsing new grammar: " & Xsd_File);
-         end if;
-         Open (Xsd_File, File);
-         Set_Public_Id (File, Xsd_File);
-         Set_System_Id (File, Xsd_File);
+      if Debug then
+         Put_Line ("Parsing new grammar: " & Xsd_File_Full);
       end if;
+      Open (Xsd_File_Full, File);
+      Set_Public_Id (File, Xsd_File_Full);
+      Set_System_Id (File, Xsd_File_Full);
 
       Set_Created_Grammar (Schema, Add_To);
       Parse (Schema, File);
