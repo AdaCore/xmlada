@@ -3,6 +3,7 @@ Problems in 2.0.1:
 - Validating a not well-formed document results in an validation error instead
   of a well-formedness error. It is therefore harder to understand such error
   messages
+- E908-010: importing the same schema twice generates an error
 
 Problems in 2.0:
 
