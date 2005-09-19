@@ -684,6 +684,17 @@ package Schema.Validators is
      (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence;
    --  Return the namespace URI associated with Grammar
 
+   function URI_Was_Parsed
+     (Grammar : XML_Grammar;
+      URI     : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Return True if the schema at URI was already parsed and included in
+   --  Grammar. URI must be an absolute URI.
+
+   procedure Set_Parsed_URI
+     (Grammar : in out XML_Grammar; URI : Unicode.CES.Byte_Sequence);
+   --  Indicate that the schema found at URI was fully parsed and integrated
+   --  into Grammar. It can then be tested through URI_Was_Parsed.
+
    procedure Set_Debug_Name
      (Typ : access XML_Validator_Record'Class; Name : String);
    --  Will be removed
@@ -1083,13 +1094,31 @@ private
    type Grammar_NS_Array is array (Natural range <>) of XML_Grammar_NS;
    type Grammar_NS_Array_Access is access all Grammar_NS_Array;
 
+   type String_List_Record;
+   type String_List is access String_List_Record;
+   type String_List_Record is record
+      Str  : Unicode.CES.Byte_Sequence_Access;
+      Next : String_List;
+   end record;
+   --  We will use Ada2005 containers when the compiler is more widely
+   --  available
+
+   procedure Free (List : in out String_List);
+   --  Free the list and its contents
+
    type XML_Grammar is record
       Grammars : Grammar_NS_Array_Access;
       --  All the namespaces known for that grammar
 
+      Parsed_Locations : String_List;
+      --  List of schema locations that have already been parsed. This is used
+      --  in particular to handle cases where a schema imports two others
+      --  schemas, that in turn import a common one.
+
       Target_NS : XML_Grammar_NS;
    end record;
-   No_Grammar : constant XML_Grammar := (Grammars => null, Target_NS => null);
+   No_Grammar : constant XML_Grammar :=
+     (Grammars => null, Target_NS => null, Parsed_Locations => null);
 
    ------------------------
    -- Group_Model_Record --

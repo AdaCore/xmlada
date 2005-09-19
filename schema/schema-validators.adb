@@ -1077,6 +1077,23 @@ package body Schema.Validators is
       Result := Grammar.Grammars (Grammar.Grammars'Last);
    end Get_NS;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out String_List) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (String_List_Record, String_List);
+      L : String_List;
+   begin
+      while List /= null loop
+         L := List.Next;
+         Free (List.Str);
+         Unchecked_Free (List);
+         List := L;
+      end loop;
+   end Free;
+
    -----------------------
    -- Create_NS_Grammar --
    -----------------------
@@ -1468,7 +1485,41 @@ package body Schema.Validators is
          end loop;
          Unchecked_Free (Grammar.Grammars);
       end if;
+
+      Free (Grammar.Parsed_Locations);
    end Free;
+
+   --------------------
+   -- URI_Was_Parsed --
+   --------------------
+
+   function URI_Was_Parsed
+     (Grammar : XML_Grammar; URI : Byte_Sequence) return Boolean
+   is
+      L : String_List := Grammar.Parsed_Locations;
+   begin
+      while L /= null loop
+         if L.Str.all = URI then
+            return True;
+         end if;
+         L := L.Next;
+      end loop;
+      return False;
+   end URI_Was_Parsed;
+
+   --------------------
+   -- Set_Parsed_URI --
+   --------------------
+
+   procedure Set_Parsed_URI
+     (Grammar : in out XML_Grammar; URI : Byte_Sequence)
+   is
+      L : constant String_List := new String_List_Record'
+        (Str  => new Byte_Sequence'(URI),
+         Next => Grammar.Parsed_Locations);
+   begin
+      Grammar.Parsed_Locations := L;
+   end Set_Parsed_URI;
 
    ----------
    -- Free --
