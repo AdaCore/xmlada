@@ -4,6 +4,8 @@ Problems in 2.0.1:
   of a well-formedness error. It is therefore harder to understand such error
   messages
 - E908-010: importing the same schema twice generates an error
+- E908-011: incorrect handling of elementFormDefault, when the child node
+  belongs to a namespace different than the parent's namespace
 
 Problems in 2.0:
 
