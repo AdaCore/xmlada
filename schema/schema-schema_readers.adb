@@ -712,7 +712,7 @@ package body Schema.Schema_Readers is
             Form := Unqualified;
          end if;
       else
-         Form := Get_Element_Form_Default (Handler.Target_NS);
+         Form := Handler.Element_Form_Default;
       end if;
 
       if Name_Index /= -1 then
@@ -725,7 +725,7 @@ package body Schema.Schema_Readers is
             when Context_Schema | Context_Redefine =>
                Element := Create_Global_Element (Handler.Target_NS,
                                     Get_Value (Atts, Name_Index),
-                                    Form => Form);
+                                                 Form => Form);
                Is_Ref := False;
                Output (Ada_Name (Element)
                        & " := Register (Handler.Target_NS, """
@@ -1730,11 +1730,11 @@ package body Schema.Schema_Readers is
 
       if Form_Default_Index /= -1 then
          if Get_Value (Atts, Form_Default_Index) = "qualified" then
-            Set_Element_Form_Default (Handler.Target_NS, Qualified);
+            Handler.Element_Form_Default := Qualified;
             Output
               ("Set_Element_Form_Default (Handler.Target_NS, Qualified);");
          else
-            Set_Element_Form_Default (Handler.Target_NS, Unqualified);
+            Handler.Element_Form_Default := Unqualified;
             Output
               ("Set_Element_Form_Default (Handler.Target_NS, Unqualified);");
          end if;

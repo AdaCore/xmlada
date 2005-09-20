@@ -110,6 +110,10 @@ private
 
       Check_Undefined : Boolean := True;
 
+      Element_Form_Default : Schema.Validators.Form_Type :=
+        Schema.Validators.Unqualified;
+      --  The value of elementFormDefault for the current file
+
       Target_NS       : Schema.Validators.XML_Grammar_NS;
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;
