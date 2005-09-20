@@ -1799,7 +1799,6 @@ package body Schema.Validators is
       elsif Get_Element_Form_Default (Parent_NS) = Unqualified
         and then Namespace_URI = ""
         and then Local_Matches
-        and then Element.NS = Parent_NS
       then
          Result := (Elem => Element, Is_Ref => True);
          Check_Qualification (Schema_Target_NS, Result, Namespace_URI);
