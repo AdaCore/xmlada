@@ -10,6 +10,9 @@
 ##   - suntest/SunTestsAll/xsd003b.xsd: replace use of xsd:number with
 ##     xsd:decimal, since the former doesn't exist in the standard
 
+## All Sun tests are included in this testsuite
+## All NIST tests are included in this testsuite
+## Some Microsoft tests are missing in this testsuite
 
 xmltests=./xmltests
 
@@ -1580,6 +1583,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "$act/ns1.xsd" "" "$act/ns1.xsd:5:30: Unexpected element \"element\""
    expect "" "$act/empty.xml" "$act/empty.xml:3:71: Mixed content is not allowed for this element"
    expect "$act/recursive_import/import.xsd" "" ""
+   expect "" "$act/elementFormDefault/doc.xml" ""
 fi
 
 summary
