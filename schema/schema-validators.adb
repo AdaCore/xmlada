@@ -1125,8 +1125,7 @@ package body Schema.Validators is
          Attributes       => new Attributes_Htable.HTable (101),
          Attribute_Groups => new Attribute_Groups_Htable.HTable (101),
          Block_Restriction => False,
-         Block_Extension   => False,
-         Element_Form_Default => Unqualified);
+         Block_Extension   => False);
    end Create_NS_Grammar;
 
    ----------------
@@ -1788,7 +1787,9 @@ package body Schema.Validators is
    begin
       Debug_Output ("Test " & Namespace_URI
                     & " : " & Get_Namespace_URI (Parent_NS)
-                    & " : " & Local_Name);
+                    & " : " & Local_Name
+                    & " element.form="
+                    & Element.Form'Img);
 
       if Local_Matches
         and then Get_Namespace_URI (Element.NS) = Namespace_URI
@@ -1796,7 +1797,7 @@ package body Schema.Validators is
          Result := (Elem => Element, Is_Ref => True);
          Check_Qualification (Schema_Target_NS, Result, Namespace_URI);
 
-      elsif Get_Element_Form_Default (Parent_NS) = Unqualified
+      elsif Element.Form = Unqualified
         and then Namespace_URI = ""
         and then Local_Matches
       then
@@ -3695,26 +3696,6 @@ package body Schema.Validators is
             & "complexContent");
       end if;
    end Check_Content_Type;
-
-   ------------------------------
-   -- Set_Element_Form_Default --
-   ------------------------------
-
-   procedure Set_Element_Form_Default
-     (Grammar : XML_Grammar_NS; Form_Default : Form_Type) is
-   begin
-      Grammar.Element_Form_Default := Form_Default;
-   end Set_Element_Form_Default;
-
-   ------------------------------
-   -- Get_Element_Form_Default --
-   ------------------------------
-
-   function Get_Element_Form_Default
-     (Grammar : XML_Grammar_NS) return Form_Type is
-   begin
-      return Grammar.Element_Form_Default;
-   end Get_Element_Form_Default;
 
    ---------------
    -- Is_Global --

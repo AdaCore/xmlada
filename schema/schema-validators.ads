@@ -656,12 +656,6 @@ package Schema.Validators is
    --  were referencing it will now refer to a new, invalid type. You need to
    --  register the new type or element before using the grammar.
 
-   procedure Set_Element_Form_Default
-     (Grammar : XML_Grammar_NS; Form_Default : Form_Type);
-   function Get_Element_Form_Default
-     (Grammar : XML_Grammar_NS) return Form_Type;
-   --  Set the elementFormDefault attribute
-
    procedure Set_Block_Default
      (Grammar : XML_Grammar_NS;
       On_Restriction : Boolean;
@@ -1083,7 +1077,6 @@ private
       Groups        : Groups_Htable_Access;
       Attributes    : Attributes_Htable_Access;
       Attribute_Groups : Attribute_Groups_Htable_Access;
-      Element_Form_Default : Form_Type := Unqualified;
       Block_Extension   : Boolean := False;
       Block_Restriction : Boolean := False;
    end record;
