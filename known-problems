@@ -6,6 +6,8 @@ Problems in 2.0.1:
 - E908-010: importing the same schema twice generates an error
 - E908-011: incorrect handling of elementFormDefault, when the child node
   belongs to a namespace different than the parent's namespace
+- E908-011: incorrect handling of elementFormDefault when a schema included
+  with <include> has a setup different than the including file
 
 Problems in 2.0:
 
