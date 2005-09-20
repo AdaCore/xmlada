@@ -1584,6 +1584,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "" "$act/empty.xml" "$act/empty.xml:3:71: Mixed content is not allowed for this element"
    expect "$act/recursive_import/import.xsd" "" ""
    expect "" "$act/elementFormDefault/doc.xml" ""
+   expect "" "$act/elementFormDefault/doc2.xml" ""
 fi
 
 summary
