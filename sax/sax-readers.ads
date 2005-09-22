@@ -41,6 +41,7 @@ pragma Elaborate_All (Sax.HTable);
 package Sax.Readers is
 
    type Reader is tagged private;
+   type Reader_Access is access all Reader'Class;
 
    procedure Parse
      (Parser : in out Reader;
@@ -493,6 +494,12 @@ package Sax.Readers is
    --  These are currently used to plug in an XML validator while limiting the
    --  dependencies between the SAX and Schema modules.
 
+   type Hook_Data is abstract tagged null record;
+   type Hook_Data_Access is access all Hook_Data'Class;
+
+   procedure Free (Data : in out Hook_Data) is abstract;
+   --  Free the memory associated with the data
+
    type Start_Element_Hook is access procedure
      (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence;
@@ -521,27 +528,46 @@ package Sax.Readers is
      (Handler       : in out Reader'Class;
       Loc           : access Sax.Locators.Locator'Class);
 
+   type Get_Error_Location_Hook is access function
+     (Handler       : Reader'Class) return Sax.Locators.Locator_Impl_Access;
+   --  Return the location that should be used when raising an exception.
+   --  It should return null if the default location (ie the one corresponding
+   --  to the curernt position in the stream) should be used
+
+   function Get_Hooks_Data (Handler : Reader) return Hook_Data_Access;
+   --  Return the hook data that was set through Set_Hooks. This could be null
+
    procedure Set_Hooks
-     (Handler       : in out Reader;
-      Start_Element : Start_Element_Hook   := null;
-      End_Element   : End_Element_Hook     := null;
-      Characters    : Characters_Hook      := null;
-      Whitespace    : Whitespace_Hook      := null;
-      Start_Prefix  : Start_Prefix_Hook    := null;
-      End_Prefix    : End_Prefix_Hook      := null;
-      Doc_Locator   : Set_Doc_Locator_Hook := null);
+     (Handler        : in out Reader;
+      Data           : Hook_Data_Access     := null;
+      Start_Element  : Start_Element_Hook   := null;
+      End_Element    : End_Element_Hook     := null;
+      Characters     : Characters_Hook      := null;
+      Whitespace     : Whitespace_Hook      := null;
+      Start_Prefix   : Start_Prefix_Hook    := null;
+      End_Prefix     : End_Prefix_Hook      := null;
+      Doc_Locator    : Set_Doc_Locator_Hook := null;
+      Error_Location : Get_Error_Location_Hook := null);
    --  Set a list of hooks to be called before calling the usual primitive
    --  operations. These override hooks that were defined previously.
+   --  Data will be passed to each of the hook. It is automatically
+   --  deallocated when no longer needed by the parser (ie the next call to
+   --  Set_Hooks or when the parser itself is freed).
+
+   procedure Error (Parser : in out Reader'Class; Msg : String);
+   --  Raises an error
 
 private
    type Parser_Hooks is record
-      Start_Element : Start_Element_Hook   := null;
-      End_Element   : End_Element_Hook     := null;
-      Characters    : Characters_Hook      := null;
-      Whitespace    : Whitespace_Hook      := null;
-      Start_Prefix  : Start_Prefix_Hook    := null;
-      End_Prefix    : End_Prefix_Hook      := null;
-      Doc_Locator   : Set_Doc_Locator_Hook := null;
+      Data           : Hook_Data_Access     := null;
+      Start_Element  : Start_Element_Hook   := null;
+      End_Element    : End_Element_Hook     := null;
+      Characters     : Characters_Hook      := null;
+      Whitespace     : Whitespace_Hook      := null;
+      Start_Prefix   : Start_Prefix_Hook    := null;
+      End_Prefix     : End_Prefix_Hook      := null;
+      Doc_Locator    : Set_Doc_Locator_Hook := null;
+      Error_Location : Get_Error_Location_Hook := null;
    end record;
 
    Entities_Table_Size : constant := 50;

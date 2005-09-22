@@ -308,6 +308,8 @@ package body Sax.Readers is
 
    procedure Unchecked_Free is new Unchecked_Deallocation
      (Input_Source'Class, Input_Source_Access);
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Hook_Data'Class, Hook_Data_Access);
 
    function Debug_Encode (C : Unicode_Char) return Byte_Sequence;
    --  Return an encoded string matching C (matching Sax.Encodins.Encoding)
@@ -324,7 +326,7 @@ package body Sax.Readers is
      (Parser : in out Reader'Class; Lang : Byte_Sequence);
    --  Return True if Lang matches the rules for languages
 
-   Input_Ended : exception;
+--   Input_Ended : exception;
 
    procedure Next_Char
      (Input   : in out Input_Source'Class;
@@ -463,7 +465,7 @@ package body Sax.Readers is
    procedure Error
      (Parser : in out Reader'Class;
       Msg    : String;
-      Id     : Token := Null_Token);
+      Id     : Token);
    --  Same as Fatal_Error, but reports an error instead
 
    procedure Warning
@@ -589,10 +591,19 @@ package body Sax.Readers is
       Id      : Token := Null_Token)
    is
       Id2 : Token := Id;
+      Loc : Locator_Impl_Access;
    begin
+      if Parser.Hooks.Error_Location /= null then
+         Loc := Parser.Hooks.Error_Location (Parser);
+      end if;
+
+      if Loc = null then
+         Loc := Parser.Locator;
+      end if;
+
       if Id = Null_Token then
-         Id2.Line   := Get_Line_Number (Parser.Locator.all);
-         Id2.Column := Get_Column_Number (Parser.Locator.all);
+         Id2.Line   := Get_Line_Number (Loc.all);
+         Id2.Column := Get_Column_Number (Loc.all);
       end if;
       Parser.Buffer_Length := 0;
 
@@ -602,8 +613,7 @@ package body Sax.Readers is
       begin
          --  Must be called before End_Document, as per the SAX standard
          Fatal_Error
-           (Parser, Create (Location (Parser, Id2) & ": " & Msg,
-                            Parser.Locator));
+           (Parser, Create (Location (Parser, Id2) & ": " & Msg, Loc));
          End_Document (Parser);
       exception
          when E : others =>
@@ -628,16 +638,33 @@ package body Sax.Readers is
    procedure Error
      (Parser  : in out Reader'Class;
       Msg     : String;
-      Id      : Token := Null_Token)
+      Id      : Token)
    is
       Id2 : Token := Id;
+      Loc : Locator_Impl_Access;
    begin
-      if Id = Null_Token then
-         Id2.Line := Get_Line_Number (Parser.Locator.all);
-         Id2.Column := Get_Column_Number (Parser.Locator.all);
+      if Parser.Hooks.Error_Location /= null then
+         Loc := Parser.Hooks.Error_Location (Parser);
       end if;
-      Error (Parser, Create (Location (Parser, Id2) & ": " & Msg,
-                             Parser.Locator));
+
+      if Loc = null then
+         Loc := Parser.Locator;
+      end if;
+
+      if Id = Null_Token then
+         Id2.Line := Get_Line_Number     (Loc.all);
+         Id2.Column := Get_Column_Number (Loc.all);
+      end if;
+      Error (Parser, Create (Location (Parser, Id2) & ": " & Msg, Loc));
+   end Error;
+
+   -----------
+   -- Error --
+   -----------
+
+   procedure Error (Parser  : in out Reader'Class; Msg : String) is
+   begin
+      Error (Parser, Msg, Null_Token);
    end Error;
 
    -------------
@@ -650,13 +677,21 @@ package body Sax.Readers is
       Id     : Token := Null_Token)
    is
       Id2 : Token := Id;
+      Loc : Locator_Impl_Access;
    begin
-      if Id = Null_Token then
-         Id2.Line := Get_Line_Number (Parser.Locator.all);
-         Id2.Column := Get_Column_Number (Parser.Locator.all);
+      if Parser.Hooks.Error_Location /= null then
+         Loc := Parser.Hooks.Error_Location (Parser);
       end if;
-      Warning (Parser, Create (Location (Parser, Id2) & ": " & Msg,
-                             Parser.Locator));
+
+      if Loc = null then
+         Loc := Parser.Locator;
+      end if;
+
+      if Id = Null_Token then
+         Id2.Line := Get_Line_Number (Loc.all);
+         Id2.Column := Get_Column_Number (Loc.all);
+      end if;
+      Warning (Parser, Create (Location (Parser, Id2) & ": " & Msg, Loc));
    end Warning;
 
    ---------------
@@ -1088,8 +1123,7 @@ package body Sax.Readers is
       --  Report the event, except for the default namespace
       if Report_Event then
          if Parser.Hooks.Start_Prefix /= null then
-            Parser.Hooks.Start_Prefix
-              (Parser, NS.Prefix.all, NS.URI.all);
+            Parser.Hooks.Start_Prefix (Parser, NS.Prefix.all, NS.URI.all);
          end if;
 
          Start_Prefix_Mapping
@@ -4569,6 +4603,11 @@ package body Sax.Readers is
          Next (Parser.Default_Atts, Iter);
       end loop;
 
+      if Parser.Hooks.Data /= null then
+         Free (Parser.Hooks.Data.all);
+         Unchecked_Free (Parser.Hooks.Data);
+      end if;
+
       --  Free the internal tables
       Reset (Parser.Entities);
       Reset (Parser.Default_Atts);
@@ -4580,23 +4619,32 @@ package body Sax.Readers is
    ---------------
 
    procedure Set_Hooks
-     (Handler       : in out Reader;
-      Start_Element : Start_Element_Hook := null;
-      End_Element   : End_Element_Hook   := null;
-      Characters    : Characters_Hook    := null;
-      Whitespace    : Whitespace_Hook    := null;
-      Start_Prefix  : Start_Prefix_Hook  := null;
-      End_Prefix    : End_Prefix_Hook    := null;
-      Doc_Locator   : Set_Doc_Locator_Hook := null) is
+     (Handler        : in out Reader;
+      Data           : Hook_Data_Access  := null;
+      Start_Element  : Start_Element_Hook := null;
+      End_Element    : End_Element_Hook   := null;
+      Characters     : Characters_Hook    := null;
+      Whitespace     : Whitespace_Hook    := null;
+      Start_Prefix   : Start_Prefix_Hook  := null;
+      End_Prefix     : End_Prefix_Hook    := null;
+      Doc_Locator    : Set_Doc_Locator_Hook := null;
+      Error_Location : Get_Error_Location_Hook := null) is
    begin
+      if Handler.Hooks.Data /= null then
+         Free (Handler.Hooks.Data.all);
+         Unchecked_Free (Handler.Hooks.Data);
+      end if;
+
       Handler.Hooks :=
-        (Start_Element => Start_Element,
-         End_Element   => End_Element,
-         Characters    => Characters,
-         Whitespace    => Whitespace,
-         Start_Prefix  => Start_Prefix,
-         End_Prefix    => End_Prefix,
-         Doc_Locator   => Doc_Locator);
+        (Data           => Data,
+         Start_Element  => Start_Element,
+         End_Element    => End_Element,
+         Characters     => Characters,
+         Whitespace     => Whitespace,
+         Start_Prefix   => Start_Prefix,
+         End_Prefix     => End_Prefix,
+         Doc_Locator    => Doc_Locator,
+         Error_Location => Error_Location);
    end Set_Hooks;
 
    -----------
@@ -5229,5 +5277,14 @@ package body Sax.Readers is
    begin
       return null;
    end Resolve_Entity;
+
+   --------------------
+   -- Get_Hooks_Data --
+   --------------------
+
+   function Get_Hooks_Data (Handler : Reader) return Hook_Data_Access is
+   begin
+      return Handler.Hooks.Data;
+   end Get_Hooks_Data;
 
 end Sax.Readers;
