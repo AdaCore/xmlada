@@ -326,13 +326,19 @@ package body Sax.Readers is
      (Parser : in out Reader'Class; Lang : Byte_Sequence);
    --  Return True if Lang matches the rules for languages
 
-   Input_Ended : exception;
-
    procedure Next_Char
      (Input   : in out Input_Source'Class;
       Parser  : in out Reader'Class);
-   --  Return the next character, and increments the locators
-   --  Input_Ended is raised at the end
+   --  Return the next character, and increments the locators.
+   --  If there are no more characters in the input streams, Parser is setup
+   --  so that End_Of_Stream (Parser) returns True.
+
+   function End_Of_Stream (Parser : Reader'Class) return Boolean;
+   pragma Inline (End_Of_Stream);
+   --  Return True if there are no more characters in the parser.
+   --  Note that this indicates that no more character remains to be read, and
+   --  is different from checking Eof on the current input (since for instance
+   --  a new input is open for an entity).
 
    procedure Put_In_Buffer
      (Parser : in out Reader'Class; Char : Unicode_Char);
@@ -353,6 +359,7 @@ package body Sax.Readers is
    --  If Coalesce_Space is True, then all the Name or Text tokens preceded or
    --  followed by Space tokens are grouped together and returned as a single
    --  Text token.
+   --  Id.Typ is set to End_Of_Input if there are no more token to be read.
 
    procedure Next_Token_Skip_Spaces
      (Input  : in out Input_Sources.Input_Source'Class;
@@ -361,6 +368,7 @@ package body Sax.Readers is
       Must_Have : Boolean := False);
    --  Same as Next_Token, except it skips spaces. If Must_Have is True,
    --  then the first token read must be a space, or an error is raised
+   --  Id.Typ is set to End_Of_Input if there are no more token to be read.
 
    procedure Reset_Buffer
      (Parser : in out Reader'Class; Id : Token := Null_Token);
@@ -491,6 +499,16 @@ package body Sax.Readers is
    --  called every time one starts an entity, so that calls to
    --  Start_Entity/End_Entity are properly nested, and error messages
    --  point to the right entity.
+
+   -------------------
+   -- End_Of_Stream --
+   -------------------
+
+   function End_Of_Stream (Parser : Reader'Class) return Boolean is
+   begin
+      return not Parser.Last_Read_Is_Valid
+        and Parser.Last_Read = 16#FFFF#;
+   end End_Of_Stream;
 
    ------------------
    -- Debug_Encode --
@@ -806,7 +824,7 @@ package body Sax.Readers is
               ("++Input " & To_String (Parser.Locator.all) & " END_OF_INPUT");
          end if;
          Parser.Last_Read := 16#FFFF#;
-         raise Input_Ended;
+         Parser.Last_Read_Is_Valid := False;
 
       else
          Parser.Last_Read_Is_Valid := True;
@@ -1177,7 +1195,9 @@ package body Sax.Readers is
 
       procedure Handle_Comments;
       --  <!- has been seen in the buffer, check if this is a comment and
-      --  handle it appropriately
+      --  handle it appropriately. The first character after '<!-' has
+      --  already been read on calling this subprogram.
+      --  Raise an error message when the end of the input stream is seen.
 
       procedure Handle_Character_Ref;
       --  '&#' has been seen in the buffer, check if this is a character
@@ -1234,9 +1254,21 @@ package body Sax.Readers is
                --  paying the cost for some extra tests to handle this.
                loop
                   Next_Char (Input, Parser);
-                  if Parser.Last_Read = Hyphen_Minus then
+                  if End_Of_Stream (Parser) then
+                     Fatal_Error
+                       (Parser, "[2.5] Comments must end with '-->'", Id);
+                     Id.Typ := End_Of_Input;
+                     return;
+
+                  elsif Parser.Last_Read = Hyphen_Minus then
                      Next_Char (Input, Parser);
-                     if Parser.Last_Read = Hyphen_Minus then
+                     if End_Of_Stream (Parser) then
+                        Fatal_Error
+                          (Parser, "[WF] Unterminated comment in stream");
+                        Id.Typ := End_Of_Input;
+                        return;
+
+                     elsif Parser.Last_Read = Hyphen_Minus then
                         if Parser.Last_Read_Is_Valid then
                            Next_Char (Input, Parser);
                            if Parser.Last_Read = Greater_Than_Sign then
@@ -1390,7 +1422,14 @@ package body Sax.Readers is
                      loop
                         Next_Char (Input, Parser);
 
-                        if Parser.Last_Read_Is_Valid then
+                        if End_Of_Stream (Parser) then
+                           Id.Typ := End_Of_Input;
+                           Fatal_Error
+                             (Parser,
+                              "[2.7] CDATA sections must end with ']]>'", Id);
+                           return;
+
+                        elsif Parser.Last_Read_Is_Valid then
                            Put_In_Buffer (Parser, Parser.Last_Read);
 
                            if Parser.Last_Read = Closing_Square_Bracket then
@@ -1409,6 +1448,7 @@ package body Sax.Readers is
                            end if;
                         end if;
                      end loop;
+
                      if Id.Input_Id /= Input_Id (Parser) then
                         Fatal_Error
                           (Parser, "[4.3.2] Entity must be self-contained",
@@ -2074,7 +2114,6 @@ package body Sax.Readers is
               and then Parser.Last_Read /= Less_Than_Sign
               and then Parser.Last_Read /= Ampersand
               and then (not Parser.State.Expand_Param_Entities
-
                         or else Parser.Last_Read /= Percent_Sign)
               and then Parser.Last_Read /= Equals_Sign
               and then Parser.Last_Read /= Quotation_Mark
@@ -2268,22 +2307,6 @@ package body Sax.Readers is
             end if;
          end;
       end if;
-
-   exception
-      when Input_Ended =>
-         --  Make sure we always emit the last characters in the buffer
-         Id.Last := Parser.Buffer_Length;
-         if Debug_Lexical then
-            Debug_Print;
-         end if;
-
-         if Id.Typ = Cdata_Section then
-            Fatal_Error
-              (Parser, "[2.7] CDATA sections must end with ']]>'", Id);
-         elsif Id.Typ = Comment then
-            Fatal_Error
-              (Parser, "[2.5] Comments must end with '-->'", Id);
-         end if;
    end Next_Token;
 
    ----------------------------
@@ -2414,7 +2437,7 @@ package body Sax.Readers is
       is
          Num_Items : Positive;
          Current_Item, Current_Operand : Natural;
-         Start_Sub : Natural;
+         Start_Sub : Natural := Parser.Buffer_Length + 1;
          M : Element_Model_Ptr;
          Found : Boolean;
          Start_Id : constant Natural := Input_Id (Parser);
@@ -2436,6 +2459,29 @@ package body Sax.Readers is
          end loop;
 
          loop
+            if End_Of_Stream (Parser) then
+               if not Is_Recursive_Call then
+                  for J in Operand_Stack'First .. Operand_Index - 1 loop
+                     Free (Operand_Stack (J));
+                  end loop;
+
+               elsif Num_Parenthesis /= 0 then
+                  Fatal_Error
+                    (Parser, "[3.2.1] Replacement text for entities must"
+                     & " be properly nested", Start_Token);
+
+               elsif Parser.Buffer_Length >= Start_Sub then
+                  Operand_Stack (Operand_Index) :=
+                    new Element_Model (Element_Ref);
+                  Operand_Stack (Operand_Index).Name := new Byte_Sequence'
+                    (Parser.Buffer (Start_Sub .. Parser.Buffer_Length));
+                  Operand_Index := Operand_Index + 1;
+                  Parser.Buffer_Length := Start_Sub - 1;
+               end if;
+
+               exit;
+            end if;
+
             if not Parser.Last_Read_Is_Valid
               or else Input_Id (Parser) /= Start_Id
             then
@@ -2768,26 +2814,6 @@ package body Sax.Readers is
          end if;
 
       exception
-         when Input_Ended =>
-            if not Is_Recursive_Call then
-               for J in Operand_Stack'First .. Operand_Index - 1 loop
-                  Free (Operand_Stack (J));
-               end loop;
-
-            elsif Num_Parenthesis /= 0 then
-               Fatal_Error
-                 (Parser, "[3.2.1] Replacement text for entities must"
-                  & " be properly nested", Start_Token);
-
-            elsif Parser.Buffer_Length >= Start_Sub then
-               Operand_Stack (Operand_Index) :=
-                 new Element_Model (Element_Ref);
-               Operand_Stack (Operand_Index).Name := new Byte_Sequence'
-                 (Parser.Buffer (Start_Sub .. Parser.Buffer_Length));
-               Operand_Index := Operand_Index + 1;
-               Parser.Buffer_Length := Start_Sub - 1;
-            end if;
-
          when others =>
             if not Is_Recursive_Call then
                for J in Operand_Stack'First .. Operand_Index - 1 loop
