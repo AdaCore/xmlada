@@ -326,7 +326,7 @@ package body Sax.Readers is
      (Parser : in out Reader'Class; Lang : Byte_Sequence);
    --  Return True if Lang matches the rules for languages
 
---   Input_Ended : exception;
+   Input_Ended : exception;
 
    procedure Next_Char
      (Input   : in out Input_Source'Class;
