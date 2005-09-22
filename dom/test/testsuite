@@ -8,12 +8,12 @@
 #   ./testsuite 0
 # to suppress the summary message printed at the end
 
-BASE=${BASE:-tests}
-verbose="$1"
+# The second parameter can be set to 1 to force the display of each test as it
+# it run
 
-if [ "$verbose " = " " ]; then
-  verbose=0
-fi
+BASE=${BASE:-tests}
+verbose=${1:-1}
+show_tests=${2:-0}
 
 XML="./testxml -valid_chars"
 XML_SILENT="$XML -silent"   # Use for testing error messages only
@@ -105,7 +105,9 @@ trap print_result INT STOP QUIT KILL TERM
 ##  $3 = input to be send to the command
 ######################################
 expect () {
-#  echo "$1"
+  if [ $show_tests = 1 ]; then
+    echo "$1"
+  fi
   num_tests_run=`expr $num_tests_run + 1`
   out=`eval $1 2>&1 <<EOF
 $3
