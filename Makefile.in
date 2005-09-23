@@ -79,20 +79,22 @@ install_dirs: force
 	@${MKDIR} ${PREFIX}/bin
 	@${MKDIR} ${PREFIX}/lib
 	@${MKDIR} ${PREFIX}/lib/xmlada
-	@${MKDIR} ${PREFIX}/doc/xmlada
+	@${MKDIR} ${PREFIX}/share/doc/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada
 	@${MKDIR} ${PREFIX}/lib/gnat
 	@${MKDIR} ${PREFIX}/lib/gnat/xmlada
+	@${MKDIR} ${PREFIX}/share/gps/plug-ins/
 
 install: obj install_dirs ${MODULE_INSTALL}
 	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/lib/gnat
 	${CP} xmlada-config  ${PREFIX}/bin
-	-${CP} docs/xml.ps   ${PREFIX}/doc/xmlada
-	-${CP} docs/xml.pdf  ${PREFIX}/doc/xmlada
-	-${CP} docs/xml.html ${PREFIX}/doc/xmlada
-	-${CP} docs/xml.info ${PREFIX}/doc/xmlada
+	-${CP} docs/xml.ps   ${PREFIX}/share/doc/xmlada
+	-${CP} docs/xml.pdf  ${PREFIX}/share/doc/xmlada
+	-${CP} docs/xml.html ${PREFIX}/share/doc/xmlada
+	-${CP} docs/xml.info ${PREFIX}/share/doc/xmlada
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
-	cp distrib/xmlada.gpr ${PREFIX}/lib/gnat/xmlada.gpr
+	${CP} distrib/xmlada.gpr ${PREFIX}/lib/gnat/xmlada.gpr
+	${CP} distrib/xmlada_gps.py ${PREFIX}/share/gps/plug-ins/
 
 clean: force
 	gnat clean -q -r -Punicode/unicode.gpr
