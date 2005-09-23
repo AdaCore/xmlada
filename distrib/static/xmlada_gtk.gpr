@@ -4,7 +4,7 @@ with "xmlada_sax";
 with "gtkada";
 project XmlAda_Gtk is
     for Source_Dirs use ("../../include/xmlada");
-    for Source_List_File use "xmlada_xml_gtk.lgpr";
+    for Source_List_File use "deps/xmlada_xml_gtk.lgpr";
     for Library_Dir use "../xmlada";
     for Library_Name use "xmlada_gtk";
     for Library_Kind use "static";

@@ -1,6 +1,6 @@
 project XmlAda_Unicode is
     for Source_Dirs use ("../../include/xmlada");
-    for Source_List_File use "xmlada_unicode.lgpr";
+    for Source_List_File use "deps/xmlada_unicode.lgpr";
     for Library_Dir use "../xmlada";
     for Library_Name use "xmlada_unicode";
     for Library_Kind use "relocatable";

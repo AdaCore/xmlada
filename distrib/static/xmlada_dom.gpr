@@ -2,7 +2,7 @@ with "xmlada_sax";
 with "xmlada_unicode";
 project XmlAda_Dom is
     for Source_Dirs use ("../../include/xmlada");
-    for Source_List_File use "xmlada_dom.lgpr";
+    for Source_List_File use "deps/xmlada_dom.lgpr";
     for Library_Dir use "../xmlada";
     for Library_Name use "xmlada_dom";
     for Library_Kind use "static";

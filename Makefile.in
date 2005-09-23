@@ -73,7 +73,7 @@ docs: force
 	   ${RM} ${PREFIX}/lib/${lib}; \
            ${LN} xmlada/${lib} ${PREFIX}/lib/${lib};}
 	cd ${PREFIX}/lib/xmlada; ${CHMOD} -w *.ali
-	cd $*; ls *.ad[bs] > ${PREFIX}/lib/gnat/xmlada_$*.lgpr
+	cd $*; ls *.ad[bs] > ${PREFIX}/lib/gnat/deps/xmlada_$*.lgpr
 
 install_dirs: force
 	@${MKDIR} ${PREFIX}/bin
@@ -82,12 +82,13 @@ install_dirs: force
 	@${MKDIR} ${PREFIX}/doc/xmlada
 	@${MKDIR} ${PREFIX}/include/xmlada
 	@${MKDIR} ${PREFIX}/lib/gnat
+	@${MKDIR} ${PREFIX}/lib/gnat/deps
 
 install: obj install_dirs ${MODULE_INSTALL}
 	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/lib/gnat
-	${CP} xmlada-config ${PREFIX}/bin
-	-${CP} docs/xml.ps ${PREFIX}/doc/xmlada
-	-${CP} docs/xml.pdf ${PREFIX}/doc/xmlada
+	${CP} xmlada-config  ${PREFIX}/bin
+	-${CP} docs/xml.ps   ${PREFIX}/doc/xmlada
+	-${CP} docs/xml.pdf  ${PREFIX}/doc/xmlada
 	-${CP} docs/xml.html ${PREFIX}/doc/xmlada
 	-${CP} docs/xml.info ${PREFIX}/doc/xmlada
 	${CHMOD} +x ${PREFIX}/bin/xmlada-config
