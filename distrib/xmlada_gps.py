@@ -8,6 +8,6 @@ GPS.parse_xml ("""
       <name>xml.html</name>
       <descr>XML/Ada User's Guide</descr>
       <category>XMLAda</category>
-      <menu>/Help/XML Ada/XML Ada User's Guide</menu>
+      <menu before="About">/Help/XML Ada/XML Ada User's Guide</menu>
    </documentation_file>
 """)
