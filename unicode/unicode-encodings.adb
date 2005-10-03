@@ -40,6 +40,7 @@ with Unicode.CCS.Iso_8859_2;    use Unicode.CCS.Iso_8859_2;
 with Unicode.CCS.Iso_8859_3;    use Unicode.CCS.Iso_8859_3;
 with Unicode.CCS.Iso_8859_4;    use Unicode.CCS.Iso_8859_4;
 with Unicode.CCS.Iso_8859_15;   use Unicode.CCS.Iso_8859_15;
+with Unicode.CCS.Windows_1252;  use Unicode.CCS.Windows_1252;
 
 package body Unicode.Encodings is
 
@@ -105,6 +106,10 @@ package body Unicode.Encodings is
       elsif N = To_Lower (Unicode.CCS.Iso_8859_15.Name1) then
          return (Name            => Unicode.CCS.Iso_8859_15.Name1'Access,
                  Character_Set   => Iso_8859_15_Character_Set,
+                 Encoding_Scheme => Basic_8bit_Encoding);
+      elsif N = To_Lower (Unicode.CCS.Windows_1252.Name1) then
+         return (Name            => Unicode.CCS.Windows_1252.Name1'Access,
+                 Character_Set   => Windows_1252_Character_Set,
                  Encoding_Scheme => Basic_8bit_Encoding);
       else
          Raise_Exception
