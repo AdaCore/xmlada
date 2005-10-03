@@ -29,7 +29,6 @@
 
 with DOM.Core.Attrs;     use DOM.Core.Attrs;
 with DOM.Core.Documents; use DOM.Core.Documents;
-with Ada.Exceptions;     use Ada.Exceptions;
 
 package body DOM.Core.Elements is
 
@@ -74,22 +73,11 @@ package body DOM.Core.Elements is
    procedure Set_Attribute
      (Elem : Element; Name : DOM_String; Value : DOM_String)
    is
-      Att   : Attr;
-      Owner : constant Document := Owner_Document (Elem);
+      Att   : constant Attr := Create_Attribute
+        (Owner_Document (Elem), Name);
    begin
-      if Shared_Strings
-        and then Owner = null
-      then
-         Raise_Exception
-           (Program_Error'Identity,
-            "When using shared strings, the element node must be added to the"
-            & " tree before an attribute can be set for it");
-         return;
-      else
-         Att := Create_Attribute (Owner, Name);
-         Set_Value (Att, Value);
-         Set_Named_Item_NS (Elem.Attributes, Att);
-      end if;
+      Set_Value (Att, Value);
+      Set_Named_Item_NS (Elem.Attributes, Att);
    end Set_Attribute;
 
    ----------------------
@@ -102,22 +90,11 @@ package body DOM.Core.Elements is
       Qualified_Name : DOM_String;
       Value : DOM_String)
    is
-      Att   : Attr;
-      Owner : constant Document := Owner_Document (Elem);
+      Att   : constant Attr := Create_Attribute_NS
+        (Owner_Document (Elem), Namespace_URI, Qualified_Name);
    begin
-      if Shared_Strings
-        and then Owner = null
-      then
-         Raise_Exception
-           (Program_Error'Identity,
-            "When using shared strings, the element node must be added to the"
-            & " tree before an attribute can be set for it");
-         return;
-      else
-         Att := Create_Attribute_NS (Owner, Namespace_URI, Qualified_Name);
-         Set_Value (Att, Value);
-         Set_Named_Item_NS (Elem.Attributes, Att);
-      end if;
+      Set_Value (Att, Value);
+      Set_Named_Item_NS (Elem.Attributes, Att);
    end Set_Attribute_NS;
 
    ----------------------
