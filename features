@@ -1,4 +1,6 @@
 New features in New version
+ Unicode:
+  - E930-022 Added support for windows-1252 encoding
  SAX parser:
   - E912-011 No longer use an exception internally to report the end of stream
  Schema validation:
