@@ -71,15 +71,14 @@ package body DOM.Core.Documents is
    --------------------
 
    function Create_Element (Doc : Document; Tag_Name : DOM_String)
-      return Element
-   is
-      pragma Warnings (Off, Doc);
+      return Element is
    begin
       --  ??? Test for Invalid_Character_Err
       --  ??? Must convert Tag_Name to uppercase for HTML documents
       return new Node_Record'
         (Node_Type  => Element_Node,
-         Parent     => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Name       => From_Qualified_Name (Doc, Tag_Name, null),
          Children   => Null_List,
          Attributes => Null_Node_Map);
@@ -92,13 +91,12 @@ package body DOM.Core.Documents is
    function Create_Element_NS
      (Doc : Document;
       Namespace_URI : DOM_String;
-      Qualified_Name : DOM_String) return Element
-   is
-      pragma Warnings (Off, Doc);
+      Qualified_Name : DOM_String) return Element is
    begin
       return new Node_Record'
         (Node_Type  => Element_Node,
-         Parent     => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Name       => From_Qualified_Name
            (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
          Children   => Null_List,
@@ -111,11 +109,11 @@ package body DOM.Core.Documents is
 
    function Create_Document_Fragment (Doc : Document) return Document_Fragment
    is
-      pragma Warnings (Off, Doc);
    begin
       return new Node_Record'
         (Node_Type         => Document_Fragment_Node,
-         Parent            => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Doc_Frag_Children => Null_List);
    end Create_Document_Fragment;
 
@@ -124,13 +122,12 @@ package body DOM.Core.Documents is
    ----------------------
 
    function Create_Text_Node (Doc : Document; Data : DOM_String)
-      return Text
-   is
-      pragma Warnings (Off, Doc);
+      return Text is
    begin
       return new Node_Record'
         (Node_Type => Text_Node,
-         Parent    => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Text      => new DOM_String'(Data));
    end Create_Text_Node;
 
@@ -139,13 +136,12 @@ package body DOM.Core.Documents is
    --------------------
 
    function Create_Comment (Doc : Document; Data : DOM_String)
-      return Comment
-   is
-      pragma Warnings (Off, Doc);
+      return Comment is
    begin
       return new Node_Record'
         (Node_Type => Comment_Node,
-         Parent    => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Comment   => new DOM_String'(Data));
    end Create_Comment;
 
@@ -154,14 +150,13 @@ package body DOM.Core.Documents is
    --------------------------
 
    function Create_Cdata_Section (Doc : Document; Data : DOM_String)
-      return Cdata_Section
-   is
-      pragma Warnings (Off, Doc);
+      return Cdata_Section is
    begin
       --  ??? Must raise Not_Supported_Err for HTML documents
       return new Node_Record'
         (Node_Type => Cdata_Section_Node,
-         Parent    => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Cdata     => new DOM_String'(Data));
    end Create_Cdata_Section;
 
@@ -171,15 +166,14 @@ package body DOM.Core.Documents is
 
    function Create_Processing_Instruction
      (Doc : Document; Target : DOM_String; Data : DOM_String)
-      return Processing_Instruction
-   is
-      pragma Warnings (Off, Doc);
+      return Processing_Instruction is
    begin
       --  ??? Test for Invalid_Character_Err
       --  ??? Must raise Not_Supported_Err for HTML documents
       return new Node_Record'
         (Node_Type => Processing_Instruction_Node,
-         Parent    => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Target    => new DOM_String'(Target),
          Pi_Data   => new DOM_String'(Data));
    end Create_Processing_Instruction;
@@ -189,14 +183,13 @@ package body DOM.Core.Documents is
    ----------------------
 
    function Create_Attribute (Doc : Document; Name : DOM_String)
-      return Attr
-   is
-      pragma Warnings (Off, Doc);
+      return Attr is
    begin
       --  ??? Test for Invalid_Character_Err
       return new Node_Record'
         (Node_Type       => Attribute_Node,
-         Parent          => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Specified       => False,
          Owner_Element   => Doc,
          Attr_Name       => From_Qualified_Name (Doc, Name, null),
@@ -210,13 +203,12 @@ package body DOM.Core.Documents is
    function Create_Attribute_NS
      (Doc : Document;
       Namespace_URI : DOM_String;
-      Qualified_Name : DOM_String) return Attr
-   is
-      pragma Warnings (Off, Doc);
+      Qualified_Name : DOM_String) return Attr is
    begin
       return new Node_Record'
         (Node_Type       => Attribute_Node,
-         Parent          => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Specified       => False,
          Owner_Element   => Doc,
          Attr_Name       => From_Qualified_Name
@@ -229,16 +221,15 @@ package body DOM.Core.Documents is
    -----------------------------
 
    function Create_Entity_Reference (Doc : Document; Name : DOM_String)
-      return Entity_Reference
-   is
-      pragma Warnings (Off, Doc);
+      return Entity_Reference is
    begin
       --  ??? Test for Invalid_Character_Err
       --  ??? Must raise Not_Supported_Err for HTML documents
       --  ??? Must test if entity is already known
       return new Node_Record'
         (Node_Type => Entity_Reference_Node,
-         Parent    => null,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
          Entity_Reference_Name => new DOM_String'(Name));
    end Create_Entity_Reference;
 

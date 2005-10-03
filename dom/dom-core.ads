@@ -365,6 +365,13 @@ private
    -----------------
 
    type Node_Record (Node_Type : Node_Types) is record
+      Parent_Is_Owner : Boolean;
+      --  If False, the Parent node points to the owner document, not to the
+      --  real parent in the tree (which is null).
+      --  This boolean doesn't increase the size of this record, since because
+      --  of alignment issues Node_Type already occupies more space than it
+      --  really needs.
+
       Parent   : Node;
       case Node_Type is
          when Element_Node =>
@@ -375,8 +382,8 @@ private
          when Attribute_Node =>
             Attr_Name       : Shared_Node_Name_Def;
             Attr_Value      : DOM_String_Access;
-            Specified       : Boolean := False;
             Owner_Element   : Node;
+            Specified       : Boolean := False;
             --   ??? In fact, attributes can have children (text or
             --   entity_reference).
 
@@ -401,11 +408,11 @@ private
             Comment : DOM_String_Access;
 
          when Document_Node =>
+            Shared_Strings : String_Htable_Access;
+            Node_Names     : Node_Name_Htable_Access;
             Doc_Children   : Node_List;
             Doc_Type       : Node;
             Implementation : DOM_Implementation;
-            Shared_Strings : String_Htable_Access;
-            Node_Names     : Node_Name_Htable_Access;
 
          when Document_Type_Node =>
             Document_Type_Name : DOM_String_Access;

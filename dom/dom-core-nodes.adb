@@ -270,15 +270,21 @@ package body DOM.Core.Nodes is
    function Previous_Sibling (N : Node) return Node is
       List : Node_List;
    begin
-      if N.Parent = null or else N.Node_Type = Attribute_Node then
+      if N.Parent = null
+        or else N.Parent_Is_Owner
+        or else N.Node_Type = Attribute_Node
+      then
          return null;
       end if;
+
       List := Child_Nodes (N.Parent);
+
       for J in 1 .. List.Last loop
          if List.Items (J) = N then
             return List.Items (J - 1);
          end if;
       end loop;
+
       return null;
    end Previous_Sibling;
 
@@ -289,9 +295,13 @@ package body DOM.Core.Nodes is
    function Next_Sibling (N : Node) return Node is
       List : Node_List;
    begin
-      if N.Parent = null or else N.Node_Type = Attribute_Node then
+      if N.Parent = null
+        or else N.Parent_Is_Owner
+        or else N.Node_Type = Attribute_Node
+      then
          return null;
       end if;
+
       List := Child_Nodes (N.Parent);
       for J in 0 .. List.Last - 1 loop
          if List.Items (J) = N then
@@ -316,7 +326,9 @@ package body DOM.Core.Nodes is
 
    function Parent_Node (N : Node) return Node is
    begin
-      if N.Node_Type = Attribute_Node then
+      if N.Node_Type = Attribute_Node
+        or else N.Parent_Is_Owner
+      then
          return null;
       else
          return N.Parent;
@@ -345,10 +357,16 @@ package body DOM.Core.Nodes is
    function Owner_Document (N : Node) return Node is
       P : Node := N;
    begin
-      while P /= null and then P.Node_Type /= Document_Node loop
-         P := P.Parent;
-      end loop;
-      return P;
+      if N.Parent_Is_Owner then
+         return N.Parent;
+      else
+         while P /= null
+           and then P.Node_Type /= Document_Node
+         loop
+            P := P.Parent;
+         end loop;
+         return P;
+      end if;
    end Owner_Document;
 
    -------------------
@@ -452,7 +470,9 @@ package body DOM.Core.Nodes is
       --  (ie same DTD,...), or raise Wrong_Document_Err
 
       --  If New_Child is already in the tree, remove it first
-      if New_Child.Parent /= null then
+      if New_Child.Parent /= null
+        and then not New_Child.Parent_Is_Owner
+      then
          Tmp := Remove_Child (New_Child.Parent, New_Child);
       end if;
 
@@ -484,6 +504,7 @@ package body DOM.Core.Nodes is
          end case;
       end if;
       New_Child.Parent := N;
+      New_Child.Parent_Is_Owner := False;
       return New_Child;
    end Insert_Before;
 
@@ -507,6 +528,7 @@ package body DOM.Core.Nodes is
          if List.Items (J) = Old_Child then
             List.Items (J) := New_Child;
             New_Child.Parent := N;
+            New_Child.Parent_Is_Owner := False;
             return Old_Child;
          end if;
       end loop;
@@ -577,7 +599,8 @@ package body DOM.Core.Nodes is
       Clone : Node;
    begin
       Clone := new Node_Record (N.Node_Type);
-      Clone.Parent := null;
+      Clone.Parent := Owner_Document (N);
+      Clone.Parent_Is_Owner := True;
 
       case N.Node_Type is
          when Element_Node =>

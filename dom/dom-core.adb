@@ -59,6 +59,7 @@ package body DOM.Core is
          Parent         => null,
          Doc_Children   => Null_List,
          Doc_Type       => Doc_Type,
+         Parent_Is_Owner => False,
          Implementation => Implementation,
          Node_Names     => new Node_Name_Htable.HTable (127),
          Shared_Strings => new String_Htable.HTable (127));
