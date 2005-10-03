@@ -2,7 +2,7 @@ with "../dom";
 with "../../shared";
 
 project Dom_Test is
-   for Main use ("testxml");
+   for Main use ("testxml", "ea03_006");
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;
    package Binder   renames Shared.Binder;

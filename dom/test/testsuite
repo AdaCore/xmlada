@@ -1829,6 +1829,9 @@ if [ -d act_testsuite/ ]; then
    echo "-- Running ACT testsuite"
    ./run
   )
+
+  # EA03-006: This fails with shared strings
+  expect "./ea03_006" "<myelem id=\"42\"></myelem>" ""
 fi
  
 
