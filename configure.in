@@ -12,12 +12,6 @@ AC_CHECK_PROGS(TEXI2DVI, texi2dvi, "")
 AC_CHECK_PROGS(PDFTEX, pdftex, "")
 AC_CHECK_PROGS(TEX, tex, "")
 
-## Check for gtkada.gpr either in the predefined path or in
-## ADA_PROJECT_PATH
-
-project_path=`gnatls -v | awk '/Current_Directory/ {if (p) printf ".:"; next} /^ *(.*)/ {if (p) printf "%s:",$1} /Project Search Path/ {p=1}'`
-AC_CHECK_PROGS(GTKADA_GPR, gtkada.gpr, "", $project_path)
-
 IFS=' '
 
 EXEC_PREFIX="$prefix"
@@ -27,13 +21,5 @@ AC_SUBST(CC)
 AC_SUBST(RANLIB)
 AC_SUBST(XMLADA_MAJOR_VERSION)
 AC_SUBST(XMLADA_MINOR_VERSION)
-
-echo "--------------------------------------------------"
-if [[ x"$GTKADA_GPR" = x ]]; then
-   echo "--  GtkAda support: no  (add gtkada.gpr to ADA_PROJECT_PATH)" 
-else
-   echo "--  GtkAda support: yes"
-fi
-echo "--------------------------------------------------"
 
 AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config)

@@ -66,9 +66,6 @@ directories should be different, since the generated code might not be the
 same in both cases, and the second set of project files (see below) would
 overwrite the ones previously installed.
 
-The GtkAda support module will only be compiled if the project file gtkada.gpr
-could be found in the ADA_PROJECT_PATH path.
-
 Configure and compile with the following commands:
    >  ./configure --prefix=<PREFIX>
    >  make install
