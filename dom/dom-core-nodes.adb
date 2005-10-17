@@ -1209,7 +1209,7 @@ package body DOM.Core.Nodes is
          when Comment_Node =>
             if Print_Comments then
                Put ("<!--", Encoding);
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+               Put (Node_Value (N), Encoding);
                Put ("-->", Encoding);
             end if;
 
