@@ -57,7 +57,7 @@ docs: force
 	cd ${PREFIX}/lib; ${foreach lib, ${notdir ${wildcard $*/lib/*xmlada_*}}, \
 	   ${RM} ${PREFIX}/lib/${lib}; \
            ${LN} xmlada/${lib} ${PREFIX}/lib/${lib};}
-	cd ${PREFIX}/lib/xmlada; ${CHMOD} -w *.ali
+	cd ${PREFIX}/lib/xmlada; ${CHMOD} ugo-w *.ali
 	cd $*; ls *.ad[bs] > ${PREFIX}/lib/gnat/xmlada/xmlada_$*.lgpr
 
 install_dirs: force
