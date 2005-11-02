@@ -1001,10 +1001,10 @@ package body Sax.Readers is
    -------------
 
    procedure Find_NS
-     (Parser  : in out Reader'Class;
-      Elem    : Element_Access;
-      Prefix  : Byte_Sequence;
-      NS      : out XML_NS;
+     (Parser             : in out Reader'Class;
+      Elem               : Element_Access;
+      Prefix             : Byte_Sequence;
+      NS                 : out XML_NS;
       Include_Default_NS : Boolean := True)
    is
       E : Element_Access := Elem;
@@ -1059,8 +1059,8 @@ package body Sax.Readers is
    -----------------------
 
    function Prefix_From_Qname (Qname : Byte_Sequence) return Byte_Sequence is
-      Index : Natural := Qname'First;
-      C : Unicode_Char;
+      Index    : Natural := Qname'First;
+      C        : Unicode_Char;
       Previous : Natural;
    begin
       while Index <= Qname'Last loop
@@ -1099,10 +1099,10 @@ package body Sax.Readers is
    -------------------
 
    procedure Add_Namespace
-     (Parser : in out Reader'Class;
-      Node   : Element_Access;
+     (Parser                     : in out Reader'Class;
+      Node                       : Element_Access;
       Prefix, URI_Start, URI_End : Token;
-      Report_Event : Boolean := True) is
+      Report_Event               : Boolean := True) is
    begin
       Add_Namespace
         (Parser       => Parser,
@@ -1117,10 +1117,10 @@ package body Sax.Readers is
    -------------------
 
    procedure Add_Namespace
-     (Parser : in out Reader'Class;
-      Node   : Element_Access;
-      Prefix : Byte_Sequence;
-      URI    : Byte_Sequence;
+     (Parser       : in out Reader'Class;
+      Node         : Element_Access;
+      Prefix       : Byte_Sequence;
+      URI          : Byte_Sequence;
       Report_Event : Boolean := True)
    is
       NS : XML_NS;
@@ -1184,9 +1184,9 @@ package body Sax.Readers is
    ----------------
 
    procedure Next_Token
-     (Input   : in out Input_Source'Class;
-      Parser  : in out Reader'Class;
-      Id      : out Token;
+     (Input          : in out Input_Source'Class;
+      Parser         : in out Reader'Class;
+      Id             : out Token;
       Coalesce_Space : Boolean := False)
    is
       function Looking_At (Str : Byte_Sequence) return Boolean;
