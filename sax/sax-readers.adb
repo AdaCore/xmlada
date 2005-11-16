@@ -1371,7 +1371,6 @@ package body Sax.Readers is
             end loop;
          end if;
 
-         Test_Valid_Char (Parser, Val, Id);
          Put_In_Buffer (Parser, Val);
          Next_Char (Input, Parser);
          Id.From_Entity := True;
@@ -4566,6 +4565,9 @@ package body Sax.Readers is
                Reset_Buffer (Parser, Id);
 
             when Sax.Readers.Space =>
+               --   If "xml:space" attribute is preserve
+               --   then same as Text
+
                if Parser.Hooks.Whitespace /= null then
                   Parser.Hooks.Whitespace
                     (Parser, Parser.Buffer (Id.First .. Id.Last));
