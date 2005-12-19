@@ -73,7 +73,7 @@ install_dirs: force
 install: obj install_dirs ${MODULE_INSTALL}
 	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/lib/gnat
 	${CP} xmlada-config  ${PREFIX}/bin
-	-${CP} docs/xml.ps   ${PREFIX}/share/doc/xmlada
+	-${CP} docs/xml.ps   ${PREFIX}/share/doc/xmlada 2>/dev/null
 	-${CP} docs/xml.pdf  ${PREFIX}/share/doc/xmlada
 	-${CP} docs/xml.html ${PREFIX}/share/doc/xmlada
 	-${CP} docs/xml.info ${PREFIX}/share/doc/xmlada
