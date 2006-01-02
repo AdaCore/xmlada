@@ -1,4 +1,4 @@
-Problems in development version:
+Problems in 2.1:
 
 Sax:
 - EB16-004: Test_Valid_Chars_Feature would check whether characters specified

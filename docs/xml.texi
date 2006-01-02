@@ -5,7 +5,7 @@
 @settitle The Ada95 XML Library
 @syncodeindex fn cp
 
-@set XMLVersion 2.0.1
+@set XMLVersion 2.1
 
 @titlepage
 
@@ -20,7 +20,7 @@
 
 Copyright @copyright{} 2000-2002, Emmanuel Briot
 
-Copyright @copyright{} 2003-2005, AdaCore
+Copyright @copyright{} 2003-2006, AdaCore
 
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
