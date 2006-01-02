@@ -1,13 +1,8 @@
-Problems in 2.1:
+Problems in 2.0.1, Fixed in 2.1:
 
-Sax:
 - Expanding parameter entities should always surround them with spaces, as per
   4.4.8 in the XML specifications
-Schema:
 - Fixes various issues when validating documents
-
-Problems in 2.0.1:
-
 - EA03-006: Setting attribute for an element not added to the tree results in
   a Constraint_Error (Workaround: disable shared strings in dom-core.ads)
 - Validating a not well-formed document results in an validation error instead
