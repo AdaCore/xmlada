@@ -1,6 +1,7 @@
 with "../shared.gpr";
 with "../sax/sax.gpr";
 with "../unicode/unicode.gpr";
+with "../dom/dom.gpr";
 
 project Schema is
 
@@ -19,5 +20,6 @@ project Schema is
    package Compiler renames Shared.Compiler;
    package Binder   renames Shared.Binder;
    package Linker   renames Shared.Linker;
+   package Ide      renames Shared.Ide;
  
 end Schema;
