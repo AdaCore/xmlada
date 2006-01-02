@@ -48,13 +48,13 @@ optional_errors=1
 # special characters (these are not saved as is so that we can easily save
 # that testsuite file in 7 bit mode)
 x9=`printf "\0011"`
-x80=`printf "\0200"`
-xb7=`printf "\0267"`
-xc2=`printf "\0302"`
-xcc=`printf "\0314"`
-x82=`printf "\0202"`
-xe3=`printf "\0343"`
-x9a=`printf "\0232"`
+x80="~"  # `printf "\0200"`
+xb7="~"  # `printf "\0267"`
+xc2="~"  # `printf "\0302"`
+xcc="~"  # `printf "\0314"`
+x82="~"  # `printf "\0202"`
+xe3="~"  # `printf "\0343"`
+x9a="~"  # `printf "\0232"`
 xe0=`printf "\0340"`
 xb9=`printf "\0271"`
 x9c=`printf "\0234"`
@@ -105,19 +105,26 @@ trap print_result INT STOP QUIT KILL TERM
 ##  $3 = input to be send to the command
 ######################################
 expect () {
+  ascii_to_ref=${4:-0}
+  
   if [ $show_tests = 1 ]; then
     echo "$1"
   fi
   num_tests_run=`expr $num_tests_run + 1`
-  out=`eval $1 2>&1 <<EOF
-$3
-EOF`
+
+  if [ $ascii_to_ref = 1 ]; then
+    out=`echo "$3" | eval $1 2>&1 | \
+         perl -pe "s/[\xe3\x82\x9a]/~/g; s/\xc2\xb7/~~/g; s/\xcc\x80/~~/g"`
+  else
+    out=`echo "$3" | eval $1 2>&1`
+  fi
+  
   exp="$2"
   if [ "$exp " != "$out " ]; then
      num_failures=`expr $num_failures + 1`
-     echo "  Cmd: $1" >> $out_file
+     echo "  Cmd: $1 $extra_switches " >> $out_file
      echo "#---------- Test failed ----------"
-     echo "  Cmd: $1"
+     echo "  Cmd: $1 $extra_switches"
      echo "  Got: $out"
      echo "  Expecting: $exp"
 
@@ -574,17 +581,17 @@ fi
 
 if [ $run_invalid_tests = 1 ]; then
     expect_invalid_sa "001" \
-        "entity %e:1:1: [4.5] Entity values must be self-contained"
+        "entity %e:1:2: [4.5] Entity values must be self-contained"
     expect_invalid_sa "002" \
-        "entity %e:1:1: [4.5] Entity values must be self-contained"
+        "entity %e:1:2: [4.5] Entity values must be self-contained"
     expect_invalid_sa "003" \
         "003.ent:2:18: [4.5] Entity values must be self-contained"
     expect_invalid_sa "004" \
-        "entity %e2:1:1: [4.5] Entity values must be self-contained"
+        "entity %e2:1:2: [4.5] Entity values must be self-contained"
     expect_invalid_sa "005" \
-        "entity %e:1:1: [4.5] Entity values must be self-contained"
+        "entity %e:1:2: [4.5] Entity values must be self-contained"
     expect_invalid_sa "006" \
-        "entity %e:1:10: [4.5] Entity values must be self-contained"
+        "entity %e:1:11: [4.5] Entity values must be self-contained"
 fi
 
 if [ $run_invalid_tests = 1 ]; then
@@ -775,7 +782,8 @@ expect_not_wf() {
    expect "$1" ""
 }
 expect_not_wf_sa() {
-   expect "$XML_SILENT $BASE/xmltest/not-wf/sa/$1.xml" "$2"
+   ## Set $3 to 1 if you want to filter the output
+   expect "$XML_SILENT $BASE/xmltest/not-wf/sa/$1.xml" "$2" "" "$3"
 }
 expect_not_wf_sa_validate() {
    expect "$XML_SILENT_VALIDATE $BASE/xmltest/not-wf/sa/$1.xml" "$2"
@@ -787,7 +795,8 @@ expect_not_wf_ext_sa() {
    expect "$XML_SILENT $BASE/xmltest/not-wf/ext-sa/$1.xml" "$2"
 }
 expect_oasis_not_wf() {
-   expect "$XML_SILENT $BASE/oasis/$1.xml" "$2"
+   ## Set $3 to 1 if you want to filter the output
+   expect "$XML_SILENT $BASE/oasis/$1.xml" "$2" "" "$3"
 }
 expect_oasis_not_wf_validate() {
     expect "$XML_SILENT_VALIDATE $BASE/oasis/$1.xml" "$2"
@@ -807,7 +816,7 @@ if [ $run_not_wf_tests = 1 ]; then
     expect_not_wf_not_sa "001" \
        "001.ent:3:2: [3.4] Conditional section must be properly terminated"
     expect_not_wf_not_sa "002" \
-       "entity %e:1:1: [2.8] <?xml?> instruction must be first in document"
+       "entity %e:1:2: [2.8] <?xml?> instruction must be first in document"
     expect_not_wf_not_sa "003" \
        "003.ent:3:1: [3.4] Conditional section must be properly terminated"
     expect_not_wf_not_sa "004" \
@@ -1203,15 +1212,16 @@ Did you want to use &amp; ?"
     expect_not_wf_sa "139" \
          "139.xml:2:15: Invalid content model: List of choices cannot be empty"
     expect_not_wf_sa "140" \
-           "entity e:1:2: [3.1] '$xe3$x82$x9a' is not a valid name"
+           "entity e:1:2: [3.1] '$xe3$x82$x9a' is not a valid name" \
+	   "1"
     expect_not_wf_sa "141" \
            "entity e:1:3: [3] Must have spaces between tag name and attributes"
            #???  "(2.3) 'X$xe0$xb9$x9c' is not a valid name, at 141.xml:4:8"
-    expect_not_wf_sa "142" "142.xml:4:6: [2.2] Invalid character (code 0)"
-    expect_not_wf_sa "143" "143.xml:4:6: [2.2] Invalid character (code 31)"
-    expect_not_wf_sa "144" "144.xml:4:6: [2.2] Invalid character (code 65535)"
-    expect_not_wf_sa "145" "145.xml:4:6: [2.2] Invalid character (code 55296)"
-    expect_not_wf_sa "146" "146.xml:4:6: [2.2] Invalid character (code 1114112)"
+    expect_not_wf_sa "142" "142.xml:4:6: [4.1] Invalid character (code 0)"
+    expect_not_wf_sa "143" "143.xml:4:6: [4.1] Invalid character (code 31)"
+    expect_not_wf_sa "144" "144.xml:4:6: [4.1] Invalid character (code 65535)"
+    expect_not_wf_sa "145" "145.xml:4:6: [4.1] Invalid character (code 55296)"
+    expect_not_wf_sa "146" "146.xml:4:6: [4.1] Invalid character (code 1114112)"
     expect_not_wf_sa "147" "147.xml:2:1: [2.8] <?xml?> instruction must be first in document"
     expect_not_wf_sa "148" \
            "148.xml:2:1: [2.8] <?xml?> instruction must be first in document"
@@ -1418,9 +1428,11 @@ if [ $run_not_wf_tests = 1 ]; then
     expect_oasis_not_wf "p05fail3" \
        "p05fail3.xml:1:2: [3.1] '-A' is not a valid name"
     expect_oasis_not_wf "p05fail4" \
-       "p05fail4.xml:1:2: [3.1] '"$xcc$x80"A' is not a valid name"
+       "p05fail4.xml:1:2: [3.1] '"$xcc$x80"A' is not a valid name" \
+       "1"
     expect_oasis_not_wf "p05fail5" \
-       "p05fail5.xml:1:2: [3.1] '"$xc2$xb7"A' is not a valid name"
+       "p05fail5.xml:1:2: [3.1] '"$xc2$xb7"A' is not a valid name" \
+       "1"
     [ $VALIDATING = 1 ] && expect_oasis_not_wf "p09fail1" \
        "p09fail1.dtd:2:23: [WF] Unterminated entity"
     expect_oasis_not_wf "p09fail2" \
@@ -1711,9 +1723,9 @@ if [ $run_not_wf_tests = 1 ]; then
     expect_oasis_not_wf "p66fail4" \
        "p66fail4.xml:1:10: [4.1] Invalid character 'G' in character reference"
     expect_oasis_not_wf "p66fail5" \
-       "p66fail5.xml:1:6: [2.2] Invalid character (code 5)"
+       "p66fail5.xml:1:6: [4.1] Invalid character (code 5)"
     expect_oasis_not_wf "p66fail6" \
-       "p66fail6.xml:1:6: [2.2] Invalid character (code 55298)"
+       "p66fail6.xml:1:6: [4.1] Invalid character (code 55298)"
     expect_oasis_not_wf "p68fail1" \
        "p68fail1.xml:7:1: [4.1] Entity references must end with ';'.
 Did you want to use &amp; ?"
@@ -1826,7 +1838,9 @@ fi
 
 if [ -d act_testsuite/ ]; then
   (cd act_testsuite
-   echo "-- Running ACT testsuite"
+   if [ $verbose = 1 ]; then
+      echo "-- Running ACT testsuite"
+   fi
    ./run
   )
 
