@@ -49,6 +49,40 @@ package body Input_Sources.Strings is
       Input.Encoding := Encoding;
       Input.Buffer := Str;
       Input.Index := Input.Buffer'First;
+      Input.Free_Buffer := False;
+
+      Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
+      case BOM is
+         when Utf32_LE =>
+            Set_Encoding (Input, Utf32_LE_Encoding);
+         when Utf32_BE =>
+            Set_Encoding (Input, Utf32_BE_Encoding);
+         when Utf16_LE =>
+            Set_Encoding (Input, Utf16_LE_Encoding);
+         when Utf16_BE =>
+            Set_Encoding (Input, Utf16_BE_Encoding);
+         when Ucs4_BE | Ucs4_LE | Ucs4_2143 | Ucs4_3412 =>
+            raise Invalid_Encoding;
+         when Utf8_All | Unknown =>
+            Set_Encoding (Input, Utf8_Encoding);
+      end case;
+   end Open;
+
+   ----------
+   -- Open --
+   ----------
+
+   procedure Open
+     (Str      : Unicode.CES.Byte_Sequence;
+      Encoding : Unicode.CES.Encoding_Scheme;
+      Input    : out String_Input)
+   is
+      BOM : Bom_Type;
+   begin
+      Input.Encoding := Encoding;
+      Input.Buffer := new Byte_Sequence'(Str);
+      Input.Index := Input.Buffer'First;
+      Input.Free_Buffer := True;
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
@@ -73,6 +107,9 @@ package body Input_Sources.Strings is
 
    procedure Close (Input : in out String_Input) is
    begin
+      if Input.Free_Buffer then
+         Free (Input.Buffer);
+      end if;
       Input_Sources.Close (Input_Source (Input));
    end Close;
 

@@ -45,6 +45,12 @@ package Input_Sources.Strings is
    --  specific encoding.
    --  No copy of Str is kept, we simply keep the pointer.
 
+   procedure Open
+     (Str      : Unicode.CES.Byte_Sequence;
+      Encoding : Unicode.CES.Encoding_Scheme;
+      Input    : out String_Input);
+   --  Same as above, but a copy of the byte sequence is kept internally
+
    procedure Close (Input : in out String_Input);
    --  Free the memory occupied by Input
 
@@ -62,5 +68,6 @@ private
          Index    : Natural;
          Buffer   : Unicode.CES.Byte_Sequence_Access;
          Encoding : Unicode.CES.Encoding_Scheme;
+         Free_Buffer : Boolean := False;
       end record;
 end Input_Sources.Strings;
