@@ -50,8 +50,9 @@ package body Sax.Readers is
 
    use Entity_Table, Attributes_Table, Notations_Table;
 
-   Debug_Lexical : constant Boolean := False;
-   Debug_Input : constant Boolean := False;
+   Debug_Lexical  : constant Boolean := False;
+   Debug_Input    : constant Boolean := False;
+   Debug_Internal : constant Boolean := False;
    --  Set to True if you want to debug this package
 
    Initial_Buffer_Length : constant := 10000;
@@ -315,9 +316,12 @@ package body Sax.Readers is
    --  Return an encoded string matching C (matching Sax.Encodins.Encoding)
 
    procedure Test_Valid_Char
-     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token);
+     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token;
+      Section : String);
    --  Raise an error if C is not valid in XML. The error is reported at
    --  location Loc.
+   --  Section is used in the error message, and referes to the section in the
+   --  XML standard.
 
    function Is_Pubid_Char (C : Unicode_Char) return Boolean;
    --  Return True if C is a valid character for a Public ID (2.3 specs)
@@ -747,7 +751,7 @@ package body Sax.Readers is
             Parser.Last_Read := C;
 
             if Parser.Feature_Test_Valid_Chars then
-               Test_Valid_Char (Parser, Parser.Last_Read, Null_Token);
+               Test_Valid_Char (Parser, Parser.Last_Read, Null_Token, "2.2");
             end if;
          end if;
       end Internal;
@@ -941,7 +945,8 @@ package body Sax.Readers is
    ---------------------
 
    procedure Test_Valid_Char
-     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token)
+     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token;
+      Section : String)
    is
       Id : Token;
    begin
@@ -959,7 +964,7 @@ package body Sax.Readers is
             Id.Column := Get_Column_Number (Parser.Locator.all);
          end if;
          Fatal_Error
-           (Parser, "[2.2] Invalid character (code"
+           (Parser, "[" & Section & "] Invalid character (code"
             & Unicode_Char'Image (C) & ")", Id);
       end if;
    end Test_Valid_Char;
@@ -1371,6 +1376,9 @@ package body Sax.Readers is
             end loop;
          end if;
 
+         if Parser.Feature_Test_Valid_Chars then
+            Test_Valid_Char (Parser, Val, Id, "4.1");
+         end if;
          Put_In_Buffer (Parser, Val);
          Next_Char (Input, Parser);
          Id.From_Entity := True;
@@ -1468,7 +1476,9 @@ package body Sax.Readers is
                      if Parser.Last_Read = Latin_Capital_Letter_I
                        or else Parser.Last_Read = Percent_Sign
                      then
-                        Next_Token (Input, Parser, Id2);
+                        --  Skip spaces: if we are expending a parameter
+                        --  entity, it must start with spaces (4.4.8)
+                        Next_Token_Skip_Spaces (Input, Parser, Id2);
                         if Parser.Buffer (Id2.First .. Id2.Last) =
                           Include_Sequence
                         then
@@ -2228,6 +2238,10 @@ package body Sax.Readers is
 
                Parser.Element_Id := Parser.Element_Id + 1;
 
+               if Debug_Internal then
+                  Put_Line ("Expanding entity " & N);
+               end if;
+
                Parser.Inputs := new Entity_Input_Source'
                  (External       => V.External,
                   Name           => new Byte_Sequence'(N),
@@ -2279,8 +2293,19 @@ package body Sax.Readers is
                   Parser.In_External_Entity := True;
                else
                   Parser.Inputs.Input := new String_Input;
-                  Open (V.Value, Encoding,
-                        String_Input (Parser.Inputs.Input.all));
+
+                  --  4.4.8: Expansion of parameter entities must include
+                  --  a leading and trailing space, unless we are within an
+                  --  entity value.
+                  if Is_Entity_Ref = Param_Entity
+                    and then not Parser.State.Ignore_Special
+                  then
+                     Open (' ' & V.Value.all & ' ', Encoding,
+                           String_Input (Parser.Inputs.Input.all));
+                  else
+                     Open (V.Value, Encoding,
+                           String_Input (Parser.Inputs.Input.all));
+                  end if;
                   Set_Public_Id (Parser.Locator.all, "entity " & N);
                   Set_Public_Id
                     (Parser.Inputs.Input.all,
@@ -2936,6 +2961,12 @@ package body Sax.Readers is
          Had_Space : Boolean := Normalize_Leading; --  Avoid leading spaces
 
       begin
+         if Debug_Internal then
+            Put_Line ("Get_String Normalize="
+                      & Boolean'Image (Normalize)
+                      & " Normalize_Leading="
+                      & Boolean'Image (Normalize_Leading));
+         end if;
          Set_State (Parser, State);
          Next_Token (Input, Parser, Id);
          Str_Start := Id;
@@ -2977,7 +3008,12 @@ package body Sax.Readers is
                         Index := Str'First;
                         while Index <= Str'Last loop
                            Encoding.Read (Str, Index, C);
-                           if not Id.From_Entity
+
+                           --  When parsing an attribute value, we should still
+                           --  process white spaces, therefore the test for
+                           --  Ignore_Special
+                           if (not Id.From_Entity
+                               or else State.Ignore_Special)
                              and then Is_White_Space (C)
                            then
                               if not Had_Space then
@@ -3150,6 +3186,11 @@ package body Sax.Readers is
          Set_State (Parser, Entity_Def_State);
          Next_Token_Skip_Spaces (Input, Parser, Name_Id, True);
 
+         if Debug_Internal then
+            Put_Line ("Parsing entity definition "
+                      & Parser.Buffer (Name_Id.First .. Name_Id.Last));
+         end if;
+
          if Name_Id.Typ = Text
            and then Parser.Buffer (Name_Id.First .. Name_Id.Last) =
            Percent_Sign_Sequence
@@ -3235,7 +3276,12 @@ package body Sax.Readers is
                       (Parser.Buffer (Def_Start.First .. Def_End.Last)),
                     Public       => null,
                     External     => False,
-                    Already_Read => False));
+                 Already_Read => False));
+            if Debug_Internal then
+               Put_Line ("Internal_Entity_Decl: "
+                         & Parser.Buffer (Name_Id.First .. Name_Id.Last) & "="
+                         & Parser.Buffer (Def_Start.First .. Def_End.Last));
+            end if;
             Internal_Entity_Decl
               (Parser,
                Name => Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
@@ -3420,7 +3466,7 @@ package body Sax.Readers is
             end if;
 
             Set_State (Parser, Attribute_Def_State);
-            Next_Token (Input, Parser, Id);
+            Next_Token_Skip_Spaces (Input, Parser, Id);
 
             Type_Id := Id;
             Default_Start := Null_Token;
@@ -3744,6 +3790,13 @@ package body Sax.Readers is
             --  Register the attribute
             --  URI are resolved later on, we currently only store the prefix
             if Add_Attr then
+               if Debug_Internal then
+                  Put_Line
+                    ("Register attribute: "
+                     & Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)
+                     & " value=" & Parser.Buffer
+                       (Value_Start.First .. Value_End.Last) & "--");
+               end if;
                Add_Attribute
                  (Attributes,
                   URI => Parser.Buffer (Attr_NS_Id.First .. Attr_NS_Id.Last),
@@ -3880,6 +3933,12 @@ package body Sax.Readers is
 
          Set_State (Parser, Default_State);
          Find_NS (Parser, Parser.Current_Node,  Elem_NS_Id, NS);
+
+         if Debug_Internal then
+            Put_Line
+              ("Start_Element "
+               & Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id));
+         end if;
 
          if Parser.Hooks.Start_Element /= null then
             Parser.Hooks.Start_Element
