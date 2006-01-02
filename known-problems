@@ -1,8 +1,10 @@
 Problems in 2.1:
 
 Sax:
-- EB16-004: Test_Valid_Chars_Feature would check whether characters specified
-  in a &#..; construct are valid, but it shouldn't
+- Expanding parameter entities should always surround them with spaces, as per
+  4.4.8 in the XML specifications
+Schema:
+- Fixes various issues when validating documents
 
 Problems in 2.0.1:
 
