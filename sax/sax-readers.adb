@@ -574,7 +574,7 @@ package body Sax.Readers is
       if C /= Slash then
          while Index <= System_Id'Last loop
             Encoding.Read (System_Id, Index, C);
-            if C = Slash then
+            if C = Slash or else C = Backslash then
                Basename_Start := Index;
             end if;
          end loop;
