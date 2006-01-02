@@ -86,6 +86,7 @@ package Sax.Encodings is
    Colon_Sequence         : constant Byte_Sequence := ":";
    Percent_Sign_Sequence  : constant Byte_Sequence := "%";
    Space_Sequence         : constant Byte_Sequence := " ";
+   Space_Numeric_Sequence : constant Byte_Sequence := "&#32;";
    Less_Than_Sequence     : constant Byte_Sequence := "<";
    Greater_Than_Sequence  : constant Byte_Sequence := ">";
    Equals_Sign_Sequence   : constant Byte_Sequence := "=";
