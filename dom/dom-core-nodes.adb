@@ -1065,7 +1065,7 @@ package body DOM.Core.Nodes is
             when Horizontal_Tabulation => Put (Tab_Sequence);
             when Line_Feed             => Put (EOL_Sequence, Encoding);
             when Carriage_Return       => Put (Cr_Sequence);
-            when 0 .. 8 | 11 .. 12 | 14 .. 32 =>
+            when 0 .. 8 | 11 .. 12 | 14 .. 31 =>
                declare
                   Img : constant String := Unicode_Char'Image (C);
                begin
