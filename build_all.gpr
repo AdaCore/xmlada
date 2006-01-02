@@ -3,7 +3,9 @@ with "unicode/unicode", "unicode/test/unicode_test";
 with "sax/sax",         "sax/test/sax_test";
 with "dom/dom",         "dom/test/dom_test";
 with "schema/schema",   "schema/test/schema_test";
+with "shared";
 
 project Build_All is
    for Source_Files use ();
+   package Ide renames Shared.Ide;
 end Build_All;

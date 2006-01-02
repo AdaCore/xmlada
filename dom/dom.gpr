@@ -19,5 +19,6 @@ project Dom is
    package Compiler renames Shared.Compiler;
    package Binder   renames Shared.Binder;
    package Linker   renames Shared.Linker;
+   package Ide      renames Shared.Ide;
  
 end Dom;

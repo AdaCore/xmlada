@@ -66,5 +66,9 @@ project Shared is
          when "optimize" =>
       end case;
    end linker;        
+
+   package Ide is
+      for VCS_Kind use "cvs";
+   end Ide;
  
 end Shared;
