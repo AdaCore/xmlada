@@ -32,13 +32,14 @@ procedure Testxml is
    EOL : Byte_Sequence_Access := new Byte_Sequence'(Sax.Encodings.Lf_Sequence);
    Print_Comments : Boolean := False;
    Print_XML_PI   : Boolean := False;
+   Collapse_Empty_Nodes : Boolean := False;
 
 begin
    --  Parse the command line
    loop
       case Getopt
         ("silent uri normalize validate dump valid_chars encoding-out: eol:"
-         & " comments xmlpi")
+         & " comments xmlpi collapse")
       is
          when ASCII.Nul => exit;
          when 'e' =>
@@ -53,7 +54,12 @@ begin
                Encoding_Out := Get_By_Name (Parameter);
             end if;
          when 'x' => Print_XML_PI := True;
-         when 'c' => Print_Comments := True;
+         when 'c' =>
+            if Full_Switch = "comments" then
+               Print_Comments := True;
+            else
+               Collapse_Empty_Nodes := True;
+            end if;
          when 's' => Silent := True;
          when 'u' => With_URI := True;
          when 'v' =>
@@ -117,7 +123,8 @@ begin
                 Print_XML_PI   => Print_XML_PI,
                 With_URI       => With_URI,
                 EOL_Sequence   => EOL.all,
-                Encoding       => Encoding_Out);
+                Encoding       => Encoding_Out,
+                Collapse_Empty_Nodes => Collapse_Empty_Nodes);
       end if;
    end if;
 
