@@ -3,6 +3,9 @@ New features in version 2.1
   - E930-022 Added support for windows-1252 encoding
  SAX parser:
   - E912-011 No longer use an exception internally to report the end of stream
+ DOM:
+  - DOM.Core.Nodes.Print now uses the <../> syntax to represent empty nodes
+  - EB02-005 DOM.Core.Nodes.Print now prints the namespace declarations
  Schema validation:
   - E802-003 Added support for time-related types, like dateTime, time, date,...
   - Added support for totalDigits and fractionDigits facets for integer types
