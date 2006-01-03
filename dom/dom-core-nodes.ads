@@ -253,7 +253,8 @@ package DOM.Core.Nodes is
       With_URI       : Boolean := False;
       EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
       Encoding       : Unicode.Encodings.Unicode_Encoding :=
-        Unicode.Encodings.Get_By_Name ("utf-8"));
+        Unicode.Encodings.Get_By_Name ("utf-8");
+      Collapse_Empty_Nodes : Boolean := False);
    --  Print the contents of Node and its children in XML format.
    --  If Print_Comments is True, then nodes associated with comments are
    --  also displayed.
@@ -268,16 +269,9 @@ package DOM.Core.Nodes is
    --
    --  By default, names are of the form  ns_prefix:local_name. However, if
    --  with_URI is True, names will be  ns_URI:local_name instead
-
-   procedure Print
-     (List           : Node_List;
-      Print_Comments : Boolean := False;
-      Print_XML_PI   : Boolean := False;
-      With_URI       : Boolean := False;
-      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
-      Encoding       : Unicode.Encodings.Unicode_Encoding :=
-        Unicode.Encodings.Get_By_Name ("utf-8"));
-   --  Same as Print, byt for all the nodes in the list.
+   --
+   --  If Collapse_Empty_Nodes is true, then nodes with no child node will be
+   --  output as <name/>, instead of <name></name>
 
    procedure Dump (N : Node; With_URI : Boolean := False);
    --  Dump the contents of the node to standard output.

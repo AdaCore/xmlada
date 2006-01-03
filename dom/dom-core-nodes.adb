@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2006                     --
+--                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -27,6 +27,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with DOM.Core.Documents;        use DOM.Core.Documents;
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
@@ -68,6 +69,11 @@ package body DOM.Core.Nodes is
    procedure Sort (Map : in out Named_Node_Map);
    --  Sort alphabetically the contents of Map (this is based on the value
    --  of Node_Name).
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (String_Htable.HTable, String_Htable_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Node_Name_Htable.HTable, Node_Name_Htable_Access);
 
    --------------------
    -- Child_Is_Valid --
@@ -952,10 +958,6 @@ package body DOM.Core.Nodes is
    procedure Free (N : in out Node; Deep : Boolean := True) is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (Node_Record, Node);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (String_Htable.HTable, String_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Node_Name_Htable.HTable, Node_Name_Htable_Access);
    begin
       if N = null then
          return;
@@ -1123,128 +1125,250 @@ package body DOM.Core.Nodes is
    -----------
 
    procedure Print
-     (List           : Node_List;
-      Print_Comments : Boolean := False;
-      Print_XML_PI   : Boolean := False;
-      With_URI       : Boolean := False;
-      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
-      Encoding       : Unicode.Encodings.Unicode_Encoding :=
-        Unicode.Encodings.Get_By_Name ("utf-8"))
-   is
-   begin
-      for J in 0 .. List.Last loop
-         Print
-           (List.Items (J), Print_Comments, Print_XML_PI, With_URI,
-            EOL_Sequence, Encoding);
-      end loop;
-   end Print;
-
-   -----------
-   -- Print --
-   -----------
-
-   procedure Print
      (N              : Node;
       Print_Comments : Boolean := False;
       Print_XML_PI   : Boolean := False;
       With_URI       : Boolean := False;
       EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
       Encoding       : Unicode.Encodings.Unicode_Encoding :=
-        Unicode.Encodings.Get_By_Name ("utf-8")) is
-   begin
-      if N = null then
-         return;
-      end if;
+        Unicode.Encodings.Get_By_Name ("utf-8");
+      Collapse_Empty_Nodes : Boolean := False)
+   is
+      use Node_Name_Htable;
 
-      case N.Node_Type is
-         when Element_Node =>
-            --  ??? Should define a new constant in Sax.Encodings
-            Put (Less_Than_Sequence, Encoding);
-            Print_Name (N, With_URI, EOL_Sequence, Encoding);
+      Namespaces : Node_Name_Htable_Access :=
+        new Node_Name_Htable.HTable (127);
+      --  Namespaces defined so far
 
-            --  Sort the XML attributes as required for canonical XML
-            Sort (N.Attributes);
+      Doc          : constant Document := Owner_Document (N);
+      Root_Element : constant Element  := Get_Element (Doc);
+      Empty_String : constant Shared_String_Access :=
+        Internalize_String (Doc, "");
 
-            for J in 0 .. N.Attributes.Last loop
-               Put (Space_Sequence, Encoding);
-               Print (N.Attributes.Items (J),
-                      Print_Comments, Print_XML_PI, With_URI,
-                      EOL_Sequence, Encoding);
-            end loop;
-            Put (Greater_Than_Sequence, Encoding);
+      procedure Recursive_Print (N : Node);
+      --  Print N recursively
 
-            Print
-              (N.Children, Print_Comments, Print_XML_PI, With_URI,
-               EOL_Sequence, Encoding);
+      procedure Recursive_Print (List : Node_List);
+      --  Print all nodes in List
 
-            Put (Less_Than_Sequence & Slash_Sequence, Encoding);
-            Print_Name (N, With_URI, EOL_Sequence, Encoding);
-            Put (Greater_Than_Sequence, Encoding);
+      procedure Print_Namespace_Declarations (N : Element);
+      --  Print the namespace declarations required for the tree rooted at N
 
-         when Attribute_Node =>
-            Print_Name (N, With_URI, EOL_Sequence, Encoding);
-            Put (Equals_Sign_Sequence & Quotation_Mark_Sequence, Encoding);
-            Print_String (Node_Value (N), EOL_Sequence, Encoding);
-            Put (Quotation_Mark_Sequence, Encoding);
+      function Print_Namespace_Declaration
+        (N : Element; Force : Boolean) return Boolean;
+      --  Print the xmlns attribute for N if its namespace is not already
+      --  known (or Force is True). Return True if the attribute was created
 
-         when Processing_Instruction_Node =>
-            Put
-              (Less_Than_Sequence
-               & Question_Mark_Sequence
-               & N.Target.all, Encoding);
+      procedure Remove_Namespace_Declaration (N : Element);
+      --  Remove the local namespace declaration for N
 
-            if N.Pi_Data'Length = 0 then
-               Put (Space_Sequence, Encoding);
+      ----------------------------------
+      -- Remove_Namespace_Declaration --
+      ----------------------------------
 
-            else
-               declare
-                  C : Unicode_Char;
-                  Index : Natural := N.Pi_Data'First;
-               begin
-                  Sax.Encodings.Encoding.Read (N.Pi_Data.all, Index, C);
+      procedure Remove_Namespace_Declaration (N : Element) is
+      begin
+         Remove
+           (Namespaces.all,
+            (Prefix     => N.Name.Prefix,
+             Local_Name => Empty_String,
+             Namespace  => N.Name.Namespace));
+      end Remove_Namespace_Declaration;
 
-                  if C /= Space then
-                     Put (Space_Sequence, Encoding);
+      ---------------------------------
+      -- Print_Namespace_Declaration --
+      ---------------------------------
+
+      function Print_Namespace_Declaration
+        (N : Element; Force : Boolean) return Boolean
+      is
+         Name  : constant Node_Name_Def :=
+           (Prefix     => N.Name.Prefix,
+            Local_Name => Empty_String,
+            Namespace  => N.Name.Namespace);
+         Prefix_Already_Defined : Boolean := False;
+         Iter : Node_Name_Htable.Iterator;
+      begin
+         if N.Name.Prefix /= null
+           and then Get (Namespaces.all, Name) = null
+         then
+            --  If we have another one with the same prefix, do not print the
+            --  second one, we will use a local attribute for this purpose
+
+            if not Force then
+               --  Check whether the prefix is already defined
+               Iter := First (Namespaces.all);
+               while Iter /= No_Iterator loop
+                  if Current (Iter).Prefix.all = N.Name.Prefix.all then
+                     Prefix_Already_Defined := True;
+                     exit;
                   end if;
-               end;
-            end if;
-            Put
-              (N.Pi_Data.all & Question_Mark_Sequence
-               & Greater_Than_Sequence, Encoding);
-
-         when Comment_Node =>
-            if Print_Comments then
-               Put ("<!--", Encoding);
-               Put (Node_Value (N), Encoding);
-               Put ("-->", Encoding);
+                  Next (Namespaces.all, Iter);
+               end loop;
             end if;
 
-         when Document_Node =>
-            if Print_XML_PI then
-               Put (Write_Bom (Encoding.Encoding_Scheme.BOM));
+            if not Prefix_Already_Defined then
+               Put (Space_Sequence, Encoding);
+               Put (Xmlns_Sequence, Encoding);
+               Put (Colon_Sequence, Encoding);
+               Print_String (Prefix (N), EOL_Sequence, Encoding);
+               Put (Equals_Sign_Sequence, Encoding);
+               Put (Quotation_Mark_Sequence, Encoding);
+               Print_String (Namespace_URI (N), EOL_Sequence, Encoding);
+               Put (Quotation_Mark_Sequence, Encoding);
+               Set
+                 (Namespaces.all,
+                  From_Qualified_Name
+                    (Doc,
+                     Name => Prefix (N) & Colon_Sequence,
+                     Namespace => N.Name.Namespace));
+               return True;
+            end if;
+         end if;
+         return False;
+      end Print_Namespace_Declaration;
+
+      ----------------------------------
+      -- Print_Namespace_Declarations --
+      ----------------------------------
+
+      procedure Print_Namespace_Declarations (N : Element) is
+         Child : Node := First_Child (N);
+         Tmp   : Boolean;
+         pragma Unreferenced (Tmp);
+      begin
+         while Child /= null loop
+            if Child.Node_Type = Element_Node then
+               Tmp :=
+                 Print_Namespace_Declaration (Element (Child), Force => False);
+            end if;
+            Child := Next_Sibling (Child);
+         end loop;
+      end Print_Namespace_Declarations;
+
+      ---------------------
+      -- Recursive_Print --
+      ---------------------
+
+      procedure Recursive_Print (List : Node_List) is
+      begin
+         for J in 0 .. List.Last loop
+            Recursive_Print (List.Items (J));
+         end loop;
+      end Recursive_Print;
+
+      ---------------------
+      -- Recursive_Print --
+      ---------------------
+
+      procedure Recursive_Print (N : Node) is
+         Xmlns_Inserted : Boolean := False;
+      begin
+         if N = null then
+            return;
+         end if;
+
+         case N.Node_Type is
+            when Element_Node =>
+               Put (Less_Than_Sequence, Encoding);
+               Print_Name (N, With_URI, EOL_Sequence, Encoding);
+
+               Xmlns_Inserted :=
+                 Print_Namespace_Declaration (Element (N), Force => True);
+               if N = Root_Element then
+                  Print_Namespace_Declarations (Element (N));
+               end if;
+
+               --  Sort the XML attributes as required for canonical XML
+               Sort (N.Attributes);
+
+               for J in 0 .. N.Attributes.Last loop
+                  Put (Space_Sequence, Encoding);
+                  Recursive_Print (N.Attributes.Items (J));
+               end loop;
+
+               if Collapse_Empty_Nodes and then N.Children = Null_List then
+                  Put (Slash_Sequence & Greater_Than_Sequence, Encoding);
+               else
+                  Put (Greater_Than_Sequence, Encoding);
+
+                  Recursive_Print (N.Children);
+
+                  Put (Less_Than_Sequence & Slash_Sequence, Encoding);
+                  Print_Name (N, With_URI, EOL_Sequence, Encoding);
+                  Put (Greater_Than_Sequence, Encoding);
+               end if;
+
+               if Xmlns_Inserted then
+                  Remove_Namespace_Declaration (Element (N));
+               end if;
+
+            when Attribute_Node =>
+               Print_Name (N, With_URI, EOL_Sequence, Encoding);
+               Put (Equals_Sign_Sequence & Quotation_Mark_Sequence, Encoding);
+               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+               Put (Quotation_Mark_Sequence, Encoding);
+
+            when Processing_Instruction_Node =>
                Put
-                 ("<?xml version=""1.0"" encoding="""
-                  & Encoding.Name.all & """?>", Encoding);
-               Print_String ("" & ASCII.LF, EOL_Sequence, Encoding);
-            end if;
-            Print (N.Doc_Children,
-                   Print_Comments, Print_XML_PI, With_URI,
-                   EOL_Sequence, Encoding);
+                 (Less_Than_Sequence
+                  & Question_Mark_Sequence
+                  & N.Target.all, Encoding);
 
-         when Document_Fragment_Node =>
-            Print (N.Doc_Frag_Children,
-                   Print_Comments, Print_XML_PI, With_URI,
-                   EOL_Sequence, Encoding);
+               if N.Pi_Data'Length = 0 then
+                  Put (Space_Sequence, Encoding);
 
-         when Document_Type_Node | Notation_Node =>
-            null;
+               else
+                  declare
+                     C : Unicode_Char;
+                     Index : Natural := N.Pi_Data'First;
+                  begin
+                     Sax.Encodings.Encoding.Read (N.Pi_Data.all, Index, C);
 
-         when Text_Node =>
-            Print_String (Node_Value (N), EOL_Sequence, Encoding);
+                     if C /= Space then
+                        Put (Space_Sequence, Encoding);
+                     end if;
+                  end;
+               end if;
+               Put
+                 (N.Pi_Data.all & Question_Mark_Sequence
+                  & Greater_Than_Sequence, Encoding);
 
-         when others =>
-            Print_String (Node_Value (N), EOL_Sequence, Encoding);
-      end case;
+            when Comment_Node =>
+               if Print_Comments then
+                  Put ("<!--", Encoding);
+                  Put (Node_Value (N), Encoding);
+                  Put ("-->", Encoding);
+               end if;
+
+            when Document_Node =>
+               if Print_XML_PI then
+                  Put (Write_Bom (Encoding.Encoding_Scheme.BOM));
+                  Put
+                    ("<?xml version=""1.0"" encoding="""
+                     & Encoding.Name.all & """?>", Encoding);
+                  Print_String ("" & ASCII.LF, EOL_Sequence, Encoding);
+               end if;
+               Recursive_Print (N.Doc_Children);
+
+            when Document_Fragment_Node =>
+               Recursive_Print (N.Doc_Frag_Children);
+
+            when Document_Type_Node | Notation_Node =>
+               null;
+
+            when Text_Node =>
+               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+
+            when others =>
+               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+         end case;
+      end Recursive_Print;
+
+   begin
+      Recursive_Print (N);
+      Reset (Namespaces.all);
+      Unchecked_Free (Namespaces);
    end Print;
 
    ----------
