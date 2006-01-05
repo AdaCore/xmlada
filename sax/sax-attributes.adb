@@ -430,6 +430,9 @@ package body Sax.Attributes is
       Tmp : Attribute_Access;
    begin
       Get (Attr, Qname, J, Tmp);
+      if Tmp = null then
+         return Cdata;   --  3.3.3: If not defined, treated as CDATA
+      end if;
       return Tmp.Att_Type;
    end Get_Type;
 
