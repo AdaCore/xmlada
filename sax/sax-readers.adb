@@ -2903,14 +2903,16 @@ package body Sax.Readers is
          State : Parser_State;
          Str_Start, Str_End : out Token;
          Normalize         : Boolean := False;
-         Normalize_Leading : Boolean := False);
+         Collapse_Spaces   : Boolean := False);
       --  Get all the character till the end of the string. Id should contain
       --  the initial quote that starts the string.
       --  On exit, Str_Start is set to the first token of the string, and
       --  Str_End to the last token.
       --  If Normalize is True, then all space characters are converted to
-      --  ' ', duplicate spaces are removed. A leading space (if there's any)
-      --  is left only if Normalize_Leading is False.
+      --  ' '.
+      --  If Collapse_Spaces is True, then all duplicate spaces sequences are
+      --  collapsed into a single space character. Leading and trailing spaces
+      --  are also removed.
 
       procedure Get_Name_NS (Id : in out Token; NS_Id, Name_Id : out Token);
       --  Read the next tokens so as to match either a single name or
@@ -2950,7 +2952,7 @@ package body Sax.Readers is
          State : Parser_State;
          Str_Start, Str_End : out Token;
          Normalize : Boolean := False;
-         Normalize_Leading : Boolean := False)
+         Collapse_Spaces : Boolean := False)
       is
          T : constant Token := Id;
          Saved_State : constant Parser_State := Get_State (Parser);
@@ -2958,14 +2960,14 @@ package body Sax.Readers is
          C : Unicode_Char;
          Index : Natural;
          Last_Space : Natural := 0;
-         Had_Space : Boolean := Normalize_Leading; --  Avoid leading spaces
+         Had_Space : Boolean := Collapse_Spaces; --  Avoid leading spaces
 
       begin
          if Debug_Internal then
             Put_Line ("Get_String Normalize="
                       & Boolean'Image (Normalize)
-                      & " Normalize_Leading="
-                      & Boolean'Image (Normalize_Leading));
+                      & " Collapse_Spaces="
+                      & Boolean'Image (Collapse_Spaces));
          end if;
          Set_State (Parser, State);
          Next_Token (Input, Parser, Id);
@@ -2999,7 +3001,7 @@ package body Sax.Readers is
                         & Location (Parser, Possible_End), Id);
                   end if;
                when others =>
-                  if Normalize then
+                  if Normalize or Collapse_Spaces then
                      declare
                         Str : constant Byte_Sequence :=
                           Parser.Buffer (Id.First .. Id.Last);
@@ -3016,7 +3018,7 @@ package body Sax.Readers is
                                or else State.Ignore_Special)
                              and then Is_White_Space (C)
                            then
-                              if not Had_Space then
+                              if not Collapse_Spaces or not Had_Space then
                                  Put_In_Buffer
                                    (Parser, Unicode.Names.Basic_Latin.Space);
                               end if;
@@ -3034,7 +3036,7 @@ package body Sax.Readers is
             Next_Token (Input, Parser, Id);
          end loop;
 
-         if Normalize and then Had_Space and then Last_Space /= 0 then
+         if Collapse_Spaces and then Had_Space and then Last_Space /= 0 then
             Str_End.Last := Last_Space - 1;
          end if;
 
@@ -3532,7 +3534,7 @@ package body Sax.Readers is
                then
                   Get_String
                     (Id, Attlist_Str_Def_State, Default_Start, Default_End,
-                     Normalize => True, Normalize_Leading => True);
+                     Normalize => True, Collapse_Spaces => True);
                else
                   Fatal_Error
                     (Parser, "[WF] Invalid default value for attribute");
@@ -3676,6 +3678,10 @@ package body Sax.Readers is
                Id);
          end if;
 
+         Attr := Get
+           (Parser.Default_Atts,
+            Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id)).Attributes;
+
          while Id.Typ /= End_Of_Tag
            and then Id.Typ /= End_Of_Input
            and then Id.Typ /= End_Of_Start_Tag
@@ -3706,10 +3712,26 @@ package body Sax.Readers is
                Fatal_Error
                  (Parser, "[3.1] Attribute values must be quoted", Id);
             end if;
-            Get_String (Id, Attr_Value_State, Value_Start, Value_End,
-                        Normalize => True,
-                        Normalize_Leading => True);
-            --  ??? All considered as CDATA
+
+            --  3.3.3: If the attribute's type is not CDATA, which must
+            --  normalize it, ie collapse sequence of spaces.
+            --  ??? What if the information comes from an XML Schema instead
+            --  of a DTD
+
+            if Attr = null
+              or else Get_Type
+                (Attr.all,
+                 Qname => Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)) =
+              Cdata
+            then
+               Get_String (Id, Attr_Value_State, Value_Start, Value_End,
+                           Normalize       => True,
+                           Collapse_Spaces => False);
+            else
+               Get_String (Id, Attr_Value_State, Value_Start, Value_End,
+                           Normalize       => True,
+                           Collapse_Spaces => True);
+            end if;
 
             Add_Attr := True;
 
@@ -3737,14 +3759,10 @@ package body Sax.Readers is
                --  requires additional testing afterwards
                if Parser.Feature_Validation then
                   declare
-                     Atts : constant Attributes_Ptr := Get
-                       (Parser.Default_Atts,
-                        Parser.Buffer
-                        (Elem_Name_Id.First .. Elem_Name_Id.Last)).Attributes;
                      Index : Integer;
                      Att_Type : Attribute_Type;
                   begin
-                     if Atts = null then
+                     if Attr = null then
                         Fatal_Error
                           (Parser, "[VC] No attribute defined for element "
                            & Parser.Buffer
@@ -3754,7 +3772,7 @@ package body Sax.Readers is
                      --  We must compare with Qnames, since we namespaces
                      --  haven't been resolved for default attributes
                      Index := Get_Index
-                       (Atts.all,
+                       (Attr.all,
                         Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id));
                      if Index = -1 then
                         Fatal_Error
@@ -3763,7 +3781,7 @@ package body Sax.Readers is
                            (Parser, Attr_NS_Id, Attr_Name_Id));
                      end if;
 
-                     Att_Type := Get_Type (Atts.all, Index);
+                     Att_Type := Get_Type (Attr.all, Index);
                      if (Att_Type = Idrefs or else Att_Type = Nmtokens)
                        and then Value_Start.First > Value_End.Last
                      then
@@ -3823,10 +3841,6 @@ package body Sax.Readers is
                  (Parser, "[3.1] Attributes must be separated by spaces", Id);
             end if;
          end loop;
-
-         Attr := Get
-           (Parser.Default_Atts,
-            Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id)).Attributes;
 
          --  Check that all #REQUIRED attributes are defined
          --  and that #FIXED attributes have the defined value
