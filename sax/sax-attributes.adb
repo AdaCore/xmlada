@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2004                     --
+--                       Copyright (C) 2001-2006                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -78,7 +78,7 @@ package body Sax.Attributes is
    -- Get --
    ---------
 
-   function Get (Attr : Attributes'Class; Index : in Natural)
+   function Get (Attr : Attributes'Class; Index : Natural)
       return Attribute_Access
    is
       Tmp : Attribute_Access := Attr.First;

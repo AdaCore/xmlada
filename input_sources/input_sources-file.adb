@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
+--                       Copyright (C) 2001-2006                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -36,7 +36,7 @@ with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
 
 package body Input_Sources.File is
 
-   procedure Fast_Read (The_File : in String; Buf : in Byte_Sequence_Access);
+   procedure Fast_Read (The_File : String; Buf : Byte_Sequence_Access);
    --  Read Buf'length characters in The_File and store it in Buf.
    --  This procedure performs a single call to Read.
 
@@ -44,8 +44,8 @@ package body Input_Sources.File is
    -- Fast_Read --
    ---------------
 
-   procedure Fast_Read (The_File : in String;
-                        Buf      : in Byte_Sequence_Access)
+   procedure Fast_Read (The_File : String;
+                        Buf      : Byte_Sequence_Access)
    is
       type Fixed_String is new String (Buf'Range);
       package Dir_Fast is new Ada.Sequential_IO (Fixed_String);

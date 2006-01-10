@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
+--                       Copyright (C) 2001-2006                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -141,7 +141,7 @@ package body Sax.Locators is
    ----------
 
    procedure Copy
-     (Loc : in out Locator_Impl; Loc_I : in Locator'Class) is
+     (Loc : in out Locator_Impl; Loc_I : Locator'Class) is
    begin
       Set_Line_Number (Loc, Get_Line_Number (Loc_I));
       Set_Column_Number (Loc, Get_Column_Number (Loc_I));

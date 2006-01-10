@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
+--                       Copyright (C) 2001-2006                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -87,7 +87,7 @@ package Sax.Locators is
    procedure Unref (Loc : in out Locator_Impl_Access);
    --  Free the memory allocated internally for the strings.
 
-   procedure Copy (Loc : in out Locator_Impl; Loc_I : in Locator'Class);
+   procedure Copy (Loc : in out Locator_Impl; Loc_I : Locator'Class);
    --  Copy the location information from Loc_I to Loc
    --  This calls the Set_* functions below, so that you don't need to
    --  rewrite it for all your classes.
