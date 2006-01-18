@@ -28,22 +28,24 @@ endif
 MODULES=unicode input_sources sax dom schema
 MODULE_INSTALL=${MODULES:%=%_inst}
 
+MAKE_ARGS=-XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
+
 .PHONY: all obj clean install install_dirs
 
 all: obj
 
 obj: force
-	${GNATMAKE} -Punicode/unicode.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
-	${GNATMAKE} -Pinput_sources/input_sources.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
-	${GNATMAKE} -Psax/sax.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
-	${GNATMAKE} -Pdom/dom.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
-	${GNATMAKE} -Pschema/schema.gpr -XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
+	${GNATMAKE} -Punicode/unicode.gpr ${MAKE_ARGS}
+	${GNATMAKE} -Pinput_sources/input_sources.gpr ${MAKE_ARGS}
+	${GNATMAKE} -Psax/sax.gpr ${MAKE_ARGS}
+	${GNATMAKE} -Pdom/dom.gpr -${MAKE_ARGS}
+	${GNATMAKE} -Pschema/schema.gpr ${MAKE_ARGS}
 
 test: force
-	${GNATMAKE} -Punicode/test/unicode_test.gpr -XMODE=${MODE}
-	${GNATMAKE} -Psax/test/sax_test.gpr -XMODE=${MODE}
-	${GNATMAKE} -Pdom/test/dom_test.gpr -XMODE=${MODE}
-	${GNATMAKE} -Pschema/test/schema_test.gpr -XMODE=${MODE}
+	${GNATMAKE} -Punicode/test/unicode_test.gpr ${MAKE_ARGS}
+	${GNATMAKE} -Psax/test/sax_test.gpr ${MAKE_ARGS}
+	${GNATMAKE} -Pdom/test/dom_test.gpr ${MAKE_ARGS}
+	${GNATMAKE} -Pschema/test/schema_test.gpr ${MAKE_ARGS}
 
 docs: force
 	-${MAKE} -e -C docs
