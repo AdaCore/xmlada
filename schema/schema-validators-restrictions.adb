@@ -201,7 +201,7 @@ package body Schema.Validators.Restrictions is
    begin
       Had_Restriction := True;
 
-      if Validator.Base.Block_Restriction and then Had_Restriction then
+      if Validator.Base.Block_Restriction then
          Validation_Error
            ("Restrictions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
