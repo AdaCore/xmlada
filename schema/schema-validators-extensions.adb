@@ -205,7 +205,7 @@ package body Schema.Validators.Extensions is
             & Get_Local_Name (Validator.Base) & """ are forbidden");
       end if;
 
-      if Validator.Base.Block_Extension and then Had_Extension then
+      if Validator.Base.Block_Extension then
          Validation_Error
            ("Extensions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
