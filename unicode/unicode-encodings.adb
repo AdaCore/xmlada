@@ -75,11 +75,13 @@ package body Unicode.Encodings is
          return (Name            => Cst_Utf32_BE'Access,
                  Character_Set   => Unicode_Character_Set,
                  Encoding_Scheme => Utf32_BE_Encoding);
-      elsif N = Cst_Utf8 then
+      elsif N = Cst_Utf8 or else N = "utf8" then
          return (Name            => Cst_Utf8'Access,
                  Character_Set   => Unicode_Character_Set,
                  Encoding_Scheme => Utf8_Encoding);
-      elsif N = To_Lower (Unicode.CCS.Iso_8859_1.Name1) then
+      elsif N = To_Lower (Unicode.CCS.Iso_8859_1.Name1)
+        or else N = "ascii"
+      then
          return (Name            => Unicode.CCS.Iso_8859_1.Name1'Access,
                  Character_Set   => Iso_8859_1_Character_Set,
                  Encoding_Scheme => Basic_8bit_Encoding);

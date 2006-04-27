@@ -1,0 +1,3279 @@
+<?xml version="1.0" ?>
+<!--  This document gives the expected error messages for the testsuite -->
+
+<!DOCTYPE results [
+  <!ELEMENT test ANY>
+  <!ATTLIST test
+            ambiguous  CDATA "no"
+            unsupported CDATA "no"
+            id ID #REQUIRED >
+
+  <!--  If ambiguous is set to yes, the test is ambiguous, ie its
+        behavior seems to contradict other tests. Such tests are not
+        run by default -->
+  <!--  If unsupported is set to yes, then the test uses unsupported
+        features by XML/Ada. The test should be supported to claim full
+        compatibility, of course, but this is pending implementation. In
+        this case, it is recommended that the node's contents explains what
+        feature is unsupported.
+        An unsupported test of type "invalid" is still run to check that XML/Ada
+        correctly detects the well-formedness of the document -->
+  <!--  id is the unique ID of the test -->
+
+  <!ENTITY attribute_is_ncname
+           "Attribute must contain Names with no colon: " >
+  <!ENTITY invalid_notation_decl "Invalid notation declaration">
+  <!ENTITY expect_space          "Expecting a space">
+
+]>
+<results>
+  <!--  These tests are apparently wrong, given the Errata E14
+        http://www.w3.org/XML/xml-V10-2e-errata -->
+  <test id="ibm-invalid-P50-ibm50i01.xml"  ambiguous="yes" />
+  <test id="ibm-not-wf-p28a-ibm28an01.xml" ambiguous="yes" />
+  <test id="not-wf-not-sa-009"             ambiguous="yes" />
+  <test id="not-wf-sa-074"                 ambiguous="yes" />
+  <test id="not-wf-sa-104"                 ambiguous="yes" />
+  <test id="not-wf-sa-182"                 ambiguous="yes" />
+
+  <!--  To be implemented -->
+  <test id="rmt-e2e-55" unsupported="yes" >
+     Reference to unparsed entity in entity valie is an error, not forbidden
+  </test>
+  <test id="inv-not-sa14" unsupported="yes" />  <!--  CDATA as whitespace -->
+  <test id="el04" unsupported="yes" />          <!--  duplicate element decl -->
+  <!--  Needs to analyse the content model -->
+  <test id="rmt-e2e-34" unsupported="yes" />
+  <test id="rmt-e2e-2a" unsupported="yes" />
+  <test id="ibm-invalid-P51-ibm51i03" unsupported="yes" />
+  <test id="ibm-invalid-P39-ibm39i02" unsupported="yes" />
+  <test id="ibm-invalid-P39-ibm39i01" unsupported="yes" />
+  <test id="ibm-invalid-P39-ibm39i03" unsupported="yes" />
+  <test id="attr16" unsupported="yes" />  <!-- Default attribute value -->
+  <test id="attr15" unsupported="yes" />  <!-- Default attribute value -->
+  <test id="optional25" unsupported="yes" />  <!-- check content model -->
+  <test id="optional24" unsupported="yes" />  <!-- check content model -->
+  <test id="optional23" unsupported="yes" />  <!-- check content model -->
+  <test id="optional22" unsupported="yes" />  <!-- check content model -->
+  <test id="optional21" unsupported="yes" />  <!-- check content model -->
+  <test id="optional20" unsupported="yes" />  <!-- check content model -->
+  <test id="optional19" unsupported="yes" />  <!-- check content model -->
+  <test id="optional18" unsupported="yes" />  <!-- check content model -->
+  <test id="optional17" unsupported="yes" />  <!-- check content model -->
+  <test id="optional16" unsupported="yes" />  <!-- check content model -->
+  <test id="optional15" unsupported="yes" />  <!-- check content model -->
+  <test id="optional14" unsupported="yes" />  <!-- check content model -->
+  <test id="optional13" unsupported="yes" />  <!-- check content model -->
+  <test id="optional12" unsupported="yes" />  <!-- check content model -->
+  <test id="optional11" unsupported="yes" />  <!-- check content model -->
+  <test id="optional10" unsupported="yes" />  <!-- check content model -->
+  <test id="optional09" unsupported="yes" />  <!-- check content model -->
+  <test id="optional08" unsupported="yes" />  <!-- check content model -->
+  <test id="optional07" unsupported="yes" />  <!-- check content model -->
+  <test id="optional06" unsupported="yes" />  <!-- check content model -->
+  <test id="optional05" unsupported="yes" />  <!-- check content model -->
+  <test id="optional04" unsupported="yes" />  <!-- check content model -->
+  <test id="optional03" unsupported="yes" />  <!-- check content model -->
+  <test id="optional02" unsupported="yes" />  <!-- check content model -->
+  <test id="optional01" unsupported="yes" />  <!-- check content model -->
+  <test id="inv-dtd03"  unsupported="yes" />  <!-- check content model -->
+  <test id="inv-dtd01"  unsupported="yes" />  <!-- duplicate in content model -->
+  <test id="el03"       unsupported="yes" />  <!-- check content model -->
+  <test id="el01"       unsupported="yes" />  <!-- check content model -->
+  <test id="el05"       unsupported="yes" />  <!-- invalid content model -->
+  <test id="el06"       unsupported="yes" />  <!-- empty element -->
+  <test id="el02"       unsupported="yes" />  <!-- empty element -->
+  <test id="ibm-invalid-P60-ibm60i03.xml" unsupported="yes" />
+  <test id="ibm-invalid-P59-ibm59i01.xml" unsupported="yes" />
+  <test id="ibm-invalid-P51-ibm51i03.xml" unsupported="yes" />
+  <test id="ibm-invalid-P45-ibm45i01.xml" unsupported="yes" />
+  <test id="ibm-invalid-P39-ibm39i04.xml" unsupported="yes" />
+  <test id="ibm-invalid-P39-ibm39i03.xml" unsupported="yes" />
+  <test id="ibm-invalid-P39-ibm39i02.xml" unsupported="yes" />
+  <test id="ibm-invalid-P39-ibm39i01.xml" unsupported="yes" />
+  <test id="ibm-invalid-P32-ibm32i04.xml" unsupported="yes"/><!--standalone-->
+  <test id="ibm-invalid-P32-ibm32i03.xml" unsupported="yes"/><!--standalone-->
+  <test id="ibm-invalid-P32-ibm32i01.xml" unsupported="yes"/><!--standalone-->
+
+  <!--  The following tests require validation with DTD. The implementation
+        should be shared with schemas -->
+  <test id="rmt-e2e-15h" unsupported="yes" />
+  <test id="rmt-e2e-15g" unsupported="yes" />
+  <test id="rmt-e2e-15d" unsupported="yes" />
+  <test id="rmt-e2e-15c" unsupported="yes" />
+  <test id="rmt-e2e-15b" unsupported="yes" />
+  <test id="rmt-e2e-15a" unsupported="yes" />
+  <test id="ibm-invalid-P60-ibm60i03" unsupported="yes" />
+  <test id="ibm-invalid-P59-ibm59i01" unsupported="yes" /> <!-- enums -->
+  <test id="attr07"                       unsupported="yes" /> <!-- enums -->
+  <test id="ibm-invalid-P56-ibm56i10" unsupported="yes" /> <!-- ids -->
+  <test id="ibm-invalid-P56-ibm56i08" unsupported="yes" /> <!-- ids -->
+  <test id="ibm-invalid-P56-ibm56i06" unsupported="yes" /> <!-- ids -->
+  <test id="ibm-invalid-P56-ibm56i02" unsupported="yes" /> <!-- ids -->
+  <test id="ibm-invalid-P56-ibm56i10.xml" unsupported="yes" /> <!-- ids -->
+  <test id="ibm-invalid-P56-ibm56i08.xml" unsupported="yes" /> <!-- ids -->
+  <test id="ibm-invalid-P56-ibm56i06.xml" unsupported="yes" /> <!-- ids -->
+  <test id="ibm-invalid-P56-ibm56i02.xml" unsupported="yes" /> <!-- ids -->
+  <test id="id09"                         unsupported="yes" /> <!-- ids and idref -->
+  <test id="id08"                         unsupported="yes" /> <!-- ids and idref -->
+  <test id="id03"                         unsupported="yes" /> <!-- one id per elem-->
+  <test id="id02"                         unsupported="yes" /> <!-- ids unique -->
+  <test id="ibm-invalid-P45-ibm45i01" unsupported="yes" /> <!-- <!ELEM -->
+  <test id="ibm-invalid-P39-ibm39i04" unsupported="yes" /> <!-- <!ELEM -->
+  <test id="ibm-invalid-P32-ibm32i04" unsupported="yes" /> <!-- standalone -->
+  <test id="ibm-invalid-P32-ibm32i03" unsupported="yes" /> <!-- standalone -->
+  <test id="ibm-invalid-P32-ibm32i01" unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa12"                 unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa11"                 unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa10"                 unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa09"                 unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa07"                 unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa06"                 unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa05"                 unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa04"                 unsupported="yes" /> <!-- standalone -->
+  <test id="inv-not-sa01"                 unsupported="yes" /> <!-- standalone -->
+  <test id="empty" unsupported="yes" />       <!-- whitespace -->
+  <test id="o-p75pass1" unsupported="yes" />  <!-- missing element decl -->
+  <test id="o-p74pass1" unsupported="yes" />  <!-- missing element decl -->
+  <test id="attr04"     unsupported="yes" />  <!-- notations must be declared -->
+  <test id="attr03"     unsupported="yes" />  <!-- notations must be declared -->
+  <test id="invalid-not-sa-022" unsupported="yes" /> <!--  conditional section -->
+
+  <!--  Known error messages 
+        This is the full list of error messages expected when running the testsuite
+    -->
+
+  <test id="id01"
+     >id01.xml:5:6: &attribute_is_ncname;id</test>
+  <test id="id06"
+     >id06.xml:11:2: &attribute_is_ncname;idref</test>
+  <test id="id07"
+     >id07.xml:12:2: &attribute_is_ncname;idrefs</test>
+  <test id="attr09"
+     >attr09.xml:7:18: &attribute_is_ncname;value
+attr09.xml:18:41: [VC] Attribute not declared in DTD: name
+attr09.xml:18:6: &attribute_is_ncname;value</test>
+  <test id="attr10"
+     >attr10.xml:7:19: &attribute_is_ncname;value
+attr10.xml:18:41: [VC] Attribute not declared in DTD: name
+attr10.xml:18:6: &attribute_is_ncname;value</test>
+  <test id="o-p06fail1"
+     >p06fail1.xml:12:2: &attribute_is_ncname;refs</test>
+  <test id="ibm-invalid-P56-ibm56i01"
+     >ibm56i01.xml:8:2: &attribute_is_ncname;UniqueName</test>
+  <test id="ibm-invalid-P56-ibm56i07"
+     >ibm56i07.xml:13:2: &attribute_is_ncname;reference</test>
+  <test id="ibm-invalid-P56-ibm56i09"
+     >ibm56i09.xml:16:2: &attribute_is_ncname;reference</test>
+  <test id="rmt-ns10-045"
+     >045.xml:7:2: &attribute_is_ncname;id</test>
+  <test id="rmt-ns10-046"
+     >046.xml:8:2: &attribute_is_ncname;ref
+046.xml:9:3: &attribute_is_ncname;id</test>
+       
+  <test id="ibm-not-wf-P82-ibm82n03"
+     >ibm82n03.xml:7:23: &invalid_notation_decl;</test>
+  <test id="ibm-not-wf-P83-ibm83n01"
+     >ibm83n01.xml:7:28: &invalid_notation_decl;</test>
+  <test id="ibm-not-wf-P83-ibm83n03"
+     >ibm83n03.xml:7:23: &invalid_notation_decl;</test>
+  <test id="ibm-not-wf-P83-ibm83n06"
+     >ibm83n06.xml:7:23: &invalid_notation_decl;</test>
+  <test id="rmt-ns10-044"
+     >044.xml:5:15: &invalid_notation_decl;</test>
+
+  <test id="not-wf-sa-045"
+     >045.xml:2:3: &expect_space;</test> 
+  <test id="not-wf-sa-046"
+     >046.xml:2:3: &expect_space;</test>
+  <test id="not-wf-sa-062"
+     >062.xml:2:13: &expect_space;</test>
+  <test id="not-wf-sa-064"
+     >064.xml:3:21: &expect_space;</test>
+  <test id="not-wf-sa-065"
+     >065.xml:3:17: &expect_space;</test>
+  <test id="not-wf-sa-066"
+     >066.xml:3:27: &expect_space;</test>
+  <test id="not-wf-sa-067"
+     >067.xml:3:23: &expect_space;</test>
+  <test id="not-wf-sa-137"
+     >137.xml:2:14: &expect_space;</test>
+  <test id="not-wf-sa-141"
+     >entity e:1:3: &expect_space;</test>
+  <test id="not-wf-sa-165"
+     >165.xml:2:9: &expect_space;</test>
+  <test id="not-wf-sa-186"
+     >186.xml:5:9: &expect_space;</test>
+  <test id="attlist10"
+     >attlist10.xml:6:20: &expect_space;</test>
+  <test id="attlist11"
+     >attlist11.xml:6:20: &expect_space;</test>
+  <test id="o-p04fail1"
+     >p04fail1.xml:1:3: &expect_space;</test>
+  <test id="o-p04fail2"
+     >p04fail2.xml:1:3: &expect_space;</test>
+  <test id="o-p04fail3"
+     >p04fail3.xml:1:3: &expect_space;</test>
+  <test id="o-p40fail1"
+     >p40fail1.xml:1:15: &expect_space;</test>
+  <test id="o-p42fail3"
+     >p42fail3.xml:1:5: &expect_space;</test>
+  <test id="o-p44fail2"
+     >p44fail2.xml:1:5: &expect_space;</test>
+  <test id="o-p44fail4"
+     >p44fail4.xml:1:15: &expect_space;</test>
+  <test id="o-p45fail2"
+     >p45fail2.xml:3:14: &expect_space;</test>
+  <test id="o-p53fail1"
+     >p53fail1.xml:4:24: &expect_space;</test>
+  <test id="o-p53fail2"
+     >p53fail2.xml:4:18: &expect_space;</test>
+  <test id="o-p53fail4"
+     >p53fail4.xml:4:24: &expect_space;</test>
+  <test id="o-p56fail1"
+     >p56fail1.xml:4:21: &expect_space;</test>
+  <test id="o-p56fail4"
+     >p56fail4.xml:4:25: &expect_space;</test>
+  <test id="o-p60fail2"
+     >p60fail2.xml:4:31: &expect_space;</test>
+  <test id="o-p60fail4"
+     >p60fail4.xml:4:31: &expect_space;</test>
+  <test id="o-p71fail1"
+     >p71fail1.xml:4:12: &expect_space;</test>
+  <test id="o-p71fail4"
+     >p71fail4.xml:4:9: &expect_space;</test>
+  <test id="o-p72fail1"
+     >p72fail1.xml:4:9: &expect_space;</test>
+  <test id="o-p72fail3"
+     >p72fail3.xml:4:14: &expect_space;</test>
+  <test id="o-p74fail2"
+     >p74fail2.xml:4:14: &expect_space;</test>
+  <test id="o-p75fail1"
+     >p75fail1.xml:3:20: &expect_space;</test>
+  <test id="o-p75fail2"
+     >p75fail2.xml:3:20: &expect_space;</test>
+  <test id="o-p76fail3"
+     >p76fail3.xml:5:35: &expect_space;</test>
+  <test id="ibm-not-wf-P10-ibm10n03"
+     >ibm10n03.xml:14:22: &expect_space;</test>
+  <test id="ibm-not-wf-P10-ibm10n07"
+     >ibm10n07.xml:14:22: &expect_space;</test>
+  <test id="ibm-not-wf-P40-ibm40n01"
+     >ibm40n01.xml:7:7: &expect_space;</test>
+  <test id="ibm-not-wf-P40-ibm40n02"
+     >ibm40n02.xml:7:11: &expect_space;</test>
+  <test id="ibm-not-wf-P40-ibm40n03"
+     >ibm40n03.xml:7:7: &expect_space;</test>
+  <test id="ibm-not-wf-P44-ibm44n02"
+     >ibm44n02.xml:7:7: &expect_space;</test>
+  <test id="ibm-not-wf-P44-ibm44n03"
+     >ibm44n03.xml:7:18: &expect_space;</test>
+  <test id="ibm-not-wf-P45-ibm45n02"
+     >ibm45n02.xml:5:15: &expect_space;</test>
+  <test id="ibm-not-wf-P45-ibm45n04"
+     >ibm45n04.xml:5:15: &expect_space;</test>
+  <test id="ibm-not-wf-P53-ibm53n02"
+     >ibm53n02.xml:6:28: &expect_space;</test>
+  <test id="ibm-not-wf-P53-ibm53n04"
+     >ibm53n04.xml:6:18: &expect_space;</test>
+  <test id="ibm-not-wf-P60-ibm60n05"
+     >ibm60n05.xml:7:36: &expect_space;</test>
+  <test id="ibm-not-wf-P71-ibm71n01"
+     >ibm71n01.xml:6:9: &expect_space;</test>
+  <test id="ibm-not-wf-P71-ibm71n02"
+     >ibm71n02.xml:6:13: &expect_space;</test>
+  <test id="ibm-not-wf-P71-ibm71n03"
+     >ibm71n03.xml:6:13: &expect_space;</test>
+  <test id="ibm-not-wf-P72-ibm72n01"
+     >ibm72n01.xml:6:9: &expect_space;</test>
+  <test id="rmt-ns10-043"
+     >043.xml:5:11: &expect_space;</test>
+  <test id="ibm-not-wf-P72-ibm72n03"
+     >ibm72n03.xml:6:16: &expect_space;</test>
+  <test id="ibm-not-wf-P72-ibm72n04"
+     >ibm72n04.xml:6:16: &expect_space;</test>
+  <test id="ibm-not-wf-P72-ibm72n09"
+     >ibm72n09.xml:6:9: &expect_space;</test>
+  <test id="ibm-not-wf-P75-ibm75n05"
+     >ibm75n05.xml:6:23: &expect_space;</test>
+  <test id="ibm-not-wf-P75-ibm75n09"
+     >ibm75n09.xml:4:11: &expect_space;</test>
+  <test id="ibm-not-wf-P76-ibm76n05"
+     >ibm76n05.xml:8:41: &expect_space;</test>
+  <test id="ibm-not-wf-P76-ibm76n06"
+     >ibm76n06.xml:8:41: &expect_space;</test>
+  <test id="ibm-not-wf-P83-ibm83n04"
+     >ibm83n04.xml:7:28: &expect_space;</test>
+  <test id="rmt-ns10-015"
+     >015.xml:3:3: &expect_space;</test>
+  <test id="rmt-ns10-043"
+     >043.xml:5:11: &expect_space;</test>
+
+  <test id="invalid--001"
+    >entity %e:1:2: Entity values must be self-contained</test>
+  <test id="invalid--002"
+    >entity %e:1:2: Entity values must be self-contained</test>
+  <test id="invalid--003"
+    >003.ent:2:18: Entity values must be self-contained</test>
+  <test id="invalid--004"
+    >entity %e2:1:2: Entity values must be self-contained</test>
+  <test id="invalid--005"
+    >entity %e:1:2: Entity values must be self-contained</test>
+  <test id="invalid--006"
+    >entity %e:1:11: Entity values must be self-contained</test>
+  <test id="not-wf-not-sa-005"
+    >005.ent:2:1: Undefined entity '%e'</test>
+  <test id="invalid--dtd06"
+    >dtd06.xml:3:5: Undefined entity '%undefined'</test>
+  <test id="not-wf-sa-001"
+    >001.ent:1:1: Entity cannot reference itself</test>
+  <test id="not-wf-sa-002"
+    >002.ent:1:21: 'encoding' must be specified for &lt;?xml?&gt; in external entities</test>
+  <test id="not-wf-not-sa-001"
+    >001.ent:3:2: Conditional section must be properly terminated</test>
+  <test id="not-wf-not-sa-002"
+    >entity %e:1:2: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="not-wf-not-sa-003"
+    >003.ent:3:1: Conditional section must be properly terminated</test>
+  <test id="not-wf-not-sa-004"
+    >004.ent:3:1: Conditional section must be properly terminated</test>
+  <test id="not-wf-not-sa-006"
+    >006.ent:2:1: Conditional sections need '[' after INCLUDE or IGNORE</test>
+  <test id="not-wf-not-sa-007"
+    >007.ent:1:1: Element not allowed in the DTD</test>
+  <test id="not-wf-not-sa-008"
+    >008.ent:2:17: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="not-wf-attlist01"
+    >attlist01.xml:7:10: Invalid type for attribute</test>
+  <test id="not-wf-attlist02"
+    >attlist02.xml:7:10: Invalid type for attribute</test>
+  <test id="not-wf-attlist03"
+    >attlist03.xml:7:11: Invalid character ',' in ATTLIST enumeration</test>
+  <test id="not-wf-attlist04"
+    >attlist04.xml:7:10: Invalid type for attribute</test>
+  <test id="not-wf-attlist05"
+    >attlist05.xml:7:11: Invalid type for attribute</test>
+  <test id="not-wf-attlist06"
+    >attlist06.xml:7:10: Invalid type for attribute</test>
+  <test id="not-wf-attlist07"
+    >attlist07.xml:7:10: Invalid type for attribute</test>
+  <test id="not-wf-attlist08"
+    >attlist08.xml:7:18: Invalid default declaration for the attribute</test>
+  <test id="not-wf-attlist09"
+    >attlist09.xml:5:18: Invalid default declaration for the attribute</test>
+  <test id="not-wf-attlist10"
+    >attlist10.xml:6:20: Expecting a space</test>
+  <test id="not-wf-attlist11"
+    >attlist11.xml:6:20: Expecting a space</test>
+  <test id="not-wf-cond01"
+    >entity %MAYBE:3:1: Invalid declaration</test>
+  <test id="not-wf-cond02"
+    >cond.dtd:3:1: Invalid declaration</test>
+  <test id="not-wf-content01"
+    >content01.xml:3:20: Invalid location for '+', '?' or '*' operators</test>
+  <test id="not-wf-content02"
+    >content02.xml:3:20: Invalid location for '+', '?' or '*' operators</test>
+  <test id="not-wf-content03"
+    >content03.xml:3:20: Invalid location for '+', '?' or '*' operators</test>
+  <test id="not-wf-decl01"
+    >decl01.ent:1:38: Text declarations &lt;?xml?&gt; in external entity cannot specify parameters other than 'version' and 'encoding'</test>
+  <test id="not-wf-dtd00"
+    >dtd00.xml:2:31: Expecting operator in content model</test>
+  <test id="not-wf-dtd01"
+    >dtd01.xml:2:31: Cannot mix ',' and '|' in content model</test>
+  <test id="not-wf-dtd02"
+    >dtd02.xml:5:6: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="not-wf-dtd03"
+    >dtd03.xml:5:9: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="not-wf-dtd04"
+    >dtd04.xml:4:26: Expecting a string after PUBLIC</test>
+  <test id="not-wf-dtd05"
+    >dtd05.xml:4:34: Expecting a string after SYSTEM</test>
+  <test id="not-wf-dtd07"
+    >dtd07.dtd:1:20: 'encoding' must be specified for &lt;?xml?&gt; in external entities</test>
+  <test id="not-wf-element00"
+    >element00.xml:3:5: Tags must end with a '&gt;' symbol</test>
+  <test id="not-wf-element01"
+    >element01.xml:3:7: Tags must end with a '&gt;' symbol</test>
+  <test id="not-wf-element02"
+    >element02.xml:3:6: Invalid name: '%'</test>
+  <test id="not-wf-element03"
+    >element03.xml:3:6: Invalid name: '%'</test>
+  <test id="not-wf-element04"
+    >element04.xml:3:5: Invalid characters '&lt;!-' in stream</test>
+  <test id="not-wf-encoding01"
+    >encoding01.xml:1:31: Illegal character ' ' in encoding value</test>
+  <test id="not-wf-encoding02"
+    >encoding02.xml:1:31: Illegal character '/' in encoding value</test>
+  <test id="not-wf-encoding03"
+    >encoding03.xml:1:31: Illegal character ')' in encoding value</test>
+  <test id="not-wf-encoding04"
+    >encoding04.xml:1:31: Illegal character ':' in encoding value</test>
+  <test id="not-wf-encoding05"
+    >encoding05.xml:1:31: Illegal character '@' in encoding value</test>
+  <test id="not-wf-encoding06"
+    >encoding06.xml:1:31: Illegal character '+' in encoding value</test>
+  <test id="not-wf-encoding07"
+    >dtd07.dtd:1:20: 'encoding' must be specified for &lt;?xml?&gt; in external entities</test>
+  <test id="not-wf-pi"
+    >pi.xml:4:10: Must have space between target and data</test>
+  <test id="not-wf-pubid05"
+    >pubid05.xml:5:45: Expecting SystemID after PUBLIC</test>
+  <test id="not-wf-sgml01"
+    >sgml01.xml:8:0: Node &lt;root&gt; is not closed</test>
+  <test id="not-wf-sgml02"
+    >sgml02.xml:1:2: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="not-wf-sgml03"
+    >sgml03.xml:3:21: '--' cannot appear in comments</test>
+  <test id="not-wf-sgml04"
+    >sgml04.xml:7:15: Expecting a Name</test>
+  <test id="not-wf-sgml05"
+    >sgml05.xml:8:16: Expecting a Name</test>
+  <test id="not-wf-sgml06"
+    >sgml06.xml:6:15: Expecting a Name</test>
+  <test id="not-wf-sgml07"
+    >sgml07.xml:3:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+  <test id="not-wf-sgml08"
+    >sgml08.xml:3:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+  <test id="not-wf-sgml09"
+    >sgml09.xml:4:41: Expecting end of ELEMENT definition</test>
+  <test id="not-wf-sgml10"
+    >sgml10.xml:3:66: Expecting end of ELEMENT definition</test>
+  <test id="not-wf-sgml11"
+    >sgml11.xml:3:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+  <test id="not-wf-sgml12"
+    >sgml12.xml:3:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+  <test id="not-wf-sgml13"
+    >sgml13.xml:3:23: Expecting operator in content model</test>
+  <test id="not-wf-sa-001"
+    >001.xml:3:1: Invalid name: '?'</test>
+  <test id="not-wf-sa-002"
+    >002.xml:2:2: Invalid name: '.doc'</test>
+  <test id="not-wf-sa-003"
+    >003.xml:1:8: Processing Instruction must specify a target name</test>
+  <test id="not-wf-sa-004"
+    >004.xml:1:6: Processing instruction must end with '?>'</test>
+  <test id="not-wf-sa-005"
+    >005.xml:1:6: Processing instruction must end with '?>'</test>
+  <test id="not-wf-sa-008"
+    >008.xml:1:6: Invalid entity name</test>
+  <test id="not-wf-sa-006"
+    >006.xml:1:21: '--' cannot appear in comments</test>
+  <test id="not-wf-sa-007"
+    >007.xml:1:6: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="not-wf-sa-009"
+    >009.xml:1:8: Invalid character in character reference: R</test>
+  <test id="not-wf-sa-010"
+    >010.xml:1:8: Invalid entity name</test>
+  <test id="not-wf-sa-011"
+    >011.xml:1:8: Attributes must have an explicit value</test>
+  <test id="not-wf-sa-012"
+    >012.xml:1:9: Attribute values must be quoted</test>
+  <test id="not-wf-sa-013"
+    >013.xml:1:14: '&lt;' not authorized in attribute values. Possible end of value at 013.xml:1:12</test>
+  <test id="not-wf-sa-014"
+    >014.xml:1:10: '&lt;' not authorized in attribute values</test>
+  <test id="not-wf-sa-015"
+    >015.xml:1:9: Attribute values must be quoted</test>
+  <test id="not-wf-sa-016"
+    >016.xml:1:14: Expecting a Name</test>
+  <test id="not-wf-sa-017"
+    >017.xml:1:6: CDATA sections must end with ']]&gt;'</test>
+  <test id="not-wf-sa-018"
+    >018.xml:1:6: CDATA must be followed immediately by '['</test>
+  <test id="not-wf-sa-019"
+    >019.xml:1:8: Expecting a Name</test>
+  <test id="not-wf-sa-020"
+    >020.xml:1:12: Invalid entity name</test>
+  <test id="not-wf-sa-022"
+    >022.xml:1:15: Invalid character in character reference: :</test>
+  <test id="not-wf-sa-023"
+    >023.xml:1:6: Invalid name: '12'</test>
+  <test id="not-wf-sa-024"
+    >024.xml:2:2: Invalid name: '123'</test>
+  <test id="not-wf-sa-025"
+    >025.xml:1:6: Text may not contain the litteral ']]&gt;'</test>
+  <test id="not-wf-sa-026"
+    >026.xml:1:7: Text may not contain the litteral ']]&gt;'</test>
+  <test id="not-wf-sa-027"
+    >027.xml:2:1: Comments must end with '-->'</test>
+  <test id="not-wf-sa-028"
+    >028.xml:2:1: Processing instruction must end with '?>'</test>
+  <test id="not-wf-sa-029"
+    >029.xml:1:10: Text may not contain the litteral ']]&gt;'</test>
+  <test id="not-wf-sa-030"
+    >030.xml:1:19: Invalid character code: 12</test>
+  <test id="not-wf-sa-031"
+    >031.xml:1:24: Invalid character code: 12</test>
+  <test id="not-wf-sa-032"
+    >032.xml:1:24: Invalid character code: 12</test>
+  <test id="not-wf-sa-033"
+    >033.xml:1:9: Invalid character code: 27</test>
+  <test id="not-wf-sa-034"
+    >034.xml:1:5: Invalid character code: 12</test>
+  <test id="not-wf-sa-035"
+    >035.xml:1:9: Expecting a Name</test>
+  <test id="not-wf-sa-036"
+    >036.xml:2:1: Non-white space found at top level</test>
+  <test id="not-wf-sa-037"
+    >037.xml:2:1: Character references cannot appear at top-level</test>
+  <test id="not-wf-sa-038"
+    >038.xml:1:22: Attributes may appear only once: x</test>
+  <test id="not-wf-sa-039"
+    >039.xml:1:9: Name differ for closing tag (expecting a, opened line 1)</test>
+  <test id="not-wf-sa-040"
+    >040.xml:2:1: Too many children for top-level node, when adding &lt;doc&gt;</test>
+  <test id="not-wf-sa-041"
+    >041.xml:2:1: Too many children for top-level node, when adding &lt;doc&gt;</test>
+  <test id="not-wf-sa-042"
+    >042.xml:1:12: Tags must end with a '&gt;' symbol</test>
+  <test id="not-wf-sa-043"
+    >043.xml:2:1: Non-white space found at top level</test>
+  <test id="not-wf-sa-044"
+    >044.xml:1:7: Too many children for top-level node, when adding &lt;doc&gt;</test>
+  <test id="not-wf-sa-045"
+    >045.xml:2:3: Expecting a space</test>
+  <test id="not-wf-sa-046"
+    >046.xml:2:3: Expecting a space</test>
+  <test id="not-wf-sa-047"
+    >047.xml:2:4: Invalid name: '/'</test>
+  <test id="not-wf-sa-048"
+    >048.xml:3:1: Non-white space found at top level</test>
+  <test id="not-wf-sa-049"
+    >049.xml:3:13: Name differ for closing tag (expecting doc, opened line 1)</test>
+  <test id="not-wf-sa-050"
+    >050.xml:1:0: No root element specified</test>
+  <test id="not-wf-sa-051"
+    >051.xml:2:1: Non-white space found at top level</test>
+  <test id="not-wf-sa-052"
+    >052.xml:2:1: Character references cannot appear at top-level</test>
+  <test id="not-wf-sa-053"
+    >053.xml:1:6: Name differ for closing tag (expecting doc, opened line 1)</test>
+  <test id="not-wf-sa-054"
+    >054.xml:2:38: Expecting SystemID after PUBLIC</test>
+  <test id="not-wf-sa-055"
+    >055.xml:2:1: Element not allowed in the DTD</test>
+  <test id="not-wf-sa-056"
+    >056.xml:1:17: Expecting end of DTD</test>
+  <test id="not-wf-sa-057"
+    >057.xml:2:25: Expecting end of ENTITY definition</test>
+  <test id="not-wf-sa-058"
+    >058.xml:3:22: Invalid character ',' in ATTLIST enumeration</test>
+  <test id="not-wf-sa-059"
+    >059.xml:3:28: Invalid default value for attribute</test>
+  <test id="not-wf-sa-060"
+    >060.xml:3:19: Invalid type for attribute</test>
+  <test id="not-wf-sa-061"
+    >061.xml:2:29: Require whitespace between public and system IDs</test>
+  <test id="not-wf-sa-062"
+    >062.xml:2:13: Expecting a space</test>
+  <test id="not-wf-sa-063"
+    >063.xml:2:1: INCLUDE and IGNORE sections only allowed in the external DTD subset</test>
+  <test id="not-wf-sa-064"
+    >064.xml:3:21: Expecting a space</test>
+  <test id="not-wf-sa-065"
+    >065.xml:3:17: Expecting a space</test>
+  <test id="not-wf-sa-066"
+    >066.xml:3:27: Expecting a space</test>
+  <test id="not-wf-sa-067"
+    >067.xml:3:23: Expecting a space</test>
+  <test id="not-wf-sa-068"
+    >068.xml:3:26: Space is required between NOTATION keyword and list of enumerated</test>
+  <test id="not-wf-sa-069"
+    >069.xml:4:30: Expecting space before NDATA declaration</test>
+  <test id="not-wf-sa-070"
+    >070.xml:1:41: '--' cannot appear in comments</test>
+  <test id="not-wf-sa-071"
+    >entity e3:1:1: Entity cannot reference itself</test>
+  <test id="not-wf-sa-072"
+    >072.xml:1:6: Undefined entity 'foo'</test>
+  <test id="not-wf-sa-073"
+    >073.xml:4:6: Undefined entity 'f'</test>
+  <test id="not-wf-sa-075"
+    >entity e3:1:1: Entity cannot reference itself</test>
+  <test id="not-wf-sa-076"
+    >076.xml:1:9: Undefined entity 'foo'</test>
+  <test id="not-wf-sa-077"
+    >entity foo:1:1: Undefined entity 'bar'</test>
+  <test id="not-wf-sa-078"
+    >078.xml:3:24: Undefined entity 'foo'</test>
+  <test id="not-wf-sa-079"
+    >entity e3:1:1: Entity cannot reference itself</test>
+  <test id="not-wf-sa-080"
+    >entity e3:1:1: Entity cannot reference itself</test>
+  <test id="not-wf-sa-081"
+    >081.xml:4:9: Attribute values cannot reference external entities</test>
+  <test id="not-wf-sa-082"
+    >082.xml:4:24: Attribute values cannot reference external entities</test>
+  <test id="not-wf-sa-084"
+    >084.xml:4:24: Undefined entity 'e'</test>
+  <test id="not-wf-sa-088"
+    >088.xml:6:13: '&lt;' not authorized in attribute values</test>
+  <test id="not-wf-sa-089"
+    >089.xml:2:33: NDATA annotation not allowed for parameter entities</test>
+  <test id="not-wf-sa-090"
+    >entity e:1:9: '&lt;' not authorized in attribute values</test>
+  <test id="not-wf-sa-091"
+    >091.xml:3:33: NDATA annotation not allowed for parameter entities</test>
+  <test id="not-wf-sa-092"
+    >entity e:1:9: Invalid entity name</test>
+  <test id="not-wf-sa-093"
+    >093.xml:1:8: Invalid character in character reference: X</test>
+  <test id="not-wf-sa-094"
+    >094.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+  <test id="not-wf-sa-095"
+    >095.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+  <test id="not-wf-sa-096"
+    >096.xml:1:20: values must be separated by spaces</test>
+  <test id="not-wf-sa-097"
+    >097.xml:1:16: Illegal version number in &lt;?xml?&gt; processing instruction</test>
+  <test id="not-wf-sa-098"
+    >098.xml:1:21: &lt;?xml..?&gt; arguments can only be 'version', 'encoding' or 'standalone', in that order</test>
+  <test id="not-wf-sa-099"
+    >099.xml:1:21: &lt;?xml..?&gt; arguments can only be 'version', 'encoding' or 'standalone', in that order</test>
+  <test id="not-wf-sa-100"
+    >100.xml:1:33: Invalid value for standalone parameter in &lt;?xml?&gt;</test>
+  <test id="not-wf-sa-101"
+    >101.xml:1:31: Illegal character ' ' in encoding value</test>
+  <test id="not-wf-sa-102"
+    >102.xml:1:16: Illegal version number in &lt;?xml?&gt; processing instruction</test>
+  <test id="not-wf-sa-103"
+    >103.xml:4:9: Name differ for closing tag (expecting foo, opened line 1)</test>
+  <test id="not-wf-sa-105"
+    >105.xml:2:1: Non-white space found at top level</test>
+  <test id="not-wf-sa-106"
+    >106.xml:2:1: Character references cannot appear at top-level</test>
+  <test id="not-wf-sa-107"
+    >107.xml:2:1: Element not allowed in the DTD</test>
+  <test id="not-wf-sa-108"
+    >108.xml:2:1: CDATA must be followed immediately by '['</test>
+  <test id="not-wf-sa-109"
+    >109.xml:4:1: Entity references cannot appear at top-level</test>
+  <test id="not-wf-sa-110"
+    >110.xml:5:1: Entity references cannot appear at top-level</test>
+  <test id="not-wf-sa-111"
+    >111.xml:4:6: Invalid name: '&amp;e;'</test>
+  <test id="not-wf-sa-112"
+    >112.xml:2:1: Invalid characters '&lt;!-' in stream</test>
+  <test id="not-wf-sa-113"
+    >113.xml:2:17: Invalid entity name</test>
+  <test id="not-wf-sa-114"
+    >114.xml:2:15: Invalid entity name</test>
+  <test id="not-wf-sa-115"
+    >entity e:1:1: Entity values must be self-contained</test>
+  <test id="not-wf-sa-116"
+    >entity e:1:1: Entity values must be self-contained</test>
+  <test id="not-wf-sa-117"
+    >entity e:1:1: Entity values must be self-contained</test>
+  <test id="not-wf-sa-118"
+    >118.xml:4:6: Invalid entity name</test>
+  <test id="not-wf-sa-119"
+    >entity e:1:1: Entity values must be self-contained</test>
+  <test id="not-wf-sa-120"
+    >entity e:1:1: Entity values must be self-contained</test>
+  <test id="not-wf-sa-121"
+    >121.xml:2:18: Expecting a Name</test>
+  <test id="not-wf-sa-122"
+    >122.xml:2:23: Cannot mix ',' and '|' in content model</test>
+  <test id="not-wf-sa-123"
+    >123.xml:2:24: Expecting end of ELEMENT definition</test>
+  <test id="not-wf-sa-124"
+    >124.xml:2:26: #PCDATA must be first in list</test>
+  <test id="not-wf-sa-125"
+    >125.xml:2:25: Mixed contents cannot be used in a list or a sequence</test>
+  <test id="not-wf-sa-126"
+    >126.xml:2:24: Occurrence on #PCDATA must be '*'</test>
+  <test id="not-wf-sa-127"
+    >127.xml:2:24: Occurrence on #PCDATA must be '*'</test>
+  <test id="not-wf-sa-128"
+    >128.xml:2:15: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+  <test id="not-wf-sa-129"
+    >129.xml:2:15: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+  <test id="not-wf-sa-130"
+    >130.xml:2:28: Expecting end of ELEMENT definition</test>
+  <test id="not-wf-sa-131"
+    >131.xml:2:28: Expecting end of ELEMENT definition</test>
+  <test id="not-wf-sa-132"
+    >132.xml:2:38: Cannot mix ',' and '|' in content model</test>
+  <test id="not-wf-sa-133"
+    >133.xml:2:15: Invalid location for '+', '?' or '*' operators</test>
+  <test id="not-wf-sa-134"
+    >134.xml:2:20: Expecting end of ELEMENT definition</test>
+  <test id="not-wf-sa-135"
+    >135.xml:2:18: Expecting operator in content model</test>
+  <test id="not-wf-sa-136"
+    >136.xml:2:15: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+  <test id="not-wf-sa-137"
+    >137.xml:2:14: Expecting a space</test>
+  <test id="not-wf-sa-138"
+    >138.xml:2:15: Invalid location for '+', '?' or '*' operators</test>
+  <test id="not-wf-sa-139"
+    >139.xml:2:15: Invalid content model: list of choices cannot be empty</test>
+  <test id="not-wf-sa-140"
+    >entity e:1:2: Invalid name: '&#x309a;'</test>
+  <test id="not-wf-sa-141"
+    >entity e:1:3: Expecting a space</test>
+  <test id="not-wf-sa-142"
+    >142.xml:4:6: Invalid character code: 0</test>
+  <test id="not-wf-sa-143"
+    >143.xml:4:6: Invalid character code: 31</test>
+  <test id="not-wf-sa-144"
+    >144.xml:4:6: Invalid character code: 65535</test>
+  <test id="not-wf-sa-145"
+    >145.xml:4:6: Invalid character code: 55296</test>
+  <test id="not-wf-sa-146"
+    >146.xml:4:6: Invalid character code: 1114112</test>
+  <test id="not-wf-sa-147"
+    >147.xml:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="not-wf-sa-148"
+    >148.xml:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="not-wf-sa-149"
+    >149.xml:3:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="not-wf-sa-150"
+    >150.xml:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="not-wf-sa-151"
+    >151.xml:3:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="not-wf-sa-152"
+    >152.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+  <test id="not-wf-sa-153"
+    >entity e:1:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="not-wf-sa-154"
+    >154.xml:1:3: 'XML' is not a valid processing instruction target</test>
+  <test id="not-wf-sa-155"
+    >155.xml:1:3: 'xmL' is not a valid processing instruction target</test>
+  <test id="not-wf-sa-156"
+    >156.xml:2:3: 'xMl' is not a valid processing instruction target</test>
+  <test id="not-wf-sa-157"
+    >157.xml:2:3: 'xmL' is not a valid processing instruction target</test>
+  <test id="not-wf-sa-158"
+    >158.xml:4:11: Expecting a Name</test>
+  <test id="not-wf-sa-159"
+    >159.xml:3:26: Invalid entity name</test>
+  <test id="not-wf-sa-160"
+    >160.xml:4:15: Parameter entities cannot occur in attribute values</test>
+  <test id="not-wf-sa-161"
+    >161.xml:3:16: Parameter entities cannot occur in attribute values</test>
+  <test id="not-wf-sa-162"
+    >162.xml:4:16: Parameter entities cannot occur in attribute values</test>
+  <test id="not-wf-sa-163"
+    >163.xml:5:1: Non-white space found at top level</test>
+  <test id="not-wf-sa-164"
+    >164.xml:4:1: Unexpected characters between ']' and '>' in the DTD</test>
+  <test id="not-wf-sa-165"
+    >165.xml:2:9: Expecting a space</test>
+  <test id="not-wf-sa-166"
+    >166.xml:1:6: Invalid character code: 65535</test>
+  <test id="not-wf-sa-167"
+    >167.xml:1:6: Invalid character code: 65534</test>
+  <test id="not-wf-sa-168"
+    >168.xml:1:6: Invalid character code: 55296</test>
+  <test id="not-wf-sa-169"
+    >169.xml:1:6: Invalid character code: 56320</test>
+  <test id="not-wf-sa-170"
+    >170.xml:1:6: Invalid character code: 1835008</test>
+  <test id="not-wf-sa-171"
+    >171.xml:1:6: Invalid character code: 65535</test>
+  <test id="not-wf-sa-172"
+    >172.xml:1:6: Invalid character code: 65535</test>
+  <test id="not-wf-sa-173"
+    >173.xml:1:9: Invalid character code: 65535</test>
+  <test id="not-wf-sa-174"
+    >174.xml:1:15: Invalid character code: 65535</test>
+  <test id="not-wf-sa-175"
+    >175.xml:3:15: Invalid character code: 65535</test>
+  <test id="not-wf-sa-176"
+    >176.xml:5:0: Node &lt;doc&gt; is not closed</test>
+  <test id="not-wf-sa-177"
+    >177.xml:4:7: Invalid character code: 65535</test>
+  <test id="not-wf-sa-178"
+    >178.xml:5:15: '&lt;' not authorized in attribute values</test>
+  <test id="not-wf-sa-179"
+    >179.xml:5:0: Unterminated string</test>
+  <test id="not-wf-sa-180"
+    >180.xml:3:24: Undefined entity 'e'</test>
+  <test id="not-wf-sa-181"
+    >entity e:1:1: Entity values must be self-contained</test>
+  <test id="not-wf-sa-183"
+    >183.xml:2:30: Nested groups and occurrence operators not allowed in mixed content</test>
+  <test id="not-wf-sa-184"
+    >184.xml:2:31: Nested groups and occurrence operators not allowed in mixed content</test>
+  <test id="not-wf-sa-185"
+    >185.xml:3:6: Undefined entity 'e'</test>
+  <test id="not-wf-sa-186"
+    >186.xml:5:9: Expecting a space</test>
+  <test id="o-p01fail1"
+    >p01fail1.xml:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="o-p01fail2"
+    >p01fail2.xml:1:19: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="o-p01fail3"
+    >p01fail3.xml:1:7: Too many children for top-level node, when adding &lt;bad&gt;</test>
+  <test id="o-p01fail4"
+    >p01fail4.xml:1:5: Node &lt;doc&gt; is not closed</test>
+  <test id="o-p02fail1"
+    >p02fail1.xml:1:8: Invalid character code: 0</test>
+  <test id="o-p02fail2"
+    >p02fail2.xml:1:8: Invalid character code: 1</test>
+  <test id="o-p02fail4"
+    >p02fail4.xml:1:8: Invalid character code: 3</test>
+  <test id="o-p02fail5"
+    >p02fail5.xml:1:8: Invalid character code: 4</test>
+  <test id="o-p02fail6"
+    >p02fail6.xml:1:8: Invalid character code: 5</test>
+  <test id="o-p02fail7"
+    >p02fail7.xml:1:8: Invalid character code: 6</test>
+  <test id="o-p02fail8"
+    >p02fail8.xml:1:8: Invalid character code: 7</test>
+  <test id="o-p02fail9"
+    >p02fail9.xml:1:8: Invalid character code: 8</test>
+  <test id="o-p02fail10"
+    >p02fail10.xml:1:8: Invalid character code: 11</test>
+  <test id="o-p02fail11"
+    >p02fail11.xml:1:8: Invalid character code: 12</test>
+  <test id="o-p02fail12"
+    >p02fail12.xml:1:8: Invalid character code: 14</test>
+  <test id="o-p02fail13"
+    >p02fail13.xml:1:8: Invalid character code: 15</test>
+  <test id="o-p02fail14"
+    >p02fail14.xml:1:8: Invalid character code: 16</test>
+  <test id="o-p02fail15"
+    >p02fail15.xml:1:8: Invalid character code: 17</test>
+  <test id="o-p02fail16"
+    >p02fail16.xml:1:8: Invalid character code: 18</test>
+  <test id="o-p02fail17"
+    >p02fail17.xml:1:8: Invalid character code: 19</test>
+  <test id="o-p02fail18"
+    >p02fail18.xml:1:8: Invalid character code: 20</test>
+  <test id="o-p02fail19"
+    >p02fail19.xml:1:8: Invalid character code: 21</test>
+  <test id="o-p02fail20"
+    >p02fail20.xml:1:8: Invalid character code: 22</test>
+  <test id="o-p02fail21"
+    >p02fail21.xml:1:8: Invalid character code: 23</test>
+  <test id="o-p02fail22"
+    >p02fail22.xml:1:8: Invalid character code: 24</test>
+  <test id="o-p02fail23"
+    >p02fail23.xml:1:8: Invalid character code: 25</test>
+  <test id="o-p02fail24"
+    >p02fail24.xml:1:8: Invalid character code: 26</test>
+  <test id="o-p02fail25"
+    >p02fail25.xml:1:8: Invalid character code: 27</test>
+  <test id="o-p02fail26"
+    >p02fail26.xml:1:8: Invalid character code: 28</test>
+  <test id="o-p02fail27"
+    >p02fail27.xml:1:8: Invalid character code: 29</test>
+  <test id="o-p02fail28"
+    >p02fail28.xml:1:8: Invalid character code: 30</test>
+  <test id="o-p02fail29"
+    >p02fail29.xml:1:8: Invalid character code: 31</test>
+  <test id="o-p02fail30"
+    >p02fail30.xml:1:8: Invalid character code: 65534</test>
+  <test id="o-p02fail31"
+    >p02fail31.xml:1:8: Invalid character code: 65535</test>
+  <test id="o-p03fail1"
+    >p03fail1.xml:1:1: Invalid character code: 0</test>
+  <test id="o-p03fail2"
+    >p03fail2.xml:1:1: Invalid character code: 1</test>
+  <test id="o-p03fail3"
+    >p03fail3.xml:1:1: Invalid character code: 2</test>
+  <test id="o-p03fail4"
+    >p03fail4.xml:1:1: Invalid character code: 3</test>
+  <test id="o-p03fail5"
+    >p03fail5.xml:1:1: Invalid character code: 4</test>
+  <test id="o-p03fail7"
+    >p03fail7.xml:1:1: Invalid character code: 6</test>
+  <test id="o-p03fail8"
+    >p03fail8.xml:1:1: Invalid character code: 7</test>
+  <test id="o-p03fail9"
+    >p03fail9.xml:1:1: Invalid character code: 8</test>
+  <test id="o-p03fail10"
+    >p03fail10.xml:1:1: Invalid character code: 11</test>
+  <test id="o-p03fail11"
+    >p03fail11.xml:1:1: Invalid character code: 12</test>
+  <test id="o-p03fail12"
+    >p03fail12.xml:1:1: Invalid character code: 14</test>
+  <test id="o-p03fail13"
+    >p03fail13.xml:1:1: Invalid character code: 15</test>
+  <test id="o-p03fail14"
+    >p03fail14.xml:1:1: Invalid character code: 16</test>
+  <test id="o-p03fail15"
+    >p03fail15.xml:1:1: Invalid character code: 17</test>
+  <test id="o-p03fail16"
+    >p03fail16.xml:1:1: Invalid character code: 18</test>
+  <test id="o-p03fail17"
+    >p03fail17.xml:1:1: Invalid character code: 19</test>
+  <test id="o-p03fail18"
+    >p03fail18.xml:1:1: Invalid character code: 20</test>
+  <test id="o-p03fail19"
+    >p03fail19.xml:1:1: Invalid character code: 21</test>
+  <test id="o-p03fail20"
+    >p03fail20.xml:1:1: Invalid character code: 22</test>
+  <test id="o-p03fail21"
+    >p03fail21.xml:1:1: Invalid character code: 23</test>
+  <test id="o-p03fail22"
+    >p03fail22.xml:1:1: Invalid character code: 24</test>
+  <test id="o-p03fail23"
+    >p03fail23.xml:1:1: Invalid character code: 25</test>
+  <test id="o-p03fail24"
+    >p03fail24.xml:1:1: Invalid character code: 26</test>
+  <test id="o-p03fail25"
+    >p03fail25.xml:1:1: Invalid character code: 27</test>
+  <test id="o-p03fail26"
+    >p03fail26.xml:1:1: Invalid character code: 28</test>
+  <test id="o-p03fail27"
+    >p03fail27.xml:1:1: Invalid character code: 29</test>
+  <test id="o-p03fail28"
+    >p03fail28.xml:1:1: Invalid character code: 30</test>
+  <test id="o-p03fail29"
+    >p03fail29.xml:1:1: Invalid character code: 31</test>
+  <test id="o-p04fail1"
+    >p04fail1.xml:1:3: Expecting a space</test>
+  <test id="o-p04fail2"
+    >p04fail2.xml:1:3: Expecting a space</test>
+  <test id="o-p04fail3"
+    >p04fail3.xml:1:3: Expecting a space</test>
+  <test id="o-p05fail1"
+    >p05fail1.xml:1:2: Invalid name: '&#48;A'</test>
+  <test id="o-p05fail2"
+    >p05fail2.xml:1:2: Invalid name: '&#46;A'</test>
+  <test id="o-p05fail3"
+    >p05fail3.xml:1:2: Invalid name: '&#45;A'</test>
+  <test id="o-p05fail4"
+    >p05fail4.xml:1:2: Invalid name: '&#768;A'</test>
+  <test id="o-p05fail5"
+    >p05fail5.xml:1:2: Invalid name: '&#183;A'</test>
+  <test id="o-p09fail2"
+    >p09fail2.dtd:2:22: Invalid entity name</test>
+  <test id="o-p09fail3"
+    >p09fail3.xml:4:26: Invalid character in character reference: "</test>
+  <test id="o-p09fail4"
+    >p09fail4.xml:4:17: Unterminated string, possible end at p09fail4.xml:4:19</test>
+  <test id="o-p09fail5"
+    >p09fail5.xml:4:17: Unterminated string, possible end at p09fail5.xml:4:19</test>
+  <test id="o-p10fail1"
+    >p10fail1.xml:1:11: '&lt;' not authorized in attribute values</test>
+  <test id="o-p10fail2"
+    >p10fail2.xml:1:11: Invalid entity name</test>
+  <test id="o-p10fail3"
+    >p10fail3.xml:1:8: Unterminated string, possible end at p10fail3.xml:1:12</test>
+  <test id="o-p11fail1"
+    >p11fail1.xml:5:24: Unterminated string, possible end at p11fail1.xml:5:26</test>
+  <test id="o-p11fail2"
+    >p11fail2.xml:5:27: Expecting end of NOTATION definition</test>
+  <test id="o-p14fail1"
+    >p14fail1.xml:1:7: Expecting a Name</test>
+  <test id="o-p14fail2"
+    >p14fail2.xml:1:6: Invalid entity name</test>
+  <test id="o-p14fail3"
+    >p14fail3.xml:1:7: Text may not contain the litteral ']]&gt;'</test>
+  <test id="o-p15fail1"
+    >p15fail1.xml:1:6: '--' cannot appear in comments</test>
+  <test id="o-p15fail2"
+    >p15fail2.xml:1:6: '--' cannot appear in comments</test>
+  <test id="o-p15fail3"
+    >p15fail3.xml:1:6: '--' cannot appear in comments</test>
+  <test id="o-p16fail1"
+    >p16fail1.xml:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="o-p16fail2"
+    >p16fail2.xml:1:3: Processing Instruction must specify a target name</test>
+  <test id="o-p18fail1"
+    >p18fail1.xml:1:6: Invalid characters '&lt;!-' in stream</test>
+  <test id="o-p18fail2"
+    >p18fail2.xml:1:6: CDATA must be followed immediately by '['</test>
+  <test id="o-p18fail3"
+    >p18fail3.xml:4:1: Text may not contain the litteral ']]&gt;'</test>
+  <test id="o-p22fail1"
+    >p22fail1.xml:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="o-p22fail2"
+    >p22fail2.xml:4:1: &lt;?xml?&gt; instruction must be first in document</test>
+  <test id="o-p23fail1"
+    >p23fail1.xml:1:3: 'XML' is not a valid processing instruction target</test>
+  <test id="o-p23fail2"
+    >p23fail2.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+  <test id="o-p23fail3"
+    >p23fail3.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+  <test id="o-p23fail4"
+    >p23fail4.xml:1:38: &lt;?xml..?&gt; arguments can only be 'version', 'encoding' or 'standalone', in that order</test>
+  <test id="o-p23fail5"
+    >p23fail5.xml:1:20: values must be separated by spaces</test>
+  <test id="o-p24fail1"
+    >p24fail1.xml:2:1: '&lt;' not authorized in attribute values. Possible end of value at p24fail1.xml:1:21</test>
+  <test id="o-p24fail2"
+    >p24fail2.xml:2:1: '&lt;' not authorized in attribute values. Possible end of value at p24fail2.xml:1:21</test>
+  <test id="o-p25fail1"
+    >p25fail1.xml:1:15: Expecting '=' sign</test>
+  <test id="o-p26fail1"
+    >p26fail1.xml:1:16: Illegal version number in &lt;?xml?&gt; processing instruction</test>
+  <test id="o-p26fail2"
+    >p26fail2.xml:1:16: Illegal version number in &lt;?xml?&gt; processing instruction</test>
+  <test id="o-p27fail1"
+    >p27fail1.xml:2:1: Character references cannot appear at top-level</test>
+  <test id="o-p28fail1"
+    >p28fail1.xml:3:1: Element not allowed in the DTD</test>
+  <test id="o-p29fail1"
+    >p29fail1.xml:3:8: Unexpected character in the DTD</test>
+  <test id="o-p30fail1"
+    >p30fail1.dtd:1:38: Text declarations &lt;?xml?&gt; in external entity cannot specify parameters other than 'version' and 'encoding'</test>
+  <test id="o-p31fail1"
+    >p31fail1.dtd:1:1: Element not allowed in the DTD</test>
+  <test id="o-p32fail1"
+    >p32fail1.xml:2:1: '&lt;' not authorized in attribute values. Possible end of value at p32fail1.xml:1:36</test>
+  <test id="o-p32fail2"
+    >p32fail2.xml:2:1: '&lt;' not authorized in attribute values. Possible end of value at p32fail2.xml:1:36</test>
+  <test id="o-p32fail3"
+    >p32fail3.xml:1:20: values must be separated by spaces</test>
+  <test id="o-p32fail4"
+    >p32fail4.xml:1:32: Parameter to 'standalone' must be quoted</test>
+  <test id="o-p32fail5"
+    >p32fail5.xml:1:33: Invalid value for standalone parameter in &lt;?xml?&gt;</test>
+  <test id="o-p39fail1"
+    >p39fail1.xml:1:12: Node &lt;doc&gt; is not closed</test>
+  <test id="o-p39fail2"
+    >p39fail2.xml:1:13: Name differ for closing tag (expecting doc, opened line 1)</test>
+  <test id="o-p39fail3"
+    >p39fail3.xml:1:0: No root element specified</test>
+  <test id="o-p39fail4"
+    >p39fail4.xml:1:20: values must be separated by spaces</test>
+  <test id="o-p39fail5"
+    >p39fail5.xml:1:20: values must be separated by spaces</test>
+  <test id="o-p40fail1"
+    >p40fail1.xml:1:15: Expecting a space</test>
+  <test id="o-p40fail2"
+    >p40fail2.xml:1:2: Invalid name: '3notname'</test>
+  <test id="o-p40fail3"
+    >p40fail3.xml:1:2: Invalid name: '3notname'</test>
+  <test id="o-p40fail4"
+    >p40fail4.xml:1:2: Expecting a Name</test>
+  <test id="o-p41fail3"
+    >p41fail3.xml:1:10: Attributes must have an explicit value</test>
+  <test id="o-p42fail1"
+    >p42fail1.xml:1:8: Expecting a Name</test>
+  <test id="o-p42fail2"
+    >p42fail2.xml:1:11: Tags must end with a '>' symbol</test>
+  <test id="o-p42fail3"
+    >p42fail3.xml:1:5: Expecting a space</test>
+  <test id="o-p43fail1"
+    >p43fail1.xml:7:1: Invalid characters '&lt;!-' in stream</test>
+  <test id="o-p43fail2"
+    >p43fail2.xml:7:1: INCLUDE and IGNORE sections only allowed in the external DTD subset</test>
+  <test id="o-p43fail3"
+    >p43fail3.xml:7:1: INCLUDE and IGNORE sections only allowed in the external DTD subset</test>
+  <test id="o-p44fail1"
+    >p44fail1.xml:1:2: Expecting a Name</test>
+  <test id="o-p44fail2"
+    >p44fail2.xml:1:5: Expecting a space</test>
+  <test id="o-p44fail3"
+    >p44fail3.xml:1:6: Invalid name: '--bad'</test>
+  <test id="o-p44fail4"
+    >p44fail4.xml:1:15: Expecting a space</test>
+  <test id="o-p44fail5"
+    >p44fail5.xml:1:16: Attributes may appear only once: att</test>
+  <test id="o-p45fail1"
+    >p45fail1.xml:3:10: Unexpected character in the DTD</test>
+  <test id="o-p45fail2"
+    >p45fail2.xml:3:14: Expecting a space</test>
+  <test id="o-p45fail3"
+    >p45fail3.xml:3:12: Expecting a Name</test>
+  <test id="o-p45fail4"
+    >p45fail4.xml:3:30: Expecting end of ELEMENT definition</test>
+  <test id="o-p46fail1"
+    >p46fail1.xml:4:13: Missing content particle in sequence</test>
+  <test id="o-p46fail2"
+    >p46fail2.xml:4:29: Expecting end of ELEMENT definition</test>
+  <test id="o-p46fail3"
+    >p46fail3.xml:4:29: Expecting end of ELEMENT definition</test>
+  <test id="o-p46fail4"
+    >p46fail4.xml:4:20: Expecting end of ELEMENT definition</test>
+  <test id="o-p46fail5"
+    >p46fail5.xml:4:23: Expecting end of ELEMENT definition</test>
+  <test id="o-p46fail6"
+    >p46fail6.xml:4:20: Expecting end of ELEMENT definition</test>
+  <test id="o-p47fail1"
+    >p47fail1.xml:4:20: Cannot mix ',' and '|' in content model</test>
+  <test id="o-p47fail2"
+    >p47fail2.xml:4:19: Expecting end of ELEMENT definition</test>
+  <test id="o-p47fail3"
+    >p47fail3.xml:4:13: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+  <test id="o-p47fail4"
+    >p47fail4.xml:4:21: Expecting end of ELEMENT definition</test>
+  <test id="o-p48fail1"
+    >p48fail1.xml:4:13: Invalid location for '+', '?' or '*' operators</test>
+  <test id="o-p48fail2"
+    >p48fail2.xml:4:13: Invalid location for '+', '?' or '*' operators</test>
+  <test id="o-p49fail1"
+    >p49fail1.xml:4:20: Cannot mix ',' and '|' in content model</test>
+  <test id="o-p50fail1"
+    >p50fail1.xml:4:20: Cannot mix ',' and '|' in content model</test>
+  <test id="o-p51fail1"
+    >p51fail1.xml:3:24: Occurrence on #PCDATA must be '*'</test>
+  <test id="o-p51fail2"
+    >p51fail2.xml:3:24: Occurrence on #PCDATA must be '*'</test>
+  <test id="o-p51fail3"
+    >p51fail3.xml:4:24: #PCDATA must be first in list</test>
+  <test id="o-p51fail4"
+    >p51fail4.xml:4:26: Closing parenthesis must be followed by '*' in mixed content</test>
+  <test id="o-p51fail5"
+    >p51fail5.xml:4:25: Cannot mix ',' and '|' in content model</test>
+  <test id="o-p51fail6"
+    >p51fail6.xml:4:21: #PCDATA can only be used with '|' connectors</test>
+  <test id="o-p51fail7"
+    >p51fail7.xml:4:29: Nested groups and occurrence operators not allowed in mixed content</test>
+  <test id="o-p52fail1"
+    >p52fail1.xml:4:12: Expecting a Name</test>
+  <test id="o-p52fail2"
+    >p52fail2.xml:4:10: Unexpected character in the DTD</test>
+  <test id="o-p53fail1"
+    >p53fail1.xml:4:24: Expecting a space</test>
+  <test id="o-p53fail2"
+    >p53fail2.xml:4:18: Expecting a space</test>
+  <test id="o-p53fail3"
+    >p53fail3.xml:4:27: Invalid type for attribute</test>
+  <test id="o-p53fail4"
+    >p53fail4.xml:4:24: Expecting a space</test>
+  <test id="o-p53fail5"
+    >p53fail5.xml:4:15: Expecting a Name</test>
+  <test id="o-p54fail1"
+    >p54fail1.xml:4:24: Invalid type for attribute</test>
+  <test id="o-p55fail1"
+    >p55fail1.xml:4:24: Invalid type for attribute</test>
+  <test id="o-p56fail1"
+    >p56fail1.xml:4:21: Expecting a space</test>
+  <test id="o-p56fail2"
+    >p56fail2.xml:4:20: Invalid type for attribute</test>
+  <test id="o-p56fail3"
+    >p56fail3.xml:4:20: Invalid type for attribute</test>
+  <test id="o-p56fail4"
+    >p56fail4.xml:4:25: Expecting a space</test>
+  <test id="o-p56fail5"
+    >p56fail5.xml:4:21: Invalid type for attribute</test>
+  <test id="o-p57fail1"
+    >p57fail1.xml:4:28: Invalid default value for attribute</test>
+  <test id="o-p58fail1"
+    >p58fail1.xml:6:28: Invalid content model: list of choices cannot be empty</test>
+  <test id="o-p58fail2"
+    >p58fail2.xml:6:30: Invalid character ',' in ATTLIST enumeration</test>
+  <test id="o-p58fail4"
+    >p58fail4.xml:6:27: Invalid type for attribute</test>
+  <test id="o-p58fail5"
+    >p58fail5.xml:6:27: Space is required between NOTATION keyword and list of enumerated</test>
+  <test id="o-p58fail6"
+    >p58fail6.xml:5:28: Expecting operator in content model</test>
+  <test id="o-p58fail7"
+    >p58fail7.xml:5:28: Expecting operator in content model</test>
+  <test id="o-p58fail8"
+    >p58fail8.xml:5:29: Expecting operator in content model</test>
+  <test id="o-p59fail1"
+    >p59fail1.xml:4:19: Invalid content model: list of choices cannot be empty</test>
+  <test id="o-p59fail2"
+    >p59fail2.xml:4:21: Invalid character ',' in ATTLIST enumeration</test>
+  <test id="o-p59fail3"
+    >p59fail3.xml:4:20: Expecting operator in content model</test>
+  <test id="o-p60fail1"
+    >p60fail1.xml:4:26: Invalid default declaration for the attribute</test>
+  <test id="o-p60fail2"
+    >p60fail2.xml:4:31: Expecting a space</test>
+  <test id="o-p60fail3"
+    >p60fail3.xml:4:35: Expecting a Name</test>
+  <test id="o-p60fail4"
+    >p60fail4.xml:4:31: Expecting a space</test>
+  <test id="o-p60fail5"
+    >p60fail5.xml:4:34: Invalid name: '#REQUIRED'</test>
+  <test id="o-p61fail1"
+    >p61fail1.dtd:2:8: Unexpected character in the DTD</test>
+  <test id="o-p62fail1"
+    >p62fail1.dtd:1:11: Unexpected character in the DTD</test>
+  <test id="o-p62fail2"
+    >p62fail2.dtd:3:4: Conditional section must be properly terminated</test>
+  <test id="o-p63fail1"
+    >p63fail1.dtd:2:10: Unexpected character in the DTD</test>
+  <test id="o-p63fail2"
+    >p63fail2.dtd:3:1: Conditional section must be properly terminated</test>
+  <test id="o-p64fail1"
+    >p64fail1.dtd:2:33: Text may not contain the litteral ']]&gt;'</test>
+  <test id="o-p64fail2"
+    >p64fail2.dtd:3:1: Conditional section must be properly terminated</test>
+  <test id="o-p66fail1"
+    >p66fail1.xml:1:10: Invalid character in character reference: &lt;</test>
+  <test id="o-p66fail2"
+    >p66fail2.xml:1:8: Invalid character in character reference:  </test>
+  <test id="o-p66fail3"
+    >p66fail3.xml:1:8: Invalid character in character reference: A</test>
+  <test id="o-p66fail4"
+    >p66fail4.xml:1:10: Invalid character in character reference: G</test>
+  <test id="o-p66fail5"
+    >p66fail5.xml:1:6: Invalid character code: 5</test>
+  <test id="o-p66fail6"
+    >p66fail6.xml:1:6: Invalid character code: 55298</test>
+  <test id="o-p68fail1"
+    >p68fail1.xml:7:1: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="o-p68fail2"
+    >p68fail2.xml:7:1: Invalid entity name</test>
+  <test id="o-p68fail3"
+    >p68fail3.xml:7:1: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="o-p69fail1"
+    >p69fail1.xml:5:4: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="o-p69fail2"
+    >p69fail2.xml:5:2: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="o-p69fail3"
+    >p69fail3.xml:5:4: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+  <test id="o-p70fail1"
+    >p70fail1.xml:4:11: Expecting a Name</test>
+  <test id="o-p71fail1"
+    >p71fail1.xml:4:12: Expecting a space</test>
+  <test id="o-p71fail2"
+    >p71fail2.xml:4:13: Expecting a Name</test>
+  <test id="o-p71fail3"
+    >p71fail3.xml:4:3: Unexpected character in the DTD</test>
+  <test id="o-p71fail4"
+    >p71fail4.xml:4:9: Expecting a space</test>
+  <test id="o-p72fail1"
+    >p72fail1.xml:4:9: Expecting a space</test>
+  <test id="o-p72fail2"
+    >p72fail2.xml:4:13: Expecting a Name</test>
+  <test id="o-p72fail3"
+    >p72fail3.xml:4:14: Expecting a space</test>
+  <test id="o-p72fail4"
+    >p72fail4.xml:4:15: Expecting a Name</test>
+  <test id="o-p73fail1"
+    >p73fail1.xml:5:18: Invalid definition for ENTITY</test>
+  <test id="o-p73fail2"
+    >p73fail2.xml:5:33: Expecting end of ENTITY definition</test>
+  <test id="o-p73fail3"
+    >p73fail3.xml:5:37: Expecting end of ENTITY definition</test>
+  <test id="o-p73fail4"
+    >p73fail4.xml:5:14: Invalid definition for ENTITY</test>
+  <test id="o-p73fail5"
+    >p73fail5.xml:5:18: Invalid definition for ENTITY</test>
+  <test id="o-p74fail1"
+    >p74fail1.xml:4:32: NDATA annotation not allowed for parameter entities</test>
+  <test id="o-p74fail2"
+    >p74fail2.xml:4:14: Expecting a space</test>
+  <test id="o-p74fail3"
+    >p74fail3.xml:3:36: Expecting end of ENTITY definition</test>
+  <test id="o-p75fail1"
+    >p75fail1.xml:3:20: Expecting a space</test>
+  <test id="o-p75fail2"
+    >p75fail2.xml:3:20: Expecting a space</test>
+  <test id="o-p75fail3"
+    >p75fail3.xml:3:31: Require whitespace between public and system IDs</test>
+  <test id="o-p75fail4"
+    >p75fail4.xml:3:33: Expecting end of ENTITY definition</test>
+  <test id="o-p75fail5"
+    >p75fail5.xml:3:38: Expecting SystemID after PUBLIC</test>
+  <test id="o-p75fail6"
+    >p75fail6.xml:3:32: Expecting SystemID after PUBLIC</test>
+  <test id="o-p76fail1"
+    >p76fail1.xml:5:29: Expecting space before NDATA declaration</test>
+  <test id="o-p76fail2"
+    >p76fail2.xml:5:35: Expecting end of ENTITY definition</test>
+  <test id="o-p76fail3"
+    >p76fail3.xml:5:35: Expecting a space</test>
+  <test id="o-p76fail4"
+    >p76fail4.xml:7:12: Expecting a Name with no colon</test>
+  <test id="invalid--pe01"
+    >pe01.dtd:4:24: Attribute values cannot reference external entities</test>
+
+  <test id="rmt-ns10-042"
+    >042.xml:3:6: Must have space between target and data</test>
+  <test id="rmt-ns10-041"
+    >041.xml:4:5: No DTD defined for this document
+041.xml:6:10: [VC] No attribute allowed for element bar
+041.xml:6:19: [VC] No attribute allowed for element bar</test>
+  <test id="rmt-ns10-040"
+    >040.xml:4:5: No DTD defined for this document
+040.xml:7:8: [VC] No attribute allowed for element bar
+040.xml:7:17: [VC] No attribute allowed for element bar</test>
+  <test id="rmt-ns10-039"
+    >039.xml:4:5: No DTD defined for this document
+039.xml:8:10: [VC] No attribute allowed for element bar
+039.xml:8:19: [VC] No attribute allowed for element bar</test>
+  <test id="rmt-ns10-038"
+    >038.xml:4:5: No DTD defined for this document
+038.xml:6:8: [VC] No attribute allowed for element bar
+038.xml:6:17: [VC] No attribute allowed for element bar</test>
+  <test id="rmt-ns10-037"
+    >037.xml:3:5: No DTD defined for this document
+037.xml:6:8: [VC] No attribute allowed for element bar
+037.xml:6:19: [VC] No attribute allowed for element bar</test>
+  <test id="rmt-ns10-036"
+    >036.xml:6:29: Attributes may appear only once: b:attr</test>
+  <test id="rmt-ns10-035"
+    >035.xml:6:19: Attributes may appear only once: a:attr</test>
+  <test id="rmt-ns10-034"
+    >034.xml:3:5: No DTD defined for this document</test>
+  <test id="rmt-ns10-033"
+    >033.xml:4:12: Cannot redefine the xmlns prefix</test>
+  <test id="rmt-ns10-032"
+    >032.xml:4:12: Cannot redefine the xmlns prefix</test>
+  <test id="rmt-ns10-031"
+    >031.xml:4:12: Cannot redefine the xmlns prefix</test>
+  <test id="rmt-ns10-030"
+    >030.xml:4:12: Cannot bind the namespace URI to a prefix other than xml</test>
+  <test id="rmt-ns10-029"
+    >029.xml:3:12: Cannot redefine the xml prefix</test>
+  <test id="rmt-ns10-028"
+    >028.xml:3:5: No DTD defined for this document</test>
+  <test id="rmt-ns10-027"
+    >027.xml:3:5: No DTD defined for this document
+027.xml:3:10: [VC] No attribute allowed for element foo</test>
+  <test id="rmt-ns10-026"
+    >026.xml:3:18: Prefix must be declared before its use: a</test>
+  <test id="rmt-ns10-025"
+    >025.xml:3:9: Prefix must be declared before its use: a</test>
+  <test id="rmt-ns10-024"
+    >024.xml:3:7: No DTD defined for this document</test>
+  <test id="rmt-ns10-023"
+    >023.xml:4:18: Cannot use an empty URI for namespaces</test>
+  <test id="rmt-ns10-022"
+    >022.xml:3:5: No DTD defined for this document</test>
+  <test id="rmt-ns10-021"
+    >021.xml:3:5: No DTD defined for this document
+021.xml:4:14: Invalid URI for namespace</test>
+  <test id="rmt-ns10-020"
+    >020.xml:3:5: No DTD defined for this document
+020.xml:3:47: [VC] No attribute allowed for element foo</test>
+  <test id="rmt-ns10-019"
+    >019.xml:3:7: No DTD defined for this document</test>
+  <test id="rmt-ns10-018"
+    >018.xml:3:5: No DTD defined for this document</test>
+  <test id="rmt-ns10-017"
+    >017.xml:3:5: No DTD defined for this document</test>
+  <test id="rmt-ns10-016"
+    >016.xml:3:13: Expecting a Name</test>
+  <test id="rmt-ns10-014"
+    >014.xml:3:7: Expecting a Name</test>
+  <test id="rmt-ns10-013"
+    >013.xml:4:9: Attributes must have an explicit value</test>
+  <test id="rmt-ns10-012"
+    >012.xml:16:29: Attributes may appear only once: b:attr</test>
+  <test id="rmt-ns10-011"
+    >011.xml:17:29: Attributes may appear only once: b:attr</test>
+  <test id="rmt-ns10-010"
+    >010.xml:16:29: Attributes may appear only once: b:attr</test>
+  <test id="rmt-ns10-009"
+    >009.xml:16:29: Attributes may appear only once: b:attr</test>
+  <test id="rmt-ns10-006"
+    >006.xml:7:13: Invalid URI for namespace</test>
+  <test id="rmt-ns10-005"
+    >005.xml:7:13: Invalid URI for namespace</test>
+  <test id="rmt-ns10-004"
+    >004.xml:7:13: Invalid URI for namespace</test>
+  <test id="rmt-e2e-61"
+    >E61.xml:2:1: Non-white space found at top level</test>
+  <test id="rmt-e2e-57"
+    >E57.xml:1:56: Value of xml:space must be (default|preserve)</test>
+  <test id="rmt-e2e-38"
+    >E38.ent:1:20: Unsupported version of XML: 1.1</test>
+  <test id="rmt-e2e-27"
+    >E27.xml:4:6: Invalid character code: 55296</test>
+  <test id="rmt-e2e-20"
+    >E20.xml:5:2: Attribute must contain Nmtokens: bar</test>
+  <test id="rmt-e2e-14"
+    >entity %e:1:20: Entity values must be self-contained</test>
+  <test id="rmt-e2e-9b"
+    >E9b.xml:5:27: Attribute must contain Names: bar
+E9b.xml:5:27: Attribute must reference an existing unparsed entity: bar</test>
+  <test id="rmt-e2e-2b"
+    >E2b.xml:4:27: Notation must be declared: one
+E2b.xml:4:27: Notation must be declared: one</test>
+  
+  <test id="ibm-not-wf-P89-ibm89n12.xml"
+    >ibm89n12.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n11.xml"
+    >ibm89n11.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n10.xml"
+    >ibm89n10.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n09.xml"
+    >ibm89n09.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n08.xml"
+    >ibm89n08.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n07.xml"
+    >ibm89n07.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n06.xml"
+    >ibm89n06.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n05.xml"
+    >ibm89n05.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n04.xml"
+    >ibm89n04.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n03.xml"
+    >ibm89n03.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n02.xml"
+    >ibm89n02.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P89-ibm89n01.xml"
+    >ibm89n01.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n16.xml"
+    >ibm88n16.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n15.xml"
+    >ibm88n15.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n14.xml"
+    >ibm88n14.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n13.xml"
+    >ibm88n13.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n12.xml"
+    >ibm88n12.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n11.xml"
+    >ibm88n11.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n10.xml"
+    >ibm88n10.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n09.xml"
+    >ibm88n09.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n08.xml"
+    >ibm88n08.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n06.xml"
+    >ibm88n06.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n05.xml"
+    >ibm88n05.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n04.xml"
+    >ibm88n04.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n03.xml"
+    >ibm88n03.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n02.xml"
+    >ibm88n02.xml:3:5: Must have space between target and data</test>
+  <test id="ibm-not-wf-P88-ibm88n01.xml"
+    >ibm88n01.xml:3:5: Must have space between target and data</test>
+     <test id="ibm-not-wf-P87-ibm87n01.xml"
+     >ibm87n01.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n02.xml"
+     >ibm87n02.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n03.xml"
+     >ibm87n03.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n04.xml"
+     >ibm87n04.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n05.xml"
+     >ibm87n05.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n06.xml"
+     >ibm87n06.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n07.xml"
+     >ibm87n07.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n08.xml"
+     >ibm87n08.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n09.xml"
+     >ibm87n09.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n10.xml"
+     >ibm87n10.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n11.xml"
+     >ibm87n11.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n12.xml"
+     >ibm87n12.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n13.xml"
+     >ibm87n13.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n14.xml"
+     >ibm87n14.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n15.xml"
+     >ibm87n15.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n16.xml"
+     >ibm87n16.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n17.xml"
+     >ibm87n17.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n18.xml"
+     >ibm87n18.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n19.xml"
+     >ibm87n19.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n20.xml"
+     >ibm87n20.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n21.xml"
+     >ibm87n21.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n22.xml"
+     >ibm87n22.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n23.xml"
+     >ibm87n23.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n24.xml"
+     >ibm87n24.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n25.xml"
+     >ibm87n25.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n26.xml"
+     >ibm87n26.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n27.xml"
+     >ibm87n27.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n28.xml"
+     >ibm87n28.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n29.xml"
+     >ibm87n29.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n30.xml"
+     >ibm87n30.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n31.xml"
+     >ibm87n31.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n32.xml"
+     >ibm87n32.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n33.xml"
+     >ibm87n33.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n34.xml"
+     >ibm87n34.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n35.xml"
+     >ibm87n35.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n36.xml"
+     >ibm87n36.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n37.xml"
+     >ibm87n37.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n38.xml"
+     >ibm87n38.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n39.xml"
+     >ibm87n39.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n40.xml"
+     >ibm87n40.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n41.xml"
+     >ibm87n41.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n42.xml"
+     >ibm87n42.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n43.xml"
+     >ibm87n43.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n44.xml"
+     >ibm87n44.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n45.xml"
+     >ibm87n45.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n46.xml"
+     >ibm87n46.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n47.xml"
+     >ibm87n47.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n48.xml"
+     >ibm87n48.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n49.xml"
+     >ibm87n49.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n50.xml"
+     >ibm87n50.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n51.xml"
+     >ibm87n51.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n52.xml"
+     >ibm87n52.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n53.xml"
+     >ibm87n53.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n54.xml"
+     >ibm87n54.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n55.xml"
+     >ibm87n55.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n56.xml"
+     >ibm87n56.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n57.xml"
+     >ibm87n57.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n58.xml"
+     >ibm87n58.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n59.xml"
+     >ibm87n59.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n60.xml"
+     >ibm87n60.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n61.xml"
+     >ibm87n61.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n62.xml"
+     >ibm87n62.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n63.xml"
+     >ibm87n63.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n64.xml"
+     >ibm87n64.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n66.xml"
+     >ibm87n66.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n67.xml"
+     >ibm87n67.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n68.xml"
+     >ibm87n68.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n69.xml"
+     >ibm87n69.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n70.xml"
+     >ibm87n70.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n71.xml"
+     >ibm87n71.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n72.xml"
+     >ibm87n72.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n73.xml"
+     >ibm87n73.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n74.xml"
+     >ibm87n74.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n75.xml"
+     >ibm87n75.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n76.xml"
+     >ibm87n76.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n77.xml"
+     >ibm87n77.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n78.xml"
+     >ibm87n78.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n79.xml"
+     >ibm87n79.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n80.xml"
+     >ibm87n80.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n81.xml"
+     >ibm87n81.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n82.xml"
+     >ibm87n82.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n83.xml"
+     >ibm87n83.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n84.xml"
+     >ibm87n84.xml:3:5: Must have space between target and data</test>
+   <test id="ibm-not-wf-P87-ibm87n85.xml"
+     >ibm87n85.xml:3:5: Must have space between target and data</test>
+
+      <test id="ibm-not-wf-P85-ibm85n01.xml"
+     >ibm85n01.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n02.xml"
+     >ibm85n02.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n03.xml"
+     >ibm85n03.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n04.xml"
+     >ibm85n04.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n05.xml"
+     >ibm85n05.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n06.xml"
+     >ibm85n06.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n07.xml"
+     >ibm85n07.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n08.xml"
+     >ibm85n08.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n09.xml"
+     >ibm85n09.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n10.xml"
+     >ibm85n10.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n100.xml"
+     >ibm85n100.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n101.xml"
+     >ibm85n101.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n102.xml"
+     >ibm85n102.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n103.xml"
+     >ibm85n103.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n104.xml"
+     >ibm85n104.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n105.xml"
+     >ibm85n105.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n106.xml"
+     >ibm85n106.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n107.xml"
+     >ibm85n107.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n108.xml"
+     >ibm85n108.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n109.xml"
+     >ibm85n109.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n11.xml"
+     >ibm85n11.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n110.xml"
+     >ibm85n110.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n111.xml"
+     >ibm85n111.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n112.xml"
+     >ibm85n112.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n113.xml"
+     >ibm85n113.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n114.xml"
+     >ibm85n114.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n115.xml"
+     >ibm85n115.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n116.xml"
+     >ibm85n116.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n117.xml"
+     >ibm85n117.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n118.xml"
+     >ibm85n118.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n119.xml"
+     >ibm85n119.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n12.xml"
+     >ibm85n12.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n120.xml"
+     >ibm85n120.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n121.xml"
+     >ibm85n121.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n122.xml"
+     >ibm85n122.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n123.xml"
+     >ibm85n123.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n124.xml"
+     >ibm85n124.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n125.xml"
+     >ibm85n125.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n126.xml"
+     >ibm85n126.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n127.xml"
+     >ibm85n127.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n128.xml"
+     >ibm85n128.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n129.xml"
+     >ibm85n129.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n13.xml"
+     >ibm85n13.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n130.xml"
+     >ibm85n130.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n131.xml"
+     >ibm85n131.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n132.xml"
+     >ibm85n132.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n133.xml"
+     >ibm85n133.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n134.xml"
+     >ibm85n134.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n135.xml"
+     >ibm85n135.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n136.xml"
+     >ibm85n136.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n137.xml"
+     >ibm85n137.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n138.xml"
+     >ibm85n138.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n139.xml"
+     >ibm85n139.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n14.xml"
+     >ibm85n14.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n140.xml"
+     >ibm85n140.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n141.xml"
+     >ibm85n141.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n142.xml"
+     >ibm85n142.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n143.xml"
+     >ibm85n143.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n144.xml"
+     >ibm85n144.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n145.xml"
+     >ibm85n145.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n146.xml"
+     >ibm85n146.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n147.xml"
+     >ibm85n147.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n148.xml"
+     >ibm85n148.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n149.xml"
+     >ibm85n149.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n15.xml"
+     >ibm85n15.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n150.xml"
+     >ibm85n150.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n151.xml"
+     >ibm85n151.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n152.xml"
+     >ibm85n152.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n153.xml"
+     >ibm85n153.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n154.xml"
+     >ibm85n154.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n155.xml"
+     >ibm85n155.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n156.xml"
+     >ibm85n156.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n157.xml"
+     >ibm85n157.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n158.xml"
+     >ibm85n158.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n159.xml"
+     >ibm85n159.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n16.xml"
+     >ibm85n16.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n160.xml"
+     >ibm85n160.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n161.xml"
+     >ibm85n161.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n162.xml"
+     >ibm85n162.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n163.xml"
+     >ibm85n163.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n164.xml"
+     >ibm85n164.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n165.xml"
+     >ibm85n165.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n166.xml"
+     >ibm85n166.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n167.xml"
+     >ibm85n167.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n168.xml"
+     >ibm85n168.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n169.xml"
+     >ibm85n169.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n17.xml"
+     >ibm85n17.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n170.xml"
+     >ibm85n170.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n171.xml"
+     >ibm85n171.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n172.xml"
+     >ibm85n172.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n173.xml"
+     >ibm85n173.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n174.xml"
+     >ibm85n174.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n175.xml"
+     >ibm85n175.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n176.xml"
+     >ibm85n176.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n177.xml"
+     >ibm85n177.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n178.xml"
+     >ibm85n178.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n179.xml"
+     >ibm85n179.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n18.xml"
+     >ibm85n18.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n180.xml"
+     >ibm85n180.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n181.xml"
+     >ibm85n181.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n182.xml"
+     >ibm85n182.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n183.xml"
+     >ibm85n183.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n184.xml"
+     >ibm85n184.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n185.xml"
+     >ibm85n185.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n186.xml"
+     >ibm85n186.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n187.xml"
+     >ibm85n187.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n188.xml"
+     >ibm85n188.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n189.xml"
+     >ibm85n189.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n19.xml"
+     >ibm85n19.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n190.xml"
+     >ibm85n190.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n191.xml"
+     >ibm85n191.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n192.xml"
+     >ibm85n192.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n193.xml"
+     >ibm85n193.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n194.xml"
+     >ibm85n194.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n195.xml"
+     >ibm85n195.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n196.xml"
+     >ibm85n196.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n197.xml"
+     >ibm85n197.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n198.xml"
+     >ibm85n198.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n20.xml"
+     >ibm85n20.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n21.xml"
+     >ibm85n21.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n22.xml"
+     >ibm85n22.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n23.xml"
+     >ibm85n23.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n24.xml"
+     >ibm85n24.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n25.xml"
+     >ibm85n25.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n26.xml"
+     >ibm85n26.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n27.xml"
+     >ibm85n27.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n28.xml"
+     >ibm85n28.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n29.xml"
+     >ibm85n29.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n30.xml"
+     >ibm85n30.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n31.xml"
+     >ibm85n31.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n32.xml"
+     >ibm85n32.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n33.xml"
+     >ibm85n33.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n34.xml"
+     >ibm85n34.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n35.xml"
+     >ibm85n35.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n36.xml"
+     >ibm85n36.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n37.xml"
+     >ibm85n37.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n38.xml"
+     >ibm85n38.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n39.xml"
+     >ibm85n39.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n40.xml"
+     >ibm85n40.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n41.xml"
+     >ibm85n41.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n42.xml"
+     >ibm85n42.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n43.xml"
+     >ibm85n43.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n44.xml"
+     >ibm85n44.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n45.xml"
+     >ibm85n45.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n46.xml"
+     >ibm85n46.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n47.xml"
+     >ibm85n47.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n48.xml"
+     >ibm85n48.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n49.xml"
+     >ibm85n49.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n50.xml"
+     >ibm85n50.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n51.xml"
+     >ibm85n51.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n52.xml"
+     >ibm85n52.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n53.xml"
+     >ibm85n53.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n54.xml"
+     >ibm85n54.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n55.xml"
+     >ibm85n55.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n56.xml"
+     >ibm85n56.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n57.xml"
+     >ibm85n57.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n58.xml"
+     >ibm85n58.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n59.xml"
+     >ibm85n59.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n60.xml"
+     >ibm85n60.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n61.xml"
+     >ibm85n61.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n62.xml"
+     >ibm85n62.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n63.xml"
+     >ibm85n63.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n64.xml"
+     >ibm85n64.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n65.xml"
+     >ibm85n65.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n66.xml"
+     >ibm85n66.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n67.xml"
+     >ibm85n67.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n68.xml"
+     >ibm85n68.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n69.xml"
+     >ibm85n69.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n70.xml"
+     >ibm85n70.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n71.xml"
+     >ibm85n71.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n72.xml"
+     >ibm85n72.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n73.xml"
+     >ibm85n73.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n74.xml"
+     >ibm85n74.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n75.xml"
+     >ibm85n75.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n76.xml"
+     >ibm85n76.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n77.xml"
+     >ibm85n77.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n78.xml"
+     >ibm85n78.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n79.xml"
+     >ibm85n79.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n80.xml"
+     >ibm85n80.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n81.xml"
+     >ibm85n81.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n82.xml"
+     >ibm85n82.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n83.xml"
+     >ibm85n83.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n84.xml"
+     >ibm85n84.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n85.xml"
+     >ibm85n85.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n86.xml"
+     >ibm85n86.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n87.xml"
+     >ibm85n87.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n88.xml"
+     >ibm85n88.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n89.xml"
+     >ibm85n89.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n90.xml"
+     >ibm85n90.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n91.xml"
+     >ibm85n91.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n92.xml"
+     >ibm85n92.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n93.xml"
+     >ibm85n93.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n94.xml"
+     >ibm85n94.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n95.xml"
+     >ibm85n95.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n96.xml"
+     >ibm85n96.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n97.xml"
+     >ibm85n97.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n98.xml"
+     >ibm85n98.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P85-ibm85n99.xml"
+     >ibm85n99.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P86-ibm86n01.xml"
+     >ibm86n01.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P86-ibm86n02.xml"
+     >ibm86n02.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P86-ibm86n03.xml"
+     >ibm86n03.xml:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P86-ibm86n04.xml"
+     >ibm86n04.xml:3:3: Processing Instruction must specify a target name</test>
+
+
+   <!-- ########################################################################
+        ## The following tests haven't been checked manually one by one,      ##
+        ## so there might technically be wrong error messages. However, we    ##
+        ## expected output of the testsuite (test passes or fails) is correct ##
+        ## since provided with the XML Conformance Testsuite itself.          ##
+        ## At worse, this means that some error messages could be improved, or##
+        ## their location                                                     ##
+        ########################################################################-->
+
+   <test id="not-wf-sa-021"
+     >021.xml:1:11: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="not-wf-sa-083"
+     >083.xml:4:6: Entity cannot reference itself</test>
+   <test id="not-wf-sa-085"
+     >085.xml:1:23: Invalid PubID character: '['</test>
+   <test id="not-wf-sa-086"
+     >086.xml:2:22: Invalid PubID character: '['</test>
+   <test id="not-wf-sa-087"
+     >087.xml:2:24: Invalid PubID character: '['</test>
+   <test id="not-wf-ext-sa-001"
+     >001.ent:1:1: Entity cannot reference itself</test>
+   <test id="not-wf-ext-sa-002"
+     >002.ent:1:21: 'encoding' must be specified for &lt;?xml?&gt; in external entities</test>
+   <test id="not-wf-ext-sa-003"
+     >003.ent:1:39: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="inv-dtd02"
+     >dtd02.xml:3:55: Notation must be declared: Encyclopaedia</test>
+   <test id="id04"
+     >id04.xml:3:9: Default value for an ID attribute must be IMPLIED or REQUIRED</test>
+   <test id="id05"
+     >id05.xml:4:9: Default value for an ID attribute must be IMPLIED or REQUIRED</test>
+   <test id="inv-not-sa02"
+     >not-sa02.xml:17:2: Attribute must contain Nmtokens: nmtokens
+not-sa02.xml:17:2: Attribute must contain Names: entities
+not-sa02.xml:17:2: Attribute must reference an existing unparsed entity: entities</test>
+   <test id="inv-not-sa08"
+     >not-sa08.xml:8:2: Attribute must contain Nmtokens: nmtokens</test>
+   <test id="inv-not-sa13"
+     >not-sa13.xml:8:2: Attribute must contain Names: entities
+not-sa13.xml:8:2: Attribute must reference an existing unparsed entity: entities</test>
+   <test id="inv-required00"
+     >required00.xml:8:8: [VC 3.3.2] Required attribute 'req' must be defined</test>
+   <test id="inv-required01"
+     >required01.xml:5:11: [VC] No attribute allowed for element root</test>
+   <test id="inv-required02"
+     >required02.xml:5:11: [VC] No attribute allowed for element root</test>
+   <test id="root"
+     >root.xml:6:6: [VC 2.8] Name of root element doesn't match name of DTD ('attributes')</test>
+   <test id="attr01"
+     >attr01.xml:9:2: Attribute must reference an existing unparsed entity: affiliated</test>
+   <test id="attr02"
+     >attr02.xml:12:2: Attribute must contain Names: affiliated
+attr02.xml:12:2: Attribute must reference an existing unparsed entity: affiliated
+attr02.xml:12:2: Attribute must contain Names: affiliated
+attr02.xml:12:2: Attribute must reference an existing unparsed entity: affiliated
+attr02.xml:12:2: Attribute must reference an existing unparsed entity: affiliated</test>
+   <test id="attr05"
+     >attr05.xml:9:2: Attribute must contain Nmtokens: token</test>
+   <test id="attr06"
+     >attr06.xml:9:2: Attribute must contain Nmtokens: token</test>
+   <test id="attr08"
+     >attr08.xml:9:19: [VC 3.3.2] xmlns attribute doesn't match FIXED value</test>
+   <test id="attr11"
+     >attr11.xml:5:19: Attribute must contain Names: value
+attr11.xml:5:19: Attribute must reference an existing unparsed entity: value</test>
+   <test id="attr12"
+     >attr12.xml:5:21: Attribute must contain Names: value
+attr12.xml:5:21: Attribute must reference an existing unparsed entity: value
+attr12.xml:5:21: Attribute must contain Names: value
+attr12.xml:5:21: Attribute must reference an existing unparsed entity: value</test>
+   <test id="attr13"
+     >attr13.xml:5:20: Attribute must contain Nmtokens: value</test>
+   <test id="attr14"
+     >attr14.xml:5:21: Attribute must contain Nmtokens: value</test>
+   <test id="utf16b"
+     >utf16b.xml:2:6: No DTD defined for this document</test>
+   <test id="utf16l"
+     >utf16l.xml:2:6: No DTD defined for this document</test>
+   <test id="not-wf-sa03"
+     >not-sa03.xml:10:20: Entity declared in external subset, but document is standalone</test>
+   <test id="attlist01"
+     >attlist01.xml:7:10: Invalid type for attribute</test>
+   <test id="attlist02"
+     >attlist02.xml:7:10: Invalid type for attribute</test>
+   <test id="attlist03"
+     >attlist03.xml:7:11: Invalid character ',' in ATTLIST enumeration</test>
+   <test id="attlist04"
+     >attlist04.xml:7:10: Invalid type for attribute</test>
+   <test id="attlist05"
+     >attlist05.xml:7:11: Invalid type for attribute</test>
+   <test id="attlist06"
+     >attlist06.xml:7:10: Invalid type for attribute</test>
+   <test id="attlist07"
+     >attlist07.xml:7:10: Invalid type for attribute</test>
+   <test id="attlist08"
+     >attlist08.xml:7:18: Invalid default declaration for the attribute</test>
+   <test id="attlist09"
+     >attlist09.xml:5:18: Invalid default declaration for the attribute</test>
+   <test id="cond01"
+     >entity %MAYBE:3:1: Invalid declaration</test>
+   <test id="cond02"
+     >cond.dtd:3:1: Invalid declaration</test>
+   <test id="content01"
+     >content01.xml:3:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="content02"
+     >content02.xml:3:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="content03"
+     >content03.xml:3:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="decl01"
+     >decl01.ent:1:38: Text declarations &lt;?xml?&gt; in external entity cannot specify parameters other than 'version' and 'encoding'</test>
+   <test id="nwf-dtd00"
+     >dtd00.xml:2:31: Expecting operator in content model</test>
+   <test id="nwf-dtd01"
+     >dtd01.xml:2:31: Cannot mix ',' and '|' in content model</test>
+   <test id="dtd02"
+     >dtd02.xml:5:6: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="dtd03"
+     >dtd03.xml:5:9: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="dtd04"
+     >dtd04.xml:4:26: Expecting a string after PUBLIC</test>
+   <test id="dtd05"
+     >dtd05.xml:4:34: Expecting a string after SYSTEM</test>
+   <test id="dtd07"
+     >dtd07.dtd:1:20: 'encoding' must be specified for &lt;?xml?&gt; in external entities</test>
+   <test id="element00"
+     >element00.xml:3:5: Tags must end with a '>' symbol</test>
+   <test id="element01"
+     >element01.xml:3:7: Tags must end with a '>' symbol</test>
+   <test id="element02"
+     >element02.xml:3:6: Invalid name: '%'</test>
+   <test id="element03"
+     >element03.xml:3:6: Invalid name: '%'</test>
+   <test id="element04"
+     >element04.xml:3:5: Invalid characters '&lt;!-' in stream</test>
+   <test id="encoding01"
+     >encoding01.xml:1:31: Illegal character ' ' in encoding value</test>
+   <test id="encoding02"
+     >encoding02.xml:1:31: Illegal character '/' in encoding value</test>
+   <test id="encoding03"
+     >encoding03.xml:1:31: Illegal character ')' in encoding value</test>
+   <test id="encoding04"
+     >encoding04.xml:1:31: Illegal character ':' in encoding value</test>
+   <test id="encoding05"
+     >encoding05.xml:1:31: Illegal character '@' in encoding value</test>
+   <test id="encoding06"
+     >encoding06.xml:1:31: Illegal character '+' in encoding value</test>
+   <test id="encoding07"
+     >dtd07.dtd:1:20: 'encoding' must be specified for &lt;?xml?&gt; in external entities</test>
+   <test id="pi"
+     >pi.xml:4:10: Must have space between target and data</test>
+   <test id="pubid01"
+     >pubid01.xml:6:24: Invalid PubID character: '&amp;'</test>
+   <test id="pubid02"
+     >pubid02.xml:6:24: Invalid PubID character: '&lt;'</test>
+   <test id="pubid03"
+     >pubid03.xml:6:24: Invalid PubID character: '['</test>
+   <test id="pubid04"
+     >pubid04.xml:6:24: Invalid PubID character: '{'</test>
+   <test id="pubid05"
+     >pubid05.xml:5:45: Expecting SystemID after PUBLIC</test>
+   <test id="sgml01"
+     >sgml01.xml:8:0: Node &lt;root&gt; is not closed</test>
+   <test id="sgml02"
+     >sgml02.xml:1:2: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="sgml03"
+     >sgml03.xml:3:21: '--' cannot appear in comments</test>
+   <test id="sgml04"
+     >sgml04.xml:7:15: Expecting a Name</test>
+   <test id="sgml05"
+     >sgml05.xml:8:16: Expecting a Name</test>
+   <test id="sgml06"
+     >sgml06.xml:6:15: Expecting a Name</test>
+   <test id="sgml07"
+     >sgml07.xml:3:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="sgml08"
+     >sgml08.xml:3:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="sgml09"
+     >sgml09.xml:4:41: Expecting end of ELEMENT definition</test>
+   <test id="sgml10"
+     >sgml10.xml:3:66: Expecting end of ELEMENT definition</test>
+   <test id="sgml11"
+     >sgml11.xml:3:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="sgml12"
+     >sgml12.xml:3:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="sgml13"
+     >sgml13.xml:3:23: Expecting operator in content model</test>
+   <test id="uri01"
+     >uri01.xml:4:30: SYSTEM identifiers may not contain URI fragments starting with #</test>
+   <test id="o-p01pass1"
+     >p01pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p01pass3"
+     >p01pass3.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p03pass1"
+     >p03pass1.xml:2:6: No DTD defined for this document</test>
+   <test id="o-p04pass1"
+     >p04pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p05pass1"
+     >p05pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p08fail1"
+     >p08fail1.xml:9:2: Attribute must contain Nmtokens: att</test>
+   <test id="o-p08fail2"
+     >p08fail2.xml:9:2: Attribute must contain Nmtokens: att</test>
+   <test id="o-p10pass1"
+     >p10pass1.xml:1:5: No DTD defined for this document
+p10pass1.xml:2:4: [VC] No attribute allowed for element A
+p10pass1.xml:5:4: [VC] No attribute allowed for element A</test>
+   <test id="o-p14pass1"
+     >p14pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p15pass1"
+     >p15pass1.xml:8:5: No DTD defined for this document</test>
+   <test id="o-p16pass1"
+     >p16pass1.xml:7:5: No DTD defined for this document</test>
+   <test id="o-p16pass2"
+     >p16pass2.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p16pass3"
+     >p16pass3.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p18pass1"
+     >p18pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p22pass1"
+     >p22pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p22pass2"
+     >p22pass2.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p22pass3"
+     >p22pass3.xml:3:5: No DTD defined for this document</test>
+   <test id="o-p23pass1"
+     >p23pass1.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p23pass2"
+     >p23pass2.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p23pass3"
+     >p23pass3.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p23pass4"
+     >p23pass4.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p24pass1"
+     >p24pass1.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p24pass2"
+     >p24pass2.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p24pass3"
+     >p24pass3.xml:8:5: No DTD defined for this document</test>
+   <test id="o-p24pass4"
+     >p24pass4.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p25pass1"
+     >p25pass1.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p25pass2"
+     >p25pass2.xml:8:5: No DTD defined for this document</test>
+   <test id="o-p26pass1"
+     >p26pass1.xml:6:5: No DTD defined for this document</test>
+   <test id="o-p27pass1"
+     >p27pass1.xml:4:5: No DTD defined for this document</test>
+   <test id="o-p27pass2"
+     >p27pass2.xml:3:5: No DTD defined for this document</test>
+   <test id="o-p27pass3"
+     >p27pass3.xml:5:5: No DTD defined for this document</test>
+   <test id="o-p27pass4"
+     >p27pass4.xml:11:11: No DTD defined for this document</test>
+   <test id="o-p32pass1"
+     >p32pass1.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p32pass2"
+     >p32pass2.xml:2:5: No DTD defined for this document</test>
+   <test id="o-p39pass1"
+     >p39pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p39pass2"
+     >p39pass2.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p40pass1"
+     >p40pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p40pass2"
+     >p40pass2.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p40pass3"
+     >p40pass3.xml:1:5: No DTD defined for this document
+p40pass3.xml:1:6: [VC] No attribute allowed for element doc</test>
+   <test id="o-p40pass4"
+     >p40pass4.xml:1:5: No DTD defined for this document
+p40pass4.xml:1:6: [VC] No attribute allowed for element doc
+p40pass4.xml:1:16: [VC] No attribute allowed for element doc
+p40pass4.xml:2:1: [VC] No attribute allowed for element doc</test>
+   <test id="o-p41pass1"
+     >p41pass1.xml:1:5: No DTD defined for this document
+p41pass1.xml:1:6: [VC] No attribute allowed for element doc</test>
+   <test id="o-p41pass2"
+     >p41pass2.xml:1:5: No DTD defined for this document
+p41pass2.xml:1:6: [VC] No attribute allowed for element doc</test>
+   <test id="o-p42pass1"
+     >p42pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p42pass2"
+     >p42pass2.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p44pass1"
+     >p44pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p44pass2"
+     >p44pass2.xml:1:5: No DTD defined for this document
+p44pass2.xml:1:6: [VC] No attribute allowed for element doc</test>
+   <test id="o-p44pass3"
+     >p44pass3.xml:1:5: No DTD defined for this document
+p44pass3.xml:1:6: [VC] No attribute allowed for element doc</test>
+   <test id="o-p44pass4"
+     >p44pass4.xml:1:5: No DTD defined for this document</test>
+   <test id="o-p44pass5"
+     >p44pass5.xml:1:5: No DTD defined for this document
+p44pass5.xml:1:6: [VC] No attribute allowed for element doc
+p44pass5.xml:2:1: [VC] No attribute allowed for element doc
+p44pass5.xml:2:13: [VC] No attribute allowed for element doc</test>
+   <test id="o-p66pass1"
+     >p66pass1.xml:1:5: No DTD defined for this document</test>
+   <test id="o-e2"
+     >e2.xml:5:4: [VC 2.8] Name of root element doesn't match name of DTD ('el')
+e2.xml:5:5: [VC] No attribute allowed for element e1</test>
+   <test id="o-p02fail3"
+     >p02fail3.xml:1:8: Invalid character code: 2</test>
+   <test id="o-p09fail1"
+     >p09fail1.dtd:2:23: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="o-p12fail1"
+     >p12fail1.xml:5:25: Invalid PubID character: '"'</test>
+   <test id="o-p12fail2"
+     >p12fail2.xml:5:25: Invalid PubID character: '\'</test>
+   <test id="o-p12fail3"
+     >p12fail3.xml:6:25: Invalid PubID character: '&amp;'</test>
+   <test id="o-p12fail4"
+     >p12fail4.xml:5:25: Invalid PubID character: '>'</test>
+   <test id="o-p12fail5"
+     >p12fail5.xml:5:25: Invalid PubID character: '&lt;'</test>
+   <test id="o-p12fail6"
+     >p12fail6.xml:5:25: Invalid PubID character: '&amp;'</test>
+   <test id="o-p12fail7"
+     >p12fail7.xml:5:25: Invalid PubID character: '	'</test>
+   <test id="o-p16fail3"
+     >p16fail3.xml:1:14: Must have space between target and data</test>
+   <test id="o-p41fail1"
+     >p41fail1.xml:3:15: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="o-p41fail2"
+     >p41fail2.xml:3:15: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="o-p58fail3"
+     >p58fail3.xml:10:12: Expecting a Name with no colon</test>
+   <test id="o-p11pass1"
+     >p11pass1.xml:5:59: SYSTEM identifiers may not contain URI fragments starting with #</test>
+   <test id="ibm-invalid-P28-ibm28i01.xml"
+     >ibm28i01.xml:7:8: [VC 2.8] Name of root element doesn't match name of DTD ('tiger')</test>
+   <test id="ibm-invalid-P41-ibm41i01.xml"
+     >ibm41i01.xml:9:20: [VC] Attribute not declared in DTD: attr1</test>
+   <test id="ibm-invalid-P41-ibm41i02.xml"
+     >ibm41i02.xml:10:54: [VC 3.3.2] Fixed attribute 'attr3' must have the defined value</test>
+   <test id="ibm-invalid-P49-ibm49i01.xml"
+     >entity %choice1:1:2: Entity values must be self-contained
+entity %choice1:1:2: Replacement text for entities must be properly nested</test>
+   <test id="ibm-invalid-P51-ibm51i01.xml"
+     >entity %mixed1:1:2: Entity values must be self-contained
+entity %mixed1:1:2: Replacement text for entities must be properly nested</test>
+   <test id="ibm-invalid-P56-ibm56i01.xml"
+     >ibm56i01.xml:8:2: Attribute must contain Names with no colon: UniqueName</test>
+   <test id="ibm-invalid-P56-ibm56i03.xml"
+     >ibm56i03.xml:6:36: Default value for an ID attribute must be IMPLIED or REQUIRED</test>
+   <test id="ibm-invalid-P56-ibm56i05.xml"
+     >ibm56i05.xml:6:36: Default value for an ID attribute must be IMPLIED or REQUIRED</test>
+   <test id="ibm-invalid-P56-ibm56i07.xml"
+     >ibm56i07.xml:13:2: Attribute must contain Names with no colon: reference</test>
+   <test id="ibm-invalid-P56-ibm56i09.xml"
+     >ibm56i09.xml:16:2: Attribute must contain Names with no colon: reference</test>
+   <test id="ibm-invalid-P56-ibm56i11.xml"
+     >ibm56i11.xml:7:62: Notation must be declared: gif
+ibm56i11.xml:11:2: Attribute must contain Names: sun
+ibm56i11.xml:11:2: Attribute must reference an existing unparsed entity: sun</test>
+   <test id="ibm-invalid-P56-ibm56i12.xml"
+     >ibm56i12.xml:7:62: Notation must be declared: gif
+ibm56i12.xml:11:2: Attribute must reference an existing unparsed entity: sun</test>
+   <test id="ibm-invalid-P56-ibm56i13.xml"
+     >ibm56i13.xml:11:2: Attribute must reference an existing unparsed entity: sun</test>
+   <test id="ibm-invalid-P56-ibm56i14.xml"
+     >ibm56i14.xml:7:63: Notation must be declared: gif
+ibm56i14.xml:8:66: Notation must be declared: gif
+ibm56i14.xml:12:2: Attribute must contain Names: sun
+ibm56i14.xml:12:2: Attribute must reference an existing unparsed entity: sun
+ibm56i14.xml:12:2: Attribute must contain Names: sun
+ibm56i14.xml:12:2: Attribute must reference an existing unparsed entity: sun</test>
+   <test id="ibm-invalid-P56-ibm56i15.xml"
+     >ibm56i15.xml:7:63: Notation must be declared: gif
+ibm56i15.xml:8:65: Notation must be declared: gif
+ibm56i15.xml:12:2: Attribute must contain Names: sun
+ibm56i15.xml:12:2: Attribute must reference an existing unparsed entity: sun
+ibm56i15.xml:12:2: Attribute must reference an existing unparsed entity: sun</test>
+   <test id="ibm-invalid-P56-ibm56i16.xml"
+     >ibm56i16.xml:12:2: Attribute must contain Names: sun
+ibm56i16.xml:12:2: Attribute must reference an existing unparsed entity: sun
+ibm56i16.xml:12:2: Attribute must reference an existing unparsed entity: sun</test>
+   <test id="ibm-invalid-P56-ibm56i17.xml"
+     >ibm56i17.xml:10:2: Attribute must contain Nmtokens: thistoken</test>
+   <test id="ibm-invalid-P56-ibm56i18.xml"
+     >ibm56i18.xml:10:2: Attribute must contain Nmtokens: thistoken</test>
+   <test id="ibm-invalid-P58-ibm58i01.xml"
+     >ibm58i01.xml:10:42: Notation must be declared: base64
+ibm58i01.xml:10:42: Notation must be declared: uuencode</test>
+   <test id="ibm-invalid-P58-ibm58i02.xml"
+     >ibm58i02.xml:9:42: Notation must be declared: base64
+ibm58i02.xml:9:42: Notation must be declared: uuencode</test>
+   <test id="ibm-invalid-P60-ibm60i01.xml"
+     >ibm60i01.xml:13:6: [VC 3.3.2] Required attribute 'chapter' must be defined</test>
+   <test id="ibm-invalid-P60-ibm60i02.xml"
+     >ibm60i02.xml:10:26: [VC 3.3.2] Fixed attribute 'chapter' must have the defined value</test>
+   <test id="ibm-invalid-P60-ibm60i04.xml"
+     >ibm60i04.xml:8:41: Attribute must contain Nmtokens: namevalue</test>
+   <test id="ibm-invalid-P68-ibm68i01.xml"
+     >ibm68i01.dtd:3:26: Undefined entity 'ge2'</test>
+   <test id="ibm-invalid-P68-ibm68i02.xml"
+     >ibm68i02.dtd:2:26: Undefined entity 'ge1'</test>
+   <test id="ibm-invalid-P68-ibm68i03.xml"
+     >ibm68i03.ent:3:26: Undefined entity 'ge2'</test>
+   <test id="ibm-invalid-P68-ibm68i04.xml"
+     >ibm68i04.ent:2:26: Undefined entity 'ge1'</test>
+   <test id="ibm-invalid-P69-ibm69i01.xml"
+     >ibm69i01.dtd:5:1: Undefined entity '%pe2'</test>
+   <test id="ibm-invalid-P69-ibm69i02.xml"
+     >ibm69i02.dtd:4:1: Undefined entity '%pe1'</test>
+   <test id="ibm-invalid-P69-ibm69i03.xml"
+     >ibm69i03.ent:5:1: Undefined entity '%pe3'</test>
+   <test id="ibm-invalid-P69-ibm69i04.xml"
+     >ibm69i04.ent:4:1: Undefined entity '%pe2'</test>
+   <test id="ibm-invalid-P76-ibm76i01.xml"
+     >ibm76i01.xml:12:40: Notation must be declared: JPGformat</test>
+   <test id="ibm-not-wf-P01-ibm01n01.xml"
+     >ibm01n01.xml:5:27: No root element specified</test>
+   <test id="ibm-not-wf-P01-ibm01n02.xml"
+     >ibm01n02.xml:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P01-ibm01n03.xml"
+     >ibm01n03.xml:8:1: Too many children for top-level node, when adding &lt;title&gt;</test>
+   <test id="ibm-not-wf-P02-ibm02n01.xml"
+     >ibm02n01.xml:5:10: Invalid character code: 0</test>
+   <test id="ibm-not-wf-P02-ibm02n02.xml"
+     >ibm02n02.xml:5:10: Invalid character code: 1</test>
+   <test id="ibm-not-wf-P02-ibm02n03.xml"
+     >ibm02n03.xml:5:10: Invalid character code: 2</test>
+   <test id="ibm-not-wf-P02-ibm02n04.xml"
+     >ibm02n04.xml:5:10: Invalid character code: 3</test>
+   <test id="ibm-not-wf-P02-ibm02n05.xml"
+     >ibm02n05.xml:5:10: Invalid character code: 4</test>
+   <test id="ibm-not-wf-P02-ibm02n06.xml"
+     >ibm02n06.xml:5:10: Invalid character code: 5</test>
+   <test id="ibm-not-wf-P02-ibm02n07.xml"
+     >ibm02n07.xml:5:10: Invalid character code: 6</test>
+   <test id="ibm-not-wf-P02-ibm02n08.xml"
+     >ibm02n08.xml:5:10: Invalid character code: 7</test>
+   <test id="ibm-not-wf-P02-ibm02n09.xml"
+     >ibm02n09.xml:5:10: Invalid character code: 8</test>
+   <test id="ibm-not-wf-P02-ibm02n10.xml"
+     >ibm02n10.xml:5:10: Invalid character code: 11</test>
+   <test id="ibm-not-wf-P02-ibm02n11.xml"
+     >ibm02n11.xml:5:10: Invalid character code: 12</test>
+   <test id="ibm-not-wf-P02-ibm02n12.xml"
+     >ibm02n12.xml:5:10: Invalid character code: 14</test>
+   <test id="ibm-not-wf-P02-ibm02n13.xml"
+     >ibm02n13.xml:5:10: Invalid character code: 15</test>
+   <test id="ibm-not-wf-P02-ibm02n14.xml"
+     >ibm02n14.xml:5:10: Invalid character code: 16</test>
+   <test id="ibm-not-wf-P02-ibm02n15.xml"
+     >ibm02n15.xml:5:10: Invalid character code: 17</test>
+   <test id="ibm-not-wf-P02-ibm02n16.xml"
+     >ibm02n16.xml:5:10: Invalid character code: 18</test>
+   <test id="ibm-not-wf-P02-ibm02n17.xml"
+     >ibm02n17.xml:5:10: Invalid character code: 19</test>
+   <test id="ibm-not-wf-P02-ibm02n18.xml"
+     >ibm02n18.xml:5:10: Invalid character code: 20</test>
+   <test id="ibm-not-wf-P02-ibm02n19.xml"
+     >ibm02n19.xml:5:10: Invalid character code: 21</test>
+   <test id="ibm-not-wf-P02-ibm02n20.xml"
+     >ibm02n20.xml:5:10: Invalid character code: 22</test>
+   <test id="ibm-not-wf-P02-ibm02n21.xml"
+     >ibm02n21.xml:5:10: Invalid character code: 23</test>
+   <test id="ibm-not-wf-P02-ibm02n22.xml"
+     >ibm02n22.xml:5:10: Invalid character code: 24</test>
+   <test id="ibm-not-wf-P02-ibm02n23.xml"
+     >ibm02n23.xml:5:10: Invalid character code: 25</test>
+   <test id="ibm-not-wf-P02-ibm02n24.xml"
+     >ibm02n24.xml:5:10: Invalid character code: 26</test>
+   <test id="ibm-not-wf-P02-ibm02n25.xml"
+     >ibm02n25.xml:5:10: Invalid character code: 27</test>
+   <test id="ibm-not-wf-P02-ibm02n26.xml"
+     >ibm02n26.xml:5:10: Invalid character code: 28</test>
+   <test id="ibm-not-wf-P02-ibm02n27.xml"
+     >ibm02n27.xml:5:10: Invalid character code: 29</test>
+   <test id="ibm-not-wf-P02-ibm02n28.xml"
+     >ibm02n28.xml:5:10: Invalid character code: 30</test>
+   <test id="ibm-not-wf-P02-ibm02n29.xml"
+     >ibm02n29.xml:5:10: Invalid character code: 31</test>
+   <test id="ibm-not-wf-P02-ibm02n30.xml"
+     >ibm02n30.xml:5:10: Invalid character code: 55296</test>
+   <test id="ibm-not-wf-P02-ibm02n31.xml"
+     >ibm02n31.xml:5:10: Invalid character code: 57343</test>
+   <test id="ibm-not-wf-P02-ibm02n32.xml"
+     >ibm02n32.xml:5:10: Invalid character code: 65534</test>
+   <test id="ibm-not-wf-P02-ibm02n33.xml"
+     >ibm02n33.xml:5:10: Invalid character code: 65535</test>
+   <test id="ibm-not-wf-P03-ibm03n01.xml"
+     >ibm03n01.xml:6:47: Tags must end with a '>' symbol</test>
+   <test id="ibm-not-wf-P04-ibm04n01.xml"
+     >ibm04n01.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n02.xml"
+     >ibm04n02.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n03.xml"
+     >ibm04n03.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n04.xml"
+     >ibm04n04.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n05.xml"
+     >ibm04n05.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n06.xml"
+     >ibm04n06.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n07.xml"
+     >ibm04n07.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n08.xml"
+     >ibm04n08.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n09.xml"
+     >ibm04n09.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n10.xml"
+     >ibm04n10.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n11.xml"
+     >ibm04n11.xml:1:28: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n12.xml"
+     >ibm04n12.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n13.xml"
+     >ibm04n13.xml:1:26: Unexpected characters between ']' and '>' in the DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n14.xml"
+     >ibm04n14.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n15.xml"
+     >ibm04n15.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n16.xml"
+     >ibm04n16.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n17.xml"
+     >ibm04n17.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P04-ibm04n18.xml"
+     >ibm04n18.xml:1:27: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P05-ibm05n01.xml"
+     >ibm05n01.xml:1:31: Expecting name after &lt;!DOCTYPE</test>
+   <test id="ibm-not-wf-P05-ibm05n02.xml"
+     >ibm05n02.xml:1:31: Expecting name after &lt;!DOCTYPE</test>
+   <test id="ibm-not-wf-P05-ibm05n03.xml"
+     >ibm05n03.xml:1:36: Expecting name after &lt;!DOCTYPE</test>
+   <test id="ibm-not-wf-P09-ibm09n01.xml"
+     >ibm09n01.xml:4:30: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P09-ibm09n02.xml"
+     >ibm09n02.xml:4:26: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P09-ibm09n03.xml"
+     >ibm09n03.xml:4:29: Expecting end of ENTITY definition</test>
+   <test id="ibm-not-wf-P09-ibm09n04.xml"
+     >ibm09n04.xml:9:0: Unterminated string</test>
+   <test id="ibm-not-wf-P10-ibm10n01.xml"
+     >ibm10n01.xml:14:21: '&lt;' not authorized in attribute values</test>
+   <test id="ibm-not-wf-P10-ibm10n02.xml"
+     >ibm10n02.xml:14:21: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P10-ibm10n03.xml"
+     >ibm10n03.xml:14:22: Expecting a space</test>
+   <test id="ibm-not-wf-P10-ibm10n04.xml"
+     >ibm10n04.xml:14:43: '&lt;' not authorized in attribute values</test>
+   <test id="ibm-not-wf-P10-ibm10n05.xml"
+     >ibm10n05.xml:14:21: '&lt;' not authorized in attribute values</test>
+   <test id="ibm-not-wf-P10-ibm10n06.xml"
+     >ibm10n06.xml:14:21: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P10-ibm10n07.xml"
+     >ibm10n07.xml:14:22: Expecting a space</test>
+   <test id="ibm-not-wf-P10-ibm10n08.xml"
+     >ibm10n08.xml:14:43: '&lt;' not authorized in attribute values</test>
+   <test id="ibm-not-wf-P11-ibm11n01.xml"
+     >ibm11n01.xml:2:39: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P11-ibm11n02.xml"
+     >ibm11n02.xml:2:39: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P11-ibm11n03.xml"
+     >ibm11n03.xml:8:0: Unterminated string</test>
+   <test id="ibm-not-wf-P11-ibm11n04.xml"
+     >ibm11n04.xml:8:0: Unterminated string</test>
+   <test id="ibm-not-wf-P12-ibm12n01.xml"
+     >ibm12n01.xml:18:1: Unterminated string</test>
+   <test id="ibm-not-wf-P12-ibm12n02.xml"
+     >ibm12n02.xml:4:24: Invalid PubID character: '\'</test>
+   <test id="ibm-not-wf-P12-ibm12n03.xml"
+     >ibm12n03.xml:8:38: Unterminated string</test>
+   <test id="ibm-not-wf-P13-ibm13n01.xml"
+     >ibm13n01.xml:3:24: Invalid PubID character: '{'</test>
+   <test id="ibm-not-wf-P13-ibm13n02.xml"
+     >ibm13n02.xml:3:24: Invalid PubID character: '~'</test>
+   <test id="ibm-not-wf-P13-ibm13n03.xml"
+     >ibm13n03.xml:3:24: Invalid PubID character: 'á'</test>
+   <test id="ibm-not-wf-P14-ibm14n01.xml"
+     >ibm14n01.xml:9:39: Text may not contain the litteral ']]&gt;'</test>
+   <test id="ibm-not-wf-P14-ibm14n02.xml"
+     >ibm14n02.xml:9:44: Expecting a Name</test>
+   <test id="ibm-not-wf-P14-ibm14n03.xml"
+     >ibm14n03.xml:9:38: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P15-ibm15n01.xml"
+     >ibm15n01.xml:7:5: '--' cannot appear in comments</test>
+   <test id="ibm-not-wf-P15-ibm15n02.xml"
+     >ibm15n02.xml:7:1: Comments must end with '-->'</test>
+   <test id="ibm-not-wf-P15-ibm15n03.xml"
+     >ibm15n03.xml:7:4: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P15-ibm15n04.xml"
+     >ibm15n04.xml:7:1: Comments must end with '-->'</test>
+   <test id="ibm-not-wf-P16-ibm16n01.xml"
+     >ibm16n01.xml:7:25: Non-white space found at top level</test>
+   <test id="ibm-not-wf-P16-ibm16n02.xml"
+     >ibm16n02.xml:8:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P16-ibm16n03.xml"
+     >ibm16n03.xml:8:1: Processing instruction must end with '?>'</test>
+   <test id="ibm-not-wf-P16-ibm16n04.xml"
+     >ibm16n04.xml:8:1: Processing instruction must end with '?>'</test>
+   <test id="ibm-not-wf-P17-ibm17n01.xml"
+     >ibm17n01.xml:8:3: 'XML' is not a valid processing instruction target</test>
+   <test id="ibm-not-wf-P17-ibm17n02.xml"
+     >ibm17n02.xml:7:3: 'xML' is not a valid processing instruction target</test>
+   <test id="ibm-not-wf-P17-ibm17n03.xml"
+     >ibm17n03.xml:7:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P17-ibm17n04.xml"
+     >ibm17n04.xml:7:3: 'xmL' is not a valid processing instruction target</test>
+   <test id="ibm-not-wf-P18-ibm18n01.xml"
+     >ibm18n01.xml:7:51: Text may not contain the litteral ']]&gt;'</test>
+   <test id="ibm-not-wf-P18-ibm18n02.xml"
+     >ibm18n02.xml:7:30: CDATA sections must end with ']]&gt;'</test>
+   <test id="ibm-not-wf-P19-ibm19n01.xml"
+     >ibm19n01.xml:7:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P19-ibm19n02.xml"
+     >ibm19n02.xml:7:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P19-ibm19n03.xml"
+     >ibm19n03.xml:7:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P20-ibm20n01.xml"
+     >ibm20n01.xml:7:1: Non-white space found at top level</test>
+   <test id="ibm-not-wf-P21-ibm21n01.xml"
+     >ibm21n01.xml:7:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P21-ibm21n02.xml"
+     >ibm21n02.xml:7:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P21-ibm21n03.xml"
+     >ibm21n03.xml:7:1: CDATA sections must end with ']]&gt;'</test>
+   <test id="ibm-not-wf-P22-ibm22n01.xml"
+     >ibm22n01.xml:4:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P22-ibm22n02.xml"
+     >ibm22n02.xml:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P22-ibm22n03.xml"
+     >ibm22n03.xml:6:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P23-ibm23n01.xml"
+     >ibm23n01.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P23-ibm23n02.xml"
+     >ibm23n02.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P23-ibm23n03.xml"
+     >ibm23n03.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P23-ibm23n04.xml"
+     >ibm23n04.xml:1:3: 'XML' is not a valid processing instruction target</test>
+   <test id="ibm-not-wf-P23-ibm23n05.xml"
+     >ibm23n05.xml:1:55: &lt;?xml..?&gt; arguments can only be 'version', 'encoding' or 'standalone', in that order</test>
+   <test id="ibm-not-wf-P23-ibm23n06.xml"
+     >ibm23n06.xml:1:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P24-ibm24n01.xml"
+     >ibm24n01.xml:1:16: Expecting version value</test>
+   <test id="ibm-not-wf-P24-ibm24n02.xml"
+     >ibm24n02.xml:1:14: Must have space between target and data</test>
+   <test id="ibm-not-wf-P24-ibm24n03.xml"
+     >ibm24n03.xml:1:14: Expecting '=' sign</test>
+   <test id="ibm-not-wf-P24-ibm24n04.xml"
+     >ibm24n04.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P24-ibm24n05.xml"
+     >ibm24n05.xml:1:14: Expecting '=' sign</test>
+   <test id="ibm-not-wf-P24-ibm24n06.xml"
+     >ibm24n06.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P24-ibm24n07.xml"
+     >ibm24n07.xml:1:7: 'version' must be the first argument to &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P24-ibm24n08.xml"
+     >ibm24n08.xml:2:1: '&lt;' not authorized in attribute values. Possible end of value at ibm24n08.xml:1:19</test>
+   <test id="ibm-not-wf-P24-ibm24n09.xml"
+     >ibm24n09.xml:2:1: '&lt;' not authorized in attribute values</test>
+   <test id="ibm-not-wf-P25-ibm25n01.xml"
+     >ibm25n01.xml:1:15: Expecting version value</test>
+   <test id="ibm-not-wf-P25-ibm25n02.xml"
+     >ibm25n02.xml:1:15: Expecting '=' sign</test>
+   <test id="ibm-not-wf-P26-ibm26n01.xml"
+     >ibm26n01.xml:1:16: Illegal version number in &lt;?xml?&gt; processing instruction</test>
+   <test id="ibm-not-wf-P27-ibm27n01.xml"
+     >ibm27n01.xml:6:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P28-ibm28n01.xml"
+     >ibm28n01.xml:2:17: Expecting name after &lt;!DOCTYPE</test>
+   <test id="ibm-not-wf-P28-ibm28n02.xml"
+     >ibm28n02.xml:2:12: Expecting name after &lt;!DOCTYPE</test>
+   <test id="ibm-not-wf-P28-ibm28n03.xml"
+     >ibm28n03.xml:2:17: Expecting name after &lt;!DOCTYPE</test>
+   <test id="ibm-not-wf-P28-ibm28n04.xml"
+     >entity generalE:1:7: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P28-ibm28n05.xml"
+     >ibm28n05.xml:2:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P28-ibm28n06.xml"
+     >ibm28n06.xml:4:1: Expecting end of internal subset ']&gt;'</test>
+   <test id="ibm-not-wf-P28-ibm28n07.xml"
+     >ibm28n07.xml:2:19: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P28-ibm28n08.xml"
+     >ibm28n08.xml:2:1: Processing instruction must end with '?&gt;'</test>
+   <test id="ibm-not-wf-P29-ibm29n01.xml"
+     >ibm29n01.xml:2:4: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P29-ibm29n02.xml"
+     >ibm29n02.xml:5:14: Parameter entities cannot occur in attribute values</test>
+   <test id="ibm-not-wf-P29-ibm29n03.xml"
+     >ibm29n03.xml:5:21: Parameter entities cannot occur in attribute values</test>
+   <test id="ibm-not-wf-P29-ibm29n04.xml"
+     >ibm29n04.xml:5:22: Parameter entities cannot occur in attribute values</test>
+   <test id="ibm-not-wf-P29-ibm29n05.xml"
+     >ibm29n05.xml:5:4: Processing instruction must end with '?&gt;'</test>
+   <test id="ibm-not-wf-P29-ibm29n06.xml"
+     >ibm29n06.xml:6:4: Comments must end with '--&gt;'</test>
+   <test id="ibm-not-wf-P29-ibm29n07.xml"
+     >ibm29n07.xml:5:15: Parameter entities cannot occur in attribute values</test>
+   <test id="ibm-not-wf-P30-ibm30n01.xml"
+     >ibm30n01.dtd:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P31-ibm31n01.xml"
+     >entity generalE:1:10: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P32-ibm32n01.xml"
+     >ibm32n01.xml:1:20: values must be separated by spaces</test>
+   <test id="ibm-not-wf-P32-ibm32n02.xml"
+     >ibm32n02.xml:1:32: Expecting '=' sign</test>
+   <test id="ibm-not-wf-P32-ibm32n03.xml"
+     >ibm32n03.xml:1:21: &lt;?xml..?&gt; arguments can only be 'version', 'encoding' or 'standalone', in that order</test>
+   <test id="ibm-not-wf-P32-ibm32n04.xml"
+     >ibm32n04.xml:1:33: Invalid value for standalone parameter in &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P32-ibm32n05.xml"
+     >ibm32n05.xml:1:33: Invalid value for standalone parameter in &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P32-ibm32n06.xml"
+     >ibm32n06.xml:1:33: Invalid value for standalone parameter in &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P32-ibm32n07.xml"
+     >ibm32n07.xml:1:33: Invalid value for standalone parameter in &lt;?xml?&gt;</test>
+   <test id="ibm-not-wf-P32-ibm32n08.xml"
+     >ibm32n08.xml:1:32: Expecting '=' sign</test>
+   <test id="ibm-not-wf-P32-ibm32n09.xml"
+     >ibm32n09.xml:9:9: Entity declared in external subset, but document is standalone</test>
+   <test id="ibm-not-wf-P39-ibm39n01.xml"
+     >ibm39n01.xml:7:0: Node &lt;root&gt; is not closed</test>
+   <test id="ibm-not-wf-P39-ibm39n02.xml"
+     >ibm39n02.xml:5:1: Non-white space found at top level</test>
+   <test id="ibm-not-wf-P39-ibm39n03.xml"
+     >ibm39n03.xml:7:0: Node &lt;root&gt; is not closed</test>
+   <test id="ibm-not-wf-P39-ibm39n04.xml"
+     >ibm39n04.xml:5:7: No start tag found for this end tag</test>
+   <test id="ibm-not-wf-P39-ibm39n05.xml"
+     >ibm39n05.xml:5:7: No start tag found for this end tag</test>
+   <test id="ibm-not-wf-P39-ibm39n06.xml"
+     >ibm39n06.xml:5:14: Non-white space found at top level</test>
+   <test id="ibm-not-wf-P40-ibm40n01.xml"
+     >ibm40n01.xml:7:7: Expecting a space</test>
+   <test id="ibm-not-wf-P40-ibm40n02.xml"
+     >ibm40n02.xml:7:11: Expecting a space</test>
+   <test id="ibm-not-wf-P40-ibm40n03.xml"
+     >ibm40n03.xml:7:7: Expecting a space</test>
+   <test id="ibm-not-wf-P40-ibm40n04.xml"
+     >ibm40n04.xml:7:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P40-ibm40n05.xml"
+     >ibm40n05.xml:7:20: Attributes may appear only once: attr1</test>
+   <test id="ibm-not-wf-P41-ibm41n01.xml"
+     >ibm41n01.xml:7:7: Expecting a Name</test>
+   <test id="ibm-not-wf-P41-ibm41n02.xml"
+     >ibm41n02.xml:7:12: Attributes must have an explicit value</test>
+   <test id="ibm-not-wf-P41-ibm41n03.xml"
+     >ibm41n03.xml:7:14: Attribute values must be quoted</test>
+   <test id="ibm-not-wf-P41-ibm41n04.xml"
+     >ibm41n04.xml:7:7: Expecting a Name</test>
+   <test id="ibm-not-wf-P41-ibm41n05.xml"
+     >ibm41n05.xml:7:12: Attributes must have an explicit value</test>
+   <test id="ibm-not-wf-P41-ibm41n06.xml"
+     >ibm41n06.xml:7:7: Expecting a Name</test>
+   <test id="ibm-not-wf-P41-ibm41n07.xml"
+     >ibm41n07.xml:7:12: Attributes must have an explicit value</test>
+   <test id="ibm-not-wf-P41-ibm41n08.xml"
+     >ibm41n08.xml:7:7: Expecting a Name</test>
+   <test id="ibm-not-wf-P41-ibm41n09.xml"
+     >ibm41n09.xml:7:7: Expecting a Name</test>
+   <test id="ibm-not-wf-P41-ibm41n10.xml"
+     >ibm41n10.xml:8:14: Attribute values cannot reference external entities</test>
+   <test id="ibm-not-wf-P41-ibm41n11.xml"
+     >entity aIndirect:1:1: Attribute values cannot reference external entities</test>
+   <test id="ibm-not-wf-P41-ibm41n12.xml"
+     >ibm41n12.xml:9:14: Entity cannot reference itself</test>
+   <test id="ibm-not-wf-P41-ibm41n13.xml"
+     >entity withlt:1:6: '&lt;' not authorized in attribute values</test>
+   <test id="ibm-not-wf-P41-ibm41n14.xml"
+     >entity withlt:1:6: '&lt;' not authorized in attribute values</test>
+   <test id="ibm-not-wf-P42-ibm42n01.xml"
+     >ibm42n01.xml:6:41: Expecting a Name</test>
+   <test id="ibm-not-wf-P42-ibm42n02.xml"
+     >ibm42n02.xml:6:52: Invalid name: '\root'</test>
+   <test id="ibm-not-wf-P42-ibm42n03.xml"
+     >ibm42n03.xml:7:0: Node &lt;root&gt; is not closed</test>
+   <test id="ibm-not-wf-P42-ibm42n04.xml"
+     >ibm42n04.xml:6:59: Expecting a Name</test>
+   <test id="ibm-not-wf-P42-ibm42n05.xml"
+     >ibm42n05.xml:6:33: Tags must end with a '&gt;' symbol</test>
+   <test id="ibm-not-wf-P43-ibm43n01.xml"
+     >ibm43n01.xml:8:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P43-ibm43n02.xml"
+     >ibm43n02.xml:8:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P43-ibm43n04.xml"
+     >ibm43n04.xml:8:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P43-ibm43n05.xml"
+     >ibm43n05.xml:8:1: Invalid characters '&lt;!-' in stream</test>
+   <test id="ibm-not-wf-P44-ibm44n01.xml"
+     >ibm44n01.xml:7:2: Expecting a Name</test>
+   <test id="ibm-not-wf-P44-ibm44n02.xml"
+     >ibm44n02.xml:7:7: Expecting a space</test>
+   <test id="ibm-not-wf-P44-ibm44n03.xml"
+     >ibm44n03.xml:7:18: Expecting a space</test>
+   <test id="ibm-not-wf-P44-ibm44n04.xml"
+     >ibm44n04.xml:7:20: Attributes may appear only once: attr1</test>
+   <test id="ibm-not-wf-P45-ibm45n01.xml"
+     >ibm45n01.xml:5:12: Expecting a Name</test>
+   <test id="ibm-not-wf-P45-ibm45n02.xml"
+     >ibm45n02.xml:5:15: Expecting a space</test>
+   <test id="ibm-not-wf-P45-ibm45n03.xml"
+     >ibm45n03.xml:5:16: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P45-ibm45n04.xml"
+     >ibm45n04.xml:5:15: Expecting a space</test>
+   <test id="ibm-not-wf-P45-ibm45n05.xml"
+     >ibm45n05.xml:5:12: Expecting a Name</test>
+   <test id="ibm-not-wf-P45-ibm45n06.xml"
+     >ibm45n06.xml:5:12: Expecting a Name</test>
+   <test id="ibm-not-wf-P45-ibm45n07.xml"
+     >ibm45n07.xml:5:1: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P45-ibm45n08.xml"
+     >ibm45n08.xml:5:4: Unknown declaration in DTD</test>
+   <test id="ibm-not-wf-P45-ibm45n09.xml"
+     >ibm45n09.xml:5:10: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P46-ibm46n01.xml"
+     >ibm46n01.xml:5:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P46-ibm46n02.xml"
+     >ibm46n02.xml:5:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P46-ibm46n03.xml"
+     >ibm46n03.xml:5:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P46-ibm46n04.xml"
+     >ibm46n04.xml:5:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P46-ibm46n05.xml"
+     >ibm46n05.xml:5:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P47-ibm47n01.xml"
+     >ibm47n01.xml:5:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P47-ibm47n02.xml"
+     >ibm47n02.xml:5:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P47-ibm47n03.xml"
+     >ibm47n03.xml:5:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P47-ibm47n04.xml"
+     >ibm47n04.xml:6:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P47-ibm47n05.xml"
+     >ibm47n05.xml:7:20: Invalid content model: expecting '(', 'EMPTY' or 'ANY'</test>
+   <test id="ibm-not-wf-P47-ibm47n06.xml"
+     >ibm47n06.xml:6:26: Expecting end of ELEMENT definition</test>
+   <test id="ibm-not-wf-P48-ibm48n01.xml"
+     >ibm48n01.xml:6:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="ibm-not-wf-P48-ibm48n02.xml"
+     >ibm48n02.xml:6:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="ibm-not-wf-P48-ibm48n03.xml"
+     >ibm48n03.xml:6:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="ibm-not-wf-P48-ibm48n04.xml"
+     >ibm48n04.xml:6:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="ibm-not-wf-P48-ibm48n05.xml"
+     >ibm48n05.xml:7:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="ibm-not-wf-P48-ibm48n06.xml"
+     >ibm48n06.xml:6:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="ibm-not-wf-P48-ibm48n07.xml"
+     >ibm48n07.xml:6:23: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P49-ibm49n01.xml"
+     >ibm49n01.xml:6:20: Missing operand before this operator</test>
+   <test id="ibm-not-wf-P49-ibm49n02.xml"
+     >ibm49n02.xml:7:20: Invalid content model</test>
+   <test id="ibm-not-wf-P49-ibm49n03.xml"
+     >ibm49n03.xml:7:22: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P49-ibm49n04.xml"
+     >ibm49n04.xml:7:23: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P49-ibm49n05.xml"
+     >ibm49n05.xml:7:20: Invalid content model</test>
+   <test id="ibm-not-wf-P49-ibm49n06.xml"
+     >ibm49n06.xml:7:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="ibm-not-wf-P50-ibm50n01.xml"
+     >ibm50n01.xml:7:21: Missing content particle in sequence</test>
+   <test id="ibm-not-wf-P50-ibm50n02.xml"
+     >ibm50n02.xml:7:20: Invalid content model</test>
+   <test id="ibm-not-wf-P50-ibm50n03.xml"
+     >ibm50n03.xml:7:24: Cannot mix ',' and '|' in content model</test>
+   <test id="ibm-not-wf-P50-ibm50n04.xml"
+     >ibm50n04.xml:7:23: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P50-ibm50n05.xml"
+     >ibm50n05.xml:7:20: Invalid content model</test>
+   <test id="ibm-not-wf-P50-ibm50n06.xml"
+     >ibm50n06.xml:7:34: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P50-ibm50n07.xml"
+     >ibm50n07.xml:7:25: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P51-ibm51n01.xml"
+     >ibm51n01.xml:7:20: Missing content particle in sequence</test>
+   <test id="ibm-not-wf-P51-ibm51n02.xml"
+     >ibm51n02.xml:7:34: #PCDATA must be first in list</test>
+   <test id="ibm-not-wf-P51-ibm51n03.xml"
+     >ibm51n03.xml:7:30: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P51-ibm51n04.xml"
+     >ibm51n04.xml:7:20: Missing content particle in sequence</test>
+   <test id="ibm-not-wf-P51-ibm51n05.xml"
+     >ibm51n05.xml:7:35: Closing parenthesis must be followed by '*' in mixed content</test>
+   <test id="ibm-not-wf-P51-ibm51n06.xml"
+     >ibm51n06.xml:7:34: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P51-ibm51n07.xml"
+     >ibm51n07.xml:7:20: Invalid location for '+', '?' or '*' operators</test>
+   <test id="ibm-not-wf-P52-ibm52n01.xml"
+     >ibm52n01.xml:6:31: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P52-ibm52n02.xml"
+     >ibm52n02.xml:6:11: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P52-ibm52n03.xml"
+     >ibm52n03.xml:6:24: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P52-ibm52n04.xml"
+     >ibm52n04.xml:6:10: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P52-ibm52n05.xml"
+     >ibm52n05.xml:7:1: Expecting a Name</test>
+   <test id="ibm-not-wf-P52-ibm52n06.xml"
+     >ibm52n06.xml:6:1: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P53-ibm53n01.xml"
+     >ibm53n01.xml:6:26: Invalid default value for attribute</test>
+   <test id="ibm-not-wf-P53-ibm53n02.xml"
+     >ibm53n02.xml:6:28: Expecting a space</test>
+   <test id="ibm-not-wf-P53-ibm53n03.xml"
+     >ibm53n03.xml:6:27: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P53-ibm53n04.xml"
+     >ibm53n04.xml:6:18: Expecting a space</test>
+   <test id="ibm-not-wf-P53-ibm53n05.xml"
+     >ibm53n05.xml:6:13: Expecting a Name</test>
+   <test id="ibm-not-wf-P53-ibm53n06.xml"
+     >ibm53n06.xml:6:44: Invalid default declaration for the attribute</test>
+   <test id="ibm-not-wf-P53-ibm53n07.xml"
+     >ibm53n07.xml:6:13: Expecting a Name</test>
+   <test id="ibm-not-wf-P53-ibm53n08.xml"
+     >ibm53n08.xml:6:13: Expecting a Name</test>
+   <test id="ibm-not-wf-P54-ibm54n01.xml"
+     >ibm54n01.xml:7:26: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P54-ibm54n02.xml"
+     >ibm54n02.xml:7:23: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P55-ibm55n01.xml"
+     >ibm55n01.xml:7:22: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P55-ibm55n02.xml"
+     >ibm55n02.xml:7:18: Invalid default declaration for the attribute</test>
+   <test id="ibm-not-wf-P55-ibm55n03.xml"
+     >ibm55n03.xml:7:22: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P56-ibm56n01.xml"
+     >ibm56n01.xml:7:20: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P56-ibm56n02.xml"
+     >ibm56n02.xml:7:23: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P56-ibm56n03.xml"
+     >ibm56n03.xml:7:24: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P56-ibm56n04.xml"
+     >ibm56n04.xml:7:24: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P56-ibm56n05.xml"
+     >ibm56n05.xml:7:25: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P56-ibm56n06.xml"
+     >ibm56n06.xml:7:20: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P56-ibm56n07.xml"
+     >ibm56n07.xml:7:20: Invalid default declaration for the attribute</test>
+   <test id="ibm-not-wf-P57-ibm57n01.xml"
+     >ibm57n01.xml:6:30: Invalid default value for attribute</test>
+   <test id="ibm-not-wf-P58-ibm58n01.xml"
+     >ibm58n01.xml:8:29: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P58-ibm58n02.xml"
+     >ibm58n02.xml:8:30: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P58-ibm58n03.xml"
+     >ibm58n03.xml:8:30: Invalid content model: list of choices cannot be empty</test>
+   <test id="ibm-not-wf-P58-ibm58n04.xml"
+     >ibm58n04.xml:8:30: Invalid content model, cannot start with #</test>
+   <test id="ibm-not-wf-P58-ibm58n05.xml"
+     >ibm58n05.xml:8:36: Invalid default value for attribute</test>
+   <test id="ibm-not-wf-P58-ibm58n06.xml"
+     >ibm58n06.xml:10:37: Invalid character ',' in ATTLIST enumeration</test>
+   <test id="ibm-not-wf-P58-ibm58n07.xml"
+     >ibm58n07.xml:9:31: Space is required between NOTATION keyword and list of enumerated</test>
+   <test id="ibm-not-wf-P58-ibm58n08.xml"
+     >ibm58n08.xml:9:33: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P59-ibm59n01.xml"
+     >ibm59n01.xml:8:21: Invalid content model: list of choices cannot be empty</test>
+   <test id="ibm-not-wf-P59-ibm59n02.xml"
+     >ibm59n02.xml:8:21: Invalid content model, cannot start with #</test>
+   <test id="ibm-not-wf-P59-ibm59n03.xml"
+     >ibm59n03.xml:9:26: Invalid character ',' in ATTLIST enumeration</test>
+   <test id="ibm-not-wf-P59-ibm59n04.xml"
+     >ibm59n04.xml:8:22: Expecting operator in content model</test>
+   <test id="ibm-not-wf-P59-ibm59n05.xml"
+     >ibm59n05.xml:8:25: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P59-ibm59n06.xml"
+     >ibm59n06.xml:8:25: Invalid type for attribute</test>
+   <test id="ibm-not-wf-P60-ibm60n01.xml"
+     >ibm60n01.xml:7:31: Invalid default declaration for the attribute</test>
+   <test id="ibm-not-wf-P60-ibm60n02.xml"
+     >ibm60n02.xml:7:32: Invalid default declaration for the attribute</test>
+   <test id="ibm-not-wf-P60-ibm60n03.xml"
+     >ibm60n03.xml:7:38: Invalid default value for attribute</test>
+   <test id="ibm-not-wf-P60-ibm60n04.xml"
+     >ibm60n04.xml:7:38: Invalid default value for attribute</test>
+   <test id="ibm-not-wf-P60-ibm60n05.xml"
+     >ibm60n05.xml:7:36: Expecting a space</test>
+   <test id="ibm-not-wf-P60-ibm60n06.xml"
+     >ibm60n06.xml:7:45: Invalid name: '#FIXED'</test>
+   <test id="ibm-not-wf-P60-ibm60n07.xml"
+     >entity avalue:1:1: '&lt;' not authorized in attribute values</test>
+   <test id="ibm-not-wf-P60-ibm60n08.xml"
+     >ibm60n08.xml:7:40: Invalid name: '#IMPLIED'</test>
+   <test id="ibm-not-wf-P61-ibm61n01.xml"
+     >ibm61n01.dtd:3:14: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P62-ibm62n01.xml"
+     >ibm62n01.dtd:3:12: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P62-ibm62n02.xml"
+     >ibm62n02.dtd:3:4: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P62-ibm62n03.xml"
+     >ibm62n03.dtd:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P62-ibm62n04.xml"
+     >ibm62n04.dtd:3:4: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P62-ibm62n05.xml"
+     >ibm62n05.dtd:4:1: Conditional sections need '[' after INCLUDE or IGNORE</test>
+   <test id="ibm-not-wf-P62-ibm62n06.xml"
+     >ibm62n06.dtd:6:1: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P62-ibm62n07.xml"
+     >ibm62n07.dtd:8:33: Conditional section must be properly terminated</test>
+   <test id="ibm-not-wf-P62-ibm62n08.xml"
+     >ibm62n08.dtd:6:2: Conditional section must be properly terminated</test>
+   <test id="ibm-not-wf-P63-ibm63n01.xml"
+     >ibm63n01.dtd:3:10: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P63-ibm63n02.xml"
+     >ibm63n02.dtd:3:4: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P63-ibm63n03.xml"
+     >ibm63n03.dtd:3:3: Processing Instruction must specify a target name</test>
+   <test id="ibm-not-wf-P63-ibm63n04.xml"
+     >ibm63n04.dtd:3:4: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P63-ibm63n05.xml"
+     >ibm63n05.dtd:4:1: Conditional sections need '[' after INCLUDE or IGNORE</test>
+   <test id="ibm-not-wf-P63-ibm63n06.xml"
+     >ibm63n06.dtd:6:1: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P63-ibm63n07.xml"
+     >ibm63n07.dtd:8:33: Conditional section must be properly terminated</test>
+   <test id="ibm-not-wf-P64-ibm64n01.xml"
+     >ibm64n01.dtd:8:4: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P64-ibm64n02.xml"
+     >ibm64n02.dtd:10:47: Conditional section must be properly terminated</test>
+   <test id="ibm-not-wf-P64-ibm64n03.xml"
+     >ibm64n03.dtd:8:4: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P65-ibm65n01.xml"
+     >ibm65n01.dtd:6:9: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P65-ibm65n02.xml"
+     >ibm65n02.dtd:13:58: Conditional section must be properly terminated</test>
+   <test id="ibm-not-wf-P66-ibm66n01.xml"
+     >ibm66n01.xml:5:46: Invalid character in character reference: f</test>
+   <test id="ibm-not-wf-P66-ibm66n02.xml"
+     >ibm66n02.xml:7:46: Invalid character in character reference: "</test>
+   <test id="ibm-not-wf-P66-ibm66n03.xml"
+     >ibm66n03.xml:5:41: Invalid entity name</test>
+   <test id="ibm-not-wf-P66-ibm66n04.xml"
+     >ibm66n04.xml:7:40: Invalid character in character reference: ~</test>
+   <test id="ibm-not-wf-P66-ibm66n05.xml"
+     >ibm66n05.xml:5:47: Invalid character in character reference: g</test>
+   <test id="ibm-not-wf-P66-ibm66n06.xml"
+     >ibm66n06.xml:7:43: Invalid character in character reference: G</test>
+   <test id="ibm-not-wf-P66-ibm66n07.xml"
+     >ibm66n07.xml:5:45: Invalid character in character reference: =</test>
+   <test id="ibm-not-wf-P66-ibm66n08.xml"
+     >ibm66n08.xml:7:41: Invalid character in character reference: .</test>
+   <test id="ibm-not-wf-P66-ibm66n09.xml"
+     >ibm66n09.xml:5:46: Invalid character in character reference: /</test>
+   <test id="ibm-not-wf-P66-ibm66n10.xml"
+     >ibm66n10.xml:7:42: Invalid character in character reference: )</test>
+   <test id="ibm-not-wf-P66-ibm66n11.xml"
+     >ibm66n11.xml:5:46: Invalid character in character reference:  </test>
+   <test id="ibm-not-wf-P66-ibm66n12.xml"
+     >ibm66n12.xml:7:50: Invalid character code: 0</test>
+   <test id="ibm-not-wf-P66-ibm66n13.xml"
+     >ibm66n13.xml:7:40: Invalid character code: 31</test>
+   <test id="ibm-not-wf-P66-ibm66n14.xml"
+     >ibm66n14.xml:7:41: Invalid character code: 65534</test>
+   <test id="ibm-not-wf-P66-ibm66n15.xml"
+     >ibm66n15.xml:7:40: Invalid character code: 65535</test>
+   <test id="ibm-not-wf-P68-ibm68n01.xml"
+     >ibm68n01.xml:7:27: Invalid entity name</test>
+   <test id="ibm-not-wf-P68-ibm68n02.xml"
+     >ibm68n02.xml:7:12: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P68-ibm68n03.xml"
+     >ibm68n03.xml:7:33: Invalid entity name</test>
+   <test id="ibm-not-wf-P68-ibm68n04.xml"
+     >ibm68n04.xml:7:12: Undefined entity 'aAa'</test>
+   <test id="ibm-not-wf-P68-ibm68n05.xml"
+     >ibm68n05.xml:6:25: Undefined entity 'aaa'</test>
+   <test id="ibm-not-wf-P68-ibm68n06.xml"
+     >ibm68n06.xml:8:12: Entity declared in external subset, but document is standalone</test>
+   <test id="ibm-not-wf-P68-ibm68n07.xml"
+     >ibm68n07.xml:6:28: Undefined entity 'aaa'</test>
+   <test id="ibm-not-wf-P68-ibm68n08.xml"
+     >ibm68n08.xml:9:52: Entity cannot reference itself</test>
+   <test id="ibm-not-wf-P68-ibm68n09.xml"
+     >entity bbb:1:1: Entity cannot reference itself</test>
+   <test id="ibm-not-wf-P68-ibm68n10.xml"
+     >entity eee:1:1: Entity cannot reference itself</test>
+   <test id="ibm-not-wf-P69-ibm69n01.xml"
+     >ibm69n01.xml:6:1: Invalid entity name '%'</test>
+   <test id="ibm-not-wf-P69-ibm69n02.xml"
+     >ibm69n02.xml:6:6: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P69-ibm69n03.xml"
+     >ibm69n03.xml:6:6: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P69-ibm69n04.xml"
+     >ibm69n04.xml:6:2: Entity references must end with ';'.
+Did you want to use &amp;amp;?</test>
+   <test id="ibm-not-wf-P69-ibm69n05.xml"
+     >ibm69n05.xml:6:1: Undefined entity '%paaa'</test>
+   <test id="ibm-not-wf-P69-ibm69n06.xml"
+     >ibm69n06.xml:6:15: Parameter entities cannot occur in attribute values</test>
+   <test id="ibm-not-wf-P69-ibm69n07.xml"
+     >ibm69n07.xml:9:15: Parameter entities cannot occur in attribute values</test>
+   <test id="ibm-not-wf-P71-ibm70n01.xml"
+     >ibm70n01.xml:7:1: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P71-ibm71n01.xml"
+     >ibm71n01.xml:6:9: Expecting a space</test>
+   <test id="ibm-not-wf-P71-ibm71n02.xml"
+     >ibm71n02.xml:6:13: Expecting a space</test>
+   <test id="ibm-not-wf-P71-ibm71n03.xml"
+     >ibm71n03.xml:6:13: Expecting a space</test>
+   <test id="ibm-not-wf-P71-ibm71n04.xml"
+     >ibm71n04.xml:6:11: Expecting a Name</test>
+   <test id="ibm-not-wf-P71-ibm71n05.xml"
+     >ibm71n05.xml:6:11: Expecting a Name</test>
+   <test id="ibm-not-wf-P71-ibm71n06.xml"
+     >ibm71n06.xml:6:9: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P71-ibm71n07.xml"
+     >ibm71n07.xml:8:3: Expecting end of ENTITY definition</test>
+   <test id="ibm-not-wf-P71-ibm71n08.xml"
+     >ibm71n08.xml:6:1: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P72-ibm72n01.xml"
+     >ibm72n01.xml:6:9: Expecting a space</test>
+   <test id="ibm-not-wf-P72-ibm72n02.xml"
+     >ibm72n02.xml:6:13: Expecting a Name</test>
+   <test id="ibm-not-wf-P72-ibm72n03.xml"
+     >ibm72n03.xml:6:16: Expecting a space</test>
+   <test id="ibm-not-wf-P72-ibm72n04.xml"
+     >ibm72n04.xml:6:16: Expecting a space</test>
+   <test id="ibm-not-wf-P72-ibm72n05.xml"
+     >ibm72n05.xml:6:13: Expecting a Name</test>
+   <test id="ibm-not-wf-P72-ibm72n06.xml"
+     >ibm72n06.xml:6:11: Expecting a Name</test>
+   <test id="ibm-not-wf-P72-ibm72n07.xml"
+     >ibm72n07.xml:6:9: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P72-ibm72n08.xml"
+     >ibm72n08.xml:7:7: Expecting end of ENTITY definition</test>
+   <test id="ibm-not-wf-P72-ibm72n09.xml"
+     >ibm72n09.xml:6:9: Expecting a space</test>
+   <test id="ibm-not-wf-P73-ibm73n01.xml"
+     >ibm73n01.xml:7:22: Invalid definition for ENTITY</test>
+   <test id="ibm-not-wf-P73-ibm73n03.xml"
+     >ibm73n03.xml:7:22: Invalid definition for ENTITY</test>
+   <test id="ibm-not-wf-P74-ibm74n01.xml"
+     >ibm74n01.xml:7:38: NDATA annotation not allowed for parameter entities</test>
+   <test id="ibm-not-wf-P75-ibm75n01.xml"
+     >ibm75n01.xml:6:23: Invalid definition for ENTITY</test>
+   <test id="ibm-not-wf-P75-ibm75n02.xml"
+     >ibm75n02.xml:4:11: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P75-ibm75n03.xml"
+     >ibm75n03.xml:4:11: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P75-ibm75n04.xml"
+     >ibm75n04.xml:4:6: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P75-ibm75n05.xml"
+     >ibm75n05.xml:6:23: Expecting a space</test>
+   <test id="ibm-not-wf-P75-ibm75n06.xml"
+     >ibm75n06.xml:6:25: Expecting a string after SYSTEM</test>
+   <test id="ibm-not-wf-P75-ibm75n07.xml"
+     >ibm75n07.xml:4:29: Require whitespace between public and system IDs</test>
+   <test id="ibm-not-wf-P75-ibm75n08.xml"
+     >ibm75n08.xml:4:6: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P75-ibm75n09.xml"
+     >ibm75n09.xml:4:11: Expecting a space</test>
+   <test id="ibm-not-wf-P75-ibm75n10.xml"
+     >ibm75n10.xml:4:13: Invalid PubID character: '\'</test>
+   <test id="ibm-not-wf-P75-ibm75n11.xml"
+     >ibm75n11.xml:4:11: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P75-ibm75n12.xml"
+     >ibm75n12.xml:6:35: Expecting end of ENTITY definition</test>
+   <test id="ibm-not-wf-P75-ibm75n13.xml"
+     >ibm75n13.xml:4:6: Expecting end of DTD</test>
+   <test id="ibm-not-wf-P76-ibm76n01.xml"
+     >ibm76n01.xml:8:41: Expecting end of ENTITY definition</test>
+   <test id="ibm-not-wf-P76-ibm76n02.xml"
+     >ibm76n02.xml:8:41: Expecting end of ENTITY definition</test>
+   <test id="ibm-not-wf-P76-ibm76n03.xml"
+     >ibm76n03.xml:8:35: Expecting space before NDATA declaration</test>
+   <test id="ibm-not-wf-P76-ibm76n04.xml"
+     >ibm76n04.xml:8:45: Expecting end of ENTITY definition</test>
+   <test id="ibm-not-wf-P76-ibm76n05.xml"
+     >ibm76n05.xml:8:41: Expecting a space</test>
+   <test id="ibm-not-wf-P76-ibm76n06.xml"
+     >ibm76n06.xml:8:41: Expecting a space</test>
+   <test id="ibm-not-wf-P76-ibm76n07.xml"
+     >ibm76n07.xml:8:45: Expecting end of ENTITY definition</test>
+   <test id="ibm-not-wf-P77-ibm77n01.xml"
+     >ibm77n01.ent:1:23: Text declarations &lt;?xml?&gt; in external entity cannot specify parameters other than 'version' and 'encoding'</test>
+   <test id="ibm-not-wf-P77-ibm77n02.xml"
+     >ibm77n02.ent:1:3: 'XML' is not a valid processing instruction target</test>
+   <test id="ibm-not-wf-P77-ibm77n03.xml"
+     >ibm77n03.ent:1:23: values must be separated by spaces</test>
+   <test id="ibm-not-wf-P77-ibm77n04.xml"
+     >ibm77n04.ent:2:1: Text declarations &lt;?xml?&gt; in external entity cannot specify parameters other than 'version' and 'encoding'</test>
+   <test id="ibm-not-wf-P78-ibm78n01.xml"
+     >ibm78n01.ent:4:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P78-ibm78n02.xml"
+     >ibm78n02.ent:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P79-ibm79n01.xml"
+     >ibm79n01.ent:3:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P79-ibm79n02.xml"
+     >ibm79n02.ent:2:1: &lt;?xml?&gt; instruction must be first in document</test>
+   <test id="ibm-not-wf-P80-ibm80n01.xml"
+     >ibm80n01.xml:1:20: values must be separated by spaces</test>
+   <test id="ibm-not-wf-P80-ibm80n02.xml"
+     >ibm80n02.xml:1:31: Expecting '=' sign</test>
+   <test id="ibm-not-wf-P80-ibm80n03.xml"
+     >ibm80n03.xml:1:33: Expecting encoding value</test>
+   <test id="ibm-not-wf-P80-ibm80n04.xml"
+     >ibm80n04.xml:1:21: &lt;?xml..?&gt; arguments can only be 'version', 'encoding' or 'standalone', in that order</test>
+   <test id="ibm-not-wf-P80-ibm80n05.xml"
+     >ibm80n05.xml:1:21: &lt;?xml..?&gt; arguments can only be 'version', 'encoding' or 'standalone', in that order</test>
+   <test id="ibm-not-wf-P80-ibm80n06.xml"
+     >ibm80n06.xml:1:21: &lt;?xml..?&gt; arguments can only be 'version', 'encoding' or 'standalone', in that order</test>
+   <test id="ibm-not-wf-P81-ibm81n01.xml"
+     >ibm81n01.xml:1:31: Illegal character '_' in encoding value</test>
+   <test id="ibm-not-wf-P81-ibm81n02.xml"
+     >ibm81n02.xml:1:31: Illegal character '-' in encoding value</test>
+   <test id="ibm-not-wf-P81-ibm81n03.xml"
+     >ibm81n03.xml:1:31: Illegal character '.' in encoding value</test>
+   <test id="ibm-not-wf-P81-ibm81n04.xml"
+     >ibm81n04.xml:1:31: Illegal character '8' in encoding value</test>
+   <test id="ibm-not-wf-P81-ibm81n05.xml"
+     >ibm81n05.xml:1:31: Illegal character '~' in encoding value</test>
+   <test id="ibm-not-wf-P81-ibm81n06.xml"
+     >ibm81n06.xml:1:31: Illegal character '#' in encoding value</test>
+   <test id="ibm-not-wf-P81-ibm81n07.xml"
+     >ibm81n07.xml:1:31: Illegal character ':' in encoding value</test>
+   <test id="ibm-not-wf-P81-ibm81n08.xml"
+     >ibm81n08.xml:1:31: Illegal character '/' in encoding value</test>
+   <test id="ibm-not-wf-P81-ibm81n09.xml"
+     >ibm81n09.xml:1:31: Illegal character ';' in encoding value</test>
+   <test id="ibm-not-wf-P82-ibm82n01.xml"
+     >ibm82n01.xml:7:20: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P82-ibm82n02.xml"
+     >ibm82n02.xml:7:12: Expecting a Name with no colon</test>
+   <test id="ibm-not-wf-P82-ibm82n03.xml"
+     >ibm82n03.xml:7:23: Invalid notation declaration</test>
+   <test id="ibm-not-wf-P82-ibm82n04.xml"
+     >ibm82n04.xml:7:12: Expecting a Name with no colon</test>
+   <test id="ibm-not-wf-P82-ibm82n05.xml"
+     >ibm82n05.xml:7:11: Unexpected character in the DTD</test>
+   <test id="ibm-not-wf-P82-ibm82n06.xml"
+     >ibm82n06.xml:8:9: Expecting end of NOTATION definition</test>
+   <test id="ibm-not-wf-P82-ibm82n07.xml"
+     >ibm82n07.xml:7:1: Element not allowed in the DTD</test>
+   <test id="ibm-not-wf-P82-ibm82n08.xml"
+     >ibm82n08.xml:7:41: Expecting end of NOTATION definition</test>
+   <test id="ibm-not-wf-P83-ibm83n01.xml"
+     >ibm83n01.xml:7:28: Invalid notation declaration</test>
+   <test id="ibm-not-wf-P83-ibm83n02.xml"
+     >ibm83n02.xml:1:1: Non-white space found at top level</test>
+   <test id="ibm-not-wf-P83-ibm83n03.xml"
+     >ibm83n03.xml:7:23: Invalid notation declaration</test>
+   <test id="ibm-not-wf-P83-ibm83n04.xml"
+     >ibm83n04.xml:7:28: Expecting a space</test>
+   <test id="ibm-not-wf-P83-ibm83n05.xml"
+     >ibm83n05.xml:7:30: Expecting a string after PUBLIC</test>
+   <test id="ibm-not-wf-P83-ibm83n06.xml"
+     >ibm83n06.xml:7:23: Invalid notation declaration</test>
+
+</results>

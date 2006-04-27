@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005                          --
+--                       Copyright (C) 2005-2006                     --
 --                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -43,18 +43,37 @@ package Sax.Utils is
    function Is_Valid_Name_Char (Char : Unicode.Unicode_Char) return Boolean;
    --  Whether Char is a valid NameChar, as per 2.3 in the XML specifications
 
+   function Is_Valid_NCname_Char (Char : Unicode.Unicode_Char) return Boolean;
+   --  Whether Char is a valid NCnameChar, as per 2 in the XML specifications
+
    function Is_Valid_Nmtoken
-     (Nmtoken : Unicode.CES.Byte_Sequence) return Boolean;
+     (Nmtoken     : Unicode.CES.Byte_Sequence) return Boolean;
    --  Whether Nmtoken is valid NMTOKEN as per 2.3 in the XML specifications
 
+   function Is_Valid_Nmtokens
+     (Nmtokens    : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether Nmtokens is valid NMTOKENS as per 2.3
+
    function Is_Valid_Name
-     (Name : Unicode.CES.Byte_Sequence) return Boolean;
-   --  Whether Name is valid name as per 2.3 in the XML specifications
+     (Name        : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether Name is valid name as per 2.3 in the XML specifications.
+
+   function Is_Valid_Names
+     (Name        : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether Name contains one or more valid Name, separated by a single
+   --  space character.
 
    function Is_Valid_NCname
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
    --  Whether Name is valid NCname as per 2 in the XML namespaces
    --  specifications
+   --  Colon should not be allowed when namespaces are supported, since names
+   --  must then match NCName, as per 6 in XML Namespaces specifications
+
+   function Is_Valid_NCnames
+     (Name        : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether Name contains one or more valid NCname, separated by a single
+   --  space character.
 
    function Is_Valid_QName
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
@@ -64,6 +83,10 @@ package Sax.Utils is
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
    --  True if Name is a valid URL, as per RFC2396.
    --  See http://www.ietf.org/rfc/rfc2396.txt
+
+   function Contains_URI_Fragment
+     (Name : Unicode.CES.Byte_Sequence) return Boolean;
+   --  True if Name contains a URI fragment (starting with #)
 
    function Is_Valid_HexBinary
      (Str  : Unicode.CES.Byte_Sequence) return Boolean;

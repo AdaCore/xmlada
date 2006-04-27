@@ -34,6 +34,7 @@ with Unicode;       use Unicode;
 with Interfaces;    use Interfaces;
 
 package body DOM.Core is
+   use Nodes_Htable;
 
    function Internalize_Node_Name
      (Doc  : Document; Name : Node_Name_Def) return Shared_Node_Name_Def;
@@ -61,6 +62,7 @@ package body DOM.Core is
          Doc_Type       => Doc_Type,
          Parent_Is_Owner => False,
          Implementation => Implementation,
+         Ids            => null,
          Node_Names     => new Node_Name_Htable.HTable (127),
          Shared_Strings => new String_Htable.HTable (127));
    end Create_Document;
@@ -512,5 +514,52 @@ package body DOM.Core is
          Force_Free (N);
       end if;
    end Free_Unless_Shared;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (N : in out Node_String) is
+   begin
+      Free (N.Key);
+   end Free;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (N : Node_String) return DOM_String_Access is
+   begin
+      return N.Key;
+   end Get_Key;
+
+   ---------------------
+   -- Document_Add_Id --
+   ---------------------
+
+   procedure Document_Add_Id
+     (Doc  : Document;
+      Id   : DOM_String;
+      Elem : Element) is
+   begin
+      if Doc.Ids = null then
+         Doc.Ids := new Nodes_Htable.HTable (203);
+      end if;
+
+      Set (Doc.Ids.all, (N => Node (Elem), Key => new DOM_String'(Id)));
+   end Document_Add_Id;
+
+   ------------------------
+   -- Document_Remove_Id --
+   ------------------------
+
+   procedure Document_Remove_Id
+     (Doc  : Document;
+      Id  : DOM_String) is
+   begin
+      if Doc.Ids /= null then
+         Remove (Doc.Ids.all, Id'Unrestricted_Access);
+      end if;
+   end Document_Remove_Id;
 
 end DOM.Core;

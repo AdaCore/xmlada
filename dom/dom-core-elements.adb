@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2005                     --
+--                       Copyright (C) 2001-2006                     --
 --                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -31,6 +31,7 @@ with DOM.Core.Attrs;     use DOM.Core.Attrs;
 with DOM.Core.Documents; use DOM.Core.Documents;
 
 package body DOM.Core.Elements is
+   use Nodes_Htable;
 
    -------------------
    -- Get_Attribute --
@@ -147,6 +148,7 @@ package body DOM.Core.Elements is
          raise Inuse_Attribute_Err;
       end if;
       Set_Named_Item (Elem.Attributes, New_Attr);
+      New_Attr.Owner_Element := Elem;
       return New_Attr;
    end Set_Attribute_Node;
 
@@ -161,6 +163,7 @@ package body DOM.Core.Elements is
          raise Inuse_Attribute_Err;
       end if;
       Set_Named_Item_NS (Elem.Attributes, New_Attr);
+      New_Attr.Owner_Element := Elem;
       return New_Attr;
    end Set_Attribute_Node_NS;
 
@@ -256,5 +259,90 @@ package body DOM.Core.Elements is
       Get_Elements_From_Node (Elem, L);
       return L;
    end Get_Elements_By_Tag_Name_NS;
+
+   ----------------------
+   -- Set_Id_Attribute --
+   ----------------------
+
+   procedure Set_Id_Attribute
+     (Elem  : Element;
+      Name  : DOM_String;
+      Is_Id : Boolean)
+   is
+      Id_Attr : constant Attr := Get_Attribute_Node (Elem, Name);
+   begin
+      if Id_Attr = null then
+         raise Not_Found_Err;
+      end if;
+
+      Id_Attr.Is_Id := Is_Id;
+
+      if Is_Id then
+         Document_Add_Id
+           (Owner_Document (Elem),
+            Id   => Value (Id_Attr),
+            Elem => Elem);
+      else
+         Document_Remove_Id
+           (Owner_Document (Elem),
+            Id  => Value (Id_Attr));
+      end if;
+   end Set_Id_Attribute;
+
+   -------------------------
+   -- Set_Id_Attribute_NS --
+   -------------------------
+
+   procedure Set_Id_Attribute_NS
+     (Elem          : Element;
+      Namespace_URI : DOM_String;
+      Local_Name    : DOM_String;
+      Is_Id         : Boolean)
+   is
+      Id_Attr : constant Attr := Get_Attribute_Node_NS
+        (Elem, Namespace_URI, Local_Name);
+   begin
+      if Id_Attr = null then
+         raise Not_Found_Err;
+      end if;
+
+      Id_Attr.Is_Id := Is_Id;
+
+      if Is_Id then
+         Document_Add_Id
+           (Owner_Document (Elem),
+            Id   => Value (Id_Attr),
+            Elem => Elem);
+      else
+         Document_Remove_Id
+           (Owner_Document (Elem),
+            Id  => Value (Id_Attr));
+      end if;
+   end Set_Id_Attribute_NS;
+
+   ---------------------------
+   -- Set_Id_Attribute_Node --
+   ---------------------------
+
+   procedure Set_Id_Attribute_Node
+     (Elem : Element; Id_Attr : Attr; Is_Id : Boolean) is
+   begin
+      if Owner_Element (Id_Attr) /= Elem then
+         raise Not_Found_Err;
+      end if;
+
+      Id_Attr.Is_Id := Is_Id;
+
+      if Is_Id then
+         Document_Add_Id
+           (Owner_Document (Elem),
+            Id   => Value (Id_Attr),
+            Elem => Elem);
+      else
+         Document_Remove_Id
+           (Owner_Document (Elem),
+            Id  => Value (Id_Attr));
+      end if;
+   end Set_Id_Attribute_Node;
 
 end DOM.Core.Elements;

@@ -122,6 +122,10 @@ package DOM.Core.Documents is
    --  is returned.
    --  The DOM implementation must know which attributes are of type Id, or
    --  null is returned.
+   --  For documents resulting from parsing an XML input source, this will only
+   --  work if the parser was configured with validation features on.
+   --  Otherwise, it will not know what attributes should be considered as ID,
+   --  and thus will not be able to retrieve them.
 
    function Import_Node (Doc : Document; Import_Node : Node; Deep : Boolean)
       return Node;

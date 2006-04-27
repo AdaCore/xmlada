@@ -66,6 +66,11 @@ directories should be different, since the generated code might not be the
 same in both cases, and the second set of project files (see below) would
 overwrite the ones previously installed.
 
+Depending on what Ada runtime your application is build with, you might need to
+change the file shared.gpr (at the root of the XML/Ada directory) so that the
+Default_Switches lines in the Compiler package contain something like:
+   for Default_Switches ("Ada") use ("--RTS=sjlj", ...);
+
 Configure and compile with the following commands:
    >  ./configure --prefix=<PREFIX>
    >  make install
@@ -166,18 +171,20 @@ examples on how to use the DOM and SAX API.
 The w3c organization has constructed an official testsuite that can be used to
 check XML/Ada. Most likely, this is only useful to you if you are modifying
 XML/Ada itself. Here is how you can run this testsuite:
-   You need to download the official OASIS test suite for XML,
-   from www.xml.org. The name of the current archive is
-     xmlconf-19990712.tar.Z.
+   You need to download the official XML Conformance Testsuite for XML,
+   The name of the current archive is
+       xmlconf-20031210.tar
+   The URL is:
+       http://www.w3.org/XML/Test/xmlconf-20031210.html
 
-   Uncompress it somewhere on your disk, then edit the file dom/test/testsuite to
-   reflect the location of that testsuite (BASE should point to the directory
-   containing these official tests)
+   Uncompress it somewhere on your disk, then add a link in dom/test, which
+   points to the directory where you unpackaged the testsuite. The link should
+   be called "tests".
 
    Execute the file
      make test
      cd dom/test
-     ./testsuite
+     ./testxml -auto
 
    This will report the number of errors found.
 

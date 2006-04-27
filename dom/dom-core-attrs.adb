@@ -44,7 +44,20 @@ package body DOM.Core.Attrs is
 
    function Owner_Element (Att : Attr) return Element is
    begin
-      return Att.Owner_Element;
+      if Att.Owner_Element.Node_Type = Element_Node then
+         return Att.Owner_Element;
+      else
+         return null;
+      end if;
    end Owner_Element;
+
+   -----------
+   -- Is_Id --
+   -----------
+
+   function Is_Id (Att : Attr) return Boolean is
+   begin
+      return Att.Is_Id;
+   end Is_Id;
 
 end DOM.Core.Attrs;

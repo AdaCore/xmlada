@@ -28,7 +28,7 @@ project Shared is
 
       case Mode is
          when "distrib" =>
-            for Default_Switches ("Ada") use ("-O2", "-gnatn", "-gnatg");
+            for Default_Switches ("Ada") use ("-O2", "-gnatn");
 
          when "debug" =>
             for Default_Switches ("Ada") use warnings
@@ -37,7 +37,7 @@ project Shared is
 
          when "optimize" =>
             for Default_Switches ("Ada") use warnings
-               & ("-O2", "-gnatn", "-gnatp", "-mcpu=pentium4");
+               & ("-O2", "-gnatn", "-gnatp");
 
          when "profile" =>
             for Default_Switches ("Ada") use warnings & ("-g", "-pg");

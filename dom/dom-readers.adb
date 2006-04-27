@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2003                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2006                     --
+--                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -30,6 +30,7 @@
 with Sax.Attributes;       use Sax.Attributes;
 with Unicode;              use Unicode;
 with Unicode.CES;          use Unicode.CES;
+with DOM.Core.Attrs;       use DOM.Core.Attrs;
 with DOM.Core.Nodes;       use DOM.Core.Nodes;
 with DOM.Core.Documents;   use DOM.Core.Documents;
 with DOM.Core.Elements;    use DOM.Core.Elements;
@@ -59,7 +60,9 @@ package body DOM.Readers is
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class)
    is
+      Att, Att2 : Attr;
       pragma Warnings (Off, Local_Name);
+      pragma Warnings (Off, Att2);
    begin
       Handler.Current_Node := Append_Child
         (Handler.Current_Node,
@@ -69,11 +72,15 @@ package body DOM.Readers is
 
       --  Insert the attributes in the right order.
       for J in 0 .. Get_Length (Atts) - 1 loop
-         Set_Attribute_NS
-           (Handler.Current_Node,
-            Get_URI (Atts, J),
-            Get_Qname (Atts, J),
-            Get_Value (Atts, J));
+         Att := Create_Attribute_NS
+           (Handler.Tree,
+            Namespace_URI  => Get_URI (Atts, J),
+            Qualified_Name => Get_Qname (Atts, J));
+         Set_Value (Att, Get_Value (Atts, J));
+         Att2 := Set_Attribute_Node (Handler.Current_Node, Att);
+         if Get_Type (Atts, J) = Id then
+            Set_Id_Attribute_Node (Handler.Current_Node, Att, Is_Id => True);
+         end if;
       end loop;
    end Start_Element;
 

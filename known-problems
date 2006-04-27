@@ -1,3 +1,28 @@
+Problems fixed in wavefront:
+  - Schema: Restrictions or extensions of type did not validate the facets of
+    their ancestors. For instance, if you set minLength on a type, and then set
+    a restriction on it also limiting the maxLength, XML/Ada no longer checked
+    the minLength
+
+Problems fixed in 2.1:
+
+Input Soures:
+  - Ignore encoding specified in the XML file if it conflicts with the Byte Order
+    Mark at the beginning of the file
+SAX
+  - XML/Ada doesn't check that ENTITY or ENTITIES attributes only refer to existing
+    unparsed entities
+  - Disabling the Namespace_Feature doesn't accepts colons in tag names, but it
+    should
+  - Validity errors are reported as fatal errors, but they should be reported as
+    recoverable errors
+  - Extra validity checks added for attributes (contents of ID attributes,...)
+  - The Sax callback Error must raise an exception, otherwise some other internal
+    errors might occur in the parser. This is unexpected, since this callback
+    indicates recoverable errors
+  - Attribute values are normalized too often (space sequences collapsing). If the
+    space is given through a character reference, it shouldn't be collapsed
+
 Problems in 2.0.1, Fixed in 2.1:
 
 - Expanding parameter entities should always surround them with spaces, as per

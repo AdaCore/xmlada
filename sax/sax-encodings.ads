@@ -85,6 +85,9 @@ package Sax.Encodings is
    Plus_Sign_Sequence     : constant Byte_Sequence := "+";
    Colon_Sequence         : constant Byte_Sequence := ":";
    Percent_Sign_Sequence  : constant Byte_Sequence := "%";
+   Space_Word_Sequence    : constant Byte_Sequence := "space";
+   Default_Sequence       : constant Byte_Sequence := "default";
+   Preserve_Sequence      : constant Byte_Sequence := "preserve";
    Space_Sequence         : constant Byte_Sequence := " ";
    Space_Numeric_Sequence : constant Byte_Sequence := "&#32;";
    Less_Than_Sequence     : constant Byte_Sequence := "<";
@@ -126,5 +129,6 @@ package Sax.Encodings is
      "validate-if-schema";
    Whitespace_In_Element_Sequence : constant Byte_Sequence :=
      "whitespace-in-element-content";
+   Mailto_Sequence : constant Byte_Sequence := "mailto:";
 
 end Sax.Encodings;

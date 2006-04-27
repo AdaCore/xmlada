@@ -31,6 +31,7 @@ with DOM.Core.Nodes;            use DOM.Core.Nodes;
 with DOM.Core.Elements;         use DOM.Core.Elements;
 
 package body DOM.Core.Documents is
+   use Nodes_Htable;
 
    --------------
    -- Doc_Type --
@@ -192,6 +193,7 @@ package body DOM.Core.Documents is
          Parent_Is_Owner => True,
          Specified       => False,
          Owner_Element   => Doc,
+         Is_Id           => False,
          Attr_Name       => From_Qualified_Name (Doc, Name, null),
          Attr_Value      => null);
    end Create_Attribute;
@@ -211,6 +213,7 @@ package body DOM.Core.Documents is
          Parent_Is_Owner => True,
          Specified       => False,
          Owner_Element   => Doc,
+         Is_Id           => False,
          Attr_Name       => From_Qualified_Name
            (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
          Attr_Value      => null);
@@ -291,13 +294,13 @@ package body DOM.Core.Documents is
    -----------------------
 
    function Get_Element_By_Id
-     (Doc : Document; Element_Id : DOM_String) return Node
-   is
-      pragma Warnings (Off, Doc);
-      pragma Warnings (Off, Element_Id);
+     (Doc : Document; Element_Id : DOM_String) return Node is
    begin
-      --  ??? Unimplemented
-      return null;
+      if Doc.Ids = null then
+         return null;
+      else
+         return Get (Doc.Ids.all, Element_Id'Unrestricted_Access).N;
+      end if;
    end Get_Element_By_Id;
 
 end DOM.Core.Documents;

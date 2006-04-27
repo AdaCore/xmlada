@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2005                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2006                     --
+--                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -58,6 +58,158 @@ package body Sax.Readers is
    Initial_Buffer_Length : constant := 10000;
    --  Initial length of the internal buffer that stores CDATA, tag names,...
 
+   --------------------
+   -- Error messages --
+   --------------------
+   --  The comment indicates the section of the XML or Namespaces specification
+   --  relevant for that error
+
+   Error_Attlist_DefaultDecl       : constant String :=
+     "Invalid default declaration for the attribute";  --  3.3.2
+   Error_Attlist_Invalid_Enum      : constant String :=
+     "Invalid character ',' in ATTLIST enumeration";  --  3.3.1
+   Error_Attlist_Type              : constant String :=
+     "Invalid type for attribute"; --  WF
+   Error_Attribute_External_Entity : constant String :=
+     "Attribute values cannot reference external entities";
+   Error_Attribute_Is_Name : constant String :=
+     "Attribute must contain Names: ";  --  NS 6 and 3.3.1
+   Error_Attribute_Is_Ncname : constant String :=
+     "Attribute must contain Names with no colon: ";  --  NS 6 and 3.3.1
+   Error_Attribute_Is_Nmtoken : constant String :=
+     "Attribute must contain Nmtokens: ";  --  2.3 and 3.3.1
+   Error_Attribute_Less_Than : constant String :=
+     "'<' not authorized in attribute values";  --  2.3
+   Error_Attribute_Less_Than_Suggests : constant String :=  --  2.3
+     "'<' not authorized in attribute values. Possible end of value at ";
+   Error_Attribute_Ref_Unparsed_Entity : constant String :=
+     "Attribute must reference an existing unparsed entity: ";
+   Error_Cdata_End            : constant String :=
+     "CDATA sections must end with ']]>'"; --  2.7
+   Error_Cdata_Unterminated   : constant String :=
+     "CDATA must be followed immediately by '['";
+   Error_Charref_Toplevel     : constant String :=
+     "Character references cannot appear at top-level";  --  2.1
+   Error_Charref_Invalid_Char : constant String :=
+     "Invalid character in character reference: "; -- 4.1
+   Error_Comment_End          : constant String :=
+     "Comments must end with '-->'";  --  2.5
+   Error_Comment_Unterminated : constant String :=
+     "Unterminated comment in stream";  --  WF
+   Error_Comment_Dash_Dash    : constant String :=
+     "'--' cannot appear in comments";  --  2.5
+   Error_Conditional_Location : constant String :=  --  3.4
+     "INCLUDE and IGNORE sections only allowed in the external DTD subset";
+   Error_Conditional_Syntax : constant String :=
+     "Conditional sections need '[' after INCLUDE or IGNORE";  --  3.4
+   Error_Content_Model_Closing_Paren : constant String :=
+     "Closing parenthesis must be followed by '*' in mixed content"; --  3.2.2
+   Error_Content_Model_Empty_List : constant String :=
+     "Invalid content model: list of choices cannot be empty";
+   Error_Content_Model_Expect_Operator : constant String :=
+     "Expecting operator in content model";
+   Error_Content_Model_Invalid : constant String :=
+     "Invalid content model";
+   Error_Content_Model_Invalid_Multiplier : constant String :=
+     "Invalid location for '+', '?' or '*' operators"; --  3.2.1
+   Error_Content_Model_Invalid_Name : constant String :=
+     "Invalid name in content model: ";
+   Error_Content_Model_Invalid_Seq : constant String :=
+     "Missing content particle in sequence"; --  3.2.1
+   Error_Content_Model_Invalid_Start : constant String :=
+     "Invalid content model, cannot start with #";
+   Error_Content_Model_Mixing : constant String :=
+     "Cannot mix ',' and '|' in content model";
+   Error_Content_Model_Nested_Groups : constant String :=
+     "Nested groups and occurrence operators not allowed in mixed content";
+   --  3.3.2
+   Error_Content_Model_Pcdata : constant String :=
+     "#PCDATA can only be used with '|' connectors"; --  3.2.2
+   Error_Content_Model_Pcdata_First : constant String :=
+     "#PCDATA must be first in list";  --  3.2.2
+   Error_Content_Model_Pcdata_Occurrence : constant String :=
+     "Occurrence on #PCDATA must be '*'"; --  3.2.2
+   Error_Entity_Definition  : constant String :=
+     "Invalid definition for ENTITY";
+   Error_Entity_Definition_Unterminated  : constant String :=
+     "Expecting end of ENTITY definition";
+   Error_Entity_Name        : constant String := "Invalid entity name"; --  4.1
+   Error_Entity_Not_Standalone    : constant String :=
+     "Entity declared in external subset, but document is standalone"; --  4.1
+   Error_Entity_Self_Ref  : constant String :=
+     "Entity cannot reference itself"; --  4.1
+   Error_Entity_Toplevel  : constant String :=
+     "Entity references cannot appear at top-level"; --  2.1
+   Error_Entity_Undefined : constant String := "Undefined entity"; --  4.1
+   Error_Entityref_Unterminated : constant String :=
+     "Entity references must end with ';'." & ASCII.LF
+       & "Did you want to use &amp;?"; --  4.1
+   Error_Entity_Nested : constant String :=
+     "Replacement text for entities must be properly nested"; --  3.2.1
+   Error_Entity_Self_Contained : constant String :=
+     "Entity values must be self-contained";  --  4.5 or 4.3.2
+   Error_Expecting_Space : constant String :=
+     "Expecting a space"; --  WF or 3.3
+   Error_External_Entity_Not_Found : constant String :=
+     "External entity not found: ";
+   Error_Invalid_Char    : constant String :=
+     "Invalid character code:";  --  2.2 or 4.1
+   Error_Invalid_Declaration : constant String := "Invalid declaration";
+   Error_Invalid_Encoding    : constant String := "Invalid character encoding";
+   Error_Invalid_Content_Model : constant String := "Invalid content model";
+   Error_Invalid_Language    : constant String :=
+     "Invalid language specification";  --  2.12
+   Error_Invalid_Name : constant String :=
+     "Invalid name: "; --  3.1
+   Error_Invalid_Notation_Decl : constant String :=
+     "Invalid notation declaration";  --  WF
+   Error_Invalid_Space         : constant String :=
+     "Value of xml:space must be (default|preserve)";  --  2.10
+   Error_Is_Name  : constant String := "Expecting a Name"; --  3.3.1
+   Error_Is_Ncname  : constant String :=
+     "Expecting a Name with no colon"; --  NS 6 and 3.3.1
+   Error_Missing_Operand       : constant String :=
+     "Missing operand before this operator";
+   Error_Mixed_Contents        : constant String :=
+     "Mixed contents cannot be used in a list or a sequence"; --  3.2.1
+   Error_Ndata_ParamEntity : constant String := --  4.2
+     "NDATA annotation not allowed for parameter entities";
+   Error_Ndata_Space : constant String := --  4.2.2
+     "Expecting space before NDATA declaration";
+   Error_Ndata_String : constant String :=
+     "Expecting string after NDATA";
+   Error_ParamEntity_In_Attribute : constant String :=
+     "Parameter entities cannot occur in attribute values";
+   --  WF PE in internal subset
+   Error_Notation_Undeclared : constant String :=
+     "Notation must be declared: "; --  VC 4.2.2 or 3.3.1
+   Error_Prefix_Not_Declared   : constant String :=
+     "Prefix must be declared before its use: ";   --  WF
+   Error_Public_String : constant String :=
+     "Expecting a string after PUBLIC";
+   Error_Public_Sysid : constant String :=
+     "Expecting SystemID after PUBLIC";
+   Error_Public_Sysid_Space : constant String :=
+     "Require whitespace between public and system IDs"; --  4.2.2
+   Error_Public_Invalid : constant String :=
+     "Invalid PubID character: ";
+   Error_System_String : constant String :=
+     "Expecting a string after SYSTEM";
+   Error_System_URI : constant String :=  --  4.2.2
+     "SYSTEM identifiers may not contain URI fragments starting with #";
+   Error_Unknown_Declaration   : constant String :=
+     "Unknown declaration in DTD"; --  WF
+   Error_Unexpected_Chars1     : constant String :=
+     "Invalid characters '<!-' in stream"; --  WF
+   Error_Unexpected_Chars2     : constant String :=
+     "Unexpected characters between ']' and '>' in the DTD";  --  2.8
+   Error_Unexpected_Chars3     : constant String :=
+     "Text may not contain the litteral ']]>'"; --  2.4
+   Error_Unterminated_String   : constant String :=
+     "Unterminated string";  --  2.3
+   Error_Unterminated_String_Suggests : constant String :=
+     "Unterminated string, possible end at "; --  2.3
+
    ------------
    -- Tokens --
    ------------
@@ -85,6 +237,7 @@ package body Sax.Readers is
       Text,                    --  any text  (Data is the identifier)
       Name,                    --  same as text, but contains only valid
       --  name characters
+      Char_Ref,                --  A character reference. Data is the character
       Cdata_Section,           --  <![CDATA
       Doctype_Start,           --  <!DOCTYPE
       System,                  --  SYSTEM  (while in DTD)
@@ -96,17 +249,17 @@ package body Sax.Readers is
       Entity_Def,              --  <!ENTITY (while in DTD)
       Element_Def,             --  <!ELEMENT (while in DTD)
       Attlist_Def,             --  <!ATTLIST (while in DTD)
-      Id_Type,                 --  ID (while in ATTLIST)      Data is "ID"
-      Idref,                   --  IDREF (while in ATTLIST)   Data is "IDREF"
-      Idrefs,                  --  IDREFS (while in ATTLIST)  Data is "IDREFS"
-      Cdata,                   --  CDATA (while in ATTLIST)   Data is "CDATA"
-      Entity,                  --  ENTITY (while in ATTLIST)  Data is "ENTITY"
+      Id_Type,                 --  ID (while in ATTLIST)       Data is "ID"
+      Idref,                   --  IDREF (while in ATTLIST)    Data is "IDREF"
+      Idrefs,                  --  IDREFS (while in ATTLIST)   Data is "IDREFS"
+      Cdata,                   --  CDATA (while in ATTLIST)    Data is "CDATA"
+      Entity,                  --  ENTITY (while in ATTLIST)   Data is "ENTITY"
       Entities,                --  ENTITIES (while in ATTLIST) Data="ENTITIES"
-      Nmtoken,                 --  NMTOKEN (while in ATTLIST) Data="NMTOKEN"
+      Nmtoken,                 --  NMTOKEN (while in ATTLIST)  Data="NMTOKEN"
       Nmtokens,                --  NMTOKENS (while in ATTLIST) Data="NMTOKENS"
       Required,                --  REQUIRED (while in ATTLIST) Data="#REQUIRED"
-      Implied,                 --  IMPLIED (while in ATTLIST) Data="#IMPLIED"
-      Fixed,                   --  FIXED (while in ATTLIST) Data="#FIXED"
+      Implied,                 --  IMPLIED (while in ATTLIST)  Data="#IMPLIED"
+      Fixed,                   --  FIXED (while in ATTLIST)    Data="#FIXED"
       End_Of_Input             --  End of input was seen.
      );
 
@@ -130,6 +283,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => False,
       Expand_Entities => True,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => False,
       Recognize_External => False,
@@ -145,7 +299,8 @@ package body Sax.Readers is
       Less_Special => True,
       Expand_Param_Entities => False,
       Expand_Entities => True,
-      Expand_Character_Ref => True,
+      Report_Character_Ref => True,
+      Expand_Character_Ref => False,
       In_DTD => False,
       Recognize_External => False,
       Handle_Strings => True,
@@ -160,6 +315,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => False,
       Expand_Entities => False,
+      Report_Character_Ref => False,
       Expand_Character_Ref => False,
       In_DTD => False,
       Recognize_External => False,
@@ -175,6 +331,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => True,
       Expand_Entities => True,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => True,
       Recognize_External => True,
@@ -190,6 +347,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => False,
       Expand_Entities => False,
+      Report_Character_Ref => False,
       Expand_Character_Ref => False,
       In_DTD => False,
       Recognize_External => False,
@@ -205,6 +363,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => False,
       Expand_Entities => False,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => True,
       Recognize_External => True,
@@ -220,6 +379,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => True,
       Expand_Entities => False,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => True,
       Recognize_External => True,
@@ -235,6 +395,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => True,
       Expand_Entities => False,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => True,
       Recognize_External => False,
@@ -250,6 +411,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => True,
       Expand_Entities => False,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => True,
       Recognize_External => False,
@@ -265,6 +427,7 @@ package body Sax.Readers is
       Less_Special => False,
       Expand_Param_Entities => True,
       Expand_Entities => False,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => True,
       Recognize_External => False,
@@ -278,8 +441,9 @@ package body Sax.Readers is
       Detect_End_Of_PI => False,
       Greater_Special => False,
       Less_Special => False,
-      Expand_Param_Entities => True,
+      Expand_Param_Entities => False,
       Expand_Entities => True,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => True,
       Recognize_External => False,
@@ -295,6 +459,7 @@ package body Sax.Readers is
       Detect_End_Of_PI => False,
       Expand_Param_Entities => False,
       Expand_Entities => False,
+      Report_Character_Ref => False,
       Expand_Character_Ref => True,
       In_DTD => False,
       Recognize_External => False,
@@ -316,12 +481,9 @@ package body Sax.Readers is
    --  Return an encoded string matching C (matching Sax.Encodins.Encoding)
 
    procedure Test_Valid_Char
-     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token;
-      Section : String);
+     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token);
    --  Raise an error if C is not valid in XML. The error is reported at
    --  location Loc.
-   --  Section is used in the error message, and referes to the section in the
-   --  XML standard.
 
    function Is_Pubid_Char (C : Unicode_Char) return Boolean;
    --  Return True if C is a valid character for a Public ID (2.3 specs)
@@ -329,6 +491,10 @@ package body Sax.Readers is
    procedure Test_Valid_Lang
      (Parser : in out Reader'Class; Lang : Byte_Sequence);
    --  Return True if Lang matches the rules for languages
+
+   procedure Test_Valid_Space
+     (Parser : in out Reader'Class; Space : Byte_Sequence);
+   --  Return True if Space matches the rules for the xml:space attribute
 
    procedure Next_Char
      (Input   : in out Input_Source'Class;
@@ -385,6 +551,27 @@ package body Sax.Readers is
 
    function Get_State (Parser : Reader'Class) return Parser_State;
    --  Return the current state.
+
+   procedure Check_Valid_Name_Or_NCname
+     (Parser : in out Reader'Class;
+      Name   : Token);
+   --  Check that Name is a valid Name (if namespaces are not supported) or
+   --  a NCname if namespaces are supported.
+
+   procedure Check_Attribute_Value
+     (Parser     : in out Reader'Class;
+      Qname      : Byte_Sequence;
+      Typ        : Attribute_Type;
+      Value      : Byte_Sequence;
+      Error_Loc  : Token);
+   --  Check Validity Constraints for a single attribute. Only call this
+   --  subprogram for a validating parser
+
+   procedure Check_Attribute_Value
+     (Parser    : in out Reader'Class;
+      Attr      : Sax.Attributes.Attributes;
+      Error_Loc : Token);
+   --  Check that the value given to an attribute matches its type
 
    procedure Syntactic_Parse
      (Parser : in out Reader'Class;
@@ -741,17 +928,37 @@ package body Sax.Readers is
 
          if C = Carriage_Return then
             Parser.Previous_Char_Was_CR := True;
-            Parser.Last_Read := Line_Feed;
+
+            --  When expanding an internal entity, do not normalize the
+            --  character (which has already been normalized when creating the
+            --  entity, and therefore comes from a &#13; character ref
+            if Parser.Inputs = null
+              or else Parser.Inputs.External
+            then
+               Parser.Last_Read := Line_Feed;
+            else
+               Parser.Last_Read := Carriage_Return;
+            end if;
 
          elsif C = Line_Feed and then Parser.Previous_Char_Was_CR then
             Parser.Previous_Char_Was_CR := False;
-            Next_Char (Stream, Parser);
+
+            --  When expanding an internal entity, do not strip the CRLF
+            --  sequences: since they have already been stripped when the
+            --  entity was created, the sequences that remain were created
+            --  through character references &#13;&#10; and should therefore
+            --  be kept as is.
+            if Parser.Inputs = null
+              or else Parser.Inputs.External
+            then
+               Next_Char (Stream, Parser);
+            end if;
 
          else
             Parser.Last_Read := C;
 
             if Parser.Feature_Test_Valid_Chars then
-               Test_Valid_Char (Parser, Parser.Last_Read, Null_Token, "2.2");
+               Test_Valid_Char (Parser, Parser.Last_Read, Null_Token);
             end if;
          end if;
       end Internal;
@@ -849,7 +1056,7 @@ package body Sax.Readers is
 
    exception
       when Unicode.CES.Invalid_Encoding =>
-         Fatal_Error (Parser, "Invalid character encoding");
+         Fatal_Error (Parser, Error_Invalid_Encoding);
    end Next_Char;
 
    -------------------
@@ -903,10 +1110,25 @@ package body Sax.Readers is
    procedure Test_Valid_Lang
      (Parser : in out Reader'Class; Lang : Byte_Sequence) is
    begin
-      if not Is_Valid_Language_Name (Lang) then
-         Fatal_Error (Parser, "[2.12] Invalid language specification");
+      --  XML Errata 41: An empty xml:lang attribute is valid
+      if Lang /= "" and then not Is_Valid_Language_Name (Lang) then
+         Error (Parser, Error_Invalid_Language);
       end if;
    end Test_Valid_Lang;
+
+   ----------------------
+   -- Test_Valid_Space --
+   ----------------------
+
+   procedure Test_Valid_Space
+     (Parser : in out Reader'Class; Space : Byte_Sequence) is
+   begin
+      if Space /= Default_Sequence
+        and then Space /= Preserve_Sequence
+      then
+         Error (Parser, Error_Invalid_Space);
+      end if;
+   end Test_Valid_Space;
 
    -------------------
    -- Is_Pubid_Char --
@@ -945,8 +1167,7 @@ package body Sax.Readers is
    ---------------------
 
    procedure Test_Valid_Char
-     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token;
-      Section : String)
+     (Parser : in out Reader'Class; C : Unicode_Char; Loc : Token)
    is
       Id : Token;
    begin
@@ -963,9 +1184,7 @@ package body Sax.Readers is
             Id.Line := Get_Line_Number (Parser.Locator.all);
             Id.Column := Get_Column_Number (Parser.Locator.all);
          end if;
-         Fatal_Error
-           (Parser, "[" & Section & "] Invalid character (code"
-            & Unicode_Char'Image (C) & ")", Id);
+         Fatal_Error (Parser, Error_Invalid_Char & Unicode_Char'Image (C), Id);
       end if;
    end Test_Valid_Char;
 
@@ -1037,10 +1256,7 @@ package body Sax.Readers is
          E := E.Parent;
       end loop;
 
-      Fatal_Error
-        (Parser,
-         "[WF] Prefix '" & Prefix & "' must be declared before its use");
-      NS := null;
+      Fatal_Error (Parser, Error_Prefix_Not_Declared & Prefix);
    end Find_NS;
 
    ---------------------
@@ -1260,16 +1476,14 @@ package body Sax.Readers is
                loop
                   Next_Char (Input, Parser);
                   if End_Of_Stream (Parser) then
-                     Fatal_Error
-                       (Parser, "[2.5] Comments must end with '-->'", Id);
+                     Fatal_Error (Parser, Error_Comment_End, Id);
                      Id.Typ := End_Of_Input;
                      return;
 
                   elsif Parser.Last_Read = Hyphen_Minus then
                      Next_Char (Input, Parser);
                      if End_Of_Stream (Parser) then
-                        Fatal_Error
-                          (Parser, "[WF] Unterminated comment in stream");
+                        Fatal_Error (Parser, Error_Comment_Unterminated);
                         Id.Typ := End_Of_Input;
                         return;
 
@@ -1285,8 +1499,7 @@ package body Sax.Readers is
                         Id.Column :=
                           Get_Column_Number (Parser.Locator.all) - 2;
                         --  2 = 2 * Hyphen_Minus
-                        Fatal_Error
-                          (Parser, "[2.5] '--' cannot appear in comments", Id);
+                        Fatal_Error (Parser, Error_Comment_Dash_Dash, Id);
                      else
                         Put_In_Buffer (Parser, Hyphen_Minus);
                         Put_In_Buffer (Parser, Parser.Last_Read);
@@ -1296,16 +1509,17 @@ package body Sax.Readers is
                   end if;
                end loop;
 
-               if Input_Id (Parser) /= Id.Input_Id then
-                  Fatal_Error
-                    (Parser, "[4.5] Entity values must be self-contained", Id);
+               if Parser.Feature_Validation
+                 and then Input_Id (Parser) /= Id.Input_Id
+               then
+                  Error (Parser, Error_Entity_Self_Contained, Id);
                end if;
 
                Next_Char (Input, Parser);
                return;
             end if;
          end if;
-         Fatal_Error (Parser, "[WF] Invalid characters '<!-' in stream");
+         Fatal_Error (Parser, Error_Unexpected_Chars1);
          Id.Typ := End_Of_Input;
       end Handle_Comments;
 
@@ -1316,14 +1530,16 @@ package body Sax.Readers is
       procedure Handle_Character_Ref is
          Val : Unicode_Char := 0;
       begin
-         Id.Typ := Text;
+         if Parser.State.Expand_Character_Ref then
+            Id.Typ := Text;
+         else
+            Id.Typ := Char_Ref;
+         end if;
 
          if Parser.Current_Node = null
            and then Parser.State.Name = Default_State.Name
          then
-            Fatal_Error
-              (Parser,
-               "[2.1] Character references can not appear at top-level",  Id);
+            Fatal_Error (Parser, Error_Charref_Toplevel, Id);
          end if;
 
          Next_Char (Input, Parser);
@@ -1352,9 +1568,8 @@ package body Sax.Readers is
                   Id.Line := Get_Line_Number (Parser.Locator.all);
                   Id.Column := Get_Column_Number (Parser.Locator.all);
                   Fatal_Error
-                    (Parser, "[4.1] Invalid character '"
-                     & Debug_Encode (Parser.Last_Read) & "' in"
-                     & " character reference", Id);
+                    (Parser, Error_Charref_Invalid_Char
+                     & Debug_Encode (Parser.Last_Read), Id);
                end if;
                Next_Char (Input, Parser);
             end loop;
@@ -1368,16 +1583,15 @@ package body Sax.Readers is
                   Id.Line := Get_Line_Number (Parser.Locator.all);
                   Id.Column := Get_Column_Number (Parser.Locator.all);
                   Fatal_Error
-                    (Parser, "[4.1] Invalid character '"
-                     & Debug_Encode (Parser.Last_Read) & "' in"
-                     & " character reference", Id);
+                    (Parser, Error_Charref_Invalid_Char
+                     & Debug_Encode (Parser.Last_Read), Id);
                end if;
                Next_Char (Input, Parser);
             end loop;
          end if;
 
          if Parser.Feature_Test_Valid_Chars then
-            Test_Valid_Char (Parser, Val, Id, "4.1");
+            Test_Valid_Char (Parser, Val, Id);
          end if;
          Put_In_Buffer (Parser, Val);
          Next_Char (Input, Parser);
@@ -1414,13 +1628,11 @@ package body Sax.Readers is
                   if Parser.Last_Read = Latin_Capital_Letter_C then
 
                      if not Looking_At (Cdata_Sequence) then
-                        Fatal_Error (Parser, "Invalid declaration", Id);
+                        Fatal_Error (Parser, Error_Invalid_Declaration, Id);
                      end if;
 
                      if Parser.Last_Read /= Opening_Square_Bracket then
-                        Fatal_Error
-                          (Parser,
-                           "CDATA must be followed immediately by '['", Id);
+                        Fatal_Error (Parser, Error_Cdata_Unterminated, Id);
                      end if;
 
                      Reset_Buffer (Parser, Id);
@@ -1431,9 +1643,7 @@ package body Sax.Readers is
 
                         if End_Of_Stream (Parser) then
                            Id.Typ := End_Of_Input;
-                           Fatal_Error
-                             (Parser,
-                              "[2.7] CDATA sections must end with ']]>'", Id);
+                           Fatal_Error (Parser, Error_Cdata_End, Id);
                            return;
 
                         elsif Parser.Last_Read_Is_Valid then
@@ -1457,9 +1667,7 @@ package body Sax.Readers is
                      end loop;
 
                      if Id.Input_Id /= Input_Id (Parser) then
-                        Fatal_Error
-                          (Parser, "[4.3.2] Entity must be self-contained",
-                           Id);
+                        Fatal_Error (Parser, Error_Entity_Self_Contained, Id);
                      end if;
 
                      if not Eof (Input) then
@@ -1490,42 +1698,37 @@ package body Sax.Readers is
                            Reset_Buffer (Parser, Id2);
                            Id.Typ := Ignore;
                         else
-                           Fatal_Error (Parser, "Invalid declaration", Id);
+                           Fatal_Error (Parser, Error_Invalid_Declaration, Id);
                         end if;
 
                         if not Parser.State.In_DTD
                           or else not Parser.In_External_Entity
                         then
                            Fatal_Error
-                             (Parser, "[3.4] INCLUDE and IGNORE sections only"
-                              & " authorized in the external DTD subset", Id);
+                             (Parser, Error_Conditional_Location, Id);
                         end if;
 
                         Next_Token_Skip_Spaces (Input, Parser, Id2);
                         if Id2.Typ /= Internal_DTD_Start then
-                           Fatal_Error
-                             (Parser,
-                              "(3.4) Conditional sections need a '[' after the"
-                              & " INCLUDE or IGNORE", Id2);
+                           Fatal_Error (Parser, Error_Conditional_Syntax, Id2);
                         end if;
 
                      elsif Parser.State.In_DTD then
                         Id.Typ := Start_Conditional;
                      else
-                        Fatal_Error
-                          (Parser,
-                           "No declaration starting with '<!' outside of DTD",
-                           Id);
+                        Fatal_Error (Parser, Error_Unexpected_Chars1, Id);
                      end if;
                   end if;
 
                elsif not Parser.State.In_DTD then
-                  Fatal_Error
-                    (Parser,
-                     "No declaration starting with '<!' outside of DTD", Id);
-                  Id.Typ := End_Of_Input;
+                  Fatal_Error (Parser, Error_Unexpected_Chars1, Id);
 
-               elsif Looking_At (Attlist_Sequence) then
+               elsif Looking_At (Attlist_Sequence)
+               --  Since parameter entities are expanded with spaces, we can
+               --  have one following ATTLIST immediately
+                 and then (Is_White_Space (Parser.Last_Read)
+                           or else Parser.Last_Read = Percent_Sign)
+               then
                   Reset_Buffer (Parser, Id);
                   Id.Typ := Attlist_Def;
 
@@ -1540,10 +1743,15 @@ package body Sax.Readers is
                      Id.Typ := Element_Def;
 
                   else
-                     Fatal_Error (Parser, "[WF] Unknown declaration in DTD");
+                     Fatal_Error (Parser, Error_Unknown_Declaration);
                   end if;
 
-               elsif Looking_At (Notation_Sequence) then
+               elsif Looking_At (Notation_Sequence)
+               --  Since parameter entities are expanded with spaces, we can
+               --  have one following NOTATION immediately
+                 and then (Is_White_Space (Parser.Last_Read)
+                           or else Parser.Last_Read = Percent_Sign)
+               then
                   Reset_Buffer (Parser, Id);
                   Id.Typ := Notation;
 
@@ -1582,22 +1790,17 @@ package body Sax.Readers is
             if not Parser.Last_Read_Is_Valid
               or else Input_Id (Parser) /= Id.Input_Id
             then
-               Fatal_Error
-                 (Parser, "[4.3.2] Entity must be self-contained", Id);
+               Fatal_Error (Parser, Error_Entity_Self_Contained, Id);
             end if;
 
             if Parser.Last_Read /= Semicolon then
-               Fatal_Error
-                 (Parser, "[4.1] Entity references must end with ';'."
-                  & ASCII.LF & "Did you want to use &amp; ?", Id);
+               Fatal_Error (Parser, Error_Entityref_Unterminated, Id);
             end if;
 
             Id.From_Entity := True;
 
          else
-            Fatal_Error
-              (Parser, "[4.1] Invalid first letter in entity name '"
-               & Debug_Encode (Parser.Last_Read) & "'", Id);
+            Fatal_Error (Parser, Error_Entity_Name, Id);
          end if;
       end Handle_Entity_Ref;
 
@@ -1750,7 +1953,12 @@ package body Sax.Readers is
 
             when Unicode.Names.Basic_Latin.Colon =>
                if Parser.State.In_Tag then
-                  Id.Typ := Colon;
+                  if Parser.Feature_Namespace then
+                     Id.Typ := Colon;
+                  else
+                     Put_In_Buffer (Parser, Parser.Last_Read);
+                     Id.Typ := Name;
+                  end if;
                else
                   Put_In_Buffer (Parser, Parser.Last_Read);
                   Id.Typ := Text;
@@ -1762,20 +1970,17 @@ package body Sax.Readers is
                if Eof (Input)
                  and then Parser.State.Expand_Entities
                then
-                  Fatal_Error
-                    (Parser, "[4.1] Entity references must end with ';'."
-                     & ASCII.LF & "Did you want to use &amp; ?", Id);
+                  Fatal_Error (Parser, Error_Entityref_Unterminated, Id);
                end if;
 
                Next_Char (Input, Parser);
                if Parser.Last_Read = Number_Sign
-                 and then Parser.State.Expand_Character_Ref
+                 and then (Parser.State.Expand_Character_Ref
+                           or Parser.State.Report_Character_Ref)
                then
                   Handle_Character_Ref;
                   if Input_Id (Parser) /= Id.Input_Id then
-                     Fatal_Error
-                       (Parser, "[4.3.2] Entity must be self-contained",
-                        Id);
+                     Fatal_Error (Parser, Error_Entity_Self_Contained, Id);
                   end if;
 
                elsif Parser.Last_Read /= Number_Sign
@@ -1813,7 +2018,7 @@ package body Sax.Readers is
                   end loop;
 
                   if Parser.Last_Read /= Semicolon then
-                     Fatal_Error (Parser, "[WF] Unterminated entity");
+                     Fatal_Error (Parser, Error_Entityref_Unterminated);
                   end if;
                   Is_Entity_Ref := Param_Entity;
                end if;
@@ -1859,9 +2064,7 @@ package body Sax.Readers is
                      if Parser.Last_Read_Is_Valid
                        and then not Is_White_Space (Parser.Last_Read)
                      then
-                        Fatal_Error
-                          (Parser, "[2.8] Unexpected character between ']'"
-                           & " and '>' in the DTD", Id);
+                        Fatal_Error (Parser, Error_Unexpected_Chars2, Id);
                      end if;
                   end loop;
                   Next_Char (Input, Parser);
@@ -1898,9 +2101,7 @@ package body Sax.Readers is
                            else
                               Id.Column := Id.Column + Num_Bracket - 2;
                               Fatal_Error
-                                (Parser,
-                                 "[2.4] Text may not contain the litteral"
-                                 & " ']]>'", Id);
+                                (Parser, Error_Unexpected_Chars3, Id);
                            end if;
                         else
                            exit;
@@ -1993,8 +2194,7 @@ package body Sax.Readers is
                         Put_In_Buffer (Parser, Parser.Last_Read);
                         Next_Char (Input, Parser);
                      else
-                        Fatal_Error
-                          (Parser, "[WF] Unexpected type in ATTLIST");
+                        Fatal_Error (Parser, Error_Attlist_Type);
                      end if;
 
                   elsif Parser.Last_Read = Latin_Capital_Letter_I
@@ -2024,8 +2224,7 @@ package body Sax.Readers is
                      elsif Looking_At (Otation_Sequence) then
                         Id.Typ := Notation;
                      else
-                        Fatal_Error
-                          (Parser, "[WF] Invalid type for attribute");
+                        Fatal_Error (Parser, Error_Attlist_Type);
                      end if;
 
                   elsif Parser.Last_Read = Number_Sign then
@@ -2038,7 +2237,7 @@ package body Sax.Readers is
                      elsif Looking_At (Fixed_Sequence) then
                         Id.Typ := Fixed;
                      else
-                        Fatal_Error (Parser, "[WF] Invalid keyword");
+                        Fatal_Error (Parser, Error_Attlist_DefaultDecl);
                      end if;
                   end if;
                end if;
@@ -2059,7 +2258,11 @@ package body Sax.Readers is
          end if;
 
          if Id.Typ = Name and then not Coalesce_Space then
-            while Is_Valid_Name_Char (Parser.Last_Read) loop
+            while Is_Valid_NCname_Char (Parser.Last_Read)
+              or else
+                (not Parser.Feature_Namespace
+                 and then Parser.Last_Read = Unicode.Names.Basic_Latin.Colon)
+            loop
                Put_In_Buffer (Parser, Parser.Last_Read);
                Next_Char (Input, Parser);
             end loop;
@@ -2196,20 +2399,41 @@ package body Sax.Readers is
 
             elsif V = null then
                Skipped_Entity (Parser, N);
-               Error (Parser, "[4.1] Undefined entity '" & N & ''', Id);
+               if N = "&" or else N = "%" then
+                  Fatal_Error (Parser, Error_Entity_Name & " '" & N & "'", Id);
+
+               elsif N (N'First) = '%' then
+                  Error (Parser, Error_Entity_Undefined & " '" & N & "'", Id);
+
+               elsif not Parser.In_External_Entity then
+                  --  WF Entity Declared
+                  Fatal_Error
+                    (Parser, Error_Entity_Undefined & " '" & N & ''', Id);
+
+               else --  if Parser.Feature_Validation then
+                  --  VC Entity Declared
+                  Error
+                    (Parser, Error_Entity_Undefined & " '" & N & ''', Id);
+               end if;
+
                Id.Typ := Text;
                Id.Last := Id.First - 1;
                Next_Char (Input, Parser);
 
             else
+               if Parser.Standalone_Document
+                 and then V.External_Declaration
+               then
+                  --  4.1 WF Entity Declared
+                  Fatal_Error
+                    (Parser, Error_Entity_Not_Standalone, Id);
+               end if;
+
                if Is_Entity_Ref = Entity
                  and then Parser.Current_Node = null
                  and then not Parser.State.In_DTD
                then
-                  Fatal_Error
-                    (Parser,
-                     "[2.1] Entity references can not appear at top-level",
-                     Id);
+                  Fatal_Error (Parser, Error_Entity_Toplevel, Id);
 
                --  Else if we are in the internal subset of the DTD, and in
                --  a context other than a declaration
@@ -2217,9 +2441,7 @@ package body Sax.Readers is
                  and then not Parser.In_External_Entity
                  and then Parser.State.Name /= DTD_State.Name
                then
-                  Fatal_Error
-                    (Parser, "[WF PE in internal subset] Parameter entities"
-                     & " cannot occur in attribute values", Id);
+                  Fatal_Error (Parser, Error_ParamEntity_In_Attribute, Id);
                end if;
 
                Close_Inputs (Parser);
@@ -2230,8 +2452,7 @@ package body Sax.Readers is
                end if;
 
                if V.Already_Read then
-                  Fatal_Error
-                    (Parser, "(4.1) Entity can not reference itself", Id);
+                  Fatal_Error (Parser, Error_Entity_Self_Ref, Id);
                end if;
 
                V.Already_Read := True;
@@ -2256,9 +2477,7 @@ package body Sax.Readers is
                   if Parser.State.Name = Attlist_Str_Def_State.Name
                     or else Parser.State.Name = Attr_Value_State.Name
                   then
-                     Fatal_Error
-                       (Parser, "[3.1] Attribute values can not reference"
-                        & " external entities", Id);
+                     Fatal_Error (Parser, Error_Attribute_External_Entity, Id);
                   end if;
 
                   declare
@@ -2276,17 +2495,21 @@ package body Sax.Readers is
                      if Parser.Inputs.Input = null then
                         Parser.Inputs.Input := new File_Input;
                         Open (URI, File_Input (Parser.Inputs.Input.all));
-                        Set_Public_Id
-                          (Parser.Inputs.Input.all, V.Value.all);
+                        Set_Public_Id (Parser.Inputs.Input.all, V.Value.all);
+                        Set_System_Id (Parser.Inputs.Input.all, URI);
                      end if;
+
+                     Free (Parser.Inputs.Name);
+                     Parser.Inputs.Name := new Byte_Sequence'
+                       (Get_System_Id (Parser.Inputs.Input.all));
 
                      Set_System_Id (Parser.Locator.all, URI);
                      Set_Public_Id (Parser.Locator.all, V.Value.all);
 
                   exception
                      when Name_Error =>
-                        Error (Parser,
-                               "External entity not found: " & URI, Id);
+                        Error
+                          (Parser, Error_External_Entity_Not_Found & URI, Id);
                         Unchecked_Free (Parser.Inputs.Input);
                   end;
 
@@ -2345,7 +2568,7 @@ package body Sax.Readers is
    begin
       Next_Token (Input, Parser, Id);
       if Must_Have and then Id.Typ /= Space then
-         Fatal_Error (Parser, "Expecting a space", Id);
+         Fatal_Error (Parser, Error_Expecting_Space, Id);
       end if;
       while Id.Typ = Space loop
          Reset_Buffer (Parser, Id);
@@ -2426,7 +2649,7 @@ package body Sax.Readers is
          M : Element_Model_Ptr;
       begin
          if Val = null then
-            Fatal_Error (Parser, "Unknown entity " & Name);
+            Fatal_Error (Parser, Error_Entity_Undefined & ' ' & Name);
 
          elsif Val.Value.all = "" then
             return;
@@ -2469,6 +2692,7 @@ package body Sax.Readers is
          Test_Multiplier : Boolean;
          Can_Be_Mixed : Boolean;
          Num_Parenthesis : Integer := 0;
+         Already_Displayed_Self_Contained_Error : Boolean := False;
 
       begin
          Start_Token.Line := Get_Line_Number (Parser.Locator.all);
@@ -2490,9 +2714,7 @@ package body Sax.Readers is
                   end loop;
 
                elsif Num_Parenthesis /= 0 then
-                  Fatal_Error
-                    (Parser, "[3.2.1] Replacement text for entities must"
-                     & " be properly nested", Start_Token);
+                  Fatal_Error (Parser, Error_Entity_Nested, Start_Token);
 
                elsif Parser.Buffer_Length >= Start_Sub then
                   Operand_Stack (Operand_Index) :=
@@ -2506,12 +2728,13 @@ package body Sax.Readers is
                exit;
             end if;
 
-            if not Parser.Last_Read_Is_Valid
-              or else Input_Id (Parser) /= Start_Id
+            if Parser.Feature_Validation
+              and then (not Parser.Last_Read_Is_Valid
+                        or else Input_Id (Parser) /= Start_Id)
+              and then not Already_Displayed_Self_Contained_Error
             then
-               Fatal_Error
-                 (Parser, "[4.5] Entity values must be self-contained",
-                  Start_Token);
+               Already_Displayed_Self_Contained_Error := True;
+               Error (Parser, Error_Entity_Self_Contained, Start_Token);
             end if;
 
             Test_Multiplier := False;
@@ -2539,9 +2762,7 @@ package body Sax.Readers is
                   if Current_Operand >= Operand_Stack'First
                     and then Is_Mixed (Operand_Stack (Current_Operand))
                   then
-                     Fatal_Error
-                       (Parser, "[3.2.1] Mixed contents can not be used in"
-                        & " a list or a sequence");
+                     Fatal_Error (Parser, Error_Mixed_Contents);
                   end if;
 
                   while Current_Item >= Operator_Stack'First
@@ -2552,14 +2773,19 @@ package body Sax.Readers is
                        and then Operator_Stack (Current_Item) /= Vertical_Line
                      then
                         Fatal_Error
-                          (Parser, "Invalid content model", Start_Token);
+                          (Parser, Error_Invalid_Content_Model, Start_Token);
+                     end if;
+
+                     if Current_Operand = 0 then
+                        Fatal_Error
+                          (Parser, Error_Missing_Operand, Start_Token);
                      end if;
 
                      Current_Operand := Current_Operand - 1;
 
                      if Current_Operand < Operand_Stack'First then
                         Fatal_Error
-                          (Parser, "Invalid content model", Start_Token);
+                          (Parser, Error_Invalid_Content_Model, Start_Token);
                      end if;
 
                      if Operand_Stack (Current_Operand).Content
@@ -2570,9 +2796,7 @@ package body Sax.Readers is
                      end if;
 
                      if Is_Mixed (Operand_Stack (Current_Operand)) then
-                        Fatal_Error
-                          (Parser, "[3.2.1] Mixed contents can not be used in"
-                           & " a list or a sequence");
+                        Fatal_Error (Parser, Error_Mixed_Contents);
                      end if;
 
                      Num_Items := Num_Items + 1;
@@ -2581,13 +2805,12 @@ package body Sax.Readers is
 
                   if Current_Item < Operator_Stack'First then
                      Fatal_Error
-                       (Parser, "Invalid content model", Start_Token);
+                       (Parser, Error_Invalid_Content_Model, Start_Token);
                   end if;
 
                   if Current_Operand < Operand_Stack'First then
                      Fatal_Error
-                       (Parser, "Invalid content model: "
-                        & "List of choices cannot be empty", Start_Token);
+                       (Parser, Error_Content_Model_Empty_List, Start_Token);
                   end if;
 
                   if Operator_Stack (Operator_Index - 1) = Comma then
@@ -2598,8 +2821,7 @@ package body Sax.Readers is
                        = Character_Data
                      then
                         Fatal_Error
-                          (Parser, "[3.2.2] Nested groups and occurence"
-                           & " operators not allowed in mixed content");
+                          (Parser, Error_Content_Model_Nested_Groups);
                      end if;
 
                      M := new Element_Model (Any_Of);
@@ -2615,12 +2837,25 @@ package body Sax.Readers is
                   Test_Multiplier := True;
                   Next_Char (Input, Parser);
 
+                  if not End_Of_Stream (Parser)
+                    and then Current_Operand >= Operand_Stack'First
+                    and then Is_Mixed (Operand_Stack (Current_Operand))
+                    and then Operand_Stack (Current_Operand).List'Length >= 2
+                    and then Parser.Last_Read /= Star
+                  then
+                     Fatal_Error
+                       (Parser, Error_Content_Model_Closing_Paren);
+                  end if;
+
                when Comma | Vertical_Line =>
                   if Attlist and then Parser.Last_Read = Comma then
-                     Fatal_Error
-                       (Parser,
-                        "[3.3.1] Invalid character ','"
-                        & " in ATTLIST enumeration");
+                     Fatal_Error (Parser, Error_Attlist_Invalid_Enum);
+                  end if;
+
+                  if Parser.Last_Read = Comma
+                    and then Operand_Index - 1 < Operand_Stack'First
+                  then
+                     Fatal_Error (Parser, Error_Content_Model_Invalid_Seq);
                   end if;
 
                   if Parser.Last_Read = Comma
@@ -2629,10 +2864,7 @@ package body Sax.Readers is
                     and then Operand_Stack (Operand_Index - 1).Content
                     = Character_Data
                   then
-                     Fatal_Error
-                       (Parser,
-                        "[3.2.2] #PCDATA can only be used with"
-                        & " '|' connectors");
+                     Fatal_Error (Parser, Error_Content_Model_Pcdata);
                   end if;
 
                   if Operator_Index = Operator_Stack'First
@@ -2642,8 +2874,7 @@ package body Sax.Readers is
                      Operator_Stack (Operator_Index - 1) /=
                        Opening_Parenthesis)
                   then
-                     Fatal_Error
-                       (Parser, "Can't mix ',' and '|' in content model");
+                     Fatal_Error (Parser, Error_Content_Model_Mixing);
                   end if;
                   Operator_Stack (Operator_Index) := Parser.Last_Read;
                   Operator_Index := Operator_Index + 1;
@@ -2652,13 +2883,13 @@ package body Sax.Readers is
 
                when Star | Question_Mark | Plus_Sign =>
                   Fatal_Error
-                    (Parser, "[3.2.1] Invalid location '+', '?' or '*' "
-                     & "operator", Start_Token);
+                    (Parser, Error_Content_Model_Invalid_Multiplier,
+                     Start_Token);
 
                when Number_Sign =>
                   if Expect_Operator then
                      Fatal_Error
-                       (Parser, "Invalid content model, cannot start with #",
+                       (Parser, Error_Content_Model_Invalid_Start,
                         Start_Token);
                   end if;
                   Expect_Operator := True;
@@ -2695,15 +2926,13 @@ package body Sax.Readers is
 
                   if not Found then
                      Fatal_Error
-                       (Parser, "[WF] Invalid sequence in content model",
-                        Start_Token);
+                       (Parser, Error_Content_Model_Invalid_Seq, Start_Token);
                   end if;
 
                   if Operator_Stack (Operator_Index - 1)
                     /= Opening_Parenthesis
                   then
-                     Fatal_Error
-                       (Parser, "[3.2.2] #PCDATA must be first in list");
+                     Fatal_Error (Parser, Error_Content_Model_Pcdata_First);
                   end if;
 
                   Operand_Stack (Operand_Index) :=
@@ -2716,9 +2945,7 @@ package body Sax.Readers is
                   if not Parser.In_External_Entity
                     and then Parser.State.Name /= DTD_State.Name
                   then
-                     Fatal_Error
-                       (Parser, "[WF PE in internal subset] Parameter entities"
-                        & " cannot occur in attribute values");
+                     Fatal_Error (Parser, Error_ParamEntity_In_Attribute);
                   end if;
 
                   Start_Sub := Parser.Buffer_Length + 1;
@@ -2736,35 +2963,41 @@ package body Sax.Readers is
                   Next_Char (Input, Parser);
 
                when others =>
-                  if Expect_Operator then
-                     Fatal_Error
-                       (Parser, "Expecting operator in content model");
-                  end if;
-                  Expect_Operator := True;
+                  if Parser.Last_Read_Is_Valid then
+                     if Expect_Operator then
+                        Fatal_Error
+                          (Parser, Error_Content_Model_Expect_Operator);
+                     end if;
+                     Expect_Operator := True;
 
-                  --  ??? Should test Is_Nmtoken
-                  Start_Sub := Parser.Buffer_Length + 1;
+                     --  ??? Should test Is_Nmtoken
+                     Start_Sub := Parser.Buffer_Length + 1;
 
-                  while Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
-                    or else Is_Valid_Name_Char (Parser.Last_Read)
-                  loop
-                     Put_In_Buffer (Parser, Parser.Last_Read);
+                     while Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
+                       or else Is_Valid_Name_Char (Parser.Last_Read)
+                     loop
+                        Put_In_Buffer (Parser, Parser.Last_Read);
+                        Next_Char (Input, Parser);
+                     end loop;
+
+                     if Start_Sub > Parser.Buffer_Length then
+                        Error (Parser, Error_Content_Model_Invalid_Name
+                               & Debug_Encode (Parser.Last_Read),
+                               Start_Token);
+                     end if;
+
+                     Operand_Stack (Operand_Index) :=
+                       new Element_Model (Element_Ref);
+                     Operand_Stack (Operand_Index).Name := new Byte_Sequence'
+                       (Parser.Buffer (Start_Sub .. Parser.Buffer_Length));
+                     Operand_Index := Operand_Index + 1;
+                     Parser.Buffer_Length := Start_Sub - 1;
+                     Test_Multiplier := True;
+
+                  else
+                     --  Could happen with improper entity nesting
                      Next_Char (Input, Parser);
-                  end loop;
-
-                  if Start_Sub > Parser.Buffer_Length then
-                     Fatal_Error (Parser, "Invalid name in content model: "
-                                  & Debug_Encode (Parser.Last_Read),
-                                  Start_Token);
                   end if;
-
-                  Operand_Stack (Operand_Index) :=
-                    new Element_Model (Element_Ref);
-                  Operand_Stack (Operand_Index).Name := new Byte_Sequence'
-                    (Parser.Buffer (Start_Sub .. Parser.Buffer_Length));
-                  Operand_Index := Operand_Index + 1;
-                  Parser.Buffer_Length := Start_Sub - 1;
-                  Test_Multiplier := True;
 
             end case;
 
@@ -2773,7 +3006,7 @@ package body Sax.Readers is
                   when Star =>
                      if Operand_Index = Operand_Stack'First then
                         Fatal_Error
-                          (Parser, "'*' must follow a name or list");
+                          (Parser, Error_Content_Model_Invalid_Multiplier);
                      end if;
                      Operand_Stack (Operand_Index - 1) := new Element_Model'
                        (Repeat, 0, Positive'Last,
@@ -2784,11 +3017,11 @@ package body Sax.Readers is
                   when Plus_Sign =>
                      if Operand_Index = Operand_Stack'First then
                         Fatal_Error
-                          (Parser, "'+' must follow a name or list");
+                          (Parser, Error_Content_Model_Invalid_Multiplier);
                      end if;
                      if Is_Mixed (Operand_Stack (Operand_Index - 1)) then
                         Fatal_Error
-                          (Parser, "[3.2.2] Occurence on #PCDATA must be '*'");
+                          (Parser, Error_Content_Model_Pcdata_Occurrence);
                      end if;
 
                      Operand_Stack (Operand_Index - 1) := new Element_Model'
@@ -2800,11 +3033,11 @@ package body Sax.Readers is
                   when Question_Mark =>
                      if Operand_Index = Operand_Stack'First then
                         Fatal_Error
-                          (Parser, "'?' must follow a name or list");
+                          (Parser, Error_Content_Model_Invalid_Multiplier);
                      end if;
                      if Is_Mixed (Operand_Stack (Operand_Index - 1)) then
                         Fatal_Error
-                          (Parser, "[3.2.2] Occurence on #PCDATA must be '*'");
+                          (Parser, Error_Content_Model_Pcdata_Occurrence);
                      end if;
                      Operand_Stack (Operand_Index - 1) := new Element_Model'
                        (Repeat, 0, 1, Operand_Stack (Operand_Index - 1));
@@ -2827,14 +3060,14 @@ package body Sax.Readers is
             if Operator_Index /= Operator_Stack'First
               or else Operand_Index /= Operand_Stack'First + 1
             then
-               Fatal_Error (Parser, "Invalid content model", Start_Token);
+               Error
+                 (Parser, Error_Content_Model_Invalid, Start_Token);
             end if;
 
             Result := Operand_Stack (Operand_Stack'First);
 
          elsif Num_Parenthesis /= 0 then
-            Fatal_Error (Parser, "[3.2.1] Replacement text for entities must"
-                         & " be properly nested", Start_Token);
+            Error (Parser, Error_Entity_Nested, Start_Token);
          end if;
 
       exception
@@ -2857,6 +3090,137 @@ package body Sax.Readers is
       Parse (Input, Result, Open_Was_Read, False);
    end Parse_Element_Model;
 
+   --------------------------------
+   -- Check_Valid_Name_Or_NCname --
+   --------------------------------
+
+   procedure Check_Valid_Name_Or_NCname
+     (Parser : in out Reader'Class;
+      Name   : Token)
+   is
+   begin
+      if Parser.Feature_Namespace then
+         if not Is_Valid_NCname (Parser.Buffer (Name.First .. Name.Last)) then
+            Fatal_Error (Parser, Error_Is_Ncname, Name);
+         end if;
+      else
+         if not Is_Valid_Name (Parser.Buffer (Name.First .. Name.Last)) then
+            Fatal_Error (Parser, Error_Is_Name, Name);
+         end if;
+      end if;
+   end Check_Valid_Name_Or_NCname;
+
+   ---------------------------
+   -- Check_Attribute_Value --
+   ---------------------------
+
+   procedure Check_Attribute_Value
+     (Parser     : in out Reader'Class;
+      Qname      : Byte_Sequence;
+      Typ        : Attribute_Type;
+      Value      : Byte_Sequence;
+      Error_Loc  : Token)
+   is
+      Ent : Entity_Entry_Access;
+   begin
+      case Typ is
+         when Id | Idref =>
+            if Parser.Feature_Namespace then
+               if not Is_Valid_NCname (Value) then
+                  --  Always a non-fatal error, since we are dealing with
+                  --  namespaces
+                  Error (Parser, Error_Attribute_Is_Ncname & Qname, Error_Loc);
+               end if;
+            else
+               if not Is_Valid_Name (Value) then
+                  Error (Parser, Error_Attribute_Is_Name & Qname, Error_Loc);
+               end if;
+            end if;
+
+         when Idrefs =>
+            if Parser.Feature_Namespace then
+               if not Is_Valid_NCnames (Value) then
+                  Error (Parser, Error_Attribute_Is_Ncname & Qname, Error_Loc);
+               end if;
+            else
+               if not Is_Valid_Names (Value) then
+                  Error (Parser, Error_Attribute_Is_Name & Qname, Error_Loc);
+               end if;
+            end if;
+
+         when Nmtoken =>
+            if not Is_Valid_Nmtoken (Value) then
+               Error (Parser, Error_Attribute_Is_Nmtoken & Qname, Error_Loc);
+            end if;
+
+         when Nmtokens =>
+            if not Is_Valid_Nmtokens (Value) then
+               Error (Parser, Error_Attribute_Is_Nmtoken & Qname, Error_Loc);
+            end if;
+
+         when Entity =>
+            if not Is_Valid_Name (Value) then
+               Error (Parser, Error_Attribute_Is_Name & Qname, Error_Loc);
+            end if;
+
+            Ent := Get (Parser.Entities, Value);
+            if Ent = null or else not Ent.Unparsed then
+               Error (Parser, Error_Attribute_Ref_Unparsed_Entity & Qname,
+                      Error_Loc);
+            end if;
+
+         when Entities =>
+            declare
+               Index : Integer := Value'First;
+               Last, Previous  : Integer;
+               C     : Unicode_Char;
+            begin
+               Last := Index;
+               while Last <= Value'Last loop
+                  Previous := Last;
+                  Encoding.Read (Value, Last, C);
+                  if C = Unicode.Names.Basic_Latin.Space
+                    or else Last > Value'Last
+                  then
+                     if not Is_Valid_Name (Value (Index .. Previous)) then
+                        Error (Parser, Error_Attribute_Is_Name & Qname,
+                               Error_Loc);
+                     end if;
+
+                     Ent := Get (Parser.Entities, Value (Index .. Previous));
+                     if Ent = null or else not Ent.Unparsed then
+                        Error (Parser, Error_Attribute_Ref_Unparsed_Entity
+                               & Qname, Error_Loc);
+                     end if;
+                     Index := Last;
+                  end if;
+               end loop;
+            end;
+
+         when others =>
+            null;
+      end case;
+   end Check_Attribute_Value;
+
+   ----------------------------
+   -- Check_Attributes_Value --
+   ----------------------------
+
+   procedure Check_Attribute_Value
+     (Parser     : in out Reader'Class;
+      Attr      : Sax.Attributes.Attributes;
+      Error_Loc : Token) is
+   begin
+      for J in 0 .. Get_Length (Attr) - 1 loop
+         Check_Attribute_Value
+           (Parser,
+            Qname     => Get_Qname (Attr, J),
+            Typ       => Get_Type (Attr, J),
+            Value     => Get_Value (Attr, J),
+            Error_Loc => Error_Loc);
+      end loop;
+   end Check_Attribute_Value;
+
    ---------------------
    -- Syntactic_Parse --
    ---------------------
@@ -2869,6 +3233,48 @@ package body Sax.Readers is
 
       procedure Parse_Start_Tag;
       --  Process an element start and its attributes   <!name name="value"..>
+
+      procedure Parse_Attributes
+        (Attributes               : out Sax.Attributes.Attributes;
+         Elem_NS_Id, Elem_Name_Id : Token;
+         Id                       : in out Token);
+      --  Process the list of attributes in a start tag.
+      --  Id should have been initialized to the first token in the attributes
+      --  list, and will be left on the first token after it.
+      --  Return the list of attributes for this element
+
+      procedure Check_And_Define_Namespace (Prefix, URI_S, URI_E : Token);
+      --  An attribute defining a namespace was found. Check that the values
+      --  are valid, and register the new namespace. If Prefix is Null_Token,
+      --  the default namespace is defined
+
+      function Get_String (Str : Token) return String;
+      function Get_String (First, Last : Token) return String;
+      pragma Inline (Get_String);
+      --  Return the string pointed to by the token
+
+      procedure Update_Attributes_From_DTD
+        (DTD_Attr   : Attributes_Ptr;
+         Attributes : in out Sax.Attributes.Attributes);
+      --  Update the properties (in particular the type) of all attributes in
+      --  Attributes from the values given in the DTD. This also checks the
+      --  requirement for REQUIRED and FIXED attributes.
+
+      procedure Check_Attribute_Defined
+        (Prefix, Name : Token; DTD_Attr : Attributes_Ptr);
+      --  Check whether the attribute Prefix:Name was defined as valid in the
+      --  DTD for the current element
+
+      procedure Add_Default_Attributes
+        (DTD_Attr   : Attributes_Ptr;
+         Attributes : in out Sax.Attributes.Attributes);
+      --  Add all DEFAULT attributes declared in the DTD into Attributes, if
+      --  they weren't overriden by the user
+
+      procedure Resolve_Attributes_Namespaces
+        (Attributes : in out Sax.Attributes.Attributes);
+      --  Resolve the real namespaces of the attributes, after the processing
+      --  of all xmlns: attributes in the same element
 
       procedure Parse_End_Tag;
       --  Process an element end   </name>
@@ -2991,15 +3397,24 @@ package body Sax.Readers is
                   Had_Space := False;
                when Start_Of_Tag =>
                   if Possible_End = Null_Token then
-                     Fatal_Error
-                       (Parser, "[2.3] '<' not authorized in attribute values",
-                        Id);
+                     Fatal_Error (Parser, Error_Attribute_Less_Than, Id);
                   else
                      Fatal_Error
-                       (Parser, "[2.3] '<' not authorized in attribute values."
-                        & " Possible end of attribute value at "
+                       (Parser, Error_Attribute_Less_Than_Suggests
                         & Location (Parser, Possible_End), Id);
                   end if;
+               when Char_Ref =>
+                  --  3.3.3 item 3: character references are kept as is
+                  if Get_String (Id) = Space_Sequence then
+                     if Collapse_Spaces and Had_Space then
+                        Reset_Buffer (Parser, Id);
+                     end if;
+                     Had_Space := True;
+                     Last_Space := Parser.Buffer_Length;
+                  else
+                     Had_Space := False;
+                  end if;
+
                when others =>
                   if Normalize or Collapse_Spaces then
                      declare
@@ -3011,13 +3426,15 @@ package body Sax.Readers is
                         while Index <= Str'Last loop
                            Encoding.Read (Str, Index, C);
 
+                           --  ??? If we have a character reference, we must
+                           --  replace the character it represents, and not do
+                           --  entity replacement. How to do that, we have lost
+                           --  that information
+
                            --  When parsing an attribute value, we should still
                            --  process white spaces, therefore the test for
                            --  Ignore_Special
-                           if (not Id.From_Entity
-                               or else State.Ignore_Special)
-                             and then Is_White_Space (C)
-                           then
+                           if Is_White_Space (C) then
                               if not Collapse_Spaces or not Had_Space then
                                  Put_In_Buffer
                                    (Parser, Unicode.Names.Basic_Latin.Space);
@@ -3042,12 +3459,10 @@ package body Sax.Readers is
 
          if Id.Typ = End_Of_Input then
             if Possible_End = Null_Token then
-               Fatal_Error
-                 (Parser, "[2.3] Unterminated string");
+               Fatal_Error (Parser, Error_Unterminated_String);
             else
-               Fatal_Error
-                 (Parser, "[2.3] Unterminated string, possible end at "
-                  & Location (Parser, Possible_End), T);
+               Fatal_Error (Parser, Error_Unterminated_String_Suggests
+                            & Location (Parser, Possible_End), T);
             end if;
          end if;
          Set_State (Parser, Saved_State);
@@ -3077,7 +3492,7 @@ package body Sax.Readers is
             if Id.Typ /= Double_String_Delimiter
               and then Id.Typ /= Single_String_Delimiter
             then
-               Fatal_Error (Parser, "[WF] Expecting string after PUBLIC");
+               Fatal_Error (Parser, Error_Public_String);
             else
                Get_String
                  (Id, Non_Interpreted_String_State, Public_Start, Public_End);
@@ -3088,7 +3503,7 @@ package body Sax.Readers is
 
                   if not Is_Pubid_Char (C) then
                      Fatal_Error
-                       (Parser, "Invalid PubID character '"
+                       (Parser, Error_Public_Invalid & "'"
                         & Debug_Encode (C) & "'", Public_Start);
                   end if;
                end loop;
@@ -3106,13 +3521,11 @@ package body Sax.Readers is
               and then Id.Typ /= Single_String_Delimiter
             then
                if not Allow_Publicid then
-                  Fatal_Error (Parser, "[WF] Expecting SystemID after PUBLIC");
+                  Fatal_Error (Parser, Error_Public_Sysid);
                end if;
             else
                if not Had_Space then
-                  Fatal_Error
-                    (Parser, "[4.2.2] Require whitespace between public and"
-                     & " system IDs", Id);
+                  Fatal_Error (Parser, Error_Public_Sysid_Space, Id);
                end if;
                Get_String
                  (Id, Non_Interpreted_String_State, System_Start, System_End);
@@ -3125,7 +3538,7 @@ package body Sax.Readers is
             if Id.Typ /= Double_String_Delimiter
               and then Id.Typ /= Single_String_Delimiter
             then
-               Fatal_Error (Parser, "[WF] Expecting string after SYSTEM");
+               Fatal_Error (Parser, Error_System_String);
             else
                Get_String
                  (Id, Non_Interpreted_String_State, System_Start, System_End);
@@ -3144,18 +3557,18 @@ package body Sax.Readers is
 
          if Id.Typ = Text then
             Fatal_Error
-              (Parser, "[3.1] '" & Parser.Buffer (Id.First .. Id.Last)
-               & "' is not a valid name", Id);
+              (Parser, Error_Invalid_Name & "'"
+               & Parser.Buffer (Id.First .. Id.Last) & "'", Id);
          --  An empty namespace ? This seems to be useful only for the XML
          --  conformance suite, so we only handle the case of a single ':'
          --  to mean both an empty prefix and empty local name.
          elsif Name_Id.Typ = Colon then
-            Name_Id.Typ := Text;
-            NS_Id := Name_Id;
-            Next_Token (Input, Parser, Id);
+               Name_Id.Typ := Text;
+               NS_Id := Name_Id;
+               Next_Token (Input, Parser, Id);
 
          elsif Id.Typ /= Name then
-            Fatal_Error (Parser, "Expecting a name", Id);
+            Fatal_Error (Parser, Error_Is_Name, Id);
 
          else
             Next_Token (Input, Parser, Id);
@@ -3163,7 +3576,7 @@ package body Sax.Readers is
                NS_Id := Name_Id;
                Next_Token (Input, Parser, Name_Id);
                if Name_Id.Typ /= Name then
-                  Fatal_Error (Parser, "[WF] Expecting name after namespace");
+                  Fatal_Error (Parser, Error_Is_Name);
                end if;
                Next_Token (Input, Parser, Id);
             else
@@ -3202,14 +3615,22 @@ package body Sax.Readers is
          end if;
 
          if Name_Id.Typ /= Name then
-            Fatal_Error (Parser, "[WF] Expecting entity name");
+            Fatal_Error (Parser, Error_Is_Name);
          end if;
+
+         Check_Valid_Name_Or_NCname (Parser, Name_Id);
 
          Next_Token_Skip_Spaces (Input, Parser, Id, Must_Have => True);
 
          if Id.Typ = Public or else Id.Typ = System then
             Get_External
               (Id, System_Start, System_End, Public_Start, Public_End);
+
+            if Contains_URI_Fragment
+              (Parser.Buffer (System_Start.First .. System_End.Last))
+            then
+               Error (Parser, Error_System_URI, Id);
+            end if;
 
             Had_Space := (Id.Typ = Space);
             if Had_Space then
@@ -3218,30 +3639,25 @@ package body Sax.Readers is
 
             if Id.Typ = Ndata then
                if not Had_Space then
-                  Fatal_Error
-                    (Parser,
-                     "[4.2.2] Expecting space before NDATA declaration", Id);
+                  Fatal_Error (Parser, Error_Ndata_Space, Id);
                end if;
 
                if Is_Parameter /= Null_Token then
-                  Fatal_Error
-                    (Parser, "[4.2] NDATA annotation not allowed for parameter"
-                     & " entities", Id);
+                  Fatal_Error (Parser, Error_Ndata_ParamEntity, Id);
                end if;
                Next_Token_Skip_Spaces (Input, Parser, Ndata_Id, True);
                if Ndata_Id.Typ /= Text and then Ndata_Id.Typ /= Name then
-                  Fatal_Error (Parser, "[WF] Expecting string after NDATA");
+                  Fatal_Error (Parser, Error_Ndata_String);
                else
                   if Parser.Feature_Validation
                     and then Get
                     (Parser.Notations,
-                     Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last)) /=
+                     Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last)) =
                     Null_Notation
                   then
-                     Fatal_Error
-                       (Parser, "[VC 4.2.2] Notation '"
-                        & Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last)
-                        & "' must be declared", Ndata_Id);
+                     Error (Parser, Error_Notation_Undeclared
+                            & Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last),
+                            Ndata_Id);
                   end if;
 
                   Next_Token_Skip_Spaces (Input, Parser, Id);
@@ -3254,11 +3670,11 @@ package body Sax.Readers is
             Get_String (Id, Entity_Str_Def_State, Def_Start, Def_End);
             Next_Token_Skip_Spaces (Input, Parser, Id);
          else
-            Fatal_Error (Parser, "[WF] Invalid definition for ENTITY");
+            Fatal_Error (Parser, Error_Entity_Definition);
          end if;
 
          if Id.Typ /= End_Of_Tag then
-            Fatal_Error (Parser, "[WF] Expecting end of ENTITY definition");
+            Fatal_Error (Parser, Error_Entity_Definition_Unterminated);
          end if;
 
          --  Only report the first definition
@@ -3277,12 +3693,18 @@ package body Sax.Readers is
                     Value => new Byte_Sequence'
                       (Parser.Buffer (Def_Start.First .. Def_End.Last)),
                     Public       => null,
+                    Unparsed     => False,
+                    External_Declaration => (Parser.Inputs /= null
+                       and then Parser.Inputs.External)
+                       or else Parser.In_External_Entity,
                     External     => False,
                  Already_Read => False));
             if Debug_Internal then
                Put_Line ("Internal_Entity_Decl: "
                          & Parser.Buffer (Name_Id.First .. Name_Id.Last) & "="
-                         & Parser.Buffer (Def_Start.First .. Def_End.Last));
+                         & Parser.Buffer (Def_Start.First .. Def_End.Last)
+                         & " length="
+                         & Integer'Image (Def_End.Last - Def_Start.First + 1));
             end if;
             Internal_Entity_Decl
               (Parser,
@@ -3291,6 +3713,19 @@ package body Sax.Readers is
                Value => Parser.Buffer (Def_Start.First .. Def_End.Last));
 
          elsif Ndata_Id /= Null_Token then
+            Set (Parser.Entities,
+                 new Entity_Entry'
+                   (Name => new Byte_Sequence'
+                      (Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
+                       & Parser.Buffer (Name_Id.First .. Name_Id.Last)),
+                    Value => null,
+                    Public       => null,
+                    Unparsed     => True,
+                    External_Declaration => (Parser.Inputs /= null
+                       and then Parser.Inputs.External)
+                       or else Parser.In_External_Entity,
+                    External     => False,
+                 Already_Read => True));
             Unparsed_Entity_Decl
               (Parser,
                Name => Parser.Buffer (Is_Parameter.First .. Is_Parameter.Last)
@@ -3311,6 +3746,10 @@ package body Sax.Readers is
                     (Parser.Buffer (System_Start.First .. System_End.Last)),
                   Public       => new Byte_Sequence'
                     (Parser.Buffer (Public_Start.First .. Public_End.Last)),
+                  Unparsed     => False,
+                  External_Declaration => (Parser.Inputs /= null
+                     and then Parser.Inputs.External)
+                     or else Parser.In_External_Entity,
                   External     => True,
                   Already_Read => False));
 
@@ -3344,7 +3783,7 @@ package body Sax.Readers is
          Next_Token_Skip_Spaces (Input, Parser, Name_Id);
 
          if Name_Id.Typ /= Name then
-            Fatal_Error (Parser, "[WF] Expecting element name");
+            Fatal_Error (Parser, Error_Is_Name);
          end if;
 
          Next_Token_Skip_Spaces (Input, Parser, Id, True);
@@ -3355,13 +3794,13 @@ package body Sax.Readers is
                Parse_Element_Model
                  (Input, Parser, M, Attlist => False, Open_Was_Read => True);
             when others =>
-               Fatal_Error (Parser, "[WF] Invalid content model: expecting"
+               Fatal_Error (Parser, "Invalid content model: expecting"
                             & " '(', 'EMPTY' or 'ANY'", Id);
          end case;
          Next_Token_Skip_Spaces (Input, Parser, Id);
 
          if Id.Typ /= End_Of_Tag then
-            Fatal_Error (Parser, "[WF] Expecting end of ELEMENT definition");
+            Fatal_Error (Parser, "Expecting end of ELEMENT definition");
          end if;
 
          Element_Decl
@@ -3384,8 +3823,10 @@ package body Sax.Readers is
          Set_State (Parser, Element_Def_State);
          Next_Token_Skip_Spaces (Input, Parser, Name_Id);
 
+         Check_Valid_Name_Or_NCname (Parser, Name_Id);
+
          if Name_Id.Typ /= Name then
-            Fatal_Error (Parser, "[WF] Expecting notation name");
+            Fatal_Error (Parser, Error_Is_Name);
          end if;
 
          Next_Token_Skip_Spaces (Input, Parser, Id);
@@ -3397,11 +3838,17 @@ package body Sax.Readers is
                Next_Token (Input, Parser, Id);
             end if;
          else
-            Fatal_Error (Parser, "[WF] Invalid notation declaration");
+            Fatal_Error (Parser, Error_Invalid_Notation_Decl);
          end if;
 
          if Id.Typ /= End_Of_Tag then
-            Fatal_Error (Parser, "[WF] Expecting end of NOTATION definition");
+            Fatal_Error (Parser, "Expecting end of NOTATION definition");
+         end if;
+
+         if Contains_URI_Fragment
+           (Parser.Buffer (System_Start.First .. System_End.Last))
+         then
+            Error (Parser, Error_System_URI);
          end if;
 
          Notation_Decl
@@ -3438,7 +3885,7 @@ package body Sax.Readers is
          Next_Token_Skip_Spaces (Input, Parser, Ename_Id);
 
          if Ename_Id.Typ /= Name then
-            Fatal_Error (Parser, "[WF] Expecting element name", Ename_Id);
+            Fatal_Error (Parser, Error_Is_Name, Ename_Id);
          end if;
 
          Attr := Get
@@ -3462,9 +3909,7 @@ package body Sax.Readers is
             Get_Name_NS (Id, NS_Id, Name_Id);
 
             if Id.Typ /= Space then
-               Fatal_Error
-                 (Parser, "[3.3] Expecting space between attribute name"
-                  & " and type", Id);
+               Fatal_Error (Parser, Error_Expecting_Space, Id);  --  3.3
             end if;
 
             Set_State (Parser, Attribute_Def_State);
@@ -3487,8 +3932,8 @@ package body Sax.Readers is
                   Next_Token (Input, Parser, Id);
                   if Id.Typ /= Space then
                      Fatal_Error
-                       (Parser,
-                        "[3.3.1] Space is required between NOTATION keyword"
+                       (Parser,  --  3.3.1
+                        "Space is required between NOTATION keyword"
                         & " and list of enumerated", Id);
                   end if;
                   Parse_Element_Model (Input, Parser, M, True, False);
@@ -3498,11 +3943,9 @@ package body Sax.Readers is
                         if Get (Parser.Notations, M.List (J).Name.all) /=
                           Null_Notation
                         then
-                           Fatal_Error
-                             (Parser,
-                              "[VC 3.3.1] Notation '"
-                              & M.List (J).Name.all & "' must be defined",
-                              Id);
+                           Error
+                             (Parser, Error_Notation_Undeclared
+                              & M.List (J).Name.all, Id);
                         end if;
                      end loop;
                   end if;
@@ -3512,7 +3955,7 @@ package body Sax.Readers is
                   Parse_Element_Model (Input, Parser, M, True, True);
 
                when others =>
-                  Fatal_Error (Parser, "[WF] Invalid type for attribute");
+                  Fatal_Error (Parser, Error_Attlist_Type);
             end case;
 
             Next_Token_Skip_Spaces (Input, Parser, Default_Id, True);
@@ -3535,10 +3978,35 @@ package body Sax.Readers is
                   Get_String
                     (Id, Attlist_Str_Def_State, Default_Start, Default_End,
                      Normalize => True, Collapse_Spaces => True);
+
+                  --  Errata 9 on XML 1.0 specs: the default value must be
+                  --  syntactically correct. Validity will only be checked if
+                  --  the attribute is used.
+                  if Parser.Feature_Validation then
+                     Check_Attribute_Value
+                       (Parser,
+                        Qname     => Qname_From_Name (Parser, NS_Id, Name_Id),
+                        Typ       => Att_Type,
+                        Value     => Parser.Buffer
+                          (Default_Start.First .. Default_End.Last),
+                        Error_Loc => Default_Start);
+                  end if;
                else
                   Fatal_Error
-                    (Parser, "[WF] Invalid default value for attribute");
+                    (Parser, "Invalid default value for attribute");
                end if;
+            end if;
+
+            if Parser.Feature_Validation
+              and then Att_Type = Sax.Attributes.Id
+              and then Default_Decl /= Sax.Attributes.Implied
+              and then Default_Decl /= Sax.Attributes.Required
+            then
+               Error
+                 (Parser,
+                  "Default value for an ID attribute must be"
+                  & " IMPLIED or REQUIRED",
+                  Default_Id);
             end if;
 
             --  Always report the attribute, even when we know the value
@@ -3590,7 +4058,7 @@ package body Sax.Readers is
          end loop;
 
          if Id.Typ /= End_Of_Tag then
-            Fatal_Error (Parser, "[WF] Expecting end of ATTLIST definition");
+            Fatal_Error (Parser, "Expecting end of ATTLIST definition");
          end if;
 
          Set_State (Parser, DTD_State);
@@ -3606,20 +4074,433 @@ package body Sax.Readers is
          null;
       end Check_Model;
 
+      ----------------
+      -- Get_String --
+      ----------------
+
+      function Get_String (Str : Token) return String is
+      begin
+         return Parser.Buffer (Str.First .. Str.Last);
+      end Get_String;
+
+      ----------------
+      -- Get_String --
+      ----------------
+
+      function Get_String (First, Last : Token) return String is
+      begin
+         return Parser.Buffer (First.First .. Last.Last);
+      end Get_String;
+
+      --------------------------------
+      -- Check_And_Define_Namespace --
+      --------------------------------
+
+      procedure Check_And_Define_Namespace
+        (Prefix, URI_S, URI_E : Token) is
+      begin
+         if Prefix = Null_Token then
+            if URI_S.First > URI_E.Last then
+               --  [2] Empty value is legal for the default namespace, and
+               --  provides unbinding
+               null;
+            end if;
+
+         else
+            if Get_String (Prefix) = Xmlns_Sequence then
+               Fatal_Error  --  NS 3
+                 (Parser, "Cannot redefine the xmlns prefix", Prefix);
+
+            elsif URI_S.First > URI_E.Last then
+               Fatal_Error
+                 (Parser,  --  NS 2.2
+                  "Cannot use an empty URI for namespaces", URI_S);
+
+            elsif Get_String (Prefix) = Xml_Sequence then
+               if Get_String (URI_S, URI_E) /= Namespaces_URI_Sequence then
+                  Fatal_Error  --  NS 3
+                    (Parser, "Cannot redefine the xml prefix", Prefix);
+               end if;
+
+            elsif Get_String (URI_S, URI_E) = Namespaces_URI_Sequence then
+               Fatal_Error
+                 (Parser,  --  NS 3
+                  "Cannot bind the namespace URI to a prefix other"
+                  & " than xml", Prefix);
+            end if;
+         end if;
+
+         if not Is_Valid_URI (Get_String (URI_S, URI_E)) then
+            Error (Parser, "Invalid URI for namespace", URI_S); --  NS 2
+         end if;
+
+         Add_Namespace (Parser, Parser.Current_Node, Prefix, URI_S, URI_E);
+      end Check_And_Define_Namespace;
+
+      -----------------------------
+      -- Check_Attribute_Defined --
+      -----------------------------
+
+      procedure Check_Attribute_Defined
+        (Prefix, Name : Token; DTD_Attr : Attributes_Ptr)
+      is
+         Index    : Integer;
+      begin
+         if DTD_Attr = null then
+            Error
+              (Parser, "[VC] No attribute allowed for element "
+               & Parser.Current_Node.Name.all, Name);
+         else
+            --  We must compare with Qnames, since we namespaces
+            --  haven't been resolved for default attributes
+            Index := Get_Index
+              (DTD_Attr.all, Qname_From_Name (Parser, Prefix, Name));
+            if Index = -1 then
+               Error
+                 (Parser, "[VC] Attribute not declared in DTD: "
+                  & Qname_From_Name (Parser, Prefix, Name));
+            end if;
+         end if;
+      end Check_Attribute_Defined;
+
+      --------------------------------
+      -- Update_Attributes_From_DTD --
+      --------------------------------
+
+      procedure Update_Attributes_From_DTD
+        (DTD_Attr   : Attributes_Ptr;
+         Attributes : in out Sax.Attributes.Attributes)
+      is
+         Found_At : Integer;
+      begin
+         --  Check that all #REQUIRED attributes are defined
+         --  and that #FIXED attributes have the defined value
+
+         for J in 0 .. Get_Length (DTD_Attr.all) - 1 loop
+            --  Update the type of attributes seen locally. No need to do
+            --  that if we have a CData attribute. FIXED attribute must
+            --  still be checked
+
+            if Get_Type (DTD_Attr.all, J) /= Sax.Attributes.Cdata
+              or else Get_Default_Declaration (DTD_Attr.all, J) = Fixed
+              or else Get_Default_Declaration (DTD_Attr.all, J) = Required
+            then
+               Found_At := Get_Index
+                 (Attributes, Qname => Get_Qname (DTD_Attr.all, J));
+
+               if Found_At = -1 then
+                  if Get_Default_Declaration (DTD_Attr.all, J) = Required then
+                     Error
+                       (Parser, "[VC 3.3.2] Required attribute '"
+                        & Get_Qname (DTD_Attr.all, J) & "' must be defined");
+                  end if;
+
+               else
+                  if Get_Default_Declaration (DTD_Attr.all, J) = Fixed then
+                     if Get_Value (Attributes, Found_At) /=
+                       Get_Value (DTD_Attr.all, J)
+                     then
+                        Error
+                          (Parser, "[VC 3.3.2] Fixed attribute '"
+                           & Get_Qname (DTD_Attr.all, J) & "' must have the"
+                           & " defined value");
+                     end if;
+                  end if;
+
+                  Set_Type (Attributes, Found_At, Get_Type (DTD_Attr.all, J));
+               end if;
+            end if;
+         end loop;
+      end Update_Attributes_From_DTD;
+
+      ----------------------------
+      -- Add_Default_Attributes --
+      ----------------------------
+
+      procedure Add_Default_Attributes
+        (DTD_Attr   : Attributes_Ptr;
+         Attributes : in out Sax.Attributes.Attributes) is
+      begin
+         --  Add all the default attributes to the element
+         --  We shouldn't add an attribute if it was overriden by the user
+
+         if DTD_Attr /= null then
+            for J in 0 .. Get_Length (DTD_Attr.all) - 1 loop
+               --  We must compare Qnames, since namespaces haven't been
+               --  resolved in the default attributes.
+               if (Get_Default_Declaration (DTD_Attr.all, J) = Default
+                   or else Get_Default_Declaration (DTD_Attr.all, J) = Fixed)
+                 and then Get_Index
+                   (Attributes, Qname => Get_Qname (DTD_Attr.all, J)) = -1
+               then
+                  declare
+                     Prefix : constant Byte_Sequence :=
+                       Prefix_From_Qname (Get_Qname (DTD_Attr.all, J));
+                     Is_Xmlns : constant Boolean := Prefix = Xmlns_Sequence;
+                  begin
+                     if Parser.Feature_Namespace_Prefixes
+                       or else not Is_Xmlns
+                     then
+                        Add_Attribute (Attributes,
+                                       Prefix,
+                                       Get_Local_Name (DTD_Attr.all, J),
+                                       Get_Qname (DTD_Attr.all, J),
+                                       Get_Type (DTD_Attr.all, J),
+                                       Get_Content (DTD_Attr.all, J),
+                                       Get_Value (DTD_Attr.all, J));
+                     end if;
+
+                     --  Is this a namespace declaration ?
+                     if Is_Xmlns then
+                        --  Following warning is because for parser that don't
+                        --  read external DTDs, the behavior would be different
+                        --  for the same document.
+                        Warning
+                          (Parser,
+                           "namespace-declaring attribute inserted via "
+                           & "DTD defaulting mechanisms are not good style");
+                        Add_Namespace
+                          (Parser, Parser.Current_Node,
+                           Prefix => Get_Local_Name (DTD_Attr.all, J),
+                           URI    => Get_Value (DTD_Attr.all, J));
+                     end if;
+                  end;
+               end if;
+            end loop;
+         end if;
+      end Add_Default_Attributes;
+
+      -----------------------------------
+      -- Resolve_Attributes_Namespaces --
+      -----------------------------------
+
+      procedure Resolve_Attributes_Namespaces
+        (Attributes : in out Sax.Attributes.Attributes)
+      is
+         NS : XML_NS;
+         Found_At : Integer;
+      begin
+         for J in 0 .. Get_Length (Attributes) - 1 loop
+            Find_NS (Parser, Parser.Current_Node,
+                     Get_URI (Attributes, J), NS,
+                     Include_Default_NS => False);
+
+            if NS.URI.all /= "" then
+               Found_At := Get_Index
+                 (Attributes,
+                  URI => NS.URI.all,
+                  Local_Name => Get_Local_Name (Attributes, J));
+               if Found_At /= -1 and then Found_At /= J then
+                  Fatal_Error --  3.1
+                    (Parser, "Attributes may appear only once: "
+                     & Get_Qname (Attributes, J));
+               end if;
+            end if;
+
+            Set_URI (Attributes, J, NS.URI.all);
+         end loop;
+      end Resolve_Attributes_Namespaces;
+
+      ----------------------
+      -- Parse_Attributes --
+      ----------------------
+
+      procedure Parse_Attributes
+        (Attributes               : out Sax.Attributes.Attributes;
+         Elem_NS_Id, Elem_Name_Id : Token;
+         Id                       : in out Token)
+      is
+         Attr : constant Attributes_Ptr := Get
+           (Parser.Default_Atts,
+            Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id)).Attributes;
+         --  The attributes as defined in the DTD
+
+         Attr_NS_Id   : Token;
+         Attr_Name_Id : Token;
+         Value_Start  : Token;
+         Value_End    : Token;
+         Add_Attr     : Boolean;
+         Found_At     : Integer;
+
+      begin
+         Attributes := No_Attributes;
+
+         while Id.Typ /= End_Of_Tag
+           and then Id.Typ /= End_Of_Input
+           and then Id.Typ /= End_Of_Start_Tag
+         loop
+            Get_Name_NS (Id, Attr_NS_Id, Attr_Name_Id);
+            if Id.Typ = Space then
+               Next_Token (Input, Parser, Id);
+            end if;
+
+            if Id.Typ /= Equal then
+               Fatal_Error  --  3.1
+                 (Parser, "Attributes must have an explicit value", Id);
+            end if;
+
+            --  First test: same prefix and local name. We will test later
+            --  for a same URI
+            if Get_Index
+              (Attributes,
+               Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)) /= -1
+            then
+               Fatal_Error  --  3.1
+                 (Parser, "Attributes may appear only once: "
+                  & Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id),
+                  Attr_Name_Id);
+            end if;
+
+            Next_Token_Skip_Spaces (Input, Parser, Id);
+            if Id.Typ /= Double_String_Delimiter
+              and then Id.Typ /= Single_String_Delimiter
+            then
+               Fatal_Error  --  3.1
+                 (Parser, "Attribute values must be quoted", Id);
+            end if;
+
+            --  3.3.3: If the attribute's type is not CDATA, we must
+            --  normalize it, ie collapse sequence of spaces.
+            --  ??? What if the information comes from an XML Schema instead
+            --  of a DTD
+            --  ??? That should be done only after we have processed the
+            --  namespaces, otherwise we do not know what attribute we are
+            --  dealing with
+
+            Get_String
+              (Id, Attr_Value_State, Value_Start, Value_End,
+               Normalize       => True,
+               Collapse_Spaces => Attr /= null
+                 and then Get_Type
+                 (Attr.all,
+                 Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)) /= Cdata);
+
+            Add_Attr := True;
+
+            --  Is this a namespace declaration ?
+
+            if Parser.Feature_Namespace
+              and then Get_String (Attr_NS_Id) = Xmlns_Sequence
+            then
+               Check_And_Define_Namespace
+                 (Attr_Name_Id, Value_Start, Value_End);
+               Add_Attr := Parser.Feature_Namespace_Prefixes;
+
+            --  Is this the declaration of the default namespace (xmlns="uri")
+
+            elsif Parser.Feature_Namespace
+              and then Attr_NS_Id = Null_Token
+              and then Get_String (Attr_Name_Id) = Xmlns_Sequence
+            then
+               --  We might have a FIXED declaration for this attribute in the
+               --  DTD, as per the XML Conformance testsuite
+               if Parser.Feature_Validation
+                 and then Attr /= null
+               then
+                  Found_At := Get_Index (Attr.all, Qname => Xmlns_Sequence);
+                  if Found_At /= -1
+                    and then Get_Default_Declaration (Attr.all, Found_At) =
+                      Fixed
+                    and then Get_Value (Attr.all, Found_At) /=
+                      Get_String (Value_Start, Value_End)
+                  then
+                     Error
+                       (Parser,
+                        "[VC 3.3.2] xmlns attribute doesn't match FIXED value",
+                        Value_Start);
+                  end if;
+               end if;
+
+               Check_And_Define_Namespace (Null_Token, Value_Start, Value_End);
+               Add_Attr := Parser.Feature_Namespace_Prefixes;
+
+            else
+               --  All attributes must be defined (including xml:lang, that
+               --  requires additional testing afterwards)
+               if Parser.Feature_Validation then
+                  Check_Attribute_Defined (Attr_NS_Id, Attr_Name_Id, Attr);
+               end if;
+
+               if Get_String (Attr_NS_Id) = Xml_Sequence then
+                  if Get_String (Attr_Name_Id) = Lang_Sequence then
+                     Test_Valid_Lang
+                       (Parser, Get_String (Value_Start, Value_End));
+
+                  elsif Get_String (Attr_Name_Id) = Space_Word_Sequence then
+                     Test_Valid_Space
+                       (Parser, Get_String (Value_Start, Value_End));
+                  end if;
+               end if;
+            end if;
+
+            --  Register the attribute
+            --  URI are resolved later on, we currently only store the prefix
+            if Add_Attr then
+               if Debug_Internal then
+                  Put_Line
+                    ("Register attribute: "
+                     & Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)
+                     & " value=" & Get_String (Value_Start, Value_End));
+               end if;
+
+               --  Temporarily register the attribute with a wrong URI. These
+               --  will be set properly later once we have read all the xmlns:
+               --  attributes.
+               --  Same for the attribute type
+               Add_Attribute
+                 (Attributes,
+                  URI        => Get_String (Attr_NS_Id),
+                  Local_Name => Get_String (Attr_Name_Id),
+                  Qname  => Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id),
+                  Att_Type   => Sax.Attributes.Cdata,
+                  Content    => null,
+                  Value      => Get_String (Value_Start, Value_End));
+            end if;
+
+            if Attr_NS_Id /= Null_Token then
+               Reset_Buffer (Parser, Attr_NS_Id);
+            else
+               Reset_Buffer (Parser, Attr_Name_Id);
+            end if;
+
+            Next_Token (Input, Parser, Id);
+            if Id.Typ = Space then
+               Next_Token (Input, Parser, Id);
+            elsif Id.Typ /= End_Of_Tag and then Id.Typ /= End_Of_Start_Tag then
+               Fatal_Error (Parser, Error_Expecting_Space, Id);
+            end if;
+         end loop;
+
+         if Parser.Feature_Validation and then Attr /= null then
+            Update_Attributes_From_DTD (Attr, Attributes);
+         end if;
+
+         Add_Default_Attributes (Attr, Attributes);
+
+         if Parser.Feature_Namespace then
+            Resolve_Attributes_Namespaces (Attributes);
+         end if;
+
+         --  Check attribute values. We must do that after adding the default
+         --  attributes, so that they are properly checked as well. It would be
+         --  nice to be able to check them only once, but that can't be done
+         --  when they are declared (since they might be referencing entities
+         --  declared after them in the DTD)
+
+         if Parser.Feature_Validation then
+            Check_Attribute_Value (Parser, Attributes, Elem_Name_Id);
+         end if;
+      end Parse_Attributes;
+
       ---------------------
       -- Parse_Start_Tag --
       ---------------------
 
       procedure Parse_Start_Tag is
          Open_Id : constant Token := Id;
-         Value_Start, Value_End : Token;
          Elem_Name_Id, Elem_NS_Id : Token;
-         Attr_Name_Id, Attr_NS_Id : Token;
-         Add_Attr : Boolean;
-         Attributes : Sax.Attributes.Attributes;
+         Attributes : Sax.Attributes.Attributes := No_Attributes;
          NS : XML_NS;
-         Attr : Attributes_Ptr;
-         Found : Boolean;
 
       begin
          Set_State (Parser, Tag_State);
@@ -3628,6 +4509,7 @@ package body Sax.Readers is
            (NS             => null,
             Name           => null,
             Namespaces     => null,
+            Start_Line     => Id.Line,
             Start_Id       => Id.Input_Id,
             Parent         => Parser.Current_Node);
 
@@ -3642,26 +4524,23 @@ package body Sax.Readers is
          if Parser.Current_Node.Parent = null then
             Parser.Num_Toplevel_Elements := Parser.Num_Toplevel_Elements + 1;
             if Parser.Num_Toplevel_Elements > 1 then
-               Fatal_Error
-                 (Parser, "(2.1) Too many children for top-level node,"
+               Fatal_Error   --  2.1
+                 (Parser, "Too many children for top-level node,"
                   & " when adding <"
                   & Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id)
                   & ">", Open_Id);
             end if;
 
-            if Parser.Feature_Validation
-              and then Parser.DTD_Name = null
-            then
-               Fatal_Error
-                 (Parser, "[VC 2.8] No DTD defined for this document", Id);
-            end if;
+            if Parser.Feature_Validation then
+               if Parser.DTD_Name = null then
+                  Error  --  VC 2.8
+                    (Parser, "No DTD defined for this document", Id);
 
-            if Parser.Feature_Validation
-              and then Parser.DTD_Name.all /= Parser.Current_Node.Name.all
-            then
-               Fatal_Error
-                 (Parser, "[VC 2.8] Name of root element doesn't match name"
-                  & " of DTD ('" & Parser.DTD_Name.all & "')", Id);
+               elsif Parser.DTD_Name.all /= Parser.Current_Node.Name.all then
+                  Error
+                    (Parser, "[VC 2.8] Name of root element doesn't match name"
+                     & " of DTD ('" & Parser.DTD_Name.all & "')", Id);
+               end if;
             end if;
 
          elsif Parser.Feature_Validation then
@@ -3670,278 +4549,18 @@ package body Sax.Readers is
 
          if Id.Typ = Space then
             Next_Token (Input, Parser, Id);
+            Parse_Attributes (Attributes, Elem_NS_Id, Elem_Name_Id, Id);
+
          elsif Id.Typ /= End_Of_Tag
            and then Id.Typ /= End_Of_Start_Tag
          then
-            Fatal_Error
-              (Parser, "[3] Must have spaces between tag name and attributes",
-               Id);
+            Fatal_Error (Parser, Error_Expecting_Space, Id);
+
+         else
+            --  We still need to check the attributes, in case we have none but
+            --  some where required
+            Parse_Attributes (Attributes, Elem_NS_Id, Elem_Name_Id, Id);
          end if;
-
-         Attr := Get
-           (Parser.Default_Atts,
-            Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id)).Attributes;
-
-         while Id.Typ /= End_Of_Tag
-           and then Id.Typ /= End_Of_Input
-           and then Id.Typ /= End_Of_Start_Tag
-         loop
-            Get_Name_NS (Id, Attr_NS_Id, Attr_Name_Id);
-            if Id.Typ = Space then
-               Next_Token (Input, Parser, Id);
-            end if;
-
-            if Get_Index
-              (Attributes,
-               Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)) /= -1
-            then
-               Fatal_Error
-                 (Parser, "(3.1) Attributes must have a unique name",
-                  Attr_Name_Id);
-            end if;
-
-            if Id.Typ /= Equal then
-               Fatal_Error
-                 (Parser, "[3.1] Attributes must have an explicit value", Id);
-            end if;
-
-            Next_Token_Skip_Spaces (Input, Parser, Id);
-            if Id.Typ /= Double_String_Delimiter
-              and then Id.Typ /= Single_String_Delimiter
-            then
-               Fatal_Error
-                 (Parser, "[3.1] Attribute values must be quoted", Id);
-            end if;
-
-            --  3.3.3: If the attribute's type is not CDATA, which must
-            --  normalize it, ie collapse sequence of spaces.
-            --  ??? What if the information comes from an XML Schema instead
-            --  of a DTD
-
-            if Attr = null
-              or else Get_Type
-                (Attr.all,
-                 Qname => Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)) =
-              Cdata
-            then
-               Get_String (Id, Attr_Value_State, Value_Start, Value_End,
-                           Normalize       => True,
-                           Collapse_Spaces => False);
-            else
-               Get_String (Id, Attr_Value_State, Value_Start, Value_End,
-                           Normalize       => True,
-                           Collapse_Spaces => True);
-            end if;
-
-            Add_Attr := True;
-
-            --  Is this a namespace declaration ?
-            if Parser.Buffer (Attr_NS_Id.First .. Attr_NS_Id.Last) =
-              Xmlns_Sequence
-            then
-               Add_Namespace
-                 (Parser, Parser.Current_Node,
-                  Attr_Name_Id, Value_Start, Value_End);
-               Add_Attr := Parser.Feature_Namespace_Prefixes;
-
-            --  Is this the declaration of the default namesapce (xmlns="uri")
-            elsif Attr_NS_Id = Null_Token
-              and then Parser.Buffer (Attr_Name_Id.First .. Attr_Name_Id.Last)
-              = Xmlns_Sequence
-            then
-               Add_Namespace
-                 (Parser, Parser.Current_Node,
-                  Null_Token, Value_Start, Value_End);
-               Add_Attr := Parser.Feature_Namespace_Prefixes;
-
-            else
-               --  All attributes must be defined (including xml:lang, that
-               --  requires additional testing afterwards
-               if Parser.Feature_Validation then
-                  declare
-                     Index : Integer;
-                     Att_Type : Attribute_Type;
-                  begin
-                     if Attr = null then
-                        Fatal_Error
-                          (Parser, "[VC] No attribute defined for element "
-                           & Parser.Buffer
-                             (Elem_Name_Id.First .. Elem_Name_Id.Last));
-                     end if;
-
-                     --  We must compare with Qnames, since we namespaces
-                     --  haven't been resolved for default attributes
-                     Index := Get_Index
-                       (Attr.all,
-                        Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id));
-                     if Index = -1 then
-                        Fatal_Error
-                          (Parser, "[VC] Attribute not declared in DTD: "
-                           & Qname_From_Name
-                           (Parser, Attr_NS_Id, Attr_Name_Id));
-                     end if;
-
-                     Att_Type := Get_Type (Attr.all, Index);
-                     if (Att_Type = Idrefs or else Att_Type = Nmtokens)
-                       and then Value_Start.First > Value_End.Last
-                     then
-                        Fatal_Error
-                          (Parser,
-                           "[VC 3.3.1] requires at least one name in IDREFS"
-                           & " and NMTOKENS", Value_Start);
-                     end if;
-                  end;
-               end if;
-
-               if Parser.Buffer (Attr_NS_Id.First .. Attr_NS_Id.Last) =
-                   Xml_Sequence
-                 and then
-                 Parser.Buffer (Attr_Name_Id.First .. Attr_Name_Id.Last) =
-                   Lang_Sequence
-               then
-                  Test_Valid_Lang
-                    (Parser,
-                     Parser.Buffer (Value_Start.First .. Value_End.Last));
-               end if;
-            end if;
-
-            --  Register the attribute
-            --  URI are resolved later on, we currently only store the prefix
-            if Add_Attr then
-               if Debug_Internal then
-                  Put_Line
-                    ("Register attribute: "
-                     & Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)
-                     & " value=" & Parser.Buffer
-                       (Value_Start.First .. Value_End.Last) & "--");
-               end if;
-               Add_Attribute
-                 (Attributes,
-                  URI => Parser.Buffer (Attr_NS_Id.First .. Attr_NS_Id.Last),
-                  Local_Name => Parser.Buffer
-                    (Attr_Name_Id.First .. Attr_Name_Id.Last),
-                  Qname => Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id),
-                  Att_Type => Sax.Attributes.Cdata,
-                  Content => null,
-                  Value => Parser.Buffer
-                    (Value_Start.First .. Value_End.Last));
-            end if;
-
-            if Attr_NS_Id /= Null_Token then
-               Reset_Buffer (Parser, Attr_NS_Id);
-            else
-               Reset_Buffer (Parser, Attr_Name_Id);
-            end if;
-
-            Next_Token (Input, Parser, Id);
-            if Id.Typ = Space then
-               Next_Token (Input, Parser, Id);
-            elsif Id.Typ /= End_Of_Tag and then Id.Typ /= End_Of_Start_Tag then
-               Fatal_Error
-                 (Parser, "[3.1] Attributes must be separated by spaces", Id);
-            end if;
-         end loop;
-
-         --  Check that all #REQUIRED attributes are defined
-         --  and that #FIXED attributes have the defined value
-         if Parser.Feature_Validation and then Attr /= null then
-            for J in 0 .. Get_Length (Attr.all) - 1 loop
-               if Get_Default_Declaration (Attr.all, J) = Required then
-                  Found := False;
-                  for K in 0 .. Get_Length (Attributes) - 1 loop
-                     if Get_Qname (Attributes, K)
-                       = Get_Qname (Attr.all, J)
-                     then
-                        Found := True;
-                        exit;
-                     end if;
-                  end loop;
-
-                  if not Found then
-                     Fatal_Error
-                       (Parser, "[VC 3.3.2] Required attribute '"
-                        & Get_Qname (Attr.all, J) & "' must be defined", Id);
-                  end if;
-
-               elsif Get_Default_Declaration (Attr.all, J) = Fixed then
-                  for K in 0 .. Get_Length (Attributes) - 1 loop
-                     if Get_Qname (Attributes, K)
-                       = Get_Qname (Attr.all, J)
-                     then
-                        if Get_Value (Attributes, K)
-                          /= Get_Value (Attr.all, J)
-                        then
-                           Fatal_Error
-                             (Parser, "[VC 3.3.2] Fixed attribute '"
-                              & Get_Qname (Attr.all, J) & "' must have the"
-                              & " defined value", Id);
-                        end if;
-                        exit;
-                     end if;
-                  end loop;
-               end if;
-            end loop;
-         end if;
-
-         --  Add all the default attributes to the element
-         --  We shouldn't add an attribute if it was overriden by the user
-
-         if Attr /= null then
-            for J in 0 .. Get_Length (Attr.all) - 1 loop
-               --  ??? This could/should be more efficient.
-
-               --  We must compare qnames, since namespaces haven't been
-               --  resolved in the default attributes.
-               if Get_Default_Declaration (Attr.all, J) /=
-                   Sax.Attributes.Implied
-                 and then Get_Index (Attributes,
-                                     Qname => Get_Qname (Attr.all, J)) = -1
-               then
-                  declare
-                     Prefix : constant Byte_Sequence :=
-                       Prefix_From_Qname (Get_Qname (Attr.all, J));
-                     Is_Xmlns : constant Boolean := Prefix = Xmlns_Sequence;
-                  begin
-                     if Parser.Feature_Namespace_Prefixes
-                       or else not Is_Xmlns
-                     then
-                        Add_Attribute (Attributes,
-                                       Prefix,
-                                       Get_Local_Name (Attr.all, J),
-                                       Get_Qname (Attr.all, J),
-                                       Get_Type (Attr.all, J),
-                                       Get_Content (Attr.all, J),
-                                       Get_Value (Attr.all, J));
-                     end if;
-
-                     --  Is this a namespace declaration ?
-                     if Is_Xmlns then
-                        --  Following warning is because for parser that don't
-                        --  read external DTDs, the behavior would be different
-                        --  for the same document.
-                        Warning
-                          (Parser,
-                           "namespace-declaring attribute inserted via "
-                           & "DTD defaulting mechanisms are not good style");
-                        Add_Namespace
-                          (Parser, Parser.Current_Node,
-                           Prefix => Get_Local_Name (Attr.all, J),
-                           URI    => Get_Value (Attr.all, J));
-                     end if;
-                  end;
-               end if;
-            end loop;
-         end if;
-
-         --  We now need to resolve all the namespaces for the attribute
-         --  namespaces
-
-         for J in 0 .. Get_Length (Attributes) - 1 loop
-            Find_NS (Parser, Parser.Current_Node,
-                     Get_URI (Attributes, J), NS,
-                     Include_Default_NS => False);
-            Set_URI (Attributes, J, NS.URI.all);
-         end loop;
 
          --  And report the elements to the callbacks
 
@@ -3983,7 +4602,7 @@ package body Sax.Readers is
          end if;
 
          if Id.Typ = End_Of_Input then
-            Fatal_Error (Parser, "[WF] Unexpected end of stream");
+            Fatal_Error (Parser, "Unexpected end of stream");
          end if;
       end Parse_Start_Tag;
 
@@ -4018,9 +4637,7 @@ package body Sax.Readers is
 
             elsif Id.Typ = End_Conditional then
                if Num_Include + Num_Ignore = 0 then
-                  Fatal_Error
-                    (Parser,
-                     "[2.4] Text may not contain the litteral ']]>'", Id);
+                  Fatal_Error (Parser, Error_Unexpected_Chars3, Id);
                elsif Num_Ignore > 0 then
                   Num_Ignore := Num_Ignore - 1;
                else
@@ -4041,7 +4658,7 @@ package body Sax.Readers is
                   when Text | Name =>
                      if Id.First < Id.Last then
                         Fatal_Error
-                          (Parser,  "[WF] Unexpected character in the DTD");
+                          (Parser,  "Unexpected character in the DTD");
                      else
                         Reset_Buffer (Parser, Id);
                      end if;
@@ -4051,23 +4668,26 @@ package body Sax.Readers is
                   when Start_Of_PI =>
                      Parse_PI (Id);
                   when others =>
-                     Fatal_Error
-                       (Parser, "[2.8] Element not allowed in the DTD", Id);
+                     Fatal_Error  --  2.8
+                       (Parser, "Element not allowed in the DTD", Id);
                end case;
 
             else
                Reset_Buffer (Parser, Id);
             end if;
 
-            if Start_Id /= Id.Input_Id then
-               Fatal_Error
-                 (Parser, "[4.5] Entity values must be self-contained", Id);
+            --  XML 1.0 Errata 14 or XML 1.1 section 4.3.2: nesting of entities
+            --  doesn't apply for well-formedness in the DTD
+            if Parser.Feature_Validation then
+               if Start_Id /= Id.Input_Id then
+                  Error (Parser, Error_Entity_Self_Contained, Id);
+               end if;
             end if;
          end loop;
 
          if Num_Ignore + Num_Include /= 0 then
-            Fatal_Error
-              (Parser, "[3.4] Conditional section must be properly terminated",
+            Fatal_Error  --  3.4
+              (Parser, "Conditional section must be properly terminated",
                Id);
          end if;
       end Parse_Doctype_Contents;
@@ -4085,7 +4705,7 @@ package body Sax.Readers is
 
          Next_Token_Skip_Spaces (Input, Parser, Name_Id);
          if Name_Id.Typ /= Name then
-            Fatal_Error (Parser, "[WF] Expecting name after <!DOCTYPE");
+            Fatal_Error (Parser, "Expecting name after <!DOCTYPE");
          end if;
 
          Next_Token_Skip_Spaces (Input, Parser, Id);
@@ -4108,11 +4728,11 @@ package body Sax.Readers is
          if Id.Typ = Internal_DTD_Start then
             Parse_Doctype_Contents;
             if Id.Typ /= Internal_DTD_End then
-               Fatal_Error
-                 (Parser, "[2.8] Expecting end of internal subset ']>'", Id);
+               Fatal_Error  --  2.8
+                 (Parser, "Expecting end of internal subset ']>'", Id);
             end if;
          elsif Id.Typ /= End_Of_Tag then
-            Fatal_Error (Parser, "[WF] Expecting end of DTD");
+            Fatal_Error (Parser, "Expecting end of DTD");
          end if;
 
          --  Read the external subset if required. This needs to be read
@@ -4189,9 +4809,10 @@ package body Sax.Readers is
             Qname => Qname_From_Name (Parser, NS_Id, Name_Id));
 
          --  Tag must end in the same entity
-         if Id.Input_Id /= Parser.Current_Node.Start_Id then
-            Fatal_Error
-              (Parser, "[4.5] Entity values must be self-contained", Id);
+         if Parser.Feature_Validation
+           and then Id.Input_Id /= Parser.Current_Node.Start_Id
+         then
+            Error (Parser, Error_Entity_Self_Contained, Id);
          end if;
 
          --  Close all the namespaces
@@ -4226,19 +4847,26 @@ package body Sax.Readers is
          end if;
 
          if Id.Typ /= End_Of_Tag then
-            Fatal_Error (Parser, "[3.1] Tags must end with a '>' symbol", Id);
+            Fatal_Error (Parser, "Tags must end with a '>' symbol", Id);
+            --  3.1
+         end if;
+
+         if Parser.Current_Node = null then
+            Fatal_Error --  3
+              (Parser, "No start tag found for this end tag", Id);
          end if;
 
          --  Tag must end in the same entity
-         if Id.Input_Id /= Parser.Current_Node.Start_Id then
-            Fatal_Error
-              (Parser, "[4.5] Entity values must be self-contained", Id);
+         if Parser.Feature_Validation
+           and then Id.Input_Id /= Parser.Current_Node.Start_Id
+         then
+            Error (Parser, Error_Entity_Self_Contained, Id);
          end if;
 
          if Parser.Current_Node = null then
             Fatal_Error
-              (Parser,
-               "[WF-Element Type Match] Unexpected closing tag", Open_Id);
+              (Parser,  --  WF element type match
+               "Unexpected closing tag", Open_Id);
 
          elsif Parser.Buffer (NS_Id.First .. NS_Id.Last) /=
              Parser.Current_Node.NS.all
@@ -4248,16 +4876,22 @@ package body Sax.Readers is
             --  Well-Formedness Constraint: Element Type Match
             if Parser.Current_Node.NS.all /= "" then
                Fatal_Error
-                 (Parser,
-                  "[WF-Element Type Match] Name differ for closing tag ("
+                 (Parser,  --  WF element type match
+                  "Name differ for closing tag ("
                   & "expecting " & Parser.Current_Node.NS.all & ':'
-                  & Parser.Current_Node.Name.all & ')',
+                  & Parser.Current_Node.Name.all
+                  & ", opened line"
+                  & Integer'Image (Parser.Current_Node.Start_Line)
+                  & ')',
                   Open_Id);
             else
                Fatal_Error
-                 (Parser,
-                  "[WF-Element Type Match] Name differ for closing tag ("
-                  & "expecting " & Parser.Current_Node.Name.all & ')',
+                 (Parser, --  WF element type match
+                  "Name differ for closing tag ("
+                  & "expecting " & Parser.Current_Node.Name.all
+                  & ", opened line"
+                  & Integer'Image (Parser.Current_Node.Start_Line)
+                  & ')',
                   Open_Id);
             end if;
          end if;
@@ -4290,7 +4924,7 @@ package body Sax.Readers is
          if Id.Typ /= Double_String_Delimiter
            and then Id.Typ /= Single_String_Delimiter
          then
-            Fatal_Error (Parser, "[WF] Expecting version value", Id);
+            Fatal_Error (Parser, "Expecting version value", Id);
          end if;
          Get_String (Id, Attr_Value_State, Value_Start, Value_End);
 
@@ -4306,11 +4940,17 @@ package body Sax.Readers is
               and then C /= Unicode.Names.Basic_Latin.Colon
               and then C /= Hyphen_Minus
             then
-               Fatal_Error
-                 (Parser, "[2.8] Illegal version number in <?xml?> processing"
+               Fatal_Error  --  2.8
+                 (Parser, "Illegal version number in <?xml?> processing"
                   & " instruction", Value_Start);
             end if;
          end loop;
+
+         if Parser.Buffer (Value_Start.First .. Value_End.Last) /= "1.0" then
+            Fatal_Error
+              (Parser, "Unsupported version of XML: "
+               & Parser.Buffer (Value_Start.First .. Value_End.Last));
+         end if;
 
          Next_Token (Input, Parser, Id);
          if Id.Typ = Space then
@@ -4325,27 +4965,34 @@ package body Sax.Readers is
       --------------------------
 
       procedure Check_Encoding_Value (Id : in out Token) is
+         Inp : Input_Source_Access := Input'Unchecked_Access;
          C : Unicode_Char;
          J : Natural;
          Value_Start, Value_End : Token;
          Tmp : Positive;
       begin
-         Next_Token_Skip_Spaces (Input, Parser, Id);
+         --  If we are parsing an external entity, everything applies to it.
+         --  See test xmltest/valid/ext-sa/008.xml
+         if Parser.Inputs /= null then
+            Inp := Parser.Inputs.Input;
+         end if;
+
+         Next_Token_Skip_Spaces (Inp.all, Parser, Id);
          if Id.Typ /= Equal then
             Fatal_Error (Parser, "Expecting '=' sign");
          end if;
 
-         Next_Token_Skip_Spaces (Input, Parser, Id);
+         Next_Token_Skip_Spaces (Inp.all, Parser, Id);
          if Id.Typ /= Double_String_Delimiter
            and then Id.Typ /= Single_String_Delimiter
          then
-            Fatal_Error (Parser, "[WF] Expecting encoding value");
+            Fatal_Error (Parser, "Expecting encoding value");
          end if;
          Get_String (Id, Attr_Value_State, Value_Start, Value_End);
 
          if Value_End.Last < Value_Start.First then
-            Fatal_Error
-              (Parser, "[4.3.3] Empty value for encoding not allowed");
+            Fatal_Error   --  4.3.3
+              (Parser, "Empty value for encoding not allowed");
          else
             Tmp := Value_Start.First;
             Encoding.Read (Parser.Buffer.all, Tmp, C);
@@ -4353,8 +5000,8 @@ package body Sax.Readers is
               and then not
                 (C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
             then
-               Fatal_Error
-                 (Parser, "[4.3.3] Illegal character '"
+               Fatal_Error   --  4.3.3
+                 (Parser, "Illegal character '"
                   & Debug_Encode (C) & "' in encoding value", Value_Start);
             end if;
 
@@ -4369,8 +5016,8 @@ package body Sax.Readers is
                  and then C /= Low_Line
                  and then C /= Hyphen_Minus
                then
-                  Fatal_Error
-                    (Parser, "(4.3.3) Illegal character '"
+                  Fatal_Error  --  4.3.3
+                    (Parser, "Illegal character '"
                      & Debug_Encode (C) & "' in encoding value",
                      Value_Start);
                end if;
@@ -4379,16 +5026,16 @@ package body Sax.Readers is
 
          --  Check we indeed have a following space
 
-         Next_Token (Input, Parser, Id);
+         Next_Token (Inp.all, Parser, Id);
          if Id.Typ = Space then
-            Next_Token (Input, Parser, Id);
+            Next_Token (Inp.all, Parser, Id);
          elsif Id.Typ /= End_Of_PI then
             Fatal_Error (Parser, "values must be separated by spaces", Id);
          end if;
 
          --  Change the encoding for the streams, if needed
          Set_Stream_Encoding
-           (Input, Parser.Buffer (Value_Start.First .. Value_End.Last));
+           (Inp.all, Parser.Buffer (Value_Start.First .. Value_End.Last));
       end Check_Encoding_Value;
 
       ----------------------------
@@ -4417,10 +5064,14 @@ package body Sax.Readers is
              No_Sequence
          then
             Fatal_Error
-              (Parser,
-               "[2.9 [32]] Invalid value for standalone parameter in <?xml?>",
+              (Parser,   --  2.9 [32]
+               "Invalid value for standalone parameter in <?xml?>",
                Value_Start);
          end if;
+
+         Parser.Standalone_Document :=
+           Parser.Buffer (Value_Start.First .. Value_End.Last) =
+           Yes_Sequence;
 
          Next_Token (Input, Parser, Id);
          if Id.Typ = Space then
@@ -4445,14 +5096,16 @@ package body Sax.Readers is
          Next_Token (Input, Parser, Name_Id);
          if Name_Id.Typ /= Name then
             Fatal_Error
-              (Parser,
-               "[2.6] Processing Instruction must specify a target name",
+              (Parser,  --  2.6
+               "Processing Instruction must specify a target name",
                Name_Id);
          end if;
 
+         Check_Valid_Name_Or_NCname (Parser, Name_Id);
+
          Next_Token (Input, Parser, Id);
          if Id.Typ /= Space and then Id.Typ /= End_Of_PI then
-            Fatal_Error (Parser, "Must have space betwee target and data");
+            Fatal_Error (Parser, "Must have space between target and data");
          elsif Id.Typ = Space then
             Next_Token (Input, Parser, Id);
          end if;
@@ -4461,13 +5114,19 @@ package body Sax.Readers is
          if Parser.Buffer (Name_Id.First .. Name_Id.Last) = Xml_Sequence then
 
             if Open_Id.Line /= 1
-              or else Open_Id.Column /= 1 + Prolog_Size (Input)
+              or else
+                (Parser.Inputs = null
+                 and then Open_Id.Column /= 1 + Prolog_Size (Input))
+              or else
+                (Parser.Inputs /= null
+                 and then Open_Id.Column /=
+                   1 + Prolog_Size (Parser.Inputs.Input.all))
               or else (Parser.Inputs /= null
                        and then not Parser.Inputs.External)
             then
                Fatal_Error
-                 (Parser,
-                  "[2.8] <?xml?> instruction must be first in document",
+                 (Parser,   --  2.8
+                  "<?xml?> instruction must be first in document",
                   Open_Id);
             end if;
 
@@ -4505,7 +5164,7 @@ package body Sax.Readers is
                if Parser.In_External_Entity then
                   Fatal_Error
                     (Parser,
-                     "Text declarations <?xml?> in external entity can not"
+                     "Text declarations <?xml?> in external entity cannot"
                      & " specify parameters other than 'version' and"
                      & " 'encoding'", Id);
                else
@@ -4539,8 +5198,8 @@ package body Sax.Readers is
                        and then J = Name_Id.Last + 1
                      then
                         Fatal_Error
-                          (Parser,
-                           "[2.6] '"
+                          (Parser,   --  2.6
+                           "'"
                            & Parser.Buffer (Name_Id.First .. Name_Id.Last)
                            & "' is not a valid processing instruction target",
                            Name_Id);
@@ -4566,8 +5225,8 @@ package body Sax.Readers is
             end loop;
 
             if Id.Typ = End_Of_Input then
-               Fatal_Error
-                 (Parser, "[2.6] Processing instruction must end with '?>'",
+               Fatal_Error  --  2.6
+                 (Parser, "Processing instruction must end with '?>'",
                   Open_Id);
             end if;
 
@@ -4609,8 +5268,8 @@ package body Sax.Readers is
 
             when Cdata_Section =>
                if Parser.Current_Node = null then
-                  Fatal_Error
-                    (Parser, "[2.1] Non-white space found at top level", Id);
+                  Fatal_Error  --  2.1
+                    (Parser, "Non-white space found at top level", Id);
                end if;
                Start_Cdata (Parser);
 
@@ -4625,8 +5284,8 @@ package body Sax.Readers is
 
             when Text | Name =>
                if Parser.Current_Node = null then
-                  Fatal_Error
-                    (Parser, "[2.1] Non-white space found at top level", Id);
+                  Fatal_Error  --  2.1
+                    (Parser, "Non-white space found at top level", Id);
                end if;
 
                if Parser.Hooks.Characters /= null then
@@ -4664,7 +5323,7 @@ package body Sax.Readers is
                Parse_Doctype;
 
             when others =>
-               Fatal_Error (Parser, "[WF] Currently ignored: "
+               Fatal_Error (Parser, "Currently ignored: "
                             & Token_Type'Image (Id.Typ));
          end case;
       end loop;
@@ -4806,13 +5465,13 @@ package body Sax.Readers is
 
       --  All the nodes must have been closed at the end of the document
       if Parser.Current_Node /= null then
-         Fatal_Error
-           (Parser, "[2.1] Node <" & Parser.Current_Node.Name.all
+         Fatal_Error   --  2.1
+           (Parser, "Node <" & Parser.Current_Node.Name.all
             & "> is not closed");
       end if;
 
       if Parser.Num_Toplevel_Elements = 0 then
-         Fatal_Error (Parser, "[2.1] No root element specified");
+         Fatal_Error (Parser, "No root element specified"); --  2.1
       end if;
 
       End_Document (Reader'Class (Parser));

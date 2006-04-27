@@ -71,6 +71,8 @@ package Sax.Readers is
      "http://www.xml.org/sax/features/namespace";
    --  Controls general namespace processing. If it is true (the default),
    --  namespace URIs will be used in events.
+   --  If False, colons (':') are allowed in tag names, and not considered
+   --  as namespace identifiers.
    --  In fact, this is only given for full compatibility with the SAX
    --  standard. As authorized in the standard, this parser will always
    --  report URIs to the Start_Element and End_Element callbacks.
@@ -593,7 +595,16 @@ private
       Name         : Unicode.CES.Byte_Sequence_Access;
       Value        : Unicode.CES.Byte_Sequence_Access;
       Public       : Unicode.CES.Byte_Sequence_Access;
+
       External     : Boolean;
+      --  Whether the entity references an external document
+
+      Unparsed     : Boolean;
+      --  Whether we have an unparsed entity (ie using a NOTATION)
+
+      External_Declaration : Boolean;
+      --  Whether the entity was defined in the external subset
+
       Already_Read : Boolean := False;
       --  True if the value of the entity was already read. This is used to
       --  detect entities referencing themselves.
@@ -659,8 +670,14 @@ private
       Expand_Entities : Boolean := True;
       --  True if &...; should be recognized
 
+      Report_Character_Ref : Boolean := False;
+      --  True if character references &#...; should be reported as a single
+      --  token, with their replacement character stored in the buffer.
+      --  Ignored if Expand_Character_Ref is True.
+
       Expand_Character_Ref : Boolean := True;
-      --  True if character references &#...; should be recognized
+      --  True if character references &#...; should be recognized and
+      --  expanded
 
       In_DTD : Boolean := False;
       --  True if we are parsing the DTD, and '['. ']' and '<!' should be
@@ -700,6 +717,7 @@ private
       NS             : Unicode.CES.Byte_Sequence_Access;
       Name           : Unicode.CES.Byte_Sequence_Access;
       Parent         : Element_Access;
+      Start_Line     : Natural;
       Start_Id       : Natural;
       --  Id of the Input source for the start tag. End tag must end on the
       --  same entity.
@@ -748,6 +766,10 @@ private
    type Reader is tagged record
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
+
+      Standalone_Document : Boolean := False;
+      --  Whether the document is specified as "standalone" in the XML
+      --  prolog
 
       Last_Read     : Unicode.Unicode_Char;
       Last_Read_Is_Valid : Boolean := True;

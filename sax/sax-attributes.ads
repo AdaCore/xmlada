@@ -41,6 +41,7 @@ with Sax.Models;
 package Sax.Attributes is
 
    type Attributes is tagged private;
+   No_Attributes : constant Attributes;
 
    type Default_Declaration is (Required, Implied, Fixed, Default);
    --  See 3.3.2 in XML specifications
@@ -243,4 +244,6 @@ private
       First  : Attribute_Access;
       Last   : Attribute_Access;
    end record;
+
+   No_Attributes : constant Attributes := (0, null, null);
 end Sax.Attributes;

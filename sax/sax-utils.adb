@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005                          --
+--                       Copyright (C) 2005-2006                     --
 --                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -28,12 +28,43 @@
 -----------------------------------------------------------------------
 
 with Interfaces;                use Interfaces;
-
 with Unicode.CES;               use Unicode, Unicode.CES;
 with Sax.Encodings;             use Sax.Encodings;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
 package body Sax.Utils is
+
+   type Unichar_Boolean_Array is array (Unicode_Char range <>) of Boolean;
+   pragma Pack (Unichar_Boolean_Array);
+
+   Valid_URI_Characters : constant Unichar_Boolean_Array
+     (Exclamation_Mark .. Tilde) :=
+     (Digit_Zero .. Digit_Nine => True,
+      Latin_Capital_Letter_A .. Latin_Capital_Letter_Z => True,
+      Latin_Small_Letter_A .. Latin_Small_Letter_Z => True,
+      Opening_Parenthesis | Closing_Parenthesis => True,
+      Percent_Sign       => True,
+      Plus_Sign          => True,
+      Comma              => True,
+      Hyphen_Minus       => True,
+      Dot                => True,
+      Colon              => True,
+      Equals_Sign        => True,
+      Commercial_At      => True,
+      Semicolon          => True,
+      Dollar_Sign        => True,
+      Spacing_Underscore => True,
+      Exclamation_Mark   => True,
+      Star               => True,
+      Apostrophe         => True,
+      Question_Mark      => True,
+      Slash              => True,
+      Pound_Sign         => True,
+      Tilde              => True,
+      others => False);
+   --  Rules based on RFC 2141, at http://rfc.net/rfc2141.html,
+   --  completed with rules from Uniformed Resource Identifier at
+   --  http://www.gbiv.com/protocols/uri/rfc/rfc3986.html
 
    ----------------------------
    -- Is_Valid_Language_Name --
@@ -42,54 +73,50 @@ package body Sax.Utils is
    function Is_Valid_Language_Name
      (Lang : Unicode.CES.Byte_Sequence) return Boolean
    is
-      C, C2 : Unicode_Char;
+      C     : Unicode_Char := Space;
       Index : Natural := Lang'First;
+      Count : Natural := 0;
+      Subtag : Natural := 1;
+      Allow_Digit : Boolean := False;
    begin
-      Encoding.Read (Lang, Index, C2);
-
-      if not (C2 in Latin_Small_Letter_A .. Latin_Small_Letter_Z
-              or else C2 in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
-        or else Index > Lang'Last
-      then
-         return False;
-      end if;
-
-      Encoding.Read (Lang, Index, C);
-      if C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
-        or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
-      then
-         if Index <= Lang'Last then
-            Encoding.Read (Lang, Index, C);
-         end if;
-
-      elsif C2 /= Latin_Small_Letter_I
-        and then C2 /= Latin_Capital_Letter_I
-        and then C2 /= Latin_Small_Letter_X
-        and then C2 /= Latin_Capital_Letter_X
-      then
-         return False;
-      end if;
-
-      if C = Hyphen_Minus and then Index > Lang'Last then
-         return False;
-      end if;
+      --  See http://www.ietf.org/rfc/rfc3066.tx
+      --    Language-Tag = Primary-subtag *( "-" Subtag )
+      --    Primary-subtag = 1*8ALPHA
+      --    Subtag = 1*8(ALPHA / DIGIT)
+      --  In addition, it seems that the length of subtags is not necessarily
+      --  limited to 8 characters, given the XML conformance testsuite test
+      --  sun/valid/v-lang04.xml
 
       while Index <= Lang'Last loop
-         if C /= Hyphen_Minus
-           or else Index > Lang'Last
+         Encoding.Read (Lang, Index, C);
+
+         if C = Hyphen_Minus then
+            if Count = 0 or else (Subtag <= 2 and Count > 8) then
+               --  Too many characters
+               return False;
+
+            else
+               Allow_Digit := True;
+               Count := 0;
+               Subtag := Subtag + 1;
+            end if;
+
+         elsif C not in Latin_Small_Letter_A .. Latin_Small_Letter_Z
+           and then C not in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
+           and then (not Allow_Digit
+                     or else C not in Digit_Zero .. Digit_Nine)
          then
             return False;
+
+         else
+            Count := Count + 1;
          end if;
-
-         loop
-            Encoding.Read (Lang, Index, C);
-
-            exit when Index > Lang'Last
-              or else not
-              (C in Latin_Small_Letter_A .. Latin_Small_Letter_Z
-                or else C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z);
-         end loop;
       end loop;
+
+      if Count = 0 or else (Subtag <= 2 and Count > 8) then
+         --  Too many characters
+         return False;
+      end if;
 
       return True;
    end Is_Valid_Language_Name;
@@ -100,6 +127,25 @@ package body Sax.Utils is
 
    function Is_Valid_Name_Char (Char : Unicode.Unicode_Char) return Boolean is
    begin
+      --  ??? Should we create a single lookup table for all of these, that
+      --  would be more efficient
+      return Char = Period
+        or else Char = Hyphen_Minus
+        or else Char = Spacing_Underscore
+        or else Char = Colon
+        or else Is_Digit (Char)
+        or else Is_Letter (Char)
+        or else Is_Combining_Char (Char)
+        or else Is_Extender (Char);
+   end Is_Valid_Name_Char;
+
+   --------------------------
+   -- Is_Valid_NCname_Char --
+   --------------------------
+
+   function Is_Valid_NCname_Char
+     (Char : Unicode.Unicode_Char) return Boolean is
+   begin
       return Char = Period
         or else Char = Hyphen_Minus
         or else Char = Spacing_Underscore
@@ -107,14 +153,14 @@ package body Sax.Utils is
         or else Is_Letter (Char)
         or else Is_Combining_Char (Char)
         or else Is_Extender (Char);
-   end Is_Valid_Name_Char;
+   end Is_Valid_NCname_Char;
 
    ----------------------
    -- Is_Valid_Nmtoken --
    ----------------------
 
    function Is_Valid_Nmtoken
-     (Nmtoken : Unicode.CES.Byte_Sequence) return Boolean
+     (Nmtoken     : Unicode.CES.Byte_Sequence) return Boolean
    is
       C     : Unicode_Char;
       Index : Natural := Nmtoken'First;
@@ -128,6 +174,30 @@ package body Sax.Utils is
 
       return True;
    end Is_Valid_Nmtoken;
+
+   -----------------------
+   -- Is_Valid_Nmtokens --
+   -----------------------
+
+   function Is_Valid_Nmtokens
+     (Nmtokens    : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      C     : Unicode_Char;
+      Index : Natural := Nmtokens'First;
+   begin
+      if Nmtokens'Length = 0 then
+         return False;
+      end if;
+
+      while Index <= Nmtokens'Last loop
+         Encoding.Read (Nmtokens, Index, C);
+         if C /= Space and then not Is_Valid_Name_Char (C) then
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end Is_Valid_Nmtokens;
 
    -------------------
    -- Is_Valid_Name --
@@ -151,6 +221,79 @@ package body Sax.Utils is
       return Is_Valid_Nmtoken (Name (Index .. Name'Last));
    end Is_Valid_Name;
 
+   --------------------
+   -- Is_Valid_Names --
+   --------------------
+
+   function Is_Valid_Names
+     (Name        : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      C : Unicode_Char;
+      Index : Natural := Name'First;
+      First_In_Name : Boolean := True;
+   begin
+      if Name'Length = 0 then
+         return False;
+      end if;
+
+      while Index <= Name'Last loop
+         Encoding.Read (Name, Index, C);
+
+         if C = Space then
+            First_In_Name := True;
+
+         elsif First_In_Name then
+            if C /= Spacing_Underscore
+              and then C /= Colon
+              and then not Is_Letter (C)
+            then
+               return False;
+            end if;
+            First_In_Name := False;
+
+         elsif not Is_Valid_Name_Char (C) then
+            return False;
+         end if;
+      end loop;
+      return True;
+   end Is_Valid_Names;
+
+   ----------------------
+   -- Is_Valid_NCnames --
+   ----------------------
+
+   function Is_Valid_NCnames
+     (Name        : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      C : Unicode_Char;
+      Index : Natural := Name'First;
+      First_In_Name : Boolean := True;
+   begin
+      if Name'Length = 0 then
+         return False;
+      end if;
+
+      while Index <= Name'Last loop
+         Encoding.Read (Name, Index, C);
+
+         if C = Space then
+            First_In_Name := True;
+
+         elsif First_In_Name then
+            if C /= Spacing_Underscore
+              and then not Is_Letter (C)
+            then
+               return False;
+            end if;
+            First_In_Name := False;
+
+         elsif not Is_Valid_NCname_Char (C) then
+            return False;
+         end if;
+      end loop;
+      return True;
+   end Is_Valid_NCnames;
+
    ---------------------
    -- Is_Valid_NCname --
    ---------------------
@@ -173,8 +316,7 @@ package body Sax.Utils is
 
       while Index <= Name'Last loop
          Encoding.Read (Name, Index, C);
-
-         if C = Colon or else not Is_Valid_Name_Char (C) then
+         if not Is_Valid_NCname_Char (C) then
             return False;
          end if;
       end loop;
@@ -245,21 +387,71 @@ package body Sax.Utils is
       Index    : Integer := Name'First;
       Previous : Integer;
       C        : Unicode_Char;
+      Prefix_Found : Boolean := False;
    begin
+      --  Check the prefix before ://
       while Index <= Name'Last loop
          Previous := Index;
          Encoding.Read (Name, Index, C);
-         if C = Character'Pos ('/') then
+         if C = Colon then
+            if Name (Name'First .. Index - 1) = Mailto_Sequence then
+               --  Do not check the format of the mail address at this point
+               return True;
+            end if;
+
             Encoding.Read (Name, Index, C);
-            if C = Character'Pos ('/') then
-               return Is_Valid_Name (Name (Name'First .. Previous - 1));
+            if C = Slash then
+               Encoding.Read (Name, Index, C);
+               if C = Slash then
+                  if not Is_Valid_Name (Name (Name'First .. Previous - 1)) then
+                     return False;
+                  end if;
+                  Prefix_Found := True;
+                  exit;
+               else
+                  return False;
+               end if;
             else
                return False;
             end if;
          end if;
       end loop;
-      return False;
+
+      if not Prefix_Found then
+         return False;
+      end if;
+
+      --  Check the rest of the URI
+      while Index <= Name'Last loop
+         Encoding.Read (Name, Index, C);
+         if C not in Valid_URI_Characters'Range
+           or else not Valid_URI_Characters (C)
+         then
+            return False;
+         end if;
+      end loop;
+
+      return True;
    end Is_Valid_URI;
+
+   ---------------------------
+   -- Contains_URI_Fragment --
+   ---------------------------
+
+   function Contains_URI_Fragment
+     (Name : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Index : Integer := Name'First;
+      C     : Unicode_Char;
+   begin
+      while Index <= Name'Last loop
+         Encoding.Read (Name, Index, C);
+         if C = Pound_Sign then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Contains_URI_Fragment;
 
    ------------------------
    -- Is_Valid_HexBinary --

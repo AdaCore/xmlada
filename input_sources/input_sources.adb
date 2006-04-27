@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2006                     --
+--                             AdaCore                               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -51,7 +51,15 @@ package body Input_Sources is
      (Input    : in out Input_Source;
       Es       : Unicode.CES.Encoding_Scheme) is
    begin
-      Input.Es := Es;
+      --  Do not change the encoding if the previous one was detected from the
+      --  BOM. For instance, if we have detected UTF16-BE, we do not want an
+      --  "encoding='UTF-16'" declaration in the XML document to switch us to
+      --  UTF16-LE
+      if Input.Prolog_Size = 0                --  no BOM
+        or else Input.Es.Length /= Es.Length  --  no the same encoding scheme
+      then
+         Input.Es := Es;
+      end if;
    end Set_Encoding;
 
    ------------------

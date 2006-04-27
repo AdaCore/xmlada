@@ -49,4 +49,10 @@ package DOM.Core.Attrs is
    function Owner_Element (Att : Attr) return Element;
    --  return the node to which Att belongs
 
+   function Is_Id (Att : Attr) return Boolean;
+   --   Returns whether this attribute is known to be of type ID (i.e. to
+   --   contain an identifier for its owner element)
+   --
+   --  Introduced in DOM 3.0
+
 end DOM.Core.Attrs;

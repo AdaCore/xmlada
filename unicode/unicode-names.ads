@@ -4,4 +4,5 @@
 --  exception is the NULL character, which has been spelled NUL
 
 package Unicode.Names is
+   pragma Preelaborate (Unicode.Names);
 end Unicode.Names;

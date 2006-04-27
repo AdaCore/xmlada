@@ -276,6 +276,30 @@ private
    --  Clone the value of Source into Dest, so that whatever happens to Source,
    --  Dest remains readable.
 
+   ------------------
+   -- Nodes htable --
+   ------------------
+
+   type Node_String is record
+      N   : Node;
+      Key : DOM_String_Access;
+   end record;
+   No_Node_String : constant Node_String := (null, null);
+
+   procedure Free (N : in out Node_String);
+   function Get_Key (N : Node_String) return DOM_String_Access;
+   pragma Inline (Free, Get_Key);
+
+   package Nodes_Htable is new Sax.HTable
+     (Element       => Node_String,
+      Empty_Element => No_Node_String,
+      Free          => Free,
+      Key           => DOM_String_Access,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => Key_Equal);
+   type Nodes_Htable_Access is access Nodes_Htable.HTable;
+
    -------------------
    -- Node_Name_Def --
    -------------------
@@ -382,7 +406,12 @@ private
          when Attribute_Node =>
             Attr_Name       : Shared_Node_Name_Def;
             Attr_Value      : DOM_String_Access;
+
             Owner_Element   : Node;
+            --  Generally an Element, but it can be a Document if the attribute
+            --  hasn't been associated yet.
+
+            Is_Id           : Boolean := False;
             Specified       : Boolean := False;
             --   ??? In fact, attributes can have children (text or
             --   entity_reference).
@@ -413,6 +442,7 @@ private
             Doc_Children   : Node_List;
             Doc_Type       : Node;
             Implementation : DOM_Implementation;
+            Ids            : Nodes_Htable_Access;
 
          when Document_Type_Node =>
             Document_Type_Name : DOM_String_Access;
@@ -433,5 +463,16 @@ private
    procedure Remove (List : in out Node_List; N : Node);
    --  Remove N from the list
    --  N must be an element of List, this is not checked.
+
+   procedure Document_Add_Id
+     (Doc  : Document;
+      Id   : DOM_String;
+      Elem : Element);
+   --  Store in the document as fast access to Elem by its ID
+
+   procedure Document_Remove_Id
+     (Doc  : Document;
+      Id   : DOM_String);
+   --  Remove an ID associated with Elem in the fast htable access
 
 end DOM.Core;

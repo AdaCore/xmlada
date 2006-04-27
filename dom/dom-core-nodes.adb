@@ -28,6 +28,7 @@
 -----------------------------------------------------------------------
 
 with DOM.Core.Documents;        use DOM.Core.Documents;
+with DOM.Core.Attrs;            use DOM.Core.Attrs;
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
@@ -965,6 +966,19 @@ package body DOM.Core.Nodes is
       case N.Node_Type is
          when Element_Node =>
             Free_Unless_Shared (N.Name);
+            --  If we have an ID attribute, remove the element from the
+            --  htable
+
+            if N.Attributes.Items /= null then
+               for Att in N.Attributes.Items'First .. N.Attributes.Last loop
+                  if Attr (N.Attributes.Items (Att)).Is_Id then
+                     Document_Remove_Id
+                       (Owner_Document (N),
+                        Value (Attr (N.Attributes.Items (Att))));
+                  end if;
+               end loop;
+            end if;
+
             Free (Node_List (N.Attributes), Deep => True);
             Free (N.Children, Deep);
 

@@ -115,6 +115,7 @@
 --  reference.
 
 package Unicode is
+   pragma Preelaborate (Unicode);
 
    type Unicode_Char is mod 2**32;
    --  A code point associated with a given character, taken in the Unicode

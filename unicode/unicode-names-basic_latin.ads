@@ -2,6 +2,8 @@
 --  unicode web site (http://www.unicode.org)
 
 package Unicode.Names.Basic_Latin is
+   pragma Preelaborate (Unicode.Names.Basic_Latin);
+
    --  Real Unicode name is NULL
    Nul                                     : constant Unicode_Char := 16#0000#;
    Start_Of_Heading                        : constant Unicode_Char := 16#0001#;

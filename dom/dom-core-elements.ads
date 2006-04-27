@@ -76,6 +76,28 @@ package DOM.Core.Elements is
      (Elem : Element; Namespace_URI : DOM_String; Local_Name : DOM_String);
    --  Like Remove_Attribute, but provides namespace support
 
+   procedure Set_Id_Attribute
+     (Elem  : Element;
+      Name  : DOM_String;
+      Is_Id : Boolean);
+   --  If the parameter is_Id is true, this method declares the specified
+   --  attribute to be a user-determined ID attribute.
+   --  This affects the behavior of Document.Get_Element_By_Id.
+   --  Not_Found_Err is raised if the specified node is not an attribute of
+   --  Elem.
+   --  No_Modification_Allowed_Err is raised if the node is readonly
+   --
+   --  Introduced in DOM 3.0
+
+   procedure Set_Id_Attribute_NS
+     (Elem          : Element;
+      Namespace_URI : DOM_String;
+      Local_Name    : DOM_String;
+      Is_Id         : Boolean);
+   --  Same as Set_Id_Attribute, with handling of namespaces.
+   --
+   --  Introduced in DOM 3.0
+
    ------------------------
    -- Attributes by node --
    ------------------------
@@ -104,6 +126,17 @@ package DOM.Core.Elements is
    function Remove_Attribute_Node_NS (Elem : Element; Old_Attr : Attr)
       return Attr;
    --  Like Remove_Attribute, but provides namespace support
+
+   procedure Set_Id_Attribute_Node
+     (Elem : Element; Id_Attr : Attr; Is_Id : Boolean);
+   --  If the parameter is_Id is true, this method declares the specified
+   --  attribute to be a user-determined ID attribute.
+   --  This affects the behavior of Document.Get_Element_By_Id.
+   --  Not_Found_Err is raised if the specified node is not an attribute of
+   --  Elem.
+   --  No_Modification_Allowed_Err is raised if the node is readonly
+   --
+   --  Introduced in DOM 3.0
 
    --------------
    -- Elements --
