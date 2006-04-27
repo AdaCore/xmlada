@@ -3,4 +3,5 @@ gnat.adc
 config.cache
 config.status
 Makefile
+shared.gpr
 xmlada-config
