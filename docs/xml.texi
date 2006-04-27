@@ -61,7 +61,6 @@ unmodified in any copy.
 * The Input module::
 * The SAX module::
 * The DOM module::
-* The XML_GTK module::
 * The Schema module::
 * Using the library::
 
@@ -90,13 +89,12 @@ The SAX module
 The DOM module
 * Using DOM::
 
-The XML_GTK module
-
 The Schema module
 * XML Grammars::
 * XML Schema Syntax::
 * Connecting XML documents and schemas::
 * Validating documents with SAX::
+* Validating documents with DOM::
 
 Using the library
 
@@ -1142,32 +1140,6 @@ tree in memory, in which case ad hoc storage might be implemented through
 the use of a SAX parser. The implementation of @code{dom-readers.adb} will
 prove helpful in creating such a parser.
 
-
-@c -------------------------------------------------------------------
-@node The XML_GTK module
-@chapter The XML_GTK module
-@c -------------------------------------------------------------------
-
-@noindent
-
-GTK/Ada is a library that can be used to build graphical user interfaces.
-It is available either from AdaCore directly, which should be the prefered
-version if you are using it in a commercial project, or directly from
-@url{http://libre.act-europe.fr} for university projects.
-
-You should first install GTK/Ada, and change the @code{ADA_PROJECT_PATH}
-environment variable so that it includes the directory containing
-@file{gtkada.gpr}.
-
-Then configure, compile and install XML/Ada. This will install an extra
-module and library called @file{xml_gtk} and @file{libxml_gtk.so}.
-
-This library allows you to use XML/Ada as the parser, while still generating
-an XML tree compatible with the one in @file{glib-xml.ads}. This can be
-used for instance in current applications that used GtkAda's lightweight
-parser, to use an XML parser which will accept a broader range of XML
-files, and will provide better error messages.
-
 @c -------------------------------------------------------------------
 @node The Schema module
 @chapter The Schema module
@@ -1178,6 +1150,7 @@ files, and will provide better error messages.
 * XML Schema Syntax::
 * Connecting XML documents and schemas::
 * Validating documents with SAX::
+* Validating documents with DOM::
 @end menu
 
 @c --------------------------------------------------------------------
@@ -1609,6 +1582,21 @@ without which no validation takes place.
 
    Close (Input);
 @b{end} SchemaExample;
+@end smallexample
+
+@c -------------------------------------------------------------------
+@node Validating documents with DOM
+@section Validating documents with DOM
+@c -------------------------------------------------------------------
+
+@noindent
+This is very similar to using DOM itself, except the base class of your
+reader should be @code{Schema.Dom_Readers.Tree_Reader}. Going back to the
+example described in @xref{Using DOM}, you would use the following to
+validate XML streams before generating the DOM tree
+
+@smallexample
+@include dom/domschemaexample.adb
 @end smallexample
 
 @c -------------------------------------------------------------------
