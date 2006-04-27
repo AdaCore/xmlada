@@ -1579,7 +1579,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
      "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.25200000000000000E+04)"
    expect "" "$act/E802-003.xml" ""
    expect "" "$act/uri.xml" ""
-   expect "" "$act/wf.xml" "$act/wf.xml:7:86: [WF-Element Type Match] Name differ for closing tag (expecting test)"
+   expect "" "$act/wf.xml" "$act/wf.xml:7:86: Name differ for closing tag (expecting test, opened line 6)"
    expect "$act/ns1.xsd" "" "$act/ns1.xsd:5:30: Unexpected element \"element\""
    expect "" "$act/empty.xml" "$act/empty.xml:3:71: Mixed content is not allowed for this element"
    expect "$act/recursive_import/import.xsd" "" ""
