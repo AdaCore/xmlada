@@ -102,7 +102,9 @@ package body Schema.Decimal is
 
    procedure Adjust (Object : in out Arbitrary_Precision_Number) is
    begin
-      Object.Value := new Byte_Sequence'(Object.Value.all);
+      if Object.Value /= null then
+         Object.Value := new Byte_Sequence'(Object.Value.all);
+      end if;
    end Adjust;
 
    -------------
