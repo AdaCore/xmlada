@@ -3,8 +3,42 @@ with Sax.Encodings;            use Sax.Encodings;
 with Sax.Utils;                use Sax.Utils;
 with Schema.Date_Time;         use Schema.Date_Time;
 with Schema.Decimal;           use Schema.Decimal;
+with Unicode.CES;              use Unicode, Unicode.CES;
 
 package body Schema.Validators.Simple_Types is
+
+   B64 : constant array (Unicode_Char range 32 .. 128) of Boolean :=
+      (Character'Pos ('A') .. Character'Pos ('Z') => True,
+       Character'Pos ('a') .. Character'Pos ('z') => True,
+       Character'Pos ('0') .. Character'Pos ('9') => True,
+       Character'Pos ('+') => True,
+       Character'Pos ('/') => True,
+       others => False);
+   B04 : constant array (Unicode_Char range 32 .. 128) of Boolean :=
+      (Character'Pos ('A') => True,
+       Character'Pos ('Q') => True,
+       Character'Pos ('g') => True,
+       Character'Pos ('w') => True,
+       others => False);
+   B16 : constant array (Unicode_Char range 32 .. 128) of Boolean :=
+      (Character'Pos ('A') => True,
+       Character'Pos ('E') => True,
+       Character'Pos ('I') => True,
+       Character'Pos ('M') => True,
+       Character'Pos ('Q') => True,
+       Character'Pos ('U') => True,
+       Character'Pos ('Y') => True,
+       Character'Pos ('c') => True,
+       Character'Pos ('g') => True,
+       Character'Pos ('k') => True,
+       Character'Pos ('o') => True,
+       Character'Pos ('s') => True,
+       Character'Pos ('w') => True,
+       Character'Pos ('0') => True,
+       Character'Pos ('4') => True,
+       Character'Pos ('8') => True,
+       others => False);
+   --  Whether the character matches the Base64Binary definitions
 
    ------------------------------------
    --  Facets used for ranged values --
@@ -36,6 +70,9 @@ package body Schema.Validators.Simple_Types is
       procedure Check_Facet
         (Facets     : in out Range_Facets_Description;
          Node_Value : Unicode.CES.Byte_Sequence);
+      procedure Copy
+        (From : Range_Facets_Description;
+         To   : in out Facets_Description_Record'Class);
       --  See doc for inherited subprograms
    end Generic_Range_Facets;
 
@@ -62,6 +99,9 @@ package body Schema.Validators.Simple_Types is
       procedure Check_Facet
         (Facets : in out Length_Facets_Description;
          Value  : Unicode.CES.Byte_Sequence);
+      procedure Copy
+        (From : Length_Facets_Description;
+         To   : in out Facets_Description_Record'Class);
    end Length_Facets;
 
    -----------------------
@@ -99,6 +139,22 @@ package body Schema.Validators.Simple_Types is
    --------------------------
 
    package body Generic_Range_Facets is
+
+      ----------
+      -- Copy --
+      ----------
+
+      procedure Copy
+        (From : Range_Facets_Description;
+         To   : in out Facets_Description_Record'Class)
+      is
+      begin
+         Copy (From => Common_Facets_Description (From), To => To);
+         Range_Facets_Description (To).Max_Inclusive := From.Max_Inclusive;
+         Range_Facets_Description (To).Min_Inclusive := From.Min_Inclusive;
+         Range_Facets_Description (To).Max_Exclusive := From.Max_Exclusive;
+         Range_Facets_Description (To).Min_Exclusive := From.Min_Exclusive;
+      end Copy;
 
       -----------------
       -- Check_Facet --
@@ -194,6 +250,20 @@ package body Schema.Validators.Simple_Types is
    -------------------
 
    package body Length_Facets is
+
+      ----------
+      -- Copy --
+      ----------
+
+      procedure Copy
+        (From : Length_Facets_Description;
+         To   : in out Facets_Description_Record'Class) is
+      begin
+         Copy (Common_Facets_Description (From), To);
+         Length_Facets_Description (To).Length     := From.Length;
+         Length_Facets_Description (To).Min_Length := From.Min_Length;
+         Length_Facets_Description (To).Max_Length := From.Max_Length;
+      end Copy;
 
       ---------------
       -- Add_Facet --
@@ -326,9 +396,12 @@ package body Schema.Validators.Simple_Types is
       function Get_Facets_Description
         (Validator : access Validator_Record) return Facets_Description
       is
-         pragma Unreferenced (Validator);
+         --  pragma Unreferenced (Validator);
+         Result : Facets_Description;
       begin
-         return new Facets_Type;
+         Result := new Facets_Type;
+         Copy (From => Validator.Facets, To => Result.all);
+         return Result;
       end Get_Facets_Description;
 
    end Generic_Simple_Validator;
@@ -404,6 +477,9 @@ package body Schema.Validators.Simple_Types is
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
+   procedure Copy
+     (From : Decimal_Facets_Description;
+      To   : in out Facets_Description_Record'Class);
    procedure Check_Facet
      (Facets      : in out Decimal_Facets_Description;
       Facet_Value : Unicode.CES.Byte_Sequence);
@@ -418,6 +494,9 @@ package body Schema.Validators.Simple_Types is
    with record
       Total_Digits    : Positive := Positive'Last;
    end record;
+   procedure Copy
+     (From : Integer_Facets_Description;
+      To   : in out Facets_Description_Record'Class);
    procedure Add_Facet
      (Facets      : in out Integer_Facets_Description;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -459,6 +538,27 @@ package body Schema.Validators.Simple_Types is
    package HexBinary_Facets is new Length_Facets (HexBinary_Get_Length);
    package HexBinary_Validators is new Generic_Simple_Validator
      (HexBinary_Facets.Length_Facets_Description);
+
+   function Base64Binary_Get_Length
+     (Value : Unicode.CES.Byte_Sequence) return Natural;
+   function Is_Valid_Base64Binary
+     (Value : Unicode.CES.Byte_Sequence) return Boolean;
+   package Base64Binary_Facets is new Length_Facets (Base64Binary_Get_Length);
+   package Base64Binary_Validators is new Generic_Simple_Validator
+     (Base64Binary_Facets.Length_Facets_Description);
+
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy
+     (From : Integer_Facets_Description;
+      To   : in out Facets_Description_Record'Class) is
+   begin
+      Integer_Facets_Package.Copy
+        (Integer_Facets_Package.Range_Facets_Description (From), To);
+      Integer_Facets_Description (To).Total_Digits := From.Total_Digits;
+   end Copy;
 
    -----------------
    -- Check_Facet --
@@ -564,6 +664,20 @@ package body Schema.Validators.Simple_Types is
          Applied := False;
    end Add_Facet;
 
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy
+     (From : Decimal_Facets_Description;
+      To   : in out Facets_Description_Record'Class) is
+   begin
+      Decimal_Facets_Package.Copy
+        (Decimal_Facets_Package.Range_Facets_Description (From), To);
+      Decimal_Facets_Description (To).Total_Digits := From.Total_Digits;
+      Decimal_Facets_Description (To).Fraction_Digits := From.Fraction_Digits;
+   end Copy;
+
    -----------------
    -- Check_Facet --
    -----------------
@@ -650,6 +764,122 @@ package body Schema.Validators.Simple_Types is
       return Sax.Encodings.Encoding.Length (Value) / 2;
    end HexBinary_Get_Length;
 
+   ---------------------------
+   -- Is_Valid_Base64Binary --
+   ---------------------------
+
+   function Is_Valid_Base64Binary
+     (Value : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Index         : Integer := Value'First;
+      C             : Unicode_Char;
+      B64S_Count    : Natural := 0;
+      Prev_Is_Space : Boolean := False;
+   begin
+      while Index <= Value'Last loop
+         Sax.Encodings.Encoding.Read (Value, Index, C);
+
+         if C = 16#20# then
+            if Prev_Is_Space then
+               return False;  --  Can never have two spaces in a row
+            end if;
+            Prev_Is_Space := True;
+         else
+            Prev_Is_Space := False;
+
+            if B64S_Count = 2
+               and then C in B16'Range
+               and then B16 (C)
+            then
+               if Index > Value'Last then
+                  return False;
+               end if;
+
+               Sax.Encodings.Encoding.Read (Value, Index, C);
+
+               if Index > Value'Last then
+                  if C /= Character'Pos ('=') then
+                     return False;
+                  else
+                     return True;
+                  end if;
+               elsif C in B64'Range and then B64 (C) then
+                  B64S_Count := B64S_Count + 2;
+               else
+                  return False;
+               end if;
+
+            elsif B64S_Count = 1
+               and then C in B04'Range
+               and then B04 (C)
+            then
+               if Index > Value'Last then
+                  return False;
+               end if;
+
+               Sax.Encodings.Encoding.Read (Value, Index, C);
+
+               if Index > Value'Last then
+                  return False;
+
+               elsif C = Character'Pos ('=') then
+                  Sax.Encodings.Encoding.Read (Value, Index, C);
+                  if Index < Value'Last and then C = 16#20# then
+                     Sax.Encodings.Encoding.Read (Value, Index, C);
+                  end if;
+
+                  if Index <= Value'Last or else C /= Character'Pos ('=') then
+                     return False;
+                  end if;
+
+                  return True;
+
+               elsif C in B64'Range and then B64 (C) then
+                  B64S_Count := B64S_Count + 2;
+               else
+                  return False;
+               end if;
+
+            elsif C in B64'Range and then B64 (C) then
+               B64S_Count := B64S_Count + 1;
+               if B64S_Count > 4 then
+                  B64S_Count := 1;
+               end if;
+
+            else
+               return False;
+            end if;
+         end if;
+      end loop;
+
+      --  Cannot finish with a space
+      if Prev_Is_Space or B64S_Count /= 4 then
+         return False;
+      end if;
+
+      return True;
+   end Is_Valid_Base64Binary;
+
+   -----------------------------
+   -- Base64Binary_Get_Length --
+   -----------------------------
+
+   function Base64Binary_Get_Length
+     (Value : Unicode.CES.Byte_Sequence) return Natural
+   is
+      Length : Natural := 0;
+      C : Unicode_Char;
+      Index : Positive := Value'First;
+   begin
+      while Index <= Value'Last loop
+         Sax.Encodings.Encoding.Read (Value, Index, C);
+         if C /= 16#20# and then C /= Character'Pos ('=') then
+            Length := Length + 1;
+         end if;
+      end loop;
+      return Length * 3 / 4;
+   end Base64Binary_Get_Length;
+
    -----------------
    -- Check_Facet --
    -----------------
@@ -695,10 +925,11 @@ package body Schema.Validators.Simple_Types is
 
    procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS) is
       use Integer_Validators;
-      use String_Facets, HexBinary_Facets;
+      use String_Facets, HexBinary_Facets, Base64Binary_Facets;
       Tmp     : XML_Validator;
       Str     : String_Validators.Validator;
       Hex     : HexBinary_Validators.Validator;
+      Base64  : Base64Binary_Validators.Validator;
       Int     : Integer_Validators.Validator;
       Dec     : Decimal_Validators.Validator;
       Created : XML_Type;
@@ -764,6 +995,10 @@ package body Schema.Validators.Simple_Types is
       Hex := new HexBinary_Validators.Validator_Record;
       Set_Implicit_Enumeration (Hex.Facets, Is_Valid_HexBinary'Access);
       Create_Global_Type (G, "hexBinary", Hex);
+
+      Base64 := new Base64Binary_Validators.Validator_Record;
+      Set_Implicit_Enumeration (Base64.Facets, Is_Valid_Base64Binary'Access);
+      Create_Global_Type (G, "base64Binary", Base64);
 
       Dec := new Decimal_Validators.Validator_Record;
       Create_Global_Type (G, "decimal", Dec);
