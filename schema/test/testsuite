@@ -32,7 +32,7 @@ nist_tests=('anyURI' 'boolean' 'byte' 'dateTime' 'date'
             'negativeInteger' 'NMTOKEN' 'nonNegativeInteger'
             'nonPositiveInteger' 'normalizedString' 'positiveInteger'
             'QName' 'short' 'string' 'time' 'token' 'unsignedByte'
-            'unsignedInt' 'unsignedLong' 'unsignedShort');
+            'unsignedInt' 'unsignedLong' 'unsignedShort' 'base64Binary');
 
 while getopts "vhdseuan:m:N" opt
 do 
