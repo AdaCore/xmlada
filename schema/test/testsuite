@@ -16,6 +16,10 @@
 
 xmltests=./xmltests
 
+## Name of the driver.
+# testschema=${TESTSCHEMA:=./testdomschema -silent}
+testschema=${TESTSCHEMA:-./testschema}
+
 debug=""
 verbose=0
 show_expected_failure=0
@@ -67,7 +71,7 @@ EOF
 done
 
 
-XML="./testschema $debug"
+XML="$testschema $debug"
 ms=$xmltests/msxsdtest
 sun=$xmltests/suntest/SunTestsAll
 nist=$xmltests/nisttest/NISTTestsAll
