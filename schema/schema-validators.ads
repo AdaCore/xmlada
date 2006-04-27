@@ -82,6 +82,11 @@ package Schema.Validators is
       Value  : Unicode.CES.Byte_Sequence) is abstract;
    --  Check whether Value matches Facets. Raises XML_Validator_Error otherwise
 
+   procedure Copy
+     (From : Facets_Description_Record;
+      To   : in out Facets_Description_Record'Class) is abstract;
+   --  Copy all the facets defined in From into To
+
    procedure Free (Facets : in out Facets_Description_Record) is abstract;
    procedure Free (Facets : in out Facets_Description);
    --  Free the facets;

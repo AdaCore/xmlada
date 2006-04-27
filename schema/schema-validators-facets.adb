@@ -1,5 +1,6 @@
 with Unicode.CES;           use Unicode.CES;
 with Ada.Strings.Unbounded;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Schema.Validators.Facets is
 
@@ -55,6 +56,38 @@ package body Schema.Validators.Facets is
          Free (Facets.Enumeration);
       end if;
    end Free;
+
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy
+     (From : Common_Facets_Description;
+      To   : in out Facets_Description_Record'Class) is
+   begin
+      Common_Facets_Description (To).Mask := From.Mask;
+      Common_Facets_Description (To).Whitespace := From.Whitespace;
+      if From.Pattern /= null then
+         Common_Facets_Description (To).Pattern :=
+           new Pattern_Matcher'(From.Pattern.all);
+      end if;
+
+      if From.Pattern_String /= null then
+         Common_Facets_Description (To).Pattern_String :=
+           new Byte_Sequence'(From.Pattern_String.all);
+      end if;
+
+      Common_Facets_Description (To).Implicit_Enumeration :=
+        From.Implicit_Enumeration;
+
+      if From.Enumeration /= null then
+         for L in From.Enumeration'Range loop
+            Append
+              (Common_Facets_Description (To).Enumeration,
+               From.Enumeration (L).all);
+         end loop;
+      end if;
+   end Copy;
 
    -----------------
    -- Check_Facet --

@@ -75,22 +75,18 @@ private package Schema.Validators.Facets is
    --  Facets shared by all basic types
 
    procedure Free (Facets : in out Common_Facets_Description);
-   --  Free the contents of the facets
-
    procedure Check_Facet
      (Facets : in out Common_Facets_Description;
       Value  : Unicode.CES.Byte_Sequence);
-   --  Check whether the facets match Value. If they don't, an exception is
-   --  raised.
-
+   procedure Copy
+     (From : Common_Facets_Description;
+      To   : in out Facets_Description_Record'Class);
    procedure Add_Facet
      (Facets      : in out Common_Facets_Description;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
-   --  Set a new facet in Facets.
-   --  Applies is set to True if Facet_Name was indeed one of the common
-   --  facets
+   --  See inherited documentation
 
    procedure Set_Implicit_Enumeration
      (Facets : in out Common_Facets_Description; Validator : Value_Validator);

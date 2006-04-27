@@ -125,7 +125,7 @@ package body Schema.Validators.Lists is
    is
       pragma Unreferenced (Validator);
    begin
-      return new List_Facets_Description;
+      return Facets_Description'(new List_Facets_Description);
    end Get_Facets_Description;
 
    -------------
