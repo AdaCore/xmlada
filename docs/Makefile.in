@@ -6,7 +6,12 @@ MAKEINFO= @MAKEINFO@
 TEXI2DVI= @TEXI2DVI@
 TEX= @TEX@
 
-all: ${FORMATS} clean
+all: examples ${FORMATS} clean
+
+examples: force
+        cd sax; gnatmake -q -Pdefault
+        cd dom; gnatmake -q -Pdefault
+        cd schema; gnatmake -q -Pdefault
 
 %.dvi: %.texi
 ifneq (${TEX},)
