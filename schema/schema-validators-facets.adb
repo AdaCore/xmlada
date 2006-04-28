@@ -1,6 +1,5 @@
 with Unicode.CES;           use Unicode.CES;
 with Ada.Strings.Unbounded;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Schema.Validators.Facets is
 
