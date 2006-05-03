@@ -4130,8 +4130,12 @@ package body Sax.Readers is
             end if;
          end if;
 
-         if not Is_Valid_URI (Get_String (URI_S, URI_E)) then
-            Error (Parser, "Invalid URI for namespace", URI_S); --  NS 2
+         if not Is_Valid_IRI (Get_String (URI_S, URI_E)) then
+            Error
+              (Parser,
+               "Invalid absolute IRI (Internationalized Resource Identifier)"
+               & " for namespace", URI_S);
+            --  NS 2
          end if;
 
          Add_Namespace (Parser, Parser.Current_Node, Prefix, URI_S, URI_E);
@@ -4914,6 +4918,7 @@ package body Sax.Readers is
          C : Unicode_Char;
          J : Natural;
          Value_Start, Value_End : Token;
+         Tmp_Version : XML_Versions;
       begin
          Next_Token_Skip_Spaces (Input, Parser, Id);
          if Id.Typ /= Equal then
@@ -4946,11 +4951,28 @@ package body Sax.Readers is
             end if;
          end loop;
 
-         if Parser.Buffer (Value_Start.First .. Value_End.Last) /= "1.0" then
+         if Parser.Buffer (Value_Start.First .. Value_End.Last) = "1.1" then
+            Tmp_Version := XML_1_1;
+
+         elsif Parser.Buffer (Value_Start.First .. Value_End.Last) = "1.0" then
+            Tmp_Version := XML_1_0;
+
+         else
             Fatal_Error
               (Parser, "Unsupported version of XML: "
                & Parser.Buffer (Value_Start.First .. Value_End.Last));
          end if;
+
+         if Parser.In_External_Entity
+           and then Parser.XML_Version /= Tmp_Version
+         then
+            Fatal_Error
+              (Parser,
+               "External entity doesn't have the same"
+               & " XML version as document");
+         end if;
+
+         Parser.XML_Version := Tmp_Version;
 
          Next_Token (Input, Parser, Id);
          if Id.Typ = Space then

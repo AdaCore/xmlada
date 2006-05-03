@@ -135,7 +135,7 @@ package Sax.Readers is
    --  Lexical_Handler.
 
    Test_Valid_Chars_Feature : constant String :=
-     "http://act-europe.fr/sax/features/test_valid_chars";
+     "http://www.adacore.com/sax/features/test_valid_chars";
    --  True if the SAX parser will check for each character read from the
    --  input streams whether it is valid. This might slow done the parser,
    --  but will provide better validation.
@@ -763,22 +763,12 @@ private
    --  For notations, we simply store whether they have been defined or not,
    --  and then only for validating parsers
 
+   type XML_Versions is (XML_1_0, XML_1_1);
+
    type Reader is tagged record
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
 
-      Standalone_Document : Boolean := False;
-      --  Whether the document is specified as "standalone" in the XML
-      --  prolog
-
-      Last_Read     : Unicode.Unicode_Char;
-      Last_Read_Is_Valid : Boolean := True;
-      --  Whether Last_Read is was actualy read, or whether it was set to null
-      --  because we encountered the end of an input stream.
-      --  (For instance, when an entity is parsed, its contents always ends
-      --  with ASCII.NUL and Last_Read_Is_Valid is set to False.
-
-      State         : Parser_State;
       Locator       : Sax.Locators.Locator_Impl_Access;
       Current_Node  : Element_Access;
 
@@ -791,14 +781,6 @@ private
 
       Close_Inputs  : Entity_Input_Source_Access;
       --  List of entities to be closed at the next call to Next_Token
-
-      In_External_Entity : Boolean;
-      --  Whether we are parsing an external entity
-
-      Previous_Char_Was_CR : Boolean;
-      --  True if the previous character read from the stream was a
-      --  Carriage_Return (needed since XML parsers must convert these to
-      --  one single Line_Feed).
 
       Default_Atts : Attributes_Table.HTable (Default_Atts_Table_Size);
       --  This table contains the list of default attributes defined for
@@ -818,11 +800,6 @@ private
       --  a validating parser). This is left to null for non-validating
       --  parsers.
 
-      Ignore_State_Special : Boolean;
-      --  If True, ignore the State.Ignore_Special flag in the next call
-      --  to Next_Token. This is used for handling of special characters
-      --  withing strings.
-
       Default_Namespaces : XML_NS;
       --  All the namespaces defined by default
 
@@ -835,6 +812,34 @@ private
 
       Hooks  : Parser_Hooks;
       --  Hooks to be called before the primitive operations
+
+      XML_Version   : XML_Versions := XML_1_0;
+
+      Standalone_Document : Boolean := False;
+      --  Whether the document is specified as "standalone" in the XML
+      --  prolog
+
+      Last_Read     : Unicode.Unicode_Char;
+      Last_Read_Is_Valid : Boolean := True;
+      --  Whether Last_Read is was actualy read, or whether it was set to null
+      --  because we encountered the end of an input stream.
+      --  (For instance, when an entity is parsed, its contents always ends
+      --  with ASCII.NUL and Last_Read_Is_Valid is set to False.
+
+      State         : Parser_State;
+
+      In_External_Entity : Boolean;
+      --  Whether we are parsing an external entity
+
+      Previous_Char_Was_CR : Boolean;
+      --  True if the previous character read from the stream was a
+      --  Carriage_Return (needed since XML parsers must convert these to
+      --  one single Line_Feed).
+
+      Ignore_State_Special : Boolean;
+      --  If True, ignore the State.Ignore_Special flag in the next call
+      --  to Next_Token. This is used for handling of special characters
+      --  withing strings.
 
       Feature_Namespace                   : Boolean := True;
       Feature_Namespace_Prefixes          : Boolean := False;
