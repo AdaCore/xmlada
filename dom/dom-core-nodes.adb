@@ -1260,6 +1260,8 @@ package body DOM.Core.Nodes is
 
             if not Prefix_Already_Defined
               and then Prefix (N) /= Xmlns_Sequence
+              and then Prefix (N) /= Xml_Sequence
+              and then Prefix (N) /= ""
             then
                Put (Space_Sequence, Encoding);
                Put (Xmlns_Sequence, Encoding);
