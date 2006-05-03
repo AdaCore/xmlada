@@ -1168,8 +1168,12 @@ package body DOM.Core.Nodes is
       procedure Print_Namespace_Declarations (N : Element);
       --  Print the namespace declarations required for the tree rooted at N
 
-      function Print_Namespace_Declaration
+      function Print_Namespace_Declaration_Element
         (N : Element; Force : Boolean) return Boolean;
+      function Print_Namespace_Declaration_Attr
+        (N : Attr; Force : Boolean) return Boolean;
+      function Print_Namespace_Declaration_Node
+        (N : Node; Name : Node_Name_Def; Force : Boolean) return Boolean;
       --  Print the xmlns attribute for N if its namespace is not already
       --  known (or Force is True). Return True if the attribute was created
 
@@ -1189,21 +1193,54 @@ package body DOM.Core.Nodes is
              Namespace  => N.Name.Namespace));
       end Remove_Namespace_Declaration;
 
-      ---------------------------------
-      -- Print_Namespace_Declaration --
-      ---------------------------------
+      -----------------------------------------
+      -- Print_Namespace_Declaration_Element --
+      -----------------------------------------
 
-      function Print_Namespace_Declaration
+      function Print_Namespace_Declaration_Element
         (N : Element; Force : Boolean) return Boolean
       is
          Name  : constant Node_Name_Def :=
            (Prefix     => N.Name.Prefix,
             Local_Name => Empty_String,
             Namespace  => N.Name.Namespace);
+         Tmp : Boolean;
+         pragma Unreferenced (Tmp);
+      begin
+         for J in 0 .. N.Attributes.Last loop
+            Tmp := Print_Namespace_Declaration_Attr
+              (N.Attributes.Items (J), Force => False);
+         end loop;
+
+         return Print_Namespace_Declaration_Node (Node (N), Name, Force);
+      end Print_Namespace_Declaration_Element;
+
+      --------------------------------------
+      -- Print_Namespace_Declaration_Attr --
+      --------------------------------------
+
+      function Print_Namespace_Declaration_Attr
+        (N : Attr; Force : Boolean) return Boolean
+      is
+         Name  : constant Node_Name_Def :=
+           (Prefix     => N.Attr_Name.Prefix,
+            Local_Name => Empty_String,
+            Namespace  => N.Attr_Name.Namespace);
+      begin
+         return Print_Namespace_Declaration_Node (Node (N), Name, Force);
+      end Print_Namespace_Declaration_Attr;
+
+      --------------------------------------
+      -- Print_Namespace_Declaration_Node --
+      --------------------------------------
+
+      function Print_Namespace_Declaration_Node
+        (N : Node; Name : Node_Name_Def; Force : Boolean) return Boolean
+      is
          Prefix_Already_Defined : Boolean := False;
          Iter : Node_Name_Htable.Iterator;
       begin
-         if N.Name.Prefix /= null
+         if Name.Prefix /= null
            and then Get (Namespaces.all, Name) = null
          then
             --  If we have another one with the same prefix, do not print the
@@ -1213,7 +1250,7 @@ package body DOM.Core.Nodes is
                --  Check whether the prefix is already defined
                Iter := First (Namespaces.all);
                while Iter /= No_Iterator loop
-                  if Current (Iter).Prefix.all = N.Name.Prefix.all then
+                  if Current (Iter).Prefix.all = Name.Prefix.all then
                      Prefix_Already_Defined := True;
                      exit;
                   end if;
@@ -1221,7 +1258,9 @@ package body DOM.Core.Nodes is
                end loop;
             end if;
 
-            if not Prefix_Already_Defined then
+            if not Prefix_Already_Defined
+              and then Prefix (N) /= Xmlns_Sequence
+            then
                Put (Space_Sequence, Encoding);
                Put (Xmlns_Sequence, Encoding);
                Put (Colon_Sequence, Encoding);
@@ -1235,12 +1274,12 @@ package body DOM.Core.Nodes is
                   From_Qualified_Name
                     (Doc,
                      Name => Prefix (N) & Colon_Sequence,
-                     Namespace => N.Name.Namespace));
+                     Namespace => Name.Namespace));
                return True;
             end if;
          end if;
          return False;
-      end Print_Namespace_Declaration;
+      end Print_Namespace_Declaration_Node;
 
       ----------------------------------
       -- Print_Namespace_Declarations --
@@ -1253,8 +1292,8 @@ package body DOM.Core.Nodes is
       begin
          while Child /= null loop
             if Child.Node_Type = Element_Node then
-               Tmp :=
-                 Print_Namespace_Declaration (Element (Child), Force => False);
+               Tmp := Print_Namespace_Declaration_Element
+                 (Element (Child), Force => False);
             end if;
             Child := Next_Sibling (Child);
          end loop;
@@ -1287,12 +1326,6 @@ package body DOM.Core.Nodes is
                Put (Less_Than_Sequence, Encoding);
                Print_Name (N, With_URI, EOL_Sequence, Encoding);
 
-               Xmlns_Inserted :=
-                 Print_Namespace_Declaration (Element (N), Force => True);
-               if N = Root_Element then
-                  Print_Namespace_Declarations (Element (N));
-               end if;
-
                --  Sort the XML attributes as required for canonical XML
                Sort (N.Attributes);
 
@@ -1302,6 +1335,12 @@ package body DOM.Core.Nodes is
                      Recursive_Print (N.Attributes.Items (J));
                   end if;
                end loop;
+
+               Xmlns_Inserted := Print_Namespace_Declaration_Element
+                 (Element (N), Force => True);
+               if N = Root_Element then
+                  Print_Namespace_Declarations (Element (N));
+               end if;
 
                if Collapse_Empty_Nodes and then N.Children = Null_List then
                   Put (Slash_Sequence & Greater_Than_Sequence, Encoding);
