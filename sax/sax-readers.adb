@@ -1181,6 +1181,7 @@ package body Sax.Readers is
          if Loc /= Null_Token then
             Id := Loc;
          else
+            Id := Null_Token;
             Id.Line := Get_Line_Number (Parser.Locator.all);
             Id.Column := Get_Column_Number (Parser.Locator.all);
          end if;
@@ -2695,7 +2696,8 @@ package body Sax.Readers is
          Already_Displayed_Self_Contained_Error : Boolean := False;
 
       begin
-         Start_Token.Line := Get_Line_Number (Parser.Locator.all);
+         Start_Token := Null_Token;
+         Start_Token.Line   := Get_Line_Number (Parser.Locator.all);
          Start_Token.Column := Get_Column_Number (Parser.Locator.all);
 
          if Open_Was_Read then
