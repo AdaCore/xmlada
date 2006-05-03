@@ -434,6 +434,49 @@ package body Sax.Utils is
       return True;
    end Is_Valid_URI;
 
+   ------------------
+   -- Is_Valid_URN --
+   ------------------
+
+   function Is_Valid_URN
+     (Name : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Index    : Integer := Name'First + URN_Sequence'Length;
+      C        : Unicode_Char;
+   begin
+      --  format is  "urn:" <NID> ":" <NSS>
+      --  NID: Namespace Identifier
+      --  NSS: Namespace Specific String
+
+      --  Leading sequence should be case insensitive
+      if Name'Length < URN_Sequence'Length
+        or else Name (Name'First .. Name'First + URN_Sequence'Length - 1) /=
+        URN_Sequence
+      then
+         return False;
+      end if;
+
+      while Index <= Name'Last loop
+         Encoding.Read (Name, Index, C);
+         if C = Colon then
+            --  Should do further tests
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Is_Valid_URN;
+
+   ------------------
+   -- Is_Valid_IRI --
+   ------------------
+
+   function Is_Valid_IRI
+     (Name : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      return Is_Valid_URI (Name) or else Is_Valid_URN (Name);
+   end Is_Valid_IRI;
+
    ---------------------------
    -- Contains_URI_Fragment --
    ---------------------------

@@ -81,8 +81,20 @@ package Sax.Utils is
 
    function Is_Valid_URI
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
-   --  True if Name is a valid URL, as per RFC2396.
+   --  True if Name is a valid URI, as per RFC2396.
    --  See http://www.ietf.org/rfc/rfc2396.txt
+
+   function Is_Valid_URN
+     (Name : Unicode.CES.Byte_Sequence) return Boolean;
+   --  True if Name is a valid URN (Uniform Ressource Name) identification, as
+   --  per RFC 2141.
+   --  See http://www.faqs.org/rfcs/rfc2141.html
+
+   function Is_Valid_IRI
+     (Name : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether Name is a valid IRI (Internationalized Resource Identifier), as
+   --  per Namespaces in XML 1.1 definition
+   --  See http://www.w3.org/TR/xml-names11/#dt-IRI
 
    function Contains_URI_Fragment
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
