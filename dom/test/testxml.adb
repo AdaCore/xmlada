@@ -65,6 +65,7 @@ procedure Testxml is
    Print_XML_PI   : Boolean := False;
    Collapse_Empty_Nodes : Boolean := False;
    Auto_Run : Boolean := False;
+   Verbose : Boolean := False;
 
    type Testcases_Result is record
       Success_Count   : Natural := 0;
@@ -351,7 +352,9 @@ procedure Testxml is
       Test : Node := First_Child (N);
       Success : Testcases_Result := No_Result;
    begin
---      Put_Line ("--- Profile: " & Get_Attribute (N, "PROFILE"));
+      if Verbose then
+         Put_Line ("--- Profile: " & Get_Attribute (N, "PROFILE"));
+      end if;
       while Test /= null loop
          if Node_Name (Test) = "TEST" then
             if Run_XML_1_1_Tests
@@ -474,6 +477,10 @@ procedure Testxml is
       Result2  : Testcases_Result := No_Result;
       Msg, Tmp : String_Access;
    begin
+      if Verbose then
+         Put_Line ("Running " & Base & " " & URI);
+      end if;
+
       if not Namespaces then
          Set_Feature (Reader, Namespace_Feature, False);
          Set_Feature (Reader, Namespace_Prefixes_Feature, False);
@@ -757,7 +764,7 @@ begin
    loop
       case Getopt
         ("silent uri normalize validate dump valid_chars encoding-out: eol:"
-         & " comments xmlpi collapse nonamespaces auto")
+         & " comments xmlpi collapse nonamespaces auto verbose")
       is
          when ASCII.Nul => exit;
          when 'e' =>
@@ -785,6 +792,8 @@ begin
                Validate := True;
             elsif Full_Switch = "valid_chars" then
                Valid_Chars := True;
+            elsif Full_Switch = "verbose" then
+               Verbose := True;
             end if;
          when 'd' => Dump := True;
          when 'n' =>
