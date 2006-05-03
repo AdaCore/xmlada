@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?my_pi ?>
 <!--  top level comment -->
-<html xmlns:top="top-levelns">
+<html xmlns:top="http://top-levelns">
    <top:h1>Big &amp; &#65; &#x41; header</top:h1>
-   <manu:h2 xmlns:manu="manuns"
+   <manu:h2 xmlns:manu="http://manuns"
       a1="  a  b  " a2=" &#x20; &#x20; a  b&#x20;  " />
    <xml:img 	xml:src='&#65;&amp;toto.gif' />
 		    <!-- an invalid comment  -->
