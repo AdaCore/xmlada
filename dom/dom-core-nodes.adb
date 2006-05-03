@@ -1422,7 +1422,11 @@ package body DOM.Core.Nodes is
 
    begin
       Recursive_Print (N);
-      Reset (Namespaces.all);
+
+      if not Shared_Strings then
+         Reset (Namespaces.all);
+      end if;
+
       Unchecked_Free (Namespaces);
    end Print;
 
