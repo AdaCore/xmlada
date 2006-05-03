@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005-2006                     --
+--                    Copyright (C) 2005-2006                        --
 --                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -180,7 +180,7 @@ package body Sax.Utils is
    -----------------------
 
    function Is_Valid_Nmtokens
-     (Nmtokens    : Unicode.CES.Byte_Sequence) return Boolean
+     (Nmtokens : Unicode.CES.Byte_Sequence) return Boolean
    is
       C     : Unicode_Char;
       Index : Natural := Nmtokens'First;
@@ -226,10 +226,10 @@ package body Sax.Utils is
    --------------------
 
    function Is_Valid_Names
-     (Name        : Unicode.CES.Byte_Sequence) return Boolean
+     (Name : Unicode.CES.Byte_Sequence) return Boolean
    is
-      C : Unicode_Char;
-      Index : Natural := Name'First;
+      C             : Unicode_Char;
+      Index         : Natural := Name'First;
       First_In_Name : Boolean := True;
    begin
       if Name'Length = 0 then
@@ -263,10 +263,10 @@ package body Sax.Utils is
    ----------------------
 
    function Is_Valid_NCnames
-     (Name        : Unicode.CES.Byte_Sequence) return Boolean
+     (Name : Unicode.CES.Byte_Sequence) return Boolean
    is
-      C : Unicode_Char;
-      Index : Natural := Name'First;
+      C             : Unicode_Char;
+      Index         : Natural := Name'First;
       First_In_Name : Boolean := True;
    begin
       if Name'Length = 0 then
@@ -441,12 +441,15 @@ package body Sax.Utils is
    function Is_Valid_URN
      (Name : Unicode.CES.Byte_Sequence) return Boolean
    is
-      Index    : Integer := Name'First + URN_Sequence'Length;
-      C        : Unicode_Char;
+      Index : Integer := Name'First + URN_Sequence'Length;
+      C     : Unicode_Char;
    begin
       --  format is  "urn:" <NID> ":" <NSS>
       --  NID: Namespace Identifier
       --  NSS: Namespace Specific String
+
+      --  ??? Note that this implementation makes <NSS> optional as it is
+      --  often the case in current usage.
 
       --  Leading sequence should be case insensitive
       if Name'Length < URN_Sequence'Length
@@ -456,15 +459,7 @@ package body Sax.Utils is
          return False;
       end if;
 
-      while Index <= Name'Last loop
-         Encoding.Read (Name, Index, C);
-         if C = Colon then
-            --  Should do further tests
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return True;
    end Is_Valid_URN;
 
    ------------------
