@@ -1297,8 +1297,10 @@ package body DOM.Core.Nodes is
                Sort (N.Attributes);
 
                for J in 0 .. N.Attributes.Last loop
-                  Put (Space_Sequence, Encoding);
-                  Recursive_Print (N.Attributes.Items (J));
+                  if Prefix (N.Attributes.Items (J)) /= Xmlns_Sequence then
+                     Put (Space_Sequence, Encoding);
+                     Recursive_Print (N.Attributes.Items (J));
+                  end if;
                end loop;
 
                if Collapse_Empty_Nodes and then N.Children = Null_List then
