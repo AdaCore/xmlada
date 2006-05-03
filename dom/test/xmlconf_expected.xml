@@ -94,6 +94,8 @@
   <test id="ibm-invalid-P32-ibm32i04.xml" unsupported="yes"/><!--standalone-->
   <test id="ibm-invalid-P32-ibm32i03.xml" unsupported="yes"/><!--standalone-->
   <test id="ibm-invalid-P32-ibm32i01.xml" unsupported="yes"/><!--standalone-->
+  <test id="not-wf-sa-084" unsupported="yes"
+    >084.xml:4:24: Undefined entity 'e'</test>  <!--  Incorrect error message -->
 
   <!--  The following tests require validation with DTD. The implementation
         should be shared with schemas -->
@@ -609,8 +611,6 @@ Did you want to use &amp;amp;?</test>
     >081.xml:4:9: Attribute values cannot reference external entities</test>
   <test id="not-wf-sa-082"
     >082.xml:4:24: Attribute values cannot reference external entities</test>
-  <test id="not-wf-sa-084"
-    >084.xml:4:24: Undefined entity 'e'</test>
   <test id="not-wf-sa-088"
     >088.xml:6:13: '&lt;' not authorized in attribute values</test>
   <test id="not-wf-sa-089"
@@ -1336,7 +1336,7 @@ Did you want to use &amp;amp;?</test>
     >022.xml:3:5: No DTD defined for this document</test>
   <test id="rmt-ns10-021"
     >021.xml:3:5: No DTD defined for this document
-021.xml:4:14: Invalid URI for namespace</test>
+021.xml:4:14: Invalid absolute IRI (Internationalized Resource Identifier) for namespace</test>
   <test id="rmt-ns10-020"
     >020.xml:3:5: No DTD defined for this document
 020.xml:3:47: [VC] No attribute allowed for element foo</test>
@@ -1361,17 +1361,17 @@ Did you want to use &amp;amp;?</test>
   <test id="rmt-ns10-009"
     >009.xml:16:29: Attributes may appear only once: b:attr</test>
   <test id="rmt-ns10-006"
-    >006.xml:7:13: Invalid URI for namespace</test>
+    >006.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace</test>
   <test id="rmt-ns10-005"
-    >005.xml:7:13: Invalid URI for namespace</test>
+    >005.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace</test>
   <test id="rmt-ns10-004"
-    >004.xml:7:13: Invalid URI for namespace</test>
+    >004.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace</test>
   <test id="rmt-e2e-61"
     >E61.xml:2:1: Non-white space found at top level</test>
   <test id="rmt-e2e-57"
     >E57.xml:1:56: Value of xml:space must be (default|preserve)</test>
   <test id="rmt-e2e-38"
-    >E38.ent:1:20: Unsupported version of XML: 1.1</test>
+    >E38.ent:1:20: External entity doesn't have the same XML version as document</test>
   <test id="rmt-e2e-27"
     >E27.xml:4:6: Invalid character code: 55296</test>
   <test id="rmt-e2e-20"
