@@ -95,6 +95,7 @@ package Sax.Encodings is
    Equals_Sign_Sequence   : constant Byte_Sequence := "=";
    Quotation_Mark_Sequence      : constant Byte_Sequence := """";
    Slash_Sequence         : constant Byte_Sequence := "/";
+   URN_Sequence           : constant Byte_Sequence := "urn:";
    Namespaces_URI_Sequence : constant Byte_Sequence :=
      "http://www.w3.org/XML/1998/namespace";
    Xmlns_URI_Sequence : constant Byte_Sequence :=
