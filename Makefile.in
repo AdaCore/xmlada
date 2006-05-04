@@ -47,6 +47,10 @@ test: force
 	${GNATMAKE} -Pdom/test/dom_test.gpr ${MAKE_ARGS}
 	${GNATMAKE} -Pschema/test/schema_test.gpr ${MAKE_ARGS}
 
+run_test: force
+	cd dom/test; make tests
+	cd schema/test; make tests
+
 docs: force
 	-${MAKE} -e -C docs
 
