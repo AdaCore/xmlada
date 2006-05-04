@@ -9,9 +9,9 @@ TEX= @TEX@
 all: examples ${FORMATS} clean
 
 examples: force
-        cd sax; gnatmake -q -Pdefault
-        cd dom; gnatmake -q -Pdefault
-        cd schema; gnatmake -q -Pdefault
+	cd sax; gnatmake -q -Pdefault
+	cd dom; gnatmake -q -Pdefault
+	cd schema; gnatmake -q -Pdefault
 
 %.dvi: %.texi
 ifneq (${TEX},)
