@@ -130,18 +130,18 @@ package Sax.Attributes is
    --  Return an attribute's value by Namespace name
 
    function Get_Content
-     (Attr : Attributes; Index : Natural) return Sax.Models.Element_Model_Ptr;
+     (Attr : Attributes; Index : Natural) return Sax.Models.Content_Model;
    --  Return the content model for the attribute.
    --  This function doesn't exist in the SAX 2.0 standard.
-   --  Do not modify the pointer returned, since this is directly the
-   --  internal pointer.
+   --  If you need to keep a copy of the returned type, you must Ref it.
 
    procedure Set_Content
      (Attr    : Attributes;
       Index   : Natural;
-      Content : Sax.Models.Element_Model_Ptr);
-   --  Set the content model for the attribute. No copy of content is made, and
-   --  you shouldn't free it until the attribute itself is destroyed.
+      Content : Sax.Models.Content_Model);
+   --  Set the content model for the attribute.
+   --  Content is automatically Refed internally, so that caller is still
+   --  responsible for Unref-ing any reference it owns.
 
    function Get_Default_Declaration
      (Attr : Attributes; Index : Natural) return Default_Declaration;
@@ -154,7 +154,7 @@ package Sax.Attributes is
       Local_Name : Unicode.CES.Byte_Sequence;
       Qname      : Unicode.CES.Byte_Sequence;
       Att_Type   : Attribute_Type;
-      Content    : Sax.Models.Element_Model_Ptr;
+      Content    : Sax.Models.Content_Model;
       Value      : Unicode.CES.Byte_Sequence;
       Default_Decl : Default_Declaration := Default);
    --  Add an attribute to the end of the list.
@@ -162,8 +162,8 @@ package Sax.Attributes is
    --  already in the list, this is the responsability of the application.
    --  Content should be null unless Att_Type is Notation or Enumeration.
    --
-   --  No copy of Content is made, so you shouldn't free it until the attribute
-   --  itself is destroyed (this is also not done automatically)
+   --  The counting for Content is incremented, so you are still responsible
+   --  for calling Unref after this procedure.
 
    procedure Clear (Attr : in out Attributes);
    --  Clear the list of attributes for reuse (or to free the memory allocated
@@ -180,12 +180,14 @@ package Sax.Attributes is
       Local_Name : Unicode.CES.Byte_Sequence;
       Qname      : Unicode.CES.Byte_Sequence;
       Att_Type   : Attribute_Type;
-      Content    : Sax.Models.Element_Model_Ptr;
+      Content    : Sax.Models.Content_Model;
       Value      : Unicode.CES.Byte_Sequence;
       Default_Decl : Default_Declaration := Default);
    --  Set an attribute in the list.
    --  For the sake of speed, this function doesn't check if the attribute is
    --  already in the list, this is the responsability of the application.
+   --  Content is Refed internally, so the caller still needs to Unref it if it
+   --  owns a reference to the model
 
    procedure Set_Attributes
      (Attr : in out Attributes; From : Attributes'Class);
@@ -235,7 +237,7 @@ private
       Att_Type     : Attribute_Type;
       Qname        : Unicode.CES.Byte_Sequence_Access;
       Default_Decl : Default_Declaration;
-      Content      : Sax.Models.Element_Model_Ptr;
+      Content      : Sax.Models.Content_Model := Sax.Models.Unknown_Model;
       Next         : Attribute_Access;
    end record;
 

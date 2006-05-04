@@ -685,7 +685,9 @@ package body Sax.Readers is
    pragma Inline (Input_Id);
    --  Return the current input id.
 
-   procedure Close_Inputs (Parser : in out Reader'Class);
+   procedure Close_Inputs
+     (Parser : in out Reader'Class;
+      Inputs : in out Entity_Input_Source_Access);
    --  Close the inputs that have been completely read. This should be
    --  called every time one starts an entity, so that calls to
    --  Start_Entity/End_Entity are properly nested, and error messages
@@ -1377,25 +1379,29 @@ package body Sax.Readers is
    -- Close_Inputs --
    ------------------
 
-   procedure Close_Inputs (Parser : in out Reader'Class) is
+   procedure Close_Inputs
+     (Parser : in out Reader'Class;
+      Inputs : in out Entity_Input_Source_Access)
+   is
       procedure Free is new Unchecked_Deallocation
         (Entity_Input_Source, Entity_Input_Source_Access);
       Input_A : Entity_Input_Source_Access;
    begin
-      while Parser.Close_Inputs /= null loop
+      while Inputs /= null loop
          --  ??? Could use Input_Sources.Locator.Free
-         if Parser.Close_Inputs.Input /= null then
-            Close (Parser.Close_Inputs.Input.all);
-            Unchecked_Free (Parser.Close_Inputs.Input);
+         if Inputs.Input /= null then
+            Close (Inputs.Input.all);
+            Unchecked_Free (Inputs.Input);
          end if;
 
          --  not in string context
          if not Parser.State.Ignore_Special then
-            End_Entity (Parser, Parser.Close_Inputs.Name.all);
+            End_Entity (Parser, Inputs.Name.all);
          end if;
 
-         Input_A := Parser.Close_Inputs;
-         Parser.Close_Inputs := Parser.Close_Inputs.Next;
+         Input_A := Inputs;
+         Inputs := Inputs.Next;
+         Unref (Input_A.Save_Loc);
          Free (Input_A.Name);
          Free (Input_A);
       end loop;
@@ -1858,7 +1864,7 @@ package body Sax.Readers is
       Id.Input_Id := Input_Id (Parser);
       Id.From_Entity := False;
 
-      Close_Inputs (Parser);
+      Close_Inputs (Parser, Parser.Close_Inputs);
 
       if Eof (Input) and then Parser.Last_Read = 16#FFFF# then
          Id.Column := Id.Column + 1;
@@ -2445,7 +2451,7 @@ package body Sax.Readers is
                   Fatal_Error (Parser, Error_ParamEntity_In_Attribute, Id);
                end if;
 
-               Close_Inputs (Parser);
+               Close_Inputs (Parser, Parser.Close_Inputs);
 
                --  not in string context
                if not Parser.State.Ignore_Special then
@@ -2696,7 +2702,7 @@ package body Sax.Readers is
          Already_Displayed_Self_Contained_Error : Boolean := False;
 
       begin
-         Start_Token := Null_Token;
+         Start_Token        := Null_Token;
          Start_Token.Line   := Get_Line_Number (Parser.Locator.all);
          Start_Token.Column := Get_Column_Number (Parser.Locator.all);
 
@@ -3780,6 +3786,7 @@ package body Sax.Readers is
       procedure Parse_Element_Def (Id : in out Token) is
          Name_Id : Token;
          M : Element_Model_Ptr;
+         M2 : Content_Model;
       begin
          Set_State (Parser, Element_Def_State);
          Next_Token_Skip_Spaces (Input, Parser, Name_Id);
@@ -3802,12 +3809,14 @@ package body Sax.Readers is
          Next_Token_Skip_Spaces (Input, Parser, Id);
 
          if Id.Typ /= End_Of_Tag then
+            Free (M);
             Fatal_Error (Parser, "Expecting end of ELEMENT definition");
          end if;
 
+         M2 := Create_Model (M);
          Element_Decl
-           (Parser, Parser.Buffer (Name_Id.First .. Name_Id.Last), M);
-         Free (M);
+           (Parser, Parser.Buffer (Name_Id.First .. Name_Id.Last), M2);
+         Unref (M2);
 
          Reset_Buffer (Parser, Name_Id);
          Set_State (Parser, DTD_State);
@@ -3876,6 +3885,7 @@ package body Sax.Readers is
 
       procedure Parse_Attlist_Def (Id : in out Token) is
          M : Element_Model_Ptr;
+         M2 : Content_Model;
          Default_Start, Default_End : Token;
          Ename_Id, Name_Id, NS_Id, Type_Id : Token;
          Default_Id : Token;
@@ -4015,12 +4025,13 @@ package body Sax.Readers is
             --  won't be used. We can't do it coherently otherwise, in case
             --  an attribute is seen in the external subset, and then
             --  overriden in the internal subset.
+            M2 := Create_Model (M);
             Attribute_Decl
               (Parser,
                Ename => Parser.Buffer (Ename_Id.First .. Ename_Id.Last),
                Aname => Qname_From_Name (Parser, NS_Id, Name_Id),
                Typ   => Att_Type,
-               Content => M,
+               Content => M2,
                Value_Default => Default_Decl,
                Value => Parser.Buffer
                  (Default_Start.First .. Default_End.Last));
@@ -4039,17 +4050,16 @@ package body Sax.Readers is
                   Parser.Buffer (Name_Id.First .. Name_Id.Last),
                   Qname_From_Name (Parser, NS_Id, Name_Id),
                   Att_Type,
-                  M,
+                  M2,
                   Parser.Buffer (Default_Start.First .. Default_End.Last),
                   Default_Decl);
-
-               --  M will be freed automatically when the Default_Atts field is
-               --  freed. However, we need to reset it for the next attribute
-               --  in the list.
-               M := null;
-            else
-               Free (M);
             end if;
+
+            Unref (M2);
+            --  M will be freed automatically when the Default_Atts field is
+            --  freed. However, we need to reset it for the next attribute
+            --  in the list.
+            M := null;
 
             if NS_Id /= Null_Token then
                Reset_Buffer (Parser, NS_Id);
@@ -4065,6 +4075,11 @@ package body Sax.Readers is
 
          Set_State (Parser, DTD_State);
          Reset_Buffer (Parser, Ename_Id);
+
+      exception
+         when others =>
+            Free (M);
+            raise;
       end Parse_Attlist_Def;
 
       -----------------
@@ -4459,7 +4474,7 @@ package body Sax.Readers is
                   Local_Name => Get_String (Attr_Name_Id),
                   Qname  => Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id),
                   Att_Type   => Sax.Attributes.Cdata,
-                  Content    => null,
+                  Content    => Unknown_Model,
                   Value      => Get_String (Value_Start, Value_End));
             end if;
 
@@ -4610,6 +4625,11 @@ package body Sax.Readers is
          if Id.Typ = End_Of_Input then
             Fatal_Error (Parser, "Unexpected end of stream");
          end if;
+
+      exception
+         when others =>
+            Clear (Attributes);
+            raise;
       end Parse_Start_Tag;
 
       ----------------------------
@@ -4780,9 +4800,15 @@ package body Sax.Readers is
                Parser.Last_Read_Is_Valid := False;
             exception
                when Name_Error =>
+                  Close (Input_F);
+                  Unref (Loc);
                   Error (Parser,
                          "External subset not found: " & URI, Id);
                   Reset_Buffer (Parser, Name_Id);
+               when others =>
+                  Close (Input_F);
+                  Unref (Loc);
+                  raise;
             end;
          else
             Reset_Buffer (Parser, Name_Id);
@@ -5359,11 +5385,13 @@ package body Sax.Readers is
 
    procedure Free (Parser : in out Reader'Class) is
       Tmp : Element_Access;
-      Iter : Attributes_Table.Iterator;
-      Length : Natural;
-      Model : Element_Model_Ptr;
+--        Iter : Attributes_Table.Iterator;
+--        Length : Natural;
+--        Model : Element_Model_Ptr;
    begin
-      Close_Inputs (Parser);
+      Close_Inputs (Parser, Parser.Inputs);
+      Close_Inputs (Parser, Parser.Close_Inputs);
+
       Free (Parser.Default_Namespaces);
       Unref (Parser.Locator);
       Free (Parser.DTD_Name);
@@ -5376,16 +5404,17 @@ package body Sax.Readers is
       end loop;
 
       --  Free the content model for the default attributes
-      Iter := First (Parser.Default_Atts);
-      while Iter /= Attributes_Table.No_Iterator loop
-         Length := Get_Length (Current (Iter).Attributes.all);
-         for A in 1 .. Length loop
-            Model := Get_Content (Current (Iter).Attributes.all, A - 1);
-            Free (Model);
-            Set_Content (Current (Iter).Attributes.all, A - 1, null);
-         end loop;
-         Next (Parser.Default_Atts, Iter);
-      end loop;
+      --  ??? Done automatically when the attributes are reset
+--        Iter := First (Parser.Default_Atts);
+--        while Iter /= Attributes_Table.No_Iterator loop
+--           Length := Get_Length (Current (Iter).Attributes.all);
+--           for A in 1 .. Length loop
+--              Model := Get_Content (Current (Iter).Attributes.all, A - 1);
+--              Free (Model);
+--              Set_Content (Current (Iter).Attributes.all, A - 1, null);
+--           end loop;
+--           Next (Parser.Default_Atts, Iter);
+--        end loop;
 
       if Parser.Hooks.Data /= null then
          Free (Parser.Hooks.Data.all);
@@ -5533,6 +5562,7 @@ package body Sax.Readers is
    begin
       Free (Entity.Name);
       Free (Entity.Value);
+      Free (Entity.Public);
       Unchecked_Free (Entity);
    end Free;
 
@@ -5994,7 +6024,7 @@ package body Sax.Readers is
    procedure Element_Decl
      (Handler : in out Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Element_Model_Ptr)
+      Model   : Content_Model)
    is
       pragma Warnings (Off, Handler);
       pragma Warnings (Off, Name);
@@ -6030,7 +6060,7 @@ package body Sax.Readers is
       Ename   : Unicode.CES.Byte_Sequence;
       Aname   : Unicode.CES.Byte_Sequence;
       Typ     : Sax.Attributes.Attribute_Type;
-      Content : Sax.Models.Element_Model_Ptr;
+      Content : Sax.Models.Content_Model;
       Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence)
    is

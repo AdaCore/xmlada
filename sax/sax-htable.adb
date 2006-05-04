@@ -75,6 +75,9 @@ package body Sax.HTable is
 
       elsif Equal (Get_Key (Elmt.Elem.all), K) then
          Hash_Table.Table (Index) := Elmt.Next;
+         Free (Elmt.Elem.all);
+         Unchecked_Free (Elmt.Elem);
+         Unchecked_Free (Elmt);
 
       else
          loop

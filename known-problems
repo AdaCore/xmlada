@@ -3,6 +3,11 @@ Problems fixed in wavefront:
     their ancestors. For instance, if you set minLength on a type, and then set
     a restriction on it also limiting the maxLength, XML/Ada no longer checked
     the minLength
+  - Fixed all memory leaks reported by valgrind when running the automatic
+    testsuite. This testsuites parses more than 2000 different XML files, both
+    in validation and not validation mode, using external entities
+    sometimes,... and should therefore indicate that there are no remaining
+    memory leaks in XML/Ada
 
 Problems fixed in 2.1:
 

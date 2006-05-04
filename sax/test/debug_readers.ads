@@ -91,7 +91,7 @@ package Debug_Readers is
    procedure Element_Decl
      (Handler : in out Debug_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Sax.Models.Element_Model_Ptr);
+      Model   : Sax.Models.Content_Model);
    procedure Notation_Decl
      (Handler       : in out Debug_Reader;
       Name          : Unicode.CES.Byte_Sequence;
@@ -102,7 +102,7 @@ package Debug_Readers is
       Ename   : Unicode.CES.Byte_Sequence;
       Aname   : Unicode.CES.Byte_Sequence;
       Typ     : Sax.Attributes.Attribute_Type;
-      Content : Sax.Models.Element_Model_Ptr;
+      Content : Sax.Models.Content_Model;
       Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence);
    function Resolve_Entity

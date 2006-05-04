@@ -49,10 +49,32 @@ package Sax.Models is
    --                              1 => (Content => Element,
    --                                    Name    => "emp"))))
 
+   type Content_Model is private;
+   Unknown_Model : constant Content_Model;
+   --  This is a reference counted type that represents a content model defined
+   --  in an XML document's DTD.
+
+   procedure Ref   (Model : Content_Model);
+   procedure Unref (Model : in out Content_Model);
+   --  Increment or decrement the reference counting for Model.
+   --  When the reference counting reaches 0, the model is freed. You need to
+   --  call these methods automatically if you intend to keep a copy of the
+   --  model in your own structures.
+
+   function Create_Model (Element : Element_Model_Ptr) return Content_Model;
+   --  Create a content model based on a description.
+   --  No copy of Element is done, and the returned content model becomes
+   --  responsible for freeing that data structure when no longer needed
+
    procedure Free (Model : in out Element_Model_Ptr);
    --  Free the memory allocated for the model.
 
-   function To_String (Model : Element_Model) return Unicode.CES.Byte_Sequence;
+   function Get_Element_Model
+     (Model : Content_Model) return Element_Model_Ptr;
+   --  Return a description of the content model. Do not free the resulting
+   --  pointer, since this points directly into the Content_Model structure
+
+   function To_String (Model : Content_Model) return Unicode.CES.Byte_Sequence;
    --  Return the string to put in an XML file to describe Model
    --  Invalid_Content_Model is raised if Model can not be described in a
    --  DTD.
@@ -64,14 +86,6 @@ package Sax.Models is
    Invalid_Content_Model : exception;
    --  Raised by To_String, when the model is invalid
 
-   --------------------------
-   -- Validating the model --
-   --------------------------
-   --  The model can be used as a non-deterministic state machine, so that
-   --  it can be used for validation
-
-   type Model_State is private;
-
 private
 
    type Model_Item;
@@ -81,8 +95,12 @@ private
       Next  : Model_List;
    end record;
 
-   type Model_State is record
-      Possible_States : Model_List;
+   type Natural_Access is access Natural;
+   type Content_Model is record
+      Ref_Count : Natural_Access;
+      Model     : Element_Model_Ptr;
    end record;
+
+   Unknown_Model : constant Content_Model := (null, null);
 
 end Sax.Models;

@@ -315,6 +315,7 @@ procedure Testxml is
       end loop;
 
       Free (Tests);
+      Free (Expected);
 
       Put_Line ("Success:  " & Integer'Image (Success.Success_Count));
       Put_Line ("Failure:  " & Integer'Image (Success.Failure_Count));
@@ -476,6 +477,18 @@ procedure Testxml is
       Result   : Testcases_Result := No_Result;
       Result2  : Testcases_Result := No_Result;
       Msg, Tmp : String_Access;
+
+      procedure Cleanup;
+      --  Free locally allocated variables
+
+      procedure Cleanup is
+      begin
+         Free (Msg);
+         Close (Input.all);
+         Unchecked_Free (Input);
+         Free (Reader.Error_Msg);
+         Free (Reader);
+      end Cleanup;
    begin
       if Verbose then
          Put_Line ("Running " & Base & " " & URI);
@@ -578,15 +591,12 @@ procedure Testxml is
          Put_Line ("  Description: [" & Sections & "] " & Trim (Description));
       end if;
 
-      Free (Msg);
-      Close (Input.all);
-      Unchecked_Free (Input);
-      Free (Reader.Error_Msg);
-      Free (Reader);
+      Cleanup;
       return Result + Result2;
 
    exception
       when E : Invalid_Encoding =>
+         Cleanup;
          if Show_Invalid_Encoding then
             New_Line;
             Put_Line ('[' & ID & "] Invalid encoding " & Path);
@@ -598,6 +608,7 @@ procedure Testxml is
          end if;
 
       when Name_Error =>
+         Cleanup;
          if Show_Not_Found_Tests then
             New_Line;
             Put_Line ('[' & ID & "] File not found: " & Path);
@@ -607,6 +618,7 @@ procedure Testxml is
          end if;
 
       when E : others =>
+         Cleanup;
          New_Line;
          Put_Line (Standard_Error, '[' & ID & "] Unexpected error for " & URI);
          Put_Line (Standard_Error,
@@ -627,11 +639,17 @@ procedure Testxml is
       function System (Str : String) return Integer;
       pragma Import (C, System, "system");
 
+      Tmp_File1_Name : constant String := "testxml_tmp1";
+      Tmp_File2_Name : constant String := "testxml_tmp2";
+      --  Do not use temporary file names created by Create, since otherwise
+      --  valgrind will report a memory leak in the GNAT runtime (which is not
+      --  really a leak, just unfreed memory on exit).
+
       File  : File_Type;
       File2 : File_Type;
    begin
       if Result.Success_Count > 0 then
-         Create (File, Out_File);
+         Create (File, Out_File, Tmp_File1_Name);
          Set_Output (File);
          Print (Get_Tree (Reader),
                 Print_Comments       => Print_Comments,
@@ -643,29 +661,25 @@ procedure Testxml is
          Set_Output (Standard_Output);
          Flush (File);
 
-         Create (File2, Out_File);
+         Create (File2, Out_File, Tmp_File2_Name);
 
-         declare
-            Name  : constant String := Ada.Text_IO.Name (File);
-            Name2 : constant String := Ada.Text_IO.Name (File2);
-         begin
-            --  Process the expected output by removing the DTD, which
-            --  is not stored in the DOM tree, and thus cannot be output
-            if System
-              ("sed -e '/<!DOCTYPE/,/]>/d' " & Expected & " > " & Name2
-               & ASCII.NUL) /= 0
-            then
-               Result := Single_Failure;
+         --  Process the expected output by removing the DTD, which
+         --  is not stored in the DOM tree, and thus cannot be output
+         if System
+           ("sed -e '/<!DOCTYPE/,/]>/d' " & Expected & " > " & Tmp_File2_Name
+            & ASCII.NUL) /= 0
+         then
+            Result := Single_Failure;
 
-            elsif System
-              ("diff -u " & Name2 & " " & Name & ASCII.NUL) /= 0
-            then
-               Result := Single_Failure;
-            end if;
+         elsif System
+           ("diff -u " & Tmp_File2_Name
+            & " " & Tmp_File1_Name & ASCII.NUL) /= 0
+         then
+            Result := Single_Failure;
+         end if;
 
-            Delete (File2);
-            Delete (File);
-         end;
+         Delete (File2);
+         Delete (File);
       end if;
    end Diff_Output;
 
@@ -813,4 +827,6 @@ begin
    else
       Run_Single_Test (Get_Argument);
    end if;
+
+   Free (EOL);
 end Testxml;

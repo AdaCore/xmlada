@@ -467,11 +467,11 @@ package body Debug_Readers is
    procedure Element_Decl
      (Handler : in out Debug_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Element_Model_Ptr) is
+      Model   : Content_Model) is
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Element_Decl ("
-                   & Name & ", " & To_String (Model.all)
+                   & Name & ", " & To_String (Model)
                    & ") at " & Location (Handler));
       end if;
    end Element_Decl;
@@ -503,16 +503,16 @@ package body Debug_Readers is
       Ename   : Unicode.CES.Byte_Sequence;
       Aname   : Unicode.CES.Byte_Sequence;
       Typ     : Attribute_Type;
-      Content : Element_Model_Ptr;
+      Content : Content_Model;
       Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence) is
    begin
       if not Handler.Silent then
-         if Content /= null then
+         if Content /= Unknown_Model then
             Put_Line ("Sax.Attribute_Decl ("
                       & Ename & ", " & Aname
                       & ", " & Attribute_Type'Image (Typ) & ", "
-                      & To_String (Content.all) & ", "
+                      & To_String (Content) & ", "
                       & Default_Declaration'Image (Value_Default)
                       & ", " & Value & ") at " & Location (Handler));
          else

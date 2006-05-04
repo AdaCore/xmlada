@@ -439,10 +439,7 @@ package body Sax.Utils is
    ------------------
 
    function Is_Valid_URN
-     (Name : Unicode.CES.Byte_Sequence) return Boolean
-   is
-      Index : Integer := Name'First + URN_Sequence'Length;
-      C     : Unicode_Char;
+     (Name : Unicode.CES.Byte_Sequence) return Boolean is
    begin
       --  format is  "urn:" <NID> ":" <NSS>
       --  NID: Namespace Identifier

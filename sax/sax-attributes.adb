@@ -69,6 +69,7 @@ package body Sax.Attributes is
       Free (Attr.Local_Name);
       Free (Attr.Value);
       Free (Attr.Qname);
+      Unref (Attr.Content);
 
       --  Do not free Attr.Content, since this is a pointer to an external
       --  structure, shared by all attributes with the same model
@@ -149,7 +150,7 @@ package body Sax.Attributes is
       Local_Name : Unicode.CES.Byte_Sequence;
       Qname      : Unicode.CES.Byte_Sequence;
       Att_Type   : Attribute_Type;
-      Content    : Sax.Models.Element_Model_Ptr;
+      Content    : Sax.Models.Content_Model;
       Value      : Unicode.CES.Byte_Sequence;
       Default_Decl : Default_Declaration := Default) is
    begin
@@ -168,6 +169,7 @@ package body Sax.Attributes is
       Attr.Last.Qname := new Byte_Sequence'(Qname);
       Attr.Last.Default_Decl := Default_Decl;
       Attr.Last.Content := Content;
+      Ref (Attr.Last.Content);
       Attr.Length := Attr.Length + 1;
    end Add_Attribute;
 
@@ -234,7 +236,7 @@ package body Sax.Attributes is
       Local_Name : Unicode.CES.Byte_Sequence;
       Qname      : Unicode.CES.Byte_Sequence;
       Att_Type   : Attribute_Type;
-      Content    : Sax.Models.Element_Model_Ptr;
+      Content    : Sax.Models.Content_Model;
       Value      : Unicode.CES.Byte_Sequence;
       Default_Decl : Default_Declaration := Default)
    is
@@ -248,6 +250,7 @@ package body Sax.Attributes is
       Att.Qname := new Byte_Sequence'(Qname);
       Att.Default_Decl := Default_Decl;
       Att.Content := Content;
+      Ref (Att.Content);
    end Set_Attribute;
 
    --------------------
@@ -568,9 +571,11 @@ package body Sax.Attributes is
    procedure Set_Content
      (Attr    : Attributes;
       Index   : Natural;
-      Content : Sax.Models.Element_Model_Ptr) is
+      Content : Sax.Models.Content_Model) is
    begin
+      Unref (Get (Attr, Index).Content);
       Get (Attr, Index).Content := Content;
+      Ref (Content);
    end Set_Content;
 
    -----------------
@@ -578,7 +583,7 @@ package body Sax.Attributes is
    -----------------
 
    function Get_Content (Attr : Attributes; Index : Natural)
-      return Sax.Models.Element_Model_Ptr is
+      return Sax.Models.Content_Model is
    begin
       return Get (Attr, Index).Content;
    end Get_Content;

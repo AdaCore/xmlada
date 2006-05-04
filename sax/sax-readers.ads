@@ -444,32 +444,29 @@ package Sax.Readers is
    procedure Element_Decl
      (Handler : in out Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Sax.Models.Element_Model_Ptr);
+      Model   : Sax.Models.Content_Model);
    --  Report an element type declaration.
-   --  The content model will consist of the string "EMPTY", the string "ANY",
-   --  or a parenthesised group, optionally followed by an occurrence
-   --  indicator. The model will be normalized so that all parameter entities
-   --  are fully resolved and all whitespace is removed,and will include the
-   --  enclosing parentheses.
-   --  In addition to the SAX standard, the parsed_model parameter is used to
-   --  manipulate directly a pre-parsed formed of Model. You shouldn't keep
-   --  a reference to the pointer, since the memory is freed as soon as your
-   --  callback ends.
+   --  Model represents the content model for this element. If you need to keep
+   --  a copy of it, you must Ref it, and Unref it when you no longer need the
+   --  copy, for proper memory management.
+   --  The model is normalized so that all parameter entities are fully
+   --  resolved and all whitespace is removed,and includes the enclosing
+   --  parentheses.
 
    procedure Attribute_Decl
      (Handler : in out Reader;
       Ename   : Unicode.CES.Byte_Sequence;
       Aname   : Unicode.CES.Byte_Sequence;
       Typ     : Sax.Attributes.Attribute_Type;
-      Content : Sax.Models.Element_Model_Ptr;
+      Content : Sax.Models.Content_Model;
       Value_Default : Sax.Attributes.Default_Declaration;
       Value   : Unicode.CES.Byte_Sequence);
    --  Report an attribute type declaration.
    --  Only the first declaration for an attribute will be reported.
    --  If Typ is Notation or Enumeration, then Content will contain the
    --  description model for the attribute. Otherwise Content is null.
-   --  Content might be freed when returning from this call, so you should make
-   --  copies of it if needed.
+   --  If you need to keep a copy of Content, you must Ref it, and Unref it
+   --  when you are done using it.
    --  Value_Default represents the attribute default requirements
    --  ("#IMPLIED", "#REQUIRED", or "#FIXED").
    --  Value is a string representing the attribute's default value, or ""

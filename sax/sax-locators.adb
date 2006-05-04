@@ -47,10 +47,12 @@ package body Sax.Locators is
 
    procedure Unref (Loc : in out Locator_Impl) is
    begin
-      Loc.Ref_Count := Loc.Ref_Count - 1;
-      if Loc.Ref_Count = 0 then
-         Free (Loc.Public_Id);
-         Free (Loc.System_Id);
+      if Loc.Ref_Count > 0 then
+         Loc.Ref_Count := Loc.Ref_Count - 1;
+         if Loc.Ref_Count = 0 then
+            Free (Loc.Public_Id);
+            Free (Loc.System_Id);
+         end if;
       end if;
    end Unref;
 

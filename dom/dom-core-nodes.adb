@@ -959,6 +959,8 @@ package body DOM.Core.Nodes is
    procedure Free (N : in out Node; Deep : Boolean := True) is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (Node_Record, Node);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Nodes_Htable.HTable, Nodes_Htable_Access);
    begin
       if N = null then
          return;
@@ -1011,6 +1013,10 @@ package body DOM.Core.Nodes is
             Unchecked_Free (N.Shared_Strings);
             Node_Name_Htable.Reset (N.Node_Names.all);
             Unchecked_Free (N.Node_Names);
+            if N.Ids /= null then
+               Nodes_Htable.Reset (N.Ids.all);
+               Unchecked_Free (N.Ids);
+            end if;
 
          when Document_Type_Node =>
             Free (N.Document_Type_Name);

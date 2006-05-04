@@ -1,10 +1,67 @@
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Sax.Encodings;             use Sax.Encodings;
 
 package body Sax.Models is
+
+   function To_String (Model : Element_Model) return Unicode.CES.Byte_Sequence;
+   --  Same as To_String, applies to an Element_Model_Ptr
+
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (Model : Content_Model) is
+   begin
+      if Model.Ref_Count /= null then
+         Model.Ref_Count.all := Model.Ref_Count.all + 1;
+      end if;
+   end Ref;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Model : in out Content_Model) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Natural, Natural_Access);
+   begin
+      if Model.Ref_Count /= null
+        and then Model.Ref_Count.all > 0
+      then
+         Model.Ref_Count.all := Model.Ref_Count.all - 1;
+         if Model.Ref_Count.all = 0 then
+            Unchecked_Free (Model.Ref_Count);
+            Free (Model.Model);
+         end if;
+      end if;
+   end Unref;
+
+   ------------------
+   -- Create_Model --
+   ------------------
+
+   function Create_Model (Element : Element_Model_Ptr) return Content_Model is
+   begin
+      if Element = null then
+         return Unknown_Model;
+      else
+         return (Model     => Element,
+                 Ref_Count => new Natural'(1));
+      end if;
+   end Create_Model;
+
+   -----------------------
+   -- Get_Element_Model --
+   -----------------------
+
+   function Get_Element_Model
+     (Model : Content_Model) return Element_Model_Ptr is
+   begin
+      return Model.Model;
+   end Get_Element_Model;
 
    --------------
    -- Is_Mixed --
@@ -16,6 +73,20 @@ package body Sax.Models is
       return M.Content = Any_Of
         and then M.List (M.List'First).Content = Character_Data;
    end Is_Mixed;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Model : Content_Model) return Unicode.CES.Byte_Sequence
+   is
+   begin
+      if Model.Model = null then
+         return "";
+      else
+         return To_String (Model.Model.all);
+      end if;
+   end To_String;
 
    ---------------
    -- To_String --
@@ -90,9 +161,9 @@ package body Sax.Models is
    ----------
 
    procedure Free (Model : in out Element_Model_Ptr) is
-      procedure Free is new Unchecked_Deallocation
+      procedure Free is new Ada.Unchecked_Deallocation
         (Element_Model_Array, Element_Model_Array_Ptr);
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Ada.Unchecked_Deallocation
         (Element_Model, Element_Model_Ptr);
    begin
       if Model /= null then
