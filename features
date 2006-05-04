@@ -5,6 +5,9 @@ New features
   - Support for new encodings: "ascii" and "utf8"
  SAX
   - We now pass the newer version of the XML Conformance Testsuite
+  - Better compatibility with valgrind: no error message is issued by valgrind.
+    There were false warnings, but might make it harder to use valgrind on your
+    own application.
  DOM
   - DOM.Core.Documents.Get_Element_By_Id is now implemented
   - Partial port to DOM 3.0
