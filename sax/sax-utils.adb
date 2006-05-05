@@ -377,61 +377,113 @@ package body Sax.Utils is
       return Qname'First - 1;
    end Split_Qname;
 
+   ---------------
+   -- Check_URI --
+   ---------------
+
+   function Check_URI
+     (Name : Unicode.CES.Byte_Sequence) return URI_Type
+   is
+      Index    : Integer := Name'First;
+      C        : Unicode_Char;
+      Has_Scheme : Boolean := False;
+      Is_Absolute : Boolean := False;
+      Has_Hash    : Boolean := False;
+   begin
+      --  This is RFC 2396.
+      --  absoluteURI = scheme ":" ( hier_part | opaque_part )
+      --  relativeURI = ( net_path | abs_path | rel_path ) [ "?" query ]
+      --  scheme      = alpha *( alpha | digit | "+" | "-" | "." )
+      --  hier_part   = ( net_path | abs_path ) [ "?" query ]
+      --  net_path    = "//" authority [ abs_path ]
+      --  abs_path    = "/"  path_segments
+      --  rel_path    = rel_segment [ abs_path ]
+      --  rel_segment = 1*( unreserved | escaped |
+      --                ";" | "@" | "&" | "=" | "+" | "$" | "," )
+      --  query       = *uric
+      --  authority   = server | reg_name
+      --  server      = [ [ userinfo "@" ] hostport ]
+      --  userinfo    = *( unreserved | escaped |
+      --                ";" | ":" | "&" | "=" | "+" | "$" | "," )
+      --  rel_segment = 1*( unreserved | escaped |
+      --                ";" | "@" | "&" | "=" | "+" | "$" | "," )
+      --  uric        = reserved | unreserved | escaped
+      --  reg_name    = 1*( unreserved | escaped | "$" | "," |
+      --                ";" | ":" | "@" | "&" | "=" | "+" )
+      --  opaque_part = uric_no_slash *uric
+      --  uric_no_slash = unreserved | escaped | ";" | "?" | ":" | "@" |
+      --                  "&" | "=" | "+" | "$" | ","
+
+      --  Find and test the scheme. If there is no scheme, we might have a
+      --  relative URI
+
+      while Index <= Name'Last loop
+         Encoding.Read (Name, Index, C);
+         if C = Colon then
+            Has_Scheme := True;
+            exit;
+
+         elsif C not in Character'Pos ('a') .. Character'Pos ('z')
+           and then C not in Character'Pos ('A') .. Character'Pos ('Z')
+           and then C not in Character'Pos ('0') .. Character'Pos ('9')
+           and then C /= Character'Pos ('+')
+           and then C /= Character'Pos ('-')
+           and then C /= Character'Pos ('.')
+         then
+            Has_Scheme := False;
+            exit;
+         end if;
+      end loop;
+
+      --  For a mailto:, nothing else to check
+      if Has_Scheme
+        and then Name (Name'First .. Index - 1) = Mailto_Sequence
+      then
+         return URI_Absolute;
+      end if;
+
+      if Index <= Name'Last then
+         Encoding.Read (Name, Index, C);
+         if C = Slash then
+            Is_Absolute := True;
+         end if;
+      end if;
+
+      --  Check the rest of the URI. We currently go for a fast check, and do
+      --  not check each of the components specifically.
+      --  As a special case, we also recognize URI references
+
+      while Index <= Name'Last loop
+         Encoding.Read (Name, Index, C);
+         if C = Unicode.Names.Basic_Latin.Hash then
+            if Has_Hash then
+               --  Two hashes => Invalid URI
+               return URI_None;
+            end if;
+            Has_Hash := True;
+
+         elsif C not in Valid_URI_Characters'Range
+           or else not Valid_URI_Characters (C)
+         then
+            return URI_None;
+         end if;
+      end loop;
+
+      if Is_Absolute then
+         return URI_Absolute;
+      else
+         return URI_Relative;
+      end if;
+   end Check_URI;
+
    ------------------
    -- Is_Valid_URI --
    ------------------
 
    function Is_Valid_URI
-     (Name : Unicode.CES.Byte_Sequence) return Boolean
-   is
-      Index    : Integer := Name'First;
-      Previous : Integer;
-      C        : Unicode_Char;
-      Prefix_Found : Boolean := False;
+     (Name : Unicode.CES.Byte_Sequence) return Boolean is
    begin
-      --  Check the prefix before ://
-      while Index <= Name'Last loop
-         Previous := Index;
-         Encoding.Read (Name, Index, C);
-         if C = Colon then
-            if Name (Name'First .. Index - 1) = Mailto_Sequence then
-               --  Do not check the format of the mail address at this point
-               return True;
-            end if;
-
-            Encoding.Read (Name, Index, C);
-            if C = Slash then
-               Encoding.Read (Name, Index, C);
-               if C = Slash then
-                  if not Is_Valid_Name (Name (Name'First .. Previous - 1)) then
-                     return False;
-                  end if;
-                  Prefix_Found := True;
-                  exit;
-               else
-                  return False;
-               end if;
-            else
-               return False;
-            end if;
-         end if;
-      end loop;
-
-      if not Prefix_Found then
-         return False;
-      end if;
-
-      --  Check the rest of the URI
-      while Index <= Name'Last loop
-         Encoding.Read (Name, Index, C);
-         if C not in Valid_URI_Characters'Range
-           or else not Valid_URI_Characters (C)
-         then
-            return False;
-         end if;
-      end loop;
-
-      return True;
+      return Check_URI (Name) /= URI_None;
    end Is_Valid_URI;
 
    ------------------
@@ -466,7 +518,7 @@ package body Sax.Utils is
    function Is_Valid_IRI
      (Name : Unicode.CES.Byte_Sequence) return Boolean is
    begin
-      return Is_Valid_URI (Name) or else Is_Valid_URN (Name);
+      return Check_URI (Name) = URI_Absolute or else Is_Valid_URN (Name);
    end Is_Valid_IRI;
 
    ---------------------------
