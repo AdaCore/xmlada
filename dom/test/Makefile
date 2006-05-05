@@ -1,5 +1,5 @@
 tests: force
-	./testxml -auto
-	cd act_testsuite; ./run
+	@./testxml -auto -silent
+	@cd act_testsuite; ./run
 
 force:
