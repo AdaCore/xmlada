@@ -52,6 +52,11 @@ procedure Testxml is
      (Input_Source'Class, Input_Source_Access);
 
    Silent : Boolean := False;
+   --  If True, do not print the resulting DOM tree when testing a single XML
+   --  file.
+   --  When running the whole testsuite in automatic mode, do not print the
+   --  final results unless there is at least one failure.
+
    With_URI : Boolean := False;
    Dump : Boolean := False;
    Name_Start : Natural;
@@ -317,10 +322,12 @@ procedure Testxml is
       Free (Tests);
       Free (Expected);
 
-      Put_Line ("Success:  " & Integer'Image (Success.Success_Count));
-      Put_Line ("Failure:  " & Integer'Image (Success.Failure_Count));
-      Put_Line ("Ignored:  " & Integer'Image (Success.Ignore_Count));
-      Put_Line ("Not found:" & Integer'Image (Success.Not_Found_Count));
+      if not Silent or else Success.Failure_Count > 0 then
+         Put_Line ("Success:  " & Integer'Image (Success.Success_Count));
+         Put_Line ("Failure:  " & Integer'Image (Success.Failure_Count));
+         Put_Line ("Ignored:  " & Integer'Image (Success.Ignore_Count));
+         Put_Line ("Not found:" & Integer'Image (Success.Not_Found_Count));
+      end if;
 
       if Success.Failure_Count = 0 then
          Set_Exit_Status (Ada.Command_Line.Success);
