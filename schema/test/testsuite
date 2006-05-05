@@ -1589,6 +1589,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "$act/recursive_import/import.xsd" "" ""
    expect "" "$act/elementFormDefault/doc.xml" ""
    expect "" "$act/elementFormDefault/doc2.xml" ""
+   expect "$act/F427-004/xmldsig-core-schema.xsd" "$act/F427-004/dsig-example.xml" ""
 fi
 
 summary
