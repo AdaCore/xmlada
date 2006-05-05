@@ -27,7 +27,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with DOM.Core.Documents;        use DOM.Core.Documents;
 with DOM.Core.Attrs;            use DOM.Core.Attrs;
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
@@ -1160,152 +1159,11 @@ package body DOM.Core.Nodes is
         new Node_Name_Htable.HTable (127);
       --  Namespaces defined so far
 
-      Doc          : constant Document := Owner_Document (N);
-      Root_Element : constant Element  := Get_Element (Doc);
-      Empty_String : constant Shared_String_Access :=
-        Internalize_String (Doc, "");
-
       procedure Recursive_Print (N : Node);
       --  Print N recursively
 
       procedure Recursive_Print (List : Node_List);
       --  Print all nodes in List
-
-      procedure Print_Namespace_Declarations (N : Element);
-      --  Print the namespace declarations required for the tree rooted at N
-
-      function Print_Namespace_Declaration_Element
-        (N : Element; Force : Boolean) return Boolean;
-      function Print_Namespace_Declaration_Attr
-        (N : Attr; Force : Boolean) return Boolean;
-      function Print_Namespace_Declaration_Node
-        (N : Node; Name : Node_Name_Def; Force : Boolean) return Boolean;
-      --  Print the xmlns attribute for N if its namespace is not already
-      --  known (or Force is True). Return True if the attribute was created
-
-      procedure Remove_Namespace_Declaration (N : Element);
-      --  Remove the local namespace declaration for N
-
-      ----------------------------------
-      -- Remove_Namespace_Declaration --
-      ----------------------------------
-
-      procedure Remove_Namespace_Declaration (N : Element) is
-      begin
-         Remove
-           (Namespaces.all,
-            (Prefix     => N.Name.Prefix,
-             Local_Name => Empty_String,
-             Namespace  => N.Name.Namespace));
-      end Remove_Namespace_Declaration;
-
-      -----------------------------------------
-      -- Print_Namespace_Declaration_Element --
-      -----------------------------------------
-
-      function Print_Namespace_Declaration_Element
-        (N : Element; Force : Boolean) return Boolean
-      is
-         Name  : constant Node_Name_Def :=
-           (Prefix     => N.Name.Prefix,
-            Local_Name => Empty_String,
-            Namespace  => N.Name.Namespace);
-         Tmp : Boolean;
-         pragma Unreferenced (Tmp);
-      begin
-         for J in 0 .. N.Attributes.Last loop
-            Tmp := Print_Namespace_Declaration_Attr
-              (N.Attributes.Items (J), Force => False);
-         end loop;
-
-         return Print_Namespace_Declaration_Node (Node (N), Name, Force);
-      end Print_Namespace_Declaration_Element;
-
-      --------------------------------------
-      -- Print_Namespace_Declaration_Attr --
-      --------------------------------------
-
-      function Print_Namespace_Declaration_Attr
-        (N : Attr; Force : Boolean) return Boolean
-      is
-         Name  : constant Node_Name_Def :=
-           (Prefix     => N.Attr_Name.Prefix,
-            Local_Name => Empty_String,
-            Namespace  => N.Attr_Name.Namespace);
-      begin
-         return Print_Namespace_Declaration_Node (Node (N), Name, Force);
-      end Print_Namespace_Declaration_Attr;
-
-      --------------------------------------
-      -- Print_Namespace_Declaration_Node --
-      --------------------------------------
-
-      function Print_Namespace_Declaration_Node
-        (N : Node; Name : Node_Name_Def; Force : Boolean) return Boolean
-      is
-         Prefix_Already_Defined : Boolean := False;
-         Iter : Node_Name_Htable.Iterator;
-      begin
-         if Name.Prefix /= null
-           and then Get (Namespaces.all, Name) = null
-         then
-            --  If we have another one with the same prefix, do not print the
-            --  second one, we will use a local attribute for this purpose
-
-            if not Force then
-               --  Check whether the prefix is already defined
-               Iter := First (Namespaces.all);
-               while Iter /= No_Iterator loop
-                  if Current (Iter).Prefix.all = Name.Prefix.all then
-                     Prefix_Already_Defined := True;
-                     exit;
-                  end if;
-                  Next (Namespaces.all, Iter);
-               end loop;
-            end if;
-
-            if not Prefix_Already_Defined
-              and then Prefix (N) /= Xmlns_Sequence
-              and then Prefix (N) /= Xml_Sequence
-              and then Prefix (N) /= ""
-            then
-               Put (Space_Sequence, Encoding);
-               Put (Xmlns_Sequence, Encoding);
-               Put (Colon_Sequence, Encoding);
-               Print_String (Prefix (N), EOL_Sequence, Encoding);
-               Put (Equals_Sign_Sequence, Encoding);
-               Put (Quotation_Mark_Sequence, Encoding);
-               Print_String (Namespace_URI (N), EOL_Sequence, Encoding);
-               Put (Quotation_Mark_Sequence, Encoding);
-               Set
-                 (Namespaces.all,
-                  From_Qualified_Name
-                    (Doc,
-                     Name => Prefix (N) & Colon_Sequence,
-                     Namespace => Name.Namespace));
-               return True;
-            end if;
-         end if;
-         return False;
-      end Print_Namespace_Declaration_Node;
-
-      ----------------------------------
-      -- Print_Namespace_Declarations --
-      ----------------------------------
-
-      procedure Print_Namespace_Declarations (N : Element) is
-         Child : Node := First_Child (N);
-         Tmp   : Boolean;
-         pragma Unreferenced (Tmp);
-      begin
-         while Child /= null loop
-            if Child.Node_Type = Element_Node then
-               Tmp := Print_Namespace_Declaration_Element
-                 (Element (Child), Force => False);
-            end if;
-            Child := Next_Sibling (Child);
-         end loop;
-      end Print_Namespace_Declarations;
 
       ---------------------
       -- Recursive_Print --
@@ -1323,7 +1181,6 @@ package body DOM.Core.Nodes is
       ---------------------
 
       procedure Recursive_Print (N : Node) is
-         Xmlns_Inserted : Boolean := False;
       begin
          if N = null then
             return;
@@ -1338,17 +1195,9 @@ package body DOM.Core.Nodes is
                Sort (N.Attributes);
 
                for J in 0 .. N.Attributes.Last loop
-                  if Prefix (N.Attributes.Items (J)) /= Xmlns_Sequence then
-                     Put (Space_Sequence, Encoding);
-                     Recursive_Print (N.Attributes.Items (J));
-                  end if;
+                  Put (Space_Sequence, Encoding);
+                  Recursive_Print (N.Attributes.Items (J));
                end loop;
-
-               Xmlns_Inserted := Print_Namespace_Declaration_Element
-                 (Element (N), Force => True);
-               if N = Root_Element then
-                  Print_Namespace_Declarations (Element (N));
-               end if;
 
                if Collapse_Empty_Nodes and then N.Children = Null_List then
                   Put (Slash_Sequence & Greater_Than_Sequence, Encoding);
@@ -1360,10 +1209,6 @@ package body DOM.Core.Nodes is
                   Put (Less_Than_Sequence & Slash_Sequence, Encoding);
                   Print_Name (N, With_URI, EOL_Sequence, Encoding);
                   Put (Greater_Than_Sequence, Encoding);
-               end if;
-
-               if Xmlns_Inserted then
-                  Remove_Namespace_Declaration (Element (N));
                end if;
 
             when Attribute_Node =>
