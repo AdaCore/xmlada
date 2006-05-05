@@ -35,6 +35,8 @@
   <test id="not-wf-sa-074"                 ambiguous="yes" />
   <test id="not-wf-sa-104"                 ambiguous="yes" />
   <test id="not-wf-sa-182"                 ambiguous="yes" />
+  <test id="rmt-ns10-033"                  ambiguous="yes" 
+    >033.xml:4:12: Cannot redefine the xmlns prefix</test>  <!--  uses ymlns instead of xmlns -->
 
   <!--  To be implemented -->
   <test id="rmt-e2e-55" unsupported="yes" >
@@ -1309,8 +1311,6 @@ Did you want to use &amp;amp;?</test>
     >035.xml:6:19: Attributes may appear only once: a:attr</test>
   <test id="rmt-ns10-034"
     >034.xml:3:5: No DTD defined for this document</test>
-  <test id="rmt-ns10-033"
-    >033.xml:4:12: Cannot redefine the xmlns prefix</test>
   <test id="rmt-ns10-032"
     >032.xml:4:12: Cannot redefine the xmlns prefix</test>
   <test id="rmt-ns10-031"
