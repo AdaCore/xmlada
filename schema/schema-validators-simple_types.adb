@@ -1,3 +1,11 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2003-2006                     --
+--                            AdaCore                                --
+--                                                                   --
+-----------------------------------------------------------------------
+
 with Schema.Validators.Facets; use Schema.Validators.Facets;
 with Sax.Encodings;            use Sax.Encodings;
 with Sax.Utils;                use Sax.Utils;
@@ -773,87 +781,80 @@ package body Schema.Validators.Simple_Types is
    is
       Index         : Integer := Value'First;
       C             : Unicode_Char;
-      B64S_Count    : Natural := 0;
       Prev_Is_Space : Boolean := False;
+
+      Group         : Natural := 1;
+      --  Characters are always by groups of 4, this variable indicates the
+      --  index of the current char in the group
+
+      type Char_Categorie is (Char_04, Char_16, Char_64, Char_Equal);
+      Chars  : array (1 .. 4) of Char_Categorie;
+      --  The various categories that characters can belong two. In the Base64
+      --  encoding, we always have groups of 4 characters.
+
    begin
       while Index <= Value'Last loop
          Sax.Encodings.Encoding.Read (Value, Index, C);
 
-         if C = 16#20# then
+         if C = 16#20# or C = 16#A# then
             if Prev_Is_Space then
                return False;  --  Can never have two spaces in a row
             end if;
             Prev_Is_Space := True;
-         else
+
+         elsif C in B04'Range and then B04 (C) then
             Prev_Is_Space := False;
+            Chars (Group) := Char_04;
+            Group := Group + 1;
 
-            if B64S_Count = 2
-               and then C in B16'Range
-               and then B16 (C)
+         elsif C in B16'Range and then B16 (C) then
+            Prev_Is_Space := False;
+            Chars (Group) := Char_16;
+            Group := Group + 1;
+
+         elsif C in B64'Range and then B64 (C) then
+            Prev_Is_Space := False;
+            Chars (Group) := Char_64;
+            Group := Group + 1;
+
+         elsif C = Character'Pos ('=') then
+            Prev_Is_Space := False;
+            if Group = 3
+              and then Chars (1) <= Char_64
+              and then Chars (2) = Char_04
             then
-               if Index > Value'Last then
-                  return False;
-               end if;
+               Chars (Group) := Char_Equal;
+               Group := Group + 1;
 
-               Sax.Encodings.Encoding.Read (Value, Index, C);
-
-               if Index > Value'Last then
-                  if C /= Character'Pos ('=') then
-                     return False;
-                  else
-                     return True;
-                  end if;
-               elsif C in B64'Range and then B64 (C) then
-                  B64S_Count := B64S_Count + 2;
-               else
-                  return False;
-               end if;
-
-            elsif B64S_Count = 1
-               and then C in B04'Range
-               and then B04 (C)
+            elsif Group = 4
+              and then Chars (1) <= Char_64
+              and then Chars (2) <= Char_64
+              and then Chars (3) <= Char_16
             then
-               if Index > Value'Last then
-                  return False;
-               end if;
+               exit;  --  Must end now
 
-               Sax.Encodings.Encoding.Read (Value, Index, C);
-
-               if Index > Value'Last then
-                  return False;
-
-               elsif C = Character'Pos ('=') then
-                  Sax.Encodings.Encoding.Read (Value, Index, C);
-                  if Index < Value'Last and then C = 16#20# then
-                     Sax.Encodings.Encoding.Read (Value, Index, C);
-                  end if;
-
-                  if Index <= Value'Last or else C /= Character'Pos ('=') then
-                     return False;
-                  end if;
-
-                  return True;
-
-               elsif C in B64'Range and then B64 (C) then
-                  B64S_Count := B64S_Count + 2;
-               else
-                  return False;
-               end if;
-
-            elsif C in B64'Range and then B64 (C) then
-               B64S_Count := B64S_Count + 1;
-               if B64S_Count > 4 then
-                  B64S_Count := 1;
-               end if;
+            elsif Group = 4
+              and then Chars (1) <= Char_64
+              and then Chars (2) <= Char_04
+              and then Chars (3) <= Char_Equal
+            then
+               exit;  --  Must end now
 
             else
                return False;
             end if;
+
+         else
+            return False;
+         end if;
+
+         if Group > 4 then
+            Group := 1;
          end if;
       end loop;
 
       --  Cannot finish with a space
-      if Prev_Is_Space or B64S_Count /= 4 then
+      if Prev_Is_Space or Group /= 4 or Index <= Value'Last then
          return False;
       end if;
 
@@ -873,7 +874,10 @@ package body Schema.Validators.Simple_Types is
    begin
       while Index <= Value'Last loop
          Sax.Encodings.Encoding.Read (Value, Index, C);
-         if C /= 16#20# and then C /= Character'Pos ('=') then
+         if C /= 16#20#
+           and then C /= 16#A#
+           and then C /= Character'Pos ('=')
+         then
             Length := Length + 1;
          end if;
       end loop;
