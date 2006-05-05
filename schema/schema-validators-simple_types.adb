@@ -831,6 +831,7 @@ package body Schema.Validators.Simple_Types is
               and then Chars (2) <= Char_64
               and then Chars (3) <= Char_16
             then
+               Group := 1;
                exit;  --  Must end now
 
             elsif Group = 4
@@ -838,6 +839,7 @@ package body Schema.Validators.Simple_Types is
               and then Chars (2) <= Char_04
               and then Chars (3) <= Char_Equal
             then
+               Group := 1;
                exit;  --  Must end now
 
             else
@@ -854,7 +856,7 @@ package body Schema.Validators.Simple_Types is
       end loop;
 
       --  Cannot finish with a space
-      if Prev_Is_Space or Group /= 4 or Index <= Value'Last then
+      if Prev_Is_Space or Group /= 1 or Index <= Value'Last then
          return False;
       end if;
 
