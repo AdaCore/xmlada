@@ -679,7 +679,7 @@ procedure Testxml is
             Result := Single_Failure;
 
          elsif System
-           ("diff -u " & Tmp_File2_Name
+           ("diff -c " & Tmp_File2_Name
             & " " & Tmp_File1_Name & ASCII.NUL) /= 0
          then
             Result := Single_Failure;
