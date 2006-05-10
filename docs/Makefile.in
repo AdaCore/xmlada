@@ -6,7 +6,8 @@ MAKEINFO= @MAKEINFO@
 TEXI2DVI= @TEXI2DVI@
 TEX= @TEX@
 
-all: examples ${FORMATS} clean
+all: ${FORMATS} clean
+all_check: examples all
 
 examples: force
 	cd sax; gnatmake -q -Pdefault
