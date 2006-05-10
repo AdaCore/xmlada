@@ -54,7 +54,7 @@ run_test_valgrind: test
 	cd dom/test; valgrind --tool=memcheck --leak-check=full ./testxml -auto
 
 docs: force
-	-${MAKE} -e -C docs
+	-${MAKE} -e -C docs all_check
 
 # Rule for installing the modules
 %_inst: force
