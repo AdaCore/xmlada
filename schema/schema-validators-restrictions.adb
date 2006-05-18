@@ -159,6 +159,9 @@ package body Schema.Validators.Restrictions is
 
       if Validator.Restriction /= null then
          Validate_Characters (Validator.Restriction, Ch, Empty_Element);
+      else
+         Validate_Characters
+           (Get_Validator (Validator.Base), Ch, Empty_Element);
       end if;
    end Validate_Characters;
 
