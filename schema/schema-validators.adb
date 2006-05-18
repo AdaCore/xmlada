@@ -2319,6 +2319,7 @@ package body Schema.Validators is
    is
       D     : constant Choice_Data_Access := Choice_Data_Access (Data);
       Skip_Current : Boolean;
+      Has_Single_Choice : Boolean;
 
       procedure Check_Particle (It : XML_Particle_Access);
       --  Check whether a specific particle matches
@@ -2401,14 +2402,34 @@ package body Schema.Validators is
 
       Debug_Output ("Testing all elements from start in choice");
       D.Num_Occurs_Of_Current := 0;
+
+      D.Current := Start (Validator.Particles);
+      Next (D.Current);
+      Has_Single_Choice := Get (D.Current) = null;
+
       D.Current := Start (Validator.Particles);
 
       --  Check whether the current item is valid
 
       while Get (D.Current) /= null loop
-         Check_Particle (Get (D.Current));
-         exit when Element_Validator /= No_Element;
-         Next (D.Current);
+         begin
+            Check_Particle (Get (D.Current));
+            exit when Element_Validator /= No_Element;
+            Next (D.Current);
+
+         exception
+            when XML_Validation_Error =>
+               Element_Validator := No_Element;
+               if Has_Single_Choice then
+                  --  If we have a single choice, we report its errors
+                  --  directly to the caller, instead of using our own error
+                  --  messages for <choice>. This is slightly more helpful to
+                  --  the user.
+                  raise;
+               end if;
+
+               Next (D.Current);
+         end;
       end loop;
 
       if Get (D.Current) = null then
@@ -2416,6 +2437,9 @@ package body Schema.Validators is
          Element_Validator := No_Element;
          Debug_Pop_Prefix;
          return;
+      else
+         Debug_Output ("<choice> matched for "
+                       & Element_Validator.Elem.Local_Name.all);
       end if;
 
       D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
