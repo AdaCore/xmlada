@@ -1590,6 +1590,9 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "" "$act/elementFormDefault/doc.xml" ""
    expect "" "$act/elementFormDefault/doc2.xml" ""
    expect "$act/F427-004/xmldsig-core-schema.xsd" "$act/F427-004/dsig-example.xml" ""
+   expect "$act/F511-007/xmldsig-core-schema.xsd" "$act/F511-007/test.xml" ""
+   expect "$act/F511-009/xmldsig-core-schema.xsd" "$act/F511-009/Untitled7-2.xml" \
+     "act_testsuite/F511-009/Untitled7-2.xml:15:67: Invalid value: \"UjBsR@409EbGhjZ0dTQUxNQUFBUUNBRU1tQ1p0dU1GUXhEUzhi\""
 fi
 
 summary
