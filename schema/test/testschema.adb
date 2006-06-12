@@ -1,3 +1,10 @@
+--  This is a small example showing how to parse one or more XML schemas
+--  and then validate one XML document. To use this tool, do a
+--  "make test" at the root of the XML/Ada distribution, then run
+--      ./testschema -xsd schema1.xsd -xsd schema2.xsd file.xml
+--  where schema1.xsd, schema2.xsd, schema3.xsd,... are our schema files
+--  to parse, and file.xml the XML document to validate
+
 with Schema.Readers;        use Schema.Readers;
 with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
