@@ -27,7 +27,6 @@ begin
    loop
       case Getopt ("xsd: debug") is
          when 'x' =>
-            Put_Line ("Parsing schema: " & Parameter);
             Open (Parameter, Read);
 
             --  We want to validate the XSD file itself
