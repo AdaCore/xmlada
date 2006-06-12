@@ -14,33 +14,42 @@ procedure TestSchema is
    My_Reader : Validating_Reader;
    Schema    : Schema_Reader;
    Grammar   : XML_Grammar := No_Grammar;
-   Xsd_File  : String_Access := null;
    Xml_File  : String_Access := null;
 
 begin
    loop
       case Getopt ("xsd: debug") is
          when 'x' =>
-            Free (Xsd_File);
-            Xsd_File := new String'(Parameter);
+            Put_Line ("Parsing schema: " & Parameter);
+            Open (Parameter, Read);
+
+            --  We want to validate the XSD file itself
+            Set_Validating_Grammar (Schema, Create_Schema_For_Schema);
+
+            --  When we are parsing several XSD files (one per namespace
+            --  in general), we need to store all of them in the same
+            --  Grammar object, so that we validate the document only
+            --  once afterward
+            Set_Created_Grammar (Schema, Grammar);
+
+            --  Parse and validate the current grammar
+            Parse (Schema, Read);
+            Close (Read);
+
+            --  Grammar now contains all the XSD files we have parsed so far
+            Grammar := Get_Created_Grammar (Schema);
+
          when 'd' =>
             Standard.Schema.Readers.Set_Debug_Output (True);
             Standard.Schema.Validators.Set_Debug_Output (True);
             Standard.Schema.Schema_Readers.Set_Debug_Output (True);
+
          when others =>
             exit;
       end case;
    end loop;
 
    Xml_File := new String'(Get_Argument);
-
-   if Xsd_File /= null then
-      Open (Xsd_File.all, Read);
-      Set_Validating_Grammar (Schema, Create_Schema_For_Schema);
-      Parse (Schema, Read);
-      Close (Read);
-      Grammar := Get_Created_Grammar (Schema);
-   end if;
 
    if Xml_File.all /= "" then
       Set_Validating_Grammar (My_Reader, Grammar);
