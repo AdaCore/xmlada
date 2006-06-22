@@ -22,6 +22,10 @@ package body Schema.Validators is
      (Element_List, Element_List_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Particle_Iterator_Record, Particle_Iterator);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Grammar_NS_Array, Grammar_NS_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (XML_Grammar_Record, XML_Grammar);
 
    procedure Create_NS_Grammar
      (Grammar       : in out XML_Grammar;
@@ -1064,7 +1068,7 @@ package body Schema.Validators is
       Result        : out XML_Grammar_NS)
    is
    begin
-      if Grammar.Grammars /= null then
+      if Grammar /= null and then Grammar.Grammars /= null then
          for G in Grammar.Grammars'Range loop
             if Grammar.Grammars (G).Namespace_URI.all = Namespace_URI then
                Result := Grammar.Grammars (G);
@@ -1102,10 +1106,12 @@ package body Schema.Validators is
      (Grammar       : in out XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Grammar_NS_Array, Grammar_NS_Array_Access);
       Tmp : Grammar_NS_Array_Access;
    begin
+      if Grammar = null then
+         Grammar := new XML_Grammar_Record;
+      end if;
+
       if Grammar.Grammars = null then
          Grammar.Grammars := new Grammar_NS_Array (1 .. 1);
       else
@@ -1137,6 +1143,8 @@ package body Schema.Validators is
       G, XML_G, XML_IG : XML_Grammar_NS;
 
    begin
+      --  The first call to Get_NS will also create the grammar itself if
+      --  needed
       Get_NS (Grammar, XML_URI,          Result => XML_G);
       Get_NS (Grammar, XML_Schema_URI,   Result => G);
       Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
@@ -1475,17 +1483,18 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Grammar : in out XML_Grammar) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Grammar_NS_Array, Grammar_NS_Array_Access);
    begin
-      if Grammar.Grammars /= null then
-         for G in Grammar.Grammars'Range loop
-            Free (Grammar.Grammars (G));
-         end loop;
-         Unchecked_Free (Grammar.Grammars);
-      end if;
+      if Grammar /= null then
+         if Grammar.Grammars /= null then
+            for G in Grammar.Grammars'Range loop
+               Free (Grammar.Grammars (G));
+            end loop;
+            Unchecked_Free (Grammar.Grammars);
+         end if;
 
-      Free (Grammar.Parsed_Locations);
+         Free (Grammar.Parsed_Locations);
+         Unchecked_Free (Grammar);
+      end if;
    end Free;
 
    --------------------
@@ -1495,14 +1504,17 @@ package body Schema.Validators is
    function URI_Was_Parsed
      (Grammar : XML_Grammar; URI : Byte_Sequence) return Boolean
    is
-      L : String_List := Grammar.Parsed_Locations;
+      L : String_List;
    begin
-      while L /= null loop
-         if L.Str.all = URI then
-            return True;
-         end if;
-         L := L.Next;
-      end loop;
+      if Grammar /= null then
+         L := Grammar.Parsed_Locations;
+         while L /= null loop
+            if L.Str.all = URI then
+               return True;
+            end if;
+            L := L.Next;
+         end loop;
+      end if;
       return False;
    end URI_Was_Parsed;
 
@@ -1511,13 +1523,13 @@ package body Schema.Validators is
    --------------------
 
    procedure Set_Parsed_URI
-     (Grammar : in out XML_Grammar; URI : Byte_Sequence)
-   is
-      L : constant String_List := new String_List_Record'
-        (Str  => new Byte_Sequence'(URI),
-         Next => Grammar.Parsed_Locations);
+     (Grammar : in out XML_Grammar; URI : Byte_Sequence) is
    begin
-      Grammar.Parsed_Locations := L;
+      if Grammar /= null then
+         Grammar.Parsed_Locations := new String_List_Record'
+           (Str  => new Byte_Sequence'(URI),
+            Next => Grammar.Parsed_Locations);
+      end if;
    end Set_Parsed_URI;
 
    ----------
@@ -3151,9 +3163,11 @@ package body Schema.Validators is
       end Local_Check;
 
    begin
-      for L in Grammar.Grammars'Range loop
-         Local_Check (Grammar.Grammars (L));
-      end loop;
+      if Grammar /= null then
+         for L in Grammar.Grammars'Range loop
+            Local_Check (Grammar.Grammars (L));
+         end loop;
+      end if;
    end Global_Check;
 
    ----------------
@@ -4100,7 +4114,9 @@ package body Schema.Validators is
      (Grammar : in out XML_Grammar;
       NS      : XML_Grammar_NS) is
    begin
-      Grammar.Target_NS := NS;
+      if Grammar /= null then
+         Grammar.Target_NS := NS;
+      end if;
    end Set_Target_NS;
 
    -------------------
@@ -4109,7 +4125,11 @@ package body Schema.Validators is
 
    function Get_Target_NS (Grammar : XML_Grammar) return XML_Grammar_NS is
    begin
-      return Grammar.Target_NS;
+      if Grammar = null then
+         return null;
+      else
+         return Grammar.Target_NS;
+      end if;
    end Get_Target_NS;
 
    ------------------

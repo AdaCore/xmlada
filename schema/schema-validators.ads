@@ -1104,7 +1104,7 @@ private
    procedure Free (List : in out String_List);
    --  Free the list and its contents
 
-   type XML_Grammar is record
+   type XML_Grammar_Record is record
       Grammars : Grammar_NS_Array_Access;
       --  All the namespaces known for that grammar
 
@@ -1115,8 +1115,11 @@ private
 
       Target_NS : XML_Grammar_NS;
    end record;
-   No_Grammar : constant XML_Grammar :=
-     (Grammars => null, Target_NS => null, Parsed_Locations => null);
+
+   type XML_Grammar is access all XML_Grammar_Record;
+   No_Grammar : constant XML_Grammar := null;
+   --  We need to use a pointer type for a grammar, since it is passed around
+   --  with Set_Created_Grammar for instance.
 
    ------------------------
    -- Group_Model_Record --
