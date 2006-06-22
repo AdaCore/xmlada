@@ -1,4 +1,7 @@
 Problems fixed in wavefront:
+  - F614-003: Storage_Error is raised when you free an XML_Grammar you have
+    stored in your application, since it has already been freed automatically
+    by XML/Ada. It is now possible to free the same grammar multiple times
   - Schema: Restrictions or extensions of type did not validate the facets of
     their ancestors. For instance, if you set minLength on a type, and then set
     a restriction on it also limiting the maxLength, XML/Ada no longer checked
