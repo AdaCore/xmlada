@@ -873,7 +873,7 @@ package body Schema.Date_Time is
          if Date.TZ > 0 then
             Result := Date + (-1, 0, 0, 0, Day_Range (Date.TZ * 60));
          else
-            Result := Date + (1, 0, 0, 0, Day_Range (-Date.TZ * 60));
+            Result := Date + (1, 0, 0, 0, Day_Range ((-Date.TZ) * 60));
          end if;
          Result.TZ := 0;
          return Result;
