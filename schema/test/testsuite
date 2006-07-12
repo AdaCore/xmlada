@@ -2,7 +2,7 @@
 
 ## Location of the testsuite's files for Schemas
 ## You can download these from
-##   http://www.w3.org/XML/2001/05/xmlschema-test-collection
+##   http://dev.w3.org/cvsweb/XML/xml-schema-test-suite/2004-01-14/
 
 ## IMPORTANT: BUG FIXES TO THE TESTSUITE:
 ## msxsdtest/element/elemT074.xml
@@ -114,15 +114,30 @@ expect() {
    fi
 
    out=`eval $XML $xsd $xml_file 2>&1`
+   compare "$XML $xsd $xml_file" "$out" "$expected"
+}
+
+#######################################
+## compare()
+##   $1=testname
+##   $2=actual output
+##   $3=expected output
+#######################################
+
+compare() {
+   testname="$1"
+   actual="$2"
+   expected="$3"
+
    total=`expr $total + 1`
 
-   if [ x"$out" != x"$expected" ]; then
-      quoted=`echo $out | sed -e 's/\"/\\\"/g' \
+   if [ x"$actual" != x"$expected" ]; then
+      quoted=`echo $actual | sed -e 's/\"/\\\"/g' \
                               -e 's,'$mse',\$mse,' \
                               -e 's,'$msp',\$msp,' \
                               -e 's,'$sun',\$sun,'`
       echo "#------------ Test failed ------------"
-      echo "  cmd: $XML $xsd $xml_file"
+      echo "  cmd: $testname"
       echo "  quoted= $quoted"
       echo "  expected= $expected"
       failed=`expr $failed + 1`
@@ -130,7 +145,7 @@ expect() {
       passed=`expr $passed + 1`
       if [ x$verbose = x1 ]; then
          echo "#+++++ Test passed +++++"
-         echo "  cmd: $XML $xsd $xml_file"
+         echo "  cmd: $testname"
       fi
    fi
 }
@@ -180,13 +195,23 @@ to_qname () {
 type_not_declared () {
  file="$1"
  to_qname "$2" "$3"
- echo "$file: Type \"$qname\" was referenced but never declared"
+ ## The way testschema.adb is setup, Global_Check is always called
+ ## explicitly, and thus filenames are not emitted
+ #if [ x"$file" = x ]; then
+    echo "Type \"$qname\" was referenced but never declared"
+ #else
+ #   echo "$file: Type \"$qname\" was referenced but never declared"
+ #fi
 }
 
 elem_not_declared () {
  file="$1"
  to_qname "$2" "$3"
- echo "$file: Element \"$qname\" was referenced but never declared"
+ #if [ x"$file" = x ]; then
+    echo "Element \"$qname\" was referenced but never declared"
+ #else
+ #   echo "$file: Element \"$qname\" was referenced but never declared"
+ #fi
 }
 
 elem_unexpected () {
@@ -218,7 +243,7 @@ expect $mse/elemA011.xsd "" \
 expect $mse/elemA012.xsd "" \
  "$mse/elemA012.xsd:3:24: Attribute \"name\": Invalid value: \"\""
 expect $mse/elemA013.xsd "" \
- "$mse/elemA013.xsd:3:25: Attribute \"name\": Invalid value: \"\""
+ "$mse/elemA013.xsd:3:25: Attribute \"name\": Invalid value: \" \""
 expect $mse/elemA014.xsd "" \
  "$mse/elemA014.xsd:3:31: Attribute \"name\": Invalid value: \"-2.5foo\""
 expect $mse/elemA015.xsd "" ""
@@ -315,9 +340,9 @@ expect $mse/elemE006.xsd "" \
 expect $mse/elemE007.xsd "" \
  "$mse/elemE007.xsd:4:50: Attribute \"substitutionGroup\": Invalid value: \"\""
 expect $mse/elemE008.xsd "" \
-   "`elem_not_declared "$mse/elemE008.xsd:11" "" foo`"
+   "`elem_not_declared "" "" foo`"
 expect $mse/elemE009.xsd "" \
-   "`elem_not_declared "$mse/elemE009.xsd:16" "" foo`"
+   "`elem_not_declared "" "" foo`"
 fi
 
 ##################
@@ -467,7 +492,7 @@ fi
 if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemL001.xsd "" ""
 expect $mse/elemL002.xsd "" \
- "`elem_not_declared "$mse/elemL002.xsd:10" "" foo`"
+ "`elem_not_declared "" "" foo`"
 expect $mse/elemL003.xsd "" \
  "$mse/elemL003.xsd:5:39: \"ref\" attribute cannot be self-referencing"
 expect $mse/elemL004.xsd "" ""
@@ -481,7 +506,7 @@ fi
 if [ x$run_ms_element = x1     -o $run_all_tests = 1 ]; then
 expect $mse/elemM001.xsd "" ""
 expect $mse/elemM002.xsd "" \
- "`type_not_declared "$mse/elemM002.xsd:6" "" foo`"
+ "`type_not_declared "" "" foo`"
 expect $mse/elemM003.xsd "" \
  "$mse/elemM003.xsd:5:31: Self-referencing restriction not allowed"
 expect $mse/elemM004.xsd "" ""
@@ -936,18 +961,18 @@ expect "$sun/xsd017.e.xsd" "" \
 expect "$sun/xsd018.e.xsd" "" \
  "`type_not_declared "$sun/xsd018.e.xsd:29:9" $schema_ns abc`"
 expect "$sun/xsd019.e.xsd" "" \
- "`type_not_declared "$sun/xsd019.e.xsd:28:9" $schema_ns abc`"
+ "$sun/xsd019.e.xsd:23:27: The type \"abc\" isn't known at this point. Please check the name and namespace"
 
 ### SUN xsd020
 
 expect "$sun/xsd020.e.xsd" "" \
  "$sun/xsd020.e.xsd:22:33: Type specified in a simpleContent context must not have a complexContent"
 expect "$sun/xsd020-2.e.xsd" "" \
- "$sun/xsd020-2.e.xsd:25:9: Attribute \"foo:abc\" is referenced, but not defined"
+ "Attribute \"foo:abc\" is referenced, but not defined"
 expect "$sun/xsd020-3.e.xsd" "" \
- "$sun/xsd020-3.e.xsd:28:9: Group \"abc\" is referenced, but not defined"
+ "Group \"abc\" is referenced, but not defined"
 expect "$sun/xsd020-4.e.xsd" "" \
- "$sun/xsd020-4.e.xsd:32:9: attributeGroup \"foo:abc\" is referenced, but not defined"
+ "attributeGroup \"foo:abc\" is referenced, but not defined"
 
 ### SUN xsd021
 
@@ -1593,6 +1618,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "$act/F511-007/xmldsig-core-schema.xsd" "$act/F511-007/test.xml" ""
    expect "$act/F511-009/xmldsig-core-schema.xsd" "$act/F511-009/Untitled7-2.xml" \
      "act_testsuite/F511-009/Untitled7-2.xml:15:67: Invalid value: \"UjBsR@409EbGhjZ0dTQUxNQUFBUUNBRU1tQ1p0dU1GUXhEUzhi\""
+   (cd act_testsuite/multiple_schemas; compare "multiple_schemas" "`./run.sh 2>&1`" "")
 fi
 
 summary
