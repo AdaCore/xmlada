@@ -32,6 +32,8 @@ package Schema.Readers is
    procedure Set_Validating_Grammar
      (Reader  : in out Validating_Reader;
       Grammar : Schema.Validators.XML_Grammar);
+   function Get_Validating_Grammar
+     (Reader : Validating_Reader) return Schema.Validators.XML_Grammar;
    --  Create an XML reader that will validate its input file. The grammar
    --  must have been parsed first (most likely through a call to
    --  Schema.Schema_Readers.Schema_Reader or a call to Parse_Grammar below).
@@ -110,10 +112,7 @@ private
       Grammar  : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar;
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator_Access;
-
       Prefixes   : Prefix_Mapping_Access;
-
-      Id_Validator : Schema.Validators.XML_Validator;
       Ids          : Schema.Validators.Id_Htable_Access;
    end record;
 

@@ -8,6 +8,7 @@ with Sax.Utils;         use Sax.Utils;
 with Sax.Readers;       use Sax.Readers;
 with Schema.Validators; use Schema.Validators;
 with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.IO_Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.IO;               use GNAT.IO;
 with Input_Sources.File;    use Input_Sources.File;
@@ -32,8 +33,6 @@ package body Schema.Readers is
    procedure Clear (List : in out Validator_List);
    --  Push or remove validators from the list
 
-   pragma Unreferenced (Clear);
-
    procedure Add_XML_Instance_Attributes
      (Handler   : in out Validating_Reader;
       Validator : access XML_Validator_Record'Class);
@@ -57,6 +56,9 @@ package body Schema.Readers is
 
    procedure Free (Mapping : in out Prefix_Mapping_Access);
    --  Free the memory occupied by Mapping
+
+   procedure Reset (Parser : in out Validating_Reader);
+   --  Reset the state of the parser so that we can parse other documents
 
    procedure Hook_Start_Element
      (Handler       : in out Reader'Class;
@@ -121,6 +123,16 @@ package body Schema.Readers is
    begin
       Reader.Grammar := Grammar;
    end Set_Validating_Grammar;
+
+   ----------------------------
+   -- Get_Validating_Grammar --
+   ----------------------------
+
+   function Get_Validating_Grammar
+     (Reader : Validating_Reader) return Schema.Validators.XML_Grammar is
+   begin
+      return Reader.Grammar;
+   end Get_Validating_Grammar;
 
    ----------
    -- Push --
@@ -216,7 +228,9 @@ package body Schema.Readers is
      (Handler : Validating_Reader;
       URI     : Byte_Sequence) return Byte_Sequence is
    begin
-      if URI (URI'First) /= '/'
+      if URI = "" then
+         return URI;
+      elsif URI (URI'First) /= '/'
         and then URI (URI'First) /= '\'
       then
          return Dir_Name (Get_System_Id (Handler.Locator.all)) & URI;
@@ -240,12 +254,17 @@ package body Schema.Readers is
         To_Absolute_URI (Handler, Xsd_File);
    begin
       if Debug then
-         Put_Line ("Parsing new grammar: " & Xsd_File_Full);
+         Put_Line ("Parsing grammar: " & Xsd_File_Full);
+         Debug_Dump (Add_To);
       end if;
       Open (Xsd_File_Full, File);
       Set_Public_Id (File, Xsd_File_Full);
       Set_System_Id (File, Xsd_File_Full);
 
+      --  MANU ? More efficient: Add_To will likely already contain the grammar
+      --  for the schema-for-schema, and we won't have to recreate it in most
+      --  cases.
+      Set_Validating_Grammar (Schema, Add_To);
       Set_Created_Grammar (Schema, Add_To);
       Parse (Schema, File);
       Close (File);
@@ -254,6 +273,15 @@ package body Schema.Readers is
       if Debug then
          Put_Line ("Done parsing new grammar: " & Xsd_File);
       end if;
+   exception
+      when Ada.IO_Exceptions.Name_Error =>
+         --  According to XML Schema Primer 0, section 5.6, this is not an
+         --  error when we do not find the schema, since this attribute is only
+         --  a hint.
+         Warning
+           (Handler,
+            Create (Message => "Could not open file " & Xsd_File_Full,
+                    Loc     => Locator_Impl_Access (Handler.Locator)));
    end Parse_Grammar;
 
    --------------------
@@ -267,6 +295,7 @@ package body Schema.Readers is
       Start_NS, Last_NS, Index : Integer;
       Start_XSD, Last_XSD : Integer;
       C : Unicode_Char;
+      Local_Grammar : XML_Grammar_NS;
    begin
       Index    := Schema_Location'First;
       Start_NS := Schema_Location'First;
@@ -299,8 +328,17 @@ package body Schema.Readers is
                       & "XSD=" & Schema_Location (Start_XSD .. Last_XSD - 1));
          end if;
 
-         Parse_Grammar (Handler, Schema_Location (Start_XSD .. Last_XSD - 1),
-                        Add_To => Handler.Grammar);
+         --  Do not reparse the grammar if we already know about it
+         Get_NS
+           (Handler.Grammar,
+            Namespace_URI    => Schema_Location (Start_NS .. Last_NS - 1),
+            Result           => Local_Grammar,
+            Create_If_Needed => False);
+         if Local_Grammar = null then
+            Parse_Grammar
+              (Handler, Schema_Location (Start_XSD .. Last_XSD - 1),
+               Add_To => Handler.Grammar);
+         end if;
 
          while Index <= Schema_Location'Last loop
             Start_NS := Index;
@@ -494,12 +532,10 @@ package body Schema.Readers is
 
       --  Get the name of the grammar to use from the element's attributes
 
-      if Validating_Reader (Handler).Grammar = No_Grammar then
-         Get_Grammar_From_Attributes;
+      Get_Grammar_From_Attributes;
 
-         if Validating_Reader (Handler).Grammar = No_Grammar then
-            return;  --  Always valid
-         end if;
+      if Validating_Reader (Handler).Grammar = No_Grammar then
+         return;  --  Always valid, since we have no grammar anyway
       end if;
 
       --  Find out the namespace to use for the current element. This namespace
@@ -656,6 +692,21 @@ package body Schema.Readers is
    end Hook_Ignorable_Whitespace;
 
    -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Parser : in out Validating_Reader) is
+   begin
+      if Parser.Locator /= null then
+         Unref (Parser.Locator.all);
+      end if;
+
+      Free  (Parser.Ids);
+      Clear (Parser.Validators);
+      Free  (Parser.Prefixes);
+   end Reset;
+
+   -----------
    -- Parse --
    -----------
 
@@ -685,11 +736,14 @@ package body Schema.Readers is
                     Doc_Locator   => null);
       end if;
 
+      if Parser.Grammar = No_Grammar then
+         --  Make sure predefined types are known
+         Initialize (Parser.Grammar);
+      end if;
+
       Sax.Readers.Parse (Sax.Readers.Reader (Parser), Input);
 
-      if Parser.Locator /= null then
-         Unref (Parser.Locator.all);
-      end if;
+      Reset (Parser);
 
    exception
       when E : XML_Validation_Error =>
@@ -700,10 +754,16 @@ package body Schema.Readers is
          else
             Copy (Loc, Parser.Locator.all);
          end if;
+
+         Reset (Parser);
+
          Validation_Error
            (Parser, Create (Byte_Sequence (Exception_Message (E)),
-                            Loc'Unchecked_Access));
-         Unref (Parser.Locator.all);
+            Loc'Unchecked_Access));
+
+      when others =>
+         Reset (Parser);
+         raise;
    end Parse;
 
    ----------------------
