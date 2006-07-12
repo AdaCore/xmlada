@@ -1137,6 +1137,11 @@ package body Schema.Validators.Simple_Types is
 
       Tmp := new Duration_Validators.Validator_Record;
       Create_Global_Type (G, "duration", Tmp);
+
+      Tmp := Restriction_Of (Lookup (G, "anySimpleType"));
+      Add_Facet (Tmp, "whiteSpace", "collapse");
+      Create_Global_Type (G, "uriReference", Tmp);
+
    end Register_Predefined_Types;
 
    ----------------------------
