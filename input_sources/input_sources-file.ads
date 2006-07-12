@@ -56,6 +56,12 @@ package Input_Sources.File is
    function Eof (From : File_Input) return Boolean;
    --  True if From is past the last character in the file.
 
+   procedure Set_System_Id
+     (Input : in out File_Input; Id : Unicode.CES.Byte_Sequence);
+   --  Override Input_Sources.Set_System_Id, and ensure we use an absolute
+   --  file name. This is needed in lots of cases, for instance to resolve
+   --  relative URIs, to ensure we do not parse a grammar twice,...
+
 private
    type File_Input is new Input_Source with
       record

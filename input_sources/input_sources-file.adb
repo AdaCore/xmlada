@@ -2,7 +2,7 @@
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
 --                       Copyright (C) 2001-2006                     --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -33,6 +33,7 @@ with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
 with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 package body Input_Sources.File is
 
@@ -139,5 +140,14 @@ package body Input_Sources.File is
    begin
       return From.Index > From.Buffer'Length;
    end Eof;
+
+   -------------------
+   -- Set_System_Id --
+   -------------------
+
+   procedure Set_System_Id (Input : in out File_Input; Id : Byte_Sequence) is
+   begin
+      Set_System_Id (Input_Source (Input), Normalize_Pathname (Id));
+   end Set_System_Id;
 
 end Input_Sources.File;
