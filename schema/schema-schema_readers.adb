@@ -223,7 +223,7 @@ package body Schema.Schema_Readers is
 
    procedure Set_Created_Grammar
      (Reader  : in out Schema_Reader;
-      Grammar : Schema.Validators.XML_Grammar) is
+      Grammar : Schema.Validators.XML_Grammar := No_Grammar) is
    begin
       Reader.Created_Grammar := Grammar;
       Reader.Check_Undefined := False;
@@ -234,11 +234,16 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Start_Document (Handler : in out Schema_Reader) is
+      G  : XML_Grammar;
    begin
-      if Handler.Created_Grammar = No_Grammar then
-         Handler.Created_Grammar := Create_Schema_For_Schema;
-         Handler.Check_Undefined := True;
-      end if;
+      --  Add the definition of all predefined types to the created grammar
+      Initialize (Handler.Created_Grammar);
+
+      --  Make sure the grammar used to validate the XSD file is correct. This
+      --  won't do anything if the schema-for-schema was already added.
+      G := Get_Validating_Grammar (Handler);
+      Add_Schema_For_Schema (G);
+      Set_Validating_Grammar (Handler, G);
 
       Handler.Target_NS := null;
       Get_NS (Handler.Created_Grammar, XML_Schema_URI, Handler.Schema_NS);
@@ -264,6 +269,8 @@ package body Schema.Schema_Readers is
       Input  : in out Input_Sources.Input_Source'Class) is
    begin
       Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
+      Set_Parsed_URI
+        (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
       Parse (Validating_Reader (Parser), Input);
    end Parse;
 
@@ -614,9 +621,15 @@ package body Schema.Schema_Readers is
 --        Namespace_Index : constant Integer :=
 --          Get_Index (Atts, URI => "", Local_Name => "namespace");
    begin
+      if Debug then
+         Put_Line ("Import: " & Absolute);
+         Put_Line ("Adding new grammar to Handler.Created_Grammar");
+      end if;
+
       if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
-         Set_Parsed_URI (Handler.Created_Grammar, Absolute);
          Parse_Grammar (Handler, Location, Handler.Created_Grammar);
+      elsif Debug then
+         Put_Line ("Already imported");
       end if;
    end Create_Import;
 

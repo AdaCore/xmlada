@@ -16,8 +16,8 @@ package Schema.Schema_Readers is
 
    procedure Set_Created_Grammar
      (Reader  : in out Schema_Reader;
-      Grammar : Schema.Validators.XML_Grammar);
-   --  Set the grammar.
+      Grammar : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar);
+   --  Start the parsing of multiple schema files.
    --  When a schema file is parsed, a new XML_Grammar_NS will be created
    --  based on the value of "targetNamespace" attribute. This should be used
    --  to cumulate several schema files into one grammar.
@@ -26,6 +26,32 @@ package Schema.Schema_Readers is
    --  Calling this subprogram will also disable the checks, at the end of the
    --  parsing, that ensure that any entity (element, type, attribute,...) that
    --  has been referenced was correctly declared.
+   --
+   --  The Grammar should initially be No_Grammar. There are also some checks
+   --  that can only be done when all schemas have been parsed and therefore
+   --  you need to call Global_Check after parsing all of them. This isn't
+   --  necessary if you are not calling Set_Created_Grammar.
+   --
+   --  For instance, if you need to parse several XSD files:
+   --       Schema  : Schema_Reader;
+   --       Grammar : XML_Grammar := No_Grammar;
+   --
+   --       Set_Created_Grammar (Schema, No_Grammar);  --  Required
+   --       Parse (Schema, My_Input_Source1);
+   --       Parse (Schema, My_Input_Source2);
+   --       Global_Check (Grammar);
+   --       Grammar := Get_Created_Grammar (Schema);
+   --
+   --  If you are only parsing one schema, this could be changed to:
+   --       Parse (Schema, My_Input_Source1);
+   --       Grammar := Get_Created_Grammar (Schema);
+   --
+   --  Another small difference is in the error messages that are output in
+   --  both cases: in the first case above, errors raised by Global_Check are
+   --  not associated with a specific location in an XSD file (these error
+   --  typically indicate that a referenced element has not been defined),
+   --  whereas in the second case it will reference a location in the single
+   --  XSD file.
 
    function Get_Created_Grammar
      (Reader : Schema_Reader) return Schema.Validators.XML_Grammar;
