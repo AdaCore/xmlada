@@ -851,7 +851,8 @@ package body Schema.Validators is
             Block_Restriction => Grammar.Block_Restriction);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Debug_Output ("Forward type decl: {"
-                         & Get_Namespace_URI (Grammar) & "}" & Local_Name);
+                       & Get_Namespace_URI (Grammar) & "}{"
+                       & Local_Name & "}");
       elsif Typ = No_Type then
          Debug_Output ("Type not found: " & Local_Name);
       end if;
@@ -1065,7 +1066,8 @@ package body Schema.Validators is
    procedure Get_NS
      (Grammar       : in out XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence;
-      Result        : out XML_Grammar_NS)
+      Result        : out XML_Grammar_NS;
+      Create_If_Needed : Boolean := True)
    is
    begin
       if Grammar /= null and then Grammar.Grammars /= null then
@@ -1077,8 +1079,12 @@ package body Schema.Validators is
          end loop;
       end if;
 
-      Create_NS_Grammar (Grammar, Namespace_URI);
-      Result := Grammar.Grammars (Grammar.Grammars'Last);
+      if Create_If_Needed then
+         Create_NS_Grammar (Grammar, Namespace_URI);
+         Result := Grammar.Grammars (Grammar.Grammars'Last);
+      else
+         Result := null;
+      end if;
    end Get_NS;
 
    ----------
@@ -1145,8 +1151,12 @@ package body Schema.Validators is
    begin
       --  The first call to Get_NS will also create the grammar itself if
       --  needed
-      Get_NS (Grammar, XML_URI,          Result => XML_G);
       Get_NS (Grammar, XML_Schema_URI,   Result => G);
+      if Lookup (G, "anyType", False) /= No_Type then
+         return;
+      end if;
+
+      Get_NS (Grammar, XML_URI,          Result => XML_G);
       Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
 
       Create_UR_Type_Elements (G);
@@ -1171,6 +1181,40 @@ package body Schema.Validators is
       Create_Global_Attribute (XML_IG, "noNamespaceSchemaLocation",
                                Lookup (G, "uriReference"));
    end Initialize;
+
+   ----------------
+   -- Debug_Dump --
+   ----------------
+
+   procedure Debug_Dump (Grammar : XML_Grammar) is
+      use Elements_Htable;
+      Str : String_List;
+      Elem : Elements_Htable.Iterator;
+   begin
+      if Debug then
+         Str := Grammar.Parsed_Locations;
+         while Str /= null loop
+            Put_Line ("   Parsed location: " & Str.Str.all);
+            Str := Str.Next;
+         end loop;
+
+         if Grammar.Grammars /= null then
+            for G in Grammar.Grammars'Range  loop
+               Put_Line ("   NS=" & Grammar.Grammars (G).Namespace_URI.all);
+
+               Put ("      Elements:");
+               Elem := First (Grammar.Grammars (G).Elements.all);
+               while Elem /= Elements_Htable.No_Iterator loop
+                  Put (' ' & Elements_Htable.Current (Elem).Local_Name.all);
+                  Next (Grammar.Grammars (G).Elements.all, Elem);
+               end loop;
+               New_Line;
+
+            end loop;
+         end if;
+
+      end if;
+   end Debug_Dump;
 
    ----------
    -- Free --
@@ -3508,6 +3552,20 @@ package body Schema.Validators is
    begin
       return Id.Key.all;
    end Get_Key;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ids : in out Id_Htable_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Id_Htable.HTable, Id_Htable_Access);
+   begin
+      if Ids /= null then
+         Id_Htable.Reset (Ids.all);
+         Unchecked_Free (Ids);
+      end if;
+   end Free;
 
    --------------------------
    -- Create_Any_Attribute --

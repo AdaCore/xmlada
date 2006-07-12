@@ -213,6 +213,9 @@ package Schema.Validators is
 
    type Id_Htable_Access is private;
 
+   procedure Free (Ids : in out Id_Htable_Access);
+   --  Free the memory occupied by Ids
+
    ----------------------
    -- Attribute groups --
    ----------------------
@@ -581,7 +584,8 @@ package Schema.Validators is
    procedure Get_NS
      (Grammar       : in out XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence;
-      Result        : out XML_Grammar_NS);
+      Result        : out XML_Grammar_NS;
+      Create_If_Needed : Boolean := True);
    --  Return the part of the grammar specialized for a given namespace.
    --  If no such namespace exists yet in the grammar, it is created.
 
@@ -668,16 +672,18 @@ package Schema.Validators is
    --  Set the default value for the "block" attribute
 
    procedure Initialize (Grammar : in out XML_Grammar);
-   --  Initialize the internal structure of the grammar
+   --  Initialize the internal structure of the grammar.
+   --  This adds the definition for all predefined types
 
    procedure Free (Grammar : in out XML_Grammar);
    --  Free the memory occupied by the grammar
 
    procedure Global_Check (Grammar : XML_Grammar);
-   --  Perform checks on the grammar, once it has been fully declared.
-   --  This must be called before you start using the grammar, since some
-   --  validation checks can only be performed at the end, not while the
-   --  grammar is being constructed.
+   --  Perform checks on the grammar, once it has been fully declared. This
+   --  must be called before you start using the grammar (see
+   --  Schema.Schema_Readers.Set_Created_Grammar), since some validation checks
+   --  can only be performed at the end, not while the grammar is being
+   --  constructed.
 
    function Get_Namespace_URI
      (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence;
@@ -693,6 +699,9 @@ package Schema.Validators is
      (Grammar : in out XML_Grammar; URI : Unicode.CES.Byte_Sequence);
    --  Indicate that the schema found at URI was fully parsed and integrated
    --  into Grammar. It can then be tested through URI_Was_Parsed.
+
+   procedure Debug_Dump (Grammar : XML_Grammar);
+   --  Dump the grammar to stdout. This is for debug only
 
    procedure Set_Debug_Name
      (Typ : access XML_Validator_Record'Class; Name : String);
