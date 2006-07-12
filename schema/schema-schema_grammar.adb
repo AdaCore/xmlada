@@ -3,8 +3,9 @@ with Schema.Validators; use Schema.Validators;
 
 package body Schema.Schema_Grammar is
 
-   function Create_Schema_For_Schema return XML_Grammar is
-      Grammar                    : XML_Grammar;
+   procedure Add_Schema_For_Schema
+     (Grammar : in out Schema.Validators.XML_Grammar)
+   is
       G, XML_G                   : XML_Grammar_NS;
       Typ, Typ2                  : XML_Validator;
       Seq1, Seq2                 : Sequence;
@@ -15,8 +16,14 @@ package body Schema.Schema_Grammar is
       Union, Union2              : XML_Validator;
       Attr                       : XML_Attribute_Group;
    begin
-      Initialize (Grammar);
+      --  Have we already added these namespaces to Grammar ?
+
       Get_NS (Grammar, XML_Schema_URI, G);
+      if Lookup (G, "formChoice", False) /= No_Type then
+         return;
+      end if;
+
+      Initialize (Grammar);
       Get_NS (Grammar, XML_URI, XML_G);
 
       --  The "formChoice" type of schema.xsd
@@ -53,11 +60,6 @@ package body Schema.Schema_Grammar is
       Add_Union (Union, All_Validator);
       Add_Union (Union, List_Of (Lookup (G, "reducedDerivationControl")));
       Create_Global_Type (G, "derivationSet", Union);
-
-      --  The "uriReference" type
-      Typ := Restriction_Of (Lookup (G, "anySimpleType"));
-      Add_Facet (Typ, "whiteSpace", "collapse");
-      Create_Global_Type (G, "uriReference", Typ);
 
       --  The "openAttrs" type
       Typ := Restriction_Of (Lookup (G, "anyType"));
@@ -1126,8 +1128,6 @@ package body Schema.Schema_Grammar is
       Elem := Create_Global_Element (G, "fractionDigits", Qualified);
       Set_Type (Elem, Lookup (G, "numFacet"));
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
-
-      return Grammar;
-   end Create_Schema_For_Schema;
+   end Add_Schema_For_Schema;
 
 end Schema.Schema_Grammar;
