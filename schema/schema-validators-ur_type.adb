@@ -14,7 +14,7 @@ package body Schema.Validators.UR_Type is
       Data           : Validator_Data);
    procedure Validate_Attributes
      (Validator         : access UR_Type_Validator;
-      Atts              : Sax.Attributes.Attributes'Class;
+      Atts              : in out Sax.Attributes.Attributes'Class;
       Id_Table          : in out Id_Htable_Access;
       Nillable          : Boolean;
       Is_Nil            : out Boolean;
@@ -106,7 +106,7 @@ package body Schema.Validators.UR_Type is
 
    procedure Validate_Attributes
      (Validator         : access UR_Type_Validator;
-      Atts              : Sax.Attributes.Attributes'Class;
+      Atts              : in out Sax.Attributes.Attributes'Class;
       Id_Table          : in out Id_Htable_Access;
       Nillable          : Boolean;
       Is_Nil            : out Boolean;
