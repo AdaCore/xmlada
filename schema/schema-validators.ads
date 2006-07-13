@@ -272,7 +272,7 @@ package Schema.Validators is
 
    procedure Validate_Attributes
      (Validator         : access XML_Validator_Record;
-      Atts              : Sax.Attributes.Attributes'Class;
+      Atts              : in out Sax.Attributes.Attributes'Class;
       Id_Table          : in out Id_Htable_Access;
       Nillable          : Boolean;
       Is_Nil            : out Boolean;

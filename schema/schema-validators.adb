@@ -10,6 +10,7 @@ with Ada.Tags; use Ada.Tags;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
 with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
+with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
 with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 with Schema.Validators.Lists;        use Schema.Validators.Lists;
@@ -441,7 +442,7 @@ package body Schema.Validators is
 
    procedure Validate_Attributes
      (Validator         : access XML_Validator_Record;
-      Atts              : Sax.Attributes.Attributes'Class;
+      Atts              : in out Sax.Attributes.Attributes'Class;
       Id_Table          : in out Id_Htable_Access;
       Nillable          : Boolean;
       Is_Nil            : out Boolean;
@@ -476,7 +477,9 @@ package body Schema.Validators is
       ---------------------------
 
       procedure Check_Named_Attribute (Named : Named_Attribute_Validator) is
-         Found : Integer;
+         Found  : Integer;
+         Facets : Facets_Description;
+         Whitespace : Whitespace_Restriction := Preserve;
       begin
          if Get (Visited, Named.Local_Name.all) = null then
             Set (Visited, Named);
@@ -516,6 +519,46 @@ package body Schema.Validators is
                end case;
 
                Check_Id (Named, Found);
+
+               Facets := Get_Facets_Description
+                 (Named.Attribute_Type.Validator);
+               if Facets /= null
+                 and then Facets.all in Common_Facets_Description'Class
+               then
+                  Whitespace :=
+                    Common_Facets_Description (Facets.all).Whitespace;
+               end if;
+
+               --  Normalize attribute value if necessary
+               if Whitespace = Collapse then
+                  declare
+                     Val : constant Byte_Sequence := Get_Value (Atts, Found);
+                     C           : Unicode_Char;
+                     Index, Last : Natural;
+                     First : Natural := Val'Last + 1;
+                  begin
+                     Index := Val'First;
+                     while Index <= Val'Last loop
+                        First := Index;
+                        Encoding.Read (Val, Index, C);
+                        exit when not Is_White_Space (C);
+                        First := Val'Last + 1;
+                     end loop;
+
+                     if First > Val'Last then
+                        Set_Value (Atts, Found, "");
+                     else
+                        Last := Index - 1;
+                        while Index <= Val'Last loop
+                           Encoding.Read (Val, Index, C);
+                           if not Is_White_Space (C) then
+                              Last := Index - 1;
+                           end if;
+                        end loop;
+                        Set_Value (Atts, Found, Val (First .. Last));
+                     end if;
+                  end;
+               end if;
 
                begin
                   Validate_Attribute (Named.all, Atts, Found, Grammar);
