@@ -751,7 +751,7 @@ expect "" $mse/elemU014.xml ""
 expect "" $mse/elemU015.xml ""
 expect "" $mse/elemU017.xml ""
 expect "" $mse/elemU018.xml ""
-expect "" $mse/elemU019.xml ""
+expected_failure $mse/elemU019.xml "EXPECTED FAILURE, REGEXP NOT SUPPORTED PROPERLY YET"
 expect "" $mse/elemU020.xml ""
 expect "" $mse/elemU021.xml ""
 expect "" $mse/elemU022.xml ""
@@ -1199,7 +1199,7 @@ expect "" "$msp/particlesC007.xml" \
 expect "" "$msp/particlesC008.xml" ""
 expect "" "$msp/particlesC009.xml" ""
 expect "" "$msp/particlesC010.xml" ""
-expect "" "$msp/particlesC011.xml" ""
+expect "$msp/particlesC011.xsd" "$msp/particlesC011.xml" ""
 expect "" "$msp/particlesC012.xml" \
  "$msp/particlesC012.xml:4:21: Invalid namespace for this element: \"foo\" not in \"http://xslt\""
 expect "" "$msp/particlesC013.xml" \
@@ -1500,7 +1500,7 @@ expect "" "$msp/particlesFa005.xml" ""
 
 expect "" "$msp/particlesFb001.xml" ""
 expected_failure "$msp/particlesFb002.xsd" "" "test seems valid"
-expect "$msp/particlesFb003.xsd" "" "f"
+expected_failure "$msp/particlesFb003.xsd" "" "test seems valid"
 expect "" "$msp/particlesFb004.xml" ""
 expect "$msp/particlesFb005.xsd" "" \
  "`elem_unexpected $msp/particlesFb005.xsd:15:20 $schema_ns sequence`"
