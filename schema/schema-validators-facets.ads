@@ -65,7 +65,7 @@ private package Schema.Validators.Facets is
       Mask                 : Facets_Mask               := (others => False);
       --  List of facets than can be set or are currently set
 
-      Whitespace           : Whitespace_Restriction    := Preserve;
+      Whitespace           : Whitespace_Restriction    := Collapse;
       Pattern              : Pattern_Matcher_Access    := null;
       Pattern_String       : Unicode.CES.Byte_Sequence_Access      := null;
       Implicit_Enumeration : Value_Validator           := null;
