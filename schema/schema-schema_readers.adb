@@ -375,6 +375,7 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
       Tmp  : Context_Access;
       Min_Occurs, Max_Occurs : Integer := 1;
+      Seq : Sequence;
    begin
       if Min_Occurs_Index /= -1 then
          Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
@@ -440,12 +441,12 @@ package body Schema.Schema_Readers is
             null;
 
          when Context_Type_Def =>
-               Handler.Contexts.Next.Type_Validator := Extension_Of
-                 (Lookup (Handler.Schema_NS, "anyType"),
-                  Handler.Contexts.Group, Min_Occurs, Max_Occurs);
-               Output ("Validator := Extension_Of (Lookup (Handler.Schema.NS,"
-                       & """anytype""), " & Ada_Name (Handler.Contexts)
-                       & "," & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
+            Handler.Contexts.Next.Type_Validator := Extension_Of
+              (Lookup (Handler.Schema_NS, "anyType"),
+               Handler.Contexts.Group, Min_Occurs, Max_Occurs);
+            Output ("Validator := Extension_Of (Lookup (Handler.Schema.NS,"
+                    & """anytype""), " & Ada_Name (Handler.Contexts)
+                    & "," & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
 
          when Context_Sequence =>
             Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Group,
@@ -460,6 +461,15 @@ package body Schema.Schema_Readers is
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts)
                     & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
+
+         when Context_Extension =>
+            Seq := Create_Sequence;
+            Output ("Validator := Create_Sequence;");
+            Add_Particle (Seq, Handler.Contexts.Group);
+            Output ("Add_Particle (Validator, " & Ada_Name (Handler.Contexts)
+                    & ");");
+
+            Handler.Contexts.Next.Extension := XML_Validator (Seq);
 
          when others =>
             Output ("Can't handle nested group decl");
