@@ -1569,11 +1569,16 @@ package body Schema.Validators is
    procedure Set_Parsed_URI
      (Grammar : in out XML_Grammar; URI : Byte_Sequence) is
    begin
-      if Grammar /= null then
-         Grammar.Parsed_Locations := new String_List_Record'
-           (Str  => new Byte_Sequence'(URI),
-            Next => Grammar.Parsed_Locations);
+      if Grammar = null then
+         Initialize (Grammar);
       end if;
+
+      if Debug then
+         Put_Line ("Set_Parsed_UI: " & URI);
+      end if;
+      Grammar.Parsed_Locations := new String_List_Record'
+        (Str  => new Byte_Sequence'(URI),
+         Next => Grammar.Parsed_Locations);
    end Set_Parsed_URI;
 
    ----------
