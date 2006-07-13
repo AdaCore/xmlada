@@ -65,7 +65,7 @@ package body Schema.Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class);
+      Atts          : in out Sax.Attributes.Attributes'Class);
    procedure Hook_End_Element
      (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
@@ -413,7 +413,7 @@ package body Schema.Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class)
+      Atts          : in out Sax.Attributes.Attributes'Class)
    is
       pragma Unreferenced (Qname);
       Element   : XML_Element := No_Element;
