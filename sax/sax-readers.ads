@@ -504,7 +504,12 @@ package Sax.Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence;
-      Atts          : Sax.Attributes.Attributes'Class);
+      Atts          : in out Sax.Attributes.Attributes'Class);
+   --  This hook should take the opportunity of normalizing attribute values
+   --  if necessary (basic normalization is already done by the SAX parser,
+   --  but based on information extracted from schemas, further normalization
+   --  might be needed).
+
    type End_Element_Hook is access procedure
      (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence;
