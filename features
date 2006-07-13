@@ -13,6 +13,11 @@ New features
   - Partial port to DOM 3.0
  Schema
   - Added support for base64Binary type
+  - Add support for parsing several .xsd files before parsing an XML file. This
+    was possible before but might have resulted in errors about multiply defined
+    elements and types
+  - Attribute's value normalization is now done based on the value of their
+    whitespace facet.
 
 New features in version 2.1
  Unicode:
