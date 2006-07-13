@@ -131,6 +131,8 @@ package body Schema.Validators.Extensions is
             Validate_Start_Element
               (Validator.Extension, Local_Name, Namespace_URI, NS,
                D.Extension_Data, Schema_Target_NS, Element_Validator);
+         else
+            Debug_Output ("Base part didn't match, but no extension defined");
          end if;
       end if;
    end Validate_Start_Element;
