@@ -944,6 +944,7 @@ package body Schema.Validators.Simple_Types is
       Create_Global_Type (G, "boolean", Tmp);
 
       Str := new String_Validators.Validator_Record;
+      Set_Whitespace (Str.Facets, Preserve);
       Create_Global_Type (G, "string", Str);
 
       Str := new String_Validators.Validator_Record;
@@ -951,15 +952,15 @@ package body Schema.Validators.Simple_Types is
       Create_Global_Type (G, "QName", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Replace);
+      Set_Whitespace (Str.Facets, Replace);  --  This should be hard-coded ???
       Create_Global_Type (G, "normalizedString", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
+      Set_Whitespace (Str.Facets, Collapse);  --  This should be hard-coded ???
       Create_Global_Type (G, "token", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
+      Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Language_Name'Access);
       Created := Create_Global_Type (G, "language", Str);
       Create_Global_Attribute (XML_G, "lang", Created);
@@ -970,27 +971,27 @@ package body Schema.Validators.Simple_Types is
       Create_Global_Type (G, "NMTOKEN", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
+      Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Name'Access);
       Create_Global_Type (G, "Name", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
+      Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "NCName", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
+      Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ID", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
+      Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "IDREF", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
+      Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ENTITY", Str);
 
