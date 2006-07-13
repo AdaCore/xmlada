@@ -1,5 +1,7 @@
 with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Simple_Types; use  Schema.Validators.Simple_Types;
+with Unicode;                        use Unicode;
+with Sax.Encodings;                  use Sax.Encodings;
 
 package body Schema.Validators.Lists is
 
@@ -149,30 +151,52 @@ package body Schema.Validators.Lists is
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean)
    is
-      Start : Integer := Ch'First;
+      Index : Integer := Ch'First;
+      Last, Start  : Integer;
+      C     : Unicode_Char;
    begin
       Debug_Output ("Validate_Characters for list --" & Ch & "--"
                     & Get_Name (Validator));
 
       Check_Facet (Validator.Facets, Ch);
 
-      --  Ch has already been normalized by the SAX parser
-      for C in Ch'Range loop
-         if Ch (C) = ' ' then
-            if C /= Ch'First then
+      --  Ch might be from an attribute (in which case it might have been
+      --  normalized first), or for the value of a mixed element, in which case
+      --  no element has taken place. We therefore need to skip initial spaces
+
+      while Index <= Ch'Last loop
+         --  Skip leading spaces
+         while Index <= Ch'Last loop
+            Start := Index;
+            Encoding.Read (Ch, Index, C);
+            exit when not Is_White_Space (C);
+            Start := Ch'Last + 1;
+         end loop;
+
+         if Start <= Ch'Last then
+            --  Move to first whitespace after word
+            while Index <= Ch'Last loop
+               Last := Index;
+               Encoding.Read (Ch, Index, C);
+               if Is_White_Space (C) then
+                  Debug_Output ("  In list: " & Ch (Start .. Last - 1));
+                  Validate_Characters
+                    (Get_Validator (Validator.Base),
+                     Ch (Start .. Last - 1),
+                     Empty_Element);
+                  exit;
+               end if;
+            end loop;
+
+            if Index > Ch'Last then
+               Debug_Output ("  In list: " & Ch (Start .. Ch'Last));
                Validate_Characters
-                 (Get_Validator (Validator.Base), Ch (Start .. C - 1),
+                 (Get_Validator (Validator.Base),
+                  Ch (Start .. Ch'Last),
                   Empty_Element);
             end if;
-            Start := C + 1;
          end if;
       end loop;
-
-      if Start <= Ch'Last then
-         Validate_Characters
-           (Get_Validator (Validator.Base), Ch (Start .. Ch'Last),
-            Empty_Element);
-      end if;
    end Validate_Characters;
 
 end Schema.Validators.Lists;
