@@ -4807,8 +4807,11 @@ package body Sax.Readers is
                when Name_Error =>
                   Close (Input_F);
                   Unref (Loc);
-                  Error (Parser,
-                         "External subset not found: " & URI, Id);
+                  Error
+                    (Parser,
+                     "External subset not found: "
+                     & Parser.Buffer (System_Start.First .. System_End.Last),
+                     Id);
                   Reset_Buffer (Parser, Name_Id);
                when others =>
                   Close (Input_F);
