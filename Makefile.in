@@ -47,7 +47,7 @@ test: force
 	${GNATMAKE} -Pdom/test/dom_test.gpr ${MAKE_ARGS}
 	${GNATMAKE} -Pschema/test/schema_test.gpr ${MAKE_ARGS}
 
-run_test: tests
+run_test: test
 	cd dom/test; make tests
 	cd schema/test; make tests
 run_test_valgrind: test
