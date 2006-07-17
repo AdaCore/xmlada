@@ -11,6 +11,7 @@ Problems fixed in wavefront:
     in validation and not validation mode, using external entities
     sometimes,... and should therefore indicate that there are no remaining
     memory leaks in XML/Ada
+  - F505-022: Dom.Core.Nodes.Print fix on the handling of namespaces
 
 Problems fixed in 2.1:
 
