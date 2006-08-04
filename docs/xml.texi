@@ -576,7 +576,7 @@ However, it is always possible to override the default through a call to
 (Latin1, ...) and the character encoding scheme (Utf8,...).
 
 The user is also encouraged to set the identifiers for the stream they
-are parsing, through called to @code{Set_System_Id} and
+are parsing, through calls to @code{Set_System_Id} and
 @code{Set_Public_Id}. These are used when reporting error messages.
 
 @c -------------------------------------------------------------------
@@ -615,7 +615,7 @@ Note that this module supports the second release of SAX (SAX2), that fully
 supports namespaces as defined in the XML standard.
 
 SAX can also be used in cases where a tree would not be the most efficient
-representation for you data. There is no point in building a tree with DOM,
+representation for your data. There is no point in building a tree with DOM,
 then extracting the data and freeing the tree occupied by the tree. It is
 much more efficient to directly store your data through SAX callbacks.
 
@@ -727,7 +727,7 @@ However, there are also a number of drawbacks to using SAX:
  As a result, SAX is probably not the best interface if you want to load,
  modify and dump back an XML file.
 
- Note however than in this Ada implementation, the DOM tree is built through
+ Note however that in this Ada implementation, the DOM tree is built through
  a set of SAX callbacks anyway, so you do not lose any power or speed by using
  DOM instead of SAX.
 @end itemize
@@ -758,9 +758,9 @@ Several other primitive subprograms are defined for the parser, that are
 called the @b{callbacks}. They get called automatically by the @code{Parse}
 procedure when some events are seen.
 
-As a result, you should always override at least some of these subprogram
+As a result, you should always override at least some of these subprograms
 to get something done. The default implementation for these is to do nothing,
-exception for the error handler that raises Ada exceptions appropriately.
+except for the error handler that raises Ada exceptions appropriately.
 
 An example of such an implementation of a SAX parser is available in the
 DOM module, and it creates a tree in memory. As you will see if you look at
