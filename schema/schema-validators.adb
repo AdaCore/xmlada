@@ -1596,7 +1596,14 @@ package body Schema.Validators is
       if Grammar /= null then
          L := Grammar.Parsed_Locations;
          while L /= null loop
+            if Debug then
+               Put_Line ("URI_Was_Parsed (" & URI & ") ? Compare with "
+                         & L.Str.all);
+            end if;
             if L.Str.all = URI then
+               if Debug then
+                  Put_Line ("    => Yes, already parsed");
+               end if;
                return True;
             end if;
             L := L.Next;
