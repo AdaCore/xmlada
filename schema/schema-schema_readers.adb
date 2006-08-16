@@ -268,10 +268,14 @@ package body Schema.Schema_Readers is
      (Parser : in out Schema_Reader;
       Input  : in out Input_Sources.Input_Source'Class) is
    begin
-      Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
-      Set_Parsed_URI
-        (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
-      Parse (Validating_Reader (Parser), Input);
+      if not URI_Was_Parsed
+        (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input))
+      then
+         Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
+         Set_Parsed_URI
+           (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
+         Parse (Validating_Reader (Parser), Input);
+      end if;
    end Parse;
 
    ----------------------
