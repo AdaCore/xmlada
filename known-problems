@@ -1,4 +1,8 @@
 Problems fixed in wavefront:
+  - F814-001: Schema
+    When a .xsd file has already been parsed (for instance through an <import>
+    tag), and you parse it explicitly through a call to Parse, an error is
+    raised. XML/Ada should not try to parse it a second time.
   - F614-003: Storage_Error is raised when you free an XML_Grammar you have
     stored in your application, since it has already been freed automatically
     by XML/Ada. It is now possible to free the same grammar multiple times
