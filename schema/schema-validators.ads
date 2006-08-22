@@ -229,6 +229,11 @@ package Schema.Validators is
       Attr  : access Attribute_Validator_Record'Class);
    --  Add a new attribute to the group
 
+   procedure Add_Attribute_Group
+     (Group : in out XML_Attribute_Group;
+      Attr  : XML_Attribute_Group);
+   --  Add a new group of attributes
+
    ---------------------
    -- Type validators --
    ---------------------

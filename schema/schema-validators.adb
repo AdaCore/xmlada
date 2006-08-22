@@ -391,6 +391,20 @@ package body Schema.Validators is
       Append (Validator.Attributes, Group);
    end Add_Attribute_Group;
 
+   -------------------------
+   -- Add_Attribute_Group --
+   -------------------------
+
+   procedure Add_Attribute_Group
+     (Group : in out XML_Attribute_Group;
+      Attr  : XML_Attribute_Group) is
+   begin
+      if Attr = null then
+         Debug_Output ("Add_Attribute_Group: adding empty attribute group");
+      end if;
+      Append (Group.Attributes, Attr);
+   end Add_Attribute_Group;
+
    --------------
    -- Get_Name --
    --------------
@@ -594,10 +608,14 @@ package body Schema.Validators is
       function Find_Attribute
         (Named : Named_Attribute_Validator) return Integer is
       begin
+         Debug_Output ("Check if XSD attribute: "
+                       & Named.NS.Namespace_URI.all
+                       & ':' & Named.Local_Name.all);
+
          for A in 0 .. Length - 1 loop
-            Debug_Output ("Check attribute: "
-                          & Named.NS.Namespace_URI.all
-                          & ':' & Named.Local_Name.all);
+            Debug_Output ("   is specified. Elem has: "
+                          & Get_URI (Atts, A) & ':'
+                          & Get_Local_Name (Atts, A));
             if not Seen (A)
               and then Get_Local_Name (Atts, A) = Named.Local_Name.all
               and then (Get_URI (Atts, A) = ""
@@ -650,6 +668,9 @@ package body Schema.Validators is
 
          elsif List.Attr.all in Named_Attribute_Validator_Record'Class then
             Check_Named_Attribute (Named_Attribute_Validator (List.Attr));
+
+         else
+            Debug_Output ("Not a named attribute, cannot check");
          end if;
       end Recursive_Check;
 
@@ -958,6 +979,7 @@ package body Schema.Validators is
         Attribute_Groups_Htable.Get (Grammar.Attribute_Groups.all, Local_Name);
    begin
       if Result = Empty_Attribute_Group then
+         Debug_Output ("Lookup_Attribute_Group: Create forward decl");
          Result := Create_Global_Attribute_Group (Grammar, Local_Name);
          Result.Is_Forward_Decl := True;
       end if;
@@ -3232,7 +3254,8 @@ package body Schema.Validators is
             Attr := Current (Attr_Iter);
             if Attr.Attribute_Type = No_Type then
                Validation_Error
-                 ("Attribute """ & Attr.Local_Name.all
+                 ("Attribute """
+                  & Attr.Local_Name.all
                   & """ is referenced, but not defined");
             end if;
 
@@ -3243,9 +3266,12 @@ package body Schema.Validators is
             Group := Current (Group_Iter);
             if Group.Is_Forward_Decl then
                Validation_Error
-                 ("Group """ & Group.Local_Name.all
+                 ("Group """
+                  & To_QName (Grammar.Namespace_URI.all,
+                              Group.Local_Name.all)
                   & """ is referenced, but not defined");
             end if;
+
             Next (Grammar.Groups.all, Group_Iter);
          end loop;
 
@@ -3253,10 +3279,11 @@ package body Schema.Validators is
             Attr_Group := Current (Attr_Group_Iter);
             if Attr_Group.Is_Forward_Decl then
                Validation_Error
-                 ("attributeGroup """ & Attr_Group.Local_Name.all
+                 ("attributeGroup """
+                  & To_QName (Grammar.Namespace_URI.all,
+                              Attr_Group.Local_Name.all)
                   & """ is referenced, but not defined");
             end if;
-
             Next (Grammar.Attribute_Groups.all, Attr_Group_Iter);
          end loop;
       end Local_Check;
