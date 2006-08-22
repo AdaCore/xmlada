@@ -1,4 +1,8 @@
 Problems fixed in wavefront:
+  - F822-009: Schema and attributeGroup
+    Using the "ref" attribute for <attributeGroup> is not supported correctly,
+    since XML/Ada will complain that the group is referenced but never defined
+  - F822-009: Schema: <attributeGroup> cannot contain another <attributeGroup>
   - F814-001: Schema
     When a .xsd file has already been parsed (for instance through an <import>
     tag), and you parse it explicitly through a call to Parse, an error is
