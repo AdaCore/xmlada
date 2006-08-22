@@ -1619,6 +1619,8 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "$act/F511-009/xmldsig-core-schema.xsd" "$act/F511-009/Untitled7-2.xml" \
      "act_testsuite/F511-009/Untitled7-2.xml:15:67: Invalid value: \"UjBsR@409EbGhjZ0dTQUxNQUFBUUNBRU1tQ1p0dU1GUXhEUzhi\""
    (cd act_testsuite/multiple_schemas; compare "multiple_schemas" "`./run.sh 2>&1`" "")
+   expect "" "$act/F822-009/file.xml" ""
+   expect "" "$act/F822-009_2/file.xml" "$act/F822-009_2/file.xml:8:2: attributeGroup \"attributes2\" is referenced, but not defined"
 fi
 
 summary
