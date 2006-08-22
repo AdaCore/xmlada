@@ -444,11 +444,13 @@ package body Schema.Readers is
             Parse_Grammar (Validating_Reader (Handler),
                            Get_Value (Atts, No_Index),
                            Add_To => Validating_Reader (Handler).Grammar);
+            Global_Check (Validating_Reader (Handler).Grammar);
          end if;
 
          if Location_Index /= -1 then
             Parse_Grammars (Validating_Reader (Handler),
                             Get_Value (Atts, Location_Index));
+            Global_Check (Validating_Reader (Handler).Grammar);
          end if;
       end Get_Grammar_From_Attributes;
 
