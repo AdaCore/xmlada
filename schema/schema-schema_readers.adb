@@ -38,6 +38,10 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Group);
+   procedure Lookup_With_NS
+     (Handler : in out Schema_Reader'Class;
+      QName   : Byte_Sequence;
+      Result  : out XML_Attribute_Group);
    --  Lookup a type or element  with a possible namespace specification
 
    function Create_Repeat
@@ -361,6 +365,28 @@ package body Schema.Schema_Readers is
          & QName (Separator + 1 .. QName'Last) & """);");
    end Lookup_With_NS;
 
+   --------------------
+   -- Lookup_With_NS --
+   --------------------
+
+   procedure Lookup_With_NS
+     (Handler : in out Schema_Reader'Class;
+      QName   : Byte_Sequence;
+      Result  : out XML_Attribute_Group)
+   is
+      Separator : constant Integer := Split_Qname (QName);
+      G         : XML_Grammar_NS;
+   begin
+      Get_Grammar_For_Namespace
+        (Handler, QName (QName'First .. Separator - 1), G);
+
+      Result := Lookup_Attribute_Group
+        (G, QName (Separator + 1 .. QName'Last));
+      Output
+        ("Attr_Group := Lookup_Attribute_Group (G, """
+         & QName (Separator + 1 .. QName'Last) & """);");
+   end Lookup_With_NS;
+
    ------------------
    -- Create_Group --
    ------------------
@@ -536,11 +562,9 @@ package body Schema.Schema_Readers is
                  & Get_Value (Atts, Name_Index) & """);");
 
       elsif Ref_Index /= -1 then
-         Handler.Contexts.Attr_Group := Lookup_Attribute_Group
-           (Handler.Target_NS, Get_Value (Atts, Ref_Index));
-         Output (Ada_Name (Handler.Contexts) &
-                 " := Lookup_Attribute_Group (Handler.Target_NS, """
-                 & Get_Value (Atts, Ref_Index) & """);");
+         Lookup_With_NS
+           (Handler, Get_Value (Atts, Ref_Index), Handler.Contexts.Attr_Group);
+         Output (Ada_Name (Handler.Contexts) & " := Attr_Group");
       end if;
 
       if not In_Redefine then
