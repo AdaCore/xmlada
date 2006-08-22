@@ -599,6 +599,14 @@ package body Schema.Schema_Readers is
                        & Ada_Name (Handler.Contexts.Next)
                        & ", " & Ada_Name (Handler.Contexts) & ");");
 
+            when Context_Attribute_Group =>
+               Add_Attribute_Group
+                 (Handler.Contexts.Next.Attr_Group,
+                  Handler.Contexts.Attr_Group);
+               Output ("Add_Attribute_Group ("
+                       & Ada_Name (Handler.Contexts.Next)
+                       & ", " & Ada_Name (Handler.Contexts) & ");");
+
             when others =>
                Output ("Context is " & Handler.Contexts.Next.Typ'Img);
                Validation_Error
