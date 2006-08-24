@@ -1,4 +1,5 @@
 with Ada.Command_Line;   use Ada.Command_Line;
+with Ada.Direct_IO;
 with Ada.Exceptions;     use Ada.Exceptions;
 with Ada.Text_IO;        use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
@@ -50,6 +51,8 @@ procedure Testxml is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Input_Source'Class, Input_Source_Access);
+
+   package Character_IO is new Ada.Direct_IO (Character);
 
    Silent : Boolean := False;
    --  If True, do not print the resulting DOM tree when testing a single XML
@@ -652,8 +655,14 @@ procedure Testxml is
       --  valgrind will report a memory leak in the GNAT runtime (which is not
       --  really a leak, just unfreed memory on exit).
 
-      File  : File_Type;
-      File2 : File_Type;
+      use Character_IO;
+
+      File  : Ada.Text_IO.File_Type;
+      File2 : Character_IO.File_Type;
+      File3 : Character_IO.File_Type;
+      C, Previous, Previous2 : Character := ASCII.NUL;
+      Last_Written : Character := ASCII.LF;
+      In_Doctype : Boolean := False;
    begin
       if Result.Success_Count > 0 then
          Create (File, Out_File, Tmp_File1_Name);
@@ -666,27 +675,72 @@ procedure Testxml is
                 Encoding             => Encoding_Out,
                 Collapse_Empty_Nodes => Collapse_Empty_Nodes);
          Set_Output (Standard_Output);
-         Flush (File);
-
-         Create (File2, Out_File, Tmp_File2_Name);
+         Close (File); --  Automatically adds a newline character at the end
 
          --  Process the expected output by removing the DTD, which
          --  is not stored in the DOM tree, and thus cannot be output
-         if System
-           ("sed -e '/<!DOCTYPE/,/]>/d' " & Expected & " > " & Tmp_File2_Name
-            & ASCII.NUL) /= 0
-         then
-            Result := Single_Failure;
+         Create (File2, Out_File, Tmp_File2_Name);
+         Open (File3, In_File, Expected);
+         while not End_Of_File (File3) loop
+            Read (File3, C);
 
-         elsif System
+            if C = 'D'
+               and then Previous2 = '<'
+               and then Previous = '!'
+            then
+               In_Doctype := True;
+               Previous := ASCII.NUL;
+               Previous2 := ASCII.NUL;
+
+            elsif In_Doctype
+               and then C = ASCII.LF
+               and then Previous = '>'
+               and then Previous2 = ']'
+            then
+               In_Doctype := False;
+               Previous := ASCII.NUL;
+               Previous2 := ASCII.NUL;
+               C := ASCII.NUL; --  Do not print
+            end if;
+
+            if not In_Doctype and then Previous2 /= ASCII.NUL then
+               Write (File2, Previous2);
+               Last_Written := Previous2;
+            end if;
+
+            Previous2 := Previous;
+            Previous  := C;
+         end loop;
+
+         if not In_Doctype and then Previous2 /= ASCII.NUL then
+            Write (File2, Previous2);
+            Last_Written := Previous2;
+         end if;
+         if not In_Doctype and then Previous /= ASCII.NUL then
+            Write (File2, Previous);
+            Last_Written := Previous;
+         end if;
+
+         --  Ensure we end up with a newline, since otherwise some diffs will
+         --  complain on some systems
+         if Last_Written /= ASCII.LF then
+            Write (File2, ASCII.LF);
+         end if;
+
+         Close (File3);
+         Close (File2);
+
+         if System
            ("diff " & Tmp_File2_Name
             & " " & Tmp_File1_Name & ASCII.NUL) /= 0
          then
             Result := Single_Failure;
          end if;
 
-         Delete (File2);
-         Delete (File);
+         --  Can't delete, since they have been closed. Anyway, it is more
+         --  convenient to analyze the output anyway
+         --  Delete (File2);
+         --  Delete (File);
       end if;
    end Diff_Output;
 
