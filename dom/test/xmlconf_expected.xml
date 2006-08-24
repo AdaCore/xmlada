@@ -38,6 +38,12 @@
   <test id="rmt-ns10-033"                  ambiguous="yes" 
     >033.xml:4:12: Cannot redefine the xmlns prefix</test>  <!--  uses ymlns instead of xmlns -->
 
+  <!--  Output requires partial output of DOCTYPE for these tests. Don't
+        know why exactly -->
+  <test id="ibm-valid-P28-ibm28v02.xml"  unsupported="yes" />
+  <test id="ibm-valid-P29-ibm29v01.xml"  unsupported="yes" />
+  <test id="ibm-valid-P29-ibm29v02.xml"  unsupported="yes" />
+
   <!--  To be implemented -->
   <test id="rmt-e2e-55" unsupported="yes" >
      Reference to unparsed entity in entity valie is an error, not forbidden
