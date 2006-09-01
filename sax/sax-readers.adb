@@ -693,6 +693,9 @@ package body Sax.Readers is
    --  Start_Entity/End_Entity are properly nested, and error messages
    --  point to the right entity.
 
+   procedure Debug_Print (Parser : Reader'Class; Id : Token);
+   --  Print the contents of Id
+
    -------------------
    -- End_Of_Stream --
    -------------------
@@ -1407,6 +1410,44 @@ package body Sax.Readers is
       end loop;
    end Close_Inputs;
 
+   -----------------
+   -- Debug_Print --
+   -----------------
+
+   procedure Debug_Print (Parser : Reader'Class; Id : Token) is
+      L : Locator_Impl := Locator_Impl (Parser.Locator.all);
+   begin
+      Set_Line_Number (L, Id.Line);
+      Set_Column_Number (L, Id.Column);
+      Put ("++Lex (" & Parser.State.Name & ") at "
+           & To_String (L) & " (" & Token_Type'Image (Id.Typ) & ")");
+      if Parser.State.Ignore_Special then
+         Put (" (in string)");
+      end if;
+
+      if Id.Typ = Space then
+         declare
+            J : Natural := Id.First;
+            C : Unicode_Char;
+         begin
+            Put (" --");
+            while J <= Id.Last loop
+               Encoding.Read (Parser.Buffer.all, J, C);
+               Put (Unicode_Char'Image (C));
+            end loop;
+            Put ("--");
+         end;
+
+      elsif Id.Last >= Id.First then
+         Put (" --" & Parser.Buffer (Id.First .. Id.Last) & "--");
+      end if;
+
+      Put_Line
+        (" buffer="
+         & Parser.Buffer (Parser.Buffer'First .. Parser.Buffer_Length)
+         & "--");
+   end Debug_Print;
+
    ----------------
    -- Next_Token --
    ----------------
@@ -1433,9 +1474,6 @@ package body Sax.Readers is
 
       procedure Handle_Less_Than_Sign;
       --  Handle '<', '<!', '<!--', '<![',... sequences
-
-      procedure Debug_Print;
-      --  Print the returned token
 
       procedure Handle_Entity_Ref;
       --  '&' has been read (as well as the following character). Skips till
@@ -1810,44 +1848,6 @@ package body Sax.Readers is
             Fatal_Error (Parser, Error_Entity_Name, Id);
          end if;
       end Handle_Entity_Ref;
-
-      -----------------
-      -- Debug_Print --
-      -----------------
-
-      procedure Debug_Print is
-         L : Locator_Impl := Locator_Impl (Parser.Locator.all);
-      begin
-         Set_Line_Number (L, Id.Line);
-         Set_Column_Number (L, Id.Column);
-         Put ("++Lex (" & Parser.State.Name & ") at "
-              & To_String (L) & " (" & Token_Type'Image (Id.Typ) & ")");
-         if Parser.State.Ignore_Special then
-            Put (" (in string)");
-         end if;
-
-         if Id.Typ = Space then
-            declare
-               J : Natural := Id.First;
-               C : Unicode_Char;
-            begin
-               Put (" --");
-               while J <= Id.Last loop
-                  Encoding.Read (Parser.Buffer.all, J, C);
-                  Put (Unicode_Char'Image (C));
-               end loop;
-               Put ("--");
-            end;
-
-         elsif Id.Last >= Id.First then
-            Put (" --" & Parser.Buffer (Id.First .. Id.Last) & "--");
-         end if;
-
-         Put_Line
-           (" buffer="
-            & Parser.Buffer (Parser.Buffer'First .. Parser.Buffer_Length)
-            & "--");
-      end Debug_Print;
 
       type Entity_Ref is (None, Entity, Param_Entity);
       Is_Entity_Ref : Entity_Ref := None;
@@ -2362,7 +2362,7 @@ package body Sax.Readers is
       Id.Last := Parser.Buffer_Length;
 
       if Debug_Lexical then
-         Debug_Print;
+         Debug_Print (Parser, Id);
       end if;
 
       --  Internal entities should be processes inline
@@ -4147,13 +4147,18 @@ package body Sax.Readers is
             end if;
          end if;
 
-         if not Is_Valid_IRI (Get_String (URI_S, URI_E)) then
-            Error
-              (Parser,
-               "Invalid absolute IRI (Internationalized Resource Identifier)"
-               & " for namespace", URI_S);
-            --  NS 2
-         end if;
+         declare
+            URI : constant String := Get_String (URI_S, URI_E);
+         begin
+            if URI /= "" and then not Is_Valid_IRI (URI) then
+               Error
+                 (Parser,
+                  "Invalid absolute IRI (Internationalized Resource"
+                  & " Identifier) for namespace: """ & URI & """",
+                  URI_S);
+               --  NS 2
+            end if;
+         end;
 
          Add_Namespace (Parser, Parser.Current_Node, Prefix, URI_S, URI_E);
       end Check_And_Define_Namespace;
@@ -4777,6 +4782,7 @@ package body Sax.Readers is
                   Parser.Buffer (System_Start.First .. System_End.Last));
                In_External : constant Boolean := Parser.In_External_Entity;
                Input_F : File_Input;
+               Saved_Last_Read : constant Unicode_Char := Parser.Last_Read;
             begin
                Open (URI, Input_F);
                Copy (Loc, Parser.Locator.all);
@@ -4784,6 +4790,7 @@ package body Sax.Readers is
                --  Protect against the case where the last character read was
                --  a LineFeed.
                Parser.Last_Read := Unicode_Char'Val (16#00#);
+               Parser.Last_Read_Is_Valid := False;
 
                Set_Line_Number (Parser.Locator.all, 1);
                Set_Column_Number
@@ -4801,8 +4808,8 @@ package body Sax.Readers is
                Parser.In_External_Entity := In_External;
                Copy (Parser.Locator.all, Loc);
                Unref (Loc);
-               Parser.Last_Read := 0;
-               Parser.Last_Read_Is_Valid := False;
+               Parser.Last_Read := Saved_Last_Read;
+               Parser.Last_Read_Is_Valid := True;
             exception
                when Name_Error =>
                   Close (Input_F);
