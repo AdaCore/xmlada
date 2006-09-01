@@ -154,7 +154,7 @@
     -->
 
   <test id="id01"
-     >id01.xml:5:6: &attribute_is_ncname;id</test>
+     >id01.xml:6:6: &attribute_is_ncname;id</test>
   <test id="id06"
      >id06.xml:11:2: &attribute_is_ncname;idref</test>
   <test id="id07"
@@ -810,7 +810,7 @@ Did you want to use &amp;amp;?</test>
   <test id="not-wf-sa-184"
     >184.xml:2:31: Nested groups and occurrence operators not allowed in mixed content</test>
   <test id="not-wf-sa-185"
-    >185.xml:3:6: Undefined entity 'e'</test>
+    >185.xml:4:6: Undefined entity 'e'</test>
   <test id="not-wf-sa-186"
     >186.xml:5:9: Expecting a space</test>
   <test id="o-p01fail1"
@@ -1341,8 +1341,7 @@ Did you want to use &amp;amp;?</test>
   <test id="rmt-ns10-022"
     >022.xml:3:5: No DTD defined for this document</test>
   <test id="rmt-ns10-021"
-    >021.xml:3:5: No DTD defined for this document
-021.xml:4:14: Invalid absolute IRI (Internationalized Resource Identifier) for namespace</test>
+    >021.xml:3:5: No DTD defined for this document</test>
   <test id="rmt-ns10-020"
     >020.xml:3:5: No DTD defined for this document
 020.xml:3:47: [VC] No attribute allowed for element foo</test>
@@ -1367,11 +1366,11 @@ Did you want to use &amp;amp;?</test>
   <test id="rmt-ns10-009"
     >009.xml:16:29: Attributes may appear only once: b:attr</test>
   <test id="rmt-ns10-006"
-    >006.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace</test>
+    >006.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "http://example.org/rosé"</test>
   <test id="rmt-ns10-005"
-    >005.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace</test>
+    >005.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "#beeblebrox"</test>
   <test id="rmt-ns10-004"
-    >004.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace</test>
+    >004.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "namespaces/zaphod"</test>
   <test id="rmt-e2e-61"
     >E61.xml:2:1: Non-white space found at top level</test>
   <test id="rmt-e2e-57"
@@ -2053,14 +2052,14 @@ Did you want to use &amp;amp;?</test>
    <test id="id05"
      >id05.xml:4:9: Default value for an ID attribute must be IMPLIED or REQUIRED</test>
    <test id="inv-not-sa02"
-     >not-sa02.xml:17:2: Attribute must contain Nmtokens: nmtokens
-not-sa02.xml:17:2: Attribute must contain Names: entities
-not-sa02.xml:17:2: Attribute must reference an existing unparsed entity: entities</test>
+     >not-sa02.xml:18:2: Attribute must contain Nmtokens: nmtokens
+not-sa02.xml:18:2: Attribute must contain Names: entities
+not-sa02.xml:18:2: Attribute must reference an existing unparsed entity: entities</test>
    <test id="inv-not-sa08"
-     >not-sa08.xml:8:2: Attribute must contain Nmtokens: nmtokens</test>
+     >not-sa08.xml:9:2: Attribute must contain Nmtokens: nmtokens</test>
    <test id="inv-not-sa13"
-     >not-sa13.xml:8:2: Attribute must contain Names: entities
-not-sa13.xml:8:2: Attribute must reference an existing unparsed entity: entities</test>
+     >not-sa13.xml:9:2: Attribute must contain Names: entities
+not-sa13.xml:9:2: Attribute must reference an existing unparsed entity: entities</test>
    <test id="inv-required00"
      >required00.xml:8:8: [VC 3.3.2] Required attribute 'req' must be defined</test>
    <test id="inv-required01"
@@ -2068,7 +2067,7 @@ not-sa13.xml:8:2: Attribute must reference an existing unparsed entity: entities
    <test id="inv-required02"
      >required02.xml:5:11: [VC] No attribute allowed for element root</test>
    <test id="root"
-     >root.xml:6:6: [VC 2.8] Name of root element doesn't match name of DTD ('attributes')</test>
+     >root.xml:7:6: [VC 2.8] Name of root element doesn't match name of DTD ('attributes')</test>
    <test id="attr01"
      >attr01.xml:9:2: Attribute must reference an existing unparsed entity: affiliated</test>
    <test id="attr02"
@@ -2100,7 +2099,7 @@ attr12.xml:5:21: Attribute must reference an existing unparsed entity: value</te
    <test id="utf16l"
      >utf16l.xml:2:6: No DTD defined for this document</test>
    <test id="not-wf-sa03"
-     >not-sa03.xml:10:20: Entity declared in external subset, but document is standalone</test>
+     >not-sa03.xml:11:20: Entity declared in external subset, but document is standalone</test>
    <test id="attlist01"
      >attlist01.xml:7:10: Invalid type for attribute</test>
    <test id="attlist02"
@@ -2746,7 +2745,7 @@ Did you want to use &amp;amp;?</test>
    <test id="ibm-not-wf-P32-ibm32n08.xml"
      >ibm32n08.xml:1:32: Expecting '=' sign</test>
    <test id="ibm-not-wf-P32-ibm32n09.xml"
-     >ibm32n09.xml:9:9: Entity declared in external subset, but document is standalone</test>
+     >ibm32n09.xml:10:9: Entity declared in external subset, but document is standalone</test>
    <test id="ibm-not-wf-P39-ibm39n01.xml"
      >ibm39n01.xml:7:0: Node &lt;root&gt; is not closed</test>
    <test id="ibm-not-wf-P39-ibm39n02.xml"
@@ -3099,7 +3098,7 @@ Did you want to use &amp;amp;?</test>
    <test id="ibm-not-wf-P68-ibm68n05.xml"
      >ibm68n05.xml:6:25: Undefined entity 'aaa'</test>
    <test id="ibm-not-wf-P68-ibm68n06.xml"
-     >ibm68n06.xml:8:12: Entity declared in external subset, but document is standalone</test>
+     >ibm68n06.xml:9:12: Entity declared in external subset, but document is standalone</test>
    <test id="ibm-not-wf-P68-ibm68n07.xml"
      >ibm68n07.xml:6:28: Undefined entity 'aaa'</test>
    <test id="ibm-not-wf-P68-ibm68n08.xml"
