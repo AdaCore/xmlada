@@ -1,4 +1,5 @@
 Problems fixed in wavefront:
+  - F830-012: Character after <DOCTYPE SYSTEM "..."> is discarded.
   - F822-009: Schema and attributeGroup
     Using the "ref" attribute for <attributeGroup> is not supported correctly,
     since XML/Ada will complain that the group is referenced but never defined
