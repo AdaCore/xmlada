@@ -945,7 +945,7 @@ package body Schema.Validators.Simple_Types is
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve);
-      Created := Create_Global_Type (G, "string", Str);
+      Create_Global_Type (G, "string", Str);
 
       Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_QName'Access);
