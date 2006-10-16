@@ -50,9 +50,9 @@ package body Sax.Readers is
 
    use Entity_Table, Attributes_Table, Notations_Table;
 
-   Debug_Lexical  : constant Boolean := False;
-   Debug_Input    : constant Boolean := False;
-   Debug_Internal : constant Boolean := False;
+   Debug_Lexical  : constant Boolean := True;
+   Debug_Input    : constant Boolean := True;
+   Debug_Internal : constant Boolean := True;
    --  Set to True if you want to debug this package
 
    Initial_Buffer_Length : constant := 10000;
@@ -2624,7 +2624,7 @@ package body Sax.Readers is
       Open_Was_Read : Boolean)
    is
       --  ??? Would be nice to get rid of this hard-coded limitation in stacks
-      Stack_Size : constant Natural := 64;
+      Stack_Size : constant Natural := 1024;
       Operand_Stack : Element_Model_Array (1 .. Stack_Size);
       Operand_Index : Natural := Operand_Stack'First;
       Operator_Stack : array (1 .. Stack_Size) of Unicode_Char;
