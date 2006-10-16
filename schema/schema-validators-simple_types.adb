@@ -945,7 +945,7 @@ package body Schema.Validators.Simple_Types is
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve);
-      Create_Global_Type (G, "string", Str);
+      Created := Create_Global_Type (G, "string", Str);
 
       Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_QName'Access);
@@ -971,6 +971,11 @@ package body Schema.Validators.Simple_Types is
       Create_Global_Type (G, "NMTOKEN", Str);
 
       Str := new String_Validators.Validator_Record;
+      Set_Whitespace (Str.Facets, Collapse);
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_Nmtokens'Access);
+      Create_Global_Type (G, "NMTOKENS", Str);
+
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Name'Access);
       Create_Global_Type (G, "Name", Str);
@@ -991,9 +996,19 @@ package body Schema.Validators.Simple_Types is
       Create_Global_Type (G, "IDREF", Str);
 
       Str := new String_Validators.Validator_Record;
+      Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCnames'Access);
+      Create_Global_Type (G, "IDREFS", Str);
+
+      Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ENTITY", Str);
+
+      Str := new String_Validators.Validator_Record;
+      Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCnames'Access);
+      Create_Global_Type (G, "ENTITIES", Str);
 
       Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_URI'Access);
