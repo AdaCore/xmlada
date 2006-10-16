@@ -50,9 +50,9 @@ package body Sax.Readers is
 
    use Entity_Table, Attributes_Table, Notations_Table;
 
-   Debug_Lexical  : constant Boolean := True;
-   Debug_Input    : constant Boolean := True;
-   Debug_Internal : constant Boolean := True;
+   Debug_Lexical  : constant Boolean := False;
+   Debug_Input    : constant Boolean := False;
+   Debug_Internal : constant Boolean := False;
    --  Set to True if you want to debug this package
 
    Initial_Buffer_Length : constant := 10000;
