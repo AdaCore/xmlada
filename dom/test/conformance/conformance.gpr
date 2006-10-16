@@ -1,0 +1,12 @@
+with "../../dom";
+with "../../../shared";
+
+project Conformance is
+   for Main use ("dom_conformance");
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
+   package Compiler is
+      for Default_Switches ("Ada") use ("-g");
+   end Compiler;
+end Conformance;
