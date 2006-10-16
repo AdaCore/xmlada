@@ -747,9 +747,10 @@ private
       Equal         => Standard."=");
 
    type Notation_Entry is record
-      Name : Unicode.CES.Byte_Sequence_Access;
+      Name             : Unicode.CES.Byte_Sequence_Access;
+      Declaration_Seen : Boolean;
    end record;
-   Null_Notation : constant Notation_Entry := (Name => null);
+   Null_Notation : constant Notation_Entry := (null, False);
 
    procedure Free (Notation : in out Notation_Entry);
    function Get_Key (Notation : Notation_Entry) return String;

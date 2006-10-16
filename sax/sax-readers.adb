@@ -3663,9 +3663,11 @@ package body Sax.Readers is
                      Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last)) =
                     Null_Notation
                   then
-                     Error (Parser, Error_Notation_Undeclared
-                            & Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last),
-                            Ndata_Id);
+                     --  The notation might be declared later in the same DTD
+                     Set (Parser.Notations,
+                          (Name => new Byte_Sequence'
+                             (Parser.Buffer (Ndata_Id.First .. Ndata_Id.Last)),
+                           Declaration_Seen => False));
                   end if;
 
                   Next_Token_Skip_Spaces (Input, Parser, Id);
@@ -3870,9 +3872,12 @@ package body Sax.Readers is
               Parser.Buffer (System_Start.First .. System_End.Last));
 
          if Parser.Feature_Validation then
+            Remove (Parser.Notations,
+                    Parser.Buffer (Name_Id.First .. Name_Id.Last));
             Set (Parser.Notations,
                  (Name => new Byte_Sequence'
-                    (Parser.Buffer (Name_Id.First .. Name_Id.Last))));
+                    (Parser.Buffer (Name_Id.First .. Name_Id.Last)),
+                  Declaration_Seen => True));
          end if;
 
          Set_State (Parser, DTD_State);
@@ -4827,6 +4832,21 @@ package body Sax.Readers is
             end;
          else
             Reset_Buffer (Parser, Name_Id);
+         end if;
+
+         --  Check that all declarations are fully declared
+         if Parser.Feature_Validation then
+            declare
+               Iter : Notations_Table.Iterator := First (Parser.Notations);
+            begin
+               while Iter /= Notations_Table.No_Iterator loop
+                  if not Current (Iter).Declaration_Seen then
+                     Error (Parser, Error_Notation_Undeclared
+                            & Current (Iter).Name.all);
+                  end if;
+                  Next (Parser.Notations, Iter);
+               end loop;
+            end;
          end if;
 
          Parser.In_External_Entity := False;
