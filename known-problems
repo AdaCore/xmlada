@@ -1,4 +1,7 @@
 Problems fixed in wavefront:
+  - FA16-002 Accept xml:lang attribute in <schema> node (2006-10-16)
+    The above attribute should be allowed in this node
+
   - F830-012: Character after <DOCTYPE SYSTEM "..."> is discarded.
   - F822-009: Schema and attributeGroup
     Using the "ref" attribute for <attributeGroup> is not supported correctly,
