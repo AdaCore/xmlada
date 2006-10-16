@@ -144,6 +144,8 @@ package body Schema.Schema_Grammar is
             Value             => "unqualified"));
       Add_Attribute (Seq2, Create_Local_Attribute ("id", G, Lookup (G, "ID"),
                                                    Is_ID => True));
+      Add_Attribute (Seq2, Lookup_Attribute
+         (Grammar => XML_G, Local_Name => "lang"));
       Set_Type (Create_Global_Element (G, "schema", Qualified),
                 Create_Local_Type (Seq2));
 
