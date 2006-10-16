@@ -1,4 +1,8 @@
 Problems fixed in wavefront:
+  - Out-of-order notation declaration in DTD (2006-10-16)
+    A notation doesn't have to be declared before its first use in a DTD, it can
+    be declared later on. XML/Ada didn't support this
+
   - FA16-002 Accept xml:lang attribute in <schema> node (2006-10-16)
     The above attribute should be allowed in this node
 
