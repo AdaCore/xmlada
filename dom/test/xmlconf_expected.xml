@@ -2046,7 +2046,7 @@ Did you want to use &amp;amp;?</test>
    <test id="not-wf-ext-sa-003"
      >003.ent:1:39: &lt;?xml?&gt; instruction must be first in document</test>
    <test id="inv-dtd02"
-     >dtd02.xml:3:55: Notation must be declared: Encyclopaedia</test>
+     >dtd02.xml:4:3: Notation must be declared: Encyclopaedia</test>
    <test id="id04"
      >id04.xml:3:9: Default value for an ID attribute must be IMPLIED or REQUIRED</test>
    <test id="id05"
@@ -2378,24 +2378,22 @@ entity %mixed1:1:2: Replacement text for entities must be properly nested</test>
    <test id="ibm-invalid-P56-ibm56i09.xml"
      >ibm56i09.xml:16:2: Attribute must contain Names with no colon: reference</test>
    <test id="ibm-invalid-P56-ibm56i11.xml"
-     >ibm56i11.xml:7:62: Notation must be declared: gif
+     >ibm56i11.xml:9:3: Notation must be declared: gif
 ibm56i11.xml:11:2: Attribute must contain Names: sun
 ibm56i11.xml:11:2: Attribute must reference an existing unparsed entity: sun</test>
    <test id="ibm-invalid-P56-ibm56i12.xml"
-     >ibm56i12.xml:7:62: Notation must be declared: gif
+     >ibm56i12.xml:9:3: Notation must be declared: gif
 ibm56i12.xml:11:2: Attribute must reference an existing unparsed entity: sun</test>
    <test id="ibm-invalid-P56-ibm56i13.xml"
      >ibm56i13.xml:11:2: Attribute must reference an existing unparsed entity: sun</test>
    <test id="ibm-invalid-P56-ibm56i14.xml"
-     >ibm56i14.xml:7:63: Notation must be declared: gif
-ibm56i14.xml:8:66: Notation must be declared: gif
+     >ibm56i14.xml:10:3: Notation must be declared: gif
 ibm56i14.xml:12:2: Attribute must contain Names: sun
 ibm56i14.xml:12:2: Attribute must reference an existing unparsed entity: sun
 ibm56i14.xml:12:2: Attribute must contain Names: sun
 ibm56i14.xml:12:2: Attribute must reference an existing unparsed entity: sun</test>
    <test id="ibm-invalid-P56-ibm56i15.xml"
-     >ibm56i15.xml:7:63: Notation must be declared: gif
-ibm56i15.xml:8:65: Notation must be declared: gif
+     >ibm56i15.xml:10:3: Notation must be declared: gif
 ibm56i15.xml:12:2: Attribute must contain Names: sun
 ibm56i15.xml:12:2: Attribute must reference an existing unparsed entity: sun
 ibm56i15.xml:12:2: Attribute must reference an existing unparsed entity: sun</test>
@@ -2436,7 +2434,7 @@ ibm58i02.xml:9:42: Notation must be declared: uuencode</test>
    <test id="ibm-invalid-P69-ibm69i04.xml"
      >ibm69i04.ent:4:1: Undefined entity '%pe2'</test>
    <test id="ibm-invalid-P76-ibm76i01.xml"
-     >ibm76i01.xml:12:40: Notation must be declared: JPGformat</test>
+     >ibm76i01.xml:14:3: Notation must be declared: JPGformat</test>
    <test id="ibm-not-wf-P01-ibm01n01.xml"
      >ibm01n01.xml:5:27: No root element specified</test>
    <test id="ibm-not-wf-P01-ibm01n02.xml"
