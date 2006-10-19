@@ -237,6 +237,9 @@ package body DOM.Core.Nodes is
          when Document_Node => return N.Doc_Children;
          when Document_Type_Node => return N.Doc_Type_Children;
          when Document_Fragment_Node => return N.Doc_Frag_Children;
+         when Entity_Reference_Node =>
+            --  ??? Should return the expansion of the entity itself
+            return Null_List;
          when others => return Null_List;
       end case;
    end Child_Nodes;
