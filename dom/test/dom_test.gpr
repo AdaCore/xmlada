@@ -1,5 +1,6 @@
 with "../dom";
 with "../../shared";
+with "conformance/conformance";
 
 project Dom_Test is
    for Main use ("testxml", "ea03_006");
