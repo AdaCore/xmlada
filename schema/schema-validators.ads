@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2004-2006, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Unicode.CES;
 with Sax.Attributes;
 with Sax.HTable;
@@ -787,6 +815,42 @@ private
    procedure Append
      (List    : in out Element_List_Access; Element : XML_Element);
 
+   --------------
+   -- Grammars --
+   --------------
+
+   type Grammar_NS_Array is array (Natural range <>) of XML_Grammar_NS;
+   type Grammar_NS_Array_Access is access all Grammar_NS_Array;
+
+   type String_List_Record;
+   type String_List is access String_List_Record;
+   type String_List_Record is record
+      Str  : Unicode.CES.Byte_Sequence_Access;
+      Next : String_List;
+   end record;
+   --  We will use Ada2005 containers when the compiler is more widely
+   --  available
+
+   procedure Free (List : in out String_List);
+   --  Free the list and its contents
+
+   type XML_Grammar_Record is record
+      Grammars : Grammar_NS_Array_Access;
+      --  All the namespaces known for that grammar
+
+      Parsed_Locations : String_List;
+      --  List of schema locations that have already been parsed. This is used
+      --  in particular to handle cases where a schema imports two others
+      --  schemas, that in turn import a common one.
+
+      Target_NS : XML_Grammar_NS;
+   end record;
+
+   type XML_Grammar is access all XML_Grammar_Record;
+   No_Grammar : constant XML_Grammar := null;
+   --  We need to use a pointer type for a grammar, since it is passed around
+   --  with Set_Created_Grammar for instance.
+
    -----------------
    -- XML_Element --
    -----------------
@@ -1102,38 +1166,6 @@ private
 
    procedure Free (Grammar : in out XML_Grammar_NS);
    --  Free the memory occupied by Grammar
-
-   type Grammar_NS_Array is array (Natural range <>) of XML_Grammar_NS;
-   type Grammar_NS_Array_Access is access all Grammar_NS_Array;
-
-   type String_List_Record;
-   type String_List is access String_List_Record;
-   type String_List_Record is record
-      Str  : Unicode.CES.Byte_Sequence_Access;
-      Next : String_List;
-   end record;
-   --  We will use Ada2005 containers when the compiler is more widely
-   --  available
-
-   procedure Free (List : in out String_List);
-   --  Free the list and its contents
-
-   type XML_Grammar_Record is record
-      Grammars : Grammar_NS_Array_Access;
-      --  All the namespaces known for that grammar
-
-      Parsed_Locations : String_List;
-      --  List of schema locations that have already been parsed. This is used
-      --  in particular to handle cases where a schema imports two others
-      --  schemas, that in turn import a common one.
-
-      Target_NS : XML_Grammar_NS;
-   end record;
-
-   type XML_Grammar is access all XML_Grammar_Record;
-   No_Grammar : constant XML_Grammar := null;
-   --  We need to use a pointer type for a grammar, since it is passed around
-   --  with Set_Created_Grammar for instance.
 
    ------------------------
    -- Group_Model_Record --
