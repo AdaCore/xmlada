@@ -55,9 +55,11 @@ to
 
 You can also chose the type of library you want to build. The default is
 to build relocatable libraries, although you can chose to build static
-libraries as well. This is done by changing the value of
+libraries as well. This is done by either changing the value of
    LIBRARY_TYPE=relocatable
-in the Makefile.in.
+in the Makefile, or simply by specifying an extra argument on the "make"
+command line:
+   make LIBRARY_TYPE=relocatable ...
 
 Note that if you wish to build both types of libraries, you should first build
 and install the static libraries, then clean the build directory with
