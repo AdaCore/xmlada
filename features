@@ -1,32 +1,47 @@
-New features
- Unicode
-  - Properties of characters are now stored in tables, instead of computed
-    through tests. This is more efficient
-  - Support for new encodings: "ascii" and "utf8"
- SAX
-  - We now pass the newer version of the XML Conformance Testsuite
-  - Better compatibility with valgrind: no error message is issued by valgrind.
-    There were false warnings, but might make it harder to use valgrind on your
-    own application.
- DOM
-  - DOM.Core.Documents.Get_Element_By_Id is now implemented
-  - Partial port to DOM 3.0
- Schema
-  - Added support for base64Binary type
-  - Add support for parsing several .xsd files before parsing an XML file. This
-    was possible before but might have resulted in errors about multiply defined
-    elements and types
+New features in version 2.3
+===========================
+
+ Schema validation:
+  - Add support for parsing several .xsd files before parsing an XML file.
+    This was possible before but might have resulted in errors about multiply
+    defined elements and types
   - Attribute's value normalization is now done based on the value of their
     whitespace facet.
 
+New features in version 2.2
+===========================
+
+ Unicode:
+  - Properties of characters are now stored in tables, instead of computed
+    through tests. This is more efficient
+  - Support for new encodings: "ascii" and "utf8"
+
+ SAX parser:
+  - We now pass the newer version of the XML Conformance Testsuite
+  - Better compatibility with valgrind: no error message is issued by valgrind.
+    There were false warnings, but might make it harder to use valgrind on
+    your own application.
+
+ DOM:
+  - DOM.Core.Documents.Get_Element_By_Id is now implemented
+  - Partial port to DOM 3.0
+
+ Schema validation:
+  - Added support for base64Binary type
+
 New features in version 2.1
+===========================
+
  Unicode:
   - E930-022 Added support for windows-1252 encoding
+
  SAX parser:
   - E912-011 No longer use an exception internally to report the end of stream
+
  DOM:
   - DOM.Core.Nodes.Print now uses the <../> syntax to represent empty nodes
   - EB02-005 DOM.Core.Nodes.Print now prints the namespace declarations
+
  Schema validation:
   - E802-003 Added support for time-related types, like dateTime, time, date,...
   - Added support for totalDigits and fractionDigits facets for integer types
@@ -34,11 +49,13 @@ New features in version 2.1
   - Improve support for arbitrary precision types like decimal and integer
   - Add support for using an attributeGroup reference when defining a local
     type for an element
+
  Documentation:
   - More code examples
   - Describe the syntax to use for XML Schemas
 
 New features in version 2.0
+===========================
 
 - Initial support for schema validation is now provided.
 
