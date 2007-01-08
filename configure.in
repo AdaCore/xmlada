@@ -3,7 +3,7 @@ AC_INIT(dom/dom.ads)
 
 ## Also change version number in docs/xml.texi
 XMLADA_MAJOR_VERSION=2
-XMLADA_MINOR_VERSION=2w
+XMLADA_MINOR_VERSION=4w
 
 AC_PROG_CC
 AC_PROG_RANLIB
