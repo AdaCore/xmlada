@@ -5,6 +5,7 @@ AC_INIT(dom/dom.ads)
 XMLADA_MAJOR_VERSION=2
 XMLADA_MINOR_VERSION=4w
 
+AC_CANONICAL_SYSTEM
 AC_PROG_CC
 AC_PROG_RANLIB
 AC_CHECK_PROGS(DVIPS, dvips, "")
@@ -16,6 +17,27 @@ AC_CHECK_PROGS(TEX, tex, "")
 IFS=' '
 
 EXEC_PREFIX="$prefix"
+
+# Defaults
+CP="cp -p -f"
+LN="ln -s -f"
+MKDIR="mkdir -p"
+
+# Overrides
+case "${host_os}" in
+  lynxos*)
+    CP="cp -p"
+    MKDIR="mkdir -p -f"
+    ;;
+
+  cygwin*|mingw32*)
+    LN="cp -p -f"
+    ;;
+esac
+
+AC_SUBST(CP)
+AC_SUBST(LN)
+AC_SUBST(MKDIR)
 
 AC_SUBST(EXEC_PREFIX)
 AC_SUBST(CC)

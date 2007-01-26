@@ -11,15 +11,11 @@ CC=gcc
 # Compiler mode: one of "distrib", "debug", "optimize", "profile"
 MODE=distrib
 
+# Commands for installation procedure
 CHMOD=chmod
-CP=cp -p -f
-MKDIR=mkdir -p
-
-ifeq (${OS}, Windows_NT)
-LN=cp -f -p
-else
-LN=ln -f -s
-endif
+CP=@CP@
+LN=@LN@
+MKDIR=@MKDIR@
 
 #########################################################################
 ## Nothing to modify below this point
