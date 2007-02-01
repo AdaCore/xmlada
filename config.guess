@@ -978,7 +978,7 @@ EOF
     i*86:atheos:*:*)
 	echo ${UNAME_MACHINE}-unknown-atheos
 	exit 0 ;;
-    i*86:LynxOS:2.*:* | i*86:LynxOS:3.[01]*:* | i*86:LynxOS:4.0*:*)
+    i*86:LynxOS:2.*:* | i*86:LynxOS:3.[01]*:* | i*86:LynxOS:4.[012]*:*)
 	echo i386-unknown-lynxos${UNAME_RELEASE}
 	exit 0 ;;
     i*86:*DOS:*:*)
@@ -1072,7 +1072,7 @@ EOF
     rs6000:LynxOS:2.*:*)
 	echo rs6000-unknown-lynxos${UNAME_RELEASE}
 	exit 0 ;;
-    PowerPC:LynxOS:2.*:* | PowerPC:LynxOS:3.[01]*:* | PowerPC:LynxOS:4.0*:*)
+    PowerPC:LynxOS:2.*:* | PowerPC:LynxOS:3.[01]*:* | PowerPC:LynxOS:4.[012]*:*)
 	echo powerpc-unknown-lynxos${UNAME_RELEASE}
 	exit 0 ;;
     SM[BE]S:UNIX_SV:*:*)
