@@ -14,9 +14,16 @@ AC_CHECK_PROGS(TEXI2DVI, texi2dvi, "")
 AC_CHECK_PROGS(PDFTEX, pdftex, "")
 AC_CHECK_PROGS(TEX, tex, "")
 
-IFS=' '
+AC_ARG_ENABLE(shared, [  --disable-shared        build only static library],
+  enable_shared=$enableval, enable_shared=yes)
+if test "$enable_shared" = "yes"; then
+   LIBRARY_TYPE=relocatable
+else
+   LIBRARY_TYPE=static
+fi
+AC_SUBST(LIBRARY_TYPE)
 
-EXEC_PREFIX="$prefix"
+IFS=' '
 
 # Defaults
 CP="cp -p -f"
@@ -39,7 +46,6 @@ AC_SUBST(CP)
 AC_SUBST(LN)
 AC_SUBST(MKDIR)
 
-AC_SUBST(EXEC_PREFIX)
 AC_SUBST(CC)
 AC_SUBST(RANLIB)
 AC_SUBST(XMLADA_MAJOR_VERSION)

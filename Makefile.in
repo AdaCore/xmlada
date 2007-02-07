@@ -1,9 +1,10 @@
 # Replace with the location for the installation directory
-PREFIX=@EXEC_PREFIX@
+PREFIX=@prefix@
 
-## The type of library we want to build
-LIBRARY_TYPE=relocatable
-# LIBRARY_TYPE=static
+## The type of library we want to build. Possible values:
+##   relocatable
+##   static
+LIBRARY_TYPE=@LIBRARY_TYPE@
 
 GNATMAKE=gnatmake
 CC=gcc
