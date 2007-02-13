@@ -1,7 +1,7 @@
 #!/bin/sh
 # @configure_input@
 
-prefix=@EXEC_PREFIX@
+prefix=@prefix@
 cflags="-aI${prefix}/include/xmlada -aO${prefix}/lib/xmlada"
 libs="-L${prefix}/lib -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode"
 static_libs="${prefix}/lib/libxmlada_input_sources.a ${prefix}/lib/libxmlada_sax.a ${prefix}/lib/libxmlada_unicode.a"
