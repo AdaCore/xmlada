@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -147,7 +146,8 @@ package DOM.Core.Elements is
    --  Returns a NodeList of all descendant elements with a given tag name,
    --  in the order in which they would be encountered in a preorder traversal
    --  of the Element tree.
-   --  The special value "*" matches all tags
+   --  The special value "*" matches all tags.
+   --  You must free the returned list.
 
    function Get_Elements_By_Tag_Name_NS
      (Elem : Element;
@@ -156,5 +156,6 @@ package DOM.Core.Elements is
       return Node_List;
    --  Same as Get_Elements_By_Tag_Name, but provides namespacesupport.
    --  "*" matches all namespaces or all local_names.
+   --  You must free the returned list.
 
 end DOM.Core.Elements;
