@@ -1,3 +1,9 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2004-2007, AdaCore            --
+-----------------------------------------------------------------------
+
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Attributes;    use Sax.Attributes;
@@ -1630,8 +1636,24 @@ package body Schema.Schema_Readers is
            (Handler, Get_Value (Atts, Type_Index), Result => Typ);
       end if;
 
-      if Use_Index /= -1 then
+      if Use_Index = -1 then
          Use_Type := Optional;
+      else
+         declare
+            Val : constant String := Get_Value (Atts, Use_Index);
+         begin
+            if Val = "required" then
+               Use_Type := Required;
+            elsif Val = "prohibited" then
+               Use_Type := Prohibited;
+            elsif Val = "default" then
+               Use_Type := Default;
+            elsif Val = "fixed" then
+               Use_Type := Fixed;
+            else
+               Use_Type := Optional;
+            end if;
+         end;
       end if;
 
       Handler.Contexts := new Context'
