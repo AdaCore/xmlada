@@ -1,6 +1,9 @@
 New features in version 2.4
 ===========================
 
+ Schema validation:
+  - G404-019 fixed handling of use='required' in schemas
+
 New features in version 2.3
 ===========================
 
