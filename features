@@ -1,8 +1,10 @@
-New features in version 2.4
+New features in version 2.4 (Development version)
 ===========================
 
  Schema validation:
   - G404-019 fixed handling of use='required' in schemas
+  - G425-003 schema-date_time.ads now contains subprograms to convert to
+    standard Ada time representation
 
 New features in version 2.3
 ===========================
