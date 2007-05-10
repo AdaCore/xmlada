@@ -5,7 +5,7 @@ with "dom/dom",         "dom/test/dom_test";
 with "schema/schema",   "schema/test/schema_test";
 with "shared";
 
-project Build_All is
+project XmlAda_Build is
    for Source_Files use ();
    package Ide renames Shared.Ide;
-end Build_All;
+end XmlAda_Build;
