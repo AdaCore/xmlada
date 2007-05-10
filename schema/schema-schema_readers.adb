@@ -235,6 +235,7 @@ package body Schema.Schema_Readers is
      (Reader  : in out Schema_Reader;
       Grammar : Schema.Validators.XML_Grammar := No_Grammar) is
    begin
+      Free (Reader.Created_Grammar);
       Reader.Created_Grammar := Grammar;
       Reader.Check_Undefined := False;
    end Set_Created_Grammar;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -27,8 +26,9 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Unicode.Encodings;
+with Ada.Streams;
 with Sax.Encodings;
+with Unicode.Encodings;
 
 package DOM.Core.Nodes is
 
@@ -238,23 +238,20 @@ package DOM.Core.Nodes is
       Local_Name    : DOM_String);
    --  Remove a node specified by its namespace and local_name.
 
-   -----------------------
-   -- Extra subprograms --
-   -----------------------
-   --  The following subprograms are not part of the standard DOM interface.
-   --  However, they are needed for a full usage of this DOM implementation.
-   --  The output of any of these subprograms is likely to change from one
-   --  version of XML/Ada to the next, do not rely on it.
+   ------------------
+   -- Input/Output --
+   ------------------
 
-   procedure Print
-     (N              : Node;
-      Print_Comments : Boolean := False;
-      Print_XML_PI   : Boolean := False;
+   procedure Write
+     (Stream         : access Ada.Streams.Root_Stream_Type'Class;
+      N              : Node;
+      Print_Comments : Boolean := True;
+      Print_XML_PI   : Boolean := True;
       With_URI       : Boolean := False;
-      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
+      EOL_Sequence   : String  := "" & ASCII.LF;
       Encoding       : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
-      Collapse_Empty_Nodes : Boolean := False);
+      Collapse_Empty_Nodes : Boolean := True);
    --  Print the contents of Node and its children in XML format.
    --  If Print_Comments is True, then nodes associated with comments are
    --  also displayed.
@@ -272,6 +269,29 @@ package DOM.Core.Nodes is
    --
    --  If Collapse_Empty_Nodes is true, then nodes with no child node will be
    --  output as <name/>, instead of <name></name>
+
+   -----------------------
+   -- Extra subprograms --
+   -----------------------
+   --  The following subprograms are not part of the standard DOM interface.
+   --  However, they are needed for a full usage of this DOM implementation.
+   --  The output of any of these subprograms is likely to change from one
+   --  version of XML/Ada to the next, do not rely on it.
+
+   procedure Print
+     (N              : Node;
+      Print_Comments : Boolean := False;
+      Print_XML_PI   : Boolean := False;
+      With_URI       : Boolean := False;
+      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
+      Encoding       : Unicode.Encodings.Unicode_Encoding :=
+        Unicode.Encodings.Get_By_Name ("utf-8");
+      Collapse_Empty_Nodes : Boolean := False);
+   --  Same as Write, but the output is done on Stdout.
+   --  Warning: the default values for the parameters are not the same as for
+   --  write. For the latter, they are chosen so that by default the output is
+   --  valid XML, whereas Print is mostly intended to be used for testsuite
+   --  purposes, and the default match that goal.
 
    procedure Dump (N : Node; With_URI : Boolean := False);
    --  Dump the contents of the node to standard output.

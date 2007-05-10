@@ -6,6 +6,13 @@ New features in version 2.4 (Development version)
   - G425-003 schema-date_time.ads now contains subprograms to convert to
     standard Ada time representation
 
+ DOM:
+  - FA12-014, G508-017 DOM.Core.Write: new subprogram
+    It outputs a Node, based on Ada95 streams.
+    This provides additional capabilities over DOM.Core.Print, for instance
+    output to sockets or memory without going through a file on disk.
+    See also the new example dom/tests/tostring.adb
+
 New features in version 2.3
 ===========================
 

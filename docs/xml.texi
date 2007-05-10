@@ -88,6 +88,7 @@ The SAX module
 
 The DOM module
 * Using DOM::
+* Printing DOM trees::
 
 The Schema module
 * XML Grammars::
@@ -1081,6 +1082,7 @@ languages to use UTF8. You can freely change this and recompile.
 
 @menu
 * Using DOM::
+* Printing DOM trees::
 @end menu
 
 @c ------------------------------------------------------------------
@@ -1139,6 +1141,27 @@ For really big XML streams, it might prove impossible to keep the whole
 tree in memory, in which case ad hoc storage might be implemented through
 the use of a SAX parser. The implementation of @code{dom-readers.adb} will
 prove helpful in creating such a parser.
+
+@c ------------------------------------------------------------------
+@node Printing DOM trees
+@section Printing DOM tress
+@c ------------------------------------------------------------------
+
+@noindent
+The standard DOM 2.0 does not define a common way to read DOM trees from
+input sources, nor how to write them back to output sources. This was
+added in later revision of the standard (DOM 3.0), which is not yet
+supported by XML/Ada.
+
+However, the package @file{DOM.Core.Nodes} provides a @code{Write}
+procedure that can be used for that purpose. It outputs a given DOM tree
+to an Ada stream. This stream can then be connected to a standard file
+on the disk, to a socket, or be used to transform the tree into a string
+in memory.
+
+An example is provided in the XML/Ada distribution, called
+@file{dom/test/tostring.adb} which shows how you can create a stream to
+convert the tree in memory, without going through a file on the disk
 
 @c -------------------------------------------------------------------
 @node The Schema module

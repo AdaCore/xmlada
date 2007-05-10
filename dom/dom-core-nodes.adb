@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
+--                       Copyright (C) 2001-2007                     --
 --                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -34,11 +34,13 @@ with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Sax.Encodings;             use Sax.Encodings;
 with Unicode.Encodings;         use Unicode.Encodings;
 with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Text_IO.Text_Streams;
 
 package body DOM.Core.Nodes is
 
    procedure Print_String
-     (Str          : DOM_String;
+     (Stream       : access Ada.Streams.Root_Stream_Type'Class;
+      Str          : DOM_String;
       EOL_Sequence : String;
       Encoding     : Unicode.Encodings.Unicode_Encoding);
    --  Print a string on standard output, in XML, protecting special
@@ -46,11 +48,15 @@ package body DOM.Core.Nodes is
    --  Str is encoded in Unicode/Sax.Encodings.Encoding, and the output is done
    --  with Encoding
 
-   procedure Put (Str : DOM_String; Encoding : Unicode_Encoding);
+   procedure Put
+     (Stream   : access Ada.Streams.Root_Stream_Type'Class;
+      Str      : DOM_String;
+      Encoding : Unicode_Encoding);
    --  Print Str, but doesn't protect any special character in it
 
    procedure Print_Name
-     (N            : Node;
+     (Stream       : access Ada.Streams.Root_Stream_Type'Class;
+      N            : Node;
       With_URI     : Boolean;
       EOL_Sequence : String;
       Encoding     : Unicode.Encodings.Unicode_Encoding);
@@ -1069,7 +1075,8 @@ package body DOM.Core.Nodes is
    ------------------
 
    procedure Print_String
-     (Str          : DOM_String;
+     (Stream       : access Ada.Streams.Root_Stream_Type'Class;
+      Str          : DOM_String;
       EOL_Sequence : String;
       Encoding     : Unicode.Encodings.Unicode_Encoding)
    is
@@ -1081,25 +1088,33 @@ package body DOM.Core.Nodes is
       while J <= Str'Last loop
          Sax.Encodings.Encoding.Read (Str, J, C);
          case C is
-            when Ampersand             => Put (Amp_DOM_Sequence);
-            when Less_Than_Sign        => Put (Lt_DOM_Sequence);
-            when Greater_Than_Sign     => Put (Gt_DOM_Sequence);
-            when Quotation_Mark        => Put (Quot_DOM_Sequence);
+            when Ampersand      =>
+               String'Write (Stream, Amp_DOM_Sequence);
+            when Less_Than_Sign =>
+               String'Write (Stream, Lt_DOM_Sequence);
+            when Greater_Than_Sign     =>
+               String'Write (Stream, Gt_DOM_Sequence);
+            when Quotation_Mark        =>
+               String'Write (Stream, Quot_DOM_Sequence);
                --  when Apostrophe            => Put ("&apos;");
-            when Horizontal_Tabulation => Put (Tab_Sequence);
-            when Line_Feed             => Put (EOL_Sequence, Encoding);
-            when Carriage_Return       => Put (Cr_Sequence);
+            when Horizontal_Tabulation =>
+               String'Write (Stream, Tab_Sequence);
+            when Line_Feed             =>
+               Put (Stream, EOL_Sequence, Encoding);
+            when Carriage_Return       =>
+               String'Write (Stream, Cr_Sequence);
             when 0 .. 8 | 11 .. 12 | 14 .. 31 =>
                declare
                   Img : constant String := Unicode_Char'Image (C);
                begin
-                  Put ("&#" & Img (Img'First + 1 .. Img'Last) & ";");
+                  String'Write
+                    (Stream, "&#" & Img (Img'First + 1 .. Img'Last) & ";");
                end;
             when others                =>
                Index := Buffer'First - 1;
                Encoding.Encoding_Scheme.Encode
                  (Encoding.Character_Set.To_CS (C), Buffer, Index);
-               Put (Buffer (Buffer'First .. Index));
+               String'Write (Stream, Buffer (Buffer'First .. Index));
          end case;
       end loop;
    end Print_String;
@@ -1108,7 +1123,11 @@ package body DOM.Core.Nodes is
    -- Put --
    ---------
 
-   procedure Put (Str : DOM_String; Encoding : Unicode_Encoding) is
+   procedure Put
+     (Stream   : access Ada.Streams.Root_Stream_Type'Class;
+      Str      : DOM_String;
+      Encoding : Unicode_Encoding)
+   is
       J : Natural := Str'First;
       C : Unicode.Unicode_Char;
       Buffer : Byte_Sequence (1 .. 20);
@@ -1119,7 +1138,7 @@ package body DOM.Core.Nodes is
          Index := Buffer'First - 1;
          Encoding.Encoding_Scheme.Encode
            (Encoding.Character_Set.To_CS (C), Buffer, Index);
-         Put (Buffer (Buffer'First .. Index));
+         String'Write (Stream, Buffer (Buffer'First .. Index));
       end loop;
    end Put;
 
@@ -1128,33 +1147,36 @@ package body DOM.Core.Nodes is
    ----------------
 
    procedure Print_Name
-     (N            : Node;
+     (Stream       : access Ada.Streams.Root_Stream_Type'Class;
+      N            : Node;
       With_URI     : Boolean;
       EOL_Sequence : String;
       Encoding     : Unicode.Encodings.Unicode_Encoding) is
    begin
       if With_URI then
          Print_String
-           (Namespace_URI (N) & Colon_Sequence & Local_Name (N),
+           (Stream,
+            Namespace_URI (N) & Colon_Sequence & Local_Name (N),
             EOL_Sequence, Encoding);
       else
-         Print_String (Node_Name (N), EOL_Sequence, Encoding);
+         Print_String (Stream, Node_Name (N), EOL_Sequence, Encoding);
       end if;
    end Print_Name;
 
    -----------
-   -- Print --
+   -- Write --
    -----------
 
-   procedure Print
-     (N              : Node;
-      Print_Comments : Boolean := False;
-      Print_XML_PI   : Boolean := False;
+   procedure Write
+     (Stream         : access Ada.Streams.Root_Stream_Type'Class;
+      N              : Node;
+      Print_Comments : Boolean := True;
+      Print_XML_PI   : Boolean := True;
       With_URI       : Boolean := False;
-      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
+      EOL_Sequence   : String  := "" & ASCII.LF;
       Encoding       : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
-      Collapse_Empty_Nodes : Boolean := False)
+      Collapse_Empty_Nodes : Boolean := True)
    is
       use Node_Name_Htable;
 
@@ -1191,43 +1213,46 @@ package body DOM.Core.Nodes is
 
          case N.Node_Type is
             when Element_Node =>
-               Put (Less_Than_Sequence, Encoding);
-               Print_Name (N, With_URI, EOL_Sequence, Encoding);
+               Put (Stream, Less_Than_Sequence, Encoding);
+               Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
 
                --  Sort the XML attributes as required for canonical XML
                Sort (N.Attributes);
 
                for J in 0 .. N.Attributes.Last loop
-                  Put (Space_Sequence, Encoding);
+                  Put (Stream, Space_Sequence, Encoding);
                   Recursive_Print (N.Attributes.Items (J));
                end loop;
 
                if Collapse_Empty_Nodes and then N.Children = Null_List then
-                  Put (Slash_Sequence & Greater_Than_Sequence, Encoding);
+                  Put
+                    (Stream, Slash_Sequence & Greater_Than_Sequence, Encoding);
                else
-                  Put (Greater_Than_Sequence, Encoding);
+                  Put (Stream, Greater_Than_Sequence, Encoding);
 
                   Recursive_Print (N.Children);
 
-                  Put (Less_Than_Sequence & Slash_Sequence, Encoding);
-                  Print_Name (N, With_URI, EOL_Sequence, Encoding);
-                  Put (Greater_Than_Sequence, Encoding);
+                  Put (Stream, Less_Than_Sequence & Slash_Sequence, Encoding);
+                  Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
+                  Put (Stream, Greater_Than_Sequence, Encoding);
                end if;
 
             when Attribute_Node =>
-               Print_Name (N, With_URI, EOL_Sequence, Encoding);
-               Put (Equals_Sign_Sequence & Quotation_Mark_Sequence, Encoding);
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               Put (Quotation_Mark_Sequence, Encoding);
+               Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
+               Put (Stream,
+                    Equals_Sign_Sequence & Quotation_Mark_Sequence, Encoding);
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Put (Stream, Quotation_Mark_Sequence, Encoding);
 
             when Processing_Instruction_Node =>
                Put
-                 (Less_Than_Sequence
+                 (Stream,
+                  Less_Than_Sequence
                   & Question_Mark_Sequence
                   & N.Target.all, Encoding);
 
                if N.Pi_Data'Length = 0 then
-                  Put (Space_Sequence, Encoding);
+                  Put (Stream, Space_Sequence, Encoding);
 
                else
                   declare
@@ -1237,28 +1262,30 @@ package body DOM.Core.Nodes is
                      Sax.Encodings.Encoding.Read (N.Pi_Data.all, Index, C);
 
                      if C /= Space then
-                        Put (Space_Sequence, Encoding);
+                        Put (Stream, Space_Sequence, Encoding);
                      end if;
                   end;
                end if;
                Put
-                 (N.Pi_Data.all & Question_Mark_Sequence
+                 (Stream,
+                  N.Pi_Data.all & Question_Mark_Sequence
                   & Greater_Than_Sequence, Encoding);
 
             when Comment_Node =>
                if Print_Comments then
-                  Put ("<!--", Encoding);
-                  Put (Node_Value (N), Encoding);
-                  Put ("-->", Encoding);
+                  Put (Stream, "<!--", Encoding);
+                  Put (Stream, Node_Value (N), Encoding);
+                  Put (Stream, "-->", Encoding);
                end if;
 
             when Document_Node =>
                if Print_XML_PI then
-                  Put (Write_Bom (Encoding.Encoding_Scheme.BOM));
+                  String'Write
+                    (Stream, Write_Bom (Encoding.Encoding_Scheme.BOM));
                   Put
-                    ("<?xml version=""1.0"" encoding="""
+                    (Stream, "<?xml version=""1.0"" encoding="""
                      & Encoding.Name.all & """?>", Encoding);
-                  Print_String ("" & ASCII.LF, EOL_Sequence, Encoding);
+                  Print_String (Stream, "" & ASCII.LF, EOL_Sequence, Encoding);
                end if;
                Recursive_Print (N.Doc_Children);
 
@@ -1269,10 +1296,10 @@ package body DOM.Core.Nodes is
                null;
 
             when Text_Node =>
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
 
             when others =>
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
          end case;
       end Recursive_Print;
 
@@ -1284,6 +1311,32 @@ package body DOM.Core.Nodes is
       end if;
 
       Unchecked_Free (Namespaces);
+   end Write;
+
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print
+     (N                    : Node;
+      Print_Comments       : Boolean := False;
+      Print_XML_PI         : Boolean := False;
+      With_URI             : Boolean := False;
+      EOL_Sequence         : String  := Sax.Encodings.Lf_Sequence;
+      Encoding             : Unicode.Encodings.Unicode_Encoding :=
+        Unicode.Encodings.Get_By_Name ("utf-8");
+      Collapse_Empty_Nodes : Boolean := False)
+   is
+   begin
+      Write
+        (Stream            => Ada.Text_IO.Text_Streams.Stream (Current_Output),
+         N                 => N,
+         Print_Comments    => Print_Comments,
+         Print_XML_PI      => Print_XML_PI,
+         With_URI          => With_URI,
+         EOL_Sequence      => EOL_Sequence,
+         Encoding          => Encoding,
+         Collapse_Empty_Nodes => Collapse_Empty_Nodes);
    end Print;
 
    ----------
@@ -1299,6 +1352,9 @@ package body DOM.Core.Nodes is
 
       Encoding : constant Unicode_Encoding := Get_By_Name ("utf-8");
       EOL_Sequence : constant Byte_Sequence := Sax.Encodings.Lf_Sequence;
+
+      Stream : constant Ada.Text_IO.Text_Streams.Stream_Access :=
+        Ada.Text_IO.Text_Streams.Stream (Current_Output);
 
       ----------
       -- Dump --
@@ -1319,9 +1375,9 @@ package body DOM.Core.Nodes is
       begin
          case N.Node_Type is
             when Element_Node =>
-               Put (Prefix & "Element: ");
-               Print_Name (N, With_URI, EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Element: ");
+               Print_Name
+                 (Stream, N, With_URI, EOL_Sequence & ASCII.LF, Encoding);
 
                --  Sort the XML attributes as required for canonical XML
                Sort (N.Attributes);
@@ -1334,54 +1390,54 @@ package body DOM.Core.Nodes is
                Dump (N.Children, Prefix & "  ");
 
             when Attribute_Node =>
-               Put (Prefix & "Attribute: ");
-               Print_Name (N, With_URI, EOL_Sequence, Encoding);
-               Put ("=");
+               String'Write (Stream, Prefix & "Attribute: ");
+               Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
+               Character'Write (Stream, '=');
                --  ??? Could be a tree
                Print_String
-                 (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+                 (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
 
             when Processing_Instruction_Node =>
-               Put_Line (Prefix & "PI: " & N.Target.all);
-               Put_Line (Prefix & "   Data: " & N.Pi_Data.all);
+               String'Write (Stream, Prefix & "PI: " & N.Target.all);
+               String'Write (Stream, Prefix & "   Data: " & N.Pi_Data.all);
 
             when Comment_Node =>
-               Put_Line (Prefix & "Comment: " & Node_Value (N));
+               String'Write (Stream, Prefix & "Comment: " & Node_Value (N));
 
             when Document_Node =>
-               Put_Line (Prefix & "Document: ");
+               String'Write (Stream, Prefix & "Document: ");
                Dump (N.Doc_Children, Prefix => Prefix & "  ");
 
             when Document_Fragment_Node =>
-               Put_Line (Prefix & "Document_Fragment: ");
+               String'Write (Stream, Prefix & "Document_Fragment: ");
                Dump (N.Doc_Frag_Children, Prefix => Prefix & "  ");
 
             when Document_Type_Node =>
-               Put_Line (Prefix & "Document_Type: ");
+               String'Write (Stream, Prefix & "Document_Type: ");
 
             when Notation_Node =>
-               Put_Line (Prefix & "Notation:");
+               String'Write (Stream, Prefix & "Notation:");
 
             when Text_Node =>
-               Put (Prefix & "Text: ");
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Text: ");
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
 
             when Cdata_Section_Node =>
-               Put (Prefix & "Cdata: ");
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Cdata: ");
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
 
             when Entity_Reference_Node =>
-               Put (Prefix & "Entity_Reference: ");
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Entity_Reference: ");
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
 
             when Entity_Node =>
-               Put (Prefix & "Entity: ");
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Entity: ");
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
          end case;
       end Dump;
 
