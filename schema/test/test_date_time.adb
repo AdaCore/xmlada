@@ -1,3 +1,32 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2005-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
+with Ada.Calendar;            use Ada.Calendar;
 with Schema.Date_Time;        use Schema.Date_Time;
 with GNAT.IO;                 use GNAT.IO;
 
@@ -16,6 +45,22 @@ procedure Test_Date_Time is
       with function "<" (T1, T2 : T) return Boolean is <>;
       with function ">" (T1, T2 : T) return Boolean is <>;
    procedure Assert_Generic (T1, T2 : T; Expected : Character);
+
+   generic
+      type T is private;
+      with function Image (T1 : T) return String is <>;
+   procedure Assert_Equal (T1, T2 : T);
+
+   ------------------
+   -- Assert_Equal --
+   ------------------
+
+   procedure Assert_Equal (T1, T2 : T) is
+   begin
+      if T1 /= T2 then
+         Put_Line (Image (T1) & " /= " & Image (T2));
+      end if;
+   end Assert_Equal;
 
    --------------------
    -- Assert_Generic --
@@ -81,6 +126,9 @@ procedure Test_Date_Time is
    procedure Assert_NC is new Assert_NC_Generic (Date_Time_T);
    procedure Assert_NC is new Assert_NC_Generic (Duration_T);
    --  Test whether Str1 = Str2
+
+   procedure Assert    is new Assert_Equal (Integer, Integer'Image);
+   procedure Assert    is new Assert_Equal (Date_Time_T);
 
    ------------
    -- Assert --
@@ -182,6 +230,12 @@ begin
 
    --  Basic comparison tests
    Assert (Time1, Time2, '<');
+
+   Assert (Time1 + Dur1Y,
+           Date_Time_T'(Value ("2001-01-12T12:13:14Z")));
+   Assert (Year (Value (Time1)), 2000);
+   Assert (Month (Value (Time1)), 1);
+   Assert (Day (Value (Time1)), 12);
 
    --  Examples from the XML Schema standard
    Assert    (T5, T6, '<');
