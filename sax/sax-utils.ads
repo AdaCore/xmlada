@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005-2006                     --
---                            AdaCore                                --
+--                       Copyright (C) 2005-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -79,14 +78,12 @@ package Sax.Utils is
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
    --  Whether Name is valid QName as per 3 in the XML specifications
 
-   type URI_Type is (URI_Absolute, URI_Relative, URI_None);
+   type URI_Type is (URI_Absolute, URI_Relative_Ref, URI_None);
 
    function Check_URI
      (Name : Unicode.CES.Byte_Sequence) return URI_Type;
-   --  Check whether Name is a URI, and its type if it is. This is RFC2396,
-   --  see http://www.ietf.org/rfc/rfc2396.txt.
-   --  As a special case, this function allows URI references (ie that include
-   --  a #... component)
+   --  Check whether Name is a URI, and its type if it is. This is RFC 3986,
+   --  see http://www.ietf.org/rfc/rfc3986.txt.
 
    function Is_Valid_URI
      (Name : Unicode.CES.Byte_Sequence) return Boolean;

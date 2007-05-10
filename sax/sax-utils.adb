@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2005-2006                        --
---                            AdaCore                                --
+--                    Copyright (C) 2005-2007, AdaCore               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -384,35 +383,56 @@ package body Sax.Utils is
    function Check_URI
      (Name : Unicode.CES.Byte_Sequence) return URI_Type
    is
-      Index    : Integer := Name'First;
-      C        : Unicode_Char;
+      Index      : Integer := Name'First;
+      C          : Unicode_Char;
       Has_Scheme : Boolean := False;
-      Is_Absolute : Boolean := False;
-      Has_Hash    : Boolean := False;
+      Has_Hash   : Boolean := False;
    begin
-      --  This is RFC 2396.
-      --  absoluteURI = scheme ":" ( hier_part | opaque_part )
-      --  relativeURI = ( net_path | abs_path | rel_path ) [ "?" query ]
-      --  scheme      = alpha *( alpha | digit | "+" | "-" | "." )
-      --  hier_part   = ( net_path | abs_path ) [ "?" query ]
-      --  net_path    = "//" authority [ abs_path ]
-      --  abs_path    = "/"  path_segments
-      --  rel_path    = rel_segment [ abs_path ]
-      --  rel_segment = 1*( unreserved | escaped |
-      --                ";" | "@" | "&" | "=" | "+" | "$" | "," )
-      --  query       = *uric
-      --  authority   = server | reg_name
-      --  server      = [ [ userinfo "@" ] hostport ]
-      --  userinfo    = *( unreserved | escaped |
-      --                ";" | ":" | "&" | "=" | "+" | "$" | "," )
-      --  rel_segment = 1*( unreserved | escaped |
-      --                ";" | "@" | "&" | "=" | "+" | "$" | "," )
-      --  uric        = reserved | unreserved | escaped
-      --  reg_name    = 1*( unreserved | escaped | "$" | "," |
-      --                ";" | ":" | "@" | "&" | "=" | "+" )
-      --  opaque_part = uric_no_slash *uric
-      --  uric_no_slash = unreserved | escaped | ";" | "?" | ":" | "@" |
-      --                  "&" | "=" | "+" | "$" | ","
+      --  This is RFC 3986 which obsoletes RFC 2396.
+      --  URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
+      --  hier-part     = "//" authority path-abempty
+      --                / path-absolute
+      --                / path-rootless
+      --                / path-empty
+      --  URI-reference = URI / relative-ref
+      --  absolute-URI  = scheme ":" hier-part [ "?" query ]
+      --  relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
+      --  relative-part = "//" authority path-abempty
+      --                / path-absolute
+      --                / path-noscheme
+      --                / path-empty
+      --  scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+      --  authority     = [ userinfo "@" ] host [ ":" port ]
+      --  userinfo      = *( unreserved / pct-encoded / sub-delims / ":" )
+      --  host          = IP-literal / IPv4address / reg-name
+      --  port          = *DIGIT
+      --  IP-literal    = "[" ( IPv6address / IPvFuture  ) "]"
+      --  reg-name      = *( unreserved / pct-encoded / sub-delims )
+      --  path          = path-abempty    ; begins with "/" or is empty
+      --                / path-absolute   ; begins with "/" but not "//"
+      --                / path-noscheme   ; begins with a non-colon segment
+      --                / path-rootless   ; begins with a segment
+      --                / path-empty      ; zero characters
+      --  path-abempty  = *( "/" segment )
+      --  path-absolute = "/" [ segment-nz *( "/" segment ) ]
+      --  path-noscheme = segment-nz-nc *( "/" segment )
+      --  path-rootless = segment-nz *( "/" segment )
+      --  path-empty    = 0<pchar>
+      --  segment       = *pchar
+      --  segment-nz    = 1*pchar
+      --  segment-nz-nc = 1*( unreserved / pct-encoded / sub-delims / "@" )
+      --                ; non-zero-length segment without any colon ":"
+      --  pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+      --  query         = *( pchar / "/" / "?" )
+      --  fragment      = *( pchar / "/" / "?" )
+      --  pct-encoded   = "%" HEXDIG HEXDIG
+      --  unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+      --  reserved      = gen-delims / sub-delims
+      --  gen-delims    = ":" / "/" / "?" / "#" / "[" / "]" / "@"
+      --  sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
+      --                / "*" / "+" / "," / ";" / "="
+
+      --  The relativeURI rule has been replaced with relative-ref.
 
       --  Find and test the scheme. If there is no scheme, we might have a
       --  relative URI
@@ -442,16 +462,8 @@ package body Sax.Utils is
          return URI_Absolute;
       end if;
 
-      if Index <= Name'Last then
-         Encoding.Read (Name, Index, C);
-         if C = Slash then
-            Is_Absolute := True;
-         end if;
-      end if;
-
       --  Check the rest of the URI. We currently go for a fast check, and do
       --  not check each of the components specifically.
-      --  As a special case, we also recognize URI references
 
       while Index <= Name'Last loop
          Encoding.Read (Name, Index, C);
@@ -469,10 +481,10 @@ package body Sax.Utils is
          end if;
       end loop;
 
-      if Is_Absolute then
+      if Has_Scheme then
          return URI_Absolute;
       else
-         return URI_Relative;
+         return URI_Relative_Ref;
       end if;
    end Check_URI;
 
