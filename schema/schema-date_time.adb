@@ -27,7 +27,6 @@
 -----------------------------------------------------------------------
 
 with Schema.Validators;       use Schema.Validators;
-with Ada.Calendar;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Schema.Date_Time is
