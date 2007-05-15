@@ -1,10 +1,25 @@
-New features in version 2.4 (Development version)
+New features in version 3.0 (Development version)
 ===========================
+
+ WARNING: the version number of XML/Ada was bumper to 3.x because the API
+ has changed slightly in several packages, providing reference-counted types
+ and thus automatic memory management. This was necessary to fix some meory
+ leaks that couldn't be fix as easily otherwise.
 
  Schema validation:
   - G404-019 fixed handling of use='required' in schemas
   - G425-003 schema-date_time.ads now contains subprograms to convert to
     standard Ada time representation
+  - G510-017 API change: ref-counted types
+    Most types have been made reference-counted, and memory management is
+    taken care of automatically. This fixes a number of memory leaks.
+
+ SAX:
+  - API change: sax.locators is now ref-counted
+    The types in Sax.Locators are now reference-counted, and memory management
+    is taken care of automatically.
+    Unfortunately, the memory leaks could not easily be resolved without
+    breaking the API here. The changes are minor, but might affect user code
 
  DOM:
   - FA12-014, G508-017 DOM.Core.Write: new subprogram

@@ -1255,8 +1255,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 ## Also change version number in docs/xml.texi
-XMLADA_MAJOR_VERSION=2
-XMLADA_MINOR_VERSION=4w
+XMLADA_MAJOR_VERSION=3
+XMLADA_MINOR_VERSION=0w
 
 ac_aux_dir=
 for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
