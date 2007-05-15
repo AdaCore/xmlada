@@ -1,3 +1,30 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2003-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
 
 --  This package provides a SAX Reader that parses an XML Schema file, and
 --  creates the appropriate data structure
@@ -95,13 +122,13 @@ private
             Element : Schema.Validators.XML_Element;
             Is_Ref  : Boolean;
          when Context_Sequence =>
-            Seq       : Schema.Validators.Sequence;
+            Seq       : Schema.Validators.Group_Model;
          when Context_Choice =>
-            C       : Schema.Validators.Choice;
+            C         : Schema.Validators.Group_Model;
          when Context_Schema | Context_Redefine =>
             null;
          when Context_All =>
-            All_Validator : Schema.Validators.XML_All;
+            All_Validator : Schema.Validators.Group_Model;
          when Context_Restriction =>
             Restriction : Schema.Validators.XML_Validator;
             Restricted  : Schema.Validators.XML_Validator; --  result

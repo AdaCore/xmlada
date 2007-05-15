@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -28,55 +27,50 @@
 -----------------------------------------------------------------------
 
 with Unicode.CES;  use Unicode.CES;
-with Unchecked_Deallocation;
 
 package body Sax.Locators is
+   use Locators;
 
-   ---------
-   -- Ref --
-   ---------
+   procedure Allocate_If_Null (Loc : in out Locator);
+   --  Allocate new memory for Loc if it is unset
 
-   procedure Ref (Loc : in out Locator_Impl) is
+   ----------------------
+   -- Allocate_If_Null --
+   ----------------------
+
+   procedure Allocate_If_Null (Loc : in out Locator) is
+      Tmp : Locators.Encapsulated_Access;
    begin
-      Loc.Ref_Count := Loc.Ref_Count + 1;
-   end Ref;
-
-   -----------
-   -- Unref --
-   -----------
-
-   procedure Unref (Loc : in out Locator_Impl) is
-   begin
-      if Loc.Ref_Count > 0 then
-         Loc.Ref_Count := Loc.Ref_Count - 1;
-         if Loc.Ref_Count = 0 then
-            Free (Loc.Public_Id);
-            Free (Loc.System_Id);
-         end if;
+      if Get (Loc) = null then
+         Tmp := new Locator_Record;
+         Loc := Allocate (Tmp);
       end if;
-   end Unref;
+   end Allocate_If_Null;
 
-   procedure Unref (Loc : in out Locator_Impl_Access) is
-      procedure Internal is new Unchecked_Deallocation
-        (Locator_Impl'Class, Locator_Impl_Access);
-      Count : Integer;
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Loc : in out Locator_Record) is
    begin
-      if Loc /= null then
-         Count := Loc.Ref_Count;
-         Unref (Loc.all);
-         if Count = 1 then
-            Internal (Loc);
-         else
-            Loc := null;
-         end if;
-      end if;
-   end Unref;
+      Free (Loc.Public_Id);
+      Free (Loc.System_Id);
+   end Free;
 
    ---------------------
    -- Get_Line_Number --
    ---------------------
 
-   function Get_Line_Number (Loc : Locator_Impl) return Natural is
+   function Get_Line_Number (Loc : Locator) return Natural is
+   begin
+      if Get (Loc) = null then
+         return 0;
+      else
+         return Get_Line_Number (Get (Loc));
+      end if;
+   end Get_Line_Number;
+
+   function Get_Line_Number (Loc : access Locator_Record) return Natural is
    begin
       return Loc.Line;
    end Get_Line_Number;
@@ -85,7 +79,16 @@ package body Sax.Locators is
    -- Get_Column_Number --
    -----------------------
 
-   function Get_Column_Number (Loc : Locator_Impl) return Natural is
+   function Get_Column_Number (Loc : Locator) return Natural is
+   begin
+      if Get (Loc) = null then
+         return 0;
+      else
+         return Get_Column_Number (Get (Loc));
+      end if;
+   end Get_Column_Number;
+
+   function Get_Column_Number (Loc : access Locator_Record) return Natural is
    begin
       return Loc.Column;
    end Get_Column_Number;
@@ -94,7 +97,16 @@ package body Sax.Locators is
    -- Get_System_Id --
    -------------------
 
-   function Get_System_Id (Loc : Locator_Impl)
+   function Get_System_Id (Loc : Locator) return Unicode.CES.Byte_Sequence is
+   begin
+      if Get (Loc) = null then
+         return "";
+      else
+         return Get_System_Id (Get (Loc));
+      end if;
+   end Get_System_Id;
+
+   function Get_System_Id (Loc : access Locator_Record)
       return Unicode.CES.Byte_Sequence is
    begin
       if Loc.System_Id /= null then
@@ -108,7 +120,16 @@ package body Sax.Locators is
    -- Get_Public_Id --
    -------------------
 
-   function Get_Public_Id (Loc : Locator_Impl)
+   function Get_Public_Id (Loc : Locator) return Unicode.CES.Byte_Sequence is
+   begin
+      if Get (Loc) = null then
+         return "";
+      else
+         return Get_Public_Id (Get (Loc));
+      end if;
+   end Get_Public_Id;
+
+   function Get_Public_Id (Loc : access Locator_Record)
       return Unicode.CES.Byte_Sequence is
    begin
       if Loc.Public_Id /= null then
@@ -122,8 +143,14 @@ package body Sax.Locators is
    -- Set_Column_Number --
    -----------------------
 
+   procedure Set_Column_Number (Loc : in out Locator; Column : Natural := 0) is
+   begin
+      Allocate_If_Null (Loc);
+      Set_Column_Number (Get (Loc), Column);
+   end Set_Column_Number;
+
    procedure Set_Column_Number
-     (Loc : in out Locator_Impl; Column : Natural := 0) is
+     (Loc : access Locator_Record; Column : Natural := 0) is
    begin
       Loc.Column := Column;
    end Set_Column_Number;
@@ -132,8 +159,14 @@ package body Sax.Locators is
    -- Set_Line_Number --
    ---------------------
 
+   procedure Set_Line_Number (Loc : in out Locator; Line : Natural := 0) is
+   begin
+      Allocate_If_Null (Loc);
+      Set_Line_Number (Get (Loc), Line);
+   end Set_Line_Number;
+
    procedure Set_Line_Number
-     (Loc : in out Locator_Impl; Line : Natural := 0) is
+     (Loc : access Locator_Record; Line : Natural := 0) is
    begin
       Loc.Line := Line;
    end Set_Line_Number;
@@ -142,13 +175,19 @@ package body Sax.Locators is
    -- Copy --
    ----------
 
-   procedure Copy
-     (Loc : in out Locator_Impl; Loc_I : Locator'Class) is
+   procedure Copy (Loc : in out Locator; Source : Locator) is
    begin
-      Set_Line_Number (Loc, Get_Line_Number (Loc_I));
-      Set_Column_Number (Loc, Get_Column_Number (Loc_I));
-      Set_Public_Id (Loc, Get_Public_Id (Loc_I));
-      Set_System_Id (Loc, Get_System_Id (Loc_I));
+      Allocate_If_Null (Loc);
+      Copy (Get (Loc), Source);
+   end Copy;
+
+   procedure Copy
+     (Loc : access Locator_Record; Source : Locator) is
+   begin
+      Set_Line_Number (Loc, Get_Line_Number (Source));
+      Set_Column_Number (Loc, Get_Column_Number (Source));
+      Set_Public_Id (Loc, Get_Public_Id (Source));
+      Set_System_Id (Loc, Get_System_Id (Source));
    end Copy;
 
    -------------------
@@ -156,7 +195,14 @@ package body Sax.Locators is
    -------------------
 
    procedure Set_Public_Id
-     (Loc : in out Locator_Impl;
+     (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence) is
+   begin
+      Allocate_If_Null (Loc);
+      Set_Public_Id (Get (Loc), Id);
+   end Set_Public_Id;
+
+   procedure Set_Public_Id
+     (Loc : access Locator_Record;
       Id  : Unicode.CES.Byte_Sequence) is
    begin
       Free (Loc.Public_Id);
@@ -168,7 +214,14 @@ package body Sax.Locators is
    -------------------
 
    procedure Set_System_Id
-     (Loc : in out Locator_Impl;
+     (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence) is
+   begin
+      Allocate_If_Null (Loc);
+      Set_System_Id (Get (Loc), Id);
+   end Set_System_Id;
+
+   procedure Set_System_Id
+     (Loc : access Locator_Record;
       Id  : Unicode.CES.Byte_Sequence) is
    begin
       Free (Loc.System_Id);
@@ -179,11 +232,12 @@ package body Sax.Locators is
    -- To_String --
    ---------------
 
-   function To_String (Loc : Locator_Impl) return String is
+   function To_String (Loc : Locator) return String is
+      C    : constant Natural := Get_Column_Number (Loc);
       Line : constant String := Natural'Image (Get_Line_Number (Loc));
-      Col  : constant String := Natural'Image (Get_Column_Number (Loc));
+      Col  : constant String := Natural'Image (C);
    begin
-      if Get_Column_Number (Loc) /= 0 then
+      if C /= 0 then
          return (Get_Public_Id (Loc) & ':'
                  & Line (Line'First + 1 .. Line'Last)
                  & ':' & Col (Col'First + 1 .. Col'Last));

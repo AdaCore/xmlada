@@ -1,3 +1,30 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2003-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
 
 with Sax.Exceptions;
 with Sax.Locators;
@@ -98,7 +125,7 @@ private
       Data      : Schema.Validators.Validator_Data;
       Is_Nil    : Boolean;          --  Whether the element has xsi:nil="true"
 
-      Start_Loc  : Sax.Locators.Locator_Impl_Access;
+      Start_Loc  : Sax.Locators.Locator;
       --  Set when starting a sequence of Characters call from the SAX parser
       Characters : Unicode.CES.Byte_Sequence_Access;
       --  The current stream of characters we have seen. We need to collapse
@@ -111,9 +138,9 @@ private
    type Validating_Reader is new Sax.Readers.Reader with record
       Grammar  : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar;
       Validators : Validator_List;
-      Locator    : Sax.Locators.Locator_Access;
+      Locator    : Sax.Locators.Locator;
       Prefixes   : Prefix_Mapping_Access;
-      Ids          : Schema.Validators.Id_Htable_Access;
+      Ids        : Schema.Validators.Id_Htable_Access;
    end record;
 
    procedure Parse

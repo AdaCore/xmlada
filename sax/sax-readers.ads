@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -190,12 +189,10 @@ package Sax.Readers is
 
    procedure Set_Document_Locator
      (Handler : in out Reader;
-      Loc     : access Sax.Locators.Locator'Class);
+      Loc     : Sax.Locators.Locator);
    --  Receive an object for locating the origin of SAX document events.
    --  SAX parsers are strongly encouraged but not required to give this
    --  information. This callback will always be called before any other.
-   --  This locator is no longer valid after the end of Parse (even if it
-   --  terminated with an exception), unless you explicitely Ref the locator.
 
    procedure Start_Document (Handler : in out Reader);
    --  Receive notification of the beginning of a document.
@@ -530,10 +527,10 @@ package Sax.Readers is
       Prefix        : Unicode.CES.Byte_Sequence);
    type Set_Doc_Locator_Hook is access procedure
      (Handler       : in out Reader'Class;
-      Loc           : access Sax.Locators.Locator'Class);
+      Loc           : Sax.Locators.Locator);
 
    type Get_Error_Location_Hook is access function
-     (Handler       : Reader'Class) return Sax.Locators.Locator_Impl_Access;
+     (Handler       : Reader'Class) return Sax.Locators.Locator;
    --  Return the location that should be used when raising an exception.
    --  It should return null if the default location (ie the one corresponding
    --  to the curernt position in the stream) should be used
@@ -642,7 +639,7 @@ private
       --  Uniq ID for each input source
 
       Input    : Input_Sources.Input_Source_Access;
-      Save_Loc : Sax.Locators.Locator_Impl;
+      Save_Loc : Sax.Locators.Locator;
    end record;
 
    type Parser_State is record
@@ -772,7 +769,7 @@ private
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
 
-      Locator       : Sax.Locators.Locator_Impl_Access;
+      Locator       : Sax.Locators.Locator;
       Current_Node  : Element_Access;
 
       Inputs        : Entity_Input_Source_Access;

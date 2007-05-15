@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2003-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Unicode;         use Unicode;
 with Unicode.CES;     use Unicode.CES;
 with Sax.Attributes;  use Sax.Attributes;
@@ -16,6 +44,7 @@ with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 with Schema.Validators.Lists;        use Schema.Validators.Lists;
 
 package body Schema.Validators is
+   use XML_Validators, XML_Grammars, Attribute_Validators;
 
    Debug : Boolean := False;
 
@@ -26,7 +55,35 @@ package body Schema.Validators is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Grammar_NS_Array, Grammar_NS_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (XML_Grammar_Record, XML_Grammar);
+     (String_List_Record, String_List);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Facets_Description_Record'Class, Facets_Description);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Types_Htable.HTable, Types_Htable_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Elements_Htable.HTable, Elements_Htable_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Groups_Htable.HTable, Groups_Htable_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (XML_Grammar_NS_Record, XML_Grammar_NS);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Attributes_Htable.HTable, Attributes_Htable_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Attribute_Groups_Htable.HTable, Attribute_Groups_Htable_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (XML_Element_Record, XML_Element_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (XML_Group_Record, XML_Group);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Validator_Data_Record'Class, Validator_Data);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Id_Htable.HTable, Id_Htable_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Attribute_Validator_List, Attribute_Validator_List_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Particle_List_Record, Particle_List);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (XML_Particle, XML_Particle_Access);
 
    procedure Create_NS_Grammar
      (Grammar       : in out XML_Grammar;
@@ -48,7 +105,7 @@ package body Schema.Validators is
    --  matched
 
    procedure Check_Nested
-     (Nested      : access Group_Model_Record'Class;
+     (Nested      : Group_Model;
       Data        : access Group_Model_Data_Record'Class;
       Local_Name  : Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
@@ -92,7 +149,7 @@ package body Schema.Validators is
 
    function Extension_Of
      (Base      : XML_Type;
-      Extension : XML_Validator := null) return XML_Validator
+      Extension : XML_Validator := No_Validator) return XML_Validator
      renames Schema.Validators.Extensions.Create_Extension_Of;
 
    function Extension_Of
@@ -104,7 +161,7 @@ package body Schema.Validators is
 
    function Restriction_Of
      (Base        : XML_Type;
-      Restriction : XML_Validator := null) return XML_Validator
+      Restriction : XML_Validator := No_Validator) return XML_Validator
       renames Schema.Validators.Restrictions.Create_Restriction_Of;
 
    function Internal_Type_Model
@@ -121,6 +178,9 @@ package body Schema.Validators is
       First_Only : Boolean) return Byte_Sequence;
    --  Return the content model describes by Particle.
 
+   function Get_GM (Model : Group_Model) return Group_Model_Access;
+   --  Return the group model pointed to by Model
+
    function Is_Optional (Iterator : Particle_Iterator) return Boolean;
    pragma Inline (Is_Optional);
    --  Whether the current optional can be omitted
@@ -128,6 +188,25 @@ package body Schema.Validators is
    Debug_Prefixes_Level : Natural := 0;
 
    --  Provide Debug_Output body early to allow it to be inlined
+
+   ------------------------------
+   -- Attribute_Validator_List --
+   ------------------------------
+
+   procedure Free (List : in out Attribute_Validator_List_Access);
+   --  Free the contents of List, including contained
+
+   procedure Append
+     (List      : in out Attribute_Validator_List_Access;
+      Validator : Attribute_Validator;
+      Override  : Boolean);
+   procedure Append
+     (List      : in out Attribute_Validator_List_Access;
+      Group     : XML_Attribute_Group);
+   --  Append a new value to List.
+   --  If a similar attribute already exists in the list, Validator will either
+   --  be ignored (Override is False), or replace the existing definition
+   --  (Override is True).
 
    ------------------
    -- Debug_Output --
@@ -148,28 +227,6 @@ package body Schema.Validators is
       end if;
    end Debug_Output;
 
-   ------------------------------
-   -- Attribute_Validator_List --
-   ------------------------------
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Attribute_Validator_List, Attribute_Validator_List_Access);
-
-   procedure Free (List : in out Attribute_Validator_List_Access);
-   --  Free the contents of List, including contained
-
-   procedure Append
-     (List      : in out Attribute_Validator_List_Access;
-      Validator : access Attribute_Validator_Record'Class;
-      Override  : Boolean);
-   procedure Append
-     (List      : in out Attribute_Validator_List_Access;
-      Group     : XML_Attribute_Group);
-   --  Append a new value to List.
-   --  If a similar attribute already exists in the list, Validator will either
-   --  be ignored (Override is False), or replace the existing definition
-   --  (Override is True).
-
    -------------------------
    -- Get_Attribute_Lists --
    -------------------------
@@ -181,8 +238,8 @@ package body Schema.Validators is
       Dependency2 : out XML_Validator) is
    begin
       List := Validator.Attributes;
-      Dependency1 := null;
-      Dependency2 := null;
+      Dependency1 := No_Validator;
+      Dependency2 := No_Validator;
    end Get_Attribute_Lists;
 
    ----------------------
@@ -211,11 +268,11 @@ package body Schema.Validators is
    procedure Free (List : in out Attribute_Validator_List_Access) is
    begin
       if List /= null then
-         for L in List'Range loop
-            if not List (L).Is_Group then
-               Free (List (L).Attr);
-            end if;
-         end loop;
+--           for L in List'Range loop
+--              if not List (L).Is_Group then
+--                 Free (List (L).Attr);
+--              end if;
+--           end loop;
          Unchecked_Free (List);
       end if;
    end Free;
@@ -245,13 +302,21 @@ package body Schema.Validators is
         and then Attribute.Kind = Any_Attribute_Validator (Attr2).Kind;
    end Is_Equal;
 
+   function Is_Equal
+     (Attribute : Attribute_Validator;
+      Attr2     : Attribute_Validator)
+      return Boolean is
+   begin
+      return Is_Equal (Get (Attribute).all, Get (Attr2).all);
+   end Is_Equal;
+
    ------------
    -- Append --
    ------------
 
    procedure Append
      (List      : in out Attribute_Validator_List_Access;
-      Validator : access Attribute_Validator_Record'Class;
+      Validator : Attribute_Validator;
       Override  : Boolean)
    is
       L : Attribute_Validator_List_Access;
@@ -259,14 +324,10 @@ package body Schema.Validators is
       if List /= null then
          for A in List'Range loop
             if not List (A).Is_Group
-              and then Is_Equal (List (A).Attr.all, Validator.all)
+              and then Is_Equal (List (A).Attr, Validator)
             then
                if Override then
-                  --  ??? Should we free the previous value => We are sharing
-                  --  the attribute definition through Restriction_Of...
-                  List (A) :=
-                    (Is_Group => False,
-                     Attr     => Attribute_Validator (Validator));
+                  List (A) := (Is_Group => False, Attr => Validator);
                end if;
                return;
             end if;
@@ -274,14 +335,12 @@ package body Schema.Validators is
 
          L := new Attribute_Validator_List'
            (List.all & Attribute_Or_Group'
-              (Is_Group => False,
-               Attr     => Attribute_Validator (Validator)));
+              (Is_Group => False, Attr => Validator));
          Unchecked_Free (List);
          List := L;
       else
          List := new Attribute_Validator_List'
-           (1 => Attribute_Or_Group'
-              (Is_Group => False, Attr => Attribute_Validator (Validator)));
+           (1 => Attribute_Or_Group'(Is_Group => False, Attr => Validator));
       end if;
    end Append;
 
@@ -336,12 +395,27 @@ package body Schema.Validators is
       end if;
    end Append;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Validator : access Attribute_Validator_Record) return String
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return "Attribute_Validator";
+   end Get_Name;
+
    ----------
    -- Free --
    ----------
 
    procedure Free (Validator : in out Named_Attribute_Validator_Record) is
    begin
+      --  Do not free Validator.Attribute_Type, since it might be shared by
+      --  several attributes. This type will be freed correctly when the full
+      --  grammar is freed.
       Free (Validator.Local_Name);
       Free (Validator.Value);
    end Free;
@@ -350,12 +424,10 @@ package body Schema.Validators is
    -- Free --
    ----------
 
-   procedure Free (Validator : in out Attribute_Validator) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Validator_Record'Class, Attribute_Validator);
+   procedure Free (Validator : in out Attribute_Validator_Record) is
+      pragma Unreferenced (Validator);
    begin
-      Free (Validator.all);
-      Unchecked_Free (Validator);
+      null;
    end Free;
 
    -------------------
@@ -364,7 +436,7 @@ package body Schema.Validators is
 
    procedure Add_Attribute
      (Validator : access XML_Validator_Record;
-      Attribute : access Attribute_Validator_Record'Class) is
+      Attribute : Attribute_Validator) is
    begin
       Append (Validator.Attributes, Attribute, Override => True);
    end Add_Attribute;
@@ -375,9 +447,9 @@ package body Schema.Validators is
 
    procedure Add_Attribute
      (Group : in out XML_Attribute_Group;
-      Attr  : access Attribute_Validator_Record'Class) is
+      Attr  : Attribute_Validator) is
    begin
-      Append (Group.Attributes, Attribute_Validator (Attr), Override => True);
+      Append (Group.Attributes, Attr, Override => True);
    end Add_Attribute;
 
    -------------------------
@@ -410,10 +482,10 @@ package body Schema.Validators is
    --------------
 
    function Get_Name
-     (Validator : access XML_Validator_Record'Class) return String is
+     (Validator : access XML_Validator_Record) return String is
    begin
       if Validator.Debug_Name = null then
-         return External_Tag (Validator'Tag);
+         return External_Tag (XML_Validator_Record'Class (Validator.all)'Tag);
       else
          return Validator.Debug_Name.all;
       end if;
@@ -477,11 +549,12 @@ package body Schema.Validators is
       --  Check whether the Index-th attribute in Atts, corresponding to Named,
       --  is an ID.
 
-      procedure Recursive_Check (Validator : XML_Validator);
+      procedure Recursive_Check
+        (Validator : access XML_Validator_Record'Class);
       procedure Recursive_Check (List : Attribute_Or_Group);
       --  Check recursively the attributes provided by Validator
 
-      procedure Check_Named_Attribute (Named : Named_Attribute_Validator);
+      procedure Check_Named_Attribute (Named : Attribute_Validator);
       procedure Check_Any_Attribute
         (Any : Any_Attribute_Validator; Index : Integer);
       --  Check a named attribute or a wildcard attribute
@@ -490,20 +563,24 @@ package body Schema.Validators is
       -- Check_Named_Attribute --
       ---------------------------
 
-      procedure Check_Named_Attribute (Named : Named_Attribute_Validator) is
+      procedure Check_Named_Attribute (Named : Attribute_Validator) is
          Found  : Integer;
          Facets : Facets_Description;
          Whitespace : Whitespace_Restriction := Preserve;
+         NamedPtr : constant Named_Attribute_Validator :=
+           Named_Attribute_Validator (Get (Named));
       begin
-         if Get (Visited, Named.Local_Name.all) = null then
+         if Get (Visited, NamedPtr.Local_Name.all) =
+           No_Attribute_Validator
+         then
             Set (Visited, Named);
-            Found := Find_Attribute (Named);
+            Found := Find_Attribute (NamedPtr);
 
             if Found = -1 then
-               case Named.Attribute_Use is
+               case NamedPtr.Attribute_Use is
                   when Required =>
                      Validation_Error
-                       ("Attribute """ & Named.Local_Name.all
+                       ("Attribute """ & NamedPtr.Local_Name.all
                         & """ is required in this context");
                   when Prohibited | Optional | Default | Fixed =>
                      null;
@@ -512,30 +589,30 @@ package body Schema.Validators is
             else
                Seen (Found) := True;
 
-               case Named.Attribute_Use is
+               case NamedPtr.Attribute_Use is
                   when Prohibited =>
                      Validation_Error
-                       ("Attribute """ & Named.Local_Name.all
+                       ("Attribute """ & NamedPtr.Local_Name.all
                         & """ is prohibited in this context");
 
                   when Fixed =>
-                     if Named.Value.all /=
+                     if NamedPtr.Value.all /=
                        Get_Value (Atts, Found)
                      then
                         Validation_Error
-                          ("Attribute """ & Named.Local_Name.all
+                          ("Attribute """ & NamedPtr.Local_Name.all
                            & """ must have the value """
-                           & Named.Value.all & """");
+                           & NamedPtr.Value.all & """");
                      end if;
 
                   when Optional | Required | Default =>
                      null;
                end case;
 
-               Check_Id (Named, Found);
+               Check_Id (NamedPtr, Found);
 
                Facets := Get_Facets_Description
-                 (Named.Attribute_Type.Validator);
+                 (Get (Get (NamedPtr.Attribute_Type).Validator));
                if Facets /= null
                  and then Facets.all in Common_Facets_Description'Class
                then
@@ -575,7 +652,7 @@ package body Schema.Validators is
                end if;
 
                begin
-                  Validate_Attribute (Named.all, Atts, Found, Grammar);
+                  Validate_Attribute (NamedPtr.all, Atts, Found, Grammar);
                exception
                   when E : XML_Validation_Error =>
                      Validation_Error
@@ -666,8 +743,10 @@ package body Schema.Validators is
                end loop;
             end if;
 
-         elsif List.Attr.all in Named_Attribute_Validator_Record'Class then
-            Check_Named_Attribute (Named_Attribute_Validator (List.Attr));
+         elsif Get (List.Attr).all in
+           Named_Attribute_Validator_Record'Class
+         then
+            Check_Named_Attribute (List.Attr);
 
          else
             Debug_Output ("Not a named attribute, cannot check");
@@ -678,7 +757,9 @@ package body Schema.Validators is
       -- Recursive_Check --
       ---------------------
 
-      procedure Recursive_Check (Validator : XML_Validator) is
+      procedure Recursive_Check
+        (Validator : access XML_Validator_Record'Class)
+      is
          List   : Attribute_Validator_List_Access;
          Dep1, Dep2 : XML_Validator;
       begin
@@ -690,32 +771,34 @@ package body Schema.Validators is
 
             for L in List'Range loop
                if not List (L).Is_Group
-                 and then List (L).Attr.all in Any_Attribute_Validator'Class
+                 and then Get (List (L).Attr).all in
+                   Any_Attribute_Validator'Class
                then
                   for A in 0 .. Length - 1 loop
                      if not Seen (A) then
                         Seen (A) := True;
                         Check_Any_Attribute
-                          (Any_Attribute_Validator (List (L).Attr.all), A);
+                          (Any_Attribute_Validator (Get (List (L).Attr).all),
+                           A);
                      end if;
                   end loop;
                end if;
             end loop;
          end if;
 
-         if Dep1 /= null then
-            Recursive_Check (Dep1);
+         if Dep1 /= No_Validator then
+            Recursive_Check (Get (Dep1));
          end if;
 
-         if Dep2 /= null then
-            Recursive_Check (Dep2);
+         if Dep2 /= No_Validator then
+            Recursive_Check (Get (Dep2));
          end if;
       end Recursive_Check;
 
    begin
       Debug_Push_Prefix ("Validate_Attributes " & Get_Name (Validator));
 
-      Recursive_Check (XML_Validator (Validator));
+      Recursive_Check (Validator);
 
       Is_Nil := False;
 
@@ -825,15 +908,18 @@ package body Schema.Validators is
       Is_ID          : Boolean := False)
       return Attribute_Validator
    is
+      Tmp : constant Attribute_Validators.Encapsulated_Access :=
+        new Named_Attribute_Validator_Record'
+          (Sax.Pointers.Root_Encapsulated with
+           Local_Name     => new Unicode.CES.Byte_Sequence'(Local_Name),
+           NS             => NS,
+           Attribute_Type => Attribute_Type,
+           Attribute_Form => Attribute_Form,
+           Attribute_Use  => Attribute_Use,
+           Value          => new Unicode.CES.Byte_Sequence'(Value),
+           Is_Id          => Is_ID);
    begin
-      return new Named_Attribute_Validator_Record'
-        (Local_Name     => new Unicode.CES.Byte_Sequence'(Local_Name),
-         NS             => NS,
-         Attribute_Type => Attribute_Type,
-         Attribute_Form => Attribute_Form,
-         Attribute_Use  => Attribute_Use,
-         Value          => new Unicode.CES.Byte_Sequence'(Value),
-         Is_Id          => Is_ID);
+      return Allocate (Tmp);
    end Create_Local_Attribute;
 
    ------------------------
@@ -853,9 +939,10 @@ package body Schema.Validators is
                     & "=" & Get_Value (Atts, Index) & "--");
 
       if Validator.Attribute_Type /= No_Type then
-         Validate_Characters (Get_Validator (Validator.Attribute_Type),
-                              Get_Value (Atts, Index),
-                              Empty_Element => False);
+         Validate_Characters
+           (Get (Get_Validator (Validator.Attribute_Type)),
+            Get_Value (Atts, Index),
+            Empty_Element => False);
       end if;
    end Validate_Attribute;
 
@@ -869,31 +956,38 @@ package body Schema.Validators is
       Free (Validator.Attributes);
    end Free;
 
+   ---------
+   -- "+" --
+   ---------
+
+   function "+" (Validator : XML_Validator) return XML_Validator_Access is
+   begin
+      return XML_Validator_Access (Get (Validator));
+   end "+";
+
+   ------------
+   -- Get_GM --
+   ------------
+
+   function Get_GM (Model : Group_Model) return Group_Model_Access is
+   begin
+      return Group_Model_Access (Get (Model));
+   end Get_GM;
+
    ----------
    -- Free --
    ----------
 
-   procedure Free (Typ : in out XML_Type) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Type_Record, XML_Type);
+   procedure Free (Typ : in out XML_Type_Record) is
    begin
-      if Typ /= null then
-         Free (Typ.Local_Name);
-         Unchecked_Free (Typ);
-      end if;
+      Free (Typ.Local_Name);
    end Free;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out XML_Validator) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Validator_Record'Class, XML_Validator);
+   procedure Do_Nothing (T : in out XML_Type) is
+      pragma Unreferenced (T);
    begin
-      Free (Validator.all);
-      Unchecked_Free (Validator);
-   end Free;
+      null;
+   end Do_Nothing;
 
    ------------
    -- Lookup --
@@ -905,14 +999,17 @@ package body Schema.Validators is
       Create_If_Needed : Boolean := True) return XML_Type
    is
       Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
+      Tmp : XML_Types.Encapsulated_Access;
    begin
       if Typ = No_Type and then Create_If_Needed then
-         Typ := new XML_Type_Record'
-           (Local_Name  => new Byte_Sequence'(Local_Name),
-            Validator   => null,
+         Tmp := new XML_Type_Record'
+           (Sax.Pointers.Root_Encapsulated with
+            Local_Name  => new Byte_Sequence'(Local_Name),
+            Validator   => No_Validator,
             Simple_Type => Unknown_Content,
             Block_Extension   => Grammar.Block_Extension,
             Block_Restriction => Grammar.Block_Restriction);
+         Typ := Allocate (Tmp);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Debug_Output ("Forward type decl: {"
                        & Get_Namespace_URI (Grammar) & "}{"
@@ -995,13 +1092,13 @@ package body Schema.Validators is
       Local_Name    : Unicode.CES.Byte_Sequence;
       Create_If_Needed : Boolean := True) return Attribute_Validator
    is
-      Result : constant Named_Attribute_Validator :=
+      Result : constant Attribute_Validator :=
         Attributes_Htable.Get (Grammar.Attributes.all, Local_Name);
    begin
-      if Result = null and then Create_If_Needed then
+      if Result = No_Attribute_Validator and then Create_If_Needed then
          return Create_Global_Attribute (Grammar, Local_Name, No_Type);
       end if;
-      return Attribute_Validator (Result);
+      return Result;
    end Lookup_Attribute;
 
    --------------------
@@ -1022,12 +1119,21 @@ package body Schema.Validators is
    begin
       if Typ = No_Type then
          return "No_Type";
-      elsif Typ.Local_Name = null then
+      elsif Get (Typ).Local_Name = null then
+         return "anonymous";
+      else
+         return Get (Typ).Local_Name.all;
+      end if;
+   end Get_Local_Name;
+
+   function Get_Name (Typ : access XML_Type_Record) return String is
+   begin
+      if Typ.Local_Name = null then
          return "anonymous";
       else
          return Typ.Local_Name.all;
       end if;
-   end Get_Local_Name;
+   end Get_Name;
 
    --------------
    -- Get_Type --
@@ -1036,11 +1142,20 @@ package body Schema.Validators is
    function Get_Type (Element : XML_Element) return XML_Type is
    begin
       if Element.Elem = null then
-         return null;
+         return No_Type;
       else
          return Element.Elem.Of_Type;
       end if;
    end Get_Type;
+
+   --------------
+   -- Set_Type --
+   --------------
+
+   procedure Set_Type (Attr : Attribute_Validator; Attr_Type : XML_Type) is
+   begin
+      Set_Type (Get (Attr), Attr_Type);
+   end Set_Type;
 
    --------------
    -- Set_Type --
@@ -1054,6 +1169,15 @@ package body Schema.Validators is
    begin
       null;
    end Set_Type;
+
+   --------------
+   -- Get_Type --
+   --------------
+
+   function Get_Type (Attr : Attribute_Validator) return XML_Type is
+   begin
+      return Get_Type (Get (Attr));
+   end Get_Type;
 
    --------------
    -- Get_Type --
@@ -1108,7 +1232,7 @@ package body Schema.Validators is
 
          if Element.Elem.Default /= null then
             Validate_Characters
-              (Get_Validator (Element_Type), Element.Elem.Default.all,
+              (Get (Get_Validator (Element_Type)), Element.Elem.Default.all,
                Empty_Element => False);
          end if;
 
@@ -1118,7 +1242,7 @@ package body Schema.Validators is
 
          if Element.Elem.Fixed /= null then
             Validate_Characters
-              (Get_Validator (Element_Type), Element.Elem.Fixed.all,
+              (Get (Get_Validator (Element_Type)), Element.Elem.Fixed.all,
                Empty_Element => False);
          end if;
       end if;
@@ -1134,11 +1258,12 @@ package body Schema.Validators is
       Result        : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True)
    is
+      Gr : XML_Grammars.Encapsulated_Access := Get (Grammar);
    begin
-      if Grammar /= null and then Grammar.Grammars /= null then
-         for G in Grammar.Grammars'Range loop
-            if Grammar.Grammars (G).Namespace_URI.all = Namespace_URI then
-               Result := Grammar.Grammars (G);
+      if Gr /= null and then Gr.Grammars /= null then
+         for G in Gr.Grammars'Range loop
+            if Gr.Grammars (G).Namespace_URI.all = Namespace_URI then
+               Result := Gr.Grammars (G);
                return;
             end if;
          end loop;
@@ -1146,7 +1271,8 @@ package body Schema.Validators is
 
       if Create_If_Needed then
          Create_NS_Grammar (Grammar, Namespace_URI);
-         Result := Grammar.Grammars (Grammar.Grammars'Last);
+         Gr := Get (Grammar);
+         Result := Gr.Grammars (Gr.Grammars'Last);
       else
          Result := null;
       end if;
@@ -1157,8 +1283,6 @@ package body Schema.Validators is
    ----------
 
    procedure Free (List : in out String_List) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (String_List_Record, String_List);
       L : String_List;
    begin
       while List /= null loop
@@ -1177,24 +1301,28 @@ package body Schema.Validators is
      (Grammar       : in out XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence)
    is
-      Tmp : Grammar_NS_Array_Access;
+      Tmp  : Grammar_NS_Array_Access;
+      Gr   : XML_Grammars.Encapsulated_Access;
    begin
-      if Grammar = null then
-         Grammar := new XML_Grammar_Record;
+      if Grammar = No_Grammar then
+         Gr := new XML_Grammar_Record;
+         Grammar := Allocate (Gr);
+      else
+         Gr := Get (Grammar);
       end if;
 
-      if Grammar.Grammars = null then
-         Grammar.Grammars := new Grammar_NS_Array (1 .. 1);
+      if Gr.Grammars = null then
+         Gr.Grammars := new Grammar_NS_Array (1 .. 1);
       else
-         Tmp := Grammar.Grammars;
-         Grammar.Grammars := new Grammar_NS_Array (1 .. Tmp'Length + 1);
-         Grammar.Grammars (Tmp'Range) := Tmp.all;
+         Tmp := Gr.Grammars;
+         Gr.Grammars := new Grammar_NS_Array (1 .. Tmp'Length + 1);
+         Gr.Grammars (Tmp'Range) := Tmp.all;
          Unchecked_Free (Tmp);
       end if;
 
       Debug_Output ("Create_NS_Grammar: " & Namespace_URI);
 
-      Grammar.Grammars (Grammar.Grammars'Last) := new XML_Grammar_NS_Record'
+      Gr.Grammars (Gr.Grammars'Last) := new XML_Grammar_NS_Record'
         (Namespace_URI    => new Byte_Sequence'(Namespace_URI),
          Types            => new Types_Htable.HTable (101),
          Elements         => new Elements_Htable.HTable (101),
@@ -1205,15 +1333,32 @@ package body Schema.Validators is
          Block_Extension   => False);
    end Create_NS_Grammar;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Grammar : access XML_Grammar_Record) return String is
+      pragma Unreferenced (Grammar);
+   begin
+      return "<grammar>";
+   end Get_Name;
+
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize (Grammar : in out XML_Grammar) is
+      Tmp      : XML_Validators.Encapsulated_Access;
       Tmp2     : XML_Validator;
+      Tmp3     : XML_Grammars.Encapsulated_Access;
       G, XML_G, XML_IG : XML_Grammar_NS;
 
    begin
+      if Grammar = No_Grammar then
+         Tmp3 := new XML_Grammar_Record;
+         Grammar := Allocate (Tmp3);
+      end if;
+
       --  The first call to Get_NS will also create the grammar itself if
       --  needed
       Get_NS (Grammar, XML_Schema_URI,   Result => G);
@@ -1229,10 +1374,12 @@ package body Schema.Validators is
         (G, "ur-Type",
          Get_Validator (Get_Type (Get_UR_Type_Element (Process_Skip))));
 
-      Tmp2 := new XML_Validator_Record;
+      Tmp := new XML_Validator_Record;
+      Tmp2 := Allocate (Tmp);
       Create_Global_Type (G, "anyType", Tmp2);
 
-      Tmp2 := new Any_Simple_XML_Validator_Record;
+      Tmp := new Any_Simple_XML_Validator_Record;
+      Tmp2 := Allocate (Tmp);
       Create_Global_Type (G, "anySimpleType", Tmp2);
 
       Register_Predefined_Types (G, XML_G);
@@ -1255,23 +1402,24 @@ package body Schema.Validators is
       use Elements_Htable;
       Str : String_List;
       Elem : Elements_Htable.Iterator;
+      Gr   : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
    begin
       if Debug then
-         Str := Grammar.Parsed_Locations;
+         Str := Gr.Parsed_Locations;
          while Str /= null loop
             Put_Line ("   Parsed location: " & Str.Str.all);
             Str := Str.Next;
          end loop;
 
-         if Grammar.Grammars /= null then
-            for G in Grammar.Grammars'Range  loop
-               Put_Line ("   NS=" & Grammar.Grammars (G).Namespace_URI.all);
+         if Gr.Grammars /= null then
+            for G in Gr.Grammars'Range  loop
+               Put_Line ("   NS=" & Gr.Grammars (G).Namespace_URI.all);
 
                Put ("      Elements:");
-               Elem := First (Grammar.Grammars (G).Elements.all);
+               Elem := First (Gr.Grammars (G).Elements.all);
                while Elem /= Elements_Htable.No_Iterator loop
                   Put (' ' & Elements_Htable.Current (Elem).Local_Name.all);
-                  Next (Grammar.Grammars (G).Elements.all, Elem);
+                  Next (Gr.Grammars (G).Elements.all, Elem);
                end loop;
                New_Line;
 
@@ -1286,8 +1434,6 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Facets : in out Facets_Description) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Facets_Description_Record'Class, Facets_Description);
    begin
       if Facets /= null then
          Free (Facets.all);
@@ -1351,7 +1497,7 @@ package body Schema.Validators is
    begin
       if Old /= No_Type then
          Result := Create_Local_Type (Get_Validator (Old));
-         Old.Validator := null;
+         Get (Old).Validator := No_Validator;
          return Result;
       end if;
       return No_Type;
@@ -1426,38 +1572,41 @@ package body Schema.Validators is
    function Create_Global_Type
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence;
-      Validator  : access XML_Validator_Record'Class) return XML_Type
+      Validator  : XML_Validator) return XML_Type
    is
       Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
+      Tmp : XML_Types.Encapsulated_Access;
    begin
       if Typ /= No_Type then
-         if Typ.Validator /= null then
+         if Get (Typ).Validator /= No_Validator then
             Validation_Error
               ("Type has already been declared: " & Local_Name);
          end if;
 
          Debug_Output ("Overriding forward type " & Local_Name);
-         Typ.Validator := XML_Validator (Validator);
+         Get (Typ).Validator := Validator;
 
-         if Typ.Simple_Type /= Unknown_Content then
+         if Get (Typ).Simple_Type /= Unknown_Content then
             Check_Content_Type
-              (Validator, Typ.Simple_Type = Simple_Content);
+              (Get (Validator), Get (Typ).Simple_Type = Simple_Content);
          end if;
 
       else
-         Typ := new XML_Type_Record'
-           (Local_Name        => new Byte_Sequence'(Local_Name),
-            Validator         => XML_Validator (Validator),
+         Tmp := new XML_Type_Record'
+           (Sax.Pointers.Root_Encapsulated with
+            Local_Name        => new Byte_Sequence'(Local_Name),
+            Validator         => Validator,
             Simple_Type       => Unknown_Content,
             Block_Extension   => Grammar.Block_Extension,
             Block_Restriction => Grammar.Block_Restriction);
+         Typ := Allocate (Tmp);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Debug_Output ("Creating global type {"
                        & Get_Namespace_URI (Grammar) & '}'
                        & Local_Name);
 
-         if Debug and then Typ.Validator.Debug_Name = null then
-            Set_Debug_Name (Typ.Validator, Local_Name);
+         if Debug and then Get (Get (Typ).Validator).Debug_Name = null then
+            Set_Debug_Name (Get (Typ).Validator, Local_Name);
          end if;
       end if;
 
@@ -1471,10 +1620,10 @@ package body Schema.Validators is
    procedure Create_Global_Type
      (Grammar    : XML_Grammar_NS;
       Local_Name : Unicode.CES.Byte_Sequence;
-      Validator  : access XML_Validator_Record'Class)
+      Validator  : XML_Validator)
    is
       Typ : constant XML_Type :=
-              Create_Global_Type (Grammar, Local_Name, Validator);
+        Create_Global_Type (Grammar, Local_Name, Validator);
       pragma Unreferenced (Typ);
    begin
       null;
@@ -1507,28 +1656,32 @@ package body Schema.Validators is
       Attribute_Type : XML_Type;
       Is_ID          : Boolean := False) return Attribute_Validator
    is
-      Old : Named_Attribute_Validator :=
+      Old : Attribute_Validator :=
         Attributes_Htable.Get (NS.Attributes.all, Local_Name);
+      OldPtr : Named_Attribute_Validator;
    begin
-      if Old /= null then
-         if Old.Attribute_Type /= No_Type then
+      if Old /= No_Attribute_Validator then
+         OldPtr := Named_Attribute_Validator (Get (Old));
+         if OldPtr.Attribute_Type /= No_Type then
             Validation_Error
               ("Attribute has already been declared: " & Local_Name);
          end if;
 
-         Old.Attribute_Type := Attribute_Type;
+         OldPtr.Attribute_Type := Attribute_Type;
       else
-         Old := new Named_Attribute_Validator_Record'
-           (NS             => NS,
+         OldPtr := new Named_Attribute_Validator_Record'
+           (Sax.Pointers.Root_Encapsulated with
+            NS             => NS,
             Local_Name     => new Byte_Sequence'(Local_Name),
             Attribute_Type => Attribute_Type,
             Attribute_Form => Unqualified,
             Attribute_Use  => Optional,
             Value          => null,
             Is_Id          => Is_ID);
+         Old := Allocate (OldPtr);
          Attributes_Htable.Set (NS.Attributes.all, Old);
       end if;
-      return Attribute_Validator (Old);
+      return Old;
    end Create_Global_Attribute;
 
    -------------------------
@@ -1591,19 +1744,16 @@ package body Schema.Validators is
    -- Free --
    ----------
 
-   procedure Free (Grammar : in out XML_Grammar) is
+   procedure Free (Grammar : in out XML_Grammar_Record) is
    begin
-      if Grammar /= null then
-         if Grammar.Grammars /= null then
-            for G in Grammar.Grammars'Range loop
-               Free (Grammar.Grammars (G));
-            end loop;
-            Unchecked_Free (Grammar.Grammars);
-         end if;
-
-         Free (Grammar.Parsed_Locations);
-         Unchecked_Free (Grammar);
+      if Grammar.Grammars /= null then
+         for G in Grammar.Grammars'Range loop
+            Free (Grammar.Grammars (G));
+         end loop;
+         Unchecked_Free (Grammar.Grammars);
       end if;
+
+      Free (Grammar.Parsed_Locations);
    end Free;
 
    --------------------
@@ -1615,8 +1765,8 @@ package body Schema.Validators is
    is
       L : String_List;
    begin
-      if Grammar /= null then
-         L := Grammar.Parsed_Locations;
+      if Grammar /= No_Grammar then
+         L := Get (Grammar).Parsed_Locations;
          while L /= null loop
             if Debug then
                Put_Line ("URI_Was_Parsed (" & URI & ") ? Compare with "
@@ -1641,16 +1791,16 @@ package body Schema.Validators is
    procedure Set_Parsed_URI
      (Grammar : in out XML_Grammar; URI : Byte_Sequence) is
    begin
-      if Grammar = null then
+      if Grammar = No_Grammar then
          Initialize (Grammar);
       end if;
 
       if Debug then
          Put_Line ("Set_Parsed_UI: " & URI);
       end if;
-      Grammar.Parsed_Locations := new String_List_Record'
+      Get (Grammar).Parsed_Locations := new String_List_Record'
         (Str  => new Byte_Sequence'(URI),
-         Next => Grammar.Parsed_Locations);
+         Next => Get (Grammar).Parsed_Locations);
    end Set_Parsed_URI;
 
    ----------
@@ -1658,22 +1808,6 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Grammar : in out XML_Grammar_NS) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Types_Htable.HTable, Types_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Elements_Htable.HTable, Elements_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Groups_Htable.HTable, Groups_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Grammar_NS_Record, XML_Grammar_NS);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attributes_Htable.HTable, Attributes_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Groups_Htable.HTable, Attribute_Groups_Htable_Access);
-
-      use Attributes_Htable;
-      Att_Iter : Attributes_Htable.Iterator;
-      Att      : Named_Attribute_Validator;
    begin
       if Grammar /= null then
          Elements_Htable.Reset (Grammar.Elements.all);
@@ -1684,16 +1818,6 @@ package body Schema.Validators is
          Unchecked_Free (Grammar.Groups);
          Attribute_Groups_Htable.Reset (Grammar.Attribute_Groups.all);
          Unchecked_Free (Grammar.Attribute_Groups);
-
-         --  We need to explicitly reset this table, since the Free subprogram
-         --  does nothing here
-
-         Att_Iter := Attributes_Htable.First (Grammar.Attributes.all);
-         while Att_Iter /= Attributes_Htable.No_Iterator loop
-            Att := Attributes_Htable.Current (Att_Iter);
-            Attributes_Htable.Next (Grammar.Attributes.all, Att_Iter);
-            Free (Attribute_Validator (Att));
-         end loop;
          Attributes_Htable.Reset (Grammar.Attributes.all);
          Unchecked_Free (Grammar.Attributes);
 
@@ -1706,7 +1830,7 @@ package body Schema.Validators is
    -- Do_Nothing --
    ----------------
 
-   procedure Do_Nothing (Att : in out Named_Attribute_Validator) is
+   procedure Do_Nothing (Att : in out Attribute_Validator) is
       pragma Unreferenced (Att);
    begin
       null;
@@ -1732,8 +1856,9 @@ package body Schema.Validators is
       --  for that element
 
       if Element.Elem.Of_Type /= No_Type then
-         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Default,
-                              Empty_Element => False);
+         Validate_Characters
+           (Get (Get_Validator (Element.Elem.Of_Type)), Default,
+            Empty_Element => False);
       end if;
 
       Free (Element.Elem.Default);
@@ -1779,8 +1904,9 @@ package body Schema.Validators is
       --  for that element
 
       if Element.Elem.Of_Type /= No_Type then
-         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Fixed,
-                              Empty_Element => False);
+         Validate_Characters
+           (Get (Get_Validator (Element.Elem.Of_Type)), Fixed,
+            Empty_Element => False);
       end if;
 
       Free (Element.Elem.Fixed);
@@ -1823,8 +1949,6 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Element : in out XML_Element_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Element_Record, XML_Element_Access);
    begin
       Free (Element.all);
       Unchecked_Free (Element);
@@ -1835,8 +1959,6 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Group : in out XML_Group) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Group_Record, XML_Group);
    begin
       Free (Group.Local_Name);
       Unchecked_Free (Group);
@@ -1878,7 +2000,7 @@ package body Schema.Validators is
    function Get_Key
      (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
    begin
-      return Typ.Local_Name.all;
+      return Get (Typ).Local_Name.all;
    end Get_Key;
 
    -------------
@@ -1896,9 +2018,9 @@ package body Schema.Validators is
    -------------
 
    function Get_Key
-     (Att : Named_Attribute_Validator) return Unicode.CES.Byte_Sequence is
+     (Att : Attribute_Validator) return Unicode.CES.Byte_Sequence is
    begin
-      return Att.Local_Name.all;
+      return Named_Attribute_Validator (Get (Att)).Local_Name.all;
    end Get_Key;
 
    -------------------------------
@@ -2018,7 +2140,7 @@ package body Schema.Validators is
    ------------------
 
    procedure Check_Nested
-     (Nested            : access Group_Model_Record'Class;
+     (Nested            : Group_Model;
       Data              : access Group_Model_Data_Record'Class;
       Local_Name        : Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
@@ -2029,18 +2151,18 @@ package body Schema.Validators is
    is
       Applies : Boolean;
    begin
-      Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
+      Debug_Push_Prefix ("Check_Nested " & Get_Name (Get (Nested)));
 
       Applies_To_Tag
-        (Nested, Local_Name, Namespace_URI, NS,
+        (Get_GM (Nested), Local_Name, Namespace_URI, NS,
          Schema_Target_NS, Applies, Skip_Current);
 
       if Applies then
-         Data.Nested      := Group_Model (Nested);
-         Data.Nested_Data := Create_Validator_Data (Nested);
+         Data.Nested      := Nested;
+         Data.Nested_Data := Create_Validator_Data (Get (Nested));
 
          Validate_Start_Element
-           (Data.Nested, Local_Name, Namespace_URI, NS,
+           (Get (Data.Nested), Local_Name, Namespace_URI, NS,
             Data.Nested_Data, Schema_Target_NS, Element_Validator);
 
          if Element_Validator /= No_Element then
@@ -2048,7 +2170,7 @@ package body Schema.Validators is
               ("nested Matched "
                & Get_Local_Name (Element_Validator.Elem.Of_Type));
          else
-            Validate_End_Element (Nested, Local_Name, Data.Nested_Data);
+            Validate_End_Element (Get (Nested), Local_Name, Data.Nested_Data);
 
             Free_Nested_Group (Group_Model_Data (Data));
          end if;
@@ -2073,10 +2195,10 @@ package body Schema.Validators is
       Element_Validator : out XML_Element) is
    begin
       Debug_Push_Prefix ("Run_Nested: " & Get_Name (Validator)
-                         & " -> " & Get_Name (Data.Nested));
+                         & " -> " & Get_Name (Get (Data.Nested)));
 
       Validate_Start_Element
-        (Data.Nested, Local_Name, Namespace_URI, NS,
+        (Get (Data.Nested), Local_Name, Namespace_URI, NS,
          Data.Nested_Data, Schema_Target_NS, Element_Validator);
 
       if Element_Validator = No_Element then
@@ -2109,7 +2231,7 @@ package body Schema.Validators is
       Debug_Push_Prefix ("Validate_Start_Element seq " & Get_Name (Validator)
                          & " occurs=" & D.Num_Occurs_Of_Current'Img);
 
-      if D.Nested /= null then
+      if D.Nested /= No_Validator then
          Run_Nested
            (Validator, D, Local_Name, Namespace_URI, NS,
             Schema_Target_NS, Element_Validator);
@@ -2211,7 +2333,7 @@ package body Schema.Validators is
             when Particle_Nested =>
                Debug_Output ("Testing nested of sequence "
                              & Get_Name (Validator) & ": "
-                             & Get_Name (Curr.Validator));
+                             & Get_Name (Get (Curr.Validator)));
                Check_Nested
                  (Curr.Validator, D, Local_Name,
                   Namespace_URI, NS,
@@ -2263,7 +2385,7 @@ package body Schema.Validators is
    begin
       return Get_Min_Occurs (Iterator) = 0
         or else (Get (Iterator).Typ = Particle_Nested
-                 and then Can_Be_Empty (Get (Iterator).Validator));
+                 and then Can_Be_Empty (Get_GM (Get (Iterator).Validator)));
    end Is_Optional;
 
    --------------------------
@@ -2279,8 +2401,8 @@ package body Schema.Validators is
    begin
       Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator));
 
-      if D.Nested /= null then
-         Validate_End_Element (D.Nested, Local_Name, D.Nested_Data);
+      if D.Nested /= No_Validator then
+         Validate_End_Element (Get (D.Nested), Local_Name, D.Nested_Data);
       end if;
 
       if Get (D.Current) /= null
@@ -2356,14 +2478,33 @@ package body Schema.Validators is
       end if;
    end Append;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Particle_List) is
+      Tmp, Tmp2 : XML_Particle_Access;
+   begin
+      if List /= null then
+         Tmp := List.First;
+         while Tmp /= null loop
+            Tmp2 := Tmp.Next;
+            Unchecked_Free (Tmp);
+            Tmp := Tmp2;
+         end loop;
+
+         Unchecked_Free (List);
+      end if;
+   end Free;
+
    ---------------------
    -- Create_Sequence --
    ---------------------
 
-   function Create_Sequence return Sequence is
-      Seq : constant Sequence := new Sequence_Record;
+   function Create_Sequence return XML_Validator is
+      Seq : constant XML_Validators.Encapsulated_Access := new Sequence_Record;
    begin
-      return Seq;
+      return Allocate (Seq);
    end Create_Sequence;
 
    ------------------
@@ -2371,7 +2512,7 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (Seq : access Sequence_Record; Item : XML_Element;
+     (Seq_Or_Choice : in out Group_Model; Item : XML_Element;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
       if Item.Elem.Local_Name = null then
@@ -2381,7 +2522,7 @@ package body Schema.Validators is
       end if;
 
       Append
-        (Seq.Particles, XML_Particle'
+        (Get_GM (Seq_Or_Choice).Particles, XML_Particle'
            (Typ        => Particle_Element,
             Element    => Item,
             Next       => null,
@@ -2394,10 +2535,10 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (Seq : access Sequence_Record; Item : Sequence;
+     (Seq_Or_Choice : in out Group_Model; Item : XML_Validator;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      Append (Seq.Particles, XML_Particle'
+      Append (Get_GM (Seq_Or_Choice).Particles, XML_Particle'
                 (Typ        => Particle_Nested,
                  Validator  => Group_Model (Item),
                  Next       => null,
@@ -2410,26 +2551,10 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (Seq : access Sequence_Record; Item : Choice;
+     (Seq_Or_Choice : in out Group_Model; Item : XML_Group;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Seq : access Sequence_Record; Item : XML_Group;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (Seq.Particles, XML_Particle'
+      Append (Get_GM (Seq_Or_Choice).Particles, XML_Particle'
                 (Typ        => Particle_Group,
                  Group      => Item,
                  Next       => null,
@@ -2487,7 +2612,7 @@ package body Schema.Validators is
                          & " occurs=" & D.Num_Occurs_Of_Current'Img
                          & ' ' & Namespace_URI & ':' & Local_Name);
 
-      if D.Nested /= null then
+      if D.Nested /= No_Validator then
          Run_Nested
            (Validator, D, Local_Name, Namespace_URI, NS,
             Schema_Target_NS, Element_Validator);
@@ -2663,9 +2788,10 @@ package body Schema.Validators is
    -- Create_Choice --
    -------------------
 
-   function Create_Choice return Choice is
+   function Create_Choice return XML_Validator is
+      Tmp : constant XML_Validators.Encapsulated_Access := new Choice_Record;
    begin
-      return new Choice_Record;
+      return Allocate (Tmp);
    end Create_Choice;
 
    ------------------
@@ -2673,98 +2799,12 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (C          : access Choice_Record;
-      Item       : XML_Element;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      if Item.Elem.Local_Name = null then
-         Raise_Exception
-           (Program_Error'Identity,
-            "Adding unnamed element to choice");
-      end if;
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Element,
-                 Element    => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C : access Choice_Record; Item : XML_Any;
+     (Seq_Or_Choice : in out Group_Model; Item : XML_Any;
       Min_Occurs : Integer := 1; Max_Occurs : Integer := 1) is
    begin
-      Append (C.Particles, XML_Particle'
+      Append (Get_GM (Seq_Or_Choice).Particles, XML_Particle'
                 (Typ        => Particle_Any,
                  Any        => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Seq : access Sequence_Record; Item : XML_Any;
-      Min_Occurs : Integer := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Any,
-                 Any        => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C : access Choice_Record; Item : Sequence;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C : access Choice_Record; Item : Choice;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C : access Choice_Record; Item : XML_Group;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Group,
-                 Group      => Item,
                  Next       => null,
                  Min_Occurs => Min_Occurs,
                  Max_Occurs => Max_Occurs));
@@ -2775,8 +2815,6 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Data : in out Validator_Data) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Validator_Data_Record'Class, Validator_Data);
    begin
       if Data /= null then
          Free (Data.all);
@@ -2836,7 +2874,7 @@ package body Schema.Validators is
 
             when Particle_Nested =>
                Applies_To_Tag
-                 (Item.Validator, Local_Name, Namespace_URI, NS,
+                 (Get_GM (Item.Validator), Local_Name, Namespace_URI, NS,
                   Schema_Target_NS, Applies, Skip_Current);
 
             when Particle_Any =>
@@ -2907,10 +2945,10 @@ package body Schema.Validators is
 
             when Particle_Nested =>
                Applies_To_Tag
-                 (It.Validator, Local_Name, Namespace_URI,
+                 (Get_GM (It.Validator), Local_Name, Namespace_URI,
                   NS, Schema_Target_NS, Applies, Skip_Current);
                Applies := Applies
-                 or else Can_Be_Empty (It.Validator);
+                 or else Can_Be_Empty (Get_GM (It.Validator));
 
             when Particle_Any =>
                --  ??? Tmp
@@ -2955,12 +2993,12 @@ package body Schema.Validators is
    is
       Had_Restriction, Had_Extension : Boolean := False;
    begin
-      if Get_Validator (Get_Type (Element)) /= null
+      if Get_Validator (Get_Type (Element)) /= No_Validator
         and then Get_Validator (Get_Type (Element)) /=
            Get_Validator (Get_Type (Head))
       then
          Check_Replacement
-           (Get_Validator (Get_Type (Element)), Get_Type (Head),
+           (Get (Get_Validator (Get_Type (Element))), Get_Type (Head),
             Had_Restriction => Had_Restriction,
             Had_Extension   => Had_Extension);
 
@@ -3005,15 +3043,16 @@ package body Schema.Validators is
    -- Create_Local_Type --
    -----------------------
 
-   function Create_Local_Type
-     (Validator  : access XML_Validator_Record'Class) return XML_Type is
-   begin
-      return new XML_Type_Record'
-        (Local_Name        => null,
-         Validator         => XML_Validator (Validator),
+   function Create_Local_Type (Validator : XML_Validator) return XML_Type is
+      Tmp : constant XML_Type_Access := new XML_Type_Record'
+        (Sax.Pointers.Root_Encapsulated with
+         Local_Name        => null,
+         Validator         => Validator,
          Simple_Type       => Unknown_Content,
          Block_Extension   => False,
          Block_Restriction => False);
+   begin
+      return Allocate (Tmp);
    end Create_Local_Type;
 
    -------------------
@@ -3022,10 +3061,10 @@ package body Schema.Validators is
 
    function Get_Validator (Typ : XML_Type) return XML_Validator is
    begin
-      if Typ = null then
-         return null;
+      if Typ = No_Type then
+         return No_Validator;
       else
-         return Typ.Validator;
+         return Get (Typ).Validator;
       end if;
    end Get_Validator;
 
@@ -3034,13 +3073,13 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (Group : in out XML_Group; Particle : access Group_Model_Record'Class;
+     (Group : in out XML_Group; Particle : XML_Validator;
       Min_Occurs : Natural := 1; Max_Occurs : Natural := 1) is
    begin
       Append
         (Group.Particles, XML_Particle'
            (Typ        => Particle_Nested,
-            Validator  => Group_Model (Particle),
+            Validator  => Particle,
             Next       => null,
             Min_Occurs => Min_Occurs,
             Max_Occurs => Max_Occurs));
@@ -3050,11 +3089,10 @@ package body Schema.Validators is
    -- Set_Debug_Name --
    --------------------
 
-   procedure Set_Debug_Name
-     (Typ : access XML_Validator_Record'Class; Name : String) is
+   procedure Set_Debug_Name (Typ : XML_Validator; Name : String) is
    begin
-      Free (Typ.Debug_Name);
-      Typ.Debug_Name := new Unicode.CES.Byte_Sequence'(Name);
+      Free (Get (Typ).Debug_Name);
+      Get (Typ).Debug_Name := new Unicode.CES.Byte_Sequence'(Name);
    end Set_Debug_Name;
 
    ----------
@@ -3222,16 +3260,18 @@ package body Schema.Validators is
 
          Elem : XML_Element_Access;
          Typ  : XML_Type;
-         Attr : Named_Attribute_Validator;
+         Attr : Attribute_Validator;
+         AttrPtr : Named_Attribute_Validator;
          Group : XML_Group;
          Attr_Group : XML_Attribute_Group;
       begin
          while Type_Iter /= Types_Htable.No_Iterator loop
             Typ := Current (Type_Iter);
-            if Get_Validator (Typ) = null then
+            if Get_Validator (Typ) = No_Validator then
                Validation_Error
                  ("Type """
-                  & To_QName (Grammar.Namespace_URI.all, Typ.Local_Name.all)
+                  & To_QName (Grammar.Namespace_URI.all,
+                              Get (Typ).Local_Name.all)
                   & """ was referenced but never declared");
             end if;
             Next (Grammar.Types.all, Type_Iter);
@@ -3252,10 +3292,11 @@ package body Schema.Validators is
 
          while Attr_Iter /= Attributes_Htable.No_Iterator loop
             Attr := Current (Attr_Iter);
-            if Attr.Attribute_Type = No_Type then
+            AttrPtr := Named_Attribute_Validator (Get (Attr));
+            if AttrPtr.Attribute_Type = No_Type then
                Validation_Error
                  ("Attribute """
-                  & Attr.Local_Name.all
+                  & AttrPtr.Local_Name.all
                   & """ is referenced, but not defined");
             end if;
 
@@ -3289,9 +3330,9 @@ package body Schema.Validators is
       end Local_Check;
 
    begin
-      if Grammar /= null then
-         for L in Grammar.Grammars'Range loop
-            Local_Check (Grammar.Grammars (L));
+      if Grammar /= No_Grammar then
+         for L in Get (Grammar).Grammars'Range loop
+            Local_Check (Get (Grammar).Grammars (L));
          end loop;
       end if;
    end Global_Check;
@@ -3301,13 +3342,15 @@ package body Schema.Validators is
    ----------------
 
    function Create_All
-     (Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) return XML_All is
-   begin
-      return new XML_All_Record'
+     (Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) return Group_Model
+   is
+      Tmp : constant XML_Validators.Encapsulated_Access := new XML_All_Record'
         (XML_Validator_Record with
          Particles  => Empty_Particle_List,
          Min_Occurs => Min_Occurs,
          Max_Occurs => Max_Occurs);
+   begin
+      return Allocate (Tmp);
    end Create_All;
 
    ----------------
@@ -3597,8 +3640,9 @@ package body Schema.Validators is
       end if;
 
       Validate_Start_Element
-        (Get_Validator
-           (Get_Type (Get_UR_Type_Element (Validator.Process_Contents))),
+        (Get
+           (Get_Validator
+              (Get_Type (Get_UR_Type_Element (Validator.Process_Contents)))),
          Local_Name, Namespace_URI, NS, null,
          Schema_Target_NS, Element_Validator);
    end Validate_Start_Element;
@@ -3640,8 +3684,6 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Ids : in out Id_Htable_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Id_Htable.HTable, Id_Htable_Access);
    begin
       if Ids /= null then
          Id_Htable.Reset (Ids.all);
@@ -3656,13 +3698,30 @@ package body Schema.Validators is
    function Create_Any_Attribute
      (Process_Contents : Process_Contents_Type := Process_Strict;
       Kind : Namespace_Kind;
-      NS   : XML_Grammar_NS) return Attribute_Validator is
+      NS   : XML_Grammar_NS) return Attribute_Validator
+   is
+      Tmp : constant Attribute_Validators.Encapsulated_Access :=
+        new Any_Attribute_Validator'
+          (Sax.Pointers.Root_Encapsulated with
+           Process_Contents => Process_Contents,
+           Kind             => Kind,
+           NS               => NS);
    begin
-      return new Any_Attribute_Validator'
-        (Process_Contents => Process_Contents,
-         Kind             => Kind,
-         NS               => NS);
+      return Allocate (Tmp);
    end Create_Any_Attribute;
+
+   ------------------------
+   -- Validate_Attribute --
+   ------------------------
+
+   procedure Validate_Attribute
+     (Validator : Attribute_Validator;
+      Atts      : Sax.Attributes.Attributes'Class;
+      Index     : Natural;
+      Grammar   : in out XML_Grammar) is
+   begin
+      Validate_Attribute (Get (Validator).all, Atts, Index, Grammar);
+   end Validate_Attribute;
 
    ------------------------
    -- Validate_Attribute --
@@ -3710,22 +3769,22 @@ package body Schema.Validators is
             Get_NS (Grammar, URI, G);
             Attr := Lookup_Attribute
               (G, Get_Local_Name (Atts, Index), Create_If_Needed => False);
-            if Attr = null then
+            if Attr = No_Attribute_Validator then
                Validation_Error ("No definition provided");
             else
-               Validate_Attribute (Attr.all, Atts, Index, Grammar);
+               Validate_Attribute (Get (Attr).all, Atts, Index, Grammar);
             end if;
 
          when Process_Lax =>
             Get_NS (Grammar, URI, G);
             Attr := Lookup_Attribute
               (G, Get_Local_Name (Atts, Index), Create_If_Needed => False);
-            if Attr = null then
+            if Attr = No_Attribute_Validator then
                Debug_Output
                  ("Definition not found for attribute "
                   & Get_Local_Name (Atts, Index));
             else
-               Validate_Attribute (Attr.all, Atts, Index, Grammar);
+               Validate_Attribute (Get (Attr).all, Atts, Index, Grammar);
             end if;
 
          when Process_Skip =>
@@ -3854,7 +3913,7 @@ package body Schema.Validators is
 
    procedure Free_Nested_Group (Data : Group_Model_Data) is
    begin
-      Data.Nested := null;
+      Data.Nested := No_Validator;
       Free (Data.Nested_Data);
    end Free_Nested_Group;
 
@@ -4008,30 +4067,34 @@ package body Schema.Validators is
      (Typ : XML_Type; Should_Be_Simple : Boolean) is
    begin
       Debug_Output ("Check_Content_Type: " & Get_Local_Name (Typ)
-                    & " " & Typ.Simple_Type'Img
+                    & " " & Get (Typ).Simple_Type'Img
                     & " Expect_simple=" & Should_Be_Simple'Img);
 
-      if Typ.Simple_Type = Unknown_Content then
-         if Typ.Validator /= null then
-            Check_Content_Type (Typ.Validator, Should_Be_Simple);
+      if Get (Typ).Simple_Type = Unknown_Content then
+         if Get (Typ).Validator /= No_Validator then
+            Check_Content_Type (Get (Get (Typ).Validator), Should_Be_Simple);
          end if;
 
          --  If we matched, we now know the content type
          if Should_Be_Simple then
-            Typ.Simple_Type := Simple_Content;
+            Get (Typ).Simple_Type := Simple_Content;
          else
-            Typ.Simple_Type := Complex_Content;
+            Get (Typ).Simple_Type := Complex_Content;
          end if;
 
-      elsif Should_Be_Simple and Typ.Simple_Type = Complex_Content then
-         if Typ.Local_Name /= null then
+      elsif Should_Be_Simple
+        and then Get (Typ).Simple_Type = Complex_Content
+      then
+         if Get (Typ).Local_Name /= null then
             Validation_Error
               (Get_Local_Name (Typ) & " specified in a simpleContent context"
                & " must not have a complexContext");
          else
             Validation_Error ("Expecting simple type, got complex type");
          end if;
-      elsif not Should_Be_Simple and Typ.Simple_Type = Simple_Content then
+      elsif not Should_Be_Simple
+        and then Get (Typ).Simple_Type = Simple_Content
+      then
          Validation_Error ("Expecting complex type, got simple type");
       end if;
    end Check_Content_Type;
@@ -4042,17 +4105,18 @@ package body Schema.Validators is
 
    function Is_Simple_Type (Typ : XML_Type) return Boolean is
    begin
-      if Typ.Simple_Type = Unknown_Content then
+      if Get (Typ).Simple_Type = Unknown_Content then
          begin
-            Check_Content_Type (Typ.Validator, Should_Be_Simple => True);
-            Typ.Simple_Type := Simple_Content;
+            Check_Content_Type
+              (Get (Get (Typ).Validator), Should_Be_Simple => True);
+            Get (Typ).Simple_Type := Simple_Content;
          exception
             when XML_Validation_Error =>
-               Typ.Simple_Type := Complex_Content;
+               Get (Typ).Simple_Type := Complex_Content;
          end;
       end if;
 
-      return Typ.Simple_Type = Simple_Content;
+      return Get (Typ).Simple_Type = Simple_Content;
    end Is_Simple_Type;
 
    ----------------
@@ -4140,7 +4204,7 @@ package body Schema.Validators is
             Str := Str & Get_Local_Name (Particle.Element);
          when Particle_Nested =>
             Str := Str & "("
-              & Type_Model (Particle.Validator, First_Only) & ")";
+              & Type_Model (Get_GM (Particle.Validator), First_Only) & ")";
          when Particle_Group | Particle_XML_Type =>
             raise Program_Error;
          when Particle_Any =>
@@ -4199,8 +4263,8 @@ package body Schema.Validators is
       On_Restriction : Boolean;
       On_Extension   : Boolean) is
    begin
-      Typ.Block_Restriction := On_Restriction;
-      Typ.Block_Extension := On_Extension;
+      Get (Typ).Block_Restriction := On_Restriction;
+      Get (Typ).Block_Extension := On_Extension;
    end Set_Block;
 
    ------------------------------
@@ -4209,7 +4273,7 @@ package body Schema.Validators is
 
    function Get_Block_On_Restriction (Typ : XML_Type) return Boolean is
    begin
-      return Typ.Block_Restriction;
+      return Get (Typ).Block_Restriction;
    end Get_Block_On_Restriction;
 
    ----------------------------
@@ -4218,7 +4282,7 @@ package body Schema.Validators is
 
    function Get_Block_On_Extension (Typ : XML_Type) return Boolean is
    begin
-      return Typ.Block_Extension;
+      return Get (Typ).Block_Extension;
    end Get_Block_On_Extension;
 
    -----------------------
@@ -4254,8 +4318,8 @@ package body Schema.Validators is
      (Grammar : in out XML_Grammar;
       NS      : XML_Grammar_NS) is
    begin
-      if Grammar /= null then
-         Grammar.Target_NS := NS;
+      if Grammar /= No_Grammar then
+         Get (Grammar).Target_NS := NS;
       end if;
    end Set_Target_NS;
 
@@ -4265,10 +4329,10 @@ package body Schema.Validators is
 
    function Get_Target_NS (Grammar : XML_Grammar) return XML_Grammar_NS is
    begin
-      if Grammar = null then
+      if Grammar = No_Grammar then
          return null;
       else
-         return Grammar.Target_NS;
+         return Get (Grammar).Target_NS;
       end if;
    end Get_Target_NS;
 
@@ -4277,8 +4341,10 @@ package body Schema.Validators is
    ------------------
 
    function Create_Union return XML_Validator is
+      Tmp : constant XML_Validators.Encapsulated_Access :=
+        new XML_Union_Record;
    begin
-      return new XML_Union_Record;
+      return Allocate (Tmp);
    end Create_Union;
 
    ---------------

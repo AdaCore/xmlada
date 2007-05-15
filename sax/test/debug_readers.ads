@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2001-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Sax.Exceptions;
 with Sax.Locators;
 with Sax.Readers;
@@ -29,7 +57,7 @@ package Debug_Readers is
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
    procedure Set_Document_Locator
      (Handler : in out Debug_Reader;
-      Loc     : access Sax.Locators.Locator'Class);
+      Loc     : Sax.Locators.Locator);
    procedure Start_Document (Handler : in out Debug_Reader);
    procedure End_Document (Handler : in out Debug_Reader);
    procedure Start_Prefix_Mapping
@@ -117,7 +145,7 @@ private
    type String_List_Access is access String_List;
 
    type Debug_Reader is new Sax.Readers.Reader with record
-      Locator : Sax.Locators.Locator_Access;
+      Locator : Sax.Locators.Locator;
       Silent  : Boolean := False;
       Saved_Locs : String_List_Access;
       Color   : Boolean := True;

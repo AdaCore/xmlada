@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -93,13 +92,13 @@ package body Sax.Exceptions is
    ------------
 
    function Create (Message : Unicode.CES.Byte_Sequence;
-                    Loc     : access Sax.Locators.Locator_Impl'Class)
+                    Loc     : Sax.Locators.Locator)
       return Sax_Parse_Exception'Class
    is
       Pe : Sax_Parse_Exception (Message'Length);
    begin
       Pe.Message := Message;
-      Pe.Loc := Locator_Impl_Access (Loc);
+      Pe.Loc := Loc;
       Pe.Except := Null_Id;
       return Pe;
    end Create;
@@ -111,14 +110,14 @@ package body Sax.Exceptions is
    function Create
      (Message       : Unicode.CES.Byte_Sequence;
       Ada_Exception : Ada.Exceptions.Exception_Id;
-      Loc           : access Locators.Locator_Impl'Class)
+      Loc           : Sax.Locators.Locator)
       return Sax_Exception'Class
    is
       Pe : Sax_Parse_Exception (Message'Length);
    begin
       Pe.Message := Message;
-      Pe.Loc := Locator_Impl_Access (Loc);
-      Pe.Except := Ada_Exception;
+      Pe.Loc     := Loc;
+      Pe.Except  := Ada_Exception;
       return Pe;
    end Create;
 
@@ -127,9 +126,9 @@ package body Sax.Exceptions is
    -----------------
 
    function Get_Locator (Except : Sax_Parse_Exception)
-      return Locators.Locator'Class is
+      return Sax.Locators.Locator is
    begin
-      return Except.Loc.all;
+      return Except.Loc;
    end Get_Locator;
 
 end Sax.Exceptions;

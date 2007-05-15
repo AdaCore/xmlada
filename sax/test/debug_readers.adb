@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2001-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Ada.Text_IO;    use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;
@@ -62,10 +90,10 @@ package body Debug_Readers is
 
       if Handler.Color then
          return ASCII.ESC & "[33m"
-           & To_String (Handler.Locator.all) & To_String (Result)
+           & To_String (Handler.Locator) & To_String (Result)
            & ASCII.ESC & "[39m";
       else
-         return To_String (Handler.Locator.all) & To_String (Result);
+         return To_String (Handler.Locator) & To_String (Result);
       end if;
    end Location;
 
@@ -140,12 +168,12 @@ package body Debug_Readers is
 
    procedure Set_Document_Locator
      (Handler : in out Debug_Reader;
-      Loc     : access Sax.Locators.Locator'Class) is
+      Loc     : Sax.Locators.Locator) is
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Set_Document_Locator ()");
       end if;
-      Handler.Locator := Locator_Access (Loc);
+      Handler.Locator := Loc;
    end Set_Document_Locator;
 
    --------------------
@@ -352,7 +380,7 @@ package body Debug_Readers is
                    & Location (Handler));
 
          Tmp := new String_List'
-           (new String'(To_String (Handler.Locator.all))
+           (new String'(To_String (Handler.Locator))
             & Handler.Saved_Locs.all);
          Unchecked_Free (Handler.Saved_Locs);
          Handler.Saved_Locs := Tmp;

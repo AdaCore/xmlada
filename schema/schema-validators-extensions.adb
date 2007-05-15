@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2003-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 package body Schema.Validators.Extensions is
 
    type Extension_XML_Validator is new XML_Validator_Record with record
@@ -58,7 +86,7 @@ package body Schema.Validators.Extensions is
    begin
       List := Validator.Attributes;
       Dependency1 := Validator.Extension;
-      Dependency2 := Validator.Base.Validator;
+      Dependency2 := Get (Validator.Base).Validator;
    end Get_Attribute_Lists;
 
    ----------
@@ -80,10 +108,10 @@ package body Schema.Validators.Extensions is
    is
       D : constant Extension_Data_Access := new Extension_Data;
    begin
-      if Validator.Extension /= null then
-         D.Extension_Data := Create_Validator_Data (Validator.Extension);
+      if Validator.Extension /= No_Validator then
+         D.Extension_Data := Create_Validator_Data (+Validator.Extension);
       end if;
-      D.Base_Data   := Create_Validator_Data (Get_Validator (Validator.Base));
+      D.Base_Data   := Create_Validator_Data (+Get_Validator (Validator.Base));
       return Validator_Data (D);
    end Create_Validator_Data;
 
@@ -115,7 +143,7 @@ package body Schema.Validators.Extensions is
          begin
             Debug_Output ("Validating base part of the extension");
             Validate_Start_Element
-              (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
+              (+Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
                D.Base_Data, Schema_Target_NS, Element_Validator);
          exception
             when XML_Validation_Error =>
@@ -126,10 +154,10 @@ package body Schema.Validators.Extensions is
 
       if Element_Validator = No_Element then
          D.Validating_Base := False;
-         if Validator.Extension /= null then
+         if Validator.Extension /= No_Validator then
             Debug_Output ("Validating extension part of the extension");
             Validate_Start_Element
-              (Validator.Extension, Local_Name, Namespace_URI, NS,
+              (+Validator.Extension, Local_Name, Namespace_URI, NS,
                D.Extension_Data, Schema_Target_NS, Element_Validator);
          else
             Debug_Output ("Base part didn't match, but no extension defined");
@@ -152,12 +180,12 @@ package body Schema.Validators.Extensions is
                          & Get_Name (Validator));
       if D.Validating_Base then
          Validate_End_Element
-           (Get_Validator (Validator.Base), Local_Name, D.Base_Data);
+           (+Get_Validator (Validator.Base), Local_Name, D.Base_Data);
       end if;
 
-      if Validator.Extension /= null then
+      if Validator.Extension /= No_Validator then
          Validate_End_Element
-           (Validator.Extension, Local_Name, D.Extension_Data);
+           (+Validator.Extension, Local_Name, D.Extension_Data);
       end if;
 
       Debug_Pop_Prefix;
@@ -175,18 +203,18 @@ package body Schema.Validators.Extensions is
       Debug_Output ("Validate_Characters for extension "
                     & Get_Name (Validator));
 
-      if Validator.Extension /= null then
-         Validate_Characters (Validator.Extension, Ch, Empty_Element);
+      if Validator.Extension /= No_Validator then
+         Validate_Characters (+Validator.Extension, Ch, Empty_Element);
       else
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element);
+           (+Get_Validator (Validator.Base), Ch, Empty_Element);
       end if;
 
    exception
       when XML_Validation_Error =>
          Debug_Output ("Validation error in extension, testing base");
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element);
+           (+Get_Validator (Validator.Base), Ch, Empty_Element);
    end Validate_Characters;
 
    -----------------------
@@ -201,13 +229,13 @@ package body Schema.Validators.Extensions is
    begin
       Had_Extension := True;
 
-      if Validator.Base.Block_Restriction and then Had_Restriction then
+      if Get (Validator.Base).Block_Restriction and then Had_Restriction then
          Validation_Error
            ("Restrictions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
       end if;
 
-      if Validator.Base.Block_Extension then
+      if Get (Validator.Base).Block_Extension then
          Validation_Error
            ("Extensions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
@@ -215,7 +243,7 @@ package body Schema.Validators.Extensions is
 
       if Validator.Base /= Typ then
          Check_Replacement
-           (Get_Validator (Validator.Base), Typ,
+           (+Get_Validator (Validator.Base), Typ,
             Had_Restriction => Had_Restriction,
             Had_Extension   => Had_Extension);
       end if;
@@ -238,13 +266,13 @@ package body Schema.Validators.Extensions is
 
    function Create_Extension_Of
      (Base      : XML_Type;
-      Extension : XML_Validator := null) return XML_Validator
+      Extension : XML_Validator := No_Validator) return XML_Validator
    is
       Result : constant Extension_Type := new Extension_XML_Validator;
    begin
       Result.Base      := Base;
       Result.Extension := Extension;
-      return XML_Validator (Result);
+      return Allocate (Result);
    end Create_Extension_Of;
 
    -------------------------
@@ -258,14 +286,14 @@ package body Schema.Validators.Extensions is
       Max_Occurs : Integer := 1) return XML_Validator
    is
       Result : constant Extension_Type := new Extension_XML_Validator;
-      C      : Sequence;
+      C      : Group_Model;
    begin
       Result.Base      := Base;
       C := Create_Sequence;
       Set_Debug_Name (C, "automatic_extension_sequence");
       Add_Particle (C, Group, Min_Occurs, Max_Occurs);
-      Result.Extension := XML_Validator (C);
-      return XML_Validator (Result);
+      Result.Extension := C;
+      return Allocate (Result);
    end Create_Extension_Of;
 
 end Schema.Validators.Extensions;

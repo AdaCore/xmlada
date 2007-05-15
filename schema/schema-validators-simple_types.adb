@@ -1,9 +1,29 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2006                     --
---                            AdaCore                                --
+--                       Copyright (C) 2003-2007, AdaCore            --
 --                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Schema.Validators.Facets; use Schema.Validators.Facets;
@@ -932,7 +952,8 @@ package body Schema.Validators.Simple_Types is
    procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS) is
       use Integer_Validators;
       use String_Facets, HexBinary_Facets, Base64Binary_Facets;
-      Tmp     : XML_Validator;
+      Tmp     : XML_Validator_Access;
+      Tmp2    : XML_Validator;
       Str     : String_Validators.Validator;
       Hex     : HexBinary_Validators.Validator;
       Base64  : Base64Binary_Validators.Validator;
@@ -941,89 +962,89 @@ package body Schema.Validators.Simple_Types is
       Created : XML_Type;
    begin
       Tmp := new Boolean_Validator_Record;
-      Create_Global_Type (G, "boolean", Tmp);
+      Create_Global_Type (G, "boolean", Allocate (Tmp));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve);
-      Create_Global_Type (G, "string", Str);
+      Create_Global_Type (G, "string", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_QName'Access);
-      Create_Global_Type (G, "QName", Str);
+      Create_Global_Type (G, "QName", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Replace);  --  This should be hard-coded ???
-      Create_Global_Type (G, "normalizedString", Str);
+      Create_Global_Type (G, "normalizedString", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);  --  This should be hard-coded ???
-      Create_Global_Type (G, "token", Str);
+      Create_Global_Type (G, "token", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Language_Name'Access);
-      Created := Create_Global_Type (G, "language", Str);
+      Created := Create_Global_Type (G, "language", Allocate (Str));
       Create_Global_Attribute (XML_G, "lang", Created);
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Nmtoken'Access);
-      Create_Global_Type (G, "NMTOKEN", Str);
+      Create_Global_Type (G, "NMTOKEN", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Collapse);
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Nmtokens'Access);
-      Create_Global_Type (G, "NMTOKENS", Str);
+      Create_Global_Type (G, "NMTOKENS", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Name'Access);
-      Create_Global_Type (G, "Name", Str);
+      Create_Global_Type (G, "Name", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
-      Create_Global_Type (G, "NCName", Str);
+      Create_Global_Type (G, "NCName", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
-      Create_Global_Type (G, "ID", Str);
+      Create_Global_Type (G, "ID", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
-      Create_Global_Type (G, "IDREF", Str);
+      Create_Global_Type (G, "IDREF", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCnames'Access);
-      Create_Global_Type (G, "IDREFS", Str);
+      Create_Global_Type (G, "IDREFS", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
-      Create_Global_Type (G, "ENTITY", Str);
+      Create_Global_Type (G, "ENTITY", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCnames'Access);
-      Create_Global_Type (G, "ENTITIES", Str);
+      Create_Global_Type (G, "ENTITIES", Allocate (Str));
 
       Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_URI'Access);
-      Create_Global_Type (G, "anyURI", Str);
+      Create_Global_Type (G, "anyURI", Allocate (Str));
 
       Hex := new HexBinary_Validators.Validator_Record;
       Set_Implicit_Enumeration (Hex.Facets, Is_Valid_HexBinary'Access);
-      Create_Global_Type (G, "hexBinary", Hex);
+      Create_Global_Type (G, "hexBinary", Allocate (Hex));
 
       Base64 := new Base64Binary_Validators.Validator_Record;
       Set_Implicit_Enumeration (Base64.Facets, Is_Valid_Base64Binary'Access);
-      Create_Global_Type (G, "base64Binary", Base64);
+      Create_Global_Type (G, "base64Binary", Allocate (Base64));
 
       Dec := new Decimal_Validators.Validator_Record;
-      Create_Global_Type (G, "decimal", Dec);
+      Create_Global_Type (G, "decimal", Allocate (Dec));
 
       Dec := new Decimal_Validators.Validator_Record;
       Dec.Facets.Mask := (Facet_Fraction_Digits => True,
@@ -1033,37 +1054,37 @@ package body Schema.Validators.Simple_Types is
       Dec.Facets.Fraction_Digits := 0;
       Dec.Facets.Max_Inclusive := Value ("+18446744073709551615");
       Dec.Facets.Min_Inclusive := Value ("0");
-      Create_Global_Type (G, "unsignedLong", Dec);
+      Create_Global_Type (G, "unsignedLong", Allocate (Dec));
 
       Dec := new Decimal_Validators.Validator_Record;
       Dec.Facets.Mask := (Facet_Fraction_Digits => True,
                           others                => False);
       Dec.Facets.Fraction_Digits := 0;
-      Create_Global_Type (G, "integer", Dec);
+      Create_Global_Type (G, "integer", Allocate (Dec));
 
       Dec := new Decimal_Validators.Validator_Record;
       Dec.Facets.Mask := (Facet_Min_Inclusive   => True,
                           others                => False);
       Dec.Facets.Min_Inclusive := Value ("0");
-      Create_Global_Type (G, "nonNegativeInteger", Dec);
+      Create_Global_Type (G, "nonNegativeInteger", Allocate (Dec));
 
       Dec := new Decimal_Validators.Validator_Record;
       Dec.Facets.Mask := (Facet_Min_Inclusive   => True,
                           others                => False);
       Dec.Facets.Min_Inclusive := Value ("1");
-      Create_Global_Type (G, "positiveInteger", Dec);
+      Create_Global_Type (G, "positiveInteger", Allocate (Dec));
 
       Dec := new Decimal_Validators.Validator_Record;
       Dec.Facets.Mask := (Facet_Max_Inclusive   => True,
                           others                => False);
       Dec.Facets.Max_Inclusive := Value ("0");
-      Create_Global_Type (G, "nonPositiveInteger", Dec);
+      Create_Global_Type (G, "nonPositiveInteger", Allocate (Dec));
 
       Dec := new Decimal_Validators.Validator_Record;
       Dec.Facets.Mask := (Facet_Max_Inclusive   => True,
                           others                => False);
       Dec.Facets.Max_Inclusive   := Value ("-1");
-      Create_Global_Type (G, "negativeInteger", Dec);
+      Create_Global_Type (G, "negativeInteger", Allocate (Dec));
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Max_Inclusive   => True,
@@ -1071,7 +1092,7 @@ package body Schema.Validators.Simple_Types is
                           others                => False);
       Int.Facets.Max_Inclusive   := +9_223_372_036_854_775_807;
       Int.Facets.Min_Inclusive   := -9_223_372_036_854_775_808;
-      Create_Global_Type (G, "long", Int);
+      Create_Global_Type (G, "long", Allocate (Int));
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Max_Inclusive   => True,
@@ -1079,7 +1100,7 @@ package body Schema.Validators.Simple_Types is
                           others                => False);
       Int.Facets.Max_Inclusive := +2_147_483_647;
       Int.Facets.Min_Inclusive := -2_147_483_648;
-      Create_Global_Type (G, "int", Int);
+      Create_Global_Type (G, "int", Allocate (Int));
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Max_Inclusive   => True,
@@ -1087,7 +1108,7 @@ package body Schema.Validators.Simple_Types is
                           others                => False);
       Int.Facets.Max_Inclusive := +32_767;
       Int.Facets.Min_Inclusive := -32_768;
-      Create_Global_Type (G, "short", Int);
+      Create_Global_Type (G, "short", Allocate (Int));
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Max_Inclusive   => True,
@@ -1095,7 +1116,7 @@ package body Schema.Validators.Simple_Types is
                           others                => False);
       Int.Facets.Max_Inclusive := +127;
       Int.Facets.Min_Inclusive := -128;
-      Create_Global_Type (G, "byte", Int);
+      Create_Global_Type (G, "byte", Allocate (Int));
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Min_Inclusive   => True,
@@ -1103,7 +1124,7 @@ package body Schema.Validators.Simple_Types is
                           others                => False);
       Int.Facets.Max_Inclusive := +4_294_967_295;
       Int.Facets.Min_Inclusive := 0;
-      Create_Global_Type (G, "unsignedInt", Int);
+      Create_Global_Type (G, "unsignedInt", Allocate (Int));
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Min_Inclusive   => True,
@@ -1111,7 +1132,7 @@ package body Schema.Validators.Simple_Types is
                           others                => False);
       Int.Facets.Max_Inclusive := +65_535;
       Int.Facets.Min_Inclusive := 0;
-      Create_Global_Type (G, "unsignedShort", Int);
+      Create_Global_Type (G, "unsignedShort", Allocate (Int));
 
       Int := new Integer_Validators.Validator_Record;
       Int.Facets.Mask := (Facet_Min_Inclusive   => True,
@@ -1119,45 +1140,44 @@ package body Schema.Validators.Simple_Types is
                           others                => False);
       Int.Facets.Max_Inclusive := +255;
       Int.Facets.Min_Inclusive := 0;
-      Create_Global_Type (G, "unsignedByte", Int);
+      Create_Global_Type (G, "unsignedByte", Allocate (Int));
 
       Tmp := new Float_Validators.Validator_Record;
-      Create_Global_Type (G, "float", Tmp);
+      Create_Global_Type (G, "float", Allocate (Tmp));
 
       Tmp := new Float_Validators.Validator_Record;
-      Create_Global_Type (G, "double", Tmp);
+      Create_Global_Type (G, "double", Allocate (Tmp));
 
       Tmp := new Time_Validators.Validator_Record;
-      Create_Global_Type (G, "time", Tmp);
+      Create_Global_Type (G, "time", Allocate (Tmp));
 
       Tmp := new Date_Time_Validators.Validator_Record;
-      Create_Global_Type (G, "dateTime", Tmp);
+      Create_Global_Type (G, "dateTime", Allocate (Tmp));
 
       Tmp := new GDay_Validators.Validator_Record;
-      Create_Global_Type (G, "gDay", Tmp);
+      Create_Global_Type (G, "gDay", Allocate (Tmp));
 
       Tmp := new GMonth_Day_Validators.Validator_Record;
-      Create_Global_Type (G, "gMonthDay", Tmp);
+      Create_Global_Type (G, "gMonthDay", Allocate (Tmp));
 
       Tmp := new GMonth_Validators.Validator_Record;
-      Create_Global_Type (G, "gMonth", Tmp);
+      Create_Global_Type (G, "gMonth", Allocate (Tmp));
 
       Tmp := new GYear_Month_Validators.Validator_Record;
-      Create_Global_Type (G, "gYearMonth", Tmp);
+      Create_Global_Type (G, "gYearMonth", Allocate (Tmp));
 
       Tmp := new GYear_Validators.Validator_Record;
-      Create_Global_Type (G, "gYear", Tmp);
+      Create_Global_Type (G, "gYear", Allocate (Tmp));
 
       Tmp := new Date_Validators.Validator_Record;
-      Create_Global_Type (G, "date", Tmp);
+      Create_Global_Type (G, "date", Allocate (Tmp));
 
       Tmp := new Duration_Validators.Validator_Record;
-      Create_Global_Type (G, "duration", Tmp);
+      Create_Global_Type (G, "duration", Allocate (Tmp));
 
-      Tmp := Restriction_Of (Lookup (G, "anySimpleType"));
-      Add_Facet (Tmp, "whiteSpace", "collapse");
-      Create_Global_Type (G, "uriReference", Tmp);
-
+      Tmp2 := Restriction_Of (Lookup (G, "anySimpleType"));
+      --  ???      Add_Facet (Tmp, "whiteSpace", "collapse");
+      Create_Global_Type (G, "uriReference", Tmp2);
    end Register_Predefined_Types;
 
    ----------------------------
@@ -1212,6 +1232,16 @@ package body Schema.Validators.Simple_Types is
             Max_Occurs => 1));
    end Add_Union;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Validator : in out XML_Union_Record) is
+   begin
+      Free (Validator.Unions);
+      Free (XML_Validator_Record (Validator));
+   end Free;
+
    -------------------------
    -- Validate_Characters --
    -------------------------
@@ -1239,8 +1269,8 @@ package body Schema.Validators.Simple_Types is
       while Get (Iter) /= null loop
          begin
             Valid := Get_Validator (Get (Iter).Type_Descr);
-            if Valid /= null then
-               Validate_Characters (Valid, Ch, Empty_Element);
+            if Valid /= No_Validator then
+               Validate_Characters (+Valid, Ch, Empty_Element);
             end if;
 
             --  No error ? => Everything is fine

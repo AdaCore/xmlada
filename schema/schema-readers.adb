@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2003-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Attributes;    use Sax.Attributes;
@@ -17,7 +45,6 @@ with Schema.Schema_Readers; use Schema.Schema_Readers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Schema.Readers is
-
    Debug : Boolean := False;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -35,7 +62,7 @@ package body Schema.Readers is
 
    procedure Add_XML_Instance_Attributes
      (Handler   : in out Validating_Reader;
-      Validator : access XML_Validator_Record'Class);
+      Validator : XML_Validator);
    --  Add the standard attributes from the XMLSchema-Instance namespace to
    --  Tmp.
 
@@ -85,7 +112,7 @@ package body Schema.Readers is
       Prefix  : Unicode.CES.Byte_Sequence);
    procedure Hook_Set_Document_Locator
      (Handler : in out Reader'Class;
-      Loc     : access Sax.Locators.Locator'Class);
+      Loc     : Sax.Locators.Locator);
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
 
@@ -152,7 +179,7 @@ package body Schema.Readers is
          Grammar => G,
          Data    => Data,
          Is_Nil  => Is_Nil,
-         Start_Loc  => null,
+         Start_Loc  => No_Locator,
          Characters => null,
          Next    => List);
    end Push;
@@ -165,10 +192,6 @@ package body Schema.Readers is
       Tmp : Validator_List := List;
    begin
       if List /= null then
-         if List.Start_Loc /= null then
-            Unref (List.Start_Loc);
-         end if;
-
          if List.Characters /= null then
             Free (List.Characters);
          end if;
@@ -197,7 +220,7 @@ package body Schema.Readers is
 
    procedure Add_XML_Instance_Attributes
      (Handler   : in out Validating_Reader;
-      Validator : access XML_Validator_Record'Class)
+      Validator : XML_Validator)
    is
       XML_G, XML_IG : XML_Grammar_NS;
    begin
@@ -205,17 +228,17 @@ package body Schema.Readers is
       Get_NS (Handler.Grammar, XML_Instance_URI, Result => XML_IG);
 
       Add_Attribute
-        (Validator,
+        (+Validator,
          Create_Local_Attribute ("type", XML_IG, Lookup (XML_G, "string")));
       Add_Attribute
-        (Validator,
+        (+Validator,
          Create_Local_Attribute ("nil", XML_IG, Lookup (XML_G, "boolean")));
       Add_Attribute
-        (Validator,
+        (+Validator,
          Create_Local_Attribute ("schemaLocation", XML_IG,
                                  List_Of (Lookup (XML_G, "string"))));
       Add_Attribute
-        (Validator,
+        (+Validator,
          Create_Local_Attribute ("noNamespaceSchemaLocation", XML_IG,
                                  Lookup (XML_G, "string")));
    end Add_XML_Instance_Attributes;
@@ -233,7 +256,7 @@ package body Schema.Readers is
       elsif URI (URI'First) /= '/'
         and then URI (URI'First) /= '\'
       then
-         return Dir_Name (Get_System_Id (Handler.Locator.all)) & URI;
+         return Dir_Name (Get_System_Id (Handler.Locator)) & URI;
       else
          return URI;
       end if;
@@ -281,7 +304,7 @@ package body Schema.Readers is
          Warning
            (Handler,
             Create (Message => "Could not open file " & Xsd_File_Full,
-                    Loc     => Locator_Impl_Access (Handler.Locator)));
+                    Loc     => Handler.Locator));
    end Parse_Grammar;
 
    --------------------
@@ -390,16 +413,12 @@ package body Schema.Readers is
 
             else
                Validate_Characters
-                 (Get_Validator (Handler.Validators.Typ),
+                 (+Get_Validator (Handler.Validators.Typ),
                   Handler.Validators.Characters.all,
                   Empty_Element => Empty_Element);
             end if;
 
             Free (Handler.Validators.Characters);
-         end if;
-
-         if Handler.Validators.Start_Loc /= null then
-            Unref (Handler.Validators.Start_Loc);
          end if;
       end if;
    end Validate_Current_Characters;
@@ -499,7 +518,7 @@ package body Schema.Readers is
 
             if Get_Validator (Typ) /= Get_Validator (Get_Type (Element)) then
                Check_Replacement
-                 (Get_Validator (Typ), Get_Type (Element),
+                 (+Get_Validator (Typ), Get_Type (Element),
                   Had_Restriction => Had_Restriction,
                   Had_Extension   => Had_Extension);
 
@@ -558,7 +577,7 @@ package body Schema.Readers is
 
       if Validating_Reader (Handler).Validators /= null then
          Validate_Start_Element
-           (Get_Validator (Validating_Reader (Handler).Validators.Typ),
+           (+Get_Validator (Validating_Reader (Handler).Validators.Typ),
             Local_Name, Namespace_URI, G,
             Validating_Reader (Handler).Validators.Data,
             Get_Target_NS (Validating_Reader (Handler).Grammar), Element);
@@ -588,10 +607,10 @@ package body Schema.Readers is
       end if;
 
       Compute_Type;
-      Data := Create_Validator_Data (Get_Validator (Typ));
+      Data := Create_Validator_Data (+Get_Validator (Typ));
 
       Validate_Attributes
-        (Get_Validator (Typ), Atts, Validating_Reader (Handler).Ids,
+        (+Get_Validator (Typ), Atts, Validating_Reader (Handler).Ids,
          Is_Nillable (Element), Is_Nil,
          Validating_Reader (Handler).Grammar);
 
@@ -631,7 +650,7 @@ package body Schema.Readers is
          --  anyway, and some validators (sequence,...) will complain
          if not Validating_Reader (Handler).Validators.Is_Nil then
             Validate_End_Element
-              (Get_Validator (Validating_Reader (Handler).Validators.Typ),
+              (+Get_Validator (Validating_Reader (Handler).Validators.Typ),
                Qname,
                Validating_Reader (Handler).Validators.Data);
          end if;
@@ -655,8 +674,7 @@ package body Schema.Readers is
          end if;
          if Handler.Validators.Characters = null then
             Handler.Validators.Characters := new String'(Ch);
-            Handler.Validators.Start_Loc := new Locator_Impl;
-            Copy (Handler.Validators.Start_Loc.all, Handler.Locator.all);
+            Copy (Handler.Validators.Start_Loc, Handler.Locator);
          else
             Tmp := new String'(Handler.Validators.Characters.all & Ch);
             Free (Handler.Validators.Characters);
@@ -699,10 +717,6 @@ package body Schema.Readers is
 
    procedure Reset (Parser : in out Validating_Reader) is
    begin
-      if Parser.Locator /= null then
-         Unref (Parser.Locator.all);
-      end if;
-
       Free  (Parser.Ids);
       Clear (Parser.Validators);
       Free  (Parser.Prefixes);
@@ -716,7 +730,7 @@ package body Schema.Readers is
      (Parser : in out Validating_Reader;
       Input  : in out Input_Sources.Input_Source'Class)
    is
-      Loc : aliased Locator_Impl;
+      Loc : Locator;
    begin
       if Get_Feature (Parser, Schema_Validation_Feature) then
          Set_Hooks (Parser,
@@ -750,18 +764,18 @@ package body Schema.Readers is
    exception
       when E : XML_Validation_Error =>
          if Parser.Validators /= null
-           and then Parser.Validators.Start_Loc /= null
+           and then Parser.Validators.Start_Loc /= No_Locator
          then
-            Copy (Loc, Parser.Validators.Start_Loc.all);
+            Copy (Loc, Parser.Validators.Start_Loc);
          else
-            Copy (Loc, Parser.Locator.all);
+            Copy (Loc, Parser.Locator);
          end if;
 
          Reset (Parser);
 
          Validation_Error
            (Parser, Create (Byte_Sequence (Exception_Message (E)),
-            Loc'Unchecked_Access));
+            Loc));
 
       when others =>
          Reset (Parser);
@@ -789,10 +803,9 @@ package body Schema.Readers is
 
    procedure Hook_Set_Document_Locator
      (Handler : in out Reader'Class;
-      Loc     : access Sax.Locators.Locator'Class) is
+      Loc     : Sax.Locators.Locator) is
    begin
-      Validating_Reader (Handler).Locator := Locator_Access (Loc);
-      Ref (Validating_Reader (Handler).Locator.all);
+      Validating_Reader (Handler).Locator := Loc;
    end Hook_Set_Document_Locator;
 
    -------------------------------

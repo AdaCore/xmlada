@@ -1,3 +1,10 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2003-2007, AdaCore            --
+--                                                                   --
+-----------------------------------------------------------------------
+
 with Ada.Unchecked_Deallocation;
 with Interfaces; use Interfaces;
 

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            AdaCore                                --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -755,7 +754,7 @@ package body Sax.Readers is
       return Byte_Sequence
    is
       C : Unicode_Char;
-      System_Id : constant Byte_Sequence := Get_System_Id (Parser.Locator.all);
+      System_Id : constant Byte_Sequence := Get_System_Id (Parser.Locator);
       Index : Natural := System_Id'First;
       Basename_Start : Natural := System_Id'First;
       URI_Index : Positive := URI'First;
@@ -785,7 +784,7 @@ package body Sax.Readers is
       Col : constant Byte_Sequence := Natural'Image (Id.Column);
    begin
       if Parser.Close_Inputs = null then
-         return Get_Public_Id (Parser.Locator.all) & ':'
+         return Get_Public_Id (Parser.Locator) & ':'
            & Line (Line'First + 1 .. Line'Last)
            & ':' & Col (Col'First + 1 .. Col'Last);
       else
@@ -805,19 +804,19 @@ package body Sax.Readers is
       Id      : Token := Null_Token)
    is
       Id2 : Token := Id;
-      Loc : Locator_Impl_Access;
+      Loc : Locator;
    begin
       if Parser.Hooks.Error_Location /= null then
          Loc := Parser.Hooks.Error_Location (Parser);
       end if;
 
-      if Loc = null then
+      if Loc = No_Locator then
          Loc := Parser.Locator;
       end if;
 
       if Id = Null_Token then
-         Id2.Line   := Get_Line_Number (Loc.all);
-         Id2.Column := Get_Column_Number (Loc.all);
+         Id2.Line   := Get_Line_Number (Loc);
+         Id2.Column := Get_Column_Number (Loc);
       end if;
       Parser.Buffer_Length := 0;
 
@@ -855,19 +854,19 @@ package body Sax.Readers is
       Id      : Token)
    is
       Id2 : Token := Id;
-      Loc : Locator_Impl_Access;
+      Loc : Locator;
    begin
       if Parser.Hooks.Error_Location /= null then
          Loc := Parser.Hooks.Error_Location (Parser);
       end if;
 
-      if Loc = null then
+      if Loc = No_Locator then
          Loc := Parser.Locator;
       end if;
 
       if Id = Null_Token then
-         Id2.Line := Get_Line_Number     (Loc.all);
-         Id2.Column := Get_Column_Number (Loc.all);
+         Id2.Line   := Get_Line_Number     (Loc);
+         Id2.Column := Get_Column_Number (Loc);
       end if;
       Error (Parser, Create (Location (Parser, Id2) & ": " & Msg, Loc));
    end Error;
@@ -891,19 +890,19 @@ package body Sax.Readers is
       Id     : Token := Null_Token)
    is
       Id2 : Token := Id;
-      Loc : Locator_Impl_Access;
+      Loc : Locator;
    begin
       if Parser.Hooks.Error_Location /= null then
          Loc := Parser.Hooks.Error_Location (Parser);
       end if;
 
-      if Loc = null then
+      if Loc = No_Locator then
          Loc := Parser.Locator;
       end if;
 
       if Id = Null_Token then
-         Id2.Line := Get_Line_Number (Loc.all);
-         Id2.Column := Get_Column_Number (Loc.all);
+         Id2.Line := Get_Line_Number (Loc);
+         Id2.Column := Get_Column_Number (Loc);
       end if;
       Warning (Parser, Create (Location (Parser, Id2) & ": " & Msg, Loc));
    end Warning;
@@ -977,14 +976,13 @@ package body Sax.Readers is
          if Parser.Last_Read = Line_Feed
            and then not Parser.Previous_Char_Was_CR
          then
-            Set_Column_Number (Parser.Locator.all, 0);
+            Set_Column_Number (Parser.Locator, 0);
             Set_Line_Number
-              (Parser.Locator.all, Get_Line_Number (Parser.Locator.all) + 1);
+              (Parser.Locator, Get_Line_Number (Parser.Locator) + 1);
          end if;
 
       elsif Parser.Inputs /= null then
-         Copy (Parser.Locator.all, Parser.Inputs.Save_Loc);
-         Unref (Parser.Inputs.Save_Loc);
+         Copy (Parser.Locator, Parser.Inputs.Save_Loc);
 
          if Parser.Inputs.External then
             Parser.In_External_Entity := False;
@@ -1030,14 +1028,14 @@ package body Sax.Readers is
 
          Parser.Last_Read_Is_Valid := True;
          Set_Column_Number
-           (Parser.Locator.all, Get_Column_Number (Parser.Locator.all) + 1);
+           (Parser.Locator, Get_Column_Number (Parser.Locator) + 1);
          Internal (Parser.Inputs.Input.all);
 
       --  Else read from the initial input stream
       elsif Eof (Input) then
          if Debug_Input then
             Put_Line
-              ("++Input " & To_String (Parser.Locator.all) & " END_OF_INPUT");
+              ("++Input " & To_String (Parser.Locator) & " END_OF_INPUT");
          end if;
          Parser.Last_Read := 16#FFFF#;
          Parser.Last_Read_Is_Valid := False;
@@ -1045,12 +1043,12 @@ package body Sax.Readers is
       else
          Parser.Last_Read_Is_Valid := True;
          Set_Column_Number
-           (Parser.Locator.all, Get_Column_Number (Parser.Locator.all) + 1);
+           (Parser.Locator, Get_Column_Number (Parser.Locator) + 1);
          Internal (Input);
       end if;
 
       if Debug_Input and then Parser.Last_Read_Is_Valid then
-         Put ("++Input " & To_String (Parser.Locator.all)
+         Put ("++Input " & To_String (Parser.Locator)
               & "(" & Unicode_Char'Image (Parser.Last_Read) & ")= ");
          if Parser.Last_Read /= Line_Feed then
             Put_Line (Debug_Encode (Parser.Last_Read));
@@ -1187,8 +1185,8 @@ package body Sax.Readers is
             Id := Loc;
          else
             Id := Null_Token;
-            Id.Line := Get_Line_Number (Parser.Locator.all);
-            Id.Column := Get_Column_Number (Parser.Locator.all);
+            Id.Line := Get_Line_Number (Parser.Locator);
+            Id.Column := Get_Column_Number (Parser.Locator);
          end if;
          Fatal_Error (Parser, Error_Invalid_Char & Unicode_Char'Image (C), Id);
       end if;
@@ -1404,7 +1402,6 @@ package body Sax.Readers is
 
          Input_A := Inputs;
          Inputs := Inputs.Next;
-         Unref (Input_A.Save_Loc);
          Free (Input_A.Name);
          Free (Input_A);
       end loop;
@@ -1415,7 +1412,7 @@ package body Sax.Readers is
    -----------------
 
    procedure Debug_Print (Parser : Reader'Class; Id : Token) is
-      L : Locator_Impl := Locator_Impl (Parser.Locator.all);
+      L : Locator := Parser.Locator;
    begin
       Set_Line_Number (L, Id.Line);
       Set_Column_Number (L, Id.Column);
@@ -1540,9 +1537,9 @@ package body Sax.Readers is
                            end if;
                         end if;
                         Parser.Buffer_Length := Id.First - 1;
-                        Id.Line := Get_Line_Number (Parser.Locator.all);
+                        Id.Line := Get_Line_Number (Parser.Locator);
                         Id.Column :=
-                          Get_Column_Number (Parser.Locator.all) - 2;
+                          Get_Column_Number (Parser.Locator) - 2;
                         --  2 = 2 * Hyphen_Minus
                         Fatal_Error (Parser, Error_Comment_Dash_Dash, Id);
                      else
@@ -1610,8 +1607,8 @@ package body Sax.Readers is
                     + 10;
 
                else
-                  Id.Line := Get_Line_Number (Parser.Locator.all);
-                  Id.Column := Get_Column_Number (Parser.Locator.all);
+                  Id.Line := Get_Line_Number (Parser.Locator);
+                  Id.Column := Get_Column_Number (Parser.Locator);
                   Fatal_Error
                     (Parser, Error_Charref_Invalid_Char
                      & Debug_Encode (Parser.Last_Read), Id);
@@ -1625,8 +1622,8 @@ package body Sax.Readers is
                if Parser.Last_Read in Digit_Zero .. Digit_Nine then
                   Val := Val * 10 + Parser.Last_Read - Digit_Zero;
                else
-                  Id.Line := Get_Line_Number (Parser.Locator.all);
-                  Id.Column := Get_Column_Number (Parser.Locator.all);
+                  Id.Line := Get_Line_Number (Parser.Locator);
+                  Id.Column := Get_Column_Number (Parser.Locator);
                   Fatal_Error
                     (Parser, Error_Charref_Invalid_Char
                      & Debug_Encode (Parser.Last_Read), Id);
@@ -1859,8 +1856,8 @@ package body Sax.Readers is
       Id.First := Parser.Buffer_Length + 1;
       Id.Last := Parser.Buffer_Length;
       Id.Typ := End_Of_Input;
-      Id.Line := Get_Line_Number (Parser.Locator.all);
-      Id.Column := Get_Column_Number (Parser.Locator.all);
+      Id.Line := Get_Line_Number (Parser.Locator);
+      Id.Column := Get_Column_Number (Parser.Locator);
       Id.Input_Id := Input_Id (Parser);
       Id.From_Entity := False;
 
@@ -2371,7 +2368,7 @@ package body Sax.Readers is
          declare
             N : constant Byte_Sequence := Parser.Buffer (Id.First .. Id.Last);
             V : constant Entity_Entry_Access := Get (Parser.Entities, N);
-            Null_Loc : Locator_Impl;
+            Null_Loc : Locator;
          begin
             Reset_Buffer (Parser, Id);
             if N = Lt_Sequence then
@@ -2478,7 +2475,7 @@ package body Sax.Readers is
                   Id             => Parser.Element_Id,
                   Handle_Strings => not Parser.State.Ignore_Special,
                   Next           => Parser.Inputs);
-               Copy (Parser.Inputs.Save_Loc, Parser.Locator.all);
+               Copy (Parser.Inputs.Save_Loc, Parser.Locator);
 
                if V.External then
                   if Parser.State.Name = Attlist_Str_Def_State.Name
@@ -2510,8 +2507,8 @@ package body Sax.Readers is
                      Parser.Inputs.Name := new Byte_Sequence'
                        (Get_System_Id (Parser.Inputs.Input.all));
 
-                     Set_System_Id (Parser.Locator.all, URI);
-                     Set_Public_Id (Parser.Locator.all, V.Value.all);
+                     Set_System_Id (Parser.Locator, URI);
+                     Set_Public_Id (Parser.Locator, V.Value.all);
 
                   exception
                      when Name_Error =>
@@ -2536,10 +2533,10 @@ package body Sax.Readers is
                      Open (V.Value, Encoding,
                            String_Input (Parser.Inputs.Input.all));
                   end if;
-                  Set_Public_Id (Parser.Locator.all, "entity " & N);
+                  Set_Public_Id (Parser.Locator, "entity " & N);
                   Set_Public_Id
                     (Parser.Inputs.Input.all,
-                     Get_Public_Id (Parser.Locator.all));
+                     Get_Public_Id (Parser.Locator));
                end if;
 
                if Parser.Inputs.Input = null then
@@ -2548,9 +2545,9 @@ package body Sax.Readers is
                   Next_Token (Input, Parser, Id);
 
                else
-                  Set_Line_Number (Parser.Locator.all, 1);
+                  Set_Line_Number (Parser.Locator, 1);
                   Set_Column_Number
-                    (Parser.Locator.all,
+                    (Parser.Locator,
                      Prolog_Size (Parser.Inputs.Input.all));
 
                   Next_Char (Input, Parser);
@@ -2649,7 +2646,7 @@ package body Sax.Readers is
       -------------------------------------
 
       procedure Parse_Element_Model_From_Entity (Name : Byte_Sequence) is
-         Loc : Locator_Impl;
+         Loc : Locator;
          Last : constant Unicode_Char := Parser.Last_Read;
          Input_S : String_Input;
          Val : constant Entity_Entry_Access := Get (Parser.Entities, Name);
@@ -2662,10 +2659,10 @@ package body Sax.Readers is
             return;
 
          else
-            Copy (Loc, Parser.Locator.all);
-            Set_Line_Number (Parser.Locator.all, 1);
-            Set_Column_Number (Parser.Locator.all, 1);
-            Set_Public_Id (Parser.Locator.all, "entity " & Name);
+            Copy (Loc, Parser.Locator);
+            Set_Line_Number (Parser.Locator, 1);
+            Set_Column_Number (Parser.Locator, 1);
+            Set_Public_Id (Parser.Locator, "entity " & Name);
 
             Open (Val.Value, Encoding, Input_S);
             Next_Char (Input_S, Parser);
@@ -2673,8 +2670,7 @@ package body Sax.Readers is
             --  Parse_Element_Model (Input_S, Parser, M, Attlist, False);
             Close (Input_S);
 
-            Copy (Parser.Locator.all, Loc);
-            Unref (Loc);
+            Copy (Parser.Locator, Loc);
             Parser.Last_Read := Last;
          end if;
       end Parse_Element_Model_From_Entity;
@@ -2703,8 +2699,8 @@ package body Sax.Readers is
 
       begin
          Start_Token        := Null_Token;
-         Start_Token.Line   := Get_Line_Number (Parser.Locator.all);
-         Start_Token.Column := Get_Column_Number (Parser.Locator.all);
+         Start_Token.Line   := Get_Line_Number (Parser.Locator);
+         Start_Token.Column := Get_Column_Number (Parser.Locator);
 
          if Open_Was_Read then
             Start_Token.Column := Start_Token.Column - 1;
@@ -4781,7 +4777,7 @@ package body Sax.Readers is
          --  priority (XML specifications 2.8)
          if System_End.Last >= System_Start.First then
             declare
-               Loc : Locator_Impl;
+               Loc : Locator;
                URI : constant Byte_Sequence := Resolve_URI
                  (Parser,
                   Parser.Buffer (System_Start.First .. System_End.Last));
@@ -4790,19 +4786,18 @@ package body Sax.Readers is
                Saved_Last_Read : constant Unicode_Char := Parser.Last_Read;
             begin
                Open (URI, Input_F);
-               Copy (Loc, Parser.Locator.all);
+               Copy (Loc, Parser.Locator);
 
                --  Protect against the case where the last character read was
                --  a LineFeed.
                Parser.Last_Read := Unicode_Char'Val (16#00#);
                Parser.Last_Read_Is_Valid := False;
 
-               Set_Line_Number (Parser.Locator.all, 1);
-               Set_Column_Number
-                 (Parser.Locator.all, Prolog_Size (Input_F));
-               Set_System_Id (Parser.Locator.all, URI);
+               Set_Line_Number (Parser.Locator, 1);
+               Set_Column_Number (Parser.Locator, Prolog_Size (Input_F));
+               Set_System_Id (Parser.Locator, URI);
                Set_Public_Id
-                 (Parser.Locator.all,
+                 (Parser.Locator,
                   Parser.Buffer (System_Start.First .. System_End.Last));
                Reset_Buffer (Parser, Name_Id);
 
@@ -4811,14 +4806,12 @@ package body Sax.Readers is
                Syntactic_Parse (Parser, Input_F);
                Close (Input_F);
                Parser.In_External_Entity := In_External;
-               Copy (Parser.Locator.all, Loc);
-               Unref (Loc);
+               Copy (Parser.Locator, Loc);
                Parser.Last_Read := Saved_Last_Read;
                Parser.Last_Read_Is_Valid := True;
             exception
                when Name_Error =>
                   Close (Input_F);
-                  Unref (Loc);
                   Error
                     (Parser,
                      "External subset not found: "
@@ -4827,7 +4820,6 @@ package body Sax.Readers is
                   Reset_Buffer (Parser, Name_Id);
                when others =>
                   Close (Input_F);
-                  Unref (Loc);
                   raise;
             end;
          else
@@ -5428,7 +5420,6 @@ package body Sax.Readers is
       Close_Inputs (Parser, Parser.Close_Inputs);
 
       Free (Parser.Default_Namespaces);
-      Unref (Parser.Locator);
       Free (Parser.DTD_Name);
       Free (Parser.Buffer);
 
@@ -5503,11 +5494,11 @@ package body Sax.Readers is
      (Parser : in out Reader;
       Input  : in out Input_Sources.Input_Source'Class) is
    begin
-      Parser.Locator := new Locator_Impl;
-      Set_Public_Id (Parser.Locator.all, Get_Public_Id (Input));
-      Set_System_Id (Parser.Locator.all, Get_System_Id (Input));
-      Set_Column_Number (Parser.Locator.all, Prolog_Size (Input));
-      Set_Line_Number (Parser.Locator.all, 1);
+      Parser.Locator := No_Locator;
+      Set_Public_Id (Parser.Locator, Get_Public_Id (Input));
+      Set_System_Id (Parser.Locator, Get_System_Id (Input));
+      Set_Column_Number (Parser.Locator, Prolog_Size (Input));
+      Set_Line_Number (Parser.Locator, 1);
       Parser.Current_Node := null;
       Parser.Num_Toplevel_Elements := 0;
       Parser.Previous_Char_Was_CR := False;
@@ -5759,7 +5750,7 @@ package body Sax.Readers is
    --------------------------
 
    procedure Set_Document_Locator
-     (Handler : in out Reader; Loc : access Sax.Locators.Locator'Class)
+     (Handler : in out Reader; Loc : Sax.Locators.Locator)
    is
       pragma Warnings (Off, Handler);
       pragma Warnings (Off, Loc);

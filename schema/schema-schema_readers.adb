@@ -51,7 +51,7 @@ package body Schema.Schema_Readers is
    --  Lookup a type or element  with a possible namespace specification
 
    function Create_Repeat
-     (Validator : access XML_Validator_Record'Class;
+     (Validator : XML_Validator;
       Min_Occurs, Max_Occurs : Integer)
       return XML_Validator;
    --  Repeat Validator a number of times, by including it in a sequence if
@@ -235,7 +235,6 @@ package body Schema.Schema_Readers is
      (Reader  : in out Schema_Reader;
       Grammar : Schema.Validators.XML_Grammar := No_Grammar) is
    begin
-      Free (Reader.Created_Grammar);
       Reader.Created_Grammar := Grammar;
       Reader.Check_Undefined := False;
    end Set_Created_Grammar;
@@ -412,7 +411,6 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
       Tmp  : Context_Access;
       Min_Occurs, Max_Occurs : Integer := 1;
-      Seq : Sequence;
    begin
       if Min_Occurs_Index /= -1 then
          Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
@@ -500,13 +498,16 @@ package body Schema.Schema_Readers is
                     & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
 
          when Context_Extension =>
-            Seq := Create_Sequence;
-            Output ("Validator := Create_Sequence;");
-            Add_Particle (Seq, Handler.Contexts.Group);
-            Output ("Add_Particle (Validator, " & Ada_Name (Handler.Contexts)
-                    & ");");
-
-            Handler.Contexts.Next.Extension := XML_Validator (Seq);
+            declare
+               Seq : Group_Model := Create_Sequence;
+            begin
+               Output ("Validator := Create_Sequence;");
+               Add_Particle (Seq, Handler.Contexts.Group);
+               Output
+                 ("Add_Particle (Validator, " & Ada_Name (Handler.Contexts)
+                  & ");");
+               Handler.Contexts.Next.Extension := Seq;
+            end;
 
          when others =>
             Output ("Can't handle nested group decl");
@@ -582,16 +583,16 @@ package body Schema.Schema_Readers is
             when Context_Type_Def =>
                Ensure_Type (Handler, Handler.Contexts.Next);
                Add_Attribute_Group
-                 (Handler.Contexts.Next.Type_Validator,
+                 (+Handler.Contexts.Next.Type_Validator,
                   Handler.Contexts.Attr_Group);
                Output ("Add_Attribute_Group ("
                        & Ada_Name (Handler.Contexts.Next)
                        & ", " & Ada_Name (Handler.Contexts) & ");");
 
             when Context_Extension =>
-               if Handler.Contexts.Next.Extension = null then
+               if Handler.Contexts.Next.Extension = No_Validator then
                   Handler.Contexts.Next.Extension := Extension_Of
-                    (Handler.Contexts.Next.Extension_Base, null);
+                    (Handler.Contexts.Next.Extension_Base);
                   Output (Ada_Name (Handler.Contexts.Next)
                           & " := Extension_Of ("
                           & Ada_Name (Handler.Contexts.Next.Extension_Base)
@@ -600,7 +601,7 @@ package body Schema.Schema_Readers is
                end if;
 
                Add_Attribute_Group
-                 (Handler.Contexts.Next.Extension,
+                 (+Handler.Contexts.Next.Extension,
                   Handler.Contexts.Attr_Group);
                Output ("Add_Attribute_Group ("
                        & Ada_Name (Handler.Contexts.Next)
@@ -984,7 +985,7 @@ package body Schema.Schema_Readers is
          Handler.Contexts := new Context'
            (Typ            => Context_Type_Def,
             Type_Name      => null,
-            Type_Validator => null,
+            Type_Validator => No_Validator,
             Redefined_Type => No_Type,
             Mixed_Content  => False,
             Simple_Content => False,
@@ -1050,7 +1051,7 @@ package body Schema.Schema_Readers is
       Handler.Contexts := new Context'
         (Typ            => Context_Type_Def,
          Type_Name      => Name,
-         Type_Validator => null,
+         Type_Validator => No_Validator,
          Redefined_Type => No_Type,
          Mixed_Content  => Mixed,
          Simple_Content => False,
@@ -1089,7 +1090,7 @@ package body Schema.Schema_Readers is
    is
       XML_G : XML_Grammar_NS;
    begin
-      if C.Type_Validator = null then
+      if C.Type_Validator = No_Validator then
          --  Create an extension, instead of a simple ur-Type, so that we can
          --  add attributes to it without impacting ur-Type itself
          Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
@@ -1131,7 +1132,8 @@ package body Schema.Schema_Readers is
                  & Boolean'Image (Handler.Contexts.Block_Extension) & ");");
       end if;
 
-      Set_Mixed_Content (Get_Validator (Typ), Handler.Contexts.Mixed_Content);
+      Set_Mixed_Content
+        (+Get_Validator (Typ), Handler.Contexts.Mixed_Content);
       Output ("Set_Mixed_Content ("
               & Ada_Name (C) & ", "
               & Boolean'Image (Handler.Contexts.Mixed_Content) & ");");
@@ -1192,8 +1194,8 @@ package body Schema.Schema_Readers is
       Handler.Contexts := new Context'
         (Typ              => Context_Restriction,
          Restriction_Base => Base,
-         Restricted       => null,
-         Restriction      => null,
+         Restricted       => No_Validator,
+         Restriction      => No_Validator,
          Level            => Handler.Contexts.Level + 1,
          Next             => Handler.Contexts);
    end Create_Restriction;
@@ -1208,7 +1210,7 @@ package body Schema.Schema_Readers is
    is
       G : XML_Grammar_NS;
    begin
-      if Ctx.Restricted = null then
+      if Ctx.Restricted = No_Validator then
          if Ctx.Restriction_Base = No_Type then
             Get_NS (Handler.Created_Grammar, XML_Schema_URI, G);
             Ctx.Restriction_Base := Lookup (G, "ur-Type");
@@ -1288,7 +1290,7 @@ package body Schema.Schema_Readers is
                end if;
 
                Lookup_With_NS (Handler, Members (Start .. Last - 1), Typ);
-               Add_Union (Handler.Contexts.Union, Typ);
+               Add_Union (+Handler.Contexts.Union, Typ);
                Output ("Add_Union ("
                        & Ada_Name (Handler.Contexts)
                        & ", """ & Members (Start .. Last - 1) & """)");
@@ -1343,7 +1345,7 @@ package body Schema.Schema_Readers is
       Handler.Contexts := new Context'
         (Typ            => Context_Extension,
          Extension_Base => Base,
-         Extension      => null,
+         Extension      => No_Validator,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
    end Create_Extension;
@@ -1363,7 +1365,7 @@ package body Schema.Schema_Readers is
                Set_Debug_Name (Handler.Contexts.Next.Type_Validator,
                                Ada_Name (Handler.Contexts));
 
-               if Handler.Contexts.Extension /= null then
+               if Handler.Contexts.Extension /= No_Validator then
                   Set_Debug_Name
                     (Handler.Contexts.Extension,
                      "extension_of_"
@@ -1429,26 +1431,20 @@ package body Schema.Schema_Readers is
    -------------------
 
    function Create_Repeat
-     (Validator : access XML_Validator_Record'Class;
+     (Validator : XML_Validator;
       Min_Occurs, Max_Occurs : Integer)
       return XML_Validator
    is
-      Seq : Sequence;
+      Seq : Group_Model;
    begin
       if Min_Occurs = 1 and then Max_Occurs = 1 then
-         return XML_Validator (Validator);
+         return Validator;
       else
          Seq := Create_Sequence;
          Set_Debug_Name (Seq, "repeat_seq");
-         if Validator.all in Sequence_Record'Class then
-            Add_Particle (Seq, Sequence (Validator),
-                          Min_Occurs => Min_Occurs,
-                          Max_Occurs => Max_Occurs);
-         else
-            Add_Particle (Seq, Choice (Validator),
-                          Min_Occurs => Min_Occurs,
-                          Max_Occurs => Max_Occurs);
-         end if;
+         Add_Particle (Seq, Validator,
+                       Min_Occurs => Min_Occurs,
+                       Max_Occurs => Max_Occurs);
          Output ("Seq := Create_Sequence;");
          Output ("Add_Particle (Seq, Validator,"
                  & Min_Occurs'Img & Max_Occurs'Img & ")");
@@ -1659,7 +1655,7 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ              => Context_Attribute,
-         Attribute        => null,
+         Attribute        => No_Attribute_Validator,
          Attribute_Is_Ref => Name_Index = -1,
          Level            => Handler.Contexts.Level + 1,
          Next             => Handler.Contexts);
@@ -1720,7 +1716,7 @@ package body Schema.Schema_Readers is
       case In_Context.Typ is
          when Context_Type_Def =>
             Ensure_Type (Handler, In_Context);
-            Add_Attribute (In_Context.Type_Validator, Attribute);
+            Add_Attribute (+In_Context.Type_Validator, Attribute);
             Output ("Add_Attribute (Validator, " & Attribute_Name & ");");
 
          when Context_Schema | Context_Redefine =>
@@ -1729,22 +1725,22 @@ package body Schema.Schema_Readers is
          when Context_Extension =>
             --  If there is no extension at this point, there won't be any as
             --  per the XML schema, since the attributes come last
-            if In_Context.Extension = null then
+            if In_Context.Extension = No_Validator then
                In_Context.Extension := Extension_Of
-                 (In_Context.Extension_Base, null);
+                 (In_Context.Extension_Base);
                Output (Ada_Name (In_Context) & " := Extension_Of ("
                        & Ada_Name (In_Context.Extension_Base)
                        & ", null);");
                In_Context.Extension_Base := No_Type;
             end if;
 
-            Add_Attribute (In_Context.Extension, Attribute);
+            Add_Attribute (+In_Context.Extension, Attribute);
             Output ("Add_Attribute (" & Ada_Name (In_Context) & ", "
                     & Attribute_Name & ");");
 
          when Context_Restriction =>
             Create_Restricted (Handler, In_Context);
-            Add_Attribute (In_Context.Restricted, Attribute);
+            Add_Attribute (+In_Context.Restricted, Attribute);
             Output ("Add_Attribute (" & Ada_Name (In_Context) & ", "
                     & Attribute_Name & ");");
 
@@ -1969,7 +1965,6 @@ package body Schema.Schema_Readers is
 
    procedure Finish_All (Handler : in out Schema_Reader) is
    begin
-
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
             Handler.Contexts.Next.Type_Validator :=
@@ -2091,7 +2086,7 @@ package body Schema.Schema_Readers is
         or else Local_Name = "minExclusive"
       then
          Create_Restricted (Handler, Handler.Contexts);
-         Add_Facet (Handler.Contexts.Restricted, Local_Name,
+         Add_Facet (+Handler.Contexts.Restricted, Local_Name,
                     Get_Value (Atts, URI => "", Local_Name => "value"));
          Output ("Add_Facet ("
                  & Ada_Name (Handler.Contexts) & ", """ & Local_Name

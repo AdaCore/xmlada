@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -27,107 +26,106 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+--  This package defines the Locator type, which is used to identify locations
+--  within the XML streams where events have occurred.
+--  This type is reference-counted in XML/Ada, which means that memory is
+--  managed automatically. However, if you keep a copy of a locator, its
+--  attributes will be changed as the XML stream is parsed. You must use Copy
+--  to preserve the value of these attributes over time.
+
+with Sax.Pointers;
 with Unicode.CES;
 
 package Sax.Locators is
 
-   -------------------------------------------------
-   -- General Locator interface as defined in SAX --
-   -------------------------------------------------
+   type Locator is private;
+   No_Locator : constant Locator;
 
-   type Locator is abstract tagged private;
-   type Locator_Access is access all Locator'Class;
-
-   function Get_Line_Number (Loc : Locator) return Natural is abstract;
+   procedure Set_Line_Number (Loc : in out Locator; Line : Natural := 0);
+   function Get_Line_Number (Loc : Locator) return Natural;
    --  Return the line number where the current document event ends
 
-   function Get_Column_Number (Loc : Locator) return Natural is abstract;
+   procedure Set_Column_Number (Loc : in out Locator; Column : Natural := 0);
+   function Get_Column_Number  (Loc : Locator) return Natural;
    --  Return the column number where the current document event ends
 
-   function Get_System_Id (Loc : Locator) return Unicode.CES.Byte_Sequence
-      is abstract;
+   procedure Set_System_Id
+     (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence);
+   function Get_System_Id (Loc : Locator) return Unicode.CES.Byte_Sequence;
    --  Return the system id for the current document (see input_sources.ads)
 
-   function Get_Public_Id (Loc : Locator) return Unicode.CES.Byte_Sequence
-      is abstract;
+   procedure Set_Public_Id
+     (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence);
+   function Get_Public_Id (Loc : Locator) return Unicode.CES.Byte_Sequence;
    --  Return the public id for the current document (see input_sources.ads)
 
-   procedure Ref   (Loc : in out Locator) is abstract;
-   procedure Unref (Loc : in out Locator) is abstract;
-   --  Memory management for the locator. If you want to preserve the validity
-   --  of a locator for instance after the call to Sax.Readers.Parse, you need
-   --  to Ref it.
-   --  A Locator is automatically created with a reference count of 1, so the
-   --  first call to Unref will actually deallooate the memory for it, unless
-   --  there has been a call to Ref in-between.
-
-   --------------------
-   -- Added features --
-   --------------------
-   --  The subprograms below are not part of the SAX2 standard, but have been
-   --  added for convenience
-
-   function To_String (Loc : Locator) return String is abstract;
+   function To_String (Loc : Locator) return String;
    --  Print the location found in the location, with a standard format:
    --     Public_Id:Line:Column
    --  Public_Id is not printed if it is null.
    --  Column is not printed if it is zero (unknown)
 
-   ---------------------------------------------------------
-   -- Convenience implementation of the locator interface --
-   ---------------------------------------------------------
-
-   type Locator_Impl is new Locator with private;
-   type Locator_Impl_Access is access all Locator_Impl'Class;
-
-   procedure Ref   (Loc : in out Locator_Impl);
-   procedure Unref (Loc : in out Locator_Impl);
-   --  See doc from inherited subprogram
-
-   procedure Unref (Loc : in out Locator_Impl_Access);
-   --  Free the memory allocated internally for the strings.
-
-   procedure Copy (Loc : in out Locator_Impl; Loc_I : Locator'Class);
-   --  Copy the location information from Loc_I to Loc
+   procedure Copy (Loc : in out Locator; Source : Locator);
+   --  Copy the location information from Source to Loc. Just using the
+   --  standard assignment ":=" will not preserve the line number, column
+   --  number,... when they are changed later on while parsing the rest of the
+   --  XML stream.
    --  This calls the Set_* functions below, so that you don't need to
    --  rewrite it for all your classes.
 
-   function Get_Line_Number (Loc : Locator_Impl) return Natural;
-   function Get_Column_Number (Loc : Locator_Impl) return Natural;
-   function Get_System_Id (Loc : Locator_Impl)
-      return Unicode.CES.Byte_Sequence;
-   function Get_Public_Id (Loc : Locator_Impl)
-      return Unicode.CES.Byte_Sequence;
+   --------------------
+   -- Locator_Record --
+   --------------------
+   --  This is the internal implementation of locators. Such types are
+   --  encapsulated in the smart pointer Locator, for proper memory management.
+
+   type Locator_Record is new Sax.Pointers.Root_Encapsulated with private;
+
+   function Get_Line_Number (Loc : access Locator_Record) return Natural;
+   function Get_Column_Number (Loc : access Locator_Record) return Natural;
+   function Get_System_Id
+     (Loc : access Locator_Record) return Unicode.CES.Byte_Sequence;
+   function Get_Public_Id
+     (Loc : access Locator_Record) return Unicode.CES.Byte_Sequence;
+   --  See documentation for Locator
 
    procedure Set_Column_Number
-     (Loc : in out Locator_Impl; Column : Natural := 0);
+     (Loc : access Locator_Record; Column : Natural := 0);
    --  Set the column number for the locator.
    --  Set this to zero if the column is unknown.
 
    procedure Set_Line_Number
-     (Loc : in out Locator_Impl; Line : Natural := 0);
+     (Loc : access Locator_Record; Line : Natural := 0);
    --  Set the line number for the locator
 
    procedure Set_Public_Id
-     (Loc : in out Locator_Impl; Id  : Unicode.CES.Byte_Sequence);
+     (Loc : access Locator_Record; Id  : Unicode.CES.Byte_Sequence);
    --  Set the public Id for the allocator
 
    procedure Set_System_Id
-     (Loc : in out Locator_Impl; Id  : Unicode.CES.Byte_Sequence);
+     (Loc : access Locator_Record; Id  : Unicode.CES.Byte_Sequence);
    --  Set the system Id for the allocator
 
-   function To_String (Loc : Locator_Impl) return String;
+   procedure Copy (Loc : access Locator_Record; Source : Locator);
+   --  Copy the location information from Source to Loc
+   --  This calls the Set_* functions below, so that you don't need to
+   --  rewrite it for all your classes.
 
 private
-   type Locator is abstract tagged null record;
-
-   type Locator_Impl is new Locator with record
-      Line   : Natural := 1;
-      Column : Natural := 1;
+   type Locator_Record is new Sax.Pointers.Root_Encapsulated with record
+      Line      : Natural := 1;
+      Column    : Natural := 1;
       Public_Id : Unicode.CES.Byte_Sequence_Access;
       System_Id : Unicode.CES.Byte_Sequence_Access;
       Ref_Count : Natural := 1;
    end record;
+
+   procedure Free (Loc : in out Locator_Record);
+   --  See inherited documentation
+
+   package Locators is new Sax.Pointers.Smart_Pointers (Locator_Record);
+   type Locator is new Locators.Pointer;
+   No_Locator : constant Locator := Locator (Locators.Null_Pointer);
 
    pragma Inline (Get_Line_Number);
    pragma Inline (Get_Column_Number);
