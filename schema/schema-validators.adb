@@ -600,6 +600,7 @@ package body Schema.Validators is
                   Whitespace :=
                     Common_Facets_Description (Facets.all).Whitespace;
                end if;
+               Free (Facets);
 
                --  Normalize attribute value if necessary
                if Whitespace = Collapse then
@@ -2111,14 +2112,23 @@ package body Schema.Validators is
    ---------------------------
 
    function Create_Validator_Data
-     (Validator : access Sequence_Record) return Validator_Data
-   is
+     (Validator : access Sequence_Record) return Validator_Data is
    begin
       return new Sequence_Data'
         (Group_Model_Data_Record with
          Current               => Start (Validator.Particles),
          Num_Occurs_Of_Current => 0);
    end Create_Validator_Data;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Sequence_Data) is
+   begin
+      Free (Data.Current);
+      Free (Group_Model_Data_Record (Data));
+   end Free;
 
    ---------------------------
    -- Move_To_Next_Particle --
@@ -2177,6 +2187,7 @@ package body Schema.Validators is
 
       if Applies then
          Data.Nested      := Nested;
+         Free (Data.Nested_Data);
          Data.Nested_Data := Create_Validator_Data (Get (Nested));
 
          Validate_Start_Element
@@ -2790,6 +2801,12 @@ package body Schema.Validators is
       null;
    end Free;
 
+   procedure Free (Data : in out Group_Model_Data_Record) is
+   begin
+      Free (Data.Nested_Data);
+      Free (Validator_Data_Record (Data));
+   end Free;
+
    ---------------------------
    -- Create_Validator_Data --
    ---------------------------
@@ -2919,16 +2936,20 @@ package body Schema.Validators is
 
          if Applies then
             Debug_Pop_Prefix;
+            Free (Iter);
             return;
          elsif Get_Min_Occurs (Iter) > 0 and then not Skip_Current then
             Debug_Output ("Current element is not optional => doesn't apply");
             Skip_Current := False;
             Applies := False;
             Debug_Pop_Prefix;
+            Free (Iter);
             return;
          end if;
          Next (Iter);
       end loop;
+
+      Free (Iter);
 
       Skip_Current := True;
       Applies := False;

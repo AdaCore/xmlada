@@ -1236,6 +1236,9 @@ private
    end record;
    type Group_Model_Data is access all Group_Model_Data_Record'Class;
 
+   procedure Free (Data : in out Group_Model_Data_Record);
+   --  See inherited documentation
+
    procedure Free_Nested_Group (Data : Group_Model_Data);
    --  Free the nested group and its data, if any
 
@@ -1312,6 +1315,10 @@ private
       --  sequence.
    end record;
    type Sequence_Data_Access is access all Sequence_Data'Class;
+
+   procedure Free (Data : in out Sequence_Data);
+   --  See inherited documentation
+
    procedure Validate_Start_Element
      (Validator         : access Sequence_Record;
       Local_Name             : Unicode.CES.Byte_Sequence;

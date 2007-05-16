@@ -577,10 +577,15 @@ package body Schema.Readers is
 
       if Validating_Reader (Handler).Validators /= null then
          Validate_Start_Element
-           (+Get_Validator (Validating_Reader (Handler).Validators.Typ),
-            Local_Name, Namespace_URI, G,
-            Validating_Reader (Handler).Validators.Data,
-            Get_Target_NS (Validating_Reader (Handler).Grammar), Element);
+           (Validator         =>
+              +Get_Validator (Validating_Reader (Handler).Validators.Typ),
+            Local_Name        => Local_Name,
+            Namespace_URI     => Namespace_URI,
+            NS                => G,
+            Data              => Validating_Reader (Handler).Validators.Data,
+            Schema_Target_NS  =>
+              Get_Target_NS (Validating_Reader (Handler).Grammar),
+            Element_Validator => Element);
       else
          if Debug then
             Put_Line ("Getting element definition from grammar: "

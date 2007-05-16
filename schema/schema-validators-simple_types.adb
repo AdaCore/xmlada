@@ -424,10 +424,8 @@ package body Schema.Validators.Simple_Types is
       function Get_Facets_Description
         (Validator : access Validator_Record) return Facets_Description
       is
-         --  pragma Unreferenced (Validator);
-         Result : Facets_Description;
+         Result : constant Facets_Description := new Facets_Type;
       begin
-         Result := new Facets_Type;
          Copy (From => Validator.Facets, To => Result.all);
          return Result;
       end Get_Facets_Description;
@@ -1274,6 +1272,7 @@ package body Schema.Validators.Simple_Types is
             end if;
 
             --  No error ? => Everything is fine
+            Free (Iter);
             return;
 
          exception
@@ -1283,6 +1282,8 @@ package body Schema.Validators.Simple_Types is
 
          Next (Iter);
       end loop;
+
+      Free (Iter);
 
       Validation_Error ("Invalid value """ & Ch & """");
    end Validate_Characters;
