@@ -91,9 +91,6 @@ package body Sax.Pointers is
       procedure Finalize (P : in out Pointer) is
       begin
          if P.Data /= null then
-            if P.Data.Refcount = 0 then
-               return;
-            end if;
             P.Data.Refcount := P.Data.Refcount - 1;
             if P.Data.Refcount = 0 then
                Free (P.Data.all);
