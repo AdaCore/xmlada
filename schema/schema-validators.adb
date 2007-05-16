@@ -44,12 +44,10 @@ with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 with Schema.Validators.Lists;        use Schema.Validators.Lists;
 
 package body Schema.Validators is
-   use XML_Validators, XML_Grammars, Attribute_Validators;
+   use XML_Validators, XML_Grammars, Attribute_Validators, XML_Elements;
 
    Debug : Boolean := False;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Element_List, Element_List_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Particle_Iterator_Record, Particle_Iterator);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -71,8 +69,6 @@ package body Schema.Validators is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Attribute_Groups_Htable.HTable, Attribute_Groups_Htable_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (XML_Element_Record, XML_Element_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (XML_Group_Record, XML_Group);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Validator_Data_Record'Class, Validator_Data);
@@ -84,14 +80,15 @@ package body Schema.Validators is
      (Particle_List_Record, Particle_List);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (XML_Particle, XML_Particle_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Substitution_Group_Array, Substitution_Group);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Substitution_Groups_Array, Substitution_Groups);
 
    procedure Create_NS_Grammar
      (Grammar       : in out XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence);
    --  Create a new namespace in the grammar
-
-   procedure Free (Element : in out XML_Element_Record);
-   --  Free Element
 
    function Move_To_Next_Particle
      (Seq   : access Sequence_Record'Class;
@@ -136,14 +133,17 @@ package body Schema.Validators is
    --  group didn't match, or there was no nested group.
 
    function Check_Substitution_Groups
-     (Element          : XML_Element_Access;
+     (Element          : XML_Element;
       Local_Name       : Unicode.CES.Byte_Sequence;
       Namespace_URI    : Unicode.CES.Byte_Sequence;
       Parent_NS        : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS) return XML_Element;
+      Schema_Target_NS : XML_Grammar_NS;
+      Check_All_In_Group : Boolean := True) return XML_Element;
    --  Check whether any element in the substitution group of Validator can
    --  be used to match Local_Name. This also check whether Element itself
    --  matches.
+   --  If Check_All_In_Group is False, then only Element itself is tested, this
+   --  is used to avoid infinite recursion while checking the group.
    --  This also raises an XML_Validator_Record if the matching element is
    --  in fact abstract
 
@@ -373,25 +373,6 @@ package body Schema.Validators is
       else
          List := new Attribute_Validator_List'
            (1 => Attribute_Or_Group'(Is_Group => True, Group => Group));
-      end if;
-   end Append;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (List    : in out Element_List_Access;
-      Element : XML_Element)
-   is
-      L : Element_List_Access;
-   begin
-      if List /= null then
-         L := new Element_List'(List.all & Element.Elem);
-         Unchecked_Free (List);
-         List := L;
-      else
-         List := new Element_List'(1 => Element.Elem);
       end if;
    end Append;
 
@@ -1030,10 +1011,10 @@ package body Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence;
       Create_If_Needed : Boolean := True) return XML_Element
    is
-      Result : constant XML_Element_Access := Elements_Htable.Get
+      Result : constant XML_Element_Pointer := Elements_Htable.Get
         (Grammar.Elements.all, Local_Name);
    begin
-      if Result = null then
+      if Result = No_Element_Pointer then
          if Create_If_Needed then
             Debug_Output ("Lookup_Element: creating forward "
                           & Grammar.Namespace_URI.all & " : "
@@ -1044,7 +1025,7 @@ package body Schema.Validators is
             return No_Element;
          end if;
       end if;
-      return (Elem => Result, Is_Ref => True);
+      return (Result, Is_Ref => True);
    end Lookup_Element;
 
    ------------------
@@ -1108,7 +1089,7 @@ package body Schema.Validators is
    function Get_Local_Name
      (Element : XML_Element) return Unicode.CES.Byte_Sequence is
    begin
-      return Element.Elem.Local_Name.all;
+      return Get (Element.Elem).Local_Name.all;
    end Get_Local_Name;
 
    --------------------
@@ -1141,10 +1122,10 @@ package body Schema.Validators is
 
    function Get_Type (Element : XML_Element) return XML_Type is
    begin
-      if Element.Elem = null then
+      if Element = No_Element then
          return No_Type;
       else
-         return Element.Elem.Of_Type;
+         return Get (Element.Elem).Of_Type;
       end if;
    end Get_Type;
 
@@ -1224,15 +1205,16 @@ package body Schema.Validators is
               ("Cannot mix complexType definition and ""ref"" attribute");
          end if;
 
-         Element.Elem.Of_Type := Element_Type;
+         Get (Element.Elem).Of_Type := Element_Type;
 
          --  3.3 Element Declaration details:  Validation Rule 3.1
          --  The "default" attribute of element must match the validation rule
          --  for that element
 
-         if Element.Elem.Default /= null then
+         if Get (Element.Elem).Default /= null then
             Validate_Characters
-              (Get (Get_Validator (Element_Type)), Element.Elem.Default.all,
+              (Get (Get_Validator (Element_Type)),
+               Get (Element.Elem).Default.all,
                Empty_Element => False);
          end if;
 
@@ -1240,9 +1222,10 @@ package body Schema.Validators is
          --  The "fixed" attribute of element must match the validation rule
          --  for that element
 
-         if Element.Elem.Fixed /= null then
+         if Get (Element.Elem).Fixed /= null then
             Validate_Characters
-              (Get (Get_Validator (Element_Type)), Element.Elem.Fixed.all,
+              (Get (Get_Validator (Element_Type)),
+               Get (Element.Elem).Fixed.all,
                Empty_Element => False);
          end if;
       end if;
@@ -1323,12 +1306,13 @@ package body Schema.Validators is
       Debug_Output ("Create_NS_Grammar: " & Namespace_URI);
 
       Gr.Grammars (Gr.Grammars'Last) := new XML_Grammar_NS_Record'
-        (Namespace_URI    => new Byte_Sequence'(Namespace_URI),
-         Types            => new Types_Htable.HTable (101),
-         Elements         => new Elements_Htable.HTable (101),
-         Groups           => new Groups_Htable.HTable (101),
-         Attributes       => new Attributes_Htable.HTable (101),
-         Attribute_Groups => new Attribute_Groups_Htable.HTable (101),
+        (Namespace_URI     => new Byte_Sequence'(Namespace_URI),
+         Types             => new Types_Htable.HTable (101),
+         Elements          => new Elements_Htable.HTable (101),
+         Groups            => new Groups_Htable.HTable (101),
+         Attributes        => new Attributes_Htable.HTable (101),
+         Attribute_Groups  => new Attribute_Groups_Htable.HTable (101),
+         Substitutions     => null,
          Block_Restriction => False,
          Block_Extension   => False);
    end Create_NS_Grammar;
@@ -1418,7 +1402,8 @@ package body Schema.Validators is
                Put ("      Elements:");
                Elem := First (Gr.Grammars (G).Elements.all);
                while Elem /= Elements_Htable.No_Iterator loop
-                  Put (' ' & Elements_Htable.Current (Elem).Local_Name.all);
+                  Put (' '
+                       & Get (Elements_Htable.Current (Elem)).Local_Name.all);
                   Next (Gr.Grammars (G).Elements.all, Elem);
                end loop;
                New_Line;
@@ -1461,27 +1446,27 @@ package body Schema.Validators is
      (Local_Name : Unicode.CES.Byte_Sequence;
       NS         : XML_Grammar_NS;
       Of_Type    : XML_Type;
-      Form       : Form_Type) return XML_Element is
+      Form       : Form_Type) return XML_Element
+   is
+      Tmp : constant XML_Elements.Encapsulated_Access :=
+        new XML_Element_Record'
+          (Sax.Pointers.Root_Encapsulated with
+           Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
+           NS                  => NS,
+           Substitution_Group  => -1,
+           Of_Type             => Of_Type,
+           Default             => null,
+           Is_Abstract         => False,
+           Nillable            => False,
+           Final_Restriction   => False,
+           Final_Extension     => False,
+           Block_Restriction   => False,
+           Block_Extension     => False,
+           Is_Global           => False,
+           Form                => Form,
+           Fixed               => null);
    begin
-      --  ??? Should be stored in a list in the grammar, so that we can free
-      --  them all later on.
-      return
-        (Elem => new XML_Element_Record'
-           (Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
-            NS                  => NS,
-            Substitution_Groups => null,
-            Of_Type             => Of_Type,
-            Default             => null,
-            Is_Abstract         => False,
-            Nillable            => False,
-            Final_Restriction   => False,
-            Final_Extension     => False,
-            Block_Restriction   => False,
-            Block_Extension     => False,
-            Is_Global           => False,
-            Form                => Form,
-            Fixed               => null),
-         Is_Ref => False);
+      return (Elem => Allocate (Tmp), Is_Ref => False);
    end Create_Local_Element;
 
    -------------------
@@ -1533,21 +1518,23 @@ package body Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence;
       Form       : Form_Type) return XML_Element
    is
-      Old : XML_Element_Access := Elements_Htable.Get
+      Old : XML_Element_Pointer := Elements_Htable.Get
         (Grammar.Elements.all, Local_Name);
+      Tmp : XML_Elements.Encapsulated_Access;
    begin
-      if Old /= null then
-         if Old.Of_Type /= No_Type then
+      if Old /= No_Element_Pointer then
+         if Get (Old).Of_Type /= No_Type then
             Validation_Error
               ("Element """ & Local_Name & """ has already been declared");
          end if;
 
-         Old.Form := Form;
+         Get (Old).Form := Form;
       else
-         Old := new XML_Element_Record'
-           (Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
+         Tmp := new XML_Element_Record'
+           (Sax.Pointers.Root_Encapsulated with
+            Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
             NS                  => Grammar,
-            Substitution_Groups => null,
+            Substitution_Group  => -1,
             Of_Type             => No_Type,
             Default             => null,
             Is_Abstract         => False,
@@ -1559,6 +1546,7 @@ package body Schema.Validators is
             Is_Global           => True,
             Form                => Form,
             Fixed               => null);
+         Old := Allocate (Tmp);
          Elements_Htable.Set (Grammar.Elements.all, Old);
       end if;
 
@@ -1822,6 +1810,14 @@ package body Schema.Validators is
          Unchecked_Free (Grammar.Attributes);
 
          Free (Grammar.Namespace_URI);
+
+         if Grammar.Substitutions /= null then
+            for G in Grammar.Substitutions'Range loop
+               Unchecked_Free (Grammar.Substitutions (G));
+            end loop;
+            Unchecked_Free (Grammar.Substitutions);
+         end if;
+
          Unchecked_Free (Grammar);
       end if;
    end Free;
@@ -1836,6 +1832,12 @@ package body Schema.Validators is
       null;
    end Do_Nothing;
 
+   procedure Do_Nothing (Element : in out XML_Element_Pointer) is
+      pragma Unreferenced (Element);
+   begin
+      null;
+   end Do_Nothing;
+
    -----------------
    -- Set_Default --
    -----------------
@@ -1846,7 +1848,7 @@ package body Schema.Validators is
       --  3.3 Element Declaration details: Can't have both
       --  "default" and "fixed"
 
-      if Element.Elem.Fixed /= null then
+      if Get (Element.Elem).Fixed /= null then
          Validation_Error
            ("Attributes ""fixed"" and ""default"" conflict with each other");
       end if;
@@ -1855,14 +1857,14 @@ package body Schema.Validators is
       --  The "default" attribute of element must match the validation rule
       --  for that element
 
-      if Element.Elem.Of_Type /= No_Type then
+      if Get (Element.Elem).Of_Type /= No_Type then
          Validate_Characters
-           (Get (Get_Validator (Element.Elem.Of_Type)), Default,
+           (Get (Get_Validator (Get (Element.Elem).Of_Type)), Default,
             Empty_Element => False);
       end if;
 
-      Free (Element.Elem.Default);
-      Element.Elem.Default := new Byte_Sequence'(Default);
+      Free (Get (Element.Elem).Default);
+      Get (Element.Elem).Default := new Byte_Sequence'(Default);
    end Set_Default;
 
    -----------------
@@ -1871,7 +1873,7 @@ package body Schema.Validators is
 
    function Has_Default (Element : XML_Element) return Boolean is
    begin
-      return Element.Elem.Default /= null;
+      return Get (Element.Elem).Default /= null;
    end Has_Default;
 
    -----------------
@@ -1881,7 +1883,7 @@ package body Schema.Validators is
    function Get_Default
      (Element : XML_Element) return Byte_Sequence_Access is
    begin
-      return Element.Elem.Default;
+      return Get (Element.Elem).Default;
    end Get_Default;
 
    ---------------
@@ -1894,7 +1896,7 @@ package body Schema.Validators is
       --  3.3 Element Declaration details: Can't have both
       --  "default" and "fixed"
 
-      if Element.Elem.Default /= null then
+      if Get (Element.Elem).Default /= null then
          Validation_Error
            ("Attributes ""fixed"" and ""default"" conflict with each other");
       end if;
@@ -1903,14 +1905,14 @@ package body Schema.Validators is
       --  The "fixed" attribute of element must match the validation rule
       --  for that element
 
-      if Element.Elem.Of_Type /= No_Type then
+      if Get (Element.Elem).Of_Type /= No_Type then
          Validate_Characters
-           (Get (Get_Validator (Element.Elem.Of_Type)), Fixed,
+           (Get (Get_Validator (Get (Element.Elem).Of_Type)), Fixed,
             Empty_Element => False);
       end if;
 
-      Free (Element.Elem.Fixed);
-      Element.Elem.Fixed := new Byte_Sequence'(Fixed);
+      Free (Get (Element.Elem).Fixed);
+      Get (Element.Elem).Fixed := new Byte_Sequence'(Fixed);
    end Set_Fixed;
 
    ---------------
@@ -1919,7 +1921,7 @@ package body Schema.Validators is
 
    function Has_Fixed (Element : XML_Element) return Boolean is
    begin
-      return Element.Elem.Fixed /= null;
+      return Get (Element.Elem).Fixed /= null;
    end Has_Fixed;
 
    ---------------
@@ -1929,7 +1931,7 @@ package body Schema.Validators is
    function Get_Fixed
      (Element : XML_Element) return Byte_Sequence_Access is
    begin
-      return Element.Elem.Fixed;
+      return Get (Element.Elem).Fixed;
    end Get_Fixed;
 
    ----------
@@ -1938,20 +1940,10 @@ package body Schema.Validators is
 
    procedure Free (Element : in out XML_Element_Record) is
    begin
-      --  ??? Should free Of_Type only if it isn't a named type
       Free (Element.Local_Name);
       Free (Element.Default);
       Free (Element.Fixed);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Element : in out XML_Element_Access) is
-   begin
-      Free (Element.all);
-      Unchecked_Free (Element);
+--      Unchecked_Free (Element.Substitution_Groups);
    end Free;
 
    ----------
@@ -1961,6 +1953,7 @@ package body Schema.Validators is
    procedure Free (Group : in out XML_Group) is
    begin
       Free (Group.Local_Name);
+      Free (Group.Particles);
       Unchecked_Free (Group);
    end Free;
 
@@ -1988,9 +1981,9 @@ package body Schema.Validators is
    -------------
 
    function Get_Key
-     (Element : XML_Element_Access) return Unicode.CES.Byte_Sequence is
+     (Element : XML_Element_Pointer) return Unicode.CES.Byte_Sequence is
    begin
-      return Element.Local_Name.all;
+      return Get (Element).Local_Name.all;
    end Get_Key;
 
    -------------
@@ -2028,60 +2021,74 @@ package body Schema.Validators is
    -------------------------------
 
    function Check_Substitution_Groups
-     (Element          : XML_Element_Access;
+     (Element          : XML_Element;
       Local_Name       : Unicode.CES.Byte_Sequence;
       Namespace_URI    : Unicode.CES.Byte_Sequence;
       Parent_NS        : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS) return XML_Element
+      Schema_Target_NS : XML_Grammar_NS;
+      Check_All_In_Group : Boolean := True) return XML_Element
    is
-      Groups : constant Element_List_Access :=
-        Element.Substitution_Groups;
+      Groups  : Substitution_Group;
+      ElemPtr : constant XML_Elements.Encapsulated_Access :=
+        Get (Element.Elem);
       Result : XML_Element := No_Element;
       Local_Matches : constant Boolean :=
-        Element.Local_Name.all = Local_Name;
+        Get (Element.Elem).Local_Name.all = Local_Name;
    begin
       Debug_Output ("Test " & Namespace_URI
                     & " : " & Get_Namespace_URI (Parent_NS)
                     & " : " & Local_Name
                     & " element.form="
-                    & Element.Form'Img);
+                    & ElemPtr.Form'Img);
 
       if Local_Matches
-        and then Get_Namespace_URI (Element.NS) = Namespace_URI
+        and then Get_Namespace_URI (ElemPtr.NS) = Namespace_URI
       then
-         Result := (Elem => Element, Is_Ref => True);
+         Result := (Elem => Element.Elem, Is_Ref => True);
          Check_Qualification (Schema_Target_NS, Result, Namespace_URI);
 
-      elsif Element.Form = Unqualified
+      elsif ElemPtr.Form = Unqualified
         and then Namespace_URI = ""
         and then Local_Matches
       then
-         Result := (Elem => Element, Is_Ref => True);
+         Result := Element;
          Check_Qualification (Schema_Target_NS, Result, Namespace_URI);
 
       elsif Local_Matches and then Namespace_URI = "" then
          Check_Qualification
-           (Schema_Target_NS, (Element, True), Namespace_URI);
+           (Schema_Target_NS,
+            XML_Element'(Element.Elem, Is_Ref => True),
+            Namespace_URI);
       end if;
 
-      if Result = No_Element
-        and then Groups /= null
-      then
-         for S in Groups'Range loop
-            Debug_Output ("Check_Substitution group: "
-                          & Element.Local_Name.all & " -> "
-                          & Groups (S).Local_Name.all);
+      if Check_All_In_Group and then Result = No_Element then
+         --  If we have a substitution group
+         if ElemPtr.NS.Substitutions /= null
+           and then ElemPtr.Substitution_Group in
+             ElemPtr.NS.Substitutions'Range
+         then
+            Groups := ElemPtr.NS.Substitutions (ElemPtr.Substitution_Group);
+         end if;
 
-            Result := Check_Substitution_Groups
-              (Groups (S), Local_Name, Namespace_URI, Parent_NS,
-               Schema_Target_NS);
-            exit when Result /= No_Element;
-         end loop;
+         if Groups /= null then
+            for S in Groups'Range loop
+               if Groups (S) /= Element then
+                  Debug_Output ("Check_Substitution group: "
+                                & ElemPtr.Local_Name.all & " -> "
+                                & Get (Groups (S).Elem).Local_Name.all);
+
+                  Result := Check_Substitution_Groups
+                    (Groups (S), Local_Name, Namespace_URI, Parent_NS,
+                     Schema_Target_NS, Check_All_In_Group => False);
+                  exit when Result /= No_Element;
+               end if;
+            end loop;
+         end if;
       end if;
 
       if Result /= No_Element and then Is_Abstract (Result) then
          Validation_Error
-           ("""" & Result.Elem.Local_Name.all & """ is abstract");
+           ("""" & ElemPtr.Local_Name.all & """ is abstract");
          Result := No_Element;
       end if;
 
@@ -2168,7 +2175,7 @@ package body Schema.Validators is
          if Element_Validator /= No_Element then
             Debug_Output
               ("nested Matched "
-               & Get_Local_Name (Element_Validator.Elem.Of_Type));
+               & Get_Local_Name (Get (Element_Validator.Elem).Of_Type));
          else
             Validate_End_Element (Get (Nested), Local_Name, Data.Nested_Data);
 
@@ -2300,14 +2307,14 @@ package body Schema.Validators is
          case Curr.Typ is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
-                 (Curr.Element.Elem, Local_Name, Namespace_URI, NS,
+                 (Curr.Element, Local_Name, Namespace_URI, NS,
                   Schema_Target_NS);
 
                if Element_Validator /= No_Element then
                   Debug_Output
                     ("Element Matched: "
-                     & Element_Validator.Elem.Local_Name.all & ' '
-                     & Get_Local_Name (Element_Validator.Elem.Of_Type));
+                     & Get (Element_Validator.Elem).Local_Name.all & ' '
+                     & Get_Local_Name (Get (Element_Validator.Elem).Of_Type));
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
@@ -2316,9 +2323,9 @@ package body Schema.Validators is
                     ("Expecting at least"
                      & Integer'Image (Get_Min_Occurs (D.Current))
                      & " occurrences of """
-                     & Curr.Element.Elem.Local_Name.all
+                     & Get (Curr.Element.Elem).Local_Name.all
                      & """ from namespace """
-                     & Curr.Element.Elem.NS.Namespace_URI.all
+                     & Get (Curr.Element.Elem).NS.Namespace_URI.all
                      & """");
                end if;
 
@@ -2515,7 +2522,7 @@ package body Schema.Validators is
      (Seq_Or_Choice : in out Group_Model; Item : XML_Element;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      if Item.Elem.Local_Name = null then
+      if Get (Item.Elem).Local_Name = null then
          Raise_Exception
            (Program_Error'Identity,
             "Adding empty element to a sequence");
@@ -2587,7 +2594,7 @@ package body Schema.Validators is
          case It.Typ is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
-                 (It.Element.Elem, Local_Name, Namespace_URI, NS,
+                 (It.Element, Local_Name, Namespace_URI, NS,
                   Schema_Target_NS);
 
             when Particle_Nested =>
@@ -2697,7 +2704,7 @@ package body Schema.Validators is
          return;
       else
          Debug_Output ("<choice> matched for "
-                       & Element_Validator.Elem.Local_Name.all);
+                       & Get (Element_Validator.Elem).Local_Name.all);
       end if;
 
       D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
@@ -2869,7 +2876,7 @@ package body Schema.Validators is
          case Item.Typ is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
-                 (Item.Element.Elem, Local_Name, Namespace_URI, NS,
+                 (Item.Element, Local_Name, Namespace_URI, NS,
                   Schema_Target_NS) /= No_Element;
 
             when Particle_Nested =>
@@ -2940,7 +2947,7 @@ package body Schema.Validators is
          case It.Typ is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
-                 (It.Element.Elem, Local_Name, Namespace_URI, NS,
+                 (It.Element, Local_Name, Namespace_URI, NS,
                   Schema_Target_NS) /= No_Element;
 
             when Particle_Nested =>
@@ -2992,6 +2999,12 @@ package body Schema.Validators is
      (Element : XML_Element; Head : XML_Element)
    is
       Had_Restriction, Had_Extension : Boolean := False;
+      ElemPtr : constant XML_Elements.Encapsulated_Access :=
+        Get (Element.Elem);
+      HeadPtr : constant XML_Elements.Encapsulated_Access :=
+        Get (Head.Elem);
+      Tmp  : Substitution_Group;
+      Tmps : Substitution_Groups;
    begin
       if Get_Validator (Get_Type (Element)) /= No_Validator
         and then Get_Validator (Get_Type (Element)) /=
@@ -3002,22 +3015,50 @@ package body Schema.Validators is
             Had_Restriction => Had_Restriction,
             Had_Extension   => Had_Extension);
 
-         if Head.Elem.Final_Restriction and then Had_Restriction then
+         if HeadPtr.Final_Restriction and then Had_Restriction then
             Validation_Error
-              ("""" & Head.Elem.Local_Name.all
+              ("""" & HeadPtr.Local_Name.all
                & """ is final for restrictions, and cannot be substituted by"
-               & """" & Element.Elem.Local_Name.all & """");
+               & """" & ElemPtr.Local_Name.all & """");
          end if;
 
-         if Head.Elem.Final_Extension and then Had_Extension then
+         if HeadPtr.Final_Extension and then Had_Extension then
             Validation_Error
-              ("""" & Head.Elem.Local_Name.all
+              ("""" & HeadPtr.Local_Name.all
                & """ is final for extensions, and cannot be substituted by"
-               & """" & Element.Elem.Local_Name.all & """");
+               & """" & ElemPtr.Local_Name.all & """");
          end if;
       end if;
 
-      Append (Head.Elem.Substitution_Groups, Element);
+      if ElemPtr.Substitution_Group /= -1 then
+         Validation_Error
+           ("""" & ElemPtr.Local_Name.all & """ already belongs to another"
+            & " substitution group");
+      end if;
+
+      if HeadPtr.Substitution_Group = -1 then
+         if HeadPtr.NS.Substitutions = null then
+            HeadPtr.NS.Substitutions := new Substitution_Groups_Array (1 .. 1);
+         else
+            Tmps := HeadPtr.NS.Substitutions;
+            HeadPtr.NS.Substitutions := new Substitution_Groups_Array'
+              (Tmps.all & null);
+            Unchecked_Free (Tmps);
+         end if;
+
+         HeadPtr.Substitution_Group := HeadPtr.NS.Substitutions'Last;
+         HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group) :=
+           new Substitution_Group_Array (1 .. 1);
+         HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group)(1) :=
+           Head;
+      end if;
+
+      ElemPtr.Substitution_Group := HeadPtr.Substitution_Group;
+
+      Tmp := HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group);
+      HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group) :=
+        new Substitution_Group_Array'(Tmp.all & Element);
+      Unchecked_Free (Tmp);
    end Set_Substitution_Group;
 
    -------------------------
@@ -3258,7 +3299,7 @@ package body Schema.Validators is
          Attr_Group_Iter : Attribute_Groups_Htable.Iterator :=
            First (Grammar.Attribute_Groups.all);
 
-         Elem : XML_Element_Access;
+         Elem : XML_Element_Pointer;
          Typ  : XML_Type;
          Attr : Attribute_Validator;
          AttrPtr : Named_Attribute_Validator;
@@ -3280,10 +3321,11 @@ package body Schema.Validators is
          while Elem_Iter /= Elements_Htable.No_Iterator loop
             Elem := Current (Elem_Iter);
 
-            if Elem.Of_Type = No_Type then
+            if Get (Elem).Of_Type = No_Type then
                Validation_Error
                  ("Element """
-                  & To_QName (Grammar.Namespace_URI.all, Elem.Local_Name.all)
+                  & To_QName
+                    (Grammar.Namespace_URI.all, Get (Elem).Local_Name.all)
                   & """ was referenced but never declared");
             end if;
 
@@ -3433,7 +3475,7 @@ package body Schema.Validators is
 
       while Get (Tmp) /= null loop
          Element_Validator := Check_Substitution_Groups
-           (Get (Tmp).Element.Elem, Local_Name, Namespace_URI, NS,
+           (Get (Tmp).Element, Local_Name, Namespace_URI, NS,
             Schema_Target_NS);
 
          if Element_Validator /= No_Element then
@@ -3477,7 +3519,7 @@ package body Schema.Validators is
       while Get (Tmp) /= null loop
          if D.All_Elements (Count) < Get_Min_Occurs (Tmp) then
             Validation_Error
-              ("Element """ & Get (Tmp).Element.Elem.Local_Name.all
+              ("Element """ & Get (Get (Tmp).Element.Elem).Local_Name.all
                & """ must appear at least"
                & Integer'Image (Get_Min_Occurs (Tmp)) & " times");
          end if;
@@ -3810,7 +3852,7 @@ package body Schema.Validators is
      (Element     : XML_Element;
       Is_Abstract : Boolean) is
    begin
-      Element.Elem.Is_Abstract := Is_Abstract;
+      Get (Element.Elem).Is_Abstract := Is_Abstract;
    end Set_Abstract;
 
    -----------------
@@ -3819,7 +3861,7 @@ package body Schema.Validators is
 
    function Is_Abstract (Element : XML_Element) return Boolean is
    begin
-      return Element.Elem.Is_Abstract;
+      return Get (Element.Elem).Is_Abstract;
    end Is_Abstract;
 
    ------------------
@@ -3830,7 +3872,7 @@ package body Schema.Validators is
      (Element  : XML_Element;
       Nillable : Boolean) is
    begin
-      Element.Elem.Nillable := Nillable;
+      Get (Element.Elem).Nillable := Nillable;
    end Set_Nillable;
 
    -----------------
@@ -3839,7 +3881,7 @@ package body Schema.Validators is
 
    function Is_Nillable (Element : XML_Element) return Boolean is
    begin
-      return Element.Elem.Nillable;
+      return Get (Element.Elem).Nillable;
    end Is_Nillable;
 
    ---------------
@@ -3851,8 +3893,8 @@ package body Schema.Validators is
       On_Restriction : Boolean;
       On_Extension   : Boolean) is
    begin
-      Element.Elem.Final_Restriction := On_Restriction;
-      Element.Elem.Final_Extension   := On_Extension;
+      Get (Element.Elem).Final_Restriction := On_Restriction;
+      Get (Element.Elem).Final_Extension   := On_Extension;
    end Set_Final;
 
    ---------------
@@ -3864,8 +3906,8 @@ package body Schema.Validators is
       On_Restriction : Boolean;
       On_Extension   : Boolean) is
    begin
-      Element.Elem.Block_Restriction := On_Restriction;
-      Element.Elem.Block_Extension   := On_Extension;
+      Get (Element.Elem).Block_Restriction := On_Restriction;
+      Get (Element.Elem).Block_Extension   := On_Extension;
    end Set_Block;
 
    ------------------------------
@@ -3874,7 +3916,7 @@ package body Schema.Validators is
 
    function Get_Block_On_Restriction (Element : XML_Element) return Boolean is
    begin
-      return Element.Elem.Block_Restriction;
+      return Get (Element.Elem).Block_Restriction;
    end Get_Block_On_Restriction;
 
    ----------------------------
@@ -3883,7 +3925,7 @@ package body Schema.Validators is
 
    function Get_Block_On_Extension (Element : XML_Element) return Boolean is
    begin
-      return Element.Elem.Block_Extension;
+      return Get (Element.Elem).Block_Extension;
    end Get_Block_On_Extension;
 
    -----------------------
@@ -3917,6 +3959,16 @@ package body Schema.Validators is
       Free (Data.Nested_Data);
    end Free_Nested_Group;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Group : in out Group_Model_Record) is
+   begin
+      Free (Group.Particles);
+      Free (XML_Validator_Record (Group));
+   end Free;
+
    ------------------------
    -- Check_Content_Type --
    ------------------------
@@ -3940,7 +3992,7 @@ package body Schema.Validators is
 
    function Is_Global (Element : XML_Element) return Boolean is
    begin
-      return Element.Elem.Is_Global;
+      return Get (Element.Elem).Is_Global;
    end Is_Global;
 
    -----------------------
@@ -3977,13 +4029,13 @@ package body Schema.Validators is
       Namespace_URI : Unicode.CES.Byte_Sequence) is
    begin
       if not Is_Global (Element)
-        and then Element.Elem.Form = Unqualified
+        and then Get (Element.Elem).Form = Unqualified
         and then Namespace_URI /= ""
       then
          Validation_Error
            ("Namespace specification not authorized in this context");
 
-      elsif Element.Elem.Form = Qualified
+      elsif Get (Element.Elem).Form = Qualified
         and then Namespace_URI = ""
         and then Target_NS /= null
       then

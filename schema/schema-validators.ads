@@ -751,19 +751,6 @@ private
 
    type Validator_Data_Record is abstract tagged null record;
 
-   ------------------
-   -- Element_List --
-   ------------------
-
-   type XML_Element_Record;
-   type XML_Element_Access is access all XML_Element_Record;
-
-   type Element_List is array (Natural range <>) of XML_Element_Access;
-   type Element_List_Access is access Element_List;
-
-   procedure Append
-     (List    : in out Element_List_Access; Element : XML_Element);
-
    --------------
    -- Grammars --
    --------------
@@ -809,52 +796,6 @@ private
      XML_Grammar (XML_Grammars.Null_Pointer);
    --  We need to use a pointer type for a grammar, since it is passed around
    --  with Set_Created_Grammar for instance.
-
-   -----------------
-   -- XML_Element --
-   -----------------
-
-   type XML_Element_Record is record
-      Local_Name : Unicode.CES.Byte_Sequence_Access;
-      NS         : XML_Grammar_NS;
-
-      Of_Type    : XML_Type;
-
-      Substitution_Groups : Element_List_Access;
-      --  List of all validators in the same substitution group
-
-      Default    : Unicode.CES.Byte_Sequence_Access;
-      Fixed      : Unicode.CES.Byte_Sequence_Access;
-
-      Is_Abstract : Boolean;
-      --  Whether the corresponding type is abstract
-
-      Nillable    : Boolean;
-      --  Whether the element is nillable
-
-      Final_Restriction : Boolean;
-      Final_Extension   : Boolean;
-      --  Whether this element is final for "restriction" or "extension" or
-      --  both
-
-      Block_Restriction : Boolean;
-      Block_Extension   : Boolean;
-      --  The value for the "block" attribute of the element
-
-      Form : Form_Type;
-      --  The value of the "form" attribute of the element
-
-      Is_Global : Boolean;
-      --  Whether the element was declared at the toplevel of the <schema>
-   end record;
-
-   type XML_Element is record
-      Elem   : XML_Element_Access;
-      Is_Ref : Boolean;
-      --  Whether this element was defined through a Lookup_Element, or a
-      --  Create_Element call.
-   end record;
-   No_Element : constant XML_Element := (null, False);
 
    -------------------------
    -- Attribute_Validator --
@@ -1025,6 +966,73 @@ private
    procedure Do_Nothing (T : in out XML_Type);
    --  Does nothing, useful for simulating a "Free" function for instance
 
+   -----------------
+   -- XML_Element --
+   -----------------
+
+   type XML_Element_Record is new Sax.Pointers.Root_Encapsulated with record
+      Local_Name         : Unicode.CES.Byte_Sequence_Access;
+      NS                 : XML_Grammar_NS;
+      Of_Type            : XML_Type;
+
+      Substitution_Group : Integer := -1;
+      --  Index of the substitution group to which this element belongs. Any
+      --  element in the same group can be used in place of the element. This
+      --  is set to -1 when there is no valid substitution group.
+
+      Default           : Unicode.CES.Byte_Sequence_Access;
+      Fixed             : Unicode.CES.Byte_Sequence_Access;
+
+      Is_Abstract       : Boolean;
+      --  Whether the corresponding type is abstract
+
+      Nillable          : Boolean;
+      --  Whether the element is nillable
+
+      Final_Restriction : Boolean;
+      Final_Extension   : Boolean;
+      --  Whether this element is final for "restriction" or "extension" or
+      --  both
+
+      Block_Restriction : Boolean;
+      Block_Extension   : Boolean;
+      --  The value for the "block" attribute of the element
+
+      Form              : Form_Type;
+      --  The value of the "form" attribute of the element
+
+      Is_Global         : Boolean;
+      --  Whether the element was declared at the toplevel of the <schema>
+   end record;
+
+   procedure Free (Element : in out XML_Element_Record);
+   --  See inherited documentation
+
+   package XML_Elements is new Sax.Pointers.Smart_Pointers
+     (XML_Element_Record);
+   type XML_Element_Pointer is new XML_Elements.Pointer;
+   No_Element_Pointer : constant XML_Element_Pointer :=
+     XML_Element_Pointer (XML_Elements.Null_Pointer);
+
+   type XML_Element is record
+      Elem   : XML_Element_Pointer;
+      Is_Ref : Boolean;
+      --  Whether this is a reference to an existing global element, or a local
+      --  element. XSD rules are different in both cases.
+   end record;
+
+   No_Element : constant XML_Element := (No_Element_Pointer, Is_Ref => False);
+
+   ------------------
+   -- Element_List --
+   ------------------
+
+   type Substitution_Group_Array is array (Natural range <>) of XML_Element;
+   type Substitution_Group is access all Substitution_Group_Array;
+   type Substitution_Groups_Array
+     is array (Natural range <>) of Substitution_Group;
+   type Substitution_Groups is access all Substitution_Groups_Array;
+
    ---------------
    -- XML_Group --
    ---------------
@@ -1127,14 +1135,14 @@ private
    --  be known when we first reference the type (it is valid in an XML schema
    --  to ref to a type described later on).
 
-   procedure Free (Element : in out XML_Element_Access);
+   procedure Do_Nothing (Element : in out XML_Element_Pointer);
    function Get_Key
-     (Element : XML_Element_Access) return Unicode.CES.Byte_Sequence;
+     (Element : XML_Element_Pointer) return Unicode.CES.Byte_Sequence;
 
    package Elements_Htable is new Sax.HTable
-     (Element       => XML_Element_Access,
-      Empty_Element => null,
-      Free          => Free,
+     (Element       => XML_Element_Pointer,
+      Empty_Element => No_Element_Pointer,
+      Free          => Do_Nothing,
       Key           => Unicode.CES.Byte_Sequence,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
@@ -1184,12 +1192,13 @@ private
      is access Attribute_Groups_Htable.HTable;
 
    type XML_Grammar_NS_Record is record
-      Namespace_URI : Unicode.CES.Byte_Sequence_Access;
-      Types         : Types_Htable_Access;
-      Elements      : Elements_Htable_Access;
-      Groups        : Groups_Htable_Access;
-      Attributes    : Attributes_Htable_Access;
-      Attribute_Groups : Attribute_Groups_Htable_Access;
+      Namespace_URI     : Unicode.CES.Byte_Sequence_Access;
+      Types             : Types_Htable_Access;
+      Elements          : Elements_Htable_Access;
+      Groups            : Groups_Htable_Access;
+      Attributes        : Attributes_Htable_Access;
+      Attribute_Groups  : Attribute_Groups_Htable_Access;
+      Substitutions     : Substitution_Groups;
       Block_Extension   : Boolean := False;
       Block_Restriction : Boolean := False;
    end record;
@@ -1204,6 +1213,10 @@ private
    type Group_Model_Record is abstract new XML_Validator_Record with record
       Particles  : Particle_List := Empty_Particle_List;
    end record;
+
+   procedure Free (Group : in out Group_Model_Record);
+   --  See inherited documentation
+
    type Group_Model_Data_Record is new Validator_Data_Record with record
       Nested : Group_Model := Group_Model (No_Validator);
       --  If a group_model is nested inside another (a sequence within a

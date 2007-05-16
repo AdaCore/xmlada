@@ -13,6 +13,8 @@ New features in version 3.0 (Development version)
   - G510-017 API change: ref-counted types
     Most types have been made reference-counted, and memory management is
     taken care of automatically. This fixes a number of memory leaks.
+  - Change the way substitution groups are implemented, since their proper
+    handling depended on the order in which they were created.
 
  SAX:
   - API change: sax.locators is now ref-counted

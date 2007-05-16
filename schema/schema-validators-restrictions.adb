@@ -134,7 +134,7 @@ package body Schema.Validators.Restrictions is
 
          if Element_Validator /= No_Element then
             Debug_Output ("Validate_Start_Element: end of restriction, result="
-                          & Element_Validator.Elem.Local_Name.all);
+                          & Get_Local_Name (Element_Validator));
          else
             Debug_Output ("Validate_Start_Element: end of restriction, no"
                           & " match from restriction");
