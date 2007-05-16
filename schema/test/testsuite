@@ -20,6 +20,12 @@ xmltests=./xmltests
 # testschema=${TESTSCHEMA:=./testdomschema -silent}
 testschema=${TESTSCHEMA:-./testschema}
 
+if [ x$USE_VALGRIND = x1 ]; then
+valgrind="valgrind --leak-check=full -q"
+else
+valgrind=""
+fi
+
 debug=""
 verbose=0
 show_expected_failure=0
@@ -113,7 +119,7 @@ expect() {
      xsd="-xsd $xsd_file"
    fi
 
-   out=`eval $XML $xsd $xml_file 2>&1`
+   out=`eval $valgrind $XML $xsd $xml_file 2>&1`
    compare "$XML $xsd $xml_file" "$out" "$expected"
 }
 
