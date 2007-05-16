@@ -189,7 +189,7 @@ package Sax.Readers is
 
    procedure Set_Document_Locator
      (Handler : in out Reader;
-      Loc     : Sax.Locators.Locator);
+      Loc     : in out Sax.Locators.Locator);
    --  Receive an object for locating the origin of SAX document events.
    --  SAX parsers are strongly encouraged but not required to give this
    --  information. This callback will always be called before any other.

@@ -5750,7 +5750,7 @@ package body Sax.Readers is
    --------------------------
 
    procedure Set_Document_Locator
-     (Handler : in out Reader; Loc : Sax.Locators.Locator)
+     (Handler : in out Reader; Loc : in out Sax.Locators.Locator)
    is
       pragma Warnings (Off, Handler);
       pragma Warnings (Off, Loc);
