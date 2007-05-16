@@ -26,18 +26,12 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
---  with Ada.Text_IO; use Ada.Text_IO;
---  with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
---  with GNAT.Traceback; use GNAT.Traceback;
---  with System.Address_Image;
 
 package body Sax.Pointers is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Encapsulated'Class, Root_Encapsulated_Access);
---     function UC is new Ada.Unchecked_Conversion
---       (Root_Encapsulated_Access, System.Address);
 
    --------------
    -- Get_Name --
@@ -94,38 +88,14 @@ package body Sax.Pointers is
       -- Finalize --
       --------------
 
---        Indent : Natural := 0;
---
---        procedure Put_Stack_Trace;
---        procedure Put_Stack_Trace is
---           Tracebacks : Tracebacks_Array (1 .. 50);
---           Len        : Natural;
---        begin
---           Call_Chain (Tracebacks, Len);
---           Put ("(callstack: ");
---           for J in Tracebacks'First .. Len loop
---              Put (System.Address_Image (Tracebacks (J)) & ' ');
---           end loop;
---           Put_Line (")");
---        end Put_Stack_Trace;
-
       procedure Finalize (P : in out Pointer) is
       begin
          if P.Data /= null then
---              Put_Line ((1 .. Indent => ' ')
---            & "About to finalize "    & System.Address_Image (UC (P.Data)));
---              Put_Stack_Trace;
             P.Data.Refcount := P.Data.Refcount - 1;
---              Put_Line ((1 .. Indent => ' ')
---                & "Finalize "    & System.Address_Image (UC (P.Data))
---                & " " & Get_Name (P.Data)
---                & " Refcount=" & P.Data.Refcount'Img);
---              Indent := Indent + 1;
             if P.Data.Refcount = 0 then
                Free (P.Data.all);
                Unchecked_Free (P.Data);
             end if;
---              Indent := Indent - 1;
             P.Data := null;
          end if;
       end Finalize;
@@ -138,12 +108,6 @@ package body Sax.Pointers is
       begin
          if P.Data /= null then
             P.Data.Refcount := P.Data.Refcount + 1;
---              Put_Line
---                ((1 .. Indent => ' ')
---                 & "Adjust "
---                 & System.Address_Image (UC (P.Data))
---                 & P.Data.Refcount'Img);
---              Put_Stack_Trace;
          end if;
       end Adjust;
    end Smart_Pointers;
