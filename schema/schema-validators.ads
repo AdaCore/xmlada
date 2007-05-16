@@ -1045,9 +1045,26 @@ private
    -- XML_Group --
    ---------------
 
-   type XML_Group_Record;
-   type XML_Group is access all XML_Group_Record;
-   No_XML_Group : constant XML_Group := null;
+   type XML_Particle;
+   type XML_Particle_Access is access XML_Particle;
+   type Particle_List is record
+      First, Last : XML_Particle_Access;
+   end record;
+
+   type XML_Group_Record is new Sax.Pointers.Root_Encapsulated with record
+      Local_Name : Unicode.CES.Byte_Sequence_Access;
+      Particles  : Particle_List;
+      Is_Forward_Decl : Boolean;
+      --  Set to true if the group was defined as a call to Lookup, but never
+      --  through Create_Global_Group
+   end record;
+
+   procedure Free (Group : in out XML_Group_Record);
+   --  See inherited documentation
+
+   package XML_Groups is new Sax.Pointers.Smart_Pointers (XML_Group_Record);
+   type XML_Group is new XML_Groups.Pointer;
+   No_XML_Group : constant XML_Group := XML_Group (XML_Groups.Null_Pointer);
 
    type Group_Model_Access is access all Group_Model_Record'Class;
 
@@ -1060,8 +1077,6 @@ private
                           Particle_Group,
                           Particle_Any,
                           Particle_XML_Type);
-   type XML_Particle;
-   type XML_Particle_Access is access XML_Particle;
    type XML_Particle (Typ : Particle_Type) is record
       Min_Occurs : Natural;
       Max_Occurs : Integer;
@@ -1075,13 +1090,7 @@ private
       end case;
    end record;
 
-   type Particle_List_Record is record
-      First, Last : XML_Particle_Access;
-   end record;
-   type Particle_List is access Particle_List_Record;
-
-   function Empty_Particle_List return Particle_List;
-   --  Return an empty list
+   Empty_Particle_List : constant Particle_List := (null, null);
 
    procedure Free (List : in out Particle_List);
    --  Free the list and its contents
@@ -1111,18 +1120,6 @@ private
    procedure Free (Iter : in out Particle_Iterator);
    --  Iterate over a list of particles. Get returns null at the end of the
    --  iteration
-
-   ----------------------
-   -- XML_Group_Record --
-   ----------------------
-
-   type XML_Group_Record is record
-      Local_Name : Unicode.CES.Byte_Sequence_Access;
-      Particles  : Particle_List;
-      Is_Forward_Decl : Boolean;
-      --  Set to true if the group was defined as a call to Lookup, but never
-      --  through Create_Global_Group
-   end record;
 
    -------------
    -- Grammar --
@@ -1157,15 +1154,14 @@ private
       Equal         => "=");
    type Elements_Htable_Access is access Elements_Htable.HTable;
 
-   procedure Free (Group : in out XML_Group);
-   function Get_Key (Group : XML_Group) return Unicode.CES.Byte_Sequence;
+   procedure Do_Nothing (Group : in out XML_Group);
 
    package Groups_Htable is new Sax.HTable
      (Element       => XML_Group,
       Empty_Element => No_XML_Group,
-      Free          => Free,
+      Free          => Do_Nothing,
       Key           => Unicode.CES.Byte_Sequence,
-      Get_Key       => Get_Key,
+      Get_Key       => Get_Local_Name,
       Hash          => Sax.Utils.Hash,
       Equal         => "=");
    type Groups_Htable_Access is access Groups_Htable.HTable;

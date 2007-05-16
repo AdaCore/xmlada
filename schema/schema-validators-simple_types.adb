@@ -1255,7 +1255,7 @@ package body Schema.Validators.Simple_Types is
       Debug_Output ("Validate_Characters for union --" & Ch & "--"
                     & Get_Name (Union));
 
-      if Union.Unions = null then
+      if Union.Unions = Empty_Particle_List then
          if Empty_Element then
             return;
          else

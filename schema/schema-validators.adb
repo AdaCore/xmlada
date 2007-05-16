@@ -69,15 +69,11 @@ package body Schema.Validators is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Attribute_Groups_Htable.HTable, Attribute_Groups_Htable_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (XML_Group_Record, XML_Group);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Validator_Data_Record'Class, Validator_Data);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Id_Htable.HTable, Id_Htable_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Attribute_Validator_List, Attribute_Validator_List_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Particle_List_Record, Particle_List);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (XML_Particle, XML_Particle_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -983,6 +979,12 @@ package body Schema.Validators is
       null;
    end Do_Nothing;
 
+   procedure Do_Nothing (Group : in out XML_Group) is
+      pragma Unreferenced (Group);
+   begin
+      null;
+   end Do_Nothing;
+
    ------------
    -- Lookup --
    ------------
@@ -998,9 +1000,9 @@ package body Schema.Validators is
       if Typ = No_Type and then Create_If_Needed then
          Tmp := new XML_Type_Record'
            (Sax.Pointers.Root_Encapsulated with
-            Local_Name  => new Byte_Sequence'(Local_Name),
-            Validator   => No_Validator,
-            Simple_Type => Unknown_Content,
+            Local_Name        => new Byte_Sequence'(Local_Name),
+            Validator         => No_Validator,
+            Simple_Type       => Unknown_Content,
             Block_Extension   => Grammar.Block_Extension,
             Block_Restriction => Grammar.Block_Restriction);
          Typ := Allocate (Tmp);
@@ -1053,7 +1055,7 @@ package body Schema.Validators is
    begin
       if Result = No_XML_Group then
          Result := Create_Global_Group (Grammar, Local_Name);
-         Result.Is_Forward_Decl := True;
+         Get (Result).Is_Forward_Decl := True;
       end if;
       return Result;
    end Lookup_Group;
@@ -1510,14 +1512,19 @@ package body Schema.Validators is
    is
       Old : constant XML_Group := Groups_Htable.Get
         (Grammar.Groups.all, Local_Name);
-      Result : XML_Group;
+      Tmp    : XML_Groups.Encapsulated_Access;
    begin
       if Old /= No_XML_Group then
-         Result := new XML_Group_Record'(Old.all);
-         Old.all := (Particles       => Empty_Particle_List,
-                     Local_Name      => new Byte_Sequence'(Local_Name),
-                     Is_Forward_Decl => True);
-         return Result;
+         --  Create a copy of Old
+         Tmp := new XML_Group_Record;
+         Tmp.Local_Name            := new Byte_Sequence'(Local_Name);
+         Tmp.Particles             := Get (Old).Particles;
+         Tmp.Is_Forward_Decl       := Get (Old).Is_Forward_Decl;
+
+         --  Make old invalid
+         Get (Old).Particles       := Empty_Particle_List;
+         Get (Old).Is_Forward_Decl := True;
+         return Allocate (Tmp);
       end if;
       return No_XML_Group;
    end Redefine_Group;
@@ -1694,19 +1701,22 @@ package body Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Group
    is
       Group : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
+      Tmp   : XML_Groups.Encapsulated_Access;
    begin
       if Group /= No_XML_Group then
-         if not Group.Is_Forward_Decl then
+         if not Get (Group).Is_Forward_Decl then
             Validation_Error
               ("Group has already been declared: " & Local_Name);
          end if;
 
-         Group.Is_Forward_Decl := False;
+         Get (Group).Is_Forward_Decl := False;
       else
-         Group := new XML_Group_Record'
-           (Local_Name      => new Byte_Sequence'(Local_Name),
+         Tmp := new XML_Group_Record'
+           (Sax.Pointers.Root_Encapsulated with
+            Local_Name      => new Byte_Sequence'(Local_Name),
             Particles       => Empty_Particle_List,
             Is_Forward_Decl => False);
+         Group := Allocate (Tmp);
          Groups_Htable.Set (Grammar.Groups.all, Group);
       end if;
       return Group;
@@ -1966,11 +1976,10 @@ package body Schema.Validators is
    -- Free --
    ----------
 
-   procedure Free (Group : in out XML_Group) is
+   procedure Free (Group : in out XML_Group_Record) is
    begin
       Free (Group.Local_Name);
       Free (Group.Particles);
-      Unchecked_Free (Group);
    end Free;
 
    ----------
@@ -2011,16 +2020,6 @@ package body Schema.Validators is
      (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
    begin
       return Get (Typ).Local_Name.all;
-   end Get_Key;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key
-     (Group : XML_Group) return Unicode.CES.Byte_Sequence is
-   begin
-      return Group.Local_Name.all;
    end Get_Key;
 
    -------------
@@ -2499,8 +2498,6 @@ package body Schema.Validators is
      (List       : in out Particle_List;
       Item       : XML_Particle) is
    begin
-      pragma Assert (List /= null, "List was never created");
-
       if Item.Max_Occurs /= Unbounded
         and then Item.Min_Occurs > Item.Max_Occurs
       then
@@ -2523,18 +2520,14 @@ package body Schema.Validators is
    ----------
 
    procedure Free (List : in out Particle_List) is
-      Tmp, Tmp2 : XML_Particle_Access;
+      Tmp2 : XML_Particle_Access;
    begin
-      if List /= null then
-         Tmp := List.First;
-         while Tmp /= null loop
-            Tmp2 := Tmp.Next;
-            Unchecked_Free (Tmp);
-            Tmp := Tmp2;
-         end loop;
-
-         Unchecked_Free (List);
-      end if;
+      while List.First /= null loop
+         Tmp2 := List.First.Next;
+         Unchecked_Free (List.First);
+         List.First := Tmp2;
+      end loop;
+      List.Last  := null;
    end Free;
 
    ---------------------
@@ -3108,15 +3101,6 @@ package body Schema.Validators is
       Unchecked_Free (Tmp);
    end Set_Substitution_Group;
 
-   -------------------------
-   -- Empty_Particle_List --
-   -------------------------
-
-   function Empty_Particle_List return Particle_List is
-   begin
-      return new Particle_List_Record;
-   end Empty_Particle_List;
-
    --------------------
    -- Get_Local_Name --
    --------------------
@@ -3124,7 +3108,7 @@ package body Schema.Validators is
    function Get_Local_Name
      (Group : XML_Group) return Unicode.CES.Byte_Sequence is
    begin
-      return Group.Local_Name.all;
+      return Get (Group).Local_Name.all;
    end Get_Local_Name;
 
    -----------------------
@@ -3165,7 +3149,7 @@ package body Schema.Validators is
       Min_Occurs : Natural := 1; Max_Occurs : Natural := 1) is
    begin
       Append
-        (Group.Particles, XML_Particle'
+        (Get (Group).Particles, XML_Particle'
            (Typ        => Particle_Nested,
             Validator  => Particle,
             Next       => null,
@@ -3210,12 +3194,12 @@ package body Schema.Validators is
       while Iter.Current /= null
         and then Iter.Current.Typ = Particle_Group
       loop
-         if Iter.Current.Group.Particles.First = null then
+         if Get (Iter.Current.Group).Particles.First = null then
             Next (Iter);
             exit;
          else
             Iter := new Particle_Iterator_Record'
-              (Current => Iter.Current.Group.Particles.First,
+              (Current => Get (Iter.Current.Group).Particles.First,
                Parent  => Iter);
          end if;
       end loop;
@@ -3242,20 +3226,20 @@ package body Schema.Validators is
          end if;
 
          Debug_Output ("--> End of group "
-                       & Iter.Current.Group.Local_Name.all);
+                       & Get_Local_Name (Iter.Current.Group));
 
          Iter.Current := Iter.Current.Next;
       end loop;
 
       while Iter.Current.Typ = Particle_Group loop
-         if Iter.Current.Group.Particles.First = null then
+         if Get (Iter.Current.Group).Particles.First = null then
             Next (Iter);
             exit;
          else
             Debug_Output ("--> In group "
-                          & Iter.Current.Group.Local_Name.all);
+                          & Get_Local_Name (Iter.Current.Group));
             Iter := new Particle_Iterator_Record'
-              (Current => Iter.Current.Group.Particles.First,
+              (Current => Get (Iter.Current.Group).Particles.First,
                Parent  => Iter);
          end if;
       end loop;
@@ -3394,11 +3378,11 @@ package body Schema.Validators is
 
          while Group_Iter /= Groups_Htable.No_Iterator loop
             Group := Current (Group_Iter);
-            if Group.Is_Forward_Decl then
+            if Get (Group).Is_Forward_Decl then
                Validation_Error
                  ("Group """
                   & To_QName (Grammar.Namespace_URI.all,
-                              Group.Local_Name.all)
+                              Get (Group).Local_Name.all)
                   & """ is referenced, but not defined");
             end if;
 
