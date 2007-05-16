@@ -57,7 +57,7 @@ package Debug_Readers is
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
    procedure Set_Document_Locator
      (Handler : in out Debug_Reader;
-      Loc     : Sax.Locators.Locator);
+      Loc     : in out Sax.Locators.Locator);
    procedure Start_Document (Handler : in out Debug_Reader);
    procedure End_Document (Handler : in out Debug_Reader);
    procedure Start_Prefix_Mapping

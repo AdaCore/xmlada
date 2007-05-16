@@ -168,7 +168,7 @@ package body Debug_Readers is
 
    procedure Set_Document_Locator
      (Handler : in out Debug_Reader;
-      Loc     : Sax.Locators.Locator) is
+      Loc     : in out Sax.Locators.Locator) is
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Set_Document_Locator ()");
