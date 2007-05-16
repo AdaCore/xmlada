@@ -811,6 +811,11 @@ package body Schema.Validators is
 
       Attributes_Htable.Reset (Visited);
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Attributes_Htable.Reset (Visited);
+         raise;
    end Validate_Attributes;
 
    --------------------------
@@ -2130,6 +2135,12 @@ package body Schema.Validators is
       Free (Group_Model_Data_Record (Data));
    end Free;
 
+   procedure Free (Data : in out Choice_Data) is
+   begin
+      Free (Data.Current);
+      Free (Group_Model_Data_Record (Data));
+   end Free;
+
    ---------------------------
    -- Move_To_Next_Particle --
    ---------------------------
@@ -2694,6 +2705,7 @@ package body Schema.Validators is
       Next (D.Current);
       Has_Single_Choice := Get (D.Current) = null;
 
+      Free (D.Current);
       D.Current := Start (Validator.Particles);
 
       --  Check whether the current item is valid
@@ -3011,11 +3023,14 @@ package body Schema.Validators is
          if Applies then
             Debug_Output ("Applies");
             Debug_Pop_Prefix;
+            Free (Item);
             return;
          end if;
 
          Next (Item);
       end loop;
+
+      Free (Item);
 
       Applies := False;
       Skip_Current := Can_Be_Empty (Group);

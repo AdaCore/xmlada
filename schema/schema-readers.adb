@@ -628,6 +628,10 @@ package body Schema.Readers is
 
       Push (Validating_Reader (Handler).Validators, Element,
             Typ, G, Data, Is_Nil);
+   exception
+      when others =>
+         Free (Data);
+         raise;
    end Hook_Start_Element;
 
    ----------------------
@@ -722,6 +726,8 @@ package body Schema.Readers is
 
    procedure Reset (Parser : in out Validating_Reader) is
    begin
+      Parser.Grammar := No_Grammar;
+      Parser.Locator := No_Locator;
       Free  (Parser.Ids);
       Clear (Parser.Validators);
       Free  (Parser.Prefixes);

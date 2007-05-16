@@ -97,6 +97,7 @@ package body Schema.Validators.Extensions is
    begin
       Free (Data.Base_Data);
       Free (Data.Extension_Data);
+      Free (Validator_Data_Record (Data));
    end Free;
 
    ---------------------------

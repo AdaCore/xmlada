@@ -1357,6 +1357,10 @@ private
       Num_Occurs_Of_Current : Natural;
    end record;
    type Choice_Data_Access is access all Choice_Data'Class;
+
+   procedure Free (Data : in out Choice_Data);
+   --  See inherited documentation
+
    procedure Validate_Start_Element
      (Validator              : access Choice_Record;
       Local_Name             : Unicode.CES.Byte_Sequence;

@@ -20,8 +20,9 @@ package body Schema.Schema_Readers is
 
    Debug : Boolean := False;
 
-   procedure Free (C : in out Context_Access);
-   --  Free the memory occupied by C
+   procedure Free (C : in out Context_Access; Recurse : Boolean);
+   --  Free the memory occupied by C.
+   --  If Recurse is true, then the whole list is freed
 
    procedure Get_Grammar_For_Namespace
      (Handler : in out Schema_Reader'Class;
@@ -286,6 +287,11 @@ package body Schema.Schema_Readers is
            (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
          Parse (Validating_Reader (Parser), Input);
       end if;
+
+   exception
+      when others =>
+         Free (Parser.Contexts, Recurse => True);
+         raise;
    end Parse;
 
    ----------------------
@@ -2244,7 +2250,7 @@ package body Schema.Schema_Readers is
       --  Free the context
       if Handled then
          Handler.Contexts := Handler.Contexts.Next;
-         Free (C);
+         Free (C, Recurse => False);
       end if;
    end End_Element;
 
@@ -2252,19 +2258,25 @@ package body Schema.Schema_Readers is
    -- Free --
    ----------
 
-   procedure Free (C : in out Context_Access) is
+   procedure Free (C : in out Context_Access; Recurse : Boolean) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Context, Context_Access);
+      Tmp : Context_Access;
    begin
-      if C /= null then
+      while C /= null loop
          case C.Typ is
             when Context_Type_Def =>
                Free (C.Type_Name);
             when others =>
                null;
          end case;
+
+         Tmp := C.Next;
          Unchecked_Free (C);
-      end if;
+
+         exit when not Recurse;
+         C := Tmp;
+      end loop;
    end Free;
 
    ----------------

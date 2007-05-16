@@ -212,6 +212,7 @@ package body Schema.Validators.Restrictions is
    procedure Free (Data : in out Restriction_Data) is
    begin
       Free (Data.Restriction_Data);
+      Free (Validator_Data_Record (Data));
    end Free;
 
    ---------------------------
@@ -223,6 +224,7 @@ package body Schema.Validators.Restrictions is
    is
       D : constant Restriction_Data_Access := new Restriction_Data;
    begin
+      Free (D.Restriction_Data);
       if Validator.Restriction /= No_Validator then
          D.Restriction_Data := Create_Validator_Data (+Validator.Restriction);
       else
