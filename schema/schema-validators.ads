@@ -903,13 +903,21 @@ private
    -- Attribute_Group --
    ---------------------
 
-   type XML_Attribute_Group_Record is record
-      Local_Name : Unicode.CES.Byte_Sequence_Access;
-      Attributes : Attribute_Validator_List_Access;
-      Is_Forward_Decl : Boolean;
-   end record;
-   type XML_Attribute_Group is access XML_Attribute_Group_Record;
-   Empty_Attribute_Group : constant XML_Attribute_Group := null;
+   type XML_Attribute_Group_Record is new Sax.Pointers.Root_Encapsulated with
+      record
+         Local_Name : Unicode.CES.Byte_Sequence_Access;
+         Attributes : Attribute_Validator_List_Access;
+         Is_Forward_Decl : Boolean;
+      end record;
+
+   procedure Free (Att : in out XML_Attribute_Group_Record);
+   --  See inherited documentation
+
+   package XML_Attribute_Groups is new Sax.Pointers.Smart_Pointers
+     (XML_Attribute_Group_Record);
+   type XML_Attribute_Group is new XML_Attribute_Groups.Pointer;
+   Empty_Attribute_Group : constant XML_Attribute_Group :=
+     XML_Attribute_Group (XML_Attribute_Groups.Null_Pointer);
 
    -------------------
    -- XML_Validator --
@@ -1178,12 +1186,12 @@ private
 
    function Get_Key
      (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence;
-   procedure Free (Att : in out XML_Attribute_Group);
+   procedure Do_Nothing (T : in out XML_Attribute_Group);
 
    package Attribute_Groups_Htable is new Sax.HTable
      (Element       => XML_Attribute_Group,
       Empty_Element => Empty_Attribute_Group,
-      Free          => Free,
+      Free          => Do_Nothing,
       Key           => Unicode.CES.Byte_Sequence,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,

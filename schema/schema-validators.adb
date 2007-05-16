@@ -354,7 +354,7 @@ package body Schema.Validators is
    is
       L : Attribute_Validator_List_Access;
    begin
-      if Group = null then
+      if Group = Empty_Attribute_Group then
          Validation_Error
            ("Cannot add null attribute group");
       end if;
@@ -430,7 +430,7 @@ package body Schema.Validators is
      (Group : in out XML_Attribute_Group;
       Attr  : Attribute_Validator) is
    begin
-      Append (Group.Attributes, Attr, Override => True);
+      Append (Get (Group).Attributes, Attr, Override => True);
    end Add_Attribute;
 
    -------------------------
@@ -452,10 +452,10 @@ package body Schema.Validators is
      (Group : in out XML_Attribute_Group;
       Attr  : XML_Attribute_Group) is
    begin
-      if Attr = null then
+      if Attr = Empty_Attribute_Group then
          Debug_Output ("Add_Attribute_Group: adding empty attribute group");
       end if;
-      Append (Group.Attributes, Attr);
+      Append (Get (Group).Attributes, Attr);
    end Add_Attribute_Group;
 
    --------------
@@ -718,9 +718,9 @@ package body Schema.Validators is
       procedure Recursive_Check (List : Attribute_Or_Group) is
       begin
          if List.Is_Group then
-            if List.Group.Attributes /= null then
-               for L in List.Group.Attributes'Range loop
-                  Recursive_Check (List.Group.Attributes (L));
+            if Get (List.Group).Attributes /= null then
+               for L in Get (List.Group).Attributes'Range loop
+                  Recursive_Check (Get (List.Group).Attributes (L));
                end loop;
             end if;
 
@@ -808,6 +808,7 @@ package body Schema.Validators is
          end if;
       end loop;
 
+      Attributes_Htable.Reset (Visited);
       Debug_Pop_Prefix;
    end Validate_Attributes;
 
@@ -970,6 +971,12 @@ package body Schema.Validators is
       null;
    end Do_Nothing;
 
+   procedure Do_Nothing (T : in out XML_Attribute_Group) is
+      pragma Unreferenced (T);
+   begin
+      null;
+   end Do_Nothing;
+
    ------------
    -- Lookup --
    ------------
@@ -1059,7 +1066,7 @@ package body Schema.Validators is
       if Result = Empty_Attribute_Group then
          Debug_Output ("Lookup_Attribute_Group: Create forward decl");
          Result := Create_Global_Attribute_Group (Grammar, Local_Name);
-         Result.Is_Forward_Decl := True;
+         Get (Result).Is_Forward_Decl := True;
       end if;
       return Result;
    end Lookup_Attribute_Group;
@@ -1709,19 +1716,22 @@ package body Schema.Validators is
    is
       Group : XML_Attribute_Group := Attribute_Groups_Htable.Get
         (NS.Attribute_Groups.all, Local_Name);
+      Tmp   : XML_Attribute_Groups.Encapsulated_Access;
    begin
       if Group /= Empty_Attribute_Group then
-         if not Group.Is_Forward_Decl then
+         if not Get (Group).Is_Forward_Decl then
             Validation_Error
               ("Attribute group has already been declared: " & Local_Name);
          end if;
 
-         Group.Is_Forward_Decl := False;
+         Get (Group).Is_Forward_Decl := False;
       else
-         Group := new XML_Attribute_Group_Record'
-           (Local_Name => new Unicode.CES.Byte_Sequence'(Local_Name),
+         Tmp := new XML_Attribute_Group_Record'
+           (Sax.Pointers.Root_Encapsulated with
+            Local_Name => new Unicode.CES.Byte_Sequence'(Local_Name),
             Attributes => null,
             Is_Forward_Decl => False);
+         Group := Allocate (Tmp);
          Attribute_Groups_Htable.Set (NS.Attribute_Groups.all, Group);
       end if;
 
@@ -1961,9 +1971,10 @@ package body Schema.Validators is
    -- Free --
    ----------
 
-   procedure Free (Att : in out XML_Attribute_Group) is
+   procedure Free (Att : in out XML_Attribute_Group_Record) is
    begin
       Free (Att.Local_Name);
+      Free (Att.Attributes);
    end Free;
 
    -------------
@@ -1973,7 +1984,7 @@ package body Schema.Validators is
    function Get_Key
      (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence is
    begin
-      return Att.Local_Name.all;
+      return Get (Att).Local_Name.all;
    end Get_Key;
 
    -------------
@@ -3360,11 +3371,11 @@ package body Schema.Validators is
 
          while Attr_Group_Iter /= Attribute_Groups_Htable.No_Iterator loop
             Attr_Group := Current (Attr_Group_Iter);
-            if Attr_Group.Is_Forward_Decl then
+            if Get (Attr_Group).Is_Forward_Decl then
                Validation_Error
                  ("attributeGroup """
                   & To_QName (Grammar.Namespace_URI.all,
-                              Attr_Group.Local_Name.all)
+                              Get (Attr_Group).Local_Name.all)
                   & """ is referenced, but not defined");
             end if;
             Next (Grammar.Attribute_Groups.all, Attr_Group_Iter);
