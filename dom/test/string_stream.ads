@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2007, AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -26,27 +26,29 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
---  This example shows how an XML tree can be converted to a string
---  in memory, without going through a temporary file on the disk
+--  This package provides an example of an Ada stream that reads or
+--  writes to an in-memory string. This can be used when printing a
+--  DOM tree for instance (see tostring.adb)
 
-with String_Stream;         use String_Stream;
 with Ada.Streams;           use Ada.Streams;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Text_IO;           use Ada.Text_IO;
-with DOM.Core.Nodes;        use DOM.Core.Nodes;
-with DOM.Readers;           use DOM.Readers;
-with Input_Sources.File;    use Input_Sources.File;
 
-procedure ToString is
-   Input  : File_Input;
-   Reader : Tree_Reader;
-   Output : aliased String_Stream_Type;
-begin
-   Open ("test.xml", Input);
-   Parse (Reader, Input);
-   Close (Input);
+package String_Stream is
 
-   Open (Output, "");
-   Write (Output'Access, Get_Tree (Reader));
-   Put_Line (To_String (Output.Str));
-end ToString;
+   type String_Stream_Type is new Root_Stream_Type with record
+      Str        : Unbounded_String;
+      Read_Index : Natural := 1;
+   end record;
+   procedure Read
+     (Stream : in out String_Stream_Type;
+      Item   :    out Stream_Element_Array;
+      Last   :    out Stream_Element_Offset);
+   procedure Write
+      (Stream : in out String_Stream_Type;
+       Item   : Stream_Element_Array);
+   procedure Open
+      (Stream : in out String_Stream_Type'Class;
+       Str    : String);
+   --  Declare a new stream type to write strings in memory
+
+end String_Stream;

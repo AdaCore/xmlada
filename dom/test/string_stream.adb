@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2007, AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -26,27 +26,57 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
---  This example shows how an XML tree can be converted to a string
---  in memory, without going through a temporary file on the disk
+package body String_Stream is
 
-with String_Stream;         use String_Stream;
-with Ada.Streams;           use Ada.Streams;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Text_IO;           use Ada.Text_IO;
-with DOM.Core.Nodes;        use DOM.Core.Nodes;
-with DOM.Readers;           use DOM.Readers;
-with Input_Sources.File;    use Input_Sources.File;
+   -----------
+   -- Write --
+   -----------
 
-procedure ToString is
-   Input  : File_Input;
-   Reader : Tree_Reader;
-   Output : aliased String_Stream_Type;
-begin
-   Open ("test.xml", Input);
-   Parse (Reader, Input);
-   Close (Input);
+   procedure Write
+     (Stream : in out String_Stream_Type;
+      Item   : Stream_Element_Array)
+   is
+      Str : String (1 .. Integer (Item'Length));
+      S   : Integer := Str'First;
+   begin
+      for J in Item'Range loop
+         Str (S) := Character'Val (Item (J));
+         S := S + 1;
+      end loop;
+      Append (Stream.Str, Str);
+   end Write;
 
-   Open (Output, "");
-   Write (Output'Access, Get_Tree (Reader));
-   Put_Line (To_String (Output.Str));
-end ToString;
+   ----------
+   -- Open --
+   ----------
+
+   procedure Open
+     (Stream : in out String_Stream_Type'Class;
+      Str    : in String) is
+   begin
+      Stream.Str        := To_Unbounded_String (Str);
+      Stream.Read_Index := 1;
+   end Open;
+
+   ----------
+   -- Read --
+   ----------
+
+   procedure Read
+     (Stream : in out String_Stream_Type;
+      Item   :    out Stream_Element_Array;
+      Last   :    out Stream_Element_Offset)
+   is
+      Str : constant String := Slice
+        (Stream.Str, Stream.Read_Index, Stream.Read_Index + Item'Length - 1);
+      J   : Stream_Element_Offset := Item'First;
+   begin
+      for S in Str'Range loop
+         Item (J) := Stream_Element (Character'Pos (Str (S)));
+         J := J + 1;
+      end loop;
+      Last := Item'First + Str'Length - 1;
+      Stream.Read_Index := Stream.Read_Index + Item'Length;
+   end Read;
+
+end String_Stream;
