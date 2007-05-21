@@ -30,7 +30,6 @@
 --  in memory, without going through a temporary file on the disk
 
 with String_Stream;         use String_Stream;
-with Ada.Streams;           use Ada.Streams;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;           use Ada.Text_IO;
 with DOM.Core.Nodes;        use DOM.Core.Nodes;
