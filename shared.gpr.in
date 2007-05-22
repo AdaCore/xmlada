@@ -68,7 +68,7 @@ project Shared is
    end linker;        
 
    package Ide is
-      for VCS_Kind use "cvs";
+      for VCS_Kind use "Subversion";
    end Ide;
  
 end Shared;
