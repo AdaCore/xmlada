@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2007, AdaCore            --
+--                Copyright (C) 2003-2007, AdaCore                   --
 --                                                                   --
 -----------------------------------------------------------------------
 
@@ -10,18 +10,22 @@ with Schema.Validators; use Schema.Validators;
 
 package body Schema.Schema_Grammar is
 
+   ---------------------------
+   -- Add_Schema_For_Schema --
+   ---------------------------
+
    procedure Add_Schema_For_Schema
      (Grammar : in out Schema.Validators.XML_Grammar)
    is
-      G, XML_G                   : XML_Grammar_NS;
-      Typ, Typ2                  : XML_Validator;
-      Seq1, Seq2                 : Group_Model;
-      Choice1                    : Group_Model;
-      All_Validator              : XML_Type;
-      Elem                       : XML_Element;
-      Gr                         : XML_Group;
-      Union, Union2              : XML_Validator;
-      Attr                       : XML_Attribute_Group;
+      G, XML_G      : XML_Grammar_NS;
+      Typ, Typ2     : XML_Validator;
+      Seq1, Seq2    : Group_Model;
+      Choice1       : Group_Model;
+      All_Validator : XML_Type;
+      Elem          : XML_Element;
+      Gr            : XML_Group;
+      Union, Union2 : XML_Validator;
+      Attr          : XML_Attribute_Group;
    begin
       --  Have we already added these namespaces to Grammar ?
 
