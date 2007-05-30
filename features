@@ -31,6 +31,10 @@ New features in version 3.0 (Development version)
     This provides additional capabilities over DOM.Core.Print, for instance
     output to sockets or memory without going through a file on disk.
     See also the new example dom/tests/tostring.adb
+  - G522-006 Support for pretty-printing in the output
+    When a DOM tree is output, an extra parameter was added to Write to
+    control the pretty-printing (ie special handling of whitespaces and
+    newline character to hopefully make the output more readable to humans)
 
 New features in version 2.3
 ===========================

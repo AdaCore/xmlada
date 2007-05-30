@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007                     --
---                            AdaCore                                --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -27,14 +26,14 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Text_IO.Text_Streams;
 with DOM.Core.Attrs;            use DOM.Core.Attrs;
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Sax.Encodings;             use Sax.Encodings;
 with Unicode.Encodings;         use Unicode.Encodings;
-with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Text_IO.Text_Streams;
 
 package body DOM.Core.Nodes is
 
@@ -1173,6 +1172,7 @@ package body DOM.Core.Nodes is
       Print_Comments : Boolean := True;
       Print_XML_PI   : Boolean := True;
       With_URI       : Boolean := False;
+      Pretty_Print   : Boolean := False;
       EOL_Sequence   : String  := "" & ASCII.LF;
       Encoding       : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
@@ -1189,6 +1189,43 @@ package body DOM.Core.Nodes is
 
       procedure Recursive_Print (List : Node_List);
       --  Print all nodes in List
+
+      function Has_Non_Whitespace (N : Text) return Boolean;
+      --  True if the text code contains text other than whitespaces
+
+      procedure Newline;
+      --  Go to the next line, when pretty-printing is activated
+
+      Indent : Natural := 0;
+
+      -------------
+      -- Newline --
+      -------------
+
+      procedure Newline is
+      begin
+         if Pretty_Print then
+            String'Write (Stream, "" & ASCII.LF);
+         end if;
+      end Newline;
+
+      ------------------------
+      -- Has_Non_Whitespace --
+      ------------------------
+
+      function Has_Non_Whitespace (N : Text) return Boolean is
+         Val   : constant Byte_Sequence := Node_Value (N);
+      begin
+         for V in Val'Range loop
+            if Val (V) /= ' '
+              and then Val (V) /= ASCII.HT
+              and then Val (V) /= ASCII.LF
+            then
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Has_Non_Whitespace;
 
       ---------------------
       -- Recursive_Print --
@@ -1213,6 +1250,10 @@ package body DOM.Core.Nodes is
 
          case N.Node_Type is
             when Element_Node =>
+               if Pretty_Print then
+                  String'Write (Stream, (1 .. Indent => ' '));
+               end if;
+
                Put (Stream, Less_Than_Sequence, Encoding);
                Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
 
@@ -1230,12 +1271,32 @@ package body DOM.Core.Nodes is
                else
                   Put (Stream, Greater_Than_Sequence, Encoding);
 
-                  Recursive_Print (N.Children);
+                  --  If the first child is a text node with text other than
+                  --  whitespaces, we'll have to preserve whitespaces in the
+                  --  children, otherwise we are free to modify them when
+                  --  pretty-printing.
 
+                  if Pretty_Print then
+                     if Length (N.Children) = 0
+                       or else N.Children.Items (0).Node_Type /= Text_Node
+                       or else not Has_Non_Whitespace (N.Children.Items (0))
+                     then
+                        Newline;
+                     end if;
+                  end if;
+
+                  Indent := Indent + 1;
+                  Recursive_Print (N.Children);
+                  Indent := Indent - 1;
+
+                  if Pretty_Print then
+                     String'Write (Stream, (1 .. Indent => ' '));
+                  end if;
                   Put (Stream, Less_Than_Sequence & Slash_Sequence, Encoding);
                   Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
                   Put (Stream, Greater_Than_Sequence, Encoding);
                end if;
+               Newline;
 
             when Attribute_Node =>
                Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
@@ -1270,12 +1331,18 @@ package body DOM.Core.Nodes is
                  (Stream,
                   N.Pi_Data.all & Question_Mark_Sequence
                   & Greater_Than_Sequence, Encoding);
+               Newline;
 
             when Comment_Node =>
                if Print_Comments then
+                  if Pretty_Print then
+                     Newline;
+                     String'Write (Stream, (1 .. Indent => ' '));
+                  end if;
                   Put (Stream, "<!--", Encoding);
                   Put (Stream, Node_Value (N), Encoding);
                   Put (Stream, "-->", Encoding);
+                  Newline;
                end if;
 
             when Document_Node =>
@@ -1296,7 +1363,41 @@ package body DOM.Core.Nodes is
                null;
 
             when Text_Node =>
-               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               if not Pretty_Print then
+                  Print_String
+                    (Stream, Node_Value (N), EOL_Sequence, Encoding);
+
+               elsif Has_Non_Whitespace (N) then
+                  declare
+                     Val   : constant Byte_Sequence := Node_Value (N);
+                     First : Integer := Val'Last + 1;
+                     Last  : Integer := Val'Last;
+                  begin
+                     for V in Val'Range loop
+                        if Val (V) /= ' '
+                          and then Val (V) /= ASCII.HT
+                          and then Val (V) /= ASCII.LF
+                        then
+                           First := V;
+                           exit;
+                        end if;
+                     end loop;
+
+                     for V in reverse First + 1 .. Val'Last loop
+                        if Val (V) /= ' '
+                          and then Val (V) /= ASCII.HT
+                          and then Val (V) /= ASCII.LF
+                        then
+                           Last := V;
+                           exit;
+                        end if;
+                     end loop;
+
+                     Print_String
+                       (Stream, Val (First .. Last),
+                        EOL_Sequence, Encoding);
+                  end;
+               end if;
 
             when others =>
                Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);

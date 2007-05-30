@@ -248,6 +248,7 @@ package DOM.Core.Nodes is
       Print_Comments : Boolean := True;
       Print_XML_PI   : Boolean := True;
       With_URI       : Boolean := False;
+      Pretty_Print   : Boolean := False;
       EOL_Sequence   : String  := "" & ASCII.LF;
       Encoding       : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
@@ -269,6 +270,14 @@ package DOM.Core.Nodes is
    --
    --  If Collapse_Empty_Nodes is true, then nodes with no child node will be
    --  output as <name/>, instead of <name></name>
+   --
+   --  If Pretty_Print is true, then the XML nodes will be indented so that
+   --  children nodes are to the right of their parents. It is set to False
+   --  by default because its use changes the document (addition or removal
+   --  of whitespaces among other things), which in general has no effect for
+   --  automatic tools reading the document. All whitespaces are modified
+   --  outside of elements containing nothing but text nodes. For text nodes,
+   --  leading and trailing whitespaces are also deleted
 
    -----------------------
    -- Extra subprograms --

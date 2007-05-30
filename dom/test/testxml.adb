@@ -26,10 +26,10 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Command_Line;   use Ada.Command_Line;
+with Ada.Command_Line;      use Ada.Command_Line;
 with Ada.Direct_IO;
-with Ada.Exceptions;     use Ada.Exceptions;
-with Ada.Text_IO;        use Ada.Text_IO;
+with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Text_IO.Text_Streams; use Ada.Text_IO.Text_Streams;
 with Ada.Unchecked_Deallocation;
 with DOM.Core.Documents; use DOM.Core, DOM.Core.Documents;
@@ -103,6 +103,7 @@ procedure Testxml is
    Collapse_Empty_Nodes : Boolean := False;
    Auto_Run : Boolean := False;
    Verbose : Boolean := False;
+   Pretty_Print : Boolean := False;
 
    type Testcases_Result is record
       Success_Count   : Natural := 0;
@@ -255,7 +256,7 @@ procedure Testxml is
       return Read;
 
    exception
-      when Name_Error =>
+      when Ada.Text_IO.Name_Error =>
          Put_Line (Standard_Error, "Cannot open " & XML_File);
          return null;
    end Open_Input;
@@ -296,13 +297,16 @@ procedure Testxml is
          if Dump then
             DOM.Core.Nodes.Dump (Get_Tree (Reader), With_URI => With_URI);
          else
-            Print (Get_Tree (Reader),
-                   Print_Comments => Print_Comments,
-                   Print_XML_PI   => Print_XML_PI,
-                   With_URI       => With_URI,
-                   EOL_Sequence   => EOL.all,
-                   Encoding       => Encoding_Out,
-                   Collapse_Empty_Nodes => Collapse_Empty_Nodes);
+            Write
+              (Stream               => Stream (Current_Output),
+               N                    => Get_Tree (Reader),
+               Print_Comments       => Print_Comments,
+               Print_XML_PI         => Print_XML_PI,
+               With_URI             => With_URI,
+               EOL_Sequence         => EOL.all,
+               Pretty_Print         => Pretty_Print,
+               Encoding             => Encoding_Out,
+               Collapse_Empty_Nodes => Collapse_Empty_Nodes);
          end if;
       end if;
 
@@ -647,7 +651,7 @@ procedure Testxml is
             return Single_Ignore;
          end if;
 
-      when Name_Error =>
+      when Ada.Text_IO.Name_Error =>
          Cleanup;
          if Show_Not_Found_Tests then
             New_Line;
@@ -868,7 +872,7 @@ begin
    loop
       case Getopt
         ("silent uri normalize validate dump valid_chars encoding-out: eol:"
-         & " comments xmlpi collapse nonamespaces auto verbose")
+         & " comments xmlpi collapse nonamespaces auto verbose pretty")
       is
          when ASCII.Nul => exit;
          when 'e' =>
@@ -899,7 +903,15 @@ begin
             elsif Full_Switch = "verbose" then
                Verbose := True;
             end if;
-         when 'd' => Dump := True;
+         when 'd' =>
+            Dump := True;
+         when 'p' =>
+            Print_XML_PI := True;
+            Pretty_Print := True;
+            Collapse_Empty_Nodes := True;
+            Print_Comments := True;
+            Free (EOL);
+            EOL := new String'("" & ASCII.LF);
          when 'n' =>
             if Full_Switch = "normalize" then
                Must_Normalize := True;
