@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2007, AdaCore            --
+--                       Copyright (C) 2004-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -140,7 +140,7 @@ private
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator;
       Prefixes   : Prefix_Mapping_Access;
-      Ids        : Schema.Validators.Id_Htable_Access;
+      Ids        : aliased Schema.Validators.Id_Htable_Access;
    end record;
 
    procedure Parse

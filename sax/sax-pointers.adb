@@ -33,16 +33,6 @@ package body Sax.Pointers is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Encapsulated'Class, Root_Encapsulated_Access);
 
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Data : access Root_Encapsulated) return String is
-      pragma Unreferenced (Data);
-   begin
-      return "<unknown>";
-   end Get_Name;
-
    ----------
    -- Free --
    ----------
@@ -64,9 +54,10 @@ package body Sax.Pointers is
       --------------
 
       function Allocate (Data : Encapsulated'Class) return Pointer is
+         Tmp : constant Encapsulated_Access :=
+           new Encapsulated'Class'(Data);
       begin
-         return (Ada.Finalization.Controlled with
-                 Data => new Encapsulated'Class'(Data));
+         return Allocate (Tmp);
       end Allocate;
 
       function Allocate (Data : access Encapsulated'Class) return Pointer is
@@ -90,7 +81,11 @@ package body Sax.Pointers is
 
       procedure Finalize (P : in out Pointer) is
       begin
-         if P.Data /= null then
+         --  Test if refcount is > 0, in case we are already freeing this
+         --  element. That shouldn't happen, though, since we are not in a
+         --  multi-tasking environment.
+
+         if P.Data /= null and then P.Data.Refcount > 0 then
             P.Data.Refcount := P.Data.Refcount - 1;
             if P.Data.Refcount = 0 then
                Free (P.Data.all);

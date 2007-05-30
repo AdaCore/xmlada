@@ -29,10 +29,12 @@
 private package Schema.Validators.Extensions is
 
    function Create_Extension_Of
-     (Base      : XML_Type;
-      Extension : XML_Validator := No_Validator) return XML_Validator;
+     (G         : XML_Grammar_NS;
+      Base      : XML_Type;
+      Extension : XML_Validator := null) return XML_Validator;
    function Create_Extension_Of
-     (Base       : XML_Type;
+     (G          : XML_Grammar_NS;
+      Base       : XML_Type;
       Group      : XML_Group;
       Min_Occurs : Natural := 1;
       Max_Occurs : Integer := 1) return XML_Validator;

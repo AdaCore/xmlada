@@ -57,10 +57,6 @@ package Sax.Pointers is
    --  Free the memory associated with Data.
    --  By default, it does nothing
 
-   function Get_Name (Data : access Root_Encapsulated) return String;
-   --  ??? Debug only, will be removed
-   --  Print a debug string identifying Data. This is for debug purposes only.
-
    generic
       type Encapsulated is abstract new Root_Encapsulated with private;
    package Smart_Pointers is

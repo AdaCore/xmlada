@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2007, AdaCore            --
+--                       Copyright (C) 2004-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -164,10 +164,11 @@ package body Schema.Validators.Lists is
    -------------
 
    function List_Of (Typ : XML_Type) return XML_Validator is
-      Validator : constant List_Validator := new List_Validator_Record;
+      Validator : List_Validator;
    begin
+      Validator := new List_Validator_Record;
       Validator.Base := Typ;
-      return Allocate (Validator);
+      return XML_Validator (Validator);
    end List_Of;
 
    -------------------------
@@ -183,8 +184,10 @@ package body Schema.Validators.Lists is
       Last, Start  : Integer;
       C     : Unicode_Char;
    begin
-      Debug_Output ("Validate_Characters for list --" & Ch & "--"
-                    & Get_Name (Validator));
+      if Debug then
+         Debug_Output ("Validate_Characters for list --" & Ch & "--"
+                       & Get_Name (Validator));
+      end if;
 
       Check_Facet (Validator.Facets, Ch);
 
@@ -207,9 +210,11 @@ package body Schema.Validators.Lists is
                Last := Index;
                Encoding.Read (Ch, Index, C);
                if Is_White_Space (C) then
-                  Debug_Output ("  In list: " & Ch (Start .. Last - 1));
+                  if Debug then
+                     Debug_Output ("  In list: " & Ch (Start .. Last - 1));
+                  end if;
                   Validate_Characters
-                    (+Get_Validator (Validator.Base),
+                    (Get_Validator (Validator.Base),
                      Ch (Start .. Last - 1),
                      Empty_Element);
                   exit;
@@ -217,9 +222,11 @@ package body Schema.Validators.Lists is
             end loop;
 
             if Index > Ch'Last then
-               Debug_Output ("  In list: " & Ch (Start .. Ch'Last));
+               if Debug then
+                  Debug_Output ("  In list: " & Ch (Start .. Ch'Last));
+               end if;
                Validate_Characters
-                 (+Get_Validator (Validator.Base),
+                 (Get_Validator (Validator.Base),
                   Ch (Start .. Ch'Last),
                   Empty_Element);
             end if;

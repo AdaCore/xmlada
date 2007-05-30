@@ -45,6 +45,7 @@ with Schema.Schema_Readers; use Schema.Schema_Readers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Schema.Readers is
+
    Debug : Boolean := False;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -62,7 +63,7 @@ package body Schema.Readers is
 
    procedure Add_XML_Instance_Attributes
      (Handler   : in out Validating_Reader;
-      Validator : XML_Validator);
+      Validator : access XML_Validator_Record'Class);
    --  Add the standard attributes from the XMLSchema-Instance namespace to
    --  Tmp.
 
@@ -81,11 +82,13 @@ package body Schema.Readers is
    procedure Validate_Current_Characters (Handler : Validating_Reader'Class);
    --  Validate the current set of characters
 
-   procedure Free (Mapping : in out Prefix_Mapping_Access);
+   procedure Free
+     (Mapping : in out Prefix_Mapping_Access; Recursive : Boolean);
    --  Free the memory occupied by Mapping
 
    procedure Reset (Parser : in out Validating_Reader);
-   --  Reset the state of the parser so that we can parse other documents
+   --  Reset the state of the parser so that we can parse other documents.
+   --  This doesn't reset the grammar
 
    procedure Hook_Start_Element
      (Handler       : in out Reader'Class;
@@ -112,7 +115,7 @@ package body Schema.Readers is
       Prefix  : Unicode.CES.Byte_Sequence);
    procedure Hook_Set_Document_Locator
      (Handler : in out Reader'Class;
-      Loc     : Sax.Locators.Locator);
+      Loc     : in out Sax.Locators.Locator);
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
 
@@ -120,15 +123,21 @@ package body Schema.Readers is
    -- Free --
    ----------
 
-   procedure Free (Mapping : in out Prefix_Mapping_Access) is
+   procedure Free
+     (Mapping : in out Prefix_Mapping_Access; Recursive : Boolean)
+   is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Prefix_Mapping, Prefix_Mapping_Access);
+      Tmp : Prefix_Mapping_Access;
    begin
-      if Mapping /= null then
+      while Mapping /= null loop
+         Tmp := Mapping.Next;
          Free (Mapping.Prefix);
          Free (Mapping.Namespace);
          Unchecked_Free (Mapping);
-      end if;
+         exit when not Recursive;
+         Mapping := Tmp;
+      end loop;
    end Free;
 
    ----------------------
@@ -220,7 +229,7 @@ package body Schema.Readers is
 
    procedure Add_XML_Instance_Attributes
      (Handler   : in out Validating_Reader;
-      Validator : XML_Validator)
+      Validator : access XML_Validator_Record'Class)
    is
       XML_G, XML_IG : XML_Grammar_NS;
    begin
@@ -228,17 +237,17 @@ package body Schema.Readers is
       Get_NS (Handler.Grammar, XML_Instance_URI, Result => XML_IG);
 
       Add_Attribute
-        (+Validator,
+        (Validator,
          Create_Local_Attribute ("type", XML_IG, Lookup (XML_G, "string")));
       Add_Attribute
-        (+Validator,
+        (Validator,
          Create_Local_Attribute ("nil", XML_IG, Lookup (XML_G, "boolean")));
       Add_Attribute
-        (+Validator,
+        (Validator,
          Create_Local_Attribute ("schemaLocation", XML_IG,
-                                 List_Of (Lookup (XML_G, "string"))));
+                                 List_Of (XML_G, Lookup (XML_G, "string"))));
       Add_Attribute
-        (+Validator,
+        (Validator,
          Create_Local_Attribute ("noNamespaceSchemaLocation", XML_IG,
                                  Lookup (XML_G, "string")));
    end Add_XML_Instance_Attributes;
@@ -413,7 +422,7 @@ package body Schema.Readers is
 
             else
                Validate_Characters
-                 (+Get_Validator (Handler.Validators.Typ),
+                 (Get_Validator (Handler.Validators.Typ),
                   Handler.Validators.Characters.all,
                   Empty_Element => Empty_Element);
             end if;
@@ -518,7 +527,7 @@ package body Schema.Readers is
 
             if Get_Validator (Typ) /= Get_Validator (Get_Type (Element)) then
                Check_Replacement
-                 (+Get_Validator (Typ), Get_Type (Element),
+                 (Get_Validator (Typ), Get_Type (Element),
                   Had_Restriction => Had_Restriction,
                   Had_Extension   => Had_Extension);
 
@@ -577,15 +586,10 @@ package body Schema.Readers is
 
       if Validating_Reader (Handler).Validators /= null then
          Validate_Start_Element
-           (Validator         =>
-              +Get_Validator (Validating_Reader (Handler).Validators.Typ),
-            Local_Name        => Local_Name,
-            Namespace_URI     => Namespace_URI,
-            NS                => G,
-            Data              => Validating_Reader (Handler).Validators.Data,
-            Schema_Target_NS  =>
-              Get_Target_NS (Validating_Reader (Handler).Grammar),
-            Element_Validator => Element);
+           (Get_Validator (Validating_Reader (Handler).Validators.Typ),
+            Local_Name, Namespace_URI, G,
+            Validating_Reader (Handler).Validators.Data,
+            Get_Target_NS (Validating_Reader (Handler).Grammar), Element);
       else
          if Debug then
             Put_Line ("Getting element definition from grammar: "
@@ -612,10 +616,11 @@ package body Schema.Readers is
       end if;
 
       Compute_Type;
-      Data := Create_Validator_Data (+Get_Validator (Typ));
+      Data := Create_Validator_Data (Get_Validator (Typ));
 
       Validate_Attributes
-        (+Get_Validator (Typ), Atts, Validating_Reader (Handler).Ids,
+        (Get_Validator (Typ), Atts,
+         Validating_Reader (Handler).Ids'Access,
          Is_Nillable (Element), Is_Nil,
          Validating_Reader (Handler).Grammar);
 
@@ -628,6 +633,7 @@ package body Schema.Readers is
 
       Push (Validating_Reader (Handler).Validators, Element,
             Typ, G, Data, Is_Nil);
+
    exception
       when others =>
          Free (Data);
@@ -659,7 +665,7 @@ package body Schema.Readers is
          --  anyway, and some validators (sequence,...) will complain
          if not Validating_Reader (Handler).Validators.Is_Nil then
             Validate_End_Element
-              (+Get_Validator (Validating_Reader (Handler).Validators.Typ),
+              (Get_Validator (Validating_Reader (Handler).Validators.Typ),
                Qname,
                Validating_Reader (Handler).Validators.Data);
          end if;
@@ -726,11 +732,10 @@ package body Schema.Readers is
 
    procedure Reset (Parser : in out Validating_Reader) is
    begin
-      Parser.Grammar := No_Grammar;
       Parser.Locator := No_Locator;
       Free  (Parser.Ids);
       Clear (Parser.Validators);
-      Free  (Parser.Prefixes);
+      Free  (Parser.Prefixes, Recursive => True);
    end Reset;
 
    -----------
@@ -741,7 +746,7 @@ package body Schema.Readers is
      (Parser : in out Validating_Reader;
       Input  : in out Input_Sources.Input_Source'Class)
    is
-      Loc : Locator;
+      Loc : aliased Locator;
    begin
       if Get_Feature (Parser, Schema_Validation_Feature) then
          Set_Hooks (Parser,
@@ -814,7 +819,7 @@ package body Schema.Readers is
 
    procedure Hook_Set_Document_Locator
      (Handler : in out Reader'Class;
-      Loc     : Sax.Locators.Locator) is
+      Loc     : in out Sax.Locators.Locator) is
    begin
       Validating_Reader (Handler).Locator := Loc;
    end Hook_Set_Document_Locator;
@@ -849,7 +854,7 @@ package body Schema.Readers is
          if Validating_Reader (Handler).Prefixes.Prefix.all = Prefix then
             Validating_Reader (Handler).Prefixes :=
               Validating_Reader (Handler).Prefixes.Next;
-            Free (Tmp);
+            Free (Tmp, Recursive => False);
          else
             while Tmp.Next /= null
               and then Tmp.Next.Prefix.all /= Prefix
@@ -860,7 +865,7 @@ package body Schema.Readers is
             if Tmp.Next /= null then
                Tmp2 := Tmp.Next;
                Tmp.Next := Tmp2.Next;
-               Free (Tmp2);
+               Free (Tmp2, Recursive => False);
             end if;
          end if;
       end if;

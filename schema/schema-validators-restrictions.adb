@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2007, AdaCore            --
+--                       Copyright (C) 2004-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -94,7 +94,7 @@ package body Schema.Validators.Restrictions is
      (Validator : access Restriction_XML_Validator)
       return Facets_Description is
    begin
-      return Get_Facets_Description (+Get (Validator.Base).Validator);
+      return Get_Facets_Description (Validator.Base.Validator);
    end Get_Facets_Description;
 
    -------------------------
@@ -109,7 +109,7 @@ package body Schema.Validators.Restrictions is
    begin
       List := Validator.Attributes;
       Dependency1 := Validator.Restriction;
-      Dependency2 := Get (Validator.Base).Validator;
+      Dependency2 := Validator.Base.Validator;
    end Get_Attribute_Lists;
 
    ----------------------------
@@ -127,21 +127,25 @@ package body Schema.Validators.Restrictions is
    is
       D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
    begin
-      if Validator.Restriction /= No_Validator then
+      if Validator.Restriction /= null then
          Validate_Start_Element
-           (+Validator.Restriction, Local_Name, Namespace_URI, NS,
+           (Validator.Restriction, Local_Name, Namespace_URI, NS,
             D.Restriction_Data, Schema_Target_NS, Element_Validator);
 
-         if Element_Validator /= No_Element then
-            Debug_Output ("Validate_Start_Element: end of restriction, result="
-                          & Get_Local_Name (Element_Validator));
-         else
-            Debug_Output ("Validate_Start_Element: end of restriction, no"
-                          & " match from restriction");
+         if Debug then
+            if Element_Validator /= No_Element then
+               Debug_Output
+                 ("Validate_Start_Element: end of restriction, result="
+                  & Element_Validator.Elem.Local_Name.all);
+            else
+               Debug_Output
+                 ("Validate_Start_Element: end of restriction, no"
+                  & " match from restriction");
+            end if;
          end if;
       else
          Validate_Start_Element
-           (+Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
+           (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
             D.Restriction_Data, Schema_Target_NS, Element_Validator);
       end if;
    end Validate_Start_Element;
@@ -157,15 +161,14 @@ package body Schema.Validators.Restrictions is
    is
       Applies : Boolean;
    begin
-      if Get (Validator.Base).Validator /= No_Validator
+      if Validator.Base.Validator /= null
         and then Validator.Facets = null
       then
-         Validator.Facets :=
-           Get_Facets_Description (+Get (Validator.Base).Validator);
+         Validator.Facets := Get_Facets_Description (Validator.Base.Validator);
       end if;
 
       if Validator.Facets = null then
-         if Get (Validator.Base).Validator = No_Validator then
+         if Validator.Base.Validator = null then
             Validation_Error
               ("The type """ & Get_Local_Name (Validator.Base)
                & """ isn't known at this point. Please check the name and"
@@ -190,18 +193,21 @@ package body Schema.Validators.Restrictions is
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean) is
    begin
-      Debug_Output ("Validate_Characters for restriction --" & Ch & "--"
-                    & Get_Name (Validator));
+      if Debug then
+         Debug_Output
+           ("Validate_Characters for restriction --" & Ch & "--"
+            & Get_Name (Validator));
+      end if;
 
       if Validator.Facets /= null then
          Check_Facet (Validator.Facets.all, Ch);
       end if;
 
-      if Validator.Restriction /= No_Validator then
-         Validate_Characters (+Validator.Restriction, Ch, Empty_Element);
+      if Validator.Restriction /= null then
+         Validate_Characters (Validator.Restriction, Ch, Empty_Element);
       else
          Validate_Characters
-           (+Get_Validator (Validator.Base), Ch, Empty_Element);
+           (Get_Validator (Validator.Base), Ch, Empty_Element);
       end if;
    end Validate_Characters;
 
@@ -225,11 +231,11 @@ package body Schema.Validators.Restrictions is
       D : constant Restriction_Data_Access := new Restriction_Data;
    begin
       Free (D.Restriction_Data);
-      if Validator.Restriction /= No_Validator then
-         D.Restriction_Data := Create_Validator_Data (+Validator.Restriction);
+      if Validator.Restriction /= null then
+         D.Restriction_Data := Create_Validator_Data (Validator.Restriction);
       else
          D.Restriction_Data := Create_Validator_Data
-           (+Get_Validator (Validator.Base));
+           (Get_Validator (Validator.Base));
       end if;
       return Validator_Data (D);
    end Create_Validator_Data;
@@ -246,13 +252,13 @@ package body Schema.Validators.Restrictions is
    begin
       Had_Restriction := True;
 
-      if Get (Validator.Base).Block_Restriction then
+      if Validator.Base.Block_Restriction then
          Validation_Error
            ("Restrictions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
       end if;
 
-      if Get (Validator.Base).Block_Extension and then Had_Extension then
+      if Validator.Base.Block_Extension and then Had_Extension then
          Validation_Error
            ("Extensions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
@@ -260,7 +266,7 @@ package body Schema.Validators.Restrictions is
 
       if Validator.Base /= Typ then
          Check_Replacement
-           (+Get_Validator (Validator.Base), Typ,
+           (Get_Validator (Validator.Base), Typ,
             Had_Restriction => Had_Restriction,
             Had_Extension   => Had_Extension);
       end if;
@@ -282,14 +288,20 @@ package body Schema.Validators.Restrictions is
    ---------------------------
 
    function Create_Restriction_Of
-     (Base        : XML_Type;
-      Restriction : XML_Validator := No_Validator) return XML_Validator
+     (G           : XML_Grammar_NS;
+      Base        : XML_Type;
+      Restriction : XML_Validator := null) return XML_Validator
    is
       Result : constant Restriction_Type := new Restriction_XML_Validator;
    begin
+      Register (G, Base);
       Result.Base        := Base;
+      if Restriction /= null then
+         Register (G, Restriction);
+      end if;
       Result.Restriction := Restriction;
-      return Allocate (Result);
+      Register (G, Result);
+      return XML_Validator (Result);
    end Create_Restriction_Of;
 
 end Schema.Validators.Restrictions;

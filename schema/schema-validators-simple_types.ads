@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2007, AdaCore            --
+--                       Copyright (C) 2004-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -75,6 +75,9 @@ private package Schema.Validators.Simple_Types is
    end record;
    type XML_Union is access all XML_Union_Record'Class;
 
+   procedure Free (Union : in out XML_Union_Record);
+   --  See inherited documentation
+
    procedure Add_Union
      (Validator : access XML_Union_Record; Part : XML_Type);
    --  Add a new element to the union in Validator
@@ -83,7 +86,6 @@ private package Schema.Validators.Simple_Types is
      (Union         : access XML_Union_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean);
-   procedure Free (Validator : in out XML_Union_Record);
    --  See doc from inherited subprograms
 
 end Schema.Validators.Simple_Types;

@@ -10,18 +10,20 @@ New features in version 3.0 (Development version)
   - G404-019 fixed handling of use='required' in schemas
   - G425-003 schema-date_time.ads now contains subprograms to convert to
     standard Ada time representation
-  - G510-017 API change: ref-counted types
-    Most types have been made reference-counted, and memory management is
-    taken care of automatically. This fixes a number of memory leaks.
-  - Change the way substitution groups are implemented, since their proper
-    handling depended on the order in which they were created.
+  - G510-017 API change: ref-counted grammar
+    The XML_Grammar type is now reference-counted, and memory management is
+    taken care of automatically. This is a change of API, since the Free
+    subprogram no longer exists and doesn't need to be called by the user in
+    any case.
 
  SAX:
   - API change: sax.locators is now ref-counted
     The types in Sax.Locators are now reference-counted, and memory management
-    is taken care of automatically.
+    is taken care of automatically. This affects the primitive operation
+    Set_Document_Locator of the SAX parser.
     Unfortunately, the memory leaks could not easily be resolved without
-    breaking the API here. The changes are minor, but might affect user code
+    breaking the API here. The changes are minor, but might affect user code,
+    removing all needs for calling Ref/Unref
 
  DOM:
   - FA12-014, G508-017 DOM.Core.Write: new subprogram

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2007, AdaCore            --
+--                       Copyright (C) 2004-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -43,7 +43,7 @@ package body Schema.Validators.UR_Type is
    procedure Validate_Attributes
      (Validator         : access UR_Type_Validator;
       Atts              : in out Sax.Attributes.Attributes'Class;
-      Id_Table          : in out Id_Htable_Access;
+      Id_Table          : access Id_Htable_Access;
       Nillable          : Boolean;
       Is_Nil            : out Boolean;
       Grammar           : in out XML_Grammar);
@@ -71,10 +71,12 @@ package body Schema.Validators.UR_Type is
       Empty_Element  : Boolean)
    is
    begin
-      Debug_Output
-        ("Validate_Characters for UR_Type Process_Contents="
-         & Validator.Process_Contents'Img & ' ' & Ch
-         & ' ' & Empty_Element'Img);
+      if Debug then
+         Debug_Output
+           ("Validate_Characters for UR_Type Process_Contents="
+            & Validator.Process_Contents'Img & ' ' & Ch
+            & ' ' & Empty_Element'Img);
+      end if;
    end Validate_Characters;
 
    ----------------------------
@@ -92,9 +94,11 @@ package body Schema.Validators.UR_Type is
    is
       pragma Unreferenced (Data);
    begin
-      Debug_Output
-        ("Validate_Start_Element UR_Type Process_Contents="
-         & Validator.Process_Contents'Img);
+      if Debug then
+         Debug_Output
+           ("Validate_Start_Element UR_Type Process_Contents="
+            & Validator.Process_Contents'Img);
+      end if;
 
       --  ur-Type and anyType accept anything
 
@@ -114,11 +118,15 @@ package body Schema.Validators.UR_Type is
             Element_Validator := Lookup_Element
               (NS, Local_Name, Create_If_Needed => False);
             if Element_Validator = No_Element then
-               Debug_Output ("Definition not found for " & Local_Name);
+               if Debug then
+                  Debug_Output ("Definition not found for " & Local_Name);
+               end if;
                Element_Validator :=
                  Get_UR_Type_Element (Validator.Process_Contents);
             else
-               Debug_Output ("Definition found for " & Local_Name);
+               if Debug then
+                  Debug_Output ("Definition found for " & Local_Name);
+               end if;
             end if;
 
          when Process_Skip =>
@@ -135,7 +143,7 @@ package body Schema.Validators.UR_Type is
    procedure Validate_Attributes
      (Validator         : access UR_Type_Validator;
       Atts              : in out Sax.Attributes.Attributes'Class;
-      Id_Table          : in out Id_Htable_Access;
+      Id_Table          : access Id_Htable_Access;
       Nillable          : Boolean;
       Is_Nil            : out Boolean;
       Grammar           : in out XML_Grammar)
@@ -183,8 +191,8 @@ package body Schema.Validators.UR_Type is
             Validator := new UR_Type_Validator;
             Validator.Process_Contents := P;
             UR_Type_Element (P)  := Create_Local_Element
-              ("", Schema_NS,
-               Create_Local_Type (Allocate (Validator)), Qualified);
+              ("", Schema_NS, Create_Local_Type (Schema_NS, Validator),
+               Qualified);
          end loop;
       end if;
    end Create_UR_Type_Elements;

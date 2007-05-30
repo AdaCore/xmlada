@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2007, AdaCore            --
+--                       Copyright (C) 2004-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -122,13 +122,13 @@ private
             Element : Schema.Validators.XML_Element;
             Is_Ref  : Boolean;
          when Context_Sequence =>
-            Seq       : Schema.Validators.Group_Model;
+            Seq       : Schema.Validators.Sequence;
          when Context_Choice =>
-            C         : Schema.Validators.Group_Model;
+            C       : Schema.Validators.Choice;
          when Context_Schema | Context_Redefine =>
             null;
          when Context_All =>
-            All_Validator : Schema.Validators.Group_Model;
+            All_Validator : Schema.Validators.XML_All;
          when Context_Restriction =>
             Restriction : Schema.Validators.XML_Validator;
             Restricted  : Schema.Validators.XML_Validator; --  result

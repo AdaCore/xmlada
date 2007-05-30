@@ -527,7 +527,7 @@ package Sax.Readers is
       Prefix        : Unicode.CES.Byte_Sequence);
    type Set_Doc_Locator_Hook is access procedure
      (Handler       : in out Reader'Class;
-      Loc           : Sax.Locators.Locator);
+      Loc           : in out Sax.Locators.Locator);
 
    type Get_Error_Location_Hook is access function
      (Handler       : Reader'Class) return Sax.Locators.Locator;
