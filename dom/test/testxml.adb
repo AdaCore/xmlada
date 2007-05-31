@@ -301,7 +301,7 @@ procedure Testxml is
               (Stream               => Stream (Current_Output),
                N                    => Get_Tree (Reader),
                Print_Comments       => Print_Comments,
-               Print_XML_PI         => Print_XML_PI,
+               Print_XML_Declaration => Print_XML_PI,
                With_URI             => With_URI,
                EOL_Sequence         => EOL.all,
                Pretty_Print         => Pretty_Print,
@@ -700,14 +700,14 @@ procedure Testxml is
    begin
       if Result.Success_Count > 0 then
          Create (File, Out_File, Tmp_File1_Name);
-         Write (Stream               => Ada.Text_IO.Text_Streams.Stream (File),
-                N                    => Get_Tree (Reader),
-                Print_Comments       => Print_Comments,
-                Print_XML_PI         => Print_XML_PI,
-                With_URI             => With_URI,
-                EOL_Sequence         => EOL.all,
-                Encoding             => Encoding_Out,
-                Collapse_Empty_Nodes => Collapse_Empty_Nodes);
+         Write (Stream              => Ada.Text_IO.Text_Streams.Stream (File),
+                N                     => Get_Tree (Reader),
+                Print_Comments        => Print_Comments,
+                Print_XML_Declaration => Print_XML_PI,
+                With_URI              => With_URI,
+                EOL_Sequence          => EOL.all,
+                Encoding              => Encoding_Out,
+                Collapse_Empty_Nodes  => Collapse_Empty_Nodes);
          Close (File); --  Automatically adds a newline character at the end
 
          --  Process the expected output by removing the DTD, which
