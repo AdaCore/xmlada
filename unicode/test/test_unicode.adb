@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2004-2007, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Unicode;                use Unicode;
 with Unicode.CES;            use Unicode.CES;
 with Unicode.CES.Utf32;      use Unicode.CES.Utf32;
@@ -180,6 +208,22 @@ begin
               " 233  0  0  0  116  0  0  0  233  0  0  0 ",
               "Incorrect conversion to 8bit for Latin1_8bit, with "
               & "Iso_8859_1");
+   end;
+
+   declare
+      Asc  : constant Unicode_Encoding := Get_By_Name ("ascii");
+      Utf8 : constant Unicode_Encoding := Get_By_Name ("utf8");
+      Str  : constant String := "Ascii string";
+   begin
+      Assert (Convert (Str, From => Asc, To => Asc), Str,
+              "Incorrect conversion from ascii to ascii");
+      Assert (Convert (Str, From => Asc, To => Utf8), Str,
+              "Incorrect conversion from ascii to utf8");
+      Assert (Convert
+                (Convert (Str, From => Asc, To => Utf8),
+                From => Utf8, To => Asc),
+              Str,
+              "Incorrect conversion from ascii to utf8 and back");
    end;
 
 exception

@@ -135,11 +135,15 @@ package body Unicode.Encodings is
       Index  : Natural;
       Result : Unbounded_String;
    begin
+      if From = To then
+         return Str;
+      end if;
+
       while J <= Str'Last loop
          From.Encoding_Scheme.Read (Str, J, C);
          C := From.Character_Set.To_Unicode (C);
          C := To.Character_Set.To_CS (C);
-         Index := 1;
+         Index := 0;
          To.Encoding_Scheme.Encode (C, Buffer, Index);
          Append (Result, Buffer (1 .. Index));
       end loop;
