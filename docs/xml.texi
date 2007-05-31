@@ -73,6 +73,7 @@ The Unicode module
 * Repertoires and subsets::
 * Character sets::
 * Character encoding schemes::
+* Unicode_Encoding::
 * Misc. functions::
 
 The Input module
@@ -88,6 +89,7 @@ The SAX module
 
 The DOM module
 * Using DOM::
+* Editing DOM trees::
 * Printing DOM trees::
 
 The Schema module
@@ -191,6 +193,7 @@ by M. Kuhn, available at @url{???}.
 * Repertoires and subsets::
 * Character sets::
 * Character encoding schemes::
+* Unicode_Encoding::
 * Misc. functions::
 @end menu
 
@@ -456,6 +459,32 @@ involves the following steps:
      v         Unicode.CCS.Iso_8859_2.Convert"
    Utf8 Latin2 string (contains code points in Latin2)
 @end smallexample
+
+@c -------------------------------------------------------------------
+@node Unicode_Encoding
+@section Unicode_Encoding
+@c -------------------------------------------------------------------
+
+@noindent
+XML/Ada groups the two notions of character sets and encoding schemes
+into a single type, @code{Unicode.Encodings.Unicode_Encoding}.
+
+This package provides additional functions to manipulate these encodings,
+for instance to retrieve them by the common name that is associated with
+them (for instance "utf-8", "iso-8859-15",@dots{}), since very often the
+encoding scheme is implicit. If you are speaking of utf-8 string, most
+people always assume you also use the unicode character set. Likewise,
+if you are speaking of "iso-8859-1", most people will assume you string
+is encoded as 8 byte characters.
+
+The goal of the @code{Unicode.Encodings} package is to make these
+implicit associations more obvious.
+
+It also provides one additional function @code{Convert}, which can be
+used to convert a sequence of bytes from one encoding to another. This
+is a convenience function that you can use when for instance creating
+DOM trees directly through Ada calls, since XML/Ada excepts all its
+strings to be in utf-8 by default.
 
 @c -------------------------------------------------------------------
 @node Misc. functions
@@ -1082,6 +1111,7 @@ languages to use UTF8. You can freely change this and recompile.
 
 @menu
 * Using DOM::
+* Editing DOM trees::
 * Printing DOM trees::
 @end menu
 
@@ -1141,6 +1171,36 @@ For really big XML streams, it might prove impossible to keep the whole
 tree in memory, in which case ad hoc storage might be implemented through
 the use of a SAX parser. The implementation of @code{dom-readers.adb} will
 prove helpful in creating such a parser.
+
+@c ------------------------------------------------------------------
+@node Editing DOM trees
+@section Editing DOM trees
+@c ------------------------------------------------------------------
+
+@noindent
+Once in memory, DOM trees can be manipulated through subprograms provides
+by the DOM API.
+
+Each of these subprograms is fully documented both in the Ada specs (the
+@file{*.ads} files) and in the DOM standard itself, which XML/Ada follows
+fully.
+
+One important note however is related to the use of strings. Various
+subprograms allows you to set the textual content of a node, modify its
+attributes,@dots{}. Such subprograms take a Byte_Sequence as a parameter.
+
+This Byte_Sequence must always be encoded in the encoding defined in
+the package @code{Sax.Encoding} (as described earlier, changing this
+package requires recompiling XML/Ada). By default, this is UTF-8.
+
+Therefore, if you need to set an attribute to a string encoded for
+instance in iso-8859-15, you should use the subprogram
+@code{Unicode.Encodings.Convert} to convert it appropriately.
+The code would thus look as follows:
+
+@smallexample
+  Set_Attribute (N, Convert ("å", From => Get_By_Name ("iso-8859-15")));
+@end smallexample
 
 @c ------------------------------------------------------------------
 @node Printing DOM trees

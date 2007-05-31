@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004                          --
---                            ACT-Europe                             --
+--                       Copyright (C) 2004-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -49,5 +48,12 @@ package Unicode.Encodings is
    function Get_By_Name (Name : String) return Unicode_Encoding;
    --  Return the unicode encoding from its name.
    --  Name is case insensitive
+
+   function Convert
+     (Str  : Unicode.CES.Byte_Sequence;
+      From : Unicode_Encoding := Get_By_Name ("iso-8859-15");
+      To   : Unicode_Encoding := Get_By_Name ("utf-8"))
+      return Unicode.CES.Byte_Sequence;
+   --  Convert a string between two encodings.
 
 end Unicode.Encodings;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004                          --
---                            ACT-Europe                             --
+--                       Copyright (C) 2004-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -29,6 +28,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
 with Unicode.CES.Utf8;          use Unicode.CES.Utf8;
@@ -118,5 +118,32 @@ package body Unicode.Encodings is
            (Invalid_Encoding'Identity,  "Invalid encoding: " & Name);
       end if;
    end Get_By_Name;
+
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert
+     (Str  : Byte_Sequence;
+      From : Unicode_Encoding := Get_By_Name ("iso-8859-15");
+      To   : Unicode_Encoding := Get_By_Name ("utf-8"))
+     return Byte_Sequence
+   is
+      J      : Natural := Str'First;
+      C      : Unicode.Unicode_Char;
+      Buffer : Byte_Sequence (1 .. 20);
+      Index  : Natural;
+      Result : Unbounded_String;
+   begin
+      while J <= Str'Last loop
+         From.Encoding_Scheme.Read (Str, J, C);
+         C := From.Character_Set.To_Unicode (C);
+         C := To.Character_Set.To_CS (C);
+         Index := 1;
+         To.Encoding_Scheme.Encode (C, Buffer, Index);
+         Append (Result, Buffer (1 .. Index));
+      end loop;
+      return To_String (Result);
+   end Convert;
 
 end Unicode.Encodings;
