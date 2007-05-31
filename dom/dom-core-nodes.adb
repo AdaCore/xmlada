@@ -1167,16 +1167,16 @@ package body DOM.Core.Nodes is
    -----------
 
    procedure Write
-     (Stream         : access Ada.Streams.Root_Stream_Type'Class;
-      N              : Node;
-      Print_Comments : Boolean := True;
-      Print_XML_PI   : Boolean := True;
-      With_URI       : Boolean := False;
-      Pretty_Print   : Boolean := False;
-      EOL_Sequence   : String  := "" & ASCII.LF;
-      Encoding       : Unicode.Encodings.Unicode_Encoding :=
+     (Stream                : access Ada.Streams.Root_Stream_Type'Class;
+      N                     : Node;
+      Print_Comments        : Boolean := True;
+      Print_XML_Declaration : Boolean := True;
+      With_URI              : Boolean := False;
+      Pretty_Print          : Boolean := False;
+      EOL_Sequence          : String  := "" & ASCII.LF;
+      Encoding              : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
-      Collapse_Empty_Nodes : Boolean := True)
+      Collapse_Empty_Nodes  : Boolean := True)
    is
       use Node_Name_Htable;
 
@@ -1346,7 +1346,7 @@ package body DOM.Core.Nodes is
                end if;
 
             when Document_Node =>
-               if Print_XML_PI then
+               if Print_XML_Declaration then
                   String'Write
                     (Stream, Write_Bom (Encoding.Encoding_Scheme.BOM));
                   Put
@@ -1433,7 +1433,7 @@ package body DOM.Core.Nodes is
         (Stream            => Ada.Text_IO.Text_Streams.Stream (Current_Output),
          N                 => N,
          Print_Comments    => Print_Comments,
-         Print_XML_PI      => Print_XML_PI,
+         Print_XML_Declaration => Print_XML_PI,
          With_URI          => With_URI,
          EOL_Sequence      => EOL_Sequence,
          Encoding          => Encoding,

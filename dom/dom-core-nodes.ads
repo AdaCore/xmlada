@@ -243,16 +243,16 @@ package DOM.Core.Nodes is
    ------------------
 
    procedure Write
-     (Stream         : access Ada.Streams.Root_Stream_Type'Class;
-      N              : Node;
-      Print_Comments : Boolean := True;
-      Print_XML_PI   : Boolean := True;
-      With_URI       : Boolean := False;
-      Pretty_Print   : Boolean := False;
-      EOL_Sequence   : String  := "" & ASCII.LF;
-      Encoding       : Unicode.Encodings.Unicode_Encoding :=
+     (Stream                : access Ada.Streams.Root_Stream_Type'Class;
+      N                     : Node;
+      Print_Comments        : Boolean := True;
+      Print_XML_Declaration : Boolean := True;
+      With_URI              : Boolean := False;
+      Pretty_Print          : Boolean := False;
+      EOL_Sequence          : String  := "" & ASCII.LF;
+      Encoding              : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
-      Collapse_Empty_Nodes : Boolean := True);
+      Collapse_Empty_Nodes  : Boolean := True);
    --  Print the contents of Node and its children in XML format.
    --  If Print_Comments is True, then nodes associated with comments are
    --  also displayed.
@@ -261,9 +261,13 @@ package DOM.Core.Nodes is
    --  appropriate output encoding.
    --  Encoding specifies the encoding to use in the output stream.
    --
-   --  The <?xml?> processing instruction is displayed only if Print_XML_PI and
+   --  The <?xml?> declaration is displayed only if Print_XML_Declaration and
    --  N is a Document_Node. In this case, a Byte-Order mark is also output
    --  so that proper decoding of the document can be performed later on.
+   --  Note that you mustn't added <?xml?> yourself to the DOM tree. The XML
+   --  standard doesn't define this as a processing instruction, which is why
+   --  it has a different name ("XML declaration") and cannot be modified by
+   --  users.
    --
    --  By default, names are of the form  ns_prefix:local_name. However, if
    --  with_URI is True, names will be  ns_URI:local_name instead
@@ -296,6 +300,8 @@ package DOM.Core.Nodes is
       Encoding       : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
       Collapse_Empty_Nodes : Boolean := False);
+   --  For debugging purposes only!
+   --
    --  Same as Write, but the output is done on Stdout.
    --  Warning: the default values for the parameters are not the same as for
    --  write. For the latter, they are chosen so that by default the output is
