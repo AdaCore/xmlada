@@ -35,76 +35,9 @@ with Ada.Text_IO;           use Ada.Text_IO;
 with DOM.Core.Nodes;        use DOM.Core.Nodes;
 with DOM.Readers;           use DOM.Readers;
 with Input_Sources.File;    use Input_Sources.File;
+with String_Stream;         use String_Stream;
 
 procedure ToString is
-
-   type String_Stream_Type is new Root_Stream_Type with record
-      Str        : Unbounded_String;
-      Read_Index : Natural := 1;
-   end record;
-   procedure Read
-     (Stream : in out String_Stream_Type;
-      Item   :    out Stream_Element_Array;
-      Last   :    out Stream_Element_Offset);
-   procedure Write
-      (Stream : in out String_Stream_Type;
-       Item   : Stream_Element_Array);
-   procedure Open
-      (Stream : in out String_Stream_Type'Class;
-       Str    : String);
-   --  Declare a new stream type to write strings in memory
-
-   -----------
-   -- Write --
-   -----------
-
-   procedure Write
-     (Stream : in out String_Stream_Type;
-      Item   : Stream_Element_Array)
-   is
-      Str : String (1 .. Integer (Item'Length));
-      S   : Integer := Str'First;
-   begin
-      for J in Item'Range loop
-         Str (S) := Character'Val (Item (J));
-         S := S + 1;
-      end loop;
-      Append (Stream.Str, Str);
-   end Write;
-
-   ----------
-   -- Open --
-   ----------
-
-   procedure Open
-     (Stream : in out String_Stream_Type'Class;
-      Str    : in String) is
-   begin
-      Stream.Str        := To_Unbounded_String (Str);
-      Stream.Read_Index := 1;
-   end Open;
-
-   ----------
-   -- Read --
-   ----------
-
-   procedure Read
-     (Stream : in out String_Stream_Type;
-      Item   :    out Stream_Element_Array;
-      Last   :    out Stream_Element_Offset)
-   is
-      Str : constant String := Slice
-        (Stream.Str, Stream.Read_Index, Stream.Read_Index + Item'Length - 1);
-      J   : Stream_Element_Offset := Item'First;
-   begin
-      for S in Str'Range loop
-         Item (J) := Stream_Element (Character'Pos (Str (S)));
-         J := J + 1;
-      end loop;
-      Last := Item'First + Str'Length - 1;
-      Stream.Read_Index := Stream.Read_Index + Item'Length;
-   end Read;
-
    Input  : File_Input;
    Reader : Tree_Reader;
    Output : aliased String_Stream_Type;
