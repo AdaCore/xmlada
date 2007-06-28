@@ -29,7 +29,6 @@
 --  This example shows how an XML tree can be converted to a string
 --  in memory, without going through a temporary file on the disk
 
-with Ada.Streams;           use Ada.Streams;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;           use Ada.Text_IO;
 with DOM.Core.Nodes;        use DOM.Core.Nodes;
