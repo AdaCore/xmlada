@@ -51,4 +51,4 @@ AC_SUBST(RANLIB)
 AC_SUBST(XMLADA_MAJOR_VERSION)
 AC_SUBST(XMLADA_MINOR_VERSION)
 
-AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config)
+AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config distrib/xmlada.gpr)

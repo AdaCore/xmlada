@@ -7,6 +7,8 @@ with "xmlada_unicode", "xmlada_sax", "xmlada_input", "xmlada_dom";
 with "xmlada_schema";
 
 project Xmlada is
+   Version = "@XMLADA_MAJOR_VERSION@.@XMLADA_MINOR_VERSION@";
+
    for Source_Dirs use ();
    --  for Object_Dir use "../xmlada";
 end Xmlada;
