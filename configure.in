@@ -1,13 +1,11 @@
+AC_INIT(XML/Ada,3.0w,report@adacore.com,xmlada)
 AC_REVISION($Revision$)
-AC_INIT(dom/dom.ads)
 
-## Also change version number in docs/xml.texi
 XMLADA_MAJOR_VERSION=3
 XMLADA_MINOR_VERSION=0w
 
 AC_CANONICAL_SYSTEM
 AC_PROG_CC
-AC_PROG_RANLIB
 AC_CHECK_PROGS(DVIPS, dvips, "")
 AC_CHECK_PROGS(MAKEINFO, makeinfo, "")
 AC_CHECK_PROGS(TEXI2DVI, texi2dvi, "")
@@ -26,8 +24,8 @@ AC_SUBST(LIBRARY_TYPE)
 IFS=' '
 
 # Defaults
-CP="cp -p -f"
-LN="ln -s -f"
+AC_PROG_INSTALL
+AC_PROG_LN_S
 MKDIR="mkdir -p"
 
 # Overrides
@@ -42,13 +40,7 @@ case "${host_os}" in
     ;;
 esac
 
-AC_SUBST(CP)
-AC_SUBST(LN)
 AC_SUBST(MKDIR)
-
 AC_SUBST(CC)
-AC_SUBST(RANLIB)
-AC_SUBST(XMLADA_MAJOR_VERSION)
-AC_SUBST(XMLADA_MINOR_VERSION)
 
 AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config distrib/xmlada.gpr)
