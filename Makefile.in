@@ -94,7 +94,7 @@ install_dirs: force
 	@${MKDIR} ${includedir}/xmlada
 	@${MKDIR} ${datadir}/gps/plug-ins/
 
-install: install_dirs ${MODULE_INSTALL}
+install: obj install_dirs ${MODULE_INSTALL}
 	${INSTALL} distrib/${LIBRARY_TYPE}/xmlada_shared.gpr ${libdir}/gnat
 	${INSTALL} distrib/*.gpr            ${libdir}/gnat/
 	${INSTALL} xmlada-config  ${bindir}
@@ -104,9 +104,9 @@ install: install_dirs ${MODULE_INSTALL}
 	-${INSTALL} docs/xml.info ${datadir}/doc/xmlada
 	${CHMOD} +x ${bindir}/xmlada-config
 	${INSTALL} distrib/xmlada_gps.py ${datadir}/gps/plug-ins/
-install_static: static
+install_static: 
 	${MAKE} LIBRARY_TYPE=static install
-install_shared install_relocatable: relocatable
+install_shared install_relocatable:
 	${MAKE} LIBRARY_TYPE=relocatable install
 
 clean: force
