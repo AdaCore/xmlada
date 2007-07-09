@@ -422,6 +422,7 @@ package body Schema.Date_Time is
       then
          Validation_Error ("Invalid separator in date value """ & Ch & """");
          Date := No_Date_NZ;
+         Eos  := Ch'First;
          return;
       end if;
 
@@ -459,6 +460,7 @@ package body Schema.Date_Time is
       then
          Validation_Error ("Invalid separator in time: """ & Ch & """");
          Time := No_Time_NZ;
+         Eos  := Ch'First;
          return;
       end if;
 
