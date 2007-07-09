@@ -7,5 +7,8 @@ project Schema_Test is
   package Builder  renames Shared.Builder;
   package Compiler renames Shared.Compiler;
   package Binder   renames Shared.Binder;
-  package Linker   renames Shared.Linker;
+  --  package Linker   renames Shared.Linker;
+  package Linker is
+      for Default_Switches ("Ada") use ("-lgmem");
+  end Linker;
 end Schema_Test;

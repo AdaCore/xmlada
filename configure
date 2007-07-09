@@ -273,7 +273,7 @@ PACKAGE_VERSION='3.0w'
 PACKAGE_STRING='XML/Ada 3.0w'
 PACKAGE_BUGREPORT='report@adacore.com'
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DVIPS MAKEINFO TEXI2DVI PDFTEX TEX LIBRARY_TYPE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S MKDIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DVIPS MAKEINFO TEXI2DVI PDFTEX TEX INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S MKDIR LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -803,11 +803,6 @@ if test -n "$ac_init_help"; then
      short | recursive ) echo "Configuration of XML/Ada 3.0w:";;
    esac
   cat <<\_ACEOF
-
-Optional Features:
-  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
-  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-shared        build only static library
 
 Some influential environment variables:
   CC          C compiler command
@@ -2420,20 +2415,6 @@ done
 test -n "$TEX" || TEX=""""
 
 
-# Check whether --enable-shared or --disable-shared was given.
-if test "${enable_shared+set}" = set; then
-  enableval="$enable_shared"
-  enable_shared=$enableval
-else
-  enable_shared=yes
-fi;
-if test "$enable_shared" = "yes"; then
-   LIBRARY_TYPE=relocatable
-else
-   LIBRARY_TYPE=static
-fi
-
-
 IFS=' '
 
 # Defaults
@@ -2542,7 +2523,7 @@ esac
 
 
 
-                                                                      ac_config_files="$ac_config_files shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config distrib/xmlada.gpr"
+                                                                                ac_config_files="$ac_config_files shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config distrib/static/xmlada_shared.gpr distrib/relocatable/xmlada_shared.gpr"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -3099,7 +3080,8 @@ do
   "dom/test/default.gpr" ) CONFIG_FILES="$CONFIG_FILES dom/test/default.gpr" ;;
   "docs/Makefile" ) CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
   "xmlada-config" ) CONFIG_FILES="$CONFIG_FILES xmlada-config" ;;
-  "distrib/xmlada.gpr" ) CONFIG_FILES="$CONFIG_FILES distrib/xmlada.gpr" ;;
+  "distrib/static/xmlada_shared.gpr" ) CONFIG_FILES="$CONFIG_FILES distrib/static/xmlada_shared.gpr" ;;
+  "distrib/relocatable/xmlada_shared.gpr" ) CONFIG_FILES="$CONFIG_FILES distrib/relocatable/xmlada_shared.gpr" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -3207,7 +3189,6 @@ s,@MAKEINFO@,$MAKEINFO,;t t
 s,@TEXI2DVI@,$TEXI2DVI,;t t
 s,@PDFTEX@,$PDFTEX,;t t
 s,@TEX@,$TEX,;t t
-s,@LIBRARY_TYPE@,$LIBRARY_TYPE,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
 s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t

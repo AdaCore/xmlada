@@ -5,16 +5,11 @@ with "../input_sources/input_sources.gpr";
 
 project Dom is
 
-   for Object_Dir use "obj/";
-   for Library_Dir use "lib/";
    for Library_Name use "xmlada_dom";
    for Library_Kind use Shared.Library_Type;
-
-   case Shared.Library_Type is
-      when "relocatable" =>
-         for Library_Version use "libxmlada_dom.so." & Shared.Version;
-      when "static" =>
-   end case;
+   for Object_Dir  use "obj/" & Project'Library_Kind;
+   for Library_Dir use "lib/" & Project'Library_Kind;
+   for Library_Version use "lib" & Project'Library_Name & ".so." & Shared.Version;
 
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;

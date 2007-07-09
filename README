@@ -53,32 +53,37 @@ to
     GNATMAKE= powerpc-wrs-vxworks-gnatmake
     CC= powerpc-wrs-vxworks-gcc
 
-You can also chose the type of library you want to build. The default is
-to build relocatable libraries, although you can chose to build static
-libraries as well. This is done by either changing the value of the variable
-LIBRARY_TYPE in the Makefile.in, or simply by specifying an extra argument on
-the "make" command line:
-   make LIBRARY_TYPE=static ...
+You need to automatically detect a few aspects of your build environment,
+which is done by running
+    ./configure --prefix=PREFIX
+where PREFIX is the installation directory you wish to use
 
-You can also specify a static library using '--disable-shared' on the command
-line of the configure script.
+The default is to build relocatable libraries, although you can chose to build
+static libraries as well. This is done by either changing the value of the
+variable LIBRARY_TYPE in the Makefile.in, or simply by specifying an extra
+argument on the "make" command line:
+   make static
 
-Note that if you wish to build both types of libraries, you should first build
-and install the static libraries, then clean the build directory with
-"make clean", and then build and install the shared libraries. The installation
-directories should be different, since the generated code might not be the
-same in both cases, and the second set of project files (see below) would
-overwrite the ones previously installed.
+To build both types of libraries, you can use the following make command:
+   make static shared
 
 Depending on what Ada runtime your application is build with, you might need to
 change the file shared.gpr (at the root of the XML/Ada directory) so that the
 Default_Switches lines in the Compiler package contain something like:
    for Default_Switches ("Ada") use ("--RTS=sjlj", ...);
 
-Configure and compile with the following commands:
-   >  ./configure --prefix=<PREFIX>
-   >  make install
-to build and install the library.
+To install the library, use the following command line:
+   make install
+   make install_shared
+   make install_static
+
+(the first two have the same effect and will install the shared library. The
+last one will install the static library). You can install the two types of
+libraries by doing
+   make install_static install_shared
+instead.
+The argument you put last on the command line indicates which default version
+of XML/Ada should be used.
 
 Compiling with other Ada compilers
 ----------------------------------

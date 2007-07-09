@@ -1,10 +1,21 @@
-# Replace with the location for the installation directory
-PREFIX=@prefix@
-
 ## The type of library we want to build. Possible values:
 ##   relocatable
 ##   static
-LIBRARY_TYPE=@LIBRARY_TYPE@
+LIBRARY_TYPE=relocatable
+
+# Replace with the location for the installation directory
+INSTALL=@INSTALL@
+PACKAGE_TARNAME=@PACKAGE_TARNAME@
+VERSION=@PACKAGE_VERSION@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+datadir=@datadir@
+datarootdir=@datarootdir@
+bindir=@bindir@
+libdir=@libdir@
+xmllib=${libdir}/xmlada/${LIBRARY_TYPE}/
+docdir=@docdir@
+includedir=@includedir@
 
 GNATMAKE=gnatmake
 CC=gcc
@@ -14,8 +25,7 @@ MODE=distrib
 
 # Commands for installation procedure
 CHMOD=chmod
-CP=@CP@
-LN=@LN@
+LN_S=@LN_S@
 MKDIR=@MKDIR@
 
 #########################################################################
@@ -30,6 +40,10 @@ MAKE_ARGS=-XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
 .PHONY: all obj clean install install_dirs
 
 all: obj
+static:
+	${MAKE} LIBRARY_TYPE=static
+shared relocatable:
+	${MAKE} LIBRARY_TYPE=relocatable
 
 obj: force
 	${GNATMAKE} -Punicode/unicode.gpr ${MAKE_ARGS}
@@ -56,36 +70,44 @@ docs: force
 
 # Rule for installing the modules
 %_inst: force
-	${CP} $*/*.ad[bs]        ${PREFIX}/include/xmlada
-	-${CP} $*/lib/*.ali       ${PREFIX}/lib/xmlada/
-	-${CP} $*/lib/*xmlada_* ${PREFIX}/lib/xmlada/
-	${RM} ${PREFIX}/lib/*xmlada_$**
-	cd ${PREFIX}/lib; ${foreach lib, ${notdir ${wildcard $*/lib/*xmlada_*}}, \
-	   ${RM} ${PREFIX}/lib/${lib}; \
-           ${LN} xmlada/${lib} ${PREFIX}/lib/${lib};}
-	cd ${PREFIX}/lib/xmlada; ${CHMOD} ugo-w *.ali
-	cd $*; ls *.ad[bs] > ${PREFIX}/lib/gnat/xmlada/xmlada_$*.lgpr
+	${INSTALL} $*/*.ad[bs]        ${includedir}/xmlada
+	cd $*; ls *.ad[bs] > ${libdir}/gnat/xmlada/xmlada_$*.lgpr
+	-${INSTALL} $*/lib/${LIBRARY_TYPE}/*.ali   ${xmllib}
+	${RM} ${libdir}/libxmlada_$**
+	${RM} ${xmllib}libxmlada_$**
+ifeq (${LIBRARY_TYPE},static)
+	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.a ${xmllib}
+else
+	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} ${xmllib}
+	cd ${xmllib}; ${LN_S} libxmlada_$*.so.${VERSION} libxmlada_$*.so
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so.${basename ${VERSION}}
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so.${VERSION}
+endif
+	cd ${xmllib}; ${CHMOD} ugo-w *.ali
 
 install_dirs: force
-	@${MKDIR} ${PREFIX}/bin
-	@${MKDIR} ${PREFIX}/lib
-	@${MKDIR} ${PREFIX}/lib/xmlada
-	@${MKDIR} ${PREFIX}/share/doc/xmlada
-	@${MKDIR} ${PREFIX}/include/xmlada
-	@${MKDIR} ${PREFIX}/lib/gnat
-	@${MKDIR} ${PREFIX}/lib/gnat/xmlada
-	@${MKDIR} ${PREFIX}/share/gps/plug-ins/
+	@${MKDIR} ${bindir}
+	@${MKDIR} ${xmllib}
+	@${MKDIR} ${libdir}/gnat/xmlada
+	@${MKDIR} ${datadir}/doc/xmlada
+	@${MKDIR} ${includedir}/xmlada
+	@${MKDIR} ${datadir}/gps/plug-ins/
 
-install: obj install_dirs ${MODULE_INSTALL}
-	${CP} distrib/${LIBRARY_TYPE}/*.gpr ${PREFIX}/lib/gnat
-	${CP} xmlada-config  ${PREFIX}/bin
-	-${CP} docs/xml.ps   ${PREFIX}/share/doc/xmlada 2>/dev/null
-	-${CP} docs/xml.pdf  ${PREFIX}/share/doc/xmlada
-	-${CP} docs/xml.html ${PREFIX}/share/doc/xmlada
-	-${CP} docs/xml.info ${PREFIX}/share/doc/xmlada
-	${CHMOD} +x ${PREFIX}/bin/xmlada-config
-	${CP} distrib/xmlada.gpr ${PREFIX}/lib/gnat/xmlada.gpr
-	${CP} distrib/xmlada_gps.py ${PREFIX}/share/gps/plug-ins/
+install: install_dirs ${MODULE_INSTALL}
+	${INSTALL} distrib/${LIBRARY_TYPE}/xmlada_shared.gpr ${libdir}/gnat
+	${INSTALL} distrib/*.gpr            ${libdir}/gnat/
+	${INSTALL} xmlada-config  ${bindir}
+	-${INSTALL} docs/xml.ps   ${datadir}/doc/xmlada 2>/dev/null
+	-${INSTALL} docs/xml.pdf  ${datadir}/doc/xmlada
+	-${INSTALL} docs/xml.html ${datadir}/doc/xmlada
+	-${INSTALL} docs/xml.info ${datadir}/doc/xmlada
+	${CHMOD} +x ${bindir}/xmlada-config
+	${INSTALL} distrib/xmlada_gps.py ${datadir}/gps/plug-ins/
+install_static: static
+	${MAKE} LIBRARY_TYPE=static install
+install_shared install_relocatable: relocatable
+	${MAKE} LIBRARY_TYPE=relocatable install
 
 clean: force
 	gnat clean -q -r -Punicode/unicode.gpr

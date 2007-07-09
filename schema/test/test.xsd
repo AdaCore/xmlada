@@ -4,7 +4,19 @@
             >
             <!-- targetNamespace="http://www.act-europe.fr/XMLAda/ManuSchema" -->
 
-<xsd:element name="root" type="xsd:anyType"/>
+<!--<xsd:element name="root" type="xsd:anyType"/>
+-->
+<xsd:element name="root">
+ <xsd:complexType>
+  <xsd:sequence>
+   <xsd:element ref="my_string" />
+   <xsd:element ref="zip" maxOccurs="3" />
+   <xsd:element ref="strs"/>
+   <xsd:element ref="strs3" maxOccurs="2"/>
+   <xsd:element ref="strs2" maxOccurs="2"/>
+  </xsd:sequence>
+ </xsd:complexType>
+</xsd:element>
 
 <xsd:complexType name="AdaString">
  <xsd:sequence>

@@ -2,14 +2,15 @@
 # @configure_input@
 
 prefix=@prefix@
-cflags="-aI${prefix}/include/xmlada -aO${prefix}/lib/xmlada"
-libs="-L${prefix}/lib -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode"
-static_libs="${prefix}/lib/libxmlada_input_sources.a ${prefix}/lib/libxmlada_sax.a ${prefix}/lib/libxmlada_unicode.a"
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includir=@includedir@
+libtype=relocatable
+cflags="-aI${includedir}/xmlada -aO${libdir}/${libtype}/xmlada"
+libs="-L${libdir}/${libtype} -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode"
+static_libs="${libdir}/${libtype}/libxmlada_input_sources.a ${libdir}/${libtype}/libxmlada_sax.a ${libdir}/${libtype}/libxmlada_unicode.a"
 full_libs="-lxmlada_dom -lxmlada_schema"
-static_full_libs="${prefix}/lib/libxmlada_dom.a ${prefix}/lib/libxmlada_schema.a"
-
-MAJOR=@XMLADA_MAJOR_VERSION@
-MINOR=@XMLADA_MINOR_VERSION@
+static_full_libs="${libdir}/static/libxmlada_dom.a ${libdir}/static/libxmlada_schema.a"
 
 usage()
 {
@@ -64,7 +65,7 @@ while test $# -gt 0; do
       output_type=none
       ;;
     --version|-v)
-      echo XmlAda ${MAJOR}.${MINOR}
+      echo XmlAda @PACKAGE_VERSION@
       exit 0
       ;;
     --libs)

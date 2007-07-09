@@ -7,6 +7,32 @@
 
 @set XMLVersion 3.0w
 
+@c ----------------------------------------- MACRO
+
+@c Macro used for all code examples
+@c No cartouche on HTML as this is part of the css
+@macro CODEEXP{TXT}
+@ifhtml
+@smallexample
+@group
+\TXT\
+@end group
+@end smallexample
+@end ifhtml
+@ifnothtml
+@cartouche
+@smallexample
+@group
+\TXT\
+@end group
+@end smallexample
+@end cartouche
+@end ifnothtml
+@end macro
+
+@c ----------------------------------------- END MACRO
+
+
 @titlepage
 
 @title The Ada95 Unicode and XML Library
@@ -1814,6 +1840,13 @@ gnatmake main.adb -Iprefix/include/xmlada -largs -Lprefix/lib \
    both code examples and project files that you can use as a basic for your
    own code.
 @end itemize
+
+The default type of library depends on the way you installed XML/Ada. In all
+cases, and assuming you installed both static and shared libraries, you can
+choose among the two by setting the environment variable:
+   LIBRARY_TYPE=static
+or
+   LIBRARY_TYPE=relocatable
 
 Whatever method you used to build your application, you might have to change,
 at least one UNIX systems, the environment variable @code{LD_LIBRARY_PATH}
