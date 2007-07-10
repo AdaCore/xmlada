@@ -70,9 +70,9 @@ docs: force
 
 # Rule for installing the modules
 %_inst: force
-	${INSTALL} $*/*.ad[bs]        ${includedir}/xmlada
+	${INSTALL} ${wildcard $*/*.ad[bs]}        ${includedir}/xmlada
 	cd $*; ls *.ad[bs] > ${libdir}/gnat/xmlada/xmlada_$*.lgpr
-	-${INSTALL} $*/lib/${LIBRARY_TYPE}/*.ali   ${xmllib}
+	-${INSTALL} ${wildcard $*/lib/${LIBRARY_TYPE}/*.ali}   ${xmllib}
 	${RM} ${libdir}/libxmlada_$**
 	${RM} ${xmllib}libxmlada_$**
 ifeq (${LIBRARY_TYPE},static)
@@ -96,7 +96,12 @@ install_dirs: force
 
 install: obj install_dirs ${MODULE_INSTALL}
 	${INSTALL} distrib/${LIBRARY_TYPE}/xmlada_shared.gpr ${libdir}/gnat
-	${INSTALL} distrib/*.gpr            ${libdir}/gnat/
+	${INSTALL} distrib/xmlada.gpr                ${libdir}/gnat/
+	${INSTALL} distrib/xmlada_dom.gpr            ${libdir}/gnat/
+	${INSTALL} distrib/xmlada_sax.gpr            ${libdir}/gnat/
+	${INSTALL} distrib/xmlada_input.gpr          ${libdir}/gnat/
+	${INSTALL} distrib/xmlada_schema.gpr         ${libdir}/gnat/
+	${INSTALL} distrib/xmlada_unicode.gpr        ${libdir}/gnat/
 	${INSTALL} xmlada-config  ${bindir}
 	-${INSTALL} docs/xml.ps   ${datadir}/doc/xmlada 2>/dev/null
 	-${INSTALL} docs/xml.pdf  ${datadir}/doc/xmlada
