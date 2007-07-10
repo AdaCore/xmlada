@@ -28,6 +28,10 @@ CHMOD=chmod
 LN_S=@LN_S@
 MKDIR=@MKDIR@
 
+# In some cases, we use cp instead of install for doing the installation,
+# since the latter does not support installing multiple files at once.
+CP=cp -p
+
 #########################################################################
 ## Nothing to modify below this point
 #########################################################################
@@ -70,9 +74,9 @@ docs: force
 
 # Rule for installing the modules
 %_inst: force
-	${INSTALL} ${wildcard $*/*.ad[bs]}        ${includedir}/xmlada
+	${CP} $*/*.ad[bs]        ${includedir}/xmlada
 	cd $*; ls *.ad[bs] > ${libdir}/gnat/xmlada/xmlada_$*.lgpr
-	-${INSTALL} ${wildcard $*/lib/${LIBRARY_TYPE}/*.ali}   ${xmllib}
+	-${CP} $*/lib/${LIBRARY_TYPE}/*.ali   ${xmllib}
 	${RM} ${libdir}/libxmlada_$**
 	${RM} ${xmllib}libxmlada_$**
 ifeq (${LIBRARY_TYPE},static)
