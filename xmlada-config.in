@@ -4,7 +4,7 @@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
-includir=@includedir@
+includedir=@includedir@
 libtype=relocatable
 cflags="-aI${includedir}/xmlada -aO${libdir}/${libtype}/xmlada"
 libs="-L${libdir}/${libtype} -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode"
