@@ -6,11 +6,11 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 libtype=relocatable
-cflags="-aI${includedir}/xmlada -aO${libdir}/${libtype}/xmlada"
-libs="-L${libdir}/${libtype} -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode"
-static_libs="${libdir}/${libtype}/libxmlada_input_sources.a ${libdir}/${libtype}/libxmlada_sax.a ${libdir}/${libtype}/libxmlada_unicode.a"
+cflags="-aI${includedir}/xmlada -aO${libdir}/xmlada/${libtype}"
+libs="-L${libdir}/xmlada/${libtype} -lxmlada_input_sources -lxmlada_sax -lxmlada_unicode"
+static_libs="${libdir}/xmlada/static/libxmlada_input_sources.a ${libdir}/xmlada/static/libxmlada_sax.a ${libdir}/xmlada/static/libxmlada_unicode.a"
 full_libs="-lxmlada_dom -lxmlada_schema"
-static_full_libs="${libdir}/static/libxmlada_dom.a ${libdir}/static/libxmlada_schema.a"
+static_full_libs="${libdir}/xmlada/static/libxmlada_dom.a ${libdir}/xmlada/static/libxmlada_schema.a"
 
 usage()
 {
