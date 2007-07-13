@@ -233,23 +233,26 @@ package body Schema.Readers is
    is
       XML_G, XML_IG : XML_Grammar_NS;
    begin
-      Get_NS (Handler.Grammar, XML_Schema_URI, Result => XML_G);
       Get_NS (Handler.Grammar, XML_Instance_URI, Result => XML_IG);
 
-      Add_Attribute
-        (Validator,
-         Create_Local_Attribute ("type", XML_IG, Lookup (XML_G, "string")));
-      Add_Attribute
-        (Validator,
-         Create_Local_Attribute ("nil", XML_IG, Lookup (XML_G, "boolean")));
-      Add_Attribute
-        (Validator,
-         Create_Local_Attribute ("schemaLocation", XML_IG,
-                                 List_Of (XML_G, Lookup (XML_G, "string"))));
-      Add_Attribute
-        (Validator,
-         Create_Local_Attribute ("noNamespaceSchemaLocation", XML_IG,
-                                 Lookup (XML_G, "string")));
+      if not Has_Attribute (Validator, XML_IG, "type") then
+         Get_NS (Handler.Grammar, XML_Schema_URI, Result => XML_G);
+
+         Add_Attribute
+           (Validator,
+            Create_Local_Attribute ("type", XML_IG, Lookup (XML_G, "string")));
+         Add_Attribute
+           (Validator,
+            Create_Local_Attribute ("nil", XML_IG, Lookup (XML_G, "boolean")));
+         Add_Attribute
+           (Validator,
+            Create_Local_Attribute ("schemaLocation", XML_IG,
+              List_Of (XML_G, Lookup (XML_G, "string"))));
+         Add_Attribute
+           (Validator,
+            Create_Local_Attribute ("noNamespaceSchemaLocation", XML_IG,
+              Lookup (XML_G, "string")));
+      end if;
    end Add_XML_Instance_Attributes;
 
    ---------------------
@@ -603,6 +606,10 @@ package body Schema.Readers is
                & """: No matching declaration available");
          end if;
 
+         --  The toplevel elements has special attributes to point to the XSD
+         --  grammar for instance. This cannot be done automatically when
+         --  parsing the grammar, since there is no reference there as to which
+         --  node is the root.
          Add_XML_Instance_Attributes
            (Validating_Reader (Handler), Get_Validator (Get_Type (Element)));
       end if;

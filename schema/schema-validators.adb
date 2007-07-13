@@ -409,6 +409,36 @@ package body Schema.Validators is
    end Free;
 
    -------------------
+   -- Has_Attribute --
+   -------------------
+
+   function Has_Attribute
+     (Validator  : access XML_Validator_Record;
+      NS         : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return Boolean
+   is
+   begin
+      if Validator.Attributes = null then
+         return False;
+      end if;
+
+      for A in Validator.Attributes'Range loop
+         if not Validator.Attributes (A).Is_Group
+           and then Validator.Attributes (A).Attr.NS = NS
+           and then Validator.Attributes (A).Attr.all in
+              Named_Attribute_Validator_Record'Class
+         then
+            if Named_Attribute_Validator_Record
+              (Validator.Attributes (A).Attr.all).Local_Name.all = Local_Name
+            then
+               return True;
+            end if;
+         end if;
+      end loop;
+      return False;
+   end Has_Attribute;
+
+   -------------------
    -- Add_Attribute --
    -------------------
 

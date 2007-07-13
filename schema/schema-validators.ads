@@ -369,6 +369,12 @@ package Schema.Validators is
       Attribute : access Attribute_Validator_Record'Class);
    --  Add a valid attribute to Validator.
 
+   function Has_Attribute
+     (Validator  : access XML_Validator_Record;
+      NS         : XML_Grammar_NS;
+      Local_Name : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether the given attribute was already added to Validator
+
    procedure Add_Attribute_Group
      (Validator : access XML_Validator_Record;
       Group     : XML_Attribute_Group);
