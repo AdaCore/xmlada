@@ -32,11 +32,14 @@ with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
 with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNAT.Sockets;       use GNAT.Sockets;
+with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Sockets;            use GNAT.Sockets;
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Streams; use Ada.Streams;
 
 package body Input_Sources.Http is
+
+   Debug : constant Boolean := False;
 
    ----------
    -- Open --
@@ -55,7 +58,7 @@ package body Input_Sources.Http is
       Channel : Stream_Access;
       Image_Port : constant String := Positive'Image (Port);
 
-      HTTP_Token_OK        : constant String := "HTTP/1.1 200 OK";
+      HTTP_Token_OK        : constant String := "HTTP/1\.\d \d\d\d (OK|FOUND)";
       Content_Length_Token : constant String := "CONTENT-LENGTH: ";
       --  These must be upper-cased.
 
@@ -72,6 +75,9 @@ package body Input_Sources.Http is
 
       function Get_Char return Character;
       --  Return the next character from the buffer
+
+      procedure Send (Str : String);
+      --  Send a request to the server
 
       --------------
       -- Get_Char --
@@ -98,6 +104,13 @@ package body Input_Sources.Http is
       procedure Update_Buffer is
       begin
          GNAT.Sockets.Receive_Socket (Socket, Buffer, Buffer_Last);
+         if Debug then
+            Put ("< ");
+            for B in Buffer'First .. Buffer_Last loop
+               Put (Character'Val (Buffer (B)));
+            end loop;
+            New_Line;
+         end if;
          Index := Buffer'First;
       end Update_Buffer;
 
@@ -111,6 +124,8 @@ package body Input_Sources.Http is
          Length : Natural := 0;
          C      : Character;
          Ok : Boolean := False;
+         Token : constant Pattern_Matcher := Compile (HTTP_Token_OK);
+
       begin
          loop
             Line_Index := Line'First;
@@ -132,9 +147,7 @@ package body Input_Sources.Http is
 
             exit when Line_Index = Line'First;
 
-            if Line_Index > HTTP_Token_OK'Length
-              and then Line (1 .. HTTP_Token_OK'Length) = HTTP_Token_OK
-            then
+            if Match (Token, Line (Line'First .. Line_Index - 1)) then
                Ok := True;
 
             elsif Line_Index > Content_Length_Token'Length
@@ -158,7 +171,25 @@ package body Input_Sources.Http is
          end if;
       end Parse_Header;
 
+      ----------
+      -- Send --
+      ----------
+
+      procedure Send (Str : String) is
+      begin
+         if Debug then
+            Put_Line ("> " & Str);
+         end if;
+         String'Write (Channel, Str);
+      end Send;
+
    begin
+      if Debug then
+         Put_Line ("Hostname: " & Hostname);
+         Put_Line ("Port:    " & Integer'Image (Port));
+         Put_Line ("File:     " & Filename);
+      end if;
+
       Addr := (GNAT.Sockets.Family_Inet,
                Addresses (Get_Host_By_Name (Hostname), 1),
                Port_Type (Port));
@@ -170,11 +201,11 @@ package body Input_Sources.Http is
 
       Channel := Stream (Socket);
 
-      String'Write (Channel, "GET http://"
-                     & Hostname & ":"
-                     & Image_Port (Image_Port'First + 1 .. Image_Port'Last)
-                     & "/" & Filename & " HTTP/1.1" & ASCII.LF);
-      String'Write (Channel, "" & ASCII.LF);
+      Send ("GET http://"
+            & Hostname & ":"
+            & Image_Port (Image_Port'First + 1 .. Image_Port'Last)
+            & "/" & Filename & " HTTP/1.0" & ASCII.LF);
+      Send ("" & ASCII.LF);
 
       Length := Parse_Header;
       if Length = 0 then

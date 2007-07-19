@@ -6,6 +6,11 @@ New features in version 3.0 (Development version)
  and thus automatic memory management. This was necessary to fix some meory
  leaks that couldn't be fix as easily otherwise.
 
+ Input_Sources:
+  - G718-020 http input now uses http 1.0 instead of http 1.1, since the
+    latter is not always properly understood by servers, and we do not need
+    new features from newer versions anyway
+
  Schema validation:
   - G404-019 fixed handling of use='required' in schemas
   - G425-003 schema-date_time.ads now contains subprograms to convert to
@@ -81,7 +86,7 @@ New features in version 2.1
   - EB02-005 DOM.Core.Nodes.Print now prints the namespace declarations
 
  Schema validation:
-  - E802-003 Added support for time-related types, like dateTime, time, date,...
+  - E802-003 Added support for time-related types, like dateTime, time, date,..
   - Added support for totalDigits and fractionDigits facets for integer types
   - Added support for all missing simple types: anyURI, hexBinary, double, ...
   - Improve support for arbitrary precision types like decimal and integer
@@ -116,7 +121,8 @@ New features in version 2.0
 
 - D609-022 Shared strings in DOM tree, to reduce memory usage by up to 50%
 
-- Improve location reports in SAX events. In particular, check debug_readers.adb
+- Improve location reports in SAX events. In particular, check
+  debug_readers.adb
   on how to get the context of an entity expansion if you want even better
   locations.
 
