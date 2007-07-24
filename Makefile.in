@@ -83,11 +83,16 @@ docs: force
 ifeq (${LIBRARY_TYPE},static)
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.a ${xmllib}
 else
+ifeq (${OS},Windows_NT)
+	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.dll ${xmllib}
+	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.dll ${xmllib}libxmlada.dll
+else
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} ${xmllib}
 	cd ${xmllib}; ${LN_S} libxmlada_$*.so.${VERSION} libxmlada_$*.so
 	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so
 	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so.${basename ${VERSION}}
 	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so.${VERSION}
+endif
 endif
 	cd ${xmllib}; ${CHMOD} ugo-w *.ali
 
