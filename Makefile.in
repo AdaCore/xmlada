@@ -76,6 +76,7 @@ docs: force
 %_inst: force
 	${CP} $*/*.ad[bs]        ${includedir}/xmlada
 	cd $*; ls *.ad[bs] > ${libdir}/gnat/xmlada/xmlada_$*.lgpr
+	cd ${xmllib}; ${CHMOD} ugo+w *.ali
 	-${CP} $*/lib/${LIBRARY_TYPE}/*.ali   ${xmllib}
 	${RM} ${libdir}/libxmlada_$**
 	${RM} ${xmllib}libxmlada_$**
