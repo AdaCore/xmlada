@@ -757,6 +757,9 @@ procedure Testxml is
          --  Ensure we end up with a newline, since otherwise some diffs will
          --  complain on some systems
          if Last_Written /= ASCII.LF then
+            if Directory_Separator = '\' then
+               Write (File2, ASCII.CR);
+            end if;
             Write (File2, ASCII.LF);
          end if;
 
