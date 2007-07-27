@@ -29,7 +29,7 @@
 with GNAT.Regpat;  use GNAT.Regpat;
 with Ada.Unchecked_Deallocation;
 
-private package Schema.Validators.Facets is
+package Schema.Validators.Facets is
 
    -------------------------
    --  Byte_Sequence_List --
@@ -122,5 +122,14 @@ private package Schema.Validators.Facets is
      (Facets     : in out Common_Facets_Description;
       Whitespace : Whitespace_Restriction);
    --  Set the various facets more efficiently than going through a string
+
+   ------------------------
+   --  Internal use only --
+   ------------------------
+   --  These are put in the specs for the sake of the testsuite
+
+   function Convert_Regexp (Regexp : String) return String;
+   --  Return a regular expresssion that converts the XML-specification
+   --  regexp Regexp to a GNAT.Regpat compatible one
 
 end Schema.Validators.Facets;

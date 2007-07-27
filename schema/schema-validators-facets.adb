@@ -31,10 +31,6 @@ with Ada.Strings.Unbounded;
 
 package body Schema.Validators.Facets is
 
-   function Convert_Regexp (Regexp : String) return String;
-   --  Return a regular expresssion that converts the XML-specification
-   --  regexp Regexp to a GNAT.Regpat compatible one
-
    --------------------
    -- Convert_Regexp --
    --------------------
@@ -42,25 +38,63 @@ package body Schema.Validators.Facets is
    function Convert_Regexp (Regexp : String) return String is
       use Ada.Strings.Unbounded;
       Result : Unbounded_String;
+      Tmp    : Unbounded_String;
       Pos    : Integer := Regexp'First;
    begin
       while Pos <= Regexp'Last loop
-         if Regexp (Pos) = '\' then
+         if Regexp (Pos) = '[' then
+            Append (Result, Regexp  (Pos));
+            Pos := Pos + 1;
+
+            Tmp := Null_Unbounded_String;
+
+            while Pos <= Regexp'Last
+              and then Regexp (Pos) /= ']'
+            loop
+               if Regexp (Pos) = '\' then
+                  case Regexp (Pos + 1) is
+                     when 'i' =>
+                        --  rule [99] in XMLSchema specifications
+                        Append (Tmp, "A-Za-z:_");
+                        Pos := Pos + 1;
+
+                     when 'c' =>
+                        Append (Tmp, "a-z:A-Z0-9._-");
+                        Pos    := Pos + 1;
+
+                     when others =>
+                        Append (Tmp, Regexp (Pos));
+                  end case;
+               else
+                  Append (Tmp, Regexp (Pos));
+               end if;
+               Pos := Pos + 1;
+            end loop;
+
+            Append (Result, Tmp);
+            Append (Result, Regexp  (Pos));
+
+         --  ??? Some tests in the old w3c testsuite seem to imply that
+         --  \c and \i are valid even outside character classes. Not sure about
+         --  this though
+
+         elsif Regexp (Pos) = '\' then
             case Regexp (Pos + 1) is
                when 'i' =>
                   --  rule [99] in XMLSchema specifications
-                  Result := Result & "[A-Za-z:_]";
+                  Append (Result, "[A-Za-z:_]");
                   Pos := Pos + 1;
 
                when 'c' =>
-                  Result := Result & "[a-z:A-Z0-9._-]";
+                  Append (Result, "[a-z:A-Z0-9._-]");
                   Pos    := Pos + 1;
 
                when others =>
-                  Result := Result & Regexp (Pos);
+                  Append (Result, Regexp (Pos));
             end case;
+
          else
-            Result := Result & Regexp  (Pos);
+            Append (Result, Regexp  (Pos));
          end if;
 
          Pos := Pos + 1;
@@ -130,10 +164,6 @@ package body Schema.Validators.Facets is
       Matched : Match_Array (0 .. 0);
    begin
       if Facets.Mask (Facet_Pattern) then
-         if Facets.Pattern = null then
-            Facets.Pattern := new Pattern_Matcher '
-              (Compile (Convert_Regexp (Facets.Pattern_String.all)));
-         end if;
          Match (Facets.Pattern.all, String (Value), Matched);
          if Matched (0).First /= Value'First
            or else Matched (0).Last /= Value'Last
@@ -248,8 +278,18 @@ package body Schema.Validators.Facets is
          end if;
          Unchecked_Free (Facets.Pattern);
          Free (Facets.Pattern_String);
-         Facets.Pattern := null;
+
          Facets.Pattern_String := new Byte_Sequence'(Facet_Value);
+
+         begin
+            Facets.Pattern := new Pattern_Matcher '
+              (Compile (Convert_Regexp (Facets.Pattern_String.all)));
+         exception
+            when  GNAT.Regpat.Expression_Error =>
+               Validation_Error ("Invalid regular expression "
+                                 & Facets.Pattern_String.all);
+         end;
+
          Facets.Mask (Facet_Pattern) := True;
          Applied := True;
       end if;
