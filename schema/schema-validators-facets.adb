@@ -72,13 +72,15 @@ package body Schema.Validators.Facets is
             end loop;
 
             Append (Result, Tmp);
-            Append (Result, Regexp  (Pos));
+            if Pos <= Regexp'Last then
+               Append (Result, Regexp (Pos));
+            end if;
 
          --  ??? Some tests in the old w3c testsuite seem to imply that
          --  \c and \i are valid even outside character classes. Not sure about
          --  this though
 
-         elsif Regexp (Pos) = '\' then
+         elsif Pos < Regexp'Last and then Regexp (Pos) = '\' then
             case Regexp (Pos + 1) is
                when 'i' =>
                   --  rule [99] in XMLSchema specifications
