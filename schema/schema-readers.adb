@@ -592,7 +592,7 @@ package body Schema.Readers is
            (Get_Validator (Validating_Reader (Handler).Validators.Typ),
             Local_Name, Namespace_URI, G,
             Validating_Reader (Handler).Validators.Data,
-            Get_Target_NS (Validating_Reader (Handler).Grammar), Element);
+            Validating_Reader (Handler).Grammar, Element);
       else
          if Debug then
             Put_Line ("Getting element definition from grammar: "

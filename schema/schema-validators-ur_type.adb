@@ -28,9 +28,6 @@
 
 package body Schema.Validators.UR_Type is
 
-   UR_Type_Element   : array (Process_Contents_Type) of XML_Element :=
-     (others => No_Element);
-
    type UR_Type_Validator is new XML_Validator_Record with record
       Process_Contents : Process_Contents_Type := Process_Strict;
    end record;
@@ -53,7 +50,7 @@ package body Schema.Validators.UR_Type is
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Schema_Target_NS  : XML_Grammar_NS;
+      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_Characters
      (Validator      : access UR_Type_Validator;
@@ -89,7 +86,7 @@ package body Schema.Validators.UR_Type is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
+      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element)
    is
       pragma Unreferenced (Data);
@@ -111,7 +108,7 @@ package body Schema.Validators.UR_Type is
                  ("No definition provided for """ & Local_Name & """");
             else
                Check_Qualification
-                 (Schema_Target_NS, Element_Validator, Namespace_URI);
+                 (Grammar, Element_Validator, Namespace_URI);
             end if;
 
          when Process_Lax =>
@@ -121,8 +118,8 @@ package body Schema.Validators.UR_Type is
                if Debug then
                   Debug_Output ("Definition not found for " & Local_Name);
                end if;
-               Element_Validator :=
-                 Get_UR_Type_Element (Validator.Process_Contents);
+               Element_Validator := Get_UR_Type_Element
+                 (Grammar, Validator.Process_Contents);
             else
                if Debug then
                   Debug_Output ("Definition found for " & Local_Name);
@@ -130,8 +127,8 @@ package body Schema.Validators.UR_Type is
             end if;
 
          when Process_Skip =>
-            Element_Validator :=
-              Get_UR_Type_Element (Validator.Process_Contents);
+            Element_Validator := Get_UR_Type_Element
+              (Grammar, Validator.Process_Contents);
       end case;
 
    end Validate_Start_Element;
@@ -172,9 +169,11 @@ package body Schema.Validators.UR_Type is
    -------------------------
 
    function Get_UR_Type_Element
-     (Process_Contents : Process_Contents_Type) return XML_Element is
+     (Grammar          : XML_Grammar;
+      Process_Contents : Process_Contents_Type) return XML_Element
+   is
    begin
-      return UR_Type_Element (Process_Contents);
+      return Get (Grammar).UR_Type_Elements (Process_Contents);
    end Get_UR_Type_Element;
 
    -----------------------------
@@ -182,19 +181,18 @@ package body Schema.Validators.UR_Type is
    -----------------------------
 
    procedure Create_UR_Type_Elements
-     (Schema_NS : Schema.Validators.XML_Grammar_NS)
+     (Schema_NS : Schema.Validators.XML_Grammar_NS;
+      Grammar   : XML_Grammar)
    is
       Validator : UR_Type_Access;
    begin
-      if UR_Type_Element (UR_Type_Element'First) = No_Element then
-         for P in Process_Contents_Type loop
-            Validator := new UR_Type_Validator;
-            Validator.Process_Contents := P;
-            UR_Type_Element (P)  := Create_Local_Element
-              ("", Schema_NS, Create_Local_Type (Schema_NS, Validator),
-               Qualified);
-         end loop;
-      end if;
+      for P in Process_Contents_Type loop
+         Validator := new UR_Type_Validator;
+         Validator.Process_Contents := P;
+         Get (Grammar).UR_Type_Elements (P) := Create_Local_Element
+           ("", Schema_NS, Create_Local_Type (Schema_NS, Validator),
+            Qualified);
+      end loop;
    end Create_UR_Type_Elements;
 
 end Schema.Validators.UR_Type;

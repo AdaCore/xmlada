@@ -1198,11 +1198,10 @@ package body Schema.Validators.Simple_Types is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
+      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element)
    is
-      pragma Unreferenced
-        (Validator, Data, Namespace_URI, NS, Schema_Target_NS);
+      pragma Unreferenced (Validator, Data, Namespace_URI, NS, Grammar);
    begin
       Validation_Error
         ("Must be a simple type, no <" & Local_Name & "> child allowed");

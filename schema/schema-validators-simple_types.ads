@@ -48,7 +48,7 @@ private package Schema.Validators.Simple_Types is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
+      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
    procedure Validate_Characters
      (Validator      : access Any_Simple_XML_Validator_Record;

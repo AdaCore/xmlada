@@ -288,7 +288,7 @@ package Schema.Validators is
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
+      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
    --  Check whether this Start_Element event is valid in the context of the
    --  validator. Data is the result of Create_Validator_Data.
@@ -490,13 +490,12 @@ package Schema.Validators is
    --  Set the "block" status of the element
 
    procedure Check_Qualification
-     (Target_NS     : XML_Grammar_NS;
+     (Grammar       : XML_Grammar;
       Element       : XML_Element;
       Namespace_URI : Unicode.CES.Byte_Sequence);
    --  Check whether the element should have been qualified or not,
    --  depending on its "form" attribute.
    --  Namespace_URI is the namespace as read in the file.
-   --  Target_NS is the namespace described by the current schema
 
    function Is_Global (Element : XML_Element) return Boolean;
    --  Whether Element is a global element (ie declared at the top-level of
@@ -838,46 +837,6 @@ private
    procedure Append
      (List    : in out Element_List_Access; Element : XML_Element);
 
-   --------------
-   -- Grammars --
-   --------------
-
-   type Grammar_NS_Array is array (Natural range <>) of XML_Grammar_NS;
-   type Grammar_NS_Array_Access is access all Grammar_NS_Array;
-
-   type String_List_Record;
-   type String_List is access String_List_Record;
-   type String_List_Record is record
-      Str  : Unicode.CES.Byte_Sequence_Access;
-      Next : String_List;
-   end record;
-   --  We will use Ada2005 containers when the compiler is more widely
-   --  available
-
-   procedure Free (List : in out String_List);
-   --  Free the list and its contents
-
-   type XML_Grammar_Record is new Sax.Pointers.Root_Encapsulated with record
-      Grammars : Grammar_NS_Array_Access;
-      --  All the namespaces known for that grammar
-
-      Parsed_Locations : String_List;
-      --  List of schema locations that have already been parsed. This is used
-      --  in particular to handle cases where a schema imports two others
-      --  schemas, that in turn import a common one.
-
-      Target_NS : XML_Grammar_NS;
-   end record;
-
-   procedure Free (Grammar : in out XML_Grammar_Record);
-   --  Free the memory occupied by the grammar
-
-   package XML_Grammars is new Sax.Pointers.Smart_Pointers
-     (XML_Grammar_Record);
-   type XML_Grammar is new XML_Grammars.Pointer;
-   No_Grammar : constant XML_Grammar :=
-     XML_Grammar (XML_Grammars.Null_Pointer);
-
    -----------------
    -- XML_Element --
    -----------------
@@ -936,6 +895,50 @@ private
    --  Registers a newly allocated element into NS, so that when the latter
    --  is destroyed, the element is properly deallocated.
    --  This does nothing if Element was already registered.
+
+   --------------
+   -- Grammars --
+   --------------
+
+   type Grammar_NS_Array is array (Natural range <>) of XML_Grammar_NS;
+   type Grammar_NS_Array_Access is access all Grammar_NS_Array;
+
+   type String_List_Record;
+   type String_List is access String_List_Record;
+   type String_List_Record is record
+      Str  : Unicode.CES.Byte_Sequence_Access;
+      Next : String_List;
+   end record;
+   --  We will use Ada2005 containers when the compiler is more widely
+   --  available
+
+   procedure Free (List : in out String_List);
+   --  Free the list and its contents
+
+   type Process_Contents_Array is array (Process_Contents_Type) of XML_Element;
+
+   type XML_Grammar_Record is new Sax.Pointers.Root_Encapsulated with record
+      Grammars : Grammar_NS_Array_Access;
+      --  All the namespaces known for that grammar
+
+      Parsed_Locations : String_List;
+      --  List of schema locations that have already been parsed. This is used
+      --  in particular to handle cases where a schema imports two others
+      --  schemas, that in turn import a common one.
+
+      UR_Type_Elements  : Process_Contents_Array := (others => No_Element);
+
+      Target_NS : XML_Grammar_NS;
+   end record;
+
+   procedure Free (Grammar : in out XML_Grammar_Record);
+   --  Free the memory occupied by the grammar
+
+   package XML_Grammars is new Sax.Pointers.Smart_Pointers
+     (XML_Grammar_Record);
+   type XML_Grammar is new XML_Grammars.Pointer;
+   No_Grammar : constant XML_Grammar :=
+     XML_Grammar (XML_Grammars.Null_Pointer);
 
    -------------------------
    -- Attribute_Validator --
@@ -1301,7 +1304,7 @@ private
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS;
+      Grammar       : XML_Grammar;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
    --  Whether Group can process Local_Name. This is used for group_models
@@ -1350,7 +1353,7 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
+      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
    procedure Validate_Characters
      (Validator     : access XML_Any_Record;
@@ -1384,7 +1387,7 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
+      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access Sequence_Record;
@@ -1397,7 +1400,7 @@ private
       Local_Name   : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS;
+      Grammar       : XML_Grammar;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
    function Can_Be_Empty (Group : access Sequence_Record) return Boolean;
@@ -1426,7 +1429,7 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
+      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access Choice_Record;
@@ -1439,7 +1442,7 @@ private
       Local_Name    : Unicode.CES.Byte_Sequence;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS;
+      Grammar       : XML_Grammar;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
    function Can_Be_Empty (Group : access Choice_Record) return Boolean;
@@ -1471,7 +1474,7 @@ private
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
+      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
    procedure Validate_End_Element
      (Validator         : access XML_All_Record;
