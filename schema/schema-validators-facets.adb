@@ -48,11 +48,12 @@ package body Schema.Validators.Facets is
          if Regexp (Pos) = '\' then
             case Regexp (Pos + 1) is
                when 'i' =>
+                  --  rule [99] in XMLSchema specifications
                   Result := Result & "[A-Za-z:_]";
                   Pos := Pos + 1;
 
                when 'c' =>
-                  Result := Result & "[:a-zA-Z0-9._-]";
+                  Result := Result & "[a-z:A-Z0-9._-]";
                   Pos    := Pos + 1;
 
                when others =>
