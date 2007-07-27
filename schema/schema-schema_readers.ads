@@ -168,6 +168,10 @@ private
       --  The value of elementFormDefault for the current file
 
       Target_NS       : Schema.Validators.XML_Grammar_NS;
+      --  The namespace for which we are currently parsing. This might be
+      --  different from Get_Target_NS (Created_Grammar) when processing
+      --  <import> for instance.
+
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;
    end record;

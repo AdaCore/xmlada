@@ -1,8 +1,16 @@
 #!/bin/sh
 
 ## Location of the testsuite's files for Schemas
-## You can download these from
-##   http://dev.w3.org/cvsweb/XML/xml-schema-test-suite/2004-01-14/
+## You can download these from the web
+##   http://www.w3.org/XML/Schema in the "Test Collection"
+## part for a link to the latest .tar.gz package.
+## Also:
+##   http://www.w3.org/XML/2004/xml-schema-test-suite/index.html
+##
+## The following page is a FAQ on runnning the testsuite
+##   http://www.w3.org/XML/2004/xml-schema-test-suite/schemafaq.html
+
+## XML/Ada was tested with http://www.w3.org/XML/2004/xml-schema-test-suite/xmlschema2006-11-06/xsts-2007-06-20.tar.gz
 
 ## IMPORTANT: BUG FIXES TO THE TESTSUITE:
 ## msxsdtest/element/elemT074.xml

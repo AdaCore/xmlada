@@ -279,7 +279,15 @@ package body Schema.Schema_Readers is
       Add_Schema_For_Schema (G);
       Set_Validating_Grammar (Handler, G);
 
-      Handler.Target_NS := null;
+      Handler.Target_NS := Get_Target_NS (Handler.Created_Grammar);
+      if Handler.Target_NS = null then
+         Get_NS (Handler.Created_Grammar, "", Handler.Target_NS);
+         if Debug then
+            Output
+              ("Get_NS (Handler.Created_Grammar, """", Handler.Target_NS)");
+         end if;
+      end if;
+
       Get_NS (Handler.Created_Grammar, XML_Schema_URI, Handler.Schema_NS);
    end Start_Document;
 
@@ -1835,14 +1843,6 @@ package body Schema.Schema_Readers is
                     & """, Handler.Target_NS)");
          end if;
          Set_Target_NS (Handler.Created_Grammar, Handler.Target_NS);
-
-      else
-         Get_NS (Handler.Created_Grammar, "", Handler.Target_NS);
-         if Debug then
-            Output
-              ("Get_NS (Handler.Created_Grammar, """", Handler.Target_NS)");
-         end if;
-         Set_Target_NS (Handler.Created_Grammar, null);
       end if;
 
       if Form_Default_Index /= -1 then
