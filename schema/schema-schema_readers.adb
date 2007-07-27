@@ -706,22 +706,30 @@ package body Schema.Schema_Readers is
    is
       Location_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
-      Location : constant Byte_Sequence := Get_Value (Atts, Location_Index);
-      Absolute : constant Byte_Sequence := To_Absolute_URI
-        (Handler, Location);
---        Namespace_Index : constant Integer :=
---          Get_Index (Atts, URI => "", Local_Name => "namespace");
+      Namespace_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "namespace");
    begin
-      if Debug then
-         Put_Line ("Import: " & Absolute);
-         Put_Line ("Adding new grammar to Handler.Created_Grammar");
+      if Location_Index = -1 or else Namespace_Index = -1 then
+         Validation_Error
+           ("schemaLocation and namespace attributes mandatory for <import>");
       end if;
 
-      if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
-         Parse_Grammar (Handler, Location, Handler.Created_Grammar);
-      elsif Debug then
-         Put_Line ("Already imported");
-      end if;
+      declare
+         Location : constant Byte_Sequence := Get_Value (Atts, Location_Index);
+         Absolute : constant Byte_Sequence := To_Absolute_URI
+           (Handler, Location);
+      begin
+         if Debug then
+            Put_Line ("Import: " & Absolute);
+            Put_Line ("Adding new grammar to Handler.Created_Grammar");
+         end if;
+
+         if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
+            Parse_Grammar (Handler, Location, Handler.Created_Grammar);
+         elsif Debug then
+            Put_Line ("Already imported");
+         end if;
+      end;
    end Create_Import;
 
    --------------------------
