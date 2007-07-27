@@ -470,7 +470,11 @@ package body Schema.Schema_Readers is
       Seq : Sequence;
    begin
       if Min_Occurs_Index /= -1 then
-         Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
+         Min_Occurs := Max_Occurs_From_Value
+           (Get_Value (Atts, Min_Occurs_Index));
+         if Min_Occurs = Unbounded then
+            Validation_Error ("minOccurs cannot be ""unbounded""");
+         end if;
       end if;
 
       if Max_Occurs_Index /= -1 then
@@ -979,7 +983,11 @@ package body Schema.Schema_Readers is
       end if;
 
       if Min_Occurs_Index /= -1 then
-         Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
+         Min_Occurs := Max_Occurs_From_Value
+           (Get_Value (Atts, Min_Occurs_Index));
+         if Min_Occurs = Unbounded then
+            Validation_Error ("minOccurs can not be set to ""unbounded""");
+         end if;
       end if;
 
       if Max_Occurs_Index /= -1 then
@@ -1393,6 +1401,11 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "base");
       Base : XML_Type;
    begin
+      if Base_Index = -1 then
+         Validation_Error
+           ("Attribute ""base"" required for <extensionType>");
+      end if;
+
       if Handler.Contexts.Type_Name /= null
         and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
       then

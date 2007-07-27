@@ -577,6 +577,10 @@ package body Schema.Date_Time is
       Tmp    : Integer;
       Processing_Time : Boolean := False;
    begin
+      if Ch = "" then
+         return No_Duration;
+      end if;
+
       if Ch (Pos) = '-' then
          Result.Sign := -1;
          Pos := Pos + 1;

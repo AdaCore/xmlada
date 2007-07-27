@@ -2010,9 +2010,13 @@ package body Schema.Validators is
 
       --  3.3 Element Declaration details:  Validation Rule 3.1
       --  The "default" attribute of element must match the validation rule
-      --  for that element
+      --  for that element.
+      --  Test whether we have a forward reference to the type, in which case
+      --  default will be checked when we know the actual type
 
-      if Element.Elem.Of_Type /= No_Type then
+      if Element.Elem.Of_Type /= No_Type
+        and then Get_Validator (Element.Elem.Of_Type) /= null
+      then
          Validate_Characters (Get_Validator (Element.Elem.Of_Type), Default,
                               Empty_Element => False);
       end if;
@@ -2058,8 +2062,12 @@ package body Schema.Validators is
       --  3.3 Element Declaration details:  Validation Rule 3.1
       --  The "fixed" attribute of element must match the validation rule
       --  for that element
+      --  Test whether we have a forward reference to the type, in which case
+      --  default will be checked when we know the actual type
 
-      if Element.Elem.Of_Type /= No_Type then
+      if Element.Elem.Of_Type /= No_Type
+        and then Get_Validator (Element.Elem.Of_Type) /= null
+      then
          Validate_Characters (Get_Validator (Element.Elem.Of_Type), Fixed,
                               Empty_Element => False);
       end if;

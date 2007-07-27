@@ -191,7 +191,6 @@ package body Schema.Validators.Simple_Types is
       procedure Check_Facet
         (Facets : in out Range_Facets_Description;
          Node_Value  : Unicode.CES.Byte_Sequence)
-
       is
          Val : T;
       begin
@@ -270,6 +269,11 @@ package body Schema.Validators.Simple_Types is
          else
             Applied := False;
          end if;
+
+      exception
+         when Constraint_Error =>
+            Validation_Error
+              ("Invalid " & Facet_Name & ": """ & Facet_Value & """");
       end Add_Facet;
    end Generic_Range_Facets;
 
