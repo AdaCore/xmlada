@@ -28,6 +28,7 @@
 
 with Ada.Calendar;            use Ada.Calendar;
 with Schema.Date_Time;        use Schema.Date_Time;
+with Schema.Validators.Facets; use Schema.Validators.Facets;
 with GNAT.IO;                 use GNAT.IO;
 
 procedure Test_Date_Time is
@@ -51,6 +52,9 @@ procedure Test_Date_Time is
       with function Image (T1 : T) return String is <>;
    procedure Assert_Equal (T1, T2 : T);
 
+   procedure Assert_Re (Re1, Re2 : String);
+   --  Compare the conversion of Re1 to Re2
+
    ------------------
    -- Assert_Equal --
    ------------------
@@ -61,6 +65,18 @@ procedure Test_Date_Time is
          Put_Line (Image (T1) & " /= " & Image (T2));
       end if;
    end Assert_Equal;
+
+   ---------------
+   -- Assert_Re --
+   ---------------
+
+   procedure Assert_Re (Re1, Re2 : String) is
+   begin
+      if Convert_Regexp (Re1) /= Re2 then
+         Put_Line ("Converting " & Re1 & " gives "
+                   & Convert_Regexp (Re1) & " and not " & Re2);
+      end if;
+   end Assert_Re;
 
    --------------------
    -- Assert_Generic --
@@ -263,5 +279,14 @@ begin
    Assert_NC (Dur5M, Dur152D);
    Assert_NC (Dur5M, Dur153D);
    Assert    (Dur5M, Dur154D, '<');
+
+   --  Regexps
+
+   Assert_Re ("[a-z]", "[a-z]");
+   Assert_Re ("[\c]", "[a-z:A-Z0-9._-]");
+   Assert_Re ("[\i]", "[A-Za-z:_]");
+   Assert_Re ("\c", "[a-z:A-Z0-9._-]");  --  ??? Not sure that's correct
+   --  Assert_Re ("[abc-[b]]", "[ac]");  --  ??? Not supported for now
+   Assert_Re ("\d{5}", "\d{5}");
 
 end Test_Date_Time;
