@@ -196,11 +196,30 @@ package body Schema.Schema_Readers is
    ---------------------------
 
    function Max_Occurs_From_Value (Value : Byte_Sequence) return Integer is
+      Index : Integer;
+      C     : Unicode_Char;
    begin
       if Value = "unbounded" then
          return Unbounded;
       else
-         return Integer'Value (Value);
+         begin
+            return Integer'Value (Value);
+         exception
+            when Constraint_Error =>
+               --  Either we have an integer too big to fit in Integer, or we
+               --  do not have an integer at all
+               Index := Value'First;
+               while Index <= Value'Last loop
+                  Encoding.Read (Value, Index, C);
+                  if not Is_Digit (C) then
+                     Validation_Error
+                       ("Value for ""maxOccurs"" must"
+                        & " be an integer or ""unbounded""");
+                  end if;
+               end loop;
+
+               return Integer'Last;
+         end;
       end if;
    end Max_Occurs_From_Value;
 
