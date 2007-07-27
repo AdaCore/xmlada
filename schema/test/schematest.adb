@@ -57,6 +57,11 @@ procedure Schematest is
    --  Whether to test the validity of XML or Schema files. If both are false,
    --  the only output will be for unexpected internal errors
 
+   Accepted_Only      : constant Boolean := True;
+   --  If true, then only tests that are marked as "accepted" are run. Some
+   --  tests might be under discussion, and have a status of "queried". Such
+   --  tests are not run.
+
    Total_Parsed_Schema : Natural := 0;
    Total_Parsed_XML    : Natural := 0;
    Total_Error         : Natural := 0;
@@ -85,12 +90,18 @@ procedure Schematest is
    --  Query an attribute from N. The empty string is returned if the attribute
    --  does not exists
 
+   procedure Test_Header (Testset, Group, Schema, Test : String);
    procedure Error (Testset, Group, Schema, Test, Msg, Full_Msg : String);
    --  Print an error message
 
    type Outcome_Value is (Valid, Invalid, NotKnown);
    function Get_Expected (N : Node) return Outcome_Value;
    --  Whether the test is expected to be valid or invalid
+
+   type Status_Value is (Accepted, Queried);
+   function Get_Status
+     (Testset, Group, Schema, Test : String; N : Node) return Status_Value;
+   --  Get the status of the test
 
 --     function As_Text (N : Node) return String;
    --  Return the node's value as text
@@ -141,6 +152,20 @@ procedure Schematest is
       end if;
    end Get_Attribute_NS;
 
+   -----------------
+   -- Test_Header --
+   -----------------
+
+   procedure Test_Header (Testset, Group, Schema, Test : String) is
+   begin
+      Put_Line ("TestSet: " & Testset);
+      Put_Line ("Group:   " & Group);
+      Put_Line ("Schema:  " & Schema);
+      if Test /= "" then
+         Put_Line ("Test:    " & Test);
+      end if;
+   end Test_Header;
+
    -----------
    -- Error --
    -----------
@@ -148,12 +173,7 @@ procedure Schematest is
    procedure Error (Testset, Group, Schema, Test, Msg, Full_Msg : String) is
    begin
       Total_Error := Total_Error + 1;
-      Put_Line ("TestSet: " & Testset);
-      Put_Line ("Group:   " & Group);
-      Put_Line ("Schema:  " & Schema);
-      if Test /= "" then
-         Put_Line ("Test:    " & Test);
-      end if;
+      Test_Header (Testset, Group, Schema, Test);
       Put_Line ("Error:   " & Msg);
       if Verbose then
          Put_Line ("          " & Full_Msg);
@@ -182,6 +202,39 @@ procedure Schematest is
       return NotKnown;
    end Get_Expected;
 
+   ----------------
+   -- Get_Status --
+   ----------------
+
+   function Get_Status
+     (Testset, Group, Schema, Test : String; N : Node) return Status_Value
+   is
+      N2 : Node := First_Child (N);
+   begin
+      while N2 /= null loop
+         if Local_Name (N2) = "current" then
+            if Get_Attribute (N2, "status") = "accepted" then
+               return Accepted;
+            elsif Get_Attribute (N2, "status") = "queried" then
+               if Verbose then
+                  Test_Header (Testset, Group, Schema, Test);
+                  Put_Line ("Test not accepted, see "
+                            & Get_Attribute (N2, "bugzilla"));
+                  New_Line;
+               end if;
+               return Queried;
+            else
+               Put_Line ("Invalid status: " & Get_Attribute (N2, "status"));
+               raise Program_Error;
+            end if;
+
+         end if;
+         N2 := Next_Sibling (N2);
+      end loop;
+
+      return Accepted;
+   end Get_Status;
+
    -----------------------
    -- Parse_Schema_Test --
    -----------------------
@@ -202,6 +255,12 @@ procedure Schematest is
    begin
       Grammar      := No_Grammar;
       Schema_Files := Null_Unbounded_String;
+
+      if Accepted_Only
+        and then Get_Status (Testset, Group, Name, "", Schema) /= Accepted
+      then
+         return;
+      end if;
 
       begin
          Set_Feature (Reader, Schema_Validation_Feature, True);
@@ -271,6 +330,12 @@ procedure Schematest is
       Input    : File_Input;
       Document : Unbounded_String;
    begin
+      if Accepted_Only
+        and then Get_Status (Testset, Group, Schema, Name, Test) /= Accepted
+      then
+         return;
+      end if;
+
       Set_Validating_Grammar (Reader, Grammar);
       Set_Feature (Reader, Schema_Validation_Feature, True);
 
@@ -335,6 +400,11 @@ procedure Schematest is
               (Testset, Name, N, Base_Dir,
                Grammar      => Schema,
                Schema_Files => Schema_Files);
+            if Schema = No_Grammar then
+               --  We couldn't parse the grammar, or the tests isn't "accepted"
+               --  so nothing else to do
+               exit;
+            end if;
 
          elsif Local_Name (N) = "instanceTest" then
             Parse_Instance_Test
