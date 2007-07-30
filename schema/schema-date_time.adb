@@ -218,7 +218,7 @@ package body Schema.Date_Time is
 
    function Image (Month : GMonth_T) return String is
    begin
-      return "--" & Image (Month.Month, 2) & "--" & Image (Month.TZ);
+      return "--" & Image (Month.Month, 2) & Image (Month.TZ);
    end Image;
 
    function Image (Year  : GYear_T) return String is
@@ -738,14 +738,27 @@ package body Schema.Date_Time is
 
    function Value (Ch : String) return GMonth_T is
       Result : GMonth_T;
+      Index  : Natural;
    begin
-      if Ch (Ch'First .. Ch'First + 1) /= "--"
-        or else Ch (Ch'First + 4 .. Ch'First + 5) /= "--"
-      then
+      if Ch (Ch'First .. Ch'First + 1) /= "--" then
          Validation_Error ("Invalid gMonth: """ & Ch & """");
       end if;
       Result.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
-      Parse (Ch (Ch'First + 6 .. Ch'Last), Result.TZ);
+      Result.TZ    := No_Timezone;
+
+      if Ch'Last > Ch'First + 3  then
+         if Ch'Last >= Ch'First + 5
+           and then Ch (Ch'First + 4 .. Ch'First + 5) = "--"
+         then
+            Index := Ch'First + 6;
+         else
+            Index := Ch'First + 4;
+         end if;
+
+         if Index < Ch'Last then
+            Parse (Ch (Index .. Ch'Last), Result.TZ);
+         end if;
+      end if;
       return Result;
    exception
       when Constraint_Error =>

@@ -50,12 +50,16 @@ with Sax.Readers;           use Sax.Readers;
 
 procedure Schematest is
 
-   Verbose      : Boolean := False;
-   Debug        : Boolean := False;
-   Test_XML     : Boolean := True;
-   Test_Schemas : Boolean := True;
+   Verbose       : Boolean := False;
+   Debug         : Boolean := False;
+   Test_XML      : Boolean := True;
+   Test_Schemas  : Boolean := True;
    --  Whether to test the validity of XML or Schema files. If both are false,
    --  the only output will be for unexpected internal errors
+
+   Show_Expected : Boolean := True;
+   --  When a test is expected to be invalid, should we compare the error
+   --  messages as well ?
 
    Accepted_Only      : constant Boolean := True;
    --  If true, then only tests that are marked as "accepted" are run. Some
@@ -92,6 +96,7 @@ procedure Schematest is
 
    procedure Test_Header (Testset, Group, Schema, Test : String);
    procedure Error (Testset, Group, Schema, Test, Msg, Full_Msg : String);
+   procedure Expected (Testset, Group, Schema, Test, Msg : String);
    --  Print an error message
 
    type Outcome_Value is (Valid, Invalid, NotKnown);
@@ -180,6 +185,19 @@ procedure Schematest is
       end if;
       New_Line;
    end Error;
+
+   --------------
+   -- Expected --
+   --------------
+
+   procedure Expected (Testset, Group, Schema, Test, Msg : String) is
+   begin
+      if Show_Expected then
+         Test_Header (Testset, Group, Schema, Test);
+         Put_Line ("Pass:   " & Msg);
+         New_Line;
+      end if;
+   end Expected;
 
    ------------------
    -- Get_Expected --
@@ -304,6 +322,10 @@ procedure Schematest is
                       Name & " (" & To_String (Document) & ")", "",
                       "SCHEMA must be valid" & ASCII.LF
                       & Exception_Message (E), "");
+            else
+               Expected (Testset, Group,
+                         Name & " (" & To_String (Document) & ")", "",
+                         Exception_Message (E));
             end if;
 
          when E : others =>
@@ -368,6 +390,10 @@ procedure Schematest is
                             Name & " (" & To_String (Document) & ")",
                             "XML Must be valid" & ASCII.LF
                             & Exception_Message (E), "");
+                  else
+                     Expected (Testset, Group, Schema,
+                               Name & " (" & To_String (Document) & ")",
+                               Exception_Message (E));
                   end if;
 
                when E : others =>
@@ -486,11 +512,12 @@ procedure Schematest is
 
 begin
    loop
-      case Getopt ("v d x s") is
+      case Getopt ("v d x s e") is
          when 'v'    => Verbose := True;
          when 'd'    => Debug   := True;
          when 'x'    => Test_XML := False;
          when 's'    => Test_Schemas := False;
+         when 'e'    => Show_Expected := False;
          when others => exit;
       end case;
    end loop;

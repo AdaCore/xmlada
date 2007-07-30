@@ -145,6 +145,7 @@ procedure Test_Date_Time is
 
    procedure Assert    is new Assert_Equal (Integer, Integer'Image);
    procedure Assert    is new Assert_Equal (Date_Time_T);
+   procedure Assert    is new Assert_Equal (GMonth_T);
 
    ------------
    -- Assert --
@@ -279,6 +280,16 @@ begin
    Assert_NC (Dur5M, Dur152D);
    Assert_NC (Dur5M, Dur153D);
    Assert    (Dur5M, Dur154D, '<');
+
+   --  Parsing GMonth
+   --  The format that ends with '--' is actually incorrect, but was mentioned
+   --  in earlier versions of the w3c schema specification, so should be
+   --  accepted. See http://books.xmlschemata.org/relaxng/ch19-77111.html
+
+   Assert (GMonth_T'(Value ("--01")), GMonth_T'(Value ("--01--")));
+   Assert (GMonth_T'(Value ("--01Z")), GMonth_T'(Value ("--01+00:00")));
+   Assert (GMonth_T'(Value ("--01+02:00")), GMonth_T'(Value ("--01+02:00")));
+   Assert (GMonth_T'(Value ("--01-04:00")), GMonth_T'(Value ("--01-04:00")));
 
    --  Regexps
 
