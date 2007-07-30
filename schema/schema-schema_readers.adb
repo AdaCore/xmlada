@@ -2157,6 +2157,7 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "maxLength"
         or else Local_Name = "pattern"
         or else Local_Name = "minLength"
+        or else Local_Name = "length"
         or else Local_Name = "enumeration"
         or else Local_Name = "whiteSpace"
         or else Local_Name = "totalDigits"

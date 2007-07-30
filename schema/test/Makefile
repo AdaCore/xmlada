@@ -1,6 +1,6 @@
 .PHONY: tests old new force
 
-tests: new old
+tests: old new
 
 old:
 	./testsuite
