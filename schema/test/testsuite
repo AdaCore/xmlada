@@ -24,6 +24,13 @@
 
 xmltests=./xmltests
 
+if [ -d $xmltests ]; then
+  :
+else
+  echo "xmltests.2002-01-16 not found"
+  exit
+fi
+
 ## Name of the driver.
 # testschema=${TESTSCHEMA:=./testdomschema -silent}
 testschema=${TESTSCHEMA:-./testschema}
