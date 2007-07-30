@@ -70,6 +70,10 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Attribute_Group);
+   procedure Lookup_With_NS
+     (Handler : in out Schema_Reader'Class;
+      QName   : Byte_Sequence;
+      Result  : out Attribute_Validator);
    --  Lookup a type or element  with a possible namespace specification
 
    function Create_Repeat
@@ -446,6 +450,28 @@ package body Schema.Schema_Readers is
         (G, QName (Separator + 1 .. QName'Last));
       Output
         ("Attr_Group := Lookup_Attribute_Group (G, """
+         & QName (Separator + 1 .. QName'Last) & """);");
+   end Lookup_With_NS;
+
+   --------------------
+   -- Lookup_With_NS --
+   --------------------
+
+   procedure Lookup_With_NS
+     (Handler : in out Schema_Reader'Class;
+      QName   : Byte_Sequence;
+      Result  : out Attribute_Validator)
+   is
+      Separator : constant Integer := Split_Qname (QName);
+      G         : XML_Grammar_NS;
+   begin
+      Get_Grammar_For_Namespace
+        (Handler, QName (QName'First .. Separator - 1), G);
+
+      Result := Lookup_Attribute
+        (G, QName (Separator + 1 .. QName'Last));
+      Output
+        ("Attr := Lookup_Attribute_NS (G, """
          & QName (Separator + 1 .. QName'Last) & """);");
    end Lookup_With_NS;
 
@@ -1776,11 +1802,7 @@ package body Schema.Schema_Readers is
                        & ", " & Use_Type'Img & ", Qualified);");
          end case;
       else
-         Att := Lookup_Attribute
-           (Handler.Target_NS, Get_Value (Atts, Ref_Index));
-         Output (Ada_Name (Handler.Contexts)
-                 & " := Lookup_Attribute (Handler.Target_NS, """
-                 & Get_Value (Atts, Ref_Index) & """);");
+         Lookup_With_NS (Handler, Get_Value (Atts, Ref_Index), Att);
       end if;
 
       Handler.Contexts.Attribute := Att;

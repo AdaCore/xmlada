@@ -3663,7 +3663,7 @@ package body Schema.Validators is
             if Attr.Attribute_Type = No_Type then
                Validation_Error
                  ("Attribute """
-                  & Attr.Local_Name.all
+                  & To_QName (Grammar.Namespace_URI.all, Attr.Local_Name.all)
                   & """ is referenced, but not defined");
             end if;
 
