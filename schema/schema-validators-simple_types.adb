@@ -756,6 +756,11 @@ package body Schema.Validators.Simple_Types is
                        & Get_Name (Validator));
       end if;
 
+      if Ch = "" then
+         Validation_Error
+           ("Invalid value for boolean type: """ & Ch & """");
+      end if;
+
       Check_Facet (Validator.Facets, Ch);
 
       --  Skip leading spaces
