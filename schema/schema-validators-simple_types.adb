@@ -793,16 +793,6 @@ package body Schema.Validators.Simple_Types is
               ("Invalid value for boolean type: """ & Ch & """");
          end if;
       end loop;
-
---
---
---        if Ch (First .. Ch'Last) /= "true"
---          and then Ch (First .. Ch'Last) /= "false"
---          and then Ch (First .. Ch'Last) /= "0"
---          and then Ch (First .. Ch'Last) /= "1"
---        then
---         Validation_Error ("Invalid value for boolean type: """ & Ch & """");
---        end if;
    end Validate_Characters;
 
    ---------------
