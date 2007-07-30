@@ -27,7 +27,7 @@ xmltests=./xmltests
 if [ -d $xmltests ]; then
   :
 else
-  echo "xmltests.2002-01-16 not found"
+  echo "./testsuite: FAILURE (xmltests.2002-01-16 not found)"
   exit
 fi
 

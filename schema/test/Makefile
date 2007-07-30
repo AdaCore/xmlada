@@ -9,5 +9,4 @@ new:
 	@./schematest > schematest.tmp.out
 	-@diff schematest.out schematest.tmp.out
 	@tail -1 schematest.tmp.out
-
 force:

@@ -364,6 +364,8 @@ procedure Testxml is
          Put_Line ("Failure:  " & Integer'Image (Success.Failure_Count));
          Put_Line ("Ignored:  " & Integer'Image (Success.Ignore_Count));
          Put_Line ("Not found:" & Integer'Image (Success.Not_Found_Count));
+      elsif Success.Failure_Count = 0 then
+         Put_Line (Command_Name & ": SUCCESS");
       end if;
 
       if Success.Failure_Count = 0 then
