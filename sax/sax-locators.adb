@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unicode.CES;  use Unicode.CES;
 
 package body Sax.Locators is
@@ -232,18 +233,31 @@ package body Sax.Locators is
    -- To_String --
    ---------------
 
-   function To_String (Loc : Locator) return String is
+   function To_String
+     (Loc : Locator; Use_Basename : Boolean := False) return String
+   is
       C    : constant Natural := Get_Column_Number (Loc);
       Line : constant String := Natural'Image (Get_Line_Number (Loc));
       Col  : constant String := Natural'Image (C);
    begin
       if C /= 0 then
-         return (Get_Public_Id (Loc) & ':'
-                 & Line (Line'First + 1 .. Line'Last)
-                 & ':' & Col (Col'First + 1 .. Col'Last));
+         if Use_Basename then
+            return (Base_Name (Get_Public_Id (Loc)) & ':'
+                    & Line (Line'First + 1 .. Line'Last)
+                    & ':' & Col (Col'First + 1 .. Col'Last));
+         else
+            return (Get_Public_Id (Loc) & ':'
+                    & Line (Line'First + 1 .. Line'Last)
+                    & ':' & Col (Col'First + 1 .. Col'Last));
+         end if;
       else
-         return (Get_Public_Id (Loc) & ':'
-                 & Line (Line'First + 1 .. Line'Last));
+         if Use_Basename then
+            return (Base_Name (Get_Public_Id (Loc)) & ':'
+                    & Line (Line'First + 1 .. Line'Last));
+         else
+            return (Get_Public_Id (Loc) & ':'
+                    & Line (Line'First + 1 .. Line'Last));
+         end if;
       end if;
    end To_String;
 

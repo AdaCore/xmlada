@@ -59,11 +59,14 @@ package Sax.Locators is
    function Get_Public_Id (Loc : Locator) return Unicode.CES.Byte_Sequence;
    --  Return the public id for the current document (see input_sources.ads)
 
-   function To_String (Loc : Locator) return String;
+   function To_String
+     (Loc : Locator; Use_Basename : Boolean := False) return String;
    --  Print the location found in the location, with a standard format:
    --     Public_Id:Line:Column
    --  Public_Id is not printed if it is null.
    --  Column is not printed if it is zero (unknown)
+   --  If Use_Basename is true, then the file name will not include any
+   --  directory specification.
 
    procedure Copy (Loc : in out Locator; Source : Locator);
    --  Copy the location information from Source to Loc. Just using the
