@@ -32005,7 +32005,7 @@ OK: psContents00102m2_n.xml:13:29: Attribute "test:date": No definition provided
 Grp: pscontents00201m1
 ./sunData/Wildcard/psContents/psContents00201m/psContents00201m1.xsd
 ./sunData/Wildcard/psContents/psContents00201m/psContents00201m1_n.xml
-OK: ./sunData/Wildcard/psContents/psContents00201m/psContents00201m1_n.xml:14:1: Name differ for closing tag (expecting date, opened line 13)
+OK: psContents00201m1_n.xml:14:1: Name differ for closing tag (expecting date, opened line 13)
 
 Grp: pscontents00301m1
 ./sunData/Wildcard/psContents/psContents00301m/psContents00301m1.xsd
@@ -32015,7 +32015,7 @@ OK: psContents00301m1_n.xml:13:22: Invalid date "2002-xx-30"
 Grp: pscontents00301m2
 ./sunData/Wildcard/psContents/psContents00301m/psContents00301m2.xsd
 ./sunData/Wildcard/psContents/psContents00301m/psContents00301m2_n.xml
-OK: ./sunData/Wildcard/psContents/psContents00301m/psContents00301m2_n.xml:13:22: Name differ for closing tag (expecting test:date, opened line 13)
+OK: psContents00301m2_n.xml:13:22: Name differ for closing tag (expecting test:date, opened line 13)
 
 Grp: pscontents00302m1
 ./sunData/Wildcard/psContents/psContents00302m/psContents00302m1.xsd
@@ -32025,7 +32025,7 @@ OK: psContents00302m1_n.xml:13:29: Attribute "test:date": Invalid date "2002-xx-
 Grp: pscontents00302m2
 ./sunData/Wildcard/psContents/psContents00302m/psContents00302m2.xsd
 ./sunData/Wildcard/psContents/psContents00302m/psContents00302m2_n.xml
-OK: ./sunData/Wildcard/psContents/psContents00302m/psContents00302m2_n.xml:13:20: Expecting a space
+OK: psContents00302m2_n.xml:13:20: Expecting a space
 
 Set: MS-Additional2006-07-15
 Grp: addA003
