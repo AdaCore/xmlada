@@ -301,6 +301,7 @@ package body Schema.Readers is
       --  cases.
       Set_Validating_Grammar (Schema, Add_To);
       Set_Created_Grammar (Schema, Add_To);
+      Use_Basename_In_Error_Messages (Schema, Handler.Basename_In_Messages);
       Parse (Schema, File);
       Close (File);
       Add_To := Get_Created_Grammar (Schema);
@@ -813,10 +814,9 @@ package body Schema.Readers is
      (Reader : in out Validating_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class)
    is
-      pragma Unreferenced (Reader);
    begin
       Validation_Error
-        (To_String (Get_Locator (Except)) & ": "
+        (To_String (Get_Locator (Except), Reader.Basename_In_Messages) & ": "
          & String (Get_Message (Except)));
    end Validation_Error;
 
@@ -899,5 +899,17 @@ package body Schema.Readers is
          return Tmp.Namespace;
       end if;
    end Get_Namespace_From_Prefix;
+
+   ------------------------------------
+   -- Use_Basename_In_Error_Messages --
+   ------------------------------------
+
+   procedure Use_Basename_In_Error_Messages
+     (Reader       : in out Validating_Reader;
+      Use_Basename : Boolean := True)
+   is
+   begin
+      Reader.Basename_In_Messages := Use_Basename;
+   end Use_Basename_In_Error_Messages;
 
 end Schema.Readers;
