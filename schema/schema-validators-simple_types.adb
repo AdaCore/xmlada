@@ -812,6 +812,10 @@ package body Schema.Validators.Simple_Types is
       C      : Unicode_Char;
       Index  : Natural := Value'First;
    begin
+      if Value = "" then
+         return 0;
+      end if;
+
       while Index <= Value'Last loop
          Encoding.Read (Value, Index, C);
          while C = Unicode.Names.Basic_Latin.Space loop
@@ -820,7 +824,7 @@ package body Schema.Validators.Simple_Types is
          end loop;
       end loop;
 
-      return Length;
+      return Length + 1;
    end String_List_Get_Length;
 
    --------------------------
