@@ -62,7 +62,7 @@ test: force
 	${GNATMAKE} -Pdom/test/dom_test.gpr ${MAKE_ARGS}
 	${GNATMAKE} -Pschema/test/schema_test.gpr ${MAKE_ARGS}
 
-run_test: test
+run_test: force
 	cd unicode/test; ./test_unicode
 	cd dom/test; make tests
 	cd schema/test; make tests
