@@ -63,9 +63,9 @@ test: force
 	${GNATMAKE} -Pschema/test/schema_test.gpr ${MAKE_ARGS}
 
 run_test: force
-	cd unicode/test; ./test_unicode
-	cd dom/test; make tests
-	cd schema/test; make tests
+	@cd unicode/test; ./test_unicode
+	@make --no-print-directory -C dom/test tests
+	@make --no-print-directory -C schema/test tests
 run_test_valgrind: test
 	cd dom/test; valgrind --tool=memcheck --leak-check=full ./testxml -auto
 
