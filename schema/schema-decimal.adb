@@ -1,8 +1,36 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                    Copyright (C) 2005-2007, AdaCore               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
 
-with Ada.Finalization;        use Ada.Finalization;
-with Unicode.CES;             use Unicode.CES;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Schema.Validators;       use Schema.Validators;
+with Ada.Finalization;          use Ada.Finalization;
+with Sax.Encodings;             use Sax.Encodings;
+with Schema.Validators;         use Schema.Validators;
+with Unicode.CES;               use Unicode, Unicode.CES;
+with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
 package body Schema.Decimal is
 
@@ -41,7 +69,9 @@ package body Schema.Decimal is
    function Value
      (Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number
    is
-      Pos : Integer;
+      Pos          : Integer := Ch'First;
+      First, Last  : Integer;
+      C            : Unicode_Char;
       Saw_Exponent : Boolean := False;
       Saw_Point    : Boolean := False;
    begin
@@ -49,21 +79,36 @@ package body Schema.Decimal is
          Validation_Error ("Invalid: empty string used as a number");
       end if;
 
-      if Ch (Ch'First) = '+' or Ch (Ch'First) = '-' then
-         Pos := Ch'First + 1;
-      else
-         Pos := Ch'First;
-      end if;
+      --  Skip leading spaces (because the "whitespace" facet is always
+      --  "collapse"
 
       while Pos <= Ch'Last loop
-         if Ch (Pos) = '.' then
+         First := Pos;
+         Encoding.Read (Ch, Pos, C);
+         exit when not Is_White_Space (C);
+      end loop;
+
+      --  Skip sign, if any
+
+      if C = Plus_Sign or C = Hyphen_Minus then
+         Encoding.Read (Ch, Pos, C);
+      end if;
+
+      Last := Pos - 1;
+
+      --  Check we only have digits from now on
+
+      loop
+         if C = Period then
             if Saw_Point then
                Validation_Error
                  ("Only one decimal separator allowed in " & Ch);
             end if;
             Saw_Point := True;
 
-         elsif Ch (Pos) = 'E' or else Ch (Pos) = 'e' then
+         elsif C = Latin_Capital_Letter_E
+           or else C = Latin_Small_Letter_E
+         then
             if Saw_Exponent then
                Validation_Error
                  ("Only one exponent allowed in " & Ch);
@@ -71,20 +116,40 @@ package body Schema.Decimal is
             Saw_Exponent := True;
             Saw_Point := False;
 
-            if Pos = Ch'Last then
+            if Pos > Ch'Last then
                Validation_Error ("No exponent specified in " & Ch);
-            elsif Ch (Pos + 1) = '-' or Ch (Pos + 1) = '+' then
-               Pos := Pos + 1;
+            else
+               declare
+                  Save : constant Integer := Pos;
+               begin
+                  Encoding.Read (Ch, Pos, C);
+                  if C /= Plus_Sign and C /= Hyphen_Minus then
+                     Pos := Save;
+                  end if;
+               end;
             end if;
 
-         elsif not Is_Decimal_Digit (Ch (Pos)) then
-            Validation_Error ("Invalid integer: """ & Ch & """");
+         elsif not Is_Digit (C) then
+            --  Skip trailing spaces
+            if Is_White_Space (C) then
+               while Pos <= Ch'Last loop
+                  Encoding.Read (Ch, Pos, C);
+                  if not Is_White_Space (C) then
+                     Validation_Error ("Invalid integer: """ & Ch & """");
+                  end if;
+               end loop;
+               exit;
+            else
+               Validation_Error ("Invalid integer: """ & Ch & """");
+            end if;
          end if;
 
-         Pos := Pos + 1;
+         Last := Pos - 1;
+         exit when Pos > Ch'Last;
+         Encoding.Read (Ch, Pos, C);
       end loop;
 
-      return (Controlled with Value => new Byte_Sequence'(Ch));
+      return (Controlled with Value => new Byte_Sequence'(Ch (First .. Last)));
    end Value;
 
    --------------
