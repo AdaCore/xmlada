@@ -747,6 +747,9 @@ package body Schema.Validators.Simple_Types is
       Empty_Element : Boolean)
    is
       pragma Unreferenced (Empty_Element);
+      First : Integer := Ch'First;
+      Index : Integer;
+      C : Unicode_Char;
    begin
       if Debug then
          Debug_Output ("Validate_Characters for boolean --" & Ch & "--"
@@ -755,13 +758,51 @@ package body Schema.Validators.Simple_Types is
 
       Check_Facet (Validator.Facets, Ch);
 
-      if Ch /= "true"
-        and then Ch /= "false"
-        and then Ch /= "0"
-        and then Ch /= "1"
+      --  Skip leading spaces
+      while First <= Ch'Last loop
+         Index := First;
+         Encoding.Read (Ch, First, C);
+         exit when not Is_White_Space (C);
+      end loop;
+
+      if C = Digit_Zero or C = Digit_One then
+         if First <= Ch'Last then
+            Encoding.Read (Ch, First, C);
+         end if;
+
+      elsif Index + True_Sequence'Length - 1 <= Ch'Last
+        and then Ch (Index .. Index + True_Sequence'Length - 1) = True_Sequence
       then
+         First := Index + True_Sequence'Length;
+
+      elsif Index + False_Sequence'Length - 1 <= Ch'Last
+        and then Ch (Index .. Index + False_Sequence'Length - 1) =
+          False_Sequence
+      then
+         First := Index + False_Sequence'Length;
+      else
          Validation_Error ("Invalid value for boolean type: """ & Ch & """");
       end if;
+
+      --  Skip trailing spaces
+
+      while First <= Ch'Last loop
+         Encoding.Read (Ch, First, C);
+         if not Is_White_Space (C) then
+            Validation_Error
+              ("Invalid value for boolean type: """ & Ch & """");
+         end if;
+      end loop;
+
+--
+--
+--        if Ch (First .. Ch'Last) /= "true"
+--          and then Ch (First .. Ch'Last) /= "false"
+--          and then Ch (First .. Ch'Last) /= "0"
+--          and then Ch (First .. Ch'Last) /= "1"
+--        then
+--         Validation_Error ("Invalid value for boolean type: """ & Ch & """");
+--        end if;
    end Validate_Characters;
 
    ---------------
