@@ -50,6 +50,8 @@ with Sax.Readers;           use Sax.Readers;
 
 procedure Schematest is
 
+   Testdir : constant String := "xmlschema2006-11-06";
+
    Verbose       : Boolean := False;
    Debug         : Boolean := False;
    Test_XML      : Boolean := True;
@@ -95,7 +97,7 @@ procedure Schematest is
    --  does not exists
 
    procedure Test_Header (Testset, Group, Schema, Test : String);
-   procedure Error (Testset, Group, Schema, Test, Msg, Full_Msg : String);
+   procedure Error (Testset, Group, Schema, Test, Msg : String);
    procedure Expected (Testset, Group, Schema, Test, Msg : String);
    --  Print an error message
 
@@ -141,13 +143,33 @@ procedure Schematest is
    -- Test_Header --
    -----------------
 
+   Last_Set    : Unbounded_String;
+   Last_Grp    : Unbounded_String;
+   Last_Schema : Unbounded_String;
+
    procedure Test_Header (Testset, Group, Schema, Test : String) is
    begin
-      Put_Line ("TestSet: " & Testset);
-      Put_Line ("Group:   " & Group);
-      Put_Line ("Schema:  " & Schema);
+      if Testset /= To_String (Last_Set) then
+         Last_Set    := To_Unbounded_String (Testset);
+         Last_Grp    := Null_Unbounded_String;
+         Put_Line ("Set: " & Testset);
+      end if;
+
+      if To_String (Last_Grp) /= Group then
+         Last_Grp    := To_Unbounded_String (Group);
+         Last_Schema := Null_Unbounded_String;
+         Put_Line ("Grp: " & Group);
+      end if;
+
+      if Schema /= To_String (Last_Schema) then
+         Last_Schema := To_Unbounded_String (Schema);
+         if Schema /= "" then
+            Put_Line (Schema);
+         end if;
+      end if;
+
       if Test /= "" then
-         Put_Line ("Test:    " & Test);
+         Put_Line (Test);
       end if;
    end Test_Header;
 
@@ -155,14 +177,11 @@ procedure Schematest is
    -- Error --
    -----------
 
-   procedure Error (Testset, Group, Schema, Test, Msg, Full_Msg : String) is
+   procedure Error (Testset, Group, Schema, Test, Msg : String) is
    begin
       Total_Error := Total_Error + 1;
       Test_Header (Testset, Group, Schema, Test);
-      Put_Line ("Error:   " & Msg);
-      if Verbose then
-         Put_Line ("          " & Full_Msg);
-      end if;
+      Put_Line (Msg);
       New_Line;
    end Error;
 
@@ -174,7 +193,7 @@ procedure Schematest is
    begin
       if Show_Expected then
          Test_Header (Testset, Group, Schema, Test);
-         Put_Line ("Pass:   " & Msg);
+         Put_Line ("OK: " & Msg);
          New_Line;
       end if;
    end Expected;
@@ -291,27 +310,26 @@ procedure Schematest is
 
          if Test_Schemas and then Outcome = Invalid then
             Error (Testset, Group,
-                   Name & " (" & To_String (Document) & ")", "",
-                   "SCHEMA must be invalid", "");
+                   To_String (Document), "",
+                   "(i)");
          end if;
 
       exception
          when E : XML_Validation_Error | XML_Fatal_Error =>
             if Test_Schemas and then Outcome = Valid then
+               --  Error message already includes the name of the schema
                Error (Testset, Group,
-                      Name & " (" & To_String (Document) & ")", "",
-                      "SCHEMA must be valid" & ASCII.LF
-                      & Exception_Message (E), "");
+                      "", "", "(v) " & Exception_Message (E));
             else
-               Expected (Testset, Group,
-                         Name & " (" & To_String (Document) & ")", "",
-                         Exception_Message (E));
+               --  The error message already includes the name of the
+               --  document, so we do not repeat it
+               Expected (Testset, Group, "", "", Exception_Message (E));
             end if;
 
          when E : others =>
             Error (Testset, Group,
-                   Name & " (" & To_String (Document) & ")", "",
-                   Exception_Information (E), "");
+                   To_String (Document), "",
+                   Exception_Information (E));
       end;
    end Parse_Schema_Test;
 
@@ -359,27 +377,26 @@ procedure Schematest is
 
                if Test_XML and then Outcome = Invalid then
                   Error (Testset, Group, Schema,
-                         Name & " (" & To_String (Document) & ")",
-                         "XML Must be invalid", "");
+                         To_String (Document),
+                         "(i)");
                end if;
 
             exception
                when E : XML_Validation_Error | XML_Fatal_Error =>
                   if Test_XML and then Outcome = Valid then
                      Error (Testset, Group, Schema,
-                            Name & " (" & To_String (Document) & ")",
-                            "XML Must be valid" & ASCII.LF
-                            & Exception_Message (E), "");
+                            "", "(v) " & Exception_Message (E));
                   else
-                     Expected (Testset, Group, Schema,
-                               Name & " (" & To_String (Document) & ")",
+                     --  The error message already includes the name of the
+                     --  document, so we do not repeat it
+                     Expected (Testset, Group, Schema, "",
                                Exception_Message (E));
                   end if;
 
                when E : others =>
                   Error (Testset, Group, Schema,
-                         Name & " (" & To_String (Document) & ")",
-                         Exception_Information (E), "");
+                         To_String (Document),
+                         Exception_Information (E));
             end;
          end if;
          N := Next_Sibling (N);
@@ -508,7 +525,8 @@ begin
       Schema.Schema_Readers.Set_Debug_Output (True);
    end if;
 
-   Run_Testsuite ("xmlschema2006-11-06/suite.xml");
+   Change_Dir (Testdir);
+   Run_Testsuite ("suite.xml");
 
    Put_Line ("Schemas:" & Total_Parsed_Schema'Img
              & " XML:" & Total_Parsed_XML'Img
