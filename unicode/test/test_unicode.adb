@@ -36,12 +36,15 @@ with Unicode.CCS;            use Unicode.CCS;
 with Unicode.Encodings;      use Unicode.Encodings;
 with Unicode.CCS.Iso_8859_2; use Unicode.CCS.Iso_8859_2;
 
+with Ada.Command_Line;       use Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Exceptions; use Ada.Exceptions;
 
 procedure Test_Unicode is
 
    Test_Num : Natural := 1;
+
+   Had_Error : Boolean := False;
 
    procedure Assert (S1, S2 : String; Msg : String);
    function Image (Str : String) return String;
@@ -79,6 +82,7 @@ procedure Test_Unicode is
          Put_Line ("### (" & Natural'Image (Test_Num) & ") " & Msg);
          Put_Line ("  --" & S1 & "--");
          Put_Line ("  --" & S2 & "--");
+         Had_Error := True;
       end if;
    end Assert;
 
@@ -225,6 +229,10 @@ begin
               Str,
               "Incorrect conversion from ascii to utf8 and back");
    end;
+
+   if not Had_Error then
+      Put_Line (Command_Name & ": SUCCESS");
+   end if;
 
 exception
    when E : others =>
