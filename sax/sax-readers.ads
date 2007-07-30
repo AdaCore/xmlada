@@ -60,6 +60,17 @@ package Sax.Readers is
      (Parser : in out Reader; Name : String; Value : Boolean);
    --  Set the state of a feature
 
+   procedure Use_Basename_In_Error_Messages
+     (Parser       : in out Reader;
+      Use_Basename : Boolean := True);
+   function Use_Basename_In_Error_Messages
+     (Parser       : Reader) return Boolean;
+   --  Indicates whether error messages will include only the base name of
+   --  files, or the full file names. In the latter case, the error message
+   --  itself might be incomplete, since the message attached to an Ada
+   --  exception is limited to 200 characters.
+   --  For backward compatibility, the default is to show full file names.
+
    -------------------------
    -- Recognized features --
    -------------------------
@@ -840,6 +851,11 @@ private
       --  If True, ignore the State.Ignore_Special flag in the next call
       --  to Next_Token. This is used for handling of special characters
       --  withing strings.
+
+      Basename_In_Messages : Boolean := False;
+      --  If True, error messages are output with simple basenames for the
+      --  files. This is required in a lot of cases because the message
+      --  attached to an Ada exception is limited to 200 characters.
 
       Feature_Namespace                   : Boolean := True;
       Feature_Namespace_Prefixes          : Boolean := False;

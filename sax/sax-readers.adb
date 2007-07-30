@@ -29,6 +29,7 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Input_Sources.File;        use Input_Sources.File;
 with Input_Sources.Strings;     use Input_Sources.Strings;
 with Input_Sources;             use Input_Sources;
@@ -784,13 +785,25 @@ package body Sax.Readers is
       Col : constant Byte_Sequence := Natural'Image (Id.Column);
    begin
       if Parser.Close_Inputs = null then
-         return Get_Public_Id (Parser.Locator) & ':'
-           & Line (Line'First + 1 .. Line'Last)
-           & ':' & Col (Col'First + 1 .. Col'Last);
+         if Use_Basename_In_Error_Messages (Parser) then
+            return Base_Name (Get_Public_Id (Parser.Locator)) & ':'
+              & Line (Line'First + 1 .. Line'Last)
+              & ':' & Col (Col'First + 1 .. Col'Last);
+         else
+            return Get_Public_Id (Parser.Locator) & ':'
+              & Line (Line'First + 1 .. Line'Last)
+              & ':' & Col (Col'First + 1 .. Col'Last);
+         end if;
       else
-         return Get_Public_Id (Parser.Close_Inputs.Input.all) & ':'
-           & Line (Line'First + 1 .. Line'Last)
-           & ':' & Col (Col'First + 1 .. Col'Last);
+         if Use_Basename_In_Error_Messages (Parser) then
+            return Base_Name (Get_Public_Id (Parser.Close_Inputs.Input.all))
+              & ':' & Line (Line'First + 1 .. Line'Last)
+              & ':' & Col (Col'First + 1 .. Col'Last);
+         else
+            return Get_Public_Id (Parser.Close_Inputs.Input.all) & ':'
+              & Line (Line'First + 1 .. Line'Last)
+              & ':' & Col (Col'First + 1 .. Col'Last);
+         end if;
       end if;
    end Location;
 
@@ -6126,5 +6139,28 @@ package body Sax.Readers is
    begin
       return Handler.Hooks.Data;
    end Get_Hooks_Data;
+
+   ------------------------------------
+   -- Use_Basename_In_Error_Messages --
+   ------------------------------------
+
+   procedure Use_Basename_In_Error_Messages
+     (Parser       : in out Reader;
+      Use_Basename : Boolean := True)
+   is
+   begin
+      Parser.Basename_In_Messages := Use_Basename;
+   end Use_Basename_In_Error_Messages;
+
+   ------------------------------------
+   -- Use_Basename_In_Error_Messages --
+   ------------------------------------
+
+   function Use_Basename_In_Error_Messages
+     (Parser       : Reader) return Boolean
+   is
+   begin
+      return Parser.Basename_In_Messages;
+   end Use_Basename_In_Error_Messages;
 
 end Sax.Readers;

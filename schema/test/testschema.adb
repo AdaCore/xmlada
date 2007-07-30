@@ -49,7 +49,7 @@ procedure TestSchema is
    Schema    : Schema_Reader;
    Grammar   : XML_Grammar := No_Grammar;
    Explicit_XSD : Boolean := False;
-   Switches  : constant String := "xsd: debug";
+   Switches  : constant String := "xsd: debug base";
 
 begin
    --  Special case: check if we want debug output, before doing anything else
@@ -92,6 +92,10 @@ begin
                   Close (Read);
                   raise;
             end;
+
+         when 'b' =>
+            Use_Basename_In_Error_Messages (Schema, True);
+            Use_Basename_In_Error_Messages (My_Reader, True);
 
          when 'd' =>
             null; --  Already handled

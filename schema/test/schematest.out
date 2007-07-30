@@ -32115,7 +32115,7 @@ Grp: addB31
 
 Grp: addB32
 ./msData/additional/test67764.xsd
-OK: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test67764.imp:16:1: Non-white space found at top level
+OK: test67764.imp:16:1: Non-white space found at top level
 
 Grp: addB033
 ./msData/additional/test71774.xsd
@@ -32197,7 +32197,7 @@ Grp: addB058
 
 Grp: addB063
 ./msData/additional/test72702.xml
-OK: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test72702.imp:18:1: Non-white space found at top level
+OK: test72702.imp:18:1: Non-white space found at top level
 
 Grp: addB064
 ./msData/additional/test73722.xsd
@@ -32368,11 +32368,11 @@ Grp: addB137
 
 Grp: addB138
 ./msData/additional/test84002_a.xml
-OK: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test84002_a.xsd:4:11: Cannot use an empty URI for namespaces
+OK: test84002_a.xsd:4:11: Cannot use an empty URI for namespaces
 
 Grp: addB139
 ./msData/additional/test84002_b.xml
-OK: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test84002_b.xsd:3:11: Cannot use an empty URI for namespaces
+OK: test84002_b.xsd:3:11: Cannot use an empty URI for namespaces
 
 Grp: addB141
 ./msData/additional/test82919.xsd

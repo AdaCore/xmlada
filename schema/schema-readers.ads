@@ -69,15 +69,6 @@ package Schema.Readers is
    --  to grammar, in their own namespace of course.
    --  If this is not called, no validation will take place.
 
-   procedure Use_Basename_In_Error_Messages
-     (Reader       : in out Validating_Reader;
-      Use_Basename : Boolean := True);
-   --  Indicates whether error messages will include only the base name of
-   --  files, or the full file names. In the latter case, the error message
-   --  itself might be incomplete, since the message attached to an Ada
-   --  exception is limited to 200 characters.
-   --  For backward compatibility, the default is to show full file names.
-
    procedure Validation_Error
      (Reader : in out Validating_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class);
@@ -149,12 +140,6 @@ private
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator;
       Prefixes   : Prefix_Mapping_Access;
-
-      Basename_In_Messages : Boolean := False;
-      --  If True, error messages are output with simple basenames for the
-      --  files. This is required in a lot of cases because the message
-      --  attached to an Ada exception is limited to 200 characters.
-
       Ids        : aliased Schema.Validators.Id_Htable_Access;
    end record;
 
