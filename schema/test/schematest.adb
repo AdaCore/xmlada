@@ -108,26 +108,6 @@ procedure Schematest is
      (Testset, Group, Schema, Test : String; N : Node) return Status_Value;
    --  Get the status of the test
 
---     function As_Text (N : Node) return String;
-   --  Return the node's value as text
-
-   -------------
-   -- As_Text --
-   -------------
-
---     function As_Text (N : Node) return String is
---        N2 : Node := First_Child (N);
---        Result : Unbounded_String;
---     begin
---        while N2 /= null loop
---           if Node_Type (N2) = Text_Node then
---              Append (Result, Node_Value (N2));
---           end if;
---           N2 := Next_Sibling (N2);
---        end loop;
---        return To_String (Result);
---     end As_Text;
-
    -------------------
    -- Get_Attribute --
    -------------------

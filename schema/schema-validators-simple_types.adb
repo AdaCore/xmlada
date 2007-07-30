@@ -26,12 +26,13 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Schema.Validators.Facets; use Schema.Validators.Facets;
-with Sax.Encodings;            use Sax.Encodings;
-with Sax.Utils;                use Sax.Utils;
-with Schema.Date_Time;         use Schema.Date_Time;
-with Schema.Decimal;           use Schema.Decimal;
-with Unicode.CES;              use Unicode, Unicode.CES;
+with Schema.Validators.Facets;  use Schema.Validators.Facets;
+with Sax.Encodings;             use Sax.Encodings;
+with Sax.Utils;                 use Sax.Utils;
+with Schema.Date_Time;          use Schema.Date_Time;
+with Schema.Decimal;            use Schema.Decimal;
+with Unicode.CES;               use Unicode, Unicode.CES;
+with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
 package body Schema.Validators.Simple_Types is
 
@@ -568,6 +569,12 @@ package body Schema.Validators.Simple_Types is
    package String_Validators is new Generic_Simple_Validator
      (String_Facets.Length_Facets_Description);
 
+   function String_List_Get_Length
+     (Value : Unicode.CES.Byte_Sequence) return Natural;
+   package String_List_Facets is new Length_Facets (String_List_Get_Length);
+   package String_List_Validators is new Generic_Simple_Validator
+     (String_List_Facets.Length_Facets_Description);
+
    function HexBinary_Get_Length
      (Value : Unicode.CES.Byte_Sequence) return Natural;
    package HexBinary_Facets is new Length_Facets (HexBinary_Get_Length);
@@ -794,6 +801,28 @@ package body Schema.Validators.Simple_Types is
       return Sax.Encodings.Encoding.Length (Value);
    end String_Get_Length;
 
+   ----------------------------
+   -- String_List_Get_Length --
+   ----------------------------
+
+   function String_List_Get_Length
+     (Value : Unicode.CES.Byte_Sequence) return Natural
+   is
+      Length : Natural := 0;
+      C      : Unicode_Char;
+      Index  : Natural := Value'First;
+   begin
+      while Index <= Value'Last loop
+         Encoding.Read (Value, Index, C);
+         while C = Unicode.Names.Basic_Latin.Space loop
+            Length := Length + 1;
+            Encoding.Read (Value, Index, C);
+         end loop;
+      end loop;
+
+      return Length;
+   end String_List_Get_Length;
+
    --------------------------
    -- HexBinary_Get_Length --
    --------------------------
@@ -963,9 +992,11 @@ package body Schema.Validators.Simple_Types is
 
    procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS) is
       use Integer_Validators;
-      use String_Facets, HexBinary_Facets, Base64Binary_Facets;
+      use String_Facets, String_List_Facets,
+          HexBinary_Facets, Base64Binary_Facets;
       Tmp     : XML_Validator;
       Str     : String_Validators.Validator;
+      StrList : String_List_Validators.Validator;
       Hex     : HexBinary_Validators.Validator;
       Base64  : Base64Binary_Validators.Validator;
       Int     : Integer_Validators.Validator;
@@ -1002,10 +1033,10 @@ package body Schema.Validators.Simple_Types is
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_Nmtoken'Access);
       Create_Global_Type (G, "NMTOKEN", Str);
 
-      Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_Nmtokens'Access);
-      Create_Global_Type (G, "NMTOKENS", Str);
+      StrList := new String_List_Validators.Validator_Record;
+      Set_Whitespace (StrList.Facets, Collapse);
+      Set_Implicit_Enumeration (StrList.Facets, Is_Valid_Nmtokens'Access);
+      Create_Global_Type (G, "NMTOKENS", StrList);
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
