@@ -22920,7 +22920,7 @@ Grp: addB013
 OK: ./msData/additional/test67514.xml:6:13: No definition provided for "foo"
 
 Grp: addB014
-OK: ./msData/additional/test65699.xsd:17:46: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test65699.inc:1: Extensions of type "keybase" are forbidden
+OK: ./msData/additional/test65699.xsd:17:46: msData/additional/test65699.inc:1: Extensions of type "keybase" are forbidden
 
 Grp: addB020
 (v) ./msData/additional/test68014.xsd:3:52: Attribute "final": Attributes with no namespace invalid in this context
@@ -22947,7 +22947,7 @@ Grp: addB31
 (v) ./msData/additional/test69277.xsd:5:25: Attribute "minOccurs": Element's value not in the enumeration set
 
 Grp: addB32
-OK: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test67764.imp:16:1: Non-white space found at top level
+OK: msData/additional/test67764.imp:16:1: Non-white space found at top level
 
 Grp: addB033
 ./msData/additional/test71774.xsd
@@ -23017,10 +23017,10 @@ Grp: addB058
 (v) ./msData/additional/test73665.xml:9:15: string pattern not matched: [\C]+
 
 Grp: addB063
-OK: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test72702.imp:18:1: Non-white space found at top level
+OK: msData/additional/test72702.imp:18:1: Non-white space found at top level
 
 Grp: addB064
-(v) ./msData/additional/test73722.xsd:27:49: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test73722_dt.xsd:1: Extensions of type "keybase" are forbidden
+(v) ./msData/additional/test73722.xsd:27:49: msData/additional/test73722_dt.xsd:1: Extensions of type "keybase" are forbidden
 
 Grp: addB065
 (v) ./msData/additional/test73826.xsd:22:108: Mixed content is not allowed for this element
@@ -23143,7 +23143,7 @@ Grp: addB118
 (i)
 
 Grp: addB120
-OK: ./msData/additional/test73456.xml:4:2: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test73456.xsd:7:84: Unexpected element "{http://www.w3.org/2001/XMLSchema}attribut
+OK: ./msData/additional/test73456.xml:4:2: msData/additional/test73456.xsd:7:84: Unexpected element "{http://www.w3.org/2001/XMLSchema}attribut
 
 Grp: addB121
 ./msData/additional/addB121.xsd
@@ -23155,7 +23155,7 @@ Grp: addB123
 (i)
 
 Grp: addB124
-OK: ./msData/additional/test79253.xml:1:107: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test79253.xsd:235:39: Unexpected element "{http://www.w3.org/2001/XMLSchema}whit
+OK: ./msData/additional/test79253.xml:1:107: msData/additional/test79253.xsd:235:39: Unexpected element "{http://www.w3.org/2001/XMLSchema}whit
 
 Grp: addB136
 ./msData/additional/test84188.xsd
@@ -23166,10 +23166,10 @@ Grp: addB137
 (i)
 
 Grp: addB138
-OK: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test84002_a.xsd:4:11: Cannot use an empty URI for namespaces
+OK: msData/additional/test84002_a.xsd:4:11: Cannot use an empty URI for namespaces
 
 Grp: addB139
-OK: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test84002_b.xsd:3:11: Cannot use an empty URI for namespaces
+OK: msData/additional/test84002_b.xsd:3:11: Cannot use an empty URI for namespaces
 
 Grp: addB141
 OK: ./msData/additional/test82919.xsd:23:65: Type is not a valid replacement for "list"
@@ -23271,10 +23271,10 @@ Grp: addB183
 (v) ./msData/additional/test113911.xsd:30:69: Duplicate space characters not allowed
 
 Grp: addB187
-(v) ./msData/additional/test264908_1.xsd:3:99: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test264908_1a.xsd:2:51: schemaLocation and namespace attributes mandatory for 
+(v) ./msData/additional/test264908_1.xsd:3:99: msData/additional/test264908_1a.xsd:2:51: schemaLocation and namespace attributes mandatory for 
 
 Grp: addB188
-(v) ./msData/additional/test264908_1.xsd:3:99: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/additional/test264908_1a.xsd:2:51: schemaLocation and namespace attributes mandatory for 
+(v) ./msData/additional/test264908_1.xsd:3:99: msData/additional/test264908_1a.xsd:2:51: schemaLocation and namespace attributes mandatory for 
 
 Grp: addB191
 (v) ./msData/additional/addB191.xml:4:95: Element "{a}b" was referenced but never declared
@@ -23648,19 +23648,19 @@ Grp: attgB007
 OK: ./msData/attributeGroup/attgB007.xsd:5:39: Attribute "name": Invalid value: ""
 
 Grp: attgB009
-(v) ./msData/attributeGroup/attgB009.xsd:4:46: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/attributeGroup/attgB009.inc:3:33: Attribute group has already been declared: xyz
+(v) ./msData/attributeGroup/attgB009.xsd:4:46: msData/attributeGroup/attgB009.inc:3:33: Attribute group has already been declared: xyz
 
 Grp: attgB010
 OK: ./msData/attributeGroup/attgB010.xsd:6:33: Attribute group has already been declared: abc
 
 Grp: attgB011
-OK: ./msData/attributeGroup/attgB011.xsd:10:46: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/attributeGroup/attgB011.imp:3:33: Attribute group has already been declared: xyz
+OK: ./msData/attributeGroup/attgB011.xsd:10:46: msData/attributeGroup/attgB011.imp:3:33: Attribute group has already been declared: xyz
 
 Grp: attgB013
-OK: ./msData/attributeGroup/attgB013.xsd:4:78: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/attributeGroup/attgB013v1.imp:2:33: Attribute group has already been declared: car
+OK: ./msData/attributeGroup/attgB013.xsd:4:78: msData/attributeGroup/attgB013v1.imp:2:33: Attribute group has already been declared: car
 
 Grp: attgB015
-OK: ./msData/attributeGroup/attgB015.xsd:4:46: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/attributeGroup/attgB015.inc:2:33: Attribute group has already been declared: car
+OK: ./msData/attributeGroup/attgB015.xsd:4:46: msData/attributeGroup/attgB015.inc:2:33: Attribute group has already been declared: car
 
 Grp: attgC001
 OK: ./msData/attributeGroup/attgC001.xsd:6:33: Attribute "name" is required in this context
@@ -23719,7 +23719,7 @@ Grp: attgC032
 OK: attributeGroup "att1" is referenced, but not defined
 
 Grp: attgC035
-(v) ./msData/attributeGroup/attgC035.xsd:4:46: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/attributeGroup/attgC035.red:8:25: Element "e" has already been declared
+(v) ./msData/attributeGroup/attgC035.xsd:4:46: msData/attributeGroup/attgC035.red:8:25: Element "e" has already been declared
 
 Grp: attgC036
 ./msData/attributeGroup/attgC036.xsd
@@ -24475,14 +24475,14 @@ Grp: attQ015
 OK: ./msData/attribute/attQ015.xsd:16:39: ID "a1" already defined
 
 Grp: attQ016
-OK: ./msData/attribute/attQ016.xsd:3:75: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/attribute/attQ016.imp:3:55: Attribute "form" is prohibited in this context
+OK: ./msData/attribute/attQ016.xsd:3:75: msData/attribute/attQ016.imp:3:55: Attribute "form" is prohibited in this context
 
 Grp: attQ017
 ./msData/attribute/attQ017.xsd
 (i)
 
 Grp: attQ018
-OK: ./msData/attribute/attQ018.xsd:3:45: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/attribute/attQ018.inc:3:55: Attribute "form" is prohibited in this context
+OK: ./msData/attribute/attQ018.xsd:3:45: msData/attribute/attQ018.inc:3:55: Attribute "form" is prohibited in this context
 
 Grp: attQ019
 ./msData/attribute/attQ019.xsd
@@ -30816,7 +30816,7 @@ Grp: elemT073
 
 Grp: elemT074
 ./msData/element/elemT074.xsd
-OK: ./msData/element/elemT074.xml:1:106: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/element/elemT074.xml:1:106: Root element must be <schema>
+OK: ./msData/element/elemT074.xml:1:106: msData/element/elemT074.xml:1:106: Root element must be <schema>
 
 Grp: elemU005
 ./msData/element/elemU005.xsd
@@ -30836,7 +30836,7 @@ Grp: elemU019
 
 Grp: elemU025
 ./msData/element/elemU025.xsd
-OK: ./msData/element/elemU025.xml:1:106: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/element/elemU001.xsd:3:27: Element "root" has already been declared
+OK: ./msData/element/elemU025.xml:1:106: msData/element/elemU001.xsd:3:27: Element "root" has already been declared
 
 Grp: elemZ002
 ./msData/element/elemZ002.xsd
@@ -30871,16 +30871,16 @@ Grp: elemZ021b
 OK: ./msData/element/test115044_b.xml:1:29: Expecting at least 1 occurrences of "e" from namespace "foo"
 
 Grp: elemZ021e
-(v) ./msData/element/test115044_3.xsd:3:55: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/element/test115044_inc.xsd:3:70: Type is not a valid replacement for "No_Type"
+(v) ./msData/element/test115044_3.xsd:3:55: msData/element/test115044_inc.xsd:3:70: Type is not a valid replacement for "No_Type"
 
 Grp: elemZ021f
-(v) ./msData/element/test115044_3.xsd:3:55: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/element/test115044_inc.xsd:3:70: Type is not a valid replacement for "No_Type"
+(v) ./msData/element/test115044_3.xsd:3:55: msData/element/test115044_inc.xsd:3:70: Type is not a valid replacement for "No_Type"
 
 Grp: elemZ021g
 (v) ./msData/element/test115044_4.xsd:3:54: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: elemZ022a
-(v) ./msData/element/test115478.xsd:3:69: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/element/test115478imp.xsd:3:28: schemaLocation and namespace attributes mandatory for <import>
+(v) ./msData/element/test115478.xsd:3:69: msData/element/test115478imp.xsd:3:28: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: elemZ022b
 (v) ./msData/element/test115478_b.xsd:3:56: schemaLocation and namespace attributes mandatory for <import>
@@ -32203,7 +32203,7 @@ Grp: idH005
 
 Grp: idH006
 ./msData/identityConstraint/idH006.xsd
-OK: ./msData/identityConstraint/idH006.xml:2:104: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/identityConstraint/idH005.xsd:3:27: Element "root" has already been declared
+OK: ./msData/identityConstraint/idH006.xml:2:104: msData/identityConstraint/idH005.xsd:3:27: Element "root" has already been declared
 
 Grp: idH010
 ./msData/identityConstraint/idH010.xsd
@@ -32229,7 +32229,7 @@ Grp: idH014
 
 Grp: idH021
 ./msData/identityConstraint/idH021.xsd
-(v) ./msData/identityConstraint/idH021.xml:2:220: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/identityConstraint/idH001.xsd:3:27: Element "root" has already been declared
+(v) ./msData/identityConstraint/idH021.xml:2:220: msData/identityConstraint/idH001.xsd:3:27: Element "root" has already been declared
 
 Grp: idH034
 ./msData/identityConstraint/idH034.xsd
@@ -35064,7 +35064,7 @@ Grp: particlesOb021
 
 Grp: particlesOb022
 ./msData/particles/particlesOb022.xsd
-(v) ./msData/particles/particlesOb022.xml:1:216: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/particles/particlesOb022a.xsd:7:20: Type has already been declared: B
+(v) ./msData/particles/particlesOb022.xml:1:216: msData/particles/particlesOb022a.xsd:7:20: Type has already been declared: B
 
 Grp: particlesOb023
 ./msData/particles/particlesOb023.xsd
@@ -35168,11 +35168,11 @@ Grp: particlesOb051
 
 Grp: particlesOb052
 ./msData/particles/particlesOb052.xsd
-(v) ./msData/particles/particlesOb052.xml:1:200: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/particles/particlesOb052a.xsd:7:20: Type has already been declared: B
+(v) ./msData/particles/particlesOb052.xml:1:200: msData/particles/particlesOb052a.xsd:7:20: Type has already been declared: B
 
 Grp: particlesOb057
 ./msData/particles/particlesOb057.xsd
-(v) ./msData/particles/particlesOb057.xml:1:240: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/particles/particlesOb057a.xsd:7:20: Type has already been declared: B
+(v) ./msData/particles/particlesOb057.xml:1:240: msData/particles/particlesOb057a.xsd:7:20: Type has already been declared: B
 
 Grp: particlesOb058
 ./msData/particles/particlesOb058.xsd
@@ -39246,7 +39246,7 @@ OK: ./msData/regex/p1.xsd:21:41: Invalid regular expression ++
 
 Grp: p2
 ./msData/regex/p2.xsd
-OK: ./msData/regex/p2.xml:3:45: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/regex/p3.xsd:9:25: Element "doc" has already been declared
+OK: ./msData/regex/p2.xml:3:45: msData/regex/p3.xsd:9:25: Element "doc" has already been declared
 
 Grp: p4
 ./msData/regex/p4.xsd
@@ -40427,7 +40427,7 @@ OK: ./msData/regex/invalid.c.xml:54:16: string pattern not matched: [\c]
 Set: MS-Schema2006-07-15
 Grp: schA1
 ./msData/schema/schA1_a.xsd
-(v) ./msData/schema/schA1.xml:6:2: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/schA1_c.xsd:8:20: Type has already been declared: ct-A
+(v) ./msData/schema/schA1.xml:6:2: msData/schema/schA1_c.xsd:8:20: Type has already been declared: ct-A
 
 Grp: schA2
 ./msData/schema/schA2_a.xsd
@@ -40457,10 +40457,10 @@ Grp: schB3
 OK: ./msData/schema/schB3.xsd:3:17: Attribute "schemaLocation" is required in this context
 
 Grp: schB4
-OK: ./msData/schema/schB4_a.xsd:2:46: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/schB4_b.xsd:1:8: Element "notwf": No matching declaration available
+OK: ./msData/schema/schB4_a.xsd:2:46: msData/schema/schB4_b.xsd:1:8: Element "notwf": No matching declaration available
 
 Grp: schB5
-OK: ./msData/schema/schB5_a.xsd:2:46: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/schB5_b.xsd:1:23: Element "wf-but-not-a-schema": No matching declaration available
+OK: ./msData/schema/schB5_a.xsd:2:46: msData/schema/schB5_b.xsd:1:23: Element "wf-but-not-a-schema": No matching declaration available
 
 Grp: schC2
 OK: ./msData/schema/schC2_a.xsd:4:27: Attribute "id" invalid for this element
@@ -40490,7 +40490,7 @@ Grp: schE4
 (v) ./msData/schema/schE4.xsd:4:32: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: schE5
-OK: ./msData/schema/schE5.xsd:4:60: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/schE5_b.xsd:1:8: Element "notwf": No matching declaration available
+OK: ./msData/schema/schE5.xsd:4:60: msData/schema/schE5_b.xsd:1:8: Element "notwf": No matching declaration available
 
 Grp: schE6
 OK: ./msData/schema/schE6.xsd:4:44: schemaLocation and namespace attributes mandatory for <import>
@@ -40522,7 +40522,7 @@ Grp: schG2
 (v) ./msData/schema/schG2_a.xsd:6:44: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: schG6
-OK: ./msData/schema/schG6_a.xsd:7:61: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/schG6_c.xsd:11:20: Type has already been declared: ct-A
+OK: ./msData/schema/schG6_a.xsd:7:61: msData/schema/schG6_c.xsd:11:20: Type has already been declared: ct-A
 
 Grp: schG7
 ./msData/schema/schG7_a.xsd
@@ -40546,7 +40546,7 @@ Grp: schG14
 (v) ./msData/schema/schG14.xsd:2:30: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: schG15
-(v) ./msData/schema/schG15_a.xsd:7:72: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/schG15_b.xsd:6:42: schemaLocation and namespace attributes mandatory for <import>
+(v) ./msData/schema/schG15_a.xsd:7:72: msData/schema/schG15_b.xsd:6:42: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: schH1
 (v) ./msData/schema/schH1_a.xsd:6:53: Attribute "id": Attributes with no namespace invalid in this context
@@ -40561,10 +40561,10 @@ Grp: schH4
 OK: ./msData/schema/schH4_a.xsd:6:63: Attribute "namespace": Attributes with no namespace invalid in this context
 
 Grp: schH5
-OK: ./msData/schema/schH5.xsd:6:46: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/not-wf.xsd:1:8: Element "notwf": No matching declaration available
+OK: ./msData/schema/schH5.xsd:6:46: msData/schema/not-wf.xsd:1:8: Element "notwf": No matching declaration available
 
 Grp: schH6
-OK: ./msData/schema/schH6.xsd:6:50: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/not-schema.xsd:1:16: Element "not-a-schema": No matching declaration available
+OK: ./msData/schema/schH6.xsd:6:50: msData/schema/not-schema.xsd:1:16: Element "not-a-schema": No matching declaration available
 
 Grp: schH9
 (v) ./msData/schema/schH9.xsd:7:33: Attribute "id" invalid for this element
@@ -40738,7 +40738,7 @@ Grp: schZ006
 OK: ./msData/schema/schZ006.xsd:11:59: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: schZ008
-(v) ./msData/schema/schZ008_a.xsd:8:60: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/schZ008_b.xsd:7:30: schemaLocation and namespace attributes mandatory for <import>
+(v) ./msData/schema/schZ008_a.xsd:8:60: msData/schema/schZ008_b.xsd:7:30: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: schZ009
 (v) ./msData/schema/schZ009b.xsd:3:33: schemaLocation and namespace attributes mandatory for <import>
@@ -40765,7 +40765,7 @@ Grp: schZ012_c
 (v) ./msData/schema/schZ012_c.xsd:2:45: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: schZ013
-(v) ./msData/schema/schZ013a.xsd:4:76: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/msData/schema/schZ013b.xsd:3:85: schemaLocation and namespace attributes mandatory for <import>
+(v) ./msData/schema/schZ013a.xsd:4:76: msData/schema/schZ013b.xsd:3:85: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: schZ014_a
 OK: ./msData/schema/schZ014_a.xsd:2:29: schemaLocation and namespace attributes mandatory for <import>
@@ -42164,6 +42164,6 @@ Grp: ipo5
 (v) ./boeingData/ipo5/ipo.xsd:14:95: Type is not a valid replacement for "string"
 
 Grp: ipo6
-(v) ./boeingData/ipo6/ipo.xsd:10:83: /home/briot/svn/trunk/xmlada/schema/test/xmlschema2006-11-06/boeingData/ipo6/address.xsd:8:97: Type is not a valid replacement for "string"
+(v) ./boeingData/ipo6/ipo.xsd:10:83: boeingData/ipo6/address.xsd:8:97: Type is not a valid replacement for "string"
 
 Schemas: 13794 XML: 24447 Errors: 2111

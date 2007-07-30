@@ -34,6 +34,7 @@
 --   http://www.w3.org/XML/2004/xml-schema-test-suite/index.html
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Text_IO;               use Ada.Text_IO;
 with DOM.Core.Documents;        use DOM.Core.Documents;
@@ -91,6 +92,10 @@ procedure Schematest is
       Grammar        : XML_Grammar);
    --  Run the testsuite whose description is in Filename
 
+   procedure Filter (Str : String);
+   --  Print Str, replace absolute file names with file names relative to
+   --  current directory
+
    function Get_Attribute (N : Node; Attribute : String) return String;
    function Get_Attribute_NS (N : Node; URI, Local : String) return String;
    --  Query an attribute from N. The empty string is returned if the attribute
@@ -109,6 +114,16 @@ procedure Schematest is
    function Get_Status
      (Testset, Group, Schema, Test : String; N : Node) return Status_Value;
    --  Get the status of the test
+
+   Last_Set    : Unbounded_String;
+   Last_Grp    : Unbounded_String;
+   Last_Schema : Unbounded_String;
+   --  Keep track of what was already output, to limit the amount of
+   --  duplication
+
+   Base_Dir    : Unbounded_String;
+   --  Directory to remove from error messages, to keep these independent from
+   --  specific filesystem location
 
    -------------------
    -- Get_Attribute --
@@ -143,10 +158,6 @@ procedure Schematest is
    -- Test_Header --
    -----------------
 
-   Last_Set    : Unbounded_String;
-   Last_Grp    : Unbounded_String;
-   Last_Schema : Unbounded_String;
-
    procedure Test_Header (Testset, Group, Schema, Test : String) is
    begin
       if Testset /= To_String (Last_Set) then
@@ -173,6 +184,27 @@ procedure Schematest is
       end if;
    end Test_Header;
 
+   ------------
+   -- Filter --
+   ------------
+
+   procedure Filter (Str : String) is
+      Current_Dir : constant String := To_String (Base_Dir);
+      Sub    : Integer;
+      Last   : Integer := Str'First;
+   begin
+      loop
+         Sub := Index (Str (Last .. Str'Last), Current_Dir);
+         exit when Sub < Last;
+
+         Put (Str (Last .. Sub - 1));
+         Sub := Sub + Current_Dir'Length;
+         Last := Sub;
+      end loop;
+
+      Put (Str (Last .. Str'Last));
+   end Filter;
+
    -----------
    -- Error --
    -----------
@@ -181,8 +213,8 @@ procedure Schematest is
    begin
       Total_Error := Total_Error + 1;
       Test_Header (Testset, Group, Schema, Test);
-      Put_Line (Msg);
-      New_Line;
+      Filter (Msg);
+      New_Line; New_Line;
    end Error;
 
    --------------
@@ -193,8 +225,8 @@ procedure Schematest is
    begin
       if Show_Expected then
          Test_Header (Testset, Group, Schema, Test);
-         Put_Line ("OK: " & Msg);
-         New_Line;
+         Filter ("OK: " & Msg);
+         New_Line; New_Line;
       end if;
    end Expected;
 
@@ -526,6 +558,7 @@ begin
    end if;
 
    Change_Dir (Testdir);
+   Base_Dir := To_Unbounded_String (Get_Current_Dir);
    Run_Testsuite ("suite.xml");
 
    Put_Line ("Schemas:" & Total_Parsed_Schema'Img
