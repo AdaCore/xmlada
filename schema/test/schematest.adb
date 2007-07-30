@@ -508,7 +508,7 @@ begin
       Schema.Schema_Readers.Set_Debug_Output (True);
    end if;
 
-   Run_Testsuite ("xmlschema/suite.xml");
+   Run_Testsuite ("xmlschema2006-11-06/suite.xml");
 
    Put_Line ("Schemas:" & Total_Parsed_Schema'Img
              & " XML:" & Total_Parsed_XML'Img
