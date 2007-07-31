@@ -1,6 +1,10 @@
 .PHONY: tests old new force
 
-tests: old new
+tests: all old new
+
+all:
+	-@./test_date_time
+	-@./testnumbers	
 
 old:
 	@./testsuite

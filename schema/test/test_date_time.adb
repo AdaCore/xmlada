@@ -287,13 +287,14 @@ begin
    --  accepted. See http://books.xmlschemata.org/relaxng/ch19-77111.html
 
    Assert (GMonth_T'(Value ("--01")), GMonth_T'(Value ("--01--")));
-   Assert (GMonth_T'(Value ("--01Z")), GMonth_T'(Value ("--01+00:00")));
+   Assert (GMonth_T'(Value ("--01Z")), GMonth_T'(Value ("--01")));
    Assert (GMonth_T'(Value ("--01+02:00")), GMonth_T'(Value ("--01+02:00")));
    Assert (GMonth_T'(Value ("--01-04:00")), GMonth_T'(Value ("--01-04:00")));
 
    --  Regexps
 
    Assert_Re ("[a-z]", "[a-z]");
+   Assert_Re ("a[]b", "a[]b");
    Assert_Re ("[\c]", "[a-z:A-Z0-9._-]");
    Assert_Re ("[\i]", "[A-Za-z:_]");
    Assert_Re ("\c", "[a-z:A-Z0-9._-]");  --  ??? Not sure that's correct
