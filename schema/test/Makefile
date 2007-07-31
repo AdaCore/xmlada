@@ -7,6 +7,6 @@ old:
 
 new:
 	@./schematest > schematest.tmp.out
-	-@diff -u schematest.out schematest.tmp.out
+	-@diff -c schematest.out schematest.tmp.out
 	@tail -1 schematest.tmp.out
 force:
