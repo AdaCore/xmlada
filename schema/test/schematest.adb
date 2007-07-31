@@ -33,6 +33,7 @@
 --  Also:
 --   http://www.w3.org/XML/2004/xml-schema-test-suite/index.html
 
+with Ada.Command_Line;          use Ada.Command_Line;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -536,7 +537,7 @@ begin
    Change_Dir (Testdir);
    Run_Testsuite ("suite.xml");
 
-   Put_Line ("Schemas:" & Total_Parsed_Schema'Img
+   Put_Line (Command_Name & ": xsd files:" & Total_Parsed_Schema'Img
              & " XML:" & Total_Parsed_XML'Img
-             & " Errors:" & Total_Error'Img);
+             & " Errors (expected if no diff):" & Total_Error'Img);
 end Schematest;
