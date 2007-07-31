@@ -31669,12 +31669,12 @@ OK: ST_facets00115m1_n.xml:13:59: 101 is greater than maxInclusive (100)
 Grp: st_facets00116m
 ./sunData/SType/ST_facets/ST_facets00116m/ST_facets00116m.xsd
 ./sunData/SType/ST_facets/ST_facets00116m/ST_facets00116m1_n.xml
-OK: ST_facets00116m1_n.xml:13:61: 101.0 is greater than maxInclusive ( 1.00000000000000000E+02)
+OK: ST_facets00116m1_n.xml:13:61: 101.0 is greater than maxInclusive ( 1.E+02)
 
 Grp: st_facets00117m
 ./sunData/SType/ST_facets/ST_facets00117m/ST_facets00117m.xsd
 ./sunData/SType/ST_facets/ST_facets00117m/ST_facets00117m1_n.xml
-OK: ST_facets00117m1_n.xml:13:61: 101.0 is greater than maxInclusive ( 1.00000000000000000E+02)
+OK: ST_facets00117m1_n.xml:13:61: 101.0 is greater than maxInclusive ( 1.E+02)
 
 Grp: st_facets00118m
 ./sunData/SType/ST_facets/ST_facets00118m/ST_facets00118m.xsd
@@ -31744,12 +31744,12 @@ OK: ST_facets00201m14_n.xml:13:60: 11 is greater than maxExclusive (11)
 Grp: st_facets00201m15
 ./sunData/SType/ST_facets/ST_facets00201m/ST_facets00201m15.xsd
 ./sunData/SType/ST_facets/ST_facets00201m/ST_facets00201m15_n.xml
-OK: ST_facets00201m15_n.xml:13:62: 11.0 is greater than maxExclusive ( 1.10000000000000000E+01)
+OK: ST_facets00201m15_n.xml:13:62: 11.0 is greater than maxExclusive ( 1.1E+01)
 
 Grp: st_facets00201m16
 ./sunData/SType/ST_facets/ST_facets00201m/ST_facets00201m16.xsd
 ./sunData/SType/ST_facets/ST_facets00201m/ST_facets00201m16_n.xml
-OK: ST_facets00201m16_n.xml:13:62: 11.0 is greater than maxExclusive ( 1.10000000000000000E+01)
+OK: ST_facets00201m16_n.xml:13:62: 11.0 is greater than maxExclusive ( 1.1E+01)
 
 Grp: st_facets00201m2
 ./sunData/SType/ST_facets/ST_facets00201m/ST_facets00201m2.xsd
@@ -38508,32 +38508,32 @@ OK: float_enumeration003.xml:4:14: Invalid float: ""
 Grp: float_maxInclusive002_1067
 ./msData/datatypes/Facets/float/float_maxInclusive002.xsd
 ./msData/datatypes/Facets/float/float_maxInclusive002.xml
-OK: float_maxInclusive002.xml:4:12: 5.55 is greater than maxInclusive ( 1.10000000000000000E+00)
+OK: float_maxInclusive002.xml:4:12: 5.55 is greater than maxInclusive ( 1.1E+00)
 
 Grp: float_maxExclusive001_1069
 ./msData/datatypes/Facets/float/float_maxExclusive001.xsd
 ./msData/datatypes/Facets/float/float_maxExclusive001.xml
-OK: float_maxExclusive001.xml:4:11: 1.1 is greater than maxExclusive ( 1.10000000000000000E+00)
+OK: float_maxExclusive001.xml:4:11: 1.1 is greater than maxExclusive ( 1.1E+00)
 
 Grp: float_maxExclusive002_1070
 ./msData/datatypes/Facets/float/float_maxExclusive002.xsd
 ./msData/datatypes/Facets/float/float_maxExclusive002.xml
-OK: float_maxExclusive002.xml:4:12: 5.55 is greater than maxExclusive ( 1.10000000000000000E+00)
+OK: float_maxExclusive002.xml:4:12: 5.55 is greater than maxExclusive ( 1.1E+00)
 
 Grp: float_minInclusive002_1073
 ./msData/datatypes/Facets/float/float_minInclusive002.xsd
 ./msData/datatypes/Facets/float/float_minInclusive002.xml
-OK: float_minInclusive002.xml:4:11: 1.1 is smaller than minInclusive ( 5.55000000000000000E+00)
+OK: float_minInclusive002.xml:4:11: 1.1 is smaller than minInclusive ( 5.55E+00)
 
 Grp: float_minExclusive001_1077
 ./msData/datatypes/Facets/float/float_minExclusive001.xsd
 ./msData/datatypes/Facets/float/float_minExclusive001.xml
-OK: float_minExclusive001.xml:4:11: 1.1 is smaller than minExclusive ( 1.10000000000000000E+00)
+OK: float_minExclusive001.xml:4:11: 1.1 is smaller than minExclusive ( 1.1E+00)
 
 Grp: float_minExclusive002_1078
 ./msData/datatypes/Facets/float/float_minExclusive002.xsd
 ./msData/datatypes/Facets/float/float_minExclusive002.xml
-OK: float_minExclusive002.xml:4:11: 1.1 is smaller than minExclusive ( 5.55000000000000000E+00)
+OK: float_minExclusive002.xml:4:11: 1.1 is smaller than minExclusive ( 5.55E+00)
 
 Grp: double_enumeration001_1083
 ./msData/datatypes/Facets/double/double_enumeration001.xsd
@@ -38548,32 +38548,32 @@ OK: double_enumeration003.xml:4:14: Invalid float: ""
 Grp: double_maxInclusive002_1088
 ./msData/datatypes/Facets/double/double_maxInclusive002.xsd
 ./msData/datatypes/Facets/double/double_maxInclusive002.xml
-OK: double_maxInclusive002.xml:4:12: 5.55 is greater than maxInclusive ( 1.10000000000000000E+00)
+OK: double_maxInclusive002.xml:4:12: 5.55 is greater than maxInclusive ( 1.1E+00)
 
 Grp: double_maxExclusive001_1090
 ./msData/datatypes/Facets/double/double_maxExclusive001.xsd
 ./msData/datatypes/Facets/double/double_maxExclusive001.xml
-OK: double_maxExclusive001.xml:4:11: 1.1 is greater than maxExclusive ( 1.10000000000000000E+00)
+OK: double_maxExclusive001.xml:4:11: 1.1 is greater than maxExclusive ( 1.1E+00)
 
 Grp: double_maxExclusive002_1091
 ./msData/datatypes/Facets/double/double_maxExclusive002.xsd
 ./msData/datatypes/Facets/double/double_maxExclusive002.xml
-OK: double_maxExclusive002.xml:4:12: 5.55 is greater than maxExclusive ( 1.10000000000000000E+00)
+OK: double_maxExclusive002.xml:4:12: 5.55 is greater than maxExclusive ( 1.1E+00)
 
 Grp: double_minInclusive002_1094
 ./msData/datatypes/Facets/double/double_minInclusive002.xsd
 ./msData/datatypes/Facets/double/double_minInclusive002.xml
-OK: double_minInclusive002.xml:4:11: 1.1 is smaller than minInclusive ( 5.55000000000000000E+00)
+OK: double_minInclusive002.xml:4:11: 1.1 is smaller than minInclusive ( 5.55E+00)
 
 Grp: double_minExclusive001_1098
 ./msData/datatypes/Facets/double/double_minExclusive001.xsd
 ./msData/datatypes/Facets/double/double_minExclusive001.xml
-OK: double_minExclusive001.xml:4:11: 1.1 is smaller than minExclusive ( 1.10000000000000000E+00)
+OK: double_minExclusive001.xml:4:11: 1.1 is smaller than minExclusive ( 1.1E+00)
 
 Grp: double_minExclusive002_1099
 ./msData/datatypes/Facets/double/double_minExclusive002.xsd
 ./msData/datatypes/Facets/double/double_minExclusive002.xml
-OK: double_minExclusive002.xml:4:11: 1.1 is smaller than minExclusive ( 5.55000000000000000E+00)
+OK: double_minExclusive002.xml:4:11: 1.1 is smaller than minExclusive ( 5.55E+00)
 
 Grp: duration_pattern001_1103
 ./msData/datatypes/Facets/duration/duration_pattern001.xsd

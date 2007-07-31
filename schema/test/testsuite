@@ -1626,7 +1626,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "" "$act/basic_types-2.xml" \
      "act_testsuite/basic_types-2.xml:10:28: 04:01:02 is greater than maxInclusive (03:01:02)"
    expect "" "$act/basic_types-3.xml" \
-     "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.25200000000000000E+04)"
+     "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.252E+04)"
    expect "" "$act/E802-003.xml" ""
    expect "" "$act/uri.xml" ""
    expect "" "$act/wf.xml" "$act/wf.xml:7:86: Name differ for closing tag (expecting test, opened line 6)"

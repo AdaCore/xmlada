@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Schema.Validators.Facets;  use Schema.Validators.Facets;
 with Sax.Encodings;             use Sax.Encodings;
 with Sax.Utils;                 use Sax.Utils;
@@ -68,6 +69,33 @@ package body Schema.Validators.Simple_Types is
        Character'Pos ('8') => True,
        others => False);
    --  Whether the character matches the Base64Binary definitions
+
+   function Image (Value : Long_Long_Float) return String;
+   --  Return a string version of Value
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Value : Long_Long_Float) return String is
+      Str : constant String := Long_Long_Float'Image (Value);
+      E   : constant Integer := Index (Str, "E");
+   begin
+      if E < Str'First then
+         for J in reverse Str'Range loop
+            if Str (J) /= '0' then
+               return Str (Str'First .. J);
+            end if;
+         end loop;
+      else
+         for J in reverse Str'First .. E - 1 loop
+            if Str (J) /= '0' then
+               return Str (Str'First .. J) & Str (E .. Str'Last);
+            end if;
+         end loop;
+      end if;
+      return Str;
+   end Image;
 
    ------------------------------------
    --  Facets used for ranged values --
@@ -491,7 +519,7 @@ package body Schema.Validators.Simple_Types is
      (Duration_Facets_Package.Range_Facets_Description);
 
    package Float_Facets_Package is new Generic_Range_Facets
-     ("float", Long_Long_Float, Long_Long_Float'Value, Long_Long_Float'Image);
+     ("float", Long_Long_Float, Long_Long_Float'Value, Image);
    type Float_Facets_Description is
      new Float_Facets_Package.Range_Facets_Description with null record;
    procedure Check_Facet
