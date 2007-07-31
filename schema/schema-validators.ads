@@ -1107,7 +1107,7 @@ private
    function Empty_Particle_List return Particle_List;
    --  Return an empty list
 
-   procedure Append (List : in out Particle_List; Item : XML_Particle);
+   procedure Append (List : Particle_List; Item : XML_Particle);
    --  Append a new element to the list
 
    procedure Free (List : in out Particle_List);

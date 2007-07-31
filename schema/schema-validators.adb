@@ -2660,7 +2660,7 @@ package body Schema.Validators is
    ------------
 
    procedure Append
-     (List       : in out Particle_List;
+     (List       : Particle_List;
       Item       : XML_Particle) is
    begin
       pragma Assert (List /= null, "List was never created");
