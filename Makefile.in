@@ -123,16 +123,18 @@ install_static:
 install_shared install_relocatable:
 	${MAKE} LIBRARY_TYPE=relocatable install
 
-clean: force
-	gnat clean -q -r -Punicode/unicode.gpr
-	gnat clean -q -r -Pinput_sources/input_sources.gpr
-	gnat clean -q -r -Psax/sax.gpr
-	gnat clean -q -r -Pdom/dom.gpr
-	gnat clean -q -r -Pschema/schema.gpr
-	gnat clean -q -Punicode/test/unicode_test.gpr
-	gnat clean -q -Pdom/test/dom_test.gpr
-	gnat clean -q -Psax/test/sax_test.gpr
-	gnat clean -q -Pschema/test/schema_test.gpr
+clean_%: force
+	gnat clean -XLIBRARY_TYPE=$* -q -r -Punicode/unicode.gpr
+	gnat clean -XLIBRARY_TYPE=$* -q -r -Pinput_sources/input_sources.gpr
+	gnat clean -XLIBRARY_TYPE=$* -q -r -Psax/sax.gpr
+	gnat clean -XLIBRARY_TYPE=$* -q -r -Pdom/dom.gpr
+	gnat clean -XLIBRARY_TYPE=$* -q -r -Pschema/schema.gpr
+	gnat clean -XLIBRARY_TYPE=$* -q -Punicode/test/unicode_test.gpr
+	gnat clean -XLIBRARY_TYPE=$* -q -Pdom/test/dom_test.gpr
+	gnat clean -XLIBRARY_TYPE=$* -q -Psax/test/sax_test.gpr
+	gnat clean -XLIBRARY_TYPE=$* -q -Pschema/test/schema_test.gpr
+
+clean: clean_relocatable clean_static
 	cd docs; ${MAKE} -e clean
 
 distclean: clean
