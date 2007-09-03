@@ -167,12 +167,12 @@ procedure Schematest is
       if Schema /= To_String (Last_Schema) then
          Last_Schema := To_Unbounded_String (Schema);
          if Schema /= "" then
-            Put_Line (Schema);
+            Put_Line (Format_Pathname (Schema, UNIX));
          end if;
       end if;
 
       if Test /= "" then
-         Put_Line (Test);
+         Put_Line (Format_Pathname (Test, UNIX));
       end if;
    end Test_Header;
 
