@@ -1,6 +1,6 @@
 .PHONY: tests old new force
 
-tests: all old new
+tests: all new
 
 all:
 	-@./test_date_time
@@ -11,6 +11,5 @@ old:
 
 new:
 	@./schematest > schematest.tmp.out
-	-@diff -c schematest.out schematest.tmp.out
-	@tail -1 schematest.tmp.out
+	@diff -c schematest.out schematest.tmp.out
 force:
