@@ -320,6 +320,7 @@ procedure Schematest is
 
       exception
          when E : XML_Validation_Error | XML_Fatal_Error =>
+            Close (Input);
             if Test_Schemas and then Outcome = Valid then
                Error (Testset, Group,
                       To_String (Document),
@@ -333,6 +334,7 @@ procedure Schematest is
             end if;
 
          when E : others =>
+            Close (Input);
             Error (Testset, Group,
                    To_String (Document), "",
                    Exception_Information (E));
