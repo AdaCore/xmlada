@@ -410,7 +410,7 @@ package Schema.Validators is
    -- Unions --
    ------------
 
-   function Create_Union return XML_Validator;
+   function Create_Union (G : XML_Grammar_NS) return XML_Validator;
    --  Create a new empty union
 
    procedure Add_Union

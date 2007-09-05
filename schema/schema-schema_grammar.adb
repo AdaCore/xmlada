@@ -72,7 +72,7 @@ package body Schema.Schema_Grammar is
       Add_Facet (Typ, "enumeration", "#all");
       All_Validator := Create_Local_Type (G, Typ);
 
-      Union := Create_Union;
+      Union := Create_Union (G);
       Add_Union (Union, All_Validator);
       Add_Union (Union, List_Of (G, Lookup (G, "derivationControl")));
       Create_Global_Type (G, "blockSet", Union);
@@ -84,7 +84,7 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "reducedDerivationControl", Typ);
 
       --  The "derivationSet" type
-      Union := Create_Union;
+      Union := Create_Union (G);
       Add_Union (Union, All_Validator);
       Add_Union (Union, List_Of (G, Lookup (G, "reducedDerivationControl")));
       Create_Global_Type (G, "derivationSet", Union);
@@ -245,7 +245,7 @@ package body Schema.Schema_Grammar is
                 Lookup (G, "XPathSpec"));
 
       --  The "allNNI" type"
-      Union := Create_Union;
+      Union := Create_Union (G);
       Add_Union (Union, Lookup (G, "nonNegativeInteger"));
       Typ := Restriction_Of (G, Lookup (G, "NMTOKEN"));
       Add_Facet (Typ, "enumeration", "unbounded");
@@ -701,13 +701,13 @@ package body Schema.Schema_Grammar is
                 Lookup (G, "wildcard"));
 
       --  The "namespaceList" type   ??? Incomplete
-      Union := Create_Union;
+      Union := Create_Union (G);
       Typ := Restriction_Of (G, Lookup (G, "token"));
       Add_Facet (Typ, "enumeration", "##any");
       Add_Facet (Typ, "enumeration", "##other");
       Add_Union (Union, Create_Local_Type (G, Typ));
 
-      Union2 := Create_Union;
+      Union2 := Create_Union (G);
       Add_Union (Union, Create_Local_Type (G, Union2));
       Add_Union (Union2, Lookup (G, "uriReference"));
       Typ := Restriction_Of (G, Lookup (G, "token"));

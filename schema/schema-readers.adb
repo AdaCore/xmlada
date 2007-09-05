@@ -312,6 +312,8 @@ package body Schema.Readers is
       end if;
    exception
       when Ada.IO_Exceptions.Name_Error =>
+         Close (File);
+
          --  According to XML Schema Primer 0, section 5.6, this is not an
          --  error when we do not find the schema, since this attribute is only
          --  a hint.
@@ -319,6 +321,9 @@ package body Schema.Readers is
            (Handler,
             Create (Message => "Could not open file " & Xsd_File_Full,
                     Loc     => Handler.Locator));
+      when others =>
+         Close (File);
+         raise;
    end Parse_Grammar;
 
    --------------------

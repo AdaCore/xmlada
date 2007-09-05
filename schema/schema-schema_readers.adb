@@ -1358,7 +1358,7 @@ package body Schema.Schema_Readers is
    begin
       Handler.Contexts := new Context'
         (Typ   => Context_Union,
-         Union => Create_Union,
+         Union => Create_Union (Handler.Target_NS),
          Level => Handler.Contexts.Level + 1,
          Next  => Handler.Contexts);
       Output (Ada_Name (Handler.Contexts) & " := Create_Union;");

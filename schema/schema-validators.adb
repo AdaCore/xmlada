@@ -3807,6 +3807,7 @@ package body Schema.Validators is
          D.All_Elements := (others => 0);
          D.Num_Occurs   := D.Num_Occurs + 1;
          Element_Validator := No_Element;
+         Free (Tmp);
          return;
       end if;
 
@@ -3957,6 +3958,8 @@ package body Schema.Validators is
 
          Next (Current);
       end loop;
+
+      Free (Current);
 
       if Debug then
          Debug_Output ("Can be empty");
@@ -4443,6 +4446,8 @@ package body Schema.Validators is
          Next (Current);
       end loop;
 
+      Free (Current);
+
       if Debug then
          Debug_Output ("Can be empty");
       end if;
@@ -4474,6 +4479,8 @@ package body Schema.Validators is
 
          Next (Current);
       end loop;
+
+      Free (Current);
 
       if Debug then
          Debug_Output ("Cannot be empty");
@@ -4760,9 +4767,11 @@ package body Schema.Validators is
    -- Create_Union --
    ------------------
 
-   function Create_Union return XML_Validator is
+   function Create_Union (G : XML_Grammar_NS) return XML_Validator is
+      Result : constant XML_Validator := new XML_Union_Record;
    begin
-      return new XML_Union_Record;
+      Register (G, Result);
+      return Result;
    end Create_Union;
 
    ---------------
