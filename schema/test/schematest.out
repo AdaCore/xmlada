@@ -52711,7 +52711,7 @@ OK: RegexTest_583.xsd:5:40: Invalid regular expression a[b-a]
 
 Grp: RegexTest_584
 ./msData/regex/RegexTest_584.xsd
-(i)
+OK: RegexTest_584.xsd:5:38: Invalid regular expression a[]b
 
 Grp: RegexTest_585
 ./msData/regex/RegexTest_585.xsd
@@ -52747,7 +52747,7 @@ OK: RegexTest_752.xsd:5:40: Invalid regular expression a[b-a]
 
 Grp: RegexTest_753
 ./msData/regex/RegexTest_753.xsd
-(i)
+OK: RegexTest_753.xsd:5:38: Invalid regular expression a[]b
 
 Grp: RegexTest_754
 ./msData/regex/RegexTest_754.xsd
@@ -52807,7 +52807,7 @@ OK: RegexTest_1067.xsd:5:40: Invalid regular expression a[b-a]
 
 Grp: RegexTest_1068
 ./msData/regex/RegexTest_1068.xsd
-(i)
+OK: RegexTest_1068.xsd:5:38: Invalid regular expression a[]b
 
 Grp: RegexTest_1069
 ./msData/regex/RegexTest_1069.xsd
@@ -52843,7 +52843,7 @@ OK: RegexTest_1236.xsd:5:40: Invalid regular expression a[b-a]
 
 Grp: RegexTest_1237
 ./msData/regex/RegexTest_1237.xsd
-(i)
+OK: RegexTest_1237.xsd:5:38: Invalid regular expression a[]b
 
 Grp: RegexTest_1238
 ./msData/regex/RegexTest_1238.xsd
@@ -55434,4 +55434,4 @@ Grp: ipo6
 ./boeingData/ipo6/ipo.xsd
 (v) ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-./schematest: xsd files: 13794 XML: 24447 Errors (expected if no diff): 2111
+./schematest: xsd files: 13794 XML: 24447 Errors (expected if no diff): 2107
