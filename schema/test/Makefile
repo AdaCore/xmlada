@@ -11,5 +11,6 @@ old:
 
 new:
 	@./schematest > schematest.tmp.out
+	-@dos2unix schematest.tmp.out
 	@diff -c schematest.out schematest.tmp.out
 force:
