@@ -85,6 +85,7 @@ ifeq (${LIBRARY_TYPE},static)
 else
 ifeq (${OS},Windows_NT)
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.dll ${xmllib}
+	cd ${libdir}; ${CP} xmlada/${LIBRARY_TYPE}/libxmlada_$*.dll libxmlada_$*.dll
 else
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} ${xmllib}
 	cd ${xmllib}; ${LN_S} libxmlada_$*.so.${VERSION} libxmlada_$*.so
