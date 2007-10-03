@@ -207,27 +207,44 @@ package body Schema.Validators.Extensions is
    procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean) is
+      Empty_Element : Boolean)
+   is
+      Saved_Mixed : Boolean;
    begin
-      if Debug then
-         Debug_Output ("Validate_Characters for extension "
-                       & Get_Name (Validator));
-      end if;
-
       if Validator.Extension /= null then
+         if Debug then
+            Debug_Output ("Validate_Characters for extension "
+                          & Get_Name (Validator));
+         end if;
+
+         Saved_Mixed := Validator.Extension.Mixed_Content;
+         Set_Mixed_Content (Validator.Extension, Validator.Mixed_Content);
          Validate_Characters (Validator.Extension, Ch, Empty_Element);
+         Validator.Extension.Mixed_Content := Saved_Mixed;
       else
+         if Debug then
+            Debug_Output ("Validate_Characters for extension "
+                          & Get_Name (Validator) & ", testing base");
+         end if;
+
+         Saved_Mixed := Get_Validator (Validator.Base).Mixed_Content;
+         Set_Mixed_Content
+           (Get_Validator (Validator.Base), Validator.Mixed_Content);
          Validate_Characters
            (Get_Validator (Validator.Base), Ch, Empty_Element);
+         Set_Mixed_Content (Get_Validator (Validator.Base), Saved_Mixed);
       end if;
 
    exception
       when XML_Validation_Error =>
-         if Debug then
-            Debug_Output ("Validation error in extension, testing base");
+         --  If null, we have already tested
+         if Validator.Extension /= null then
+            if Debug then
+               Debug_Output ("Validation error in extension, testing base");
+            end if;
+            Validate_Characters
+              (Get_Validator (Validator.Base), Ch, Empty_Element);
          end if;
-         Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element);
    end Validate_Characters;
 
    -----------------------

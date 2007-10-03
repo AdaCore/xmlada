@@ -20,6 +20,8 @@ New features in version 3.0 (Development version)
     taken care of automatically. This is a change of API, since the Free
     subprogram no longer exists and doesn't need to be called by the user in
     any case.
+  - GA01-010 Validation of mixed content for a complex type or an extension
+    with no child nodes
 
  SAX:
   - API change: sax.locators is now ref-counted
