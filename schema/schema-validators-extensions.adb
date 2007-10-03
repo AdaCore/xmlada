@@ -244,6 +244,8 @@ package body Schema.Validators.Extensions is
             end if;
             Validate_Characters
               (Get_Validator (Validator.Base), Ch, Empty_Element);
+         else
+            raise;
          end if;
    end Validate_Characters;
 

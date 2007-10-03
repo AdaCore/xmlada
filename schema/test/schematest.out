@@ -32205,7 +32205,8 @@ Grp: addB064
 
 Grp: addB065
 ./msData/additional/test73826.xsd
-(v) test73826.xsd:22:108: Mixed content is not allowed for this element
+./msData/additional/test73826.xml
+(i)
 
 Grp: addB066
 ./msData/additional/test73850.xsd
@@ -33082,11 +33083,6 @@ Grp: attgC044
 Grp: attgD002
 ./msData/attributeGroup/attgD002.xsd
 OK: attgD002.xsd:5:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
-
-Grp: attgD005
-./msData/attributeGroup/attgD005.xsd
-./msData/attributeGroup/attgD005.xml
-(v) attgD005.xml:3:1: Mixed content is not allowed for this element
 
 Grp: attgD006
 ./msData/attributeGroup/attgD006.xsd
@@ -34059,16 +34055,6 @@ OK: ctA030.xsd:3:41: Attribute "id": Invalid value: ""
 Grp: ctA031
 ./msData/complexType/ctA031.xsd
 OK: ctA031.xsd:3:44: Attribute "id": Invalid value: "123"
-
-Grp: ctA033
-./msData/complexType/ctA033.xsd
-./msData/complexType/ctA033.xml
-(v) ctA033.xml:2:108: Mixed content is not allowed for this element
-
-Grp: ctA035
-./msData/complexType/ctA035.xsd
-./msData/complexType/ctA035.xml
-(v) ctA035.xml:2:108: Mixed content is not allowed for this element
 
 Grp: ctA036
 ./msData/complexType/ctA036.xsd
@@ -43270,26 +43256,6 @@ Grp: idF018
 ./msData/identityConstraint/idF018.xml
 (i)
 
-Grp: idF025
-./msData/identityConstraint/idF025.xsd
-./msData/identityConstraint/idF025.xml
-(v) idF025.xml:5:17: Mixed content is not allowed for this element
-
-Grp: idF033
-./msData/identityConstraint/idF033.xsd
-./msData/identityConstraint/idF033.xml
-(v) idF033.xml:4:25: Mixed content is not allowed for this element
-
-Grp: idF034
-./msData/identityConstraint/idF034.xsd
-./msData/identityConstraint/idF034.xml
-(v) idF034.xml:5:17: Mixed content is not allowed for this element
-
-Grp: idF036
-./msData/identityConstraint/idF036.xsd
-./msData/identityConstraint/idF036.xml
-(v) idF036.xml:4:36: Mixed content is not allowed for this element
-
 Grp: idG003
 ./msData/identityConstraint/idG003.xsd
 ./msData/identityConstraint/idG003.xml
@@ -43330,16 +43296,6 @@ Grp: idG012
 ./msData/identityConstraint/idG012.xml
 (i)
 
-Grp: idG018
-./msData/identityConstraint/idG018.xsd
-./msData/identityConstraint/idG018.xml
-(v) idG018.xml:4:25: Mixed content is not allowed for this element
-
-Grp: idG019
-./msData/identityConstraint/idG019.xsd
-./msData/identityConstraint/idG019.xml
-(v) idG019.xml:5:17: Mixed content is not allowed for this element
-
 Grp: idG020
 ./msData/identityConstraint/idG020.xsd
 ./msData/identityConstraint/idG020.xml
@@ -43354,21 +43310,6 @@ Grp: idG025
 ./msData/identityConstraint/idG025.xsd
 ./msData/identityConstraint/idG025.xml
 (i)
-
-Grp: idG027
-./msData/identityConstraint/idG027.xsd
-./msData/identityConstraint/idG027.xml
-(v) idG027.xml:4:32: Mixed content is not allowed for this element
-
-Grp: idG028
-./msData/identityConstraint/idG028.xsd
-./msData/identityConstraint/idG028.xml
-(v) idG028.xml:5:17: Mixed content is not allowed for this element
-
-Grp: idG030
-./msData/identityConstraint/idG030.xsd
-./msData/identityConstraint/idG030.xml
-(v) idG030.xml:4:36: Mixed content is not allowed for this element
 
 Grp: idH005
 ./msData/identityConstraint/idH005.xsd
@@ -43406,11 +43347,6 @@ Grp: idH021
 ./msData/identityConstraint/idH021.xsd
 ./msData/identityConstraint/idH021.xml
 (v) idH021.xml:2:220: idH001.xsd:3:27: Element "root" has already been declared
-
-Grp: idH034
-./msData/identityConstraint/idH034.xsd
-./msData/identityConstraint/idH034.xml
-(v) idH034.xml:4:36: Mixed content is not allowed for this element
 
 Grp: idH035
 ./msData/identityConstraint/idH035.xsd
@@ -55434,4 +55370,4 @@ Grp: ipo6
 ./boeingData/ipo6/ipo.xsd
 (v) ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-./schematest: xsd files: 13794 XML: 24447 Errors (expected if no diff): 2107
+./schematest: xsd files: 13794 XML: 24448 Errors (expected if no diff): 2094
