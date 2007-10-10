@@ -7,7 +7,7 @@ project Shared is
    for Source_Dirs use ();
 
    type Mode_Type is ("distrib", "debug", "optimize", "profile");
-   Mode : Mode_Type := external ("MODE", "debug");
+   Mode : Mode_Type := external ("MODE", "optimize");
 
    package Builder is
        case Mode is
@@ -24,7 +24,7 @@ project Shared is
    end Builder;
 
    package compiler is
-      warnings := ("-gnatwua", "-gnaty", "-gnatQ", "-gnatg");
+      warnings := ("-gnatwua", "-gnaty", "-gnatQ");
 
       case Mode is
          when "distrib" =>
@@ -32,7 +32,7 @@ project Shared is
 
          when "debug" =>
             for Default_Switches ("Ada") use warnings
-               & ("-g", "-gnata");
+               & ("-g", "-gnata", "-gnatwe");
                --  & ("-g", "-gnata", "-gnatVaMI");
 
          when "optimize" =>
