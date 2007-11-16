@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            AdaCore                                --
+--                       Copyright (C) 2001-2007, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -147,7 +146,9 @@ package body Input_Sources.File is
 
    procedure Set_System_Id (Input : in out File_Input; Id : Byte_Sequence) is
    begin
-      Set_System_Id (Input_Source (Input), Normalize_Pathname (Id));
+      Set_System_Id
+        (Input_Source (Input),
+         Normalize_Pathname (Id, Resolve_Links => False));
    end Set_System_Id;
 
 end Input_Sources.File;
