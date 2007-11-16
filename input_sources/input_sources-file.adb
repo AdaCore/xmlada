@@ -146,9 +146,13 @@ package body Input_Sources.File is
 
    procedure Set_System_Id (Input : in out File_Input; Id : Byte_Sequence) is
    begin
-      Set_System_Id
-        (Input_Source (Input),
-         Normalize_Pathname (Id, Resolve_Links => False));
+      if Is_Absolute_Path (Id) then
+         Set_System_Id (Input_Source (Input), Id);
+      else
+         Set_System_Id
+           (Input_Source (Input),
+            Normalize_Pathname (Id, Resolve_Links => False));
+      end if;
    end Set_System_Id;
 
 end Input_Sources.File;
