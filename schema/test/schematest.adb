@@ -521,6 +521,11 @@ procedure Schematest is
    end Run_Testsuite;
 
 begin
+   if not Is_Directory (Testdir) then
+      Put_Line (Standard_Error, "No such directory: " & Testdir);
+      return;
+   end if;
+
    loop
       case Getopt ("v d x s e") is
          when 'v'    => Verbose := True;
