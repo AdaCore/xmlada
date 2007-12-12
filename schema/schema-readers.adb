@@ -819,7 +819,7 @@ package body Schema.Readers is
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;
-      Except  : Sax.Exceptions.Sax_Parse_Exception'Class)
+      Except : Sax.Exceptions.Sax_Parse_Exception'Class)
    is
       pragma Unmodified (Reader);
    begin

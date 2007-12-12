@@ -289,7 +289,7 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Start_Document (Handler : in out Schema_Reader) is
-      G  : XML_Grammar;
+      G : XML_Grammar;
    begin
       --  Add the definition of all predefined types to the created grammar
       --  Not needed, since that is already done by the call to Set_Parsed_URI
@@ -1976,14 +1976,16 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
-      Namespace_Index : constant Integer := Get_Index (Atts, "namespace");
-      Min_Occurs_Index : constant Integer :=
-        Get_Index (Atts, URI => "", Local_Name => "minOccurs");
-      Max_Occurs_Index : constant Integer :=
-        Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
+      pragma Unmodified (Handler);
+      Namespace_Index        : constant Integer := Get_Index
+        (Atts, "namespace");
+      Min_Occurs_Index       : constant Integer := Get_Index
+        (Atts, URI => "", Local_Name => "minOccurs");
+      Max_Occurs_Index       : constant Integer := Get_Index
+        (Atts, URI => "", Local_Name => "maxOccurs");
       Min_Occurs, Max_Occurs : Integer := 1;
-      Process_Contents : Process_Contents_Type;
-      Any : XML_Any;
+      Process_Contents       : Process_Contents_Type;
+      Any                    : XML_Any;
    begin
       if Min_Occurs_Index /= -1 then
          Min_Occurs := Integer'Value (Get_Value (Atts, Min_Occurs_Index));
@@ -2042,10 +2044,10 @@ package body Schema.Schema_Readers is
      (Handler  : in out Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
-      Min_Occurs_Index : constant Integer :=
-        Get_Index (Atts, URI => "", Local_Name => "minOccurs");
-      Max_Occurs_Index : constant Integer :=
-        Get_Index (Atts, URI => "", Local_Name => "maxOccurs");
+      Min_Occurs_Index       : constant Integer := Get_Index
+        (Atts, URI => "", Local_Name => "minOccurs");
+      Max_Occurs_Index       : constant Integer := Get_Index
+        (Atts, URI => "", Local_Name => "maxOccurs");
       Min_Occurs, Max_Occurs : Integer := 1;
    begin
       if Min_Occurs_Index /= -1 then
