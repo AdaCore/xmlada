@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2006                          --
---                            AdaCore                                --
+--                Copyright (C) 2006-2007, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -34,7 +33,7 @@ with Sax.Attributes;
 with Sax.Exceptions;
 with Schema.Readers;
 with Unicode.CES;
-with DOM.Core;             use DOM.Core;
+with DOM.Core;        use DOM.Core;
 
 package Schema.Dom_Readers is
 
@@ -48,7 +47,7 @@ package Schema.Dom_Readers is
    function Get_Tree (Read : Tree_Reader) return Document;
 
    procedure Free (Read : in out Tree_Reader);
-   --  Free the memory associated with the reader, in particular the tree.
+   --  Free the memory associated with the reader, in particular the tree
 
    procedure Set_Warnings_As_Errors
      (Read : in out Tree_Reader; Warnings_As_Error : Boolean);
@@ -58,12 +57,11 @@ package Schema.Dom_Readers is
 private
 
    type Tree_Reader is new Schema.Readers.Validating_Reader with record
-      Tree                       : Document;
-      Current_Node               : Node;
-      Internal_Encoding          : Unicode.CES.Encoding_Scheme;
-      In_DTD                     : Boolean := False;
-
-      Warnings_As_Error          : Boolean := False;
+      Tree              : Document;
+      Current_Node      : Node;
+      Internal_Encoding : Unicode.CES.Encoding_Scheme;
+      In_DTD            : Boolean := False;
+      Warnings_As_Error : Boolean := False;
    end record;
 
    procedure Start_Document (Handler : in out Tree_Reader);
@@ -74,7 +72,7 @@ private
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class);
    procedure End_Element
-     (Handler : in out Tree_Reader;
+     (Handler       : in out Tree_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "");
@@ -102,5 +100,6 @@ private
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
    procedure Warning
      (Handler : in out Tree_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class);
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
+
 end Schema.Dom_Readers;
