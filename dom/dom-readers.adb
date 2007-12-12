@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            AdaCore                                --
+--                Copyright (C) 2001-2007, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -108,6 +107,7 @@ package body DOM.Readers is
    procedure Characters
      (Handler : in out Tree_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
+      pragma Unmodified (Handler);
       Tmp : Node;
       pragma Unreferenced (Tmp);
    begin
@@ -131,6 +131,7 @@ package body DOM.Readers is
      (Handler : in out Tree_Reader;
       Comment : Unicode.CES.Byte_Sequence)
    is
+      pragma Unmodified (Handler);
       Tmp : Node;
       pragma Unreferenced (Tmp);
    begin
@@ -145,6 +146,7 @@ package body DOM.Readers is
    procedure Ignorable_Whitespace
      (Handler : in out Tree_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
+      pragma Unmodified (Handler);
       Tmp : Node;
       pragma Unreferenced (Tmp);
    begin
@@ -164,6 +166,7 @@ package body DOM.Readers is
       Target  : Unicode.CES.Byte_Sequence;
       Data    : Unicode.CES.Byte_Sequence)
    is
+      pragma Unmodified (Handler);
       Tmp : Node;
       pragma Unreferenced (Tmp);
    begin
@@ -193,9 +196,7 @@ package body DOM.Readers is
       Public_Id : Unicode.CES.Byte_Sequence := "";
       System_Id : Unicode.CES.Byte_Sequence := "")
    is
-      pragma Warnings (Off, Name);
-      pragma Warnings (Off, Public_Id);
-      pragma Warnings (Off, System_Id);
+      pragma Unreferenced (Name, Public_Id, System_Id);
    begin
       Handler.In_DTD := True;
    end Start_DTD;

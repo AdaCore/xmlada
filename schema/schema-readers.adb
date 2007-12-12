@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2003-2007, AdaCore            --
+--                Copyright (C) 2003-2007, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -695,6 +695,7 @@ package body Schema.Readers is
      (Handler : in out Validating_Reader;
       Ch      : Unicode.CES.Byte_Sequence)
    is
+      pragma Unmodified (Handler);
       Tmp : Byte_Sequence_Access;
    begin
       if Handler.Validators /= null then
@@ -820,6 +821,7 @@ package body Schema.Readers is
      (Reader : in out Validating_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class)
    is
+      pragma Unmodified (Reader);
    begin
       Validation_Error
         (To_String (Get_Locator (Except),

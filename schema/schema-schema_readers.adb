@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                Copyright (C) 2004-2007, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -319,6 +319,7 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure End_Document (Handler : in out Schema_Reader) is
+      pragma Unmodified (Handler);
    begin
       if Handler.Check_Undefined then
          Global_Check (Handler.Created_Grammar);
@@ -1058,6 +1059,7 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Finish_Element (Handler : in out Schema_Reader) is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Contexts.Is_Ref
         and then Get_Type (Handler.Contexts.Element) = No_Type
@@ -1403,6 +1405,7 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Finish_Union (Handler : in out Schema_Reader) is
+      pragma Unmodified (Handler);
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1459,6 +1462,7 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Finish_Extension (Handler : in out Schema_Reader) is
+      pragma Unmodified (Handler);
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1520,6 +1524,7 @@ package body Schema.Schema_Readers is
    -----------------
 
    procedure Finish_List (Handler : in out Schema_Reader) is
+      pragma Unmodified (Handler);
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1870,6 +1875,7 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Finish_Attribute (Handler : in out Schema_Reader) is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Contexts.Attribute_Is_Ref
         and then Get_Type (Handler.Contexts.Attribute) = No_Type
@@ -2066,8 +2072,8 @@ package body Schema.Schema_Readers is
    ----------------
 
    procedure Finish_All (Handler : in out Schema_Reader) is
+      pragma Unmodified (Handler);
    begin
-
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
             Handler.Contexts.Next.Type_Validator :=
