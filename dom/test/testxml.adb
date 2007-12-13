@@ -682,6 +682,8 @@ procedure Testxml is
       Expected : String;
       Result   : in out Testcases_Result)
    is
+      pragma Unmodified (Reader);
+
       function System (Str : String) return Integer;
       pragma Import (C, System, "system");
 

@@ -209,7 +209,9 @@ package body Debug_Readers is
    procedure Start_Prefix_Mapping
      (Handler : in out Debug_Reader;
       Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence) is
+      URI     : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Start_Prefix_Mapping (" & Prefix & ", " & URI
@@ -222,7 +224,9 @@ package body Debug_Readers is
    ------------------------
 
    procedure End_Prefix_Mapping
-     (Handler : in out Debug_Reader; Prefix : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Debug_Reader; Prefix : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.End_Prefix_Mapping (" & Prefix & ") at "
@@ -239,7 +243,9 @@ package body Debug_Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class) is
+      Atts          : Sax.Attributes.Attributes'Class)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put ("Sax.Start_Element ("
@@ -260,7 +266,9 @@ package body Debug_Readers is
      (Handler : in out Debug_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "") is
+      Qname         : Unicode.CES.Byte_Sequence := "")
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.End_Element (" & Namespace_URI & ", "
@@ -273,7 +281,9 @@ package body Debug_Readers is
    ----------------
 
    procedure Characters
-     (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Characters (" & Ch & ','
@@ -288,8 +298,9 @@ package body Debug_Readers is
    procedure Ignorable_Whitespace
      (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
+      pragma Unmodified (Handler);
       Index : Natural := Ch'First;
-      C : Unicode_Char;
+      C     : Unicode_Char;
    begin
       if not Handler.Silent then
          Put ("Sax.Ignorable_Whitespace (");
@@ -310,7 +321,9 @@ package body Debug_Readers is
    procedure Processing_Instruction
      (Handler : in out Debug_Reader;
       Target  : Unicode.CES.Byte_Sequence;
-      Data    : Unicode.CES.Byte_Sequence) is
+      Data    : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Processing instruction (" & Target & ", '" & Data
@@ -323,7 +336,9 @@ package body Debug_Readers is
    --------------------
 
    procedure Skipped_Entity
-     (Handler : in out Debug_Reader; Name : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Debug_Reader; Name : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Skipped_Entity (" & Name & ") at "
@@ -336,7 +351,9 @@ package body Debug_Readers is
    -------------
 
    procedure Comment
-     (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Comment (" & Ch & ") at "
@@ -349,6 +366,7 @@ package body Debug_Readers is
    -----------------
 
    procedure Start_Cdata (Handler : in out Debug_Reader) is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Start_Cdata () at " & Location (Handler));
@@ -360,6 +378,7 @@ package body Debug_Readers is
    ---------------
 
    procedure End_Cdata (Handler : in out Debug_Reader) is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.End_Cdata () at " & Location (Handler));
@@ -415,7 +434,9 @@ package body Debug_Readers is
      (Handler   : in out Debug_Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence := "";
-      System_Id : Unicode.CES.Byte_Sequence := "") is
+      System_Id : Unicode.CES.Byte_Sequence := "")
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Start_DTD (" & Name
@@ -430,6 +451,7 @@ package body Debug_Readers is
    -------------
 
    procedure End_DTD (Handler : in out Debug_Reader) is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.End_DTD () at " & Location (Handler));
@@ -443,7 +465,9 @@ package body Debug_Readers is
    procedure Internal_Entity_Decl
      (Handler : in out Debug_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Value   : Unicode.CES.Byte_Sequence) is
+      Value   : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Internal_Entity_Decl ("
@@ -460,7 +484,9 @@ package body Debug_Readers is
      (Handler   : in out Debug_Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence;
-      System_Id : Unicode.CES.Byte_Sequence) is
+      System_Id : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.External_Entity_Decl ("
@@ -478,7 +504,9 @@ package body Debug_Readers is
      (Handler       : in out Debug_Reader;
       Name          : Unicode.CES.Byte_Sequence;
       System_Id     : Unicode.CES.Byte_Sequence;
-      Notation_Name : Unicode.CES.Byte_Sequence) is
+      Notation_Name : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Unparsed_Entity_Decl ("
@@ -495,7 +523,9 @@ package body Debug_Readers is
    procedure Element_Decl
      (Handler : in out Debug_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Content_Model) is
+      Model   : Content_Model)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Element_Decl ("
@@ -509,10 +539,12 @@ package body Debug_Readers is
    -------------------
 
    procedure Notation_Decl
-     (Handler       : in out Debug_Reader;
-      Name          : Unicode.CES.Byte_Sequence;
-      Public_Id     : Unicode.CES.Byte_Sequence;
-      System_Id     : Unicode.CES.Byte_Sequence) is
+     (Handler   : in out Debug_Reader;
+      Name      : Unicode.CES.Byte_Sequence;
+      Public_Id : Unicode.CES.Byte_Sequence;
+      System_Id : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Notation_Decl ("
@@ -527,13 +559,15 @@ package body Debug_Readers is
    --------------------
 
    procedure Attribute_Decl
-     (Handler : in out Debug_Reader;
-      Ename   : Unicode.CES.Byte_Sequence;
-      Aname   : Unicode.CES.Byte_Sequence;
-      Typ     : Attribute_Type;
-      Content : Content_Model;
+     (Handler       : in out Debug_Reader;
+      Ename         : Unicode.CES.Byte_Sequence;
+      Aname         : Unicode.CES.Byte_Sequence;
+      Typ           : Attribute_Type;
+      Content       : Content_Model;
       Value_Default : Sax.Attributes.Default_Declaration;
-      Value   : Unicode.CES.Byte_Sequence) is
+      Value         : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          if Content /= Unknown_Model then
