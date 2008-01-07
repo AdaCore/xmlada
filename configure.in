@@ -1,8 +1,9 @@
-AC_INIT(XML/Ada,3.0w,report@adacore.com,xmlada)
+AC_INIT(XML/Ada,3.0,report@adacore.com,xmlada)
 AC_REVISION($Revision$)
 
+# Also update docs/xml.texi, and in AC_INIT above
 XMLADA_MAJOR_VERSION=3
-XMLADA_MINOR_VERSION=0w
+XMLADA_MINOR_VERSION=0
 
 AC_CANONICAL_SYSTEM
 AC_PROG_CC
