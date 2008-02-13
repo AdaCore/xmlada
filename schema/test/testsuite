@@ -128,14 +128,15 @@ expect() {
    xsd_file="$1"
    xml_file="$2"
    expected="$3"
+   extra_args=${4:-""}
 
    xsd=""
    if [ x"$xsd_file" != x ]; then
      xsd="-xsd $xsd_file"
    fi
 
-   out=`eval $valgrind $XML $xsd $xml_file 2>&1`
-   compare "$XML $xsd $xml_file" "$out" "$expected"
+   out=`eval $valgrind $XML $extra_args $xsd $xml_file 2>&1`
+   compare "$XML $extra_args $xsd $xml_file" "$out" "$expected"
 }
 
 #######################################
@@ -159,8 +160,9 @@ compare() {
                               -e 's,'$sun',\$sun,'`
       echo "#------------ Test failed ------------"
       echo "  cmd: $testname"
-      echo "  quoted= $quoted"
-      echo "  expected= $expected"
+      echo "  quoted  = $quoted"
+      # echo "  actual  = $actual--"
+      echo "  expected= $expected--"
       failed=`expr $failed + 1`
    else
       passed=`expr $passed + 1`
@@ -1644,6 +1646,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "$act/FA16-002/6_xhtml1-frameset.xsd" "" "Attribute \"{http://www.w3.org/XML/1998/namespace}space\" is referenced, but not defined"
    expect "" "$act/F822-009_2/file.xml" "$act/F822-009_2/file.xml:8:2: attributeGroup \"{http://www.w3.org/2001/XMLSchema}attributes2\" is referenced, but not defined"
    expect "" "$act/G404-019/c_test.xml" "$act/G404-019/c_test.xml:16:10: Attribute \"subSystemId\" is required in this context"
+   expect "" "$act/H212-023/default_H212-023.xml" "<root xsi:noNamespaceSchemaLocation=\"H212-023.xsd\">   <Acknowledge>false</Acknowledge></root>" "-dom"
 fi
 
 summary

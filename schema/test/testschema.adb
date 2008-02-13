@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -33,9 +33,13 @@
 --  where schema1.xsd, schema2.xsd, schema3.xsd,... are our schema files
 --  to parse, and file.xml the XML document to validate
 
+with Ada.Text_IO;
+with Ada.Text_IO.Text_Streams; use Ada.Text_IO.Text_Streams;
 with Schema.Readers;        use Schema.Readers;
+with Schema.Dom_Readers;    use Schema.Dom_Readers;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 with Schema.Validators;     use Schema.Validators;
+with DOM.Core.Nodes;        use DOM.Core.Nodes;
 with Input_Sources.File;    use Input_Sources.File;
 with Ada.Exceptions;        use Ada.Exceptions;
 with GNAT.IO;               use GNAT.IO;
@@ -45,27 +49,40 @@ with GNAT.Command_Line;     use GNAT.Command_Line;
 procedure TestSchema is
    Debug     : Boolean := False;
    Read      : File_Input;
-   My_Reader : Validating_Reader;
+   My_Reader : Validating_Reader_Access;
    Schema    : Schema_Reader;
    Grammar   : XML_Grammar := No_Grammar;
    Explicit_XSD : Boolean := False;
-   Switches  : constant String := "xsd: debug base";
+   Switches  : constant String := "xsd: debug base dom";
+   DOM       : boolean := False;
 
 begin
    --  Special case: check if we want debug output, before doing anything else
    loop
       case Getopt (Switches) is
          when 'd' =>
-            Debug := True;
-            Standard.Schema.Readers.Set_Debug_Output (True);
-            Standard.Schema.Validators.Set_Debug_Output (True);
-            Standard.Schema.Schema_Readers.Set_Debug_Output (True);
+            if Full_Switch = "debug" then
+               Debug := True;
+               Standard.Schema.Readers.Set_Debug_Output (True);
+               Standard.Schema.Validators.Set_Debug_Output (True);
+               Standard.Schema.Schema_Readers.Set_Debug_Output (True);
+            elsif Full_Switch = "dom" then
+               DOM := True;
+            end if;
          when ASCII.NUL =>
             exit;
          when others =>
             null;  --  Handled later
       end case;
    end loop;
+
+   --  Create the parser
+
+   if DOM then
+      My_Reader := new Standard.Schema.Dom_Readers.Tree_Reader;
+   else
+      My_Reader := new Standard.Schema.Readers.Validating_Reader;
+   end if;
 
    --  We want to validate with possibly several schemas to parse first. This
    --  is slightly more complex than a single grammar, since some checks can
@@ -95,7 +112,7 @@ begin
 
          when 'b' =>
             Use_Basename_In_Error_Messages (Schema, True);
-            Use_Basename_In_Error_Messages (My_Reader, True);
+            Use_Basename_In_Error_Messages (My_Reader.all, True);
 
          when 'd' =>
             null; --  Already handled
@@ -113,14 +130,14 @@ begin
       Global_Check (Grammar);
 
       --  Validate the documents with the schemas we have just parsed.
-      Set_Validating_Grammar (My_Reader, Grammar);
+      Set_Validating_Grammar (My_Reader.all, Grammar);
    end if;
 
    --  Activate validation. Even though we have a validating reader, we can
    --  still choose to disable validation if we know the document is correct.
    --  This makes loading the document faster
 
-   Set_Feature (My_Reader, Schema_Validation_Feature, True);
+   Set_Feature (My_Reader.all, Schema_Validation_Feature, True);
 
    --  Now valid all XML files given as input
 
@@ -136,8 +153,16 @@ begin
          end if;
 
          Open (Xml_File, Read);
-         Parse (My_Reader, Read);
+         Parse (My_Reader.all, Read);
          Close (Read);
+
+         if DOM then
+            Write
+              (Stream => Stream (Ada.Text_IO.Current_Output),
+               N      => Get_Tree (Tree_Reader (My_Reader.all)),
+               Print_XML_Declaration => False,
+               EOL_Sequence => "");
+         end if;
       end;
    end loop;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -36,6 +36,7 @@ with Schema.Validators;
 package Schema.Readers is
 
    type Validating_Reader is new Sax.Readers.Reader with private;
+   type Validating_Reader_Access is access all Validating_Reader'Class;
    --  To get full validation of an XML document, you must derive from this
    --  type. You must also enable the Validation_Feature feature, through a
    --  call to Set_Feature.

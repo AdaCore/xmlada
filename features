@@ -1,4 +1,14 @@
-New features in version 3.0 (Development version)
+New features in version 3.1w
+============================
+
+ Schema validation:
+   - H212-023: The default value of elements is properly taken into account
+     when validating the contents of the node. A SAX event is also generated
+     for the default value, so that users automatically get access to the
+     default value (the latter is also included in the resulting DOM tree
+     when using Schema.Dom_Readers)
+
+New features in version 3.0
 ===========================
 
  WARNING: the version number of XML/Ada was bumper to 3.x because the API

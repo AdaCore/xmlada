@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2003-2007, AdaCore                   --
+--                Copyright (C) 2003-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -79,7 +79,8 @@ package body Schema.Readers is
    --  collapse multiple calls to Characters and Ignorable_Whitespace into a
    --  single string, for validation purposes.
 
-   procedure Validate_Current_Characters (Handler : Validating_Reader'Class);
+   procedure Validate_Current_Characters
+     (Handler : in out Validating_Reader'Class);
    --  Validate the current set of characters
 
    procedure Free
@@ -394,7 +395,9 @@ package body Schema.Readers is
    -- Validate_Current_Characters --
    ---------------------------------
 
-   procedure Validate_Current_Characters (Handler : Validating_Reader'Class) is
+   procedure Validate_Current_Characters
+     (Handler : in out Validating_Reader'Class)
+   is
       Empty_Element : Boolean := False;
    begin
       --  If we were in the middle of a series of Characters callback, we need
@@ -408,8 +411,16 @@ package body Schema.Readers is
             --  test explicitely. For instance, the "minLength" facet might or
             --  the "fixed" attribute need to test whether the empty string is
             --  valid.
-            Handler.Validators.Characters := new Byte_Sequence'("");
-            Empty_Element := True;
+
+            if Has_Default (Handler.Validators.Element) then
+               Handler.Validators.Characters := new Byte_Sequence'
+                 (Get_Default (Handler.Validators.Element).all);
+               Characters
+                 (Handler, Get_Default (Handler.Validators.Element).all);
+            else
+               Handler.Validators.Characters := new Byte_Sequence'("");
+               Empty_Element := True;
+            end if;
          end if;
 
          if Handler.Validators.Characters /= null then
@@ -695,7 +706,6 @@ package body Schema.Readers is
      (Handler : in out Validating_Reader;
       Ch      : Unicode.CES.Byte_Sequence)
    is
-      pragma Unmodified (Handler);
       Tmp : Byte_Sequence_Access;
    begin
       if Handler.Validators /= null then
