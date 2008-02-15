@@ -31007,11 +31007,6 @@ Grp: typedef01501m1
 ./sunData/ElemDecl/typeDef/typeDef01501m/typeDef01501m1_n.xml
 OK: typeDef01501m1_n.xml:22:7: Element's value must be ""
 
-Grp: valueconstraint00101m1
-./sunData/ElemDecl/valueConstraint/valueConstraint00101m/valueConstraint00101m1.xsd
-./sunData/ElemDecl/valueConstraint/valueConstraint00101m/valueConstraint00101m1_p.xml
-(v) valueConstraint00101m1_p.xml:12:79: Invalid: empty string used as a number
-
 Grp: valueconstraint00101m2
 ./sunData/ElemDecl/valueConstraint/valueConstraint00101m/valueConstraint00101m2.xsd
 OK: valueConstraint00101m2.xsd:14:62: Invalid integer: "XII"
@@ -31088,20 +31083,10 @@ Grp: valueconstraint00501m3
 ./sunData/ElemDecl/valueConstraint/valueConstraint00501m/valueConstraint00501m3_n.xml
 OK: valueConstraint00501m3_n.xml:14:38: Element's value must be "1.0E-3"
 
-Grp: valueconstraint00501m4
-./sunData/ElemDecl/valueConstraint/valueConstraint00501m/valueConstraint00501m4.xsd
-./sunData/ElemDecl/valueConstraint/valueConstraint00501m/valueConstraint00501m4_p.xml
-(v) valueConstraint00501m4_p.xml:14:38: Invalid float: ""
-
-Grp: valueconstraint00501m5
-./sunData/ElemDecl/valueConstraint/valueConstraint00501m/valueConstraint00501m5.xsd
-./sunData/ElemDecl/valueConstraint/valueConstraint00501m/valueConstraint00501m5_p.xml
-(v) valueConstraint00501m5_p.xml:14:38: Invalid float: ""
-
 Grp: valueconstraint00501m6
 ./sunData/ElemDecl/valueConstraint/valueConstraint00501m/valueConstraint00501m6.xsd
 ./sunData/ElemDecl/valueConstraint/valueConstraint00501m/valueConstraint00501m6_n.xml
-OK: valueConstraint00501m6_n.xml:14:38: Invalid float: ""
+OK: valueConstraint00501m6_n.xml:14:38: string pattern not matched: 1\.0[Ee]-2
 
 Grp: valueconstraint00601m1
 ./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m1.xsd
@@ -31111,11 +31096,6 @@ Grp: valueconstraint00601m1
 Grp: valueconstraint00601m2
 ./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m2.xsd
 OK: valueConstraint00601m2.xsd:14:61: Invalid float: "1.0F-2"
-
-Grp: valueconstraint00601m3
-./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m3.xsd
-./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m3_p.xml
-(v) valueConstraint00601m3_p.xml:12:79: Invalid float: ""
 
 Grp: valueconstraint00601m4
 ./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m4.xsd
@@ -31129,11 +31109,6 @@ Grp: valueconstraint00601m5
 Grp: valueconstraint00601m6
 ./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m6.xsd
 (i)
-
-Grp: valueconstraint00601m7
-./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m7.xsd
-./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m7_p.xml
-(v) valueConstraint00601m7_p.xml:12:79: Invalid float: ""
 
 Grp: valueconstraint00601m8
 ./sunData/ElemDecl/valueConstraint/valueConstraint00601m/valueConstraint00601m8.xsd
@@ -31186,15 +31161,10 @@ Grp: valueconstraint01101m2
 ./sunData/ElemDecl/valueConstraint/valueConstraint01101m/valueConstraint01101m2_n.xml
 OK: valueConstraint01101m2_n.xml:14:43: Element's value must be "-1"
 
-Grp: valueconstraint01101m3
-./sunData/ElemDecl/valueConstraint/valueConstraint01101m/valueConstraint01101m3.xsd
-./sunData/ElemDecl/valueConstraint/valueConstraint01101m/valueConstraint01101m3_p.xml
-(v) valueConstraint01101m3_p.xml:14:43: Invalid float: ""
-
 Grp: valueconstraint01101m4
 ./sunData/ElemDecl/valueConstraint/valueConstraint01101m/valueConstraint01101m4.xsd
 ./sunData/ElemDecl/valueConstraint/valueConstraint01101m/valueConstraint01101m4_n.xml
-OK: valueConstraint01101m4_n.xml:14:43: Invalid float: ""
+OK: valueConstraint01101m4_n.xml:14:43: -1 is smaller than minInclusive ( 0.E+00)
 
 Set: IdConstrDefs
 Grp: annotation00101m2
@@ -32659,16 +32629,6 @@ Grp: isDefault011
 ./msData/additional/isdefault011.xml
 OK: isdefault011.xml:2:8: Element's value must be "abc"
 
-Grp: isDefault025
-./msData/additional/isdefault004.xsd
-./msData/additional/isdefault025.xml
-(v) isdefault025.xml:3:11: Invalid: empty string used as a number
-
-Grp: isDefault026
-./msData/additional/isdefault004.xsd
-./msData/additional/isdefault026.xml
-(v) isdefault026.xml:3:19: Invalid: empty string used as a number
-
 Grp: isDefault052
 ./msData/additional/isdefault051.xsd
 ./msData/additional/isdefault052.xml
@@ -32698,11 +32658,6 @@ Grp: isDefault064
 ./msData/additional/isdefault061.xsd
 ./msData/additional/isdefault064.xml
 (i)
-
-Grp: isDefault060_1
-./msData/additional/test95960_1.xsd
-./msData/additional/test95960_1.xml
-(v) test95960_1.xml:3:15: Invalid integer: ""
 
 Grp: isDefault070
 ./msData/additional/isdefault070.xsd
@@ -55370,4 +55325,4 @@ Grp: ipo6
 ./boeingData/ipo6/ipo.xsd
 (v) ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-./schematest: xsd files: 13794 XML: 24448 Errors (expected if no diff): 2094
+./schematest: xsd files: 13794 XML: 24448 Errors (expected if no diff): 2085
