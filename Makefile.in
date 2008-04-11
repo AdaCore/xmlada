@@ -104,7 +104,7 @@ install_dirs: force
 	@${MKDIR} ${includedir}/xmlada
 	@${MKDIR} ${datadir}/gps/plug-ins/
 
-install: obj install_dirs ${MODULE_INSTALL}
+install: install_dirs ${MODULE_INSTALL}
 	${INSTALL} distrib/${LIBRARY_TYPE}/xmlada_shared.gpr ${libdir}/gnat
 	${INSTALL} distrib/xmlada.gpr                ${libdir}/gnat/
 	${INSTALL} distrib/xmlada_dom.gpr            ${libdir}/gnat/
