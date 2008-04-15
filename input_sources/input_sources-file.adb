@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -63,7 +63,7 @@ package body Input_Sources.File is
    -- Open --
    ----------
 
-   procedure Open (Filename : String; Input : out File_Input) is
+   procedure Open (Filename : String; Input : out File_Input'Class) is
       package Dir is new Ada.Direct_IO (Character);
       F : Dir.File_Type;
       Length : Natural;
@@ -137,7 +137,7 @@ package body Input_Sources.File is
 
    function Eof (From : File_Input) return Boolean is
    begin
-      return From.Index > From.Buffer'Length;
+      return From.Buffer = null or else From.Index > From.Buffer'Length;
    end Eof;
 
    -------------------

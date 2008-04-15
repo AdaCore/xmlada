@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -36,7 +35,7 @@ package Input_Sources.File is
    type File_Input_Access is access all File_Input'Class;
    --  A special implementation of a reader, that reads from a file.
 
-   procedure Open (Filename : String; Input : out File_Input);
+   procedure Open (Filename : String; Input : out File_Input'Class);
    --  Open a new file for reading.
    --  Note that the file is read completly at once, and saved in memory.
    --  This provides a much better access later on, however this might be a
