@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -128,6 +128,7 @@ package DOM.Core.Nodes is
    --    * Wrong_Document_Err: if New_Child was created from another document
    --    * No_Modification_Allowed_Err: N or New_Child is read-only.
    --    * Not_Found_Err: Old_Child is not a child of N.
+   --  The caller must free the returned node.
 
    function Remove_Child
      (N         : Node;
@@ -136,6 +137,7 @@ package DOM.Core.Nodes is
    --  raises:
    --    * No_Modification_Allowed_Err: N is read-only
    --    * Not_Found_Err: Old_Child is not a child of N
+   --  The caller must free the returned node.
 
    function Append_Child
      (N         : Node;
