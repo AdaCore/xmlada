@@ -3,5 +3,5 @@ project Xmlada_Shared is
    Version := "@PACKAGE_VERSION@";
 
    type Xmlada_Kind_Type is ("static", "relocatable");
-   Xmlada_Kind : Xmlada_Kind_Type := external ("LIBRARY_TYPE", "static");
+   Xmlada_Kind : Xmlada_Kind_Type := external ("LIBRARY_TYPE", "@DEFAULT_LIBRARY_TYPE@");
 end Xmlada_Shared;

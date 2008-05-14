@@ -40,6 +40,8 @@ with Schema.Dom_Readers;    use Schema.Dom_Readers;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 with Schema.Validators;     use Schema.Validators;
 with DOM.Core.Nodes;        use DOM.Core.Nodes;
+with DOM.Core;              use DOM.Core;
+with DOM.Core.Documents;    use DOM.Core.Documents;
 with Input_Sources.File;    use Input_Sources.File;
 with Ada.Exceptions;        use Ada.Exceptions;
 with GNAT.IO;               use GNAT.IO;
@@ -144,6 +146,7 @@ begin
    loop
       declare
          Xml_File : constant String := Get_Argument;
+         List : Node_List;
       begin
          exit when Xml_File'Length = 0;
 
@@ -162,6 +165,14 @@ begin
                N      => Get_Tree (Tree_Reader (My_Reader.all)),
                Print_XML_Declaration => False,
                EOL_Sequence => "");
+
+            List := Get_Elements_By_Tag_Name
+              (Get_Tree (Tree_Reader (My_Reader.all)),
+               Tag_Name => "Corrective_Action");
+            Put_Line
+              ("Found " & Length (List)'Img & " Corrective_Action nodes");
+            Put_Line
+              ("Value=" & Node_Value (Item (List, 0)));
          end if;
       end;
    end loop;

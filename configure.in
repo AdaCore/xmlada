@@ -1,17 +1,17 @@
-AC_INIT(XML/Ada,3.0,report@adacore.com,xmlada)
-AC_REVISION($Revision$)
+AC_INIT(XML/Ada,3.1,report@adacore.com,xmlada)
+AC_CANONICAL_SYSTEM
 
 # Also update docs/xml.texi, and in AC_INIT above
 XMLADA_MAJOR_VERSION=3
 XMLADA_MINOR_VERSION=1w
 
-AC_CANONICAL_SYSTEM
 AC_PROG_CC
 AC_CHECK_PROGS(DVIPS, dvips, "")
 AC_CHECK_PROGS(MAKEINFO, makeinfo, "")
 AC_CHECK_PROGS(TEXI2DVI, texi2dvi, "")
 AC_CHECK_PROGS(PDFTEX, pdftex, "")
 AC_CHECK_PROGS(TEX, tex, "")
+AM_GNAT_BUILDS_SHARED
 
 IFS=' '
 
@@ -35,4 +35,4 @@ esac
 AC_SUBST(MKDIR)
 AC_SUBST(CC)
 
-AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config distrib/static/xmlada_shared.gpr distrib/relocatable/xmlada_shared.gpr)
+AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config distrib/xmlada_shared.gpr)
