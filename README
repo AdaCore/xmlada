@@ -58,14 +58,14 @@ which is done by running
     ./configure --prefix=PREFIX
 where PREFIX is the installation directory you wish to use
 
-The default is to build relocatable libraries, although you can chose to build
-static libraries as well. This is done by either changing the value of the
-variable LIBRARY_TYPE in the Makefile.in, or simply by specifying an extra
-argument on the "make" command line:
-   make static
+By default, XML/Ada will build both static and shared libraries, if
+"configure" detected that the latter were supported on your system. You can
+prevent the building of shared libraries by specifying --disable-shared as
+an extra switch to configure.
 
-To build both types of libraries, you can use the following make command:
-   make static shared
+Once install, your applications will by default by linked statically with
+XML/Ada. You can change that default by specifying explicitly --enable-shared
+as an extra switch to configure.
 
 Depending on what Ada runtime your application is build with, you might need to
 change the file shared.gpr (at the root of the XML/Ada directory) so that the
@@ -74,16 +74,6 @@ Default_Switches lines in the Compiler package contain something like:
 
 To install the library, use the following command line:
    make install
-   make install_shared
-   make install_static
-
-(the first two have the same effect and will install the shared library. The
-last one will install the static library). You can install the two types of
-libraries by doing
-   make install_static install_shared
-instead.
-The argument you put last on the command line indicates which default version
-of XML/Ada should be used.
 
 Compiling with other Ada compilers
 ----------------------------------
