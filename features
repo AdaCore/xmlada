@@ -1,6 +1,9 @@
 New features in version 3.1w
 ============================
 
+ Unicode:
+  - H523-017 Add support for the windows-1251 encoding.
+
  Schema validation:
    - H212-023: The default value of elements is properly taken into account
      when validating the contents of the node. A SAX event is also generated
