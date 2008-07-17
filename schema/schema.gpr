@@ -14,7 +14,6 @@ project Schema is
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;
    package Binder   renames Shared.Binder;
-   package Linker   renames Shared.Linker;
    package Ide      renames Shared.Ide;
  
 end Schema;
