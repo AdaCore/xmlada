@@ -24,6 +24,12 @@ CC=gcc
 # Compiler mode: one of "distrib", "debug", "optimize", "profile"
 MODE=distrib
 
+ifeq (${OS},Windows_NT)
+LIBEXT=dll
+else
+LIBEXT=so
+endif
+
 # Commands for installation procedure
 CHMOD=chmod
 LN_S=@LN_S@
@@ -93,14 +99,14 @@ ifeq (${LIBRARY_TYPE},static)
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.a ${xmllib}
 else
 ifeq (${OS},Windows_NT)
-	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.dll ${xmllib}
-	cd ${libdir}; ${CP} xmlada/${LIBRARY_TYPE}/libxmlada_$*.dll libxmlada_$*.dll
+	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT} ${xmllib}
+	cd ${libdir}; ${CP} xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT} libxmlada_$*.${LIBEXT}
 else
-	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} ${xmllib}
-	cd ${xmllib}; ${LN_S} libxmlada_$*.so.${VERSION} libxmlada_$*.so
-	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so
-	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so.${basename ${VERSION}}
-	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.so.${VERSION} libxmlada_$*.so.${VERSION}
+	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT}.${VERSION} ${xmllib}
+	cd ${xmllib}; ${LN_S} libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}.${basename ${VERSION}}
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}.${VERSION}
 endif
 endif
 	cd ${xmllib}; ${CHMOD} ugo-w *.ali
