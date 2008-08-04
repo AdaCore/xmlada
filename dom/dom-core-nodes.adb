@@ -596,7 +596,7 @@ package body DOM.Core.Nodes is
    function Clone_List (List : Node_List; Deep : Boolean) return Node_List is
       L : Node_List := Null_List;
    begin
-      if Deep then
+      if List /= Null_List and then Deep then
          L := (Items => new Node_Array'(List.Items.all), Last  => List.Last);
          for J in 0 .. L.Last loop
             L.Items (J) := List.Items (J);
