@@ -36,54 +36,52 @@ with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 package body Input_Sources.File is
 
-   procedure Fast_Read (The_File : String; Buf : Byte_Sequence_Access);
-   --  Read Buf'length characters in The_File and store it in Buf.
-   --  This procedure performs a single call to Read.
-
-   ---------------
-   -- Fast_Read --
-   ---------------
-
-   procedure Fast_Read (The_File : String;
-                        Buf      : Byte_Sequence_Access)
-   is
-      type Fixed_String is new String (Buf'Range);
-      package Dir_Fast is new Ada.Sequential_IO (Fixed_String);
-      use Dir_Fast;
-
-      F : Dir_Fast.File_Type;
-
-   begin
-      Dir_Fast.Open (F, In_File, The_File);
-      Dir_Fast.Read (F, Fixed_String (Buf.all));
-      Dir_Fast.Close (F);
-   end Fast_Read;
-
    ----------
    -- Open --
    ----------
 
    procedure Open (Filename : String; Input : out File_Input'Class) is
-      package Dir is new Ada.Direct_IO (Character);
-      F : Dir.File_Type;
+      FD : File_Descriptor;
       Length : Natural;
+      Cursor : Positive;
+      Actual_Length : Integer;
       BOM    : Bom_Type;
    begin
-      Dir.Open (F, Dir.In_File, Filename);
-      Length := Natural (Dir.Size (F));
-      Dir.Close (F);
+      --  Open the source FD, note that we open in binary mode, because there
+      --  is no point in wasting time on text translation when it is not
+      --  required.
+
+      FD := Open_Read (Filename, Binary);
+      Length := Integer (File_Length (FD));
 
       --  If the file is empty, we just create a reader that will not return
       --  any character. This will fail later on when the XML document is
       --  parsed, anyway.
+
       if Length = 0 then
          Input.Buffer := new String (1 .. 1);
          Input.Index := 2;
+         Close (FD);
          return;
       end if;
 
+      --  Allocate buffer
+
       Input.Buffer := new String (1 .. Length);
-      Fast_Read (Filename, Input.Buffer);
+
+      --  On most systems, the loop below will be executed only once and the
+      --  file will be read in one chunk. However, some systems (e.g. VMS) have
+      --  file types that require one read per line, so read until we get the
+      --  Length bytes or until there are no more bytes to read.
+
+      Cursor := 1;
+      loop
+         Actual_Length := Read (FD, Input.Buffer (Cursor)'Address, Length);
+         Cursor := Cursor + Actual_Length;
+         exit when Actual_Length = Length or Actual_Length <= 0;
+      end loop;
+
+      Close (FD);
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
