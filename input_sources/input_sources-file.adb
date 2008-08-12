@@ -26,8 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Direct_IO;
-with Ada.Sequential_IO;
+with IO_Exceptions;      use IO_Exceptions;
 with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
@@ -52,6 +51,13 @@ package body Input_Sources.File is
       --  required.
 
       FD := Open_Read (Filename, Binary);
+
+      --  Raise Name_Error if file cannot be found
+
+      if FD = Invalid_FD then
+         raise Name_Error;
+      end if;
+
       Length := Integer (File_Length (FD));
 
       --  If the file is empty, we just create a reader that will not return
