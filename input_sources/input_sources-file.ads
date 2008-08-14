@@ -43,6 +43,7 @@ package Input_Sources.File is
    --  The physical file on disk can be modified at any time afterwards, since
    --  it is no longer read.
    --  This function can decode a file if it is coded in Utf8, Utf16 or Utf32
+   --  This function must raise Name_Error if the file does not exist
 
    procedure Close (Input : in out File_Input);
    --  Close the file and free the memory
