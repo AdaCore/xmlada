@@ -1,5 +1,9 @@
-Problems fixed in 2.4
+Problems fixed in 3.1
 =====================
+
+ DOM:
+   - H312-009 Write prints extra white-spaces at the end of elements when
+     pretty printing
 
 Problems fixed in 2.3
 =====================
