@@ -1196,7 +1196,11 @@ package body DOM.Core.Nodes is
       procedure Newline;
       --  Go to the next line, when pretty-printing is activated
 
+      procedure Indent_Line;
+      --  Indent the newline if needed
+
       Indent : Natural := 0;
+      At_Bol : Boolean := True;
 
       -------------
       -- Newline --
@@ -1206,8 +1210,21 @@ package body DOM.Core.Nodes is
       begin
          if Pretty_Print then
             String'Write (Stream, "" & ASCII.LF);
+            At_Bol := True;
          end if;
       end Newline;
+
+      -----------------
+      -- Indent_Line --
+      -----------------
+
+      procedure Indent_Line is
+      begin
+         if Pretty_Print and At_Bol then
+            String'Write (Stream, (1 .. Indent => ' '));
+            At_Bol := False;
+         end if;
+      end Indent_Line;
 
       ------------------------
       -- Has_Non_Whitespace --
@@ -1250,10 +1267,7 @@ package body DOM.Core.Nodes is
 
          case N.Node_Type is
             when Element_Node =>
-               if Pretty_Print then
-                  String'Write (Stream, (1 .. Indent => ' '));
-               end if;
-
+               Indent_Line;
                Put (Stream, Less_Than_Sequence, Encoding);
                Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
 
@@ -1289,9 +1303,7 @@ package body DOM.Core.Nodes is
                   Recursive_Print (N.Children);
                   Indent := Indent - 1;
 
-                  if Pretty_Print then
-                     String'Write (Stream, (1 .. Indent => ' '));
-                  end if;
+                  Indent_Line;
                   Put (Stream, Less_Than_Sequence & Slash_Sequence, Encoding);
                   Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
                   Put (Stream, Greater_Than_Sequence, Encoding);
@@ -1299,6 +1311,7 @@ package body DOM.Core.Nodes is
                Newline;
 
             when Attribute_Node =>
+               At_Bol := False;
                Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
                Put (Stream,
                     Equals_Sign_Sequence & Quotation_Mark_Sequence, Encoding);
@@ -1306,6 +1319,7 @@ package body DOM.Core.Nodes is
                Put (Stream, Quotation_Mark_Sequence, Encoding);
 
             when Processing_Instruction_Node =>
+               Indent_Line;
                Put
                  (Stream,
                   Less_Than_Sequence
@@ -1337,7 +1351,7 @@ package body DOM.Core.Nodes is
                if Print_Comments then
                   if Pretty_Print then
                      Newline;
-                     String'Write (Stream, (1 .. Indent => ' '));
+                     Indent_Line;
                   end if;
                   Put (Stream, "<!--", Encoding);
                   Put (Stream, Node_Value (N), Encoding);
