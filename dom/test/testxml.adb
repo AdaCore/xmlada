@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -881,7 +881,7 @@ begin
         ("silent uri normalize validate dump valid_chars encoding-out: eol:"
          & " comments xmlpi collapse nonamespaces auto verbose pretty")
       is
-         when ASCII.Nul => exit;
+         when ASCII.NUL => exit;
          when 'e' =>
             if Full_Switch = "eol" then
                Free (EOL);
