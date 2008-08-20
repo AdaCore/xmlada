@@ -56,7 +56,7 @@ procedure TestSchema is
    Grammar   : XML_Grammar := No_Grammar;
    Explicit_XSD : Boolean := False;
    Switches  : constant String := "xsd: debug base dom";
-   DOM       : boolean := False;
+   DOM       : Boolean := False;
 
 begin
    --  Special case: check if we want debug output, before doing anything else
