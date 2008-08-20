@@ -1,0 +1,6 @@
+schZ012_a
+  --  test: msData/schema/schZ012_a.xsd
+  --  Disable because it relies on case-sensitive file systems to work
+  --  properly. It fails on Darwin (lena) with HFS and on Windows, since
+  --  the included file schZ012_A.xsd is found on those systems.
+  --  See discussion at http://www.w3.org/Bugs/Public/show_bug.cgi?id=4137

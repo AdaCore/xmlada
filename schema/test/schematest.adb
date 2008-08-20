@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2007, AdaCore                 --
+--                       Copyright (C) 2007-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -32,9 +32,13 @@
 --  in the "Test Collection" part for a link to the latest .tar.gz package.
 --  Also:
 --   http://www.w3.org/XML/2004/xml-schema-test-suite/index.html
+--
+--  Some tests are disabled through the "disable" file
 
 with Ada.Command_Line;          use Ada.Command_Line;
+with Ada.Containers.Indefinite_Hashed_Sets;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Text_IO;               use Ada.Text_IO;
 with DOM.Core.Documents;        use DOM.Core.Documents;
@@ -44,14 +48,15 @@ with GNAT.Command_Line;         use GNAT.Command_Line;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Input_Sources.File;        use Input_Sources, Input_Sources.File;
+with Sax.Readers;               use Sax.Readers;
 with Schema.Readers;            use Schema.Readers;
 with Schema.Schema_Readers;     use Schema.Schema_Readers;
 with Schema.Validators;         use Schema.Validators;
-with Sax.Readers;           use Sax.Readers;
 
 procedure Schematest is
 
    Testdir : constant String := "xmlschema2006-11-06";
+   Disable_File_List : constant String := "disable";
 
    Verbose       : Boolean := False;
    Debug         : Boolean := False;
@@ -75,6 +80,12 @@ procedure Schematest is
 
    Xlink : constant String := "http://www.w3.org/1999/xlink";
 
+   package String_Hash is new Ada.Containers.Indefinite_Hashed_Sets
+     (Element_Type        => String,
+      Hash                => Ada.Strings.Hash,
+      Equivalent_Elements => "=");
+   Disabled_Groups : String_Hash.Set;
+
    procedure Run_Testsuite  (Filename : String);
    procedure Run_Testset    (Filename : String);
    procedure Run_Test_Group
@@ -97,6 +108,9 @@ procedure Schematest is
    --  Query an attribute from N. The empty string is returned if the attribute
    --  does not exists
 
+   procedure Parse_Disabled;
+   --  Parse the list of disabled tests
+
    procedure Test_Header (Testset, Group, Schema, Test : String);
    procedure Error (Testset, Group, Schema, Test, Msg : String);
    procedure Expected (Testset, Group, Schema, Test, Msg : String);
@@ -116,6 +130,31 @@ procedure Schematest is
    Last_Schema : Unbounded_String;
    --  Keep track of what was already output, to limit the amount of
    --  duplication
+
+   --------------------
+   -- Parse_Disabled --
+   --------------------
+
+   procedure Parse_Disabled is
+      File : File_Type;
+      Line : String (1 .. 1024);
+      Last : Natural;
+   begin
+      Open (File, Mode => In_File, Name => Disable_File_List);
+
+      while not End_Of_File (File) loop
+         Get_Line (File, Line, Last);
+         if Line (1) /= '-' and then Line (1) /= ' ' then
+            String_Hash.Include (Disabled_Groups, Line (1 .. Last));
+         end if;
+      end loop;
+
+      Close (File);
+
+   exception
+      when Name_Error =>
+         null;
+   end Parse_Disabled;
 
    -------------------
    -- Get_Attribute --
@@ -430,6 +469,12 @@ procedure Schematest is
       Schema : XML_Grammar;
       Schema_Files : Unbounded_String;
    begin
+      if String_Hash.Contains (Disabled_Groups, Name) then
+         Put_Line ("Grp: " & Name & " (disabled)");
+         New_Line;
+         return;
+      end if;
+
       while N /= null loop
          if Local_Name (N) = "schemaTest" then
             Parse_Schema_Test
@@ -536,6 +581,8 @@ begin
          when others => exit;
       end case;
    end loop;
+
+   Parse_Disabled;
 
    if Debug then
       Schema.Readers.Set_Debug_Output (True);

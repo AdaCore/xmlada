@@ -53604,6 +53604,8 @@ Grp: schZ011_d
 ./msData/schema/schZ011_d.xsd
 OK: schZ011_d.xsd:8:29: schemaLocation and namespace attributes mandatory for <import>
 
+Grp: schZ012_a (disabled)
+
 Grp: schZ012_b
 ./msData/schema/schZ012_b.xsd
 (v) schZ012_b.xsd:2:45: schemaLocation and namespace attributes mandatory for <import>
@@ -55325,4 +55327,4 @@ Grp: ipo6
 ./boeingData/ipo6/ipo.xsd
 (v) ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-./schematest: xsd files: 13794 XML: 24448 Errors (expected if no diff): 2085
+./schematest: xsd files: 13793 XML: 24448 Errors (expected if no diff): 2085
