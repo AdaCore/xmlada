@@ -338,4 +338,8 @@ package body Input_Sources.Http is
         or else From.Index > From.Buffer'Length;
    end Eof;
 
+begin
+   pragma Warnings (Off);
+   GNAT.Sockets.Initialize;
+   pragma Warnings (On);
 end Input_Sources.Http;
