@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2001-2007, AdaCore                   --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -338,6 +338,4 @@ package body Input_Sources.Http is
         or else From.Index > From.Buffer'Length;
    end Eof;
 
-begin
-   GNAT.Sockets.Initialize;
 end Input_Sources.Http;
