@@ -17,7 +17,7 @@ full_libs_static="${libdir}/static/libxmlada_dom.a ${libdir}/static/libxmlada_sc
 show_cflags=1
 show_libs=1
 sax_only=0
-libtype=relocatable
+libtype=@DEFAULT_LIBRARY_TYPE@
 
 usage()
 {
@@ -41,6 +41,8 @@ Options:
         [--static]
             Output all the flags (compiler and linker) required to
             compile a static version of your program
+        [--shared]
+            Output flags to link with a shared library
 EOF
 }
 
@@ -76,6 +78,9 @@ while test $# -gt 0; do
       ;;
     --static)
       libtype=static
+      ;;
+    --shared)
+      libtype=relocatable
       ;;
     *)
       usage 1>&2
