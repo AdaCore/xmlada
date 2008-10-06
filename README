@@ -137,7 +137,9 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
    The value should have been set properly by the call to configure
 
 4. The best way to proceed is to do a 'make install'.
-
+   It is possible that make complains that it cannot execute an "install"
+   executable. In such a case, it is recommended to execute
+   "make INSTALL=cp install" instead to use "cp" to do the installation
 
 IV - TWEAKING THE LIBRARY
 =========================
