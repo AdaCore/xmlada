@@ -127,7 +127,7 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
      Cygwin : http://cygwin.com/
      Mingw  : http://www.mingw.org/ (MSYS Toolset)
 
-2. Run 'configure --prefix=<installation directory>' to generate the makefile.
+2. Run 'sh configure --prefix=<installation directory>' to generate the makefile.
    where "installation directory" is the place where you want to install
    XML/Ada.
 
