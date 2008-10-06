@@ -144,15 +144,15 @@ install_shared install_relocatable:
 	${MAKE} LIBRARY_TYPE=relocatable install_library_type
 
 clean_%: force
-	gnat clean -XLIBRARY_TYPE=$* -q -r -Punicode/unicode.gpr
-	gnat clean -XLIBRARY_TYPE=$* -q -r -Pinput_sources/input_sources.gpr
-	gnat clean -XLIBRARY_TYPE=$* -q -r -Psax/sax.gpr
-	gnat clean -XLIBRARY_TYPE=$* -q -r -Pdom/dom.gpr
-	gnat clean -XLIBRARY_TYPE=$* -q -r -Pschema/schema.gpr
-	gnat clean -XLIBRARY_TYPE=$* -q -Punicode/test/unicode_test.gpr
-	gnat clean -XLIBRARY_TYPE=$* -q -Pdom/test/dom_test.gpr
-	gnat clean -XLIBRARY_TYPE=$* -q -Psax/test/sax_test.gpr
-	gnat clean -XLIBRARY_TYPE=$* -q -Pschema/test/schema_test.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -r -Punicode/unicode.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -r -Pinput_sources/input_sources.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -r -Psax/sax.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -r -Pdom/dom.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -r -Pschema/schema.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -Punicode/test/unicode_test.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -Pdom/test/dom_test.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -Psax/test/sax_test.gpr
+	-gnat clean -XLIBRARY_TYPE=$* -q -Pschema/test/schema_test.gpr
 
 clean: clean_relocatable clean_static
 	cd docs; ${MAKE} -e clean
