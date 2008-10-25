@@ -100,7 +100,7 @@ ifeq (${LIBRARY_TYPE},static)
 else
 ifeq (${OS},Windows_NT)
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT} ${xmllib}
-	cd ${libdir}; ${CP} xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT} libxmlada_$*.${LIBEXT}
+	cd ${bindir}; ${CP} ${libdir}/xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT} libxmlada_$*.${LIBEXT}
 else
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT}.${VERSION} ${xmllib}
 	cd ${xmllib}; ${LN_S} libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}
