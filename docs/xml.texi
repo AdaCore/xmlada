@@ -5,7 +5,7 @@
 @settitle The Ada95 XML Library
 @syncodeindex fn cp
 
-@set XMLVersion 3.1
+@set XMLVersion 3.2w
 
 @c ----------------------------------------- MACRO
 

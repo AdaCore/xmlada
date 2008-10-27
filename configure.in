@@ -1,4 +1,4 @@
-AC_INIT(XML/Ada,3.1,report@adacore.com,xmlada)
+AC_INIT(XML/Ada,3.2w,report@adacore.com,xmlada)
 AC_CANONICAL_SYSTEM
 
 # Also update docs/xml.texi, and in AC_INIT above
