@@ -1,20 +1,27 @@
-New features in version 3.1w
-============================
+New features in version 3.1
+===========================
 
  Unicode:
   - H523-017 Add support for the windows-1251 encoding.
 
  Schema validation:
-   - H212-023: The default value of elements is properly taken into account
-     when validating the contents of the node. A SAX event is also generated
-     for the default value, so that users automatically get access to the
-     default value (the latter is also included in the resulting DOM tree
-     when using Schema.Dom_Readers)
+  - H212-023: The default value of elements is properly taken into account
+    when validating the contents of the node. A SAX event is also generated
+    for the default value, so that users automatically get access to the
+    default value (the latter is also included in the resulting DOM tree
+    when using Schema.Dom_Readers)
+
+ Installation
+  - HA21-023: prefix/lib no longer contains unversioned .so files, since this
+    prevents the use of static libraries on some systems if the user has
+    prefix/lib in his LD_LIBRARY_PATH. Instead, only the .so.<version> are
+    copied into that directory, since they are enough to run the executables
+    linked dynamically with XML/Ada
 
 New features in version 3.0
 ===========================
 
- WARNING: the version number of XML/Ada was bumper to 3.x because the API
+ WARNING: the version number of XML/Ada was bumped to 3.x because the API
  has changed slightly in several packages, providing reference-counted types
  and thus automatic memory management. This was necessary to fix some meory
  leaks that couldn't be fix as easily otherwise.
