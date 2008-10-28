@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -32,6 +31,7 @@
 --  to Unicode.
 --  See http://www.isoc.org:8080/codage/iso8859/jeuxiso.en.htm for a list
 --  of the ISO 8859-*  character sets
+--  ??? URL above is invalid
 
 package Unicode.CCS is
 
@@ -40,7 +40,11 @@ package Unicode.CCS is
    --    function Convert (Char : Unicode_Char) return Unicode_Char
    --  that converts from a code point representing an abstract character in
    --  the specific encoding to the code point for the same character in
-   --  Unicode, or reverse
+   --  Unicode, or reverse.
+
+   --  ??? This is not consistent with the specification of type Unicode_Char,
+   --  which states that values of Unicode_Char always are code points in
+   --  the Unicode repertoire.
 
    type Conversion_Function is access
      function (Char : Unicode_Char) return Unicode_Char;
