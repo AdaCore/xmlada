@@ -101,7 +101,8 @@ package body DOM.Core is
       if Old = null or else Old'Last = List.Last then
          List.Items := new Node_Array
            (0 .. List.Last + 1
-              + (Natural (Float (List.Last) * Node_List_Growth_Factor)));
+              + (Integer'Max (0,
+                   Integer (Float (List.Last) * Node_List_Growth_Factor))));
          if Old /= null then
             List.Items (0 .. List.Last) := Old.all;
             Free (Old);
