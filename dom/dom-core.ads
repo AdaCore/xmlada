@@ -52,12 +52,12 @@ package DOM.Core is
    --  Whether the local_name+prefix+namespace are shared between nodes. This
    --  also results in memory usage reduction.
 
-   Default_Node_List_Growth_Factor : constant Float := 0.0;
-   --  Set to 1.0 the buffer will be doubled in size (growth factor is 100%).
-   --  The default value is 0, in this case only a single empty items is added.
+   Default_Node_List_Growth_Factor : constant Float := 1.0;
+   --  Set to 1.0 the buffer is doubled in size (growth factor is 100%).
+   --  If set to 0.0 only a single empty items is added.
    --  The higher this factor, the less memory allocations will be required
    --  (and thus the faster your program will run).
-   --  Setting this to 0 will require more allocations, but will save memory,
+   --  Setting this to 0.0 will require more allocations, but will save memory,
    --  since no empty node will remain in the final tree.
 
    subtype DOM_String is Unicode.CES.Byte_Sequence;
