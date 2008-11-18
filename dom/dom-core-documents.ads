@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -61,6 +60,9 @@ package DOM.Core.Documents is
    function Create_Text_Node (Doc : Document; Data : DOM_String)
       return Text;
    --  Create a text node given a specific string
+   function Create_Text_Node (Doc : Document; Data : DOM_String_Access)
+      return Text;
+   --  As above but with a pre-allocated Data which must not be freed
 
    function Create_Comment (Doc : Document; Data : DOM_String)
       return Comment;

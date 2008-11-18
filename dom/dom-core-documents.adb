@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -126,10 +125,20 @@ package body DOM.Core.Documents is
       return Text is
    begin
       return new Node_Record'
-        (Node_Type => Text_Node,
+        (Node_Type       => Text_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Text      => new DOM_String'(Data));
+         Text            => new DOM_String'(Data));
+   end Create_Text_Node;
+
+   function Create_Text_Node (Doc : Document; Data : DOM_String_Access)
+      return Text is
+   begin
+      return new Node_Record'
+        (Node_Type       => Text_Node,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
+         Text            => Data);
    end Create_Text_Node;
 
    --------------------
