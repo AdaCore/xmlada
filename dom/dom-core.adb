@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            AdaCore                                --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -36,9 +35,20 @@ with Interfaces;    use Interfaces;
 package body DOM.Core is
    use Nodes_Htable;
 
+   Node_List_Growth_Factor : Float := Default_Node_List_Growth_Factor;
+
    function Internalize_Node_Name
      (Doc  : Document; Name : Node_Name_Def) return Shared_Node_Name_Def;
    --  Return a shared version of Name
+
+   ---------------------------------
+   -- Set_Node_List_Growth_Factor --
+   ---------------------------------
+
+   procedure Set_Node_List_Growth_Factor (Factor : Float) is
+   begin
+      Node_List_Growth_Factor := Factor;
+   end Set_Node_List_Growth_Factor;
 
    ---------------------
    -- Create_Document --
@@ -89,7 +99,9 @@ package body DOM.Core is
       Old : Node_Array_Access := List.Items;
    begin
       if Old = null or else Old'Last = List.Last then
-         List.Items := new Node_Array (0 .. List.Last + Node_List_Growth_Rate);
+         List.Items := new Node_Array
+           (0 .. List.Last + 1
+              + (Natural (Float (List.Last) * Node_List_Growth_Factor)));
          if Old /= null then
             List.Items (0 .. List.Last) := Old.all;
             Free (Old);

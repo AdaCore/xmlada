@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -53,11 +52,12 @@ package DOM.Core is
    --  Whether the local_name+prefix+namespace are shared between nodes. This
    --  also results in memory usage reduction.
 
-   Node_List_Growth_Rate : constant Natural := 1;
-   --  How many empty items are added to a Node_List every time a node is
-   --  added to a full list. The higher this rate, the less memory allocations
-   --  will be required (and thus the faster your program will run).
-   --  Setting this to 1 will require more allocations, but will save memory,
+   Default_Node_List_Growth_Factor : constant Float := 0.0;
+   --  Set to 1.0 the buffer will be doubled in size (growth factor is 100%).
+   --  The default value is 0, in this case only a single empty items is added.
+   --  The higher this factor, the less memory allocations will be required
+   --  (and thus the faster your program will run).
+   --  Setting this to 0 will require more allocations, but will save memory,
    --  since no empty node will remain in the final tree.
 
    subtype DOM_String is Unicode.CES.Byte_Sequence;
@@ -146,6 +146,9 @@ package DOM.Core is
    --  with the document.
    --  Wrong_Document_Err is raised if Doc_Type has already been used for
    --  another document.
+
+   procedure Set_Node_List_Growth_Factor (Factor : Float);
+   --  Set the growth factor, see Default_Node_List_Growth_Factor
 
    --------------------
    -- Dom exceptions --
