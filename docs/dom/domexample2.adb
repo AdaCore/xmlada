@@ -23,10 +23,12 @@ begin
    Set_Feature (Reader, Namespace_Feature, False);
 
    Parse (Reader, Input);
+   Close (Input);
 
    Doc := Get_Tree (Reader); 
 
    List := Get_Elements_By_Tag_Name (Doc, "pref");
+
    for Index in 1 .. Length (List) loop
        N := Item (List, Index - 1);
        A := Get_Named_Item (Attributes (N), "name");
@@ -34,4 +36,7 @@ begin
                  & Node_Value (First_Child (N)));
    end loop; 
 
+   Free (List);
+
+   Free (Reader);
 end DomExample2;

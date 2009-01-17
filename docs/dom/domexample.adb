@@ -15,6 +15,9 @@ begin
    Set_Feature (Reader, Namespace_Feature, False);
 
    Parse (Reader, Input);
+   Close (Input);
 
    Doc := Get_Tree (Reader); 
+
+   Free (Reader);
 end DomExample;
