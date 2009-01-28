@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -5424,10 +5424,7 @@ package body Sax.Readers is
    ----------
 
    procedure Free (Parser : in out Reader'Class) is
-      Tmp : Element_Access;
---        Iter : Attributes_Table.Iterator;
---        Length : Natural;
---        Model : Element_Model_Ptr;
+      Tmp, Tmp2 : Element_Access;
    begin
       Close_Inputs (Parser, Parser.Inputs);
       Close_Inputs (Parser, Parser.Close_Inputs);
@@ -5439,21 +5436,13 @@ package body Sax.Readers is
       --  Free the nodes, in case there are still some open
       Tmp := Parser.Current_Node;
       while Tmp /= null loop
+         Tmp2 := Tmp.Parent;
          Free (Tmp);
+         Tmp := Tmp2;
       end loop;
 
       --  Free the content model for the default attributes
-      --  ??? Done automatically when the attributes are reset
---        Iter := First (Parser.Default_Atts);
---        while Iter /= Attributes_Table.No_Iterator loop
---           Length := Get_Length (Current (Iter).Attributes.all);
---           for A in 1 .. Length loop
---              Model := Get_Content (Current (Iter).Attributes.all, A - 1);
---              Free (Model);
---              Set_Content (Current (Iter).Attributes.all, A - 1, null);
---           end loop;
---           Next (Parser.Default_Atts, Iter);
---        end loop;
+      --  is done automatically when the attributes are reset
 
       if Parser.Hooks.Data /= null then
          Free (Parser.Hooks.Data.all);
