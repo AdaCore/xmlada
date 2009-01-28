@@ -73,7 +73,7 @@ Default_Switches lines in the Compiler package contain something like:
    for Default_Switches ("Ada") use ("--RTS=sjlj", ...);
 
 To install the library, use the following command line:
-   make install
+   make all install
 
 Compiling with other Ada compilers
 ----------------------------------
@@ -136,7 +136,7 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
    the makefile where to install the library. Note the slashes in the path!
    The value should have been set properly by the call to configure
 
-4. The best way to proceed is to do a 'make install'.
+4. The best way to proceed is to do a 'make all install'.
    It is possible that make complains that it cannot execute an "install"
    executable. In such a case, it is recommended to execute
    "make INSTALL=cp install" instead to use "cp" to do the installation
