@@ -63,7 +63,7 @@ By default, XML/Ada will build both static and shared libraries, if
 prevent the building of shared libraries by specifying --disable-shared as
 an extra switch to configure.
 
-Once install, your applications will by default by linked statically with
+Once installed, your applications will by default be linked statically with
 XML/Ada. You can change that default by specifying explicitly --enable-shared
 as an extra switch to configure.
 
