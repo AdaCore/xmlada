@@ -1573,20 +1573,23 @@ validating a file.
        time.
 
 @smallexample
- @b{with} Schema.Schema_Readers, Schema.Validators, Input_Sources.File;
- @b{use}  Schema.Schema_Readers, Schema.Validators, Input_Sources.File;
- @b{with} Schema.Schema_Grammar;  @b{use}  Schema.Schema_Grammar;
- @b{declare}
-    Grammar : XML_Grammar;
-    Schema  : Schema_Reader;
-    Read    : File_Input;
- @b{begin}
-      Open ("file.xsd", Read);
-      Set_Validating_Grammar (Schema, Create_Schema_For_Schema);
-      Parse (Schema, Read);
-      Close (Read);
-      Grammar := Get_Created_Grammar (Schema);
- @b{end;}
+@b{with} Schema.Schema_Readers, Schema.Validators, Input_Sources.File;
+@b{use}  Schema.Schema_Readers, Schema.Validators, Input_Sources.File;
+@b{with} Schema.Schema_Grammar;  @b{use}  Schema.Schema_Grammar;
+
+@b{procedure} SchemaExample2 @b{is}
+   Grammar : XML_Grammar;
+   Schema  : Schema_Reader;
+   Read    : File_Input;
+@b{begin}
+     Open ("file.xsd", Read);
+     Set_Created_Grammar (Schema, No_Grammar);
+     Parse (Schema, Read);
+     Close (Read);
+     Global_Check (Grammar);
+
+     Grammar := Get_Created_Grammar (Schema);
+@b{end} SchemaExample2;
 @end smallexample
 
       In the example above, the schema file itself is validated against the
