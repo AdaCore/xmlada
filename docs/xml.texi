@@ -1600,8 +1600,8 @@ validating a file.
 
       The resulting grammar object is in fact a collection of parsed schema
       files, each associated with its own namespace. It can be kept as long as
-      you need it in your application, or freed with a call to @code{Free} to
-      deallocate the associated memory.
+      you need it in your application. Memory will automatically be reclaimed
+      when no longer needed.
 
       Every time you parse an XML file later on, you must associated the
       Grammar with the parser.

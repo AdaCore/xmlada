@@ -60,6 +60,8 @@ package Schema.Validators is
    --  the standard XML Schema namespace for predefined types, and the
    --  namespace we are defining). Each of these is accessed by a separate
    --  XML_Grammar_NS object
+   --  A grammar is a smart pointer, and will take care of freeing memory
+   --  automatically when no longer needed.
 
    No_Grammar : constant XML_Grammar;
    --  No Grammar has been defined
