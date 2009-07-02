@@ -4409,8 +4409,9 @@ package body Sax.Readers is
             --  In XML Schema 1.1 Part 1, Section 3.1.4, it is indicated that
             --  we should always normalize attribute values according to the
             --  whitespace property of their type. As a result, we do not
-            --  normalize here by default, and it will be done by the schema
-            --  parser if we are using one (see Hook_Start_Element).
+            --  normalize here by default if the attribute was registered, and
+            --  it will be done by the schema parser if we are using one
+            --  (see Hook_Start_Element).
 
             Get_String
               (Id, Attr_Value_State, Value_Start, Value_End,

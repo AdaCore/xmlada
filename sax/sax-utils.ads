@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005-2007, AdaCore            --
+--                       Copyright (C) 2005-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -118,4 +118,7 @@ package Sax.Utils is
    --     Qname (Qname'First .. Result - 1) = <prefix>
    --     Qname (Result + 1 .. Qname'Last) = <local_name>
 
+   function Collapse_Whitespaces (Str : String) return String;
+   --  Collapse whitespaces in Str, according to the attributes normalization
+   --  rule
 end Sax.Utils;

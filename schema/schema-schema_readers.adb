@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2004-2007, AdaCore                   --
+--                Copyright (C) 2004-2009, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -1739,8 +1739,22 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "type");
       Use_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "use");
+      Fixed_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "fixed");
       Ref_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "ref");
+
+      function Get_Fixed return String;
+      --  Return the "fixed" value for the attribute
+
+      function Get_Fixed return String is
+      begin
+         if Fixed_Index /= -1 then
+            return Get_Value (Atts, Fixed_Index);
+         else
+            return "";
+         end if;
+      end Get_Fixed;
 
       Att : Attribute_Validator;
       Typ : XML_Type := No_Type;
@@ -1761,10 +1775,6 @@ package body Schema.Schema_Readers is
                Use_Type := Required;
             elsif Val = "prohibited" then
                Use_Type := Prohibited;
-            elsif Val = "default" then
-               Use_Type := Default;
-            elsif Val = "fixed" then
-               Use_Type := Fixed;
             else
                Use_Type := Optional;
             end if;
@@ -1785,11 +1795,14 @@ package body Schema.Schema_Readers is
                  (Local_Name     => Get_Value (Atts, Name_Index),
                   NS             => Handler.Target_NS,
                   Attribute_Type => Typ);
-               Output (Ada_Name (Handler.Contexts)
-                       & " := Create_Global_Attribute ("""
-                       & Get_Value (Atts, Name_Index)
-                       & """, Handler.Target_NS, "
-                       & Ada_Name (Typ) & ");");
+
+               if Debug then
+                  Output (Ada_Name (Handler.Contexts)
+                          & " := Create_Global_Attribute ("""
+                          & Get_Value (Atts, Name_Index)
+                          & """, Handler.Target_NS, "
+                          & Ada_Name (Typ) & ");");
+               end if;
 
             when others =>
                Att := Create_Local_Attribute
@@ -1798,13 +1811,19 @@ package body Schema.Schema_Readers is
                   Attribute_Type => Typ,
                   Attribute_Use  => Use_Type,
                   Attribute_Form => Qualified,
+                  Has_Fixed      => Fixed_Index /= -1,
+                  Fixed          => Get_Fixed,
                   Value          => "");
-               Output (Ada_Name (Handler.Contexts)
-                       & " := Create_Local_Attribute ("""
-                       & Get_Value (Atts, Name_Index)
-                       & """, Handler.Target_NS, "
-                       & Ada_Name (Typ)
-                       & ", " & Use_Type'Img & ", Qualified);");
+
+               if Debug then
+                  Output (Ada_Name (Handler.Contexts)
+                          & " := Create_Local_Attribute ("""
+                          & Get_Value (Atts, Name_Index)
+                          & """, Handler.Target_NS, "
+                          & Ada_Name (Typ)
+                          & ", " & Use_Type'Img & ", Qualified, Has_Fixed="
+                          & Boolean'Image (Fixed_Index /= -1) & ";");
+               end if;
          end case;
       else
          Lookup_With_NS (Handler, Get_Value (Atts, Ref_Index), Att);

@@ -30223,7 +30223,7 @@ Grp: ad_valconstr00101m
 (i)
 
 ./sunData/AttrDecl/AD_valConstr/AD_valConstr00101m/AD_valConstr00101m2_n.xml
-(i)
+OK: AD_valConstr00101m2_n.xml:14:38: Attribute "price": value must be "12.3" (found "-1.3")
 
 Grp: ad_valconstr00201m1
 ./sunData/AttrDecl/AD_valConstr/AD_valConstr00201m/AD_valConstr00201m1.xsd
@@ -32203,7 +32203,7 @@ Grp: addB071
 Grp: addB075
 ./msData/additional/test75564.xsd
 ./msData/additional/test75564.xml
-(i)
+OK: test75564.xml:5:25: Attribute "a": value must be "foo" (found "fooasdfsdfs")
 
 Grp: addB080
 ./msData/additional/addB080.xsd
@@ -32300,7 +32300,7 @@ OK: addB114.xml:2:36: Element's value not in the enumeration set
 Grp: addB115
 ./msData/additional/addB115.xsd
 ./msData/additional/addB115.xml
-(i)
+OK: addB115.xml:5:25: Attribute "a": value must be "foo" (found "fooasdfsdfs")
 
 Grp: addB116
 ./msData/additional/test75092.xsd
@@ -32496,7 +32496,7 @@ OK: fixed1a.xml:2:20: Element's value must be "fixed"
 Grp: addB196g
 ./msData/additional/fixed2.xsd
 ./msData/additional/fixed1c.xml
-(i)
+OK: fixed1c.xml:1:27: Attribute "att": value must be "fixed" (found "[D0][80]fixed")
 
 Grp: addB196i
 ./msData/additional/fixed2.xsd
@@ -32506,7 +32506,7 @@ OK: fixed2a.xml:2:20: Element's value must be "fixed"
 Grp: addB196j
 ./msData/additional/fixed2.xsd
 ./msData/additional/fixed2b.xml
-(i)
+OK: fixed2b.xml:1:26: Attribute "att": value must be "fixed" (found "[EF][BB][BF]fixed")
 
 Grp: addB196k
 ./msData/additional/fixed2.xsd
@@ -32516,7 +32516,7 @@ OK: fixed3a.xml:2:20: Element's value must be "fixed"
 Grp: addB196l
 ./msData/additional/fixed2.xsd
 ./msData/additional/fixed3b.xml
-(i)
+OK: fixed3b.xml:1:26: Attribute "att": value must be "fixed" (found "[E2][80][8B]fixed")
 
 Grp: addB197b
 ./msData/additional/enum1.xsd
@@ -32632,32 +32632,32 @@ OK: isdefault011.xml:2:8: Element's value must be "abc"
 Grp: isDefault052
 ./msData/additional/isdefault051.xsd
 ./msData/additional/isdefault052.xml
-(i)
+OK: isdefault052.xml:1:45: Attribute "attr1": value must be "123" (found "456")
 
 Grp: isDefault053
 ./msData/additional/isdefault051.xsd
 ./msData/additional/isdefault053.xml
-(i)
+OK: isdefault053.xml:1:45: Attribute "attr2": value must be "abc" (found "def")
 
 Grp: isDefault054
 ./msData/additional/isdefault051.xsd
 ./msData/additional/isdefault054.xml
-(i)
+OK: isdefault054.xml:1:46: Attribute "attr3": value must be "true" (found "false")
 
 Grp: isDefault062
 ./msData/additional/isdefault061.xsd
 ./msData/additional/isdefault062.xml
-(i)
+OK: isdefault062.xml:1:76: Attribute "foo:attr1": value must be "123" (found "456")
 
 Grp: isDefault063
 ./msData/additional/isdefault061.xsd
 ./msData/additional/isdefault063.xml
-(i)
+OK: isdefault063.xml:1:76: Attribute "foo:attr2": value must be "abc" (found "def")
 
 Grp: isDefault064
 ./msData/additional/isdefault061.xsd
 ./msData/additional/isdefault064.xml
-(i)
+OK: isdefault064.xml:1:77: Attribute "foo:attr3": value must be "true" (found "false")
 
 Grp: isDefault070
 ./msData/additional/isdefault070.xsd
@@ -32941,7 +32941,7 @@ OK: attgC001.xsd:6:33: Attribute "name" is required in this context
 Grp: attgC006
 ./msData/attributeGroup/attgC006.xsd
 ./msData/attributeGroup/attgC006.xml
-(i)
+OK: attgC006.xml:2:21: Attribute "attFix": value must be "37" (found "38")
 
 Grp: attgC008
 ./msData/attributeGroup/attgC008.xsd
@@ -32978,7 +32978,7 @@ OK: attributeGroup "gAtt" is referenced, but not defined
 Grp: attgC025
 ./msData/attributeGroup/attgC025.xsd
 ./msData/attributeGroup/attgC025.xml
-(i)
+OK: attgC025.xml:2:21: Attribute "attFix": value must be "37" (found "38")
 
 Grp: attgC028
 ./msData/attributeGroup/attgC028.xsd
@@ -33161,7 +33161,7 @@ Grp: attgD034
 Grp: attgD035
 ./msData/attributeGroup/attgD035.xsd
 ./msData/attributeGroup/attgD035.xml
-(i)
+OK: attgD035.xml:3:22: Attribute "x:att": value must be "37" (found "36")
 
 Grp: attgD037
 ./msData/attributeGroup/attgD037.xsd
@@ -33556,12 +33556,12 @@ Grp: attLa005
 Grp: attLb005
 ./msData/attribute/attLb005.xsd
 ./msData/attribute/attLb005.xml
-(i)
+OK: attLb005.xml:3:34: Attribute "x:aga1": value must be "abc" (found "123")
 
 Grp: attLc005
 ./msData/attribute/attLc005.xsd
 ./msData/attribute/attLc005.xml
-(i)
+OK: attLc005.xml:3:23: Attribute "x:ca1": value must be "abc" (found "123")
 
 Grp: attO001
 ./msData/attribute/attO001.xsd
@@ -33779,7 +33779,7 @@ OK: attP003.xsd:4:29: Attribute "ref" is prohibited in this context
 Grp: attP005
 ./msData/attribute/attP005.xsd
 ./msData/attribute/attP005.xml
-(i)
+OK: attP005.xml:3:21: Attribute "x:att": value must be "1" (found "2")
 
 Grp: attP006
 ./msData/attribute/attP006.xsd
@@ -33798,32 +33798,32 @@ OK: attP009.xml:3:11: Attribute "att" is required in this context
 Grp: attP010
 ./msData/attribute/attP010.xsd
 ./msData/attribute/attP010.xml
-(i)
+OK: attP010.xml:3:22: Attribute "x:att": value must be "37" (found "36")
 
 Grp: attP012
 ./msData/attribute/attP012.xsd
 ./msData/attribute/attP012.xml
-(i)
+OK: attP012.xml:3:22: Attribute "x:att": value must be "37" (found "38")
 
 Grp: attP014
 ./msData/attribute/attP014.xsd
 ./msData/attribute/attP014.xml
-(i)
+OK: attP014.xml:3:22: Attribute "x:att": value must be "37" (found "36")
 
 Grp: attP016
 ./msData/attribute/attP016.xsd
 ./msData/attribute/attP016.xml
-(i)
+OK: attP016.xml:3:22: Attribute "x:att": value must be "37" (found "38")
 
 Grp: attP018
 ./msData/attribute/attP018.xsd
 ./msData/attribute/attP018.xml
-(i)
+OK: attP018.xml:3:22: Attribute "x:att": value must be "37" (found "36")
 
 Grp: attP020
 ./msData/attribute/attP020.xsd
 ./msData/attribute/attP020.xml
-(i)
+OK: attP020.xml:3:22: Attribute "x:att": value must be "37" (found "38")
 
 Grp: attP027
 ./msData/attribute/attP027.xsd
@@ -55327,4 +55327,4 @@ Grp: ipo6
 ./boeingData/ipo6/ipo.xsd
 (v) ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-./schematest: xsd files: 13793 XML: 24448 Errors (expected if no diff): 2085
+./schematest: xsd files: 13793 XML: 24448 Errors (expected if no diff): 2061

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2005-2007, AdaCore               --
+--                    Copyright (C) 2005-2009, AdaCore               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -577,5 +577,53 @@ package body Sax.Utils is
       end loop;
       return True;
    end Is_Valid_HexBinary;
+
+   --------------------------
+   -- Collapse_Whitespaces --
+   --------------------------
+
+   function Collapse_Whitespaces (Str : String) return String is
+      Start : Integer := Str'First;
+   begin
+      --  Find first non-whitespace character in Str
+
+      while Start <= Str'Last
+        and then Is_White_Space (Character'Pos (Str (Start)))
+      loop
+         Start := Start + 1;
+      end loop;
+
+      --  Then remove series of contiguous whitespaces
+
+      declare
+         Normalized : String (1 .. Str'Last - Start + 1);
+         Index      : Integer := Normalized'First;
+      begin
+         while Start <= Str'Last loop
+            if Is_White_Space (Character'Pos (Str (Start))) then
+               --  Remove series of contiguous whitespaces
+               if Start = Str'First
+                 or else not Is_White_Space (Character'Pos (Str (Start - 1)))
+               then
+                  Normalized (Index) := ' ';
+                  Index := Index + 1;
+               end if;
+            else
+               Normalized (Index) := Str (Start);
+               Index := Index + 1;
+            end if;
+
+            Start := Start + 1;
+         end loop;
+
+         if Index = Normalized'First then
+            return "";
+         elsif Normalized (Index - 1) = ' ' then
+            return Normalized (Normalized'First .. Index - 2);
+         else
+            return Normalized (Normalized'First .. Index - 1);
+         end if;
+      end;
+   end Collapse_Whitespaces;
 
 end Sax.Utils;

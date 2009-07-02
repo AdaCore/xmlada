@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -192,8 +192,7 @@ package Schema.Validators is
    type Attribute_Validator_Record is abstract tagged private;
    type Attribute_Validator is access all Attribute_Validator_Record'Class;
 
-   type Attribute_Use_Type is
-     (Prohibited, Optional, Required, Default, Fixed);
+   type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
 
    function Create_Local_Attribute
      (Local_Name     : Unicode.CES.Byte_Sequence;
@@ -201,6 +200,8 @@ package Schema.Validators is
       Attribute_Type : XML_Type                  := No_Type;
       Attribute_Form : Form_Type                 := Qualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
+      Fixed          : Unicode.CES.Byte_Sequence := "";
+      Has_Fixed      : Boolean := False;
       Value          : Unicode.CES.Byte_Sequence := "";
       Is_ID          : Boolean := False)
       return Attribute_Validator;
@@ -970,6 +971,7 @@ private
          Attribute_Type : XML_Type;
          Attribute_Form : Form_Type;
          Attribute_Use  : Attribute_Use_Type;
+         Fixed          : Unicode.CES.Byte_Sequence_Access;
          Value          : Unicode.CES.Byte_Sequence_Access;
          Is_Id          : Boolean;
       end record;

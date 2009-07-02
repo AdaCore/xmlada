@@ -1,3 +1,13 @@
+Problems fixed in 3.2
+=====================
+
+- I702-002 (Schema): validating fixed attributes
+  Problem:    If an attribute is declared as "fixed" in the schema, this
+              indicates that only a specific value can be used for it in the
+              XML file. However, XML/Ada did not properly enforce it.
+  Workaround: This impacts validation only, not the parsing of the file. No
+              workaround found
+
 Problems fixed in 3.1
 =====================
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Exceptions;                 use Ada.Exceptions;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada.Tags;                       use Ada.Tags;
@@ -167,6 +168,9 @@ package body Schema.Validators is
    function Is_Optional (Iterator : Particle_Iterator) return Boolean;
    pragma Inline (Is_Optional);
    --  Whether the current optional can be omitted
+
+   function To_Graphic_String (Str : Byte_Sequence) return String;
+   --  Convert non-graphic characters in Str to make them visible in a display
 
    Debug_Prefixes_Level : Natural := 0;
    --  Provide Debug_Output body early to allow it to be inlined
@@ -586,7 +590,7 @@ package body Schema.Validators is
                      Validation_Error
                        ("Attribute """ & Named.Local_Name.all
                         & """ is required in this context");
-                  when Prohibited | Optional | Default | Fixed =>
+                  when Prohibited | Optional | Default =>
                      null;
                end case;
 
@@ -598,16 +602,6 @@ package body Schema.Validators is
                      Validation_Error
                        ("Attribute """ & Named.Local_Name.all
                         & """ is prohibited in this context");
-
-                  when Fixed =>
-                     if Named.Value.all /=
-                       Get_Value (Atts, Found)
-                     then
-                        Validation_Error
-                          ("Attribute """ & Named.Local_Name.all
-                           & """ must have the value """
-                           & Named.Value.all & """");
-                     end if;
 
                   when Optional | Required | Default =>
                      null;
@@ -921,6 +915,8 @@ package body Schema.Validators is
       Attribute_Type : XML_Type                  := No_Type;
       Attribute_Form : Form_Type                 := Qualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
+      Fixed          : Unicode.CES.Byte_Sequence := "";
+      Has_Fixed      : Boolean := False;
       Value          : Unicode.CES.Byte_Sequence := "";
       Is_ID          : Boolean := False)
       return Attribute_Validator
@@ -932,13 +928,49 @@ package body Schema.Validators is
            Attribute_Type => Attribute_Type,
            Attribute_Form => Attribute_Form,
            Attribute_Use  => Attribute_Use,
+           Fixed          => null,
            Value          => new Unicode.CES.Byte_Sequence'(Value),
            Next           => null,
            Is_Id          => Is_ID);
+
    begin
+      if Has_Fixed then
+         Named_Attribute_Validator_Record (Result.all).Fixed :=
+           new Unicode.CES.Byte_Sequence'(Collapse_Whitespaces (Fixed));
+      end if;
+
       Register (NS, Result);
       return Result;
    end Create_Local_Attribute;
+
+   -----------------------
+   -- To_Graphic_String --
+   -----------------------
+
+   function To_Graphic_String (Str : Byte_Sequence) return String is
+      To_Hex : constant array (0 .. 15) of Character :=
+        ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C',
+         'D', 'E', 'F');
+      Result : String (1 .. 4 * Str'Length);
+      Index : Integer := Result'First;
+   begin
+      for S in Str'Range loop
+         if Character'Pos (Str (S)) >= 32
+           and then Character'Pos (Str (S)) <= 128
+           and then Is_Graphic (Str (S))
+         then
+            Result (Index) := Str (S);
+            Index := Index + 1;
+         else
+            Result (Index) := '[';
+            Result (Index + 1) := To_Hex (Character'Pos (Str (S)) / 16);
+            Result (Index + 2) := To_Hex (Character'Pos (Str (S)) mod 16);
+            Result (Index + 3) := ']';
+            Index := Index + 4;
+         end if;
+      end loop;
+      return Result (1 .. Index - 1);
+   end To_Graphic_String;
 
    ------------------------
    -- Validate_Attribute --
@@ -951,17 +983,29 @@ package body Schema.Validators is
       Grammar   : in out XML_Grammar)
    is
       pragma Unreferenced (Grammar);
+      Val : constant Byte_Sequence := Get_Value (Atts, Index);
    begin
       if Debug then
          Debug_Output ("Checking attribute "
                        & Validator.Local_Name.all
-                       & "=" & Get_Value (Atts, Index) & "--");
+                       & "=" & Val & "--");
       end if;
 
       if Validator.Attribute_Type /= No_Type then
-         Validate_Characters (Get_Validator (Validator.Attribute_Type),
-                              Get_Value (Atts, Index),
-                              Empty_Element => False);
+         Validate_Characters
+           (Get_Validator (Validator.Attribute_Type), Val,
+            Empty_Element => False);
+      end if;
+
+      if Validator.Fixed /= null
+        and then Validator.Fixed.all /= Collapse_Whitespaces (Val)
+      then
+         Validation_Error
+           ("value must be """
+            & To_Graphic_String (Validator.Fixed.all)
+            & """ (found """
+            & To_Graphic_String (Collapse_Whitespaces (Val))
+            & """)");
       end if;
    end Validate_Attribute;
 
@@ -1705,6 +1749,7 @@ package body Schema.Validators is
             Attribute_Type => Attribute_Type,
             Attribute_Form => Unqualified,
             Attribute_Use  => Optional,
+            Fixed          => null,
             Value          => null,
             Next           => null,
             Is_Id          => Is_ID);
