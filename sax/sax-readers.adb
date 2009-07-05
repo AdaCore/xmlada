@@ -5835,7 +5835,7 @@ package body Sax.Readers is
    -----------------
 
    procedure End_Element
-     (Handler : in out Reader;
+     (Handler       : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "")
