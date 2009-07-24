@@ -10,6 +10,7 @@ old:
 	@./testsuite
 
 new:
+	@./testsuite -a
 	@./schematest > schematest.tmp.out
 	-@dos2unix schematest.tmp.out >/dev/null 2>/dev/null
 	@diff -c schematest.out schematest.tmp.out

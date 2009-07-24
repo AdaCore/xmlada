@@ -1647,6 +1647,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "" "$act/F822-009_2/file.xml" "$act/F822-009_2/file.xml:8:2: attributeGroup \"{http://www.w3.org/2001/XMLSchema}attributes2\" is referenced, but not defined"
    expect "" "$act/G404-019/c_test.xml" "$act/G404-019/c_test.xml:16:10: Attribute \"subSystemId\" is required in this context"
    expect "" "$act/H212-023/default_H212-023.xml" "<root xsi:noNamespaceSchemaLocation=\"H212-023.xsd\">   <Acknowledge>false</Acknowledge></root>" "-dom"
+   expect "$act/I723-028/test.xsd" "" ""
 fi
 
 summary

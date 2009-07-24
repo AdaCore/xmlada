@@ -30149,23 +30149,15 @@ Grp: annotation00101m3
 ./sunData/AGroupDef/annotation/annotation00101m/annotation00101m3.xsd
 OK: annotation00101m3.xsd:24:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
-Grp: annotation00101m4
-./sunData/AGroupDef/annotation/annotation00101m/annotation00101m4.xsd
-(v) annotation00101m4.xsd:24:32: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m5
 ./sunData/AGroupDef/annotation/annotation00101m/annotation00101m5.xsd
-OK: annotation00101m5.xsd:24:32: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m5.xsd:27:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotation00101m6
 ./sunData/AGroupDef/annotation/annotation00101m/annotation00101m6.xsd
 OK: annotation00101m6.xsd:24:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Set: AttrDecl
-Grp: ad_annotation00101m2
-./sunData/AttrDecl/AD_annotation/AD_annotation00101m/AD_annotation00101m2.xsd
-(v) AD_annotation00101m2.xsd:19:31: Unexpected element "{JavaTest}keywords"
-
 Grp: ad_name00101m1
 ./sunData/AttrDecl/AD_name/AD_name00101m/AD_name00101m1.xsd
 ./sunData/AttrDecl/AD_name/AD_name00101m/AD_name00101m1_n.xml
@@ -30266,10 +30258,6 @@ Grp: abstract00101m2
 ./sunData/CType/abstract/abstract00101m/abstract00101m2.xsd
 ./sunData/CType/abstract/abstract00101m/abstract00101m2_n.xml
 OK: abstract00101m2_n.xml:15:1: No character data allowed by content model
-
-Grp: annotation00101m2
-./sunData/CType/annotation/annotation00101m/annotation00101m2.xsd
-(v) annotation00101m2.xsd:19:31: Unexpected element "{JavaTest}keywords"
 
 Grp: annotation00101m3
 ./sunData/CType/annotation/annotation00101m/annotation00101m3.xsd
@@ -30441,10 +30429,6 @@ Grp: abstract00201m1
 Grp: annotation00101m2
 ./sunData/ElemDecl/annotation/annotation00101m/annotation00101m2.xsd
 OK: annotation00101m2.xsd:20:26: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
-
-Grp: annotation00101m3
-./sunData/ElemDecl/annotation/annotation00101m/annotation00101m3.xsd
-(v) annotation00101m3.xsd:19:31: Unexpected element "{JavaTest}keywords"
 
 Grp: annotation00101m4
 ./sunData/ElemDecl/annotation/annotation00101m/annotation00101m4.xsd
@@ -31175,17 +31159,13 @@ Grp: annotation00101m3
 ./sunData/IdConstrDefs/annotation/annotation00101m/annotation00101m3.xsd
 OK: annotation00101m3.xsd:29:27: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
 
-Grp: annotation00101m4
-./sunData/IdConstrDefs/annotation/annotation00101m/annotation00101m4.xsd
-(v) annotation00101m4.xsd:26:32: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m5
 ./sunData/IdConstrDefs/annotation/annotation00101m/annotation00101m5.xsd
 OK: annotation00101m5.xsd:26:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotation00101m6
 ./sunData/IdConstrDefs/annotation/annotation00101m/annotation00101m6.xsd
-OK: annotation00101m6.xsd:26:32: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m6.xsd:29:27: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
 
 Grp: fields00201m2
 ./sunData/IdConstrDefs/fields/fields00201m/fields00201m2.xsd
@@ -31261,13 +31241,9 @@ Grp: targetns00101m2
 (i)
 
 Set: MGroup
-Grp: annotation00101m10
-./sunData/MGroup/annotation/annotation00101m/annotation00101m10.xsd
-(v) annotation00101m10.xsd:22:36: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m11
 ./sunData/MGroup/annotation/annotation00101m/annotation00101m11.xsd
-OK: annotation00101m11.xsd:22:36: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m11.xsd:25:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotation00101m12
 ./sunData/MGroup/annotation/annotation00101m/annotation00101m12.xsd
@@ -31281,13 +31257,9 @@ Grp: annotation00101m15
 ./sunData/MGroup/annotation/annotation00101m/annotation00101m15.xsd
 OK: annotation00101m15.xsd:22:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
-Grp: annotation00101m16
-./sunData/MGroup/annotation/annotation00101m/annotation00101m16.xsd
-(v) annotation00101m16.xsd:22:36: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m17
 ./sunData/MGroup/annotation/annotation00101m/annotation00101m17.xsd
-OK: annotation00101m17.xsd:22:36: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m17.xsd:25:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotation00101m18
 ./sunData/MGroup/annotation/annotation00101m/annotation00101m18.xsd
@@ -31301,13 +31273,9 @@ Grp: annotation00101m3
 ./sunData/MGroup/annotation/annotation00101m/annotation00101m3.xsd
 OK: annotation00101m3.xsd:22:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
-Grp: annotation00101m4
-./sunData/MGroup/annotation/annotation00101m/annotation00101m4.xsd
-(v) annotation00101m4.xsd:22:36: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m5
 ./sunData/MGroup/annotation/annotation00101m/annotation00101m5.xsd
-OK: annotation00101m5.xsd:22:36: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m5.xsd:25:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotation00101m6
 ./sunData/MGroup/annotation/annotation00101m/annotation00101m6.xsd
@@ -31421,13 +31389,9 @@ Grp: annotation00101m3
 ./sunData/MGroupDef/annotation/annotation00101m/annotation00101m3.xsd
 OK: annotation00101m3.xsd:26:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
-Grp: annotation00101m4
-./sunData/MGroupDef/annotation/annotation00101m/annotation00101m4.xsd
-(v) annotation00101m4.xsd:24:32: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m5
 ./sunData/MGroupDef/annotation/annotation00101m/annotation00101m5.xsd
-OK: annotation00101m5.xsd:24:32: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m5.xsd:27:27: Expecting (all|choice|sequence)
 
 Grp: annotation00101m6
 ./sunData/MGroupDef/annotation/annotation00101m/annotation00101m6.xsd
@@ -31496,13 +31460,9 @@ Grp: annotation00101m2
 ./sunData/Notation/annotation/annotation00101m/annotation00101m2.xsd
 OK: annotation00101m2.xsd:23:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
-Grp: annotation00101m3
-./sunData/Notation/annotation/annotation00101m/annotation00101m3.xsd
-(v) annotation00101m3.xsd:20:32: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m4
 ./sunData/Notation/annotation/annotation00101m/annotation00101m4.xsd
-OK: annotation00101m4.xsd:20:32: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m4.xsd:23:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: name00101m1
 ./sunData/Notation/name/name00101m/name00101m1.xsd
@@ -31525,10 +31485,6 @@ Grp: targetns00101m2
 (v) targetNS00101m2.xsd:21:61: The type "NOTATION" isn't known at this point. Please check the name and namespace
 
 Set: SType
-Grp: st_annotation00101m2
-./sunData/SType/ST_annotation/ST_annotation00101m/ST_annotation00101m2.xsd
-(v) ST_annotation00101m2.xsd:20:31: Unexpected element "{JavaTest}keywords"
-
 Grp: st_basetd00101m
 ./sunData/SType/ST_baseTD/ST_baseTD00101m/ST_baseTD00101m.xsd
 ./sunData/SType/ST_baseTD/ST_baseTD00101m/ST_baseTD00101m1_n.xml
@@ -31881,43 +31837,22 @@ Grp: st_variety00201m2
 ./sunData/SType/ST_variety/ST_variety00201m/ST_variety00201m2.xsd
 OK: ST_variety00201m2.xsd:23:45: Invalid facet: maxInclusive
 
-Set: Schema
-Grp: annotations00101m4
-./sunData/Schema/annotations/annotations00101m/annotations00101m4.xsd
-(v) annotations00101m4.xsd:16:24: Unexpected element "{JavaTest}keywords"
-
-Grp: annotations00101m5
-./sunData/Schema/annotations/annotations00101m/annotations00101m5.xsd
-(v) annotations00101m5.xsd:16:24: Unexpected element "{JavaTest}keywords"
-
-Grp: annotations00101m6
-./sunData/Schema/annotations/annotations00101m/annotations00101m6.xsd
-(v) annotations00101m6.xsd:17:24: Unexpected element "{JavaTest}keywords"
-
 Set: Wildcard
 Grp: annotation00101m2
 ./sunData/Wildcard/annotation/annotation00101m/annotation00101m2.xsd
 OK: annotation00101m2.xsd:24:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
-Grp: annotation00101m3
-./sunData/Wildcard/annotation/annotation00101m/annotation00101m3.xsd
-(v) annotation00101m3.xsd:21:36: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m4
 ./sunData/Wildcard/annotation/annotation00101m/annotation00101m4.xsd
-OK: annotation00101m4.xsd:21:36: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m4.xsd:24:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotation00101m6
 ./sunData/Wildcard/annotation/annotation00101m/annotation00101m6.xsd
 OK: annotation00101m6.xsd:25:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
-Grp: annotation00101m7
-./sunData/Wildcard/annotation/annotation00101m/annotation00101m7.xsd
-(v) annotation00101m7.xsd:22:36: Unexpected element "{JavaTest}keywords"
-
 Grp: annotation00101m8
 ./sunData/Wildcard/annotation/annotation00101m/annotation00101m8.xsd
-OK: annotation00101m8.xsd:22:36: Unexpected element "{JavaTest}keywords"
+OK: annotation00101m8.xsd:25:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: nsconstraint00101m1
 ./sunData/Wildcard/nsConstraint/nsConstraint00101m/nsConstraint00101m1.xsd
@@ -32689,25 +32624,13 @@ Grp: isDefault078
 (v) isdefault078.xsd:2:67: schemaLocation and namespace attributes mandatory for <import>
 
 Set: MS-Annotations2006-07-15
-Grp: annotA005
-./msData/annotations/annotA005.xsd
-(v) annotA005.xsd:5:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
-
-Grp: annotA010
-./msData/annotations/annotA010.xsd
-(v) annotA010.xsd:6:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
-
-Grp: annotA019
-./msData/annotations/annotA019.xsd
-(v) annotA019.xsd:6:10: Unexpected element "foo"
-
 Grp: annotB001
 ./msData/annotations/annotB001.xsd
 OK: annotB001.xsd:4:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB004
 ./msData/annotations/annotB004.xsd
-OK: annotB004.xsd:7:33: Unexpected element "Application"
+OK: annotB004.xsd:10:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB005
 ./msData/annotations/annotB005.xsd
@@ -32715,51 +32638,43 @@ OK: annotB005.xsd:4:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}an
 
 Grp: annotB006
 ./msData/annotations/annotB006.xsd
-OK: annotB006.xsd:8:34: Unexpected element "Application"
+OK: annotB006.xsd:11:22: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB007
 ./msData/annotations/annotB007.xsd
-OK: annotB007.xsd:9:35: Unexpected element "Application"
-
-Grp: annotB008
-./msData/annotations/annotB008.xsd
-(v) annotB008.xsd:5:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
+OK: annotB007.xsd:12:23: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB009
 ./msData/annotations/annotB009.xsd
-OK: annotB009.xsd:5:31: Unexpected element "Application"
+OK: annotB009.xsd:8:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB010
 ./msData/annotations/annotB010.xsd
-OK: annotB010.xsd:10:32: Unexpected element "Application"
+OK: annotB010.xsd:13:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB011
 ./msData/annotations/annotB011.xsd
-OK: annotB011.xsd:7:32: Unexpected element "Application"
+OK: annotB011.xsd:10:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB012
 ./msData/annotations/annotB012.xsd
-OK: annotB012.xsd:11:32: Unexpected element "Application"
+OK: annotB012.xsd:14:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB013
 ./msData/annotations/annotB013.xsd
-OK: annotB013.xsd:6:32: Unexpected element "Application"
-
-Grp: annotB014
-./msData/annotations/annotB014.xsd
-(v) annotB014.xsd:4:30: Unexpected element "Application"
+OK: annotB013.xsd:9:20: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
 
 Grp: annotB015
 ./msData/annotations/annotB015.xsd
-OK: annotB015.xsd:5:31: Unexpected element "Application"
+OK: annotB015.xsd:8:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB016
 ./msData/annotations/annotB016.xsd
-OK: annotB016.xsd:8:34: Unexpected element "Application"
+OK: annotB016.xsd:11:22: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB017
 ./msData/annotations/annotB017.xsd
-OK: annotB017.xsd:8:33: Unexpected element "Application"
+OK: annotB017.xsd:11:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB018
 ./msData/annotations/annotB018.xsd
@@ -32771,43 +32686,39 @@ OK: annotB019.xsd:3:46: schemaLocation and namespace attributes mandatory for <i
 
 Grp: annotB020
 ./msData/annotations/annotB020.xsd
-OK: annotB020.xsd:5:31: Unexpected element "Application"
+OK: annotB020.xsd:8:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB021
 ./msData/annotations/annotB021.xsd
-OK: annotB021.xsd:6:32: Unexpected element "Application"
+OK: annotB021.xsd:9:20: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
 
 Grp: annotB022
 ./msData/annotations/annotB022.xsd
-OK: annotB022.xsd:10:32: Unexpected element "Application"
+OK: annotB022.xsd:13:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB023
 ./msData/annotations/annotB023.xsd
-OK: annotB023.xsd:7:33: Unexpected element "Application"
+OK: annotB023.xsd:10:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB024
 ./msData/annotations/annotB024.xsd
-OK: annotB024.xsd:5:31: Unexpected element "Application"
+OK: annotB024.xsd:8:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB026
 ./msData/annotations/annotB026.xsd
 OK: annotB026.xsd:4:32: Attribute "name" is prohibited in this context
 
-Grp: annotB027
-./msData/annotations/annotB027.xsd
-(v) annotB027.xsd:4:30: Unexpected element "Application"
-
 Grp: annotB028
 ./msData/annotations/annotB028.xsd
-OK: annotB028.xsd:7:33: Unexpected element "Application"
+OK: annotB028.xsd:10:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB029
 ./msData/annotations/annotB029.xsd
-OK: annotB029.xsd:7:32: Unexpected element "Application"
+OK: annotB029.xsd:10:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB030
 ./msData/annotations/annotB030.xsd
-OK: annotB030.xsd:7:32: Unexpected element "Application"
+OK: annotB030.xsd:10:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB031
 ./msData/annotations/annotB031.xsd
@@ -32815,31 +32726,11 @@ OK: annotB031.xsd:4:32: Attribute "name" is prohibited in this context
 
 Grp: annotB032
 ./msData/annotations/annotB032.xsd
-OK: annotB032.xsd:7:33: Unexpected element "Application"
+OK: annotB032.xsd:10:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: annotB033
 ./msData/annotations/annotB033.xsd
-OK: annotB033.xsd:6:32: Unexpected element "Application"
-
-Grp: annotC001
-./msData/annotations/annotC001.xsd
-(v) annotC001.xsd:5:9: Unexpected element "foo"
-
-Grp: annotC002
-./msData/annotations/annotC002.xsd
-(v) annotC002.xsd:5:9: Unexpected element "foo"
-
-Grp: annotD001
-./msData/annotations/annotD001.xsd
-(v) annotD001.xsd:5:9: Unexpected element "foo"
-
-Grp: annotD002
-./msData/annotations/annotD002.xsd
-(v) annotD002.xsd:5:9: Unexpected element "foo"
-
-Grp: annotE002
-./msData/annotations/annotE002.xsd
-(v) annotE002.xsd:5:18: Unexpected element "well_formed"
+OK: annotB033.xsd:9:20: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
 
 Grp: annotF001
 ./msData/annotations/annotF001.xsd
@@ -32856,14 +32747,6 @@ OK: annotF009.xsd:3:29: Attribute "foo" invalid for this element
 Grp: annotZ001
 ./msData/annotations/annotZ001.xsd
 (v) annotZ001.xsd:4:30: Attribute "id" invalid for this element
-
-Grp: annotZ002
-./msData/annotations/annotZ002.xsd
-(v) annotZ002.xsd:5:47: Unexpected element "{http://schemas.microsoft.com/BizTalk/2003}schemaInfo"
-
-Grp: annotZ004
-./msData/annotations/annotZ004.xsd
-(v) annotZ004.xsd:10:9: Unexpected element "{bar}foo"
 
 Set: MS-AttributeGroup2006-07-15
 Grp: attgA002
@@ -44920,10 +44803,6 @@ Grp: notatF008
 ./msData/notations/notatF008.xsd
 OK: notatF008.xsd:4:22: Unexpected element "{http://www.w3.org/2001/XMLSchema}anyAttribute"
 
-Grp: notatF009
-./msData/notations/notatF009.xsd
-(v) notatF009.xsd:5:71: Unexpected element "{http://www.w3.org/2001/XMLSchema}notation"
-
 Grp: notatF010
 ./msData/notations/notatF010.xsd
 OK: notatF010.xsd:4:17: Unexpected element "{http://www.w3.org/2001/XMLSchema}appinfo"
@@ -44967,10 +44846,6 @@ OK: notatF019.xsd:4:70: Expecting one of "simpleContent|complexContent|((group|a
 Grp: notatF020
 ./msData/notations/notatF020.xsd
 OK: notatF020.xsd:4:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}complexType"
-
-Grp: notatF021
-./msData/notations/notatF021.xsd
-(v) notatF021.xsd:5:71: Unexpected element "{http://www.w3.org/2001/XMLSchema}notation"
 
 Grp: notatF022
 ./msData/notations/notatF022.xsd
@@ -55327,4 +55202,4 @@ Grp: ipo6
 ./boeingData/ipo6/ipo.xsd
 (v) ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-./schematest: xsd files: 13793 XML: 24448 Errors (expected if no diff): 2061
+./schematest: xsd files: 13793 XML: 24464 Errors (expected if no diff): 2030

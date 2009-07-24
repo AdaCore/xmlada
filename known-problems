@@ -1,6 +1,12 @@
 Problems fixed in 3.2
 =====================
 
+- I723-028 Handling of <xsd:appinfo>
+  Problem:    If you grammar file contains an appinfo, this element can contain
+              any XML node. However, XML/Ada rejects such a content
+  Workaround: filter out the contents of appinfo before feeding it to
+              XML/Ada. The contents do not play any role in actual validation
+
 - I702-002 (Schema): validating fixed attributes
   Problem:    If an attribute is declared as "fixed" in the schema, this
               indicates that only a specific value can be used for it in the

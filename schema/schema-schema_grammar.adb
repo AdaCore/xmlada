@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -321,7 +321,11 @@ package body Schema.Schema_Grammar is
       Seq2 := Create_Sequence (G);
       Add_Particle (Seq1, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Seq2, "appinfo_seq2");
-      --   <any processContents="lax" />
+      Add_Particle
+        (Seq2,
+         Create_Any (Process_Contents => Process_Lax,
+                     Namespace        => "##other",
+                     Target_NS        => XML_G));
       Add_Attribute
         (Seq1, Create_Local_Attribute
            ("source", G, Lookup (G, "uriReference")));
@@ -335,7 +339,11 @@ package body Schema.Schema_Grammar is
       Add_Particle (Seq1, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Seq1, "documentation_seq");
       Set_Debug_Name (Seq2, "documentation_seq2");
-      --   <any processContents="lax" />
+      Add_Particle
+        (Seq2,
+         Create_Any (Process_Contents => Process_Lax,
+                     Namespace        => "##other",
+                     Target_NS        => XML_G));
       Add_Attribute
         (Seq1, Create_Local_Attribute
            ("source", G, Lookup (G, "uriReference")));
