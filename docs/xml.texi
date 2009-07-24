@@ -1583,12 +1583,11 @@ validating a file.
    Read    : File_Input;
 @b{begin}
      Open ("file.xsd", Read);
-     Set_Created_Grammar (Schema, No_Grammar);
      Parse (Schema, Read);
      Close (Read);
-     Global_Check (Grammar);
 
      Grammar := Get_Created_Grammar (Schema);
+     Global_Check (Grammar);
 @b{end} SchemaExample2;
 @end smallexample
 
