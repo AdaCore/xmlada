@@ -169,10 +169,12 @@ begin
             List := Get_Elements_By_Tag_Name
               (Get_Tree (Tree_Reader (My_Reader.all)),
                Tag_Name => "Corrective_Action");
-            Put_Line
-              ("Found " & Length (List)'Img & " Corrective_Action nodes");
-            Put_Line
-              ("Value=" & Node_Value (Item (List, 0)));
+            if Item (List, 0) /= null then
+               Put_Line
+                 ("Found " & Length (List)'Img & " Corrective_Action nodes");
+               Put_Line
+                 ("Value=" & Node_Value (Item (List, 0)));
+            end if;
          end if;
       end;
    end loop;
