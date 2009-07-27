@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2005-2007, AdaCore               --
+--                    Copyright (C) 2005-2009, AdaCore               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -309,12 +309,33 @@ package body Schema.Decimal is
             then
                return Equal;
             elsif Pos1 > Num1'Last then
+               --  If only "0" remain (and because we are in the decimal part),
+               --  the two numbers are equal.
+
+               while Num2 (Pos2) = '0' loop
+                  To_Next_Digit (Num2, Pos2);
+                  if Pos2 > Num2'Last then
+                     return Equal;
+                  end if;
+               end loop;
+
                if Num1_Negative then
                   return Less_Than;
                else
                   return Greater_Than;
                end if;
+
             elsif Pos2 > Num2'Last then
+               --  If only "0" remain (and because we are in the decimal part),
+               --  the two numbers are equal.
+
+               while Num1 (Pos1) = '0' loop
+                  To_Next_Digit (Num1, Pos1);
+                  if Pos1 > Num1'Last then
+                     return Equal;
+                  end if;
+               end loop;
+
                if Num1_Negative then
                   return Greater_Than;
                else

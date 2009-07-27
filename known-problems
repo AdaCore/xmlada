@@ -1,6 +1,12 @@
 Problems fixed in 3.2
 =====================
 
+- I727-025 Comparison of arbitrary precision numbers ending with ".000"
+  Problem:    When your schema file includes a "decimal" type and specifies
+              some minimal and maximal values, XML/Ada incorrectly compares
+              the value in the XML file and the schema file if one of them
+              ends with ".0" and not the other.
+  Workaround: Always specify ".0" even when specifying an integer number
 - I723-028 Handling of <xsd:appinfo>
   Problem:    If you grammar file contains an appinfo, this element can contain
               any XML node. However, XML/Ada rejects such a content
