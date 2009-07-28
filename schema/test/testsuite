@@ -1649,6 +1649,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    #expect "" "$act/H212-023/default_H212-023.xml" "<root xsi:noNamespaceSchemaLocation=\"H212-023.xsd\"> <Acknowledge>false</Acknowledge></root>" "-dom"
    expect "$act/I723-028/test.xsd" "" ""
    expect "$act/I727-025/test.xsd" "$act/I727-025/test.xml" ""
+   expect "$act/I728-012/test.xsd" "$act/I728-012/test.xml" ""
 fi
 
 summary

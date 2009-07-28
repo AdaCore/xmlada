@@ -320,9 +320,9 @@ package body Schema.Decimal is
                end loop;
 
                if Num1_Negative then
-                  return Less_Than;
-               else
                   return Greater_Than;
+               else
+                  return Less_Than;
                end if;
 
             elsif Pos2 > Num2'Last then
@@ -337,9 +337,9 @@ package body Schema.Decimal is
                end loop;
 
                if Num1_Negative then
-                  return Greater_Than;
-               else
                   return Less_Than;
+               else
+                  return Greater_Than;
                end if;
             end if;
          end loop;
