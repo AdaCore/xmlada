@@ -29885,10 +29885,10 @@ OK: xsd003b.n00.xml:9:29: Attribute "add": Invalid integer: "abc"
 OK: xsd003b.n01.xml:9:50: Attribute "foo:gAtt": Element's value not in the enumeration set
 
 ./sunData/combined/xsd003b/xsd003b.v00.xml
-(v) xsd003b.v00.xml:10:9: Expecting at least 1 occurrences of "tail" from namespace "foo"
+(v) xsd003b.v00.xml:10:9: Expecting at least 1 occurrences of "{foo}tail"
 
 ./sunData/combined/xsd003b/xsd003b.v01.xml
-(v) xsd003b.v01.xml:11:9: Expecting at least 1 occurrences of "tail" from namespace "foo"
+(v) xsd003b.v01.xml:11:9: Expecting at least 1 occurrences of "{foo}tail"
 
 Grp: xsd004
 ./sunData/combined/xsd004/xsd004.xsd
@@ -29943,7 +29943,7 @@ OK: xsd005.n01.xml:11:30: Unknown type "undeclared"
 OK: xsd005.n02.xml:12:15: Too many occurrences of "{foo}b" (expecting "{foo}c")
 
 ./sunData/combined/xsd005/xsd005.n03.xml
-OK: xsd005.n03.xml:12:11: Expecting at least 1 occurrences of "c" from namespace "foo"
+OK: xsd005.n03.xml:12:11: Expecting at least 1 occurrences of "{foo}c"
 
 ./sunData/combined/xsd005/xsd005.n04.xml
 OK: xsd005.n04.xml:12:15: Unexpected element "{foo}d"
@@ -30506,7 +30506,7 @@ Grp: disallowedsubst00301m2
 Grp: disallowedsubst00401m2
 ./sunData/ElemDecl/disallowedSubst/disallowedSubst00401m/disallowedSubst00401m2.xsd
 ./sunData/ElemDecl/disallowedSubst/disallowedSubst00401m/disallowedSubst00401m2_n.xml
-OK: disallowedSubst00401m2_n.xml:15:13: Expecting at least 1 occurrences of "Head" from namespace "ElemDecl/disallowedSubst"
+OK: disallowedSubst00401m2_n.xml:15:13: Expecting at least 1 occurrences of "{ElemDecl/disallowedSubst}Head"
 
 Grp: disallowedsubst00501m2
 ./sunData/ElemDecl/disallowedSubst/disallowedSubst00501m/disallowedSubst00501m2.xsd
@@ -31157,7 +31157,7 @@ OK: annotation00101m2.xsd:26:27: Unexpected element "{http://www.w3.org/2001/XML
 
 Grp: annotation00101m3
 ./sunData/IdConstrDefs/annotation/annotation00101m/annotation00101m3.xsd
-OK: annotation00101m3.xsd:29:27: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: annotation00101m3.xsd:29:27: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: annotation00101m5
 ./sunData/IdConstrDefs/annotation/annotation00101m/annotation00101m5.xsd
@@ -31165,7 +31165,7 @@ OK: annotation00101m5.xsd:26:27: Unexpected element "{http://www.w3.org/2001/XML
 
 Grp: annotation00101m6
 ./sunData/IdConstrDefs/annotation/annotation00101m/annotation00101m6.xsd
-OK: annotation00101m6.xsd:29:27: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: annotation00101m6.xsd:29:27: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: fields00201m2
 ./sunData/IdConstrDefs/fields/fields00201m/fields00201m2.xsd
@@ -32690,7 +32690,7 @@ OK: annotB020.xsd:8:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}an
 
 Grp: annotB021
 ./msData/annotations/annotB021.xsd
-OK: annotB021.xsd:9:20: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: annotB021.xsd:9:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: annotB022
 ./msData/annotations/annotB022.xsd
@@ -32730,7 +32730,7 @@ OK: annotB032.xsd:10:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}a
 
 Grp: annotB033
 ./msData/annotations/annotB033.xsd
-OK: annotB033.xsd:9:20: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: annotB033.xsd:9:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: annotF001
 ./msData/annotations/annotF001.xsd
@@ -34316,11 +34316,11 @@ OK: ctD007.xsd:16:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}anno
 
 Grp: ctD009
 ./msData/complexType/ctD009.xsd
-OK: ctD009.xsd:12:40: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: ctD009.xsd:12:40: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: ctD011
 ./msData/complexType/ctD011.xsd
-OK: ctD011.xsd:12:40: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: ctD011.xsd:12:40: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: ctD012
 ./msData/complexType/ctD012.xsd
@@ -35135,7 +35135,7 @@ OK: ctL006.xml:5:22: Invalid: empty string used as a number
 Grp: ctL009
 ./msData/complexType/ctL009.xsd
 ./msData/complexType/ctL009.xml
-OK: ctL009.xml:4:12: Expecting at least 1 occurrences of "child_1" from namespace ""
+OK: ctL009.xml:4:12: Expecting at least 1 occurrences of "child_1"
 
 Grp: ctL010
 ./msData/complexType/ctL010.xsd
@@ -35145,7 +35145,7 @@ OK: ctL010.xml:6:12: Unexpected element "child_3"
 Grp: ctL012
 ./msData/complexType/ctL012.xsd
 ./msData/complexType/ctL012.xml
-OK: ctL012.xml:5:2: Expecting at least 1 occurrences of "child_1" from namespace ""
+OK: ctL012.xml:5:2: Expecting at least 1 occurrences of "child_1"
 
 Grp: ctL013
 ./msData/complexType/ctL013.xsd
@@ -41545,7 +41545,7 @@ Grp: elemZ020
 Grp: elemZ021b
 ./msData/element/test115044_1.xsd
 ./msData/element/test115044_b.xml
-OK: test115044_b.xml:1:29: Expecting at least 1 occurrences of "e" from namespace "foo"
+OK: test115044_b.xml:1:29: Expecting at least 1 occurrences of "{foo}e"
 
 Grp: elemZ021e
 ./msData/element/test115044_3.xsd
@@ -41570,7 +41570,7 @@ Grp: elemZ022b
 Grp: elemZ023
 ./msData/element/elemZ023.xsd
 ./msData/element/elemZ023.xml
-OK: elemZ023.xml:1:29: Expecting at least 1 occurrences of "e" from namespace "foo"
+OK: elemZ023.xml:1:29: Expecting at least 1 occurrences of "{foo}e"
 
 Grp: QFE1700c1
 ./msData/element/QFE1700c.xsd
@@ -42336,7 +42336,7 @@ OK: groupO022.xsd:8:17: Unexpected element "{http://www.w3.org/2001/XMLSchema}se
 
 Grp: groupO023
 ./msData/group/groupO023.xsd
-OK: groupO023.xsd:9:23: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: groupO023.xsd:9:23: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: groupO024
 ./msData/group/groupO024.xsd
@@ -42413,7 +42413,7 @@ OK: idA028.xsd:17:29: Unexpected element "{http://www.w3.org/2001/XMLSchema}uniq
 
 Grp: idA029
 ./msData/identityConstraint/idA029.xsd
-OK: idA029.xsd:16:28: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA029.xsd:16:28: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: idA030
 ./msData/identityConstraint/idA030.xsd
@@ -42437,7 +42437,7 @@ OK: idA037.xsd:15:16: Unexpected end of sequence, expecting "selector"
 
 Grp: idA038
 ./msData/identityConstraint/idA038.xsd
-OK: idA038.xsd:15:20: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA038.xsd:15:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA039
 ./msData/identityConstraint/idA039.xsd
@@ -42445,7 +42445,7 @@ OK: idA039.xsd:11:16: Unexpected end of sequence, expecting "field"
 
 Grp: idA042
 ./msData/identityConstraint/idA042.xsd
-OK: idA042.xsd:11:20: Expecting at least 1 occurrences of "field" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA042.xsd:11:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}field"
 
 Grp: idA043
 ./msData/identityConstraint/idA043.xsd
@@ -42453,7 +42453,7 @@ OK: idA043.xsd:12:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}anno
 
 Grp: idA044
 ./msData/identityConstraint/idA044.xsd
-OK: idA044.xsd:15:34: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA044.xsd:15:34: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA046
 ./msData/identityConstraint/idA046.xsd
@@ -42461,59 +42461,59 @@ OK: idA046.xsd:11:29: Too many occurrences of "{http://www.w3.org/2001/XMLSchema
 
 Grp: idA047
 ./msData/identityConstraint/idA047.xsd
-OK: idA047.xsd:10:51: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA047.xsd:10:51: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA048
 ./msData/identityConstraint/idA048.xsd
-OK: idA048.xsd:15:51: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA048.xsd:15:51: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA049
 ./msData/identityConstraint/idA049.xsd
-OK: idA049.xsd:10:41: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA049.xsd:10:41: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA050
 ./msData/identityConstraint/idA050.xsd
-OK: idA050.xsd:10:53: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA050.xsd:10:53: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA051
 ./msData/identityConstraint/idA051.xsd
-OK: idA051.xsd:10:53: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA051.xsd:10:53: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA052
 ./msData/identityConstraint/idA052.xsd
-OK: idA052.xsd:10:20: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA052.xsd:10:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA053
 ./msData/identityConstraint/idA053.xsd
-OK: idA053.xsd:10:21: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA053.xsd:10:21: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA054
 ./msData/identityConstraint/idA054.xsd
-OK: idA054.xsd:10:36: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA054.xsd:10:36: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA055
 ./msData/identityConstraint/idA055.xsd
-OK: idA055.xsd:10:31: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA055.xsd:10:31: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA056
 ./msData/identityConstraint/idA056.xsd
-OK: idA056.xsd:10:51: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA056.xsd:10:51: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA057
 ./msData/identityConstraint/idA057.xsd
-OK: idA057.xsd:10:13: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA057.xsd:10:13: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA058
 ./msData/identityConstraint/idA058.xsd
-OK: idA058.xsd:10:16: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA058.xsd:10:16: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA059
 ./msData/identityConstraint/idA059.xsd
-OK: idA059.xsd:10:18: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA059.xsd:10:18: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idA060
 ./msData/identityConstraint/idA060.xsd
-OK: idA060.xsd:10:32: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA060.xsd:10:32: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB002
 ./msData/identityConstraint/idB002.xsd
@@ -42577,7 +42577,7 @@ OK: idB028.xsd:17:28: Unexpected element "{http://www.w3.org/2001/XMLSchema}key"
 
 Grp: idB029
 ./msData/identityConstraint/idB029.xsd
-OK: idB029.xsd:16:27: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB029.xsd:16:27: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: idB030
 ./msData/identityConstraint/idB030.xsd
@@ -42601,7 +42601,7 @@ OK: idB037.xsd:15:13: Unexpected end of sequence, expecting "selector"
 
 Grp: idB038
 ./msData/identityConstraint/idB038.xsd
-OK: idB038.xsd:15:20: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB038.xsd:15:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB039
 ./msData/identityConstraint/idB039.xsd
@@ -42609,7 +42609,7 @@ OK: idB039.xsd:11:13: Unexpected end of sequence, expecting "field"
 
 Grp: idB042
 ./msData/identityConstraint/idB042.xsd
-OK: idB042.xsd:11:20: Expecting at least 1 occurrences of "field" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB042.xsd:11:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}field"
 
 Grp: idB043
 ./msData/identityConstraint/idB043.xsd
@@ -42617,7 +42617,7 @@ OK: idB043.xsd:12:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}anno
 
 Grp: idB044
 ./msData/identityConstraint/idB044.xsd
-OK: idB044.xsd:15:34: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB044.xsd:15:34: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB046
 ./msData/identityConstraint/idB046.xsd
@@ -42625,59 +42625,59 @@ OK: idB046.xsd:11:29: Too many occurrences of "{http://www.w3.org/2001/XMLSchema
 
 Grp: idB047
 ./msData/identityConstraint/idB047.xsd
-OK: idB047.xsd:10:34: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB047.xsd:10:34: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB048
 ./msData/identityConstraint/idB048.xsd
-OK: idB048.xsd:15:34: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB048.xsd:15:34: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB049
 ./msData/identityConstraint/idB049.xsd
-OK: idB049.xsd:10:38: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB049.xsd:10:38: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB050
 ./msData/identityConstraint/idB050.xsd
-OK: idB050.xsd:10:53: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB050.xsd:10:53: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB051
 ./msData/identityConstraint/idB051.xsd
-OK: idB051.xsd:10:53: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB051.xsd:10:53: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB052
 ./msData/identityConstraint/idB052.xsd
-OK: idB052.xsd:10:20: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB052.xsd:10:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB053
 ./msData/identityConstraint/idB053.xsd
-OK: idB053.xsd:10:21: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB053.xsd:10:21: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB054
 ./msData/identityConstraint/idB054.xsd
-OK: idB054.xsd:10:29: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB054.xsd:10:29: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB055
 ./msData/identityConstraint/idB055.xsd
-OK: idB055.xsd:10:40: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB055.xsd:10:40: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB056
 ./msData/identityConstraint/idB056.xsd
-OK: idB056.xsd:10:53: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB056.xsd:10:53: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB057
 ./msData/identityConstraint/idB057.xsd
-OK: idB057.xsd:10:13: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB057.xsd:10:13: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB058
 ./msData/identityConstraint/idB058.xsd
-OK: idB058.xsd:10:16: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB058.xsd:10:16: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB059
 ./msData/identityConstraint/idB059.xsd
-OK: idB059.xsd:10:18: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB059.xsd:10:18: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idB060
 ./msData/identityConstraint/idB060.xsd
-OK: idB060.xsd:10:32: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB060.xsd:10:32: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idC002
 ./msData/identityConstraint/idC002.xsd
@@ -42737,7 +42737,7 @@ OK: idC028.xsd:17:50: Unexpected element "{http://www.w3.org/2001/XMLSchema}keyr
 
 Grp: idC029
 ./msData/identityConstraint/idC029.xsd
-OK: idC029.xsd:16:49: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idC029.xsd:16:49: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: idC030
 ./msData/identityConstraint/idC030.xsd
@@ -42857,7 +42857,7 @@ OK: idD006.xsd:10:57: Attribute "name": Attributes with no namespace invalid in 
 
 Grp: idD007
 ./msData/identityConstraint/idD007.xsd
-OK: idD007.xsd:10:34: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idD007.xsd:10:34: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: idD011
 ./msData/identityConstraint/idD011.xsd
@@ -44289,7 +44289,7 @@ OK: mgK006.xml:4:7: Unexpected end of sequence, expecting "e2"
 Grp: mgK007
 ./msData/modelGroups/mgK007.xsd
 ./msData/modelGroups/mgK007.xml
-OK: mgK007.xml:3:7: Expecting at least 1 occurrences of "e1" from namespace ""
+OK: mgK007.xml:3:7: Expecting at least 1 occurrences of "e1"
 
 Grp: mgK008
 ./msData/modelGroups/mgK008.xsd
@@ -44299,7 +44299,7 @@ OK: mgK008.xml:5:8: Unexpected element "foo"
 Grp: mgK010
 ./msData/modelGroups/mgK010.xsd
 ./msData/modelGroups/mgK010.xml
-OK: mgK010.xml:6:7: Expecting at least 1 occurrences of "e4" from namespace ""
+OK: mgK010.xml:6:7: Expecting at least 1 occurrences of "e4"
 
 Grp: mgL002
 ./msData/modelGroups/mgL002.xsd
@@ -44374,7 +44374,7 @@ OK: mgN002.xml:8:7: Unexpected end of sequence, expecting "e6"
 Grp: mgN003
 ./msData/modelGroups/mgN003.xsd
 ./msData/modelGroups/mgN003.xml
-OK: mgN003.xml:3:11: Expecting at least 1 occurrences of "e1" from namespace ""
+OK: mgN003.xml:3:11: Expecting at least 1 occurrences of "e1"
 
 Grp: mgN004
 ./msData/modelGroups/mgN004.xsd
@@ -44389,12 +44389,12 @@ OK: mgN006.xml:3:7: Expecting (e1)
 Grp: mgN007
 ./msData/modelGroups/mgN007.xsd
 ./msData/modelGroups/mgN007.xml
-OK: mgN007.xml:4:7: Expecting at least 1 occurrences of "e2" from namespace ""
+OK: mgN007.xml:4:7: Expecting at least 1 occurrences of "e2"
 
 Grp: mgN008
 ./msData/modelGroups/mgN008.xsd
 ./msData/modelGroups/mgN008.xml
-OK: mgN008.xml:4:7: Expecting at least 1 occurrences of "e2" from namespace ""
+OK: mgN008.xml:4:7: Expecting at least 1 occurrences of "e2"
 
 Grp: mgN009
 ./msData/modelGroups/mgN009.xsd
@@ -44409,7 +44409,7 @@ OK: mgN010.xml:3:7: Expecting (e1)
 Grp: mgN011
 ./msData/modelGroups/mgN011.xsd
 ./msData/modelGroups/mgN011.xml
-OK: mgN011.xml:4:7: Expecting at least 1 occurrences of "e2" from namespace ""
+OK: mgN011.xml:4:7: Expecting at least 1 occurrences of "e2"
 
 Grp: mgN013
 ./msData/modelGroups/mgN013.xsd
@@ -44909,7 +44909,7 @@ OK: notatF036.xsd:4:17: Unexpected element "{http://www.w3.org/2001/XMLSchema}in
 
 Grp: notatF037
 ./msData/notations/notatF037.xsd
-OK: notatF037.xsd:5:71: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: notatF037.xsd:5:71: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: notatF038
 ./msData/notations/notatF038.xsd
@@ -45025,7 +45025,7 @@ OK: notatF066.xsd:4:23: Unexpected element "{http://www.w3.org/2001/XMLSchema}si
 
 Grp: notatF067
 ./msData/notations/notatF067.xsd
-OK: notatF067.xsd:4:70: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: notatF067.xsd:4:70: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: notatF068
 ./msData/notations/notatF068.xsd
@@ -45041,7 +45041,7 @@ OK: notatF070.xsd:4:15: Unexpected element "{http://www.w3.org/2001/XMLSchema}un
 
 Grp: notatF071
 ./msData/notations/notatF071.xsd
-OK: notatF071.xsd:5:71: Expecting at least 1 occurrences of "selector" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: notatF071.xsd:5:71: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}selector"
 
 Grp: notatF072
 ./msData/notations/notatF072.xsd
@@ -45292,12 +45292,12 @@ OK: particlesDa003.xml:4:10: Namespace specification is required in this context
 Grp: particlesDa004
 ./msData/particles/particlesDa004.xsd
 ./msData/particles/particlesDa004.xml
-OK: particlesDa004.xml:4:26: Expecting at least 1 occurrences of "elem2" from namespace "http://xsdtesting"
+OK: particlesDa004.xml:4:26: Expecting at least 1 occurrences of "{http://xsdtesting}elem2"
 
 Grp: particlesDa005
 ./msData/particles/particlesDa005.xsd
 ./msData/particles/particlesDa005.xml
-OK: particlesDa005.xml:4:10: Expecting at least 1 occurrences of "elem2" from namespace "http://xsdtesting"
+OK: particlesDa005.xml:4:10: Expecting at least 1 occurrences of "{http://xsdtesting}elem2"
 
 Grp: particlesDa006
 ./msData/particles/particlesDa006.xsd
@@ -45310,7 +45310,7 @@ Grp: particlesDa011
 Grp: particlesDb001
 ./msData/particles/particlesDb001.xsd
 ./msData/particles/particlesDb001.xml
-OK: particlesDb001.xml:3:41: Expecting at least 1 occurrences of "elem1" from namespace "http://xsdtesting"
+OK: particlesDb001.xml:3:41: Expecting at least 1 occurrences of "{http://xsdtesting}elem1"
 
 Grp: particlesDb003
 ./msData/particles/particlesDb003.xsd
@@ -45320,17 +45320,17 @@ OK: particlesDb003.xml:3:10: Namespace specification is required in this context
 Grp: particlesDb004
 ./msData/particles/particlesDb004.xsd
 ./msData/particles/particlesDb004.xml
-OK: particlesDb004.xml:3:26: Expecting at least 1 occurrences of "elem1" from namespace "http://xsdtesting"
+OK: particlesDb004.xml:3:26: Expecting at least 1 occurrences of "{http://xsdtesting}elem1"
 
 Grp: particlesDb005
 ./msData/particles/particlesDb005.xsd
 ./msData/particles/particlesDb005.xml
-OK: particlesDb005.xml:3:10: Expecting at least 1 occurrences of "elem1" from namespace "http://xsdtesting"
+OK: particlesDb005.xml:3:10: Expecting at least 1 occurrences of "{http://xsdtesting}elem1"
 
 Grp: particlesDb006
 ./msData/particles/particlesDb006.xsd
 ./msData/particles/particlesDb006.xml
-OK: particlesDb006.xml:3:41: Expecting at least 1 occurrences of "elem1" from namespace "http://xsdtesting"
+OK: particlesDb006.xml:3:41: Expecting at least 1 occurrences of "{http://xsdtesting}elem1"
 
 Grp: particlesDb008
 ./msData/particles/particlesDb008.xsd
@@ -45340,12 +45340,12 @@ OK: particlesDb008.xml:3:10: Namespace specification is required in this context
 Grp: particlesDb009
 ./msData/particles/particlesDb009.xsd
 ./msData/particles/particlesDb009.xml
-OK: particlesDb009.xml:3:26: Expecting at least 1 occurrences of "elem1" from namespace "http://xsdtesting"
+OK: particlesDb009.xml:3:26: Expecting at least 1 occurrences of "{http://xsdtesting}elem1"
 
 Grp: particlesDb010
 ./msData/particles/particlesDb010.xsd
 ./msData/particles/particlesDb010.xml
-OK: particlesDb010.xml:3:10: Expecting at least 1 occurrences of "elem1" from namespace "http://xsdtesting"
+OK: particlesDb010.xml:3:10: Expecting at least 1 occurrences of "{http://xsdtesting}elem1"
 
 Grp: particlesDb011
 ./msData/particles/particlesDb011.xsd
@@ -46942,7 +46942,7 @@ Grp: particlesZ033_g
 Grp: particlesZ034_a2
 ./msData/particles/particlesZ034_a.xsd
 ./msData/particles/particlesZ034_a2.xml
-OK: particlesZ034_a2.xml:72:36: Expecting at least 1 occurrences of "b" from namespace ""
+OK: particlesZ034_a2.xml:72:36: Expecting at least 1 occurrences of "b"
 
 Grp: particlesZ034_a3
 ./msData/particles/particlesZ034_a.xsd
@@ -53372,7 +53372,7 @@ Grp: schO2
 
 Grp: schP1
 ./msData/schema/schP1_a.xsd
-OK: schP1_a.xsd:9:32: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: schP1_a.xsd:9:32: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: schP3
 ./msData/schema/schP3_a.xsd
@@ -53680,7 +53680,7 @@ OK: stC031.xsd:7:29: No facet overridable for this type
 
 Grp: stC032
 ./msData/simpleType/stC032.xsd
-OK: stC032.xsd:6:28: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: stC032.xsd:6:28: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: stC034
 ./msData/simpleType/stC034.xsd
@@ -54769,7 +54769,7 @@ OK: wildI003.xsd:6:104: Attribute "foo": Attributes with no namespace invalid in
 Grp: wildI004i
 ./msData/wildcards/wildI004i.xsd
 ./msData/wildcards/wildI004i.xml
-OK: wildI004i.xml:6:17: Expecting at least 1 occurrences of "c" from namespace ""
+OK: wildI004i.xml:6:17: Expecting at least 1 occurrences of "c"
 
 Grp: wildI005
 ./msData/wildcards/wildI005.xsd - ./msData/wildcards/wildI005a.xsd

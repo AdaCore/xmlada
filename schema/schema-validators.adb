@@ -2580,10 +2580,9 @@ package body Schema.Validators is
                        ("Expecting at least"
                         & Integer'Image (Get_Min_Occurs (D.Current))
                         & " occurrences of """
-                        & Curr.Element.Elem.Local_Name.all
-                        & """ from namespace """
-                        & Curr.Element.Elem.NS.Namespace_URI.all
-                        & """");
+                        & To_QName
+                          (Curr.Element.Elem.NS.Namespace_URI.all,
+                           Curr.Element.Elem.Local_Name.all) & """");
                   end if;
                end if;
 
