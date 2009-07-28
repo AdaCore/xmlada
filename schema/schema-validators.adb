@@ -2329,6 +2329,7 @@ package body Schema.Validators is
    begin
       return new Sequence_Data'
         (Group_Model_Data_Record with
+         Previous              => null,
          Current               => Start (Validator.Particles),
          Num_Occurs_Of_Current => 0);
    end Create_Validator_Data;
@@ -2350,6 +2351,8 @@ package body Schema.Validators is
                           & Data.Num_Occurs_Of_Current'Img);
          end if;
       end if;
+
+      Data.Previous := Get (Data.Current);
 
       if Get (Data.Current) /= null then
          if Force
@@ -2549,18 +2552,39 @@ package body Schema.Validators is
                         & Element_Validator.Elem.Local_Name.all & ' '
                         & Get_Local_Name (Element_Validator.Elem.Of_Type));
                   end if;
+                  Debug_Push_Prefix
+                    ("Validate_Start_Element seq " & Get_Name (Validator)
+                     & " moving to next particle");
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
                   Debug_Pop_Prefix;
-                  Validation_Error
-                    ("Expecting at least"
-                     & Integer'Image (Get_Min_Occurs (D.Current))
-                     & " occurrences of """
-                     & Curr.Element.Elem.Local_Name.all
-                     & """ from namespace """
-                     & Curr.Element.Elem.NS.Namespace_URI.all
-                     & """");
+
+                  if D.Num_Occurs_Of_Current = 0
+                    and then D.Previous /= null
+                    and then D.Previous.Typ = Particle_Element
+                    and then Namespace_URI =
+                      D.Previous.Element.Elem.NS.Namespace_URI.all
+                    and then Local_Name =
+                      D.Previous.Element.Elem.Local_Name.all
+                  then
+                     Validation_Error
+                       ("Too many occurrences of """
+                        & To_QName (Namespace_URI, Local_Name)
+                        & """ (expecting """
+                        & To_QName
+                          (Curr.Element.Elem.NS.Namespace_URI.all,
+                           Curr.Element.Elem.Local_Name.all) & """)");
+                  else
+                     Validation_Error
+                       ("Expecting at least"
+                        & Integer'Image (Get_Min_Occurs (D.Current))
+                        & " occurrences of """
+                        & Curr.Element.Elem.Local_Name.all
+                        & """ from namespace """
+                        & Curr.Element.Elem.NS.Namespace_URI.all
+                        & """");
+                  end if;
                end if;
 
             when Particle_Any =>

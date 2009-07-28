@@ -29940,7 +29940,7 @@ OK: xsd005.n00.xml:11:10: Unexpected end of sequence, expecting "a"
 OK: xsd005.n01.xml:11:30: Unknown type "undeclared"
 
 ./sunData/combined/xsd005/xsd005.n02.xml
-OK: xsd005.n02.xml:12:15: Expecting at least 1 occurrences of "c" from namespace "foo"
+OK: xsd005.n02.xml:12:15: Too many occurrences of "{foo}b" (expecting "{foo}c")
 
 ./sunData/combined/xsd005/xsd005.n03.xml
 OK: xsd005.n03.xml:12:11: Expecting at least 1 occurrences of "c" from namespace "foo"
@@ -42457,7 +42457,7 @@ OK: idA044.xsd:15:34: Expecting at least 1 occurrences of "selector" from namesp
 
 Grp: idA046
 ./msData/identityConstraint/idA046.xsd
-OK: idA046.xsd:11:29: Expecting at least 1 occurrences of "field" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idA046.xsd:11:29: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}selector" (expecting "{http://www.w3.org/2001/XMLSchema}field")
 
 Grp: idA047
 ./msData/identityConstraint/idA047.xsd
@@ -42621,7 +42621,7 @@ OK: idB044.xsd:15:34: Expecting at least 1 occurrences of "selector" from namesp
 
 Grp: idB046
 ./msData/identityConstraint/idB046.xsd
-OK: idB046.xsd:11:29: Expecting at least 1 occurrences of "field" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: idB046.xsd:11:29: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}selector" (expecting "{http://www.w3.org/2001/XMLSchema}field")
 
 Grp: idB047
 ./msData/identityConstraint/idB047.xsd
@@ -53556,7 +53556,7 @@ Grp: stB001
 
 Grp: stB002
 ./msData/simpleType/stB002.xsd
-OK: stB002.xsd:4:20: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: stB002.xsd:4:20: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "{http://www.w3.org/2001/XMLSchema}simpleDerivation")
 
 Grp: stB004
 ./msData/simpleType/stB004.xsd
@@ -53588,15 +53588,15 @@ OK: stB014.xsd:4:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annot
 
 Grp: stB016
 ./msData/simpleType/stB016.xsd
-OK: stB016.xsd:4:20: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: stB016.xsd:4:20: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "{http://www.w3.org/2001/XMLSchema}simpleDerivation")
 
 Grp: stB017
 ./msData/simpleType/stB017.xsd
-OK: stB017.xsd:4:20: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: stB017.xsd:4:20: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "{http://www.w3.org/2001/XMLSchema}simpleDerivation")
 
 Grp: stB018
 ./msData/simpleType/stB018.xsd
-OK: stB018.xsd:4:20: Expecting at least 1 occurrences of "simpleDerivation" from namespace "http://www.w3.org/2001/XMLSchema"
+OK: stB018.xsd:4:20: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "{http://www.w3.org/2001/XMLSchema}simpleDerivation")
 
 Grp: stB019
 ./msData/simpleType/stB019.xsd

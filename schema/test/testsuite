@@ -60,7 +60,7 @@ nist_tests=('anyURI' 'boolean' 'byte' 'dateTime' 'date'
             'unsignedInt' 'unsignedLong' 'unsignedShort' 'base64Binary');
 
 while getopts "vhdseuan:m:N" opt
-do 
+do
    case $opt in
       d) debug="-debug";;
       v) verbose=1;;
@@ -1650,6 +1650,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
    expect "$act/I723-028/test.xsd" "" ""
    expect "$act/I727-025/test.xsd" "$act/I727-025/test.xml" ""
    expect "$act/I728-012/test.xsd" "$act/I728-012/test.xml" ""
+   expect "$act/I702-017/test.xsd" "$act/I702-017/test.xml" "$act/I702-017/test.xml:7:11: Too many occurrences of \"size\" (expecting \"contents\")"
 fi
 
 summary

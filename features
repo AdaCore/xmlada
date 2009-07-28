@@ -1,3 +1,13 @@
+New features in version 3.2
+===========================
+
+ Schema validation:
+ - I702-017 Improved error message when element repeated too many times
+   If your schema requires a sequence of "a", then "b", and your XML file
+   contains "<a><a><b>", XML/Ada used to complain on the second occurrence
+   of "a" that at least one occurrence of "b" is expected. The error message
+   has now been improved to indicate "Too many occurrences of a".
+
 New features in version 3.1
 ===========================
 
@@ -5,14 +15,14 @@ New features in version 3.1
   - H523-017 Add support for the windows-1251 encoding.
 
  Schema validation:
-  - H212-023: The default value of elements is properly taken into account
+  - H212-023 The default value of elements is properly taken into account
     when validating the contents of the node. A SAX event is also generated
     for the default value, so that users automatically get access to the
     default value (the latter is also included in the resulting DOM tree
     when using Schema.Dom_Readers)
 
  Installation
-  - HA21-023: prefix/lib no longer contains unversioned .so files, since this
+  - HA21-023 prefix/lib no longer contains unversioned .so files, since this
     prevents the use of static libraries on some systems if the user has
     prefix/lib in his LD_LIBRARY_PATH. Instead, only the .so.<version> are
     copied into that directory, since they are enough to run the executables

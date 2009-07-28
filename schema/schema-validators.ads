@@ -1374,6 +1374,9 @@ private
 
    type Sequence_Record is new Group_Model_Record with null record;
    type Sequence_Data is new Group_Model_Data_Record with record
+      Previous     : XML_Particle_Access;
+      --  The previous particle we were matching
+
       Current      : Particle_Iterator := No_Iter;
       Num_Occurs_Of_Current : Integer := 0;
       --  Number of repeats for the current particle of the sequence. This is
