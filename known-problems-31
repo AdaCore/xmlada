@@ -1,25 +1,3 @@
-Problems fixed in 3.2
-=====================
-
-- I727-025 Comparison of arbitrary precision numbers ending with ".000"
-  Problem:    When your schema file includes a "decimal" type and specifies
-              some minimal and maximal values, XML/Ada incorrectly compares
-              the value in the XML file and the schema file if one of them
-              ends with ".0" and not the other.
-  Workaround: Always specify ".0" even when specifying an integer number
-- I723-028 Handling of <xsd:appinfo>
-  Problem:    If you grammar file contains an appinfo, this element can contain
-              any XML node. However, XML/Ada rejects such a content
-  Workaround: filter out the contents of appinfo before feeding it to
-              XML/Ada. The contents do not play any role in actual validation
-
-- I702-002 (Schema): validating fixed attributes
-  Problem:    If an attribute is declared as "fixed" in the schema, this
-              indicates that only a specific value can be used for it in the
-              XML file. However, XML/Ada did not properly enforce it.
-  Workaround: This impacts validation only, not the parsing of the file. No
-              workaround found
-
 Problems fixed in 3.1
 =====================
 
@@ -100,8 +78,8 @@ Problems in 2.0.1, Fixed in 2.1
 - E908-011: incorrect handling of elementFormDefault when a schema included
   with <include> has a setup different than the including file
 - Attributes normalization done even if the attribute's type is CDATA. However,
-  according to 3.3.3 in the XML standard, space sequences should be left untouched
-  in such a case
+  according to 3.3.3 in the XML standard, space sequences should be left
+  untouched in such a case
 
 Problems in 2.0
 ===============

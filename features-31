@@ -1,15 +1,19 @@
-New features in version 3.2
-===========================
+=========================
+XML/Ada NEW FEATURES LIST
+=========================
 
- Schema validation:
- - I702-017 Improved error message when element repeated too many times
-   If your schema requires a sequence of "a", then "b", and your XML file
-   contains "<a><a><b>", XML/Ada used to complain on the second occurrence
-   of "a" that at least one occurrence of "b" is expected. The error message
-   has now been improved to indicate "Too many occurrences of a".
+Copyright (C) 2001-2009, AdaCore
+
+This file contains a list of new features introduced in GPS.
+A full description of all GPS features can be found in the GPS
+documentation.
+
+An ISO date (YYYY-MM-DD) appears in parentheses after the
+description line. This date shows the implementation date
+of the feature.
 
 New features in version 3.1
-===========================
+---------------------------
 
  Unicode:
   - H523-017 Add support for the windows-1251 encoding.
