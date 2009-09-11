@@ -11,6 +11,17 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
+KP-31-I910-014 Cannot compile with a cross-compiler
+
+  Problem:    The configure script checks that a C compiler is available and
+              results in applications that can be run on the host. This is
+              not true when using a cross-compiler
+
+  Status:     Fixed in 3.2.0
+
+  Workaround: Set the CC environment variable to a native compiler, it is
+              not used anyway when compiling XML/Ada
+
 KP-31-I727-025 Comparison of arbitrary precision numbers ending with ".000"
 
   Problem:    When your schema file includes a "decimal" type and specifies
