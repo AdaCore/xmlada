@@ -19,7 +19,6 @@ docdir=@docdir@
 includedir=@includedir@
 
 GNATMAKE=gnatmake
-CC=gcc
 
 # Compiler mode: one of "distrib", "debug", "optimize", "profile"
 MODE=distrib
