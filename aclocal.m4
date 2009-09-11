@@ -7,6 +7,7 @@
 # Check whether GNAT on that target supports building shared
 # libraries
 # The following variables is exported by configure:
+#   @gnatmake@: the gnatmake command to use
 #   @GNAT_BUILDS_SHARED@: either "yes" or "no"
 #   @DEFAULT_LIBRARY_TYPE@: either "static" or "relocatable"
 #############################################################
@@ -31,6 +32,14 @@ Make them the installation default])],
       fi],
      [GNAT_BUILDS_SHARED=yes])
 
+   if test "$program_prefix" != NONE; then
+      gnatmake=${program_prefix}gnatmake
+   else
+      gnatmake=gnatmake
+   fi
+
+   AC_SUBST(gnatmake)
+
    if test x$GNAT_BUILDS_SHARED = xyes; then
       # Create a temporary directory (from "info autoconf")
       : ${TMPDIR=/tmp}
@@ -53,7 +62,7 @@ project Lib is
 end Lib;
 EOF
 
-      gnatmake -c -q -P$tmp/lib 2>/dev/null
+      $gnatmake -c -q -P$tmp/lib 2>/dev/null
       if test $? = 0 ; then
          GNAT_BUILDS_SHARED=yes
       else

@@ -272,7 +272,7 @@ PACKAGE_VERSION='3.2w'
 PACKAGE_STRING='XML/Ada 3.2w'
 PACKAGE_BUGREPORT='report@adacore.com'
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os DVIPS MAKEINFO TEXI2DVI PDFTEX TEX GNAT_BUILDS_SHARED DEFAULT_LIBRARY_TYPE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S MKDIR CC LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os DVIPS MAKEINFO TEXI2DVI PDFTEX TEX gnatmake GNAT_BUILDS_SHARED DEFAULT_LIBRARY_TYPE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S MKDIR CC LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1542,6 +1542,14 @@ else
   GNAT_BUILDS_SHARED=yes
 fi;
 
+   if test "$program_prefix" != NONE; then
+      gnatmake=${program_prefix}gnatmake
+   else
+      gnatmake=gnatmake
+   fi
+
+
+
    if test x$GNAT_BUILDS_SHARED = xyes; then
       # Create a temporary directory (from "info autoconf")
       : ${TMPDIR=/tmp}
@@ -1564,7 +1572,7 @@ project Lib is
 end Lib;
 EOF
 
-      gnatmake -c -q -P$tmp/lib 2>/dev/null
+      $gnatmake -c -q -P$tmp/lib 2>/dev/null
       if test $? = 0 ; then
          GNAT_BUILDS_SHARED=yes
       else
@@ -2349,6 +2357,7 @@ s,@MAKEINFO@,$MAKEINFO,;t t
 s,@TEXI2DVI@,$TEXI2DVI,;t t
 s,@PDFTEX@,$PDFTEX,;t t
 s,@TEX@,$TEX,;t t
+s,@gnatmake@,$gnatmake,;t t
 s,@GNAT_BUILDS_SHARED@,$GNAT_BUILDS_SHARED,;t t
 s,@DEFAULT_LIBRARY_TYPE@,$DEFAULT_LIBRARY_TYPE,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t

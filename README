@@ -44,19 +44,16 @@ to
 Compiling with GNAT 3.16 or newer versions of GNAT
 ---------------------------------------------------
 
-You might need to modify the following lines in the Makefile.in:
-    GNATMAKE= gnatmake
-    CC= gcc
-if you are using a compiler other than native GNAT. For instance, if 
-you are using a cross-compiler for powerpc/vxworks, you would set them
-to
-    GNATMAKE= powerpc-wrs-vxworks-gnatmake
-    CC= powerpc-wrs-vxworks-gcc
-
 You need to automatically detect a few aspects of your build environment,
 which is done by running
     ./configure --prefix=PREFIX
 where PREFIX is the installation directory you wish to use
+
+If, however, you are running a cross-compiler, you need to add an additional
+command line switch to configure, namely
+    ./configure --prefix=PREFIX --target=TARGET
+where target will be similar to "powerpc-wrs-vxworks", "powerpc-elinos-linux",
+or any other prefix used to find the name of the gnatmake executable to run.
 
 By default, XML/Ada will build both static and shared libraries, if
 "configure" detected that the latter were supported on your system. You can
