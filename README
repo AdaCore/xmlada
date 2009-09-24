@@ -181,7 +181,7 @@ XML/Ada itself. Here is how you can run this testsuite:
    be called "tests".
 
 A similar setup is required for the W3C schema testsuite. The URL of the
-testsuite is:  http://www.w3.org/XML/2001/05/xmlschema-test-collection
+testsuite is:  http://www.w3.org/2001/05/xmlschema-test-collection
 and once uncompressed, you should created a link from schema/test to this
 directory. The link should be called xmltests.
 
