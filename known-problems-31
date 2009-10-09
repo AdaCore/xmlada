@@ -1,107 +1,75 @@
-Problems fixed in 3.1
-=====================
+=======================================
+Known problems in XML/Ada version 3.1.0
+=======================================
 
- DOM:
-   - H312-009 Write prints extra white-spaces at the end of elements when
-     pretty printing
+Copyright (c) 2008-2009, AdaCore
 
-Problems fixed in 2.3
-=====================
+The following is a listing of known problems in release 3.1.0. Except where
+specifically noted, all these problems have been corrected in the development
+tree of the 3.2 technology. This means they are corrected in any 3.2.0w
+wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
+the status line. This can be used to determine if a given wavefront has the fix
+identified in the entry.
 
-  - Out-of-order notation declaration in DTD (2006-10-16)
-    A notation doesn't have to be declared before its first use in a DTD,
-    it can be declared later on. XML/Ada didn't support this
-  - FA16-002 Accept xml:lang attribute in <schema> node (2006-10-16)
-    The above attribute should be allowed in this node
-  - F830-012: Character after <DOCTYPE SYSTEM "..."> is discarded.
-  - F822-009: Schema and attributeGroup
-    Using the "ref" attribute for <attributeGroup> is not supported correctly,
-    since XML/Ada will complain that the group is referenced but never defined
-  - F822-009: Schema: <attributeGroup> cannot contain another <attributeGroup>
-  - F814-001: Schema
-    When a .xsd file has already been parsed (for instance through an <import>
-    tag), and you parse it explicitly through a call to Parse, an error is
-    raised. XML/Ada should not try to parse it a second time.
-  - F614-003: Storage_Error is raised when you free an XML_Grammar you have
-    stored in your application, since it has already been freed automatically
-    by XML/Ada. It is now possible to free the same grammar multiple times
+KP-31-IA09-001 Reuse of SAX parser after an error is not possible
 
-Problems fixed in 2.2
-=====================
+  Problem:    The SAX parser uses an internal buffer while parsing. When an
+              error occurs, the buffer is properly freed, but an index is not
+              reset. As a result, reusing the same parser to parse another
+              file is not possible.
 
-  - Schema: Restrictions or extensions of type did not validate the facets of
-    their ancestors. For instance, if you set minLength on a type, and then set
-    a restriction on it also limiting the maxLength, XML/Ada no longer checked
-    the minLength
-  - Fixed all memory leaks reported by valgrind when running the automatic
-    testsuite. This testsuites parses more than 2000 different XML files, both
-    in validation and not validation mode, using external entities
-    sometimes,... and should therefore indicate that there are no remaining
-    memory leaks in XML/Ada
-  - F505-022: Dom.Core.Nodes.Print fix on the handling of namespaces
+  Status:     Fixed in 3.2.0
 
-Problems fixed in 2.1
-=====================
+  Workaround: Create a new parser for every file you need to parse.
 
-Input Soures:
-  - Ignore encoding specified in the XML file if it conflicts with the
-    Byte Order Mark at the beginning of the file
-SAX
-  - XML/Ada doesn't check that ENTITY or ENTITIES attributes only refer to
-    existing unparsed entities
-  - Disabling the Namespace_Feature doesn't accepts colons in tag names, but
-    it should
-  - Validity errors are reported as fatal errors, but they should be reported
-    as recoverable errors
-  - Extra validity checks added for attributes (contents of ID attributes,...)
-  - The Sax callback Error must raise an exception, otherwise some other
-    internal errors might occur in the parser. This is unexpected, since this
-    callback indicates recoverable errors
-  - Attribute values are normalized too often (space sequences collapsing).
-    If the space is given through a character reference, it shouldn't be
-    collapsed
+KP-31-I910-014 Cannot compile with a cross-compiler
 
-Problems in 2.0.1, Fixed in 2.1
-===============================
+  Problem:    The configure script checks that a C compiler is available and
+              results in applications that can be run on the host. This is
+              not true when using a cross-compiler
 
-- Expanding parameter entities should always surround them with spaces, as per
-  4.4.8 in the XML specifications
-- Fixes various issues when validating documents
-- EA03-006: Setting attribute for an element not added to the tree results in
-  a Constraint_Error (Workaround: disable shared strings in dom-core.ads)
-- Validating a not well-formed document results in an validation error instead
-  of a well-formedness error. It is therefore harder to understand such error
-  messages
-- E908-010: importing the same schema twice generates an error
-- E908-011: incorrect handling of elementFormDefault, when the child node
-  belongs to a namespace different than the parent's namespace
-- E908-011: incorrect handling of elementFormDefault when a schema included
-  with <include> has a setup different than the including file
-- Attributes normalization done even if the attribute's type is CDATA. However,
-  according to 3.3.3 in the XML standard, space sequences should be left
-  untouched in such a case
+  Status:     Fixed in 3.2.0
 
-Problems in 2.0
-===============
+  Workaround: Set the CC environment variable to a native compiler, it is
+              not used anyway when compiling XML/Ada
 
-- E307-011: Invalid project file for xmlada_schema.gpr when installing static
-  libraries
+KP-31-I727-025 Comparison of arbitrary precision numbers ending with ".000"
 
-Problems fixed in 2.0
-=====================
+  Problem:    When your schema file includes a "decimal" type and specifies
+              some minimal and maximal values, XML/Ada incorrectly compares
+              the value in the XML file and the schema file if one of them
+              ends with ".0" and not the other.
 
-- DB25-005 Incorrect value returned by DOM.Attributes.Owner_Element
-- D714-002 Attribute quotes are no longer present in a processing-instruction
-  data, in SAX or DOM
-- Constraint_Error raised when an external entity doesn't reference an
-  existing file
-- D213-012: Constraint_Error when using the same parser twice
-- SAX: End_Document() is called even in case of a fatal error
-- DOM: There is now initially a single Text node per block of text, as required
-  by DOM specifications
-- DOM: Missing function DOM.Core.Nodes.Node_Type added
-- CC01-006: In some cases, the handling of entities like &amp; results in
-  duplicates when getting the Node_Value through DOM
-- CC01-002: Handling of big files (multi-mega bytes) was generating a
-  Storage_Error in Direct_IO.
+  Status:     Fixed in 3.2.0
 
+  Workaround: Always specify ".0" even when specifying an integer number
+
+KP-31-I723-028 Handling of <xsd:appinfo>
+
+  Problem:    If you grammar file contains an appinfo, this element can contain
+              any XML node. However, XML/Ada rejects such a content
+
+  Status:     Fixed in 3.2.0
+
+  Workaround: filter out the contents of appinfo before feeding it to
+              XML/Ada. The contents do not play any role in actual validation
+
+KP-31-I702-002 (Schema): validating fixed attributes
+
+  Problem:    If an attribute is declared as "fixed" in the schema, this
+              indicates that only a specific value can be used for it in the
+              XML file. However, XML/Ada did not properly enforce it.
+
+  Status:     Fixed in 3.2.0
+
+  Workaround: This impacts validation only, not the parsing of the file. No
+              workaround found
+
+KP-31-I212-047 Installation problem with shared libraries
+
+  Problem:    When installing the shared libraries, XML/Ada did not create
+              some of the links (libname.so.{MAJOR})
+
+  Status:     Fixed in 3.2.0
+
+  Workaround: Create the missing links manually

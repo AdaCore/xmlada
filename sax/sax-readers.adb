@@ -5433,6 +5433,7 @@ package body Sax.Readers is
       Free (Parser.Default_Namespaces);
       Free (Parser.DTD_Name);
       Free (Parser.Buffer);
+      Parser.Buffer_Length := 0;
 
       --  Free the nodes, in case there are still some open
       Tmp := Parser.Current_Node;
