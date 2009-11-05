@@ -10,7 +10,9 @@ old:
 	@./testsuite
 
 new:
-	@./testsuite -a
+	@./testsuite -a > testsuite.tmp.out 2>&1
+	@tr -d '\r' < testsuite.tmp.out > testsuite.tmp
+	@diff -c testsuite.out testsuite.tmp
 	@./schematest > schematest.tmp.out
 	@tr -d '\r' < schematest.tmp.out > schematest.tmp
 	@diff -c schematest.out schematest.tmp
