@@ -55202,4 +55202,4 @@ Grp: ipo6
 ./boeingData/ipo6/ipo.xsd
 (v) ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-./schematest: xsd files: 13793 XML: 24464 Errors (expected if no diff): 2030
+schematest: xsd files: 13793 XML: 24464 Errors (expected if no diff): 2030
