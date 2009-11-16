@@ -21,4 +21,9 @@ schema/test/test_date_time
 unicode/test/test_unicode
 xmlada-config
 shared.gpr
-
+*.o
+*.ali
+b~*.ad*
+*.a
+*.so.*
+*.so
