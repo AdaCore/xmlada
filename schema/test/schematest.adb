@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2007-2008, AdaCore            --
+--                       Copyright (C) 2007-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -593,7 +593,8 @@ begin
    Change_Dir (Testdir);
    Run_Testsuite ("suite.xml");
 
-   Put_Line (Command_Name & ": xsd files:" & Total_Parsed_Schema'Img
+   Put_Line (Base_Name (Command_Name, ".exe")
+             & ": xsd files:" & Total_Parsed_Schema'Img
              & " XML:" & Total_Parsed_XML'Img
              & " Errors (expected if no diff):" & Total_Error'Img);
 end Schematest;
