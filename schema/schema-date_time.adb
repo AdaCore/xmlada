@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005-2007, AdaCore            --
+--                       Copyright (C) 2005-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -418,7 +418,11 @@ package body Schema.Date_Time is
 
       if Ch (Pos) /= '-'
         or else Ch (Pos + 3) /= '-'
-        or else (Pos + 6 <= Ch'Last and then Ch (Pos + 6) /= 'T')
+        or else (Pos + 6 <= Ch'Last
+                 and then Ch (Pos + 6) /= 'T'
+                 and then Ch (Pos + 6) /= '-'
+                 and then Ch (Pos + 6) /= '+'
+                 and then Ch (Pos + 6) /= 'Z')
       then
          Validation_Error ("Invalid separator in date value """ & Ch & """");
          Date := No_Date_NZ;
