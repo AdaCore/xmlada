@@ -22,6 +22,6 @@ NF-32-I702-017 Improved error msg when element repeated too much (2009-07-25)
    of "a" that at least one occurrence of "b" is expected. The error message
    has now been improved to indicate "Too many occurrences of a".
 
-NF-32-I123-005 Support for windows-1251 encoding
+NF-32-I123-005 Support for windows-1251 encoding (2009-01-23)
 
-   XML files can now be encoded with windows-1251
+   XML files can now be encoded with windows-1251.
