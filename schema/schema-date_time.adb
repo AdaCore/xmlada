@@ -383,7 +383,10 @@ package body Schema.Date_Time is
          Pos := Pos + 1;
       end if;
 
-      while Pos <= Ch'Last and then Ch (Pos) /= '-' loop
+      while Pos <= Ch'Last
+         and then Ch (Pos) /= '-'
+         and then Ch (Pos) /= 'Z'
+      loop
          Pos := Pos + 1;
       end loop;
 

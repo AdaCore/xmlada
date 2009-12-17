@@ -35585,15 +35585,11 @@ Grp: date_maxInclusive003_133
 
 Grp: date_maxInclusive007_134
 ./msData/datatypes/Facets/Schemas/date_maxInclusive007.xsd
-OK: date_maxInclusive007.xsd:4:46: Invalid separator in date value "2002-10-10-02:00"
+(i)
 
 Grp: date_maxInclusive008_135
 ./msData/datatypes/Facets/Schemas/date_maxInclusive008.xsd
-OK: date_maxInclusive008.xsd:4:46: Invalid separator in date value "2005-01-19+14:00"
-
-Grp: date_maxInclusive009_136
-./msData/datatypes/Facets/Schemas/date_maxInclusive009.xsd
-(v) date_maxInclusive009.xsd:4:46: Invalid separator in date value "2002-10-10-02:00"
+(i)
 
 Grp: date_maxExclusive001_137
 ./msData/datatypes/Facets/Schemas/date_maxExclusive001.xsd
@@ -40387,11 +40383,6 @@ Grp: date009_2037
 ./msData/datatypes/date009.xml
 (i)
 
-Grp: date010_2038
-./msData/datatypes/date.xsd
-./msData/datatypes/date010.xml
-(v) date010.xml:6:31: Invalid separator in date value "2000-10-05-05:00"
-
 Grp: date011_2039
 ./msData/datatypes/date.xsd
 ./msData/datatypes/date011.xml
@@ -41689,11 +41680,6 @@ Grp: errE004
 ./msData/errata10/errE004.xsd
 ./msData/errata10/errE004.xml
 OK: errE004.xml:5:27: Expecting time after T in "P20Y0M15DT"
-
-Grp: errE006
-./msData/errata10/errE006.xsd
-./msData/errata10/errE006.xml
-(v) errE006.xml:5:30: Invalid separator in date value "2002-12-31-05:00"
 
 Grp: errE008
 ./msData/errata10/errE008.xsd
@@ -55202,4 +55188,4 @@ Grp: ipo6
 ./boeingData/ipo6/ipo.xsd
 (v) ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-schematest: xsd files: 13793 XML: 24464 Errors (expected if no diff): 2030
+schematest: xsd files: 13793 XML: 24464 Errors (expected if no diff): 2029
