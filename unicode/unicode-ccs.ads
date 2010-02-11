@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -63,7 +63,7 @@ package Unicode.CCS is
 
    Unicode_Character_Set : constant Character_Set :=
      (To_Unicode => Identity'Access,
-      To_Cs      => Identity'Access);
+      To_CS      => Identity'Access);
 
    Invalid_Code : exception;
    --  Exception raised when trying to convert to a code point that
