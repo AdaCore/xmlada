@@ -124,6 +124,7 @@ The Schema module
 * Connecting XML documents and schemas::
 * Validating documents with SAX::
 * Validating documents with DOM::
+* Unsupported schema elements::
 
 Using the library
 
@@ -1260,6 +1261,7 @@ convert the tree in memory, without going through a file on the disk
 * Connecting XML documents and schemas::
 * Validating documents with SAX::
 * Validating documents with DOM::
+* Unsupported schema elements::
 @end menu
 
 @c --------------------------------------------------------------------
@@ -1709,6 +1711,17 @@ validate XML streams before generating the DOM tree
 @smallexample
 @include dom/domschemaexample.adb
 @end smallexample
+
+@c -------------------------------------------------------------------
+@node Unsupported schema elements
+@section Unsupported schema elements
+@c -------------------------------------------------------------------
+
+@noindent
+Not all aspects of XML schemas are supported by XML/Ada.
+In particular, it does not currently support XPath, so any part of the
+schema that is related to XPath expressions (for instance @code{<xsd:key>}
+and @code{<xsd:unique>}) are not supported currently.
 
 @c -------------------------------------------------------------------
 @node Using the library
