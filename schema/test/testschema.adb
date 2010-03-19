@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2008, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -55,13 +55,23 @@ procedure TestSchema is
    Schema    : Schema_Reader;
    Grammar   : XML_Grammar := No_Grammar;
    Explicit_XSD : Boolean := False;
-   Switches  : constant String := "xsd: debug base dom";
+   Switches  : constant String := "xsd: debug base dom h";
    DOM       : Boolean := False;
+   Stats     : Boolean := False;
 
 begin
    --  Special case: check if we want debug output, before doing anything else
    loop
       case Getopt (Switches) is
+         when 'h' =>
+            Put_Line ("--xsd file     Specifies location of XSD file");
+            Put_Line ("--debug        Print extra debugging info");
+            Put_Line ("--base         Use basenames in error messages");
+            Put_Line ("--dom          Dump the DOM tree after parsing");
+            Put_Line ("               Uses a DOM-based parser, instead of");
+            Put_Line ("               the default sax-based parser");
+            return;
+
          when 'd' =>
             if Full_Switch = "debug" then
                Debug := True;

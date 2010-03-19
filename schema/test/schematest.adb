@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2007-2009, AdaCore            --
+--                       Copyright (C) 2007-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -36,8 +36,9 @@
 --  Some tests are disabled through the "disable" file
 
 with Ada.Command_Line;          use Ada.Command_Line;
-with Ada.Containers.Indefinite_Hashed_Sets;
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Float_Text_IO;         use Ada.Float_Text_IO;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -65,39 +66,57 @@ procedure Schematest is
    --  Whether to test the validity of XML or Schema files. If both are false,
    --  the only output will be for unexpected internal errors
 
-   Show_Expected : Boolean := True;
-   --  When a test is expected to be invalid, should we compare the error
-   --  messages as well ?
+   Show_Passed : Boolean := True;
+   Show_Failed : Boolean := True;
+   --  What tests output should be displayed ?
 
-   Accepted_Only      : constant Boolean := True;
+   Stats : Boolean := False;
+   Stats_Hide_OK : Boolean := False;
+   --  If True, print statistics of passed and failed tests per chapter
+
+   Accepted_Only      : Boolean := True;
    --  If true, then only tests that are marked as "accepted" are run. Some
    --  tests might be under discussion, and have a status of "queried". Such
    --  tests are not run.
 
-   Total_Parsed_Schema : Natural := 0;
-   Total_Parsed_XML    : Natural := 0;
-   Total_Error         : Natural := 0;
-
    Xlink : constant String := "http://www.w3.org/1999/xlink";
 
-   package String_Hash is new Ada.Containers.Indefinite_Hashed_Sets
-     (Element_Type        => String,
-      Hash                => Ada.Strings.Hash,
-      Equivalent_Elements => "=");
-   Disabled_Groups : String_Hash.Set;
+   type Error_Kind is (XSD_Should_Pass,
+                       XSD_Should_Fail,
+                       XML_Should_Pass,
+                       XML_Should_Fail,
+                       Internal_Error);
+   type Errors_Count is array (Error_Kind) of Natural;
+   --  The various categories of errors:
+   --  Either the XSD was valid, but rejected by XML/Ada.
+   --  Or the XSD was invalid, but accepted by XML/Ada
+   --  Or the XML was valid, but validation failed in XML/Ada
+   --  Or the XML was invalid, but validation passed in XML/Ada
+   --  Or an internal unknown error.
+
+   type Group_Result is record
+      Name          : Ada.Strings.Unbounded.Unbounded_String;
+      Descr         : Ada.Strings.Unbounded.Unbounded_String;
+      Disabled      : Boolean := False;
+      Test_Count    : Natural := 0;
+      Errors        : Errors_Count := (others => 0);
+      Parsed_XSD    : Natural := 0;
+      Parsed_XML    : Natural := 0;
+   end record;
 
    procedure Run_Testsuite  (Filename : String);
    procedure Run_Testset    (Filename : String);
    procedure Run_Test_Group
      (Testset : String; Group : Node; Base_Dir : String);
    procedure Parse_Schema_Test
-     (Testset, Group : String;
+     (Group          : in out Group_Result;
       Schema         : Node;
       Base_Dir       : String;
       Grammar        : out XML_Grammar;
       Schema_Files   : out Unbounded_String);
    procedure Parse_Instance_Test
-     (Testset, Group, Schema : String;
+     (Group          : in out Group_Result;
+      Schema         : String;
       Test           : Node;
       Base_Dir       : String;
       Grammar        : XML_Grammar);
@@ -111,10 +130,24 @@ procedure Schematest is
    procedure Parse_Disabled;
    --  Parse the list of disabled tests
 
-   procedure Test_Header (Testset, Group, Schema, Test : String);
-   procedure Error (Testset, Group, Schema, Test, Msg : String);
-   procedure Expected (Testset, Group, Schema, Test, Msg : String);
+   procedure Test_Header (Group : Group_Result; Schema, Test : String);
+   procedure Expected (Group : Group_Result; Schema, Test, Msg : String);
    --  Print an error message
+
+   package Group_Hash is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Group_Result,
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=");
+   use Group_Hash;
+
+   Groups : Group_Hash.Map;
+
+   procedure Error
+     (Kind  : Error_Kind;
+      Group : in out Group_Result;
+      Schema, Test, Msg : String);
+   --  Print an error message.
 
    type Outcome_Value is (Valid, Invalid, NotKnown);
    function Get_Expected (N : Node) return Outcome_Value;
@@ -122,10 +155,14 @@ procedure Schematest is
 
    type Status_Value is (Accepted, Queried);
    function Get_Status
-     (Testset, Group, Schema, Test : String; N : Node) return Status_Value;
+     (Group : Group_Result;
+      Schema, Test : String;
+      N     : Node) return Status_Value;
    --  Get the status of the test
 
-   Last_Set    : Unbounded_String;
+   procedure Print_Results;
+   --  Print overview of results
+
    Last_Grp    : Unbounded_String;
    Last_Schema : Unbounded_String;
    --  Keep track of what was already output, to limit the amount of
@@ -145,7 +182,12 @@ procedure Schematest is
       while not End_Of_File (File) loop
          Get_Line (File, Line, Last);
          if Line (1) /= '-' and then Line (1) /= ' ' then
-            String_Hash.Include (Disabled_Groups, Line (1 .. Last));
+            Groups.Include
+              (Key => Line (1 .. Last),
+               New_Item => Group_Result'
+                 (Name     => To_Unbounded_String (Line (1 .. Last)),
+                  Disabled => True,
+                  others   => <>));
          end if;
       end loop;
 
@@ -189,18 +231,12 @@ procedure Schematest is
    -- Test_Header --
    -----------------
 
-   procedure Test_Header (Testset, Group, Schema, Test : String) is
+   procedure Test_Header (Group : Group_Result; Schema, Test : String) is
    begin
-      if Testset /= To_String (Last_Set) then
-         Last_Set    := To_Unbounded_String (Testset);
-         Last_Grp    := Null_Unbounded_String;
-         Put_Line ("Set: " & Testset);
-      end if;
-
-      if To_String (Last_Grp) /= Group then
-         Last_Grp    := To_Unbounded_String (Group);
+      if Last_Grp /= Group.Name then
+         Last_Grp    := Group.Name;
          Last_Schema := Null_Unbounded_String;
-         Put_Line ("Grp: " & Group);
+         Put_Line ("Grp: " & To_String (Group.Name));
       end if;
 
       if Schema /= To_String (Last_Schema) then
@@ -219,22 +255,28 @@ procedure Schematest is
    -- Error --
    -----------
 
-   procedure Error (Testset, Group, Schema, Test, Msg : String) is
+   procedure Error
+     (Kind  : Error_Kind;
+      Group : in out Group_Result;
+      Schema, Test, Msg : String) is
    begin
-      Total_Error := Total_Error + 1;
-      Test_Header (Testset, Group, Schema, Test);
-      Put_Line (Msg);
-      New_Line;
+      Group.Errors (Kind) := Group.Errors (Kind) + 1;
+
+      if Show_Failed then
+         Test_Header (Group, Schema, Test);
+         Put_Line (Msg);
+         New_Line;
+      end if;
    end Error;
 
    --------------
    -- Expected --
    --------------
 
-   procedure Expected (Testset, Group, Schema, Test, Msg : String) is
+   procedure Expected (Group : Group_Result; Schema, Test, Msg : String) is
    begin
-      if Show_Expected then
-         Test_Header (Testset, Group, Schema, Test);
+      if Show_Passed then
+         Test_Header (Group, Schema, Test);
          Put_Line ("OK: " & Msg);
          New_Line;
       end if;
@@ -266,7 +308,9 @@ procedure Schematest is
    ----------------
 
    function Get_Status
-     (Testset, Group, Schema, Test : String; N : Node) return Status_Value
+     (Group : Group_Result;
+      Schema, Test : String;
+      N     : Node) return Status_Value
    is
       N2 : Node := First_Child (N);
    begin
@@ -276,7 +320,7 @@ procedure Schematest is
                return Accepted;
             elsif Get_Attribute (N2, "status") = "queried" then
                if Verbose then
-                  Test_Header (Testset, Group, Schema, Test);
+                  Test_Header (Group, Schema, Test);
                   Put_Line ("Test not accepted, see "
                             & Get_Attribute (N2, "bugzilla"));
                   New_Line;
@@ -299,7 +343,7 @@ procedure Schematest is
    -----------------------
 
    procedure Parse_Schema_Test
-     (Testset, Group : String;
+     (Group          : in out Group_Result;
       Schema         : Node;
       Base_Dir       : String;
       Grammar        : out XML_Grammar;
@@ -316,7 +360,7 @@ procedure Schematest is
       Schema_Files := Null_Unbounded_String;
 
       if Accepted_Only
-        and then Get_Status (Testset, Group, Name, "", Schema) /= Accepted
+        and then Get_Status (Group, Name, "", Schema) /= Accepted
       then
          return;
       end if;
@@ -340,7 +384,7 @@ procedure Schematest is
                end if;
                Append (Schema_Files, Document);
 
-               Total_Parsed_Schema := Total_Parsed_Schema + 1;
+               Group.Parsed_XSD := Group.Parsed_XSD + 1;
                Open (To_String (Document), Input);
                Parse (Reader, Input);
                Close (Input);
@@ -352,31 +396,37 @@ procedure Schematest is
          Global_Check (Grammar);
 
          if Test_Schemas and then Outcome = Invalid then
-            Error (Testset, Group,
-                   To_String (Document), "",
-                   "(i)");
+            Error (Kind    => XSD_Should_Fail,
+                   Group   => Group,
+                   Schema  => To_String (Document),
+                   Test    => "",
+                   Msg     => "(i)");
          end if;
 
       exception
          when E : XML_Validation_Error | XML_Fatal_Error =>
             Close (Input);
             if Test_Schemas and then Outcome = Valid then
-               Error (Testset, Group,
-                      To_String (Document),
-                      "", "(v) " & Exception_Message (E));
+               Error (Kind    => XSD_Should_Pass,
+                      Group   => Group,
+                      Schema  => To_String (Document),
+                      Test    => "",
+                      Msg     => "(v) " & Exception_Message (E));
             else
                --  The error message already includes the name of the
                --  document, so we do not repeat it
                Expected
-                 (Testset, Group, To_String (Document), "",
+                 (Group, To_String (Document), "",
                   Exception_Message (E));
             end if;
 
          when E : others =>
             Close (Input);
-            Error (Testset, Group,
-                   To_String (Document), "",
-                   Exception_Information (E));
+            Error (Kind    => Internal_Error,
+                   Group   => Group,
+                   Schema  => To_String (Document),
+                   Test    => "",
+                   Msg     => Exception_Information (E));
       end;
    end Parse_Schema_Test;
 
@@ -385,10 +435,11 @@ procedure Schematest is
    -------------------------
 
    procedure Parse_Instance_Test
-     (Testset, Group, Schema : String;
-      Test           : Node;
-      Base_Dir       : String;
-      Grammar        : XML_Grammar)
+     (Group     : in out Group_Result;
+      Schema    : String;
+      Test      : Node;
+      Base_Dir  : String;
+      Grammar   : XML_Grammar)
    is
       Name     : constant String := Get_Attribute (Test, "name");
       Outcome  : constant Outcome_Value := Get_Expected (Test);
@@ -398,7 +449,7 @@ procedure Schematest is
       Document : Unbounded_String;
    begin
       if Accepted_Only
-        and then Get_Status (Testset, Group, Schema, Name, Test) /= Accepted
+        and then Get_Status (Group, Schema, Name, Test) /= Accepted
       then
          return;
       end if;
@@ -418,37 +469,43 @@ procedure Schematest is
                   Put_Line ("Parsing " & To_String (Document));
                end if;
 
-               Total_Parsed_XML := Total_Parsed_XML + 1;
+               Group.Parsed_XML := Group.Parsed_XML + 1;
                Open (To_String (Document), Input);
                Parse (Reader, Input);
                Close (Input);
 
                if Test_XML and then Outcome = Invalid then
-                  Error (Testset, Group, Schema,
-                         To_String (Document),
-                         "(i)");
+                  Error (Kind    => XML_Should_Fail,
+                         Group   => Group,
+                         Schema  => Schema,
+                         Test    => To_String (Document),
+                         Msg     => "(i)");
                end if;
 
             exception
                when E : XML_Validation_Error | XML_Fatal_Error =>
                   Close (Input);
                   if Test_XML and then Outcome = Valid then
-                     Error (Testset, Group, Schema,
-                            To_String (Document),
-                            "(v) " & Exception_Message (E));
+                     Error (Kind    => XML_Should_Pass,
+                            Group   => Group,
+                            Schema  => Schema,
+                            Test    => To_String (Document),
+                            Msg     => "(v) " & Exception_Message (E));
                   else
                      --  The error message already includes the name of the
                      --  document, so we do not repeat it
-                     Expected (Testset, Group, Schema,
+                     Expected (Group, Schema,
                                To_String (Document),
                                Exception_Message (E));
                   end if;
 
                when E : others =>
                   Close (Input);
-                  Error (Testset, Group, Schema,
-                         To_String (Document),
-                         Exception_Information (E));
+                  Error (Kind    => Internal_Error,
+                         Group   => Group,
+                         Schema  => Schema,
+                         Test    => To_String (Document),
+                         Msg     => Exception_Message (E));
             end;
          end if;
          N := Next_Sibling (N);
@@ -468,17 +525,28 @@ procedure Schematest is
       N      : Node := First_Child (Group);
       Schema : XML_Grammar;
       Schema_Files : Unbounded_String;
+      Result : Group_Result;
    begin
-      if String_Hash.Contains (Disabled_Groups, Name) then
-         Put_Line ("Grp: " & Name & " (disabled)");
-         New_Line;
-         return;
+      if Find (Groups, Name) /= Group_Hash.No_Element then
+         Result := Group_Hash.Element (Groups, Name);
+         if Result.Disabled then
+            Put_Line ("Grp: " & Name & " (disabled)");
+            New_Line;
+            return;
+         end if;
+      else
+         Result.Name := To_Unbounded_String (Testset & " / " & Name);
       end if;
 
       while N /= null loop
-         if Local_Name (N) = "schemaTest" then
+         if Local_Name (N) = "description" then
+            Result.Descr := To_Unbounded_String
+              (Node_Value (First_Child (N)));
+
+         elsif Local_Name (N) = "schemaTest" then
+            Result.Test_Count := Result.Test_Count + 1;
             Parse_Schema_Test
-              (Testset, Name, N, Base_Dir,
+              (Result, N, Base_Dir,
                Grammar      => Schema,
                Schema_Files => Schema_Files);
             if Schema = No_Grammar then
@@ -488,12 +556,15 @@ procedure Schematest is
             end if;
 
          elsif Local_Name (N) = "instanceTest" then
+            Result.Test_Count := Result.Test_Count + 1;
             Parse_Instance_Test
-              (Testset, Name, To_String (Schema_Files), N, Base_Dir, Schema);
+              (Result, To_String (Schema_Files), N, Base_Dir, Schema);
          end if;
 
          N := Next_Sibling (N);
       end loop;
+
+      Group_Hash.Include (Groups, Name, Result);
    end Run_Test_Group;
 
    -----------------
@@ -565,6 +636,146 @@ procedure Schematest is
       Free (Reader);
    end Run_Testsuite;
 
+   procedure Print_Results is
+      Total_Error : Natural := 0;
+      Total_Tests : Natural := 0;
+      Total_XML   : Natural := 0;
+      Total_XSD   : Natural := 0;
+      Group_Total : Natural;
+      In_Full_Fail_Groups : Natural := 0;
+      XSD_In_Partial_Fail_Groups_Should_Fail : Natural := 0;
+      XML_In_Partial_Fail_Groups_Should_Fail : Natural := 0;
+      Errors      : Errors_Count := (others => 0);
+      Group       : Group_Hash.Cursor := Group_Hash.First (Groups);
+      Group_Should_Fail : Natural;
+      Gr          : Group_Result;
+   begin
+      Put_Line (Base_Name (Command_Name, ".exe"));
+
+      if Accepted_Only then
+         Put_Line ("Tests marked by W3C as non-accepted were not run");
+      end if;
+
+      while Has_Element (Group) loop
+         Gr := Group_Hash.Element (Group);
+
+         Total_Tests := Total_Tests + Gr.Test_Count;
+         Total_XML   := Total_XML   + Gr.Parsed_XML;
+         Total_XSD   := Total_XSD   + Gr.Parsed_XSD;
+
+         Group_Total := 0;
+         Group_Should_Fail :=
+           Gr.Errors (XSD_Should_Fail) + Gr.Errors (XML_Should_Fail);
+
+         for K in Gr.Errors'Range loop
+            Errors (K)  := Errors (K)  + Gr.Errors (K);
+            Group_Total := Group_Total + Gr.Errors (K);
+         end loop;
+
+         Total_Error := Total_Error + Group_Total;
+
+         if Group_Total = Gr.Test_Count then
+            In_Full_Fail_Groups := In_Full_Fail_Groups + Group_Total;
+         else
+            XSD_In_Partial_Fail_Groups_Should_Fail :=
+              XSD_In_Partial_Fail_Groups_Should_Fail
+                + Gr.Errors (XSD_Should_Fail);
+            XML_In_Partial_Fail_Groups_Should_Fail :=
+              XML_In_Partial_Fail_Groups_Should_Fail
+                + Gr.Errors (XML_Should_Fail);
+         end if;
+
+         if Stats then
+            if Gr.Disabled then
+               Put_Line ("    --disabled--");
+
+            elsif Group_Total /= 0 or not Stats_Hide_OK then
+               New_Line;
+               Put_Line (To_String (Gr.Name));
+
+               if Gr.Descr /= Null_Unbounded_String then
+                  Put_Line (To_String (Gr.Descr));
+               end if;
+
+               Put_Line ("   tests=" & Gr.Test_Count'Img
+                         & " including xsd=" & Gr.Parsed_XSD'Img
+                         & " xml=" & Gr.Parsed_XML'Img);
+               Put ("   OK ="
+                    & Integer'Image (Gr.Test_Count - Group_Total)
+                    & "  FAILED ="
+                    & Integer'Image (Group_Total) & " ie ");
+               Put (100.0 * Float (Group_Total) / Float (Gr.Test_Count),
+                    Aft => 0, Exp => 0);
+               Put_Line (" %");
+
+               if Group_Should_Fail /= 0 then
+                  Put_Line
+                    ("   accepted but should have failed:"
+                     & Integer'Image (Group_Should_Fail)
+                     & " (xsd=" & Gr.Errors (XSD_Should_Fail)'Img
+                     & " xml="  & Gr.Errors (XML_Should_Fail)'Img & ")");
+               end if;
+
+               if Gr.Errors
+                 (XSD_Should_Pass) + Gr.Errors (XML_Should_Pass) /= 0
+               then
+                  Put_Line
+                    ("   rejected but should have passed:"
+                     & Integer'Image
+                       (Gr.Errors (XSD_Should_Pass)
+                        + Gr.Errors (XML_Should_Pass))
+                     & " (xsd=" & Gr.Errors (XSD_Should_Pass)'Img
+                     & " xml="  & Gr.Errors (XML_Should_Pass)'Img & ")");
+               end if;
+
+               if Gr.Errors (Internal_Error) /= 0 then
+                  Put_Line
+                    ("  internal errors:"
+                     & Gr.Errors (Internal_Error)'Img);
+               end if;
+            end if;
+         end if;
+
+         Next (Group);
+      end loop;
+
+      if Stats then
+         New_Line;
+      end if;
+
+      Put_Line ("Total number of tests:" & Total_Tests'Img);
+      Put_Line ("  " & Total_XSD'Img
+                & " XSD files (not including those parsed"
+                & " automatically)");
+      Put_Line ("  " & Total_XML'Img & " XML files");
+
+      for K in Error_Kind'Range loop
+         case K is
+            when XSD_Should_Pass =>
+               Put ("XSD was rejected, but should have passed:");
+            when XSD_Should_Fail =>
+               Put ("XSD was accepted, but should have been rejected:");
+            when XML_Should_Pass =>
+               Put ("XML was rejected, but should have passed:");
+            when XML_Should_Fail =>
+               Put ("XML was accepted, but should have been rejected:");
+            when Internal_Error =>
+               Put ("Internal error:");
+         end case;
+         Put_Line (Errors (K)'Img);
+      end loop;
+      Put ("Total errors:" & Total_Error'Img & " (");
+      Put (100.0 * Float (Total_Error) / Float (Total_Tests),
+           Aft => 0, Exp => 0);
+      Put_Line (" %)");
+      Put_Line ("   including" & In_Full_Fail_Groups'Img
+                & " in groups for which no test pass (unimplemented?)");
+      Put_Line ("   (" & XSD_In_Partial_Fail_Groups_Should_Fail'Img
+                & " xsd errors in groups that partially pass)");
+      Put_Line ("   (" & XML_In_Partial_Fail_Groups_Should_Fail'Img
+                & " xml errors in groups that partially pass)");
+   end Print_Results;
+
 begin
    if not Is_Directory (Testdir) then
       Put_Line (Standard_Error, "No such directory: " & Testdir);
@@ -572,12 +783,33 @@ begin
    end if;
 
    loop
-      case Getopt ("v d x s e") is
+      case Getopt ("v d x s e f h a -stats -statsKO") is
+         when 'h'    =>
+            Put_Line ("-v   Verbose mode");
+            Put_Line ("-d   Debug mode");
+            Put_Line ("-x   Disable testing of XML file validity");
+            Put_Line ("-s   Disable testing of XSD file validity");
+            Put_Line ("-a   Also run ambiguous tests under discussion");
+            New_Line;
+            Put_Line ("-e   Hide PASSED tests");
+            Put_Line ("-f   Hide FAILED tests in the output");
+            New_Line;
+            Put_Line ("--stats    Print statistics (per chapter)");
+            Put_Line ("--statsKO  Print stats only for failed groups");
+            return;
+
          when 'v'    => Verbose := True;
          when 'd'    => Debug   := True;
          when 'x'    => Test_XML := False;
          when 's'    => Test_Schemas := False;
-         when 'e'    => Show_Expected := False;
+         when 'e'    => Show_Passed := False;
+         when 'f'    => Show_Failed := False;
+         when 'a'    => Accepted_Only := False;
+         when '-'    =>
+            Stats := True;
+            if Full_Switch = "-statsKO" then
+               Stats_Hide_OK := True;
+            end if;
          when others => exit;
       end case;
    end loop;
@@ -593,8 +825,5 @@ begin
    Change_Dir (Testdir);
    Run_Testsuite ("suite.xml");
 
-   Put_Line (Base_Name (Command_Name, ".exe")
-             & ": xsd files:" & Total_Parsed_Schema'Img
-             & " XML:" & Total_Parsed_XML'Img
-             & " Errors (expected if no diff):" & Total_Error'Img);
+   Print_Results;
 end Schematest;
