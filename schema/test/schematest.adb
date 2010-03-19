@@ -637,16 +637,17 @@ procedure Schematest is
    end Run_Testsuite;
 
    procedure Print_Results is
+      type Group_Kind is (Fully_Passed, Partially_Passed, Fully_Failed);
+
       Total_Error : Natural := 0;
       Total_Tests : Natural := 0;
       Total_XML   : Natural := 0;
       Total_XSD   : Natural := 0;
       Group_Total : Natural;
-      In_Full_Fail_Groups : Natural := 0;
-      XSD_In_Partial_Fail_Groups_Should_Fail : Natural := 0;
-      XML_In_Partial_Fail_Groups_Should_Fail : Natural := 0;
-      Errors      : Errors_Count := (others => 0);
+      Errors      : array (Group_Kind) of Errors_Count :=
+        (others => (others => 0));
       Group       : Group_Hash.Cursor := Group_Hash.First (Groups);
+      Kind        : Group_Kind;
       Group_Should_Fail : Natural;
       Gr          : Group_Result;
    begin
@@ -668,22 +669,22 @@ procedure Schematest is
            Gr.Errors (XSD_Should_Fail) + Gr.Errors (XML_Should_Fail);
 
          for K in Gr.Errors'Range loop
-            Errors (K)  := Errors (K)  + Gr.Errors (K);
             Group_Total := Group_Total + Gr.Errors (K);
          end loop;
 
          Total_Error := Total_Error + Group_Total;
 
-         if Group_Total = Gr.Test_Count then
-            In_Full_Fail_Groups := In_Full_Fail_Groups + Group_Total;
+         if Group_Total = 0 then
+            Kind := Fully_Passed;
+         elsif Group_Total = Gr.Test_Count then
+            Kind := Fully_Failed;
          else
-            XSD_In_Partial_Fail_Groups_Should_Fail :=
-              XSD_In_Partial_Fail_Groups_Should_Fail
-                + Gr.Errors (XSD_Should_Fail);
-            XML_In_Partial_Fail_Groups_Should_Fail :=
-              XML_In_Partial_Fail_Groups_Should_Fail
-                + Gr.Errors (XML_Should_Fail);
+            Kind := Partially_Passed;
          end if;
+
+         for K in Gr.Errors'Range loop
+            Errors (Kind)(K)  := Errors (Kind)(K) + Gr.Errors (K);
+         end loop;
 
          if Stats then
             if Gr.Disabled then
@@ -748,32 +749,41 @@ procedure Schematest is
                 & " XSD files (not including those parsed"
                 & " automatically)");
       Put_Line ("  " & Total_XML'Img & " XML files");
+      New_Line;
 
       for K in Error_Kind'Range loop
          case K is
             when XSD_Should_Pass =>
-               Put ("XSD was rejected, but should have passed:");
+               Put ("XSD KO, should be OK:");
             when XSD_Should_Fail =>
-               Put ("XSD was accepted, but should have been rejected:");
+               Put ("XSD OK, should be KO:");
             when XML_Should_Pass =>
-               Put ("XML was rejected, but should have passed:");
+               Put ("XML KO, should be OK:");
             when XML_Should_Fail =>
-               Put ("XML was accepted, but should have been rejected:");
+               Put ("XML OK, should be KO:");
             when Internal_Error =>
                Put ("Internal error:");
          end case;
-         Put_Line (Errors (K)'Img);
+
+         for Kind in Group_Kind'Range loop
+            case Kind is
+               when Fully_Passed =>
+                  Put (" in_full_pass=");
+               when Fully_Failed =>
+                  Put (" in_full_fail=");
+               when Partially_Passed =>
+                  Put (" in_partial=");
+            end case;
+            Put (Errors (Kind)(K)'Img);
+         end loop;
+
+         New_Line;
       end loop;
+
       Put ("Total errors:" & Total_Error'Img & " (");
       Put (100.0 * Float (Total_Error) / Float (Total_Tests),
            Aft => 0, Exp => 0);
       Put_Line (" %)");
-      Put_Line ("   including" & In_Full_Fail_Groups'Img
-                & " in groups for which no test pass (unimplemented?)");
-      Put_Line ("   (" & XSD_In_Partial_Fail_Groups_Should_Fail'Img
-                & " xsd errors in groups that partially pass)");
-      Put_Line ("   (" & XML_In_Partial_Fail_Groups_Should_Fail'Img
-                & " xml errors in groups that partially pass)");
    end Print_Results;
 
 begin
