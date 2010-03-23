@@ -22,7 +22,7 @@
 ## All NIST tests are included in this testsuite
 ## Some Microsoft tests are missing in this testsuite
 
-xmltests=./xmltests
+xmltests=./xmlschema2006-11-06 
 
 if [ -d $xmltests ]; then
   :
