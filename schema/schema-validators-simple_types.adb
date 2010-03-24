@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -529,7 +529,7 @@ package body Schema.Validators.Simple_Types is
      (Float_Facets_Description);
 
    package Decimal_Facets_Package is new Generic_Range_Facets
-     ("decimal", Arbitrary_Precision_Number, Value, Image);
+     ("decimal", Arbitrary_Precision_Number, Value_No_Exponent, Image);
    type Decimal_Facets_Description is new
      Decimal_Facets_Package.Range_Facets_Description with
       record
@@ -760,7 +760,7 @@ package body Schema.Validators.Simple_Types is
    is
       use Decimal_Facets_Package;
    begin
-      Check_Digits (Value (Facet_Value), Facets.Fraction_Digits,
+      Check_Digits (Value_No_Exponent (Facet_Value), Facets.Fraction_Digits,
                     Facets.Total_Digits);
       Check_Facet (Range_Facets_Description (Facets), Facet_Value);
    end Check_Facet;

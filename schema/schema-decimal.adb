@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2005-2009, AdaCore               --
+--                    Copyright (C) 2005-2010, AdaCore               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -48,6 +48,11 @@ package body Schema.Decimal is
    procedure To_Next_Digit (Num : String; Pos : in out Integer);
    --  Move Pos to the next digit in Num
 
+   function Internal_Value
+     (Ch : Unicode.CES.Byte_Sequence;
+      Allow_Exponent : Boolean) return Arbitrary_Precision_Number;
+   --  Internal implementation of Value
+
    -----------
    -- Image --
    -----------
@@ -67,7 +72,18 @@ package body Schema.Decimal is
    -----------
 
    function Value
-     (Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number
+     (Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number is
+   begin
+      return Internal_Value (Ch, Allow_Exponent => True);
+   end Value;
+
+   --------------------
+   -- Internal_Value --
+   --------------------
+
+   function Internal_Value
+     (Ch : Unicode.CES.Byte_Sequence;
+      Allow_Exponent : Boolean) return Arbitrary_Precision_Number
    is
       Pos          : Integer := Ch'First;
       First, Last  : Integer;
@@ -110,9 +126,13 @@ package body Schema.Decimal is
            or else C = Latin_Small_Letter_E
          then
             if Saw_Exponent then
-               Validation_Error
-                 ("Only one exponent allowed in " & Ch);
+               Validation_Error ("Only one exponent allowed in " & Ch);
             end if;
+
+            if not Allow_Exponent then
+               Validation_Error ("Exponent parent not authorized in " & Ch);
+            end if;
+
             Saw_Exponent := True;
             Saw_Point := False;
 
@@ -150,7 +170,17 @@ package body Schema.Decimal is
       end loop;
 
       return (Controlled with Value => new Byte_Sequence'(Ch (First .. Last)));
-   end Value;
+   end Internal_Value;
+
+   -----------------------
+   -- Value_No_Exponent --
+   -----------------------
+
+   function Value_No_Exponent
+     (Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number is
+   begin
+      return Internal_Value (Ch, Allow_Exponent => False);
+   end Value_No_Exponent;
 
    --------------
    -- Finalize --

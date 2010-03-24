@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005-2009, AdaCore            --
+--                       Copyright (C) 2005-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -497,6 +497,13 @@ package body Schema.Date_Time is
       else
          Msec := Day_Range'Value (Ch (Ch'First + 6 .. Ch'First + 7));
          Eos := Ch'First + 8;
+      end if;
+
+      if Msec >= 60.0 then
+         Validation_Error
+           ("Invalid seconds specification in time: """ & Ch & """");
+         Time := No_Time_NZ;
+         return;
       end if;
 
       Time := Dur + Msec;
