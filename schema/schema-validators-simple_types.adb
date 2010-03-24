@@ -70,31 +70,148 @@ package body Schema.Validators.Simple_Types is
        others => False);
    --  Whether the character matches the Base64Binary definitions
 
-   function Image (Value : Long_Long_Float) return String;
-   --  Return a string version of Value
+   type XML_Float_Kind is (Plus_Infinity, Minus_Infinity, NaN, Standard_Float);
+   type XML_Float (Kind : XML_Float_Kind := NaN) is record
+      case Kind is
+         when Standard_Float =>
+            Value : Long_Long_Float;
+         when others =>
+            null;
+      end case;
+   end record;
+
+   function "<=" (F1, F2 : XML_Float) return Boolean;
+   function "<" (F1, F2 : XML_Float) return Boolean;
+   function ">=" (F1, F2 : XML_Float) return Boolean;
+   function ">" (F1, F2 : XML_Float) return Boolean;
+   function Image (Value : XML_Float) return String;
+   function Value (Str : String) return XML_Float;
+   --  Return the float stored in Str (including +INF, -INF)
+
+   ----------
+   -- "<=" --
+   ----------
+
+   function "<=" (F1, F2 : XML_Float) return Boolean is
+   begin
+      case F1.Kind is
+         when NaN =>
+            return False;
+         when Plus_Infinity =>
+            return False;
+         when Minus_Infinity =>
+            return True;
+         when Standard_Float =>
+            case F2.Kind is
+               when NaN =>
+                  return False;
+               when Plus_Infinity =>
+                  return True;
+               when Minus_Infinity =>
+                  return False;
+               when Standard_Float =>
+                  return F1.Value <= F2.Value;
+            end case;
+      end case;
+   end "<=";
+
+   ----------
+   -- ">=" --
+   ----------
+
+   function ">=" (F1, F2 : XML_Float) return Boolean is
+   begin
+      return not (F1 < F2);
+   end ">=";
+
+   ---------
+   -- ">" --
+   ---------
+
+   function ">" (F1, F2 : XML_Float) return Boolean is
+   begin
+      return not (F1 <= F2);
+   end ">";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (F1, F2 : XML_Float) return Boolean is
+   begin
+      case F1.Kind is
+         when NaN =>
+            return False;
+         when Plus_Infinity =>
+            return False;
+         when Minus_Infinity =>
+            return True;
+         when Standard_Float =>
+            case F2.Kind is
+               when NaN =>
+                  return False;
+               when Plus_Infinity =>
+                  return True;
+               when Minus_Infinity =>
+                  return False;
+               when Standard_Float =>
+                  return F1.Value < F2.Value;
+            end case;
+      end case;
+   end "<";
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Str : String) return XML_Float is
+   begin
+      if Str = "NaN" then
+         return XML_Float'(Kind => NaN);
+      elsif Str = "INF" then
+         return XML_Float'(Kind => Plus_Infinity);
+      elsif Str = "-INF" then
+         return XML_Float'(Kind => Minus_Infinity);
+      else
+         return XML_Float'(Kind  => Standard_Float,
+                           Value => Long_Long_Float'Value (Str));
+      end if;
+   end Value;
 
    -----------
    -- Image --
    -----------
 
-   function Image (Value : Long_Long_Float) return String is
-      Str : constant String := Long_Long_Float'Image (Value);
-      E   : constant Integer := Index (Str, "E");
+   function Image (Value : XML_Float) return String is
    begin
-      if E < Str'First then
-         for J in reverse Str'Range loop
-            if Str (J) /= '0' then
-               return Str (Str'First .. J);
-            end if;
-         end loop;
-      else
-         for J in reverse Str'First .. E - 1 loop
-            if Str (J) /= '0' then
-               return Str (Str'First .. J) & Str (E .. Str'Last);
-            end if;
-         end loop;
-      end if;
-      return Str;
+      case Value.Kind is
+         when NaN =>
+            return "NaN";
+         when Plus_Infinity =>
+            return "INF";
+         when Minus_Infinity =>
+            return "-INF";
+         when Standard_Float =>
+            declare
+               Str : constant String := Long_Long_Float'Image (Value.Value);
+               E   : constant Integer := Index (Str, "E");
+            begin
+               if E < Str'First then
+                  for J in reverse Str'Range loop
+                     if Str (J) /= '0' then
+                        return Str (Str'First .. J);
+                     end if;
+                  end loop;
+               else
+                  for J in reverse Str'First .. E - 1 loop
+                     if Str (J) /= '0' then
+                        return Str (Str'First .. J) & Str (E .. Str'Last);
+                     end if;
+                  end loop;
+               end if;
+               return Str;
+            end;
+      end case;
    end Image;
 
    ------------------------------------
@@ -519,7 +636,7 @@ package body Schema.Validators.Simple_Types is
      (Duration_Facets_Package.Range_Facets_Description);
 
    package Float_Facets_Package is new Generic_Range_Facets
-     ("float", Long_Long_Float, Long_Long_Float'Value, Image);
+     ("float", XML_Float, Value, Image);
    type Float_Facets_Description is
      new Float_Facets_Package.Range_Facets_Description with null record;
    procedure Check_Facet
