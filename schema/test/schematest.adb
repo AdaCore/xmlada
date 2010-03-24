@@ -79,6 +79,8 @@ procedure Schematest is
    --  tests might be under discussion, and have a status of "queried". Such
    --  tests are not run.
 
+   Features : Supported_Features := All_Features;
+
    Xlink : constant String := "http://www.w3.org/1999/xlink";
 
    type Result_Kind is (Passed,
@@ -318,6 +320,7 @@ procedure Schematest is
             Set_Feature (Reader, Schema_Validation_Feature, True);
             Set_Created_Grammar (Reader, No_Grammar);
             Use_Basename_In_Error_Messages (Reader, True);
+            Set_Supported_Features (Reader, Features);
 
             Group.Test_Count := Group.Test_Count + 1;
 
@@ -832,7 +835,7 @@ procedure Schematest is
       Put_Line (" %)");
    end Print_Results;
 
-   Setting : Boolean;
+   Setting  : Boolean;
 begin
    if not Is_Directory (Testdir) then
       Put_Line (Standard_Error, "No such directory: " & Testdir);
@@ -840,7 +843,7 @@ begin
    end if;
 
    loop
-      case Getopt ("v d a h f -filter: -descr -group -hide:") is
+      case Getopt ("v d a h f -filter: -descr -group -hide: -feature:") is
          when 'h'    =>
             Put_Line ("-v   Verbose mode");
             Put_Line ("-d   Debug mode");
@@ -856,6 +859,9 @@ begin
             Put_Line ("--descr Show group descriptions");
             Put_Line ("--group Hide fully failed groups");
             Put_Line ("     These likely show unimplemented features");
+            Put_Line ("--feature name    Disable support for a feature");
+            Put_Line
+              ("     Valid names are: attrform, subgroup, abstract, nillable");
             return;
 
          when 'v' => Verbose := True;
@@ -864,6 +870,20 @@ begin
          when '-' =>
             if Full_Switch = "-group" then
                Hide_Fully_Failed_Groups := True;
+
+            elsif Full_Switch = "-feature" then
+               if Parameter = "attrform" then
+                  Features.Attribute_Form := False;
+               elsif Parameter = "subgroup" then
+                  Features.Substitution_Group := False;
+               elsif Parameter = "abstract" then
+                  Features.Abstracts := False;
+               elsif Parameter = "nillable" then
+                  Features.Nillable := False;
+               else
+                  Put_Line ("Invalid feature name");
+                  return;
+               end if;
 
             elsif Full_Switch = "-filter"
               or else Full_Switch = "-hide"
@@ -897,6 +917,7 @@ begin
                            Filter (Not_Implemented) := Setting;
                         else
                            Put_Line ("Invalid filter: " & F (Prev .. Pos - 1));
+                           return;
                         end if;
 
                         Prev := Pos + 1;
@@ -907,6 +928,9 @@ begin
 
             elsif Full_Switch = "-descr" then
                Show_Descr := True;
+
+            else
+               Put_Line ("Invalid switch: -" & Full_Switch);
             end if;
          when 'a'    => Accepted_Only := False;
          when others => exit;

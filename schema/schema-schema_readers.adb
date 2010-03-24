@@ -869,6 +869,12 @@ package body Schema.Schema_Readers is
 
    begin
       if Form_Index /= -1 then
+         if not Handler.Supported.Attribute_Form then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Support for element's ""form"" explicitly disabled");
+         end if;
+
          if Get_Value (Atts, Form_Index) = "qualified" then
             Form := Qualified;
          else
@@ -882,6 +888,14 @@ package body Schema.Schema_Readers is
          if Type_Index /= -1 then
             Lookup_With_NS
               (Handler, Get_Value (Atts, Type_Index), Result => Typ);
+
+            if Get_Local_Name (Typ) = "IDREF"
+              or else Get_Local_Name (Typ) = "IDREFS"
+            then
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  "Unsupported type IDREF and IDREFS");
+            end if;
          end if;
 
          case Handler.Contexts.Typ is
@@ -937,6 +951,13 @@ package body Schema.Schema_Readers is
       end if;
 
       if Subst_Index /= -1 then
+         if not Handler.Supported.Substitution_Group then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Support for element's ""substitutionGroup"" explicitly"
+               & " disabled");
+         end if;
+
          Lookup_With_NS
            (Handler, Get_Value (Atts, Subst_Index), Result => Group);
          Set_Substitution_Group (Element, Group);
@@ -959,6 +980,12 @@ package body Schema.Schema_Readers is
       end if;
 
       if Abstract_Index /= -1 then
+         if not Handler.Supported.Abstracts then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Support for ""abstract"" explicitly disabled");
+         end if;
+
          Set_Abstract (Element, Get_Value_As_Boolean (Atts, Abstract_Index));
          Output ("Set_Abstract ("
                  & Ada_Name (Element) & ", "
@@ -967,6 +994,12 @@ package body Schema.Schema_Readers is
       end if;
 
       if Nillable_Index /= -1 then
+         if not Handler.Supported.Nillable then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Support for ""nillable"" explicitly disabled");
+         end if;
+
          Set_Nillable (Element, Get_Value_As_Boolean (Atts, Nillable_Index));
          Output ("Set_Nillable ("
                  & Ada_Name (Element) & ", "
@@ -1139,10 +1172,25 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "mixed");
       Block_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "block");
+      Abstract_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "abstract");
       Name       : Byte_Sequence_Access;
       Mixed   : Boolean;
 
    begin
+      if Abstract_Index /= -1 then
+         if not Handler.Supported.Abstracts then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Support for ""abstract"" explicitly disabled");
+         end if;
+
+         --  Not supported yet anyway
+         Raise_Exception
+           (XML_Not_Implemented'Identity,
+            "Unsupported ""abstract"" attribute for complexType");
+      end if;
+
       if Name_Index /= -1 then
          Name := new Byte_Sequence'(Get_Value (Atts, Name_Index));
       end if;
@@ -1285,6 +1333,15 @@ package body Schema.Schema_Readers is
       elsif Base_Index /= -1 then
          Lookup_With_NS
            (Handler, Get_Value (Atts, Base_Index), Result => Base);
+
+         if Get_Local_Name (Base) = "IDREF"
+           or else Get_Local_Name (Base) = "IDREFS"
+         then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported type IDREF and IDREFS");
+         end if;
+
       else
          Base := No_Type;
       end if;
@@ -1744,6 +1801,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "fixed");
       Ref_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "ref");
+      Form_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "form");
 
       function Get_Fixed return String;
       --  Return the "fixed" value for the attribute
@@ -1761,9 +1820,30 @@ package body Schema.Schema_Readers is
       Typ : XML_Type := No_Type;
       Use_Type : Attribute_Use_Type := Optional;
    begin
+      if Form_Index /= -1 then
+         if not Handler.Supported.Attribute_Form then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Support for attribute form explicitly disabled");
+         end if;
+
+         --  Not implemented yet anyway
+         Raise_Exception
+           (XML_Not_Implemented'Identity,
+            "Unsupported ""form"" attribute for <attribute>");
+      end if;
+
       if Type_Index /= -1 then
          Lookup_With_NS
            (Handler, Get_Value (Atts, Type_Index), Result => Typ);
+
+         if Get_Local_Name (Typ) = "IDREF"
+           or else Get_Local_Name (Typ) = "IDREFS"
+         then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported type IDREF and IDREFS");
+         end if;
       end if;
 
       if Use_Index = -1 then
@@ -1934,6 +2014,12 @@ package body Schema.Schema_Readers is
       end if;
 
       if Form_Default_Index /= -1 then
+         if not Handler.Supported.Attribute_Form then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Support for attribute elementFormdefault explicitly disabled");
+         end if;
+
          if Get_Value (Atts, Form_Default_Index) = "qualified" then
             Handler.Element_Form_Default := Qualified;
             Output
@@ -2447,5 +2533,16 @@ package body Schema.Schema_Readers is
          Get_NS (Handler.Created_Grammar, Namespace.all, Grammar);
       end if;
    end Get_Grammar_For_Namespace;
+
+   ----------------------------
+   -- Set_Supported_Features --
+   ----------------------------
+
+   procedure Set_Supported_Features
+     (Reader   : in out Schema_Reader;
+      Features : Supported_Features) is
+   begin
+      Reader.Supported := Features;
+   end Set_Supported_Features;
 
 end Schema.Schema_Readers;

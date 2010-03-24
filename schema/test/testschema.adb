@@ -57,7 +57,6 @@ procedure TestSchema is
    Explicit_XSD : Boolean := False;
    Switches  : constant String := "xsd: debug base dom h";
    DOM       : Boolean := False;
-   Stats     : Boolean := False;
 
 begin
    --  Special case: check if we want debug output, before doing anything else
@@ -102,6 +101,13 @@ begin
 
    Set_Created_Grammar (Schema, No_Grammar);
    Initialize_Option_Scan;
+
+   Set_Supported_Features   --  not needed here, just for example
+     (Schema,
+      (Attribute_Form     => True,
+       Substitution_Group => True,
+       Abstracts          => True,
+       Nillable           => True));
 
    loop
       case Getopt (Switches) is

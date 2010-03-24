@@ -396,6 +396,9 @@ package body Schema.Date_Time is
          Validation_Error ("Year cannot be null in: """ & Ch & """");
          Eos  := Ch'Last;
          return;
+
+      elsif Pos - Ch'First < 4 then
+         Validation_Error ("Year must include at least four digits");
       end if;
 
       Eos := Pos;
@@ -415,7 +418,10 @@ package body Schema.Date_Time is
       Date : out Date_NZ_T;
       Eos  : out Natural)
    is
+      Max_Days : constant array (1 .. 12) of Natural :=
+        (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
       Pos  : Integer;
+      Leap_Year : Boolean;
    begin
       Parse_Year (Ch, Date.Year, Pos);
 
@@ -436,6 +442,25 @@ package body Schema.Date_Time is
       Date.Month  := Integer'Value (Ch (Pos +  1 .. Pos +  2));
       Date.Day    := Integer'Value (Ch (Pos +  4 .. Pos +  5));
       Eos := Pos + 6;
+
+      --  Check that the date is correct.
+      --  We cannot use Ada.Calendar, since its range of dates is much more
+      --  limited than the one in XML.
+
+      Leap_Year :=
+        Date.Year mod 4 = 0
+        and then (Date.Year mod 100 /= 0 or else Date.Year mod 400 = 0);
+
+      if Date.Day > Max_Days (Date.Month)
+        or else (Date.Month = 2
+                 and then (Date.Day > 29
+                           or else (Date.Day = 29 and then not Leap_Year)))
+      then
+         Validation_Error ("Invalid date """ & Ch & """");
+         --  & Date.Year'Image & Date.Month'Img & Date.Day'Img);
+         Date := No_Date_NZ;
+         Eos  := Ch'Last + 1;
+      end if;
 
    exception
       when Constraint_Error =>

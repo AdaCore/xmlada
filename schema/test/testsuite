@@ -1643,7 +1643,7 @@ if [ x$run_act = x1            -o $run_all_tests = 1 ]; then
      "act_testsuite/F511-009/Untitled7-2.xml:15:67: Invalid value: \"UjBsR@409EbGhjZ0dTQUxNQUFBUUNBRU1tQ1p0dU1GUXhEUzhi\""
    (cd act_testsuite/multiple_schemas; compare "multiple_schemas" "`./run.sh 2>&1`" "")
    expect "" "$act/F822-009/file.xml" ""
-   expect "$act/FA16-002/6_xhtml1-frameset.xsd" "" "Attribute \"{http://www.w3.org/XML/1998/namespace}space\" is referenced, but not defined"
+   expect "$act/FA16-002/6_xhtml1-frameset.xsd" "" "Unsupported type IDREF and IDREFS"
    expect "" "$act/F822-009_2/file.xml" "$act/F822-009_2/file.xml:8:2: attributeGroup \"{http://www.w3.org/2001/XMLSchema}attributes2\" is referenced, but not defined"
    expect "" "$act/G404-019/c_test.xml" "$act/G404-019/c_test.xml:16:10: Attribute \"subSystemId\" is required in this context"
    #expect "" "$act/H212-023/default_H212-023.xml" "<root xsi:noNamespaceSchemaLocation=\"H212-023.xsd\"> <Acknowledge>false</Acknowledge></root>" "-dom"

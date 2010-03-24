@@ -87,6 +87,33 @@ package Schema.Schema_Readers is
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether extra debug output should be displayed
 
+   type Supported_Features is record
+      Attribute_Form     : Boolean := True;
+      Substitution_Group : Boolean := True;
+      Abstracts          : Boolean := True;
+      Nillable           : Boolean := True;
+   end record;
+   All_Features : constant Supported_Features;
+   --  See Set_Supported_Features below.
+   --
+   --  "Attribute_Form": whether you can use the "form" attribute when defining
+   --    attributes.
+   --  "Substitution_Group": whether you can use the "substitutionGroup"
+   --    attribute.
+   --  "Abstracts": whether to accept "abstract" attribute
+   --  "Nil": whether the attribute "nillable" is supported
+
+   procedure Set_Supported_Features
+     (Reader   : in out Schema_Reader;
+      Features : Supported_Features);
+   --  This allows you to disable the support for various schema features,
+   --  which might only be partially supported by XML/Ada, and thus run the
+   --  testsuite when disabling the tests that use this feature. In turn, that
+   --  helps ensure that the subset of schema that you are using is fully
+   --  supported by XML/Ada.
+   --  The exception XML_Not_Implemented will be raised if your schema uses one
+   --  of the features you have disabled.
+
 private
    type Context_Type is (Context_Type_Def,
                          Context_Element,
@@ -154,6 +181,8 @@ private
       end case;
    end record;
 
+   All_Features : constant Supported_Features := (others => True);
+
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
       Created_Grammar : Schema.Validators.XML_Grammar :=
         Schema.Validators.No_Grammar;
@@ -178,6 +207,8 @@ private
 
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;
+
+      Supported       : Supported_Features := All_Features;
    end record;
 
    procedure Start_Document (Handler : in out Schema_Reader);

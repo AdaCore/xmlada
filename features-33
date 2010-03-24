@@ -19,3 +19,7 @@ NF-33-J302-043 New exception XML_Not_Implemented (2010-03-24)
 
    A new exception is raised when using a schema (.xsd) validator, and
    the schema uses features that are not supported by XML/Ada.
+   Unsupported features are: xsd:key elements, IDREF and IDREFS types.
+   It is also possible to explicitly disable support for some features
+   to make sure the subset of Schema you use is fully supported by
+   XML/Ada and passes all relevant tests of the W3C testsuite

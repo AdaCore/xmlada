@@ -2,24 +2,6 @@ schematest
 Tests marked by W3C as non-accepted were not run
 Version: W3C XML Schema 1.0 2nd edition
 Release: 2007-06-15
-Grp: NIST2004-01-14 / atomic-double-whiteSpace
-  81.3% tests= 16 (xsd= 1 xml= 15) OK= 13 FAILED= 3
-  XP NISTXML-SV-IV-atomic-double-whiteSpace-1-1
-    NISTXML-SV-IV-atomic-double-whiteSpace-1-1.xml:19:125: Invalid float: "-INF"
-  XP NISTXML-SV-IV-atomic-double-whiteSpace-1-14
-    NISTXML-SV-IV-atomic-double-whiteSpace-1-14.xml:19:124: Invalid float: "INF"
-  XP NISTXML-SV-IV-atomic-double-whiteSpace-1-15
-    NISTXML-SV-IV-atomic-double-whiteSpace-1-15.xml:19:124: Invalid float: "NaN"
-
-Grp: NIST2004-01-14 / atomic-float-whiteSpace
-  81.3% tests= 16 (xsd= 1 xml= 15) OK= 13 FAILED= 3
-  XP NISTXML-SV-IV-atomic-float-whiteSpace-1-1
-    NISTXML-SV-IV-atomic-float-whiteSpace-1-1.xml:19:123: Invalid float: "-INF"
-  XP NISTXML-SV-IV-atomic-float-whiteSpace-1-14
-    NISTXML-SV-IV-atomic-float-whiteSpace-1-14.xml:19:122: Invalid float: "INF"
-  XP NISTXML-SV-IV-atomic-float-whiteSpace-1-15
-    NISTXML-SV-IV-atomic-float-whiteSpace-1-15.xml:19:122: Invalid float: "NaN"
-
 Grp: NIST2004-01-14 / atomic-NCName-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-NCName-pattern-1
@@ -154,32 +136,6 @@ Grp: NIST2004-01-14 / atomic-QName-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-QName-pattern-5
     NISTSchema-SV-IV-atomic-QName-pattern-5.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{58}
-
-Grp: NIST2004-01-14 / list-double-whiteSpace
-  16.7% tests= 6 (xsd= 1 xml= 5) OK= 1 FAILED= 5
-  XP NISTXML-SV-IV-list-double-whiteSpace-1-1
-    NISTXML-SV-IV-list-double-whiteSpace-1-1.xml:19:529: Invalid float: "-INF"
-  XP NISTXML-SV-IV-list-double-whiteSpace-1-2
-    NISTXML-SV-IV-list-double-whiteSpace-1-2.xml:19:529: Invalid float: "-INF"
-  XP NISTXML-SV-IV-list-double-whiteSpace-1-3
-    NISTXML-SV-IV-list-double-whiteSpace-1-3.xml:19:484: Invalid float: "-INF"
-  XP NISTXML-SV-IV-list-double-whiteSpace-1-4
-    NISTXML-SV-IV-list-double-whiteSpace-1-4.xml:19:484: Invalid float: "-INF"
-  XP NISTXML-SV-IV-list-double-whiteSpace-1-5
-    NISTXML-SV-IV-list-double-whiteSpace-1-5.xml:19:341: Invalid float: "-INF"
-
-Grp: NIST2004-01-14 / list-float-whiteSpace
-  16.7% tests= 6 (xsd= 1 xml= 5) OK= 1 FAILED= 5
-  XP NISTXML-SV-IV-list-float-whiteSpace-1-1
-    NISTXML-SV-IV-list-float-whiteSpace-1-1.xml:19:369: Invalid float: "-INF"
-  XP NISTXML-SV-IV-list-float-whiteSpace-1-2
-    NISTXML-SV-IV-list-float-whiteSpace-1-2.xml:19:342: Invalid float: "-INF"
-  XP NISTXML-SV-IV-list-float-whiteSpace-1-3
-    NISTXML-SV-IV-list-float-whiteSpace-1-3.xml:19:314: Invalid float: "-INF"
-  XP NISTXML-SV-IV-list-float-whiteSpace-1-4
-    NISTXML-SV-IV-list-float-whiteSpace-1-4.xml:19:395: Invalid float: "-INF"
-  XP NISTXML-SV-IV-list-float-whiteSpace-1-5
-    NISTXML-SV-IV-list-float-whiteSpace-1-5.xml:19:286: Invalid float: "-INF"
 
 Grp: NIST2004-01-14 / list-NCName-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -357,41 +313,64 @@ Grp: AGroupDef / ag_targetns00101m1_n
   SF AG_targetNS00101m1_n
 
 Grp: AttrDecl / ad_name00101m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
-  XF Negative
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_name00101m1
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrDecl / ad_name00101m2
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
-  XF Negative
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_name00101m2
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrDecl / ad_name00101m3
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
-  XF Negative
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_name00101m3
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrDecl / ad_name00101m4
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
-  XF Negative
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_name00101m4
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrDecl / ad_targetns00101m
-  66.7% tests= 6 (xsd= 1 xml= 5) OK= 4 FAILED= 2
-  XF AD_targetNS00101m1_n
-  XF AD_targetNS00101m3_n
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_targetNS00101m
+    Unsupported "form" attribute for <attribute>
+
+Grp: AttrDecl / ad_type00101m
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_type00101m
+    Unsupported "form" attribute for <attribute>
+
+Grp: AttrDecl / ad_type00102m
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_type00102m
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrDecl / ad_valconstr00101m
-  80.0% tests= 5 (xsd= 1 xml= 4) OK= 4 FAILED= 1
-  XF AD_valConstr00101m1_n
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_valConstr00101m
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrDecl / ad_valconstr00201m1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF AD_valConstr00201m1
+  NI AD_valConstr00201m1
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrDecl / ad_valconstr00201m2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF AD_valConstr00201m2
+  NI AD_valConstr00201m2
+    Unsupported "form" attribute for <attribute>
+
+Grp: AttrDecl / ad_valconstr00201m3
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI AD_valConstr00201m3
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrDecl / ad_valconstr00201m4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF AD_valConstr00201m4
+  NI AD_valConstr00201m4
+    Unsupported "form" attribute for <attribute>
 
 Grp: AttrUse / au_attrdecl00101m1_n
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -404,6 +383,16 @@ Grp: AttrUse / au_required00101m1
 Grp: AttrUse / au_valconstr00101m1
   66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
   XF Negative
+
+Grp: CType / abstract00101m1
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI abstract00101m1
+    Unsupported "abstract" attribute for complexType
+
+Grp: CType / abstract00101m2
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI abstract00101m2
+    Unsupported "abstract" attribute for complexType
 
 Grp: CType / attributeuses00101m1
   66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
@@ -522,24 +511,29 @@ Grp: ElemDecl / idconstrdefs00204m
     Unsupported element in the schema: key
 
 Grp: ElemDecl / idconstrdefs00301m
-  40.0% tests= 5 (xsd= 1 xml= 4) OK= 2 FAILED= 3
-  XF idConstrDefs00301m2_n
-  XF idConstrDefs00301m3_n
-  XF idConstrDefs00301m4_n
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI idConstrDefs00301m
+    Unsupported type IDREF and IDREFS
 
 Grp: ElemDecl / idconstrdefs00302m
-  40.0% tests= 5 (xsd= 1 xml= 4) OK= 2 FAILED= 3
-  XF idConstrDefs00302m2_n
-  XF idConstrDefs00302m3_n
-  XF idConstrDefs00302m4_n
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI idConstrDefs00302m
+    Unsupported type IDREF and IDREFS
+
+Grp: ElemDecl / idconstrdefs00401m
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI idConstrDefs00401m
+    Unsupported type IDREF and IDREFS
 
 Grp: ElemDecl / idconstrdefs00402m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
-  XF idConstrDefs00402m1_n
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI idConstrDefs00402m
+    Unsupported type IDREF and IDREFS
 
 Grp: ElemDecl / idconstrdefs00403m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
-  XF idConstrDefs00403m1_n
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI idConstrDefs00403m
+    Unsupported type IDREF and IDREFS
 
 Grp: ElemDecl / idconstrdefs00501m
   66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
@@ -670,9 +664,9 @@ Grp: ElemDecl / typedef00901m1
     typeDef00901m1_p.xml:16:1: string pattern not matched: true|1
 
 Grp: ElemDecl / typedef01101m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
-  XP Positive
-    typeDef01101m1_p.xml:14:7: Attribute "xsi:schemaLocation" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI typeDef01101m1
+    Unsupported "abstract" attribute for complexType
 
 Grp: ElemDecl / typedef01201m1
   66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
@@ -1072,10 +1066,20 @@ Grp: MS-Additional2006-07-15 / addC002
   SP addC002
     adhocAddC002.xsd:3:66: schemaLocation and namespace attributes mandatory for <import>
 
+Grp: MS-Additional2006-07-15 / addB003
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addB003
+    Unsupported "abstract" attribute for complexType
+
 Grp: MS-Additional2006-07-15 / addB009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI addB009
     Unsupported element in the schema: unique
+
+Grp: MS-Additional2006-07-15 / addB017
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addB017
+    Unsupported "abstract" attribute for complexType
 
 Grp: MS-Additional2006-07-15 / addB020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -1089,6 +1093,11 @@ Grp: MS-Additional2006-07-15 / addB021a
 Grp: MS-Additional2006-07-15 / addB022
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SF addB022
+
+Grp: MS-Additional2006-07-15 / addB026
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addB026
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-Additional2006-07-15 / addB028
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -1174,6 +1183,11 @@ Grp: MS-Additional2006-07-15 / addB058
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   XP addB058.v
     test73665.xml:9:15: string pattern not matched: [\C]+
+
+Grp: MS-Additional2006-07-15 / addB060
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addB060
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-Additional2006-07-15 / addB064
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -1403,6 +1417,16 @@ Grp: MS-Additional2006-07-15 / addD003
   SP addD003
     xsd.xsd:31:63: schemaLocation and namespace attributes mandatory for <import>
 
+Grp: MS-Additional2006-07-15 / addD004
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addD004
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Additional2006-07-15 / addD004a
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addD004a
+    Unsupported "form" attribute for <attribute>
+
 Grp: MS-Additional2006-07-15 / isDefault001
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   XP isDefault001.v
@@ -1432,9 +1456,9 @@ Grp: MS-Additional2006-07-15 / isDefault069
   NA isDefault069
 
 Grp: MS-Additional2006-07-15 / isDefault072
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP isDefault072.v
-    isdefault072.xml:3:29: Attribute "ser:Id" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI isDefault072
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Additional2006-07-15 / isDefault073
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -1558,8 +1582,8 @@ Grp: MS-AttributeGroup2006-07-15 / attgC031
 
 Grp: MS-AttributeGroup2006-07-15 / attgC035
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP attgC035
-    attgC035.xsd:4:46: attgC035.red:8:25: Element "e" has already been declared
+  NI attgC035
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-AttributeGroup2006-07-15 / attgC036
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -1666,6 +1690,16 @@ Grp: MS-AttributeGroup2006-07-15 / attgZ003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SF attgZ003
 
+Grp: MS-Attribute2006-07-15 / attA007
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attA007
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attA008
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attA008
+    Unsupported "form" attribute for <attribute>
+
 Grp: MS-Attribute2006-07-15 / attD002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SF attD002
@@ -1708,7 +1742,8 @@ Grp: MS-Attribute2006-07-15 / attKb011
 
 Grp: MS-Attribute2006-07-15 / attKb012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKb012
+  NI attKb012
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attKb013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -1748,7 +1783,8 @@ Grp: MS-Attribute2006-07-15 / attKc011
 
 Grp: MS-Attribute2006-07-15 / attKc012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKc012
+  NI attKc012
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attKc013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -1765,6 +1801,66 @@ Grp: MS-Attribute2006-07-15 / attKc015
 Grp: MS-Attribute2006-07-15 / attLa005
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   XF attLa005.i
+
+Grp: MS-Attribute2006-07-15 / attLb001
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLb001
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLb002
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLb002
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLb003
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLb003
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLb004
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLb004
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLb005
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLb005
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLb006
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLb006
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLc001
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLc001
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLc002
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLc002
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLc003
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLc003
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLc004
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLc004
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLc005
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLc005
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attLc006
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attLc006
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attO002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -1806,52 +1902,124 @@ Grp: MS-Attribute2006-07-15 / attMa002
   XF attMa002.i
 
 Grp: MS-Attribute2006-07-15 / attMb001
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMb001.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb001
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMb002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMb002.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb002
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMb003
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMb003.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb003
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMb004
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb004
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMb005
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb005
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMb006
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb006
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMb007
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb007
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMb008
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb008
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMb009
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb009
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMb010
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMb010.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb010
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMb011
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMb011.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb011
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMb012
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMb012.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMb012
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMc001
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMc001.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc001
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMc002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMc002.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc002
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMc003
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMc003.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc003
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMc004
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc004
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMc005
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc005
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMc006
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc006
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMc007
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc007
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMc008
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc008
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attMc009
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc009
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMc010
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMc010.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc010
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMc011
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMc011.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc011
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attMc012
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF attMc012.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attMc012
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attP006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -1863,7 +2031,13 @@ Grp: MS-Attribute2006-07-15 / attP030
 
 Grp: MS-Attribute2006-07-15 / attQ009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attQ009
+  NI attQ009
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attQ010
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attQ010
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attQ011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -1875,11 +2049,18 @@ Grp: MS-Attribute2006-07-15 / attQ012
 
 Grp: MS-Attribute2006-07-15 / attQ013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attQ013
+  NI attQ013
+    Unsupported "form" attribute for <attribute>
+
+Grp: MS-Attribute2006-07-15 / attQ015
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attQ015
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attQ017
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attQ017
+  NI attQ017
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-Attribute2006-07-15 / attQ019
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -1939,6 +2120,26 @@ Grp: MS-Attribute2006-07-15 / attZ015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP attZ015
     attZ015.xsd:11:39: Can't handle attributeGroup in this context
+
+Grp: MS-ComplexType2006-07-15 / ctA001
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctA001
+    Unsupported "abstract" attribute for complexType
+
+Grp: MS-ComplexType2006-07-15 / ctA002
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctA002
+    Unsupported "abstract" attribute for complexType
+
+Grp: MS-ComplexType2006-07-15 / ctA003
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctA003
+    Unsupported "abstract" attribute for complexType
+
+Grp: MS-ComplexType2006-07-15 / ctA005
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctA005
+    Unsupported "abstract" attribute for complexType
 
 Grp: MS-ComplexType2006-07-15 / ctD001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -2234,12 +2435,19 @@ Grp: MS-ComplexType2006-07-15 / ctI041
     ctI041.xml:3:29: Extensions of type "fooType" are forbidden
 
 Grp: MS-ComplexType2006-07-15 / ctI048
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF ctI048.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctI048
+    Unsupported "abstract" attribute for complexType
 
 Grp: MS-ComplexType2006-07-15 / ctI049
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF ctI049.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctI049
+    Unsupported "abstract" attribute for complexType
+
+Grp: MS-ComplexType2006-07-15 / ctI050
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctI050
+    Unsupported "abstract" attribute for complexType
 
 Grp: MS-ComplexType2006-07-15 / ctJ002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -2253,6 +2461,11 @@ Grp: MS-ComplexType2006-07-15 / ctL003
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   XP ctL003.v
     ctL003.xml:4:2: HT, LF and CR characters not allowed
+
+Grp: MS-ComplexType2006-07-15 / ctL022
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctL022
+    Unsupported "abstract" attribute for complexType
 
 Grp: MS-ComplexType2006-07-15 / ctM001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -2709,21 +2922,110 @@ Grp: MS-DataTypes2006-07-15 / language_enumeration001_388
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SF language_enumeration001_388
 
+Grp: MS-DataTypes2006-07-15 / IDREFS_length001_390
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_length001_390
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_length002_391
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_length002_391
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_length003_392
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_length003_392
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_length004_393
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_length004_393
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_length005_394
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_length005_394
+    Unsupported type IDREF and IDREFS
+
 Grp: MS-DataTypes2006-07-15 / IDREFS_length006_395
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF IDREFS_length006_395
+  NI IDREFS_length006_395
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREFS_length007_396
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF IDREFS_length007_396
+  NI IDREFS_length007_396
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_minLength001_397
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength001_397
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_minLength002_398
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength002_398
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_minLength003_399
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength003_399
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_minLength004_400
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength004_400
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_minLength005_401
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength005_401
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREFS_minLength006_402
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF IDREFS_minLength006_402
+  NI IDREFS_minLength006_402
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_minLength007_403
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength007_403
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_maxLength001_404
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_maxLength001_404
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_maxLength002_405
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_maxLength002_405
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_maxLength003_406
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_maxLength003_406
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_maxLength004_407
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_maxLength004_407
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_maxLength005_408
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_maxLength005_408
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREFS_enumeration001_409
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF IDREFS_enumeration001_409
+  NI IDREFS_enumeration001_409
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_enumeration002_410
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_enumeration002_410
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / NMTOKEN_length006_416
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -2805,21 +3107,115 @@ Grp: MS-DataTypes2006-07-15 / ID_enumeration001_518
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SF ID_enumeration001_518
 
+Grp: MS-DataTypes2006-07-15 / IDREF_length001_520
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_length001_520
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_length002_521
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_length002_521
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_length003_522
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_length003_522
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_length004_523
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_length004_523
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_length005_524
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_length005_524
+    Unsupported type IDREF and IDREFS
+
 Grp: MS-DataTypes2006-07-15 / IDREF_length006_525
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF IDREF_length006_525
+  NI IDREF_length006_525
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREF_length007_526
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF IDREF_length007_526
+  NI IDREF_length007_526
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength001_527
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength001_527
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength002_528
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength002_528
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength003_529
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength003_529
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength004_530
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength004_530
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength005_531
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength005_531
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREF_minLength006_532
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF IDREF_minLength006_532
+  NI IDREF_minLength006_532
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength007_533
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength007_533
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_maxLength001_534
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_maxLength001_534
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_maxLength002_535
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_maxLength002_535
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_maxLength003_536
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_maxLength003_536
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_maxLength004_537
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_maxLength004_537
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_maxLength005_538
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_maxLength005_538
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_pattern001_539
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_pattern001_539
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREF_enumeration001_540
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF IDREF_enumeration001_540
+  NI IDREF_enumeration001_540
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_enumeration002_541
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_enumeration002_541
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / integer_enumeration001_543
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -3617,29 +4013,150 @@ Grp: MS-DataTypes2006-07-15 / NOTATION_enumeration004_1386
   SP NOTATION_enumeration004_1386
     NOTATION_enumeration004.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
 
+Grp: MS-DataTypes2006-07-15 / IDREFS_length001_1432
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_length001_1432
+    Unsupported type IDREF and IDREFS
+
 Grp: MS-DataTypes2006-07-15 / IDREFS_length002_1433
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP IDREFS_length002_1433.v
-    IDREFS_length002.xml:4:54: Attribute "idrefs_attr": Invalid length, must be 2 characters
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_length002_1433
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_length003_1434
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_length003_1434
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_minLength001_1435
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength001_1435
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_minLength002_1436
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength002_1436
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREFS_minLength003_1437
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF IDREFS_minLength003_1437.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength003_1437
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREFS_minLength004_1438
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP IDREFS_minLength004_1438.v
-    IDREFS_minLength004.xml:4:52: Attribute "idrefs_attr": String too long, maximum length is 3 characters
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_minLength004_1438
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_maxLength001_1439
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_maxLength001_1439
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREFS_maxLength002_1440
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP IDREFS_maxLength002_1440.v
-    IDREFS_maxLength002.xml:4:46: Attribute "idrefs_attr": String too long, maximum length is 1 characters
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_maxLength002_1440
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / IDREFS_maxLength003_1441
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP IDREFS_maxLength003_1441.v
-    IDREFS_maxLength003.xml:4:47: Attribute "idrefs_attr": String too long, maximum length is 2 characters
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_maxLength003_1441
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_enumeration001_1442
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_enumeration001_1442
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_enumeration002_1443
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_enumeration002_1443
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_enumeration003_1444
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_enumeration003_1444
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREFS_enumeration004_1445
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREFS_enumeration004_1445
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_length001_1522
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_length001_1522
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_length002_1523
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_length002_1523
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_length003_1524
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_length003_1524
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength001_1525
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength001_1525
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength002_1526
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength002_1526
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength003_1527
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength003_1527
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_minLength004_1528
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_minLength004_1528
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_maxLength001_1529
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_maxLength001_1529
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_maxLength002_1530
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_maxLength002_1530
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_maxLength003_1531
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_maxLength003_1531
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_pattern001_1532
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_pattern001_1532
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_enumeration001_1533
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_enumeration001_1533
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_enumeration002_1534
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_enumeration002_1534
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_enumeration003_1535
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_enumeration003_1535
+    Unsupported type IDREF and IDREFS
+
+Grp: MS-DataTypes2006-07-15 / IDREF_enumeration004_1536
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI IDREF_enumeration004_1536
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / integer_pattern001_1537
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -3706,46 +4223,6 @@ Grp: MS-DataTypes2006-07-15 / positiveInteger_pattern001_1826
   XP positiveInteger_pattern001_1826.v
     positiveInteger_pattern001.xml:4:9: string pattern not matched: \p{Nd}{1,3}
 
-Grp: MS-DataTypes2006-07-15 / float019_1918
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP float019_1918.v
-    float019.xml:6:18: Invalid float: "INF"
-
-Grp: MS-DataTypes2006-07-15 / float020_1919
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP float020_1919.v
-    float020.xml:6:19: Invalid float: "-INF"
-
-Grp: MS-DataTypes2006-07-15 / float021_1920
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP float021_1920.v
-    float021.xml:6:18: Invalid float: "NaN"
-
-Grp: MS-DataTypes2006-07-15 / float039_1938
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP float039_1938.v
-    float039.xml:13:18: Invalid float: "NaN"
-
-Grp: MS-DataTypes2006-07-15 / double019_1957
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP double019_1957.v
-    double019.xml:6:18: Invalid float: "INF"
-
-Grp: MS-DataTypes2006-07-15 / double020_1958
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP double020_1958.v
-    double020.xml:6:19: Invalid float: "-INF"
-
-Grp: MS-DataTypes2006-07-15 / double021_1959
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP double021_1959.v
-    double021.xml:6:18: Invalid float: "NaN"
-
-Grp: MS-DataTypes2006-07-15 / double030_1968
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP double030_1968.v
-    double030.xml:13:18: Invalid float: "NaN"
-
 Grp: MS-DataTypes2006-07-15 / duration001_1969
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   XF duration001_1969.i
@@ -3769,48 +4246,33 @@ Grp: MS-DataTypes2006-07-15 / duration024_1992
     duration024.xml:6:30: Invalid duration: "P1Y2M15DT25H30M"
 
 Grp: MS-DataTypes2006-07-15 / duration028_1996
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF duration028_1996.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI duration028_1996
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / duration029_1997
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF duration029_1997.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI duration029_1997
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / duration030_1998
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF duration030_1998.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI duration030_1998
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / dateTime013_2009
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF dateTime013_2009.i
-
-Grp: MS-DataTypes2006-07-15 / date003_2033
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF date003_2033.i
-
-Grp: MS-DataTypes2006-07-15 / date004_2034
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF date004_2034.i
-
-Grp: MS-DataTypes2006-07-15 / date006_2036
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF date006_2036.i
-
-Grp: MS-DataTypes2006-07-15 / date009_2037
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF date009_2037.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI dateTime013_2009
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / gYearMonth004_2043
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   XF gYearMonth004_2043.i
 
-Grp: MS-DataTypes2006-07-15 / gYearMonth006_2044
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF gYearMonth006_2044.i
-
 Grp: MS-DataTypes2006-07-15 / gMonthDay006_2054
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF gMonthDay006_2054.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI gMonthDay006_2054
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / gMonth007_2066
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -3839,15 +4301,25 @@ Grp: MS-DataTypes2006-07-15 / token004_2101
   XP token004_2101.v
     token004.xml:8:2: HT, LF and CR characters not allowed
 
+Grp: MS-DataTypes2006-07-15 / ID_test64335_2240
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ID_test64335_2240
+    Unsupported "abstract" attribute for complexType
+
+Grp: MS-DataTypes2006-07-15 / ID_test70681_2241
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ID_test70681_2241
+    Unsupported type IDREF and IDREFS
+
 Grp: MS-DataTypes2006-07-15 / dtZ107447_2243
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP dtZ107447_2243.v
-    test107447.xml:2:14: Leading whitespaces not allowed
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI dtZ107447_2243
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / dtZ107447_1_2244
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XP dtZ107447_1_2244.v
-    test107447_1.xml:4:13: HT, LF and CR characters not allowed
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI dtZ107447_1_2244
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-DataTypes2006-07-15 / dtZ107447_a_2245
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -4010,11 +4482,12 @@ Grp: MS-Element2006-07-15 / elemZ014
 Grp: MS-Element2006-07-15 / elemZ015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI elemZ015
-    Unsupported element in the schema: unique
+    Unsupported "abstract" attribute for complexType
 
 Grp: MS-Element2006-07-15 / elemZ016
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF elemZ016.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemZ016
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-Element2006-07-15 / elemZ017
    0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
@@ -4053,7 +4526,8 @@ Grp: MS-Element2006-07-15 / elemZ022b
 
 Grp: MS-Element2006-07-15 / elemZ026
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF elemZ026
+  NI elemZ026
+    Unsupported "abstract" attribute for complexType
 
 Grp: MS-Element2006-07-15 / elemZ027_b
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -5655,7 +6129,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idG026
 Grp: MS-IdentityConstraint2006-07-15 / idG027
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idG027
-    Unsupported element in the schema: key
+    Unsupported "form" attribute for <attribute>
 
 Grp: MS-IdentityConstraint2006-07-15 / idG028
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -8293,8 +8767,9 @@ Grp: MS-IdentityConstraint2006-07-15 / idZ011_a
     Unsupported element in the schema: unique
 
 Grp: MS-IdentityConstraint2006-07-15 / idZ012
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF idZ012.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI idZ012
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-IdentityConstraint2006-07-15 / idZ015
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -9947,6 +10422,11 @@ Grp: MS-Particles2006-07-15 / particlesZ007
   SP particlesZ007
     Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
 
+Grp: MS-Particles2006-07-15 / particlesZ008
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesZ008
+    Unsupported "abstract" attribute for complexType
+
 Grp: MS-Particles2006-07-15 / particlesZ011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SF particlesZ011
@@ -11410,9 +11890,15 @@ Grp: MS-Regex2006-07-15 / reDG3
   XP reDG3.v
     reDG3.xml:9:25: Attribute "att": string pattern not matched: \p{Nd}{4}
 
+Grp: MS-Regex2006-07-15 / reDH7
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI reDH7
+    Unsupported type IDREF and IDREFS
+
 Grp: MS-Regex2006-07-15 / reDH7a
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  XF reDH7a.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI reDH7a
+    Unsupported type IDREF and IDREFS
 
 Grp: MS-Regex2006-07-15 / reDI1
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -15213,15 +15699,15 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37820 (omitting non-accepted tests)
+Total number of tests: 37685 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
-   24137 XML files
-NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 947
+   24002 XML files
+NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
     Fixing these will run more XML tests
-SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 263
-SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 827
-XP: XML KO, should be OK: in_full_pass= 0 in_partial= 544 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 126 in_full_fail= 10
+SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
+SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
+XP: XML KO, should be OK: in_full_pass= 0 in_partial= 512 in_full_fail= 4
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 83 in_full_fail= 10
     These need fixing, an invalid XML file could be handed to the application
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1774 ( 4.7 %)
+Total errors: 1681 ( 4.5 %)
