@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2004-2009, AdaCore                   --
+--                Copyright (C) 2004-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -2183,7 +2183,7 @@ package body Schema.Schema_Readers is
          Create_Schema (Handler, Atts);
 
       elsif Local_Name = "annotation" then
-         null;
+         Handler.In_Annotation := True;
 
       elsif Local_Name = "element" then
          Create_Element (Handler, Atts);
@@ -2267,8 +2267,13 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "import" then
          Create_Import (Handler, Atts);
 
+      elsif Handler.In_Annotation then
+         null;   --  ignore all tags
+
       else
          Output ("Tag not handled yet: " & Local_Name);
+         Validation_Error
+           ("Unsupported element in the schema: " & Local_Name);
       end if;
    end Start_Element;
 
@@ -2365,6 +2370,10 @@ package body Schema.Schema_Readers is
         or else Local_Name = "simpleContent"
         or else Local_Name = "complexContent"
       then
+         Handled := False;
+
+      elsif Local_Name = "annotation" then
+         Handler.In_Annotation := False;
          Handled := False;
 
       else

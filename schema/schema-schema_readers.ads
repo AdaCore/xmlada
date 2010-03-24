@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -171,6 +171,10 @@ private
       --  The namespace for which we are currently parsing. This might be
       --  different from Get_Target_NS (Created_Grammar) when processing
       --  <import> for instance.
+
+      In_Annotation   : Boolean := False;
+      --  Whether we are processing an <annotation> node, in which case we
+      --  need to ignore all children
 
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;

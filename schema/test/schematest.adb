@@ -797,6 +797,7 @@ procedure Schematest is
          case K is
             when XSD_Should_Pass =>
                Put_Line ("    Fixing these might run more XML tests");
+               Put_Line ("    In general, they indicate unsupported features");
             when XSD_Should_Fail =>
                Put_Line ("    These need fixing, an invalid XSD file could be"
                          & " handed to the application");
