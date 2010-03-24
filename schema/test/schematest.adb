@@ -41,6 +41,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Float_Text_IO;         use Ada.Float_Text_IO;
 with Ada.Strings.Hash;
+with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Text_IO;               use Ada.Text_IO;
 with DOM.Core.Documents;        use DOM.Core.Documents;
@@ -66,8 +67,12 @@ procedure Schematest is
    Show_Files : Boolean := False;
    --  Whether to show the XML and XSD file names in test results
 
-   Show_Passed : Boolean := True;
-   --  What tests output should be displayed ?
+   Show_Descr : Boolean := False;
+   --  Whether to show group descriptions
+
+   Hide_Fully_Failed_Groups : Boolean := False;
+   --  If True, fully failed groups are not displayed, assuming this is an
+   --  unimplemented feature.
 
    Accepted_Only      : Boolean := True;
    --  If true, then only tests that are marked as "accepted" are run. Some
@@ -118,6 +123,8 @@ procedure Schematest is
       Parsed_XML    : Natural := 0;
    end record;
 
+   Filter : array (Result_Kind) of Boolean := (others => True);
+
    procedure Run_Testsuite  (Filename : String);
    procedure Run_Testset    (Filename : String);
    procedure Run_Test_Group
@@ -166,6 +173,11 @@ procedure Schematest is
 
    procedure Print_Results;
    --  Print overview of results
+
+   procedure Set_Description
+     (Result : in out Group_Result;
+      Annotation : Node);
+   --  Set the description of the group
 
    --------------------
    -- Parse_Disabled --
@@ -297,13 +309,16 @@ procedure Schematest is
       Schema_Files  := Null_Unbounded_String;
 
       if Accepted_Only and then Get_Status (Schema) /= Accepted then
-         Result.Kind := Not_Accepted;
+         --  Do not increment Group.Test_Count
+         Result.Kind      := Not_Accepted;
 
       else
          begin
             Set_Feature (Reader, Schema_Validation_Feature, True);
             Set_Created_Grammar (Reader, No_Grammar);
             Use_Basename_In_Error_Messages (Reader, True);
+
+            Group.Test_Count := Group.Test_Count + 1;
 
             while N /= null loop
                if Local_Name (N) = "schemaDocument" then
@@ -336,6 +351,7 @@ procedure Schematest is
 
             if Outcome = Invalid then
                Result.Kind  := XSD_Should_Fail;
+               Grammar := No_Grammar;
             end if;
 
          exception
@@ -344,6 +360,7 @@ procedure Schematest is
                if Outcome = Valid then
                   Result.Kind := XSD_Should_Pass;
                   Result.Msg  := To_Unbounded_String (Exception_Message (E));
+                  Grammar     := No_Grammar;
                else
                   Result.Kind := Passed;
                   Result.Msg  := To_Unbounded_String (Exception_Message (E));
@@ -353,6 +370,7 @@ procedure Schematest is
                Close (Input);
                Result.Kind := Internal_Error;
                Result.Msg  := To_Unbounded_String (Exception_Message (E));
+               Grammar     := No_Grammar;
          end;
       end if;
 
@@ -382,6 +400,7 @@ procedure Schematest is
       Result.XSD  := Schema;
 
       if Accepted_Only and then Get_Status (Test) /= Accepted then
+         --  Do not increment Group.Test_Count
          Result.Kind := Not_Accepted;
          Append (Group.Tests, Result);
          return;
@@ -432,11 +451,50 @@ procedure Schematest is
                   Result.Msg  := To_Unbounded_String (Exception_Message (E));
             end;
 
+            Group.Test_Count := Group.Test_Count + 1;
             Append (Group.Tests, Result);  --  A copy of Result
          end if;
          N := Next_Sibling (N);
       end loop;
    end Parse_Instance_Test;
+
+   ---------------------
+   -- Set_Description --
+   ---------------------
+
+   procedure Set_Description
+     (Result : in out Group_Result;
+      Annotation : Node)
+   is
+      N  : Node := First_Child (Annotation);
+      N2, N3 : Node;
+   begin
+      while N /= null loop
+         if Local_Name (N) = "documentation" then
+            N2 := First_Child (N);
+            while N2 /= null loop
+               if Local_Name (N2) = "Description" then
+                  N3 := First_Child (N2);
+                  while N3 /= null loop
+                     Append (Result.Descr, Node_Value (N3));
+                     N3 := Next_Sibling (N3);
+                  end loop;
+
+               elsif Node_Type (N2) = Text_Node then
+                  Append (Result.Descr, Node_Value (N2));
+               end if;
+
+               N2 := Next_Sibling (N2);
+            end loop;
+         end if;
+
+         N := Next_Sibling (N);
+      end loop;
+
+      Trim (Result.Descr,
+            To_Set (" " & ASCII.HT & ASCII.LF),
+            To_Set (" " & ASCII.HT & ASCII.LF));
+   end Set_Description;
 
    --------------------
    -- Run_Test_Group --
@@ -456,24 +514,26 @@ procedure Schematest is
       Cursor : Test_Result_Lists.Cursor;
       Kind   : Result_Kind;
    begin
-      if Find (Groups, Name) /= Group_Hash.No_Element then
-         Result := Group_Hash.Element (Groups, Name);
+      Result.Name := To_Unbounded_String (Testset & " / " & Name);
+      Result.Counts := (others => 0);
+
+      if Find (Groups, To_String (Result.Name)) /= Group_Hash.No_Element then
+         Result := Group_Hash.Element (Groups, To_String (Result.Name));
          if Result.Disabled then
-            Put_Line ("Grp: " & Name & " (disabled)");
+            Put_Line ("Grp: " & To_String (Result.Name) & " (disabled)");
             New_Line;
             return;
+         else
+            Put_Line ("Reusing existing group for "
+                      & To_String (Result.Name));
          end if;
-      else
-         Result.Name := To_Unbounded_String (Testset & " / " & Name);
       end if;
 
       while N /= null loop
-         if Local_Name (N) = "description" then
-            Result.Descr := To_Unbounded_String
-              (Node_Value (First_Child (N)));
+         if Local_Name (N) = "annotation" then
+            Set_Description (Result, N);
 
          elsif Local_Name (N) = "schemaTest" then
-            Result.Test_Count := Result.Test_Count + 1;
             Parse_Schema_Test
               (Result, N, Base_Dir,
                Grammar      => Schema,
@@ -486,7 +546,6 @@ procedure Schematest is
             end if;
 
          elsif Local_Name (N) = "instanceTest" then
-            Result.Test_Count := Result.Test_Count + 1;
             Parse_Instance_Test (Result, Schema_Files, N, Base_Dir, Schema);
          end if;
 
@@ -593,12 +652,33 @@ procedure Schematest is
       Total  : Natural := 0;
       Cursor : Test_Result_Lists.Cursor := First (Group.Tests);
       Test   : Test_Result;
+      Show_Group : Boolean := False;
    begin
+      if Group.Kind = Fully_Failed and then Hide_Fully_Failed_Groups then
+         return;
+      end if;
+
+      while Has_Element (Cursor) loop
+         if Filter (Test_Result_Lists.Element (Cursor).Kind) then
+            Show_Group := True;
+            exit;
+         end if;
+         Next (Cursor);
+      end loop;
+
+      if not Show_Group then
+         return;
+      end if;
+
       for K in Error_Kind loop
          Total := Total + Group.Counts (K);
       end loop;
 
       Put_Line ("Grp: " & To_String (Group.Name));
+
+      if Show_Descr and then Group.Descr /= "" then
+         Put_Line ("  " & To_String (Group.Descr));
+      end if;
 
       if Group.Disabled then
          Put_Line ("  --disabled--");
@@ -613,20 +693,19 @@ procedure Schematest is
                    & ") OK=" & Group.Counts (Passed)'Img
                    & " FAILED=" & Integer'Image (Total));
 
+         Cursor := First (Group.Tests);
          while Has_Element (Cursor) loop
             Test := Test_Result_Lists.Element (Cursor);
 
-            if Show_Passed
-              or else Test.Kind /= Passed
-            then
+            if Filter (Test.Kind) then
                case Test.Kind is
-               when Passed          => Put ("  OK ");
-               when Not_Accepted    => Put ("  N/A ");
-               when XSD_Should_Fail => Put ("  SF ");
-               when XSD_Should_Pass => Put ("  SP ");
-               when XML_Should_Fail => Put ("  XF ");
-               when XML_Should_Pass => Put ("  XP ");
-               when Internal_Error  => Put ("  !! ");
+                  when Passed          => Put ("  OK ");
+                  when Not_Accepted    => Put ("  NA ");
+                  when XSD_Should_Fail => Put ("  SF ");
+                  when XSD_Should_Pass => Put ("  SP ");
+                  when XML_Should_Fail => Put ("  XF ");
+                  when XML_Should_Pass => Put ("  XP ");
+                  when Internal_Error  => Put ("  IE ");
                end case;
 
                Put_Line (To_String (Test.Name));
@@ -680,12 +759,12 @@ procedure Schematest is
          Next (Group);
       end loop;
 
-      Put_Line ("Total number of tests:" & Total_Tests'Img);
+      Put_Line ("Total number of tests:" & Total_Tests'Img
+                & " (omitting non-accepted tests)");
       Put_Line ("  " & Total_XSD'Img
                 & " XSD files (not including those parsed"
                 & " automatically)");
       Put_Line ("  " & Total_XML'Img & " XML files");
-      New_Line;
 
       for K in Error_Kind loop
          case K is
@@ -698,7 +777,7 @@ procedure Schematest is
             when XML_Should_Fail =>
                Put ("XF: XML OK, should be KO:");
             when Internal_Error =>
-               Put ("!!: Internal error:");
+               Put ("IE: Internal error:");
          end case;
 
          for Kind in Group_Kind'Range loop
@@ -737,6 +816,7 @@ procedure Schematest is
       Put_Line (" %)");
    end Print_Results;
 
+   Setting : Boolean;
 begin
    if not Is_Directory (Testdir) then
       Put_Line (Standard_Error, "No such directory: " & Testdir);
@@ -744,19 +824,72 @@ begin
    end if;
 
    loop
-      case Getopt ("v d e a h f") is
+      case Getopt ("v d a h f -filter: -descr -group -hide:") is
          when 'h'    =>
             Put_Line ("-v   Verbose mode");
             Put_Line ("-d   Debug mode");
             Put_Line ("-f   Show XSD and XML file names in results");
             Put_Line ("-a   Also run ambiguous tests under discussion");
-            Put_Line ("-e   Hide PASSED tests");
+            Put_Line
+              ("--filter [PA,NA,SP,SF,XP,XF,IE] only show those tests.");
+            Put_Line ("     Separate categories with commas.");
+            Put_Line ("     This will also only matching groups.");
+            Put_Line
+              ("--hide [PA,NA,SP,SF,XP,XF,IE] only show those tests.");
+            Put_Line ("     Opposite of --filter, cannot be combined");
+            Put_Line ("--descr Show group descriptions");
+            Put_Line ("--group Hide fully failed groups");
+            Put_Line ("     These likely show unimplemented features");
             return;
 
-         when 'v'    => Verbose := True;
-         when 'd'    => Debug   := True;
-         when 'e'    => Show_Passed := False;
-         when 'f'    => Show_Files := True;
+         when 'v' => Verbose := True;
+         when 'd' => Debug   := True;
+         when 'f' => Show_Files := True;
+         when '-' =>
+            if Full_Switch = "-group" then
+               Hide_Fully_Failed_Groups := True;
+
+            elsif Full_Switch = "-filter"
+              or else Full_Switch = "-hide"
+            then
+               Setting := Full_Switch = "-filter";
+
+               Filter := (others => not Setting);
+               declare
+                  F : constant String := Parameter;
+                  Prev : Integer := F'First;
+                  Pos  : Integer := F'First - 1;
+               begin
+                  loop
+                     Pos := Pos + 1;
+                     if Pos > F'Last or else F (Pos) = ',' then
+                        if F (Prev .. Pos - 1) = "SF" then
+                           Filter (XSD_Should_Fail) := Setting;
+                        elsif F (Prev .. Pos - 1) = "SP" then
+                           Filter (XSD_Should_Pass) := Setting;
+                        elsif F (Prev .. Pos - 1) = "XF" then
+                           Filter (XML_Should_Fail) := Setting;
+                        elsif F (Prev .. Pos - 1) = "XP" then
+                           Filter (XML_Should_Pass) := Setting;
+                        elsif F (Prev .. Pos - 1) = "PA" then
+                           Filter (Passed) := Setting;
+                        elsif F (Prev .. Pos - 1) = "NA" then
+                           Filter (Not_Accepted) := Setting;
+                        elsif F (Prev .. Pos - 1) = "IE" then
+                           Filter (Internal_Error) := Setting;
+                        else
+                           Put_Line ("Invalid filter: " & F (Prev .. Pos - 1));
+                        end if;
+
+                        Prev := Pos + 1;
+                        exit when Pos > F'Last;
+                     end if;
+                  end loop;
+               end;
+
+            elsif Full_Switch = "-descr" then
+               Show_Descr := True;
+            end if;
          when 'a'    => Accepted_Only := False;
          when others => exit;
       end case;

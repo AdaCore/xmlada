@@ -1,4 +1,4 @@
-schZ012_a
+MS-Schema2006-07-15 / schZ012_a
   --  test: msData/schema/schZ012_a.xsd
   --  Disable because it relies on case-sensitive file systems to work
   --  properly. It fails on Darwin (lena) with HFS and on Windows, since
