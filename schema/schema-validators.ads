@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2009, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -44,6 +44,9 @@ package Schema.Validators is
    XML_Validation_Error : exception;
    --  Raised in case of error in the validation process. The exception message
    --  contains the error, but not its location
+
+   XML_Not_Implemented : exception;
+   --  Raised when a schema uses features that are not supported by XML/Ada yet
 
    type XML_Validator_Record is tagged private;
    type XML_Validator is access all XML_Validator_Record'Class;

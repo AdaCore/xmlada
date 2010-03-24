@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;    use Ada.Exceptions;
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Attributes;    use Sax.Attributes;
@@ -2272,8 +2273,9 @@ package body Schema.Schema_Readers is
 
       else
          Output ("Tag not handled yet: " & Local_Name);
-         Validation_Error
-           ("Unsupported element in the schema: " & Local_Name);
+         Raise_Exception
+           (XML_Not_Implemented'Identity,
+            "Unsupported element in the schema: " & Local_Name);
       end if;
    end Start_Element;
 

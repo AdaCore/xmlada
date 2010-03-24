@@ -83,12 +83,13 @@ procedure Schematest is
 
    type Result_Kind is (Passed,
                         Not_Accepted,
+                        Not_Implemented,
                         XSD_Should_Pass,
                         XSD_Should_Fail,
                         XML_Should_Pass,
                         XML_Should_Fail,
                         Internal_Error);
-   subtype Error_Kind is Result_Kind range XSD_Should_Pass .. Internal_Error;
+   subtype Error_Kind is Result_Kind range Not_Implemented .. Internal_Error;
    type Result_Count is array (Result_Kind) of Natural;
    --  The various categories of errors:
    --  Either the XSD was valid, but rejected by XML/Ada.
@@ -355,6 +356,12 @@ procedure Schematest is
             end if;
 
          exception
+            when E : XML_Not_Implemented =>
+               Close (Input);
+               Result.Kind := Not_Implemented;
+               Result.Msg  := To_Unbounded_String (Exception_Message (E));
+               Grammar     := No_Grammar;
+
             when E : XML_Validation_Error | XML_Fatal_Error =>
                Close (Input);
                if Outcome = Valid then
@@ -433,6 +440,11 @@ procedure Schematest is
                end if;
 
             exception
+               when E : XML_Not_Implemented =>
+                  Close (Input);
+                  Result.Kind := Not_Implemented;
+                  Result.Msg  := To_Unbounded_String (Exception_Message (E));
+
                when E : XML_Validation_Error | XML_Fatal_Error =>
                   Close (Input);
                   if Outcome = Valid then
@@ -706,6 +718,7 @@ procedure Schematest is
                   when XML_Should_Fail => Put ("  XF ");
                   when XML_Should_Pass => Put ("  XP ");
                   when Internal_Error  => Put ("  IE ");
+                  when Not_Implemented => Put ("  NI ");
                end case;
 
                Put_Line (To_String (Test.Name));
@@ -752,7 +765,10 @@ procedure Schematest is
          Total_XSD   := Total_XSD   + Gr.Parsed_XSD;
 
          for K in Error_Kind loop
-            Total_Error := Total_Error + Gr.Counts (K);
+            if K /= Not_Implemented then
+               Total_Error := Total_Error + Gr.Counts (K);
+            end if;
+
             Errors (Gr.Kind)(K) := Errors (Gr.Kind)(K) + Gr.Counts (K);
          end loop;
 
@@ -776,6 +792,8 @@ procedure Schematest is
                Put ("XP: XML KO, should be OK:");
             when XML_Should_Fail =>
                Put ("XF: XML OK, should be KO:");
+            when Not_Implemented =>
+               Put ("NI: Features not implemented:");
             when Internal_Error =>
                Put ("IE: Internal error:");
          end case;
@@ -795,14 +813,11 @@ procedure Schematest is
          New_Line;
 
          case K is
-            when XSD_Should_Pass =>
-               Put_Line ("    Fixing these might run more XML tests");
-               Put_Line ("    In general, they indicate unsupported features");
-            when XSD_Should_Fail =>
-               Put_Line ("    These need fixing, an invalid XSD file could be"
-                         & " handed to the application");
-            when XML_Should_Pass =>
-               null;
+            when XSD_Should_Pass => null;
+            when XSD_Should_Fail => null;
+            when XML_Should_Pass => null;
+            when Not_Implemented =>
+               Put_Line ("    Fixing these will run more XML tests");
             when XML_Should_Fail =>
                Put_Line ("    These need fixing, an invalid XML file could be"
                          & " handed to the application");
@@ -878,6 +893,8 @@ begin
                            Filter (Not_Accepted) := Setting;
                         elsif F (Prev .. Pos - 1) = "IE" then
                            Filter (Internal_Error) := Setting;
+                        elsif F (Prev .. Pos - 1) = "NI" then
+                           Filter (Not_Implemented) := Setting;
                         else
                            Put_Line ("Invalid filter: " & F (Prev .. Pos - 1));
                         end if;

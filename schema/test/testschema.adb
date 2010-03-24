@@ -190,7 +190,7 @@ begin
    end loop;
 
 exception
-   when E : XML_Validation_Error | XML_Fatal_Error =>
+   when E : XML_Validation_Error | XML_Fatal_Error | XML_Not_Implemented =>
       Put_Line (Exception_Message (E));
       Close (Read);
 end TestSchema;
