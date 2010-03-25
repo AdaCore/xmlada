@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -53,7 +53,8 @@ private package Schema.Validators.Simple_Types is
    procedure Validate_Characters
      (Validator      : access Any_Simple_XML_Validator_Record;
       Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean);
+      Empty_Element  : Boolean;
+      Id_Table       : access Id_Htable_Access);
    procedure Validate_End_Element
      (Validator  : access Any_Simple_XML_Validator_Record;
       Local_Name : Unicode.CES.Byte_Sequence;
@@ -85,7 +86,8 @@ private package Schema.Validators.Simple_Types is
    procedure Validate_Characters
      (Union         : access XML_Union_Record;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
+      Empty_Element : Boolean;
+      Id_Table      : access Id_Htable_Access);
    --  See doc from inherited subprograms
 
 end Schema.Validators.Simple_Types;

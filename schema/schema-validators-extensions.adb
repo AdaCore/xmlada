@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -58,7 +58,8 @@ package body Schema.Validators.Extensions is
    procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
+      Empty_Element : Boolean;
+      Id_Table       : access Id_Htable_Access);
    procedure Get_Attribute_Lists
      (Validator   : access Extension_XML_Validator;
       List        : out Attribute_Validator_List_Access;
@@ -207,7 +208,8 @@ package body Schema.Validators.Extensions is
    procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
+      Empty_Element : Boolean;
+      Id_Table       : access Id_Htable_Access)
    is
       Saved_Mixed : Boolean;
    begin
@@ -219,7 +221,8 @@ package body Schema.Validators.Extensions is
 
          Saved_Mixed := Validator.Extension.Mixed_Content;
          Set_Mixed_Content (Validator.Extension, Validator.Mixed_Content);
-         Validate_Characters (Validator.Extension, Ch, Empty_Element);
+         Validate_Characters
+           (Validator.Extension, Ch, Empty_Element, Id_Table);
          Validator.Extension.Mixed_Content := Saved_Mixed;
       else
          if Debug then
@@ -231,7 +234,7 @@ package body Schema.Validators.Extensions is
          Set_Mixed_Content
            (Get_Validator (Validator.Base), Validator.Mixed_Content);
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element);
+           (Get_Validator (Validator.Base), Ch, Empty_Element, Id_Table);
          Set_Mixed_Content (Get_Validator (Validator.Base), Saved_Mixed);
       end if;
 
@@ -243,7 +246,7 @@ package body Schema.Validators.Extensions is
                Debug_Output ("Validation error in extension, testing base");
             end if;
             Validate_Characters
-              (Get_Validator (Validator.Base), Ch, Empty_Element);
+              (Get_Validator (Validator.Base), Ch, Empty_Element, Id_Table);
          else
             raise;
          end if;

@@ -338,11 +338,13 @@ package body Schema.Schema_Readers is
          Set_Parsed_URI
            (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
          Parse (Validating_Reader (Parser), Input);
+         Free (Parser.Ids);
       end if;
 
    exception
       when others =>
          Free (Parser.Contexts, Recurse => True);
+         Free (Parser.Ids);
          raise;
    end Parse;
 
@@ -802,8 +804,8 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Create_Element
-     (Handler  : in out Schema_Reader;
-      Atts     : Sax.Attributes.Attributes'Class)
+     (Handler : in out Schema_Reader;
+      Atts    : Sax.Attributes.Attributes'Class)
    is
       --  ??? Could be more efficient by traversing the list of attributes
       --  only once
@@ -885,7 +887,7 @@ package body Schema.Schema_Readers is
                        & ");");
 
                if Typ /= No_Type then
-                  Set_Type (Element, Typ);
+                  Set_Type (Element, Typ, Handler.Ids'Access);
                   Output ("Set_Type (" & Ada_Name (Element) & ", "
                           & Ada_Name (Typ) & ");");
                end if;
@@ -940,14 +942,16 @@ package body Schema.Schema_Readers is
       end if;
 
       if Default_Index /= -1 then
-         Set_Default (Element, Get_Value (Atts, Default_Index));
+         Set_Default
+           (Element, Get_Value (Atts, Default_Index), Handler.Ids'Access);
          Output ("Set_Default ("
                  & Ada_Name (Element) & ", """
                  & Get_Value (Atts, Default_Index) & """);");
       end if;
 
       if Fixed_Index /= -1 then
-         Set_Fixed (Element, Get_Value (Atts, Fixed_Index));
+         Set_Fixed
+           (Element, Get_Value (Atts, Fixed_Index), Handler.Ids'Access);
          Output ("Set_Fixed ("
                  & Ada_Name (Element) & ", """
                  & Get_Value (Atts, Fixed_Index) & """);");
@@ -1067,13 +1071,13 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Finish_Element (Handler : in out Schema_Reader) is
-      pragma Unmodified (Handler);
    begin
       if not Handler.Contexts.Is_Ref
         and then Get_Type (Handler.Contexts.Element) = No_Type
       then
          Set_Type (Handler.Contexts.Element,
-                   Lookup (Handler.Schema_NS, "ur-Type"));
+                   Lookup (Handler.Schema_NS, "ur-Type"),
+                   Handler.Ids'Access);
          Output ("Set_Type (" & Ada_Name (Handler.Contexts)
                  & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
       end if;
@@ -1227,7 +1231,7 @@ package body Schema.Schema_Readers is
    -- Finish_Complex_Type --
    -------------------------
 
-   procedure Finish_Complex_Type (Handler : in out Schema_Reader) is
+   procedure Finish_Complex_Type (Handler  : in out Schema_Reader) is
       C   : constant Context_Access := Handler.Contexts;
       Typ : XML_Type;
    begin
@@ -1266,7 +1270,7 @@ package body Schema.Schema_Readers is
          when Context_Schema | Context_Redefine =>
             null;
          when Context_Element =>
-            Set_Type (Handler.Contexts.Next.Element, Typ);
+            Set_Type (Handler.Contexts.Next.Element, Typ, Handler.Ids'Access);
             Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (C) & ");");
          when Context_Attribute =>
@@ -1437,7 +1441,6 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Finish_Union (Handler : in out Schema_Reader) is
-      pragma Unmodified (Handler);
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1494,7 +1497,6 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Finish_Extension (Handler : in out Schema_Reader) is
-      pragma Unmodified (Handler);
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1556,7 +1558,6 @@ package body Schema.Schema_Readers is
    -----------------
 
    procedure Finish_List (Handler : in out Schema_Reader) is
-      pragma Unmodified (Handler);
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -2182,7 +2183,6 @@ package body Schema.Schema_Readers is
    ----------------
 
    procedure Finish_All (Handler : in out Schema_Reader) is
-      pragma Unmodified (Handler);
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>

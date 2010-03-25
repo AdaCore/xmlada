@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -56,7 +56,8 @@ package body Schema.Validators.Lists is
    procedure Validate_Characters
      (Validator     : access List_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
+      Empty_Element : Boolean;
+      Id_Table      : access Id_Htable_Access);
    function Get_Facets_Description
      (Validator : access List_Validator_Record) return Facets_Description;
    procedure Free (Validator : in out List_Validator_Record);
@@ -178,7 +179,8 @@ package body Schema.Validators.Lists is
    procedure Validate_Characters
      (Validator     : access List_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
+      Empty_Element : Boolean;
+      Id_Table      : access Id_Htable_Access)
    is
       Index : Integer := Ch'First;
       Last, Start  : Integer;
@@ -216,7 +218,8 @@ package body Schema.Validators.Lists is
                   Validate_Characters
                     (Get_Validator (Validator.Base),
                      Ch (Start .. Last - 1),
-                     Empty_Element);
+                     Empty_Element,
+                     Id_Table => Id_Table);
                   exit;
                end if;
             end loop;
@@ -228,7 +231,7 @@ package body Schema.Validators.Lists is
                Validate_Characters
                  (Get_Validator (Validator.Base),
                   Ch (Start .. Ch'Last),
-                  Empty_Element);
+                  Empty_Element, Id_Table);
             end if;
          end if;
       end loop;

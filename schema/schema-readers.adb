@@ -445,7 +445,8 @@ package body Schema.Readers is
                Validate_Characters
                  (Get_Validator (Handler.Validators.Typ),
                   Handler.Validators.Characters.all,
-                  Empty_Element => Empty_Element);
+                  Empty_Element => Empty_Element,
+                  Id_Table      => Validating_Reader (Handler).Ids'Access);
             end if;
 
             Free (Handler.Validators.Characters);

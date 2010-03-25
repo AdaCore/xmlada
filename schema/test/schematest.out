@@ -44974,7 +44974,7 @@ Grp: ElemDecl / idconstrdefs00501m
   OK idConstrDefs00501m
   OK idConstrDefs00501m1_p
   OK idConstrDefs00501m1_n
-    idConstrDefs00501m1_n.xml:20:22: ID "s007" already defined
+    idConstrDefs00501m1_n.xml:20:22: Attribute "ssn": ID "s007" already defined
 
 Grp: ElemDecl / maxoccurs00101m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47726,7 +47726,7 @@ Grp: MS-Additional2006-07-15 / addB042
 Grp: MS-Additional2006-07-15 / addB043
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK addB043
-    test72530.xsd:11:54: ID "anID" already defined
+    test72530.xsd:11:54: Attribute "id": ID "anID" already defined
 
 Grp: MS-Additional2006-07-15 / addB044
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47837,9 +47837,10 @@ Grp: MS-Additional2006-07-15 / addB065
   XF addB065.i
 
 Grp: MS-Additional2006-07-15 / addB066
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB066
-  XF addB066.i
+  OK addB066.i
+    test73850.xml:6:9: ID "a1" already defined
 
 Grp: MS-Additional2006-07-15 / addB067
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -47914,7 +47915,7 @@ Grp: MS-Additional2006-07-15 / addB080
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB080
   OK addB080.i
-    addB080.xml:6:22: ID "j1" already defined
+    addB080.xml:6:22: Attribute "itemID": ID "j1" already defined
 
 Grp: MS-Additional2006-07-15 / addB081
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49292,17 +49293,17 @@ Grp: MS-AttributeGroup2006-07-15 / attgA004
 Grp: MS-AttributeGroup2006-07-15 / attgA005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgA005
-    attgA005.xsd:5:43: ID "abc" already defined
+    attgA005.xsd:5:43: Attribute "id": ID "abc" already defined
 
 Grp: MS-AttributeGroup2006-07-15 / attgA006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgA006
-    attgA006.xsd:11:43: ID "abc" already defined
+    attgA006.xsd:11:43: Attribute "id": ID "abc" already defined
 
 Grp: MS-AttributeGroup2006-07-15 / attgA007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgA007
-    attgA007.xsd:9:41: ID "a" already defined
+    attgA007.xsd:9:41: Attribute "id": ID "a" already defined
 
 Grp: MS-AttributeGroup2006-07-15 / attgA008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49311,7 +49312,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgA008
 Grp: MS-AttributeGroup2006-07-15 / attgA009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgA009
-    attgA009.xsd:11:43: ID "abc" already defined
+    attgA009.xsd:11:43: Attribute "id": ID "abc" already defined
 
 Grp: MS-AttributeGroup2006-07-15 / attgB001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49660,7 +49661,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD015
 Grp: MS-AttributeGroup2006-07-15 / attgD016
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgD016
-    attgD016.xsd:7:44: ID "abc" already defined
+    attgD016.xsd:7:44: Attribute "id": ID "abc" already defined
 
 Grp: MS-AttributeGroup2006-07-15 / attgD017
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49800,7 +49801,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD040
 Grp: MS-AttributeGroup2006-07-15 / attgD041
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgD041
-    attgD041.xsd:8:45: ID "abc" already defined
+    attgD041.xsd:8:45: Attribute "id": ID "abc" already defined
 
 Grp: MS-AttributeGroup2006-07-15 / attgD042
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -51356,7 +51357,7 @@ Grp: MS-ComplexType2006-07-15 / ctA027
 Grp: MS-ComplexType2006-07-15 / ctA028
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctA028
-    ctA028.xsd:4:47: ID "foo123" already defined
+    ctA028.xsd:4:47: Attribute "id": ID "foo123" already defined
 
 Grp: MS-ComplexType2006-07-15 / ctA029
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52095,7 +52096,7 @@ Grp: MS-ComplexType2006-07-15 / ctC001
 Grp: MS-ComplexType2006-07-15 / ctC002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctC002
-    ctC002.xsd:5:34: ID "foo123" already defined
+    ctC002.xsd:5:34: Attribute "id": ID "foo123" already defined
 
 Grp: MS-ComplexType2006-07-15 / ctC003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52461,7 +52462,7 @@ Grp: MS-ComplexType2006-07-15 / ctF001
 Grp: MS-ComplexType2006-07-15 / ctF002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctF002
-    ctF002.xsd:9:35: ID "foo123" already defined
+    ctF002.xsd:9:35: Attribute "id": ID "foo123" already defined
 
 Grp: MS-ComplexType2006-07-15 / ctF003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -65565,7 +65566,7 @@ Grp: MS-Element2006-07-15 / elemI004
 Grp: MS-Element2006-07-15 / elemI005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemI005
-    elemI005.xsd:4:39: ID "foo25" already defined
+    elemI005.xsd:4:39: Attribute "id": ID "foo25" already defined
 
 Grp: MS-Element2006-07-15 / elemJ002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67010,17 +67011,17 @@ Grp: MS-Group2006-07-15 / groupA002
 Grp: MS-Group2006-07-15 / groupA003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupA003
-    groupA003.xsd:8:33: ID "bar" already defined
+    groupA003.xsd:8:33: Attribute "id": ID "bar" already defined
 
 Grp: MS-Group2006-07-15 / groupA004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupA004
-    groupA004.xsd:9:34: ID "bar" already defined
+    groupA004.xsd:9:34: Attribute "id": ID "bar" already defined
 
 Grp: MS-Group2006-07-15 / groupA005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupA005
-    groupA005.xsd:13:35: ID "bar" already defined
+    groupA005.xsd:13:35: Attribute "id": ID "bar" already defined
 
 Grp: MS-Group2006-07-15 / groupA006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68126,7 +68127,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idA001
 Grp: MS-IdentityConstraint2006-07-15 / idA002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idA002
-    idA002.xsd:10:41: ID "foo123" already defined
+    idA002.xsd:10:41: Attribute "id": ID "foo123" already defined
 
 Grp: MS-IdentityConstraint2006-07-15 / idA003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -68426,7 +68427,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idB001
 Grp: MS-IdentityConstraint2006-07-15 / idB002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idB002
-    idB002.xsd:10:39: ID "foo123" already defined
+    idB002.xsd:10:39: Attribute "id": ID "foo123" already defined
 
 Grp: MS-IdentityConstraint2006-07-15 / idB003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -72340,32 +72341,32 @@ Grp: MS-ModelGroups2006-07-15 / mgA005
 Grp: MS-ModelGroups2006-07-15 / mgA006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgA006
-    mgA006.xsd:14:21: ID "foo" already defined
+    mgA006.xsd:14:21: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgA007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgA007
-    mgA007.xsd:11:23: ID "foo" already defined
+    mgA007.xsd:11:23: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgA008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgA008
-    mgA008.xsd:9:21: ID "foo" already defined
+    mgA008.xsd:9:21: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgA009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgA009
-    mgA009.xsd:16:23: ID "foo" already defined
+    mgA009.xsd:16:23: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgA010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgA010
-    mgA010.xsd:14:21: ID "foo" already defined
+    mgA010.xsd:14:21: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgA011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgA011
-    mgA011.xsd:20:23: ID "foo" already defined
+    mgA011.xsd:20:23: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgA012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -72673,27 +72674,27 @@ Grp: MS-ModelGroups2006-07-15 / mgE006
 Grp: MS-ModelGroups2006-07-15 / mgE007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgE007
-    mgE007.xsd:11:28: ID "foo" already defined
+    mgE007.xsd:11:28: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgE008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgE008
-    mgE008.xsd:9:26: ID "foo" already defined
+    mgE008.xsd:9:26: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgE009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgE009
-    mgE009.xsd:16:28: ID "foo" already defined
+    mgE009.xsd:16:28: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgE010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgE010
-    mgE010.xsd:14:26: ID "foo" already defined
+    mgE010.xsd:14:26: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgE011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgE011
-    mgE011.xsd:20:28: ID "foo" already defined
+    mgE011.xsd:20:28: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgE012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -73112,32 +73113,32 @@ Grp: MS-ModelGroups2006-07-15 / mgH005
 Grp: MS-ModelGroups2006-07-15 / mgH006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgH006
-    mgH006.xsd:11:26: ID "foo" already defined
+    mgH006.xsd:11:26: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgH007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgH007
-    mgH007.xsd:11:26: ID "foo" already defined
+    mgH007.xsd:11:26: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgH008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgH008
-    mgH008.xsd:9:24: ID "foo" already defined
+    mgH008.xsd:9:24: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgH009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgH009
-    mgH009.xsd:16:26: ID "foo" already defined
+    mgH009.xsd:16:26: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgH010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgH010
-    mgH010.xsd:14:24: ID "foo" already defined
+    mgH010.xsd:14:24: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgH011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgH011
-    mgH011.xsd:20:26: ID "foo" already defined
+    mgH011.xsd:20:26: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgH012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92013,7 +92014,7 @@ Grp: MS-Schema2006-07-15 / schB1
 Grp: MS-Schema2006-07-15 / schB1i
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK schB1i
-    schB1i.xsd:3:34: ID "a" already defined
+    schB1i.xsd:3:34: Attribute "id": ID "a" already defined
 
 Grp: MS-Schema2006-07-15 / schB2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92595,7 +92596,7 @@ Grp: MS-SimpleType2006-07-15 / stA001
 Grp: MS-SimpleType2006-07-15 / stA002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stA002
-    stA002.xsd:7:44: ID "foo123" already defined
+    stA002.xsd:7:44: Attribute "id": ID "foo123" already defined
 
 Grp: MS-SimpleType2006-07-15 / stA003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92818,7 +92819,7 @@ Grp: MS-SimpleType2006-07-15 / stC005
 Grp: MS-SimpleType2006-07-15 / stC006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stC006
-    stC006.xsd:5:48: ID "foo123" already defined
+    stC006.xsd:5:48: Attribute "id": ID "foo123" already defined
 
 Grp: MS-SimpleType2006-07-15 / stC007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92956,7 +92957,7 @@ Grp: MS-SimpleType2006-07-15 / stD001
 Grp: MS-SimpleType2006-07-15 / stD002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stD002
-    stD002.xsd:5:48: ID "foo123" already defined
+    stD002.xsd:5:48: Attribute "id": ID "foo123" already defined
 
 Grp: MS-SimpleType2006-07-15 / stD003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93047,7 +93048,7 @@ Grp: MS-SimpleType2006-07-15 / stE001
 Grp: MS-SimpleType2006-07-15 / stE002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stE002
-    stE002.xsd:5:52: ID "foo123" already defined
+    stE002.xsd:5:52: Attribute "id": ID "foo123" already defined
 
 Grp: MS-SimpleType2006-07-15 / stE003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -94262,7 +94263,7 @@ Grp: MS-Wildcards2006-07-15 / wildA007
 Grp: MS-Wildcards2006-07-15 / wildA008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildA008
-    wildA008.xsd:6:26: ID "foo25" already defined
+    wildA008.xsd:6:26: Attribute "id": ID "foo25" already defined
 
 Grp: MS-Wildcards2006-07-15 / wildB010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95045,7 +95046,7 @@ Grp: MS-Wildcards2006-07-15 / wildJ007
 Grp: MS-Wildcards2006-07-15 / wildJ008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildJ008
-    wildJ008.xsd:7:36: ID "foo25" already defined
+    wildJ008.xsd:7:36: Attribute "id": ID "foo25" already defined
 
 Grp: MS-Wildcards2006-07-15 / wildK001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95752,6 +95753,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 513 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 75 in_full_fail= 10
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 74 in_full_fail= 10
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1674 ( 4.4 %)
+Total errors: 1673 ( 4.4 %)

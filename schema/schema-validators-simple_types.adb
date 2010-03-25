@@ -297,7 +297,8 @@ package body Schema.Validators.Simple_Types is
       procedure Validate_Characters
         (Validator     : access Validator_Record;
          Ch            : Unicode.CES.Byte_Sequence;
-         Empty_Element : Boolean);
+         Empty_Element : Boolean;
+         Id_Table      : access Id_Htable_Access);
       procedure Add_Facet
         (Validator   : access Validator_Record;
          Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -532,7 +533,8 @@ package body Schema.Validators.Simple_Types is
       procedure Validate_Characters
         (Validator     : access Validator_Record;
          Ch            : Unicode.CES.Byte_Sequence;
-         Empty_Element : Boolean)
+         Empty_Element : Boolean;
+         Id_Table      : access Id_Htable_Access)
       is
          pragma Unreferenced (Empty_Element);
       begin
@@ -540,6 +542,8 @@ package body Schema.Validators.Simple_Types is
             Debug_Output ("Validate_Characters for --" & Ch & "--"
                           & Get_Name (Validator));
          end if;
+
+         Check_Id (Id_Table, Validator, Ch);
          Check_Facet (Validator.Facets, Ch);
       end Validate_Characters;
 
@@ -696,7 +700,8 @@ package body Schema.Validators.Simple_Types is
    procedure Validate_Characters
      (Validator     : access Boolean_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
+      Empty_Element : Boolean;
+      Id_Table      : access Id_Htable_Access);
    procedure Add_Facet
      (Validator   : access Boolean_Validator_Record;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -903,9 +908,10 @@ package body Schema.Validators.Simple_Types is
    procedure Validate_Characters
      (Validator     : access Boolean_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
+      Empty_Element : Boolean;
+      Id_Table      : access Id_Htable_Access)
    is
-      pragma Unreferenced (Empty_Element);
+      pragma Unreferenced (Empty_Element, Id_Table);
       First : Integer := Ch'First;
       Index : Integer;
       C : Unicode_Char;
@@ -1480,7 +1486,8 @@ package body Schema.Validators.Simple_Types is
    procedure Validate_Characters
      (Union         : access XML_Union_Record;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
+      Empty_Element : Boolean;
+      Id_Table      : access Id_Htable_Access)
    is
       Iter : Particle_Iterator;
       Valid : XML_Validator;
@@ -1503,7 +1510,7 @@ package body Schema.Validators.Simple_Types is
          begin
             Valid := Get_Validator (Get (Iter).Type_Descr);
             if Valid /= null then
-               Validate_Characters (Valid, Ch, Empty_Element);
+               Validate_Characters (Valid, Ch, Empty_Element, Id_Table);
             end if;
 
             --  No error ? => Everything is fine
@@ -1558,7 +1565,10 @@ package body Schema.Validators.Simple_Types is
    procedure Validate_Characters
      (Validator      : access Any_Simple_XML_Validator_Record;
       Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean) is
+      Empty_Element  : Boolean;
+      Id_Table       : access Id_Htable_Access)
+   is
+      pragma Unreferenced (Id_Table);
    begin
       if Debug then
          Debug_Output ("Validate_Character for Any_Simple_XML_Validator "

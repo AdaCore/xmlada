@@ -55,7 +55,8 @@ package body Schema.Validators.UR_Type is
    procedure Validate_Characters
      (Validator      : access UR_Type_Validator;
       Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean);
+      Empty_Element  : Boolean;
+      Id_Table       : access Id_Htable_Access);
    --  See doc for inherited subprograms
 
    -------------------------
@@ -65,8 +66,10 @@ package body Schema.Validators.UR_Type is
    procedure Validate_Characters
      (Validator      : access UR_Type_Validator;
       Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean)
+      Empty_Element  : Boolean;
+      Id_Table       : access Id_Htable_Access)
    is
+      pragma Unreferenced (Id_Table);
    begin
       if Debug then
          Debug_Output

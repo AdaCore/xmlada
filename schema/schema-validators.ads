@@ -204,6 +204,15 @@ package Schema.Validators is
    --  Set the "block" status of the type.
    --  This can also be done at the element's level
 
+   ---------------
+   -- ID_Htable --
+   ---------------
+
+   type Id_Htable_Access is private;
+
+   procedure Free (Ids : in out Id_Htable_Access);
+   --  Free the memory occupied by Ids
+
    -------------------------
    -- Attribute_Validator --
    -------------------------
@@ -249,7 +258,8 @@ package Schema.Validators is
      (Validator : Attribute_Validator_Record;
       Atts      : Sax.Attributes.Attributes'Class;
       Index     : Natural;
-      Grammar   : in out XML_Grammar) is abstract;
+      Grammar   : in out XML_Grammar;
+      Id_Table  : access Id_Htable_Access) is abstract;
    --  Return True if Value is valid for this attribute.
    --  Raise XML_Validation_Error in case of error
 
@@ -267,15 +277,6 @@ package Schema.Validators is
    function Get_Type
      (Attr : Attribute_Validator_Record) return XML_Type;
    --  Set the type of the attribute
-
-   ---------------
-   -- ID_Htable --
-   ---------------
-
-   type Id_Htable_Access is private;
-
-   procedure Free (Ids : in out Id_Htable_Access);
-   --  Free the memory occupied by Ids
 
    ----------------------
    -- Attribute groups --
@@ -366,7 +367,8 @@ package Schema.Validators is
    procedure Validate_Characters
      (Validator      : access XML_Validator_Record;
       Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean);
+      Empty_Element  : Boolean;
+      Id_Table       : access Id_Htable_Access);
    --  Check whether this Characters event is valid in the context of
    --  Validator. Multiple calls to the SAX event Characters are grouped before
    --  calling this subprogram.
@@ -468,7 +470,10 @@ package Schema.Validators is
    --  instead.
 
    function Get_Type  (Element : XML_Element) return XML_Type;
-   procedure Set_Type (Element : XML_Element; Element_Type : XML_Type);
+   procedure Set_Type
+     (Element      : XML_Element;
+      Element_Type : XML_Type;
+      Id_Table     : access Id_Htable_Access);
    --  Return the type validator for this element
 
    function Get_Local_Name
@@ -476,7 +481,9 @@ package Schema.Validators is
    --  Return the local name of Element
 
    procedure Set_Default
-     (Element : XML_Element; Default : Unicode.CES.Byte_Sequence);
+     (Element  : XML_Element;
+      Default  : Unicode.CES.Byte_Sequence;
+      Id_Table : access Id_Htable_Access);
    function Has_Default (Element : XML_Element) return Boolean;
    function Get_Default
      (Element : XML_Element) return Unicode.CES.Byte_Sequence_Access;
@@ -486,7 +493,9 @@ package Schema.Validators is
    --  efficiency only
 
    procedure Set_Fixed
-     (Element : XML_Element; Fixed : Unicode.CES.Byte_Sequence);
+     (Element  : XML_Element;
+      Fixed    : Unicode.CES.Byte_Sequence;
+      Id_Table : access Id_Htable_Access);
    function Has_Fixed (Element : XML_Element) return Boolean;
    function Get_Fixed
      (Element : XML_Element) return Unicode.CES.Byte_Sequence_Access;
@@ -1007,7 +1016,8 @@ private
      (Validator : Named_Attribute_Validator_Record;
       Atts      : Sax.Attributes.Attributes'Class;
       Index     : Natural;
-      Grammar   : in out XML_Grammar);
+      Grammar   : in out XML_Grammar;
+      Id_Table  : access Id_Htable_Access);
    procedure Free (Validator : in out Named_Attribute_Validator_Record);
    function Is_Equal
      (Attribute : Named_Attribute_Validator_Record;
@@ -1027,7 +1037,8 @@ private
      (Validator : Any_Attribute_Validator;
       Atts      : Sax.Attributes.Attributes'Class;
       Index     : Natural;
-      Grammar   : in out XML_Grammar);
+      Grammar   : in out XML_Grammar;
+      Id_Table  : access Id_Htable_Access);
    procedure Free (Validator : in out Any_Attribute_Validator);
    function Is_Equal
      (Attribute : Any_Attribute_Validator;
@@ -1354,7 +1365,8 @@ private
    procedure Validate_Characters
      (Validator     : access Group_Model_Record;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
+      Empty_Element : Boolean;
+      Id_Table       : access Id_Htable_Access);
    --  See doc for inherited subprograms
 
    function Type_Model
@@ -1388,7 +1400,8 @@ private
    procedure Validate_Characters
      (Validator     : access XML_Any_Record;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
+      Empty_Element : Boolean;
+      Id_Table       : access Id_Htable_Access);
    function Get_Namespace_From_Parent_For_Locals
      (Validator : access XML_Any_Record) return Boolean;
    procedure Free (Any : in out XML_Any_Record);
@@ -1530,6 +1543,14 @@ private
      (Validator : access XML_Validator_Record'Class) return String;
    --  Return a string "(rule "name")" if the name of the validator is defined.
    --  This is for debug purposes only
+
+   procedure Check_Id
+     (Id_Table  : access Id_Htable_Access;
+      Validator : access XML_Validator_Record'Class;
+      Value     : Unicode.CES.Byte_Sequence);
+   --  Check whether Value is a unique ID in the document.
+   --  If yes, store it in Id_Table to ensure its future uniqueness.
+   --  This does nothing if Validator is not associated with an ID type.
 
    Debug : Boolean := False;
    --  Whether we are in debug mode
