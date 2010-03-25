@@ -734,6 +734,20 @@ package body Schema.Validators.Simple_Types is
    package Base64Binary_Validators is new Generic_Simple_Validator
      (Base64Binary_Facets.Length_Facets_Description);
 
+   type ID_Validator
+     is new String_Validators.Validator_Record with null record;
+   function Is_ID (Validator : ID_Validator) return Boolean;
+
+   -----------
+   -- Is_ID --
+   -----------
+
+   function Is_ID (Validator : ID_Validator) return Boolean is
+      pragma Unreferenced (Validator);
+   begin
+      return True;
+   end Is_ID;
+
    ----------
    -- Copy --
    ----------
@@ -1233,7 +1247,7 @@ package body Schema.Validators.Simple_Types is
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "NCName", Str);
 
-      Str := new String_Validators.Validator_Record;
+      Str := new ID_Validator;
       Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ID", Str);

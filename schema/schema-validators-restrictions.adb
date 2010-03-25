@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -74,7 +74,17 @@ package body Schema.Validators.Restrictions is
    function Get_Facets_Description
      (Validator : access Restriction_XML_Validator) return Facets_Description;
    procedure Free (Validator : in out Restriction_XML_Validator);
+   function Is_ID (Validator : Restriction_XML_Validator) return Boolean;
    --  See doc from inherited subprograms
+
+   -----------
+   -- Is_ID --
+   -----------
+
+   function Is_ID (Validator : Restriction_XML_Validator) return Boolean is
+   begin
+      return Is_ID (Validator.Base);
+   end Is_ID;
 
    ----------
    -- Free --

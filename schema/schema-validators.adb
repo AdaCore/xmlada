@@ -708,7 +708,7 @@ package body Schema.Validators is
       procedure Check_Id
         (Named : Named_Attribute_Validator; Index : Integer) is
       begin
-         if Named.Is_Id then
+         if Is_ID (Get_Type (Named.all)) then
             if Id_Table.all = null then
                Id_Table.all := new Id_Htable.HTable (101);
             else
@@ -831,6 +831,25 @@ package body Schema.Validators is
          raise;
    end Validate_Attributes;
 
+   -----------
+   -- Is_ID --
+   -----------
+
+   function Is_ID (Typ : XML_Type) return Boolean is
+   begin
+      return Typ.Validator /= null and then Is_ID (Typ.Validator.all);
+   end Is_ID;
+
+   -----------
+   -- Is_ID --
+   -----------
+
+   function Is_ID (Validator : XML_Validator_Record) return Boolean is
+      pragma Unreferenced (Validator);
+   begin
+      return False;
+   end Is_ID;
+
    --------------------------
    -- Validate_End_Element --
    --------------------------
@@ -911,8 +930,7 @@ package body Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
-      Value          : Unicode.CES.Byte_Sequence := "";
-      Is_ID          : Boolean := False)
+      Value          : Unicode.CES.Byte_Sequence := "")
       return Attribute_Validator
    is
       Result : constant Attribute_Validator :=
@@ -925,8 +943,7 @@ package body Schema.Validators is
            Attribute_Use  => Attribute_Use,
            Fixed          => null,
            Value          => new Unicode.CES.Byte_Sequence'(Value),
-           Next           => null,
-           Is_Id          => Is_ID);
+           Next           => null);
 
    begin
       if Has_Fixed then
@@ -948,8 +965,7 @@ package body Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
-      Value          : Unicode.CES.Byte_Sequence := "";
-      Is_ID          : Boolean := False)
+      Value          : Unicode.CES.Byte_Sequence := "")
       return Attribute_Validator
    is
       --  We cannot extract the type from Based_On yet, because it might not
@@ -966,8 +982,7 @@ package body Schema.Validators is
            Attribute_Use  => Attribute_Use,
            Fixed          => null,
            Value          => new Unicode.CES.Byte_Sequence'(Value),
-           Next           => null,
-           Is_Id          => Is_ID);
+           Next           => null);
 
    begin
       if Has_Fixed then
@@ -1757,11 +1772,10 @@ package body Schema.Validators is
    procedure Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence;
-      Attribute_Type : XML_Type;
-      Is_ID          : Boolean := False)
+      Attribute_Type : XML_Type)
    is
       Att : constant Attribute_Validator :=
-              Create_Global_Attribute (NS, Local_Name, Attribute_Type, Is_ID);
+              Create_Global_Attribute (NS, Local_Name, Attribute_Type);
       pragma Unreferenced (Att);
    begin
       null;
@@ -1774,8 +1788,7 @@ package body Schema.Validators is
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence;
-      Attribute_Type : XML_Type;
-      Is_ID          : Boolean := False) return Attribute_Validator
+      Attribute_Type : XML_Type) return Attribute_Validator
    is
       Old : Named_Attribute_Validator :=
         Attributes_Htable.Get (NS.Attributes.all, Local_Name);
@@ -1797,8 +1810,7 @@ package body Schema.Validators is
             Attribute_Use  => Optional,
             Fixed          => null,
             Value          => null,
-            Next           => null,
-            Is_Id          => Is_ID);
+            Next           => null);
          Register (NS, Old);
          Attributes_Htable.Set (NS.Attributes.all, Old);
       end if;

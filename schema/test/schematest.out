@@ -44970,10 +44970,11 @@ Grp: ElemDecl / idconstrdefs00403m
     Unsupported type IDREF and IDREFS
 
 Grp: ElemDecl / idconstrdefs00501m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK idConstrDefs00501m
   OK idConstrDefs00501m1_p
-  XF idConstrDefs00501m1_n
+  OK idConstrDefs00501m1_n
+    idConstrDefs00501m1_n.xml:20:22: ID "s007" already defined
 
 Grp: ElemDecl / maxoccurs00101m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47910,9 +47911,10 @@ Grp: MS-Additional2006-07-15 / addB079
   OK addB079
 
 Grp: MS-Additional2006-07-15 / addB080
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB080
-  XF addB080.i
+  OK addB080.i
+    addB080.xml:6:22: ID "j1" already defined
 
 Grp: MS-Additional2006-07-15 / addB081
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95747,11 +95749,9 @@ Total number of tests: 37685 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
    24002 XML files
 NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
-    Fixing these will run more XML tests
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 513 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 77 in_full_fail= 10
-    These need fixing, an invalid XML file could be handed to the application
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 75 in_full_fail= 10
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1676 ( 4.4 %)
+Total errors: 1674 ( 4.4 %)

@@ -1793,6 +1793,7 @@ package body Schema.Schema_Readers is
       Att : Attribute_Validator;
       Typ : XML_Type := No_Type;
       Use_Type : Attribute_Use_Type := Optional;
+
    begin
       if Form_Index /= -1 then
          if not Handler.Supported.Attribute_Form then

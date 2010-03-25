@@ -158,6 +158,13 @@ package Schema.Validators is
    --  Return a new type validator that checks for a list of values valid for
    --  Validator.
 
+   function Is_ID (Typ : XML_Type) return Boolean;
+   --  Whether Typ is an ID, ie the values of its attributes must be unique
+   --  throughout the document
+
+   function Is_ID (Validator : XML_Validator_Record) return Boolean;
+   --  Whether the validator is associated with an ID type
+
    function Extension_Of
      (G         : XML_Grammar_NS;
       Base      : XML_Type;
@@ -214,8 +221,7 @@ package Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
-      Value          : Unicode.CES.Byte_Sequence := "";
-      Is_ID          : Boolean := False)
+      Value          : Unicode.CES.Byte_Sequence := "")
       return Attribute_Validator;
    function Create_Local_Attribute
      (Based_On       : Attribute_Validator;
@@ -223,8 +229,8 @@ package Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
-      Value          : Unicode.CES.Byte_Sequence := "";
-      Is_ID          : Boolean := False) return Attribute_Validator;
+      Value          : Unicode.CES.Byte_Sequence := "")
+      return Attribute_Validator;
    --  Create a new local attribute validator. See also Create_Global_Attribute
 
    type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List,
@@ -704,8 +710,7 @@ package Schema.Validators is
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence;
-      Attribute_Type : XML_Type;
-      Is_ID          : Boolean := False) return Attribute_Validator;
+      Attribute_Type : XML_Type) return Attribute_Validator;
    function Create_Global_Attribute_Group
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
@@ -718,8 +723,7 @@ package Schema.Validators is
    procedure Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence;
-      Attribute_Type : XML_Type;
-      Is_ID          : Boolean := False);
+      Attribute_Type : XML_Type);
    --  Same as above, but doesn't return the newly created type. Use Lookup if
    --  you need access to it later on
 
@@ -998,7 +1002,6 @@ private
          Attribute_Use  : Attribute_Use_Type;
          Fixed          : Unicode.CES.Byte_Sequence_Access;
          Value          : Unicode.CES.Byte_Sequence_Access;
-         Is_Id          : Boolean;
       end record;
    procedure Validate_Attribute
      (Validator : Named_Attribute_Validator_Record;

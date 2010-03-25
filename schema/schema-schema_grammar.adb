@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2009, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -101,8 +101,7 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Seq1, "annotated_seq");
       Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Typ := Extension_Of (G, Lookup (G, "openAttrs"), XML_Validator (Seq1));
-      Add_Attribute (Typ, Create_Local_Attribute
-                       ("id", G, Lookup (G, "ID"), Is_ID => True));
+      Add_Attribute (Typ, Create_Local_Attribute ("id", G, Lookup (G, "ID")));
       Create_Global_Type (G, "annotated", Typ);
 
       --  The "schemaTop" element  ??? Missing abstract
@@ -170,8 +169,7 @@ package body Schema.Schema_Grammar is
            ("elementFormDefault", G, Lookup (G, "formChoice"),
             Attribute_Use     => Default,
             Value             => "unqualified"));
-      Add_Attribute (Seq2, Create_Local_Attribute ("id", G, Lookup (G, "ID"),
-                                                   Is_ID => True));
+      Add_Attribute (Seq2, Create_Local_Attribute ("id", G, Lookup (G, "ID")));
       Add_Attribute (Seq2, Lookup_Attribute
          (Grammar => XML_G, Local_Name => "lang"));
       Set_Type (Create_Global_Element (G, "schema", Qualified),
