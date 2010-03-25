@@ -632,6 +632,8 @@ package body Schema.Date_Time is
          return No_Duration;
       end if;
 
+      Pos := Pos + 1;
+
       while Pos <= Ch'Last loop
          Tmp := Pos;
          while Tmp <= Ch'Last
@@ -686,6 +688,11 @@ package body Schema.Date_Time is
             end if;
             Result.Seconds := Result.Seconds + Day_Range
               (Integer'Value (Ch (Pos .. Tmp - 1))) * 3600.0;
+
+         else
+            Validation_Error
+              ("Invalid character '" & Ch (Tmp)
+               & "' in duration: """ & Ch & """");
          end if;
 
          Pos := Tmp + 1;

@@ -727,7 +727,9 @@ procedure Schematest is
                Put_Line (To_String (Test.Name));
 
                if Show_Files then
-                  Put_Line ("    " & To_String (Test.XSD));
+                  if Test.XSD /= "" then
+                     Put_Line ("    " & To_String (Test.XSD));
+                  end if;
 
                   if Test.XML /= "" then
                      Put_Line ("    " & To_String (Test.XML));
