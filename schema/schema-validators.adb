@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2009, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -610,7 +610,7 @@ package body Schema.Validators is
                Check_Id (Named, Found);
 
                Facets := Get_Facets_Description
-                 (Named.Attribute_Type.Validator);
+                 (Get_Type (Named.all).Validator);
                if Facets /= null
                  and then Facets.all in Common_Facets_Description'Class
                then
@@ -684,23 +684,17 @@ package body Schema.Validators is
       function Find_Attribute
         (Named : Named_Attribute_Validator) return Integer is
       begin
-         if Debug then
-            Debug_Output ("Check if XSD attribute: "
-                          & Named.NS.Namespace_URI.all
-                          & ':' & Named.Local_Name.all);
-         end if;
-
          for A in 0 .. Length - 1 loop
-            if Debug then
-               Debug_Output ("   is specified. Elem has: "
-                             & Get_URI (Atts, A) & ':'
-                             & Get_Local_Name (Atts, A));
-            end if;
             if not Seen (A)
               and then Get_Local_Name (Atts, A) = Named.Local_Name.all
               and then (Get_URI (Atts, A) = ""
                         or else Get_URI (Atts, A) = Named.NS.Namespace_URI.all)
             then
+               if Debug then
+                  Debug_Output ("Found attribute: "
+                                & Named.NS.Namespace_URI.all
+                                & ':' & Named.Local_Name.all);
+               end if;
                return A;
             end if;
          end loop;
@@ -925,6 +919,7 @@ package body Schema.Validators is
         new Named_Attribute_Validator_Record'
           (Local_Name     => new Unicode.CES.Byte_Sequence'(Local_Name),
            NS             => NS,
+           Ref_Attr       => null,
            Attribute_Type => Attribute_Type,
            Attribute_Form => Attribute_Form,
            Attribute_Use  => Attribute_Use,
@@ -940,6 +935,47 @@ package body Schema.Validators is
       end if;
 
       Register (NS, Result);
+      return Result;
+   end Create_Local_Attribute;
+
+   ----------------------------
+   -- Create_Local_Attribute --
+   ----------------------------
+
+   function Create_Local_Attribute
+     (Based_On       : Attribute_Validator;
+      Attribute_Form : Form_Type                 := Qualified;
+      Attribute_Use  : Attribute_Use_Type        := Optional;
+      Fixed          : Unicode.CES.Byte_Sequence := "";
+      Has_Fixed      : Boolean := False;
+      Value          : Unicode.CES.Byte_Sequence := "";
+      Is_ID          : Boolean := False)
+      return Attribute_Validator
+   is
+      --  We cannot extract the type from Based_On yet, because it might not
+      --  have been defined yet in the grammar.
+
+      Result : constant Attribute_Validator :=
+        new Named_Attribute_Validator_Record'
+          (Local_Name     => new Unicode.CES.Byte_Sequence'
+               (Named_Attribute_Validator (Based_On).Local_Name.all),
+           NS             => Based_On.NS,
+           Ref_Attr       => Named_Attribute_Validator (Based_On),
+           Attribute_Type => No_Type,
+           Attribute_Form => Attribute_Form,
+           Attribute_Use  => Attribute_Use,
+           Fixed          => null,
+           Value          => new Unicode.CES.Byte_Sequence'(Value),
+           Next           => null,
+           Is_Id          => Is_ID);
+
+   begin
+      if Has_Fixed then
+         Named_Attribute_Validator_Record (Result.all).Fixed :=
+           new Unicode.CES.Byte_Sequence'(Collapse_Whitespaces (Fixed));
+      end if;
+
+      Register (Based_On.NS, Result);
       return Result;
    end Create_Local_Attribute;
 
@@ -991,9 +1027,9 @@ package body Schema.Validators is
                        & "=" & Val & "--");
       end if;
 
-      if Validator.Attribute_Type /= No_Type then
+      if Get_Type (Validator) /= No_Type then
          Validate_Characters
-           (Get_Validator (Validator.Attribute_Type), Val,
+           (Get_Validator (Get_Type (Validator)), Val,
             Empty_Element => False);
       end if;
 
@@ -1194,7 +1230,7 @@ package body Schema.Validators is
    --------------
 
    function Get_Type
-     (Attr : access Attribute_Validator_Record) return XML_Type
+     (Attr : Attribute_Validator_Record) return XML_Type
    is
       pragma Unreferenced (Attr);
    begin
@@ -1217,8 +1253,14 @@ package body Schema.Validators is
    --------------
 
    function Get_Type
-     (Attr : access Named_Attribute_Validator_Record) return XML_Type is
+     (Attr : Named_Attribute_Validator_Record) return XML_Type is
    begin
+      if Attr.Attribute_Type = null
+        and then Attr.Ref_Attr /= null
+      then
+         return Attr.Ref_Attr.Attribute_Type;
+      end if;
+
       return Attr.Attribute_Type;
    end Get_Type;
 
@@ -1431,10 +1473,13 @@ package body Schema.Validators is
       Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
 
       Create_UR_Type_Elements (G, Grammar);
+
+      --  As per 3.4.7, ur-Type (ie anyType) uses a Lax processing for its
+      --  children node (ie uses the grammar definition if one is found)
       Create_Global_Type
         (G, "ur-Type",
          Get_Validator
-           (Get_Type (Get_UR_Type_Element (Grammar, Process_Skip))));
+           (Get_Type (Get_UR_Type_Element (Grammar, Process_Lax))));
 
       Tmp2 := new XML_Validator_Record;
       Create_Global_Type (G, "anyType", Tmp2);
@@ -1736,7 +1781,7 @@ package body Schema.Validators is
         Attributes_Htable.Get (NS.Attributes.all, Local_Name);
    begin
       if Old /= null then
-         if Old.Attribute_Type /= No_Type then
+         if Get_Type (Old.all) /= No_Type then
             Validation_Error
               ("Attribute has already been declared: " & Local_Name);
          end if;
@@ -1746,6 +1791,7 @@ package body Schema.Validators is
          Old := new Named_Attribute_Validator_Record'
            (NS             => NS,
             Local_Name     => new Byte_Sequence'(Local_Name),
+            Ref_Attr       => null,
             Attribute_Type => Attribute_Type,
             Attribute_Form => Unqualified,
             Attribute_Use  => Optional,
@@ -3728,7 +3774,7 @@ package body Schema.Validators is
 
          while Attr_Iter /= Attributes_Htable.No_Iterator loop
             Attr := Current (Attr_Iter);
-            if Attr.Attribute_Type = No_Type then
+            if Get_Type (Attr.all) = No_Type then
                Validation_Error
                  ("Attribute """
                   & To_QName (Grammar.Namespace_URI.all, Attr.Local_Name.all)

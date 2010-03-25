@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2003-2008, AdaCore                   --
+--                Copyright (C) 2003-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -606,14 +606,27 @@ package body Schema.Readers is
       --  Whether this element is valid in the current context
 
       if Validating_Reader (Handler).Validators /= null then
+         if Debug then
+            Put_Line ("Using parent's validator to validate the element");
+         end if;
+
          Validate_Start_Element
            (Get_Validator (Validating_Reader (Handler).Validators.Typ),
             Local_Name, Namespace_URI, G,
             Validating_Reader (Handler).Validators.Data,
             Validating_Reader (Handler).Grammar, Element);
+
+         --  If not: this is a validation error
+
+         if Element = No_Element then
+            Validation_Error
+              ("Unexpected element """ &
+               To_QName (Namespace_URI, Local_Name) & """");
+         end if;
+
       else
          if Debug then
-            Put_Line ("Getting element definition from grammar: "
+            Put_Line ("Parent node defines no validator, lookup in grammar: "
                       & Namespace_URI & " " & Local_Name);
          end if;
          Element := Lookup_Element (G, Local_Name, False);
@@ -630,14 +643,6 @@ package body Schema.Readers is
          --  node is the root.
          Add_XML_Instance_Attributes
            (Validating_Reader (Handler), Get_Validator (Get_Type (Element)));
-      end if;
-
-      --  If not: this is a validation error
-
-      if Element = No_Element then
-         Validation_Error
-           ("Unexpected element """ &
-            To_QName (Namespace_URI, Local_Name) & """");
       end if;
 
       Compute_Type;

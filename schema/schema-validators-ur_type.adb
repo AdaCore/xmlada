@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -25,7 +25,7 @@
 -- exception does not however invalidate any other reasons why the   --
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
-
+with GNAT.IO; use GNAT.IO;
 package body Schema.Validators.UR_Type is
 
    type UR_Type_Validator is new XML_Validator_Record with record
@@ -93,8 +93,8 @@ package body Schema.Validators.UR_Type is
    begin
       if Debug then
          Debug_Output
-           ("Validate_Start_Element UR_Type Process_Contents="
-            & Validator.Process_Contents'Img);
+           ("Validate_Start_Element " & Local_Name
+            & " (parent=UR_Type, " & Validator.Process_Contents'Img & ")");
       end if;
 
       --  ur-Type and anyType accept anything
@@ -127,10 +127,14 @@ package body Schema.Validators.UR_Type is
             end if;
 
          when Process_Skip =>
+            if Debug then
+               Debug_Output
+                 ("Children will be validated with UR-Type, because of SKIP");
+            end if;
+
             Element_Validator := Get_UR_Type_Element
               (Grammar, Validator.Process_Contents);
       end case;
-
    end Validate_Start_Element;
 
    -------------------------

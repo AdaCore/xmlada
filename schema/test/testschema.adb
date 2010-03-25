@@ -63,10 +63,10 @@ begin
    loop
       case Getopt (Switches) is
          when 'h' =>
-            Put_Line ("--xsd file     Specifies location of XSD file");
-            Put_Line ("--debug        Print extra debugging info");
-            Put_Line ("--base         Use basenames in error messages");
-            Put_Line ("--dom          Dump the DOM tree after parsing");
+            Put_Line ("-xsd file     Specifies location of XSD file");
+            Put_Line ("-debug        Print extra debugging info");
+            Put_Line ("-base         Use basenames in error messages");
+            Put_Line ("-dom          Dump the DOM tree after parsing");
             Put_Line ("               Uses a DOM-based parser, instead of");
             Put_Line ("               the default sax-based parser");
             return;

@@ -77,7 +77,16 @@ package Schema.Validators is
    --  To indicate that a Max_Occurs is set to unbounded
 
    type Form_Type is (Qualified, Unqualified);
+
    type Process_Contents_Type is (Process_Strict, Process_Lax, Process_Skip);
+   --  When in an element that accepts any children (ur-type, or xsd:any), this
+   --  type indicates that should be done to validate the children:
+   --     Strict: the children must have a definition in the schema (as a
+   --             global element)
+   --     Lax:    if the children have a definition, it is used, otherwise they
+   --             are just accepted as is.
+   --     Skip:   even if the children have a defition, it is ignored, and the
+   --             child is processed as a ur-type.
 
    --------------------
    -- Validator_Data --
@@ -208,6 +217,14 @@ package Schema.Validators is
       Value          : Unicode.CES.Byte_Sequence := "";
       Is_ID          : Boolean := False)
       return Attribute_Validator;
+   function Create_Local_Attribute
+     (Based_On       : Attribute_Validator;
+      Attribute_Form : Form_Type                 := Qualified;
+      Attribute_Use  : Attribute_Use_Type        := Optional;
+      Fixed          : Unicode.CES.Byte_Sequence := "";
+      Has_Fixed      : Boolean := False;
+      Value          : Unicode.CES.Byte_Sequence := "";
+      Is_ID          : Boolean := False) return Attribute_Validator;
    --  Create a new local attribute validator. See also Create_Global_Attribute
 
    type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List,
@@ -242,7 +259,7 @@ package Schema.Validators is
    procedure Set_Type
      (Attr : access Attribute_Validator_Record; Attr_Type : XML_Type);
    function Get_Type
-     (Attr : access Attribute_Validator_Record) return XML_Type;
+     (Attr : Attribute_Validator_Record) return XML_Type;
    --  Set the type of the attribute
 
    ---------------
@@ -968,18 +985,21 @@ private
      is array (Natural range <>) of Attribute_Or_Group;
    type Attribute_Validator_List_Access is access Attribute_Validator_List;
 
+   type Named_Attribute_Validator_Record;
+   type Named_Attribute_Validator is access all
+     Named_Attribute_Validator_Record'Class;
+
    type Named_Attribute_Validator_Record is new Attribute_Validator_Record with
       record
          Local_Name     : Unicode.CES.Byte_Sequence_Access;
-         Attribute_Type : XML_Type;
+         Ref_Attr       : Named_Attribute_Validator;
+         Attribute_Type : XML_Type;   --  or read from Ref_Attr the first time
          Attribute_Form : Form_Type;
          Attribute_Use  : Attribute_Use_Type;
          Fixed          : Unicode.CES.Byte_Sequence_Access;
          Value          : Unicode.CES.Byte_Sequence_Access;
          Is_Id          : Boolean;
       end record;
-   type Named_Attribute_Validator is access all
-     Named_Attribute_Validator_Record'Class;
    procedure Validate_Attribute
      (Validator : Named_Attribute_Validator_Record;
       Atts      : Sax.Attributes.Attributes'Class;
@@ -994,7 +1014,7 @@ private
      (Attr      : access Named_Attribute_Validator_Record;
       Attr_Type : XML_Type);
    function Get_Type
-     (Attr : access Named_Attribute_Validator_Record) return XML_Type;
+     (Attr : Named_Attribute_Validator_Record) return XML_Type;
 
    type Any_Attribute_Validator is new Attribute_Validator_Record with record
       Process_Contents : Process_Contents_Type;

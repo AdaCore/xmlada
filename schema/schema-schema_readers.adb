@@ -71,10 +71,6 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Attribute_Group);
-   procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
-      QName   : Byte_Sequence;
-      Result  : out Attribute_Validator);
    --  Lookup a type or element  with a possible namespace specification
 
    function Create_Repeat
@@ -452,28 +448,6 @@ package body Schema.Schema_Readers is
         (G, QName (Separator + 1 .. QName'Last));
       Output
         ("Attr_Group := Lookup_Attribute_Group (G, """
-         & QName (Separator + 1 .. QName'Last) & """);");
-   end Lookup_With_NS;
-
-   --------------------
-   -- Lookup_With_NS --
-   --------------------
-
-   procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
-      QName   : Byte_Sequence;
-      Result  : out Attribute_Validator)
-   is
-      Separator : constant Integer := Split_Qname (QName);
-      G         : XML_Grammar_NS;
-   begin
-      Get_Grammar_For_Namespace
-        (Handler, QName (QName'First .. Separator - 1), G);
-
-      Result := Lookup_Attribute
-        (G, QName (Separator + 1 .. QName'Last));
-      Output
-        ("Attr := Lookup_Attribute_NS (G, """
          & QName (Separator + 1 .. QName'Last) & """);");
    end Lookup_With_NS;
 
@@ -1907,7 +1881,34 @@ package body Schema.Schema_Readers is
                end if;
          end case;
       else
-         Lookup_With_NS (Handler, Get_Value (Atts, Ref_Index), Att);
+         declare
+            QName     : constant Byte_Sequence := Get_Value (Atts, Ref_Index);
+            Separator : constant Integer := Split_Qname (QName);
+            G         : XML_Grammar_NS;
+         begin
+            Get_Grammar_For_Namespace
+              (Handler, QName (QName'First .. Separator - 1), G);
+            Att := Lookup_Attribute (G, QName (Separator + 1 .. QName'Last));
+
+            Att := Create_Local_Attribute
+              (Based_On       => Att,
+               Attribute_Use  => Use_Type,
+               Attribute_Form => Qualified,
+               Has_Fixed      => Fixed_Index /= -1,
+               Fixed          => Get_Fixed,
+               Value          => "");
+
+            if Debug then
+               Output
+                 ("Attr := Lookup_Attribute_NS (G, """
+                  & QName (Separator + 1 .. QName'Last) & """);");
+               Output
+                 (Ada_Name (Handler.Contexts)
+                  & " := Create_Local_Attribute (Attr, Handler.Target_NS, "
+                  & Use_Type'Img & ", Qualified, Has_Fixed="
+                  & Boolean'Image (Fixed_Index /= -1) & ";");
+            end if;
+         end;
       end if;
 
       Handler.Contexts.Attribute := Att;
@@ -1978,7 +1979,7 @@ package body Schema.Schema_Readers is
       pragma Unmodified (Handler);
    begin
       if not Handler.Contexts.Attribute_Is_Ref
-        and then Get_Type (Handler.Contexts.Attribute) = No_Type
+        and then Get_Type (Handler.Contexts.Attribute.all) = No_Type
       then
          Set_Type (Handler.Contexts.Attribute,
                    Lookup (Handler.Schema_NS, "ur-Type"));

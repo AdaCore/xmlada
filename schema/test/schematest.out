@@ -44002,9 +44002,10 @@ Grp: AGroupDef / ag_attrusens00101m1_n
   SF AG_attrUseNS00101m1_n
 
 Grp: AGroupDef / ag_attrwcard00101m1
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK AG_attrWCard00101m1
-  OK Positive
+  XP Positive
+    AG_attrWCard00101m1_p.xml:15:43: Attribute "notDefined" invalid for this element
 
 Grp: AGroupDef / ag_name00101m1_p
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44480,16 +44481,18 @@ Grp: AttrUse / au_attrdecl00101m1_n
   SF AU_attrDecl00101m1_n
 
 Grp: AttrUse / au_required00101m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK AU_required00101m1
   OK Positive
-  XF Negative
+  OK Negative
+    AU_required00101m1_n.xml:19:25: Attribute "number" is required in this context
 
 Grp: AttrUse / au_valconstr00101m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK AU_valConstr00101m1
   OK Positive
-  XF Negative
+  OK Negative
+    AU_valConstr00101m1_n.xml:14:40: Attribute "td:number": value must be "12" (found "-1")
 
 Grp: CType / abstract00101m1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50095,9 +50098,10 @@ Grp: MS-Attribute2006-07-15 / attJ007
   OK attJ007.v
 
 Grp: MS-Attribute2006-07-15 / attJ008
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attJ008
-  XF attJ008.i
+  OK attJ008.i
+    attJ008.xml:3:31: Attribute "bar" is required in this context
 
 Grp: MS-Attribute2006-07-15 / attJ009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -50446,9 +50450,10 @@ Grp: MS-Attribute2006-07-15 / attLa004
   OK attLa004.v
 
 Grp: MS-Attribute2006-07-15 / attLa005
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attLa005
-  XF attLa005.i
+  OK attLa005.i
+    attLa005.xml:2:154: Attribute "x:ga1": value must be "abc" (found "999")
 
 Grp: MS-Attribute2006-07-15 / attLa006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95745,8 +95750,8 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
     Fixing these will run more XML tests
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
-XP: XML KO, should be OK: in_full_pass= 0 in_partial= 512 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 81 in_full_fail= 10
+XP: XML KO, should be OK: in_full_pass= 0 in_partial= 513 in_full_fail= 4
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 77 in_full_fail= 10
     These need fixing, an invalid XML file could be handed to the application
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1679 ( 4.5 %)
+Total errors: 1676 ( 4.4 %)

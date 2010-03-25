@@ -764,13 +764,16 @@ procedure Schematest is
                Put_Line (To_String (Test.Name));
 
                if Show_Files then
+                  Put ("    ./testschema");
                   if Test.XSD /= "" then
-                     Put_Line ("    " & To_String (Test.XSD));
+                     Put (" -xsd " & To_String (Test.XSD));
                   end if;
 
                   if Test.XML /= "" then
-                     Put_Line ("    " & To_String (Test.XML));
+                     Put (" " & To_String (Test.XML));
                   end if;
+
+                  New_Line;
                end if;
 
                if Test.Msg /= "" then
@@ -853,19 +856,6 @@ procedure Schematest is
          end loop;
 
          New_Line;
-
-         case K is
-            when XSD_Should_Pass => null;
-            when XSD_Should_Fail => null;
-            when XML_Should_Pass => null;
-            when Not_Implemented =>
-               Put_Line ("    Fixing these will run more XML tests");
-            when XML_Should_Fail =>
-               Put_Line ("    These need fixing, an invalid XML file could be"
-                         & " handed to the application");
-            when Internal_Error =>
-               null;
-         end case;
       end loop;
 
       Put ("Total errors:" & Total_Error'Img & " (");
