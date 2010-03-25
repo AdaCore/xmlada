@@ -181,14 +181,36 @@ XML/Ada itself. Here is how you can run this testsuite:
    be called "tests".
 
 A similar setup is required for the W3C schema testsuite. The URL of the
-testsuite is:  http://www.w3.org/2001/05/xmlschema-test-collection
-and once uncompressed, you should created a link from schema/test to this
-directory. The link should be called xmlschema2006-11-06
+testsuite is:
+   http://www.w3.org/XML/2004/xml-schema-test-suite/xmlschema2006-11-06/xsts-2007-06-20.tar.gz
+This file should be extracted in the schema/test directory (creating a
+xmlschema-2006-11-06 subdirectory as a result).
 
-   Execute the command
-     make run_test
+   Then execute the command from the toplevel directory:
+       make run_test
 
    This will report the number of errors found.
+
+The W3C committee has reviewed the status of a number of tests since the
+testsuite was released (as developers of XML parsers have reported issues
+with the testsuite). They provide a public CVS repository that include the
+metadata for the tests (list of tests, their status, expected output,...),
+but unfortunately not the tests themselves. As a result, getting the latest
+version requires several steps. First get the .tar.gz as described above,
+and extract it in schema/test. From the same directory, run:
+
+   cvs -d :pserver:anonymous@dev.w3.org:/sources/public login
+   cvs -d :pserver:anonymous@dev.w3.org:/sources/public -z5 co XML/xml-schema-test-suite/2004-01-14/xmlschema2006-11-06
+
+You can update that directory at any time with:
+   cd XML; cvs update
+
+The XML/Ada testsuite will automatically take advantage of that directory
+if found. You need however to manually run
+   cd schema/test
+   ./schematest --cvs
+to get the output under those conditions, since "make run_test" is setup
+for the .tar.gz output.
 
 
 VII - CONTENTS OF THE LIBRARY

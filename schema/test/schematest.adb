@@ -59,7 +59,16 @@ with Schema.Validators;         use Schema.Validators;
 procedure Schematest is
 
    Testdir : constant String := "xmlschema2006-11-06";
+
+   Alternative_Dir : constant String :=
+     "XML/xml-schema-test-suite/2004-01-14/xmlschema2006-11-06";
+   --  Where we might find the CVS checkout of W3C, which contains more
+   --  up-to-date metadata. Whenever possible, we use files from this
+   --  directory
+
    Disable_File_List : constant String := "disable";
+
+   Check_Alternative_Dir : Boolean := False;
 
    Verbose       : Boolean := False;
    Debug         : Boolean := False;
@@ -182,6 +191,35 @@ procedure Schematest is
       Annotation : Node);
    --  Set the description of the group
 
+   procedure Load (File : String; Input : in out File_Input'Class);
+   --  Open File, loading from the alternative directory if the file is
+   --  found, or from Testdir otherwise
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load (File : String; Input : in out File_Input'Class) is
+   begin
+      if Check_Alternative_Dir then
+         if Is_Regular_File (Alternative_Dir & Directory_Separator & File) then
+            if Verbose then
+               Put_Line
+                 ("Load " & Alternative_Dir & Directory_Separator & File);
+            end if;
+
+            Open (Alternative_Dir & Directory_Separator & File, Input);
+            return;
+         end if;
+      end if;
+
+      if Verbose then
+         Put_Line ("Load " & Testdir & Directory_Separator & File);
+      end if;
+
+      Open (Testdir & Directory_Separator & File, Input);
+   end Load;
+
    --------------------
    -- Parse_Disabled --
    --------------------
@@ -272,9 +310,15 @@ procedure Schematest is
    begin
       while N2 /= null loop
          if Local_Name (N2) = "current" then
-            if Get_Attribute (N2, "status") = "accepted" then
+            if Get_Attribute (N2, "status") = "accepted"
+              or else Get_Attribute (N2, "status") = "stable"
+            then
                return Accepted;
-            elsif Get_Attribute (N2, "status") = "queried" then
+            elsif Get_Attribute (N2, "status") = "queried"
+              or else Get_Attribute (N2, "status") = "disputed-spec"
+              or else Get_Attribute (N2, "status") = "disputed-test"
+              or else Get_Attribute (N2, "status") = "disputedTest"
+            then
                return Queried;
             else
                Put_Line ("Invalid status: " & Get_Attribute (N2, "status"));
@@ -326,23 +370,19 @@ procedure Schematest is
 
             while N /= null loop
                if Local_Name (N) = "schemaDocument" then
-                  Result.XSD := To_Unbounded_String
-                    (Normalize_Pathname
-                       (Get_Attribute_NS (N, Xlink, "href"),
-                        Base_Dir, Resolve_Links => False));
-
-                  if Verbose then
-                     Put_Line ("Parsing " & To_String (Result.XSD));
-                  end if;
+                  Group.Parsed_XSD := Group.Parsed_XSD + 1;
 
                   if Schema_Files /= Null_Unbounded_String then
                      Append (Schema_Files, " - ");
                   end if;
 
+                  Load (Normalize_Pathname
+                        (Get_Attribute_NS (N, Xlink, "href"),
+                         Base_Dir, Resolve_Links => False),
+                    Input);
+                  Result.XSD := To_Unbounded_String (Get_System_Id (Input));
                   Append (Schema_Files, Result.XSD);
 
-                  Group.Parsed_XSD := Group.Parsed_XSD + 1;
-                  Open (To_String (Result.XSD), Input);
                   Parse (Reader, Input);
                   Close (Input);
                end if;
@@ -423,18 +463,15 @@ procedure Schematest is
       while N /= null loop
          if Local_Name (N) = "instanceDocument" then
             begin
-               Result.XML := To_Unbounded_String
-                 (Normalize_Pathname
-                    (Get_Attribute_NS (N, Xlink, "href"),
-                     Base_Dir, Resolve_Links => False));
-               if Verbose then
-                  Put_Line ("Parsing " & To_String (Result.XML));
-               end if;
+               Group.Parsed_XML := Group.Parsed_XML + 1;
 
                Result.Kind := Passed;
+               Load (Normalize_Pathname
+                     (Get_Attribute_NS (N, Xlink, "href"),
+                      Base_Dir, Resolve_Links => False),
+                     Input);
+               Result.XML := To_Unbounded_String (Get_System_Id (Input));
 
-               Group.Parsed_XML := Group.Parsed_XML + 1;
-               Open (To_String (Result.XML), Input);
                Parse (Reader, Input);
                Close (Input);
 
@@ -600,7 +637,7 @@ procedure Schematest is
       N      : Node;
       Name   : Unbounded_String;
    begin
-      Open (Filename, Input);
+      Load (Filename, Input);
       Parse (Reader, Input);
       Close (Input);
 
@@ -635,7 +672,7 @@ procedure Schematest is
       Reader : Tree_Reader;
       N      : Node;
    begin
-      Open (Filename, Input);
+      Load (Filename, Input);
       Parse (Reader, Input);
       Close (Input);
 
@@ -845,7 +882,8 @@ begin
    end if;
 
    loop
-      case Getopt ("v d a h f -filter: -descr -group -hide: -feature:") is
+      case Getopt ("v d a h f -filter: -descr -group -hide: -feature:"
+                   & " -cvs") is
          when 'h'    =>
             Put_Line ("-v   Verbose mode");
             Put_Line ("-d   Debug mode");
@@ -859,6 +897,8 @@ begin
               ("--hide [PA,NA,SP,SF,XP,XF,IE] only show those tests.");
             Put_Line ("     Opposite of --filter, cannot be combined");
             Put_Line ("--descr Show group descriptions");
+            Put_Line ("--cvs   Check the CVS checkout of W3C (see README file)"
+                      & " for more up-to-date data");
             Put_Line ("--group Hide fully failed groups");
             Put_Line ("     These likely show unimplemented features");
             Put_Line ("--feature name    Disable support for a feature");
@@ -872,6 +912,9 @@ begin
          when '-' =>
             if Full_Switch = "-group" then
                Hide_Fully_Failed_Groups := True;
+
+            elsif Full_Switch = "-cvs" then
+               Check_Alternative_Dir := True;
 
             elsif Full_Switch = "-feature" then
                if Parameter = "attrform" then
@@ -953,7 +996,6 @@ begin
       Put_Line ("Tests marked by W3C as non-accepted were not run");
    end if;
 
-   Change_Dir (Testdir);
    Run_Testsuite ("suite.xml");
 
    Print_Results;

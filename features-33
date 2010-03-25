@@ -23,3 +23,9 @@ NF-33-J302-043 New exception XML_Not_Implemented (2010-03-24)
    It is also possible to explicitly disable support for some features
    to make sure the subset of Schema you use is fully supported by
    XML/Ada and passes all relevant tests of the W3C testsuite
+
+NF-33-J302-043 Support for the CVS version of W3C testsuite (2010-03-25)
+
+   The W3C committee has reviewed the status of some of their schema
+   tests since their last release. Support was added to use this latest
+   version. See the README file for information on the setup.

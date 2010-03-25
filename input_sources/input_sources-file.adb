@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2008, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;     use Ada.Exceptions;
 with IO_Exceptions;      use IO_Exceptions;
 with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
@@ -55,7 +56,8 @@ package body Input_Sources.File is
       --  Raise Name_Error if file cannot be found
 
       if FD = Invalid_FD then
-         raise Name_Error;
+         Raise_Exception
+            (Name_Error'Identity, "Could not open " & Filename);
       end if;
 
       Length := Integer (File_Length (FD));
