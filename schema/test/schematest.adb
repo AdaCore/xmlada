@@ -444,7 +444,20 @@ procedure Schematest is
       N        : Node := First_Child (Test);
       Reader   : Validating_Reader;
       Input    : File_Input;
+      Tmp_Gr   : Group_Result;
    begin
+      if Find (Groups, To_String (Group.Name) & " / " & Name) /=
+        Group_Hash.No_Element
+      then
+         Tmp_Gr := Group_Hash.Element
+           (Groups, To_String (Group.Name) & " / " & Name);
+         if Tmp_Gr.Disabled then
+            Put_Line ("Test: " & To_String (Tmp_Gr.Name) & " (disabled)");
+            New_Line;
+            return;
+         end if;
+      end if;
+
       Result.Name := To_Unbounded_String (Name);
       Result.Kind := Passed;
       Result.XSD  := Schema;

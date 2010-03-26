@@ -4,3 +4,7 @@ MS-Schema2006-07-15 / schZ012_a
   --  properly. It fails on Darwin (lena) with HFS and on Windows, since
   --  the included file schZ012_A.xsd is found on those systems.
   --  See discussion at http://www.w3.org/Bugs/Public/show_bug.cgi?id=4137
+
+MS-Regex2006-07-15 / reZ001 / reZ001.v
+  --  The regexp pattern obviously matches the attribute value, as confirmed
+  --  by using Perl

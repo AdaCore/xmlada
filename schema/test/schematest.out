@@ -91938,10 +91938,11 @@ Grp: MS-Regex2006-07-15 / Specials
   XP Specials.v
     Specials.xml:1:226: Attribute "value": string pattern not matched: \p{IsSpecials}+
 
+Test: MS-Regex2006-07-15 / reZ001 / reZ001.v (disabled)
+
 Grp: MS-Regex2006-07-15 / reZ001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reZ001
-  NA reZ001.v
 
 Grp: MS-Regex2006-07-15 / reZ002
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
