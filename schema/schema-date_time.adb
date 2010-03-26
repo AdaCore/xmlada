@@ -617,7 +617,7 @@ package body Schema.Date_Time is
       Processing_Time : Boolean := False;
    begin
       if Ch = "" then
-         return No_Duration;
+         Validation_Error ("Empty string is not a valid value for duration");
       end if;
 
       if Ch (Pos) = '-' then
@@ -790,6 +790,11 @@ package body Schema.Date_Time is
          Validation_Error ("Invalid gMonth: """ & Ch & """");
       end if;
       Result.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
+
+      if Result.Month > 12 then
+         Validation_Error ("Invalid month:" & Result.Month'Img);
+      end if;
+
       Result.TZ    := No_Timezone;
 
       if Ch'Last > Ch'First + 3  then
@@ -834,10 +839,17 @@ package body Schema.Date_Time is
       Eos    : Integer;
    begin
       Parse_Year (Ch, Result.Year, Eos);
+
       if Ch (Eos) /= '-' then
          Validation_Error ("Invalid gYearMonth: """ & Ch & """");
       end if;
+
       Result.Month := Integer'Value (Ch (Eos + 1 .. Eos + 2));
+
+      if Result.Month > 12 then
+         Validation_Error ("Invalid month:" & Result.Month'Img);
+      end if;
+
       Parse (Ch (Eos + 3 .. Ch'Last), Result.TZ);
       return Result;
    exception

@@ -54345,8 +54345,9 @@ Grp: MS-DataTypes2006-07-15 / duration_enumeration004_84
   OK duration_enumeration004_84
 
 Grp: MS-DataTypes2006-07-15 / duration_maxInclusive001_85
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF duration_maxInclusive001_85
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK duration_maxInclusive001_85
+    duration_maxInclusive001.xsd:10:41: Empty string is not a valid value for duration
 
 Grp: MS-DataTypes2006-07-15 / duration_maxInclusive002_86
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -54357,16 +54358,18 @@ Grp: MS-DataTypes2006-07-15 / duration_maxInclusive003_87
   SF duration_maxInclusive003_87
 
 Grp: MS-DataTypes2006-07-15 / duration_maxExclusive001_88
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF duration_maxExclusive001_88
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK duration_maxExclusive001_88
+    duration_maxExclusive001.xsd:10:41: Empty string is not a valid value for duration
 
 Grp: MS-DataTypes2006-07-15 / duration_maxExclusive002_89
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK duration_maxExclusive002_89
 
 Grp: MS-DataTypes2006-07-15 / duration_minInclusive001_90
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF duration_minInclusive001_90
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK duration_minInclusive001_90
+    duration_minInclusive001.xsd:10:41: Empty string is not a valid value for duration
 
 Grp: MS-DataTypes2006-07-15 / duration_minInclusive002_91
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -54381,8 +54384,9 @@ Grp: MS-DataTypes2006-07-15 / duration_minInclusive004_93
   OK duration_minInclusive004_93
 
 Grp: MS-DataTypes2006-07-15 / duration_minExclusive001_94
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF duration_minExclusive001_94
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK duration_minExclusive001_94
+    duration_minExclusive001.xsd:10:41: Empty string is not a valid value for duration
 
 Grp: MS-DataTypes2006-07-15 / duration_minExclusive002_95
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -59014,7 +59018,7 @@ Grp: MS-DataTypes2006-07-15 / duration_enumeration001_1104
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK duration_enumeration001_1104
   OK duration_enumeration001_1104.i
-    duration_enumeration001.xml:4:14: Element's value not in the enumeration set
+    duration_enumeration001.xml:4:14: Empty string is not a valid value for duration
 
 Grp: MS-DataTypes2006-07-15 / duration_enumeration002_1105
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -59025,7 +59029,7 @@ Grp: MS-DataTypes2006-07-15 / duration_enumeration003_1106
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK duration_enumeration003_1106
   OK duration_enumeration003_1106.i
-    duration_enumeration003.xml:4:14: Element's value not in the enumeration set
+    duration_enumeration003.xml:4:14: Empty string is not a valid value for duration
 
 Grp: MS-DataTypes2006-07-15 / duration_enumeration004_1107
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -63648,9 +63652,10 @@ Grp: MS-DataTypes2006-07-15 / double030_1968
   OK double030_1968.v
 
 Grp: MS-DataTypes2006-07-15 / duration001_1969
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK duration001_1969
-  XF duration001_1969.i
+  OK duration001_1969.i
+    duration001.xml:6:26: Empty string is not a valid value for duration
 
 Grp: MS-DataTypes2006-07-15 / duration002_1970
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -64048,9 +64053,10 @@ Grp: MS-DataTypes2006-07-15 / gYearMonth003_2042
   OK gYearMonth003_2042.v
 
 Grp: MS-DataTypes2006-07-15 / gYearMonth004_2043
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK gYearMonth004_2043
-  XF gYearMonth004_2043.i
+  OK gYearMonth004_2043.i
+    gYearMonth004.xml:6:22: Invalid month: 15
 
 Grp: MS-DataTypes2006-07-15 / gYearMonth006_2044
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -64174,9 +64180,10 @@ Grp: MS-DataTypes2006-07-15 / gMonth006_2065
     gMonth006.xml:6:20: Invalid gMonth: "--3--"
 
 Grp: MS-DataTypes2006-07-15 / gMonth007_2066
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK gMonth007_2066
-  XF gMonth007_2066.i
+  OK gMonth007_2066.i
+    gMonth007.xml:6:21: Invalid month: 15
 
 Grp: MS-DataTypes2006-07-15 / hexBinary001_2067
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95764,8 +95771,8 @@ Total number of tests: 37685 (omitting non-accepted tests)
    24002 XML files
 NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
-SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
+SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 806
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 513 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 69 in_full_fail= 2
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 66 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1660 ( 4.4 %)
+Total errors: 1653 ( 4.4 %)
