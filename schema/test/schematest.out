@@ -48045,9 +48045,10 @@ Grp: MS-Additional2006-07-15 / addB108
   SF addB108
 
 Grp: MS-Additional2006-07-15 / addB109
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB109
-  XF addB109.i
+  OK addB109.i
+    addB109.xml:5:2: Attribute "att": value must be "123" (found "abc")
 
 Grp: MS-Additional2006-07-15 / addB110
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -48200,9 +48201,10 @@ Grp: MS-Additional2006-07-15 / addB142
     test84613.xml:1:25: Element "Envelope": No matching declaration available
 
 Grp: MS-Additional2006-07-15 / addB143
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB143
-  XF addB143.i
+  OK addB143.i
+    test83452.xml:4:13: HexBinary length must be an even number of characters
 
 Grp: MS-Additional2006-07-15 / addB144
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -48427,9 +48429,10 @@ Grp: MS-Additional2006-07-15 / addB196c
   OK addB196c.v
 
 Grp: MS-Additional2006-07-15 / addB196d
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB196d
-  XF addB196d.i
+  OK addB196d.i
+    fixed1d.xml:1:19: Attribute "att": value must be "[D0][80]fixed" (found "fixed")
 
 Grp: MS-Additional2006-07-15 / addB196e
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94178,12 +94181,14 @@ Grp: MS-SimpleType2006-07-15 / stZ063
   OK stZ063.v
 
 Grp: MS-SimpleType2006-07-15 / stZ064
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XF stZ064.i
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK stZ064.i
+    test102159_7.xml:2:35: Attribute "mylist": value must be "a b c d" (found "b c d")
 
 Grp: MS-SimpleType2006-07-15 / stZ066
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XF stZ066.i
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK stZ066.i
+    test102159_9.xml:3:25: Attribute "nms": value must be "a b c d" (found "a")
 
 Grp: MS-SimpleType2006-07-15 / stZ067
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95753,6 +95758,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 513 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 74 in_full_fail= 10
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 71 in_full_fail= 8
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1673 ( 4.4 %)
+Total errors: 1668 ( 4.4 %)

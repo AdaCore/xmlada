@@ -730,6 +730,14 @@ package body Schema.Validators.Simple_Types is
    package HexBinary_Facets is new Length_Facets (HexBinary_Get_Length);
    package HexBinary_Validators is new Generic_Simple_Validator
      (HexBinary_Facets.Length_Facets_Description);
+   type HexBinary_Validator is new HexBinary_Validators.Validator_Record
+      with null record;
+   procedure Validate_Characters
+     (Validator     : access HexBinary_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean;
+      Id_Table      : access Id_Htable_Access);
+   --  See inherited documentation
 
    function Base64Binary_Get_Length
      (Value : Unicode.CES.Byte_Sequence) return Natural;
@@ -742,6 +750,25 @@ package body Schema.Validators.Simple_Types is
    type ID_Validator
      is new String_Validators.Validator_Record with null record;
    function Is_ID (Validator : ID_Validator) return Boolean;
+
+   -------------------------
+   -- Validate_Characters --
+   -------------------------
+
+   procedure Validate_Characters
+     (Validator     : access HexBinary_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean;
+      Id_Table      : access Id_Htable_Access) is
+   begin
+      if Sax.Encodings.Encoding.Length (Ch) mod 2 /= 0 then
+         Validation_Error
+           ("HexBinary length must be an even number of characters");
+      end if;
+      HexBinary_Validators.Validate_Characters
+        (HexBinary_Validators.Validator_Record (Validator.all)'Access,
+         Ch, Empty_Element, Id_Table);
+   end Validate_Characters;
 
    -----------
    -- Is_ID --
@@ -1282,7 +1309,7 @@ package body Schema.Validators.Simple_Types is
       Set_Implicit_Enumeration (Str.Facets, Is_Valid_URI'Access);
       Create_Global_Type (G, "anyURI", Str);
 
-      Hex := new HexBinary_Validators.Validator_Record;
+      Hex := new HexBinary_Validator;
       Set_Implicit_Enumeration (Hex.Facets, Is_Valid_HexBinary'Access);
       Create_Global_Type (G, "hexBinary", Hex);
 
