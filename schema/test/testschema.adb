@@ -107,7 +107,8 @@ begin
       (Attribute_Form     => True,
        Substitution_Group => True,
        Abstracts          => True,
-       Nillable           => True));
+       Nillable           => True,
+       XSD_Version        => XSD_1_0));
 
    loop
       case Getopt (Switches) is

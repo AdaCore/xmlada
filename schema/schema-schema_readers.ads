@@ -92,6 +92,8 @@ package Schema.Schema_Readers is
       Substitution_Group : Boolean := True;
       Abstracts          : Boolean := True;
       Nillable           : Boolean := True;
+      XSD_Version        : Schema.Validators.XSD_Versions :=
+        Schema.Validators.XSD_1_1;
    end record;
    All_Features : constant Supported_Features;
    --  See Set_Supported_Features below.
@@ -181,7 +183,9 @@ private
       end case;
    end record;
 
-   All_Features : constant Supported_Features := (others => True);
+   All_Features : constant Supported_Features :=
+     (XSD_Version => Schema.Validators.XSD_1_1,
+      others      => True);
 
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
       Created_Grammar : Schema.Validators.XML_Grammar :=

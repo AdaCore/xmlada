@@ -293,6 +293,9 @@ package body Schema.Schema_Readers is
       --  in Parse.
       --  Initialize (Handler.Created_Grammar);
 
+      Set_XSD_Version (Handler.Created_Grammar,
+                       Handler.Supported.XSD_Version);
+
       --  Make sure the grammar used to validate the XSD file is correct. This
       --  won't do anything if the schema-for-schema was already added.
       G := Get_Validating_Grammar (Handler);
@@ -1920,10 +1923,6 @@ package body Schema.Schema_Readers is
       end if;
 
       Handler.Contexts.Attribute := Att;
-
-      Insert_Attribute
-        (Handler, Handler.Contexts.Next, Handler.Contexts.Attribute,
-         Ada_Name (Handler.Contexts));
    end Create_Attribute;
 
    ----------------------
@@ -1984,7 +1983,6 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Finish_Attribute (Handler : in out Schema_Reader) is
-      pragma Unmodified (Handler);
    begin
       if not Handler.Contexts.Attribute_Is_Ref
         and then Get_Type (Handler.Contexts.Attribute.all) = No_Type
@@ -1994,6 +1992,10 @@ package body Schema.Schema_Readers is
          Output ("Set_Type (" & Ada_Name (Handler.Contexts)
                  & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
       end if;
+
+      Insert_Attribute
+        (Handler, Handler.Contexts.Next, Handler.Contexts.Attribute,
+         Ada_Name (Handler.Contexts));
    end Finish_Attribute;
 
    -------------------

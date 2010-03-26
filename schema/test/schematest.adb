@@ -894,6 +894,8 @@ begin
             Put_Line ("--feature name    Disable support for a feature");
             Put_Line
               ("     Valid names are: attrform, subgroup, abstract, nillable");
+            Put_Line
+              ("     xsd_1_0");
             return;
 
          when 'v' => Verbose := True;
@@ -915,6 +917,8 @@ begin
                   Features.Abstracts := False;
                elsif Parameter = "nillable" then
                   Features.Nillable := False;
+               elsif Parameter = "xsd_1_0" then
+                  Features.XSD_Version := XSD_1_0;
                else
                   Put_Line ("Invalid feature name");
                   return;

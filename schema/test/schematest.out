@@ -51212,14 +51212,16 @@ Grp: MS-Attribute2006-07-15 / attZ013b
   SF attZ013b
 
 Grp: MS-Attribute2006-07-15 / attZ014a
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attZ014a
-  XF attZ014a.i
+  OK attZ014a.i
+    attZ014a.xml:1:36: Elements can have a single ID attribute in XSD 1.0
 
 Grp: MS-Attribute2006-07-15 / attZ014b
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attZ014b
-  XF attZ014b.i
+  OK attZ014b.i
+    attZ014b.xml:1:30: Elements can have a single ID attribute in XSD 1.0
 
 Grp: MS-Attribute2006-07-15 / attZ015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95758,6 +95760,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 513 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 71 in_full_fail= 8
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 69 in_full_fail= 8
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1668 ( 4.4 %)
+Total errors: 1666 ( 4.4 %)

@@ -48,6 +48,10 @@ package Schema.Validators is
    XML_Not_Implemented : exception;
    --  Raised when a schema uses features that are not supported by XML/Ada yet
 
+   type XSD_Versions is (XSD_1_0, XSD_1_1);
+   --  The version of XSD the parser should support.
+   --  The support for 1.1 is only partial at present.
+
    type XML_Validator_Record is tagged private;
    type XML_Validator is access all XML_Validator_Record'Class;
    --  A new validator is typically created every time a new element starts,
@@ -65,6 +69,11 @@ package Schema.Validators is
    --  XML_Grammar_NS object
    --  A grammar is a smart pointer, and will take care of freeing memory
    --  automatically when no longer needed.
+
+   procedure Set_XSD_Version
+     (Grammar : in out XML_Grammar; XSD_Version : XSD_Versions);
+   function Get_XSD_Version (Grammar : XML_Grammar) return XSD_Versions;
+   --  Set the version of XSD accepted by this grammar
 
    No_Grammar : constant XML_Grammar;
    --  No Grammar has been defined
@@ -256,11 +265,13 @@ package Schema.Validators is
 
    procedure Validate_Attribute
      (Validator : Attribute_Validator_Record;
-      Atts      : Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
       Grammar   : in out XML_Grammar;
       Id_Table  : access Id_Htable_Access) is abstract;
    --  Return True if Value is valid for this attribute.
+   --  Sets the type of the attribute (per sax-attributes) to ID if we have an
+   --  ID attribute.
    --  Raise XML_Validation_Error in case of error
 
    procedure Free (Validator : in out Attribute_Validator_Record) is abstract;
@@ -354,6 +365,9 @@ package Schema.Validators is
    --  Nillable indicates whether the xsi:nil attribute should be supported,
    --  even if not explicitely inserted in the list. Is_Nil is set to the value
    --  of this attribute.
+   --
+   --  Sets the type of the attributes (through Sax.Attributes.Set_Type) to Id
+   --  if the corresponding attribute is an id.
 
    procedure Validate_End_Element
      (Validator      : access XML_Validator_Record;
@@ -968,6 +982,8 @@ private
 
       UR_Type_Elements  : Process_Contents_Array := (others => No_Element);
 
+      XSD_Version : XSD_Versions := XSD_1_0;
+
       Target_NS : XML_Grammar_NS;
    end record;
 
@@ -991,6 +1007,9 @@ private
       --  Points to the next attribute validator in NS, for memory management
       --  purposes
    end record;
+
+   function Is_ID (Attr : Attribute_Validator_Record) return Boolean;
+   --  Whether the attribute is an ID
 
    type Attribute_Or_Group (Is_Group : Boolean := False) is record
       case Is_Group is
@@ -1018,7 +1037,7 @@ private
       end record;
    procedure Validate_Attribute
      (Validator : Named_Attribute_Validator_Record;
-      Atts      : Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
       Grammar   : in out XML_Grammar;
       Id_Table  : access Id_Htable_Access);
@@ -1032,6 +1051,7 @@ private
       Attr_Type : XML_Type);
    function Get_Type
      (Attr : Named_Attribute_Validator_Record) return XML_Type;
+   function Is_ID (Attr : Named_Attribute_Validator_Record) return Boolean;
 
    type Any_Attribute_Validator is new Attribute_Validator_Record with record
       Process_Contents : Process_Contents_Type;
@@ -1039,7 +1059,7 @@ private
    end record;
    procedure Validate_Attribute
      (Validator : Any_Attribute_Validator;
-      Atts      : Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
       Grammar   : in out XML_Grammar;
       Id_Table  : access Id_Htable_Access);

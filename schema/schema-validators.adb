@@ -203,9 +203,9 @@ package body Schema.Validators is
    --  Free the contents of List, including contained
 
    procedure Append
-     (List      : in out Attribute_Validator_List_Access;
-      Validator : access Attribute_Validator_Record'Class;
-      Override  : Boolean);
+     (List        : in out Attribute_Validator_List_Access;
+      Validator   : access Attribute_Validator_Record'Class;
+      Override    : Boolean);
    procedure Append
      (List      : in out Attribute_Validator_List_Access;
       Group     : XML_Attribute_Group);
@@ -310,30 +310,46 @@ package body Schema.Validators is
         and then Attribute.Kind = Any_Attribute_Validator (Attr2).Kind;
    end Is_Equal;
 
+   -----------
+   -- Is_ID --
+   -----------
+
+   function Is_ID (Attr : Attribute_Validator_Record) return Boolean is
+      pragma Unreferenced (Attr);
+   begin
+      return False;
+   end Is_ID;
+
+   function Is_ID (Attr : Named_Attribute_Validator_Record) return Boolean is
+   begin
+      return Is_ID (Get_Type (Attr));
+   end Is_ID;
+
    ------------
    -- Append --
    ------------
 
    procedure Append
-     (List      : in out Attribute_Validator_List_Access;
-      Validator : access Attribute_Validator_Record'Class;
-      Override  : Boolean)
+     (List        : in out Attribute_Validator_List_Access;
+      Validator   : access Attribute_Validator_Record'Class;
+      Override    : Boolean)
    is
       L : Attribute_Validator_List_Access;
    begin
       if List /= null then
          for A in List'Range loop
-            if not List (A).Is_Group
-              and then Is_Equal (List (A).Attr.all, Validator.all)
-            then
-               if Override then
-                  --  ??? Should we free the previous value => We are sharing
-                  --  the attribute definition through Restriction_Of...
-                  List (A) :=
-                    (Is_Group => False,
-                     Attr     => Attribute_Validator (Validator));
+            if not List (A).Is_Group then
+               if Is_Equal (List (A).Attr.all, Validator.all) then
+                  if Override then
+                     --  ??? Should we free the previous value => We are
+                     --  sharing the attribute definition through
+                     --  Restriction_Of...
+                     List (A) :=
+                       (Is_Group => False,
+                        Attr     => Attribute_Validator (Validator));
+                  end if;
+                  return;
                end if;
-               return;
             end if;
          end loop;
 
@@ -447,8 +463,8 @@ package body Schema.Validators is
    -------------------
 
    procedure Add_Attribute
-     (Validator : access XML_Validator_Record;
-      Attribute : access Attribute_Validator_Record'Class) is
+     (Validator  : access XML_Validator_Record;
+      Attribute  : access Attribute_Validator_Record'Class) is
    begin
       Append (Validator.Attributes, Attribute, Override => True);
    end Add_Attribute;
@@ -565,6 +581,31 @@ package body Schema.Validators is
       procedure Check_Any_Attribute
         (Any : Any_Attribute_Validator; Index : Integer);
       --  Check a named attribute or a wildcard attribute
+
+      procedure Check_Single_ID;
+      --  If using XSD 1.0, check that there is a single ID attribute.
+      --  This relies on the Sax.Attributes.Get_Type being set correctly.
+      --  XSD 1.0 prevents having two such attributes, for easier conversion
+      --  to DTD (see G.1.7 ID, IDREF, and related types)
+
+      ---------------------
+      -- Check_Single_ID --
+      ---------------------
+
+      procedure Check_Single_ID is
+         Seen_ID : Boolean := False;
+      begin
+         for A in 0 .. Length - 1 loop
+            if Get_Type (Atts, A) = Sax.Attributes.Id then
+               if Seen_ID then
+                  Validation_Error
+                    ("Elements can have a single ID attribute in XSD 1.0");
+               end if;
+
+               Seen_ID := True;
+            end if;
+         end loop;
+      end Check_Single_ID;
 
       ---------------------------
       -- Check_Named_Attribute --
@@ -796,6 +837,8 @@ package body Schema.Validators is
          end if;
       end loop;
 
+      Check_Single_ID;
+
       Reset (Visited);
 
       Debug_Pop_Prefix;
@@ -1006,7 +1049,7 @@ package body Schema.Validators is
 
    procedure Validate_Attribute
      (Validator : Named_Attribute_Validator_Record;
-      Atts      : Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
       Grammar   : in out XML_Grammar;
       Id_Table  : access Id_Htable_Access)
@@ -1025,6 +1068,10 @@ package body Schema.Validators is
          Validate_Characters
            (Get_Validator (Get_Type (Validator)), Val,
             Empty_Element => False, Id_Table => Id_Table);
+
+         if Is_ID (Get_Type (Validator)) then
+            Set_Type (Atts, Index, Sax.Attributes.Id);
+         end if;
       end if;
 
       Fixed := Validator.Fixed;
@@ -1348,6 +1395,40 @@ package body Schema.Validators is
          List := L;
       end loop;
    end Free;
+
+   ---------------------
+   -- Set_XSD_Version --
+   ---------------------
+
+   procedure Set_XSD_Version
+     (Grammar : in out XML_Grammar; XSD_Version : XSD_Versions)
+   is
+      G   : XML_Grammars.Encapsulated_Access;
+   begin
+      if Grammar = No_Grammar then
+         G := new XML_Grammar_Record;
+         Grammar := Allocate (G);
+      else
+         G := Get (Grammar);
+      end if;
+
+      G.XSD_Version := XSD_Version;
+   end Set_XSD_Version;
+
+   ---------------------
+   -- Get_XSD_Version --
+   ---------------------
+
+   function Get_XSD_Version (Grammar : XML_Grammar) return XSD_Versions is
+      G   : XML_Grammars.Encapsulated_Access;
+   begin
+      G := Get (Grammar);
+      if G = null then
+         return XSD_1_1;
+      else
+         return G.XSD_Version;
+      end if;
+   end Get_XSD_Version;
 
    -----------------------
    -- Create_NS_Grammar --
@@ -4252,7 +4333,7 @@ package body Schema.Validators is
 
    procedure Validate_Attribute
      (Validator : Any_Attribute_Validator;
-      Atts      : Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
       Grammar   : in out XML_Grammar;
       Id_Table  : access Id_Htable_Access)
@@ -4299,6 +4380,10 @@ package body Schema.Validators is
                Validation_Error ("No definition provided");
             else
                Validate_Attribute (Attr.all, Atts, Index, Grammar, Id_Table);
+
+               if Is_ID (Attr.all) then
+                  Set_Type (Atts, Index, Sax.Attributes.Id);
+               end if;
             end if;
 
          when Process_Lax =>
@@ -4313,6 +4398,9 @@ package body Schema.Validators is
                end if;
             else
                Validate_Attribute (Attr.all, Atts, Index, Grammar, Id_Table);
+               if Is_ID (Attr.all) then
+                  Set_Type (Atts, Index, Sax.Attributes.Id);
+               end if;
             end if;
 
          when Process_Skip =>
