@@ -1463,6 +1463,7 @@ package body Schema.Validators is
 
       G.Grammars (G.Grammars'Last) := new XML_Grammar_NS_Record'
         (Namespace_URI      => new Byte_Sequence'(Namespace_URI),
+         System_ID          => null,
          Types              => new Types_Htable.HTable (101),
          Elements           => new Elements_Htable.HTable (101),
          Groups             => new Groups_Htable.HTable (101),
@@ -2150,6 +2151,7 @@ package body Schema.Validators is
          end loop;
 
          Free (Grammar.Namespace_URI);
+         Free (Grammar.System_ID);
          Unchecked_Free (Grammar);
       end if;
    end Free;
@@ -5040,5 +5042,31 @@ package body Schema.Validators is
            (Id_Table.all.all, Id_Ref'(Key => new Byte_Sequence'(Value)));
       end if;
    end Check_Id;
+
+   -------------------
+   -- Set_System_Id --
+   -------------------
+
+   procedure Set_System_Id
+     (Grammar   : XML_Grammar_NS;
+      System_Id : Unicode.CES.Byte_Sequence) is
+   begin
+      Free (Grammar.System_ID);
+      Grammar.System_ID := new Byte_Sequence'(System_Id);
+   end Set_System_Id;
+
+   -------------------
+   -- Get_System_Id --
+   -------------------
+
+   function Get_System_Id
+     (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence is
+   begin
+      if Grammar.System_Id = null then
+         return "";
+      else
+         return Grammar.System_Id.all;
+      end if;
+   end Get_System_Id;
 
 end Schema.Validators;

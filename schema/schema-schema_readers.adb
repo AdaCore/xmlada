@@ -31,7 +31,7 @@ with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Attributes;    use Sax.Attributes;
 with Sax.Encodings;     use Sax.Encodings;
-with Sax.Readers;
+with Sax.Readers;       use Sax.Readers;
 with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
 with Schema.Readers;    use Schema.Readers;
@@ -277,6 +277,7 @@ package body Schema.Schema_Readers is
      (Reader  : in out Schema_Reader;
       Grammar : Schema.Validators.XML_Grammar := No_Grammar) is
    begin
+      Reader.Supported.XSD_Version := Get_XSD_Version (Grammar);
       Reader.Created_Grammar := Grammar;
       Reader.Check_Undefined := False;
    end Set_Created_Grammar;
@@ -342,6 +343,8 @@ package body Schema.Schema_Readers is
            (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
          Parse (Validating_Reader (Parser), Input);
          Free (Parser.Ids);
+
+         Set_System_Id (Parser.Target_NS, Input_Sources.Get_System_Id (Input));
       end if;
 
    exception
@@ -2530,17 +2533,22 @@ package body Schema.Schema_Readers is
       Prefix  : Byte_Sequence;
       Grammar : out XML_Grammar_NS)
    is
-      Namespace : constant Byte_Sequence_Access := Get_Namespace_From_Prefix
-        (Handler, Prefix);
+      NS : XML_NS;
    begin
-      if Namespace = null then
+      Get_Namespace_From_Prefix (Handler, Prefix, NS);
+
+      if NS = No_XML_NS then
          Output ("G := Handler.Target_NS;");
          Grammar := Handler.Target_NS;
+
       else
-         Output
-           ("Get_NS (Handler.Created_Grammar, """
-            & Namespace.all & """, G);");
-         Get_NS (Handler.Created_Grammar, Namespace.all, Grammar);
+         if Debug then
+            Output
+              ("Get_NS (Handler.Created_Grammar, """
+               & Get_URI (NS) & """, G);");
+         end if;
+
+         Get_NS (Handler.Created_Grammar, Get_URI (NS), Grammar);
       end if;
    end Get_Grammar_For_Namespace;
 

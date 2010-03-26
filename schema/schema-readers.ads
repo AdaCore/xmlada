@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2008, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -92,26 +92,16 @@ package Schema.Readers is
    --  Parse the grammar to use from an XSD file, and add it to Add_To.
    --  The resulting grammar can be passed to Set_Validating_Grammar.
 
-   function Get_Namespace_From_Prefix
-     (Handler  : Validating_Reader;
-      Prefix   : Unicode.CES.Byte_Sequence)
-      return Unicode.CES.Byte_Sequence_Access;
+   procedure Get_Namespace_From_Prefix
+     (Handler  : in out Validating_Reader;
+      Prefix   : Unicode.CES.Byte_Sequence;
+      NS       : out Sax.Readers.XML_NS);
    --  Get the namespace associated with a given prefix, in the current
    --  context.
    --  The caller must not modify the return value.
+   --  Returns No_XML_NS if the prefix is not defined
 
 private
-   type Prefix_Mapping;
-   type Prefix_Mapping_Access is access Prefix_Mapping;
-   type Prefix_Mapping is record
-      Prefix    : Unicode.CES.Byte_Sequence_Access;
-      Namespace : Unicode.CES.Byte_Sequence_Access;
-      Next      : Prefix_Mapping_Access;
-   end record;
-   --  Usee a list to store the prefixes, since there aren't that many of them,
-   --  and a local prefix can override a more global one (so a hash table needs
-   --  some special handling in any case).
-
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;
    type Validator_List_Record is record
@@ -140,7 +130,11 @@ private
       Grammar  : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar;
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator;
-      Prefixes   : Prefix_Mapping_Access;
+
+      Context    : Sax.Readers.Element_Access;
+      --  Element we are currently processing. This is only used to resolve
+      --  namespaces.
+
       Ids        : aliased Schema.Validators.Id_Htable_Access;
    end record;
 

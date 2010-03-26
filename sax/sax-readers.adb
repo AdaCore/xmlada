@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2009, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -584,19 +584,10 @@ package body Sax.Readers is
       Prefix  : Token;
       NS      : out XML_NS;
       Include_Default_NS : Boolean := True);
-   --  Search the namespace associated with a given prefix in the scope of
-   --  Elem or its parents. Use the empty string to get the default namespace.
-   --  Fatal_Error is raised if no such namespace was found (and null is
-   --  returned, in case Fatal_Error didn't raise an exception)
-   --  The default namespace is not resolved if Include_Default_NS is False.
+   --  Internal version of Find_NS
 
-   procedure Find_NS
-     (Parser  : in out Reader'Class;
-      Elem    : Element_Access;
-      Prefix  : Byte_Sequence;
-      NS      : out XML_NS;
-      Include_Default_NS : Boolean := True);
-   --  Same as above, from a Byte_Sequence
+   procedure Increment_Count (NS : XML_NS; Inc : Natural := 1);
+   --  Increment the use_count for NS
 
    function Qname_From_Name (Parser : Reader'Class; Prefix, Local_Name : Token)
       return Byte_Sequence;
@@ -1235,6 +1226,11 @@ package body Sax.Readers is
    begin
       Find_NS (Parser, Elem, Parser.Buffer (Prefix.First .. Prefix.Last), NS,
                Include_Default_NS);
+      if NS = null then
+         Fatal_Error
+           (Parser, Error_Prefix_Not_Declared &
+            Parser.Buffer (Prefix.First .. Prefix.Last));
+      end if;
    end Find_NS;
 
    -------------
@@ -1243,12 +1239,12 @@ package body Sax.Readers is
 
    procedure Find_NS
      (Parser             : in out Reader'Class;
-      Elem               : Element_Access;
+      Context            : Element_Access;
       Prefix             : Byte_Sequence;
       NS                 : out XML_NS;
       Include_Default_NS : Boolean := True)
    is
-      E : Element_Access := Elem;
+      E : Element_Access := Context;
    begin
       loop
          --  Search in the default namespaces
@@ -1272,9 +1268,44 @@ package body Sax.Readers is
          exit when E = null;
          E := E.Parent;
       end loop;
-
-      Fatal_Error (Parser, Error_Prefix_Not_Declared & Prefix);
    end Find_NS;
+
+   ----------------------
+   -- Find_NS_From_URI --
+   ----------------------
+
+   procedure Find_NS_From_URI
+     (Parser             : in out Reader'Class;
+      Context            : Element_Access;
+      URI                : Unicode.CES.Byte_Sequence;
+      NS                 : out XML_NS;
+      Include_Default_NS : Boolean := True)
+   is
+      E : Element_Access := Context;
+   begin
+      loop
+         --  Search in the default namespaces
+         if E = null then
+            NS := Parser.Default_Namespaces;
+         else
+            NS := E.Namespaces;
+         end if;
+
+         while NS /= null loop
+            if (Include_Default_NS
+                or else E = null
+                or else NS.URI.all /= "")
+              and then NS.URI.all = URI
+            then
+               return;
+            end if;
+            NS := NS.Next;
+         end loop;
+
+         exit when E = null;
+         E := E.Parent;
+      end loop;
+   end Find_NS_From_URI;
 
    ---------------------
    -- Qname_From_Name --
@@ -1361,12 +1392,36 @@ package body Sax.Readers is
       URI          : Byte_Sequence;
       Report_Event : Boolean := True)
    is
-      NS : XML_NS;
+      NS, Tmp : XML_NS;
    begin
       NS := new XML_NS_Record'
-        (Prefix => new Byte_Sequence'(Prefix),
-         URI    => new Byte_Sequence'(URI),
-         Next   => null);
+        (Prefix    => new Byte_Sequence'(Prefix),
+         URI       => new Byte_Sequence'(URI),
+         Same_As   => null,
+         Use_Count => 0,
+         Next      => null);
+
+      if Node /= null then
+         Tmp := Node.Namespaces;
+         while Tmp /= null loop
+            if Tmp.URI.all = URI then
+               NS.Same_As := Tmp;
+               exit;
+            end if;
+            Tmp := Tmp.Next;
+         end loop;
+      end if;
+
+      if NS.Same_As = null then
+         Tmp := Parser.Default_Namespaces;
+         while Tmp /= null loop
+            if Tmp.URI.all = URI then
+               NS.Same_As := Tmp;
+               exit;
+            end if;
+            Tmp := Tmp.Next;
+         end loop;
+      end if;
 
       if Node = null then
          NS.Next := Parser.Default_Namespaces;
@@ -3259,6 +3314,11 @@ package body Sax.Readers is
       --  Id should have been initialized to the first token in the attributes
       --  list, and will be left on the first token after it.
       --  Return the list of attributes for this element
+      --  On exit, NS_Count is set to the number of references to Elem_NS_Id
+      --  among the attributes. The count for other XML_NS that the one of the
+      --  element is directly increment in the corresponding XML_NS, but for
+      --  the element we want to keep it virgin until we have called the
+      --  validation hook.
 
       procedure Check_And_Define_Namespace (Prefix, URI_S, URI_E : Token);
       --  An attribute defining a namespace was found. Check that the values
@@ -3291,7 +3351,9 @@ package body Sax.Readers is
       procedure Resolve_Attributes_Namespaces
         (Attributes : in out Sax.Attributes.Attributes);
       --  Resolve the real namespaces of the attributes, after the processing
-      --  of all xmlns: attributes in the same element
+      --  of all xmlns: attributes in the same element.
+      --  NS_Count is the number of time the namespace Elem_NS_Id (a prefix)
+      --  has been used.
 
       procedure Parse_End_Tag;
       --  Process an element end   </name>
@@ -4324,6 +4386,10 @@ package body Sax.Readers is
             Find_NS (Parser, Parser.Current_Node,
                      Get_URI (Attributes, J), NS,
                      Include_Default_NS => False);
+            if NS = null then
+               Fatal_Error
+                 (Parser, Error_Prefix_Not_Declared & Get_URI (Attributes, J));
+            end if;
 
             if NS.URI.all /= "" then
                Found_At := Get_Index
@@ -4593,6 +4659,22 @@ package body Sax.Readers is
             Check_Model;
          end if;
 
+         --  Call the hook before checking the attributes. This might mean we
+         --  are passing incorrect attributes (or missing ones), but the hook
+         --  is used for validation (otherwise standard users should use
+         --  Start_Element itself).
+         --  We want the count of elements in the NS to not include the current
+         --  context.
+
+         if Debug_Internal then
+            Put_Line
+              ("Start_Element "
+               & Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id));
+         end if;
+
+         --  We need to process the attributes first, because they might define
+         --  the namespace for the element
+
          if Id.Typ = Space then
             Next_Token (Input, Parser, Id);
             Parse_Attributes (Attributes, Elem_NS_Id, Elem_Name_Id, Id);
@@ -4611,21 +4693,21 @@ package body Sax.Readers is
          --  And report the elements to the callbacks
 
          Set_State (Parser, Default_State);
-         Find_NS (Parser, Parser.Current_Node,  Elem_NS_Id, NS);
-
-         if Debug_Internal then
-            Put_Line
-              ("Start_Element "
-               & Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id));
-         end if;
+         Find_NS (Parser, Parser.Current_Node, Elem_NS_Id, NS);
 
          if Parser.Hooks.Start_Element /= null then
             Parser.Hooks.Start_Element
               (Parser, NS.URI.all,
                Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last),
                Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
-               Attributes);
+               Parser.Current_Node, Attributes);
          end if;
+
+         --  This does not take into account the use of the namespace by the
+         --  attributes.
+         --  ??? That would be costly to again do a Find_NS for each of the
+         --  attributes.
+         Increment_Count (NS, 1);
 
          Start_Element
            (Parser,
@@ -6153,5 +6235,58 @@ package body Sax.Readers is
    begin
       return Parser.Basename_In_Messages;
    end Use_Basename_In_Error_Messages;
+
+   -------------
+   -- Get_URI --
+   -------------
+
+   function Get_URI (NS : XML_NS) return Unicode.CES.Byte_Sequence is
+   begin
+      if NS = null then
+         return "";
+      else
+         return NS.URI.all;
+      end if;
+   end Get_URI;
+
+   ----------------
+   -- Get_Prefix --
+   ----------------
+
+   function Get_Prefix (NS : XML_NS) return Unicode.CES.Byte_Sequence is
+   begin
+      if NS = null then
+         return "";
+      else
+         return NS.Prefix.all;
+      end if;
+   end Get_Prefix;
+
+   -------------------
+   -- Element_Count --
+   -------------------
+
+   function Element_Count (NS : XML_NS) return Natural is
+   begin
+      if NS = null then
+         return 0;
+      else
+         return NS.Use_Count;
+      end if;
+   end Element_Count;
+
+   ---------------------
+   -- Increment_Count --
+   ---------------------
+
+   procedure Increment_Count (NS : XML_NS; Inc : Natural := 1) is
+      Tmp : XML_NS := NS;
+   begin
+      while Tmp.Same_As /= null loop
+         Tmp := Tmp.Same_As;
+      end loop;
+
+      Tmp.Use_Count := Tmp.Use_Count + Inc;
+   end Increment_Count;
 
 end Sax.Readers;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2009, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -507,16 +507,59 @@ package Sax.Readers is
    procedure Free (Data : in out Hook_Data) is abstract;
    --  Free the memory associated with the data
 
+   type Element_Access is private;
+   type XML_NS is private;
+   No_XML_NS : constant XML_NS;
+
+   function Get_Prefix (NS : XML_NS) return Unicode.CES.Byte_Sequence;
+   function Get_URI (NS : XML_NS) return Unicode.CES.Byte_Sequence;
+   --  Return the URI for this namespace
+
+   function Element_Count (NS : XML_NS) return Natural;
+   --  Return the count of elements (or attributes) seen so far in this
+   --  namespace. This does not include the count of uses in the current
+   --  context (that is for the <element> we are currently parsing or its
+   --  attributes).
+
+   procedure Find_NS
+     (Parser             : in out Reader'Class;
+      Context            : Element_Access;
+      Prefix             : Unicode.CES.Byte_Sequence;
+      NS                 : out XML_NS;
+      Include_Default_NS : Boolean := True);
+   --  Search the namespace associated with a given prefix in the scope of
+   --  Elem or its parents. Use the empty string to get the default namespace.
+   --  Fatal_Error is raised if no such namespace was found (and null is
+   --  returned, in case Fatal_Error didn't raise an exception)
+   --  The default namespace is not resolved if Include_Default_NS is False.
+   --  Returns No_XML_NS if the namespace is not defined
+
+   procedure Find_NS_From_URI
+     (Parser             : in out Reader'Class;
+      Context            : Element_Access;
+      URI                : Unicode.CES.Byte_Sequence;
+      NS                 : out XML_NS;
+      Include_Default_NS : Boolean := True);
+   --  Return the XML_NS for URI. There could be several, and the most recent
+   --  one is returned (that is with the prefix that was defined last in the
+   --  current context.
+   --  Returns No_XML_NS if the namespace is not defined
+
    type Start_Element_Hook is access procedure
      (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence;
+      Element       : Element_Access;
       Atts          : in out Sax.Attributes.Attributes'Class);
    --  This hook should take the opportunity of normalizing attribute values
    --  if necessary (basic normalization is already done by the SAX parser,
    --  but based on information extracted from schemas, further normalization
    --  might be needed).
+   --  The list of attributes Atts has not been checked, and thus some of the
+   --  attributes might have wrong values, or some attributes might be missing.
+   --  This hook is really intended for validating parsers to do their own
+   --  checks in any case. Standard applications should override Start_Element.
 
    type End_Element_Hook is access procedure
      (Handler       : in out Reader'Class;
@@ -715,11 +758,19 @@ private
 
    type XML_NS_Record;
    type XML_NS is access XML_NS_Record;
+   No_XML_NS : constant XML_NS := null;
    type XML_NS_Record is record
-      Prefix : Unicode.CES.Byte_Sequence_Access;
-      URI    : Unicode.CES.Byte_Sequence_Access;
-      Next   : XML_NS;
+      Prefix    : Unicode.CES.Byte_Sequence_Access;
+      URI       : Unicode.CES.Byte_Sequence_Access;
+      Same_As   : XML_NS;
+      Use_Count : Natural := 0;
+      Next      : XML_NS;
    end record;
+   --  Same_As points to the next prefix referencing the same namespace.
+   --  A namespace must be freed before the ones it references (or you will get
+   --  a Storage_Error).
+   --  Use_Count will always be 0 if Same_As is not null, since the uses are
+   --  incremented in only one namespace.
 
    type Element;
    type Element_Access is access Element;

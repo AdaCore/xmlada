@@ -48262,12 +48262,14 @@ Grp: MS-Additional2006-07-15 / addB157
   OK addB157.v
 
 Grp: MS-Additional2006-07-15 / addB158
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XF addB158.i
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK addB158.i
+    test93490_4.xml:9:55: schemaLocation for "bar" cannot occur after the first element of that namespace in XSD 1.0
 
 Grp: MS-Additional2006-07-15 / addB159
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XF addB159.i
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK addB159.i
+    test93490_5.xml:9:55: schemaLocation for "foo" cannot occur after the first element of that namespace in XSD 1.0
 
 Grp: MS-Additional2006-07-15 / addB160
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -48278,8 +48280,9 @@ Grp: MS-Additional2006-07-15 / addB161
   XF addB161.i
 
 Grp: MS-Additional2006-07-15 / addB162
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XF addB162.i
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK addB162.i
+    test93490_8.xml:10:51: schemaLocation for "bar" cannot occur after the first element of that namespace in XSD 1.0
 
 Grp: MS-Additional2006-07-15 / addB163
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -48294,8 +48297,9 @@ Grp: MS-Additional2006-07-15 / addB165
   OK addB165.v
 
 Grp: MS-Additional2006-07-15 / addB166
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XF addB166.i
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK addB166.i
+    test93490_12.xml:8:56: schemaLocation for "foo" cannot occur after the first element of that namespace in XSD 1.0
 
 Grp: MS-Additional2006-07-15 / addB167
    0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
@@ -95760,6 +95764,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 513 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 69 in_full_fail= 8
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 69 in_full_fail= 4
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1666 ( 4.4 %)
+Total errors: 1662 ( 4.4 %)

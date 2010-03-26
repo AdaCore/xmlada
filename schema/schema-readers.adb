@@ -83,10 +83,6 @@ package body Schema.Readers is
      (Handler : in out Validating_Reader'Class);
    --  Validate the current set of characters
 
-   procedure Free
-     (Mapping : in out Prefix_Mapping_Access; Recursive : Boolean);
-   --  Free the memory occupied by Mapping
-
    procedure Reset (Parser : in out Validating_Reader);
    --  Reset the state of the parser so that we can parse other documents.
    --  This doesn't reset the grammar
@@ -96,6 +92,7 @@ package body Schema.Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
+      Elem          : Element_Access;
       Atts          : in out Sax.Attributes.Attributes'Class);
    procedure Hook_End_Element
      (Handler       : in out Reader'Class;
@@ -107,39 +104,11 @@ package body Schema.Readers is
    procedure Hook_Ignorable_Whitespace
      (Handler : in out Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence);
-   procedure Hook_Start_Prefix_Mapping
-     (Handler : in out Reader'Class;
-      Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence);
-   procedure Hook_End_Prefix_Mapping
-     (Handler : in out Reader'Class;
-      Prefix  : Unicode.CES.Byte_Sequence);
    procedure Hook_Set_Document_Locator
      (Handler : in out Reader'Class;
       Loc     : in out Sax.Locators.Locator);
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free
-     (Mapping : in out Prefix_Mapping_Access; Recursive : Boolean)
-   is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Prefix_Mapping, Prefix_Mapping_Access);
-      Tmp : Prefix_Mapping_Access;
-   begin
-      while Mapping /= null loop
-         Tmp := Mapping.Next;
-         Free (Mapping.Prefix);
-         Free (Mapping.Namespace);
-         Unchecked_Free (Mapping);
-         exit when not Recursive;
-         Mapping := Tmp;
-      end loop;
-   end Free;
 
    ----------------------
    -- Set_Debug_Output --
@@ -371,12 +340,45 @@ package body Schema.Readers is
                       & "XSD=" & Schema_Location (Start_XSD .. Last_XSD - 1));
          end if;
 
-         --  Do not reparse the grammar if we already know about it
          Get_NS
            (Handler.Grammar,
             Namespace_URI    => Schema_Location (Start_NS .. Last_NS - 1),
             Result           => Local_Grammar,
             Create_If_Needed => False);
+
+         if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
+            --  Must check that no element of the same namespace was seen
+            --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
+            --  changed in XSD 1.1).
+
+            declare
+               NS : XML_NS;
+               Resolved : constant String :=
+                 To_Absolute_URI
+                   (Handler, Schema_Location (Start_XSD .. Last_XSD - 1));
+            begin
+               Find_NS_From_URI
+                 (Handler,
+                  Context => Handler.Context,
+                  URI     => Schema_Location (Start_NS .. Last_NS - 1),
+                  NS      => NS);
+
+               if NS /= No_XML_NS
+                 and then Element_Count (NS) > 0
+                 and then Resolved /=
+                   Get_System_Id (Local_Grammar)
+               then
+                  Validation_Error
+                    ("schemaLocation for """
+                     & Schema_Location (Start_NS .. Last_NS - 1)
+                     & """ cannot occur after the first"
+                     & " element of that namespace in XSD 1.0");
+               end if;
+            end;
+         end if;
+
+         --  Do not reparse the grammar if we already know about it
+
          if Local_Grammar = null then
             Parse_Grammar
               (Handler, Schema_Location (Start_XSD .. Last_XSD - 1),
@@ -463,6 +465,7 @@ package body Schema.Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
+      Elem          : Element_Access;
       Atts          : in out Sax.Attributes.Attributes'Class)
    is
       pragma Unreferenced (Qname);
@@ -525,19 +528,12 @@ package body Schema.Readers is
             declare
                Qname : constant Byte_Sequence := Get_Value (Atts, Type_Index);
                Separator : constant Integer := Split_Qname (Qname);
-               Namespace : Byte_Sequence_Access;
+               NS        : XML_NS;
             begin
-               Namespace := Get_Namespace_From_Prefix
+               Get_Namespace_From_Prefix
                  (Validating_Reader (Handler),
-                  Qname (Qname'First .. Separator - 1));
-               if Namespace /= null then
-                  Get_NS
-                    (Validating_Reader (Handler).Grammar, Namespace.all, G);
-               else
-                  Get_NS
-                    (Validating_Reader (Handler).Grammar, Namespace_URI, G);
-               end if;
-
+                  Qname (Qname'First .. Separator - 1), NS);
+               Get_NS (Validating_Reader (Handler).Grammar, Get_URI (NS), G);
                Typ := Lookup (G, Qname (Separator + 1 .. Qname'Last),
                               Create_If_Needed => False);
             end;
@@ -579,6 +575,8 @@ package body Schema.Readers is
                    & "Start_Element: " & Namespace_URI & ':' & Local_Name
                    & ASCII.ESC & "[39m");
       end if;
+
+      Validating_Reader (Handler).Context := Elem;
 
       Validate_Current_Characters (Validating_Reader (Handler));
 
@@ -766,7 +764,6 @@ package body Schema.Readers is
       Parser.Locator := No_Locator;
       Free  (Parser.Ids);
       Clear (Parser.Validators);
-      Free  (Parser.Prefixes, Recursive => True);
    end Reset;
 
    -----------
@@ -785,8 +782,6 @@ package body Schema.Readers is
                     End_Element   => Hook_End_Element'Access,
                     Characters    => Hook_Characters'Access,
                     Whitespace    => Hook_Ignorable_Whitespace'Access,
-                    Start_Prefix  => Hook_Start_Prefix_Mapping'Access,
-                    End_Prefix    => Hook_End_Prefix_Mapping'Access,
                     Doc_Locator   => Hook_Set_Document_Locator'Access);
       else
          Set_Hooks (Parser,
@@ -857,71 +852,21 @@ package body Schema.Readers is
    end Hook_Set_Document_Locator;
 
    -------------------------------
-   -- Hook_Start_Prefix_Mapping --
-   -------------------------------
-
-   procedure Hook_Start_Prefix_Mapping
-     (Handler : in out Reader'Class;
-      Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence) is
-   begin
-      Validating_Reader (Handler).Prefixes := new Prefix_Mapping'
-        (Prefix    => new Byte_Sequence'(Prefix),
-         Namespace => new Byte_Sequence'(URI),
-         Next      => Validating_Reader (Handler).Prefixes);
-   end Hook_Start_Prefix_Mapping;
-
-   -----------------------------
-   -- Hook_End_Prefix_Mapping --
-   -----------------------------
-
-   procedure Hook_End_Prefix_Mapping
-     (Handler : in out Reader'Class;
-      Prefix  : Unicode.CES.Byte_Sequence)
-   is
-      Tmp  : Prefix_Mapping_Access := Validating_Reader (Handler).Prefixes;
-      Tmp2 : Prefix_Mapping_Access;
-   begin
-      if Validating_Reader (Handler).Prefixes /= null then
-         if Validating_Reader (Handler).Prefixes.Prefix.all = Prefix then
-            Validating_Reader (Handler).Prefixes :=
-              Validating_Reader (Handler).Prefixes.Next;
-            Free (Tmp, Recursive => False);
-         else
-            while Tmp.Next /= null
-              and then Tmp.Next.Prefix.all /= Prefix
-            loop
-               Tmp := Tmp.Next;
-            end loop;
-
-            if Tmp.Next /= null then
-               Tmp2 := Tmp.Next;
-               Tmp.Next := Tmp2.Next;
-               Free (Tmp2, Recursive => False);
-            end if;
-         end if;
-      end if;
-   end Hook_End_Prefix_Mapping;
-
-   -------------------------------
    -- Get_Namespace_From_Prefix --
    -------------------------------
 
-   function Get_Namespace_From_Prefix
-     (Handler  : Validating_Reader;
-      Prefix   : Unicode.CES.Byte_Sequence)
-      return Unicode.CES.Byte_Sequence_Access
-   is
-      Tmp : Prefix_Mapping_Access := Handler.Prefixes;
+   procedure Get_Namespace_From_Prefix
+     (Handler  : in out Validating_Reader;
+      Prefix   : Unicode.CES.Byte_Sequence;
+      NS       : out Sax.Readers.XML_NS) is
    begin
-      while Tmp /= null and then Tmp.Prefix.all /= Prefix loop
-         Tmp := Tmp.Next;
-      end loop;
-
-      if Tmp = null then
-         return null;
-      else
-         return Tmp.Namespace;
+      Find_NS
+        (Parser  => Handler,
+         Context => Handler.Context,
+         Prefix  => Prefix,
+         NS      => NS);
+      if Get_URI (NS) = "" then
+         NS := No_XML_NS;
       end if;
    end Get_Namespace_From_Prefix;
 end Schema.Readers;

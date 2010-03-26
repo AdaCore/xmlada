@@ -75,6 +75,13 @@ package Schema.Validators is
    function Get_XSD_Version (Grammar : XML_Grammar) return XSD_Versions;
    --  Set the version of XSD accepted by this grammar
 
+   procedure Set_System_Id
+     (Grammar   : XML_Grammar_NS;
+      System_Id : Unicode.CES.Byte_Sequence);
+   function Get_System_Id
+     (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence;
+   --  The URI from which we loaded the schema
+
    No_Grammar : constant XML_Grammar;
    --  No Grammar has been defined
 
@@ -1304,6 +1311,7 @@ private
 
    type XML_Grammar_NS_Record is record
       Namespace_URI     : Unicode.CES.Byte_Sequence_Access;
+      System_ID         : Unicode.CES.Byte_Sequence_Access;
       Types             : Types_Htable_Access;
       Elements          : Elements_Htable_Access;
       Groups            : Groups_Htable_Access;
