@@ -93574,10 +93574,9 @@ Grp: MS-SimpleType2006-07-15 / stG001
   OK stG001.v
 
 Grp: MS-SimpleType2006-07-15 / stG002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stG002
-  XP stG002.v
-    stG002.xml:5:3: Invalid number of elements in list, expecting at most 3
+  OK stG002.v
 
 Grp: MS-SimpleType2006-07-15 / stG003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93598,10 +93597,9 @@ Grp: MS-SimpleType2006-07-15 / stG005
     stG005.xml:5:3: Invalid value "10"
 
 Grp: MS-SimpleType2006-07-15 / stG006
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stG006
-  XP stG006.v
-    stG006.xml:5:3: Invalid number of elements in list, expecting 2
+  OK stG006.v
 
 Grp: MS-SimpleType2006-07-15 / stG007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93615,9 +93613,10 @@ Grp: MS-SimpleType2006-07-15 / stG008
   OK stG008.v
 
 Grp: MS-SimpleType2006-07-15 / stG009
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stG009
-  XF stG009.i
+  OK stG009.i
+    stG009.xml:5:3: Invalid number of elements in list, expecting at least 2
 
 Grp: MS-SimpleType2006-07-15 / stG010
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -95773,7 +95772,7 @@ Total number of tests: 37685 (omitting non-accepted tests)
 NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 802
-XP: XML KO, should be OK: in_full_pass= 0 in_partial= 504 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 61 in_full_fail= 2
+XP: XML KO, should be OK: in_full_pass= 0 in_partial= 502 in_full_fail= 4
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 60 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1635 ( 4.3 %)
+Total errors: 1632 ( 4.3 %)

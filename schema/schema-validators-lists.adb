@@ -30,7 +30,7 @@ with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Simple_Types; use  Schema.Validators.Simple_Types;
 with Unicode;                        use Unicode;
 with Sax.Encodings;                  use Sax.Encodings;
-
+with GNAT.IO; use GNAT.IO;
 package body Schema.Validators.Lists is
 
    type List_Facets_Description is new Common_Facets_Description with record
@@ -62,6 +62,11 @@ package body Schema.Validators.Lists is
      (Validator : access List_Validator_Record) return Facets_Description;
    procedure Free (Validator : in out List_Validator_Record);
    --  See doc from inherited subprogram
+
+   generic
+      with procedure Callback (Str : Unicode.CES.Byte_Sequence);
+   procedure For_Each_Item (Ch : Unicode.CES.Byte_Sequence);
+   --  Iterate over each element of the list
 
    ---------------
    -- Add_Facet --
@@ -95,6 +100,46 @@ package body Schema.Validators.Lists is
       end if;
    end Add_Facet;
 
+   -------------------
+   -- For_Each_Item --
+   -------------------
+
+   procedure For_Each_Item (Ch : Unicode.CES.Byte_Sequence) is
+      Index : Integer := Ch'First;
+      Last, Start  : Integer;
+      C     : Unicode_Char;
+   begin
+      --  Ch might be from an attribute (in which case it might have been
+      --  normalized first), or for the value of a mixed element, in which case
+      --  no element has taken place. We therefore need to skip initial spaces
+
+      while Index <= Ch'Last loop
+         --  Skip leading spaces
+         while Index <= Ch'Last loop
+            Start := Index;
+            Encoding.Read (Ch, Index, C);
+            exit when not Is_White_Space (C);
+            Start := Ch'Last + 1;
+         end loop;
+
+         exit when Start > Ch'Last;
+
+         --  Move to first whitespace after word
+         while Index <= Ch'Last loop
+            Last := Index;
+            Encoding.Read (Ch, Index, C);
+            exit when Index > Ch'Last or else Is_White_Space (C);
+         end loop;
+
+         if Index > Ch'Last then
+            Callback (Ch (Start .. Index - 1));
+            exit;
+         else
+            Callback (Ch (Start .. Last - 1)); --  Last points to a whitespace
+         end if;
+      end loop;
+   end For_Each_Item;
+
    -----------------
    -- Check_Facet --
    -----------------
@@ -103,38 +148,48 @@ package body Schema.Validators.Lists is
      (Facets : in out List_Facets_Description;
       Value  : Unicode.CES.Byte_Sequence)
    is
-      Length : Natural := 1;
+      Length : Natural := 0;
+
+      procedure Callback (Value : Unicode.CES.Byte_Sequence);
+      procedure Callback (Value : Unicode.CES.Byte_Sequence) is
+         pragma Unreferenced (Value);
+      begin
+         Length := Length + 1;
+      end Callback;
+
+      procedure For_Each is new For_Each_Item (Callback);
+
    begin
       Check_Facet (Common_Facets_Description (Facets), Value);
 
-      --  Ch has already been normalized by the SAX parser
-      for C in Value'Range loop
-         if Value (C) = ' ' then
-            Length := Length + 1;
-         end if;
-      end loop;
-
       if Facets.Mask (Facet_Length)
-        and then Length /= Facets.Length
+        or else Facets.Mask (Facet_Min_Length)
+        or else Facets.Mask (Facet_Max_Length)
       then
-         Validation_Error ("Invalid number of elements in list, expecting"
-                           & Integer'Image (Facets.Length));
-      end if;
+         For_Each (Value);
 
-      if Facets.Mask (Facet_Min_Length)
-        and then Length < Facets.Min_Length
-      then
-         Validation_Error
-           ("Invalid number of elements in list, expecting at least"
-            & Integer'Image (Facets.Min_Length));
-      end if;
+         if Facets.Mask (Facet_Length)
+           and then Length /= Facets.Length
+         then
+            Validation_Error ("Invalid number of elements in list, expecting"
+                              & Integer'Image (Facets.Length));
+         end if;
 
-      if Facets.Mask (Facet_Max_Length)
-        and then Length > Facets.Max_Length
-      then
-         Validation_Error
-           ("Invalid number of elements in list, expecting at most"
-            & Integer'Image (Facets.Max_Length));
+         if Facets.Mask (Facet_Min_Length)
+           and then Length < Facets.Min_Length
+         then
+            Validation_Error
+              ("Invalid number of elements in list, expecting at least"
+               & Integer'Image (Facets.Min_Length));
+         end if;
+
+         if Facets.Mask (Facet_Max_Length)
+           and then Length > Facets.Max_Length
+         then
+            Validation_Error
+              ("Invalid number of elements in list, expecting at most"
+               & Integer'Image (Facets.Max_Length));
+         end if;
       end if;
    end Check_Facet;
 
@@ -182,9 +237,19 @@ package body Schema.Validators.Lists is
       Empty_Element : Boolean;
       Id_Table      : access Id_Htable_Access)
    is
-      Index : Integer := Ch'First;
-      Last, Start  : Integer;
-      C     : Unicode_Char;
+      procedure Callback (Value : Unicode.CES.Byte_Sequence);
+      procedure Callback (Value : Unicode.CES.Byte_Sequence) is
+      begin
+         if Debug then
+            Debug_Output ("  In list: " & Value);
+         end if;
+         Validate_Characters
+           (Get_Validator (Validator.Base), Value, Empty_Element,
+            Id_Table => Id_Table);
+      end Callback;
+
+      procedure For_Each is new For_Each_Item (Callback);
+
    begin
       if Debug then
          Debug_Output ("Validate_Characters for list --" & Ch & "--"
@@ -193,48 +258,7 @@ package body Schema.Validators.Lists is
 
       Check_Facet (Validator.Facets, Ch);
 
-      --  Ch might be from an attribute (in which case it might have been
-      --  normalized first), or for the value of a mixed element, in which case
-      --  no element has taken place. We therefore need to skip initial spaces
-
-      while Index <= Ch'Last loop
-         --  Skip leading spaces
-         while Index <= Ch'Last loop
-            Start := Index;
-            Encoding.Read (Ch, Index, C);
-            exit when not Is_White_Space (C);
-            Start := Ch'Last + 1;
-         end loop;
-
-         if Start <= Ch'Last then
-            --  Move to first whitespace after word
-            while Index <= Ch'Last loop
-               Last := Index;
-               Encoding.Read (Ch, Index, C);
-               if Is_White_Space (C) then
-                  if Debug then
-                     Debug_Output ("  In list: " & Ch (Start .. Last - 1));
-                  end if;
-                  Validate_Characters
-                    (Get_Validator (Validator.Base),
-                     Ch (Start .. Last - 1),
-                     Empty_Element,
-                     Id_Table => Id_Table);
-                  exit;
-               end if;
-            end loop;
-
-            if Index > Ch'Last then
-               if Debug then
-                  Debug_Output ("  In list: " & Ch (Start .. Ch'Last));
-               end if;
-               Validate_Characters
-                 (Get_Validator (Validator.Base),
-                  Ch (Start .. Ch'Last),
-                  Empty_Element, Id_Table);
-            end if;
-         end if;
-      end loop;
+      For_Each (Ch);
    end Validate_Characters;
 
 end Schema.Validators.Lists;
