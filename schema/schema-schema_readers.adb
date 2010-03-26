@@ -705,8 +705,10 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
    begin
       Parse_Grammar
-        (Handler, Get_Value (Atts, Schema_Location_Index),
-         Handler.Created_Grammar);
+        (Handler,
+         URI      => "-",
+         Xsd_File => Get_Value (Atts, Schema_Location_Index),
+         Add_To   => Handler.Created_Grammar);
    end Create_Include;
 
    ---------------------
@@ -721,7 +723,10 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
    begin
       Parse_Grammar
-        (Handler, Get_Value (Atts, Location_Index), Handler.Created_Grammar);
+        (Handler,
+         URI      => "-",
+         Xsd_File => Get_Value (Atts, Location_Index),
+         Add_To   => Handler.Created_Grammar);
 
       Handler.Contexts := new Context'
         (Typ            => Context_Redefine,
@@ -758,7 +763,11 @@ package body Schema.Schema_Readers is
          end if;
 
          if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
-            Parse_Grammar (Handler, Location, Handler.Created_Grammar);
+            Parse_Grammar
+              (Handler,
+               URI      => "-",
+               Xsd_File => Location,
+               Add_To   => Handler.Created_Grammar);
          elsif Debug then
             Put_Line ("Already imported");
          end if;

@@ -5062,10 +5062,10 @@ package body Schema.Validators is
    function Get_System_Id
      (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence is
    begin
-      if Grammar.System_Id = null then
+      if Grammar.System_ID = null then
          return "";
       else
-         return Grammar.System_Id.all;
+         return Grammar.System_ID.all;
       end if;
    end Get_System_Id;
 

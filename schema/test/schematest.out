@@ -48276,8 +48276,9 @@ Grp: MS-Additional2006-07-15 / addB160
   OK addB160.v
 
 Grp: MS-Additional2006-07-15 / addB161
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XF addB161.i
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK addB161.i
+    test93490_7.xml:10:63: schemaLocation for "" cannot occur after the first element of that namespace in XSD 1.0
 
 Grp: MS-Additional2006-07-15 / addB162
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -48289,8 +48290,9 @@ Grp: MS-Additional2006-07-15 / addB163
   OK addB163.v
 
 Grp: MS-Additional2006-07-15 / addB164
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XF addB164.i
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK addB164.i
+    test93490_10.xml:13:57: schemaLocation for "" cannot occur after the first element of that namespace in XSD 1.0
 
 Grp: MS-Additional2006-07-15 / addB165
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -66463,7 +66465,7 @@ Grp: MS-Element2006-07-15 / elemT074
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT074
   OK elemT074.i
-    elemT074.xml:1:106: elemT074.xml:1:106: Root element must be <schema>
+    elemT074.xml:2:23: Restrictions of type "A" are forbidden
 
 Grp: MS-Element2006-07-15 / elemU001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66588,7 +66590,7 @@ Grp: MS-Element2006-07-15 / elemU025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemU025
   OK elemU025.i
-    elemU025.xml:1:106: elemU001.xsd:3:27: Element "root" has already been declared
+    elemU025.xml:2:14: string pattern not matched: Chapter \d
 
 Grp: MS-Element2006-07-15 / elemZ001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -78007,7 +78009,7 @@ Grp: MS-Particles2006-07-15 / particlesOb022
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK particlesOb022
   XP particlesOb022.v
-    particlesOb022.xml:1:216: particlesOb022a.xsd:7:20: Type has already been declared: B
+    particlesOb022.xml:3:8: No definition provided for "e1"
 
 Grp: MS-Particles2006-07-15 / particlesOb023
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -78141,7 +78143,7 @@ Grp: MS-Particles2006-07-15 / particlesOb052
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK particlesOb052
   XP particlesOb052.v
-    particlesOb052.xml:1:200: particlesOb052a.xsd:7:20: Type has already been declared: B
+    particlesOb052.xml:3:8: No definition provided for "e1"
 
 Grp: MS-Particles2006-07-15 / particlesOb053
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -78167,7 +78169,7 @@ Grp: MS-Particles2006-07-15 / particlesOb057
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK particlesOb057
   XP particlesOb057.v
-    particlesOb057.xml:1:240: particlesOb057a.xsd:7:20: Type has already been declared: B
+    particlesOb057.xml:3:6: No definition provided for "a"
 
 Grp: MS-Particles2006-07-15 / particlesOb058
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -85823,7 +85825,7 @@ Grp: MS-Regex2006-07-15 / p2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK p2
   OK p2.i
-    p2.xml:3:45: p3.xsd:9:25: Element "doc" has already been declared
+    p2.xml:9:16: Mixed content is not allowed for this element
 
 Grp: MS-Regex2006-07-15 / p3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91985,7 +91987,7 @@ Grp: MS-Schema2006-07-15 / schA1
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK schA1
   XP schA1.v
-    schA1.xml:6:2: schA1_c.xsd:8:20: Type has already been declared: ct-A
+    schA1.xml:17:6: Namespace specification is required in this context
 
 Grp: MS-Schema2006-07-15 / schA2
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -95764,6 +95766,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 810
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 513 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 69 in_full_fail= 4
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 69 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1662 ( 4.4 %)
+Total errors: 1660 ( 4.4 %)

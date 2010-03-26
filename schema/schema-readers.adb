@@ -250,6 +250,7 @@ package body Schema.Readers is
 
    procedure Parse_Grammar
      (Handler  : in out Validating_Reader;
+      URI      : Byte_Sequence;
       Xsd_File : Byte_Sequence;
       Add_To   : in out XML_Grammar)
    is
@@ -257,29 +258,74 @@ package body Schema.Readers is
       Schema   : Schema_Reader;
       Xsd_File_Full : constant Byte_Sequence :=
         To_Absolute_URI (Handler, Xsd_File);
+      Local_Grammar : XML_Grammar_NS;
    begin
       if Debug then
-         Put_Line ("Parsing grammar: " & Xsd_File_Full);
-         Debug_Dump (Add_To);
+         Put_Line ("NS=" & URI & ASCII.LF & "XSD=" & Xsd_File);
       end if;
-      Open (Xsd_File_Full, File);
-      Set_Public_Id (File, Xsd_File_Full);
-      Set_System_Id (File, Xsd_File_Full);
 
-      --  MANU ? More efficient: Add_To will likely already contain the grammar
-      --  for the schema-for-schema, and we won't have to recreate it in most
-      --  cases.
-      Set_Validating_Grammar (Schema, Add_To);
-      Set_Created_Grammar (Schema, Add_To);
-      Use_Basename_In_Error_Messages
-        (Schema, Use_Basename_In_Error_Messages (Handler));
-      Parse (Schema, File);
-      Close (File);
-      Add_To := Get_Created_Grammar (Schema);
+      if URI /= "-" then
+         Get_NS
+           (Handler.Grammar,
+            Namespace_URI    => URI,
+            Result           => Local_Grammar,
+            Create_If_Needed => False);
 
-      if Debug then
-         Put_Line ("Done parsing new grammar: " & Xsd_File);
+         if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
+            --  Must check that no element of the same namespace was seen
+            --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
+            --  changed in XSD 1.1).
+
+            declare
+               NS : XML_NS;
+            begin
+               Find_NS_From_URI
+                 (Handler,
+                  Context => Handler.Context,
+                  URI     => URI,
+                  NS      => NS);
+
+               if NS /= No_XML_NS
+                 and then Element_Count (NS) > 0
+                 and then Xsd_File_Full /= Get_System_Id (Local_Grammar)
+               then
+                  Validation_Error
+                    ("schemaLocation for """
+                     & URI & """ cannot occur after the first"
+                     & " element of that namespace in XSD 1.0");
+               end if;
+            end;
+         end if;
       end if;
+
+      --  Do not reparse the grammar if we already know about it
+
+      if Local_Grammar = null then
+         if Debug then
+            Put_Line ("Parsing grammar: " & Xsd_File_Full);
+            Debug_Dump (Add_To);
+         end if;
+         Open (Xsd_File_Full, File);
+         Set_Public_Id (File, Xsd_File_Full);
+         Set_System_Id (File, Xsd_File_Full);
+
+         --  MANU ? More efficient: Add_To will likely already contain the
+         --  grammar for the schema-for-schema, and we won't have to recreate
+         --  it in most
+         --  cases.
+         Set_Validating_Grammar (Schema, Add_To);
+         Set_Created_Grammar (Schema, Add_To);
+         Use_Basename_In_Error_Messages
+           (Schema, Use_Basename_In_Error_Messages (Handler));
+         Parse (Schema, File);
+         Close (File);
+         Add_To := Get_Created_Grammar (Schema);
+
+         if Debug then
+            Put_Line ("Done parsing new grammar: " & Xsd_File);
+         end if;
+      end if;
+
    exception
       when Ada.IO_Exceptions.Name_Error =>
          Close (File);
@@ -307,7 +353,6 @@ package body Schema.Readers is
       Start_NS, Last_NS, Index : Integer;
       Start_XSD, Last_XSD : Integer;
       C : Unicode_Char;
-      Local_Grammar : XML_Grammar_NS;
    begin
       Index    := Schema_Location'First;
       Start_NS := Schema_Location'First;
@@ -334,56 +379,11 @@ package body Schema.Readers is
             Last_XSD := Schema_Location'Last + 1;
          end if;
 
-         if Debug then
-            Put_Line ("NS=" & Schema_Location (Start_NS .. Last_NS - 1)
-                      & ASCII.LF
-                      & "XSD=" & Schema_Location (Start_XSD .. Last_XSD - 1));
-         end if;
-
-         Get_NS
-           (Handler.Grammar,
-            Namespace_URI    => Schema_Location (Start_NS .. Last_NS - 1),
-            Result           => Local_Grammar,
-            Create_If_Needed => False);
-
-         if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
-            --  Must check that no element of the same namespace was seen
-            --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
-            --  changed in XSD 1.1).
-
-            declare
-               NS : XML_NS;
-               Resolved : constant String :=
-                 To_Absolute_URI
-                   (Handler, Schema_Location (Start_XSD .. Last_XSD - 1));
-            begin
-               Find_NS_From_URI
-                 (Handler,
-                  Context => Handler.Context,
-                  URI     => Schema_Location (Start_NS .. Last_NS - 1),
-                  NS      => NS);
-
-               if NS /= No_XML_NS
-                 and then Element_Count (NS) > 0
-                 and then Resolved /=
-                   Get_System_Id (Local_Grammar)
-               then
-                  Validation_Error
-                    ("schemaLocation for """
-                     & Schema_Location (Start_NS .. Last_NS - 1)
-                     & """ cannot occur after the first"
-                     & " element of that namespace in XSD 1.0");
-               end if;
-            end;
-         end if;
-
-         --  Do not reparse the grammar if we already know about it
-
-         if Local_Grammar = null then
-            Parse_Grammar
-              (Handler, Schema_Location (Start_XSD .. Last_XSD - 1),
-               Add_To => Handler.Grammar);
-         end if;
+         Parse_Grammar
+           (Handler,
+            URI      => Schema_Location (Start_NS .. Last_NS - 1),
+            Xsd_File => Schema_Location (Start_XSD .. Last_XSD - 1),
+            Add_To   => Handler.Grammar);
 
          while Index <= Schema_Location'Last loop
             Start_NS := Index;
@@ -495,8 +495,9 @@ package body Schema.Readers is
       begin
          if No_Index /= -1 then
             Parse_Grammar (Validating_Reader (Handler),
-                           Get_Value (Atts, No_Index),
-                           Add_To => Validating_Reader (Handler).Grammar);
+                           URI      => "",
+                           Xsd_File => Get_Value (Atts, No_Index),
+                           Add_To   => Validating_Reader (Handler).Grammar);
             Global_Check (Validating_Reader (Handler).Grammar);
          end if;
 

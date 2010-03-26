@@ -87,6 +87,7 @@ package Schema.Readers is
 
    procedure Parse_Grammar
      (Handler  : in out Validating_Reader;
+      URI      : Unicode.CES.Byte_Sequence;
       Xsd_File : Unicode.CES.Byte_Sequence;
       Add_To   : in out Schema.Validators.XML_Grammar);
    --  Parse the grammar to use from an XSD file, and add it to Add_To.
