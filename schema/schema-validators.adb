@@ -1013,6 +1013,7 @@ package body Schema.Validators is
    is
       pragma Unreferenced (Grammar);
       Val : constant Byte_Sequence := Get_Value (Atts, Index);
+      Fixed : Byte_Sequence_Access;
    begin
       if Debug then
          Debug_Output ("Checking attribute "
@@ -1026,12 +1027,17 @@ package body Schema.Validators is
             Empty_Element => False, Id_Table => Id_Table);
       end if;
 
-      if Validator.Fixed /= null
-        and then Validator.Fixed.all /= Collapse_Whitespaces (Val)
+      Fixed := Validator.Fixed;
+      if Fixed = null and then Validator.Ref_Attr /= null then
+         Fixed := Validator.Ref_Attr.Fixed;
+      end if;
+
+      if Fixed /= null
+        and then Fixed.all /= Collapse_Whitespaces (Val)
       then
          Validation_Error
            ("value must be """
-            & To_Graphic_String (Validator.Fixed.all)
+            & To_Graphic_String (Fixed.all)
             & """ (found """
             & To_Graphic_String (Collapse_Whitespaces (Val))
             & """)");
@@ -1769,7 +1775,11 @@ package body Schema.Validators is
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence;
-      Attribute_Type : XML_Type) return Attribute_Validator
+      Attribute_Type : XML_Type;
+      Attribute_Form : Form_Type                 := Qualified;
+      Attribute_Use  : Attribute_Use_Type        := Optional;
+      Fixed          : Unicode.CES.Byte_Sequence := "";
+      Has_Fixed      : Boolean := False) return Attribute_Validator
    is
       Old : Named_Attribute_Validator :=
         Attributes_Htable.Get (NS.Attributes.all, Local_Name);
@@ -1787,13 +1797,21 @@ package body Schema.Validators is
             Local_Name     => new Byte_Sequence'(Local_Name),
             Ref_Attr       => null,
             Attribute_Type => Attribute_Type,
-            Attribute_Form => Unqualified,
-            Attribute_Use  => Optional,
+            Attribute_Form => Attribute_Form,
+            Attribute_Use  => Attribute_Use,
             Fixed          => null,
             Value          => null,
             Next           => null);
+
          Register (NS, Old);
          Attributes_Htable.Set (NS.Attributes.all, Old);
+      end if;
+
+      Old.Attribute_Form := Attribute_Form;
+      Old.Attribute_Use  := Attribute_Use;
+
+      if Has_Fixed then
+         Old.Fixed := new Byte_Sequence'(Fixed);
       end if;
       return Attribute_Validator (Old);
    end Create_Global_Attribute;

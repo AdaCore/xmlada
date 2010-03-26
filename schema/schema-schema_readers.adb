@@ -1851,14 +1851,20 @@ package body Schema.Schema_Readers is
                Att := Create_Global_Attribute
                  (Local_Name     => Get_Value (Atts, Name_Index),
                   NS             => Handler.Target_NS,
-                  Attribute_Type => Typ);
+                  Attribute_Type => Typ,
+                  Attribute_Use  => Use_Type,
+                  Attribute_Form => Qualified,
+                  Has_Fixed      => Fixed_Index /= -1,
+                  Fixed          => Get_Fixed);
 
                if Debug then
                   Output (Ada_Name (Handler.Contexts)
                           & " := Create_Global_Attribute ("""
                           & Get_Value (Atts, Name_Index)
                           & """, Handler.Target_NS, "
-                          & Ada_Name (Typ) & ");");
+                          & Ada_Name (Typ)
+                          & ", " & Use_Type'Img & ", Qualified, Has_Fixed="
+                          & Boolean'Image (Fixed_Index /= -1) & ");");
                end if;
 
             when others =>

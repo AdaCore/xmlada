@@ -719,7 +719,11 @@ package Schema.Validators is
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence;
-      Attribute_Type : XML_Type) return Attribute_Validator;
+      Attribute_Type : XML_Type;
+      Attribute_Form : Form_Type                 := Qualified;
+      Attribute_Use  : Attribute_Use_Type        := Optional;
+      Fixed          : Unicode.CES.Byte_Sequence := "";
+      Has_Fixed      : Boolean := False) return Attribute_Validator;
    function Create_Global_Attribute_Group
      (NS             : XML_Grammar_NS;
       Local_Name     : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
@@ -1009,7 +1013,7 @@ private
          Attribute_Type : XML_Type;   --  or read from Ref_Attr the first time
          Attribute_Form : Form_Type;
          Attribute_Use  : Attribute_Use_Type;
-         Fixed          : Unicode.CES.Byte_Sequence_Access;
+         Fixed          : Unicode.CES.Byte_Sequence_Access; -- or from Ref_Attr
          Value          : Unicode.CES.Byte_Sequence_Access;
       end record;
    procedure Validate_Attribute
