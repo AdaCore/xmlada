@@ -66929,9 +66929,10 @@ Grp: MS-Errata102006-07-15 / errA001
   OK errA001.v
 
 Grp: MS-Errata102006-07-15 / errA002
-  50.0% tests= 2 (xsd= 3 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 3 xml= 1) OK= 2 FAILED= 0
   OK errA002
-  XF errA002.i
+  OK errA002.i
+    errA002.xml:10:16: Element must specify a namespace
 
 Grp: MS-Errata102006-07-15 / errA003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75110,14 +75111,16 @@ Grp: MS-Particles2006-07-15 / particlesC008
   OK particlesC008.v
 
 Grp: MS-Particles2006-07-15 / particlesC009
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesC009
-  XF particlesC009.i
+  OK particlesC009.i
+    particlesC009.xml:4:7: Element must specify a namespace
 
 Grp: MS-Particles2006-07-15 / particlesC010
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesC010
-  XF particlesC010.i
+  OK particlesC010.i
+    particlesC010.xml:4:7: Element must specify a namespace
 
 Grp: MS-Particles2006-07-15 / particlesC011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95666,9 +95669,10 @@ Grp: MS-Wildcards2006-07-15 / wildZ005
     wildZ005.xml:2:15: Namespace should be different from urn:target
 
 Grp: MS-Wildcards2006-07-15 / wildZ006
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildZ006
-  XF wildZ006.i
+  OK wildZ006.i
+    wildZ006.xml:2:8: Element must specify a namespace
 
 Grp: MS-Wildcards2006-07-15 / wildZ007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95770,6 +95774,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 802
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 504 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 65 in_full_fail= 2
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 61 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1639 ( 4.3 %)
+Total errors: 1635 ( 4.3 %)

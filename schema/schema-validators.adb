@@ -4199,6 +4199,12 @@ package body Schema.Validators is
       C : Unicode_Char;
       Valid : Boolean := False;
    begin
+      if Debug then
+         Debug_Output ("Validate ANY: namespaces="
+                       & Validator.Namespace.all
+                       & " " & Validator.Process_Contents'Img);
+      end if;
+
       --  Do not check qualification, there is a special handling for
       --  namespaces
 
@@ -4210,6 +4216,8 @@ package body Schema.Validators is
             Validation_Error
               ("Namespace should be different from "
                & Validator.Target_NS.Namespace_URI.all);
+         elsif Namespace_URI = "" then
+            Validation_Error ("Element must specify a namespace");
          end if;
 
       else

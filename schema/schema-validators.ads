@@ -260,6 +260,10 @@ package Schema.Validators is
 
    type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List,
                            Namespace_Local);
+   --  "Any":   any non-conflicting namespace
+   --  "Other": any non-conflicting namespace other than targetNamespace
+   --  "Local": any unqualified non-conflicting namespace
+
    function Create_Any_Attribute
      (Process_Contents : Process_Contents_Type := Process_Strict;
       Kind : Namespace_Kind;

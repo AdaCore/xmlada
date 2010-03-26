@@ -25,7 +25,7 @@
 -- exception does not however invalidate any other reasons why the   --
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
-with GNAT.IO; use GNAT.IO;
+
 package body Schema.Validators.UR_Type is
 
    type UR_Type_Validator is new XML_Validator_Record with record
@@ -117,6 +117,7 @@ package body Schema.Validators.UR_Type is
          when Process_Lax =>
             Element_Validator := Lookup_Element
               (NS, Local_Name, Create_If_Needed => False);
+
             if Element_Validator = No_Element then
                if Debug then
                   Debug_Output ("Definition not found for " & Local_Name);

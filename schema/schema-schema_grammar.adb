@@ -328,7 +328,7 @@ package body Schema.Schema_Grammar is
       Add_Particle
         (Seq2,
          Create_Any (Process_Contents => Process_Lax,
-                     Namespace        => "##other",
+                     Namespace        => "##any",
                      Target_NS        => XML_G));
       Add_Attribute
         (Seq1, Create_Local_Attribute
@@ -346,7 +346,7 @@ package body Schema.Schema_Grammar is
       Add_Particle
         (Seq2,
          Create_Any (Process_Contents => Process_Lax,
-                     Namespace        => "##other",
+                     Namespace        => "##any",
                      Target_NS        => XML_G));
       Add_Attribute
         (Seq1, Create_Local_Attribute
