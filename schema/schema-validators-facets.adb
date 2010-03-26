@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -36,6 +36,59 @@ package body Schema.Validators.Facets is
    --------------------
 
    function Convert_Regexp (Regexp : String) return String is
+      function Anchor (Str : String) return String;
+      --  Return an anchored version of Str ("^...$").
+      --  In XML, regexps are always anchored, as per the beginning of [G]
+
+      function Missing_End_Anchor (Str : String) return Boolean;
+      function Missing_Start_Anchor (Str : String) return Boolean;
+      --  Whether the regexp is missing the "^" or "$" anchors
+
+      function Missing_End_Anchor (Str : String) return Boolean is
+      begin
+         --  Do not add '$' if Str ends with a single \, since it is
+         --  invalid anyway
+         return Str'Length = 0
+           or else
+             (Str (Str'Last) /= '$'
+              and then (Str (Str'Last) /= '\'
+                        or else (Str'Length /= 1
+                                 and then Str (Str'Last - 1) = '\')));
+      end Missing_End_Anchor;
+
+      --------------------------
+      -- Missing_Start_Anchor --
+      --------------------------
+
+      function Missing_Start_Anchor (Str : String) return Boolean is
+      begin
+         --  Do not add '^' if we start with an operator, since Str is invalid
+         return Str'Length = 0
+           or else not (Str (Str'First) = '^'
+                        or else Str (Str'First) = '*'
+                        or else Str (Str'First) = '+'
+                        or else Str (Str'First) = '?');
+      end Missing_Start_Anchor;
+
+      ------------
+      -- Anchor --
+      ------------
+
+      function Anchor (Str : String) return String is
+         Start : constant Boolean := Missing_Start_Anchor (Str);
+         Last  : constant Boolean := Missing_End_Anchor (Str);
+      begin
+         if Start and Last then
+            return "^" & Str & "$";
+         elsif Start then
+            return "^" & Str;
+         elsif Last then
+            return Str & "$";
+         else
+            return Str;
+         end if;
+      end Anchor;
+
       use Ada.Strings.Unbounded;
       Result : Unbounded_String;
       Tmp    : Unbounded_String;
@@ -61,6 +114,10 @@ package body Schema.Validators.Facets is
                      when 'c' =>
                         Append (Tmp, "a-z:A-Z0-9._-");
                         Pos    := Pos + 1;
+
+                     when 'w' =>
+                        Append (Tmp, "a-zA-Z0-9");
+                        Pos := Pos + 1;
 
                      when others =>
                         Append (Tmp, Regexp (Pos));
@@ -91,6 +148,10 @@ package body Schema.Validators.Facets is
                   Append (Result, "[a-z:A-Z0-9._-]");
                   Pos    := Pos + 1;
 
+               when 'w' =>
+                  Append (Result, "[a-zA-Z0-9]");
+                  Pos := Pos + 1;
+
                when others =>
                   Append (Result, Regexp (Pos));
             end case;
@@ -102,7 +163,7 @@ package body Schema.Validators.Facets is
          Pos := Pos + 1;
       end loop;
 
-      return To_String (Result);
+      return Anchor (To_String (Result));
    end Convert_Regexp;
 
    ----------
@@ -289,7 +350,10 @@ package body Schema.Validators.Facets is
          exception
             when  GNAT.Regpat.Expression_Error =>
                Validation_Error ("Invalid regular expression "
-                                 & Facets.Pattern_String.all);
+                                 & Facets.Pattern_String.all
+                                 & " (converted to "
+                                 & Convert_Regexp (Facets.Pattern_String.all)
+                                 & ")");
          end;
 
          Facets.Mask (Facet_Pattern) := True;

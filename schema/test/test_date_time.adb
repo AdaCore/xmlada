@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005-2007, AdaCore            --
+--                       Copyright (C) 2005-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -293,12 +293,12 @@ begin
 
    --  Regexps
 
-   Assert_Re ("[a-z]", "[a-z]");
-   Assert_Re ("a[]b", "a[]b");
-   Assert_Re ("[\c]", "[a-z:A-Z0-9._-]");
-   Assert_Re ("[\i]", "[A-Za-z:_]");
-   Assert_Re ("\c", "[a-z:A-Z0-9._-]");  --  ??? Not sure that's correct
+   Assert_Re ("[a-z]", "^[a-z]$");
+   Assert_Re ("a[]b", "^a[]b$");
+   Assert_Re ("[\c]$", "^[a-z:A-Z0-9._-]$");
+   Assert_Re ("^[\i]", "^[A-Za-z:_]$");
+   Assert_Re ("\c", "^[a-z:A-Z0-9._-]$");  --  ??? Not sure that's correct
    --  Assert_Re ("[abc-[b]]", "[ac]");  --  ??? Not supported for now
-   Assert_Re ("\d{5}", "\d{5}");
+   Assert_Re ("^\d{5}$", "^\d{5}$");
 
 end Test_Date_Time;
