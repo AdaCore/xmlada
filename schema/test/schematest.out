@@ -43579,45 +43579,47 @@ Grp: suntest / test007
   OK test
   OK test.1.v
   XP test.6.v
-    test.6.v.xml:8:91: Attribute "a:foo": Invalid namespace in this context, must be "urn:a urn:b urn:c"
+    test.6.v.xml:8:91: Attribute "a:foo": Invalid namespace for {urn:a}foo
   OK test.2.n
-    test.2.n.xml:8:91: Attribute "a:foo" invalid for this element
+    test.2.n.xml:8:91: Attribute "a:foo": Invalid namespace for {urn:a}foo
   OK test.3.n
-    test.3.n.xml:8:91: Attribute "b:foo" invalid for this element
+    test.3.n.xml:8:91: Attribute "b:foo": Invalid namespace for {urn:b}foo
   OK test.4.n
-    test.4.n.xml:8:91: Attribute "foo" invalid for this element
+    test.4.n.xml:8:91: Attribute "foo": Invalid namespace for foo
   OK test.5.n
-    test.5.n.xml:8:89: Attribute "foo": Invalid namespace in this context, must be "urn:a urn:b urn:c"
+    test.5.n.xml:8:89: Attribute "foo": Invalid namespace for foo
   OK test.7.n
-    test.7.n.xml:8:91: Attribute "b:foo": Invalid namespace in this context, must be "urn:a urn:b urn:c"
+    test.7.n.xml:8:91: Attribute "b:foo": Invalid namespace for {urn:b}foo
   OK test.8.n
-    test.8.n.xml:8:91: Attribute "c:foo": Invalid namespace in this context, must be "urn:a urn:b urn:c"
+    test.8.n.xml:8:91: Attribute "c:foo": Invalid namespace for {urn:c}foo
 
 Grp: suntest / test008
-  84.6% tests= 13 (xsd= 1 xml= 12) OK= 11 FAILED= 2
+  69.2% tests= 13 (xsd= 1 xml= 12) OK= 9 FAILED= 4
   OK test
   OK test.1.n
-    test.1.n.xml:8:99: Attribute "xxx": Invalid namespace in this context, must be "urn:c"
+    test.1.n.xml:8:99: Attribute "xxx": Invalid namespace for xxx
   OK test.10.n
-    test.10.n.xml:8:97: Attribute "a:xxx": Invalid namespace in this context, must be "urn:a urn:b"
+    test.10.n.xml:8:97: Attribute "a:xxx": Invalid namespace for {urn:a}xxx
   OK test.11.n
-    test.11.n.xml:8:97: Attribute "b:xxx": Invalid namespace in this context, must be "urn:a urn:b"
+    test.11.n.xml:8:97: Attribute "b:xxx": Invalid namespace for {urn:b}xxx
   OK test.12.n
-    test.12.n.xml:8:97: Attribute "c:xxx": Invalid namespace in this context, must be "urn:a urn:b"
+    test.12.n.xml:8:97: Attribute "c:xxx": Invalid namespace for {urn:c}xxx
   OK test.5.n
-    test.5.n.xml:8:101: Attribute "xxx": Invalid namespace in this context, must be "urn:a"
+    test.5.n.xml:8:101: Attribute "xxx": Invalid namespace for xxx
   OK test.7.n
-    test.7.n.xml:8:103: Attribute "b:xxx": Invalid namespace in this context, must be "urn:a"
+    test.7.n.xml:8:103: Attribute "b:xxx": Invalid namespace for {urn:b}xxx
   OK test.8.n
-    test.8.n.xml:8:103: Attribute "c:xxx": Invalid namespace in this context, must be "urn:a"
+    test.8.n.xml:8:103: Attribute "c:xxx": Invalid namespace for {urn:c}xxx
   OK test.9.n
-    test.9.n.xml:8:95: Attribute "xxx": Invalid namespace in this context, must be "urn:a urn:b"
+    test.9.n.xml:8:95: Attribute "xxx": Invalid namespace for xxx
   XP test.2.v
-    test.2.v.xml:8:101: Attribute "a:xxx": Invalid namespace in this context, must be "urn:c"
+    test.2.v.xml:8:101: Attribute "a:xxx": Invalid namespace for {urn:a}xxx
   XP test.3.v
-    test.3.v.xml:8:101: Attribute "b:xxx": Invalid namespace in this context, must be "urn:c"
-  OK test.4.v
-  OK test.6.v
+    test.3.v.xml:8:101: Attribute "b:xxx": Invalid namespace for {urn:b}xxx
+  XP test.4.v
+    test.4.v.xml:8:101: Attribute "c:xxx": Invalid namespace for {urn:c}xxx
+  XP test.6.v
+    test.6.v.xml:8:103: Attribute "a:xxx": Invalid namespace for {urn:a}xxx
 
 Grp: suntest / test009
   100.0% tests= 14 (xsd= 1 xml= 13) OK= 14 FAILED= 0
@@ -43947,7 +43949,7 @@ Grp: suntest / xsd020.e
     xsd020.e.xsd:28:33: Type specified in a simpleContent context must not have a complexContent
 
 Grp: suntest / xsd021
-  100.0% tests= 14 (xsd= 1 xml= 13) OK= 14 FAILED= 0
+  92.9% tests= 14 (xsd= 1 xml= 13) OK= 13 FAILED= 1
   OK xsd021
   OK xsd021.n00
     xsd021.n00.xml:14:28: Attribute "f:a": Invalid integer: "invalid"
@@ -43958,22 +43960,23 @@ Grp: suntest / xsd021
   OK xsd021.n03
     xsd021.n03.xml:14:31: Attribute "f:b": Invalid integer: "invalid"
   OK xsd021.n04
-    xsd021.n04.xml:14:33: Attribute "f:a": Invalid namespace in this context, must be different from "foo"
+    xsd021.n04.xml:14:33: Attribute "f:a": Invalid namespace for {foo}a
   OK xsd021.n05
-    xsd021.n05.xml:14:25: Attribute "f:a": Invalid namespace in this context, must be different from "foo"
+    xsd021.n05.xml:14:25: Attribute "f:a": Invalid namespace for {foo}a
   OK xsd021.n06
-    xsd021.n06.xml:14:24: Attribute "f:a": No namespace allowed
+    xsd021.n06.xml:14:24: Attribute "f:a": Invalid namespace for {foo}a
   OK xsd021.n07
-    xsd021.n07.xml:14:24: Attribute "b:b": No namespace allowed
+    xsd021.n07.xml:14:24: Attribute "b:b": Invalid namespace for {bar}b
   OK xsd021.n08
-    xsd021.n08.xml:14:35: Attribute "local": Invalid namespace in this context, must be "foo"
+    xsd021.n08.xml:14:35: Attribute "local": Invalid namespace for local
   OK xsd021.n09
     xsd021.n09.xml:14:34: Attribute "f:a": Invalid integer: "invalid"
   OK xsd021.n10
-    xsd021.n10.xml:14:30: Attribute "local": Invalid namespace in this context, must be "bar"
+    xsd021.n10.xml:14:30: Attribute "local": Invalid namespace for local
   OK xsd021.n11
-    xsd021.n11.xml:14:28: Attribute "f:a": Invalid namespace in this context, must be "bar"
-  OK xsd021.v00
+    xsd021.n11.xml:14:28: Attribute "f:a": Invalid namespace for {foo}a
+  XP xsd021.v00
+    xsd021.v00.xml:26:31: Attribute "att": Invalid namespace for att
 
 Grp: suntest / xsd022
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -44002,10 +44005,9 @@ Grp: AGroupDef / ag_attrusens00101m1_n
   SF AG_attrUseNS00101m1_n
 
 Grp: AGroupDef / ag_attrwcard00101m1
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK AG_attrWCard00101m1
-  XP Positive
-    AG_attrWCard00101m1_p.xml:15:43: Attribute "notDefined" invalid for this element
+  OK Positive
 
 Grp: AGroupDef / ag_name00101m1_p
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -47168,77 +47170,77 @@ Grp: SType / st_facets00608
 Grp: SType / st_final00101m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ST_final00101m1
-    ST_final00101m1.xsd:15:54: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00101m1.xsd:15:54: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00101m2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00101m2
-    ST_final00101m2.xsd:15:54: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00101m2.xsd:15:54: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00101m3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00101m3
-    ST_final00101m3.xsd:15:54: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00101m3.xsd:15:54: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00101m4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00101m4
-    ST_final00101m4.xsd:15:54: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00101m4.xsd:15:54: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00101m5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00101m5
-    ST_final00101m5.xsd:15:54: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00101m5.xsd:15:54: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00101m6
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00101m6
-    ST_final00101m6.xsd:15:54: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00101m6.xsd:15:54: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00102m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ST_final00102m1
-    ST_final00102m1.xsd:15:47: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00102m1.xsd:15:47: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00102m2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m2
-    ST_final00102m2.xsd:15:47: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00102m2.xsd:15:47: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00102m3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m3
-    ST_final00102m3.xsd:15:47: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00102m3.xsd:15:47: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00102m4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m4
-    ST_final00102m4.xsd:15:47: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00102m4.xsd:15:47: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00102m5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m5
-    ST_final00102m5.xsd:15:47: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00102m5.xsd:15:47: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00102m6
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m6
-    ST_final00102m6.xsd:15:47: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00102m6.xsd:15:47: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00103m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ST_final00103m1
-    ST_final00103m1.xsd:15:48: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00103m1.xsd:15:48: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00103m2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00103m2
-    ST_final00103m2.xsd:15:48: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00103m2.xsd:15:48: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_final00103m3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00103m3
-    ST_final00103m3.xsd:15:48: Attribute "final": Attributes with no namespace invalid in this context
+    ST_final00103m3.xsd:15:48: Attribute "final": Invalid namespace for final
 
 Grp: SType / st_name00101m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47410,7 +47412,7 @@ Grp: Wildcard / nsconstraint00202m1
   OK nsConstraint00202m1
   OK Positive
   OK Negative
-    nsConstraint00202m1_n.xml:14:29: Attribute "test:date": Invalid namespace in this context, must be different from "nsConstraint"
+    nsConstraint00202m1_n.xml:14:29: Attribute "test:date": Invalid namespace for {nsConstraint}date
 
 Grp: Wildcard / nsconstraint00301m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47423,9 +47425,9 @@ Grp: Wildcard / nsconstraint00302m1
   66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
   OK nsConstraint00302m1
   XP Positive
-    nsConstraint00302m1_p.xml:16:28: Attribute "test1:date": Invalid namespace in this context, must be "ns_test1 ns_test2"
+    nsConstraint00302m1_p.xml:16:28: Attribute "test1:date": Invalid namespace for {ns_test1}date
   OK Negative
-    nsConstraint00302m1_n.xml:15:29: Attribute "test:date": Invalid namespace in this context, must be "ns_test1 ns_test2"
+    nsConstraint00302m1_n.xml:15:29: Attribute "test:date": Invalid namespace for {nsConstraint}date
 
 Grp: Wildcard / pscontents00101m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47624,7 +47626,7 @@ Grp: MS-Additional2006-07-15 / addB019
 Grp: MS-Additional2006-07-15 / addB020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP addB020
-    test68014.xsd:3:52: Attribute "final": Attributes with no namespace invalid in this context
+    test68014.xsd:3:52: Attribute "final": Invalid namespace for final
 
 Grp: MS-Additional2006-07-15 / addB021
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47668,7 +47670,7 @@ Grp: MS-Additional2006-07-15 / addB028
 Grp: MS-Additional2006-07-15 / addB029
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP addB029
-    test69527.xsd:3:53: Attribute "final": Attributes with no namespace invalid in this context
+    test69527.xsd:3:53: Attribute "final": Invalid namespace for final
 
 Grp: MS-Additional2006-07-15 / addB030
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47924,7 +47926,7 @@ Grp: MS-Additional2006-07-15 / addB081
 Grp: MS-Additional2006-07-15 / addB082
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK addB082
-    addB082.xsd:8:57: Attribute "xsd:type": Invalid namespace in this context, must be different from "http://www.w3.org/2001/XMLSchema"
+    addB082.xsd:8:57: Attribute "xsd:type": Invalid namespace for {http://www.w3.org/2001/XMLSchema}type
 
 Grp: MS-Additional2006-07-15 / addB083
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49683,82 +49685,76 @@ Grp: MS-AttributeGroup2006-07-15 / attgD018
   OK attgD018.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD019
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK attgD019
-  XP attgD019.v
-    attgD019.xml:3:46: Attribute "x:foo" invalid for this element
+  OK attgD019.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD020
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK attgD020
   XP attgD020.v
-    attgD020.xml:1:198: Attribute "foo" invalid for this element
+    attgD020.xml:1:198: Attribute "foo": No definition provided
 
 Grp: MS-AttributeGroup2006-07-15 / attgD021
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK attgD021
-  XP attgD021.v
-    attgD021.xml:3:50: Attribute "foo:foo" invalid for this element
+  OK attgD021.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD022
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK attgD022
-  XP attgD022.v
-    attgD022.xml:1:162: Attribute "a:a" invalid for this element
+  OK attgD022.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD023
   OK attgD023.i
-    attgD023.xml:1:154: Attribute "x:foo" invalid for this element
+    attgD023.xml:1:154: Attribute "x:foo": Invalid namespace for {http://xsdtesting}foo
 
 Grp: MS-AttributeGroup2006-07-15 / attgD024
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD024
   OK attgD024.i
-    attgD024.xml:3:56: Attribute "x:foo" invalid for this element
+    attgD024.xml:3:56: Attribute "x:foo": No definition provided
 
 Grp: MS-AttributeGroup2006-07-15 / attgD025
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK attgD025
   XP attgD025.v
-    attgD025.xml:3:17: Attribute "a" invalid for this element
+    attgD025.xml:3:17: Attribute "a": Invalid namespace for a
 
 Grp: MS-AttributeGroup2006-07-15 / attgD026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD026
   OK attgD026.i
-    attgD026.xml:3:33: Attribute "a:a" invalid for this element
+    attgD026.xml:3:33: Attribute "a:a": Invalid namespace for {foo}a
 
 Grp: MS-AttributeGroup2006-07-15 / attgD027
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD027
-  XP attgD027.v
-    attgD027.xml:3:45: Attribute "a:a" invalid for this element
+  OK attgD027.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD028
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD028
   OK attgD028.i
-    attgD028.xml:3:45: Attribute "a:a" invalid for this element
+    attgD028.xml:3:45: Attribute "a:a": Invalid namespace for {bar}a
 
 Grp: MS-AttributeGroup2006-07-15 / attgD029
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD029
-  XP attgD029.v
-    attgD029.xml:3:35: Attribute "x:bar" invalid for this element
+  OK attgD029.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD030
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD030
   OK attgD030.i
-    attgD030.xml:3:33: Attribute "a:b" invalid for this element
+    attgD030.xml:3:33: Attribute "a:b": Invalid namespace for {foo}b
 
 Grp: MS-AttributeGroup2006-07-15 / attgD031
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD031
-  XP attgD031.v
-    attgD031.xml:3:52: Attribute "a:b" invalid for this element
+  OK attgD031.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD032
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49766,16 +49762,14 @@ Grp: MS-AttributeGroup2006-07-15 / attgD032
   OK attgD032.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD033
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD033
-  XP attgD033.v
-    attgD033.xml:3:49: Attribute "test:bar" invalid for this element
+  OK attgD033.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD034
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD034
-  XP attgD034.v
-    attgD034.xml:3:25: Attribute "foo:att" invalid for this element
+  OK attgD034.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49816,7 +49810,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD042
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD042
   OK attgD042.i
-    attgD042.xml:3:48: Attribute "aga1" invalid for this element
+    attgD042.xml:3:48: Attribute "aga1": Invalid namespace for aga1
 
 Grp: MS-AttributeGroup2006-07-15 / attgZ001
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -50182,7 +50176,7 @@ Grp: MS-Attribute2006-07-15 / attG003
 Grp: MS-Attribute2006-07-15 / attH001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attH001
-    attH001.xsd:5:62: Attribute "value": Attributes with no namespace invalid in this context
+    attH001.xsd:5:62: Attribute "value": Invalid namespace for value
 
 Grp: MS-Attribute2006-07-15 / attI001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53001,7 +52995,7 @@ Grp: MS-ComplexType2006-07-15 / ctH011
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK ctH011
   XP ctH011.v
-    ctH011.xml:2:205: Attribute "myAttr": Attributes with no namespace invalid in this context
+    ctH011.xml:2:205: Attribute "myAttr": Invalid namespace for myAttr
 
 Grp: MS-ComplexType2006-07-15 / ctH012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53116,7 +53110,7 @@ Grp: MS-ComplexType2006-07-15 / ctH035
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK ctH035
   XP ctH035.v
-    ctH035.xml:2:201: Attribute "local": Attributes with no namespace invalid in this context
+    ctH035.xml:2:201: Attribute "local": Invalid namespace for local
 
 Grp: MS-ComplexType2006-07-15 / ctH036
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53232,7 +53226,7 @@ Grp: MS-ComplexType2006-07-15 / ctH058
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK ctH058
   XP ctH058.v
-    ctH058.xml:2:167: Attribute "local": Invalid namespace in this context, must be "##local ##targetNamespace"
+    ctH058.xml:2:167: Attribute "local": Invalid namespace for local
 
 Grp: MS-ComplexType2006-07-15 / ctH059
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53353,7 +53347,7 @@ Grp: MS-ComplexType2006-07-15 / ctH082
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK ctH082
   XP ctH082.v
-    ctH082.xml:2:132: Attribute "local": Invalid namespace in this context, must be "##local ##targetNamespace"
+    ctH082.xml:2:132: Attribute "local": Invalid namespace for local
 
 Grp: MS-ComplexType2006-07-15 / ctI001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -65706,7 +65700,7 @@ Grp: MS-Element2006-07-15 / elemK006
 Grp: MS-Element2006-07-15 / elemK007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemK007
-    elemK007.xsd:3:43: Attribute "nullable": Attributes with no namespace invalid in this context
+    elemK007.xsd:3:43: Attribute "nullable": Invalid namespace for nullable
 
 Grp: MS-Element2006-07-15 / elemL001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -65779,7 +65773,7 @@ Grp: MS-Element2006-07-15 / elemN005
 Grp: MS-Element2006-07-15 / elemN006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemN006
-    elemN006.xsd:3:58: Attribute "foo": Attributes with no namespace invalid in this context
+    elemN006.xsd:3:58: Attribute "foo": Invalid namespace for foo
 
 Grp: MS-Element2006-07-15 / elemO001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -68311,7 +68305,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idA034
 Grp: MS-IdentityConstraint2006-07-15 / idA035
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idA035
-    idA035.xsd:9:58: Attribute "refer": Attributes with no namespace invalid in this context
+    idA035.xsd:9:58: Attribute "refer": Invalid namespace for refer
 
 Grp: MS-IdentityConstraint2006-07-15 / idA036
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -68611,7 +68605,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idB034
 Grp: MS-IdentityConstraint2006-07-15 / idB035
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idB035
-    idB035.xsd:9:56: Attribute "refer": Attributes with no namespace invalid in this context
+    idB035.xsd:9:56: Attribute "refer": Invalid namespace for refer
 
 Grp: MS-IdentityConstraint2006-07-15 / idB036
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -74491,12 +74485,12 @@ Grp: MS-Notations2006-07-15 / notatE001
 Grp: MS-Notations2006-07-15 / notatE002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK notatE002
-    notatE002.xsd:3:120: Attribute "a:b": Invalid namespace in this context, must be different from "http://www.w3.org/2001/XMLSchema"
+    notatE002.xsd:3:120: Attribute "a:b": Invalid namespace for {http://www.w3.org/2001/XMLSchema}b
 
 Grp: MS-Notations2006-07-15 / notatE003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK notatE003
-    notatE003.xsd:3:79: Attribute "foo": Attributes with no namespace invalid in this context
+    notatE003.xsd:3:79: Attribute "foo": Invalid namespace for foo
 
 Grp: MS-Notations2006-07-15 / notatE004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92254,7 +92248,7 @@ Grp: MS-Schema2006-07-15 / schG15
 Grp: MS-Schema2006-07-15 / schH1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP schH1
-    schH1_a.xsd:6:53: Attribute "id": Attributes with no namespace invalid in this context
+    schH1_a.xsd:6:53: Attribute "id": Invalid namespace for id
 
 Grp: MS-Schema2006-07-15 / schH2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92269,7 +92263,7 @@ Grp: MS-Schema2006-07-15 / schH3
 Grp: MS-Schema2006-07-15 / schH4
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK schH4
-    schH4_a.xsd:6:63: Attribute "namespace": Attributes with no namespace invalid in this context
+    schH4_a.xsd:6:63: Attribute "namespace": Invalid namespace for namespace
 
 Grp: MS-Schema2006-07-15 / schH5
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92523,7 +92517,7 @@ Grp: MS-Schema2006-07-15 / schZ002_78029-b
 Grp: MS-Schema2006-07-15 / schZ003_78029-c
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK schZ003_78029-c
-    78029c.xsd:6:78: Attribute "SubstitutionGroup": Attributes with no namespace invalid in this context
+    78029c.xsd:6:78: Attribute "SubstitutionGroup": Invalid namespace for SubstitutionGroup
 
 Grp: MS-Schema2006-07-15 / schZ004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92933,7 +92927,7 @@ Grp: MS-SimpleType2006-07-15 / stC027
 Grp: MS-SimpleType2006-07-15 / stC028
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stC028
-    stC028.xsd:4:36: Attribute "value": Attributes with no namespace invalid in this context
+    stC028.xsd:4:36: Attribute "value": Invalid namespace for value
 
 Grp: MS-SimpleType2006-07-15 / stC029
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93536,17 +93530,17 @@ Grp: MS-SimpleType2006-07-15 / stF030
 Grp: MS-SimpleType2006-07-15 / stF031
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stF031
-    stF031.xsd:15:60: Attribute "final": Attributes with no namespace invalid in this context
+    stF031.xsd:15:60: Attribute "final": Invalid namespace for final
 
 Grp: MS-SimpleType2006-07-15 / stF032
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP stF032
-    stF032.xsd:11:44: Attribute "final": Attributes with no namespace invalid in this context
+    stF032.xsd:11:44: Attribute "final": Invalid namespace for final
 
 Grp: MS-SimpleType2006-07-15 / stF033
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stF033
-    stF033.xsd:11:44: Attribute "final": Attributes with no namespace invalid in this context
+    stF033.xsd:11:44: Attribute "final": Invalid namespace for final
 
 Grp: MS-SimpleType2006-07-15 / stF034
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -93900,7 +93894,7 @@ Grp: MS-SimpleType2006-07-15 / stK019
 Grp: MS-SimpleType2006-07-15 / stZ001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP stZ001
-    stZ001.xsd:11:51: Attribute "final": Attributes with no namespace invalid in this context
+    stZ001.xsd:11:51: Attribute "final": Invalid namespace for final
 
 Grp: MS-SimpleType2006-07-15 / stZ002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -93909,7 +93903,7 @@ Grp: MS-SimpleType2006-07-15 / stZ002
 Grp: MS-SimpleType2006-07-15 / stZ003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stZ003
-    stZ003.xsd:15:70: Attribute "final": Attributes with no namespace invalid in this context
+    stZ003.xsd:15:70: Attribute "final": Invalid namespace for final
 
 Grp: MS-SimpleType2006-07-15 / stZ004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94963,12 +94957,12 @@ Grp: MS-Wildcards2006-07-15 / wildI001
 Grp: MS-Wildcards2006-07-15 / wildI002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildI002
-    wildI002.xsd:6:129: Attribute "b": Attributes with no namespace invalid in this context
+    wildI002.xsd:6:129: Attribute "b": Invalid namespace for b
 
 Grp: MS-Wildcards2006-07-15 / wildI003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildI003
-    wildI003.xsd:6:104: Attribute "foo": Attributes with no namespace invalid in this context
+    wildI003.xsd:6:104: Attribute "foo": Invalid namespace for foo
 
 Grp: MS-Wildcards2006-07-15 / wildI004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95375,17 +95369,17 @@ Grp: MS-Wildcards2006-07-15 / wildQ001
 Grp: MS-Wildcards2006-07-15 / wildQ002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildQ002
-    wildQ002.xsd:7:39: Attribute "minOccurs": Attributes with no namespace invalid in this context
+    wildQ002.xsd:7:39: Attribute "minOccurs": Invalid namespace for minOccurs
 
 Grp: MS-Wildcards2006-07-15 / wildQ003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildQ003
-    wildQ003.xsd:7:39: Attribute "maxOccurs": Attributes with no namespace invalid in this context
+    wildQ003.xsd:7:39: Attribute "maxOccurs": Invalid namespace for maxOccurs
 
 Grp: MS-Wildcards2006-07-15 / wildQ004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildQ004
-    wildQ004.xsd:7:61: Attribute "minOccurs": Attributes with no namespace invalid in this context
+    wildQ004.xsd:7:61: Attribute "minOccurs": Invalid namespace for minOccurs
 
 Grp: MS-Wildcards2006-07-15 / wildO001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95401,7 +95395,7 @@ Grp: MS-Wildcards2006-07-15 / wildO003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO003
   OK wildO003.i
-    wildO003.xml:5:17: Attribute "att:name": Invalid namespace in this context, must be different from "http://foobar"
+    wildO003.xml:5:17: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO004
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95417,7 +95411,7 @@ Grp: MS-Wildcards2006-07-15 / wildO006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO006
   OK wildO006.i
-    wildO006.xml:2:142: Attribute "name": No definition provided
+    wildO006.xml:2:142: Attribute "name": Invalid namespace for name
 
 Grp: MS-Wildcards2006-07-15 / wildO007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95428,43 +95422,43 @@ Grp: MS-Wildcards2006-07-15 / wildO008
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO008
   OK wildO008.i
-    wildO008.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "http://foobar"
+    wildO008.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO009
   OK wildO009.i
-    wildO009.xml:2:172: Attribute "att:name": Invalid namespace in this context, must be "##local http://www.w3.org/1999/xhtml"
+    wildO009.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO010
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO010
   XP wildO010.v
-    wildO010.xml:2:230: Attribute "att:href": Invalid namespace in this context, must be "##local http://www.w3.org/1999/xhtml"
+    wildO010.xml:2:230: Attribute "att:href": Invalid namespace for {http://www.w3.org/1999/xhtml}href
 
 Grp: MS-Wildcards2006-07-15 / wildO011
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO011
   OK wildO011.i
-    wildO011.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "##local http://www.w3.org/1999/xhtml"
+    wildO011.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO012
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK wildO012
   XP wildO012.v
-    wildO012.xml:2:172: Attribute "att:name": Invalid namespace in this context, must be "##targetNamespace http://www.w3.org/1999/xhtml"
+    wildO012.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO013
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO013
   XP wildO013.v
-    wildO013.xml:2:229: Attribute "att:href": Invalid namespace in this context, must be "##targetNamespace http://www.w3.org/1999/xhtml"
+    wildO013.xml:2:229: Attribute "att:href": Invalid namespace for {http://www.w3.org/1999/xhtml}href
 
 Grp: MS-Wildcards2006-07-15 / wildO014
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO014
   OK wildO014.i
-    wildO014.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "##targetNamespace http://www.w3.org/1999/xhtml"
+    wildO014.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO015
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95480,7 +95474,7 @@ Grp: MS-Wildcards2006-07-15 / wildO017
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO017
   OK wildO017.i
-    wildO017.xml:2:172: Attribute "att:name": Invalid namespace in this context, must be different from "http://foobar"
+    wildO017.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO018
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95491,13 +95485,13 @@ Grp: MS-Wildcards2006-07-15 / wildO019
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO019
   XP wildO019.v
-    wildO019.xml:2:205: Attribute "name": No definition provided
+    wildO019.xml:2:205: Attribute "name": Invalid namespace for name
 
 Grp: MS-Wildcards2006-07-15 / wildO020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO020
   OK wildO020.i
-    wildO020.xml:2:172: Attribute "att:name": No namespace allowed
+    wildO020.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95508,7 +95502,7 @@ Grp: MS-Wildcards2006-07-15 / wildO022
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO022
   OK wildO022.i
-    wildO022.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "http://foobar"
+    wildO022.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95519,13 +95513,13 @@ Grp: MS-Wildcards2006-07-15 / wildO024
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO024
   OK wildO024.i
-    wildO024.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "http://foobar"
+    wildO024.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO025
   OK wildO025.i
-    wildO025.xml:2:172: Attribute "att:name": Invalid namespace in this context, must be different from "http://foobar"
+    wildO025.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO026
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95541,19 +95535,19 @@ Grp: MS-Wildcards2006-07-15 / wildO028
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO028
   OK wildO028.i
-    wildO028.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "http://foobar"
+    wildO028.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO029
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO029
   XP wildO029.v
-    wildO029.xml:2:205: Attribute "name": No definition provided
+    wildO029.xml:2:205: Attribute "name": Invalid namespace for name
 
 Grp: MS-Wildcards2006-07-15 / wildO030
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO030
   OK wildO030.i
-    wildO030.xml:2:194: Attribute "att:name": No namespace allowed
+    wildO030.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95564,49 +95558,49 @@ Grp: MS-Wildcards2006-07-15 / wildO032
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO032
   OK wildO032.i
-    wildO032.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "http://foobar"
+    wildO032.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO033
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO033
   XP wildO033.v
-    wildO033.xml:2:205: Attribute "name": Invalid namespace in this context, must be "##local http://foobar"
+    wildO033.xml:2:205: Attribute "name": Invalid namespace for name
 
 Grp: MS-Wildcards2006-07-15 / wildO034
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO034
   OK wildO034.i
-    wildO034.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "##local http://foobar"
+    wildO034.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO035
   OK wildO035.i
-    wildO035.xml:2:172: Attribute "att:name": Invalid namespace in this context, must be "##local http://www.w3.org/1999/xhtml"
+    wildO035.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO037
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO037
   XP wildO037.v
-    wildO037.xml:2:230: Attribute "att:href": Invalid namespace in this context, must be "##local http://www.w3.org/1999/xhtml"
+    wildO037.xml:2:230: Attribute "att:href": Invalid namespace for {http://www.w3.org/1999/xhtml}href
 
 Grp: MS-Wildcards2006-07-15 / wildO038
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK wildO038
   XP wildO038.v
-    wildO038.xml:2:172: Attribute "att:name": Invalid namespace in this context, must be "##targetNamespace http://www.w3.org/1999/xhtml"
+    wildO038.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO039
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO039
   OK wildO039.i
-    wildO039.xml:2:194: Attribute "att:name": Invalid namespace in this context, must be "##targetNamespace http://www.w3.org/1999/xhtml"
+    wildO039.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO040
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO040
   XP wildO040.v
-    wildO040.xml:2:230: Attribute "att:href": Invalid namespace in this context, must be "##targetNamespace http://www.w3.org/1999/xhtml"
+    wildO040.xml:2:230: Attribute "att:href": Invalid namespace for {http://www.w3.org/1999/xhtml}href
 
 Grp: MS-Wildcards2006-07-15 / wildP001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95772,7 +95766,7 @@ Total number of tests: 37685 (omitting non-accepted tests)
 NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 802
-XP: XML KO, should be OK: in_full_pass= 0 in_partial= 502 in_full_fail= 4
+XP: XML KO, should be OK: in_full_pass= 0 in_partial= 496 in_full_fail= 4
 XF: XML OK, should be KO: in_full_pass= 0 in_partial= 60 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1632 ( 4.3 %)
+Total errors: 1626 ( 4.3 %)

@@ -563,8 +563,9 @@ package body Schema.Validators is
       Is_Nil            : out Boolean;
       Grammar           : in out XML_Grammar)
    is
-      Length : constant Natural := Get_Length (Atts);
-      Seen   : array (0 .. Length - 1) of Boolean := (others => False);
+      Length   : constant Natural := Get_Length (Atts);
+      Seen     : array (0 .. Length - 1) of Boolean := (others => False);
+      Seen_Any : array (0 .. Length - 1) of Boolean := (others => False);
 
       use Attributes_Htable;
       Visited : Attributes_Htable.HTable (101);
@@ -574,8 +575,9 @@ package body Schema.Validators is
       --  Chech whether Named appears in Atts
 
       procedure Recursive_Check (Validator : XML_Validator);
-      procedure Recursive_Check (List : Attribute_Or_Group);
-      --  Check recursively the attributes provided by Validator
+      procedure Recursive_Check_Named (List : Attribute_Or_Group);
+      procedure Check_Any (List : Attribute_Or_Group);
+      --  Check recursively the attributes provided by Validator.
 
       procedure Check_Named_Attribute (Named : Named_Attribute_Validator);
       procedure Check_Any_Attribute
@@ -710,6 +712,13 @@ package body Schema.Validators is
       procedure Check_Any_Attribute
         (Any : Any_Attribute_Validator; Index : Integer) is
       begin
+         if Debug then
+            Debug_Output ("Checking any attribute index="
+                          & Index'Img
+                          & " name={" & Get_URI (Atts, Index)
+                          & "}" & Get_Local_Name (Atts, Index));
+         end if;
+
          Validate_Attribute (Any, Atts, Index, Grammar, Id_Table);
       exception
          when E : XML_Validation_Error =>
@@ -742,28 +751,51 @@ package body Schema.Validators is
          return -1;
       end Find_Attribute;
 
-      ---------------------
-      -- Recursive_Check --
-      ---------------------
+      ---------------------------
+      -- Recursive_Check_Named --
+      ---------------------------
 
-      procedure Recursive_Check (List : Attribute_Or_Group) is
+      procedure Recursive_Check_Named (List : Attribute_Or_Group) is
       begin
          if List.Is_Group then
             if List.Group.Attributes /= null then
                for L in List.Group.Attributes'Range loop
-                  Recursive_Check (List.Group.Attributes (L));
+                  Recursive_Check_Named (List.Group.Attributes (L));
                end loop;
             end if;
 
          elsif List.Attr.all in Named_Attribute_Validator_Record'Class then
             Check_Named_Attribute (Named_Attribute_Validator (List.Attr));
-
-         else
-            if Debug then
-               Debug_Output ("Not a named attribute, cannot check");
-            end if;
          end if;
-      end Recursive_Check;
+      end Recursive_Check_Named;
+
+      ---------------
+      -- Check_Any --
+      ---------------
+
+      procedure Check_Any (List : Attribute_Or_Group) is
+      begin
+         if List.Is_Group then
+            if List.Group.Attributes /= null then
+               for A in List.Group.Attributes'Range loop
+                  Check_Any (List.Group.Attributes (A));
+               end loop;
+            end if;
+
+         elsif List.Attr.all in Any_Attribute_Validator'Class then
+            --  From 3.4.2 (intersection of anyAttribute), an attribute must
+            --  match *all* the anyAttribute, so we do not modify Seen yet, so
+            --  that the attribute is tested multiple times
+
+            for A in 0 .. Length - 1 loop
+               if not Seen (A) then
+                  Seen_Any (A) := True;
+                  Check_Any_Attribute
+                    (Any_Attribute_Validator (List.Attr.all), A);
+               end if;
+            end loop;
+         end if;
+      end Check_Any;
 
       ---------------------
       -- Recursive_Check --
@@ -776,21 +808,11 @@ package body Schema.Validators is
          Get_Attribute_Lists (Validator, List, Dep1, Dep2);
          if List /= null then
             for L in List'Range loop
-               Recursive_Check (List (L));
+               Recursive_Check_Named (List (L));
             end loop;
 
             for L in List'Range loop
-               if not List (L).Is_Group
-                 and then List (L).Attr.all in Any_Attribute_Validator'Class
-               then
-                  for A in 0 .. Length - 1 loop
-                     if not Seen (A) then
-                        Seen (A) := True;
-                        Check_Any_Attribute
-                          (Any_Attribute_Validator (List (L).Attr.all), A);
-                     end if;
-                  end loop;
-               end if;
+               Check_Any (List (L));
             end loop;
          end if;
 
@@ -811,7 +833,7 @@ package body Schema.Validators is
       Is_Nil := False;
 
       for S in Seen'Range loop
-         if not Seen (S) then
+         if not Seen (S) and not Seen_Any (S) then
             if Nillable
               and then Get_URI (Atts, S) = XML_Instance_URI
               and then Get_Local_Name (Atts, S) = "nil"
@@ -4351,35 +4373,36 @@ package body Schema.Validators is
       URI  : constant Byte_Sequence := Get_URI (Atts, Index);
       Attr : Attribute_Validator;
       G    : XML_Grammar_NS;
+      NS_Matches : Boolean := True;
    begin
       if Debug then
          Debug_Output ("Validate_Attribute, anyAttribute: "
+                       & Validator.Kind'Img & " "
+                       & Validator.Process_Contents'Img & " "
                        & Get_Local_Name (Atts, Index));
       end if;
 
+      --  See 3.10.1 for interpretation of processContent.
+      --  See also 3.4.2 for the intersection of <anyAttribute> elements
+
       case Validator.Kind is
          when Namespace_Other =>
-            if URI = "" then
-               Validation_Error
-                 ("Attributes with no namespace invalid in this context");
-            elsif URI = Validator.NS.Namespace_URI.all then
-               Validation_Error
-                 ("Invalid namespace in this context, must be different from "
-                  & """" & Validator.NS.Namespace_URI.all & """");
-            end if;
+            NS_Matches := URI /= ""
+              and then URI /= Validator.NS.Namespace_URI.all;
          when Namespace_Any =>
-            null;
+            NS_Matches := True;
          when Namespace_Local =>
-            if URI /= "" then
-               Validation_Error ("No namespace allowed");
-            end if;
+            NS_Matches := Validator.NS.Namespace_URI.all = "";
          when Namespace_List =>
-            if URI /= Validator.NS.Namespace_URI.all then
-               Validation_Error
-                 ("Invalid namespace in this context, must be """
-                  & Validator.NS.Namespace_URI.all & """");
-            end if;
+            NS_Matches := URI = Validator.NS.Namespace_URI.all;
       end case;
+
+      if not NS_Matches then
+         Validation_Error ("Invalid namespace for "
+                           & To_QName
+                             (Get_URI (Atts, Index),
+                              Get_Local_Name (Atts, Index)));
+      end if;
 
       case Validator.Process_Contents is
          when Process_Strict =>

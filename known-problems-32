@@ -1,0 +1,61 @@
+=======================================
+Known problems in XML/Ada version 3.2.0
+=======================================
+
+Copyright (c) 2009-2010, AdaCore
+
+The following is a listing of known problems in release 3.2.0. Except where
+specifically noted, all these problems have been corrected in the development
+tree of the 3.2 technology. This means they are corrected in any 3.3.0w
+wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
+the status line. This can be used to determine if a given wavefront has the fix
+identified in the entry.
+
+KP-32-IC10-021 Incorrect validation of "date" types with timezone
+
+  Problem:    If an attribute is of type xsd:date, it should allow the use of
+              timezones (either "Z" or "+00:00" for instance). XML/Ada does not
+              support these in 3.2.0 version
+
+  Status:     Fixed in 3.3.0
+
+  Workaround: You could have two elements, one for the date the other for the
+              timezone, although that's not as elegant
+
+KP-32-J302-043 Lots of fixes in schema validation
+
+  Problem:    Several problems were found in the schema validation testsuite.
+              These include:
+              - Incorrect checking of date ranges (valid days in the month for
+                instance), or in time (seconds < 60);
+              - Elements with no type should have processContents lax, rather
+                than strict. This means that their children element should be
+                checked if they have entries in the schema, rather than just
+                ignored;
+              - Attributes "use" and "fixed" were ignored for attribute whose
+                type was defined with a "ref". For instance:
+                    <xsd:attribute ref="tn:number" use="required"/>
+                Furthermore, when using ref, the referenced attribute's fixed
+                was also ignored.
+              - Unicity was not checked for types derived from ID. In
+                particular, XML/Ada did not check unicity for elements (only
+                for certain cases of attributes)
+              - HexBinary length must be even
+              - In XSD 1.0, elements must have at most one ID attribute. This
+                restriction was lifted in XSD 1.1 (and XML/Ada now handles both
+                cases)
+              - In XSD 1.0, schemaLocation cannot be used after an element has
+                already used that namespace
+              - Regexp are always anchored implicitly ("^..$"), and "\w" should
+                not match "_"
+              - Namespaces specified as ##other should not allow unqualified
+                elements.
+              - Fix computation of length on lists, and therefore the facets
+                minLength, length and maxLength
+              - Fix handling of anyAttribute when defined in an attributeGroup
+              - When multiple anyAttributes are defined for an element, they
+                must all match
+
+  Status:     Fixed in 3.3.0
+
+  Workaround: None
