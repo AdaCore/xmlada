@@ -860,12 +860,6 @@ package body Schema.Schema_Readers is
 
    begin
       if Form_Index /= -1 then
-         if not Handler.Supported.Attribute_Form then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Support for element's ""form"" explicitly disabled");
-         end if;
-
          if Get_Value (Atts, Form_Index) = "qualified" then
             Form := Qualified;
          else
@@ -1797,30 +1791,30 @@ package body Schema.Schema_Readers is
       Form_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "form");
 
+      Att : Attribute_Validator;
+      Typ : XML_Type := No_Type;
+      Use_Type : Attribute_Use_Type := Optional;
+
       function Get_Fixed return String;
       --  Return the "fixed" value for the attribute
 
       function Get_Fixed return String is
       begin
          if Fixed_Index /= -1 then
+            if Typ /= No_Type then
+               Normalize_Whitespace  --  Depending on the type of the attribute
+                 (Typ   => Typ,
+                  Atts  => Atts,
+                  Index => Fixed_Index);
+            end if;
             return Get_Value (Atts, Fixed_Index);
          else
             return "";
          end if;
       end Get_Fixed;
 
-      Att : Attribute_Validator;
-      Typ : XML_Type := No_Type;
-      Use_Type : Attribute_Use_Type := Optional;
-
    begin
       if Form_Index /= -1 then
-         if not Handler.Supported.Attribute_Form then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Support for attribute form explicitly disabled");
-         end if;
-
          --  Not implemented yet anyway
          Raise_Exception
            (XML_Not_Implemented'Identity,
@@ -1882,7 +1876,8 @@ package body Schema.Schema_Readers is
                           & """, Handler.Target_NS, "
                           & Ada_Name (Typ)
                           & ", " & Use_Type'Img & ", Qualified, Has_Fixed="
-                          & Boolean'Image (Fixed_Index /= -1) & ");");
+                          & Boolean'Image (Fixed_Index /= -1)
+                          & " """ & Get_Fixed & """);");
                end if;
 
             when others =>
@@ -1903,7 +1898,8 @@ package body Schema.Schema_Readers is
                           & """, Handler.Target_NS, "
                           & Ada_Name (Typ)
                           & ", " & Use_Type'Img & ", Qualified, Has_Fixed="
-                          & Boolean'Image (Fixed_Index /= -1) & ";");
+                          & Boolean'Image (Fixed_Index /= -1)
+                          & " """ & Get_Fixed & """);");
                end if;
          end case;
       else
@@ -1916,6 +1912,7 @@ package body Schema.Schema_Readers is
               (Handler, QName (QName'First .. Separator - 1), G);
             Att := Lookup_Attribute (G, QName (Separator + 1 .. QName'Last));
 
+            --  ??? We haven't normalized the value for fixed here
             Att := Create_Local_Attribute
               (Based_On       => Att,
                Attribute_Use  => Use_Type,
@@ -1932,7 +1929,8 @@ package body Schema.Schema_Readers is
                  (Ada_Name (Handler.Contexts)
                   & " := Create_Local_Attribute (Attr, Handler.Target_NS, "
                   & Use_Type'Img & ", Qualified, Has_Fixed="
-                  & Boolean'Image (Fixed_Index /= -1) & ";");
+                  & Boolean'Image (Fixed_Index /= -1)
+                  & " """ & Get_Fixed & """);");
             end if;
          end;
       end if;
@@ -2040,12 +2038,6 @@ package body Schema.Schema_Readers is
       end if;
 
       if Form_Default_Index /= -1 then
-         if not Handler.Supported.Attribute_Form then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Support for attribute elementFormdefault explicitly disabled");
-         end if;
-
          if Get_Value (Atts, Form_Default_Index) = "qualified" then
             Handler.Element_Form_Default := Qualified;
             Output
@@ -2127,6 +2119,19 @@ package body Schema.Schema_Readers is
          Max_Occurs := Max_Occurs_From_Value
            (Get_Value (Atts, Max_Occurs_Index));
       end if;
+
+--        declare
+--           Ctx : Context_Access := Handler.Contexts;
+--        begin
+--           Put_Line ("MANU Adding <any>");
+--           while Ctx /= null loop
+--              Put_Line ("   " & Ctx.Typ'Img);
+--              if Ctx.Typ = Context_Restriction then
+--                 Put_Line ("     " & Get_Local_Name (Ctx.Restriction_Base));
+--              end if;
+--              Ctx := Ctx.Next;
+--           end loop;
+--        end;
 
       Process_Contents := Process_Contents_From_Atts (Atts);
 

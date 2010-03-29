@@ -58,6 +58,8 @@ KP-32-J302-043 Lots of fixes in schema validation
               - "qualified/unqualified" does not apply to elements defined
                 through a <group> when they have a "ref" attribute, since they
                 are considered global in that case.
+              - "fixed" attribute values should be compared with non-normalized
+                value of the attribute
 
   Status:     Fixed in 3.3.0
 

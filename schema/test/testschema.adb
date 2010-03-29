@@ -104,8 +104,7 @@ begin
 
    Set_Supported_Features   --  not needed here, just for example
      (Schema,
-      (Attribute_Form     => True,
-       Substitution_Group => True,
+      (Substitution_Group => True,
        Abstracts          => True,
        Nillable           => True,
        XSD_Version        => XSD_1_0));

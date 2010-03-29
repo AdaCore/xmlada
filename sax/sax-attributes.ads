@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -218,7 +217,7 @@ package Sax.Attributes is
    --   Set the Namespace URI of a specific attribute in the list
 
    procedure Set_Value
-     (Attr  : in out Attributes;
+     (Attr  : Attributes;
       Index : Natural;
       Value : Unicode.CES.Byte_Sequence);
    --   Set the value of a specific attribute in the list

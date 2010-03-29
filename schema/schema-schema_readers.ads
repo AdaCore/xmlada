@@ -88,7 +88,6 @@ package Schema.Schema_Readers is
    --  Whether extra debug output should be displayed
 
    type Supported_Features is record
-      Attribute_Form     : Boolean := True;
       Substitution_Group : Boolean := True;
       Abstracts          : Boolean := True;
       Nillable           : Boolean := True;

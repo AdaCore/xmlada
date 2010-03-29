@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -338,7 +337,7 @@ package body Sax.Attributes is
    ---------------
 
    procedure Set_Value
-     (Attr  : in out Attributes;
+     (Attr  : Attributes;
       Index : Natural;
       Value : Unicode.CES.Byte_Sequence)
    is

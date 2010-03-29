@@ -286,6 +286,120 @@ package body Schema.Validators is
       end if;
    end Free;
 
+   --------------------------
+   -- Normalize_Whitespace --
+   --------------------------
+
+   procedure Normalize_Whitespace
+     (Typ       : XML_Type;
+      Atts      : Sax.Attributes.Attributes'Class;
+      Index     : Natural)
+   is
+      Whitespace : Whitespace_Restriction := Preserve;
+      Facets     : Facets_Description := Get_Facets_Description
+        (Typ.Validator);
+      C          : Unicode_Char;
+   begin
+      if Facets /= null
+        and then Facets.all in Common_Facets_Description'Class
+      then
+         Whitespace := Common_Facets_Description (Facets.all).Whitespace;
+      end if;
+
+      Free (Facets);
+
+      --  Normalize attribute value if necessary
+      --  replace: All occurrences of #x9 (tab), #xA (line feed) and #xD
+      --     (carriage return) are replaced with #x20 (space).
+      --  collapse: Subsequent to the replacements specified above under
+      --     replace, contiguous sequences of #x20s are collapsed to a single
+      --     #x20, and initial and/or final #x20s are deleted.
+
+      case Whitespace is
+         when Preserve =>
+            null;
+
+         when Replace =>
+            declare
+               Val   : Byte_Sequence := Get_Value (Atts, Index);
+               Idx   : Natural := Val'First;
+               First : Natural := Val'Last + 1;
+            begin
+               while Idx <= Val'Last loop
+                  First := Idx;
+                  Encoding.Read (Val, Idx, C);
+
+                  if Is_White_Space (C) then
+                     --  Assumes all characters we replace are encoded as
+                     --  single byte
+                     Val (First) := ' ';
+                  end if;
+               end loop;
+
+               Set_Value (Atts, Index, Val);
+            end;
+
+         when Collapse =>
+            declare
+               Val        : Byte_Sequence := Get_Value (Atts, Index);
+               C          : Unicode_Char;
+               Last       : Natural := Val'Last + 1;
+               Idx, Idx_Output : Natural := Val'First;
+               First      : Natural := Val'Last + 1;
+               Tmp        : Natural;
+               Prev_Is_Whitespace : Boolean := False;
+            begin
+               if Val = "" then
+                  return;  --  nothing to do
+               end if;
+
+               --  Remove leading spaces.
+               --  At the end of this loop, First points to the first non
+               --  blank character
+
+               loop
+                  First := Idx;
+                  Encoding.Read (Val, Idx, C);
+                  exit when not Is_White_Space (C);
+
+                  if Idx > Val'Last then
+                     Set_Value (Atts, Index, "");
+                     return;
+                  end if;
+               end loop;
+
+               Idx_Output := Idx;
+
+               --  Iterate and replace all whitespaces. Mark the spot of the
+               --  last whitespace so that we can ignore trailing spaces.
+               --  At the same time, we can copy to Idx_Output, since the
+               --  output string will always be at least as short as Val.
+
+               while Idx <= Val'Last loop
+                  Tmp := Idx;
+                  Encoding.Read (Val, Idx, C);
+
+                  if Is_White_Space (C) then
+                     if not Prev_Is_Whitespace then
+                        Last := Idx_Output;
+                        Val (Idx_Output) := ' ';
+                        Idx_Output := Idx_Output + 1;
+                        Prev_Is_Whitespace := True;
+                     end if;
+                  else
+                     Val (Idx_Output .. Idx_Output + Idx - Tmp - 1) :=
+                       Val (Tmp .. Idx - 1);
+                     Idx_Output := Idx_Output + Idx - Tmp;
+                     Last := Idx_Output;  --  after this char
+                     Prev_Is_Whitespace := False;
+                  end if;
+               end loop;
+
+               Set_Value (Atts, Index, Val (First .. Last - 1));
+            end;
+      end case;
+   end Normalize_Whitespace;
+
    --------------
    -- Is_Equal --
    --------------
@@ -616,8 +730,6 @@ package body Schema.Validators is
 
       procedure Check_Named_Attribute (Named : Named_Attribute_Validator) is
          Found  : Integer;
-         Facets : Facets_Description;
-         Whitespace : Whitespace_Restriction := Preserve;
       begin
          if Get (Visited, Named.Local_Name.all) = null then
             Set (Visited, Named);
@@ -652,46 +764,7 @@ package body Schema.Validators is
                --       (Id_Table, Get_Type (Named.all).Validator,
                --        Get_Value (Atts, Found));
 
-               Facets := Get_Facets_Description
-                 (Get_Type (Named.all).Validator);
-               if Facets /= null
-                 and then Facets.all in Common_Facets_Description'Class
-               then
-                  Whitespace :=
-                    Common_Facets_Description (Facets.all).Whitespace;
-                  Free (Facets);
-               end if;
-
-               --  Normalize attribute value if necessary
-               if Whitespace = Collapse then
-                  declare
-                     Val : constant Byte_Sequence := Get_Value (Atts, Found);
-                     C           : Unicode_Char;
-                     Index, Last : Natural;
-                     First : Natural := Val'Last + 1;
-                  begin
-                     Index := Val'First;
-                     while Index <= Val'Last loop
-                        First := Index;
-                        Encoding.Read (Val, Index, C);
-                        exit when not Is_White_Space (C);
-                        First := Val'Last + 1;
-                     end loop;
-
-                     if First > Val'Last then
-                        Set_Value (Atts, Found, "");
-                     else
-                        Last := Index - 1;
-                        while Index <= Val'Last loop
-                           Encoding.Read (Val, Index, C);
-                           if not Is_White_Space (C) then
-                              Last := Index - 1;
-                           end if;
-                        end loop;
-                        Set_Value (Atts, Found, Val (First .. Last));
-                     end if;
-                  end;
-               end if;
+               Normalize_Whitespace (Get_Type (Named.all), Atts, Found);
 
                begin
                   Validate_Attribute
@@ -991,7 +1064,7 @@ package body Schema.Validators is
    begin
       if Has_Fixed then
          Named_Attribute_Validator_Record (Result.all).Fixed :=
-           new Unicode.CES.Byte_Sequence'(Collapse_Whitespaces (Fixed));
+           new Unicode.CES.Byte_Sequence'(Fixed);
       end if;
 
       Register (NS, Result);
@@ -1030,7 +1103,7 @@ package body Schema.Validators is
    begin
       if Has_Fixed then
          Named_Attribute_Validator_Record (Result.all).Fixed :=
-           new Unicode.CES.Byte_Sequence'(Collapse_Whitespaces (Fixed));
+           new Unicode.CES.Byte_Sequence'(Fixed);
       end if;
 
       Register (Based_On.NS, Result);
@@ -1102,15 +1175,23 @@ package body Schema.Validators is
          Fixed := Validator.Ref_Attr.Fixed;
       end if;
 
+      if Debug and then Fixed /= null then
+         Debug_Output ("Attribute value must be equal to """
+                       & Fixed.all & """");
+      end if;
+
+      --  3.2.4 [Attribute Declaration Value] indicates we should check Fixed
+      --  with the "actual value" of the attribute, not the "normalized value".
+      --  However, we need to match depending on the type of the attribute: if
+      --  it is an integer, the whitespaces are irrelevant; likewise for a list
+
       if Fixed /= null
-        and then Fixed.all /= Collapse_Whitespaces (Val)
+        and then Fixed.all /= Val
       then
          Validation_Error
            ("value must be """
             & To_Graphic_String (Fixed.all)
-            & """ (found """
-            & To_Graphic_String (Collapse_Whitespaces (Val))
-            & """)");
+            & """ (found """ & To_Graphic_String (Val) & """)");
       end if;
    end Validate_Attribute;
 

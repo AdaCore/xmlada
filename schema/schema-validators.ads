@@ -227,6 +227,13 @@ package Schema.Validators is
    --  Set the "block" status of the type.
    --  This can also be done at the element's level
 
+   procedure Normalize_Whitespace
+     (Typ       : XML_Type;
+      Atts      : Sax.Attributes.Attributes'Class;
+      Index     : Natural);
+   --  Normalizes whitespaces in the attribute, depending on the type
+   --  represented by Validator.
+
    ---------------
    -- ID_Htable --
    ---------------

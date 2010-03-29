@@ -50562,9 +50562,10 @@ Grp: MS-Attribute2006-07-15 / attO007
   OK attO007.v
 
 Grp: MS-Attribute2006-07-15 / attO008
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attO008
-  XF attO008.i
+  OK attO008.i
+    attO008.xml:3:26: Attribute "x:att": value must be "   1       2          3" (found " 1 2 3")
 
 Grp: MS-Attribute2006-07-15 / attO009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -50572,12 +50573,9 @@ Grp: MS-Attribute2006-07-15 / attO009
   OK attO009.v
 
 Grp: MS-Attribute2006-07-15 / attO010
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attO010
-  XP attO010.v
-    attO010.xml:3:73: Attribute "x:att": Invalid value: "A
-
-B"
+  OK attO010.v
 
 Grp: MS-Attribute2006-07-15 / attO011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -50585,9 +50583,10 @@ Grp: MS-Attribute2006-07-15 / attO011
   OK attO011.v
 
 Grp: MS-Attribute2006-07-15 / attO012
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attO012
-  XF attO012.i
+  OK attO012.i
+    attO012.xml:3:47: Attribute "att": value must be "[0A][0A]A[0A][0A]B[0A]" (found "A B")
 
 Grp: MS-Attribute2006-07-15 / attO013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -66940,9 +66939,8 @@ Grp: MS-Errata102006-07-15 / errC001
   OK errC001.v
 
 Grp: MS-Errata102006-07-15 / errC002
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP errC002
-    errC002.xsd:4:57: Attribute "version": Duplicate space characters not allowed
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK errC002
 
 Grp: MS-Errata102006-07-15 / errC003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -78021,9 +78019,8 @@ Grp: MS-Particles2006-07-15 / particlesOb023
   SF particlesOb023
 
 Grp: MS-Particles2006-07-15 / particlesOb024
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOb024
-    particlesOb024.xsd:12:68: Attribute "namespace": Invalid value "foo     bar"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF particlesOb024
 
 Grp: MS-Particles2006-07-15 / particlesOb025
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -78075,39 +78072,33 @@ Grp: MS-Particles2006-07-15 / particlesOb036
   SF particlesOb036
 
 Grp: MS-Particles2006-07-15 / particlesOb037
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOb037
-    particlesOb037.xsd:5:66: Attribute "namespace": Invalid value "foo  bar"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF particlesOb037
 
 Grp: MS-Particles2006-07-15 / particlesOb038
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOb038
-    particlesOb038.xsd:5:66: Attribute "namespace": Invalid value "foo  bar"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF particlesOb038
 
 Grp: MS-Particles2006-07-15 / particlesOb039
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOb039
-    particlesOb039.xsd:5:66: Attribute "namespace": Invalid value "foo  bar"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF particlesOb039
 
 Grp: MS-Particles2006-07-15 / particlesOb040
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOb040
-    particlesOb040.xsd:5:66: Attribute "namespace": Invalid value "foo  bar"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF particlesOb040
 
 Grp: MS-Particles2006-07-15 / particlesOb041
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOb041
-    particlesOb041.xsd:5:66: Attribute "namespace": Invalid value "foo  bar"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF particlesOb041
 
 Grp: MS-Particles2006-07-15 / particlesOb042
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesOb042
-    particlesOb042.xsd:5:74: Attribute "namespace": Invalid value "foo  bar"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK particlesOb042
+  OK particlesOb042.v
 
 Grp: MS-Particles2006-07-15 / particlesOb043
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOb043
-    particlesOb043.xsd:5:66: Attribute "namespace": Invalid value "foo  bar"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF particlesOb043
 
 Grp: MS-Particles2006-07-15 / particlesOb044
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -78122,10 +78113,9 @@ Grp: MS-Particles2006-07-15 / particlesOb046
   SF particlesOb046
 
 Grp: MS-Particles2006-07-15 / particlesOb047
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesOb047
-    particlesOb047.xsd:5:80: Attribute "namespace": Invalid value "foo  
-        bar"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK particlesOb047
+  OK particlesOb047.v
 
 Grp: MS-Particles2006-07-15 / particlesOb048
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -78569,24 +78559,23 @@ Grp: MS-Particles2006-07-15 / particlesQ028
     particlesQ028.xsd:4:51: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: MS-Particles2006-07-15 / particlesQ029
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesQ029
-    particlesQ029.xsd:7:65: Attribute "namespace": Invalid value "foo  bar"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK particlesQ029
+  OK particlesQ029.v
 
 Grp: MS-Particles2006-07-15 / particlesQ030
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesQ030
-    particlesQ030.xsd:12:64: Attribute "namespace": Invalid value "foo  bar"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK particlesQ030
+  OK particlesQ030.v
 
 Grp: MS-Particles2006-07-15 / particlesQ031
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesQ031
-    particlesQ031.xsd:10:64: Attribute "namespace": Invalid value "foo  bar"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF particlesQ031
 
 Grp: MS-Particles2006-07-15 / particlesQ032
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesQ032
-    particlesQ032.xsd:14:81: Attribute "namespace": Invalid value "##targetNamespace foo  bar"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK particlesQ032
+  OK particlesQ032.v
 
 Grp: MS-Particles2006-07-15 / particlesU001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -86296,13 +86285,13 @@ Grp: MS-Regex2006-07-15 / RegexTest_117
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK RegexTest_117
   OK RegexTest_117.i
-    RegexTest_117.xml:1:129: Attribute "value": string pattern not matched: (foo) #foo        \s+ #followed by 1 or more whitespace        (bar)  #followed by bar
+    RegexTest_117.xml:1:129: Attribute "value": string pattern not matched: (foo) #foo \s+ #followed by 1 or more whitespace (bar) #followed by bar
 
 Grp: MS-Regex2006-07-15 / RegexTest_118
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK RegexTest_118
   OK RegexTest_118.i
-    RegexTest_118.xml:1:129: Attribute "value": string pattern not matched: (foo) #foo        \s+ #followed by 1 or more whitespace        (bar)  #followed by bar
+    RegexTest_118.xml:1:129: Attribute "value": string pattern not matched: (foo) #foo \s+ #followed by 1 or more whitespace (bar) #followed by bar
 
 Grp: MS-Regex2006-07-15 / RegexTest_119
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -94513,29 +94502,24 @@ Grp: MS-Wildcards2006-07-15 / wildC065
   OK wildC065
 
 Grp: MS-Wildcards2006-07-15 / wildC066
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK wildC066
-    wildC066.xsd:6:330: Attribute "namespace": Invalid value "##any http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3.org/1999/02/22-rdf-
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF wildC066
 
 Grp: MS-Wildcards2006-07-15 / wildC067
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK wildC067
-    wildC067.xsd:6:332: Attribute "namespace": Invalid value "##other http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3.org/1999/02/22-rd
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF wildC067
 
 Grp: MS-Wildcards2006-07-15 / wildC068
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP wildC068
-    wildC068.xsd:6:332: Attribute "namespace": Invalid value "##local http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3.org/1999/02/22-rd
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK wildC068
 
 Grp: MS-Wildcards2006-07-15 / wildC069
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP wildC069
-    wildC069.xsd:6:342: Attribute "namespace": Invalid value "##targetNamespace http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3.org/199
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK wildC069
 
 Grp: MS-Wildcards2006-07-15 / wildC070
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP wildC070
-    wildC070.xsd:6:350: Attribute "namespace": Invalid value "##local ##targetNamespace http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK wildC070
 
 Grp: MS-Wildcards2006-07-15 / wildD071
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95207,29 +95191,24 @@ Grp: MS-Wildcards2006-07-15 / wildK036
   OK wildK036
 
 Grp: MS-Wildcards2006-07-15 / wildK037
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP wildK037
-    wildK037.xsd:7:334: Attribute "namespace": Invalid value "http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3.org/1999/02/22-rdf-syntax
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK wildK037
 
 Grp: MS-Wildcards2006-07-15 / wildK038
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK wildK038
-    wildK038.xsd:7:342: Attribute "namespace": Invalid value "##other http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3.org/1999/02/22-rd
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF wildK038
 
 Grp: MS-Wildcards2006-07-15 / wildK039
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP wildK039
-    wildK039.xsd:7:342: Attribute "namespace": Invalid value "##local http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3.org/1999/02/22-rd
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK wildK039
 
 Grp: MS-Wildcards2006-07-15 / wildK040
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP wildK040
-    wildK040.xsd:7:352: Attribute "namespace": Invalid value "##targetNamespace http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3.org/199
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK wildK040
 
 Grp: MS-Wildcards2006-07-15 / wildK041
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP wildK041
-    wildK041.xsd:7:360: Attribute "namespace": Invalid value "##local ##targetNamespace http://www.w3.org/1999/xhtml http://www.w3.org/1999/XSL/Transform http://www.w3.org/1999/XML/xinclude  http://www.w3
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK wildK041
 
 Grp: MS-Wildcards2006-07-15 / wildL001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95761,13 +95740,13 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37685 (omitting non-accepted tests)
+Total number of tests: 37690 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
-   24002 XML files
+   24007 XML files
 NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
-SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
-SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 802
-XP: XML KO, should be OK: in_full_pass= 0 in_partial= 496 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 59 in_full_fail= 2
+SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 249
+SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 813
+XP: XML KO, should be OK: in_full_pass= 0 in_partial= 495 in_full_fail= 4
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 57 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1625 ( 4.3 %)
+Total errors: 1620 ( 4.3 %)

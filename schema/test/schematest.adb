@@ -906,7 +906,7 @@ begin
             Put_Line ("     These likely show unimplemented features");
             Put_Line ("--feature name    Disable support for a feature");
             Put_Line
-              ("     Valid names are: attrform, subgroup, abstract, nillable");
+              ("     Valid names are: subgroup, abstract, nillable");
             Put_Line
               ("     xsd_1_0");
             return;
@@ -922,9 +922,7 @@ begin
                Check_Alternative_Dir := True;
 
             elsif Full_Switch = "-feature" then
-               if Parameter = "attrform" then
-                  Features.Attribute_Form := False;
-               elsif Parameter = "subgroup" then
+               if Parameter = "subgroup" then
                   Features.Substitution_Group := False;
                elsif Parameter = "abstract" then
                   Features.Abstracts := False;
