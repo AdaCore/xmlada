@@ -93,6 +93,13 @@ package Schema.Validators is
    --  To indicate that a Max_Occurs is set to unbounded
 
    type Form_Type is (Qualified, Unqualified);
+   --  Whether locally declared elements need to be qualified or whether
+   --  qualification is optional (the latter is the default). This does not
+   --  apply to global elements, that always need to be qualified (or found in
+   --  the default namespace).
+   --  Note that elements defined in a <group> are considered local only if
+   --  they do not use the "ref" attribute, otherwise they are considered
+   --  global and therefore the "form" does not apply to them.
 
    type Process_Contents_Type is (Process_Strict, Process_Lax, Process_Skip);
    --  When in an element that accepts any children (ur-type, or xsd:any), this
@@ -629,8 +636,10 @@ package Schema.Validators is
    --  If Max_Occurs = Unbounded, the number of repeats is unbounded
 
    procedure Add_Particle
-     (Seq : access Sequence_Record; Item : XML_Element;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
+     (Seq              : access Sequence_Record;
+      Item             : XML_Element;
+      Min_Occurs       : Natural := 1;
+      Max_Occurs       : Integer := 1);
    procedure Add_Particle
      (Seq : access Sequence_Record; Item : Sequence;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);

@@ -55,6 +55,9 @@ KP-32-J302-043 Lots of fixes in schema validation
               - Fix handling of anyAttribute when defined in an attributeGroup
               - When multiple anyAttributes are defined for an element, they
                 must all match
+              - "qualified/unqualified" does not apply to elements defined
+                through a <group> when they have a "ref" attribute, since they
+                are considered global in that case.
 
   Status:     Fixed in 3.3.0
 

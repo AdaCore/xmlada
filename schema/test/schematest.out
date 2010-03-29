@@ -43704,7 +43704,7 @@ Grp: suntest / xsd001
   100.0% tests= 13 (xsd= 1 xml= 12) OK= 13 FAILED= 0
   OK xsd001
   OK xsd001.n00
-    xsd001.n00.xml:12:12: Unexpected end of sequence, expecting "child"
+    xsd001.n00.xml:12:12: Unexpected end of sequence, expecting "{http://foo.com}child"
   OK xsd001.n01
     xsd001.n01.xml:16:9: Unexpected element "child"
   OK xsd001.n02
@@ -43803,7 +43803,7 @@ Grp: suntest / xsd005
   100.0% tests= 9 (xsd= 1 xml= 8) OK= 9 FAILED= 0
   OK xsd005
   OK xsd005.n00
-    xsd005.n00.xml:11:10: Unexpected end of sequence, expecting "a"
+    xsd005.n00.xml:11:10: Unexpected end of sequence, expecting "{foo}a"
   OK xsd005.n01
     xsd005.n01.xml:11:30: Unknown type "undeclared"
   OK xsd005.n02
@@ -43815,7 +43815,7 @@ Grp: suntest / xsd005
   OK xsd005.n05
     xsd005.n05.xml:12:18: Unknown type "ext"
   OK xsd005.n06
-    xsd005.n06.xml:13:9: Unexpected end of sequence, expecting "d"
+    xsd005.n06.xml:13:9: Unexpected end of sequence, expecting "{foo}d"
   OK xsd005.v00
 
 Grp: suntest / xsd006
@@ -43826,23 +43826,23 @@ Grp: suntest / xsd006
   OK xsd006.n01
     xsd006.n01.xml:11:15: Unexpected element "{foo}x"
   OK xsd006.n02
-    xsd006.n02.xml:11:13: Unexpected end of sequence, expecting "x"
+    xsd006.n02.xml:11:13: Unexpected end of sequence, expecting "{foo}x"
   OK xsd006.n03
     xsd006.n03.xml:11:15: Unexpected element "{foo}x"
   OK xsd006.n04
-    xsd006.n04.xml:11:13: Unexpected end of sequence, expecting "x"
+    xsd006.n04.xml:11:13: Unexpected end of sequence, expecting "{foo}x"
   OK xsd006.n05
-    xsd006.n05.xml:12:13: Unexpected end of sequence, expecting "x"
+    xsd006.n05.xml:12:13: Unexpected end of sequence, expecting "{foo}x"
   OK xsd006.n06
     xsd006.n06.xml:11:15: Unexpected element "{foo}x"
   OK xsd006.n07
-    xsd006.n07.xml:12:13: Unexpected end of sequence, expecting "x"
+    xsd006.n07.xml:12:13: Unexpected end of sequence, expecting "{foo}x"
   OK xsd006.n08
-    xsd006.n08.xml:11:13: Unexpected end of sequence, expecting "x"
+    xsd006.n08.xml:11:13: Unexpected end of sequence, expecting "{foo}x"
   OK xsd006.n09
-    xsd006.n09.xml:12:13: Unexpected end of sequence, expecting "x"
+    xsd006.n09.xml:12:13: Unexpected end of sequence, expecting "{foo}x"
   OK xsd006.n10
-    xsd006.n10.xml:12:13: Unexpected end of sequence, expecting "x"
+    xsd006.n10.xml:12:13: Unexpected end of sequence, expecting "{foo}x"
   OK xsd006.n11
     xsd006.n11.xml:11:35: Unexpected element "{foo}x"
   OK xsd006.v00
@@ -43875,9 +43875,9 @@ Grp: suntest / xsd011
   100.0% tests= 7 (xsd= 1 xml= 6) OK= 7 FAILED= 0
   OK xsd011
   OK xsd011.n00
-    xsd011.n00.xml:13:17: Unexpected end of sequence, expecting "x"
+    xsd011.n00.xml:13:17: Unexpected end of sequence, expecting "{foo}x"
   OK xsd011.n01
-    xsd011.n01.xml:13:14: Unexpected end of sequence, expecting "x"
+    xsd011.n01.xml:13:14: Unexpected end of sequence, expecting "{foo}x"
   OK xsd011.n02
     xsd011.n02.xml:13:7: Element is set as nil, and doesn't accept any child element
   OK xsd011.n03
@@ -44519,12 +44519,12 @@ Grp: CType / annotation00101m2
 Grp: CType / annotation00101m3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotation00101m3
-    annotation00101m3.xsd:18:26: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    annotation00101m3.xsd:18:26: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3
 
 Grp: CType / annotation00101m4
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotation00101m4
-    annotation00101m4.xsd:18:26: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    annotation00101m4.xsd:18:26: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3
 
 Grp: CType / attrwildcard00101m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44595,7 +44595,7 @@ Grp: CType / contenttype00401m
   OK contentType00401m
   OK contentType00401m1_p
   OK contentType00401m1_n
-    contentType00401m1_n.xml:13:63: Unexpected end of sequence, expecting "date"
+    contentType00401m1_n.xml:13:63: Unexpected end of sequence, expecting "{contentType}date"
 
 Grp: CType / derivationmethod00101m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -44642,7 +44642,7 @@ Grp: CType / final00101m3
   OK final00101m3
   OK Positive
   OK Negative
-    final00101m3_n.xml:15:10: Unexpected end of sequence, expecting "d"
+    final00101m3_n.xml:15:10: Unexpected end of sequence, expecting "{final}d"
 
 Grp: CType / final00101m4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -44668,7 +44668,7 @@ Grp: CType / psubstitutions00101m
   OK pSubstitutions00101m
   OK pSubstitutions00101m1_p
   OK pSubstitutions00101m1_n
-    pSubstitutions00101m1_n.xml:15:10: Unexpected end of sequence, expecting "d"
+    pSubstitutions00101m1_n.xml:15:10: Unexpected end of sequence, expecting "{pSubstitutions}d"
   OK pSubstitutions00101m2_p
   OK pSubstitutions00101m2_n
     pSubstitutions00101m2_n.xml:14:20: Unexpected element "c"
@@ -44688,7 +44688,7 @@ Grp: CType / psubstitutions00103m
   OK pSubstitutions00103m
   OK pSubstitutions00103m1_p
   OK pSubstitutions00103m1_n
-    pSubstitutions00103m1_n.xml:15:10: Unexpected end of sequence, expecting "d"
+    pSubstitutions00103m1_n.xml:15:10: Unexpected end of sequence, expecting "{pSubstitutions}d"
   OK pSubstitutions00103m2_p
   OK pSubstitutions00103m2_n
     pSubstitutions00103m2_n.xml:13:84: Restrictions of type "A" are forbidden
@@ -44997,14 +44997,14 @@ Grp: ElemDecl / minoccurs00101m
   OK minOccurs00101m
   OK minOccurs00101m1_p
   OK minOccurs00101m1_n
-    minOccurs00101m1_n.xml:18:13: Unexpected end of sequence, expecting "Local"
+    minOccurs00101m1_n.xml:18:13: Unexpected end of sequence, expecting "{ElemDecl/minOccurs}Local"
 
 Grp: ElemDecl / minoccurs00201m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK minOccurs00201m
   OK minOccurs00201m1_p
   OK minOccurs00201m1_n
-    minOccurs00201m1_n.xml:18:8: Unexpected end of sequence, expecting "Local"
+    minOccurs00201m1_n.xml:18:8: Unexpected end of sequence, expecting "{ElemDecl/minOccurs}Local"
 
 Grp: ElemDecl / name00101m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -45545,10 +45545,11 @@ Grp: ElemDecl / typedef00301m
     typeDef00301m1_n.xml:18:14: Invalid value for boolean type: "No"
 
 Grp: ElemDecl / typedef00401m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef00401m
   OK typeDef00401m1_p
-  XF typeDef00401m1_n
+  OK typeDef00401m1_n
+    typeDef00401m1_n.xml:18:13: Expecting ({ElemDecl/typeDef}Global)
 
 Grp: ElemDecl / typedef00402m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46195,7 +46196,7 @@ Grp: MGroup / compositor00101m1
   OK compositor00101m1
   OK Positive
   OK Negative
-    compositor00101m1_n.xml:13:7: Expecting (date)
+    compositor00101m1_n.xml:13:7: Expecting ({compositor}date)
 
 Grp: MGroup / compositor00102m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46231,7 +46232,7 @@ Grp: MGroup / particles00101m1
   OK particles00101m1
   OK Positive
   OK Negative
-    particles00101m1_n.xml:13:10: Unexpected end of sequence, expecting "(date)"
+    particles00101m1_n.xml:13:10: Unexpected end of sequence, expecting "({particles}date)"
 
 Grp: MGroup / particles00101m2
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46272,7 +46273,7 @@ Grp: MGroup / particles00202m1
   OK particles00202m1
   OK Positive
   OK Negative
-    particles00202m1_n.xml:14:11: Expecting ((date)|(num))
+    particles00202m1_n.xml:14:11: Expecting (({particles}date)|({particles}num))
 
 Grp: MGroup / particles00203m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46286,7 +46287,7 @@ Grp: MGroup / particles00204m1
   OK particles00204m1
   OK Positive
   OK Negative
-    particles00204m1_n.xml:14:11: Expecting ((date)|(num))
+    particles00204m1_n.xml:14:11: Expecting (({particles}date)|({particles}num))
 
 Grp: MGroup / particles00205m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46300,28 +46301,28 @@ Grp: MGroup / particles00301m1
   OK particles00301m1
   OK Positive
   OK Negative
-    particles00301m1_n.xml:15:10: Unexpected end of sequence, expecting "name"
+    particles00301m1_n.xml:15:10: Unexpected end of sequence, expecting "{particles}name"
 
 Grp: MGroup / particles00302m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK particles00302m1
   OK Positive
   OK Negative
-    particles00302m1_n.xml:15:10: Expecting (name)
+    particles00302m1_n.xml:15:10: Expecting ({particles}name)
 
 Grp: MGroup / particles00303m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK particles00303m1
   OK Positive
   OK Negative
-    particles00303m1_n.xml:15:10: Expecting (name|type)
+    particles00303m1_n.xml:15:10: Expecting ({particles}name|{particles}type)
 
 Grp: MGroup / particles00304m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK particles00304m1
   OK Positive
   OK Negative
-    particles00304m1_n.xml:16:10: Expecting (num)
+    particles00304m1_n.xml:16:10: Expecting ({particles}num)
 
 Grp: MGroup / particles00305m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46338,7 +46339,7 @@ Grp: MGroupDef / annotation00101m1
 Grp: MGroupDef / annotation00101m2
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotation00101m2
-    annotation00101m2.xsd:27:27: Expecting (all|choice|sequence)
+    annotation00101m2.xsd:27:27: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MGroupDef / annotation00101m3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -46353,7 +46354,7 @@ Grp: MGroupDef / annotation00101m4
 Grp: MGroupDef / annotation00101m5
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotation00101m5
-    annotation00101m5.xsd:27:27: Expecting (all|choice|sequence)
+    annotation00101m5.xsd:27:27: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MGroupDef / annotation00101m6
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49082,7 +49083,7 @@ Grp: MS-Annotations2006-07-15 / annotB012
 Grp: MS-Annotations2006-07-15 / annotB013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotB013
-    annotB013.xsd:9:20: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    annotB013.xsd:9:20: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001
 
 Grp: MS-Annotations2006-07-15 / annotB014
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49107,7 +49108,7 @@ Grp: MS-Annotations2006-07-15 / annotB017
 Grp: MS-Annotations2006-07-15 / annotB018
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotB018
-    annotB018.xsd:12:19: Expecting (all|choice|sequence)
+    annotB018.xsd:12:19: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-Annotations2006-07-15 / annotB019
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51033,7 +51034,7 @@ Grp: MS-Attribute2006-07-15 / attQ003
 Grp: MS-Attribute2006-07-15 / attQ004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attQ004
-    attQ004.xsd:5:20: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    attQ004.xsd:5:20: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/X
 
 Grp: MS-Attribute2006-07-15 / attQ005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51476,7 +51477,7 @@ Grp: MS-ComplexType2006-07-15 / ctB001
 Grp: MS-ComplexType2006-07-15 / ctB002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB002
-    ctB002.xsd:9:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB002.xsd:9:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/XM
 
 Grp: MS-ComplexType2006-07-15 / ctB003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -51486,7 +51487,7 @@ Grp: MS-ComplexType2006-07-15 / ctB003
 Grp: MS-ComplexType2006-07-15 / ctB004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB004
-    ctB004.xsd:7:15: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB004.xsd:7:15: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/XM
 
 Grp: MS-ComplexType2006-07-15 / ctB005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51556,7 +51557,7 @@ Grp: MS-ComplexType2006-07-15 / ctB017
 Grp: MS-ComplexType2006-07-15 / ctB018
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB018
-    ctB018.xsd:17:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB018.xsd:17:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/X
 
 Grp: MS-ComplexType2006-07-15 / ctB019
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51626,7 +51627,7 @@ Grp: MS-ComplexType2006-07-15 / ctB031
 Grp: MS-ComplexType2006-07-15 / ctB032
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB032
-    ctB032.xsd:16:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB032.xsd:16:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/X
 
 Grp: MS-ComplexType2006-07-15 / ctB033
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51696,7 +51697,7 @@ Grp: MS-ComplexType2006-07-15 / ctB045
 Grp: MS-ComplexType2006-07-15 / ctB046
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB046
-    ctB046.xsd:13:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB046.xsd:13:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/X
 
 Grp: MS-ComplexType2006-07-15 / ctB047
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51766,7 +51767,7 @@ Grp: MS-ComplexType2006-07-15 / ctB059
 Grp: MS-ComplexType2006-07-15 / ctB060
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB060
-    ctB060.xsd:13:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB060.xsd:13:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/X
 
 Grp: MS-ComplexType2006-07-15 / ctB061
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51836,7 +51837,7 @@ Grp: MS-ComplexType2006-07-15 / ctB073
 Grp: MS-ComplexType2006-07-15 / ctB074
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB074
-    ctB074.xsd:13:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB074.xsd:13:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/X
 
 Grp: MS-ComplexType2006-07-15 / ctB075
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51906,7 +51907,7 @@ Grp: MS-ComplexType2006-07-15 / ctB087
 Grp: MS-ComplexType2006-07-15 / ctB088
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB088
-    ctB088.xsd:5:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB088.xsd:5:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/XM
 
 Grp: MS-ComplexType2006-07-15 / ctB089
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51971,7 +51972,7 @@ Grp: MS-ComplexType2006-07-15 / ctB100
 Grp: MS-ComplexType2006-07-15 / ctB101
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB101
-    ctB101.xsd:9:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB101.xsd:9:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/XM
 
 Grp: MS-ComplexType2006-07-15 / ctB102
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52036,7 +52037,7 @@ Grp: MS-ComplexType2006-07-15 / ctB113
 Grp: MS-ComplexType2006-07-15 / ctB114
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctB114
-    ctB114.xsd:5:19: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    ctB114.xsd:5:19: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/XM
 
 Grp: MS-ComplexType2006-07-15 / ctB115
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52135,7 +52136,7 @@ Grp: MS-ComplexType2006-07-15 / ctC008
 Grp: MS-ComplexType2006-07-15 / ctC009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctC009
-    ctC009.xsd:10:23: Expecting one of "restriction|extension"
+    ctC009.xsd:10:23: Expecting one of "{http://www.w3.org/2001/XMLSchema}restriction|{http://www.w3.org/2001/XMLSchema}extension"
 
 Grp: MS-ComplexType2006-07-15 / ctC010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52513,7 +52514,7 @@ Grp: MS-ComplexType2006-07-15 / ctF011
 Grp: MS-ComplexType2006-07-15 / ctF012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctF012
-    ctF012.xsd:5:24: Expecting one of "restriction|extension"
+    ctF012.xsd:5:24: Expecting one of "{http://www.w3.org/2001/XMLSchema}restriction|{http://www.w3.org/2001/XMLSchema}extension"
 
 Grp: MS-ComplexType2006-07-15 / ctF013
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -52528,7 +52529,7 @@ Grp: MS-ComplexType2006-07-15 / ctF014
 Grp: MS-ComplexType2006-07-15 / ctF015
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctF015
-    ctF015.xsd:10:24: Expecting one of "restriction|extension"
+    ctF015.xsd:10:24: Expecting one of "{http://www.w3.org/2001/XMLSchema}restriction|{http://www.w3.org/2001/XMLSchema}extension"
 
 Grp: MS-ComplexType2006-07-15 / ctF016
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68003,7 +68004,7 @@ Grp: MS-Group2006-07-15 / groupO001
 Grp: MS-Group2006-07-15 / groupO002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO002
-    groupO002.xsd:5:20: Expecting (all|choice|sequence)
+    groupO002.xsd:5:20: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-Group2006-07-15 / groupO003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68046,22 +68047,22 @@ Grp: MS-Group2006-07-15 / groupO009v
 Grp: MS-Group2006-07-15 / groupO010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO010
-    groupO010.xsd:5:26: Expecting (all|choice|sequence)
+    groupO010.xsd:5:26: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-Group2006-07-15 / groupO011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO011
-    groupO011.xsd:5:20: Expecting (all|choice|sequence)
+    groupO011.xsd:5:20: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-Group2006-07-15 / groupO012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO012
-    groupO012.xsd:5:19: Expecting (all|choice|sequence)
+    groupO012.xsd:5:19: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-Group2006-07-15 / groupO013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO013
-    groupO013.xsd:5:31: Expecting (all|choice|sequence)
+    groupO013.xsd:5:31: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-Group2006-07-15 / groupO014
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68130,7 +68131,7 @@ Grp: MS-Group2006-07-15 / groupO026
 Grp: MS-Group2006-07-15 / groupO027
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO027
-    groupO027.xsd:9:25: Expecting (all|choice|sequence)
+    groupO027.xsd:9:25: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-IdentityConstraint2006-07-15 / idA001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -68245,7 +68246,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idA022
 Grp: MS-IdentityConstraint2006-07-15 / idA023
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idA023
-    idA023.xsd:16:28: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    idA023.xsd:16:28: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/X
 
 Grp: MS-IdentityConstraint2006-07-15 / idA024
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68255,7 +68256,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idA024
 Grp: MS-IdentityConstraint2006-07-15 / idA025
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idA025
-    idA025.xsd:16:28: Expecting (all|choice|sequence)
+    idA025.xsd:16:28: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-IdentityConstraint2006-07-15 / idA026
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68545,7 +68546,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idB022
 Grp: MS-IdentityConstraint2006-07-15 / idB023
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idB023
-    idB023.xsd:11:39: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    idB023.xsd:11:39: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/X
 
 Grp: MS-IdentityConstraint2006-07-15 / idB024
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68555,7 +68556,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idB024
 Grp: MS-IdentityConstraint2006-07-15 / idB025
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idB025
-    idB025.xsd:16:27: Expecting (all|choice|sequence)
+    idB025.xsd:16:27: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-IdentityConstraint2006-07-15 / idB026
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -73939,12 +73940,12 @@ Grp: MS-ModelGroups2006-07-15 / mgO024
 Grp: MS-ModelGroups2006-07-15 / mgO025
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgO025
-    mgO025.xsd:11:20: Expecting (all|choice|sequence)
+    mgO025.xsd:11:20: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-ModelGroups2006-07-15 / mgO026
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgO026
-    mgO026.xsd:7:15: Expecting (all|choice|sequence)
+    mgO026.xsd:7:15: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-ModelGroups2006-07-15 / mgO027
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -73974,12 +73975,12 @@ Grp: MS-ModelGroups2006-07-15 / mgO031
 Grp: MS-ModelGroups2006-07-15 / mgO032
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgO032
-    mgO032.xsd:11:20: Expecting (all|choice|sequence)
+    mgO032.xsd:11:20: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-ModelGroups2006-07-15 / mgO033
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgO033
-    mgO033.xsd:7:15: Expecting (all|choice|sequence)
+    mgO033.xsd:7:15: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-ModelGroups2006-07-15 / mgO034
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -74589,7 +74590,7 @@ Grp: MS-Notations2006-07-15 / notatF018
 Grp: MS-Notations2006-07-15 / notatF019
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK notatF019
-    notatF019.xsd:4:70: Expecting one of "simpleContent|complexContent|((group|all|choice|sequence))"
+    notatF019.xsd:4:70: Expecting one of "{http://www.w3.org/2001/XMLSchema}simpleContent|{http://www.w3.org/2001/XMLSchema}complexContent|(({http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001
 
 Grp: MS-Notations2006-07-15 / notatF020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -75512,7 +75513,7 @@ Grp: MS-Particles2006-07-15 / particlesEa007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEa007
   OK particlesEa007.i
-    particlesEa007.xml:3:10: Expecting (a1&a2)
+    particlesEa007.xml:3:10: Expecting ({http://xsdtesting}a1&{http://xsdtesting}a2)
 
 Grp: MS-Particles2006-07-15 / particlesEa008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75590,7 +75591,7 @@ Grp: MS-Particles2006-07-15 / particlesEa021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEa021
   OK particlesEa021.i
-    particlesEa021.xml:3:10: Expecting (a1&a2)
+    particlesEa021.xml:3:10: Expecting ({http://xsdtesting}a1&{http://xsdtesting}a2)
 
 Grp: MS-Particles2006-07-15 / particlesEa022
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -75619,7 +75620,7 @@ Grp: MS-Particles2006-07-15 / particlesEb002
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb002
   OK particlesEb002.i
-    particlesEb002.xml:4:9: Unexpected end of sequence, expecting "a2"
+    particlesEb002.xml:4:9: Unexpected end of sequence, expecting "{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75654,13 +75655,13 @@ Grp: MS-Particles2006-07-15 / particlesEb008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb008
   OK particlesEb008.i
-    particlesEb008.xml:3:9: Unexpected end of sequence, expecting "(a1)"
+    particlesEb008.xml:3:9: Unexpected end of sequence, expecting "({http://xsdtesting}a1)"
 
 Grp: MS-Particles2006-07-15 / particlesEb009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb009
   OK particlesEb009.i
-    particlesEb009.xml:4:9: Unexpected end of sequence, expecting "a2"
+    particlesEb009.xml:4:9: Unexpected end of sequence, expecting "{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb010
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75671,7 +75672,7 @@ Grp: MS-Particles2006-07-15 / particlesEb011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb011
   OK particlesEb011.i
-    particlesEb011.xml:3:9: Expecting (a1)
+    particlesEb011.xml:3:9: Expecting ({http://xsdtesting}a1)
 
 Grp: MS-Particles2006-07-15 / particlesEb012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75689,7 +75690,7 @@ Grp: MS-Particles2006-07-15 / particlesEb014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb014
   OK particlesEb014.i
-    particlesEb014.xml:3:8: Expecting (a1)
+    particlesEb014.xml:3:8: Expecting ({http://xsdtesting}a1)
 
 Grp: MS-Particles2006-07-15 / particlesEb015
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -75700,13 +75701,13 @@ Grp: MS-Particles2006-07-15 / particlesEb017
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb017
   OK particlesEb017.i
-    particlesEb017.xml:3:9: Unexpected end of sequence, expecting "(a1)"
+    particlesEb017.xml:3:9: Unexpected end of sequence, expecting "({http://xsdtesting}a1)"
 
 Grp: MS-Particles2006-07-15 / particlesEb018
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb018
   OK particlesEb018.i
-    particlesEb018.xml:4:9: Unexpected end of sequence, expecting "a2"
+    particlesEb018.xml:4:9: Unexpected end of sequence, expecting "{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb019
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75717,7 +75718,7 @@ Grp: MS-Particles2006-07-15 / particlesEb020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb020
   OK particlesEb020.i
-    particlesEb020.xml:3:9: Expecting (a1)
+    particlesEb020.xml:3:9: Expecting ({http://xsdtesting}a1)
 
 Grp: MS-Particles2006-07-15 / particlesEb021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75735,19 +75736,19 @@ Grp: MS-Particles2006-07-15 / particlesEb023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb023
   OK particlesEb023.i
-    particlesEb023.xml:3:6: Expecting (a1)
+    particlesEb023.xml:3:6: Expecting ({http://xsdtesting}a1)
 
 Grp: MS-Particles2006-07-15 / particlesEb024
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb024
   OK particlesEb024.i
-    particlesEb024.xml:3:9: Unexpected end of sequence, expecting "(a1)"
+    particlesEb024.xml:3:9: Unexpected end of sequence, expecting "({http://xsdtesting}a1)"
 
 Grp: MS-Particles2006-07-15 / particlesEb025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb025
   OK particlesEb025.i
-    particlesEb025.xml:6:9: Unexpected end of sequence, expecting "a2"
+    particlesEb025.xml:6:9: Unexpected end of sequence, expecting "{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75763,13 +75764,13 @@ Grp: MS-Particles2006-07-15 / particlesEb028
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb028
   OK particlesEb028.i
-    particlesEb028.xml:3:9: Expecting (a1)
+    particlesEb028.xml:3:9: Expecting ({http://xsdtesting}a1)
 
 Grp: MS-Particles2006-07-15 / particlesEb029
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb029
   OK particlesEb029.i
-    particlesEb029.xml:6:9: Unexpected end of sequence, expecting "a2"
+    particlesEb029.xml:6:9: Unexpected end of sequence, expecting "{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb030
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75781,31 +75782,31 @@ Grp: MS-Particles2006-07-15 / particlesEb031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb031
   OK particlesEb031.i
-    particlesEb031.xml:3:15: Expecting (a1)
+    particlesEb031.xml:3:15: Expecting ({http://xsdtesting}a1)
 
 Grp: MS-Particles2006-07-15 / particlesEb032
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb032
   OK particlesEb032.i
-    particlesEb032.xml:3:9: Unexpected end of sequence, expecting "(a1)"
+    particlesEb032.xml:3:9: Unexpected end of sequence, expecting "({http://xsdtesting}a1)"
 
 Grp: MS-Particles2006-07-15 / particlesEb033
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb033
   OK particlesEb033.i
-    particlesEb033.xml:5:9: Unexpected end of sequence, expecting "(a1)"
+    particlesEb033.xml:5:9: Unexpected end of sequence, expecting "({http://xsdtesting}a1)"
 
 Grp: MS-Particles2006-07-15 / particlesEb034
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb034
   OK particlesEb034.i
-    particlesEb034.xml:3:9: Expecting (a1)
+    particlesEb034.xml:3:9: Expecting ({http://xsdtesting}a1)
 
 Grp: MS-Particles2006-07-15 / particlesEb035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb035
   OK particlesEb035.i
-    particlesEb035.xml:6:9: Unexpected end of sequence, expecting "a2"
+    particlesEb035.xml:6:9: Unexpected end of sequence, expecting "{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb036
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75816,7 +75817,7 @@ Grp: MS-Particles2006-07-15 / particlesEb037
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb037
   OK particlesEb037.i
-    particlesEb037.xml:8:9: Unexpected end of sequence, expecting "a2"
+    particlesEb037.xml:8:9: Unexpected end of sequence, expecting "{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb038
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75827,7 +75828,7 @@ Grp: MS-Particles2006-07-15 / particlesEb039
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb039
   OK particlesEb039.i
-    particlesEb039.xml:3:6: Expecting (a1)
+    particlesEb039.xml:3:6: Expecting ({http://xsdtesting}a1)
 
 Grp: MS-Particles2006-07-15 / particlesEb040
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -75864,7 +75865,7 @@ Grp: MS-Particles2006-07-15 / particlesEc005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc005
   OK particlesEc005.i
-    particlesEc005.xml:3:9: Unexpected end of sequence, expecting "(a1|a2)"
+    particlesEc005.xml:3:9: Unexpected end of sequence, expecting "({http://xsdtesting}a1|{http://xsdtesting}a2)"
 
 Grp: MS-Particles2006-07-15 / particlesEc006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75881,7 +75882,7 @@ Grp: MS-Particles2006-07-15 / particlesEc008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc008
   OK particlesEc008.i
-    particlesEc008.xml:3:10: Expecting (a1|a2)
+    particlesEc008.xml:3:10: Expecting ({http://xsdtesting}a1|{http://xsdtesting}a2)
 
 Grp: MS-Particles2006-07-15 / particlesEc009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -75892,7 +75893,7 @@ Grp: MS-Particles2006-07-15 / particlesEc011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc011
   OK particlesEc011.i
-    particlesEc011.xml:3:9: Unexpected end of sequence, expecting "(a1|a2)"
+    particlesEc011.xml:3:9: Unexpected end of sequence, expecting "({http://xsdtesting}a1|{http://xsdtesting}a2)"
 
 Grp: MS-Particles2006-07-15 / particlesEc012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75909,13 +75910,13 @@ Grp: MS-Particles2006-07-15 / particlesEc014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc014
   OK particlesEc014.i
-    particlesEc014.xml:3:6: Expecting (a1|a2)
+    particlesEc014.xml:3:6: Expecting ({http://xsdtesting}a1|{http://xsdtesting}a2)
 
 Grp: MS-Particles2006-07-15 / particlesEc015
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc015
   OK particlesEc015.i
-    particlesEc015.xml:3:9: Unexpected end of sequence, expecting "(a1|a2)"
+    particlesEc015.xml:3:9: Unexpected end of sequence, expecting "({http://xsdtesting}a1|{http://xsdtesting}a2)"
 
 Grp: MS-Particles2006-07-15 / particlesEc016
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75969,25 +75970,25 @@ Grp: MS-Particles2006-07-15 / particlesEc025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc025
   OK particlesEc025.i
-    particlesEc025.xml:3:8: Expecting (a|b)
+    particlesEc025.xml:3:8: Expecting ({http://xsdtesting}a|{http://xsdtesting}b)
 
 Grp: MS-Particles2006-07-15 / particlesEc026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc026
   OK particlesEc026.i
-    particlesEc026.xml:3:9: Unexpected end of sequence, expecting "(a|b)"
+    particlesEc026.xml:3:9: Unexpected end of sequence, expecting "({http://xsdtesting}a|{http://xsdtesting}b)"
 
 Grp: MS-Particles2006-07-15 / particlesEc027
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc027
   OK particlesEc027.i
-    particlesEc027.xml:4:9: Unexpected end of sequence, expecting "(a|b)"
+    particlesEc027.xml:4:9: Unexpected end of sequence, expecting "({http://xsdtesting}a|{http://xsdtesting}b)"
 
 Grp: MS-Particles2006-07-15 / particlesEc028
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc028
   OK particlesEc028.i
-    particlesEc028.xml:4:9: Unexpected end of sequence, expecting "(a|b)"
+    particlesEc028.xml:4:9: Unexpected end of sequence, expecting "({http://xsdtesting}a|{http://xsdtesting}b)"
 
 Grp: MS-Particles2006-07-15 / particlesEc029
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76056,7 +76057,7 @@ Grp: MS-Particles2006-07-15 / particlesEc041
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc041
   OK particlesEc041.i
-    particlesEc041.xml:3:6: Expecting (a|b)
+    particlesEc041.xml:3:6: Expecting ({http://xsdtesting}a|{http://xsdtesting}b)
 
 Grp: MS-Particles2006-07-15 / particlesEd001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95767,6 +95768,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 262
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 802
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 496 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 60 in_full_fail= 2
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 59 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1626 ( 4.3 %)
+Total errors: 1625 ( 4.3 %)

@@ -120,6 +120,7 @@ package body Schema.Validators is
       Namespace_URI      : Unicode.CES.Byte_Sequence;
       Parent_NS          : XML_Grammar_NS;
       Grammar            : XML_Grammar;
+      Is_Local_Element   : Boolean;
       Check_All_In_Group : Boolean := True) return XML_Element;
    --  Check whether any element in the substitution group of Validator can
    --  be used to match Local_Name. This also check whether Element itself
@@ -2401,6 +2402,7 @@ package body Schema.Validators is
       Namespace_URI      : Unicode.CES.Byte_Sequence;
       Parent_NS          : XML_Grammar_NS;
       Grammar            : XML_Grammar;
+      Is_Local_Element   : Boolean;
       Check_All_In_Group : Boolean := True) return XML_Element
    is
       Groups  : Substitution_Group;
@@ -2422,7 +2424,8 @@ package body Schema.Validators is
          Result := (Elem => Element, Is_Ref => True);
          Check_Qualification (Grammar, Result, Namespace_URI);
 
-      elsif Element.Form = Unqualified
+      elsif Is_Local_Element
+        and then Element.Form = Unqualified
         and then Namespace_URI = ""
         and then Local_Matches
       then
@@ -2452,8 +2455,11 @@ package body Schema.Validators is
                   end if;
 
                   Result := Check_Substitution_Groups
-                    (Groups (S).Elem, Local_Name, Namespace_URI, Parent_NS,
-                     Grammar, Check_All_In_Group => False);
+                    (Groups (S).Elem,
+                     Local_Name, Namespace_URI, Parent_NS,
+                     Grammar,
+                     Is_Local_Element   => Is_Local_Element,
+                     Check_All_In_Group => False);
                   exit when Result /= No_Element;
                end if;
             end loop;
@@ -2709,7 +2715,7 @@ package body Schema.Validators is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
                  (Curr.Element.Elem, Local_Name, Namespace_URI, NS,
-                  Grammar);
+                  Grammar, Is_Local_Element => not Curr.Element.Is_Ref);
 
                if Element_Validator /= No_Element then
                   if Debug then
@@ -2933,8 +2939,10 @@ package body Schema.Validators is
    ------------------
 
    procedure Add_Particle
-     (Seq : access Sequence_Record; Item : XML_Element;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
+     (Seq              : access Sequence_Record;
+      Item             : XML_Element;
+      Min_Occurs       : Natural := 1;
+      Max_Occurs       : Integer := 1) is
    begin
       if Item.Elem.Local_Name = null then
          Raise_Exception
@@ -3025,7 +3033,7 @@ package body Schema.Validators is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
                  (It.Element.Elem, Local_Name, Namespace_URI, NS,
-                  Grammar);
+                  Grammar, Is_Local_Element => not It.Element.Is_Ref);
 
             when Particle_Nested =>
                Check_Nested
@@ -3409,7 +3417,8 @@ package body Schema.Validators is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
                  (Item.Element.Elem, Local_Name, Namespace_URI, NS,
-                  Grammar) /= No_Element;
+                  Grammar, Is_Local_Element => not Item.Element.Is_Ref)
+                 /= No_Element;
 
             when Particle_Nested =>
                Applies_To_Tag
@@ -3417,7 +3426,6 @@ package body Schema.Validators is
                   Grammar, Applies, Skip_Current);
 
             when Particle_Any =>
-               --  ??? Tmp
                declare
                   Element_Validator : XML_Element;
                begin
@@ -3488,7 +3496,8 @@ package body Schema.Validators is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
                  (It.Element.Elem, Local_Name, Namespace_URI, NS,
-                  Grammar) /= No_Element;
+                  Grammar, Is_Local_Element => not It.Element.Is_Ref)
+                 /= No_Element;
 
             when Particle_Nested =>
                Applies_To_Tag
@@ -4054,7 +4063,7 @@ package body Schema.Validators is
       while Get (Tmp) /= null loop
          Element_Validator := Check_Substitution_Groups
            (Get (Tmp).Element.Elem, Local_Name, Namespace_URI, NS,
-            Grammar);
+            Grammar, Is_Local_Element => not Get (Tmp).Element.Is_Ref);
 
          if Element_Validator /= No_Element then
             D.All_Elements (Count) := D.All_Elements (Count) + 1;
@@ -4881,7 +4890,10 @@ package body Schema.Validators is
    begin
       case Particle.Typ is
          when Particle_Element =>
-            Str := Str & Get_Local_Name (Particle.Element);
+            Str := Str
+              & To_QName
+              (Get_Namespace_URI (Particle.Element.Elem.NS),
+               Get_Local_Name (Particle.Element));
          when Particle_Nested =>
             Str := Str & "("
               & Type_Model (Particle.Validator, First_Only) & ")";

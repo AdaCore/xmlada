@@ -1054,9 +1054,12 @@ package body Schema.Schema_Readers is
             null;
          when Context_Sequence =>
             Add_Particle
-              (Handler.Contexts.Seq, Element, Min_Occurs, Max_Occurs);
+              (Handler.Contexts.Seq, Element,
+               Min_Occurs       => Min_Occurs,
+               Max_Occurs       => Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
-                    & ", " & Ada_Name (Element) & ','
+                    & ", " & Ada_Name (Element) & ", is_ref="
+                    & Boolean'Image (Ref_Index /= -1) & ','
                     & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
          when Context_Choice =>
             Add_Particle (Handler.Contexts.C, Element, Min_Occurs, Max_Occurs);
