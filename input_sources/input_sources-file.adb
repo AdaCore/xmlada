@@ -27,7 +27,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;     use Ada.Exceptions;
-with IO_Exceptions;      use IO_Exceptions;
+with Ada.IO_Exceptions;  use Ada.IO_Exceptions;
 with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
