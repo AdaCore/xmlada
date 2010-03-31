@@ -11,16 +11,15 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
-KP-32-IC10-021 Incorrect validation of "date" types with timezone
+KP-32-J325-027 Missing obj directories
 
-  Problem:    If an attribute is of type xsd:date, it should allow the use of
-              timezones (either "Z" or "+00:00" for instance). XML/Ada does not
-              support these in 3.2.0 version
+  Problem:    When compiling XML/Ada, gnatmake will sometimes complain of
+              missing object directories, which may not be part of the source
+              package.
 
-  Status:     Fixed in 3.3.0
+  Status:     Fixes in XML/Ada 3.3.0
 
-  Workaround: You could have two elements, one for the date the other for the
-              timezone, although that's not as elegant
+  Workaround: In the Makefile, replace "gnatmake" with "gnatmake -p"
 
 KP-32-J302-043 Lots of fixes in schema validation
 
@@ -64,3 +63,16 @@ KP-32-J302-043 Lots of fixes in schema validation
   Status:     Fixed in 3.3.0
 
   Workaround: None
+
+KP-32-IC10-021 Incorrect validation of "date" types with timezone
+
+  Problem:    If an attribute is of type xsd:date, it should allow the use of
+              timezones (either "Z" or "+00:00" for instance). XML/Ada does not
+              support these in 3.2.0 version
+
+  Status:     Fixed in 3.3.0
+
+  Workaround: You could have two elements, one for the date the other for the
+              timezone, although that's not as elegant
+
+
