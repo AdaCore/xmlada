@@ -59,6 +59,8 @@ KP-32-J302-043 Lots of fixes in schema validation
                 are considered global in that case.
               - "fixed" attribute values should be compared with non-normalized
                 value of the attribute
+              - Verify the "form" for attributes (whether they should be
+                namespace qualified or not)
 
   Status:     Fixed in 3.3.0
 

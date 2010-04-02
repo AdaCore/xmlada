@@ -44069,24 +44069,32 @@ Grp: AttrDecl / ad_annotation00101m2
   OK Positive
 
 Grp: AttrDecl / ad_name00101m1
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_name00101m1
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK AD_name00101m1
+  OK Positive
+  OK Negative
+    AD_name00101m1_n.xml:19:39: Attribute price must have a namespace
 
 Grp: AttrDecl / ad_name00101m2
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_name00101m2
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK AD_name00101m2
+  OK Positive
+  OK Negative
+    AD_name00101m2_n.xml:19:40: Attribute number must not have a namespace
 
 Grp: AttrDecl / ad_name00101m3
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_name00101m3
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK AD_name00101m3
+  OK Positive
+  OK Negative
+    AD_name00101m3_n.xml:19:42: Attribute price must not have a namespace
 
 Grp: AttrDecl / ad_name00101m4
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_name00101m4
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK AD_name00101m4
+  OK Positive
+  OK Negative
+    AD_name00101m4_n.xml:19:37: Attribute number must have a namespace
 
 Grp: AttrDecl / ad_name00102m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44429,44 +44437,63 @@ Grp: AttrDecl / ad_scope00101m2
     Attribute "{AttrDecl/scope}number" is referenced, but not defined
 
 Grp: AttrDecl / ad_targetns00101m
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_targetNS00101m
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
+  OK AD_targetNS00101m
+  OK AD_targetNS00101m1_p
+  OK AD_targetNS00101m1_n
+    AD_targetNS00101m1_n.xml:14:39: Attribute price must have a namespace
+  OK AD_targetNS00101m2_n
+    AD_targetNS00101m2_n.xml:15:44: Attribute "tNOT:price" invalid for this element
+  OK AD_targetNS00101m3_p
+  OK AD_targetNS00101m3_n
+    AD_targetNS00101m3_n.xml:14:41: Attribute number must not have a namespace
 
 Grp: AttrDecl / ad_type00101m
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_type00101m
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 5 (xsd= 1 xml= 4) OK= 5 FAILED= 0
+  OK AD_type00101m
+  OK AD_type00101m1_p
+  OK AD_type00101m1_n
+    AD_type00101m1_n.xml:14:45: Attribute "td:number": Invalid integer: "twelve3"
+  OK AD_type00101m2_p
+  OK AD_type00101m2_n
+    AD_type00101m2_n.xml:14:42: Attribute "price": Invalid integer: "twelve.3"
 
 Grp: AttrDecl / ad_type00102m
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_type00102m
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 5 (xsd= 1 xml= 4) OK= 5 FAILED= 0
+  OK AD_type00102m
+  OK AD_type00102m1_p
+  OK AD_type00102m1_n
+    AD_type00102m1_n.xml:14:41: Attribute "td:number": -11 is smaller than minExclusive (0)
+  OK AD_type00102m2_p
+  OK AD_type00102m2_n
+    AD_type00102m2_n.xml:14:38: Attribute "price": -1.1 is smaller than minExclusive (0.0)
 
 Grp: AttrDecl / ad_valconstr00101m
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_valConstr00101m
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 5 (xsd= 1 xml= 4) OK= 5 FAILED= 0
+  OK AD_valConstr00101m
+  OK AD_valConstr00101m1_p
+  OK AD_valConstr00101m1_n
+    AD_valConstr00101m1_n.xml:14:40: Attribute "td:number": value must be "12" (found "-1")
+  OK AD_valConstr00101m2_p
+  OK AD_valConstr00101m2_n
+    AD_valConstr00101m2_n.xml:14:38: Attribute "price": value must be "12.3" (found "-1.3")
 
 Grp: AttrDecl / ad_valconstr00201m1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_valConstr00201m1
-    Unsupported "form" attribute for <attribute>
+  SF AD_valConstr00201m1
 
 Grp: AttrDecl / ad_valconstr00201m2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_valConstr00201m2
-    Unsupported "form" attribute for <attribute>
+  SF AD_valConstr00201m2
 
 Grp: AttrDecl / ad_valconstr00201m3
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_valConstr00201m3
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK AD_valConstr00201m3
+  OK Positive
 
 Grp: AttrDecl / ad_valconstr00201m4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI AD_valConstr00201m4
-    Unsupported "form" attribute for <attribute>
+  SF AD_valConstr00201m4
 
 Grp: AttrDecl / ad_valconstr00201m5
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47887,7 +47914,7 @@ Grp: MS-Additional2006-07-15 / addB075
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB075
   OK addB075.i
-    test75564.xml:5:25: Attribute "a": value must be "foo" (found "fooasdfsdfs")
+    test75564.xml:5:25: Attribute a must have a namespace
 
 Grp: MS-Additional2006-07-15 / addB076
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -48081,7 +48108,7 @@ Grp: MS-Additional2006-07-15 / addB115
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB115
   OK addB115.i
-    addB115.xml:5:25: Attribute "a": value must be "foo" (found "fooasdfsdfs")
+    addB115.xml:5:25: Attribute a must have a namespace
 
 Grp: MS-Additional2006-07-15 / addB116
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -48597,14 +48624,14 @@ Grp: MS-Additional2006-07-15 / addD003
     xsd.xsd:31:63: schemaLocation and namespace attributes mandatory for <import>
 
 Grp: MS-Additional2006-07-15 / addD004
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI addD004
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK addD004
+  OK addD004.v
 
 Grp: MS-Additional2006-07-15 / addD004a
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI addD004a
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK addD004a
+  OK addD004a.v
 
 Grp: MS-Additional2006-07-15 / isDefault001
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -48821,9 +48848,10 @@ Grp: MS-Additional2006-07-15 / isDefault071
   OK isDefault071.v
 
 Grp: MS-Additional2006-07-15 / isDefault072
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI isDefault072
-    Unsupported "form" attribute for <attribute>
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  OK isDefault072
+  XP isDefault072.v
+    isdefault072.xml:3:29: Attribute "ser:Id" invalid for this element
 
 Grp: MS-Additional2006-07-15 / isDefault073
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -49551,8 +49579,8 @@ Grp: MS-AttributeGroup2006-07-15 / attgC034
 
 Grp: MS-AttributeGroup2006-07-15 / attgC035
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attgC035
-    Unsupported "form" attribute for <attribute>
+  SP attgC035
+    attgC035.xsd:4:46: attgC035.red:8:25: Element "e" has already been declared
 
 Grp: MS-AttributeGroup2006-07-15 / attgC036
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -49776,7 +49804,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD035
   OK attgD035.i
-    attgD035.xml:3:22: Attribute "x:att": value must be "37" (found "36")
+    attgD035.xml:3:22: Attribute att must not have a namespace
 
 Grp: MS-AttributeGroup2006-07-15 / attgD036
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49857,14 +49885,12 @@ Grp: MS-Attribute2006-07-15 / attA006
     attA006.xsd:4:50: Attribute "form": Element's value not in the enumeration set
 
 Grp: MS-Attribute2006-07-15 / attA007
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attA007
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attA007
 
 Grp: MS-Attribute2006-07-15 / attA008
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attA008
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attA008
 
 Grp: MS-Attribute2006-07-15 / attB001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50323,8 +50349,7 @@ Grp: MS-Attribute2006-07-15 / attKb011
 
 Grp: MS-Attribute2006-07-15 / attKb012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attKb012
-    Unsupported "form" attribute for <attribute>
+  SF attKb012
 
 Grp: MS-Attribute2006-07-15 / attKb013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50402,8 +50427,7 @@ Grp: MS-Attribute2006-07-15 / attKc011
 
 Grp: MS-Attribute2006-07-15 / attKc012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attKc012
-    Unsupported "form" attribute for <attribute>
+  SF attKc012
 
 Grp: MS-Attribute2006-07-15 / attKc013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50468,64 +50492,66 @@ Grp: MS-Attribute2006-07-15 / attLa006
   OK attLa006.v
 
 Grp: MS-Attribute2006-07-15 / attLb001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLb001
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLb001
+  OK attLb001.v
 
 Grp: MS-Attribute2006-07-15 / attLb002
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLb002
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLb002
+  OK attLb002.v
 
 Grp: MS-Attribute2006-07-15 / attLb003
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLb003
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLb003
+  OK attLb003.v
 
 Grp: MS-Attribute2006-07-15 / attLb004
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLb004
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLb004
+  OK attLb004.v
 
 Grp: MS-Attribute2006-07-15 / attLb005
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLb005
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLb005
+  OK attLb005.i
+    attLb005.xml:3:34: Attribute "x:aga1": value must be "abc" (found "123")
 
 Grp: MS-Attribute2006-07-15 / attLb006
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLb006
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLb006
+  OK attLb006.v
 
 Grp: MS-Attribute2006-07-15 / attLc001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLc001
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLc001
+  OK attLc001.v
 
 Grp: MS-Attribute2006-07-15 / attLc002
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLc002
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLc002
+  OK attLc002.v
 
 Grp: MS-Attribute2006-07-15 / attLc003
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLc003
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLc003
+  OK attLc003.v
 
 Grp: MS-Attribute2006-07-15 / attLc004
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLc004
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLc004
+  OK attLc004.v
 
 Grp: MS-Attribute2006-07-15 / attLc005
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLc005
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLc005
+  OK attLc005.i
+    attLc005.xml:3:23: Attribute "x:ca1": value must be "abc" (found "123")
 
 Grp: MS-Attribute2006-07-15 / attLc006
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attLc006
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attLc006
+  OK attLc006.v
 
 Grp: MS-Attribute2006-07-15 / attO001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -50545,7 +50571,7 @@ Grp: MS-Attribute2006-07-15 / attO004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attO004
   OK attO004.i
-    attO004.xml:3:25: Attribute "att": Element's value not in the enumeration set
+    attO004.xml:3:25: Attribute att must have a namespace
 
 Grp: MS-Attribute2006-07-15 / attO005
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50586,7 +50612,7 @@ Grp: MS-Attribute2006-07-15 / attO012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attO012
   OK attO012.i
-    attO012.xml:3:47: Attribute "att": value must be "[0A][0A]A[0A][0A]B[0A]" (found "A B")
+    attO012.xml:3:47: Attribute att must have a namespace
 
 Grp: MS-Attribute2006-07-15 / attO013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50672,124 +50698,136 @@ Grp: MS-Attribute2006-07-15 / attMa004
   OK attMa004.v
 
 Grp: MS-Attribute2006-07-15 / attMb001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb001
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb001
+  OK attMb001.i
+    attMb001.xml:3:57: Attribute ca1 must have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMb002
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb002
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb002
+  OK attMb002.i
+    attMb002.xml:3:47: Attribute ca1 must have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMb003
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb003
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb003
+  OK attMb003.i
+    attMb003.xml:3:47: Attribute ca2 must have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMb004
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb004
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb004
+  OK attMb004.v
 
 Grp: MS-Attribute2006-07-15 / attMb005
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb005
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb005
+  OK attMb005.v
 
 Grp: MS-Attribute2006-07-15 / attMb006
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb006
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb006
+  OK attMb006.v
 
 Grp: MS-Attribute2006-07-15 / attMb007
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb007
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb007
+  OK attMb007.v
 
 Grp: MS-Attribute2006-07-15 / attMb008
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb008
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb008
+  OK attMb008.v
 
 Grp: MS-Attribute2006-07-15 / attMb009
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb009
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb009
+  OK attMb009.v
 
 Grp: MS-Attribute2006-07-15 / attMb010
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb010
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb010
+  OK attMb010.i
+    attMb010.xml:3:59: Attribute ca1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMb011
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb011
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb011
+  OK attMb011.i
+    attMb011.xml:3:35: Attribute ca1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMb012
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMb012
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMb012
+  OK attMb012.i
+    attMb012.xml:3:23: Attribute ca2 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc001
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc001
+  OK attMc001.i
+    attMc001.xml:3:48: Attribute aga1 must have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc002
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc002
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc002
+  OK attMc002.i
+    attMc002.xml:3:59: Attribute aga1 must have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc003
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc003
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc003
+  OK attMc003.i
+    attMc003.xml:3:59: Attribute aga1 must have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc004
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc004
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc004
+  OK attMc004.v
 
 Grp: MS-Attribute2006-07-15 / attMc005
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc005
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc005
+  OK attMc005.v
 
 Grp: MS-Attribute2006-07-15 / attMc006
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc006
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc006
+  OK attMc006.v
 
 Grp: MS-Attribute2006-07-15 / attMc007
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc007
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc007
+  OK attMc007.v
 
 Grp: MS-Attribute2006-07-15 / attMc008
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc008
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc008
+  OK attMc008.v
 
 Grp: MS-Attribute2006-07-15 / attMc009
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc009
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc009
+  OK attMc009.v
 
 Grp: MS-Attribute2006-07-15 / attMc010
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc010
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc010
+  OK attMc010.i
+    attMc010.xml:3:50: Attribute aga1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc011
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc011
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc011
+  OK attMc011.i
+    attMc011.xml:3:63: Attribute aga1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc012
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attMc012
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK attMc012
+  OK attMc012.i
+    attMc012.xml:3:63: Attribute aga1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMd001
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -51057,13 +51095,11 @@ Grp: MS-Attribute2006-07-15 / attQ008
 
 Grp: MS-Attribute2006-07-15 / attQ009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attQ009
-    Unsupported "form" attribute for <attribute>
+  SF attQ009
 
 Grp: MS-Attribute2006-07-15 / attQ010
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attQ010
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attQ010
 
 Grp: MS-Attribute2006-07-15 / attQ011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -51075,8 +51111,7 @@ Grp: MS-Attribute2006-07-15 / attQ012
 
 Grp: MS-Attribute2006-07-15 / attQ013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attQ013
-    Unsupported "form" attribute for <attribute>
+  SF attQ013
 
 Grp: MS-Attribute2006-07-15 / attQ014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -51084,9 +51119,9 @@ Grp: MS-Attribute2006-07-15 / attQ014
   OK attQ014.v
 
 Grp: MS-Attribute2006-07-15 / attQ015
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attQ015
-    Unsupported "form" attribute for <attribute>
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attQ015
+    attQ015.xsd:16:39: Attribute "id": ID "a1" already defined
 
 Grp: MS-Attribute2006-07-15 / attQ016
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51095,8 +51130,7 @@ Grp: MS-Attribute2006-07-15 / attQ016
 
 Grp: MS-Attribute2006-07-15 / attQ017
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI attQ017
-    Unsupported "form" attribute for <attribute>
+  SF attQ017
 
 Grp: MS-Attribute2006-07-15 / attQ018
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -69674,7 +69708,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idG026
 Grp: MS-IdentityConstraint2006-07-15 / idG027
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idG027
-    Unsupported "form" attribute for <attribute>
+    Unsupported element in the schema: key
 
 Grp: MS-IdentityConstraint2006-07-15 / idG028
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95740,13 +95774,13 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37690 (omitting non-accepted tests)
+Total number of tests: 37755 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
-   24007 XML files
-NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1115
-SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 249
-SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 813
-XP: XML KO, should be OK: in_full_pass= 0 in_partial= 495 in_full_fail= 4
+   24072 XML files
+NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1054
+SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 250
+SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 821
+XP: XML KO, should be OK: in_full_pass= 0 in_partial= 496 in_full_fail= 4
 XF: XML OK, should be KO: in_full_pass= 0 in_partial= 57 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1620 ( 4.3 %)
+Total errors: 1630 ( 4.3 %)

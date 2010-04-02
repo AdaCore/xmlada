@@ -78,6 +78,10 @@ package Sax.Attributes is
       return Unicode.CES.Byte_Sequence;
    --  Return an attribute's local name by index
 
+   function Get_Prefix (Attr : Attributes; Index : Natural)
+      return Unicode.CES.Byte_Sequence;
+   --  Return the prefix used for the attribute in the XML file
+
    function Get_Qname (Attr : Attributes; Index : Natural)
       return Unicode.CES.Byte_Sequence;
    --  Return an attribute's qualified name by index

@@ -195,6 +195,8 @@ private
 
       Check_Undefined : Boolean := True;
 
+      Attribute_Form_Default : Schema.Validators.Form_Type :=
+        Schema.Validators.Unqualified;
       Element_Form_Default : Schema.Validators.Form_Type :=
         Schema.Validators.Unqualified;
       --  The value of elementFormDefault for the current file

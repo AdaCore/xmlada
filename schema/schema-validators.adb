@@ -206,6 +206,7 @@ package body Schema.Validators is
    procedure Append
      (List        : in out Attribute_Validator_List_Access;
       Validator   : access Attribute_Validator_Record'Class;
+      Is_Local    : Boolean;
       Override    : Boolean);
    procedure Append
      (List      : in out Attribute_Validator_List_Access;
@@ -447,6 +448,7 @@ package body Schema.Validators is
    procedure Append
      (List        : in out Attribute_Validator_List_Access;
       Validator   : access Attribute_Validator_Record'Class;
+      Is_Local    : Boolean;
       Override    : Boolean)
    is
       L : Attribute_Validator_List_Access;
@@ -461,6 +463,7 @@ package body Schema.Validators is
                      --  Restriction_Of...
                      List (A) :=
                        (Is_Group => False,
+                        Is_Local => Is_Local,
                         Attr     => Attribute_Validator (Validator));
                   end if;
                   return;
@@ -472,13 +475,16 @@ package body Schema.Validators is
          L (List'Range) := List.all;
          L (L'Last) := Attribute_Or_Group'
            (Is_Group => False,
+            Is_Local => Is_Local,
             Attr     => Attribute_Validator (Validator));
          Unchecked_Free (List);
          List := L;
       else
          List := new Attribute_Validator_List'
            (1 => Attribute_Or_Group'
-              (Is_Group => False, Attr => Attribute_Validator (Validator)));
+              (Is_Group => False,
+               Is_Local => Is_Local,
+               Attr     => Attribute_Validator (Validator)));
       end if;
    end Append;
 
@@ -579,9 +585,11 @@ package body Schema.Validators is
 
    procedure Add_Attribute
      (Validator  : access XML_Validator_Record;
-      Attribute  : access Attribute_Validator_Record'Class) is
+      Attribute  : access Attribute_Validator_Record'Class;
+      Is_Local   : Boolean := True) is
    begin
-      Append (Validator.Attributes, Attribute, Override => True);
+      Append (Validator.Attributes, Attribute,
+              Is_Local => Is_Local, Override => True);
    end Add_Attribute;
 
    -------------------
@@ -589,10 +597,12 @@ package body Schema.Validators is
    -------------------
 
    procedure Add_Attribute
-     (Group : in out XML_Attribute_Group;
-      Attr  : access Attribute_Validator_Record'Class) is
+     (Group    : in out XML_Attribute_Group;
+      Attr     : access Attribute_Validator_Record'Class;
+      Is_Local : Boolean := True) is
    begin
-      Append (Group.Attributes, Attribute_Validator (Attr), Override => True);
+      Append (Group.Attributes, Attribute_Validator (Attr),
+              Is_Local => Is_Local, Override => True);
    end Add_Attribute;
 
    -------------------------
@@ -694,7 +704,9 @@ package body Schema.Validators is
       procedure Check_Any (List : Attribute_Or_Group);
       --  Check recursively the attributes provided by Validator.
 
-      procedure Check_Named_Attribute (Named : Named_Attribute_Validator);
+      procedure Check_Named_Attribute
+        (Named : Named_Attribute_Validator;
+         Is_Local_In_XSD : Boolean);
       procedure Check_Any_Attribute
         (Any : Any_Attribute_Validator; Index : Integer);
       --  Check a named attribute or a wildcard attribute
@@ -728,7 +740,10 @@ package body Schema.Validators is
       -- Check_Named_Attribute --
       ---------------------------
 
-      procedure Check_Named_Attribute (Named : Named_Attribute_Validator) is
+      procedure Check_Named_Attribute
+        (Named : Named_Attribute_Validator;
+         Is_Local_In_XSD : Boolean)
+      is
          Found  : Integer;
       begin
          if Get (Visited, Named.Local_Name.all) = null then
@@ -747,6 +762,28 @@ package body Schema.Validators is
 
             else
                Seen (Found) := True;
+
+               case Named.Attribute_Form is
+                  when Qualified =>
+                     if Is_Local_In_XSD
+                       and then Get_Prefix (Atts, Found) = ""
+                     then
+                        Validation_Error
+                          ("Attribute " & Get_Local_Name (Atts, Found)
+                           & " must have a namespace");
+                     end if;
+
+                  when Unqualified =>
+                     if Is_Local_In_XSD
+                       and then Get_Prefix (Atts, Found) /= ""
+                       and then Get_URI (Atts, Found) =
+                          Get_Namespace_URI (Get (Grammar).Target_NS)
+                     then
+                        Validation_Error
+                          ("Attribute " & Get_Local_Name (Atts, Found)
+                           & " must not have a namespace");
+                     end if;
+               end case;
 
                case Named.Attribute_Use is
                   when Prohibited =>
@@ -839,7 +876,9 @@ package body Schema.Validators is
             end if;
 
          elsif List.Attr.all in Named_Attribute_Validator_Record'Class then
-            Check_Named_Attribute (Named_Attribute_Validator (List.Attr));
+            Check_Named_Attribute
+              (Named_Attribute_Validator (List.Attr),
+               Is_Local_In_XSD => List.Is_Local);
          end if;
       end Recursive_Check_Named;
 
@@ -1042,7 +1081,7 @@ package body Schema.Validators is
      (Local_Name     : Unicode.CES.Byte_Sequence;
       NS             : XML_Grammar_NS;
       Attribute_Type : XML_Type                  := No_Type;
-      Attribute_Form : Form_Type                 := Qualified;
+      Attribute_Form : Form_Type                 := Unqualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
@@ -1077,7 +1116,7 @@ package body Schema.Validators is
 
    function Create_Local_Attribute
      (Based_On       : Attribute_Validator;
-      Attribute_Form : Form_Type                 := Qualified;
+      Attribute_Form : Form_Type                 := Unqualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;

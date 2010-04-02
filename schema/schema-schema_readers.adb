@@ -96,10 +96,11 @@ package body Schema.Schema_Readers is
    --  Whether we are currently processing a <redefine> tag
 
    procedure Insert_Attribute
-     (Handler    : in out Schema_Reader;
-      In_Context : Context_Access;
-      Attribute  : Attribute_Validator;
-      Attribute_Name : Byte_Sequence);
+     (Handler        : in out Schema_Reader;
+      In_Context     : Context_Access;
+      Attribute      : Attribute_Validator;
+      Attribute_Name : Byte_Sequence;
+      Is_Local       : Boolean);
    --  Insert attribute at the right location in In_Context.
    --  Attribute_Name is only for debugging purposes
 
@@ -811,7 +812,8 @@ package body Schema.Schema_Readers is
          Create_Any_Attribute (Process_Contents, Kind, NS),
          "Create_Any_Attribute (" & Process_Contents'Img
          & ", " & Kind'Img & ", """
-         & Get_Namespace_URI (NS) & """);");
+         & Get_Namespace_URI (NS) & """);",
+         Is_Local => False);
    end Create_Any_Attribute;
 
    --------------------
@@ -1794,6 +1796,7 @@ package body Schema.Schema_Readers is
       Att : Attribute_Validator;
       Typ : XML_Type := No_Type;
       Use_Type : Attribute_Use_Type := Optional;
+      Form : Form_Type;
 
       function Get_Fixed return String;
       --  Return the "fixed" value for the attribute
@@ -1815,10 +1818,9 @@ package body Schema.Schema_Readers is
 
    begin
       if Form_Index /= -1 then
-         --  Not implemented yet anyway
-         Raise_Exception
-           (XML_Not_Implemented'Identity,
-            "Unsupported ""form"" attribute for <attribute>");
+         Form := Form_Type'Value (Get_Value (Atts, Form_Index));
+      else
+         Form := Handler.Attribute_Form_Default;
       end if;
 
       if Type_Index /= -1 then
@@ -1853,7 +1855,7 @@ package body Schema.Schema_Readers is
       Handler.Contexts := new Context'
         (Typ              => Context_Attribute,
          Attribute        => null,
-         Attribute_Is_Ref => Name_Index = -1,
+         Attribute_Is_Ref => Ref_Index /= -1,
          Level            => Handler.Contexts.Level + 1,
          Next             => Handler.Contexts);
 
@@ -1865,7 +1867,7 @@ package body Schema.Schema_Readers is
                   NS             => Handler.Target_NS,
                   Attribute_Type => Typ,
                   Attribute_Use  => Use_Type,
-                  Attribute_Form => Qualified,
+                  Attribute_Form => Form,
                   Has_Fixed      => Fixed_Index /= -1,
                   Fixed          => Get_Fixed);
 
@@ -1877,6 +1879,7 @@ package body Schema.Schema_Readers is
                           & Ada_Name (Typ)
                           & ", " & Use_Type'Img & ", Qualified, Has_Fixed="
                           & Boolean'Image (Fixed_Index /= -1)
+                          & ", " & Form'Img
                           & " """ & Get_Fixed & """);");
                end if;
 
@@ -1886,7 +1889,7 @@ package body Schema.Schema_Readers is
                   NS             => Handler.Target_NS,
                   Attribute_Type => Typ,
                   Attribute_Use  => Use_Type,
-                  Attribute_Form => Qualified,
+                  Attribute_Form => Form,
                   Has_Fixed      => Fixed_Index /= -1,
                   Fixed          => Get_Fixed,
                   Value          => "");
@@ -1899,6 +1902,7 @@ package body Schema.Schema_Readers is
                           & Ada_Name (Typ)
                           & ", " & Use_Type'Img & ", Qualified, Has_Fixed="
                           & Boolean'Image (Fixed_Index /= -1)
+                          & ", " & Form'Img
                           & " """ & Get_Fixed & """);");
                end if;
          end case;
@@ -1916,7 +1920,7 @@ package body Schema.Schema_Readers is
             Att := Create_Local_Attribute
               (Based_On       => Att,
                Attribute_Use  => Use_Type,
-               Attribute_Form => Qualified,
+               Attribute_Form => Form,
                Has_Fixed      => Fixed_Index /= -1,
                Fixed          => Get_Fixed,
                Value          => "");
@@ -1930,6 +1934,7 @@ package body Schema.Schema_Readers is
                   & " := Create_Local_Attribute (Attr, Handler.Target_NS, "
                   & Use_Type'Img & ", Qualified, Has_Fixed="
                   & Boolean'Image (Fixed_Index /= -1)
+                  & ", " & Form'Img
                   & " """ & Get_Fixed & """);");
             end if;
          end;
@@ -1943,15 +1948,17 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Insert_Attribute
-     (Handler    : in out Schema_Reader;
-      In_Context : Context_Access;
-      Attribute  : Attribute_Validator;
-      Attribute_Name : Byte_Sequence) is
+     (Handler        : in out Schema_Reader;
+      In_Context     : Context_Access;
+      Attribute      : Attribute_Validator;
+      Attribute_Name : Byte_Sequence;
+      Is_Local       : Boolean) is
    begin
       case In_Context.Typ is
          when Context_Type_Def =>
             Ensure_Type (Handler, In_Context);
-            Add_Attribute (In_Context.Type_Validator, Attribute);
+            Add_Attribute (In_Context.Type_Validator, Attribute,
+                           Is_Local => Is_Local);
             Output ("Add_Attribute (Validator, " & Attribute_Name & ");");
 
          when Context_Schema | Context_Redefine =>
@@ -1969,18 +1976,21 @@ package body Schema.Schema_Readers is
                In_Context.Extension_Base := No_Type;
             end if;
 
-            Add_Attribute (In_Context.Extension, Attribute);
+            Add_Attribute (In_Context.Extension, Attribute,
+                           Is_Local => Is_Local);
             Output ("Add_Attribute (" & Ada_Name (In_Context) & ", "
                     & Attribute_Name & ");");
 
          when Context_Restriction =>
             Create_Restricted (Handler, In_Context);
-            Add_Attribute (In_Context.Restricted, Attribute);
+            Add_Attribute (In_Context.Restricted, Attribute,
+                           Is_Local => Is_Local);
             Output ("Add_Attribute (" & Ada_Name (In_Context) & ", "
                     & Attribute_Name & ");");
 
          when Context_Attribute_Group =>
-            Add_Attribute (In_Context.Attr_Group, Attribute);
+            Add_Attribute (In_Context.Attr_Group, Attribute,
+                           Is_Local => Is_Local);
             Output ("Add_Attribute (" & Ada_Name (In_Context) & ", "
                     & Attribute_Name & ");");
 
@@ -2008,7 +2018,8 @@ package body Schema.Schema_Readers is
 
       Insert_Attribute
         (Handler, Handler.Contexts.Next, Handler.Contexts.Attribute,
-         Ada_Name (Handler.Contexts));
+         Ada_Name (Handler.Contexts),
+         Is_Local => not Handler.Contexts.Attribute_Is_Ref);
    end Finish_Attribute;
 
    -------------------
@@ -2023,6 +2034,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "targetNamespace");
       Form_Default_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "elementFormDefault");
+      Attr_Form_Default_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "attributeFormDefault");
       Block_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "blockDefault");
    begin
@@ -2047,6 +2060,18 @@ package body Schema.Schema_Readers is
             Output
               ("Set_Element_Form_Default (Handler.Target_NS, Unqualified);");
          end if;
+      end if;
+
+      if Attr_Form_Default_Index /= -1
+        and then Get_Value (Atts, Attr_Form_Default_Index) = "qualified"
+      then
+         Handler.Attribute_Form_Default := Qualified;
+         Output
+           ("Set_Attribute_Form_Default (Handler.Target_NS, Qualified);");
+      else
+         Handler.Attribute_Form_Default := Unqualified;
+         Output
+           ("Set_Attribute_Form_Default (Handler.Target_NS, Unqualified);");
       end if;
 
       if Block_Index /= -1 then

@@ -26,9 +26,10 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Unicode.CES;  use Unicode.CES;
+with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
+with Unicode.CES;            use Unicode.CES;
 with Unchecked_Deallocation;
-with Sax.Models;   use Sax.Models;
+with Sax.Models;             use Sax.Models;
 
 package body Sax.Attributes is
 
@@ -408,6 +409,25 @@ package body Sax.Attributes is
    begin
       return Get (Attr, Index).Qname.all;
    end Get_Qname;
+
+   ----------------
+   -- Get_Prefix --
+   ----------------
+
+   function Get_Prefix (Attr : Attributes; Index : Natural)
+      return Unicode.CES.Byte_Sequence
+   is
+      QName : constant Unicode.CES.Byte_Sequence_Access :=
+        Get (Attr, Index).Qname;
+      Pos : constant Natural := Ada.Strings.Fixed.Index
+        (String (QName.all), ":");
+   begin
+      if Pos < QName'First then
+         return "";
+      else
+         return QName (QName'First .. Pos - 1);
+      end if;
+   end Get_Prefix;
 
    --------------
    -- Get_Type --

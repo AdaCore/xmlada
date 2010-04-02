@@ -256,7 +256,7 @@ package Schema.Validators is
      (Local_Name     : Unicode.CES.Byte_Sequence;
       NS             : XML_Grammar_NS;
       Attribute_Type : XML_Type                  := No_Type;
-      Attribute_Form : Form_Type                 := Qualified;
+      Attribute_Form : Form_Type                 := Unqualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
@@ -264,7 +264,7 @@ package Schema.Validators is
       return Attribute_Validator;
    function Create_Local_Attribute
      (Based_On       : Attribute_Validator;
-      Attribute_Form : Form_Type                 := Qualified;
+      Attribute_Form : Form_Type                 := Unqualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
@@ -323,9 +323,12 @@ package Schema.Validators is
    --  Created through calls to Create_Global_Attribute_Group below
 
    procedure Add_Attribute
-     (Group : in out XML_Attribute_Group;
-      Attr  : access Attribute_Validator_Record'Class);
+     (Group    : in out XML_Attribute_Group;
+      Attr     : access Attribute_Validator_Record'Class;
+      Is_Local : Boolean := True);
    --  Add a new attribute to the group
+   --  Is_Local should be true if the attribute is local, or False if this is
+   --  a reference to a global attribute
 
    procedure Add_Attribute_Group
      (Group : in out XML_Attribute_Group;
@@ -436,8 +439,11 @@ package Schema.Validators is
 
    procedure Add_Attribute
      (Validator : access XML_Validator_Record;
-      Attribute : access Attribute_Validator_Record'Class);
+      Attribute : access Attribute_Validator_Record'Class;
+      Is_Local  : Boolean := True);
    --  Add a valid attribute to Validator.
+   --  Is_Local should be true if the attribute is local, or False if this is
+   --  a reference to a global attribute
 
    function Has_Attribute
      (Validator  : access XML_Validator_Record;
@@ -1041,7 +1047,10 @@ private
    type Attribute_Or_Group (Is_Group : Boolean := False) is record
       case Is_Group is
          when True  => Group : XML_Attribute_Group;
-         when False => Attr  : Attribute_Validator;
+         when False =>
+            Attr     : Attribute_Validator;
+            Is_Local : Boolean;
+            --  Whether the attribute is local or a ref to a global attribute
       end case;
    end record;
    type Attribute_Validator_List
