@@ -54,7 +54,7 @@ private package Schema.Validators.Simple_Types is
      (Validator      : access Any_Simple_XML_Validator_Record;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
-      Id_Table       : access Id_Htable_Access);
+      Context        : in out Validation_Context);
    procedure Validate_End_Element
      (Validator  : access Any_Simple_XML_Validator_Record;
       Local_Name : Unicode.CES.Byte_Sequence;
@@ -87,7 +87,7 @@ private package Schema.Validators.Simple_Types is
      (Union         : access XML_Union_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access);
+      Context       : in out Validation_Context);
    --  See doc from inherited subprograms
 
 end Schema.Validators.Simple_Types;

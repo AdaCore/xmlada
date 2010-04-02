@@ -40,10 +40,9 @@ package body Schema.Validators.UR_Type is
    procedure Validate_Attributes
      (Validator         : access UR_Type_Validator;
       Atts              : in out Sax.Attributes.Attributes'Class;
-      Id_Table          : access Id_Htable_Access;
       Nillable          : Boolean;
       Is_Nil            : out Boolean;
-      Grammar           : in out XML_Grammar);
+      Context           : in out Validation_Context);
    procedure Validate_Start_Element
      (Validator         : access UR_Type_Validator;
       Local_Name        : Unicode.CES.Byte_Sequence;
@@ -56,7 +55,7 @@ package body Schema.Validators.UR_Type is
      (Validator      : access UR_Type_Validator;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
-      Id_Table       : access Id_Htable_Access);
+      Context        : in out Validation_Context);
    --  See doc for inherited subprograms
 
    -------------------------
@@ -67,9 +66,9 @@ package body Schema.Validators.UR_Type is
      (Validator      : access UR_Type_Validator;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
-      Id_Table       : access Id_Htable_Access)
+      Context        : in out Validation_Context)
    is
-      pragma Unreferenced (Id_Table);
+      pragma Unreferenced (Context);
    begin
       if Debug then
          Debug_Output
@@ -148,12 +147,11 @@ package body Schema.Validators.UR_Type is
    procedure Validate_Attributes
      (Validator         : access UR_Type_Validator;
       Atts              : in out Sax.Attributes.Attributes'Class;
-      Id_Table          : access Id_Htable_Access;
       Nillable          : Boolean;
       Is_Nil            : out Boolean;
-      Grammar           : in out XML_Grammar)
+      Context           : in out Validation_Context)
    is
-      pragma Unreferenced (Validator, Atts, Id_Table, Nillable, Grammar);
+      pragma Unreferenced (Validator, Atts, Nillable, Context);
    begin
       Is_Nil := False;
    end Validate_Attributes;

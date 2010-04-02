@@ -30,7 +30,7 @@ with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Simple_Types; use  Schema.Validators.Simple_Types;
 with Unicode;                        use Unicode;
 with Sax.Encodings;                  use Sax.Encodings;
-with GNAT.IO; use GNAT.IO;
+
 package body Schema.Validators.Lists is
 
    type List_Facets_Description is new Common_Facets_Description with record
@@ -57,7 +57,7 @@ package body Schema.Validators.Lists is
      (Validator     : access List_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access);
+      Context       : in out Validation_Context);
    function Get_Facets_Description
      (Validator : access List_Validator_Record) return Facets_Description;
    procedure Free (Validator : in out List_Validator_Record);
@@ -235,7 +235,7 @@ package body Schema.Validators.Lists is
      (Validator     : access List_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access)
+      Context       : in out Validation_Context)
    is
       procedure Callback (Value : Unicode.CES.Byte_Sequence);
       procedure Callback (Value : Unicode.CES.Byte_Sequence) is
@@ -244,8 +244,7 @@ package body Schema.Validators.Lists is
             Debug_Output ("  In list: " & Value);
          end if;
          Validate_Characters
-           (Get_Validator (Validator.Base), Value, Empty_Element,
-            Id_Table => Id_Table);
+           (Get_Validator (Validator.Base), Value, Empty_Element, Context);
       end Callback;
 
       procedure For_Each is new For_Each_Item (Callback);

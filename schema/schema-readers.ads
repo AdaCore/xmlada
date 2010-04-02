@@ -102,6 +102,11 @@ package Schema.Readers is
    --  The caller must not modify the return value.
    --  Returns No_XML_NS if the prefix is not defined
 
+   function Get_Context
+     (Handler : access Validating_Reader)
+      return Schema.Validators.Validation_Context_Access;
+   --  Return the current validation context.
+
 private
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;
@@ -128,15 +133,9 @@ private
    end record;
 
    type Validating_Reader is new Sax.Readers.Reader with record
-      Grammar  : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar;
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator;
-
-      Context    : Sax.Readers.Element_Access;
-      --  Element we are currently processing. This is only used to resolve
-      --  namespaces.
-
-      Ids        : aliased Schema.Validators.Id_Htable_Access;
+      Context    : aliased Schema.Validators.Validation_Context;
    end record;
 
    procedure Parse

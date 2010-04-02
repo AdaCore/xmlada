@@ -44001,8 +44001,9 @@ Grp: AGroupDef / ag_attrusens00101m1_p
   OK Positive
 
 Grp: AGroupDef / ag_attrusens00101m1_n
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF AG_attrUseNS00101m1_n
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK AG_attrUseNS00101m1_n
+    AG_attrUseNS00101m1_n.xsd:25:41: Attribute "ref": No corresponding namespace in scope for "wrongNS"
 
 Grp: AGroupDef / ag_attrwcard00101m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44025,8 +44026,9 @@ Grp: AGroupDef / ag_targetns00101m1_p
   OK Positive
 
 Grp: AGroupDef / ag_targetns00101m1_n
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF AG_targetNS00101m1_n
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK AG_targetNS00101m1_n
+    AG_targetNS00101m1_n.xsd:19:45: Attribute "ref": No corresponding namespace in scope for "wrongNS"
 
 Grp: AGroupDef / annotation00101m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -47534,7 +47536,7 @@ Grp: MS-Additional2006-07-15 / addA002
 Grp: MS-Additional2006-07-15 / addA003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK addA003
-    adhocAddA003e.xsd:9:39: Attribute "ref": Invalid value: "foo test"
+    adhocAddA003e.xsd:9:39: Attribute "ref": Invalid QName: "foo test"
 
 Grp: MS-Additional2006-07-15 / addA005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49464,7 +49466,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgC008
 Grp: MS-AttributeGroup2006-07-15 / attgC009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgC009
-    attgC009.xsd:4:31: Attribute "ref": Invalid value: ""
+    attgC009.xsd:4:31: Attribute "ref": Invalid QName: ""
 
 Grp: MS-AttributeGroup2006-07-15 / attgC010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49507,7 +49509,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgC018
 Grp: MS-AttributeGroup2006-07-15 / attgC019
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgC019
-    attgC019.xsd:4:31: Attribute "ref": Invalid value: ""
+    attgC019.xsd:4:31: Attribute "ref": Invalid QName: ""
 
 Grp: MS-AttributeGroup2006-07-15 / attgC020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49558,7 +49560,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgC029
 Grp: MS-AttributeGroup2006-07-15 / attgC030
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgC030
-    attgC030.xsd:10:33: Attribute "ref": Invalid value: ""
+    attgC030.xsd:10:33: Attribute "ref": Invalid QName: ""
 
 Grp: MS-AttributeGroup2006-07-15 / attgC031
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49607,7 +49609,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgC039
 Grp: MS-AttributeGroup2006-07-15 / attgC040
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgC040
-    attgC040.xsd:6:32: Attribute "ref": Invalid value: ""
+    attgC040.xsd:6:32: Attribute "ref": Invalid QName: ""
 
 Grp: MS-AttributeGroup2006-07-15 / attgC041
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49987,12 +49989,12 @@ Grp: MS-Attribute2006-07-15 / attD004
 Grp: MS-Attribute2006-07-15 / attD005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attD005
-    attD005.xsd:3:39: Attribute "type": Invalid value: ":_"
+    attD005.xsd:3:39: Attribute "type": Invalid QName: ":_"
 
 Grp: MS-Attribute2006-07-15 / attD006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attD006
-    attD006.xsd:4:40: Attribute "type": Invalid value: "123"
+    attD006.xsd:4:40: Attribute "type": Invalid QName: "123"
 
 Grp: MS-Attribute2006-07-15 / attD007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -50022,7 +50024,7 @@ Grp: MS-Attribute2006-07-15 / attE004
 Grp: MS-Attribute2006-07-15 / attE005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attE005
-    attE005.xsd:7:28: Attribute "ref": Invalid value: ":_"
+    attE005.xsd:7:28: Attribute "ref": Invalid QName: ":_"
 
 Grp: MS-Attribute2006-07-15 / attE006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50032,7 +50034,7 @@ Grp: MS-Attribute2006-07-15 / attE006
 Grp: MS-Attribute2006-07-15 / attE007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attE007
-    attE007.xsd:6:26: Attribute "ref": Invalid value: ""
+    attE007.xsd:6:26: Attribute "ref": Invalid QName: ""
 
 Grp: MS-Attribute2006-07-15 / attE008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -64306,7 +64308,7 @@ Grp: MS-DataTypes2006-07-15 / QName001_2084
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK QName001_2084
   OK QName001_2084.i
-    QName001.xml:6:26: Invalid value: ""
+    QName001.xml:6:26: Invalid QName: ""
 
 Grp: MS-DataTypes2006-07-15 / QName002_2085
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -64322,13 +64324,13 @@ Grp: MS-DataTypes2006-07-15 / QName004_2087
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK QName004_2087
   OK QName004_2087.i
-    QName004.xml:6:18: Invalid value: "1fo"
+    QName004.xml:6:18: Invalid QName: "1fo"
 
 Grp: MS-DataTypes2006-07-15 / QName005_2088
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK QName005_2088
   OK QName005_2088.i
-    QName005.xml:6:19: Invalid value: "-foo"
+    QName005.xml:6:19: Invalid QName: "-foo"
 
 Grp: MS-DataTypes2006-07-15 / QName006_2089
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -64339,13 +64341,13 @@ Grp: MS-DataTypes2006-07-15 / QName007_2090
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK QName007_2090
   OK QName007_2090.i
-    QName007.xml:6:19: Invalid value: ":foo"
+    QName007.xml:6:19: Invalid QName: ":foo"
 
 Grp: MS-DataTypes2006-07-15 / QName008_2091
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK QName008_2091
   OK QName008_2091.i
-    QName008.xml:6:21: Invalid value: "fo:1fo"
+    QName008.xml:6:21: Invalid QName: "fo:1fo"
 
 Grp: MS-DataTypes2006-07-15 / QName009_2092
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -64356,13 +64358,13 @@ Grp: MS-DataTypes2006-07-15 / QName010_2093
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK QName010_2093
   OK QName010_2093.i
-    QName010.xml:6:20: Invalid value: "@test"
+    QName010.xml:6:20: Invalid QName: "@test"
 
 Grp: MS-DataTypes2006-07-15 / QName011_2094
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK QName011_2094
   OK QName011_2094.i
-    QName011.xml:6:16: Invalid value: "//foo"
+    QName011.xml:6:16: Invalid QName: "//foo"
 
 Grp: MS-DataTypes2006-07-15 / normalizedString001_2095
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -65447,7 +65449,7 @@ Grp: MS-Element2006-07-15 / elemE006
 Grp: MS-Element2006-07-15 / elemE007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemE007
-    elemE007.xsd:4:50: Attribute "substitutionGroup": Invalid value: ""
+    elemE007.xsd:4:50: Attribute "substitutionGroup": Invalid QName: ""
 
 Grp: MS-Element2006-07-15 / elemE008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -66689,7 +66691,7 @@ Grp: MS-Element2006-07-15 / elemZ014
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK elemZ014
   XP elemZ014.v
-    elemZ014.xml:4:32: No definition found for "myelem"
+    elemZ014.xml:4:32: No definitiont  found for "myelem"
 
 Grp: MS-Element2006-07-15 / elemZ015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -76568,7 +76570,7 @@ Grp: MS-Particles2006-07-15 / particlesIc002
 Grp: MS-Particles2006-07-15 / particlesIc003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK particlesIc003
-    particlesIc003.xsd:9:48: Attribute "name": Invalid value: "imp:e1"
+    particlesIc003.xsd:7:37: Attribute "base": No corresponding namespace in scope for "imp"
 
 Grp: MS-Particles2006-07-15 / particlesIc004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92849,7 +92851,7 @@ Grp: MS-SimpleType2006-07-15 / stC003
 Grp: MS-SimpleType2006-07-15 / stC004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stC004
-    Type "string" was referenced but never declared
+    stC004.xsd:3:39: Attribute "base": No corresponding namespace in scope for "foo"
 
 Grp: MS-SimpleType2006-07-15 / stC005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93025,13 +93027,14 @@ Grp: MS-SimpleType2006-07-15 / stD008
   OK stD008
 
 Grp: MS-SimpleType2006-07-15 / stD009
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF stD009
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK stD009
+    stD009.xsd:7:39: Attribute "itemType": No corresponding namespace in scope for "foo"
 
 Grp: MS-SimpleType2006-07-15 / stD010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stD010
-    stD010.xsd:4:26: Attribute "itemType": Invalid value: ""
+    stD010.xsd:4:26: Attribute "itemType": Invalid QName: ""
 
 Grp: MS-SimpleType2006-07-15 / stD011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93112,8 +93115,9 @@ Grp: MS-SimpleType2006-07-15 / stE007
   OK stE007
 
 Grp: MS-SimpleType2006-07-15 / stE008
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF stE008
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK stE008
+    stE008.xsd:14:58: Attribute "memberTypes": No corresponding namespace in scope for "foo"
 
 Grp: MS-SimpleType2006-07-15 / stE009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93326,9 +93330,9 @@ Grp: MS-SimpleType2006-07-15 / stE078
     stE078.xml:1:13: Element's value must be "anyur"
 
 Grp: MS-SimpleType2006-07-15 / stE079
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stE079
-  OK stE079.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP stE079
+    stE079.xsd:5:20: Invalid value "a:b"
 
 Grp: MS-SimpleType2006-07-15 / stE080
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93367,15 +93371,14 @@ Grp: MS-SimpleType2006-07-15 / stE093
   OK stE093.v
 
 Grp: MS-SimpleType2006-07-15 / stE094
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stE094
-  OK stE094.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP stE094
+    stE094.xsd:10:20: Invalid value "a:a"
 
 Grp: MS-SimpleType2006-07-15 / stE095
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stE095
-  OK stE095.i
-    stE095.xml:1:56: Element's value must be "12 abcdef 4.0 a:a a:b b:a b:b"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP stE095
+    stE095.xsd:10:20: Invalid value "a:a"
 
 Grp: MS-SimpleType2006-07-15 / stE096
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95670,7 +95673,7 @@ Grp: MS-Wildcards2006-07-15 / wildZ004
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK wildZ004
   XP wildZ004.v
-    wildZ004.xml:7:35: No definition found for "myelem"
+    wildZ004.xml:7:35: No definitiont  found for "myelem"
 
 Grp: MS-Wildcards2006-07-15 / wildZ005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95777,13 +95780,13 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37755 (omitting non-accepted tests)
+Total number of tests: 37752 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
-   24072 XML files
+   24069 XML files
 NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1054
-SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 250
-SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 821
+SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 253
+SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 817
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 496 in_full_fail= 4
 XF: XML OK, should be KO: in_full_pass= 0 in_partial= 54 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1627 ( 4.3 %)
+Total errors: 1626 ( 4.3 %)

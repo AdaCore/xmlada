@@ -29,9 +29,11 @@
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Schema.Validators.Facets;  use Schema.Validators.Facets;
 with Sax.Encodings;             use Sax.Encodings;
+with Sax.Readers;               use Sax.Readers;
 with Sax.Utils;                 use Sax.Utils;
 with Schema.Date_Time;          use Schema.Date_Time;
 with Schema.Decimal;            use Schema.Decimal;
+with Schema.Readers;            use Schema.Readers;
 with Unicode.CES;               use Unicode, Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
@@ -298,7 +300,7 @@ package body Schema.Validators.Simple_Types is
         (Validator     : access Validator_Record;
          Ch            : Unicode.CES.Byte_Sequence;
          Empty_Element : Boolean;
-         Id_Table      : access Id_Htable_Access);
+         Context       : in out Validation_Context);
       procedure Add_Facet
         (Validator   : access Validator_Record;
          Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -534,7 +536,7 @@ package body Schema.Validators.Simple_Types is
         (Validator     : access Validator_Record;
          Ch            : Unicode.CES.Byte_Sequence;
          Empty_Element : Boolean;
-         Id_Table      : access Id_Htable_Access)
+         Context       : in out Validation_Context)
       is
          pragma Unreferenced (Empty_Element);
       begin
@@ -543,7 +545,7 @@ package body Schema.Validators.Simple_Types is
                           & Get_Name (Validator));
          end if;
 
-         Check_Id (Id_Table, Validator, Ch);
+         Check_Id (Context, Validator, Ch);
          Check_Facet (Validator.Facets, Ch);
       end Validate_Characters;
 
@@ -701,7 +703,7 @@ package body Schema.Validators.Simple_Types is
      (Validator     : access Boolean_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access);
+      Context       : in out Validation_Context);
    procedure Add_Facet
      (Validator   : access Boolean_Validator_Record;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -736,7 +738,7 @@ package body Schema.Validators.Simple_Types is
      (Validator     : access HexBinary_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access);
+      Context       : in out Validation_Context);
    --  See inherited documentation
 
    function Base64Binary_Get_Length
@@ -751,6 +753,46 @@ package body Schema.Validators.Simple_Types is
      is new String_Validators.Validator_Record with null record;
    function Is_ID (Validator : ID_Validator) return Boolean;
 
+   type QName_Validator
+     is new String_Validators.Validator_Record with null record;
+   procedure Validate_Characters
+     (Validator     : access QName_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean;
+      Context       : in out Validation_Context);
+
+   -------------------------
+   -- Validate_Characters --
+   -------------------------
+
+   procedure Validate_Characters
+     (Validator     : access QName_Validator;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean;
+      Context       : in out Validation_Context)
+   is
+      pragma Unreferenced (Validator, Empty_Element);
+      Pos : Integer;
+      NS  : XML_NS;
+   begin
+      if not Is_Valid_QName (Ch) then
+         Validation_Error ("Invalid QName: """ & Ch & '"');
+      end if;
+
+      Pos := Ada.Strings.Fixed.Index (Ch, ":");
+      if Pos >= Ch'First then
+         --  Check whether the namespace is valid
+         Get_Namespace_From_Prefix
+           (Handler => Validating_Reader (Context.Parser.all),
+            Prefix  => Ch (Ch'First .. Pos - 1),
+            NS      => NS);
+         if NS = No_XML_NS or else Get_URI (NS) = "xmlns" then
+            Validation_Error ("No corresponding namespace in scope for """
+                              & Ch (Ch'First .. Pos - 1) & '"');
+         end if;
+      end if;
+   end Validate_Characters;
+
    -------------------------
    -- Validate_Characters --
    -------------------------
@@ -759,7 +801,7 @@ package body Schema.Validators.Simple_Types is
      (Validator     : access HexBinary_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access) is
+      Context       : in out Validation_Context) is
    begin
       if Sax.Encodings.Encoding.Length (Ch) mod 2 /= 0 then
          Validation_Error
@@ -767,7 +809,7 @@ package body Schema.Validators.Simple_Types is
       end if;
       HexBinary_Validators.Validate_Characters
         (HexBinary_Validators.Validator_Record (Validator.all)'Access,
-         Ch, Empty_Element, Id_Table);
+         Ch, Empty_Element, Context);
    end Validate_Characters;
 
    -----------
@@ -936,9 +978,9 @@ package body Schema.Validators.Simple_Types is
      (Validator     : access Boolean_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access)
+      Context       : in out Validation_Context)
    is
-      pragma Unreferenced (Empty_Element, Id_Table);
+      pragma Unreferenced (Empty_Element, Context);
       First : Integer := Ch'First;
       Index : Integer;
       C : Unicode_Char;
@@ -1242,8 +1284,7 @@ package body Schema.Validators.Simple_Types is
       Set_Whitespace (Str.Facets, Preserve);
       Create_Global_Type (G, "string", Str);
 
-      Str := new String_Validators.Validator_Record;
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_QName'Access);
+      Str := new QName_Validator;
       Create_Global_Type (G, "QName", Str);
 
       Str := new String_Validators.Validator_Record;
@@ -1514,7 +1555,7 @@ package body Schema.Validators.Simple_Types is
      (Union         : access XML_Union_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access)
+      Context       : in out Validation_Context)
    is
       Iter : Particle_Iterator;
       Valid : XML_Validator;
@@ -1537,7 +1578,7 @@ package body Schema.Validators.Simple_Types is
          begin
             Valid := Get_Validator (Get (Iter).Type_Descr);
             if Valid /= null then
-               Validate_Characters (Valid, Ch, Empty_Element, Id_Table);
+               Validate_Characters (Valid, Ch, Empty_Element, Context);
             end if;
 
             --  No error ? => Everything is fine
@@ -1593,9 +1634,9 @@ package body Schema.Validators.Simple_Types is
      (Validator      : access Any_Simple_XML_Validator_Record;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
-      Id_Table       : access Id_Htable_Access)
+      Context        : in out Validation_Context)
    is
-      pragma Unreferenced (Id_Table);
+      pragma Unreferenced (Context);
    begin
       if Debug then
          Debug_Output ("Validate_Character for Any_Simple_XML_Validator "

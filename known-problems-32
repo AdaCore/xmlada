@@ -61,6 +61,7 @@ KP-32-J302-043 Lots of fixes in schema validation
                 value of the attribute
               - Verify the "form" for attributes (whether they should be
                 namespace qualified or not)
+              - QName elements must have a valid namespace
 
   Status:     Fixed in 3.3.0
 

@@ -127,7 +127,7 @@ package body Schema.Readers is
      (Reader  : in out Validating_Reader;
       Grammar : Schema.Validators.XML_Grammar) is
    begin
-      Reader.Grammar := Grammar;
+      Reader.Context.Grammar := Grammar;
    end Set_Validating_Grammar;
 
    ----------------------------
@@ -137,7 +137,7 @@ package body Schema.Readers is
    function Get_Validating_Grammar
      (Reader : Validating_Reader) return Schema.Validators.XML_Grammar is
    begin
-      return Reader.Grammar;
+      return Reader.Context.Grammar;
    end Get_Validating_Grammar;
 
    ----------
@@ -203,10 +203,10 @@ package body Schema.Readers is
    is
       XML_G, XML_IG : XML_Grammar_NS;
    begin
-      Get_NS (Handler.Grammar, XML_Instance_URI, Result => XML_IG);
+      Get_NS (Handler.Context.Grammar, XML_Instance_URI, Result => XML_IG);
 
       if not Has_Attribute (Validator, XML_IG, "type") then
-         Get_NS (Handler.Grammar, XML_Schema_URI, Result => XML_G);
+         Get_NS (Handler.Context.Grammar, XML_Schema_URI, Result => XML_G);
 
          Add_Attribute
            (Validator,
@@ -270,12 +270,12 @@ package body Schema.Readers is
 
       if URI /= "-" then
          Get_NS
-           (Handler.Grammar,
+           (Handler.Context.Grammar,
             Namespace_URI    => URI,
             Result           => Local_Grammar,
             Create_If_Needed => False);
 
-         if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
+         if Get_XSD_Version (Handler.Context.Grammar) = XSD_1_0 then
             --  Must check that no element of the same namespace was seen
             --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
             --  changed in XSD 1.1).
@@ -285,7 +285,7 @@ package body Schema.Readers is
             begin
                Find_NS_From_URI
                  (Handler,
-                  Context => Handler.Context,
+                  Context => Handler.Context.Context,
                   URI     => URI,
                   NS      => NS);
 
@@ -387,7 +387,7 @@ package body Schema.Readers is
            (Handler,
             URI      => Schema_Location (Start_NS .. Last_NS - 1),
             Xsd_File => Schema_Location (Start_XSD .. Last_XSD - 1),
-            Add_To   => Handler.Grammar);
+            Add_To   => Handler.Context.Grammar);
 
          while Index <= Schema_Location'Last loop
             Start_NS := Index;
@@ -452,7 +452,7 @@ package body Schema.Readers is
                  (Get_Validator (Handler.Validators.Typ),
                   Handler.Validators.Characters.all,
                   Empty_Element => Empty_Element,
-                  Id_Table      => Validating_Reader (Handler).Ids'Access);
+                  Context       => Validating_Reader (Handler).Context);
             end if;
 
             Free (Handler.Validators.Characters);
@@ -498,17 +498,18 @@ package body Schema.Readers is
             Local_Name => "schemaLocation");
       begin
          if No_Index /= -1 then
-            Parse_Grammar (Validating_Reader (Handler),
-                           URI      => "",
-                           Xsd_File => Get_Value (Atts, No_Index),
-                           Add_To   => Validating_Reader (Handler).Grammar);
-            Global_Check (Validating_Reader (Handler).Grammar);
+            Parse_Grammar
+              (Validating_Reader (Handler),
+               URI      => "",
+               Xsd_File => Get_Value (Atts, No_Index),
+               Add_To   => Validating_Reader (Handler).Context.Grammar);
+            Global_Check (Validating_Reader (Handler).Context.Grammar);
          end if;
 
          if Location_Index /= -1 then
             Parse_Grammars (Validating_Reader (Handler),
                             Get_Value (Atts, Location_Index));
-            Global_Check (Validating_Reader (Handler).Grammar);
+            Global_Check (Validating_Reader (Handler).Context.Grammar);
          end if;
       end Get_Grammar_From_Attributes;
 
@@ -538,7 +539,8 @@ package body Schema.Readers is
                Get_Namespace_From_Prefix
                  (Validating_Reader (Handler),
                   Qname (Qname'First .. Separator - 1), NS);
-               Get_NS (Validating_Reader (Handler).Grammar, Get_URI (NS), G);
+               Get_NS (Validating_Reader (Handler).Context.Grammar,
+                       Get_URI (NS), G);
                Typ := Lookup (G, Qname (Separator + 1 .. Qname'Last),
                               Create_If_Needed => False);
             end;
@@ -581,7 +583,7 @@ package body Schema.Readers is
                    & ASCII.ESC & "[39m");
       end if;
 
-      Validating_Reader (Handler).Context := Elem;
+      Validating_Reader (Handler).Context.Context := Elem;
 
       Validate_Current_Characters (Validating_Reader (Handler));
 
@@ -589,7 +591,7 @@ package body Schema.Readers is
 
       Get_Grammar_From_Attributes;
 
-      if Validating_Reader (Handler).Grammar = No_Grammar then
+      if Validating_Reader (Handler).Context.Grammar = No_Grammar then
          return;  --  Always valid, since we have no grammar anyway
       end if;
 
@@ -603,7 +605,7 @@ package body Schema.Readers is
       then
          G := Validating_Reader (Handler).Validators.Grammar;
       else
-         Get_NS (Validating_Reader (Handler).Grammar,
+         Get_NS (Validating_Reader (Handler).Context.Grammar,
                  Namespace_URI, Result => G);
       end if;
 
@@ -618,7 +620,7 @@ package body Schema.Readers is
            (Get_Validator (Validating_Reader (Handler).Validators.Typ),
             Local_Name, Namespace_URI, G,
             Validating_Reader (Handler).Validators.Data,
-            Validating_Reader (Handler).Grammar, Element);
+            Validating_Reader (Handler).Context.Grammar, Element);
 
          --  If not: this is a validation error
 
@@ -654,9 +656,8 @@ package body Schema.Readers is
 
       Validate_Attributes
         (Get_Validator (Typ), Atts,
-         Validating_Reader (Handler).Ids'Access,
          Is_Nillable (Element), Is_Nil,
-         Validating_Reader (Handler).Grammar);
+         Validating_Reader (Handler).Context);
 
       if Validating_Reader (Handler).Validators /= null
         and then Validating_Reader (Handler).Validators.Is_Nil
@@ -767,7 +768,7 @@ package body Schema.Readers is
    procedure Reset (Parser : in out Validating_Reader) is
    begin
       Parser.Locator := No_Locator;
-      Free  (Parser.Ids);
+      Free (Parser.Context.Id_Table);
       Clear (Parser.Validators);
    end Reset;
 
@@ -799,9 +800,11 @@ package body Schema.Readers is
                     Doc_Locator   => null);
       end if;
 
-      if Parser.Grammar = No_Grammar then
+      Parser.Context.Parser := Parser'Unrestricted_Access;
+
+      if Parser.Context.Grammar = No_Grammar then
          --  Make sure predefined types are known
-         Initialize (Parser.Grammar);
+         Initialize (Parser.Context.Grammar);
       end if;
 
       Sax.Readers.Parse (Sax.Readers.Reader (Parser), Input);
@@ -856,6 +859,18 @@ package body Schema.Readers is
       Validating_Reader (Handler).Locator := Loc;
    end Hook_Set_Document_Locator;
 
+   -----------------
+   -- Get_Context --
+   -----------------
+
+   function Get_Context
+     (Handler : access Validating_Reader)
+      return Schema.Validators.Validation_Context_Access is
+   begin
+      --  ??? This is dangerous
+      return Handler.Context'Unrestricted_Access;
+   end Get_Context;
+
    -------------------------------
    -- Get_Namespace_From_Prefix --
    -------------------------------
@@ -867,7 +882,7 @@ package body Schema.Readers is
    begin
       Find_NS
         (Parser  => Handler,
-         Context => Handler.Context,
+         Context => Handler.Context.Context,
          Prefix  => Prefix,
          NS      => NS);
       if Get_URI (NS) = "" then

@@ -30,6 +30,7 @@ with Unicode.CES;
 with Sax.Attributes;
 with Sax.HTable;
 with Sax.Pointers;
+with Sax.Readers;
 with Sax.Utils;
 
 package Schema.Validators is
@@ -240,8 +241,20 @@ package Schema.Validators is
 
    type Id_Htable_Access is private;
 
-   procedure Free (Ids : in out Id_Htable_Access);
-   --  Free the memory occupied by Ids
+   type Validation_Context is record
+      Id_Table  : Id_Htable_Access;
+      --  Mapping of IDs to elements
+
+      Grammar   : XML_Grammar := No_Grammar;
+
+      Context   : Sax.Readers.Element_Access;
+      --  Current element being parsed
+
+      Parser    : Sax.Readers.Reader_Access;
+   end record;
+   type Validation_Context_Access is access all Validation_Context;
+
+   procedure Free (Id_Table : in out Id_Htable_Access);
 
    -------------------------
    -- Attribute_Validator --
@@ -292,8 +305,7 @@ package Schema.Validators is
      (Validator : Attribute_Validator_Record;
       Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
-      Grammar   : in out XML_Grammar;
-      Id_Table  : access Id_Htable_Access) is abstract;
+      Context   : in out Validation_Context) is abstract;
    --  Return True if Value is valid for this attribute.
    --  Sets the type of the attribute (per sax-attributes) to ID if we have an
    --  ID attribute.
@@ -376,12 +388,11 @@ package Schema.Validators is
    --  Raise XML_Validation_Error in case of error
 
    procedure Validate_Attributes
-     (Validator         : access XML_Validator_Record;
-      Atts              : in out Sax.Attributes.Attributes'Class;
-      Id_Table          : access Id_Htable_Access;
-      Nillable          : Boolean;
-      Is_Nil            : out Boolean;
-      Grammar           : in out XML_Grammar);
+     (Validator : access XML_Validator_Record;
+      Atts      : in out Sax.Attributes.Attributes'Class;
+      Nillable  : Boolean;
+      Is_Nil    : out Boolean;
+      Context   : in out Validation_Context);
    --  Check whether this list of attributes is valid for elements associated
    --  with this validator. By default, this simply check whether the list of
    --  attributes registered through Add_Attribute matches Atts.
@@ -410,7 +421,7 @@ package Schema.Validators is
      (Validator      : access XML_Validator_Record;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
-      Id_Table       : access Id_Htable_Access);
+      Context        : in out Validation_Context);
    --  Check whether this Characters event is valid in the context of
    --  Validator. Multiple calls to the SAX event Characters are grouped before
    --  calling this subprogram.
@@ -518,7 +529,7 @@ package Schema.Validators is
    procedure Set_Type
      (Element      : XML_Element;
       Element_Type : XML_Type;
-      Id_Table     : access Id_Htable_Access);
+      Context      : in out Validation_Context);
    --  Return the type validator for this element
 
    function Get_Local_Name
@@ -528,7 +539,7 @@ package Schema.Validators is
    procedure Set_Default
      (Element  : XML_Element;
       Default  : Unicode.CES.Byte_Sequence;
-      Id_Table : access Id_Htable_Access);
+      Context  : in out Validation_Context);
    function Has_Default (Element : XML_Element) return Boolean;
    function Get_Default
      (Element : XML_Element) return Unicode.CES.Byte_Sequence_Access;
@@ -540,7 +551,7 @@ package Schema.Validators is
    procedure Set_Fixed
      (Element  : XML_Element;
       Fixed    : Unicode.CES.Byte_Sequence;
-      Id_Table : access Id_Htable_Access);
+      Context  : in out Validation_Context);
    function Has_Fixed (Element : XML_Element) return Boolean;
    function Get_Fixed
      (Element : XML_Element) return Unicode.CES.Byte_Sequence_Access;
@@ -1075,8 +1086,7 @@ private
      (Validator : Named_Attribute_Validator_Record;
       Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
-      Grammar   : in out XML_Grammar;
-      Id_Table  : access Id_Htable_Access);
+      Context   : in out Validation_Context);
    procedure Free (Validator : in out Named_Attribute_Validator_Record);
    function Is_Equal
      (Attribute : Named_Attribute_Validator_Record;
@@ -1097,8 +1107,7 @@ private
      (Validator : Any_Attribute_Validator;
       Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
-      Grammar   : in out XML_Grammar;
-      Id_Table  : access Id_Htable_Access);
+      Context   : in out Validation_Context);
    procedure Free (Validator : in out Any_Attribute_Validator);
    function Is_Equal
      (Attribute : Any_Attribute_Validator;
@@ -1427,7 +1436,7 @@ private
      (Validator     : access Group_Model_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table       : access Id_Htable_Access);
+      Context       : in out Validation_Context);
    --  See doc for inherited subprograms
 
    function Type_Model
@@ -1462,7 +1471,7 @@ private
      (Validator     : access XML_Any_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table       : access Id_Htable_Access);
+      Context       : in out Validation_Context);
    function Get_Namespace_From_Parent_For_Locals
      (Validator : access XML_Any_Record) return Boolean;
    procedure Free (Any : in out XML_Any_Record);
@@ -1606,7 +1615,7 @@ private
    --  This is for debug purposes only
 
    procedure Check_Id
-     (Id_Table  : access Id_Htable_Access;
+     (Context   : in out Validation_Context;
       Validator : access XML_Validator_Record'Class;
       Value     : Unicode.CES.Byte_Sequence);
    --  Check whether Value is a unique ID in the document.

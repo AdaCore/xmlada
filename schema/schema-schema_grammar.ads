@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -37,7 +37,7 @@ with Schema.Validators;
 package Schema.Schema_Grammar is
 
    procedure Add_Schema_For_Schema
-     (Grammar : in out Schema.Validators.XML_Grammar);
+     (Context : in out Schema.Validators.Validation_Context);
    --  Adds the definition for the standard XML namespaces (schemas,...) to
    --  Grammar. The resulting grammar can thus be used, among other things, to
    --  validate schema files. This doesn't add the predefined types, which

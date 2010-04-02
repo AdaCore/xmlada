@@ -54,7 +54,7 @@ package body Schema.Validators.Restrictions is
      (Validator     : access Restriction_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access);
+      Context       : in out Validation_Context);
    procedure Get_Attribute_Lists
      (Validator   : access Restriction_XML_Validator;
       List        : out Attribute_Validator_List_Access;
@@ -203,7 +203,7 @@ package body Schema.Validators.Restrictions is
      (Validator     : access Restriction_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table      : access Id_Htable_Access) is
+      Context       : in out Validation_Context) is
    begin
       if Debug then
          Debug_Output
@@ -217,10 +217,10 @@ package body Schema.Validators.Restrictions is
 
       if Validator.Restriction /= null then
          Validate_Characters
-           (Validator.Restriction, Ch, Empty_Element, Id_Table);
+           (Validator.Restriction, Ch, Empty_Element, Context);
       else
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element, Id_Table);
+           (Get_Validator (Validator.Base), Ch, Empty_Element, Context);
       end if;
    end Validate_Characters;
 

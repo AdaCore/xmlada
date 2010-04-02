@@ -109,60 +109,60 @@ package body Schema.Schema_Readers is
    --  Get the value of processContents from the attributes
 
    procedure Create_Element
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Complex_Type
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Simple_Type
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Restriction
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_All
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Sequence
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Attribute
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Schema
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Extension
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_List
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Union
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Choice
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Redefine
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Include
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Group
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Attribute_Group
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Any
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Import
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    procedure Create_Any_Attribute
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class);
    --  Create a new context for a specific tag:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
    --  <attribute>, <schema>, <extension>, <list>, <union>, <choice>,
    --  <redefine>, <group>, <attributeGroup>, <any>, <import>, <anyAttribute>
 
-   procedure Finish_Element (Handler : in out Schema_Reader);
-   procedure Finish_Complex_Type (Handler : in out Schema_Reader);
-   procedure Finish_Simple_Type (Handler : in out Schema_Reader);
-   procedure Finish_Restriction (Handler : in out Schema_Reader);
-   procedure Finish_All (Handler : in out Schema_Reader);
-   procedure Finish_Sequence (Handler : in out Schema_Reader);
-   procedure Finish_Attribute (Handler : in out Schema_Reader);
-   procedure Finish_Extension (Handler : in out Schema_Reader);
-   procedure Finish_Union (Handler : in out Schema_Reader);
-   procedure Finish_List (Handler : in out Schema_Reader);
-   procedure Finish_Choice (Handler : in out Schema_Reader);
-   procedure Finish_Group (Handler : in out Schema_Reader);
+   procedure Finish_Element      (Handler : access Schema_Reader);
+   procedure Finish_Complex_Type (Handler : access Schema_Reader);
+   procedure Finish_Simple_Type  (Handler : access Schema_Reader);
+   procedure Finish_Restriction  (Handler : access Schema_Reader);
+   procedure Finish_All          (Handler : access Schema_Reader);
+   procedure Finish_Sequence     (Handler : access Schema_Reader);
+   procedure Finish_Attribute    (Handler : access Schema_Reader);
+   procedure Finish_Extension    (Handler : access Schema_Reader);
+   procedure Finish_Union        (Handler : access Schema_Reader);
+   procedure Finish_List         (Handler : access Schema_Reader);
+   procedure Finish_Choice       (Handler : access Schema_Reader);
+   procedure Finish_Group        (Handler : access Schema_Reader);
    --  Finish the handling of various tags:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
    --  <extension>, <union>, <list>, <choice>, <group>
@@ -301,7 +301,7 @@ package body Schema.Schema_Readers is
       --  Make sure the grammar used to validate the XSD file is correct. This
       --  won't do anything if the schema-for-schema was already added.
       G := Get_Validating_Grammar (Handler);
-      Add_Schema_For_Schema (G);
+      Add_Schema_For_Schema (Get_Context (Handler'Access).all);
       Set_Validating_Grammar (Handler, G);
 
       Handler.Target_NS := Get_Target_NS (Handler.Created_Grammar);
@@ -343,7 +343,6 @@ package body Schema.Schema_Readers is
          Set_Parsed_URI
            (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
          Parse (Validating_Reader (Parser), Input);
-         Free (Parser.Ids);
 
          Set_System_Id (Parser.Target_NS, Input_Sources.Get_System_Id (Input));
       end if;
@@ -351,7 +350,6 @@ package body Schema.Schema_Readers is
    exception
       when others =>
          Free (Parser.Contexts, Recurse => True);
-         Free (Parser.Ids);
          raise;
    end Parse;
 
@@ -465,7 +463,7 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Create_Group
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
       Name_Index : constant Integer :=
@@ -518,7 +516,7 @@ package body Schema.Schema_Readers is
                  & Get_Value (Atts, Name_Index) & """);");
 
       elsif Ref_Index /= -1 then
-         if In_Redefine_Context (Handler) then
+         if In_Redefine_Context (Handler.all) then
             Tmp := Handler.Contexts;
             while Tmp /= null loop
                if Tmp.Typ = Context_Group
@@ -538,7 +536,8 @@ package body Schema.Schema_Readers is
 
          if Handler.Contexts.Group = No_XML_Group then
             Lookup_With_NS
-              (Handler, Get_Value (Atts, Ref_Index), Handler.Contexts.Group);
+              (Handler.all, Get_Value (Atts, Ref_Index),
+               Handler.Contexts.Group);
             Output (Ada_Name (Handler.Contexts) & " := Group;");
          end if;
       end if;
@@ -588,7 +587,7 @@ package body Schema.Schema_Readers is
    -- Finish_Group --
    ------------------
 
-   procedure Finish_Group (Handler : in out Schema_Reader) is
+   procedure Finish_Group (Handler : access Schema_Reader) is
       pragma Unreferenced (Handler);
    begin
       null;
@@ -599,14 +598,14 @@ package body Schema.Schema_Readers is
    ----------------------------
 
    procedure Create_Attribute_Group
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
       Name_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "name");
       Ref_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "ref");
-      In_Redefine : constant Boolean := In_Redefine_Context (Handler);
+      In_Redefine : constant Boolean := In_Redefine_Context (Handler.all);
    begin
       Handler.Contexts := new Context'
         (Typ            => Context_Attribute_Group,
@@ -641,7 +640,8 @@ package body Schema.Schema_Readers is
 
       elsif Ref_Index /= -1 then
          Lookup_With_NS
-           (Handler, Get_Value (Atts, Ref_Index), Handler.Contexts.Attr_Group);
+           (Handler.all, Get_Value (Atts, Ref_Index),
+            Handler.Contexts.Attr_Group);
          Output (Ada_Name (Handler.Contexts) & " := Attr_Group");
       end if;
 
@@ -651,7 +651,7 @@ package body Schema.Schema_Readers is
                null;
 
             when Context_Type_Def =>
-               Ensure_Type (Handler, Handler.Contexts.Next);
+               Ensure_Type (Handler.all, Handler.Contexts.Next);
                Add_Attribute_Group
                  (Handler.Contexts.Next.Type_Validator,
                   Handler.Contexts.Attr_Group);
@@ -699,14 +699,14 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Create_Include
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
       Schema_Location_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
    begin
       Parse_Grammar
-        (Handler,
+        (Handler.all,
          URI      => "-",
          Xsd_File => Get_Value (Atts, Schema_Location_Index),
          Add_To   => Handler.Created_Grammar);
@@ -717,14 +717,14 @@ package body Schema.Schema_Readers is
    ---------------------
 
    procedure Create_Redefine
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
       Location_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
    begin
       Parse_Grammar
-        (Handler,
+        (Handler.all,
          URI      => "-",
          Xsd_File => Get_Value (Atts, Location_Index),
          Add_To   => Handler.Created_Grammar);
@@ -740,7 +740,7 @@ package body Schema.Schema_Readers is
    -------------------
 
    procedure Create_Import
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
       Location_Index : constant Integer :=
@@ -756,7 +756,7 @@ package body Schema.Schema_Readers is
       declare
          Location : constant Byte_Sequence := Get_Value (Atts, Location_Index);
          Absolute : constant Byte_Sequence := To_Absolute_URI
-           (Handler, Location);
+           (Handler.all, Location);
       begin
          if Debug then
             Put_Line ("Import: " & Absolute);
@@ -765,7 +765,7 @@ package body Schema.Schema_Readers is
 
          if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
             Parse_Grammar
-              (Handler,
+              (Handler.all,
                URI      => "-",
                Xsd_File => Location,
                Add_To   => Handler.Created_Grammar);
@@ -780,7 +780,7 @@ package body Schema.Schema_Readers is
    --------------------------
 
    procedure Create_Any_Attribute
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
       Namespace_Index : constant Integer :=
@@ -807,7 +807,7 @@ package body Schema.Schema_Readers is
       end if;
 
       Insert_Attribute
-        (Handler,
+        (Handler.all,
          Handler.Contexts,
          Create_Any_Attribute (Process_Contents, Kind, NS),
          "Create_Any_Attribute (" & Process_Contents'Img
@@ -821,7 +821,7 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Create_Element
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
       --  ??? Could be more efficient by traversing the list of attributes
@@ -874,7 +874,7 @@ package body Schema.Schema_Readers is
       if Name_Index /= -1 then
          if Type_Index /= -1 then
             Lookup_With_NS
-              (Handler, Get_Value (Atts, Type_Index), Result => Typ);
+              (Handler.all, Get_Value (Atts, Type_Index), Result => Typ);
 
             if Get_Local_Name (Typ) = "IDREF"
               or else Get_Local_Name (Typ) = "IDREFS"
@@ -898,7 +898,7 @@ package body Schema.Schema_Readers is
                        & ");");
 
                if Typ /= No_Type then
-                  Set_Type (Element, Typ, Handler.Ids'Access);
+                  Set_Type (Element, Typ, Get_Context (Handler).all);
                   Output ("Set_Type (" & Ada_Name (Element) & ", "
                           & Ada_Name (Typ) & ");");
                end if;
@@ -915,7 +915,7 @@ package body Schema.Schema_Readers is
 
          if Ref_Index /= -1
            and then Get_Value (Atts, Name_Index) = Get_Value (Atts, Ref_Index)
-           and then not In_Redefine_Context (Handler)
+           and then not In_Redefine_Context (Handler.all)
          then
             Validation_Error
               ("""ref"" attribute cannot be self-referencing");
@@ -927,7 +927,7 @@ package body Schema.Schema_Readers is
 
       else
          Lookup_With_NS
-           (Handler, Get_Value (Atts, Ref_Index), Result => Element);
+           (Handler.all, Get_Value (Atts, Ref_Index), Result => Element);
          Is_Ref := True;
 
          --  Section 3.3.2, validity constraints 3.3.3
@@ -946,7 +946,7 @@ package body Schema.Schema_Readers is
          end if;
 
          Lookup_With_NS
-           (Handler, Get_Value (Atts, Subst_Index), Result => Group);
+           (Handler.all, Get_Value (Atts, Subst_Index), Result => Group);
          Set_Substitution_Group (Element, Group);
          Output ("Set_Substitution_Group ("
                  & Ada_Name (Element) & ", " & Ada_Name (Group) & ");");
@@ -954,7 +954,8 @@ package body Schema.Schema_Readers is
 
       if Default_Index /= -1 then
          Set_Default
-           (Element, Get_Value (Atts, Default_Index), Handler.Ids'Access);
+           (Element, Get_Value (Atts, Default_Index),
+            Get_Context (Handler).all);
          Output ("Set_Default ("
                  & Ada_Name (Element) & ", """
                  & Get_Value (Atts, Default_Index) & """);");
@@ -962,7 +963,8 @@ package body Schema.Schema_Readers is
 
       if Fixed_Index /= -1 then
          Set_Fixed
-           (Element, Get_Value (Atts, Fixed_Index), Handler.Ids'Access);
+           (Element, Get_Value (Atts, Fixed_Index),
+            Get_Context (Handler).all);
          Output ("Set_Fixed ("
                  & Ada_Name (Element) & ", """
                  & Get_Value (Atts, Fixed_Index) & """);");
@@ -1084,14 +1086,14 @@ package body Schema.Schema_Readers is
    -- Finish_Element --
    --------------------
 
-   procedure Finish_Element (Handler : in out Schema_Reader) is
+   procedure Finish_Element (Handler : access Schema_Reader) is
    begin
       if not Handler.Contexts.Is_Ref
         and then Get_Type (Handler.Contexts.Element) = No_Type
       then
          Set_Type (Handler.Contexts.Element,
                    Lookup (Handler.Schema_NS, "ur-Type"),
-                   Handler.Ids'Access);
+                   Get_Context (Handler).all);
          Output ("Set_Type (" & Ada_Name (Handler.Contexts)
                  & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
       end if;
@@ -1102,7 +1104,7 @@ package body Schema.Schema_Readers is
    ------------------------
 
    procedure Create_Simple_Type
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
    begin
@@ -1130,14 +1132,14 @@ package body Schema.Schema_Readers is
    -- Finish_Simple_Type --
    ------------------------
 
-   procedure Finish_Simple_Type (Handler : in out Schema_Reader) is
+   procedure Finish_Simple_Type (Handler : access Schema_Reader) is
       C   : constant Context_Access := Handler.Contexts;
       Typ : XML_Type;
    begin
       if C.Next.Typ = Context_Restriction
         and then C.Next.Restriction_Base = No_Type
       then
-         Ensure_Type (Handler, C);
+         Ensure_Type (Handler.all, C);
 
          Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
          Output (Ada_Name (C) & " := Create_Local_Type (Validator);");
@@ -1155,7 +1157,7 @@ package body Schema.Schema_Readers is
    -------------------------
 
    procedure Create_Complex_Type
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
       Name_Index : constant Integer :=
@@ -1245,11 +1247,11 @@ package body Schema.Schema_Readers is
    -- Finish_Complex_Type --
    -------------------------
 
-   procedure Finish_Complex_Type (Handler  : in out Schema_Reader) is
+   procedure Finish_Complex_Type (Handler  : access Schema_Reader) is
       C   : constant Context_Access := Handler.Contexts;
       Typ : XML_Type;
    begin
-      Ensure_Type (Handler, C);
+      Ensure_Type (Handler.all, C);
       if C.Type_Name = null then
          Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
          Output (Ada_Name (C) & " := Create_Local_Type (Validator);");
@@ -1284,7 +1286,8 @@ package body Schema.Schema_Readers is
          when Context_Schema | Context_Redefine =>
             null;
          when Context_Element =>
-            Set_Type (Handler.Contexts.Next.Element, Typ, Handler.Ids'Access);
+            Set_Type (Handler.Contexts.Next.Element, Typ,
+                      Get_Context (Handler).all);
             Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (C) & ");");
          when Context_Attribute =>
@@ -1304,7 +1307,7 @@ package body Schema.Schema_Readers is
    ------------------------
 
    procedure Create_Restriction
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
       Base_Index : constant Integer :=
@@ -1315,7 +1318,7 @@ package body Schema.Schema_Readers is
         and then Base_Index /= -1
         and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
       then
-         if In_Redefine_Context (Handler) then
+         if In_Redefine_Context (Handler.all) then
             Base := Handler.Contexts.Redefined_Type;
          else
             Validation_Error
@@ -1324,7 +1327,7 @@ package body Schema.Schema_Readers is
 
       elsif Base_Index /= -1 then
          Lookup_With_NS
-           (Handler, Get_Value (Atts, Base_Index), Result => Base);
+           (Handler.all, Get_Value (Atts, Base_Index), Result => Base);
 
          if Get_Local_Name (Base) = "IDREF"
            or else Get_Local_Name (Base) = "IDREFS"
@@ -1381,9 +1384,9 @@ package body Schema.Schema_Readers is
    -- Finish_Restriction --
    ------------------------
 
-   procedure Finish_Restriction (Handler : in out Schema_Reader) is
+   procedure Finish_Restriction (Handler : access Schema_Reader) is
    begin
-      Create_Restricted (Handler, Handler.Contexts);
+      Create_Restricted (Handler.all, Handler.Contexts);
 
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1402,7 +1405,7 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Create_Union
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
       Member_Index : constant Integer :=
@@ -1440,7 +1443,7 @@ package body Schema.Schema_Readers is
                   Last := Members'Last + 1;
                end if;
 
-               Lookup_With_NS (Handler, Members (Start .. Last - 1), Typ);
+               Lookup_With_NS (Handler.all, Members (Start .. Last - 1), Typ);
                Add_Union (Handler.Contexts.Union, Typ);
                Output ("Add_Union ("
                        & Ada_Name (Handler.Contexts)
@@ -1454,7 +1457,7 @@ package body Schema.Schema_Readers is
    -- Finish_Union --
    ------------------
 
-   procedure Finish_Union (Handler : in out Schema_Reader) is
+   procedure Finish_Union (Handler : access Schema_Reader) is
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1472,7 +1475,7 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Create_Extension
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
       Base_Index : constant Integer :=
@@ -1487,7 +1490,7 @@ package body Schema.Schema_Readers is
       if Handler.Contexts.Type_Name /= null
         and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name.all
       then
-         if In_Redefine_Context (Handler) then
+         if In_Redefine_Context (Handler.all) then
             Base := Handler.Contexts.Redefined_Type;
          else
             Validation_Error
@@ -1495,7 +1498,7 @@ package body Schema.Schema_Readers is
          end if;
       else
          Lookup_With_NS
-           (Handler, Get_Value (Atts, Base_Index), Result => Base);
+           (Handler.all, Get_Value (Atts, Base_Index), Result => Base);
       end if;
 
       Handler.Contexts := new Context'
@@ -1510,7 +1513,7 @@ package body Schema.Schema_Readers is
    -- Finish_Extension --
    ----------------------
 
-   procedure Finish_Extension (Handler : in out Schema_Reader) is
+   procedure Finish_Extension (Handler : access Schema_Reader) is
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1548,7 +1551,7 @@ package body Schema.Schema_Readers is
    -----------------
 
    procedure Create_List
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
       Item_Type_Index : constant Integer :=
@@ -1557,7 +1560,7 @@ package body Schema.Schema_Readers is
    begin
       if Item_Type_Index /= -1 then
          Lookup_With_NS
-           (Handler, Get_Value (Atts, Item_Type_Index), Result => Items);
+           (Handler.all, Get_Value (Atts, Item_Type_Index), Result => Items);
       end if;
 
       Handler.Contexts := new Context'
@@ -1571,7 +1574,7 @@ package body Schema.Schema_Readers is
    -- Finish_List --
    -----------------
 
-   procedure Finish_List (Handler : in out Schema_Reader) is
+   procedure Finish_List (Handler : access Schema_Reader) is
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1622,7 +1625,7 @@ package body Schema.Schema_Readers is
    -------------------
 
    procedure Create_Choice
-     (Handler : in out Schema_Reader; Atts : Sax.Attributes.Attributes'Class)
+     (Handler : access Schema_Reader; Atts : Sax.Attributes.Attributes'Class)
    is
       Min_Occurs_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "minOccurs");
@@ -1650,7 +1653,7 @@ package body Schema.Schema_Readers is
          when Context_Type_Def =>
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             Handler.Contexts.Next.Type_Validator := Create_Repeat
-              (Handler, Handler.Contexts.C, Min_Occurs, Max_Occurs);
+              (Handler.all, Handler.Contexts.C, Min_Occurs, Max_Occurs);
          when Context_Sequence =>
             Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.C,
                           Min_Occurs, Max_Occurs);
@@ -1664,7 +1667,7 @@ package body Schema.Schema_Readers is
          when Context_Extension =>
             Output ("Validator := " & Ada_Name (Handler.Contexts));
             Handler.Contexts.Next.Extension := Create_Repeat
-              (Handler, Handler.Contexts.C, Min_Occurs, Max_Occurs);
+              (Handler.all, Handler.Contexts.C, Min_Occurs, Max_Occurs);
 
          when Context_Group =>
             Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.C,
@@ -1684,7 +1687,7 @@ package body Schema.Schema_Readers is
    -- Finish_Choice --
    -------------------
 
-   procedure Finish_Choice (Handler : in out Schema_Reader) is
+   procedure Finish_Choice (Handler : access Schema_Reader) is
       pragma Unreferenced (Handler);
    begin
       null;
@@ -1695,7 +1698,7 @@ package body Schema.Schema_Readers is
    ---------------------
 
    procedure Create_Sequence
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
       Min_Occurs_Index : constant Integer :=
@@ -1724,7 +1727,7 @@ package body Schema.Schema_Readers is
          when Context_Type_Def =>
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             Handler.Contexts.Next.Type_Validator := Create_Repeat
-              (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
+              (Handler.all, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Sequence =>
             Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Seq,
                           Min_Occurs, Max_Occurs);
@@ -1740,11 +1743,11 @@ package body Schema.Schema_Readers is
          when Context_Extension =>
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             Handler.Contexts.Next.Extension := Create_Repeat
-              (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
+              (Handler.all, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Restriction =>
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             Handler.Contexts.Next.Restriction := Create_Repeat
-              (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
+              (Handler.all, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Group =>
             Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.Seq,
                           Min_Occurs, Max_Occurs);
@@ -1766,7 +1769,7 @@ package body Schema.Schema_Readers is
    -- Finish_Sequence --
    ---------------------
 
-   procedure Finish_Sequence (Handler : in out Schema_Reader) is
+   procedure Finish_Sequence (Handler : access Schema_Reader) is
       pragma Unreferenced (Handler);
    begin
       null;
@@ -1777,7 +1780,7 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Create_Attribute
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
       Name_Index : constant Integer :=
@@ -1825,7 +1828,7 @@ package body Schema.Schema_Readers is
 
       if Type_Index /= -1 then
          Lookup_With_NS
-           (Handler, Get_Value (Atts, Type_Index), Result => Typ);
+           (Handler.all, Get_Value (Atts, Type_Index), Result => Typ);
 
          if Get_Local_Name (Typ) = "IDREF"
            or else Get_Local_Name (Typ) = "IDREFS"
@@ -1913,7 +1916,7 @@ package body Schema.Schema_Readers is
             G         : XML_Grammar_NS;
          begin
             Get_Grammar_For_Namespace
-              (Handler, QName (QName'First .. Separator - 1), G);
+              (Handler.all, QName (QName'First .. Separator - 1), G);
             Att := Lookup_Attribute (G, QName (Separator + 1 .. QName'Last));
 
             --  ??? We haven't normalized the value for fixed here
@@ -2005,7 +2008,7 @@ package body Schema.Schema_Readers is
    -- Finish_Attribute --
    ----------------------
 
-   procedure Finish_Attribute (Handler : in out Schema_Reader) is
+   procedure Finish_Attribute (Handler : access Schema_Reader) is
    begin
       if not Handler.Contexts.Attribute_Is_Ref
         and then Get_Type (Handler.Contexts.Attribute.all) = No_Type
@@ -2017,7 +2020,7 @@ package body Schema.Schema_Readers is
       end if;
 
       Insert_Attribute
-        (Handler, Handler.Contexts.Next, Handler.Contexts.Attribute,
+        (Handler.all, Handler.Contexts.Next, Handler.Contexts.Attribute,
          Ada_Name (Handler.Contexts),
          Is_Local => not Handler.Contexts.Attribute_Is_Ref);
    end Finish_Attribute;
@@ -2027,7 +2030,7 @@ package body Schema.Schema_Readers is
    -------------------
 
    procedure Create_Schema
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
       Target_NS_Index : constant Integer :=
@@ -2122,10 +2125,9 @@ package body Schema.Schema_Readers is
    ----------------
 
    procedure Create_Any
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Atts    : Sax.Attributes.Attributes'Class)
    is
-      pragma Unmodified (Handler);
       Namespace_Index        : constant Integer := Get_Index
         (Atts, "namespace");
       Min_Occurs_Index       : constant Integer := Get_Index
@@ -2144,19 +2146,6 @@ package body Schema.Schema_Readers is
          Max_Occurs := Max_Occurs_From_Value
            (Get_Value (Atts, Max_Occurs_Index));
       end if;
-
---        declare
---           Ctx : Context_Access := Handler.Contexts;
---        begin
---           Put_Line ("MANU Adding <any>");
---           while Ctx /= null loop
---              Put_Line ("   " & Ctx.Typ'Img);
---              if Ctx.Typ = Context_Restriction then
---                 Put_Line ("     " & Get_Local_Name (Ctx.Restriction_Base));
---              end if;
---              Ctx := Ctx.Next;
---           end loop;
---        end;
 
       Process_Contents := Process_Contents_From_Atts (Atts);
 
@@ -2203,7 +2192,7 @@ package body Schema.Schema_Readers is
    ----------------
 
    procedure Create_All
-     (Handler  : in out Schema_Reader;
+     (Handler  : access Schema_Reader;
       Atts     : Sax.Attributes.Attributes'Class)
    is
       Min_Occurs_Index       : constant Integer := Get_Index
@@ -2235,7 +2224,7 @@ package body Schema.Schema_Readers is
    -- Finish_All --
    ----------------
 
-   procedure Finish_All (Handler : in out Schema_Reader) is
+   procedure Finish_All (Handler : access Schema_Reader) is
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -2322,28 +2311,28 @@ package body Schema.Schema_Readers is
             Validation_Error ("Root element must be <schema>");
          end if;
 
-         Create_Schema (Handler, Atts);
+         Create_Schema (Handler'Access, Atts);
 
       elsif Local_Name = "annotation" then
          Handler.In_Annotation := True;
 
       elsif Local_Name = "element" then
-         Create_Element (Handler, Atts);
+         Create_Element (Handler'Access, Atts);
 
       elsif Local_Name = "complexType" then
-         Create_Complex_Type (Handler, Atts);
+         Create_Complex_Type (Handler'Access, Atts);
 
       elsif Local_Name = "simpleType" then
-         Create_Simple_Type (Handler, Atts);
+         Create_Simple_Type (Handler'Access, Atts);
 
       elsif Local_Name = "restriction" then
-         Create_Restriction (Handler, Atts);
+         Create_Restriction (Handler'Access, Atts);
 
       elsif Local_Name = "extension" then
-         Create_Extension (Handler, Atts);
+         Create_Extension (Handler'Access, Atts);
 
       elsif Local_Name = "anyAttribute" then
-         Create_Any_Attribute (Handler, Atts);
+         Create_Any_Attribute (Handler'Access, Atts);
 
       elsif Local_Name = "maxLength"
         or else Local_Name = "pattern"
@@ -2368,25 +2357,25 @@ package body Schema.Schema_Readers is
                  & """);");
 
       elsif Local_Name = "all" then
-         Create_All (Handler, Atts);
+         Create_All (Handler'Access, Atts);
 
       elsif Local_Name = "sequence" then
-         Create_Sequence (Handler, Atts);
+         Create_Sequence (Handler'Access, Atts);
 
       elsif Local_Name = "choice" then
-         Create_Choice (Handler, Atts);
+         Create_Choice (Handler'Access, Atts);
 
       elsif Local_Name = "list" then
-         Create_List (Handler, Atts);
+         Create_List (Handler'Access, Atts);
 
       elsif Local_Name = "union" then
-         Create_Union (Handler, Atts);
+         Create_Union (Handler'Access, Atts);
 
       elsif Local_Name = "attribute" then
-         Create_Attribute (Handler, Atts);
+         Create_Attribute (Handler'Access, Atts);
 
       elsif Local_Name = "group" then
-         Create_Group (Handler, Atts);
+         Create_Group (Handler'Access, Atts);
 
       elsif Local_Name = "simpleContent" then
          Handler.Contexts.Simple_Content := True;
@@ -2395,19 +2384,19 @@ package body Schema.Schema_Readers is
          Handler.Contexts.Simple_Content := False;
 
       elsif Local_Name = "attributeGroup" then
-         Create_Attribute_Group (Handler, Atts);
+         Create_Attribute_Group (Handler'Access, Atts);
 
       elsif Local_Name = "any" then
-         Create_Any (Handler, Atts);
+         Create_Any (Handler'Access, Atts);
 
       elsif Local_Name = "redefine" then
-         Create_Redefine (Handler, Atts);
+         Create_Redefine (Handler'Access, Atts);
 
       elsif Local_Name = "include" then
-         Create_Include (Handler, Atts);
+         Create_Include (Handler'Access, Atts);
 
       elsif Local_Name = "import" then
-         Create_Import (Handler, Atts);
+         Create_Import (Handler'Access, Atts);
 
       elsif Handler.In_Annotation then
          null;   --  ignore all tags
@@ -2441,44 +2430,44 @@ package body Schema.Schema_Readers is
 
       --  Process the tag
       if Local_Name = "element" then
-         Finish_Element (Handler);
+         Finish_Element (Handler'Access);
 
       elsif Local_Name = "schema" then
          --  ??? Check there remains no undefined forward declaration
          null;
 
       elsif Local_Name = "complexType" then
-         Finish_Complex_Type (Handler);
+         Finish_Complex_Type (Handler'Access);
 
       elsif Local_Name = "simpleType" then
-         Finish_Simple_Type (Handler);
+         Finish_Simple_Type (Handler'Access);
 
       elsif Local_Name = "all" then
-         Finish_All (Handler);
+         Finish_All (Handler'Access);
 
       elsif Local_Name = "sequence" then
-         Finish_Sequence (Handler);
+         Finish_Sequence (Handler'Access);
 
       elsif Local_Name = "anyAttribute" then
          Handled := False;
 
       elsif Local_Name = "choice" then
-         Finish_Choice (Handler);
+         Finish_Choice (Handler'Access);
 
       elsif Local_Name = "restriction" then
-         Finish_Restriction (Handler);
+         Finish_Restriction (Handler'Access);
 
       elsif Local_Name = "extension" then
-         Finish_Extension (Handler);
+         Finish_Extension (Handler'Access);
 
       elsif Local_Name = "attribute" then
-         Finish_Attribute (Handler);
+         Finish_Attribute (Handler'Access);
 
       elsif Local_Name = "union" then
-         Finish_Union (Handler);
+         Finish_Union (Handler'Access);
 
       elsif Local_Name = "list" then
-         Finish_List (Handler);
+         Finish_List (Handler'Access);
 
       elsif Local_Name = "maxLength"
         or else Local_Name = "pattern"
@@ -2501,7 +2490,7 @@ package body Schema.Schema_Readers is
          Handled := False;
 
       elsif Local_Name = "group" then
-         Finish_Group (Handler);
+         Finish_Group (Handler'Access);
 
       elsif Local_Name = "attributeGroup" then
          null;

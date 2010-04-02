@@ -661,7 +661,7 @@ package body Schema.Validators is
    is
       pragma Unreferenced (Validator, Data, Namespace_URI, NS, Grammar);
    begin
-      Validation_Error ("No definition found for """ & Local_Name & """");
+      Validation_Error ("No definitiont  found for """ & Local_Name & """");
       Element_Validator := No_Element;
    end Validate_Start_Element;
 
@@ -681,12 +681,11 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Attributes
-     (Validator         : access XML_Validator_Record;
-      Atts              : in out Sax.Attributes.Attributes'Class;
-      Id_Table          : access Id_Htable_Access;
-      Nillable          : Boolean;
-      Is_Nil            : out Boolean;
-      Grammar           : in out XML_Grammar)
+     (Validator : access XML_Validator_Record;
+      Atts      : in out Sax.Attributes.Attributes'Class;
+      Nillable  : Boolean;
+      Is_Nil    : out Boolean;
+      Context   : in out Validation_Context)
    is
       Length   : constant Natural := Get_Length (Atts);
       Seen     : array (0 .. Length - 1) of Boolean := (others => False);
@@ -764,11 +763,6 @@ package body Schema.Validators is
             else
                Seen (Found) := True;
 
---                 Put_Line ("MANU " & Named.Attribute_Form'Img
---                           & " " & Get_Local_Name (Atts, Found)
---                           & " local=" & Is_Local_In_XSD'Img
---                           & " URI=" & Get_URI (Atts, Found));
-
                case Named.Attribute_Form is
                   when Qualified =>
                      if Is_Local_In_XSD
@@ -783,7 +777,7 @@ package body Schema.Validators is
                      if Is_Local_In_XSD
                        and then Get_Prefix (Atts, Found) /= ""
                        and then Get_URI (Atts, Found) =
-                          Get_Namespace_URI (Get (Grammar).Target_NS)
+                          Get_Namespace_URI (Get (Context.Grammar).Target_NS)
                      then
                         Validation_Error
                           ("Attribute " & Get_Local_Name (Atts, Found)
@@ -810,8 +804,7 @@ package body Schema.Validators is
                Normalize_Whitespace (Get_Type (Named.all), Atts, Found);
 
                begin
-                  Validate_Attribute
-                    (Named.all, Atts, Found, Grammar, Id_Table);
+                  Validate_Attribute (Named.all, Atts, Found, Context);
                exception
                   when E : XML_Validation_Error =>
                      Validation_Error
@@ -836,7 +829,7 @@ package body Schema.Validators is
                           & "}" & Get_Local_Name (Atts, Index));
          end if;
 
-         Validate_Attribute (Any, Atts, Index, Grammar, Id_Table);
+         Validate_Attribute (Any, Atts, Index, Context);
       exception
          when E : XML_Validation_Error =>
             Validation_Error
@@ -1031,9 +1024,9 @@ package body Schema.Validators is
      (Validator      : access XML_Validator_Record;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
-      Id_Table       : access Id_Htable_Access)
+      Context        : in out Validation_Context)
    is
-      pragma Unreferenced (Id_Table);
+      pragma Unreferenced (Context);
    begin
       if Debug then
          Debug_Output
@@ -1193,10 +1186,8 @@ package body Schema.Validators is
      (Validator : Named_Attribute_Validator_Record;
       Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
-      Grammar   : in out XML_Grammar;
-      Id_Table  : access Id_Htable_Access)
+      Context   : in out Validation_Context)
    is
-      pragma Unreferenced (Grammar);
       Val : constant Byte_Sequence := Get_Value (Atts, Index);
       Fixed : Byte_Sequence_Access;
    begin
@@ -1209,7 +1200,7 @@ package body Schema.Validators is
       if Get_Type (Validator) /= No_Type then
          Validate_Characters
            (Get_Validator (Get_Type (Validator)), Val,
-            Empty_Element => False, Id_Table => Id_Table);
+            Empty_Element => False, Context => Context);
 
          if Is_ID (Get_Type (Validator)) then
             Set_Type (Atts, Index, Sax.Attributes.Id);
@@ -1467,7 +1458,7 @@ package body Schema.Validators is
    procedure Set_Type
      (Element      : XML_Element;
       Element_Type : XML_Type;
-      Id_Table     : access Id_Htable_Access) is
+      Context      : in out Validation_Context) is
    begin
       if Element /= No_Element then
          if Element.Is_Ref then
@@ -1484,7 +1475,7 @@ package body Schema.Validators is
          if Element.Elem.Default /= null then
             Validate_Characters
               (Get_Validator (Element_Type), Element.Elem.Default.all,
-               Empty_Element => False, Id_Table => Id_Table);
+               Empty_Element => False, Context => Context);
          end if;
 
          --  3.3 Element Declaration details:  Validation Rule 3.1
@@ -1494,7 +1485,7 @@ package body Schema.Validators is
          if Element.Elem.Fixed /= null then
             Validate_Characters
               (Get_Validator (Element_Type), Element.Elem.Fixed.all,
-               Empty_Element => False, Id_Table => Id_Table);
+               Empty_Element => False, Context => Context);
          end if;
       end if;
    end Set_Type;
@@ -2335,7 +2326,7 @@ package body Schema.Validators is
    procedure Set_Default
      (Element  : XML_Element;
       Default  : Unicode.CES.Byte_Sequence;
-      Id_Table : access Id_Htable_Access) is
+      Context  : in out Validation_Context) is
    begin
       --  3.3 Element Declaration details: Can't have both
       --  "default" and "fixed"
@@ -2355,7 +2346,7 @@ package body Schema.Validators is
         and then Get_Validator (Element.Elem.Of_Type) /= null
       then
          Validate_Characters (Get_Validator (Element.Elem.Of_Type), Default,
-                              Empty_Element => False, Id_Table => Id_Table);
+                              Empty_Element => False, Context => Context);
       end if;
 
       Free (Element.Elem.Default);
@@ -2388,7 +2379,7 @@ package body Schema.Validators is
    procedure Set_Fixed
      (Element  : XML_Element;
       Fixed    : Unicode.CES.Byte_Sequence;
-      Id_Table : access Id_Htable_Access) is
+      Context  : in out Validation_Context) is
    begin
       --  3.3 Element Declaration details: Can't have both
       --  "default" and "fixed"
@@ -2408,7 +2399,7 @@ package body Schema.Validators is
         and then Get_Validator (Element.Elem.Of_Type) /= null
       then
          Validate_Characters (Get_Validator (Element.Elem.Of_Type), Fixed,
-                              Empty_Element => False, Id_Table => Id_Table);
+                              Empty_Element => False, Context => Context);
       end if;
 
       Free (Element.Elem.Fixed);
@@ -3011,9 +3002,9 @@ package body Schema.Validators is
      (Validator     : access Group_Model_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table       : access Id_Htable_Access)
+      Context       : in out Validation_Context)
    is
-      pragma Unreferenced (Ch, Id_Table);
+      pragma Unreferenced (Ch, Context);
    begin
       if not Empty_Element
         and then not Validator.Mixed_Content
@@ -4436,9 +4427,9 @@ package body Schema.Validators is
      (Validator     : access XML_Any_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Id_Table       : access Id_Htable_Access)
+      Context       : in out Validation_Context)
    is
-      pragma Unreferenced (Validator, Ch, Empty_Element, Id_Table);
+      pragma Unreferenced (Validator, Ch, Empty_Element, Context);
    begin
       Validation_Error ("No character data allowed for this element");
    end Validate_Characters;
@@ -4465,13 +4456,13 @@ package body Schema.Validators is
    -- Free --
    ----------
 
-   procedure Free (Ids : in out Id_Htable_Access) is
+   procedure Free (Id_Table : in out Id_Htable_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Id_Htable.HTable, Id_Htable_Access);
    begin
-      if Ids /= null then
-         Id_Htable.Reset (Ids.all);
-         Unchecked_Free (Ids);
+      if Id_Table /= null then
+         Id_Htable.Reset (Id_Table.all);
+         Unchecked_Free (Id_Table);
       end if;
    end Free;
 
@@ -4503,8 +4494,7 @@ package body Schema.Validators is
      (Validator : Any_Attribute_Validator;
       Atts      : in out Sax.Attributes.Attributes'Class;
       Index     : Natural;
-      Grammar   : in out XML_Grammar;
-      Id_Table  : access Id_Htable_Access)
+      Context   : in out Validation_Context)
    is
       URI  : constant Byte_Sequence := Get_URI (Atts, Index);
       Attr : Attribute_Validator;
@@ -4542,13 +4532,13 @@ package body Schema.Validators is
 
       case Validator.Process_Contents is
          when Process_Strict =>
-            Get_NS (Grammar, URI, G);
+            Get_NS (Context.Grammar, URI, G);
             Attr := Lookup_Attribute
               (G, Get_Local_Name (Atts, Index), Create_If_Needed => False);
             if Attr = null then
                Validation_Error ("No definition provided");
             else
-               Validate_Attribute (Attr.all, Atts, Index, Grammar, Id_Table);
+               Validate_Attribute (Attr.all, Atts, Index, Context);
 
                if Is_ID (Attr.all) then
                   Set_Type (Atts, Index, Sax.Attributes.Id);
@@ -4556,7 +4546,7 @@ package body Schema.Validators is
             end if;
 
          when Process_Lax =>
-            Get_NS (Grammar, URI, G);
+            Get_NS (Context.Grammar, URI, G);
             Attr := Lookup_Attribute
               (G, Get_Local_Name (Atts, Index), Create_If_Needed => False);
             if Attr = null then
@@ -4566,7 +4556,7 @@ package body Schema.Validators is
                      & Get_Local_Name (Atts, Index));
                end if;
             else
-               Validate_Attribute (Attr.all, Atts, Index, Grammar, Id_Table);
+               Validate_Attribute (Attr.all, Atts, Index, Context);
                if Is_ID (Attr.all) then
                   Set_Type (Atts, Index, Sax.Attributes.Id);
                end if;
@@ -5194,22 +5184,23 @@ package body Schema.Validators is
    --------------
 
    procedure Check_Id
-     (Id_Table  : access Id_Htable_Access;
+     (Context   : in out Validation_Context;
       Validator : access XML_Validator_Record'Class;
       Value     : Unicode.CES.Byte_Sequence)
    is
    begin
       if Is_ID (Validator.all) then
-         if Id_Table.all = null then
-            Id_Table.all := new Id_Htable.HTable (101);
+         if Context.Id_Table = null then
+            Context.Id_Table := new Id_Htable.HTable (101);
          else
-            if Id_Htable.Get (Id_Table.all.all, Value) /= No_Id then
+            if Id_Htable.Get (Context.Id_Table.all, Value) /= No_Id then
                Validation_Error ("ID """ & Value & """ already defined");
             end if;
          end if;
 
          Id_Htable.Set
-           (Id_Table.all.all, Id_Ref'(Key => new Byte_Sequence'(Value)));
+           (Context.Id_Table.all,
+            Id_Ref'(Key => new Byte_Sequence'(Value)));
       end if;
    end Check_Id;
 

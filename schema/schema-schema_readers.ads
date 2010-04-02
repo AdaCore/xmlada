@@ -213,8 +213,6 @@ private
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;
 
-      Ids             : aliased Schema.Validators.Id_Htable_Access;
-
       Supported       : Supported_Features := All_Features;
    end record;
 
