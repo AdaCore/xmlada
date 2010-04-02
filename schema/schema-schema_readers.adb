@@ -572,9 +572,10 @@ package body Schema.Schema_Readers is
          when Context_Extension =>
             Seq := Create_Sequence (Handler.Target_NS);
             Output ("Validator := Create_Sequence;");
-            Add_Particle (Seq, Handler.Contexts.Group);
+            Add_Particle (Seq, Handler.Contexts.Group,
+                          Min_Occurs, Max_Occurs);
             Output ("Add_Particle (Validator, " & Ada_Name (Handler.Contexts)
-                    & ");");
+                    & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
 
             Handler.Contexts.Next.Extension := XML_Validator (Seq);
 
@@ -2424,9 +2425,9 @@ package body Schema.Schema_Readers is
    begin
       --  Check the grammar
       End_Element (Validating_Reader (Handler),
-                     Namespace_URI,
-                     Local_Name,
-                     Qname);
+                   Namespace_URI,
+                   Local_Name,
+                   Qname);
 
       --  Process the tag
       if Local_Name = "element" then

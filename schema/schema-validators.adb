@@ -2959,7 +2959,8 @@ package body Schema.Validators is
    is
       D : constant Sequence_Data_Access := Sequence_Data_Access (Data);
    begin
-      Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator));
+      Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator)
+                         & " occurs=" & D.Num_Occurs_Of_Current'Img);
 
       if D.Nested /= null then
          Validate_End_Element (D.Nested, Local_Name, D.Nested_Data);
@@ -3117,12 +3118,14 @@ package body Schema.Validators is
      (Seq : access Sequence_Record; Item : XML_Group;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Group,
-                 Group      => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
+      if Min_Occurs /= 0 or else Max_Occurs /= 0 then
+         Append (Seq.Particles, XML_Particle'
+                   (Typ        => Particle_Group,
+                    Group      => Item,
+                    Next       => null,
+                    Min_Occurs => Min_Occurs,
+                    Max_Occurs => Max_Occurs));
+      end if;
    end Add_Particle;
 
    ----------------------------
@@ -3279,7 +3282,7 @@ package body Schema.Validators is
 
       D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
       if Get_Max_Occurs (D.Current) /= Unbounded
-        and then D.Num_Occurs_Of_Current > Get_Max_Occurs (D.Current)
+        and then D.Num_Occurs_Of_Current >= Get_Max_Occurs (D.Current)
       then
          Free (D.Current);
       else
