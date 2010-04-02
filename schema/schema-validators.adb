@@ -696,7 +696,8 @@ package body Schema.Validators is
       Visited : Attributes_Htable.HTable (101);
 
       function Find_Attribute
-        (Named : Named_Attribute_Validator) return Integer;
+        (Named : Named_Attribute_Validator;
+         Is_Local_In_XSD : Boolean) return Integer;
       --  Chech whether Named appears in Atts
 
       procedure Recursive_Check (Validator : XML_Validator);
@@ -748,7 +749,7 @@ package body Schema.Validators is
       begin
          if Get (Visited, Named.Local_Name.all) = null then
             Set (Visited, Named);
-            Found := Find_Attribute (Named);
+            Found := Find_Attribute (Named, Is_Local_In_XSD);
 
             if Found = -1 then
                case Named.Attribute_Use is
@@ -762,6 +763,11 @@ package body Schema.Validators is
 
             else
                Seen (Found) := True;
+
+--                 Put_Line ("MANU " & Named.Attribute_Form'Img
+--                           & " " & Get_Local_Name (Atts, Found)
+--                           & " local=" & Is_Local_In_XSD'Img
+--                           & " URI=" & Get_URI (Atts, Found));
 
                case Named.Attribute_Form is
                   when Qualified =>
@@ -843,12 +849,13 @@ package body Schema.Validators is
       --------------------
 
       function Find_Attribute
-        (Named : Named_Attribute_Validator) return Integer is
+        (Named : Named_Attribute_Validator;
+         Is_Local_In_XSD : Boolean) return Integer is
       begin
          for A in 0 .. Length - 1 loop
             if not Seen (A)
               and then Get_Local_Name (Atts, A) = Named.Local_Name.all
-              and then (Get_URI (Atts, A) = ""
+              and then ((Is_Local_In_XSD and Get_Prefix (Atts, A) = "")
                         or else Get_URI (Atts, A) = Named.NS.Namespace_URI.all)
             then
                if Debug then

@@ -49842,9 +49842,10 @@ Grp: MS-AttributeGroup2006-07-15 / attgD042
     attgD042.xml:3:48: Attribute "aga1": Invalid namespace for aga1
 
 Grp: MS-AttributeGroup2006-07-15 / attgZ001
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgZ001
-  XF attgZ001.i
+  OK attgZ001.i
+    attgZ001.xml:3:21: Attribute "foo": Invalid namespace for foo
 
 Grp: MS-AttributeGroup2006-07-15 / attgZ002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50678,14 +50679,16 @@ Grp: MS-Attribute2006-07-15 / attO025
   SF attO025
 
 Grp: MS-Attribute2006-07-15 / attMa001
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attMa001
-  XF attMa001.i
+  OK attMa001.i
+    attMa001.xml:3:57: Attribute "ga1" invalid for this element
 
 Grp: MS-Attribute2006-07-15 / attMa002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attMa002
-  XF attMa002.i
+  OK attMa002.i
+    attMa002.xml:3:57: Attribute "ga1" invalid for this element
 
 Grp: MS-Attribute2006-07-15 / attMa003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95781,6 +95784,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1054
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 250
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 821
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 496 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 57 in_full_fail= 2
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 54 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1630 ( 4.3 %)
+Total errors: 1627 ( 4.3 %)
