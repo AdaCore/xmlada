@@ -46565,18 +46565,9 @@ Grp: SType / st_basetd00301m
     ST_baseTD00301m1_n.xml:13:72: String too long, maximum length is 6 characters
 
 Grp: SType / st_basetd00302m
-  66.7% tests= 6 (xsd= 1 xml= 5) OK= 4 FAILED= 2
-  OK ST_baseTD00302m
-  XP ST_baseTD00302m1_p
-    ST_baseTD00302m1_p.xml:13:59: Invalid value "aaa"
-  OK ST_baseTD00302m1_n
-    ST_baseTD00302m1_n.xml:13:60: Invalid value "aaaa"
-  XP ST_baseTD00302m2_p
-    ST_baseTD00302m2_p.xml:13:58: Invalid value "bb"
-  OK ST_baseTD00302m2_n
-    ST_baseTD00302m2_n.xml:13:60: Invalid value "bbbb"
-  OK ST_baseTD00302m3_n
-    ST_baseTD00302m3_n.xml:12:57: Invalid value "z"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ST_baseTD00302m
+    Unsupported: "complexType" in this context
 
 Grp: SType / st_facets00101m
   100.0% tests= 5 (xsd= 1 xml= 4) OK= 5 FAILED= 0
@@ -47810,8 +47801,8 @@ Grp: MS-Additional2006-07-15 / addB053
 
 Grp: MS-Additional2006-07-15 / addB054
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP addB054
-    test70948.xsd:19:35: No facet overridable for this type
+  NI addB054
+    Unsupported: "complexType" in this context
 
 Grp: MS-Additional2006-07-15 / addB055
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -48003,8 +47994,9 @@ Grp: MS-Additional2006-07-15 / addB092
     addB092.xml:4:64: Unexpected element "{http://xsdtesting}a1"
 
 Grp: MS-Additional2006-07-15 / addB093
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK addB093
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addB093
+    Unsupported: "choice" in this context
 
 Grp: MS-Additional2006-07-15 / addB094
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51265,8 +51257,8 @@ Grp: MS-Attribute2006-07-15 / attZ014b
 
 Grp: MS-Attribute2006-07-15 / attZ015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP attZ015
-    attZ015.xsd:11:39: Can't handle attributeGroup in this context
+  NI attZ015
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctA001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -52227,9 +52219,9 @@ Grp: MS-ComplexType2006-07-15 / ctD007
     ctD007.xsd:16:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-ComplexType2006-07-15 / ctD008
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctD008
-  OK ctD008.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctD008
+    Unsupported: "complexType" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctD009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52237,9 +52229,9 @@ Grp: MS-ComplexType2006-07-15 / ctD009
     ctD009.xsd:12:40: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: MS-ComplexType2006-07-15 / ctD010
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctD010
-  OK ctD010.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctD010
+    Unsupported: "complexType" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctD011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52248,8 +52240,8 @@ Grp: MS-ComplexType2006-07-15 / ctD011
 
 Grp: MS-ComplexType2006-07-15 / ctD012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD012
-    ctD012.xsd:14:27: No facet overridable for this type
+  NI ctD012
+    Unsupported: "complexType" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctD013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52343,13 +52335,13 @@ Grp: MS-ComplexType2006-07-15 / ctD030
 
 Grp: MS-ComplexType2006-07-15 / ctD031
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD031
-    ctD031.xsd:16:41: Can't handle attributeGroup in this context
+  NI ctD031
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctD032
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD032
-    ctD032.xsd:19:41: Can't handle attributeGroup in this context
+  NI ctD032
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctD033
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -52636,124 +52628,124 @@ Grp: MS-ComplexType2006-07-15 / ctG012
     ctG012.xsd:19:54: Unexpected element "{http://www.w3.org/2001/XMLSchema}anyAttribute"
 
 Grp: MS-ComplexType2006-07-15 / ctG013
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctG013
-  OK ctG013.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG013
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG014
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG014
-    ctG014.xsd:17:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG014
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG015
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG015
-    ctG015.xsd:22:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}group"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG015
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG016
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG016
-    ctG016.xsd:17:14: Unexpected element "{http://www.w3.org/2001/XMLSchema}all"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG016
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG017
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG017
-    ctG017.xsd:17:17: Unexpected element "{http://www.w3.org/2001/XMLSchema}choice"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG017
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG018
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG018
-    ctG018.xsd:17:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}sequence"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG018
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG019
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctG019
-  OK ctG019.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG019
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG020
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctG020
-  OK ctG020.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG020
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG021
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG021
-    ctG021.xsd:21:41: Can't handle attributeGroup in this context
+  NI ctG021
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG022
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG022
-    ctG022.xsd:25:42: Can't handle attributeGroup in this context
+  NI ctG022
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG023
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctG023
-  OK ctG023.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG023
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG024
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG024
-    ctG024.xsd:18:44: Unexpected element "{http://www.w3.org/2001/XMLSchema}anyAttribute"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG024
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG025
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctG025
-  OK ctG025.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG025
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG026
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG026
-    ctG026.xsd:17:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG026
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG027
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG027
-    ctG027.xsd:22:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}group"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG027
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG028
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG028
-    ctG028.xsd:17:14: Unexpected element "{http://www.w3.org/2001/XMLSchema}all"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG028
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG029
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG029
-    ctG029.xsd:17:17: Unexpected element "{http://www.w3.org/2001/XMLSchema}choice"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG029
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG030
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG030
-    ctG030.xsd:17:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}sequence"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG030
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG031
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctG031
-  OK ctG031.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG031
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG032
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctG032
-  OK ctG032.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG032
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG033
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG033
-    ctG033.xsd:20:42: Can't handle attributeGroup in this context
+  NI ctG033
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG034
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG034
-    ctG034.xsd:23:42: Can't handle attributeGroup in this context
+  NI ctG034
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG035
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctG035
-  OK ctG035.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG035
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG036
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG036
-    ctG036.xsd:18:44: Unexpected element "{http://www.w3.org/2001/XMLSchema}anyAttribute"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG036
+    Unsupported: "choice" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG037
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -52797,13 +52789,13 @@ Grp: MS-ComplexType2006-07-15 / ctG044
 
 Grp: MS-ComplexType2006-07-15 / ctG045
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG045
-    ctG045.xsd:20:42: Can't handle attributeGroup in this context
+  NI ctG045
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG046
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG046
-    ctG046.xsd:23:42: Can't handle attributeGroup in this context
+  NI ctG046
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG047
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -52852,13 +52844,13 @@ Grp: MS-ComplexType2006-07-15 / ctG055
 
 Grp: MS-ComplexType2006-07-15 / ctG056
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG056
-    ctG056.xsd:18:42: Can't handle attributeGroup in this context
+  NI ctG056
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG057
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG057
-    ctG057.xsd:21:42: Can't handle attributeGroup in this context
+  NI ctG057
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG058
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -52872,58 +52864,58 @@ Grp: MS-ComplexType2006-07-15 / ctG059
 
 Grp: MS-ComplexType2006-07-15 / ctG060
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG060
-    ctG060.xsd:17:42: Can't handle attributeGroup in this context
+  NI ctG060
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG061
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG061
-    ctG061.xsd:17:43: Can't handle attributeGroup in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG061
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG062
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG062
-    ctG062.xsd:20:44: Can't handle attributeGroup in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG062
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG063
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG063
-    ctG063.xsd:18:42: Can't handle attributeGroup in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG063
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG064
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG064
-    ctG064.xsd:17:43: Can't handle attributeGroup in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG064
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG065
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG065
-    ctG065.xsd:17:43: Can't handle attributeGroup in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG065
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG066
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG066
-    ctG066.xsd:17:42: Can't handle attributeGroup in this context
+  NI ctG066
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG067
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG067
-    ctG067.xsd:17:42: Can't handle attributeGroup in this context
+  NI ctG067
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG068
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG068
-    ctG068.xsd:20:42: Can't handle attributeGroup in this context
+  NI ctG068
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG069
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctG069
-    ctG069.xsd:17:42: Can't handle attributeGroup in this context
+  NI ctG069
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG070
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctG070
-    ctG070.xsd:17:43: Can't handle attributeGroup in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctG070
+    Unsupported: "attributeGroup" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctG071
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53043,57 +53035,63 @@ Grp: MS-ComplexType2006-07-15 / ctH012
 
 Grp: MS-ComplexType2006-07-15 / ctH013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctH013
+  NI ctH013
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH014
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctH014
-    ctH014.xsd:17:21: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctH014
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH015
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctH015
-    ctH015.xsd:23:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}group"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctH015
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH016
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctH016
-    ctH016.xsd:17:14: Unexpected element "{http://www.w3.org/2001/XMLSchema}all"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctH016
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH017
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctH017
-    ctH017.xsd:17:17: Unexpected element "{http://www.w3.org/2001/XMLSchema}choice"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctH017
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH018
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctH018
-    ctH018.xsd:17:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}sequence"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctH018
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH019
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctH019
+  NI ctH019
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctH020
+  NI ctH020
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH021
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctH021
+  NI ctH021
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH022
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctH022
+  NI ctH022
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH023
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctH023
+  NI ctH023
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH024
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctH024
-    ctH024.xsd:18:42: Unexpected element "{http://www.w3.org/2001/XMLSchema}anyAttribute"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI ctH024
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctH025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53645,11 +53643,13 @@ Grp: MS-ComplexType2006-07-15 / ctJ001
 
 Grp: MS-ComplexType2006-07-15 / ctJ002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctJ002
+  NI ctJ002
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctJ003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctJ003
+  NI ctJ003
+    Unsupported: "all" in this context
 
 Grp: MS-ComplexType2006-07-15 / ctK001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66156,33 +66156,29 @@ Grp: MS-Element2006-07-15 / elemT010
     elemT010.xsd:10:60: Attribute "block": Invalid value "union"
 
 Grp: MS-Element2006-07-15 / elemT011
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK elemT011
-  OK elemT011.i
-    elemT011.xml:2:29: Type is not a valid replacement for "int"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemT011
+    Unsupported: "complexType" in this context
 
 Grp: MS-Element2006-07-15 / elemT012
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK elemT012
-  OK elemT012.i
-    elemT012.xml:2:30: Type is not a valid replacement for "int"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemT012
+    Unsupported: "complexType" in this context
 
 Grp: MS-Element2006-07-15 / elemT013
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK elemT013
-  OK elemT013.i
-    elemT013.xml:2:30: Type is not a valid replacement for "int"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemT013
+    Unsupported: "complexType" in this context
 
 Grp: MS-Element2006-07-15 / elemT014
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK elemT014
-  XP elemT014.v
-    elemT014.xml:2:31: Invalid value "1"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemT014
+    Unsupported: "complexType" in this context
 
 Grp: MS-Element2006-07-15 / elemT015
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK elemT015
-  OK elemT015.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemT015
+    Unsupported: "complexType" in this context
 
 Grp: MS-Element2006-07-15 / elemT016
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67535,9 +67531,9 @@ Grp: MS-Group2006-07-15 / groupH016v
     groupH016.xml:3:9: Unexpected end of sequence, expecting "((x1)|(y1|y2))"
 
 Grp: MS-Group2006-07-15 / groupH017v
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK groupH017v
-  OK groupH017v.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI groupH017v
+    Unsupported: "choice" in this context
 
 Grp: MS-Group2006-07-15 / groupH018v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67557,7 +67553,8 @@ Grp: MS-Group2006-07-15 / groupH020
 
 Grp: MS-Group2006-07-15 / groupH021v
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF groupH021v
+  NI groupH021v
+    Unsupported: "choice" in this context
 
 Grp: MS-Group2006-07-15 / groupH022
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -72403,9 +72400,9 @@ Grp: MS-ModelGroups2006-07-15 / mgA005
     mgA005.xsd:4:21: Attribute "id": Invalid value: "a:b"
 
 Grp: MS-ModelGroups2006-07-15 / mgA006
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgA006
-    mgA006.xsd:14:21: Attribute "id": ID "foo" already defined
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgA006
+    Unsupported: "all" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgA007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -72418,14 +72415,14 @@ Grp: MS-ModelGroups2006-07-15 / mgA008
     mgA008.xsd:9:21: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgA009
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgA009
-    mgA009.xsd:16:23: Attribute "id": ID "foo" already defined
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgA009
+    Unsupported: "all" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgA010
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgA010
-    mgA010.xsd:14:21: Attribute "id": ID "foo" already defined
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgA010
+    Unsupported: "all" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgA011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -72448,13 +72445,14 @@ Grp: MS-ModelGroups2006-07-15 / mgA014
   OK mgA014.v
 
 Grp: MS-ModelGroups2006-07-15 / mgA015
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK mgA015
-  OK mgA015.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgA015
+    Unsupported: "all" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgA016
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF mgA016
+  NI mgA016
+    Unsupported: "all" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgA017
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -73191,14 +73189,14 @@ Grp: MS-ModelGroups2006-07-15 / mgH008
     mgH008.xsd:9:24: Attribute "id": ID "foo" already defined
 
 Grp: MS-ModelGroups2006-07-15 / mgH009
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgH009
-    mgH009.xsd:16:26: Attribute "id": ID "foo" already defined
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgH009
+    Unsupported: "choice" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgH010
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgH010
-    mgH010.xsd:14:24: Attribute "id": ID "foo" already defined
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgH010
+    Unsupported: "choice" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgH011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -73216,9 +73214,9 @@ Grp: MS-ModelGroups2006-07-15 / mgH013
   OK mgH013.v
 
 Grp: MS-ModelGroups2006-07-15 / mgH014
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK mgH014
-  OK mgH014.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgH014
+    Unsupported: "choice" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgH015
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -74353,8 +74351,9 @@ Grp: MS-ModelGroups2006-07-15 / mgZ001
     mgZ001.xsd:34:26: Attribute "minOccurs": Element's value not in the enumeration set
 
 Grp: MS-ModelGroups2006-07-15 / mgZ002
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgZ002
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgZ002
+    Unsupported: "all" in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgZ003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76147,7 +76146,8 @@ Grp: MS-Particles2006-07-15 / particlesFb001
 
 Grp: MS-Particles2006-07-15 / particlesFb002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesFb002
+  NI particlesFb002
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesFb003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -76290,12 +76290,14 @@ Grp: MS-Particles2006-07-15 / particlesHa054
   OK particlesHa054
 
 Grp: MS-Particles2006-07-15 / particlesHa070
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesHa070
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesHa070
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa071
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHa071
+  NI particlesHa071
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa080
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -76347,7 +76349,8 @@ Grp: MS-Particles2006-07-15 / particlesHa122
 
 Grp: MS-Particles2006-07-15 / particlesHa123
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHa123
+  NI particlesHa123
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa140
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -76358,28 +76361,34 @@ Grp: MS-Particles2006-07-15 / particlesHa141
   OK particlesHa141
 
 Grp: MS-Particles2006-07-15 / particlesHa142
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesHa142
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesHa142
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa143
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHa143
+  NI particlesHa143
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa144
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHa144
+  NI particlesHa144
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa145
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHa145
+  NI particlesHa145
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa146
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesHa146
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesHa146
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa147
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHa147
+  NI particlesHa147
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa160
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -76442,16 +76451,19 @@ Grp: MS-Particles2006-07-15 / particlesHa184
   SF particlesHa184
 
 Grp: MS-Particles2006-07-15 / particlesHa185
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesHa185
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesHa185
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa186
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesHa186
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesHa186
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa187
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHa187
+  NI particlesHa187
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHa188
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -76459,27 +76471,33 @@ Grp: MS-Particles2006-07-15 / particlesHa188
 
 Grp: MS-Particles2006-07-15 / particlesHa189
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHa189
+  NI particlesHa189
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHb001
+  NI particlesHb001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHb002
+  NI particlesHb002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHb003
+  NI particlesHb003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHb004
+  NI particlesHb004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHb006
+  NI particlesHb006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -76487,19 +76505,23 @@ Grp: MS-Particles2006-07-15 / particlesHb007
 
 Grp: MS-Particles2006-07-15 / particlesHb008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHb008
+  NI particlesHb008
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHb009
+  NI particlesHb009
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb010
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesHb010
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesHb010
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesHb011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesHb011
+  NI particlesHb011
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIa001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76543,35 +76565,39 @@ Grp: MS-Particles2006-07-15 / particlesIa009
   OK particlesIa009
 
 Grp: MS-Particles2006-07-15 / particlesIb001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIb001
-  OK particlesIb001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIb001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIb002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIb002
+  NI particlesIb002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIb003
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIb003
-  OK particlesIb003.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIb003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIb004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIb004
+  NI particlesIb004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIb005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIb005
-  OK particlesIb005.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIb005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIb006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIb006
+  NI particlesIb006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIb007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIb007
+  NI particlesIb007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIc001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76608,441 +76634,489 @@ Grp: MS-Particles2006-07-15 / particlesIc007
   OK particlesIc007.v
 
 Grp: MS-Particles2006-07-15 / particlesId001
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesId001
-  XP particlesId001.v
-    particlesId001.xml:2:9: Expecting one of "{http://xsdtesting}e0|{http://xsdtesting}e1|{http://xsdtesting}e2"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId002
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesId002
-  OK particlesId002.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesId003
+  NI particlesId003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId004
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesId004
-  OK particlesId004.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesId005
-  OK particlesId005.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesId006
+  NI particlesId006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId007
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesId007
-  OK particlesId007.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId008
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesId008
-  OK particlesId008.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId008
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId009
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesId009
-  OK particlesId009.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId009
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId010
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesId010
-  OK particlesId010.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId010
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId011
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesId011
-  OK particlesId011.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesId011
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesId012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesId012
+  NI particlesId012
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe001
-  OK particlesIe001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe002
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe002
-  OK particlesIe002.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe003
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe003
-  OK particlesIe003.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe004
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesIe004
-  XP particlesIe004.v
-    particlesIe004.xml:2:9: Expecting one of "{http://xsdtesting}e1|{http://xsdtesting}e2"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe005
-  OK particlesIe005.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIe006
+  NI particlesIe006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe007
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe007
-  OK particlesIe007.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe008
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe008
-  OK particlesIe008.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe008
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIe009
+  NI particlesIe009
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe010
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe010
-  OK particlesIe010.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe010
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe011
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe011
-  OK particlesIe011.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe011
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIe012
+  NI particlesIe012
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe013
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesIe013
-  XP particlesIe013.v
-    particlesIe013.xml:1:156: Expecting one of "{http://xsdtesting}e1|{http://xsdtesting}e2"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe013
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe014
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIe014
+  NI particlesIe014
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe015
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe015
-  OK particlesIe015.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe015
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIe016
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIe016
-  OK particlesIe016.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIe016
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIf001
-  OK particlesIf001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIf001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf002
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIf002
-  OK particlesIf002.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIf002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf003
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIf003
-  OK particlesIf003.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIf003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf004
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIf004
-  OK particlesIf004.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIf004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIf005
-  OK particlesIf005.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIf005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf006
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIf006
-  OK particlesIf006.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIf006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIf007
+  NI particlesIf007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIf008
+  NI particlesIf008
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIf009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIf009
+  NI particlesIf009
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIg001
-  OK particlesIg001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIg001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg002
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIg002
-  OK particlesIg002.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIg002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg003
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIg003
-  OK particlesIg003.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIg003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIg004
+  NI particlesIg004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIg005
-  OK particlesIg005.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIg005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIg006
+  NI particlesIg006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIg007
+  NI particlesIg007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIg008
+  NI particlesIg008
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIg009
+  NI particlesIg009
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIg010
+  NI particlesIg010
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg011
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIg011
-  OK particlesIg011.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIg011
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg012
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIg012
-  OK particlesIg012.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIg012
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIg013
+  NI particlesIg013
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg014
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIg014
-  OK particlesIg014.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIg014
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg015
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIg015
-  OK particlesIg015.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIg015
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIg016
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIg016
+  NI particlesIg016
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIh001
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesIh001
-    particlesIh001.xsd:20:64: "e1" is final for restrictions, and cannot be substituted by"e2"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIh001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIj001
-  OK particlesIj001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIj001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj002
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIj002
-  OK particlesIj002.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIj002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj003
+  NI particlesIj003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj004
+  NI particlesIj004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIj005
-  OK particlesIj005.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIj005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj006
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIj006
-  OK particlesIj006.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIj006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj007
+  NI particlesIj007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj008
+  NI particlesIj008
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj009
+  NI particlesIj009
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj010
+  NI particlesIj010
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj011
+  NI particlesIj011
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj012
+  NI particlesIj012
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj013
+  NI particlesIj013
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj014
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesIj014
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIj014
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj015
+  NI particlesIj015
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIj016
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIj016
+  NI particlesIj016
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIk001
-  OK particlesIk001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIk001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk002
+  NI particlesIk002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk003
+  NI particlesIk003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk004
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesIk004
-  OK particlesIk004.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIk004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk005
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk005
+  NI particlesIk005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk006
+  NI particlesIk006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk007
+  NI particlesIk007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk008
+  NI particlesIk008
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk009
+  NI particlesIk009
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk010
+  NI particlesIk010
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk011
+  NI particlesIk011
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk012
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesIk012
-  XP particlesIk012.v
-    particlesIk012.xml:3:14: Invalid value "false"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIk012
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk013
+  NI particlesIk013
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk014
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesIk014
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIk014
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk015
+  NI particlesIk015
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk016
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk016
+  NI particlesIk016
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk017
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesIk017
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIk017
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk018
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesIk018
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIk018
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk019
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk019
+  NI particlesIk019
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk020
+  NI particlesIk020
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk021
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk021
+  NI particlesIk021
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk022
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk022
+  NI particlesIk022
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk023
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesIk023
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIk023
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk024
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk024
+  NI particlesIk024
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk025
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk025
+  NI particlesIk025
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk026
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesIk026
-  XP particlesIk026.v
-    particlesIk026.xml:3:13: Invalid value "test"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesIk026
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesIk027
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesIk027
+  NI particlesIk027
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesJa001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -77786,9 +77860,9 @@ Grp: MS-Particles2006-07-15 / particlesL011
   SF particlesL011
 
 Grp: MS-Particles2006-07-15 / particlesL012
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesL012
-  OK particlesL012.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesL012
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesL013
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -77880,100 +77954,108 @@ Grp: MS-Particles2006-07-15 / particlesL032
 
 Grp: MS-Particles2006-07-15 / particlesM001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesM001
+  NI particlesM001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesM002
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesM002
-  OK particlesM002.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesM002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesM003
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesM003
-  OK particlesM003.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesM003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesM033
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesM033
+  NI particlesM033
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesM034
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesM034
+  NI particlesM034
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesM035
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesM035
-  OK particlesM035.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesM035
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOa001
-  OK particlesOa001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa001
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOa002
+  NI particlesOa002
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa003
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOa003
-  OK particlesOa003.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa004
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOa004
-    particlesOa004.xsd:12:48: minOccurs > maxOccurs when creating particle
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa004
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa005
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOa005
-    particlesOa005.xsd:12:48: minOccurs > maxOccurs when creating particle
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa006
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOa006
-  OK particlesOa006.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOa007
+  NI particlesOa007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa008
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesOa008
-    particlesOa008.xsd:12:48: minOccurs > maxOccurs when creating particle
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa008
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOa009
+  NI particlesOa009
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOa010
+  NI particlesOa010
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa011
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOa011
-  OK particlesOa011.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa011
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa012
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOa012
-  OK particlesOa012.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa012
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa013
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOa013
-  OK particlesOa013.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa013
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa014
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOa014
-  OK particlesOa014.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOa014
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOa015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOa015
+  NI particlesOa015
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb001
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -77984,28 +78066,28 @@ Grp: MS-Particles2006-07-15 / particlesOb002
   NA particlesOb002
 
 Grp: MS-Particles2006-07-15 / particlesOb003
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb003
-  OK particlesOb003.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb003
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb004
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
   NA particlesOb004
 
 Grp: MS-Particles2006-07-15 / particlesOb005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb005
-  OK particlesOb005.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb005
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb006
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb006
-  OK particlesOb006.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb006
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb007
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb007
-  OK particlesOb007.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb007
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb008
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -78017,16 +78099,18 @@ Grp: MS-Particles2006-07-15 / particlesOb009
 
 Grp: MS-Particles2006-07-15 / particlesOb010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb010
+  NI particlesOb010
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb011
+  NI particlesOb011
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb012
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb012
-  OK particlesOb012.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb012
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb013
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -78034,20 +78118,23 @@ Grp: MS-Particles2006-07-15 / particlesOb013
 
 Grp: MS-Particles2006-07-15 / particlesOb014
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb014
+  NI particlesOb014
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb015
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb015
-  OK particlesOb015.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb015
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb016
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb016
+  NI particlesOb016
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb017
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb017
+  NI particlesOb017
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb018
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -78055,242 +78142,273 @@ Grp: MS-Particles2006-07-15 / particlesOb018
 
 Grp: MS-Particles2006-07-15 / particlesOb019
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb019
+  NI particlesOb019
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb020
+  NI particlesOb020
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb021
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb021
+  NI particlesOb021
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb022
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesOb022
-  XP particlesOb022.v
-    particlesOb022.xml:3:8: No definition provided for "e1"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb022
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb023
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb023
+  NI particlesOb023
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb024
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb024
+  NI particlesOb024
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb025
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb025
+  NI particlesOb025
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb026
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb026
+  NI particlesOb026
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb027
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb027
+  NI particlesOb027
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb028
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb028
+  NI particlesOb028
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb029
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb029
+  NI particlesOb029
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb030
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb030
+  NI particlesOb030
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb031
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb031
+  NI particlesOb031
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb032
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb032
-  OK particlesOb032.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb032
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb033
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb033
+  NI particlesOb033
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb034
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb034
+  NI particlesOb034
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb035
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb035
+  NI particlesOb035
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb036
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb036
+  NI particlesOb036
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb037
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb037
+  NI particlesOb037
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb038
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb038
+  NI particlesOb038
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb039
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb039
+  NI particlesOb039
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb040
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb040
+  NI particlesOb040
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb041
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb041
+  NI particlesOb041
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb042
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb042
-  OK particlesOb042.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb042
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb043
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb043
+  NI particlesOb043
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb044
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb044
+  NI particlesOb044
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb045
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb045
+  NI particlesOb045
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb046
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb046
+  NI particlesOb046
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb047
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb047
-  OK particlesOb047.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb047
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb048
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb048
-  OK particlesOb048.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb048
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb049
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb049
+  NI particlesOb049
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb050
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb050
+  NI particlesOb050
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb051
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb051
+  NI particlesOb051
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb052
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesOb052
-  XP particlesOb052.v
-    particlesOb052.xml:3:8: No definition provided for "e1"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb052
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb053
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb053
-  OK particlesOb053.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb053
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb054
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb054
-  OK particlesOb054.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb054
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb055
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb055
-  OK particlesOb055.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb055
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb056
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb056
-  OK particlesOb056.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb056
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb057
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesOb057
-  XP particlesOb057.v
-    particlesOb057.xml:3:6: No definition provided for "a"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb057
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb058
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesOb058
+  NI particlesOb058
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb059
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb059
-  OK particlesOb059.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb059
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesOb060
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesOb060
-  OK particlesOb060.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesOb060
+    Unsupported: "choice" in this context
 
 Grp: MS-Particles2006-07-15 / particlesP002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesP002
-  XP particlesP002.v
-    particlesP002.xml:3:8: No definition provided for "e1"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesP002
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesS001
-  OK particlesS001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesS001
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesS002
+  NI particlesS002
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS003
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesS003
-  OK particlesS003.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesS003
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS004
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesS004
-  OK particlesS004.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesS004
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS005
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesS005
+  NI particlesS005
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesS006
+  NI particlesS006
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS007
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesS007
-  OK particlesS007.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesS007
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesS008
+  NI particlesS008
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesS009
+  NI particlesS009
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesS010
+  NI particlesS010
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesS011
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK particlesS011
-  OK particlesS011.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesS011
+    Unsupported: "all" in this context
 
 Grp: MS-Particles2006-07-15 / particlesR001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -78839,15 +78957,14 @@ Grp: MS-Particles2006-07-15 / particlesZ003
   OK particlesZ003.v
 
 Grp: MS-Particles2006-07-15 / particlesZ005
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK particlesZ005
-  XP particlesZ005.v
-    particlesZ005.xml:2:7: Invalid value "1"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesZ005
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesZ007
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  NI particlesZ007
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -78869,22 +78986,23 @@ Grp: MS-Particles2006-07-15 / particlesZ011
 
 Grp: MS-Particles2006-07-15 / particlesZ012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesZ012
-    particlesZ012.xsd:49:68: Type is not a valid replacement for "myType10"
+  NI particlesZ012
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesZ013
+  NI particlesZ013
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ014
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesZ014
-    particlesZ014.xsd:36:65: Type is not a valid replacement for "integer"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesZ014
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesZ015
-    particlesZ015.xsd:49:68: Type is not a valid replacement for "myType10"
+  NI particlesZ015
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ016
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -78898,17 +79016,18 @@ Grp: MS-Particles2006-07-15 / particlesZ017
 
 Grp: MS-Particles2006-07-15 / particlesZ018
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesZ018
+  NI particlesZ018
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesZ020
-    particlesZ020.xsd:48:68: Type is not a valid replacement for "myType10"
+  NI particlesZ020
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ021
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesZ021
-    particlesZ021.xsd:48:65: Type is not a valid replacement for "integer"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesZ021
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ022
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -78935,12 +79054,14 @@ Grp: MS-Particles2006-07-15 / particlesZ028
   SF particlesZ028
 
 Grp: MS-Particles2006-07-15 / particlesZ030_a
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesZ030_a
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesZ030_a
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ030_b
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK particlesZ030_b
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI particlesZ030_b
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ030_c
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -78949,7 +79070,8 @@ Grp: MS-Particles2006-07-15 / particlesZ030_c
 
 Grp: MS-Particles2006-07-15 / particlesZ030_d
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF particlesZ030_d
+  NI particlesZ030_d
+    Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ031
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92139,8 +92261,9 @@ Grp: MS-Schema2006-07-15 / schD10
   OK schD10.v
 
 Grp: MS-Schema2006-07-15 / schD11
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schD11
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schD11
+    Unsupported: "complexType" in this context
 
 Grp: MS-Schema2006-07-15 / schE1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92467,13 +92590,14 @@ Grp: MS-Schema2006-07-15 / schQ2
   SF schQ2
 
 Grp: MS-Schema2006-07-15 / schQ3
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schQ3
-  OK schQ3.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schQ3
+    Unsupported: "choice" in this context
 
 Grp: MS-Schema2006-07-15 / schQ4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schQ4
+  NI schQ4
+    Unsupported: "choice" in this context
 
 Grp: MS-Schema2006-07-15 / schR2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93095,8 +93219,9 @@ Grp: MS-SimpleType2006-07-15 / stD019
   SF stD019
 
 Grp: MS-SimpleType2006-07-15 / stD020
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stD020
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stD020
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stD021
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93155,12 +93280,14 @@ Grp: MS-SimpleType2006-07-15 / stE012
   SF stE012
 
 Grp: MS-SimpleType2006-07-15 / stE013
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stE013
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stE013
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stE014
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stE014
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stE014
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stE015
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93168,13 +93295,14 @@ Grp: MS-SimpleType2006-07-15 / stE015
     stE015.xsd:10:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-SimpleType2006-07-15 / stE016
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stE016
-    stE016.xsd:8:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stE016
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stE017
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stE017
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stE017
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stE018
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -93629,16 +93757,14 @@ Grp: MS-SimpleType2006-07-15 / stG003
     stG003.xml:6:3: Invalid number of elements in list, expecting at most 3
 
 Grp: MS-SimpleType2006-07-15 / stG004
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK stG004
-  XP stG004.v
-    stG004.xml:5:3: Invalid value "12"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stG004
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stG005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stG005
-  OK stG005.i
-    stG005.xml:5:3: Invalid value "10"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stG005
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stG006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93687,18 +93813,14 @@ Grp: MS-SimpleType2006-07-15 / stG013
     stG013.xml:5:3: string pattern not matched: [A-C]{0,2}
 
 Grp: MS-SimpleType2006-07-15 / stH001
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK stH001
-  XP stH001.v
-    stH001.xml:3:14: Invalid value "150"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stH001
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stH002
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stH002
-  OK stH002.i
-    stH002.xml:5:3: Invalid value "
-	NY
-  "
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stH002
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stH003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93714,36 +93836,24 @@ Grp: MS-SimpleType2006-07-15 / stH004
   "
 
 Grp: MS-SimpleType2006-07-15 / stH005
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK stH005
-  XP stH005.v
-    stH005.xml:5:3: Invalid value "
-	12345
-  "
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stH005
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stH006
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stH006
-  OK stH006.i
-    stH006.xml:5:3: Invalid value "
-	98765
-  "
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stH006
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stH007
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK stH007
-  XP stH007.v
-    stH007.xml:5:3: Invalid value "
-	CA
-  "
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stH007
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stH008
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stH008
-  OK stH008.i
-    stH008.xml:5:3: Invalid value "
-	WA
-  "
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stH008
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stI001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93770,8 +93880,9 @@ Grp: MS-SimpleType2006-07-15 / stJ001
   OK stJ001
 
 Grp: MS-SimpleType2006-07-15 / stJ002
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stJ002
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stJ002
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stJ003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -94122,10 +94233,9 @@ Grp: MS-SimpleType2006-07-15 / stZ039
     stZ039.xml:2:23: string pattern not matched: [A-Z]*
 
 Grp: MS-SimpleType2006-07-15 / stZ040
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK stZ040
-  XP stZ040.v
-    stZ040.xml:4:25: Invalid value "123456"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stZ040
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stZ041
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -94249,26 +94359,28 @@ Grp: MS-SimpleType2006-07-15 / stZ066
     test102159_9.xml:3:25: Attribute "nms": value must be "a b c d" (found "a")
 
 Grp: MS-SimpleType2006-07-15 / stZ067
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stZ067
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stZ067
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stZ068
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stZ068
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stZ068
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stZ069
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stZ069
 
 Grp: MS-SimpleType2006-07-15 / stZ070
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stZ070
-    stZ070.xsd:31:23: Invalid value "1"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stZ070
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stZ071
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stZ071
-  OK stZ071.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stZ071
+    Unsupported: "complexType" in this context
 
 Grp: MS-SimpleType2006-07-15 / stZ072
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95798,13 +95910,13 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37755 (omitting non-accepted tests)
+Total number of tests: 37638 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
-   24072 XML files
-NI: Features not implemented: in_full_fail= 1054
-SP: XSD KO, should be OK: in_full_fail= 250
-SF: XSD OK, should be KO: in_full_fail= 809
-XP: XML KO, should be OK: in_partial= 489 in_full_fail= 4
+   23955 XML files
+NI: Features not implemented: in_full_fail= 1380
+SP: XSD KO, should be OK: in_full_fail= 228
+SF: XSD OK, should be KO: in_full_fail= 678
+XP: XML KO, should be OK: in_partial= 471 in_full_fail= 4
 XF: XML OK, should be KO: in_partial= 38 in_full_fail= 2
 IE: Internal error:
-Total errors: 1592 ( 4.2 %)
+Total errors: 1421 ( 3.8 %)

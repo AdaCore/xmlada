@@ -590,6 +590,9 @@ package body Schema.Schema_Readers is
 
          when others =>
             Output ("Can't handle nested group decl");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""group"" in this context");
       end case;
    end Create_Group;
 
@@ -698,8 +701,9 @@ package body Schema.Schema_Readers is
 
             when others =>
                Output ("Context is " & Handler.Contexts.Next.Typ'Img);
-               Validation_Error
-                 ("Can't handle attributeGroup in this context");
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  "Unsupported: ""attributeGroup"" in this context");
          end case;
       end if;
    end Create_Attribute_Group;
@@ -1082,6 +1086,9 @@ package body Schema.Schema_Readers is
                     & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
          when others =>
             Output ("Can't handle nested element decl");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""element"" in this context");
       end case;
 
       Handler.Contexts := new Context'
@@ -1309,6 +1316,9 @@ package body Schema.Schema_Readers is
             Output ("Validator := " & Ada_Name (C) & ";");
          when others =>
             Output ("Can't handle nested type decl");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""complexType"" in this context");
       end case;
    end Finish_Complex_Type;
 
@@ -1407,6 +1417,9 @@ package body Schema.Schema_Readers is
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
          when others =>
             Output ("Can't handler nested restrictions");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""restriction"" in this context");
       end case;
    end Finish_Restriction;
 
@@ -1477,6 +1490,9 @@ package body Schema.Schema_Readers is
 
          when others =>
             Output ("Can't handle nested unions");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""union"" in this context");
       end case;
    end Finish_Union;
 
@@ -1553,6 +1569,9 @@ package body Schema.Schema_Readers is
 
          when others =>
             Output ("Can't handle nested extensions");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""extension"" in this context");
       end case;
    end Finish_Extension;
 
@@ -1594,6 +1613,9 @@ package body Schema.Schema_Readers is
             Output ("Validator := List_Of (Validator);");
          when others =>
             Output ("Can't handle nested list");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""list"" in this context");
       end case;
    end Finish_List;
 
@@ -1690,6 +1712,9 @@ package body Schema.Schema_Readers is
             | Context_Restriction | Context_All | Context_Union
             | Context_List | Context_Redefine | Context_Attribute_Group =>
             Output ("Can't handle nested sequence");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""choice"" in this context");
       end case;
    end Create_Choice;
 
@@ -1772,6 +1797,9 @@ package body Schema.Schema_Readers is
             | Context_All | Context_Union
             | Context_List | Context_Redefine | Context_Attribute_Group =>
             Output ("Can't handle nested sequence");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""sequence"" in this context");
       end case;
    end Create_Sequence;
 
@@ -2011,6 +2039,9 @@ package body Schema.Schema_Readers is
             | Context_Attribute | Context_All
             | Context_Union | Context_List | Context_Group =>
             Output ("Can't handle attribute decl in this context");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""attribute"" in this context");
       end case;
    end Insert_Attribute;
 
@@ -2194,6 +2225,9 @@ package body Schema.Schema_Readers is
 
          when others =>
             Output ("Can't handled nested <any>");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""any"" in this context");
       end case;
    end Create_Any;
 
@@ -2252,6 +2286,9 @@ package body Schema.Schema_Readers is
 
          when others =>
             Output ("Can't handled nested all");
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported: ""all"" in this context");
       end case;
    end Finish_All;
 
