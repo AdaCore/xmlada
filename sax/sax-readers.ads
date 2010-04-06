@@ -565,7 +565,8 @@ package Sax.Readers is
      (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
-      Qname         : Unicode.CES.Byte_Sequence);
+      Qname         : Unicode.CES.Byte_Sequence;
+      Elem          : Element_Access);
    type Characters_Hook is access procedure
      (Handler       : in out Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence);

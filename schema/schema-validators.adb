@@ -3032,13 +3032,15 @@ package body Schema.Validators is
            ("minOccurs > maxOccurs when creating particle");
       end if;
 
-      if List.First = null then
-         List.First := new XML_Particle'(Item);
-         List.First.Next := null;
-         List.Last  := List.First;
-      else
-         List.Last.Next := new XML_Particle'(Item);
-         List.Last := List.Last.Next;
+      if Item.Max_Occurs /= 0 then
+         if List.First = null then
+            List.First := new XML_Particle'(Item);
+            List.First.Next := null;
+            List.Last  := List.First;
+         else
+            List.Last.Next := new XML_Particle'(Item);
+            List.Last := List.Last.Next;
+         end if;
       end if;
    end Append;
 
@@ -3069,15 +3071,13 @@ package body Schema.Validators is
             "Adding empty element to a sequence");
       end if;
 
-      if Min_Occurs /= 0 or else Max_Occurs /= 0 then
-         Append
-           (Seq.Particles, XML_Particle'
-              (Typ        => Particle_Element,
-               Element    => Item,
-               Next       => null,
-               Min_Occurs => Min_Occurs,
-               Max_Occurs => Max_Occurs));
-      end if;
+      Append
+        (Seq.Particles, XML_Particle'
+           (Typ        => Particle_Element,
+            Element    => Item,
+            Next       => null,
+            Min_Occurs => Min_Occurs,
+            Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -3088,14 +3088,12 @@ package body Schema.Validators is
      (Seq : access Sequence_Record; Item : Sequence;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      if Min_Occurs /= 0 or else Max_Occurs /= 0 then
-         Append (Seq.Particles, XML_Particle'
-             (Typ        => Particle_Nested,
-              Validator  => Group_Model (Item),
-              Next       => null,
-              Min_Occurs => Min_Occurs,
-              Max_Occurs => Max_Occurs));
-      end if;
+      Append (Seq.Particles, XML_Particle'
+          (Typ        => Particle_Nested,
+           Validator  => Group_Model (Item),
+           Next       => null,
+           Min_Occurs => Min_Occurs,
+           Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -3106,14 +3104,12 @@ package body Schema.Validators is
      (Seq : access Sequence_Record; Item : Choice;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      if Min_Occurs /= 0 or else Max_Occurs /= 0 then
-         Append (Seq.Particles, XML_Particle'
-                   (Typ        => Particle_Nested,
-                    Validator  => Group_Model (Item),
-                    Next       => null,
-                    Min_Occurs => Min_Occurs,
-                    Max_Occurs => Max_Occurs));
-      end if;
+      Append (Seq.Particles, XML_Particle'
+          (Typ        => Particle_Nested,
+           Validator  => Group_Model (Item),
+           Next       => null,
+           Min_Occurs => Min_Occurs,
+           Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -3124,14 +3120,12 @@ package body Schema.Validators is
      (Seq : access Sequence_Record; Item : XML_Group;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      if Min_Occurs /= 0 or else Max_Occurs /= 0 then
-         Append (Seq.Particles, XML_Particle'
-                   (Typ        => Particle_Group,
-                    Group      => Item,
-                    Next       => null,
-                    Min_Occurs => Min_Occurs,
-                    Max_Occurs => Max_Occurs));
-      end if;
+      Append (Seq.Particles, XML_Particle'
+          (Typ        => Particle_Group,
+           Group      => Item,
+           Next       => null,
+           Min_Occurs => Min_Occurs,
+           Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ----------------------------
@@ -3395,6 +3389,7 @@ package body Schema.Validators is
            (Program_Error'Identity,
             "Adding unnamed element to choice");
       end if;
+
       Append (C.Particles, XML_Particle'
                 (Typ        => Particle_Element,
                  Element    => Item,
@@ -3412,11 +3407,11 @@ package body Schema.Validators is
       Min_Occurs : Integer := 1; Max_Occurs : Integer := 1) is
    begin
       Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Any,
-                 Any        => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
+          (Typ        => Particle_Any,
+           Any        => Item,
+           Next       => null,
+           Min_Occurs => Min_Occurs,
+           Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -3428,11 +3423,11 @@ package body Schema.Validators is
       Min_Occurs : Integer := 1; Max_Occurs : Integer := 1) is
    begin
       Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Any,
-                 Any        => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
+          (Typ        => Particle_Any,
+           Any        => Item,
+           Next       => null,
+           Min_Occurs => Min_Occurs,
+           Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -3444,11 +3439,11 @@ package body Schema.Validators is
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
       Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
+          (Typ        => Particle_Nested,
+           Validator  => Group_Model (Item),
+           Next       => null,
+           Min_Occurs => Min_Occurs,
+           Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -3460,11 +3455,11 @@ package body Schema.Validators is
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
       Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
+          (Typ        => Particle_Nested,
+           Validator  => Group_Model (Item),
+           Next       => null,
+           Min_Occurs => Min_Occurs,
+           Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ------------------
@@ -3476,11 +3471,11 @@ package body Schema.Validators is
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
       Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Group,
-                 Group      => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
+          (Typ        => Particle_Group,
+           Group      => Item,
+           Next       => null,
+           Min_Occurs => Min_Occurs,
+           Max_Occurs => Max_Occurs));
    end Add_Particle;
 
    ----------

@@ -4954,7 +4954,8 @@ package body Sax.Readers is
          if Parser.Hooks.End_Element /= null then
             Parser.Hooks.End_Element
               (Parser, NS.URI.all, Parser.Current_Node.Name.all,
-               Qname_From_Name (Parser, NS_Id, Name_Id));
+               Qname_From_Name (Parser, NS_Id, Name_Id),
+               Elem  => Parser.Current_Node);
          end if;
 
          End_Element

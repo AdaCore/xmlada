@@ -899,9 +899,9 @@ package body Schema.Schema_Readers is
                        & ");");
 
                if Typ /= No_Type then
-                  Set_Type (Element, Typ, Get_Context (Handler).all);
                   Output ("Set_Type (" & Ada_Name (Element) & ", "
                           & Ada_Name (Typ) & ");");
+                  Set_Type (Element, Typ, Get_Context (Handler).all);
                end if;
             when others =>
                Element := Create_Local_Element
@@ -1092,11 +1092,11 @@ package body Schema.Schema_Readers is
       if not Handler.Contexts.Is_Ref
         and then Get_Type (Handler.Contexts.Element) = No_Type
       then
+         Output ("Set_Type (" & Ada_Name (Handler.Contexts)
+                 & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
          Set_Type (Handler.Contexts.Element,
                    Lookup (Handler.Schema_NS, "ur-Type"),
                    Get_Context (Handler).all);
-         Output ("Set_Type (" & Ada_Name (Handler.Contexts)
-                 & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
       end if;
    end Finish_Element;
 
@@ -1287,10 +1287,10 @@ package body Schema.Schema_Readers is
          when Context_Schema | Context_Redefine =>
             null;
          when Context_Element =>
-            Set_Type (Handler.Contexts.Next.Element, Typ,
-                      Get_Context (Handler).all);
             Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (C) & ");");
+            Set_Type (Handler.Contexts.Next.Element, Typ,
+                      Get_Context (Handler).all);
          when Context_Attribute =>
             Set_Type (Handler.Contexts.Next.Attribute, Typ);
             Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
@@ -2296,10 +2296,7 @@ package body Schema.Schema_Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class)
-   is
-      Val : constant Byte_Sequence :=
-        Get_Value (Atts, URI => "", Local_Name => "value");
+      Atts          : Sax.Attributes.Attributes'Class) is
    begin
       --  Check the grammar
       Start_Element (Validating_Reader (Handler),

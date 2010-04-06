@@ -67784,9 +67784,10 @@ Grp: MS-Group2006-07-15 / groupL007
   OK groupL007.v
 
 Grp: MS-Group2006-07-15 / groupL008v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupL008v
-  XF groupL008v.i
+  OK groupL008v.i
+    groupL008.xml:4:8: Unexpected element "b2"
 
 Grp: MS-Group2006-07-15 / groupL009v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -73921,7 +73922,7 @@ Grp: MS-ModelGroups2006-07-15 / mgO013
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgO013
   OK mgO013.i
-    mgO013.xml:3:7: <all> element was repeated too many times, expecting at most 1 times
+    mgO013.xml:3:7: Expecting ()
 
 Grp: MS-ModelGroups2006-07-15 / mgO014
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93374,14 +93375,15 @@ Grp: MS-SimpleType2006-07-15 / stE093
   OK stE093.v
 
 Grp: MS-SimpleType2006-07-15 / stE094
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE094
-    stE094.xsd:10:20: Invalid value "a:a"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE094
+  OK stE094.v
 
 Grp: MS-SimpleType2006-07-15 / stE095
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE095
-    stE095.xsd:10:20: Invalid value "a:a"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE095
+  OK stE095.i
+    stE095.xml:1:56: Element's value must be "12 abcdef 4.0 a:a a:b b:a b:b"
 
 Grp: MS-SimpleType2006-07-15 / stE096
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95781,13 +95783,13 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37753 (omitting non-accepted tests)
+Total number of tests: 37755 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
-   24070 XML files
+   24072 XML files
 NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1054
-SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 252
+SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 250
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 813
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 487 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 48 in_full_fail= 2
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 47 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1606 ( 4.3 %)
+Total errors: 1603 ( 4.2 %)

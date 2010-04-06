@@ -98,7 +98,8 @@ package body Schema.Readers is
      (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "");
+      Qname         : Unicode.CES.Byte_Sequence := "";
+      Elem          : Element_Access);
    procedure Hook_Characters
      (Handler : in out Reader'Class; Ch : Unicode.CES.Byte_Sequence);
    procedure Hook_Ignorable_Whitespace
@@ -683,7 +684,8 @@ package body Schema.Readers is
      (Handler       : in out Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "")
+      Qname         : Unicode.CES.Byte_Sequence := "";
+      Elem          : Element_Access)
    is
       pragma Unreferenced (Namespace_URI);
    begin
@@ -692,6 +694,8 @@ package body Schema.Readers is
                    & "End_Element: " & Local_Name
                    & ASCII.ESC & "[39m");
       end if;
+
+      Validating_Reader (Handler).Context.Context := Elem;
 
       if Validating_Reader (Handler).Validators /= null then
          Validate_Current_Characters (Validating_Reader (Handler));
