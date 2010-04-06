@@ -226,6 +226,12 @@ package Sax.Attributes is
       Value : Unicode.CES.Byte_Sequence);
    --   Set the value of a specific attribute in the list
 
+   function Get_Non_Normalized_Value
+     (Attr       : Attributes;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence) return Unicode.CES.Byte_Sequence;
+   --  Get the value of the attribute before normalization
+
    Out_Of_Bounds : exception;
    --  Raised when Index is out of bounds in all the Set_* subprograms.
 
@@ -237,6 +243,7 @@ private
       URI          : Unicode.CES.Byte_Sequence_Access;
       Local_Name   : Unicode.CES.Byte_Sequence_Access;
       Value        : Unicode.CES.Byte_Sequence_Access;
+      Non_Normalized_Value : Unicode.CES.Byte_Sequence_Access;
       Att_Type     : Attribute_Type;
       Qname        : Unicode.CES.Byte_Sequence_Access;
       Default_Decl : Default_Declaration;

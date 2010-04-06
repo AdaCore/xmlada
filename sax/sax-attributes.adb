@@ -67,6 +67,12 @@ package body Sax.Attributes is
    begin
       Free (Attr.URI);
       Free (Attr.Local_Name);
+
+      if Attr.Non_Normalized_Value /= Attr.Value then
+         Free (Attr.Non_Normalized_Value);
+      end if;
+
+      Attr.Non_Normalized_Value := null;
       Free (Attr.Value);
       Free (Attr.Qname);
       Unref (Attr.Content);
@@ -166,6 +172,7 @@ package body Sax.Attributes is
       Attr.Last.Local_Name := new Byte_Sequence'(Local_Name);
       Attr.Last.Att_Type := Att_Type;
       Attr.Last.Value := new Byte_Sequence'(Value);
+      Attr.Last.Non_Normalized_Value := Attr.Last.Value;
       Attr.Last.Qname := new Byte_Sequence'(Qname);
       Attr.Last.Default_Decl := Default_Decl;
       Attr.Last.Content := Content;
@@ -247,6 +254,7 @@ package body Sax.Attributes is
       Att.Local_Name := new Byte_Sequence'(Local_Name);
       Att.Att_Type := Att_Type;
       Att.Value := new Byte_Sequence'(Value);
+      Att.Non_Normalized_Value := Att.Value;
       Att.Qname := new Byte_Sequence'(Qname);
       Att.Default_Decl := Default_Decl;
       Att.Content := Content;
@@ -345,7 +353,10 @@ package body Sax.Attributes is
       Tmp : constant Attribute_Access := Get (Attr, Index);
    begin
       pragma Assert (Tmp /= null, "Unexpected null attribute");
-      Free (Tmp.Value);
+      if Tmp.Non_Normalized_Value /= Tmp.Value then
+         Free (Tmp.Value);
+      end if;
+
       Tmp.Value := new Byte_Sequence'(Value);
    end Set_Value;
 
@@ -523,6 +534,26 @@ package body Sax.Attributes is
       return Tmp.Value.all;
    end Get_Value;
 
+   ------------------------------
+   -- Get_Non_Normalized_Value --
+   ------------------------------
+
+   function Get_Non_Normalized_Value
+     (Attr       : Attributes;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence) return Unicode.CES.Byte_Sequence
+   is
+      J : Integer;
+      Tmp : Attribute_Access;
+   begin
+      Get (Attr, URI, Local_Name, J, Tmp);
+      if Tmp /= null then
+         return Tmp.Non_Normalized_Value.all;
+      else
+         return "";
+      end if;
+   end Get_Non_Normalized_Value;
+
    --------------------------
    -- Get_Value_As_Boolean --
    --------------------------
@@ -553,7 +584,11 @@ package body Sax.Attributes is
       Tmp : Attribute_Access;
    begin
       Get (Attr, URI, Local_Name, J, Tmp);
-      return Tmp.Value.all;
+      if Tmp /= null then
+         return Tmp.Value.all;
+      else
+         return "";
+      end if;
    end Get_Value;
 
    --------------------------

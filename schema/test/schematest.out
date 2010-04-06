@@ -79245,10 +79245,9 @@ Grp: MS-Regex2006-07-15 / reA40
   OK reA40
 
 Grp: MS-Regex2006-07-15 / reA45
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK reA45
-  XP reA45.v
-    reA45.xml:9:29: Attribute "att": string pattern not matched: a|b
+  OK reA45.v
 
 Grp: MS-Regex2006-07-15 / reB1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -86327,13 +86326,13 @@ Grp: MS-Regex2006-07-15 / RegexTest_117
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK RegexTest_117
   OK RegexTest_117.i
-    RegexTest_117.xml:1:129: Attribute "value": string pattern not matched: (foo) #foo \s+ #followed by 1 or more whitespace (bar) #followed by bar
+    RegexTest_117.xml:1:129: Attribute "value": string pattern not matched: (foo) #foo        \s+ #followed by 1 or more whitespace        (bar)  #followed by bar        
 
 Grp: MS-Regex2006-07-15 / RegexTest_118
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK RegexTest_118
   OK RegexTest_118.i
-    RegexTest_118.xml:1:129: Attribute "value": string pattern not matched: (foo) #foo \s+ #followed by 1 or more whitespace (bar) #followed by bar
+    RegexTest_118.xml:1:129: Attribute "value": string pattern not matched: (foo) #foo        \s+ #followed by 1 or more whitespace        (bar)  #followed by bar
 
 Grp: MS-Regex2006-07-15 / RegexTest_119
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -87504,9 +87503,10 @@ Grp: MS-Regex2006-07-15 / RegexTest_513
   OK RegexTest_513.v
 
 Grp: MS-Regex2006-07-15 / RegexTest_514
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK RegexTest_514
-  XF RegexTest_514.i
+  OK RegexTest_514.i
+    RegexTest_514.xml:1:122: Attribute "value": string pattern not matched:             ((.)+)      
 
 Grp: MS-Regex2006-07-15 / RegexTest_515
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93333,9 +93333,9 @@ Grp: MS-SimpleType2006-07-15 / stE078
     stE078.xml:1:13: Element's value must be "anyur"
 
 Grp: MS-SimpleType2006-07-15 / stE079
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE079
-    stE079.xsd:5:20: Invalid value "a:b"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE079
+  OK stE079.v
 
 Grp: MS-SimpleType2006-07-15 / stE080
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95781,13 +95781,13 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37752 (omitting non-accepted tests)
+Total number of tests: 37753 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
-   24069 XML files
+   24070 XML files
 NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1054
-SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 253
+SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 252
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 813
-XP: XML KO, should be OK: in_full_pass= 0 in_partial= 488 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 49 in_full_fail= 2
+XP: XML KO, should be OK: in_full_pass= 0 in_partial= 487 in_full_fail= 4
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 48 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1609 ( 4.3 %)
+Total errors: 1606 ( 4.3 %)

@@ -4483,8 +4483,8 @@ package body Sax.Readers is
               (Id, Attr_Value_State, Value_Start, Value_End,
                Normalize       => True,
                Collapse_Spaces => Attr /= null
-                 and then Get_Type
-                 (Attr.all,
+               and then Get_Type
+                (Attr.all,
                  Qname_From_Name (Parser, Attr_NS_Id, Attr_Name_Id)) /= Cdata);
 
             Add_Attr := True;

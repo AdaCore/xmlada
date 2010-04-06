@@ -2296,7 +2296,10 @@ package body Schema.Schema_Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class) is
+      Atts          : Sax.Attributes.Attributes'Class)
+   is
+      Val : constant Byte_Sequence :=
+        Get_Value (Atts, URI => "", Local_Name => "value");
    begin
       --  Check the grammar
       Start_Element (Validating_Reader (Handler),
@@ -2335,8 +2338,19 @@ package body Schema.Schema_Readers is
       elsif Local_Name = "anyAttribute" then
          Create_Any_Attribute (Handler'Access, Atts);
 
+      elsif Local_Name = "pattern" then
+         declare
+            Val2 : constant Byte_Sequence :=
+              Get_Non_Normalized_Value (Atts, "", "value");
+         begin
+            Create_Restricted (Handler, Handler.Contexts);
+            Add_Facet (Handler.Contexts.Restricted, Local_Name, Val2);
+            Output ("Add_Facet ("
+                    & Ada_Name (Handler.Contexts) & ", """ & Local_Name
+                    & """, unnormalized=""" & Val2 & """);");
+         end;
+
       elsif Local_Name = "maxLength"
-        or else Local_Name = "pattern"
         or else Local_Name = "minLength"
         or else Local_Name = "length"
         or else Local_Name = "enumeration"
