@@ -652,6 +652,12 @@ package body Schema.Readers is
            (Validating_Reader (Handler), Get_Validator (Get_Type (Element)));
       end if;
 
+      if Is_Abstract (Element) then
+         Validation_Error
+           ("Element """ & To_QName (Namespace_URI, Local_Name)
+            & """ is abstract");
+      end if;
+
       Compute_Type;
       Data := Create_Validator_Data (Get_Validator (Typ));
 

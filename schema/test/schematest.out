@@ -44748,9 +44748,10 @@ Grp: ElemDecl / abstract00101m
     abstract00101m1_n.xml:19:11: "Head" is abstract
 
 Grp: ElemDecl / abstract00201m1
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK abstract00201m1
-  XF Negative
+  OK Negative
+    abstract00201m1_n.xml:13:63: Element "{ElemDecl/abstract}root" is abstract
 
 Grp: ElemDecl / abstract00201m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95917,6 +95918,6 @@ NI: Features not implemented: in_full_fail= 1380
 SP: XSD KO, should be OK: in_full_fail= 228
 SF: XSD OK, should be KO: in_full_fail= 678
 XP: XML KO, should be OK: in_partial= 471 in_full_fail= 4
-XF: XML OK, should be KO: in_partial= 38 in_full_fail= 2
+XF: XML OK, should be KO: in_partial= 37 in_full_fail= 2
 IE: Internal error:
-Total errors: 1421 ( 3.8 %)
+Total errors: 1420 ( 3.8 %)
