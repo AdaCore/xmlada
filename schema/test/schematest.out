@@ -73042,9 +73042,10 @@ Grp: MS-ModelGroups2006-07-15 / mgG012
   OK mgG012.v
 
 Grp: MS-ModelGroups2006-07-15 / mgG013
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgG013
-  XF mgG013.i
+  OK mgG013.i
+    mgG013.xml:3:7: Unexpected element "e1"
 
 Grp: MS-ModelGroups2006-07-15 / mgG014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -73482,9 +73483,10 @@ Grp: MS-ModelGroups2006-07-15 / mgJ012
   OK mgJ012.v
 
 Grp: MS-ModelGroups2006-07-15 / mgJ013
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgJ013
-  XF mgJ013.i
+  OK mgJ013.i
+    mgJ013.xml:3:7: Unexpected element "e1"
 
 Grp: MS-ModelGroups2006-07-15 / mgJ014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95786,6 +95788,6 @@ NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1054
 SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 253
 SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 813
 XP: XML KO, should be OK: in_full_pass= 0 in_partial= 488 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 51 in_full_fail= 2
+XF: XML OK, should be KO: in_full_pass= 0 in_partial= 49 in_full_fail= 2
 IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1611 ( 4.3 %)
+Total errors: 1609 ( 4.3 %)

@@ -3069,13 +3069,15 @@ package body Schema.Validators is
             "Adding empty element to a sequence");
       end if;
 
-      Append
-        (Seq.Particles, XML_Particle'
-           (Typ        => Particle_Element,
-            Element    => Item,
-            Next       => null,
-            Min_Occurs => Min_Occurs,
-            Max_Occurs => Max_Occurs));
+      if Min_Occurs /= 0 or else Max_Occurs /= 0 then
+         Append
+           (Seq.Particles, XML_Particle'
+              (Typ        => Particle_Element,
+               Element    => Item,
+               Next       => null,
+               Min_Occurs => Min_Occurs,
+               Max_Occurs => Max_Occurs));
+      end if;
    end Add_Particle;
 
    ------------------
@@ -3086,12 +3088,14 @@ package body Schema.Validators is
      (Seq : access Sequence_Record; Item : Sequence;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
+      if Min_Occurs /= 0 or else Max_Occurs /= 0 then
+         Append (Seq.Particles, XML_Particle'
+             (Typ        => Particle_Nested,
+              Validator  => Group_Model (Item),
+              Next       => null,
+              Min_Occurs => Min_Occurs,
+              Max_Occurs => Max_Occurs));
+      end if;
    end Add_Particle;
 
    ------------------
@@ -3102,12 +3106,14 @@ package body Schema.Validators is
      (Seq : access Sequence_Record; Item : Choice;
       Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
    begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
+      if Min_Occurs /= 0 or else Max_Occurs /= 0 then
+         Append (Seq.Particles, XML_Particle'
+                   (Typ        => Particle_Nested,
+                    Validator  => Group_Model (Item),
+                    Next       => null,
+                    Min_Occurs => Min_Occurs,
+                    Max_Occurs => Max_Occurs));
+      end if;
    end Add_Particle;
 
    ------------------
