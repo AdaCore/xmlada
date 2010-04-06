@@ -857,15 +857,17 @@ procedure Schematest is
          end case;
 
          for Kind in Group_Kind'Range loop
-            case Kind is
-               when Fully_Passed =>
-                  Put (" in_full_pass=");
-               when Fully_Failed =>
-                  Put (" in_full_fail=");
-               when Partially_Passed =>
-                  Put (" in_partial=");
-            end case;
-            Put (Errors (Kind)(K)'Img);
+            if Errors (Kind)(K) /= 0 then
+               case Kind is
+                  when Fully_Passed =>
+                     Put (" in_full_pass=");
+                  when Fully_Failed =>
+                     Put (" in_full_fail=");
+                  when Partially_Passed =>
+                     Put (" in_partial=");
+               end case;
+               Put (Errors (Kind)(K)'Img);
+            end if;
          end loop;
 
          New_Line;

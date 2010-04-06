@@ -579,6 +579,15 @@ package body Schema.Schema_Readers is
 
             Handler.Contexts.Next.Extension := XML_Validator (Seq);
 
+         when Context_Restriction =>
+            Seq := Create_Sequence (Handler.Target_NS);
+            Output ("Validator := Create_Sequence;");
+            Add_Particle (Seq, Handler.Contexts.Group,
+                          Min_Occurs, Max_Occurs);
+            Output ("Add_Particle (Validator, " & Ada_Name (Handler.Contexts)
+                    & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
+            Handler.Contexts.Next.Restriction := XML_Validator (Seq);
+
          when others =>
             Output ("Can't handle nested group decl");
       end case;

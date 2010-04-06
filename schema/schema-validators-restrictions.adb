@@ -25,7 +25,7 @@
 -- exception does not however invalidate any other reasons why the   --
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
-
+with GNAT.IO; use GNAT.IO;
 package body Schema.Validators.Restrictions is
 
    type Restriction_XML_Validator is new XML_Validator_Record with record
@@ -50,6 +50,10 @@ package body Schema.Validators.Restrictions is
       Data              : Validator_Data;
       Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
+   procedure Validate_End_Element
+     (Validator      : access Restriction_XML_Validator;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Data           : Validator_Data);
    procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
@@ -160,6 +164,26 @@ package body Schema.Validators.Restrictions is
             D.Restriction_Data, Grammar, Element_Validator);
       end if;
    end Validate_Start_Element;
+
+   --------------------------
+   -- Validate_End_Element --
+   --------------------------
+
+   procedure Validate_End_Element
+     (Validator      : access Restriction_XML_Validator;
+      Local_Name     : Unicode.CES.Byte_Sequence;
+      Data           : Validator_Data)
+   is
+      D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
+   begin
+      if Validator.Restriction /= null then
+         Validate_End_Element (Validator.Restriction, Local_Name,
+                               D.Restriction_Data);
+      else
+         Validate_End_Element
+           (Get_Validator (Validator.Base), Local_Name, D.Restriction_Data);
+      end if;
+   end Validate_End_Element;
 
    ---------------
    -- Add_Facet --

@@ -52581,10 +52581,9 @@ Grp: MS-ComplexType2006-07-15 / ctF017
     ctF017.xsd:17:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-ComplexType2006-07-15 / ctG001
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctG001
-  XP ctG001.v
-    ctG001.xml:3:13: No definition provided for "myElement"
+  OK ctG001.v
 
 Grp: MS-ComplexType2006-07-15 / ctG002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67427,13 +67426,15 @@ Grp: MS-Group2006-07-15 / groupF025
     groupF025.xsd:18:55: Attribute "maxOccurs": Invalid value "-1"
 
 Grp: MS-Group2006-07-15 / groupG002
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF groupG002
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK groupG002
+    groupG002.xsd:36:40: minOccurs > maxOccurs when creating particle
 
 Grp: MS-Group2006-07-15 / groupG003v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupG003v
-  XF groupG003v.i
+  OK groupG003v.i
+    groupG003.xml:3:9: Unexpected end of sequence, expecting "((x1)|(y1|y2))"
 
 Grp: MS-Group2006-07-15 / groupG004v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67441,9 +67442,10 @@ Grp: MS-Group2006-07-15 / groupG004v
   OK groupG004v.v
 
 Grp: MS-Group2006-07-15 / groupG005v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupG005v
-  XF groupG005v.i
+  OK groupG005v.i
+    groupG005.xml:3:18: Unexpected element "y1"
 
 Grp: MS-Group2006-07-15 / groupH001v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67456,9 +67458,10 @@ Grp: MS-Group2006-07-15 / groupH002v
   OK groupH002v.v
 
 Grp: MS-Group2006-07-15 / groupH003v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH003v
-  XF groupH003v.i
+  OK groupH003v.i
+    groupH003.xml:5:7: Unexpected element "x1"
 
 Grp: MS-Group2006-07-15 / groupH004v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67471,18 +67474,20 @@ Grp: MS-Group2006-07-15 / groupH005v
   OK groupH005v.v
 
 Grp: MS-Group2006-07-15 / groupH006v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH006v
-  XF groupH006v.i
+  OK groupH006v.i
+    groupH006.xml:5:8: Unexpected element "y1"
 
 Grp: MS-Group2006-07-15 / groupH007v
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SF groupH007v
 
 Grp: MS-Group2006-07-15 / groupH008v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH008v
-  XF groupH008v.i
+  OK groupH008v.i
+    groupH008.xml:3:8: Unexpected element "x1"
 
 Grp: MS-Group2006-07-15 / groupH009v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67490,9 +67495,10 @@ Grp: MS-Group2006-07-15 / groupH009v
   OK groupH009v.v
 
 Grp: MS-Group2006-07-15 / groupH010v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH010v
-  XF groupH010v.i
+  OK groupH010v.i
+    groupH010.xml:3:9: Unexpected end of sequence, expecting "((x1)|(y1|y2))"
 
 Grp: MS-Group2006-07-15 / groupH011v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67500,14 +67506,16 @@ Grp: MS-Group2006-07-15 / groupH011v
   OK groupH011v.v
 
 Grp: MS-Group2006-07-15 / groupH012v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH012v
-  XF groupH012v.i
+  OK groupH012v.i
+    groupH012.xml:4:8: Unexpected element "x1"
 
 Grp: MS-Group2006-07-15 / groupH013v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH013v
-  XF groupH013v.i
+  OK groupH013v.i
+    groupH013.xml:3:9: Unexpected end of sequence, expecting "((x1)|(y1|y2))"
 
 Grp: MS-Group2006-07-15 / groupH014v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67518,12 +67526,13 @@ Grp: MS-Group2006-07-15 / groupH015v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH015v
   OK groupH015v.i
-    groupH015.xml:6:8: Unexpected element "x1"
+    groupH015.xml:5:8: Unexpected element "x1"
 
 Grp: MS-Group2006-07-15 / groupH016v
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH016v
-  XF groupH016v.i
+  OK groupH016v.i
+    groupH016.xml:3:9: Unexpected end of sequence, expecting "((x1)|(y1|y2))"
 
 Grp: MS-Group2006-07-15 / groupH017v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67539,7 +67548,7 @@ Grp: MS-Group2006-07-15 / groupH019v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupH019v
   OK groupH019v.i
-    groupH019.xml:4:18: Unexpected element "x1"
+    groupH019.xml:4:8: Unexpected element "x1"
 
 Grp: MS-Group2006-07-15 / groupH020
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67551,12 +67560,14 @@ Grp: MS-Group2006-07-15 / groupH021v
   SF groupH021v
 
 Grp: MS-Group2006-07-15 / groupH022
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF groupH022
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK groupH022
+    groupH022.xsd:31:54: minOccurs > maxOccurs when creating particle
 
 Grp: MS-Group2006-07-15 / groupH023
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF groupH023
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK groupH023
+    groupH023.xsd:31:54: minOccurs > maxOccurs when creating particle
 
 Grp: MS-Group2006-07-15 / groupH024
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67577,7 +67588,7 @@ Grp: MS-Group2006-07-15 / groupI003v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupI003v
   OK groupI003v.i
-    groupI003.xml:3:8: Unexpected element "a1"
+    groupI003.xml:3:8: Expecting ((x1)|(y1|y2))
 
 Grp: MS-Group2006-07-15 / groupI004v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76597,9 +76608,10 @@ Grp: MS-Particles2006-07-15 / particlesIc007
   OK particlesIc007.v
 
 Grp: MS-Particles2006-07-15 / particlesId001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK particlesId001
-  OK particlesId001.v
+  XP particlesId001.v
+    particlesId001.xml:2:9: Expecting one of "{http://xsdtesting}e0|{http://xsdtesting}e1|{http://xsdtesting}e2"
 
 Grp: MS-Particles2006-07-15 / particlesId002
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76669,9 +76681,10 @@ Grp: MS-Particles2006-07-15 / particlesIe003
   OK particlesIe003.v
 
 Grp: MS-Particles2006-07-15 / particlesIe004
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK particlesIe004
-  OK particlesIe004.v
+  XP particlesIe004.v
+    particlesIe004.xml:2:9: Expecting one of "{http://xsdtesting}e1|{http://xsdtesting}e2"
 
 Grp: MS-Particles2006-07-15 / particlesIe005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76711,9 +76724,10 @@ Grp: MS-Particles2006-07-15 / particlesIe012
   SF particlesIe012
 
 Grp: MS-Particles2006-07-15 / particlesIe013
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK particlesIe013
-  OK particlesIe013.v
+  XP particlesIe013.v
+    particlesIe013.xml:1:156: Expecting one of "{http://xsdtesting}e1|{http://xsdtesting}e2"
 
 Grp: MS-Particles2006-07-15 / particlesIe014
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92727,8 +92741,9 @@ Grp: MS-SimpleType2006-07-15 / stA020
   OK stA020
 
 Grp: MS-SimpleType2006-07-15 / stB001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF stB001
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK stB001
+    stB001.xsd:4:19: Unexpected end of sequence, expecting "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
 
 Grp: MS-SimpleType2006-07-15 / stB002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95786,10 +95801,10 @@ Grp: BoeingXSDTestCases / ipo6
 Total number of tests: 37755 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
    24072 XML files
-NI: Features not implemented: in_full_pass= 0 in_partial= 0 in_full_fail= 1054
-SP: XSD KO, should be OK: in_full_pass= 0 in_partial= 0 in_full_fail= 250
-SF: XSD OK, should be KO: in_full_pass= 0 in_partial= 0 in_full_fail= 813
-XP: XML KO, should be OK: in_full_pass= 0 in_partial= 487 in_full_fail= 4
-XF: XML OK, should be KO: in_full_pass= 0 in_partial= 47 in_full_fail= 2
-IE: Internal error: in_full_pass= 0 in_partial= 0 in_full_fail= 0
-Total errors: 1603 ( 4.2 %)
+NI: Features not implemented: in_full_fail= 1054
+SP: XSD KO, should be OK: in_full_fail= 250
+SF: XSD OK, should be KO: in_full_fail= 809
+XP: XML KO, should be OK: in_partial= 489 in_full_fail= 4
+XF: XML OK, should be KO: in_partial= 38 in_full_fail= 2
+IE: Internal error:
+Total errors: 1592 ( 4.2 %)

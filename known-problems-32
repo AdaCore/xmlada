@@ -64,6 +64,7 @@ KP-32-J302-043 Lots of fixes in schema validation
               - QName elements must have a valid namespace
               - <facet name="pattern" value="..."> should preserve spaces in
                 the pattern
+              - handling of <group> inside a <restriction>
 
   Status:     Fixed in 3.3.0
 
