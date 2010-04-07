@@ -3766,6 +3766,16 @@ package body Schema.Validators is
       ElemPtr.Substitution_Group := Head;
    end Set_Substitution_Group;
 
+   ----------------------------
+   -- Get_Substitution_Group --
+   ----------------------------
+
+   function Get_Substitution_Group
+     (Element : XML_Element) return XML_Element is
+   begin
+      return Element.Elem.Substitution_Group;
+   end Get_Substitution_Group;
+
    -------------------------
    -- Empty_Particle_List --
    -------------------------

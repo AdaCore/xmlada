@@ -1116,11 +1116,37 @@ package body Schema.Schema_Readers is
       if not Handler.Contexts.Is_Ref
         and then Get_Type (Handler.Contexts.Element) = No_Type
       then
-         Output ("Set_Type (" & Ada_Name (Handler.Contexts)
-                 & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
-         Set_Type (Handler.Contexts.Element,
-                   Lookup (Handler.Schema_NS, "ur-Type"),
-                   Get_Context (Handler).all);
+         --  From 3.3.2.1, the type should be that of the substitutionGroup
+         --  attribute if there is any
+
+         if Get_Substitution_Group (Handler.Contexts.Element) /=
+           No_Element
+         then
+            Output ("Set_Type (" & Ada_Name (Handler.Contexts)
+                    & " from substitution group");
+
+            if Get_Type (Get_Substitution_Group (Handler.Contexts.Element)) =
+               No_Type
+            then
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  "Not supported: type computed from substitutionGroup when"
+                  & " the group has not been fully defined yet");
+            end if;
+
+            Set_Type
+              (Handler.Contexts.Element,
+               Get_Type (Get_Substitution_Group (Handler.Contexts.Element)),
+               Get_Context (Handler).all);
+
+         else
+            --  Otherwise the type is anyType
+            Output ("Set_Type (" & Ada_Name (Handler.Contexts)
+                    & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
+            Set_Type (Handler.Contexts.Element,
+                      Lookup (Handler.Schema_NS, "ur-Type"),
+                      Get_Context (Handler).all);
+         end if;
       end if;
    end Finish_Element;
 

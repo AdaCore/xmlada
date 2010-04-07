@@ -45567,10 +45567,15 @@ Grp: ElemDecl / typedef00203m
 "
 
 Grp: ElemDecl / typedef00204m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef00204m
   OK typeDef00204m1_p
-  XF typeDef00204m1_n
+  OK typeDef00204m1_n
+    typeDef00204m1_n.xml:16:1: Invalid value for boolean type: "
+
+    Yes
+
+"
 
 Grp: ElemDecl / typedef00205m
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -48408,7 +48413,8 @@ Grp: MS-Additional2006-07-15 / addB178
 
 Grp: MS-Additional2006-07-15 / addB180
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF addB180
+  NI addB180
+    Not supported: type computed from substitutionGroup when the group has not been fully defined yet
 
 Grp: MS-Additional2006-07-15 / addB181
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -66694,8 +66700,9 @@ Grp: MS-Element2006-07-15 / elemZ010
   OK elemZ010.v
 
 Grp: MS-Element2006-07-15 / elemZ011
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemZ011
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemZ011
+    Not supported: type computed from substitutionGroup when the group has not been fully defined yet
 
 Grp: MS-Element2006-07-15 / elemZ012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92723,9 +92730,9 @@ Grp: MS-Schema2006-07-15 / schZ005
   OK schZ005
 
 Grp: MS-Schema2006-07-15 / schZ006
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schZ006
-    schZ006.xsd:11:59: schemaLocation and namespace attributes mandatory for <import>
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schZ006
+    Not supported: type computed from substitutionGroup when the group has not been fully defined yet
 
 Grp: MS-Schema2006-07-15 / schZ007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95937,10 +95944,10 @@ Grp: BoeingXSDTestCases / ipo6
 Total number of tests: 37636 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
    23953 XML files
-NI: Features not implemented: in_full_fail= 1379
+NI: Features not implemented: in_full_fail= 1382
 SP: XSD KO, should be OK: in_full_fail= 230
-SF: XSD OK, should be KO: in_full_fail= 681
+SF: XSD OK, should be KO: in_full_fail= 680
 XP: XML KO, should be OK: in_partial= 469 in_full_fail= 4
-XF: XML OK, should be KO: in_partial= 7 in_full_fail= 2
+XF: XML OK, should be KO: in_partial= 6 in_full_fail= 2
 IE: Internal error:
-Total errors: 1393 ( 3.7 %)
+Total errors: 1391 ( 3.7 %)

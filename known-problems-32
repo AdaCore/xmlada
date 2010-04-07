@@ -67,6 +67,8 @@ KP-32-J302-043 Lots of fixes in schema validation
               - Handling of <group> inside a <restriction>
               - Error when root element is abstract
               - Support for block="substitution"
+              - Type of <element> should be computed from its
+                substitutionGroup if there is no other type defined
 
   Status:     Fixed in 3.3.0
 

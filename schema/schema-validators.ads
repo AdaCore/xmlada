@@ -528,6 +528,8 @@ package Schema.Validators is
 
    procedure Set_Substitution_Group
      (Element : XML_Element; Head : XML_Element);
+   function Get_Substitution_Group
+     (Element : XML_Element) return XML_Element;
    --  Define a substitution group for Validator, as declared through the
    --  "substitutionGroup" attribute of the XML Schema.
    --  Anywhere Head is referenced, Validator can be used
