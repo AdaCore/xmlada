@@ -88,19 +88,11 @@ package Schema.Schema_Readers is
    --  Whether extra debug output should be displayed
 
    type Supported_Features is record
-      Substitution_Group : Boolean := True;
       XSD_Version        : Schema.Validators.XSD_Versions :=
         Schema.Validators.XSD_1_1;
    end record;
    All_Features : constant Supported_Features;
    --  See Set_Supported_Features below.
-   --
-   --  "Attribute_Form": whether you can use the "form" attribute when defining
-   --    attributes.
-   --  "Substitution_Group": whether you can use the "substitutionGroup"
-   --    attribute.
-   --  "Abstracts": whether to accept "abstract" attribute
-   --  "Nil": whether the attribute "nillable" is supported
 
    procedure Set_Supported_Features
      (Reader   : in out Schema_Reader;
@@ -181,8 +173,7 @@ private
    end record;
 
    All_Features : constant Supported_Features :=
-     (XSD_Version => Schema.Validators.XSD_1_1,
-      others      => True);
+     (XSD_Version => Schema.Validators.XSD_1_1);
 
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
       Created_Grammar : Schema.Validators.XML_Grammar :=

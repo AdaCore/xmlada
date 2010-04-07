@@ -868,6 +868,10 @@ procedure Schematest is
                 & " automatically)");
       Put_Line ("  " & Total_XML'Img & " XML files");
 
+      if Check_Alternative_Dir then
+         Put_Line ("Comparing with latest CVS baselines from W3C");
+      end if;
+
       for K in Error_Kind loop
          case K is
             when XSD_Should_Pass =>
@@ -935,10 +939,7 @@ begin
             Put_Line ("--group Hide fully failed groups");
             Put_Line ("     These likely show unimplemented features");
             Put_Line ("--feature name    Disable support for a feature");
-            Put_Line
-              ("     Valid names are: subgroup");
-            Put_Line
-              ("     xsd_1_0");
+            Put_Line ("     Valid names are: xsd_1_0");
             return;
 
          when 'v' => Verbose := True;
@@ -952,9 +953,7 @@ begin
                Check_Alternative_Dir := True;
 
             elsif Full_Switch = "-feature" then
-               if Parameter = "subgroup" then
-                  Features.Substitution_Group := False;
-               elsif Parameter = "xsd_1_0" then
+               if Parameter = "xsd_1_0" then
                   Features.XSD_Version := XSD_1_0;
                else
                   Put_Line ("Invalid feature name");

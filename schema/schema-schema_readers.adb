@@ -953,13 +953,6 @@ package body Schema.Schema_Readers is
       end if;
 
       if Subst_Index /= -1 then
-         if not Handler.Supported.Substitution_Group then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Support for element's ""substitutionGroup"" explicitly"
-               & " disabled");
-         end if;
-
          Lookup_With_NS
            (Handler.all, Get_Value (Atts, Subst_Index), Result => Group);
          Set_Substitution_Group (Element, Group);

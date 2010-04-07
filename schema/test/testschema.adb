@@ -103,9 +103,7 @@ begin
    Initialize_Option_Scan;
 
    Set_Supported_Features   --  not needed here, just for example
-     (Schema,
-      (Substitution_Group => True,
-       XSD_Version        => XSD_1_0));
+     (Schema, (XSD_Version => XSD_1_0));
 
    loop
       case Getopt (Switches) is
