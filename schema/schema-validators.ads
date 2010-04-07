@@ -831,6 +831,14 @@ package Schema.Validators is
       On_Extension   : Boolean);
    --  Set the default value for the "block" attribute
 
+   procedure Compute_Blocks
+     (Value         : Unicode.CES.Byte_Sequence;
+      Restrictions  : out Boolean;
+      Extensions    : out Boolean;
+      Substitutions : out Boolean);
+   --  Compute the list of blocked elements from value. Value is a list similar
+   --  to what is used for the "block" attribute of elements in a schema
+
    procedure Initialize (Grammar : in out XML_Grammar);
    --  Initialize the internal structure of the grammar.
    --  This adds the definition for all predefined types

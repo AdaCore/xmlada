@@ -152,7 +152,8 @@ procedure Schematest is
       Schema         : Unbounded_String;
       Test           : Node;
       Base_Dir       : String;
-      Grammar        : XML_Grammar);
+      Grammar        : XML_Grammar;
+      Failed_Grammar : Boolean);
    --  Run the testsuite whose description is in Filename
 
    function Get_Attribute (N : Node; Attribute : String) return String;
@@ -436,7 +437,8 @@ procedure Schematest is
       Schema    : Unbounded_String;
       Test      : Node;
       Base_Dir  : String;
-      Grammar   : XML_Grammar)
+      Grammar   : XML_Grammar;
+      Failed_Grammar : Boolean)
    is
       Result   : Test_Result;
       Name     : constant String := Get_Attribute (Test, "name");
@@ -485,11 +487,27 @@ procedure Schematest is
                      Input);
                Result.XML := To_Unbounded_String (Get_System_Id (Input));
 
-               Parse (Reader, Input);
-               Close (Input);
+               --  Can't comapre Grammar=No_Grammar, since some tests do not
+               --  explicitly pass a grammar
+               if Failed_Grammar then
+                  if Outcome = Valid then
+                     Result.Kind := XML_Should_Pass;
+                     Result.Msg  :=
+                       To_Unbounded_String ("XSD file could not be parsed");
 
-               if Outcome = Invalid then
-                  Result.Kind := XML_Should_Fail;
+                  else
+                     --  We did expect to fail anyway. The error message might
+                     --  not be correct though
+                     null;
+                  end if;
+
+               else
+                  Parse (Reader, Input);
+                  Close (Input);
+
+                  if Outcome = Invalid then
+                     Result.Kind := XML_Should_Fail;
+                  end if;
                end if;
 
             exception
@@ -578,6 +596,7 @@ procedure Schematest is
       Total_Errors : Natural := 0;
       Cursor : Test_Result_Lists.Cursor;
       Kind   : Result_Kind;
+      Failed_Grammar : Boolean := False;
    begin
       Result.Name := To_Unbounded_String (Testset & " / " & Name);
       Result.Counts := (others => 0);
@@ -604,14 +623,23 @@ procedure Schematest is
                Grammar      => Schema,
                Schema_Files => Schema_Files);
 
+            --  If Schema=No_Grammar, we failed to parse the grammar. But that
+            --  might be accepted, so we'll still run each test, marking them
+            --  all as "can't parse" (which might be the expected result)
+
+            --  ??? For now, we simply do not run any of the tests. But there
+            --  are situations where XML/Ada report an error on the XSD rather
+            --  than on the XML (for instance disallowedSubst00503m4_n where
+            --  we restrict a type that has block="restriction").
+
             if Schema = No_Grammar then
-               --  We couldn't parse the grammar, or the tests isn't "accepted"
-               --  so nothing else to do
+               Failed_Grammar := True;
                exit;
             end if;
 
          elsif Local_Name (N) = "instanceTest" then
-            Parse_Instance_Test (Result, Schema_Files, N, Base_Dir, Schema);
+            Parse_Instance_Test (Result, Schema_Files, N, Base_Dir, Schema,
+                                 Failed_Grammar);
          end if;
 
          N := Next_Sibling (N);

@@ -1038,30 +1038,12 @@ package body Schema.Schema_Readers is
       if Block_Index /= -1 then
          declare
             On_Restriction, On_Extension, On_Substitution : Boolean := False;
-
-            procedure On_Item (Str : Byte_Sequence);
-            procedure On_Item (Str : Byte_Sequence) is
-            begin
-               if Str = "restriction" then
-                  On_Restriction := True;
-               elsif Str = "extension" then
-                  On_Extension := True;
-               elsif Str = "substitution" then
-                  On_Substitution := True;
-               elsif Str = "#all" then
-                  On_Restriction := True;
-                  On_Extension := True;
-                  On_Substitution := True;
-               else
-                  Validation_Error
-                    ("Invalid value for block: """ & Str & """");
-               end if;
-            end On_Item;
-
-            procedure For_Each
-               is new Schema.Validators.Lists.For_Each_Item (On_Item);
          begin
-            For_Each (Get_Value (Atts, Block_Index));
+            Compute_Blocks
+              (Get_Value (Atts, Block_Index),
+               Restrictions  => On_Restriction,
+               Extensions    => On_Extension,
+               Substitutions => On_Substitution);
             Set_Block (Element,
                        On_Restriction  => On_Restriction,
                        On_Extension    => On_Extension,
@@ -1211,8 +1193,9 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "block");
       Abstract_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "abstract");
-      Name       : Byte_Sequence_Access;
+      Name    : Byte_Sequence_Access;
       Mixed   : Boolean;
+      Dummy   : Boolean;
 
    begin
       if Abstract_Index /= -1 then
@@ -1242,14 +1225,11 @@ package body Schema.Schema_Readers is
          Next           => Handler.Contexts);
 
       if Block_Index /= -1 then
-         declare
-            Block : constant Byte_Sequence := Get_Value (Atts, Block_Index);
-         begin
-            Handler.Contexts.Block_Restriction :=
-              Block = "restriction" or else Block = "#all";
-            Handler.Contexts.Block_Extension :=
-              Block = "extension" or else Block = "#all";
-         end;
+         Compute_Blocks
+           (Get_Value (Atts, Block_Index),
+            Restrictions  => Handler.Contexts.Block_Restriction,
+            Extensions    => Handler.Contexts.Block_Extension,
+            Substitutions => Dummy);
       end if;
 
       --  Do not use In_Redefine_Context, since this only applies for types

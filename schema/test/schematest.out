@@ -44949,14 +44949,14 @@ Grp: ElemDecl / disallowedsubst00503m3
     disallowedSubst00503m3.xsd:34:80: Restrictions of type "Type" are forbidden
 
 Grp: ElemDecl / disallowedsubst00503m4
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK disallowedSubst00503m4
-  XF Negative
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP disallowedSubst00503m4
+    disallowedSubst00503m4.xsd:34:80: Restrictions of type "Type" are forbidden
 
 Grp: ElemDecl / disallowedsubst00503m5
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK disallowedSubst00503m5
-  XF Negative
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP disallowedSubst00503m5
+    disallowedSubst00503m5.xsd:34:80: Restrictions of type "Type" are forbidden
 
 Grp: ElemDecl / idconstrdefs00101m
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95934,13 +95934,13 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37638 (omitting non-accepted tests)
+Total number of tests: 37636 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
-   23955 XML files
+   23953 XML files
 NI: Features not implemented: in_full_fail= 1379
-SP: XSD KO, should be OK: in_full_fail= 228
+SP: XSD KO, should be OK: in_full_fail= 230
 SF: XSD OK, should be KO: in_full_fail= 681
 XP: XML KO, should be OK: in_partial= 469 in_full_fail= 4
-XF: XML OK, should be KO: in_partial= 9 in_full_fail= 2
+XF: XML OK, should be KO: in_partial= 7 in_full_fail= 2
 IE: Internal error:
 Total errors: 1393 ( 3.7 %)

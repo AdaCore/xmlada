@@ -2573,7 +2573,8 @@ package body Schema.Validators is
                           ("Unexpected element """ & Local_Name
                            & """ (substitutions are blocked)");
 
-                     elsif G.Elem.Block_Extension
+                     elsif (G.Elem.Block_Extension
+                            or else G.Elem.Of_Type.Block_Extension)
                        and then Is_Extension_Of (R, Base => G)
                      then
                         Validation_Error
@@ -2581,7 +2582,8 @@ package body Schema.Validators is
                            & G.Elem.Local_Name.all
                            & """ blocks extensions");
 
-                     elsif G.Elem.Block_Restriction
+                     elsif (G.Elem.Block_Restriction
+                            or else G.Elem.Of_Type.Block_Restriction)
                        and then Is_Restriction_Of (R, Base => G)
                      then
                         Validation_Error
@@ -4719,14 +4721,16 @@ package body Schema.Validators is
    is
       pragma Unreferenced (Had_Restriction, Had_Extension);
    begin
+      if Debug then
+         Debug_Output ("Is " & Get_Name (Validator)
+                       & " a valid replacement of " & Get_Local_Name (Typ));
+      end if;
+
       if Get_Local_Name (Typ) /= "ur-Type" then
-         if Debug then
-            Debug_Output ("Check_Replacement "
-                          & Get_Name (Validator)
-                          & " " & Get_Local_Name (Typ));
-         end if;
          Validation_Error ("Type is not a valid replacement for """
                            & Get_Local_Name (Typ) & """");
+      else
+         Had_Restriction := True;
       end if;
    end Check_Replacement;
 
@@ -5335,5 +5339,43 @@ package body Schema.Validators is
         (Element.Elem.Of_Type.Validator.all,
          Base.Elem.Of_Type.Validator);
    end Is_Restriction_Of;
+
+   --------------------
+   -- Compute_Blocks --
+   --------------------
+
+   procedure Compute_Blocks
+     (Value         : Unicode.CES.Byte_Sequence;
+      Restrictions  : out Boolean;
+      Extensions    : out Boolean;
+      Substitutions : out Boolean)
+   is
+      procedure On_Item (Str : Byte_Sequence);
+      procedure On_Item (Str : Byte_Sequence) is
+      begin
+         if Str = "restriction" then
+            Restrictions := True;
+         elsif Str = "extension" then
+            Extensions := True;
+         elsif Str = "substitution" then
+            Substitutions := True;
+         elsif Str = "#all" then
+            Restrictions  := True;
+            Extensions    := True;
+            Substitutions := True;
+         else
+            Validation_Error
+              ("Invalid value for block: """ & Str & """");
+         end if;
+      end On_Item;
+
+      procedure For_Each
+        is new Schema.Validators.Lists.For_Each_Item (On_Item);
+   begin
+      Restrictions  := False;
+      Extensions    := False;
+      Substitutions := False;
+      For_Each (Value);
+   end Compute_Blocks;
 
 end Schema.Validators;

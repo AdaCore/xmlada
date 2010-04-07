@@ -527,16 +527,16 @@ package body Schema.Readers is
          Typ := Get_Type (Element);
 
          if Type_Index /= -1 then
-            if Debug then
-               Put_Line ("Getting element definition from type attribute: "
-                         & Get_Value (Atts, Type_Index));
-            end if;
-
             declare
                Qname : constant Byte_Sequence := Get_Value (Atts, Type_Index);
                Separator : constant Integer := Split_Qname (Qname);
                NS        : XML_NS;
             begin
+               if Debug then
+                  Put_Line ("Getting element definition from type attribute: "
+                            & Qname);
+               end if;
+
                Get_Namespace_From_Prefix
                  (Validating_Reader (Handler),
                   Qname (Qname'First .. Separator - 1), NS);
