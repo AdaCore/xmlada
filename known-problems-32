@@ -71,6 +71,7 @@ KP-32-J302-043 Lots of fixes in schema validation
                 substitutionGroup if there is no other type defined
               - Raise explicit exception (XML_Not_Supported) for various
                 regexp constructs that are not supported (unicode,...)
+              - Length facets should be ignored for QName (always match)
 
   Status:     Fixed in 3.3.0
 

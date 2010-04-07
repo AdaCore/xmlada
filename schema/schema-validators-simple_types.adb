@@ -280,6 +280,16 @@ package body Schema.Validators.Simple_Types is
          To   : in out Facets_Description_Record'Class);
    end Length_Facets;
 
+   --  For QName, length facets always match (4.3.1.3)
+
+   type Always_Match_Length_Facets_Description
+     is new Common_Facets_Description with null record;
+   procedure Add_Facet
+     (Facets      : in out Always_Match_Length_Facets_Description;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence;
+      Applied     : out Boolean);
+
    -----------------------
    -- Generic validator --
    -----------------------
@@ -522,6 +532,30 @@ package body Schema.Validators.Simple_Types is
       end Check_Facet;
    end Length_Facets;
 
+   ---------------
+   -- Add_Facet --
+   ---------------
+
+   procedure Add_Facet
+     (Facets      : in out Always_Match_Length_Facets_Description;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence;
+      Applied     : out Boolean)
+   is
+   begin
+      Add_Facet (Common_Facets_Description (Facets), Facet_Name,
+                 Facet_Value, Applied);
+      if Applied
+        or else Facet_Name = "length"
+        or else Facet_Name = "minLength"
+        or else Facet_Name = "maxLength"
+      then
+         Applied := True;
+      else
+         Applied := False;
+      end if;
+   end Add_Facet;
+
    ------------------------------
    -- Generic_Simple_Validator --
    ------------------------------
@@ -753,8 +787,10 @@ package body Schema.Validators.Simple_Types is
      is new String_Validators.Validator_Record with null record;
    function Is_ID (Validator : ID_Validator) return Boolean;
 
+   package QName_Validators is new Generic_Simple_Validator
+     (Always_Match_Length_Facets_Description);
    type QName_Validator
-     is new String_Validators.Validator_Record with null record;
+     is new QName_Validators.Validator_Record with null record;
    procedure Validate_Characters
      (Validator     : access QName_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
@@ -1275,6 +1311,7 @@ package body Schema.Validators.Simple_Types is
       Base64  : Base64Binary_Validators.Validator;
       Int     : Integer_Validators.Validator;
       Dec     : Decimal_Validators.Validator;
+      QN      : QName_Validators.Validator;
       Created : XML_Type;
    begin
       Tmp := new Boolean_Validator_Record;
@@ -1284,8 +1321,8 @@ package body Schema.Validators.Simple_Types is
       Set_Whitespace (Str.Facets, Preserve);
       Create_Global_Type (G, "string", Str);
 
-      Str := new QName_Validator;
-      Create_Global_Type (G, "QName", Str);
+      QN  := new QName_Validator;
+      Create_Global_Type (G, "QName", QN);
 
       Str := new String_Validators.Validator_Record;
       Set_Whitespace (Str.Facets, Replace);  --  This should be hard-coded ???
