@@ -80,6 +80,9 @@ package body Schema.Validators.Restrictions is
      (Validator : access Restriction_XML_Validator) return Facets_Description;
    procedure Free (Validator : in out Restriction_XML_Validator);
    function Is_ID (Validator : Restriction_XML_Validator) return Boolean;
+   function Is_Restriction_Of
+     (Validator : Restriction_XML_Validator;
+      Base      : access XML_Validator_Record'Class) return Boolean;
    --  See doc from inherited subprograms
 
    -----------
@@ -340,5 +343,19 @@ package body Schema.Validators.Restrictions is
       Register (G, Result);
       return XML_Validator (Result);
    end Create_Restriction_Of;
+
+   -----------------------
+   -- Is_Restriction_Of --
+   -----------------------
+
+   function Is_Restriction_Of
+     (Validator : Restriction_XML_Validator;
+      Base      : access XML_Validator_Record'Class) return Boolean
+   is
+   begin
+      return Validator.Base.Validator = XML_Validator (Base)
+        or else Is_Restriction_Of
+          (Validator.Base.Validator.all, Base => Base);
+   end Is_Restriction_Of;
 
 end Schema.Validators.Restrictions;

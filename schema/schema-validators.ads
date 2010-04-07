@@ -197,6 +197,14 @@ package Schema.Validators is
    --  Base doesn't need to be a Clone of some other type, since it isn't
    --  altered. See also Is_Extension_Of below
 
+   function Is_Extension_Of
+     (Validator : XML_Validator_Record;
+      Base      : access XML_Validator_Record'Class) return Boolean;
+   function Is_Restriction_Of
+     (Validator : XML_Validator_Record;
+      Base      : access XML_Validator_Record'Class) return Boolean;
+   --  Whether Validator is an extension/restriction of Base
+
    function Restriction_Of
      (G           : XML_Grammar_NS;
       Base        : XML_Type;
@@ -525,6 +533,12 @@ package Schema.Validators is
    --  Anywhere Head is referenced, Validator can be used
    --  instead.
 
+   function Is_Extension_Of
+     (Element : XML_Element; Base : XML_Element) return Boolean;
+   function Is_Restriction_Of
+     (Element : XML_Element; Base : XML_Element) return Boolean;
+   --  Whether Element is an extension/restriction of Base
+
    function Get_Type  (Element : XML_Element) return XML_Type;
    procedure Set_Type
      (Element      : XML_Element;
@@ -576,11 +590,13 @@ package Schema.Validators is
    --  Set the final status of the element
 
    procedure Set_Block
-     (Element        : XML_Element;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean);
+     (Element         : XML_Element;
+      On_Restriction  : Boolean;
+      On_Extension    : Boolean;
+      On_Substitution : Boolean);
    function Get_Block_On_Restriction (Element : XML_Element) return Boolean;
    function Get_Block_On_Extension (Element : XML_Element) return Boolean;
+   function Get_Block_On_Substitution (Element : XML_Element) return Boolean;
    --  Set the "block" status of the element
 
    procedure Check_Qualification
@@ -943,12 +959,7 @@ private
       Local_Name : Unicode.CES.Byte_Sequence_Access;
       NS         : XML_Grammar_NS;
       Of_Type    : XML_Type;
-
-      Substitution_Group : Integer := -1;
-      --  Index of the substitution group to which this element belongs. Any
-      --  element in the same group can be used in place of the element. This
-      --  is set to -1 when there is no valid substitution group. These groups
-      --  are stored in NS itself
+      Substitution_Group : XML_Element := No_Element;
 
       Default    : Unicode.CES.Byte_Sequence_Access;
       Fixed      : Unicode.CES.Byte_Sequence_Access;
@@ -964,8 +975,9 @@ private
       --  Whether this element is final for "restriction" or "extension" or
       --  both
 
-      Block_Restriction : Boolean;
-      Block_Extension   : Boolean;
+      Block_Restriction  : Boolean;
+      Block_Extension    : Boolean;
+      Block_Substitution : Boolean;
       --  The value for the "block" attribute of the element
 
       Form : Form_Type;
@@ -1258,16 +1270,6 @@ private
       --  through Create_Global_Group
    end record;
 
-   -------------------------
-   -- Substitution groups --
-   -------------------------
-
-   type Substitution_Group_Array is array (Natural range <>) of XML_Element;
-   type Substitution_Group is access all Substitution_Group_Array;
-   type Substitution_Groups_Array
-     is array (Natural range <>) of Substitution_Group;
-   type Substitution_Groups is access all Substitution_Groups_Array;
-
    -------------
    -- Grammar --
    -------------
@@ -1356,11 +1358,6 @@ private
       Attributes        : Attributes_Htable_Access;
       Attribute_Groups  : Attribute_Groups_Htable_Access;
 
-      Substitutions     : Substitution_Groups;
-      --  The substitution groups defined for this namespace. Each element
-      --  contains an index to the substitution group to which it belongs, if
-      --  any.
-
       Validators_For_Mem : XML_Validator;
       --  List of validators allocated in the context of this grammar, and
       --  that should be freed when the grammar is destroyed. Warning: if an
@@ -1379,8 +1376,9 @@ private
       --  List of elements defined in this grammar, for memory management
       --  purposes
 
-      Block_Extension   : Boolean := False;
-      Block_Restriction : Boolean := False;
+      Block_Extension    : Boolean := False;
+      Block_Restriction  : Boolean := False;
+      Block_Substitution : Boolean := False;
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_NS);

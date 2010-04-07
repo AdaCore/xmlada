@@ -73,6 +73,9 @@ package body Schema.Validators.Extensions is
    procedure Check_Content_Type
      (Validator        : access Extension_XML_Validator;
       Should_Be_Simple : Boolean);
+   function Is_Extension_Of
+     (Validator : Extension_XML_Validator;
+      Base      : access XML_Validator_Record'Class) return Boolean;
    --  See doc from inherited subprograms
 
    -------------------------
@@ -199,6 +202,11 @@ package body Schema.Validators.Extensions is
       end if;
 
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Validate_End_Element;
 
    -------------------------
@@ -338,5 +346,19 @@ package body Schema.Validators.Extensions is
       Result.Extension := XML_Validator (C);
       return XML_Validator (Result);
    end Create_Extension_Of;
+
+   ---------------------
+   -- Is_Extension_Of --
+   ---------------------
+
+   function Is_Extension_Of
+     (Validator : Extension_XML_Validator;
+      Base      : access XML_Validator_Record'Class) return Boolean
+   is
+   begin
+      return Validator.Base.Validator = XML_Validator (Base)
+        or else Is_Extension_Of
+          (Validator.Base.Validator.all, Base => Base);
+   end Is_Extension_Of;
 
 end Schema.Validators.Extensions;

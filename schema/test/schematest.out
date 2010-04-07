@@ -43739,12 +43739,12 @@ Grp: suntest / xsd002
 Grp: suntest / xsd003-1.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK xsd003-1.e
-    xsd003-1.e.xsd:16:30: Element "root" has already been declared
+    xsd003-1.e.xsd:16:30: Unexpected element "{http://www.w3.org/2001/XMLSchema}element"
 
 Grp: suntest / xsd003-2.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK xsd003-2.e
-    xsd003-2.e.xsd:16:50: Attribute has already been declared: gAtt
+    xsd003-2.e.xsd:16:50: Unexpected element "{http://www.w3.org/2001/XMLSchema}attribute"
 
 Grp: suntest / xsd003a
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -43852,24 +43852,23 @@ Grp: suntest / xsd007.e
   SF xsd007.e
 
 Grp: suntest / xsd008
-  80.0% tests= 5 (xsd= 1 xml= 4) OK= 4 FAILED= 1
+  100.0% tests= 5 (xsd= 1 xml= 4) OK= 5 FAILED= 0
   OK xsd008
   OK xsd008.n00
     xsd008.n00.xml:10:27: "facet" is abstract
   OK xsd008.n01
-    xsd008.n01.xml:10:27: "facet" is abstract
-  XF xsd008.n02
+    xsd008.n01.xml:10:27: Expecting at least 1 occurrences of "{foo}long"
+  OK xsd008.n02
+    xsd008.n02.xml:10:25: Expecting at least 1 occurrences of "{foo}long"
   OK xsd008.v00
 
 Grp: suntest / xsd009.e
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK xsd009.e
-    xsd009.e.xsd:26:50: "bar" already belongs to another substitution group
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF xsd009.e
 
 Grp: suntest / xsd010.e
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK xsd010.e
-    xsd010.e.xsd:26:50: "bar" already belongs to another substitution group
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF xsd010.e
 
 Grp: suntest / xsd011
   100.0% tests= 7 (xsd= 1 xml= 6) OK= 7 FAILED= 0
@@ -44784,10 +44783,11 @@ Grp: ElemDecl / annotation00101m4
     annotation00101m4.xsd:20:26: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: ElemDecl / disallowedsubst00101m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK disallowedSubst00101m
   OK disallowedSubst00101m1_p
-  XF disallowedSubst00101m1_n
+  OK disallowedSubst00101m1_n
+    disallowedSubst00101m1_n.xml:17:14: Unexpected element "Member1" (substitutions are blocked)
 
 Grp: ElemDecl / disallowedsubst00102m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44795,15 +44795,17 @@ Grp: ElemDecl / disallowedsubst00102m1
   OK Positive
 
 Grp: ElemDecl / disallowedsubst00102m2
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00102m2
-  XF Negative
+  OK Negative
+    disallowedSubst00102m2_n.xml:15:14: Unexpected element "Member1" (substitutions are blocked)
 
 Grp: ElemDecl / disallowedsubst00105m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK disallowedSubst00105m
   OK disallowedSubst00105m1_p
-  XF disallowedSubst00105m1_n
+  OK disallowedSubst00105m1_n
+    disallowedSubst00105m1_n.xml:17:14: Invalid substitution, because "Head" blocks extensions
 
 Grp: ElemDecl / disallowedsubst00106m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44811,9 +44813,10 @@ Grp: ElemDecl / disallowedsubst00106m1
   OK Positive
 
 Grp: ElemDecl / disallowedsubst00106m2
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00106m2
-  XF Negative
+  OK Negative
+    disallowedSubst00106m2_n.xml:15:14: Invalid substitution, because "Head" blocks extensions
 
 Grp: ElemDecl / disallowedsubst00202m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -44881,9 +44884,10 @@ Grp: ElemDecl / disallowedsubst00301m1
   OK Positive
 
 Grp: ElemDecl / disallowedsubst00301m2
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00301m2
-  XF Negative
+  OK Negative
+    disallowedSubst00301m2_n.xml:15:13: Unexpected element "Member1" (substitutions are blocked)
 
 Grp: ElemDecl / disallowedsubst00401m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44902,9 +44906,10 @@ Grp: ElemDecl / disallowedsubst00501m1
   OK Positive
 
 Grp: ElemDecl / disallowedsubst00501m2
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00501m2
-  XF Negative
+  OK Negative
+    disallowedSubst00501m2_n.xml:15:13: Invalid substitution, because "Head" blocks restrictions
 
 Grp: ElemDecl / disallowedsubst00502m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44917,14 +44922,16 @@ Grp: ElemDecl / disallowedsubst00502m2
   OK Positive
 
 Grp: ElemDecl / disallowedsubst00502m3
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00502m3
-  XF Negative
+  OK Negative
+    disallowedSubst00502m3_n.xml:15:13: Invalid substitution, because "Head" blocks extensions
 
 Grp: ElemDecl / disallowedsubst00502m4
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00502m4
-  XF Negative
+  OK Negative
+    disallowedSubst00502m4_n.xml:15:13: Invalid substitution, because "Head" blocks extensions
 
 Grp: ElemDecl / disallowedsubst00503m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45319,10 +45326,11 @@ Grp: ElemDecl / substgrpaffil00101m
     substGrpAffil00101m1_n.xml:23:14: Unexpected element "{ElemDecl/substGroupAffilation}Article"
 
 Grp: ElemDecl / substgrpaffil00201m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK substGrpAffil00201m
   OK substGrpAffil00201m1_p
-  XF substGrpAffil00201m1_n
+  OK substGrpAffil00201m1_n
+    substGrpAffil00201m1_n.xml:20:20: Unexpected element "{ElemDecl/substGroupAffilation}SuperElement"
 
 Grp: ElemDecl / substgrpexcl00202m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -48399,9 +48407,8 @@ Grp: MS-Additional2006-07-15 / addB178
   SF addB178
 
 Grp: MS-Additional2006-07-15 / addB180
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK addB180
-    test111869.xsd:3:55: "e2" already belongs to another substitution group
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF addB180
 
 Grp: MS-Additional2006-07-15 / addB181
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -66424,19 +66431,22 @@ Grp: MS-Element2006-07-15 / elemT058
   OK elemT058.v
 
 Grp: MS-Element2006-07-15 / elemT059
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT059
-  XF elemT059.i
+  OK elemT059.i
+    elemT059.xml:2:17: Unexpected element "sa2" (substitutions are blocked)
 
 Grp: MS-Element2006-07-15 / elemT060
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT060
-  XF elemT060.i
+  OK elemT060.i
+    elemT060.xml:2:7: Unexpected element "sa1" (substitutions are blocked)
 
 Grp: MS-Element2006-07-15 / elemT061
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT061
-  XF elemT061.i
+  OK elemT061.i
+    elemT061.xml:2:7: Unexpected element "sa3" (substitutions are blocked)
 
 Grp: MS-Element2006-07-15 / elemT062
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66444,9 +66454,10 @@ Grp: MS-Element2006-07-15 / elemT062
   OK elemT062.v
 
 Grp: MS-Element2006-07-15 / elemT063
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT063
-  XF elemT063.i
+  OK elemT063.i
+    elemT063.xml:2:7: Invalid substitution, because "test1" blocks restrictions
 
 Grp: MS-Element2006-07-15 / elemT064
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66454,9 +66465,10 @@ Grp: MS-Element2006-07-15 / elemT064
   OK elemT064.v
 
 Grp: MS-Element2006-07-15 / elemT065
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT065
-  XF elemT065.i
+  OK elemT065.i
+    elemT065.xml:2:17: Invalid substitution, because "test1" blocks extensions
 
 Grp: MS-Element2006-07-15 / elemT066
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66469,19 +66481,22 @@ Grp: MS-Element2006-07-15 / elemT067
   OK elemT067.v
 
 Grp: MS-Element2006-07-15 / elemT068
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT068
-  XF elemT068.i
+  OK elemT068.i
+    elemT068.xml:2:17: Unexpected element "sa2" (substitutions are blocked)
 
 Grp: MS-Element2006-07-15 / elemT069
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT069
-  XF elemT069.i
+  OK elemT069.i
+    elemT069.xml:2:7: Unexpected element "sa1" (substitutions are blocked)
 
 Grp: MS-Element2006-07-15 / elemT070
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT070
-  XF elemT070.i
+  OK elemT070.i
+    elemT070.xml:2:7: Unexpected element "sa3" (substitutions are blocked)
 
 Grp: MS-Element2006-07-15 / elemT071
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -66722,7 +66737,7 @@ Grp: MS-Element2006-07-15 / elemZ020
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK elemZ020
   XP elemZ020.v
-    elemZ020.xml:5:18: Namespace specification is required in this context
+    elemZ020.xml:5:21: Invalid value for boolean type: "123"
 
 Grp: MS-Element2006-07-15 / elemZ021a
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -74822,9 +74837,9 @@ Grp: MS-Notations2006-07-15 / notatF054
     Unsupported element in the schema: notation
 
 Grp: MS-Notations2006-07-15 / notatF055
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI notatF055
-    Unsupported element in the schema: notation
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK notatF055
+    notatF055.xsd:4:70: Unexpected element "{http://www.w3.org/2001/XMLSchema}notation"
 
 Grp: MS-Notations2006-07-15 / notatF056
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -75502,19 +75517,22 @@ Grp: MS-Particles2006-07-15 / particlesDc003
   OK particlesDc003.v
 
 Grp: MS-Particles2006-07-15 / particlesDc004
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc004
-  XF particlesDc004.i
+  OK particlesDc004.i
+    particlesDc004.xml:3:12: Unexpected element "elem3" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesDc005
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc005
-  XF particlesDc005.i
+  OK particlesDc005.i
+    particlesDc005.xml:3:12: Unexpected element "elem2" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesDc006
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc006
-  XF particlesDc006.i
+  OK particlesDc006.i
+    particlesDc006.xml:3:12: Unexpected element "elem3" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesDc007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75522,14 +75540,16 @@ Grp: MS-Particles2006-07-15 / particlesDc007
   OK particlesDc007.v
 
 Grp: MS-Particles2006-07-15 / particlesDc008
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc008
-  XF particlesDc008.i
+  OK particlesDc008.i
+    particlesDc008.xml:3:12: Unexpected element "elem2" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesDc009
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc009
-  XF particlesDc009.i
+  OK particlesDc009.i
+    particlesDc009.xml:3:11: Unexpected element "elem3" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesEa001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95917,10 +95937,10 @@ Grp: BoeingXSDTestCases / ipo6
 Total number of tests: 37638 (omitting non-accepted tests)
    13741 XSD files (not including those parsed automatically)
    23955 XML files
-NI: Features not implemented: in_full_fail= 1380
+NI: Features not implemented: in_full_fail= 1379
 SP: XSD KO, should be OK: in_full_fail= 228
-SF: XSD OK, should be KO: in_full_fail= 678
+SF: XSD OK, should be KO: in_full_fail= 681
 XP: XML KO, should be OK: in_partial= 469 in_full_fail= 4
-XF: XML OK, should be KO: in_partial= 32 in_full_fail= 2
+XF: XML OK, should be KO: in_partial= 9 in_full_fail= 2
 IE: Internal error:
-Total errors: 1413 ( 3.8 %)
+Total errors: 1393 ( 3.7 %)

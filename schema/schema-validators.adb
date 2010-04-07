@@ -59,10 +59,6 @@ package body Schema.Validators is
      (XML_Attribute_Group_Record, XML_Attribute_Group);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Grammar_NS_Array, Grammar_NS_Array_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Substitution_Group_Array, Substitution_Group);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Substitution_Groups_Array, Substitution_Groups);
 
    procedure Create_NS_Grammar
      (Grammar       : in out XML_Grammar;
@@ -182,14 +178,7 @@ package body Schema.Validators is
 
    procedure Debug_Output (Str : String) is
    begin
-      for Prefix in 1 .. Debug_Prefixes_Level loop
-         declare
-            Str : constant String := Integer'Image (Prefix);
-         begin
-            Put ("#" & Str (Str'First + 1 .. Str'Last) & ' ');
-         end;
-      end loop;
-
+      Put ((1 .. Debug_Prefixes_Level * 2 => ' '));
       Put_Line (Str);
    end Debug_Output;
 
@@ -980,8 +969,10 @@ package body Schema.Validators is
       Reset (Visited);
 
       Debug_Pop_Prefix;
+
    exception
       when others =>
+         Debug_Pop_Prefix;
          Reset (Visited);
          raise;
    end Validate_Attributes;
@@ -1617,7 +1608,7 @@ package body Schema.Validators is
          Types_For_Mem      => null,
          Atts_For_Mem       => null,
          Elems_For_Mem      => null,
-         Substitutions      => null,
+         Block_Substitution => False,
          Block_Restriction  => False,
          Block_Extension    => False);
    end Create_NS_Grammar;
@@ -1801,7 +1792,7 @@ package body Schema.Validators is
       Ptr : constant XML_Element_Access := new XML_Element_Record'
         (Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
          NS                  => NS,
-         Substitution_Group  => -1,
+         Substitution_Group  => No_Element,
          Of_Type             => Of_Type,
          Default             => null,
          Is_Abstract         => False,
@@ -1810,6 +1801,7 @@ package body Schema.Validators is
          Final_Extension     => False,
          Block_Restriction   => False,
          Block_Extension     => False,
+         Block_Substitution  => False,
          Is_Global           => False,
          Form                => Form,
          Fixed               => null,
@@ -1889,7 +1881,7 @@ package body Schema.Validators is
          Old := new XML_Element_Record'
            (Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
             NS                  => Grammar,
-            Substitution_Group  => -1,
+            Substitution_Group  => No_Element,
             Of_Type             => No_Type,
             Default             => null,
             Is_Abstract         => False,
@@ -1898,6 +1890,7 @@ package body Schema.Validators is
             Final_Extension     => False,
             Block_Restriction   => Grammar.Block_Restriction,
             Block_Extension     => Grammar.Block_Extension,
+            Block_Substitution  => Grammar.Block_Substitution,
             Is_Global           => True,
             Form                => Form,
             Fixed               => null,
@@ -2241,15 +2234,6 @@ package body Schema.Validators is
          Attributes_Htable.Reset (Grammar.Attributes.all);
          Unchecked_Free (Grammar.Attributes);
 
-         --  Free substitution groups
-
-         if Grammar.Substitutions /= null then
-            for G in Grammar.Substitutions'Range loop
-               Unchecked_Free (Grammar.Substitutions (G));
-            end loop;
-            Unchecked_Free (Grammar.Substitutions);
-         end if;
-
          --  Free types
 
          while Grammar.Types_For_Mem /= null loop
@@ -2526,18 +2510,20 @@ package body Schema.Validators is
       Is_Local_Element   : Boolean;
       Check_All_In_Group : Boolean := True) return XML_Element
    is
-      Groups  : Substitution_Group;
       Result : XML_Element := No_Element;
       Local_Matches : constant Boolean :=
         Element.Local_Name.all = Local_Name;
    begin
       if Debug then
-         Debug_Output ("Test " & Namespace_URI
-                       & " : " & Get_Namespace_URI (Parent_NS)
-                       & " : " & Local_Name
-                       & " element.form="
-                       & Element.Form'Img);
+         Debug_Push_Prefix ("SubstitutionGroup, can " & Namespace_URI
+                            & ":" & Local_Name & " replace "
+                            & Get_Namespace_URI (Parent_NS)
+                            & ":" & Element.Local_Name.all
+                            & " element.form="
+                            & Element.Form'Img);
       end if;
+
+      --  Shortcut if Element itself is the validator for (namespace, local)
 
       if Local_Matches
         and then Get_Namespace_URI (Element.NS) = Namespace_URI
@@ -2557,43 +2543,74 @@ package body Schema.Validators is
          Check_Qualification (Grammar, (Element, True), Namespace_URI);
       end if;
 
-      if Check_All_In_Group and then Result = No_Element then
-         --  If we have a substitution group
-         if Element.NS.Substitutions /= null
-           and then Element.Substitution_Group in
-             Element.NS.Substitutions'Range
-         then
-            Groups := Element.NS.Substitutions (Element.Substitution_Group);
-         end if;
+      --  Search for the global element (namespace_uri, local_name), and check
+      --  that it can indeed be a substitute for Element
 
-         if Groups /= null then
-            for S in Groups'Range loop
-               if Groups (S).Elem /= Element then
+      if Check_All_In_Group and then Result = No_Element then
+         declare
+            R : XML_Element;
+            G : XML_Element;
+         begin
+            R := Lookup_Element (Parent_NS, Local_Name, False);
+            if R /= No_Element then
+               G := R.Elem.Substitution_Group;
+               while G /= No_Element loop
                   if Debug then
-                     Debug_Output ("Check_Substitution group: "
-                                   & Element.Local_Name.all & " -> "
-                                   & Groups (S).Elem.Local_Name.all);
+                     Debug_Output ("Is this a substitution of: "
+                                   & G.Elem.Local_Name.all);
                   end if;
 
-                  Result := Check_Substitution_Groups
-                    (Groups (S).Elem,
-                     Local_Name, Namespace_URI, Parent_NS,
-                     Grammar,
-                     Is_Local_Element   => Is_Local_Element,
-                     Check_All_In_Group => False);
-                  exit when Result /= No_Element;
-               end if;
-            end loop;
-         end if;
+                  --  We compare directly the XML_Element, since namespace and
+                  --  local_name might correspond to a local element inside the
+                  --  parent, but the substitution itself only applies for
+                  --  global elements. This is also more efficient
+
+                  if G.Elem = Element then
+                     Result := R;
+
+                     if G.Elem.Block_Substitution then
+                        Validation_Error
+                          ("Unexpected element """ & Local_Name
+                           & """ (substitutions are blocked)");
+
+                     elsif G.Elem.Block_Extension
+                       and then Is_Extension_Of (R, Base => G)
+                     then
+                        Validation_Error
+                          ("Invalid substitution, because """
+                           & G.Elem.Local_Name.all
+                           & """ blocks extensions");
+
+                     elsif G.Elem.Block_Restriction
+                       and then Is_Restriction_Of (R, Base => G)
+                     then
+                        Validation_Error
+                          ("Invalid substitution, because """
+                           & G.Elem.Local_Name.all
+                           & """ blocks restrictions");
+                     end if;
+
+                     exit;
+                  end if;
+
+                  G := G.Elem.Substitution_Group;
+               end loop;
+            end if;
+         end;
       end if;
 
       if Result /= No_Element and then Is_Abstract (Result) then
          Validation_Error
            ("""" & Result.Elem.Local_Name.all & """ is abstract");
-         Result := No_Element;
       end if;
 
+      Debug_Pop_Prefix;
       return Result;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Check_Substitution_Groups;
 
    ----------
@@ -2712,6 +2729,11 @@ package body Schema.Validators is
       end if;
 
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Check_Nested;
 
    ----------------
@@ -2739,6 +2761,11 @@ package body Schema.Validators is
       end if;
 
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Run_Nested;
 
    ----------------------------
@@ -2844,15 +2871,13 @@ package body Schema.Validators is
                        ("Element Matched: "
                         & Element_Validator.Elem.Local_Name.all & ' '
                         & Get_Local_Name (Element_Validator.Elem.Of_Type));
+                     Debug_Output
+                       ("Validate_Start_Element seq " & Get_Name (Validator)
+                        & " moving to next particle");
                   end if;
-                  Debug_Push_Prefix
-                    ("Validate_Start_Element seq " & Get_Name (Validator)
-                     & " moving to next particle");
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
-                  Debug_Pop_Prefix;
-
                   if D.Num_Occurs_Of_Current = 0
                     and then D.Previous /= null
                     and then D.Previous.Typ = Particle_Element
@@ -2904,7 +2929,6 @@ package body Schema.Validators is
                elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current)
                  and then not Skip_Current
                then
-                  Debug_Pop_Prefix;
                   Validation_Error
                     ("Expecting "
                      & Type_Model (D.Current, First_Only => True));
@@ -2938,6 +2962,11 @@ package body Schema.Validators is
       end loop;
 
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Validate_Start_Element;
 
    -----------------
@@ -2996,6 +3025,11 @@ package body Schema.Validators is
       end if;
 
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Validate_End_Element;
 
    -------------------------
@@ -3294,6 +3328,11 @@ package body Schema.Validators is
       end if;
 
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Validate_Start_Element;
 
    --------------------------
@@ -3596,6 +3635,11 @@ package body Schema.Validators is
       Applies := False;
 
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Applies_To_Tag;
 
    --------------------
@@ -3684,8 +3728,6 @@ package body Schema.Validators is
      (Element : XML_Element; Head : XML_Element)
    is
       Had_Restriction, Had_Extension : Boolean := False;
-      Tmp  : Substitution_Group;
-      Tmps : Substitution_Groups;
       HeadPtr : constant XML_Element_Access := Head.Elem;
       ElemPtr : constant XML_Element_Access := Element.Elem;
    begin
@@ -3713,39 +3755,13 @@ package body Schema.Validators is
          end if;
       end if;
 
-      if ElemPtr.Substitution_Group /= -1 then
+      if ElemPtr.Substitution_Group /= No_Element then
          Validation_Error
            ("""" & ElemPtr.Local_Name.all
             & """ already belongs to another substitution group");
       end if;
 
-      if HeadPtr.Substitution_Group = -1 then
-         if HeadPtr.NS.Substitutions = null then
-            HeadPtr.NS.Substitutions := new Substitution_Groups_Array (1 .. 1);
-         else
-            Tmps := Head.Elem.NS.Substitutions;
-            HeadPtr.NS.Substitutions := new Substitution_Groups_Array'
-              (Tmps.all & null);
-            Unchecked_Free (Tmps);
-         end if;
-
-         HeadPtr.Substitution_Group := HeadPtr.NS.Substitutions'Last;
-         HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group) :=
-           new Substitution_Group_Array (1 .. 1);
-         HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group)(1) :=
-           Head;
-      end if;
-
-      ElemPtr.Substitution_Group := HeadPtr.Substitution_Group;
-
-      Tmp := HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group);
-      HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group) :=
-        new Substitution_Group_Array (Tmp'First .. Tmp'Last + 1);
-      HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group)(Tmp'Range) :=
-        Tmp.all;
-      HeadPtr.NS.Substitutions (HeadPtr.Substitution_Group) (Tmp'Last + 1) :=
-        Element;
-      Unchecked_Free (Tmp);
+      ElemPtr.Substitution_Group := Head;
    end Set_Substitution_Group;
 
    -------------------------
@@ -4177,6 +4193,7 @@ package body Schema.Validators is
          D.Num_Occurs   := D.Num_Occurs + 1;
          Element_Validator := No_Element;
          Free (Tmp);
+         Debug_Pop_Prefix;
          return;
       end if;
 
@@ -4212,6 +4229,7 @@ package body Schema.Validators is
 
    exception
       when others =>
+         Debug_Pop_Prefix;
          Free (Tmp);
          raise;
    end Validate_Start_Element;
@@ -4266,6 +4284,11 @@ package body Schema.Validators is
       end if;
 
       Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Validate_End_Element;
 
    ---------------------------
@@ -4335,6 +4358,11 @@ package body Schema.Validators is
       end if;
       Debug_Pop_Prefix;
       return True;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Can_Be_Empty;
 
    ----------------------------
@@ -4642,12 +4670,14 @@ package body Schema.Validators is
    ---------------
 
    procedure Set_Block
-     (Element        : XML_Element;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean) is
+     (Element         : XML_Element;
+      On_Restriction  : Boolean;
+      On_Extension    : Boolean;
+      On_Substitution : Boolean) is
    begin
-      Element.Elem.Block_Restriction := On_Restriction;
-      Element.Elem.Block_Extension   := On_Extension;
+      Element.Elem.Block_Restriction  := On_Restriction;
+      Element.Elem.Block_Extension    := On_Extension;
+      Element.Elem.Block_Substitution := On_Substitution;
    end Set_Block;
 
    ------------------------------
@@ -4667,6 +4697,15 @@ package body Schema.Validators is
    begin
       return Element.Elem.Block_Extension;
    end Get_Block_On_Extension;
+
+   -------------------------------
+   -- Get_Block_On_Substitution --
+   -------------------------------
+
+   function Get_Block_On_Substitution (Element : XML_Element) return Boolean is
+   begin
+      return Element.Elem.Block_Substitution;
+   end Get_Block_On_Substitution;
 
    -----------------------
    -- Check_Replacement --
@@ -4754,9 +4793,9 @@ package body Schema.Validators is
    procedure Debug_Push_Prefix (Append : String) is
    begin
       if Debug then
+         Debug_Output (ASCII.ESC & "[36m" & Append
+                       & ASCII.ESC & "[39m");
          Debug_Prefixes_Level := Debug_Prefixes_Level + 1;
-         Debug_Output (ASCII.ESC & "[36m(" & Append
-                       & ")" & ASCII.ESC & "[39m");
       end if;
    end Debug_Push_Prefix;
 
@@ -4839,6 +4878,11 @@ package body Schema.Validators is
       end if;
       Debug_Pop_Prefix;
       return True;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Can_Be_Empty;
 
    ------------------
@@ -4873,6 +4917,11 @@ package body Schema.Validators is
       end if;
       Debug_Pop_Prefix;
       return False;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Can_Be_Empty;
 
    ------------------------
@@ -5236,5 +5285,55 @@ package body Schema.Validators is
          return Grammar.System_ID.all;
       end if;
    end Get_System_Id;
+
+   ---------------------
+   -- Is_Extension_Of --
+   ---------------------
+
+   function Is_Extension_Of
+     (Validator : XML_Validator_Record;
+      Base      : access XML_Validator_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Validator, Base);
+   begin
+      return False;
+   end Is_Extension_Of;
+
+   ---------------------
+   -- Is_Extension_Of --
+   ---------------------
+
+   function Is_Extension_Of
+     (Element : XML_Element; Base : XML_Element) return Boolean is
+   begin
+      return Is_Extension_Of
+        (Element.Elem.Of_Type.Validator.all,
+         Base.Elem.Of_Type.Validator);
+   end Is_Extension_Of;
+
+   -----------------------
+   -- Is_Restriction_Of --
+   -----------------------
+
+   function Is_Restriction_Of
+     (Validator : XML_Validator_Record;
+      Base      : access XML_Validator_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Validator, Base);
+   begin
+      return False;
+   end Is_Restriction_Of;
+
+   -----------------------
+   -- Is_Restriction_Of --
+   -----------------------
+
+   function Is_Restriction_Of
+     (Element : XML_Element; Base : XML_Element) return Boolean is
+   begin
+      return Is_Restriction_Of
+        (Element.Elem.Of_Type.Validator.all,
+         Base.Elem.Of_Type.Validator);
+   end Is_Restriction_Of;
 
 end Schema.Validators;

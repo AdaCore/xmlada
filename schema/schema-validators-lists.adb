@@ -63,11 +63,6 @@ package body Schema.Validators.Lists is
    procedure Free (Validator : in out List_Validator_Record);
    --  See doc from inherited subprogram
 
-   generic
-      with procedure Callback (Str : Unicode.CES.Byte_Sequence);
-   procedure For_Each_Item (Ch : Unicode.CES.Byte_Sequence);
-   --  Iterate over each element of the list
-
    ---------------
    -- Add_Facet --
    ---------------

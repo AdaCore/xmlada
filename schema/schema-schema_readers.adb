@@ -34,6 +34,7 @@ with Sax.Encodings;     use Sax.Encodings;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
+with Schema.Validators.Lists;
 with Schema.Readers;    use Schema.Readers;
 with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with GNAT.IO;           use GNAT.IO;
@@ -1002,12 +1003,28 @@ package body Schema.Schema_Readers is
 
       if Final_Index /= -1 then
          declare
-            Final : constant Byte_Sequence := Get_Value (Atts, Final_Index);
-            On_Restriction : constant Boolean :=
-              Final = "restriction" or else Final = "#all";
-            On_Extension : constant Boolean :=
-              Final = "extension" or else Final = "#all";
+            On_Restriction, On_Extension : Boolean := False;
+
+            procedure On_Item (Str : Byte_Sequence);
+            procedure On_Item (Str : Byte_Sequence) is
+            begin
+               if Str = "restriction" then
+                  On_Restriction := True;
+               elsif Str = "extension" then
+                  On_Extension := True;
+               elsif Str = "#all" then
+                  On_Restriction := True;
+                  On_Extension := True;
+               else
+                  Validation_Error
+                    ("Invalid value for final: """ & Str & """");
+               end if;
+            end On_Item;
+
+            procedure For_Each
+               is new Schema.Validators.Lists.For_Each_Item (On_Item);
          begin
+            For_Each (Get_Value (Atts, Final_Index));
             Set_Final (Element,
                        On_Restriction => On_Restriction,
                        On_Extension   => On_Extension);
@@ -1020,19 +1037,40 @@ package body Schema.Schema_Readers is
 
       if Block_Index /= -1 then
          declare
-            Block : constant Byte_Sequence := Get_Value (Atts, Block_Index);
-            On_Restriction : constant Boolean :=
-              Block = "restriction" or else Block = "#all";
-            On_Extension : constant Boolean :=
-              Block = "extension" or else Block = "#all";
+            On_Restriction, On_Extension, On_Substitution : Boolean := False;
+
+            procedure On_Item (Str : Byte_Sequence);
+            procedure On_Item (Str : Byte_Sequence) is
+            begin
+               if Str = "restriction" then
+                  On_Restriction := True;
+               elsif Str = "extension" then
+                  On_Extension := True;
+               elsif Str = "substitution" then
+                  On_Substitution := True;
+               elsif Str = "#all" then
+                  On_Restriction := True;
+                  On_Extension := True;
+                  On_Substitution := True;
+               else
+                  Validation_Error
+                    ("Invalid value for block: """ & Str & """");
+               end if;
+            end On_Item;
+
+            procedure For_Each
+               is new Schema.Validators.Lists.For_Each_Item (On_Item);
          begin
+            For_Each (Get_Value (Atts, Block_Index));
             Set_Block (Element,
-                       On_Restriction => On_Restriction,
-                       On_Extension   => On_Extension);
+                       On_Restriction  => On_Restriction,
+                       On_Extension    => On_Extension,
+                       On_Substitution => On_Substitution);
             Output ("Set_Block ("
                     & Ada_Name (Element) & ", "
                     & Boolean'Image (On_Restriction) & ", "
-                    & Boolean'Image (On_Extension) & ");");
+                    & Boolean'Image (On_Extension) & ", "
+                    & Boolean'Image (On_Substitution) & ");");
          end;
       end if;
 

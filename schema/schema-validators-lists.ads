@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -30,5 +30,10 @@ package Schema.Validators.Lists is
 
    function List_Of (Typ : XML_Type) return XML_Validator;
    --  Return a validator for a list of Typ
+
+   generic
+      with procedure Callback (Str : Unicode.CES.Byte_Sequence);
+   procedure For_Each_Item (Ch : Unicode.CES.Byte_Sequence);
+   --  Iterate over each element of the list
 
 end Schema.Validators.Lists;

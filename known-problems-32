@@ -66,6 +66,7 @@ KP-32-J302-043 Lots of fixes in schema validation
                 the pattern
               - Handling of <group> inside a <restriction>
               - Error when root element is abstract
+              - Support for block="substitution"
 
   Status:     Fixed in 3.3.0
 
