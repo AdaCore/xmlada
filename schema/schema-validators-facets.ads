@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -128,7 +128,7 @@ package Schema.Validators.Facets is
    ------------------------
    --  These are put in the specs for the sake of the testsuite
 
-   function Convert_Regexp (Regexp : String) return String;
+   function Convert_Regexp (Regexp : Unicode.CES.Byte_Sequence) return String;
    --  Return a regular expresssion that converts the XML-specification
    --  regexp Regexp to a GNAT.Regpat compatible one
 

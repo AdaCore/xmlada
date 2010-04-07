@@ -69,6 +69,8 @@ KP-32-J302-043 Lots of fixes in schema validation
               - Support for block="substitution"
               - Type of <element> should be computed from its
                 substitutionGroup if there is no other type defined
+              - Raise explicit exception (XML_Not_Supported) for various
+                regexp constructs that are not supported (unicode,...)
 
   Status:     Fixed in 3.3.0
 

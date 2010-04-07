@@ -25,142 +25,208 @@
 -- exception does not however invalidate any other reasons why the   --
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
-
-with Unicode.CES;           use Unicode.CES;
+with GNAT.IO; use GNAT.IO;
+with Ada.Exceptions;        use Ada.Exceptions;
+with Unicode.CES;           use Unicode, Unicode.CES;
+with Unicode.CES.Utf8;      use Unicode.CES.Utf8;
 with Ada.Strings.Unbounded;
 
 package body Schema.Validators.Facets is
+
+   function Anchor (Str : String) return String;
+   --  Return an anchored version of Str ("^...$").
+   --  In XML, regexps are always anchored, as per the beginning of [G]
+
+   function Missing_End_Anchor (Str : String) return Boolean;
+   function Missing_Start_Anchor (Str : String) return Boolean;
+   --  Whether the regexp is missing the "^" or "$" anchors
+
+   ------------------------
+   -- Missing_End_Anchor --
+   ------------------------
+
+   function Missing_End_Anchor (Str : String) return Boolean is
+   begin
+      --  Do not add '$' if Str ends with a single \, since it is
+      --  invalid anyway
+      return Str'Length = 0
+        or else
+          (Str (Str'Last) /= '$'
+           and then (Str (Str'Last) /= '\'
+                     or else (Str'Length /= 1
+                              and then Str (Str'Last - 1) = '\')));
+   end Missing_End_Anchor;
+
+   --------------------------
+   -- Missing_Start_Anchor --
+   --------------------------
+
+   function Missing_Start_Anchor (Str : String) return Boolean is
+   begin
+      --  Do not add '^' if we start with an operator, since Str is invalid
+      return Str'Length = 0
+        or else not (Str (Str'First) = '^'
+                     or else Str (Str'First) = '*'
+                     or else Str (Str'First) = '+'
+                     or else Str (Str'First) = '?');
+   end Missing_Start_Anchor;
+
+   ------------
+   -- Anchor --
+   ------------
+
+   function Anchor (Str : String) return String is
+      Start : constant Boolean := Missing_Start_Anchor (Str);
+      Last  : constant Boolean := Missing_End_Anchor (Str);
+   begin
+      if Start and Last then
+         return "^" & Str & "$";
+      elsif Start then
+         return "^" & Str;
+      elsif Last then
+         return Str & "$";
+      else
+         return Str;
+      end if;
+   end Anchor;
 
    --------------------
    -- Convert_Regexp --
    --------------------
 
-   function Convert_Regexp (Regexp : String) return String is
-      function Anchor (Str : String) return String;
-      --  Return an anchored version of Str ("^...$").
-      --  In XML, regexps are always anchored, as per the beginning of [G]
-
-      function Missing_End_Anchor (Str : String) return Boolean;
-      function Missing_Start_Anchor (Str : String) return Boolean;
-      --  Whether the regexp is missing the "^" or "$" anchors
-
-      function Missing_End_Anchor (Str : String) return Boolean is
-      begin
-         --  Do not add '$' if Str ends with a single \, since it is
-         --  invalid anyway
-         return Str'Length = 0
-           or else
-             (Str (Str'Last) /= '$'
-              and then (Str (Str'Last) /= '\'
-                        or else (Str'Length /= 1
-                                 and then Str (Str'Last - 1) = '\')));
-      end Missing_End_Anchor;
-
-      --------------------------
-      -- Missing_Start_Anchor --
-      --------------------------
-
-      function Missing_Start_Anchor (Str : String) return Boolean is
-      begin
-         --  Do not add '^' if we start with an operator, since Str is invalid
-         return Str'Length = 0
-           or else not (Str (Str'First) = '^'
-                        or else Str (Str'First) = '*'
-                        or else Str (Str'First) = '+'
-                        or else Str (Str'First) = '?');
-      end Missing_Start_Anchor;
-
-      ------------
-      -- Anchor --
-      ------------
-
-      function Anchor (Str : String) return String is
-         Start : constant Boolean := Missing_Start_Anchor (Str);
-         Last  : constant Boolean := Missing_End_Anchor (Str);
-      begin
-         if Start and Last then
-            return "^" & Str & "$";
-         elsif Start then
-            return "^" & Str;
-         elsif Last then
-            return Str & "$";
-         else
-            return Str;
-         end if;
-      end Anchor;
-
+   function Convert_Regexp
+     (Regexp : Unicode.CES.Byte_Sequence) return String
+   is
       use Ada.Strings.Unbounded;
       Result : Unbounded_String;
       Tmp    : Unbounded_String;
       Pos    : Integer := Regexp'First;
+      C      : Character;
+
+      function Next_Char return Character;
+      --  Read the next char from the regexp, and check it is ASCII
+
+      function Next_Char return Character is
+         Char   : Unicode_Char;
+      begin
+         Read (Regexp, Pos, Char);
+
+         if Char > 255 then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unicode regexps are not supported");
+         end if;
+
+         return Character'Val (Integer (Char));
+      end Next_Char;
+
    begin
       while Pos <= Regexp'Last loop
-         if Regexp (Pos) = '[' then
-            Append (Result, Regexp  (Pos));
-            Pos := Pos + 1;
+         C := Next_Char;
 
+         if C = '[' then
+            Append (Result, C);
             Tmp := Null_Unbounded_String;
 
-            while Pos <= Regexp'Last
-              and then Regexp (Pos) /= ']'
-            loop
-               if Regexp (Pos) = '\' then
-                  case Regexp (Pos + 1) is
+            while Pos <= Regexp'Last loop
+               C := Next_Char;
+
+               if C = ']' then
+                  Append (Tmp, C);
+                  exit;
+
+               elsif C = '\' and then Pos <= Regexp'Last then
+                  C := Next_Char;
+
+                  case C is
                      when 'i' =>
                         --  rule [99] in XMLSchema specifications
                         Append (Tmp, "A-Za-z:_");
-                        Pos := Pos + 1;
 
                      when 'c' =>
                         Append (Tmp, "a-z:A-Z0-9._-");
-                        Pos    := Pos + 1;
 
                      when 'w' =>
                         Append (Tmp, "a-zA-Z0-9");
-                        Pos := Pos + 1;
+
+                     when 'I' | 'C' =>
+                        Raise_Exception
+                          (XML_Not_Implemented'Identity,
+                           "Unsupported regexp construct: \" & C);
+
+                     when 'P' | 'p' =>
+                        if Pos <= Regexp'Last
+                          and then Regexp (Pos) = '{'
+                        then
+                           Raise_Exception
+                             (XML_Not_Implemented'Identity,
+                              "Unsupported regexp construct: \P{...}");
+                        else
+                           Append (Tmp, '\' & C);
+                        end if;
+
+                     when '-' =>
+                        if Pos <= Regexp'Last
+                          and then Regexp (Pos) = '['
+                        then
+                           Raise_Exception
+                             (XML_Not_Implemented'Identity,
+                              "Unsupported regexp construct: [...-[...]]");
+                        else
+                           Append (Tmp, '\' & C);
+                        end if;
 
                      when others =>
-                        Append (Tmp, Regexp (Pos));
+                        Append (Tmp, '\' & C);
                   end case;
                else
-                  Append (Tmp, Regexp (Pos));
+                  Append (Tmp, C);
                end if;
-               Pos := Pos + 1;
             end loop;
 
             Append (Result, Tmp);
-            if Pos <= Regexp'Last then
-               Append (Result, Regexp (Pos));
-            end if;
 
          --  ??? Some tests in the old w3c testsuite seem to imply that
          --  \c and \i are valid even outside character classes. Not sure about
          --  this though
 
-         elsif Pos < Regexp'Last and then Regexp (Pos) = '\' then
-            case Regexp (Pos + 1) is
+         elsif C = '\' and then Pos <= Regexp'Last then
+            C := Next_Char;
+
+            case C is
                when 'i' =>
                   --  rule [99] in XMLSchema specifications
                   Append (Result, "[A-Za-z:_]");
-                  Pos := Pos + 1;
 
                when 'c' =>
                   Append (Result, "[a-z:A-Z0-9._-]");
-                  Pos    := Pos + 1;
 
                when 'w' =>
                   Append (Result, "[a-zA-Z0-9]");
-                  Pos := Pos + 1;
+
+               when 'I' | 'C' =>
+                  Raise_Exception
+                    (XML_Not_Implemented'Identity,
+                     "Unsupported regexp construct: \" & C);
+
+               when 'P' | 'p' =>
+                  if Pos <= Regexp'Last
+                    and then Regexp (Pos) = '{'
+                  then
+                     Raise_Exception
+                       (XML_Not_Implemented'Identity,
+                        "Unsupported regexp construct: \P{...}");
+                  else
+                     Append (Result, '\' & C);
+                  end if;
 
                when others =>
-                  Append (Result, Regexp (Pos));
+                  Append (Result, '\' & C);
             end case;
 
          else
-            Append (Result, Regexp  (Pos));
+            Append (Result, C);
          end if;
-
-         Pos := Pos + 1;
       end loop;
 
       return Anchor (To_String (Result));
@@ -225,8 +291,22 @@ package body Schema.Validators.Facets is
    is
       Found : Boolean;
       Matched : Match_Array (0 .. 0);
+      Index : Integer;
+      Char  : Unicode_Char;
    begin
       if Facets.Mask (Facet_Pattern) then
+         --  Check whether we have unicode char outside of ASCII
+
+         Index := Value'First;
+         while Index <= Value'Last loop
+            Read (Value, Index, Char);
+            if Char > 255 then
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  "Regexp matching with unicode not supported");
+            end if;
+         end loop;
+
          Match (Facets.Pattern.all, String (Value), Matched);
          if Matched (0).First /= Value'First
            or else Matched (0).Last /= Value'Last
@@ -340,20 +420,30 @@ package body Schema.Validators.Facets is
             Validation_Error ("pattern facet can't be set for this type");
          end if;
          Unchecked_Free (Facets.Pattern);
-         Free (Facets.Pattern_String);
 
-         Facets.Pattern_String := new Byte_Sequence'(Facet_Value);
+         if Facets.Pattern_String = null then
+            Free (Facets.Pattern_String);
+            Facets.Pattern_String := new Byte_Sequence'(Facet_Value);
+         else
+            declare
+               Tmp : constant Byte_Sequence := Facets.Pattern_String.all;
+            begin
+               Free (Facets.Pattern_String);
+               Facets.Pattern_String :=
+                 new Byte_Sequence'('(' & Tmp & ")|(" & Facet_Value & ')');
+            end;
+         end if;
 
+         declare
+            Convert : constant String :=
+              Convert_Regexp (Facets.Pattern_String.all);
          begin
-            Facets.Pattern := new Pattern_Matcher '
-              (Compile (Convert_Regexp (Facets.Pattern_String.all)));
+            Facets.Pattern := new Pattern_Matcher'(Compile (Convert));
          exception
             when  GNAT.Regpat.Expression_Error =>
                Validation_Error ("Invalid regular expression "
                                  & Facets.Pattern_String.all
-                                 & " (converted to "
-                                 & Convert_Regexp (Facets.Pattern_String.all)
-                                 & ")");
+                                 & " (converted to " & Convert & ")");
          end;
 
          Facets.Mask (Facet_Pattern) := True;
