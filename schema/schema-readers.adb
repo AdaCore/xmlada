@@ -666,11 +666,39 @@ package body Schema.Readers is
          Is_Nillable (Element), Is_Nil,
          Validating_Reader (Handler).Context);
 
-      if Validating_Reader (Handler).Validators /= null
-        and then Validating_Reader (Handler).Validators.Is_Nil
-      then
+      if Validating_Reader (Handler).Validators /= null then
+         if Validating_Reader (Handler).Validators.Is_Nil then
+            Validation_Error
+              ("Element is set as nil, and doesn't accept any child element");
+         end if;
+      else
+         --  For root element, we need to check nillable here, otherwise this
+         --  has been done in Validate_Attributes
+
+         declare
+            Nil_Index : constant Integer :=
+              Get_Index (Atts,
+                         URI        => XML_Instance_URI,
+                         Local_Name => "nil");
+         begin
+            if Nil_Index /= -1 then
+               if not Is_Nillable (Element) then
+                  Validation_Error ("Element """
+                                    & To_QName (Namespace_URI, Local_Name)
+                                    & """ cannot be nil");
+               end if;
+
+               Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
+            else
+               Is_Nil := False;
+            end if;
+         end;
+      end if;
+
+      if Is_Nil and then Has_Fixed (Element) then
          Validation_Error
-           ("Element is set as nil, and doesn't accept any child element");
+           ("Element cannot be nilled because"
+            & " a fixed value is defined for it");
       end if;
 
       Push (Validating_Reader (Handler).Validators, Element,

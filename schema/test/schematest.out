@@ -45241,43 +45241,45 @@ Grp: ElemDecl / name00805
   OK name00805_p
 
 Grp: ElemDecl / nillable00101m1
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK nillable00101m1
-  XP Positive
-    nillable00101m1_p.xml:14:22: Invalid value for boolean type: ""
+  OK Positive
 
 Grp: ElemDecl / nillable00101m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK nillable00101m2
   OK Negative
-    nillable00101m2_n.xml:14:22: Invalid value for boolean type: ""
+    nillable00101m2_n.xml:14:22: Element "{ElemDecl/nillable}root" cannot be nil
 
 Grp: ElemDecl / nillable00102m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK nillable00102m
-  XP nillable00102m1_p
-    nillable00102m1_p.xml:14:22: Invalid value for boolean type: ""
+  OK nillable00102m1_p
   OK nillable00102m1_n
     nillable00102m1_n.xml:14:23: Invalid value for boolean type: ""
 
 Grp: ElemDecl / nillable00201m
-  50.0% tests= 4 (xsd= 1 xml= 3) OK= 2 FAILED= 2
+  100.0% tests= 4 (xsd= 1 xml= 3) OK= 4 FAILED= 0
   OK nillable00201m
-  XF nillable00201m1_n
-  XF nillable00201m2_n
+  OK nillable00201m1_n
+    nillable00201m1_n.xml:13:22: Element "{ElemDecl/nillable}root" cannot be nil
+  OK nillable00201m2_n
+    nillable00201m2_n.xml:13:23: Element "{ElemDecl/nillable}root" cannot be nil
   OK nillable00201m3_p
 
 Grp: ElemDecl / nillable00301m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK nillable00301m
   OK nillable00301m1_p
-  XF nillable00301m1_n
+  OK nillable00301m1_n
+    nillable00301m1_n.xml:14:11: Element has character data, but is declared as nil
 
 Grp: ElemDecl / nillable00302m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK nillable00302m
   OK nillable00302m1_p
-  XF nillable00302m1_n
+  OK nillable00302m1_n
+    nillable00302m1_n.xml:14:14: Element is set as nil, and doesn't accept any child element
 
 Grp: ElemDecl / nillable00401m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -47856,9 +47858,10 @@ Grp: MS-Additional2006-07-15 / addB064
     test73722.xsd:27:49: test73722_dt.xsd:1: Extensions of type "keybase" are forbidden
 
 Grp: MS-Additional2006-07-15 / addB065
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB065
-  XF addB065.i
+  OK addB065.i
+    test73826.xml:4:62: Element cannot be nilled because a fixed value is defined for it
 
 Grp: MS-Additional2006-07-15 / addB066
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -65866,13 +65869,13 @@ Grp: MS-Element2006-07-15 / elemO010
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemO010
   OK elemO010.i
-    elemO010.xml:3:27: Attribute "xsi:nil" invalid for this element
+    elemO010.xml:3:27: Element cannot be nil
 
 Grp: MS-Element2006-07-15 / elemO011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemO011
   OK elemO011.i
-    elemO011.xml:3:27: Attribute "xsi:nil" invalid for this element
+    elemO011.xml:3:27: Element cannot be nil
 
 Grp: MS-Element2006-07-15 / elemO012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66813,7 +66816,7 @@ Grp: MS-Element2006-07-15 / QFE1700d1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK QFE1700d1
   OK QFE1700d1.i
-    QFE1700d1.xml:2:21: Attribute "xsi:nil" invalid for this element
+    QFE1700d1.xml:2:21: Element cannot be nil
 
 Grp: MS-Element2006-07-15 / QFE1700e1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95917,7 +95920,7 @@ Total number of tests: 37638 (omitting non-accepted tests)
 NI: Features not implemented: in_full_fail= 1380
 SP: XSD KO, should be OK: in_full_fail= 228
 SF: XSD OK, should be KO: in_full_fail= 678
-XP: XML KO, should be OK: in_partial= 471 in_full_fail= 4
-XF: XML OK, should be KO: in_partial= 37 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 469 in_full_fail= 4
+XF: XML OK, should be KO: in_partial= 32 in_full_fail= 2
 IE: Internal error:
-Total errors: 1420 ( 3.8 %)
+Total errors: 1413 ( 3.8 %)

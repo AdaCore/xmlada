@@ -105,8 +105,6 @@ begin
    Set_Supported_Features   --  not needed here, just for example
      (Schema,
       (Substitution_Group => True,
-       Abstracts          => True,
-       Nillable           => True,
        XSD_Version        => XSD_1_0));
 
    loop

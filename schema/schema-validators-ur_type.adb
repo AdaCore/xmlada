@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Sax.Attributes; use Sax.Attributes;
+
 package body Schema.Validators.UR_Type is
 
    type UR_Type_Validator is new XML_Validator_Record with record
@@ -151,7 +153,7 @@ package body Schema.Validators.UR_Type is
       Is_Nil            : out Boolean;
       Context           : in out Validation_Context)
    is
-      pragma Unreferenced (Validator, Atts, Nillable, Context);
+      pragma Unreferenced (Validator, Nillable, Atts, Context);
    begin
       Is_Nil := False;
    end Validate_Attributes;
@@ -198,6 +200,7 @@ package body Schema.Validators.UR_Type is
          Get (Grammar).UR_Type_Elements (P) := Create_Local_Element
            ("", Schema_NS, Create_Local_Type (Schema_NS, Validator),
             Qualified);
+         --  Get (Grammar).UR_Type_Elements (P).Elem.Nillable := True;
       end loop;
    end Create_UR_Type_Elements;
 

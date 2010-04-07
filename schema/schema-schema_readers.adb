@@ -985,12 +985,6 @@ package body Schema.Schema_Readers is
       end if;
 
       if Abstract_Index /= -1 then
-         if not Handler.Supported.Abstracts then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Support for ""abstract"" explicitly disabled");
-         end if;
-
          Set_Abstract (Element, Get_Value_As_Boolean (Atts, Abstract_Index));
          Output ("Set_Abstract ("
                  & Ada_Name (Element) & ", "
@@ -999,12 +993,6 @@ package body Schema.Schema_Readers is
       end if;
 
       if Nillable_Index /= -1 then
-         if not Handler.Supported.Nillable then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Support for ""nillable"" explicitly disabled");
-         end if;
-
          Set_Nillable (Element, Get_Value_As_Boolean (Atts, Nillable_Index));
          Output ("Set_Nillable ("
                  & Ada_Name (Element) & ", "
@@ -1190,12 +1178,6 @@ package body Schema.Schema_Readers is
 
    begin
       if Abstract_Index /= -1 then
-         if not Handler.Supported.Abstracts then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Support for ""abstract"" explicitly disabled");
-         end if;
-
          --  Not supported yet anyway
          Raise_Exception
            (XML_Not_Implemented'Identity,

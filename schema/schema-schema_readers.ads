@@ -89,8 +89,6 @@ package Schema.Schema_Readers is
 
    type Supported_Features is record
       Substitution_Group : Boolean := True;
-      Abstracts          : Boolean := True;
-      Nillable           : Boolean := True;
       XSD_Version        : Schema.Validators.XSD_Versions :=
         Schema.Validators.XSD_1_1;
    end record;

@@ -947,10 +947,13 @@ package body Schema.Validators is
 
       for S in Seen'Range loop
          if not Seen (S) and not Seen_Any (S) then
-            if Nillable
-              and then Get_URI (Atts, S) = XML_Instance_URI
+            if Get_URI (Atts, S) = XML_Instance_URI
               and then Get_Local_Name (Atts, S) = "nil"
             then
+               if not Nillable then
+                  Validation_Error ("Element cannot be nil");
+               end if;
+
                Is_Nil := Get_Value_As_Boolean (Atts, S);
 
             elsif Get_URI (Atts, S) = XML_Instance_URI
