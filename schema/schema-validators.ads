@@ -236,6 +236,14 @@ package Schema.Validators is
    --  Set the "block" status of the type.
    --  This can also be done at the element's level
 
+   procedure Set_Final
+     (Typ            : XML_Type;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean);
+   function Get_Final_On_Restriction (Typ : XML_Type) return Boolean;
+   function Get_Final_On_Extension   (Typ : XML_Type) return Boolean;
+   --  Set the final status of the element
+
    procedure Normalize_Whitespace
      (Typ       : XML_Type;
       Atts      : Sax.Attributes.Attributes'Class;
@@ -841,6 +849,13 @@ package Schema.Validators is
    --  Compute the list of blocked elements from value. Value is a list similar
    --  to what is used for the "block" attribute of elements in a schema
 
+   procedure Compute_Final
+     (Value         : Unicode.CES.Byte_Sequence;
+      Restrictions  : out Boolean;
+      Extensions    : out Boolean);
+   --  Compute the list of final attributes from value. Value is a list similar
+   --  to what is used for the "final" attribute of elements in a schema
+
    procedure Initialize (Grammar : in out XML_Grammar);
    --  Initialize the internal structure of the grammar.
    --  This adds the definition for all predefined types
@@ -932,6 +947,11 @@ private
       Block_Restriction : Boolean;
       Block_Extension   : Boolean;
       --  The value for the "block" attribute of the type
+
+      Final_Restriction : Boolean;
+      Final_Extension   : Boolean;
+      --  Whether this element is final for "restriction" or "extension" or
+      --  both
 
       Next : XML_Type;
       --  Next type in the list of allocated types for this grammar.

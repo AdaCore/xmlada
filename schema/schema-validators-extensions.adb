@@ -340,6 +340,11 @@ package body Schema.Validators.Extensions is
       Result : constant Extension_Type := new Extension_XML_Validator;
       C      : Sequence;
    begin
+      if Get_Final_On_Extension (Base) then
+         Validation_Error
+           ("Type """ & Get_Local_Name (Base) & """ forbids extensions");
+      end if;
+
       Register (G, Result);
       Register (G, Base);
       Result.Base      := Base;

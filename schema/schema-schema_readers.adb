@@ -34,7 +34,6 @@ with Sax.Encodings;     use Sax.Encodings;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
-with Schema.Validators.Lists;
 with Schema.Readers;    use Schema.Readers;
 with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with GNAT.IO;           use GNAT.IO;
@@ -997,27 +996,11 @@ package body Schema.Schema_Readers is
       if Final_Index /= -1 then
          declare
             On_Restriction, On_Extension : Boolean := False;
-
-            procedure On_Item (Str : Byte_Sequence);
-            procedure On_Item (Str : Byte_Sequence) is
-            begin
-               if Str = "restriction" then
-                  On_Restriction := True;
-               elsif Str = "extension" then
-                  On_Extension := True;
-               elsif Str = "#all" then
-                  On_Restriction := True;
-                  On_Extension := True;
-               else
-                  Validation_Error
-                    ("Invalid value for final: """ & Str & """");
-               end if;
-            end On_Item;
-
-            procedure For_Each
-               is new Schema.Validators.Lists.For_Each_Item (On_Item);
          begin
-            For_Each (Get_Value (Atts, Final_Index));
+            Compute_Final
+              (Get_Value (Atts, Final_Index),
+               Restrictions => On_Restriction,
+               Extensions   => On_Extension);
             Set_Final (Element,
                        On_Restriction => On_Restriction,
                        On_Extension   => On_Extension);
@@ -1164,6 +1147,8 @@ package body Schema.Schema_Readers is
             Simple_Content => False,
             Block_Restriction => False,
             Block_Extension   => False,
+            Final_Restriction => False,
+            Final_Extension   => False,
             Level             => Handler.Contexts.Level + 1,
             Next              => Handler.Contexts);
 
@@ -1188,6 +1173,14 @@ package body Schema.Schema_Readers is
          Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
          Output (Ada_Name (C) & " := Create_Local_Type (Validator);");
 
+         Set_Final (Typ,
+                    On_Restriction => Handler.Contexts.Final_Restriction,
+                    On_Extension   => Handler.Contexts.Final_Extension);
+         Output ("Set_Final ("
+                 & Ada_Name (Typ) & ", "
+                 & Boolean'Image (Handler.Contexts.Final_Restriction) & ", "
+                 & Boolean'Image (Handler.Contexts.Final_Extension) & ");");
+
          C.Next.Restriction_Base := Typ;
          Output ("Setting base type for restriction");
       else
@@ -1210,6 +1203,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "mixed");
       Block_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "block");
+      Final_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "final");
       Abstract_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "abstract");
       Name    : Byte_Sequence_Access;
@@ -1239,9 +1234,11 @@ package body Schema.Schema_Readers is
          Mixed_Content  => Mixed,
          Simple_Content => False,
          Block_Restriction => False,
-         Block_Extension => False,
-         Level          => Handler.Contexts.Level + 1,
-         Next           => Handler.Contexts);
+         Block_Extension   => False,
+         Final_Restriction => False,
+         Final_Extension   => False,
+         Level             => Handler.Contexts.Level + 1,
+         Next              => Handler.Contexts);
 
       if Block_Index /= -1 then
          Compute_Blocks
@@ -1249,6 +1246,13 @@ package body Schema.Schema_Readers is
             Restrictions  => Handler.Contexts.Block_Restriction,
             Extensions    => Handler.Contexts.Block_Extension,
             Substitutions => Dummy);
+      end if;
+
+      if Final_Index /= -1 then
+         Compute_Final
+           (Get_Value (Atts, Final_Index),
+            Restrictions  => Handler.Contexts.Final_Restriction,
+            Extensions    => Handler.Contexts.Final_Extension);
       end if;
 
       --  Do not use In_Redefine_Context, since this only applies for types
@@ -1312,6 +1316,14 @@ package body Schema.Schema_Readers is
                  & Boolean'Image (Handler.Contexts.Block_Restriction) & ", "
                  & Boolean'Image (Handler.Contexts.Block_Extension) & ");");
       end if;
+
+      Set_Final (Typ,
+                 On_Restriction => Handler.Contexts.Final_Restriction,
+                 On_Extension   => Handler.Contexts.Final_Extension);
+      Output ("Set_Final ("
+              & Ada_Name (Typ) & ", "
+              & Boolean'Image (Handler.Contexts.Final_Restriction) & ", "
+              & Boolean'Image (Handler.Contexts.Final_Extension) & ");");
 
       Set_Mixed_Content (Get_Validator (Typ), Handler.Contexts.Mixed_Content);
       Output ("Set_Mixed_Content ("

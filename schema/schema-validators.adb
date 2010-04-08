@@ -1274,6 +1274,8 @@ package body Schema.Validators is
             Simple_Type       => Unknown_Content,
             Block_Extension   => Grammar.Block_Extension,
             Block_Restriction => Grammar.Block_Restriction,
+            Final_Extension   => False,
+            Final_Restriction => False,
             Next              => null);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Register (Grammar, Typ);
@@ -1958,6 +1960,8 @@ package body Schema.Validators is
             Simple_Type       => Unknown_Content,
             Block_Extension   => Grammar.Block_Extension,
             Block_Restriction => Grammar.Block_Restriction,
+            Final_Extension   => False,
+            Final_Restriction => False,
             Next              => null);
          Types_Htable.Set (Grammar.Types.all, Typ);
          if Debug then
@@ -3832,6 +3836,8 @@ package body Schema.Validators is
          Simple_Type       => Unknown_Content,
          Block_Extension   => False,
          Block_Restriction => False,
+         Final_Extension   => False,
+         Final_Restriction => False,
          Next              => null);
       Register (Grammar, Result);
       return Result;
@@ -4698,6 +4704,20 @@ package body Schema.Validators is
    end Set_Final;
 
    ---------------
+   -- Set_Final --
+   ---------------
+
+   procedure Set_Final
+     (Typ            : XML_Type;
+      On_Restriction : Boolean;
+      On_Extension   : Boolean)
+   is
+   begin
+      Typ.Final_Restriction := On_Restriction;
+      Typ.Final_Extension   := On_Extension;
+   end Set_Final;
+
+   ---------------
    -- Set_Block --
    ---------------
 
@@ -5184,6 +5204,24 @@ package body Schema.Validators is
       return Typ.Block_Extension;
    end Get_Block_On_Extension;
 
+   ------------------------------
+   -- Get_Final_On_Restriction --
+   ------------------------------
+
+   function Get_Final_On_Restriction (Typ : XML_Type) return Boolean is
+   begin
+      return Typ.Final_Restriction;
+   end Get_Final_On_Restriction;
+
+   ----------------------------
+   -- Get_Final_On_Extension --
+   ----------------------------
+
+   function Get_Final_On_Extension (Typ : XML_Type) return Boolean is
+   begin
+      return Typ.Final_Extension;
+   end Get_Final_On_Extension;
+
    -----------------------
    -- Set_Block_Default --
    -----------------------
@@ -5407,5 +5445,38 @@ package body Schema.Validators is
       Substitutions := False;
       For_Each (Value);
    end Compute_Blocks;
+
+   -------------------
+   -- Compute_Final --
+   -------------------
+
+   procedure Compute_Final
+     (Value         : Unicode.CES.Byte_Sequence;
+      Restrictions  : out Boolean;
+      Extensions    : out Boolean)
+   is
+      procedure On_Item (Str : Byte_Sequence);
+      procedure On_Item (Str : Byte_Sequence) is
+      begin
+         if Str = "restriction" then
+            Restrictions := True;
+         elsif Str = "extension" then
+            Extensions := True;
+         elsif Str = "#all" then
+            Restrictions := True;
+            Extensions := True;
+         else
+            Validation_Error
+              ("Invalid value for final: """ & Str & """");
+         end if;
+      end On_Item;
+
+      procedure For_Each
+         is new Schema.Validators.Lists.For_Each_Item (On_Item);
+   begin
+      Restrictions := False;
+      Extensions   := False;
+      For_Each (Value);
+   end Compute_Final;
 
 end Schema.Validators;

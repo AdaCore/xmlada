@@ -136,6 +136,9 @@ private
             Simple_Content : Boolean;
             Block_Restriction : Boolean;
             Block_Extension   : Boolean;
+            Final_Restriction : Boolean;
+            Final_Extension   : Boolean;
+
          when Context_Element =>
             Element : Schema.Validators.XML_Element;
             Is_Ref  : Boolean;

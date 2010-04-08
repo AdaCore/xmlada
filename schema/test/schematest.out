@@ -43594,16 +43594,16 @@ Grp: suntest / test007
     test.8.n.xml:8:91: Attribute "c:foo": Invalid namespace for {urn:c}foo
 
 Grp: suntest / test008
-  69.2% tests= 13 (xsd= 1 xml= 12) OK= 9 FAILED= 4
+  76.9% tests= 13 (xsd= 1 xml= 12) OK= 10 FAILED= 3
   OK test
   OK test.1.n
     test.1.n.xml:8:99: Attribute "xxx": Invalid namespace for xxx
   OK test.10.n
-    test.10.n.xml:8:97: Attribute "a:xxx": Invalid namespace for {urn:a}xxx
+    test.10.n.xml:8:97: Attribute "a:xxx" invalid for this element
   OK test.11.n
-    test.11.n.xml:8:97: Attribute "b:xxx": Invalid namespace for {urn:b}xxx
+    test.11.n.xml:8:97: Attribute "b:xxx" invalid for this element
   OK test.12.n
-    test.12.n.xml:8:97: Attribute "c:xxx": Invalid namespace for {urn:c}xxx
+    test.12.n.xml:8:97: Attribute "c:xxx" invalid for this element
   OK test.5.n
     test.5.n.xml:8:101: Attribute "xxx": Invalid namespace for xxx
   OK test.7.n
@@ -43611,15 +43611,14 @@ Grp: suntest / test008
   OK test.8.n
     test.8.n.xml:8:103: Attribute "c:xxx": Invalid namespace for {urn:c}xxx
   OK test.9.n
-    test.9.n.xml:8:95: Attribute "xxx": Invalid namespace for xxx
+    test.9.n.xml:8:95: Attribute "xxx" invalid for this element
   XP test.2.v
     test.2.v.xml:8:101: Attribute "a:xxx": Invalid namespace for {urn:a}xxx
   XP test.3.v
     test.3.v.xml:8:101: Attribute "b:xxx": Invalid namespace for {urn:b}xxx
   XP test.4.v
     test.4.v.xml:8:101: Attribute "c:xxx": Invalid namespace for {urn:c}xxx
-  XP test.6.v
-    test.6.v.xml:8:103: Attribute "a:xxx": Invalid namespace for {urn:a}xxx
+  OK test.6.v
 
 Grp: suntest / test009
   100.0% tests= 14 (xsd= 1 xml= 13) OK= 14 FAILED= 0
@@ -44673,12 +44672,14 @@ Grp: CType / final00101m3
     final00101m3_n.xml:15:10: Unexpected end of sequence, expecting "{final}d"
 
 Grp: CType / final00101m4
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF final00101m4
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK final00101m4
+    final00101m4.xsd:28:34: Type "A" forbids restrictions
 
 Grp: CType / final00101m5
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF final00101m5
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK final00101m5
+    final00101m5.xsd:28:34: Type "A" forbids restrictions
 
 Grp: CType / final00101m6
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -47207,77 +47208,87 @@ Grp: SType / st_facets00608
 Grp: SType / st_final00101m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ST_final00101m1
-    ST_final00101m1.xsd:15:54: Attribute "final": Invalid namespace for final
+    ST_final00101m1.xsd:25:41: Type "Test" forbids restrictions
 
 Grp: SType / st_final00101m2
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ST_final00101m2
-    ST_final00101m2.xsd:15:54: Attribute "final": Invalid namespace for final
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK ST_final00101m2
+  OK Positive
+  OK Negative
+    ST_final00101m2_n.xml:13:60: string pattern not matched: 1|2
 
 Grp: SType / st_final00101m3
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ST_final00101m3
-    ST_final00101m3.xsd:15:54: Attribute "final": Invalid namespace for final
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK ST_final00101m3
+  OK Positive
+  OK Negative
+    ST_final00101m3_n.xml:13:56: Invalid value "5"
 
 Grp: SType / st_final00101m4
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ST_final00101m4
-    ST_final00101m4.xsd:15:54: Attribute "final": Invalid namespace for final
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK ST_final00101m4
+  OK Positive
+  OK Negative
+    ST_final00101m4_n.xml:13:56: Invalid value "0"
 
 Grp: SType / st_final00101m5
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ST_final00101m5
-    ST_final00101m5.xsd:15:54: Attribute "final": Invalid namespace for final
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK ST_final00101m5
+  OK Positive
+  OK Negative
+    ST_final00101m5_n.xml:13:58: Invalid value "xxx"
 
 Grp: SType / st_final00101m6
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ST_final00101m6
-    ST_final00101m6.xsd:15:54: Attribute "final": Invalid namespace for final
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
+  OK ST_final00101m6
+  OK Positive
+  OK Negative
+    ST_final00101m6_n.xml:13:60: Invalid value ".a.b."
 
 Grp: SType / st_final00102m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ST_final00102m1
-    ST_final00102m1.xsd:15:47: Attribute "final": Invalid namespace for final
+    ST_final00102m1.xsd:15:47: Attribute "final": Invalid value "list"
 
 Grp: SType / st_final00102m2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m2
-    ST_final00102m2.xsd:15:47: Attribute "final": Invalid namespace for final
+    ST_final00102m2.xsd:15:47: Attribute "final": Invalid value "list"
 
 Grp: SType / st_final00102m3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m3
-    ST_final00102m3.xsd:15:47: Attribute "final": Invalid namespace for final
+    ST_final00102m3.xsd:15:47: Attribute "final": Invalid value "list"
 
 Grp: SType / st_final00102m4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m4
-    ST_final00102m4.xsd:15:47: Attribute "final": Invalid namespace for final
+    ST_final00102m4.xsd:15:47: Attribute "final": Invalid value "list"
 
 Grp: SType / st_final00102m5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m5
-    ST_final00102m5.xsd:15:47: Attribute "final": Invalid namespace for final
+    ST_final00102m5.xsd:15:47: Attribute "final": Invalid value "list"
 
 Grp: SType / st_final00102m6
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00102m6
-    ST_final00102m6.xsd:15:47: Attribute "final": Invalid namespace for final
+    ST_final00102m6.xsd:15:47: Attribute "final": Invalid value "list"
 
 Grp: SType / st_final00103m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ST_final00103m1
-    ST_final00103m1.xsd:15:48: Attribute "final": Invalid namespace for final
+    ST_final00103m1.xsd:15:48: Attribute "final": Invalid value "union"
 
 Grp: SType / st_final00103m2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00103m2
-    ST_final00103m2.xsd:15:48: Attribute "final": Invalid namespace for final
+    ST_final00103m2.xsd:15:48: Attribute "final": Invalid value "union"
 
 Grp: SType / st_final00103m3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP ST_final00103m3
-    ST_final00103m3.xsd:15:48: Attribute "final": Invalid namespace for final
+    ST_final00103m3.xsd:15:48: Attribute "final": Invalid value "union"
 
 Grp: SType / st_name00101m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47661,9 +47672,8 @@ Grp: MS-Additional2006-07-15 / addB019
   OK addB019.v
 
 Grp: MS-Additional2006-07-15 / addB020
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP addB020
-    test68014.xsd:3:52: Attribute "final": Invalid namespace for final
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK addB020
 
 Grp: MS-Additional2006-07-15 / addB021
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47708,7 +47718,7 @@ Grp: MS-Additional2006-07-15 / addB028
 Grp: MS-Additional2006-07-15 / addB029
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP addB029
-    test69527.xsd:3:53: Attribute "final": Invalid namespace for final
+    test69527.xsd:3:53: Attribute "final": Invalid value "list"
 
 Grp: MS-Additional2006-07-15 / addB030
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47963,7 +47973,7 @@ Grp: MS-Additional2006-07-15 / addB081
 Grp: MS-Additional2006-07-15 / addB082
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK addB082
-    addB082.xsd:8:57: Attribute "xsd:type": Invalid namespace for {http://www.w3.org/2001/XMLSchema}type
+    addB082.xsd:8:57: Attribute "xsd:type" invalid for this element
 
 Grp: MS-Additional2006-07-15 / addB083
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49310,12 +49320,11 @@ Grp: MS-Annotations2006-07-15 / annotF008
 Grp: MS-Annotations2006-07-15 / annotF009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotF009
-    annotF009.xsd:3:29: Attribute "foo" invalid for this element
+    annotF009.xsd:3:29: Attribute "foo": Invalid namespace for foo
 
 Grp: MS-Annotations2006-07-15 / annotZ001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP annotZ001
-    annotZ001.xsd:4:30: Attribute "id" invalid for this element
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK annotZ001
 
 Grp: MS-Annotations2006-07-15 / annotZ002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49723,14 +49732,14 @@ Grp: MS-AttributeGroup2006-07-15 / attgD017
     attgD017.xsd:16:47: Attribute has already been declared: foo
 
 Grp: MS-AttributeGroup2006-07-15 / attgD018
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attgD018
-  OK attgD018.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attgD018
+    attgD018.xsd:5:82: Attribute "foo:anyattribute" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD019
-  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
-  OK attgD019
-  OK attgD019.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attgD019
+    attgD019.xsd:5:82: Attribute "foo:anyattribute" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD020
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
@@ -49739,9 +49748,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgD020
     attgD020.xml:1:198: Attribute "foo": No definition provided
 
 Grp: MS-AttributeGroup2006-07-15 / attgD021
-  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
-  OK attgD021
-  OK attgD021.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attgD021
+    attgD021.xsd:5:82: Attribute "foo:anyattribute" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD022
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -49755,10 +49764,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgD023
     attgD023.xml:1:154: Attribute "x:foo": Invalid namespace for {http://xsdtesting}foo
 
 Grp: MS-AttributeGroup2006-07-15 / attgD024
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attgD024
-  OK attgD024.i
-    attgD024.xml:3:56: Attribute "x:foo": No definition provided
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attgD024
+    attgD024.xsd:5:82: Attribute "foo:anyattribute" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD025
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
@@ -50204,16 +50212,19 @@ Grp: MS-Attribute2006-07-15 / attJ018
   OK attJ018.v
 
 Grp: MS-Attribute2006-07-15 / attG001
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attG001
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attG001
+    attG001.xsd:3:45: Attribute "foo:foo" invalid for this element
 
 Grp: MS-Attribute2006-07-15 / attG002
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attG002
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attG002
+    attG002.xsd:3:43: Attribute "x:foo" invalid for this element
 
 Grp: MS-Attribute2006-07-15 / attG003
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attG003
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attG003
+    attG003.xsd:3:44: Attribute "_a:foo" invalid for this element
 
 Grp: MS-Attribute2006-07-15 / attH001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51515,9 +51526,9 @@ Grp: MS-ComplexType2006-07-15 / ctA048
   OK ctA048.v
 
 Grp: MS-ComplexType2006-07-15 / ctA049
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK ctA049
-  OK ctA049.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP ctA049
+    ctA049.xsd:3:51: Attribute "foo:attr" invalid for this element
 
 Grp: MS-ComplexType2006-07-15 / ctB001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53431,16 +53442,18 @@ Grp: MS-ComplexType2006-07-15 / ctI005
   OK ctI005.v
 
 Grp: MS-ComplexType2006-07-15 / ctI006
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctI006
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK ctI006
+    ctI006.xsd:17:22: Type "foo" forbids restrictions
 
 Grp: MS-ComplexType2006-07-15 / ctI007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SF ctI007
 
 Grp: MS-ComplexType2006-07-15 / ctI008
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctI008
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK ctI008
+    ctI008.xsd:17:22: Type "foo" forbids restrictions
 
 Grp: MS-ComplexType2006-07-15 / ctI009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53461,8 +53474,9 @@ Grp: MS-ComplexType2006-07-15 / ctI012
   SF ctI012
 
 Grp: MS-ComplexType2006-07-15 / ctI013
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctI013
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK ctI013
+    ctI013.xsd:17:22: Type "foo" forbids restrictions
 
 Grp: MS-ComplexType2006-07-15 / ctI014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53842,8 +53856,9 @@ Grp: MS-ComplexType2006-07-15 / ctO001
   OK ctO001.v
 
 Grp: MS-ComplexType2006-07-15 / ctO002
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF ctO002
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK ctO002
+    ctO002.xsd:17:22: Type "foo" forbids restrictions
 
 Grp: MS-ComplexType2006-07-15 / ctO003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -65758,7 +65773,7 @@ Grp: MS-Element2006-07-15 / elemK006
 Grp: MS-Element2006-07-15 / elemK007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemK007
-    elemK007.xsd:3:43: Attribute "nullable": Invalid namespace for nullable
+    elemK007.xsd:3:43: Attribute "nullable" invalid for this element
 
 Grp: MS-Element2006-07-15 / elemL001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -65821,17 +65836,19 @@ Grp: MS-Element2006-07-15 / elemN003
     Unsupported element in the schema: unique
 
 Grp: MS-Element2006-07-15 / elemN004
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemN004
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP elemN004
+    elemN004.xsd:3:56: Attribute "a:b" invalid for this element
 
 Grp: MS-Element2006-07-15 / elemN005
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemN005
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP elemN005
+    elemN005.xsd:6:56: Attribute "a:b" invalid for this element
 
 Grp: MS-Element2006-07-15 / elemN006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemN006
-    elemN006.xsd:3:58: Attribute "foo": Invalid namespace for foo
+    elemN006.xsd:3:58: Attribute "foo" invalid for this element
 
 Grp: MS-Element2006-07-15 / elemO001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66959,7 +66976,7 @@ Grp: MS-Element2006-07-15 / elemZ029
 Grp: MS-Element2006-07-15 / elemZ030
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemZ030
-    elemZ030.xsd:2:23: Attribute "id" invalid for this element
+    elemZ030.xsd:2:23: Attribute "id": Invalid value: ""
 
 Grp: MS-Element2006-07-15 / elemZ031
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -67004,8 +67021,9 @@ Grp: MS-Errata102006-07-15 / errC002
   OK errC002
 
 Grp: MS-Errata102006-07-15 / errC003
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK errC003
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP errC003
+    errC003.xsd:6:113: Attribute "myNS:testAttr" invalid for this element
 
 Grp: MS-Errata102006-07-15 / errC004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -72369,8 +72387,8 @@ Grp: MS-IdentityConstraint2006-07-15 / idZ006
 
 Grp: MS-IdentityConstraint2006-07-15 / idZ007
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI idZ007
-    Unsupported element in the schema: unique
+  SP idZ007
+    idZ007.xsd:3:57: Attribute "msdata:IsDataSet" invalid for this element
 
 Grp: MS-IdentityConstraint2006-07-15 / idZ008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -72711,19 +72729,19 @@ Grp: MS-ModelGroups2006-07-15 / mgC014
   OK mgC014.v
 
 Grp: MS-ModelGroups2006-07-15 / mgD001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK mgD001
-  OK mgD001.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP mgD001
+    mgD001.xsd:5:28: Attribute "other:foo" invalid for this element
 
 Grp: MS-ModelGroups2006-07-15 / mgD005
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK mgD005
-  OK mgD005.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP mgD005
+    mgD005.xsd:5:32: Attribute "other:foo" invalid for this element
 
 Grp: MS-ModelGroups2006-07-15 / mgD009
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK mgD009
-  OK mgD009.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP mgD009
+    mgD009.xsd:5:29: Attribute "other:att" invalid for this element
 
 Grp: MS-ModelGroups2006-07-15 / mgD013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -74557,18 +74575,18 @@ Grp: MS-Notations2006-07-15 / notatD007
 
 Grp: MS-Notations2006-07-15 / notatE001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  NI notatE001
-    Unsupported element in the schema: notation
+  SP notatE001
+    notatE001.xsd:3:77: Attribute "a:b" invalid for this element
 
 Grp: MS-Notations2006-07-15 / notatE002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK notatE002
-    notatE002.xsd:3:120: Attribute "a:b": Invalid namespace for {http://www.w3.org/2001/XMLSchema}b
+    notatE002.xsd:3:120: Attribute "a:b" invalid for this element
 
 Grp: MS-Notations2006-07-15 / notatE003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK notatE003
-    notatE003.xsd:3:79: Attribute "foo": Invalid namespace for foo
+    notatE003.xsd:3:79: Attribute "foo" invalid for this element
 
 Grp: MS-Notations2006-07-15 / notatE004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -91665,9 +91683,8 @@ Grp: MS-Schema2006-07-15 / schB1i
     schB1i.xsd:3:34: Attribute "id": ID "a" already defined
 
 Grp: MS-Schema2006-07-15 / schB2
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP schB2
-    schB2_a.xsd:8:27: Attribute "id" invalid for this element
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK schB2
 
 Grp: MS-Schema2006-07-15 / schB3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -91689,24 +91706,22 @@ Grp: MS-Schema2006-07-15 / schB8
   OK schB8
 
 Grp: MS-Schema2006-07-15 / schC2
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schC2
-    schC2_a.xsd:4:27: Attribute "id" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF schC2
 
 Grp: MS-Schema2006-07-15 / schC3
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP schC3
-    schC3_a.xsd:4:27: Attribute "id" invalid for this element
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK schC3
+  OK schC3.v
 
 Grp: MS-Schema2006-07-15 / schC4
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP schC4
-    schC4_a.xsd:8:27: Attribute "id" invalid for this element
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK schC4
+  OK schC4.v
 
 Grp: MS-Schema2006-07-15 / schC5
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schC5
-    schC5_a.xsd:8:27: Attribute "id" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF schC5
 
 Grp: MS-Schema2006-07-15 / schD5
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91888,9 +91903,8 @@ Grp: MS-Schema2006-07-15 / schH1
     schH1_a.xsd:6:53: Attribute "id": Invalid namespace for id
 
 Grp: MS-Schema2006-07-15 / schH2
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP schH2
-    schH2_a.xsd:7:29: Attribute "id" invalid for this element
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK schH2
 
 Grp: MS-Schema2006-07-15 / schH3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -91913,19 +91927,16 @@ Grp: MS-Schema2006-07-15 / schH6
     schH6.xsd:6:50: not-schema.xsd:1:16: Element "not-a-schema": No matching declaration available
 
 Grp: MS-Schema2006-07-15 / schH9
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP schH9
-    schH9.xsd:7:33: Attribute "id" invalid for this element
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK schH9
 
 Grp: MS-Schema2006-07-15 / schI2
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schI2
-    schI2_a.xsd:5:33: Attribute "id" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF schI2
 
 Grp: MS-Schema2006-07-15 / schI5
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schI5
-    schI5_a.xsd:8:33: Attribute "id" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF schI5
 
 Grp: MS-Schema2006-07-15 / schJ2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92148,14 +92159,13 @@ Grp: MS-Schema2006-07-15 / schZ001_78029-a
   SF schZ001_78029-a
 
 Grp: MS-Schema2006-07-15 / schZ002_78029-b
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schZ002_78029-b
-    78029b.xsd:6:68: Attribute "final" is prohibited in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF schZ002_78029-b
 
 Grp: MS-Schema2006-07-15 / schZ003_78029-c
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK schZ003_78029-c
-    78029c.xsd:6:78: Attribute "SubstitutionGroup": Invalid namespace for SubstitutionGroup
+    78029c.xsd:6:78: Attribute "SubstitutionGroup" invalid for this element
 
 Grp: MS-Schema2006-07-15 / schZ004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93175,17 +93185,16 @@ Grp: MS-SimpleType2006-07-15 / stF030
 Grp: MS-SimpleType2006-07-15 / stF031
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stF031
-    stF031.xsd:15:60: Attribute "final": Invalid namespace for final
+    stF031.xsd:15:60: Attribute "final": Invalid value "list restriction union"
 
 Grp: MS-SimpleType2006-07-15 / stF032
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stF032
-    stF032.xsd:11:44: Attribute "final": Invalid namespace for final
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK stF032
 
 Grp: MS-SimpleType2006-07-15 / stF033
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stF033
-    stF033.xsd:11:44: Attribute "final": Invalid namespace for final
+    stF033.xsd:15:34: Type "parent" forbids restrictions
 
 Grp: MS-SimpleType2006-07-15 / stF034
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -93520,9 +93529,8 @@ Grp: MS-SimpleType2006-07-15 / stK019
     stK019.xsd:8:29: Unexpected element "{http://www.w3.org/2001/XMLSchema}period"
 
 Grp: MS-SimpleType2006-07-15 / stZ001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ001
-    stZ001.xsd:11:51: Attribute "final": Invalid namespace for final
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK stZ001
 
 Grp: MS-SimpleType2006-07-15 / stZ002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -93531,7 +93539,7 @@ Grp: MS-SimpleType2006-07-15 / stZ002
 Grp: MS-SimpleType2006-07-15 / stZ003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stZ003
-    stZ003.xsd:15:70: Attribute "final": Invalid namespace for final
+    stZ003.xsd:15:70: Attribute "final": Invalid value "list restriction union extension"
 
 Grp: MS-SimpleType2006-07-15 / stZ004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95377,13 +95385,13 @@ Grp: BoeingXSDTestCases / ipo6
   SP ipo6
     ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
 
-Total number of tests: 37048 (omitting non-accepted tests)
-   13741 XSD files (not including those parsed automatically)
-   23365 XML files
-NI: Features not implemented: in_partial= 205 in_full_fail= 2025
-SP: XSD KO, should be OK: in_full_fail= 216
-SF: XSD OK, should be KO: in_full_fail= 676
-XP: XML KO, should be OK: in_partial= 120 in_full_fail= 4
+Total number of tests: 37052 (omitting non-accepted tests)
+   13739 XSD files (not including those parsed automatically)
+   23369 XML files
+NI: Features not implemented: in_partial= 205 in_full_fail= 2023
+SP: XSD KO, should be OK: in_full_fail= 218
+SF: XSD OK, should be KO: in_full_fail= 675
+XP: XML KO, should be OK: in_partial= 119 in_full_fail= 4
 XF: XML OK, should be KO: in_partial= 6 in_full_fail= 2
 IE: Internal error:
 Total errors: 1024 ( 2.8 %)

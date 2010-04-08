@@ -341,6 +341,11 @@ package body Schema.Validators.Restrictions is
    is
       Result : constant Restriction_Type := new Restriction_XML_Validator;
    begin
+      if Get_Final_On_Restriction (Base) then
+         Validation_Error
+           ("Type """ & Get_Local_Name (Base) & """ forbids restrictions");
+      end if;
+
       Register (G, Base);
       Result.Base        := Base;
       if Restriction /= null then
