@@ -64,6 +64,7 @@ package body Schema.Validators.Extensions is
      (Validator   : access Extension_XML_Validator;
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
+      Ignore_Wildcard_In_Dep1 : out Boolean;
       Dependency2 : out XML_Validator);
    procedure Check_Replacement
      (Validator         : access Extension_XML_Validator;
@@ -86,10 +87,12 @@ package body Schema.Validators.Extensions is
      (Validator   : access Extension_XML_Validator;
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
+      Ignore_Wildcard_In_Dep1 : out Boolean;
       Dependency2 : out XML_Validator) is
    begin
       List := Validator.Attributes;
       Dependency1 := Validator.Extension;
+      Ignore_Wildcard_In_Dep1 := False;
       Dependency2 := Validator.Base.Validator;
    end Get_Attribute_Lists;
 

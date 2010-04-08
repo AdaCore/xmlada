@@ -1140,6 +1140,7 @@ private
      (Validator   : access XML_Validator_Record;
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
+      Ignore_Wildcard_In_Dep1 : out Boolean;
       Dependency2 : out XML_Validator);
    --  Return the list of attributes that need to be checked for this
    --  validator, and a set of other validators whose list of attributes also

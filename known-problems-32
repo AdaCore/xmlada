@@ -72,6 +72,9 @@ KP-32-J302-043 Lots of fixes in schema validation
               - Raise explicit exception (XML_Not_Supported) for various
                 regexp constructs that are not supported (unicode,...)
               - Length facets should be ignored for QName (always match)
+              - A restriction does not inherit wildcard attributes from its
+                base type
+              - Added support for "final" attribute in <simpleType>
 
   Status:     Fixed in 3.3.0
 

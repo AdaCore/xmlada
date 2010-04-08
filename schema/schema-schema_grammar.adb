@@ -359,8 +359,10 @@ package body Schema.Schema_Grammar is
       Set_Debug_Name (Choice1, "annotation_choice");
       Add_Particle (Choice1, Lookup_Element (G, "appinfo"));
       Add_Particle (Choice1, Lookup_Element (G, "documentation"));
+      Typ := Extension_Of (G, Lookup (G, "openAttrs"), XML_Validator (Seq1));
+      Add_Attribute (Typ, Create_Local_Attribute ("id", G, Lookup (G, "ID")));
       Set_Type (Create_Global_Element (G, "annotation", Qualified),
-                Create_Local_Type (G, Seq1), Context);
+                Create_Local_Type (G, Typ), Context);
 
       --  The "topLevelElement" type
       Seq1 := Create_Sequence (G);
@@ -725,7 +727,8 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "namespaceList", Union);
 
       --  The "wildcard" type
-      Typ := Restriction_Of (G, Lookup (G, "annotated"));
+      Typ := Extension_Of (G, Lookup (G, "annotated"));
+      Set_Debug_Name (Typ, "annotated_restr_in_wildcard");
       Add_Attribute (Typ, Create_Local_Attribute ("namespace", G,
                                             Lookup (G, "namespaceList"),
                                             Attribute_Use => Default,
@@ -741,7 +744,8 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "wildcard", Typ);
 
       --  The "any" element   ??? Error if you put before "wildcard"
-      Typ := Restriction_Of (G, Lookup (G, "wildcard"));
+      Typ := Extension_Of (G, Lookup (G, "wildcard"));
+      Set_Debug_Name (Typ, "wildcard_ext");
       Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
       Set_Type (Create_Global_Element (G, "any", Qualified),
                 Create_Local_Type (G, Typ), Context);
@@ -988,6 +992,19 @@ package body Schema.Schema_Grammar is
       Set_Type (Create_Global_Element (G, "simpleDerivation", Qualified),
                 Lookup (G, "annotated"), Context);
 
+      --  The "simpleDerivationSet" type
+      Union := Create_Union (G);
+      Typ := Restriction_Of (G, Lookup (G, "token"));
+      Add_Facet (Typ, "enumeration", "#all");
+      Add_Union (Union, Create_Local_Type (G, Typ));
+      Typ := Restriction_Of (G, Lookup (G, "derivationControl"));
+      Add_Facet (Typ, "enumeration", "list");
+      Add_Facet (Typ, "enumeration", "union");
+      Add_Facet (Typ, "enumeration", "restriction");
+      Add_Facet (Typ, "enumeration", "extension");
+      Add_Union (Union, List_Of (G, Create_Local_Type (G, Typ)));
+      Create_Global_Type (G, "simpleDerivationSet", Union);
+
       --  The "simpleType" type  ??? abstract=true
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "simpleType_seq");
@@ -995,6 +1012,9 @@ package body Schema.Schema_Grammar is
       Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName")));
+      Add_Attribute
+        (Typ, Create_Local_Attribute
+           ("final", G, Lookup (G, "simpleDerivationSet")));
       Create_Global_Type (G, "simpleType", Typ);
 
       --  The "topLevelSimpleType" type
@@ -1007,7 +1027,10 @@ package body Schema.Schema_Grammar is
       Create_Global_Type (G, "topLevelSimpleType", Typ);
       Add_Attribute
         (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName"),
-                                Attribute_Use => Required));
+         Attribute_Use => Required));
+      Add_Attribute
+        (Typ, Create_Any_Attribute
+           (Process_Lax, NS => G, Kind => Namespace_Other));
 
       --  The "simpleType" element
       Elem := Create_Global_Element (G, "simpleType", Qualified);

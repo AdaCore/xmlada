@@ -25,7 +25,7 @@
 -- exception does not however invalidate any other reasons why the   --
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
-with GNAT.IO; use GNAT.IO;
+
 package body Schema.Validators.Restrictions is
 
    type Restriction_XML_Validator is new XML_Validator_Record with record
@@ -63,6 +63,7 @@ package body Schema.Validators.Restrictions is
      (Validator   : access Restriction_XML_Validator;
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
+      Ignore_Wildcard_In_Dep1 : out Boolean;
       Dependency2 : out XML_Validator);
    procedure Add_Facet
      (Validator   : access Restriction_XML_Validator;
@@ -123,11 +124,17 @@ package body Schema.Validators.Restrictions is
      (Validator   : access Restriction_XML_Validator;
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
+      Ignore_Wildcard_In_Dep1 : out Boolean;
       Dependency2 : out XML_Validator) is
    begin
+      --  A restriction has the same list of attributes as the base type
+      --  (as per Primer 4.4) plus possibly some new ones, but it doesn't
+      --  inherit the wildcards
+
       List := Validator.Attributes;
-      Dependency1 := Validator.Restriction;
-      Dependency2 := Validator.Base.Validator;
+      Dependency1 := Validator.Base.Validator;
+      Ignore_Wildcard_In_Dep1 := True;
+      Dependency2 := Validator.Restriction;
    end Get_Attribute_Lists;
 
    ----------------------------

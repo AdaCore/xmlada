@@ -213,10 +213,12 @@ package body Schema.Validators is
      (Validator   : access XML_Validator_Record;
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
+      Ignore_Wildcard_In_Dep1 : out Boolean;
       Dependency2 : out XML_Validator) is
    begin
       List := Validator.Attributes;
       Dependency1 := null;
+      Ignore_Wildcard_In_Dep1 := False;
       Dependency2 := null;
    end Get_Attribute_Lists;
 
@@ -688,7 +690,8 @@ package body Schema.Validators is
          Is_Local_In_XSD : Boolean) return Integer;
       --  Chech whether Named appears in Atts
 
-      procedure Recursive_Check (Validator : XML_Validator);
+      procedure Recursive_Check
+        (Validator : XML_Validator; Ignore_Wildcard : Boolean);
       procedure Recursive_Check_Named (List : Attribute_Or_Group);
       procedure Check_Any (List : Attribute_Or_Group);
       --  Check recursively the attributes provided by Validator.
@@ -812,15 +815,19 @@ package body Schema.Validators is
         (Any : Any_Attribute_Validator; Index : Integer) is
       begin
          if Debug then
-            Debug_Output ("Checking any attribute index="
-                          & Index'Img
-                          & " name={" & Get_URI (Atts, Index)
-                          & "}" & Get_Local_Name (Atts, Index));
+            Debug_Push_Prefix ("Checking any attribute index="
+                               & Index'Img
+                               & " name={" & Get_URI (Atts, Index)
+                               & "}" & Get_Local_Name (Atts, Index));
          end if;
 
          Validate_Attribute (Any, Atts, Index, Context);
+
+         Debug_Pop_Prefix;
+
       exception
          when E : XML_Validation_Error =>
+            Debug_Pop_Prefix;
             Validation_Error
               ("Attribute """ & Get_Qname (Atts, Index)
                & """: " & Exception_Message (E));
@@ -903,34 +910,53 @@ package body Schema.Validators is
       -- Recursive_Check --
       ---------------------
 
-      procedure Recursive_Check (Validator : XML_Validator) is
+      procedure Recursive_Check
+        (Validator : XML_Validator; Ignore_Wildcard : Boolean)
+      is
          List   : Attribute_Validator_List_Access;
          Dep1, Dep2 : XML_Validator;
+         Ignore_Dep1_Wildcard : Boolean;
       begin
-         Get_Attribute_Lists (Validator, List, Dep1, Dep2);
+         if Debug then
+            Debug_Push_Prefix
+              ("Checking attributes from " & Get_Name (Validator)
+               & " ignore_wildcards=" & Ignore_Wildcard'Img);
+         end if;
+
+         Get_Attribute_Lists
+           (Validator, List, Dep1, Ignore_Dep1_Wildcard, Dep2);
          if List /= null then
             for L in List'Range loop
                Recursive_Check_Named (List (L));
             end loop;
+         end if;
 
+         if Dep1 /= null then
+            Recursive_Check (Dep1, Ignore_Wildcard or Ignore_Dep1_Wildcard);
+         end if;
+
+         if Dep2 /= null then
+            Recursive_Check (Dep2, Ignore_Wildcard);
+         end if;
+
+         if List /= null and then not Ignore_Wildcard then
             for L in List'Range loop
                Check_Any (List (L));
             end loop;
          end if;
 
-         if Dep1 /= null then
-            Recursive_Check (Dep1);
-         end if;
+         Debug_Pop_Prefix;
 
-         if Dep2 /= null then
-            Recursive_Check (Dep2);
-         end if;
+      exception
+         when others =>
+            Debug_Pop_Prefix;
+            raise;
       end Recursive_Check;
 
    begin
       Debug_Push_Prefix ("Validate_Attributes " & Get_Name (Validator));
 
-      Recursive_Check (XML_Validator (Validator));
+      Recursive_Check (XML_Validator (Validator), Ignore_Wildcard => False);
 
       Is_Nil := False;
 
@@ -951,12 +977,6 @@ package body Schema.Validators is
                null;
 
             else
-               if Debug then
-                  Debug_Output ("Invalid attribute "
-                                & Get_URI (Atts, S) & ":"
-                                & Get_Local_Name (Atts, S));
-               end if;
-
                Validation_Error
                  ("Attribute """ & Get_Qname (Atts, S) & """ invalid for this"
                   & " element");
