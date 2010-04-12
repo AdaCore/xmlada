@@ -972,19 +972,27 @@ package body Schema.Validators is
 
       for S in Seen'Range loop
          if not Seen (S) and not Seen_Any (S) then
-            if Get_URI (Atts, S) = XML_Instance_URI
-              and then Get_Local_Name (Atts, S) = "nil"
-            then
-               if not Nillable then
-                  Validation_Error ("Element cannot be nil");
+            if Get_URI (Atts, S) = XML_Instance_URI then
+               if Get_Local_Name (Atts, S) = "nil" then
+                  if not Nillable then
+                     Validation_Error ("Element cannot be nil");
+                  end if;
+
+                  Is_Nil := Get_Value_As_Boolean (Atts, S);
+
+                  --  Following attributes are always valid
+                  --  See "Element Locally Valid (Complex Type)" 3.4.4.2
+               elsif Get_Local_Name (Atts, S) = "type"
+                 or else Get_Local_Name (Atts, S) = "schemaLocation"
+                 or else Get_Local_Name (Atts, S) = "noNamespaceSchemaLocation"
+               then
+                  null;
+
+               else
+                  Validation_Error
+                    ("Attribute """ & Get_Qname (Atts, S)
+                     & """ invalid for this element");
                end if;
-
-               Is_Nil := Get_Value_As_Boolean (Atts, S);
-
-            elsif Get_URI (Atts, S) = XML_Instance_URI
-              and then Get_Local_Name (Atts, S) = "type"
-            then
-               null;
 
             else
                Validation_Error

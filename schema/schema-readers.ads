@@ -112,9 +112,10 @@ private
    type Validator_List is access Validator_List_Record;
    type Validator_List_Record is record
       Element   : Schema.Validators.XML_Element;
-      Typ       : Schema.Validators.XML_Type;
-      --  Typ will most often be the type of Element, but if the instance has
-      --  specified a xsi:type attribute, this could point to some other type.
+
+      Typ : Schema.Validators.XML_Type;
+      --  Typ read from the xsi:type attribute. This might be No_Type, in case
+      --  there is no such attribute
 
       Grammar   : Schema.Validators.XML_Grammar_NS;
       --  The grammar to which Element belongs

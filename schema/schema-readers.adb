@@ -405,8 +405,8 @@ package body Schema.Readers is
    procedure Validate_Current_Characters
      (Handler : in out Validating_Reader'Class)
    is
-      Empty_Element : Boolean := False;
-      Validator : XML_Validator;
+      Empty_Element      : Boolean := False;
+      Typ, Typ_For_Mixed : XML_Type;
    begin
       --  If we were in the middle of a series of Characters callback, we need
       --  to process them now
@@ -450,17 +450,45 @@ package body Schema.Readers is
                end if;
 
             else
-               Validator := Get_Validator (Handler.Validators.Typ);
+               Typ := Handler.Validators.Typ;
+               if Typ /= No_Type then
+                  Typ_For_Mixed := Typ;
+               else
+                  Typ_For_Mixed := Get_Type (Handler.Validators.Element);
+               end if;
 
                if not Empty_Element
-                 and then not Get_Mixed_Content (Validator)
+                 and then not Get_Mixed_Content (Get_Validator (Typ_For_Mixed))
                then
                   Validation_Error
                     ("No character data allowed by content model");
                end if;
 
+               if Typ /= No_Type then
+                  --  If the element specified a xsi:attribute, we need to
+                  --  validate with this type (which might be more restrictive
+                  --  than the parent type)
+
+                  Validate_Characters
+                    (Get_Validator (Typ),
+                     Handler.Validators.Characters.all,
+                     Empty_Element => Empty_Element,
+                     Context       => Validating_Reader (Handler).Context);
+
+                  Typ := Get_Type (Handler.Validators.Element);
+
+               else
+                  Typ := Get_Type (Handler.Validators.Element);
+                  Typ_For_Mixed := Typ;
+               end if;
+
+               --  We still need to check the "fixed" restriction of the base
+               --  type, so ask the base type. So whether there was a xsi:type
+               --  or not, we still need to validate the attributes with that
+               --  type from XSD
+
                Validate_Characters
-                 (Validator,
+                 (Get_Validator (Typ),
                   Handler.Validators.Characters.all,
                   Empty_Element => Empty_Element,
                   Context       => Validating_Reader (Handler).Context);
@@ -484,15 +512,16 @@ package body Schema.Readers is
       Atts          : in out Sax.Attributes.Attributes'Class)
    is
       pragma Unreferenced (Qname);
-      Element   : XML_Element := No_Element;
-      Data      : Validator_Data;
-      Typ       : XML_Type;
-      Is_Nil    : Boolean;
+      Element       : XML_Element := No_Element;
+      Data          : Validator_Data;
+      Typ, Xsi_Type : XML_Type;
+      Parent_Type   : XML_Type;
+      Is_Nil        : Boolean;
 
       procedure Get_Grammar_From_Attributes;
       --  Parse the grammar, reading its name from the attributes
 
-      procedure Compute_Type;
+      function Compute_Type_From_Attribute return XML_Type;
       --  Compute the type to use, depending on whether the xsi:type attribute
       --  was specified
 
@@ -528,14 +557,13 @@ package body Schema.Readers is
       -- Compute_Type --
       ------------------
 
-      procedure Compute_Type is
+      function Compute_Type_From_Attribute return XML_Type is
          Type_Index : constant Integer := Get_Index
            (Atts, URI => XML_Instance_URI, Local_Name => "type");
          G : XML_Grammar_NS;
          Had_Restriction, Had_Extension : Boolean := False;
+         Typ : XML_Type := No_Type;
       begin
-         Typ := Get_Type (Element);
-
          if Type_Index /= -1 then
             declare
                Qname : constant Byte_Sequence := Get_Value (Atts, Type_Index);
@@ -584,7 +612,8 @@ package body Schema.Readers is
                end if;
             end if;
          end if;
-      end Compute_Type;
+         return Typ;
+      end Compute_Type_From_Attribute;
 
       G : XML_Grammar_NS;
    begin
@@ -623,15 +652,20 @@ package body Schema.Readers is
       --  Whether this element is valid in the current context
 
       if Validating_Reader (Handler).Validators /= null then
+         Parent_Type := Validating_Reader (Handler).Validators.Typ;
+         if Parent_Type = No_Type then
+            Parent_Type :=
+              Get_Type (Validating_Reader (Handler).Validators.Element);
+         end if;
+
          if Debug then
             Put_Line
-              ("Using parent's validator ("
-               & Get_Local_Name (Validating_Reader (Handler).Validators.Typ)
+              ("Using parent's validator (" & Get_Local_Name (Parent_Type)
                & ") to validate the element");
          end if;
 
          Validate_Start_Element
-           (Get_Validator (Validating_Reader (Handler).Validators.Typ),
+           (Get_Validator (Parent_Type),
             Local_Name, Namespace_URI, G,
             Validating_Reader (Handler).Validators.Data,
             Validating_Reader (Handler).Context.Grammar, Element);
@@ -671,7 +705,13 @@ package body Schema.Readers is
             & """ is abstract");
       end if;
 
-      Compute_Type;
+      Xsi_Type := Compute_Type_From_Attribute;
+      if Xsi_Type = No_Type then
+         Typ := Get_Type (Element);
+      else
+         Typ := Xsi_Type;
+      end if;
+
       Data := Create_Validator_Data (Get_Validator (Typ));
 
       Validate_Attributes
@@ -715,7 +755,7 @@ package body Schema.Readers is
       end if;
 
       Push (Validating_Reader (Handler).Validators, Element,
-            Typ, G, Data, Is_Nil);
+            Xsi_Type, G, Data, Is_Nil);
 
    exception
       when others =>
@@ -735,6 +775,7 @@ package body Schema.Readers is
       Elem          : Element_Access)
    is
       pragma Unreferenced (Namespace_URI);
+      Typ : XML_Type;
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
@@ -750,9 +791,14 @@ package body Schema.Readers is
          --  Do not check if the element is nil, since no child is expected
          --  anyway, and some validators (sequence,...) will complain
          if not Validating_Reader (Handler).Validators.Is_Nil then
+            Typ := Validating_Reader (Handler).Validators.Typ;
+            if Typ = No_Type then
+               Typ := Get_Type
+                 (Validating_Reader (Handler).Validators.Element);
+            end if;
+
             Validate_End_Element
-              (Get_Validator (Validating_Reader (Handler).Validators.Typ),
-               Qname,
+              (Get_Validator (Typ), Qname,
                Validating_Reader (Handler).Validators.Data);
          end if;
       end if;
