@@ -301,21 +301,24 @@ package Schema.Validators is
       return Attribute_Validator;
    --  Create a new local attribute validator. See also Create_Global_Attribute
 
-   type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List,
-                           Namespace_Local);
+   type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List);
    --  "Any":   any non-conflicting namespace
    --  "Other": any non-conflicting namespace other than targetNamespace
-   --  "Local": any unqualified non-conflicting namespace
+   --  Namespace_List can contain "##local", "##targetNamespace" or actual
+   --  namespaces.
+
+   type NS_List
+     is array (Natural range <>) of Unicode.CES.Byte_Sequence_Access;
+   Empty_NS_List : constant NS_List;
 
    function Create_Any_Attribute
-     (Process_Contents : Process_Contents_Type := Process_Strict;
-      Kind : Namespace_Kind;
-      NS   : XML_Grammar_NS) return Attribute_Validator;
+     (In_NS  : XML_Grammar_NS;
+      Process_Contents : Process_Contents_Type := Process_Strict;
+      Kind   : Namespace_Kind;
+      List   : NS_List := Empty_NS_List) return Attribute_Validator;
    --  Equivalent of <anyAttribute> in an XML schema.
-   --  Validates to true if the attribute's namespace is:
-   --    Namespace_Other:  not equal to NS
-   --    Namespace_Any:    any Namespace (the second parameter is irrelevant)
-   --    Namespace_List:   equal to NS
+   --  List is irrelevant if Kind /= Namespace_List. It is adopted by the
+   --  attribute, and should not be freed by the caller
 
    procedure Validate_Attribute
      (Validator : Attribute_Validator_Record;
@@ -1093,7 +1096,7 @@ private
    -------------------------
 
    type Attribute_Validator_Record is abstract tagged record
-      NS : XML_Grammar_NS;
+      NS   : XML_Grammar_NS;
 
       Next : Attribute_Validator;
       --  Points to the next attribute validator in NS, for memory management
@@ -1147,9 +1150,14 @@ private
      (Attr : Named_Attribute_Validator_Record) return XML_Type;
    function Is_ID (Attr : Named_Attribute_Validator_Record) return Boolean;
 
-   type Any_Attribute_Validator is new Attribute_Validator_Record with record
+   Empty_NS_List : constant NS_List := (1 .. 0 => null);
+
+   type Any_Attribute_Validator (NS_Count : Natural) is
+     new Attribute_Validator_Record
+   with record
       Process_Contents : Process_Contents_Type;
       Kind             : Namespace_Kind;
+      List             : NS_List (1 .. NS_Count);
    end record;
    procedure Validate_Attribute
      (Validator : Any_Attribute_Validator;

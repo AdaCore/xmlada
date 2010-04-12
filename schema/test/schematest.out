@@ -43575,11 +43575,10 @@ Grp: suntest / test006
     test.9.n.xml:9:26: Type is not a valid replacement for "De"
 
 Grp: suntest / test007
-  88.9% tests= 9 (xsd= 1 xml= 8) OK= 8 FAILED= 1
+  100.0% tests= 9 (xsd= 1 xml= 8) OK= 9 FAILED= 0
   OK test
   OK test.1.v
-  XP test.6.v
-    test.6.v.xml:8:91: Attribute "a:foo": Invalid namespace for {urn:a}foo
+  OK test.6.v
   OK test.2.n
     test.2.n.xml:8:91: Attribute "a:foo": Invalid namespace for {urn:a}foo
   OK test.3.n
@@ -43940,7 +43939,7 @@ Grp: suntest / xsd020.e
     xsd020.e.xsd:28:33: Type specified in a simpleContent context must not have a complexContent
 
 Grp: suntest / xsd021
-  92.9% tests= 14 (xsd= 1 xml= 13) OK= 13 FAILED= 1
+  100.0% tests= 14 (xsd= 1 xml= 13) OK= 14 FAILED= 0
   OK xsd021
   OK xsd021.n00
     xsd021.n00.xml:14:28: Attribute "f:a": Invalid integer: "invalid"
@@ -43966,8 +43965,7 @@ Grp: suntest / xsd021
     xsd021.n10.xml:14:30: Attribute "local": Invalid namespace for local
   OK xsd021.n11
     xsd021.n11.xml:14:28: Attribute "f:a": Invalid namespace for {foo}a
-  XP xsd021.v00
-    xsd021.v00.xml:26:31: Attribute "att": Invalid namespace for att
+  OK xsd021.v00
 
 Grp: suntest / xsd022
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47458,10 +47456,9 @@ Grp: Wildcard / nsconstraint00301m1
     nsConstraint00301m1_n.xml:15:12: Invalid namespace for this element: "nsConstraint" not in "ns_test1 ns_test2"
 
 Grp: Wildcard / nsconstraint00302m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK nsConstraint00302m1
-  XP Positive
-    nsConstraint00302m1_p.xml:16:28: Attribute "test1:date": Invalid namespace for {ns_test1}date
+  OK Positive
   OK Negative
     nsConstraint00302m1_n.xml:15:29: Attribute "test:date": Invalid namespace for {nsConstraint}date
 
@@ -49768,7 +49765,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD025
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK attgD025
   XP attgD025.v
-    attgD025.xml:3:17: Attribute "a": Invalid namespace for a
+    attgD025.xml:3:17: Attribute "a": No definition provided
 
 Grp: MS-AttributeGroup2006-07-15 / attgD026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53233,9 +53230,10 @@ Grp: MS-ComplexType2006-07-15 / ctH046
   OK ctH046.v
 
 Grp: MS-ComplexType2006-07-15 / ctH047
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK ctH047
-  OK ctH047.v
+  XP ctH047.v
+    ctH047.xml:2:182: Attribute "other:myAttr": Invalid namespace for {http://tempuri.org/xmlschema}myAttr
 
 Grp: MS-ComplexType2006-07-15 / ctH048
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53288,10 +53286,9 @@ Grp: MS-ComplexType2006-07-15 / ctH057
   OK ctH057.v
 
 Grp: MS-ComplexType2006-07-15 / ctH058
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctH058
-  XP ctH058.v
-    ctH058.xml:2:167: Attribute "local": Invalid namespace for local
+  OK ctH058.v
 
 Grp: MS-ComplexType2006-07-15 / ctH059
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53409,10 +53406,9 @@ Grp: MS-ComplexType2006-07-15 / ctH081
     ctH081.xsd:15:44: Unexpected element "{http://www.w3.org/2001/XMLSchema}anyAttribute"
 
 Grp: MS-ComplexType2006-07-15 / ctH082
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctH082
-  XP ctH082.v
-    ctH082.xml:2:132: Attribute "local": Invalid namespace for local
+  OK ctH082.v
 
 Grp: MS-ComplexType2006-07-15 / ctI001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95055,7 +95051,7 @@ Grp: MS-Wildcards2006-07-15 / wildO006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO006
   OK wildO006.i
-    wildO006.xml:2:142: Attribute "name": Invalid namespace for name
+    wildO006.xml:2:142: Attribute "name": No definition provided
 
 Grp: MS-Wildcards2006-07-15 / wildO007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95075,10 +95071,9 @@ Grp: MS-Wildcards2006-07-15 / wildO009
     wildO009.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO010
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO010
-  XP wildO010.v
-    wildO010.xml:2:230: Attribute "att:href": Invalid namespace for {http://www.w3.org/1999/xhtml}href
+  OK wildO010.v
 
 Grp: MS-Wildcards2006-07-15 / wildO011
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95087,16 +95082,14 @@ Grp: MS-Wildcards2006-07-15 / wildO011
     wildO011.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO012
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO012
-  XP wildO012.v
-    wildO012.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
+  OK wildO012.v
 
 Grp: MS-Wildcards2006-07-15 / wildO013
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO013
-  XP wildO013.v
-    wildO013.xml:2:229: Attribute "att:href": Invalid namespace for {http://www.w3.org/1999/xhtml}href
+  OK wildO013.v
 
 Grp: MS-Wildcards2006-07-15 / wildO014
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95129,7 +95122,7 @@ Grp: MS-Wildcards2006-07-15 / wildO019
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO019
   XP wildO019.v
-    wildO019.xml:2:205: Attribute "name": Invalid namespace for name
+    wildO019.xml:2:205: Attribute "name": No definition provided
 
 Grp: MS-Wildcards2006-07-15 / wildO020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95185,7 +95178,7 @@ Grp: MS-Wildcards2006-07-15 / wildO029
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO029
   XP wildO029.v
-    wildO029.xml:2:205: Attribute "name": Invalid namespace for name
+    wildO029.xml:2:205: Attribute "name": No definition provided
 
 Grp: MS-Wildcards2006-07-15 / wildO030
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95208,7 +95201,7 @@ Grp: MS-Wildcards2006-07-15 / wildO033
   50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
   OK wildO033
   XP wildO033.v
-    wildO033.xml:2:205: Attribute "name": Invalid namespace for name
+    wildO033.xml:2:205: Attribute "name": No definition provided
 
 Grp: MS-Wildcards2006-07-15 / wildO034
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95223,16 +95216,14 @@ Grp: MS-Wildcards2006-07-15 / wildO035
     wildO035.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
 
 Grp: MS-Wildcards2006-07-15 / wildO037
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO037
-  XP wildO037.v
-    wildO037.xml:2:230: Attribute "att:href": Invalid namespace for {http://www.w3.org/1999/xhtml}href
+  OK wildO037.v
 
 Grp: MS-Wildcards2006-07-15 / wildO038
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO038
-  XP wildO038.v
-    wildO038.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
+  OK wildO038.v
 
 Grp: MS-Wildcards2006-07-15 / wildO039
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95241,10 +95232,9 @@ Grp: MS-Wildcards2006-07-15 / wildO039
     wildO039.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO040
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO040
-  XP wildO040.v
-    wildO040.xml:2:230: Attribute "att:href": Invalid namespace for {http://www.w3.org/1999/xhtml}href
+  OK wildO040.v
 
 Grp: MS-Wildcards2006-07-15 / wildP001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95410,7 +95400,7 @@ Total number of tests: 37034 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 204
 SF: XSD OK, should be KO: in_full_fail= 644
-XP: XML KO, should be OK: in_partial= 97 in_full_fail= 3
+XP: XML KO, should be OK: in_partial= 87 in_full_fail= 3
 XF: XML OK, should be KO: in_partial= 4 in_full_fail= 2
 IE: Internal error:
-Total errors: 954 ( 2.6 %)
+Total errors: 944 ( 2.5 %)

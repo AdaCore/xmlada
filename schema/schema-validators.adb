@@ -4531,18 +4531,21 @@ package body Schema.Validators is
    --------------------------
 
    function Create_Any_Attribute
-     (Process_Contents : Process_Contents_Type := Process_Strict;
-      Kind : Namespace_Kind;
-      NS   : XML_Grammar_NS) return Attribute_Validator
+     (In_NS  : XML_Grammar_NS;
+      Process_Contents : Process_Contents_Type := Process_Strict;
+      Kind   : Namespace_Kind;
+      List   : NS_List := Empty_NS_List) return Attribute_Validator
    is
       Result : constant Attribute_Validator :=
         new Any_Attribute_Validator'
-          (Process_Contents => Process_Contents,
+          (NS_Count         => List'Length,
+           Process_Contents => Process_Contents,
            Kind             => Kind,
            Next             => null,
-           NS               => NS);
+           NS               => In_NS,
+           List             => List);
    begin
-      Register (NS, Result);
+      Register (In_NS, Result);
       return Result;
    end Create_Any_Attribute;
 
@@ -4559,7 +4562,7 @@ package body Schema.Validators is
       URI  : constant Byte_Sequence := Get_URI (Atts, Index);
       Attr : Attribute_Validator;
       G    : XML_Grammar_NS;
-      NS_Matches : Boolean := True;
+      NS_Matches : Boolean := False;
    begin
       if Debug then
          Debug_Output ("Validate_Attribute, anyAttribute: "
@@ -4577,10 +4580,18 @@ package body Schema.Validators is
               and then URI /= Validator.NS.Namespace_URI.all;
          when Namespace_Any =>
             NS_Matches := True;
-         when Namespace_Local =>
-            NS_Matches := Validator.NS.Namespace_URI.all = "";
          when Namespace_List =>
-            NS_Matches := URI = Validator.NS.Namespace_URI.all;
+            for N in Validator.List'Range loop
+               if Validator.List (N).all = "##local" then
+                  NS_Matches := NS_Matches or else URI = "";
+               elsif Validator.List (N).all = "##targetNamespace" then
+                  NS_Matches := NS_Matches
+                    or else URI = Validator.NS.Namespace_URI.all;
+               else
+                  NS_Matches := NS_Matches
+                    or else URI = Validator.List (N).all;
+               end if;
+            end loop;
       end case;
 
       if not NS_Matches then
@@ -4632,9 +4643,10 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Validator : in out Any_Attribute_Validator) is
-      pragma Unreferenced (Validator);
    begin
-      null;
+      for N in Validator.List'Range loop
+         Free (Validator.List (N));
+      end loop;
    end Free;
 
    ------------------

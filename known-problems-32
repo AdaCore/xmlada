@@ -75,6 +75,8 @@ KP-32-J302-043 Lots of fixes in schema validation
               - A restriction does not inherit wildcard attributes from its
                 base type
               - Added support for "final" attribute in <simpleType>
+              - <anyAttribute> should accept multiple namespaces in its
+                namespace attribute
 
   Status:     Fixed in 3.3.0
 

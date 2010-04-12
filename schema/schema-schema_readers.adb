@@ -34,6 +34,7 @@ with Sax.Encodings;     use Sax.Encodings;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
+with Schema.Validators.Lists; use Schema.Validators.Lists;
 with Schema.Readers;    use Schema.Readers;
 with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with GNAT.IO;           use GNAT.IO;
@@ -42,6 +43,11 @@ with Ada.Unchecked_Deallocation;
 package body Schema.Schema_Readers is
 
    Debug : Boolean := False;
+
+   Max_Namespaces_In_Any_Attribute : constant := 50;
+   --  Maximum number of namespaces for a <anyAttribute>
+   --  This only impacts the parsing of the grammar, so can easily be raised if
+   --  need be.
 
    procedure Free (C : in out Context_Access; Recurse : Boolean);
    --  Free the memory occupied by C
@@ -852,32 +858,44 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "namespace");
       Process_Contents : constant Process_Contents_Type :=
         Process_Contents_From_Atts (Atts);
-      Kind             : Namespace_Kind;
-      NS               : XML_Grammar_NS := Handler.Target_NS;
+      Kind  : Namespace_Kind;
+
+      List  : NS_List (1 .. Max_Namespaces_In_Any_Attribute);
+      Last  : Integer := List'First;
+
+      procedure Cb_Item (Str : Byte_Sequence);
+      procedure Cb_Item (Str : Byte_Sequence) is
+      begin
+         List (Last) := new Byte_Sequence'(Str);
+         Last := Last + 1;
+      end Cb_Item;
+
+      procedure For_Each is new For_Each_Item (Cb_Item);
    begin
       if Namespace_Index = -1 then
          Kind := Namespace_Any;
-      elsif Get_Value (Atts, Namespace_Index) = "##other" then
-         Kind := Namespace_Other;
-      elsif Get_Value (Atts, Namespace_Index) = "##any" then
-         Kind := Namespace_Any;
-      elsif Get_Value (Atts, Namespace_Index) = "##local" then
-         Kind := Namespace_Local;
-      elsif Get_Value (Atts, Namespace_Index) = "##targetNamespace" then
-         Kind := Namespace_List;
       else
-         Kind := Namespace_List;
-         Get_NS (Handler.Created_Grammar,
-                 Get_Value (Atts, Namespace_Index), NS);
+         declare
+            Val : constant Byte_Sequence := Get_Value (Atts, Namespace_Index);
+         begin
+            if Val = "##other" then
+               Kind := Namespace_Other;
+            elsif Val = "##any" then
+               Kind := Namespace_Any;
+            else
+               Kind := Namespace_List;
+               For_Each (Val);
+            end if;
+         end;
       end if;
 
       Insert_Attribute
         (Handler.all,
          Handler.Contexts,
-         Create_Any_Attribute (Process_Contents, Kind, NS),
+         Create_Any_Attribute
+           (Handler.Target_NS, Process_Contents, Kind, List (1 .. Last - 1)),
          "Create_Any_Attribute (" & Process_Contents'Img
-         & ", " & Kind'Img & ", """
-         & Get_Namespace_URI (NS) & """);",
+         & ", " & Kind'Img & """);",
          Is_Local => False);
    end Create_Any_Attribute;
 

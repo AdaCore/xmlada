@@ -92,8 +92,7 @@ package body Schema.Schema_Grammar is
       --  The "openAttrs" type
       Typ := Restriction_Of (G, Lookup (G, "anyType"));
       Add_Attribute
-        (Typ, Create_Any_Attribute
-           (Process_Lax, NS => G, Kind => Namespace_Other));
+        (Typ, Create_Any_Attribute (G, Process_Lax, Kind => Namespace_Other));
       Create_Global_Type (G, "openAttrs", Typ);
 
       --  The "annotated" type
@@ -1029,8 +1028,7 @@ package body Schema.Schema_Grammar is
         (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName"),
          Attribute_Use => Required));
       Add_Attribute
-        (Typ, Create_Any_Attribute
-           (Process_Lax, NS => G, Kind => Namespace_Other));
+        (Typ, Create_Any_Attribute (G, Process_Lax, Kind => Namespace_Other));
 
       --  The "simpleType" element
       Elem := Create_Global_Element (G, "simpleType", Qualified);
@@ -1190,8 +1188,7 @@ package body Schema.Schema_Grammar is
            ("value", G, Lookup (G, "positiveInteger"),
            Attribute_Use => Required));
       Add_Attribute
-        (Typ, Create_Any_Attribute
-           (Process_Lax, NS => G, Kind => Namespace_Other));
+        (Typ, Create_Any_Attribute (G, Process_Lax, Kind => Namespace_Other));
       Set_Type (Elem, Create_Local_Type (G, Typ), Context);
 
       --  The "fractionDigits" element
