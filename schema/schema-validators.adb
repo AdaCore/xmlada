@@ -2700,7 +2700,7 @@ package body Schema.Validators is
       if Increase_Count then
          Data.Num_Occurs_Of_Current := Data.Num_Occurs_Of_Current + 1;
          if Debug then
-            Debug_Output ("Num_Occurs_Of_Current="
+            Debug_Output ("Current particle, now occured="
                           & Data.Num_Occurs_Of_Current'Img);
          end if;
       end if;
@@ -2756,15 +2756,8 @@ package body Schema.Validators is
            (Data.Nested, Local_Name, Namespace_URI, NS,
             Data.Nested_Data, Grammar, Element_Validator);
 
-         if Element_Validator /= No_Element then
-            if Debug then
-               Debug_Output
-                 ("nested Matched "
-                  & Get_Local_Name (Element_Validator.Elem.Of_Type));
-            end if;
-         else
+         if Element_Validator = No_Element then
             Validate_End_Element (Nested, Local_Name, Data.Nested_Data);
-
             Free_Nested_Group (Group_Model_Data (Data));
          end if;
       else
@@ -2831,8 +2824,11 @@ package body Schema.Validators is
       Skip_Current : Boolean;
 
    begin
-      Debug_Push_Prefix ("Validate_Start_Element seq " & Get_Name (Validator)
-                         & " occurs=" & D.Num_Occurs_Of_Current'Img);
+      Debug_Push_Prefix
+        ("Validate_Start seq " & Get_Name (Validator)
+         & " occurs=" & D.Num_Occurs_Of_Current'Img
+         & " has_nested=" & Boolean'Image (D.Nested /= null)
+         & ' ' & To_QName (Namespace_URI, Local_Name));
 
       if D.Nested /= null then
          Run_Nested
@@ -2911,12 +2907,9 @@ package body Schema.Validators is
                if Element_Validator /= No_Element then
                   if Debug then
                      Debug_Output
-                       ("Element Matched: "
+                       ("Element matched in seq: "
                         & Element_Validator.Elem.Local_Name.all & ' '
                         & Get_Local_Name (Element_Validator.Elem.Of_Type));
-                     Debug_Output
-                       ("Validate_Start_Element seq " & Get_Name (Validator)
-                        & " moving to next particle");
                   end if;
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
@@ -3237,10 +3230,11 @@ package body Schema.Validators is
       end Check_Particle;
 
    begin
-      Debug_Push_Prefix ("Validate_Start_Element choice "
-                         & Get_Name (Validator)
-                         & " occurs=" & D.Num_Occurs_Of_Current'Img
-                         & ' ' & Namespace_URI & ':' & Local_Name);
+      Debug_Push_Prefix
+        ("Validate_Start choice " & Get_Name (Validator)
+         & " occurs=" & D.Num_Occurs_Of_Current'Img
+         & " has_nested=" & Boolean'Image (D.Nested /= null)
+         & ' ' & To_QName (Namespace_URI, Local_Name));
 
       if D.Nested /= null then
          Run_Nested
@@ -3337,11 +3331,6 @@ package body Schema.Validators is
          Element_Validator := No_Element;
          Debug_Pop_Prefix;
          return;
-      else
-         if Debug then
-            Debug_Output ("<choice> matched for "
-                          & Element_Validator.Elem.Local_Name.all);
-         end if;
       end if;
 
       D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
@@ -3375,9 +3364,18 @@ package body Schema.Validators is
       D     : constant Choice_Data_Access := Choice_Data_Access (Data);
    begin
       if D.Current /= No_Iter then
+         case Get (D.Current).Typ is
+            when Particle_Nested =>
+               Validate_End_Element
+                 (Get (D.Current).Validator,
+                  Local_Name => "",
+                  Data       => D.Nested_Data);
+            when others =>
+               null;
+         end case;
+
          if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
             if Get (D.Current).Typ = Particle_Element then
-
                Validation_Error
                  ("Not enough occurrences of """
                   & Get_Local_Name (Get (D.Current).Element) & """");
@@ -4758,7 +4756,7 @@ package body Schema.Validators is
       Had_Restriction : in out Boolean;
       Had_Extension   : in out Boolean)
    is
-      pragma Unreferenced (Had_Restriction, Had_Extension);
+      pragma Unreferenced (Validator, Had_Restriction, Had_Extension);
    begin
       if not Is_Wildcard (Get_Validator (Typ)) then
          Validation_Error ("Type is not a valid replacement for """

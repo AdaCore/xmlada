@@ -45677,20 +45677,18 @@ Grp: ElemDecl / typedef01101m1
     Unsupported "abstract" attribute for complexType
 
 Grp: ElemDecl / typedef01201m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef01201m1
-  XP Positive
-    typeDef01201m1_p.xml:16:7: Attribute "xsi:schemaLocation" invalid for this element
+  OK Positive
   OK Negative
-    typeDef01201m1_n.xml:17:7: Attribute "xsi:schemaLocation" invalid for this element
+    typeDef01201m1_n.xml:17:7: Attribute "test:attr" invalid for this element
 
 Grp: ElemDecl / typedef01202m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef01202m1
-  XP Positive
-    typeDef01202m1_p.xml:15:7: Attribute "xsi:noNamespaceSchemaLocation" invalid for this element
+  OK Positive
   OK Negative
-    typeDef01202m1_n.xml:16:7: Attribute "xsi:noNamespaceSchemaLocation" invalid for this element
+    typeDef01202m1_n.xml:16:7: Attribute "attr" invalid for this element
 
 Grp: ElemDecl / typedef01301m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -45937,12 +45935,11 @@ Grp: ElemDecl / valueconstraint00801m1
     valueConstraint00801m1_n.xml:14:16: Element's value must be "alpha beta"
 
 Grp: ElemDecl / valueconstraint00901m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK valueConstraint00901m1
-  XP Positive
-    valueConstraint00901m1_p.xml:15:6: Attribute "xsi:schemaLocation" invalid for this element
+  OK Positive
   OK Negative
-    valueConstraint00901m1_n.xml:15:6: Attribute "xsi:schemaLocation" invalid for this element
+    valueConstraint00901m1_n.xml:15:16: Element's value must be "alpha beta"
 
 Grp: ElemDecl / valueconstraint01001m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53947,7 +53944,7 @@ Grp: MS-ComplexType2006-07-15 / ctZ009_c
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctZ009_c
   OK ctZ009_c.i
-    ctZ009_c.xml:3:17: Attribute "xsi:noNamespaceSchemaLocation" invalid for this element
+    ctZ009_c.xml:7:8: Unexpected end of sequence, expecting "b"
 
 Grp: MS-ComplexType2006-07-15 / ctZ009_d
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -66672,10 +66669,9 @@ Grp: MS-Element2006-07-15 / elemZ001
   OK elemZ001.v
 
 Grp: MS-Element2006-07-15 / elemZ002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemZ002
-  XP elemZ002.v
-    elemZ002.xml:2:174: Attribute "xsi:noNamespaceSchemaLocation" invalid for this element
+  OK elemZ002.v
 
 Grp: MS-Element2006-07-15 / elemZ003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95414,7 +95410,7 @@ Total number of tests: 37034 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 204
 SF: XSD OK, should be KO: in_full_fail= 644
-XP: XML KO, should be OK: in_partial= 101 in_full_fail= 3
+XP: XML KO, should be OK: in_partial= 97 in_full_fail= 3
 XF: XML OK, should be KO: in_partial= 4 in_full_fail= 2
 IE: Internal error:
-Total errors: 958 ( 2.6 %)
+Total errors: 954 ( 2.6 %)
