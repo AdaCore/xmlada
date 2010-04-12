@@ -74,7 +74,7 @@ package body Schema.Validators.UR_Type is
    begin
       if Debug then
          Debug_Output
-           ("Validate_Characters for UR_Type Process_Contents="
+           ("Validate_Characters for UR_Type "
             & Validator.Process_Contents'Img & ' ' & Ch
             & ' ' & Empty_Element'Img);
       end if;
@@ -184,6 +184,15 @@ package body Schema.Validators.UR_Type is
       return Get (Grammar).UR_Type_Elements (Process_Contents);
    end Get_UR_Type_Element;
 
+   -----------------
+   -- Is_Wildcard --
+   -----------------
+
+   function Is_Wildcard (Validator : XML_Validator) return Boolean is
+   begin
+      return Validator.all in UR_Type_Validator'Class;
+   end Is_Wildcard;
+
    -----------------------------
    -- Create_UR_Type_Elements --
    -----------------------------
@@ -193,14 +202,15 @@ package body Schema.Validators.UR_Type is
       Grammar   : XML_Grammar)
    is
       Validator : UR_Type_Access;
+      Typ       : XML_Type;
    begin
       for P in Process_Contents_Type loop
          Validator := new UR_Type_Validator;
          Validator.Process_Contents := P;
+         Typ := Create_Local_Type (Schema_NS, Validator);
+         Typ.Local_Name := new Unicode.CES.Byte_Sequence'("ur-Type" & P'Img);
          Get (Grammar).UR_Type_Elements (P) := Create_Local_Element
-           ("", Schema_NS, Create_Local_Type (Schema_NS, Validator),
-            Qualified);
-         --  Get (Grammar).UR_Type_Elements (P).Elem.Nillable := True;
+           ("", Schema_NS, Typ, Qualified);
       end loop;
    end Create_UR_Type_Elements;
 

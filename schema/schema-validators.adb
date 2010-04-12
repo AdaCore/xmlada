@@ -650,9 +650,9 @@ package body Schema.Validators is
       Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element)
    is
-      pragma Unreferenced (Validator, Data, Namespace_URI, NS, Grammar);
+      pragma Unreferenced (Data, Namespace_URI, NS, Grammar);
    begin
-      Validation_Error ("No definitiont  found for """ & Local_Name & """");
+      Validation_Error ("No definition found for """ & Local_Name & """");
       Element_Validator := No_Element;
    end Validate_Start_Element;
 
@@ -1048,6 +1048,7 @@ package body Schema.Validators is
             & " --" & Ch & "--empty=" & Boolean'Image (Empty_Element)
             & " mixed=" & Boolean'Image (Validator.Mixed_Content));
       end if;
+
       if not Validator.Mixed_Content
         and then not Empty_Element
       then
@@ -1722,8 +1723,10 @@ package body Schema.Validators is
          Get_Validator
            (Get_Type (Get_UR_Type_Element (Grammar, Process_Lax))));
 
-      Tmp2 := new XML_Validator_Record;
-      Create_Global_Type (G, "anyType", Tmp2);
+      Create_Global_Type
+        (G, "anyType",
+         Get_Validator
+           (Get_Type (Get_UR_Type_Element (Grammar, Process_Lax))));
 
       Tmp2 := new Any_Simple_XML_Validator_Record;
       Create_Global_Type (G, "anySimpleType", Tmp2);
@@ -4771,13 +4774,9 @@ package body Schema.Validators is
    is
       pragma Unreferenced (Had_Restriction, Had_Extension);
    begin
-      if Debug then
-         Debug_Output ("Is " & Get_Name (Validator)
-                       & " a valid replacement of " & Get_Local_Name (Typ));
-      end if;
-
-      if Get_Local_Name (Typ) /= "ur-Type" then
-         Validation_Error ("Type is not a valid replacement for """
+      if not Is_Wildcard (Get_Validator (Typ)) then
+         Validation_Error (Get_Name (Validator)
+                           & " is not a valid replacement for """
                            & Get_Local_Name (Typ) & """");
       else
          Had_Restriction := True;

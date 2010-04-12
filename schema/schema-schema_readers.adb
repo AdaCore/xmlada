@@ -1278,7 +1278,7 @@ package body Schema.Schema_Readers is
          --  Create an extension, instead of a simple ur-Type, so that we can
          --  add attributes to it without impacting ur-Type itself
          Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
-         C.Type_Validator := Extension_Of (XML_G, Lookup (XML_G, "anyType"));
+         C.Type_Validator := Restriction_Of (XML_G, Lookup (XML_G, "anyType"));
          Output ("Validator := Extension_Of (Lookup (G, ""anyType""));");
       end if;
    end Ensure_Type;
@@ -2436,9 +2436,24 @@ package body Schema.Schema_Readers is
         or else Local_Name = "minInclusive"
         or else Local_Name = "minExclusive"
       then
-         Create_Restricted (Handler, Handler.Contexts);
-         Add_Facet (Handler.Contexts.Restricted, Local_Name,
-                    Get_Value (Atts, URI => "", Local_Name => "value"));
+         case Handler.Contexts.Typ is
+            when Context_Restriction =>
+               Create_Restricted (Handler, Handler.Contexts);
+               Add_Facet (Handler.Contexts.Restricted, Local_Name,
+                          Get_Value (Atts, URI => "", Local_Name => "value"));
+
+            when Context_Extension =>
+               Validation_Error
+                 ("Invalid restriction in an extension: """
+                  & Local_Name & """");
+
+            when others =>
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  '"' & Local_Name
+                  & """ not supported outside of restriction or extension");
+         end case;
+
          Output ("Add_Facet ("
                  & Ada_Name (Handler.Contexts) & ", """ & Local_Name
                  & """, """

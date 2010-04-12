@@ -614,7 +614,10 @@ package body Schema.Readers is
 
       if Validating_Reader (Handler).Validators /= null then
          if Debug then
-            Put_Line ("Using parent's validator to validate the element");
+            Put_Line
+              ("Using parent's validator ("
+               & Get_Local_Name (Validating_Reader (Handler).Validators.Typ)
+               & ") to validate the element");
          end if;
 
          Validate_Start_Element

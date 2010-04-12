@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -38,5 +38,8 @@ private package Schema.Validators.UR_Type is
       Process_Contents : Process_Contents_Type) return XML_Element;
    --  Return an element of type ur-Type, which will match its contents with
    --  a given policy.
+
+   function Is_Wildcard (Validator : XML_Validator) return Boolean;
+   --  Whether Validator is a wildcard
 
 end Schema.Validators.UR_Type;
