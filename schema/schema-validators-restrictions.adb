@@ -152,6 +152,11 @@ package body Schema.Validators.Restrictions is
    is
       D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
    begin
+      if Debug then
+         Debug_Push_Prefix
+           ("Validate_Start_Element for restriction " & Get_Name (Validator));
+      end if;
+
       if Validator.Restriction /= null then
          Validate_Start_Element
            (Validator.Restriction, Local_Name, Namespace_URI, NS,
@@ -168,11 +173,18 @@ package body Schema.Validators.Restrictions is
                   & " match from restriction");
             end if;
          end if;
+
       else
-         Validate_Start_Element
-           (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
-            D.Restriction_Data, Grammar, Element_Validator);
+         --  We never need to analyze the base, since all relevant elements are
+         --  already duplicates in the restriction part (or else the element
+         --  must be null)
+         null;
       end if;
+
+      Debug_Pop_Prefix;
+   exception
+      when others =>
+         Debug_Pop_Prefix;
    end Validate_Start_Element;
 
    --------------------------
@@ -237,14 +249,12 @@ package body Schema.Validators.Restrictions is
      (Validator     : access Restriction_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Context       : in out Validation_Context)
-   is
-      Saved_Mixed : Boolean;
+      Context       : in out Validation_Context) is
    begin
       if Debug then
          Debug_Output
-           ("Validate_Characters for restriction --" & Ch & "--"
-            & Get_Name (Validator));
+           ("Validate_Characters for restriction " & Get_Name (Validator)
+            & " --" & Ch & "--");
       end if;
 
       if Validator.Facets /= null then
@@ -252,17 +262,11 @@ package body Schema.Validators.Restrictions is
       end if;
 
       if Validator.Restriction /= null then
-         Saved_Mixed := Validator.Restriction.Mixed_Content;
-         Set_Mixed_Content (Validator.Restriction, False);
          Validate_Characters
            (Validator.Restriction, Ch, Empty_Element, Context);
-         Set_Mixed_Content (Validator.Restriction, Saved_Mixed);
       else
-         Saved_Mixed := Get_Validator (Validator.Base).Mixed_Content;
-         Set_Mixed_Content (Get_Validator (Validator.Base), False);
          Validate_Characters
            (Get_Validator (Validator.Base), Ch, Empty_Element, Context);
-         Set_Mixed_Content (Get_Validator (Validator.Base), Saved_Mixed);
       end if;
    end Validate_Characters;
 

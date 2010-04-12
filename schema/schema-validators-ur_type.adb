@@ -53,32 +53,21 @@ package body Schema.Validators.UR_Type is
       Data              : Validator_Data;
       Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
-   procedure Validate_Characters
-     (Validator      : access UR_Type_Validator;
-      Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean;
-      Context        : in out Validation_Context);
+   function Get_Mixed_Content
+     (Validator : access UR_Type_Validator) return Boolean;
    --  See doc for inherited subprograms
 
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
+   -----------------------
+   -- Get_Mixed_Content --
+   -----------------------
 
-   procedure Validate_Characters
-     (Validator      : access UR_Type_Validator;
-      Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean;
-      Context        : in out Validation_Context)
+   function Get_Mixed_Content
+     (Validator : access UR_Type_Validator) return Boolean
    is
-      pragma Unreferenced (Context);
+      pragma Unreferenced (Validator);
    begin
-      if Debug then
-         Debug_Output
-           ("Validate_Characters for UR_Type "
-            & Validator.Process_Contents'Img & ' ' & Ch
-            & ' ' & Empty_Element'Img);
-      end if;
-   end Validate_Characters;
+      return True;
+   end Get_Mixed_Content;
 
    ----------------------------
    -- Validate_Start_Element --

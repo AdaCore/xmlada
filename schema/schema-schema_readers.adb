@@ -495,6 +495,8 @@ package body Schema.Schema_Readers is
         (Typ             => Context_Group,
          Group           => No_XML_Group,
          Redefined_Group => No_XML_Group,
+         Group_Min       => Min_Occurs,
+         Group_Max       => Max_Occurs,
          Level           => Handler.Contexts.Level + 1,
          Next            => Handler.Contexts);
 
@@ -547,13 +549,7 @@ package body Schema.Schema_Readers is
             null;
 
          when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator := Extension_Of
-              (Handler.Target_NS,
-               Lookup (Handler.Schema_NS, "anyType"),
-               Handler.Contexts.Group, Min_Occurs, Max_Occurs);
-            Output ("Validator := Extension_Of (Lookup (Handler.Schema.NS,"
-                    & """anytype""), " & Ada_Name (Handler.Contexts)
-                    & "," & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
+            null;  --  See Finish_Group
 
          when Context_Sequence =>
             Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Group,
@@ -601,9 +597,24 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Finish_Group (Handler : access Schema_Reader) is
-      pragma Unreferenced (Handler);
+      Seq : Sequence;
    begin
-      null;
+      case Handler.Contexts.Next.Typ is
+         when Context_Type_Def =>
+            Seq := Create_Sequence (Handler.Target_NS);
+            Add_Particle (Seq, Handler.Contexts.Group,
+                          Handler.Contexts.Group_Min,
+                          Handler.Contexts.Group_Max);
+
+            Handler.Contexts.Next.Type_Validator := Restriction_Of
+              (Handler.Target_NS,
+               Lookup (Handler.Schema_NS, "anyType"), XML_Validator (Seq));
+            Output ("Validator := Restriction_Of (Lookup (Handler.Schema.NS,"
+                    & """anytype""), " & Ada_Name (Handler.Contexts));
+
+         when others =>
+            null;
+      end case;
    end Finish_Group;
 
    ----------------------------
@@ -1275,11 +1286,11 @@ package body Schema.Schema_Readers is
       XML_G : XML_Grammar_NS;
    begin
       if C.Type_Validator = null then
-         --  Create an extension, instead of a simple ur-Type, so that we can
+         --  Create a restriction, instead of a simple ur-Type, so that we can
          --  add attributes to it without impacting ur-Type itself
          Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
          C.Type_Validator := Restriction_Of (XML_G, Lookup (XML_G, "anyType"));
-         Output ("Validator := Extension_Of (Lookup (G, ""anyType""));");
+         Output ("Validator := Restriction_Of (Lookup (G, ""anyType""));");
       end if;
    end Ensure_Type;
 

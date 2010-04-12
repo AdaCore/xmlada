@@ -169,6 +169,7 @@ private
          when Context_Group =>
             Group     : Schema.Validators.XML_Group;
             Redefined_Group : Schema.Validators.XML_Group;
+            Group_Min, Group_Max : Integer;
             --  Handling of <redefine>
          when Context_Attribute_Group =>
             Attr_Group : Schema.Validators.XML_Attribute_Group;

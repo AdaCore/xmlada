@@ -406,6 +406,7 @@ package body Schema.Readers is
      (Handler : in out Validating_Reader'Class)
    is
       Empty_Element : Boolean := False;
+      Validator : XML_Validator;
    begin
       --  If we were in the middle of a series of Characters callback, we need
       --  to process them now
@@ -449,8 +450,17 @@ package body Schema.Readers is
                end if;
 
             else
+               Validator := Get_Validator (Handler.Validators.Typ);
+
+               if not Empty_Element
+                 and then not Get_Mixed_Content (Validator)
+               then
+                  Validation_Error
+                    ("No character data allowed by content model");
+               end if;
+
                Validate_Characters
-                 (Get_Validator (Handler.Validators.Typ),
+                 (Validator,
                   Handler.Validators.Characters.all,
                   Empty_Element => Empty_Element,
                   Context       => Validating_Reader (Handler).Context);
@@ -760,9 +770,6 @@ package body Schema.Readers is
       Tmp : Byte_Sequence_Access;
    begin
       if Handler.Validators /= null then
-         if Debug then
-            Put_Line ("Appending characters --" & Ch & "--");
-         end if;
          if Handler.Validators.Characters = null then
             Handler.Validators.Characters := new String'(Ch);
             Copy (Handler.Validators.Start_Loc, Handler.Locator);

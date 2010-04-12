@@ -848,6 +848,18 @@ package body Schema.Validators.Simple_Types is
          Ch, Empty_Element, Context);
    end Validate_Characters;
 
+   -----------------------
+   -- Get_Mixed_Content --
+   -----------------------
+
+   function Get_Mixed_Content
+     (Validator : access Any_Simple_XML_Validator_Record) return Boolean
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return True;
+   end Get_Mixed_Content;
+
    -----------
    -- Is_ID --
    -----------

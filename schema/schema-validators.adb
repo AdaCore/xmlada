@@ -650,7 +650,7 @@ package body Schema.Validators is
       Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element)
    is
-      pragma Unreferenced (Data, Namespace_URI, NS, Grammar);
+      pragma Unreferenced (Validator, Data, Namespace_URI, NS, Grammar);
    begin
       Validation_Error ("No definition found for """ & Local_Name & """");
       Element_Validator := No_Element;
@@ -666,6 +666,16 @@ package body Schema.Validators is
    begin
       Validator.Mixed_Content := Mixed;
    end Set_Mixed_Content;
+
+   -----------------------
+   -- Get_Mixed_Content --
+   -----------------------
+
+   function Get_Mixed_Content
+     (Validator : access XML_Validator_Record) return Boolean is
+   begin
+      return Validator.Mixed_Content;
+   end Get_Mixed_Content;
 
    -------------------------
    -- Validate_Attributes --
@@ -1045,15 +1055,7 @@ package body Schema.Validators is
       if Debug then
          Debug_Output
            ("Validate_Character for unknown " & Get_Name (Validator)
-            & " --" & Ch & "--empty=" & Boolean'Image (Empty_Element)
-            & " mixed=" & Boolean'Image (Validator.Mixed_Content));
-      end if;
-
-      if not Validator.Mixed_Content
-        and then not Empty_Element
-      then
-         Validation_Error
-           ("Mixed content is not allowed for this element");
+            & " --" & Ch & "--empty=" & Boolean'Image (Empty_Element));
       end if;
    end Validate_Characters;
 
@@ -1397,7 +1399,11 @@ package body Schema.Validators is
       if Typ = No_Type then
          return "No_Type";
       elsif Typ.Local_Name = null then
-         return "anonymous";
+         if Typ.Validator /= null then
+            return "anonymous/" & Get_Name (Typ.Validator);
+         else
+            return "anonymous";
+         end if;
       else
          return Typ.Local_Name.all;
       end if;
@@ -2970,7 +2976,11 @@ package body Schema.Validators is
 
          if Element_Validator /= No_Element then
             if Debug then
-               Debug_Output ("Found validator");
+               Debug_Output ("Found validator: "
+                             & Element_Validator.Elem.Local_Name.all
+                             & " type="
+                             & Get_Local_Name
+                               (Get_Type (Element_Validator)));
             end if;
             Debug_Pop_Prefix;
             return;
@@ -3060,26 +3070,6 @@ package body Schema.Validators is
          Debug_Pop_Prefix;
          raise;
    end Validate_End_Element;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access Group_Model_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
-      Context       : in out Validation_Context)
-   is
-      pragma Unreferenced (Ch, Context);
-   begin
-      if not Empty_Element
-        and then not Validator.Mixed_Content
-      then
-         Validation_Error
-           ("No character data allowed by content model");
-      end if;
-   end Validate_Characters;
 
    ------------
    -- Append --
@@ -3760,7 +3750,10 @@ package body Schema.Validators is
       HeadPtr : constant XML_Element_Access := Head.Elem;
       ElemPtr : constant XML_Element_Access := Element.Elem;
    begin
+      --  ??? Should Head be fully defined here, so that we can check we are a
+      --  possible replacement for it ?
       if Get_Validator (Get_Type (Element)) /= null
+        and then Get_Validator (Get_Type (Head)) /= null
         and then Get_Validator (Get_Type (Element)) /=
            Get_Validator (Get_Type (Head))
       then
@@ -4494,21 +4487,6 @@ package body Schema.Validators is
          Local_Name, Namespace_URI, NS, null,
          Grammar, Element_Validator);
    end Validate_Start_Element;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access XML_Any_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
-      Context       : in out Validation_Context)
-   is
-      pragma Unreferenced (Validator, Ch, Empty_Element, Context);
-   begin
-      Validation_Error ("No character data allowed for this element");
-   end Validate_Characters;
 
    ----------
    -- Free --

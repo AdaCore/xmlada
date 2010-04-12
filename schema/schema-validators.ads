@@ -486,6 +486,8 @@ package Schema.Validators is
    procedure Set_Mixed_Content
      (Validator : access XML_Validator_Record;
       Mixed     : Boolean);
+   function Get_Mixed_Content
+     (Validator : access XML_Validator_Record) return Boolean;
    --  Whether character data is allowed within that element, in addition to
    --  children nodes
 
@@ -1461,13 +1463,6 @@ private
      (Group : access Group_Model_Record) return Boolean;
    --  Whether having no child is acceptable for Group
 
-   procedure Validate_Characters
-     (Validator     : access Group_Model_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
-      Context       : in out Validation_Context);
-   --  See doc for inherited subprograms
-
    function Type_Model
      (Validator  : access Group_Model_Record;
       First_Only : Boolean) return Unicode.CES.Byte_Sequence;
@@ -1496,11 +1491,6 @@ private
       Data                   : Validator_Data;
       Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
-   procedure Validate_Characters
-     (Validator     : access XML_Any_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
-      Context       : in out Validation_Context);
    function Get_Namespace_From_Parent_For_Locals
      (Validator : access XML_Any_Record) return Boolean;
    procedure Free (Any : in out XML_Any_Record);

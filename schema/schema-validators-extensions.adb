@@ -77,6 +77,8 @@ package body Schema.Validators.Extensions is
    function Is_Extension_Of
      (Validator : Extension_XML_Validator;
       Base      : access XML_Validator_Record'Class) return Boolean;
+   function Get_Mixed_Content
+     (Validator : access Extension_XML_Validator) return Boolean;
    --  See doc from inherited subprograms
 
    -------------------------
@@ -139,7 +141,7 @@ package body Schema.Validators.Extensions is
       D : constant Extension_Data_Access := Extension_Data_Access (Data);
    begin
       if Debug then
-         Debug_Output
+         Debug_Push_Prefix
            ("Validate_Start_Element for extension " & Get_Name (Validator));
       end if;
 
@@ -152,7 +154,9 @@ package body Schema.Validators.Extensions is
       if D.Validating_Base then
          begin
             if Debug then
-               Debug_Output ("Validating base part of the extension");
+               Debug_Output ("Validating base part of the extension ("
+                             & Get_Name (Get_Validator (Validator.Base))
+                             & ')');
             end if;
             Validate_Start_Element
               (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
@@ -179,6 +183,11 @@ package body Schema.Validators.Extensions is
             Debug_Output ("Base part didn't match, but no extension defined");
          end if;
       end if;
+
+      Debug_Pop_Prefix;
+   exception
+      when others =>
+         Debug_Pop_Prefix;
    end Validate_Start_Element;
 
    --------------------------
@@ -212,6 +221,17 @@ package body Schema.Validators.Extensions is
          raise;
    end Validate_End_Element;
 
+   -----------------------
+   -- Get_Mixed_Content --
+   -----------------------
+
+   function Get_Mixed_Content
+     (Validator : access Extension_XML_Validator) return Boolean is
+   begin
+      return Get_Mixed_Content (XML_Validator_Record (Validator.all)'Access)
+        or else Get_Mixed_Content (Get_Validator (Validator.Base));
+   end Get_Mixed_Content;
+
    -------------------------
    -- Validate_Characters --
    -------------------------
@@ -220,9 +240,7 @@ package body Schema.Validators.Extensions is
      (Validator     : access Extension_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Context       : in out Validation_Context)
-   is
-      Saved_Mixed : Boolean;
+      Context       : in out Validation_Context) is
    begin
       if Validator.Extension /= null then
          if Debug then
@@ -230,22 +248,15 @@ package body Schema.Validators.Extensions is
                           & Get_Name (Validator));
          end if;
 
-         Saved_Mixed := Validator.Extension.Mixed_Content;
-         Set_Mixed_Content (Validator.Extension, Validator.Mixed_Content);
          Validate_Characters (Validator.Extension, Ch, Empty_Element, Context);
-         Validator.Extension.Mixed_Content := Saved_Mixed;
       else
          if Debug then
             Debug_Output ("Validate_Characters for extension "
                           & Get_Name (Validator) & ", testing base");
          end if;
 
-         Saved_Mixed := Get_Validator (Validator.Base).Mixed_Content;
-         Set_Mixed_Content
-           (Get_Validator (Validator.Base), Validator.Mixed_Content);
          Validate_Characters
            (Get_Validator (Validator.Base), Ch, Empty_Element, Context);
-         Set_Mixed_Content (Get_Validator (Validator.Base), Saved_Mixed);
       end if;
 
    exception

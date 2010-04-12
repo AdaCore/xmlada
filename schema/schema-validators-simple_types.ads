@@ -65,6 +65,8 @@ private package Schema.Validators.Simple_Types is
    function Get_Facets_Description
      (Validator : access Any_Simple_XML_Validator_Record)
       return Facets_Description;
+   function Get_Mixed_Content
+     (Validator : access Any_Simple_XML_Validator_Record) return Boolean;
    --  See doc from inherited subprograms
 
    ---------------
