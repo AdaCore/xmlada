@@ -67,6 +67,11 @@ private package Schema.Validators.Simple_Types is
       return Facets_Description;
    function Get_Mixed_Content
      (Validator : access Any_Simple_XML_Validator_Record) return Boolean;
+   procedure Check_Replacement
+     (Validator       : access Any_Simple_XML_Validator_Record;
+      Typ             : XML_Type;
+      Had_Restriction : in out Boolean;
+      Had_Extension   : in out Boolean);
    --  See doc from inherited subprograms
 
    ---------------

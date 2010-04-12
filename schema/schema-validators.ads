@@ -483,6 +483,10 @@ package Schema.Validators is
       Group     : XML_Attribute_Group);
    --  Add a new group of attributes
 
+   function Is_Wildcard
+     (Validator : access XML_Validator_Record) return Boolean;
+   --  Whether Validator is a wildcard
+
    procedure Set_Mixed_Content
      (Validator : access XML_Validator_Record;
       Mixed     : Boolean);

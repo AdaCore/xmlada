@@ -53,6 +53,8 @@ package body Schema.Validators.UR_Type is
       Data              : Validator_Data;
       Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
+   function Is_Wildcard
+     (Validator : access UR_Type_Validator) return Boolean;
    function Get_Mixed_Content
      (Validator : access UR_Type_Validator) return Boolean;
    --  See doc for inherited subprograms
@@ -177,9 +179,12 @@ package body Schema.Validators.UR_Type is
    -- Is_Wildcard --
    -----------------
 
-   function Is_Wildcard (Validator : XML_Validator) return Boolean is
+   function Is_Wildcard
+     (Validator : access UR_Type_Validator) return Boolean
+   is
+      pragma Unreferenced (Validator);
    begin
-      return Validator.all in UR_Type_Validator'Class;
+      return True;
    end Is_Wildcard;
 
    -----------------------------

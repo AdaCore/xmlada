@@ -4753,8 +4753,7 @@ package body Schema.Validators is
       pragma Unreferenced (Had_Restriction, Had_Extension);
    begin
       if not Is_Wildcard (Get_Validator (Typ)) then
-         Validation_Error (Get_Name (Validator)
-                           & " is not a valid replacement for """
+         Validation_Error ("Type is not a valid replacement for """
                            & Get_Local_Name (Typ) & """");
       else
          Had_Restriction := True;
@@ -5455,5 +5454,17 @@ package body Schema.Validators is
       Extensions   := False;
       For_Each (Value);
    end Compute_Final;
+
+   -----------------
+   -- Is_Wildcard --
+   -----------------
+
+   function Is_Wildcard
+     (Validator : access XML_Validator_Record) return Boolean
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return False;
+   end Is_Wildcard;
 
 end Schema.Validators;

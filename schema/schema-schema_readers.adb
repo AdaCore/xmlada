@@ -177,6 +177,32 @@ package body Schema.Schema_Readers is
    --  Applies to a Context_Restriction, ensures that the restriction has been
    --  created appropriately.
 
+   procedure Debug_Dump_Contexts (Handler : Schema_Reader; Prefix : String);
+   --  List the current contexts
+
+   -------------------------
+   -- Debug_Dump_Contexts --
+   -------------------------
+
+   procedure Debug_Dump_Contexts (Handler : Schema_Reader; Prefix : String) is
+      C : Context_Access := Handler.Contexts;
+   begin
+      if Debug then
+         while C /= null loop
+            case C.Typ is
+               when Context_Type_Def =>
+                  Put_Line (Prefix & "=" & C.Typ'Img & C.Level'Img
+                            & " mixed=" & C.Mixed_Content'Img
+                            & " simple=" & C.Simple_Content'Img);
+
+               when others =>
+                  Put_Line (Prefix & "=" & C.Typ'Img & C.Level'Img);
+            end case;
+            C := C.Next;
+         end loop;
+      end if;
+   end Debug_Dump_Contexts;
+
    -------------------------
    -- In_Redefine_Context --
    -------------------------
@@ -748,6 +774,20 @@ package body Schema.Schema_Readers is
       Location_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
    begin
+      --  Disable for now.
+      --  On the test./testschema -xsd boeingData/ipo4/ipo.xsd
+      --    -xsd boeingData/ipo4/address.xsd
+      --    -xsd boeingData/ipo4/itematt.xsd
+      --    boeingData/ipo4/ipo_1.xml
+      --  we redefine an extension whose base type comes from the redefined
+      --  grammar, and whose name is the same. As a result, the extension and
+      --  its base type end up being the same XML_Type, and thus we get
+      --  infinite loops. We should really merge the models when the grammar is
+      --  parsed.
+
+      Raise_Exception
+        (XML_Not_Implemented'Identity,
+         "<redefine> not supported");
       Parse_Grammar
         (Handler.all,
          URI      => "-",
@@ -1150,12 +1190,12 @@ package body Schema.Schema_Readers is
         and then Handler.Contexts.Restriction_Base = No_Type
       then
          Handler.Contexts := new Context'
-           (Typ            => Context_Type_Def,
-            Type_Name      => null,
-            Type_Validator => null,
-            Redefined_Type => No_Type,
-            Mixed_Content  => False,
-            Simple_Content => False,
+           (Typ               => Context_Type_Def,
+            Type_Name         => null,
+            Type_Validator    => null,
+            Redefined_Type    => No_Type,
+            Mixed_Content     => False,
+            Simple_Content    => True,
             Block_Restriction => False,
             Block_Extension   => False,
             Final_Restriction => False,
@@ -1238,12 +1278,12 @@ package body Schema.Schema_Readers is
         and then Get_Value_As_Boolean (Atts, Mixed_Index);
 
       Handler.Contexts := new Context'
-        (Typ            => Context_Type_Def,
-         Type_Name      => Name,
-         Type_Validator => null,
-         Redefined_Type => No_Type,
-         Mixed_Content  => Mixed,
-         Simple_Content => False,
+        (Typ               => Context_Type_Def,
+         Type_Name         => Name,
+         Type_Validator    => null,
+         Redefined_Type    => No_Type,
+         Mixed_Content     => Mixed,
+         Simple_Content    => False,
          Block_Restriction => False,
          Block_Extension   => False,
          Final_Restriction => False,
@@ -1284,13 +1324,24 @@ package body Schema.Schema_Readers is
      (Handler : in out Schema_Reader; C : Context_Access)
    is
       XML_G : XML_Grammar_NS;
+      Base  : XML_Type;
    begin
       if C.Type_Validator = null then
          --  Create a restriction, instead of a simple ur-Type, so that we can
          --  add attributes to it without impacting ur-Type itself
          Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
-         C.Type_Validator := Restriction_Of (XML_G, Lookup (XML_G, "anyType"));
-         Output ("Validator := Restriction_Of (Lookup (G, ""anyType""));");
+
+         if C.Simple_Content then
+            Output
+              ("Validator := Restriction_Of (Lookup (G, ""anySimpleType""));");
+            Base := Lookup (XML_G, "anySimpleType");
+
+         else
+            Output ("Validator := Restriction_Of (Lookup (G, ""anyType""));");
+            Base := Lookup (XML_G, "anyType");
+         end if;
+
+         C.Type_Validator := Restriction_Of (XML_G, Base);
       end if;
    end Ensure_Type;
 
@@ -1336,10 +1387,13 @@ package body Schema.Schema_Readers is
               & Boolean'Image (Handler.Contexts.Final_Restriction) & ", "
               & Boolean'Image (Handler.Contexts.Final_Extension) & ");");
 
-      Set_Mixed_Content (Get_Validator (Typ), Handler.Contexts.Mixed_Content);
+      Set_Mixed_Content
+        (Get_Validator (Typ), Handler.Contexts.Mixed_Content
+                              or Handler.Contexts.Simple_Content);
       Output ("Set_Mixed_Content ("
               & Ada_Name (C) & ", "
-              & Boolean'Image (Handler.Contexts.Mixed_Content) & ");");
+        & Boolean'Image (Handler.Contexts.Mixed_Content
+                         or Handler.Contexts.Simple_Content) & ");");
 
       case Handler.Contexts.Next.Typ is
          when Context_Schema | Context_Redefine =>
@@ -2386,6 +2440,10 @@ package body Schema.Schema_Readers is
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class) is
    begin
+      if Debug then
+         Debug_Dump_Contexts (Handler, "Start");
+      end if;
+
       --  Check the grammar
       Start_Element (Validating_Reader (Handler),
                      Namespace_URI,
@@ -2537,6 +2595,10 @@ package body Schema.Schema_Readers is
       C : Context_Access := Handler.Contexts;
       Handled : Boolean := True;
    begin
+      if Debug then
+         Debug_Dump_Contexts (Handler, "End");
+      end if;
+
       --  Check the grammar
       End_Element (Validating_Reader (Handler),
                    Namespace_URI,

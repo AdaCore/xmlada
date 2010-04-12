@@ -849,6 +849,30 @@ package body Schema.Validators.Simple_Types is
    end Validate_Characters;
 
    -----------------------
+   -- Check_Replacement --
+   -----------------------
+
+   procedure Check_Replacement
+     (Validator       : access Any_Simple_XML_Validator_Record;
+      Typ             : XML_Type;
+      Had_Restriction : in out Boolean;
+      Had_Extension   : in out Boolean)
+   is
+      pragma Unreferenced (Had_Restriction, Had_Extension);
+   begin
+      if not Is_Wildcard (Get_Validator (Typ))
+        and then
+          Get_Validator (Typ).all not in Any_Simple_XML_Validator_Record'Class
+      then
+         Validation_Error (Get_Name (Validator)
+                           & " is not a valid replacement for """
+                           & Get_Local_Name (Typ) & """");
+      end if;
+
+      Had_Restriction := True;
+   end Check_Replacement;
+
+   -----------------------
    -- Get_Mixed_Content --
    -----------------------
 

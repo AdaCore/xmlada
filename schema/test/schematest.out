@@ -43736,36 +43736,29 @@ Grp: suntest / xsd002
   OK xsd002.v01
 
 Grp: suntest / xsd003-1.e
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK xsd003-1.e
-    xsd003-1.e.xsd:16:30: Unexpected element "{http://www.w3.org/2001/XMLSchema}element"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI xsd003-1.e
+    <redefine> not supported
 
 Grp: suntest / xsd003-2.e
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK xsd003-2.e
-    xsd003-2.e.xsd:16:50: Unexpected element "{http://www.w3.org/2001/XMLSchema}attribute"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI xsd003-2.e
+    <redefine> not supported
 
 Grp: suntest / xsd003a
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK xsd003a
-  OK xsd003a.v00
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI xsd003a
+    <redefine> not supported
 
 Grp: suntest / xsd003b.e
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK xsd003b.e
-    Type "{http://www.w3.org/2001/XMLSchema}undefined" was referenced but never declared
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI xsd003b.e
+    <redefine> not supported
 
 Grp: suntest / xsd003b
-  60.0% tests= 5 (xsd= 1 xml= 4) OK= 3 FAILED= 2
-  OK xsd003b
-  OK xsd003b.n00
-    xsd003b.n00.xml:9:29: Attribute "add": Invalid integer: "abc"
-  OK xsd003b.n01
-    xsd003b.n01.xml:9:50: Attribute "foo:gAtt": Element's value not in the enumeration set
-  XP xsd003b.v00
-    xsd003b.v00.xml:10:9: Expecting at least 1 occurrences of "{foo}tail"
-  XP xsd003b.v01
-    xsd003b.v01.xml:11:9: Expecting at least 1 occurrences of "{foo}tail"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI xsd003b
+    <redefine> not supported
 
 Grp: suntest / xsd004
   100.0% tests= 15 (xsd= 1 xml= 14) OK= 15 FAILED= 0
@@ -44601,7 +44594,7 @@ Grp: CType / contenttype00101m
   OK contentType00101m
   OK contentType00101m1_p
   OK contentType00101m1_n
-    contentType00101m1_n.xml:13:75: Mixed content is not allowed for this element
+    contentType00101m1_n.xml:13:75: No character data allowed by content model
 
 Grp: CType / contenttype00201m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -45634,10 +45627,9 @@ Grp: ElemDecl / typedef00601m
     typeDef00601m1_p.xml:16:7: Unknown type "     xsd:boolean     "
 
 Grp: ElemDecl / typedef00701m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef00701m
-  XP typeDef00701m1_p
-    typeDef00701m1_p.xml:15:19: Attribute "xsi:schemaLocation" invalid for this element
+  OK typeDef00701m1_p
   OK typeDef00701m1_n
     typeDef00701m1_n.xml:15:18: Attribute "value": Invalid value for boolean type: "Yes"
 
@@ -45786,9 +45778,9 @@ Grp: ElemDecl / valueconstraint00401m3
   OK Positive
 
 Grp: ElemDecl / valueconstraint00401m4
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP valueConstraint00401m4
-    valueConstraint00401m4.xsd:16:62: Mixed content is not allowed for this element
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK valueConstraint00401m4
+  OK Positive
 
 Grp: ElemDecl / valueconstraint00401m5
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45829,9 +45821,9 @@ Grp: ElemDecl / valueconstraint00402m3
   OK Positive
 
 Grp: ElemDecl / valueconstraint00402m4
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP valueConstraint00402m4
-    valueConstraint00402m4.xsd:16:60: Mixed content is not allowed for this element
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK valueConstraint00402m4
+  OK Positive
 
 Grp: ElemDecl / valueconstraint00402m5
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45938,20 +45930,19 @@ Grp: ElemDecl / valueconstraint00701m1
     valueConstraint00701m1_n.xml:16:12: Element's value must be "part1 part2"
 
 Grp: ElemDecl / valueconstraint00801m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK valueConstraint00801m1
-  XP Positive
-    valueConstraint00801m1_p.xml:14:6: Attribute "xsi:schemaLocation" invalid for this element
+  OK Positive
   OK Negative
-    valueConstraint00801m1_n.xml:14:6: Attribute "xsi:schemaLocation" invalid for this element
+    valueConstraint00801m1_n.xml:14:16: Element's value must be "alpha beta"
 
 Grp: ElemDecl / valueconstraint00901m1
   66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
   OK valueConstraint00901m1
   XP Positive
-    valueConstraint00901m1_p.xml:15:6: Type is not a valid replacement for "anySimpleType"
+    valueConstraint00901m1_p.xml:15:6: Attribute "xsi:schemaLocation" invalid for this element
   OK Negative
-    valueConstraint00901m1_n.xml:15:6: Type is not a valid replacement for "anySimpleType"
+    valueConstraint00901m1_n.xml:15:6: Attribute "xsi:schemaLocation" invalid for this element
 
 Grp: ElemDecl / valueconstraint01001m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -46412,21 +46403,21 @@ Grp: MGroupDef / modelgroup00101m1
   OK modelGroup00101m1
   OK Positive
   OK Negative
-    modelGroup00101m1_n.xml:15:1: Mixed content is not allowed for this element
+    modelGroup00101m1_n.xml:15:1: No character data allowed by content model
 
 Grp: MGroupDef / modelgroup00101m2
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK modelGroup00101m2
   OK Positive
   OK Negative
-    modelGroup00101m2_n.xml:15:1: Mixed content is not allowed for this element
+    modelGroup00101m2_n.xml:15:1: No character data allowed by content model
 
 Grp: MGroupDef / modelgroup00101m3
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK modelGroup00101m3
   OK Positive
   OK Negative
-    modelGroup00101m3_n.xml:15:1: Mixed content is not allowed for this element
+    modelGroup00101m3_n.xml:15:1: No character data allowed by content model
 
 Grp: MGroupDef / modelgroup00102m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -46475,14 +46466,14 @@ Grp: MGroupDef / targetns00101m1
   OK targetNS00101m1
   OK Positive
   OK Negative
-    targetNS00101m1_n.xml:15:1: Mixed content is not allowed for this element
+    targetNS00101m1_n.xml:15:1: No character data allowed by content model
 
 Grp: MGroupDef / targetns00101m2
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK targetNS00101m2
   OK Positive
   OK Negative
-    targetNS00101m2_n.xml:15:1: Mixed content is not allowed for this element
+    targetNS00101m2_n.xml:15:1: No character data allowed by content model
 
 Grp: Notation / annotation00101m1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -47613,8 +47604,9 @@ Grp: MS-Additional2006-07-15 / addB006
   OK addB006
 
 Grp: MS-Additional2006-07-15 / addB007
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK addB007
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addB007
+    <redefine> not supported
 
 Grp: MS-Additional2006-07-15 / addB008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47710,10 +47702,9 @@ Grp: MS-Additional2006-07-15 / addB027
   OK addB027
 
 Grp: MS-Additional2006-07-15 / addB028
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB028
-  XP addB028.v
-    test69846.xml:7:29: Type is not a valid replacement for "anyType"
+  OK addB028.v
 
 Grp: MS-Additional2006-07-15 / addB029
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -48025,8 +48016,9 @@ Grp: MS-Additional2006-07-15 / addB093
     Unsupported: "choice" in this context
 
 Grp: MS-Additional2006-07-15 / addB094
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK addB094
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addB094
+    <redefine> not supported
 
 Grp: MS-Additional2006-07-15 / addB095
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -48138,8 +48130,9 @@ Grp: MS-Additional2006-07-15 / addB116
     test75092.xml:7:27: No definition provided for "b"
 
 Grp: MS-Additional2006-07-15 / addB117
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK addB117
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI addB117
+    <redefine> not supported
 
 Grp: MS-Additional2006-07-15 / addB118
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -48245,9 +48238,8 @@ Grp: MS-Additional2006-07-15 / addB140
   OK addB140.v
 
 Grp: MS-Additional2006-07-15 / addB141
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK addB141
-    test82919.xsd:23:65: Type is not a valid replacement for "list"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF addB141
 
 Grp: MS-Additional2006-07-15 / addB142
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -48872,10 +48864,9 @@ Grp: MS-Additional2006-07-15 / isDefault071
   OK isDefault071.v
 
 Grp: MS-Additional2006-07-15 / isDefault072
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault072
-  XP isDefault072.v
-    isdefault072.xml:3:29: Attribute "ser:Id" invalid for this element
+  OK isDefault072.v
 
 Grp: MS-Additional2006-07-15 / isDefault073
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -49026,12 +49017,14 @@ Grp: MS-Annotations2006-07-15 / annotA012
   OK annotA012
 
 Grp: MS-Annotations2006-07-15 / annotA013
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK annotA013
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP annotA013
+    annotA013.xsd:4:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-Annotations2006-07-15 / annotA014
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK annotA014
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP annotA014
+    annotA014.xsd:4:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-Annotations2006-07-15 / annotA015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49053,8 +49046,9 @@ Grp: MS-Annotations2006-07-15 / annotA018
     Unsupported element in the schema: notation
 
 Grp: MS-Annotations2006-07-15 / annotA019
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK annotA019
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI annotA019
+    <redefine> not supported
 
 Grp: MS-Annotations2006-07-15 / annotA020
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49170,7 +49164,7 @@ Grp: MS-Annotations2006-07-15 / annotB019
 Grp: MS-Annotations2006-07-15 / annotB020
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotB020
-    annotB020.xsd:8:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
+    annotB020.xsd:4:19: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-Annotations2006-07-15 / annotB021
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49359,9 +49353,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgA005
     attgA005.xsd:5:43: Attribute "id": ID "abc" already defined
 
 Grp: MS-AttributeGroup2006-07-15 / attgA006
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgA006
-    attgA006.xsd:11:43: Attribute "id": ID "abc" already defined
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgA006
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgA007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49373,9 +49367,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgA008
   OK attgA008
 
 Grp: MS-AttributeGroup2006-07-15 / attgA009
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgA009
-    attgA009.xsd:11:43: Attribute "id": ID "abc" already defined
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgA009
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgB001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49397,8 +49391,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgB004
     attgB004.xsd:14:37: Attribute "ref" is required in this context
 
 Grp: MS-AttributeGroup2006-07-15 / attgB005
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgB005
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgB005
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgB006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49425,9 +49420,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgB010
     attgB010.xsd:6:33: Attribute group has already been declared: abc
 
 Grp: MS-AttributeGroup2006-07-15 / attgB011
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgB011
-    attgB011.xsd:10:46: attgB011.imp:3:33: Attribute group has already been declared: xyz
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgB011
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgB012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49469,15 +49464,14 @@ Grp: MS-AttributeGroup2006-07-15 / attgC005
   OK attgC005
 
 Grp: MS-AttributeGroup2006-07-15 / attgC006
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attgC006
-  OK attgC006.i
-    attgC006.xml:2:21: Attribute "attFix": value must be "37" (found "38")
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC006
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC007
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attgC007
-  OK attgC007.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC007
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49519,8 +49513,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgC016
   OK attgC016
 
 Grp: MS-AttributeGroup2006-07-15 / attgC017
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgC017
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC017
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC018
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49571,7 +49566,8 @@ Grp: MS-AttributeGroup2006-07-15 / attgC027
 
 Grp: MS-AttributeGroup2006-07-15 / attgC028
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attgC028
+  NI attgC028
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC029
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49597,44 +49593,44 @@ Grp: MS-AttributeGroup2006-07-15 / attgC033
   OK attgC033
 
 Grp: MS-AttributeGroup2006-07-15 / attgC034
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgC034
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC034
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC035
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP attgC035
-    attgC035.xsd:4:46: attgC035.red:8:25: Element "e" has already been declared
+  NI attgC035
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC036
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK attgC036
-  XP attgC036.v
-    attgC036.xml:1:127: Attribute "att4" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC036
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC037
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK attgC037
-  XP attgC037.v
-    attgC037.xml:1:127: Attribute "foo1" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC037
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC038
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK attgC038
-  XP attgC038.v
-    attgC038.xml:1:127: Attribute "foo1" invalid for this element
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC038
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC039
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attgC039
+  NI attgC039
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC040
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgC040
-    attgC040.xsd:6:32: Attribute "ref": Invalid QName: ""
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC040
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC041
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgC041
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC041
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC042
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49642,16 +49638,19 @@ Grp: MS-AttributeGroup2006-07-15 / attgC042
     attgC042.xsd:4:46: Unexpected element "{http://www.w3.org/2001/XMLSchema}redefine"
 
 Grp: MS-AttributeGroup2006-07-15 / attgC043
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgC043
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC043
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC044
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attgC044
+  NI attgC044
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgC045
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgC045
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgC045
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgD001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49727,9 +49726,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgD016
     attgD016.xsd:7:44: Attribute "id": ID "abc" already defined
 
 Grp: MS-AttributeGroup2006-07-15 / attgD017
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attgD017
-    attgD017.xsd:16:47: Attribute has already been declared: foo
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgD017
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgD018
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49823,15 +49822,14 @@ Grp: MS-AttributeGroup2006-07-15 / attgD034
   OK attgD034.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD035
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attgD035
-  OK attgD035.i
-    attgD035.xml:3:22: Attribute att must not have a namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgD035
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgD036
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attgD036
-  OK attgD036.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attgD036
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgD037
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49871,11 +49869,13 @@ Grp: MS-AttributeGroup2006-07-15 / attgZ001
 
 Grp: MS-AttributeGroup2006-07-15 / attgZ002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attgZ002
+  NI attgZ002
+    <redefine> not supported
 
 Grp: MS-AttributeGroup2006-07-15 / attgZ003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attgZ003
+  NI attgZ003
+    <redefine> not supported
 
 Grp: MS-Attribute2006-07-15 / attA001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51077,9 +51077,9 @@ Grp: MS-Attribute2006-07-15 / attP031
     attP031.xml:3:22: Attribute "att" is prohibited in this context
 
 Grp: MS-Attribute2006-07-15 / attP032
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attP032
-  OK attP032.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attP032
+    <redefine> not supported
 
 Grp: MS-Attribute2006-07-15 / attQ001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51131,7 +51131,8 @@ Grp: MS-Attribute2006-07-15 / attQ010
 
 Grp: MS-Attribute2006-07-15 / attQ011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attQ011
+  NI attQ011
+    <redefine> not supported
 
 Grp: MS-Attribute2006-07-15 / attQ012
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -51158,7 +51159,8 @@ Grp: MS-Attribute2006-07-15 / attQ016
 
 Grp: MS-Attribute2006-07-15 / attQ017
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attQ017
+  NI attQ017
+    <redefine> not supported
 
 Grp: MS-Attribute2006-07-15 / attQ018
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -51172,10 +51174,9 @@ Grp: MS-Attribute2006-07-15 / attQ019
     attQ019.xml:3:98: Attribute "imp:aga1" invalid for this element
 
 Grp: MS-Attribute2006-07-15 / attZ001
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attZ001
-  OK attZ001.i
-    attZ001.xml:3:30: Attribute "keyField" is prohibited in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI attZ001
+    <redefine> not supported
 
 Grp: MS-Attribute2006-07-15 / attZ002
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -53698,7 +53699,7 @@ Grp: MS-ComplexType2006-07-15 / ctL001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctL001
   OK ctL001.i
-    ctL001.xml:5:3: Mixed content is not allowed for this element
+    ctL001.xml:5:3: No character data allowed by content model
 
 Grp: MS-ComplexType2006-07-15 / ctL002
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53996,10 +53997,9 @@ Grp: MS-ComplexType2006-07-15 / ctZ011_a
     ctZ011.xml:5:2: Element "a": No matching declaration available
 
 Grp: MS-ComplexType2006-07-15 / ctZ011_b
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctZ011_b
-  XP ctZ011_b.v
-    ctZ011.xml:7:9: Mixed content is not allowed for this element
+  OK ctZ011_b.v
 
 Grp: MS-ComplexType2006-07-15 / ctZ012a
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -60355,7 +60355,7 @@ Grp: MS-DataTypes2006-07-15 / anyURI_a001_1336
 Grp: MS-DataTypes2006-07-15 / anyURI_a002_1337
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI anyURI_a002_1337
-    Unsupported element in the schema: notation
+    <redefine> not supported
 
 Grp: MS-DataTypes2006-07-15 / anyURI_a003_1338
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -60364,7 +60364,7 @@ Grp: MS-DataTypes2006-07-15 / anyURI_a003_1338
 Grp: MS-DataTypes2006-07-15 / anyURI_a004_1339
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI anyURI_a004_1339
-    Unsupported element in the schema: notation
+    <redefine> not supported
 
 Grp: MS-DataTypes2006-07-15 / anyURI_a005_1340
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -60384,8 +60384,9 @@ Grp: MS-DataTypes2006-07-15 / anyURI_a008_1343
   OK anyURI_a008_1343
 
 Grp: MS-DataTypes2006-07-15 / anyURI_a009_1344
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK anyURI_a009_1344
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI anyURI_a009_1344
+    <redefine> not supported
 
 Grp: MS-DataTypes2006-07-15 / anyURI_a010_1345
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -65223,7 +65224,7 @@ Grp: MS-DataTypes2006-07-15 / dtZ86723_2246
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK dtZ86723_2246
   OK dtZ86723_2246.i
-    test86723.xml:3:25: Type is not a valid replacement for "anyType"
+    test86723.xml:3:30: Must be a simple type, no <a> child allowed
 
 Grp: MS-Element2006-07-15 / elemA001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -65442,9 +65443,8 @@ Grp: MS-Element2006-07-15 / elemD003
     elemD003.xsd:3:72: Attributes "fixed" and "default" conflict with each other
 
 Grp: MS-Element2006-07-15 / elemD004
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemD004
-    elemD004.xsd:9:56: No character data allowed by content model
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF elemD004
 
 Grp: MS-Element2006-07-15 / elemD005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -65589,14 +65589,12 @@ Grp: MS-Element2006-07-15 / elemG002
   OK elemG002
 
 Grp: MS-Element2006-07-15 / elemG003
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemG003
-    elemG003.xsd:8:21: No character data allowed by content model
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF elemG003
 
 Grp: MS-Element2006-07-15 / elemG004
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemG004
-    elemG004.xsd:8:21: No character data allowed by content model
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF elemG004
 
 Grp: MS-Element2006-07-15 / elemG005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -66225,7 +66223,7 @@ Grp: MS-Element2006-07-15 / elemT017
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT017
   OK elemT017.i
-    elemT017.xml:3:21: Type is not a valid replacement for "A"
+    elemT017.xml:3:21: SCHEMA.VALIDATORS.SIMPLE_TYPES.STRING_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT018
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66237,31 +66235,31 @@ Grp: MS-Element2006-07-15 / elemT019
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT019
   OK elemT019.i
-    elemT019.xml:2:26: Type is not a valid replacement for "A"
+    elemT019.xml:2:26: SCHEMA.VALIDATORS.SIMPLE_TYPES.INTEGER_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT020
   OK elemT020.i
-    elemT020.xml:2:27: Type is not a valid replacement for "A"
+    elemT020.xml:2:27: for_type_Union-A is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT021
   OK elemT021.i
-    elemT021.xml:2:28: Type is not a valid replacement for "A"
+    elemT021.xml:2:28: for_type_Union-AB is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT022
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT022
   OK elemT022.i
-    elemT022.xml:2:26: Type is not a valid replacement for "A"
+    elemT022.xml:2:26: for_type_List-A is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT023
   OK elemT023.i
-    elemT023.xml:2:27: Type is not a valid replacement for "A"
+    elemT023.xml:2:27: for_type_List-AB is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT024
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66303,7 +66301,7 @@ Grp: MS-Element2006-07-15 / elemT031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT031
   OK elemT031.i
-    elemT031.xml:2:21: Type is not a valid replacement for "A"
+    elemT031.xml:2:21: SCHEMA.VALIDATORS.SIMPLE_TYPES.STRING_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT032
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66314,31 +66312,31 @@ Grp: MS-Element2006-07-15 / elemT033
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT033
   OK elemT033.i
-    elemT033.xml:2:26: Type is not a valid replacement for "A"
+    elemT033.xml:2:26: SCHEMA.VALIDATORS.SIMPLE_TYPES.INTEGER_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT034
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT034
   OK elemT034.i
-    elemT034.xml:2:27: Type is not a valid replacement for "A"
+    elemT034.xml:2:27: for_type_Union-A is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT035
   OK elemT035.i
-    elemT035.xml:2:28: Type is not a valid replacement for "A"
+    elemT035.xml:2:28: for_type_Union-AB is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT036
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT036
   OK elemT036.i
-    elemT036.xml:2:26: Type is not a valid replacement for "A"
+    elemT036.xml:2:26: for_type_List-A is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT037
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT037
   OK elemT037.i
-    elemT037.xml:2:27: Type is not a valid replacement for "A"
+    elemT037.xml:2:27: for_type_List-AB is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT038
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66380,7 +66378,7 @@ Grp: MS-Element2006-07-15 / elemT045
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT045
   OK elemT045.i
-    elemT045.xml:2:21: Type is not a valid replacement for "A"
+    elemT045.xml:2:21: SCHEMA.VALIDATORS.SIMPLE_TYPES.STRING_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT046
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66392,31 +66390,31 @@ Grp: MS-Element2006-07-15 / elemT047
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT047
   OK elemT047.i
-    elemT047.xml:2:26: Type is not a valid replacement for "A"
+    elemT047.xml:2:26: SCHEMA.VALIDATORS.SIMPLE_TYPES.INTEGER_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT048
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT048
   OK elemT048.i
-    elemT048.xml:2:27: Type is not a valid replacement for "A"
+    elemT048.xml:2:27: for_type_Union-A is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT049
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT049
   OK elemT049.i
-    elemT049.xml:2:28: Type is not a valid replacement for "A"
+    elemT049.xml:2:28: for_type_Union-AB is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT050
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT050
   OK elemT050.i
-    elemT050.xml:2:26: Type is not a valid replacement for "A"
+    elemT050.xml:2:26: for_type_List-A is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT051
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT051
   OK elemT051.i
-    elemT051.xml:2:27: Type is not a valid replacement for "A"
+    elemT051.xml:2:27: for_type_List-AB is not a valid replacement for "A"
 
 Grp: MS-Element2006-07-15 / elemT052
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66524,16 +66522,14 @@ Grp: MS-Element2006-07-15 / elemT070
     elemT070.xml:2:7: Unexpected element "sa3" (substitutions are blocked)
 
 Grp: MS-Element2006-07-15 / elemT071
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT071
-  XP elemT071.v
-    elemT071.xml:2:21: Type is not a valid replacement for "Union-A"
+  OK elemT071.v
 
 Grp: MS-Element2006-07-15 / elemT072
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT072
-  XP elemT072.v
-    elemT072.xml:2:21: Type is not a valid replacement for "Union-AB"
+  OK elemT072.v
 
 Grp: MS-Element2006-07-15 / elemT073
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -66679,7 +66675,7 @@ Grp: MS-Element2006-07-15 / elemZ002
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK elemZ002
   XP elemZ002.v
-    elemZ002.xml:2:174: Type is not a valid replacement for "decimal"
+    elemZ002.xml:2:174: Attribute "xsi:noNamespaceSchemaLocation" invalid for this element
 
 Grp: MS-Element2006-07-15 / elemZ003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66727,10 +66723,9 @@ Grp: MS-Element2006-07-15 / elemZ012
     elemZ012.xsd:10:22: Invalid integer: "YYXPADGVWRINYHGPQEFLBRMOUKOLBFXWGSRFA"
 
 Grp: MS-Element2006-07-15 / elemZ014
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemZ014
-  XP elemZ014.v
-    elemZ014.xml:4:32: No definitiont  found for "myelem"
+  OK elemZ014.v
 
 Grp: MS-Element2006-07-15 / elemZ015
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -66743,9 +66738,8 @@ Grp: MS-Element2006-07-15 / elemZ016
     Unsupported type IDREF and IDREFS
 
 Grp: MS-Element2006-07-15 / elemZ017
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XP elemZ017.v
-    elemZ017.xml:3:32: Type is not a valid replacement for "anonymous"
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK elemZ017.v
 
 Grp: MS-Element2006-07-15 / elemZ018
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66785,14 +66779,15 @@ Grp: MS-Element2006-07-15 / elemZ021d
   OK elemZ021d.v
 
 Grp: MS-Element2006-07-15 / elemZ021e
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP elemZ021e
-    test115044_3.xsd:3:55: test115044_inc.xsd:3:70: Type is not a valid replacement for "No_Type"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK elemZ021e
+  OK elemZ021e.v
 
 Grp: MS-Element2006-07-15 / elemZ021f
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP elemZ021f
-    test115044_3.xsd:3:55: test115044_inc.xsd:3:70: Type is not a valid replacement for "No_Type"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK elemZ021f
+  OK elemZ021f.i
+    test115044_b.xml:1:29: Expecting at least 1 occurrences of "{foo}e"
 
 Grp: MS-Element2006-07-15 / elemZ021g
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -66914,34 +66909,30 @@ Grp: MS-Element2006-07-15 / elemZ027_a
   OK elemZ027_a
 
 Grp: MS-Element2006-07-15 / elemZ027_b
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP elemZ027_b
-    elemZ027b.xsd:2:72: Type is not a valid replacement for "No_Type"
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK elemZ027_b
 
 Grp: MS-Element2006-07-15 / elemZ027_c
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemZ027_c
-    elemZ027c.xsd:2:72: Type is not a valid replacement for "No_Type"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF elemZ027_c
 
 Grp: MS-Element2006-07-15 / elemZ027_e
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP elemZ027_e
-    elemZ027e.xsd:3:68: Type is not a valid replacement for "No_Type"
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK elemZ027_e
 
 Grp: MS-Element2006-07-15 / elemZ027_f
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP elemZ027_f
-    elemZ027f.xsd:3:73: Type is not a valid replacement for "No_Type"
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK elemZ027_f
 
 Grp: MS-Element2006-07-15 / elemZ028a
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP elemZ028a
-    elemZ028a.xsd:3:72: Type is not a valid replacement for "No_Type"
+  NI elemZ028a
+    Unsupported: "all" in this context
 
 Grp: MS-Element2006-07-15 / elemZ028b
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemZ028b
-    elemZ028b.xsd:3:70: Type is not a valid replacement for "No_Type"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemZ028b
+    Unsupported: "all" in this context
 
 Grp: MS-Element2006-07-15 / elemZ028c
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -66952,9 +66943,9 @@ Grp: MS-Element2006-07-15 / elemZ028d
   NA elemZ028d
 
 Grp: MS-Element2006-07-15 / elemZ028e
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK elemZ028e
-    elemZ028e.xsd:3:70: Type is not a valid replacement for "No_Type"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemZ028e
+    Unsupported: "choice" in this context
 
 Grp: MS-Element2006-07-15 / elemZ028f1
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -66993,7 +66984,7 @@ Grp: MS-Element2006-07-15 / elemZ032b
 Grp: MS-Element2006-07-15 / elemZ033b
    0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
   XP elemZ033b.v
-    elemZ033b.xml:7:45: Type is not a valid replacement for "anonymous"
+    elemZ033b.xml:7:45: Element cannot be nil
 
 Grp: MS-Errata102006-07-15 / errA001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67042,7 +67033,7 @@ Grp: MS-Errata102006-07-15 / errC007
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK errC007
   XP errC007.v
-    errC007.xml:9:40: Attribute "a:testAttribute" invalid for this element
+    errC007.xml:10:24: Invalid integer: "any text"
 
 Grp: MS-Errata102006-07-15 / errC008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -67115,8 +67106,9 @@ Grp: MS-Group2006-07-15 / groupA005
     groupA005.xsd:13:35: Attribute "id": ID "bar" already defined
 
 Grp: MS-Group2006-07-15 / groupA006
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK groupA006
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI groupA006
+    <redefine> not supported
 
 Grp: MS-Group2006-07-15 / groupA007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67177,9 +67169,9 @@ Grp: MS-Group2006-07-15 / groupB006v
   OK groupB006v.v
 
 Grp: MS-Group2006-07-15 / groupB007
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK groupB007
-    groupB007.xsd:4:23: Attribute "name" is required in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI groupB007
+    <redefine> not supported
 
 Grp: MS-Group2006-07-15 / groupB008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67227,8 +67219,9 @@ Grp: MS-Group2006-07-15 / groupB017
   OK groupB017
 
 Grp: MS-Group2006-07-15 / groupB018
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK groupB018
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI groupB018
+    <redefine> not supported
 
 Grp: MS-Group2006-07-15 / groupC001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67241,9 +67234,9 @@ Grp: MS-Group2006-07-15 / groupC002
     groupC002.xsd:8:13: Attribute "name" is required in this context
 
 Grp: MS-Group2006-07-15 / groupC003
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK groupC003
-    groupC003.xsd:11:22: Group has already been declared: A
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI groupC003
+    <redefine> not supported
 
 Grp: MS-Group2006-07-15 / groupC004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67295,9 +67288,9 @@ Grp: MS-Group2006-07-15 / groupD001
     groupD001.xsd:3:36: Attribute "minOccurs" is prohibited in this context
 
 Grp: MS-Group2006-07-15 / groupD002
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK groupD002
-    groupD002.xsd:4:37: Attribute "minOccurs" is prohibited in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI groupD002
+    <redefine> not supported
 
 Grp: MS-Group2006-07-15 / groupD003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -67305,9 +67298,9 @@ Grp: MS-Group2006-07-15 / groupD003
     groupD003.xsd:3:36: Attribute "maxOccurs" is prohibited in this context
 
 Grp: MS-Group2006-07-15 / groupD004
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK groupD004
-    groupD004.xsd:4:39: Attribute "maxOccurs" is prohibited in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI groupD004
+    <redefine> not supported
 
 Grp: MS-Group2006-07-15 / groupE002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68247,7 +68240,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idA004
 Grp: MS-IdentityConstraint2006-07-15 / idA005
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idA005
-    Unsupported element in the schema: unique
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idA006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68547,7 +68540,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idB004
 Grp: MS-IdentityConstraint2006-07-15 / idB005
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idB005
-    Unsupported element in the schema: key
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idB006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68847,7 +68840,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idC004
 Grp: MS-IdentityConstraint2006-07-15 / idC005
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idC005
-    Unsupported element in the schema: key
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idC006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69582,7 +69575,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idF024
 Grp: MS-IdentityConstraint2006-07-15 / idF025
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idF025
-    Unsupported element in the schema: unique
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idF026
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69607,7 +69600,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idF029
 Grp: MS-IdentityConstraint2006-07-15 / idF030
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idF030
-    Unsupported element in the schema: unique
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idF031
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69627,7 +69620,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idF033
 Grp: MS-IdentityConstraint2006-07-15 / idF034
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idF034
-    Unsupported element in the schema: unique
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idF035
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69727,7 +69720,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idG018
 Grp: MS-IdentityConstraint2006-07-15 / idG019
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idG019
-    Unsupported element in the schema: key
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idG020
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69752,7 +69745,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idG023
 Grp: MS-IdentityConstraint2006-07-15 / idG024
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idG024
-    Unsupported element in the schema: key
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idG025
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69772,7 +69765,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idG027
 Grp: MS-IdentityConstraint2006-07-15 / idG028
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idG028
-    Unsupported element in the schema: key
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idG029
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69892,7 +69885,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idH022
 Grp: MS-IdentityConstraint2006-07-15 / idH023
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idH023
-    Unsupported element in the schema: key
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idH024
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69917,7 +69910,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idH027
 Grp: MS-IdentityConstraint2006-07-15 / idH028
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idH028
-    Unsupported element in the schema: key
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idH029
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -69936,7 +69929,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idH031
 Grp: MS-IdentityConstraint2006-07-15 / idH032
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI idH032
-    Unsupported element in the schema: key
+    <redefine> not supported
 
 Grp: MS-IdentityConstraint2006-07-15 / idH034
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -73937,10 +73930,9 @@ Grp: MS-ModelGroups2006-07-15 / mgO005
   OK mgO005.v
 
 Grp: MS-ModelGroups2006-07-15 / mgO006
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK mgO006
-  XP mgO006.v
-    mgO006.xml:4:7: Expecting (e1)
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgO006
+    <redefine> not supported
 
 Grp: MS-ModelGroups2006-07-15 / mgO007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -73972,10 +73964,9 @@ Grp: MS-ModelGroups2006-07-15 / mgO012
     mgO012.xsd:9:26: Attribute "name" is required in this context
 
 Grp: MS-ModelGroups2006-07-15 / mgO013
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK mgO013
-  OK mgO013.i
-    mgO013.xml:3:7: Expecting ()
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgO013
+    <redefine> not supported
 
 Grp: MS-ModelGroups2006-07-15 / mgO014
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -74007,9 +73998,9 @@ Grp: MS-ModelGroups2006-07-15 / mgO019
     mgO019.xsd:4:40: Attribute "minOccurs": Element's value not in the enumeration set
 
 Grp: MS-ModelGroups2006-07-15 / mgO020
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgO020
-    mgO020.xsd:5:41: Attribute "minOccurs": Element's value not in the enumeration set
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgO020
+    <redefine> not supported
 
 Grp: MS-ModelGroups2006-07-15 / mgO021
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -74042,9 +74033,9 @@ Grp: MS-ModelGroups2006-07-15 / mgO026
     mgO026.xsd:7:15: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-ModelGroups2006-07-15 / mgO027
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgO027
-    mgO027.xsd:5:41: Attribute "minOccurs": Element's value not in the enumeration set
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgO027
+    <redefine> not supported
 
 Grp: MS-ModelGroups2006-07-15 / mgO028
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -74077,10 +74068,9 @@ Grp: MS-ModelGroups2006-07-15 / mgO033
     mgO033.xsd:7:15: Expecting ({http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence)
 
 Grp: MS-ModelGroups2006-07-15 / mgO034
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK mgO034
-  XP mgO034.v
-    mgO034.xml:4:7: Expecting (e1)
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgO034
+    <redefine> not supported
 
 Grp: MS-ModelGroups2006-07-15 / mgO035
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -74112,9 +74102,9 @@ Grp: MS-ModelGroups2006-07-15 / mgP040
     mgP040.xsd:4:40: Attribute "maxOccurs": Element's value not in the enumeration set
 
 Grp: MS-ModelGroups2006-07-15 / mgP041
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgP041
-    mgP041.xsd:5:41: Attribute "maxOccurs": Element's value not in the enumeration set
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgP041
+    <redefine> not supported
 
 Grp: MS-ModelGroups2006-07-15 / mgP042
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -74132,9 +74122,9 @@ Grp: MS-ModelGroups2006-07-15 / mgP049
     mgP049.xsd:4:40: Attribute "minOccurs": Element's value not in the enumeration set
 
 Grp: MS-ModelGroups2006-07-15 / mgP050
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK mgP050
-    mgP050.xsd:5:41: Attribute "minOccurs": Element's value not in the enumeration set
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI mgP050
+    <redefine> not supported
 
 Grp: MS-ModelGroups2006-07-15 / mgP055
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -74862,9 +74852,9 @@ Grp: MS-Notations2006-07-15 / notatF054
     Unsupported element in the schema: notation
 
 Grp: MS-Notations2006-07-15 / notatF055
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK notatF055
-    notatF055.xsd:4:70: Unexpected element "{http://www.w3.org/2001/XMLSchema}notation"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI notatF055
+    <redefine> not supported
 
 Grp: MS-Notations2006-07-15 / notatF056
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -75700,12 +75690,12 @@ Grp: MS-Particles2006-07-15 / particlesEa022
 Grp: MS-Particles2006-07-15 / particlesEa023
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK particlesEa023
-    particlesEa023.xsd:11:39: minOccurs > maxOccurs when creating particle
+    particlesEa023.xsd:12:16: minOccurs > maxOccurs when creating particle
 
 Grp: MS-Particles2006-07-15 / particlesEa024
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK particlesEa024
-    particlesEa024.xsd:11:53: minOccurs > maxOccurs when creating particle
+    particlesEa024.xsd:12:16: minOccurs > maxOccurs when creating particle
 
 Grp: MS-Particles2006-07-15 / particlesEa025
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -85588,7 +85578,7 @@ Grp: MS-Regex2006-07-15 / p2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK p2
   OK p2.i
-    p2.xml:9:16: Mixed content is not allowed for this element
+    p2.xml:9:16: No character data allowed by content model
 
 Grp: MS-Regex2006-07-15 / p3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91683,8 +91673,9 @@ Grp: MS-Schema2006-07-15 / schB1i
     schB1i.xsd:3:34: Attribute "id": ID "a" already defined
 
 Grp: MS-Schema2006-07-15 / schB2
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schB2
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP schB2
+    schB2_a.xsd:8:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-Schema2006-07-15 / schB3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -91706,22 +91697,24 @@ Grp: MS-Schema2006-07-15 / schB8
   OK schB8
 
 Grp: MS-Schema2006-07-15 / schC2
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schC2
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK schC2
+    schC2_a.xsd:4:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-Schema2006-07-15 / schC3
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schC3
-  OK schC3.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP schC3
+    schC3_a.xsd:4:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-Schema2006-07-15 / schC4
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schC4
-  OK schC4.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP schC4
+    schC4_a.xsd:8:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-Schema2006-07-15 / schC5
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schC5
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK schC5
+    schC5_a.xsd:8:27: Unexpected element "{http://www.w3.org/2001/XMLSchema}annotation"
 
 Grp: MS-Schema2006-07-15 / schD5
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91903,8 +91896,9 @@ Grp: MS-Schema2006-07-15 / schH1
     schH1_a.xsd:6:53: Attribute "id": Invalid namespace for id
 
 Grp: MS-Schema2006-07-15 / schH2
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schH2
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schH2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schH3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -91917,242 +91911,274 @@ Grp: MS-Schema2006-07-15 / schH4
     schH4_a.xsd:6:63: Attribute "namespace": Invalid namespace for namespace
 
 Grp: MS-Schema2006-07-15 / schH5
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schH5
-    schH5.xsd:6:46: not-wf.xsd:1:8: Element "notwf": No matching declaration available
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schH5
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schH6
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schH6
-    schH6.xsd:6:50: not-schema.xsd:1:16: Element "not-a-schema": No matching declaration available
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schH6
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schH9
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schH9
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schH9
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schI2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schI2
+  NI schI2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schI5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schI5
+  NI schI5
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schJ2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schJ2
+  NI schJ2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schJ3
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schJ3
-    schJ3_a.xsd:10:31: No facet overridable for this type
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schJ3
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schK2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schK2
+  NI schK2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schK3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schK3
+  NI schK3
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schL1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schL1
+  NI schL1
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schL3
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schL3
-    schL3_a.xsd:10:29: Unexpected element "{http://www.w3.org/2001/XMLSchema}group"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schL3
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schL5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schL5
+  NI schL5
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schL6
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schL6
+  NI schL6
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schL8
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schL8
+  NI schL8
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schL10
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schL10
+  NI schL10
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schM3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schM3
+  NI schM3
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schM4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schM4
+  NI schM4
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schM5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schM5
+  NI schM5
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schM8
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schM8
+  NI schM8
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schM9
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schM9
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schM9
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schM10
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schM10
+  NI schM10
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schN4
+  NI schN4
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schN5
+  NI schN5
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN6
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schN6
+  NI schN6
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN7
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schN7
+  NI schN7
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN10
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schN10
+  NI schN10
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN11
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schN11
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schN11
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN12
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schN12
+  NI schN12
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN13v
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schN13v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schN13v
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schN13i
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schN13i
+  NI schN13i
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schO2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schO2
+  NI schO2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schP1
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schP1
-    schP1_a.xsd:9:32: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}simpleDerivation"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schP1
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schP2
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schP2
-  OK schP2.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schP2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schP3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schP3
+  NI schP3
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schQ1
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schQ1
-  OK schQ1.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schQ1
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schQ2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schQ2
+  NI schQ2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schQ3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI schQ3
-    Unsupported: "choice" in this context
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schQ4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI schQ4
-    Unsupported: "choice" in this context
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schR2
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schR2
-  OK schR2.i
-    schR2.xml:6:11: Invalid integer: ""
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schR2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schR3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schR3
+  NI schR3
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schR4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schR4
+  NI schR4
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schR5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schR5
+  NI schR5
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schS1
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schS1
-    schS1_a.xsd:15:25: Group has already been declared: a-g2
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schS1
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schT1
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schT1
-    attributeGroup "{ns-a}notExist" is referenced, but not defined
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schT1
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schT2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF schT2
+  NI schT2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schT3
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schT3
-  OK schT3.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schT3
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schT6
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schT6
-  OK schT6.i
-    schT6.xml:6:23: Attribute "att2" is required in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schT6
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schT9
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schT9
-  OK schT9.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schT9
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schT10
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schT10
-  OK schT10.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schT10
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schU1
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schU1
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schU1
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schU2
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schU2
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schU2
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schU3
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK schU3
-  OK schU3.i
-    schU3.xml:2:24: Attribute "c1": Invalid integer: "a"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schU3
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schU4
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK schU4
-  XF schU4.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schU4
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schU5
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK schU5
-  XF schU5.i
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schU5
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schZ001_78029-a
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92178,11 +92204,12 @@ Grp: MS-Schema2006-07-15 / schZ005
 Grp: MS-Schema2006-07-15 / schZ006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI schZ006
-    Not supported: type computed from substitutionGroup when the group has not been fully defined yet
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schZ007
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schZ007
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI schZ007
+    <redefine> not supported
 
 Grp: MS-Schema2006-07-15 / schZ008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -93578,9 +93605,8 @@ Grp: MS-SimpleType2006-07-15 / stZ011
   SF stZ011
 
 Grp: MS-SimpleType2006-07-15 / stZ012
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stZ012
-    stZ012.xsd:45:64: Type is not a valid replacement for "list"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF stZ012
 
 Grp: MS-SimpleType2006-07-15 / stZ013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -93662,22 +93688,19 @@ Grp: MS-SimpleType2006-07-15 / stZ031
   OK stZ031.v
 
 Grp: MS-SimpleType2006-07-15 / stZ032
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stZ032
-  OK stZ032.i
-    stZ032.xml:4:3: Element's value not in the enumeration set
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stZ032
+    <redefine> not supported
 
 Grp: MS-SimpleType2006-07-15 / stZ033
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stZ033
-  OK stZ033.i
-    stZ033.xml:3:3: Element's value not in the enumeration set
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stZ033
+    <redefine> not supported
 
 Grp: MS-SimpleType2006-07-15 / stZ034
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK stZ034
-  OK stZ034.i
-    stZ034.xml:3:3: Element's value not in the enumeration set
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI stZ034
+    <redefine> not supported
 
 Grp: MS-SimpleType2006-07-15 / stZ035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93721,14 +93744,15 @@ Grp: MS-SimpleType2006-07-15 / stZ042
   OK stZ042
 
 Grp: MS-SimpleType2006-07-15 / stZ043
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ043
-    test107331_a.xsd:9:82: Type is not a valid replacement for "anySimpleType"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stZ043
+  OK stZ043.v
 
 Grp: MS-SimpleType2006-07-15 / stZ044
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ044
-    test107331_b.xsd:9:82: Type is not a valid replacement for "anySimpleType"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stZ044
+  OK stZ044.i
+    test107331_1.xml:2:7: "item" is abstract
 
 Grp: MS-SimpleType2006-07-15 / stZ045
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93750,51 +93774,50 @@ Grp: MS-SimpleType2006-07-15 / stZ048
   SF stZ048
 
 Grp: MS-SimpleType2006-07-15 / stZ049
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK stZ049
-    test107331_g.xsd:16:74: Type is not a valid replacement for "ct2"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF stZ049
 
 Grp: MS-SimpleType2006-07-15 / stZ050
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ050
-    test107331_h.xsd:16:74: Type is not a valid replacement for "anyType"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stZ050
+  OK stZ050.v
 
 Grp: MS-SimpleType2006-07-15 / stZ051
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ051
-    test107331_i.xsd:9:82: Type is not a valid replacement for "anySimpleType"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stZ051
+  OK stZ051.i
+    test107331_1.xml:3:6: Unexpected element "int" (substitutions are blocked)
 
 Grp: MS-SimpleType2006-07-15 / stZ052
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ052
-    test107331_a.xsd:9:82: Type is not a valid replacement for "anySimpleType"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stZ052
+  OK stZ052.v
 
 Grp: MS-SimpleType2006-07-15 / stZ053
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ053
-    test107331_h.xsd:16:74: Type is not a valid replacement for "anyType"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stZ053
+  OK stZ053.v
 
 Grp: MS-SimpleType2006-07-15 / stZ054
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stZ054
-  XP stZ054.v
-    test107331_8.xml:5:25: Type is not a valid replacement for "anySimpleType"
+  OK stZ054.v
 
 Grp: MS-SimpleType2006-07-15 / stZ055
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stZ055
-  XP stZ055.v
-    test107331_9.xml:8:53: Type is not a valid replacement for "anySimpleType"
+  OK stZ055.v
 
 Grp: MS-SimpleType2006-07-15 / stZ056
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ056
-    test107331_a.xsd:9:82: Type is not a valid replacement for "anySimpleType"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stZ056
+  OK stZ056.i
+    test107331_10.xml:18:29: Type is not a valid replacement for "anySimpleType"
 
 Grp: MS-SimpleType2006-07-15 / stZ057
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stZ057
-    test107331_j.xsd:9:82: Type is not a valid replacement for "anyType"
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stZ057
+  OK stZ057.v
 
 Grp: MS-SimpleType2006-07-15 / stZ058
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -95275,10 +95298,9 @@ Grp: MS-Wildcards2006-07-15 / wildZ003
   OK wildZ003.v
 
 Grp: MS-Wildcards2006-07-15 / wildZ004
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildZ004
-  XP wildZ004.v
-    wildZ004.xml:7:35: No definitiont  found for "myelem"
+  OK wildZ004.v
 
 Grp: MS-Wildcards2006-07-15 / wildZ005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95366,32 +95388,33 @@ Grp: BoeingXSDTestCases / ipo2
   OK ipo_2
 
 Grp: BoeingXSDTestCases / ipo3
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+   0.0% tests= 1 (xsd= 3 xml= 0) OK= 0 FAILED= 1
   SP ipo3
-    ipo.xsd:7:95: Type is not a valid replacement for "string"
+    attributeGroup "{http://www.example.com/IPO}ItemDelivery" is referenced, but not defined
 
 Grp: BoeingXSDTestCases / ipo4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ipo4
-    ipo.xsd:25:95: Type is not a valid replacement for "string"
+  NI ipo4
+    <redefine> not supported
 
 Grp: BoeingXSDTestCases / ipo5
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+   0.0% tests= 1 (xsd= 3 xml= 0) OK= 0 FAILED= 1
   SP ipo5
-    ipo.xsd:14:95: Type is not a valid replacement for "string"
+    attributeGroup "{http://www.example.com/IPO}ItemDelivery" is referenced, but not defined
 
 Grp: BoeingXSDTestCases / ipo6
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ipo6
-    ipo.xsd:10:83: address.xsd:8:97: Type is not a valid replacement for "string"
+  100.0% tests= 3 (xsd= 4 xml= 2) OK= 3 FAILED= 0
+  OK ipo6
+  OK ipo_1
+  OK ipo_2
 
-Total number of tests: 37052 (omitting non-accepted tests)
-   13739 XSD files (not including those parsed automatically)
-   23369 XML files
-NI: Features not implemented: in_partial= 205 in_full_fail= 2023
-SP: XSD KO, should be OK: in_full_fail= 218
-SF: XSD OK, should be KO: in_full_fail= 675
-XP: XML KO, should be OK: in_partial= 119 in_full_fail= 4
-XF: XML OK, should be KO: in_partial= 6 in_full_fail= 2
+Total number of tests: 37034 (omitting non-accepted tests)
+   13746 XSD files (not including those parsed automatically)
+   23351 XML files
+NI: Features not implemented: in_partial= 205 in_full_fail= 2136
+SP: XSD KO, should be OK: in_full_fail= 204
+SF: XSD OK, should be KO: in_full_fail= 644
+XP: XML KO, should be OK: in_partial= 101 in_full_fail= 3
+XF: XML OK, should be KO: in_partial= 4 in_full_fail= 2
 IE: Internal error:
-Total errors: 1024 ( 2.8 %)
+Total errors: 958 ( 2.6 %)

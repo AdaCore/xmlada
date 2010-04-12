@@ -185,6 +185,7 @@ package body Schema.Validators.Restrictions is
    exception
       when others =>
          Debug_Pop_Prefix;
+         raise;
    end Validate_Start_Element;
 
    --------------------------

@@ -39,7 +39,4 @@ private package Schema.Validators.UR_Type is
    --  Return an element of type ur-Type, which will match its contents with
    --  a given policy.
 
-   function Is_Wildcard (Validator : XML_Validator) return Boolean;
-   --  Whether Validator is a wildcard
-
 end Schema.Validators.UR_Type;
