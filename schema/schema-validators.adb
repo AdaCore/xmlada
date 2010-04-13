@@ -35,6 +35,7 @@ with GNAT.IO;                        use GNAT.IO;
 with Sax.Attributes;                 use Sax.Attributes;
 with Sax.Encodings;                  use Sax.Encodings;
 with Sax.Utils;                      use Sax.Utils;
+with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
 with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
 with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Lists;        use Schema.Validators.Lists;
@@ -1291,9 +1292,9 @@ package body Schema.Validators is
          Types_Htable.Set (Grammar.Types.all, Typ);
          Register (Grammar, Typ);
          if Debug then
-            Debug_Output ("Forward type decl: {"
-                          & Get_Namespace_URI (Grammar) & "}{"
-                          & Local_Name & "}");
+            Debug_Output
+              ("Forward type decl: "
+               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
          end if;
       elsif Typ = No_Type then
          if Debug then
@@ -1577,13 +1578,8 @@ package body Schema.Validators is
    is
       G   : XML_Grammars.Encapsulated_Access;
    begin
-      if Grammar = No_Grammar then
-         G := new XML_Grammar_Record;
-         Grammar := Allocate (G);
-      else
-         G := Get (Grammar);
-      end if;
-
+      Initialize (Grammar);
+      G := Get (Grammar);
       G.XSD_Version := XSD_Version;
    end Set_XSD_Version;
 
@@ -1613,12 +1609,8 @@ package body Schema.Validators is
       G   : XML_Grammars.Encapsulated_Access;
       Tmp : Grammar_NS_Array_Access;
    begin
-      if Grammar = No_Grammar then
-         G       := new XML_Grammar_Record;
-         Grammar := Allocate (G);
-      else
-         G := Get (Grammar);
-      end if;
+      Initialize (Grammar);
+      G := Get (Grammar);
 
       if G.Grammars = null then
          G.Grammars := new Grammar_NS_Array (1 .. 1);
@@ -1714,47 +1706,13 @@ package body Schema.Validators is
    ----------------
 
    procedure Initialize (Grammar : in out XML_Grammar) is
-      Tmp2     : XML_Validator;
-      G, XML_G, XML_IG : XML_Grammar_NS;
-
+      Actual_G : XML_Grammars.Encapsulated_Access;
    begin
-      --  The first call to Get_NS will also create the grammar itself if
-      --  needed
-      Get_NS (Grammar, XML_Schema_URI,   Result => G);
-      if Lookup (G, "anyType", False) /= No_Type then
-         return;
+      if Grammar = No_Grammar then
+         Actual_G := new XML_Grammar_Record;
+         Grammar  := Allocate (Actual_G);
+         Add_Schema_For_Schema (Grammar);
       end if;
-
-      Get_NS (Grammar, XML_URI,          Result => XML_G);
-      Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
-
-      Create_UR_Type_Elements (G, Grammar);
-
-      --  As per 3.4.7, ur-Type (ie anyType) uses a Lax processing for its
-      --  children node (ie uses the grammar definition if one is found)
-      Create_Global_Type
-        (G, "ur-Type",
-         Get_Validator
-           (Get_Type (Get_UR_Type_Element (Grammar, Process_Lax))));
-
-      Create_Global_Type
-        (G, "anyType",
-         Get_Validator
-           (Get_Type (Get_UR_Type_Element (Grammar, Process_Lax))));
-
-      Tmp2 := new Any_Simple_XML_Validator_Record;
-      Create_Global_Type (G, "anySimpleType", Tmp2);
-
-      Register_Predefined_Types (G, XML_G);
-
-      --  Invalid below
-
-      Create_Global_Attribute (XML_IG, "nil", Lookup (G, "boolean"));
-      Create_Global_Attribute (XML_IG, "type", Lookup (G, "QName"));
-      Create_Global_Attribute (XML_IG, "schemaLocation",
-                               List_Of (XML_IG, Lookup (G, "uriReference")));
-      Create_Global_Attribute (XML_IG, "noNamespaceSchemaLocation",
-                               Lookup (G, "uriReference"));
    end Initialize;
 
    ----------------
@@ -2186,9 +2144,7 @@ package body Schema.Validators is
    procedure Set_Parsed_URI
      (Grammar : in out XML_Grammar; URI : Byte_Sequence) is
    begin
-      if Grammar = No_Grammar then
-         Initialize (Grammar);
-      end if;
+      Initialize (Grammar);
 
       if Debug then
          Put_Line ("Set_Parsed_UI: " & URI);
@@ -4424,9 +4380,9 @@ package body Schema.Validators is
       Valid : Boolean := False;
    begin
       if Debug then
-         Debug_Output ("Validate ANY: namespaces="
-                       & Validator.Namespace.all
-                       & " " & Validator.Process_Contents'Img);
+         Debug_Push_Prefix ("Validate ANY: namespaces="
+                            & Validator.Namespace.all
+                            & " " & Validator.Process_Contents'Img);
       end if;
 
       --  Do not check qualification, there is a special handling for
@@ -4475,7 +4431,6 @@ package body Schema.Validators is
             end if;
 
             exit when Valid;
-
          end loop;
 
          if not Valid then
@@ -4492,6 +4447,13 @@ package body Schema.Validators is
             (Grammar, Validator.Process_Contents))),
          Local_Name, Namespace_URI, NS, null,
          Grammar, Element_Validator);
+
+      Debug_Pop_Prefix;
+
+   exception
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Validate_Start_Element;
 
    ----------

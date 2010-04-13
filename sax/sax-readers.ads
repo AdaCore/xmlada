@@ -507,7 +507,8 @@ package Sax.Readers is
    procedure Free (Data : in out Hook_Data) is abstract;
    --  Free the memory associated with the data
 
-   type Element_Access is private;
+   type Element is private;
+   type Element_Access is access Element;
    type XML_NS is private;
    No_XML_NS : constant XML_NS;
 
@@ -773,8 +774,6 @@ private
    --  Use_Count will always be 0 if Same_As is not null, since the uses are
    --  incremented in only one namespace.
 
-   type Element;
-   type Element_Access is access Element;
    type Element is record
       NS             : Unicode.CES.Byte_Sequence_Access;
       Name           : Unicode.CES.Byte_Sequence_Access;

@@ -34,13 +34,13 @@
 
 with Schema.Validators;
 
-package Schema.Schema_Grammar is
+private package Schema.Validators.XSD_Grammar is
 
    procedure Add_Schema_For_Schema
-     (Context : in out Schema.Validators.Validation_Context);
+     (Grammar : in out Schema.Validators.XML_Grammar);
    --  Adds the definition for the standard XML namespaces (schemas,...) to
    --  Grammar. The resulting grammar can thus be used, among other things, to
    --  validate schema files. This doesn't add the predefined types, which
    --  must be added separately.
 
-end Schema.Schema_Grammar;
+end Schema.Validators.XSD_Grammar;

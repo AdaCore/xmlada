@@ -80,6 +80,14 @@ package Schema.Schema_Readers is
    --  whereas in the second case it will reference a location in the single
    --  XSD file.
 
+   procedure Parse
+     (Parser : in out Schema_Reader;
+      Input  : in out Input_Sources.Input_Source'Class;
+      Default_Namespace : Unicode.CES.Byte_Sequence);
+   --  Same as inherited parse, but you can indicate the default value for
+   --  targetNamespace. In practice, this is useful when processing <include>
+   --  or <redefine> elements from another schema
+
    function Get_Created_Grammar
      (Reader : Schema_Reader) return Schema.Validators.XML_Grammar;
    --  Return the grammar parsed

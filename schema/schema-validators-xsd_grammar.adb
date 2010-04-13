@@ -26,33 +26,53 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Unicode.CES;       use Unicode.CES;
-with Schema.Validators; use Schema.Validators;
+with Unicode.CES;                    use Unicode.CES;
+with Schema.Validators;              use Schema.Validators;
+with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
+with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
 
-package body Schema.Schema_Grammar is
+package body Schema.Validators.XSD_Grammar is
 
-   procedure Add_Schema_For_Schema
-     (Context : in out Validation_Context)
-   is
-      G, XML_G         : XML_Grammar_NS;
-      Typ, Typ2        : XML_Validator;
-      Seq1, Seq2       : Sequence;
-      Choice1          : Choice;
-      All_Validator    : XML_Type;
-      Elem             : XML_Element;
-      Gr               : XML_Group;
-      Union, Union2    : XML_Validator;
-      Attr             : XML_Attribute_Group;
+   procedure Add_Schema_For_Schema (Grammar : in out XML_Grammar) is
+      G, XML_G, XML_IG : XML_Grammar_NS;
+      Tmp2          : XML_Validator;
+      Typ, Typ2     : XML_Validator;
+      Seq1, Seq2    : Sequence;
+      Choice1       : Choice;
+      All_Validator : XML_Type;
+      Elem          : XML_Element;
+      Gr            : XML_Group;
+      Union, Union2 : XML_Validator;
+      Attr          : XML_Attribute_Group;
+      Context       : Validation_Context;
    begin
-      --  Have we already added these namespaces to Grammar ?
+      Context := (Id_Table => null,
+                  Grammar  => Grammar,
+                  Context  => null,
+                  Parser   => null);
 
-      Get_NS (Context.Grammar, XML_Schema_URI, G);
-      if Lookup (G, "formChoice", False) /= No_Type then
-         return;
-      end if;
+      Get_NS (Grammar, XML_Schema_URI,   Result => G);
+      Get_NS (Grammar, XML_URI,          Result => XML_G);
+      Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
 
-      Initialize (Context.Grammar);
-      Get_NS (Context.Grammar, XML_URI, XML_G);
+      Create_UR_Type_Elements (G, Context.Grammar);
+
+      --  As per 3.4.7, ur-Type (ie anyType) uses a Lax processing for its
+      --  children node (ie uses the grammar definition if one is found)
+      Create_Global_Type
+        (G, "ur-Type",
+         Get_Validator
+           (Get_Type (Get_UR_Type_Element (Context.Grammar, Process_Lax))));
+
+      Create_Global_Type
+        (G, "anyType",
+         Get_Validator
+           (Get_Type (Get_UR_Type_Element (Context.Grammar, Process_Lax))));
+
+      Tmp2 := new Any_Simple_XML_Validator_Record;
+      Create_Global_Type (G, "anySimpleType", Tmp2);
+
+      Schema.Validators.Simple_Types.Register_Predefined_Types (G, XML_G);
 
       --  The "formChoice" type of schema.xsd
       Typ := Restriction_Of (G, Lookup (G, "NMTOKEN"));
@@ -1195,6 +1215,15 @@ package body Schema.Schema_Grammar is
       Elem := Create_Global_Element (G, "fractionDigits", Qualified);
       Set_Type (Elem, Lookup (G, "numFacet"), Context);
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+
+      --  The schema instance namespace
+
+      Create_Global_Attribute (XML_IG, "nil", Lookup (G, "boolean"));
+      Create_Global_Attribute (XML_IG, "type", Lookup (G, "QName"));
+      Create_Global_Attribute (XML_IG, "schemaLocation",
+                               List_Of (XML_IG, Lookup (G, "uriReference")));
+      Create_Global_Attribute (XML_IG, "noNamespaceSchemaLocation",
+                               Lookup (G, "uriReference"));
    end Add_Schema_For_Schema;
 
-end Schema.Schema_Grammar;
+end Schema.Validators.XSD_Grammar;

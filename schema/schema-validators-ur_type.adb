@@ -88,7 +88,9 @@ package body Schema.Validators.UR_Type is
    begin
       if Debug then
          Debug_Output
-           ("Validate_Start_Element " & Local_Name
+           ("Validate_Start_Element "
+            & To_QName (Namespace_URI, Local_Name)
+            & " NS=" & Get_Namespace_URI (NS)
             & " (parent=UR_Type, " & Validator.Process_Contents'Img & ")");
       end if;
 

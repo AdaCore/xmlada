@@ -263,72 +263,68 @@ package body Schema.Readers is
       Schema   : Schema_Reader;
       Xsd_File_Full : constant Byte_Sequence :=
         To_Absolute_URI (Handler, Xsd_File);
-      Local_Grammar : XML_Grammar_NS;
    begin
       if Debug then
          Put_Line ("NS=" & URI & ASCII.LF & "XSD=" & Xsd_File);
       end if;
 
-      if URI /= "-" then
-         Get_NS
-           (Handler.Context.Grammar,
-            Namespace_URI    => URI,
-            Result           => Local_Grammar,
-            Create_If_Needed => False);
+      if Get_XSD_Version (Handler.Context.Grammar) = XSD_1_0 then
+         --  Must check that no element of the same namespace was seen
+         --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
+         --  changed in XSD 1.1).
 
-         if Get_XSD_Version (Handler.Context.Grammar) = XSD_1_0 then
-            --  Must check that no element of the same namespace was seen
-            --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
-            --  changed in XSD 1.1).
+         declare
+            NS : XML_NS;
+            Local_Grammar : XML_Grammar_NS;
+         begin
+            Get_NS
+              (Handler.Context.Grammar,
+               Namespace_URI    => URI,
+               Result           => Local_Grammar,
+               Create_If_Needed => False);
 
-            declare
-               NS : XML_NS;
-            begin
-               Find_NS_From_URI
-                 (Handler,
-                  Context => Handler.Context.Context,
-                  URI     => URI,
-                  NS      => NS);
+            Find_NS_From_URI
+              (Handler,
+               Context => Handler.Context.Context,
+               URI     => URI,
+               NS      => NS);
 
-               if NS /= No_XML_NS
-                 and then Element_Count (NS) > 0
-                 and then Xsd_File_Full /= Get_System_Id (Local_Grammar)
-               then
-                  Validation_Error
-                    ("schemaLocation for """
-                     & URI & """ cannot occur after the first"
-                     & " element of that namespace in XSD 1.0");
-               end if;
-            end;
-         end if;
+            if NS /= No_XML_NS
+              and then Element_Count (NS) > 0
+              and then Xsd_File_Full /= Get_System_Id (Local_Grammar)
+            then
+               Validation_Error
+                 ("schemaLocation for """
+                  & URI & """ cannot occur after the first"
+                  & " element of that namespace in XSD 1.0");
+            end if;
+         end;
       end if;
 
       --  Do not reparse the grammar if we already know about it
 
-      if Local_Grammar = null then
-         if Debug then
-            Put_Line ("Parsing grammar: " & Xsd_File_Full);
-            Debug_Dump (Add_To);
-         end if;
-         Open (Xsd_File_Full, File);
-         Set_Public_Id (File, Xsd_File_Full);
-         Set_System_Id (File, Xsd_File_Full);
+      if Debug then
+         Put_Line ("Parsing grammar: " & Xsd_File_Full);
+         Debug_Dump (Add_To);
+      end if;
 
-         --  MANU ? More efficient: Add_To will likely already contain the
-         --  grammar for the schema-for-schema, and we won't have to recreate
-         --  it in most
-         --  cases.
-         Set_Validating_Grammar (Schema, Add_To);
-         Set_Created_Grammar (Schema, Add_To);
-         Use_Basename_In_Error_Messages
-           (Schema, Use_Basename_In_Error_Messages (Handler));
-         Parse (Schema, File);
-         Close (File);
-         Add_To := Get_Created_Grammar (Schema);
+      Open (Xsd_File_Full, File);
+      Set_Public_Id (File, Xsd_File_Full);
+      Set_System_Id (File, Xsd_File_Full);
 
-         if Debug then
-            Put_Line ("Done parsing new grammar: " & Xsd_File);
-         end if;
+      --  Add_To will likely already contain the grammar for the
+      --  schema-for-schema, and we won't have to recreate it in most cases.
+
+      Set_Validating_Grammar (Schema, Add_To);
+      Set_Created_Grammar (Schema, Add_To);
+      Use_Basename_In_Error_Messages
+        (Schema, Use_Basename_In_Error_Messages (Handler));
+      Parse (Schema, File, Default_Namespace => URI);
+      Close (File);
+      Add_To := Get_Created_Grammar (Schema);
+
+      if Debug then
+         Put_Line ("Done parsing new grammar: " & Xsd_File);
       end if;
 
    exception
@@ -619,7 +615,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
-                   & "Start_Element: " & Namespace_URI & ':' & Local_Name
+                   & "Start_Element: " & To_Qname (Namespace_URI, Local_Name)
                    & ASCII.ESC & "[39m");
       end if;
 
@@ -635,19 +631,8 @@ package body Schema.Readers is
          return;  --  Always valid, since we have no grammar anyway
       end if;
 
-      --  Find out the namespace to use for the current element. This namespace
-      --  can be guessed from the parent's element for validation purposes if
-      --  we have an unqualified item. Whether qualification should be
-      --  mandatory or not is tested later on
-
-      if Namespace_URI = ""
-        and then Validating_Reader (Handler).Validators /= null
-      then
-         G := Validating_Reader (Handler).Validators.Grammar;
-      else
-         Get_NS (Validating_Reader (Handler).Context.Grammar,
-                 Namespace_URI, Result => G);
-      end if;
+      Get_NS (Validating_Reader (Handler).Context.Grammar,
+              Namespace_URI, Result => G);
 
       --  Whether this element is valid in the current context
 
@@ -894,15 +879,9 @@ package body Schema.Readers is
                     Doc_Locator   => null);
       end if;
 
+      Initialize (Parser.Context.Grammar);
       Parser.Context.Parser := Parser'Unrestricted_Access;
-
-      if Parser.Context.Grammar = No_Grammar then
-         --  Make sure predefined types are known
-         Initialize (Parser.Context.Grammar);
-      end if;
-
       Sax.Readers.Parse (Sax.Readers.Reader (Parser), Input);
-
       Reset (Parser);
 
    exception

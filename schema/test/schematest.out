@@ -47637,7 +47637,7 @@ Grp: MS-Additional2006-07-15 / addB013
 Grp: MS-Additional2006-07-15 / addB014
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK addB014
-    test65699.xsd:17:46: test65699.inc:1: Extensions of type "keybase" are forbidden
+    test65699.xsd:17:46: schemaLocation for "http://www.w3.org/2001/XMLSchema" cannot occur after the first element of that namespace in XSD 1.0
 
 Grp: MS-Additional2006-07-15 / addB016
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47862,7 +47862,7 @@ Grp: MS-Additional2006-07-15 / addB063
 Grp: MS-Additional2006-07-15 / addB064
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP addB064
-    test73722.xsd:27:49: test73722_dt.xsd:1: Extensions of type "keybase" are forbidden
+    test73722.xsd:27:49: schemaLocation for "http://www.w3.org/2001/XMLSchema" cannot occur after the first element of that namespace in XSD 1.0
 
 Grp: MS-Additional2006-07-15 / addB065
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49404,9 +49404,8 @@ Grp: MS-AttributeGroup2006-07-15 / attgB008
   OK attgB008
 
 Grp: MS-AttributeGroup2006-07-15 / attgB009
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP attgB009
-    attgB009.xsd:4:46: attgB009.inc:3:33: Attribute group has already been declared: xyz
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attgB009
 
 Grp: MS-AttributeGroup2006-07-15 / attgB010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49735,10 +49734,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgD019
     attgD019.xsd:5:82: Attribute "foo:anyattribute" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD020
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK attgD020
-  XP attgD020.v
-    attgD020.xml:1:198: Attribute "foo": No definition provided
+  OK attgD020.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD021
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49762,10 +49760,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgD024
     attgD024.xsd:5:82: Attribute "foo:anyattribute" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD025
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK attgD025
-  XP attgD025.v
-    attgD025.xml:3:17: Attribute "a": No definition provided
+  OK attgD025.v
 
 Grp: MS-AttributeGroup2006-07-15 / attgD026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66534,7 +66531,7 @@ Grp: MS-Element2006-07-15 / elemT074
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT074
   OK elemT074.i
-    elemT074.xml:2:23: Restrictions of type "A" are forbidden
+    elemT074.xml:1:106: elemT074.xml:1:106: Root element must be <schema>
 
 Grp: MS-Element2006-07-15 / elemU001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66657,7 +66654,7 @@ Grp: MS-Element2006-07-15 / elemU025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemU025
   OK elemU025.i
-    elemU025.xml:2:14: string pattern not matched: Chapter \d
+    elemU025.xml:1:106: elemU001.xsd:3:27: Element "root" has already been declared
 
 Grp: MS-Element2006-07-15 / elemZ001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66744,10 +66741,9 @@ Grp: MS-Element2006-07-15 / elemZ019
   OK elemZ019.v
 
 Grp: MS-Element2006-07-15 / elemZ020
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemZ020
-  XP elemZ020.v
-    elemZ020.xml:5:21: Invalid value for boolean type: "123"
+  OK elemZ020.v
 
 Grp: MS-Element2006-07-15 / elemZ021a
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67022,10 +67018,9 @@ Grp: MS-Errata102006-07-15 / errC006
   SF errC006
 
 Grp: MS-Errata102006-07-15 / errC007
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK errC007
-  XP errC007.v
-    errC007.xml:10:24: Invalid integer: "any text"
+  OK errC007.v
 
 Grp: MS-Errata102006-07-15 / errC008
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -75404,7 +75399,7 @@ Grp: MS-Particles2006-07-15 / particlesC048
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesC048
   OK particlesC048.i
-    particlesC048.xml:4:25: Invalid namespace for this element: "xyz" not in "foo ##targetNamespace bar ##local"
+    particlesC048.xml:2:147: particlesC047.xsd:4:26: Element "doc" has already been declared
 
 Grp: MS-Particles2006-07-15 / particlesDa001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -85570,7 +85565,7 @@ Grp: MS-Regex2006-07-15 / p2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK p2
   OK p2.i
-    p2.xml:9:16: No character data allowed by content model
+    p2.xml:3:45: p3.xsd:9:25: Element "doc" has already been declared
 
 Grp: MS-Regex2006-07-15 / p3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91621,15 +91616,15 @@ Grp: MS-Regex2006-07-15 / reZ006i
     invalid.c.xml:54:16: string pattern not matched: [\c]
 
 Grp: MS-Schema2006-07-15 / schA1
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK schA1
-  XP schA1.v
-    schA1.xml:17:6: Unexpected element "e1"
+  OK schA1.v
 
 Grp: MS-Schema2006-07-15 / schA2
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK schA2
-  XF schA2.i
+  OK schA2.i
+    schA2.xml:5:2: schA2_b.xsd:11:20: Type has already been declared: ct-A
 
 Grp: MS-Schema2006-07-15 / schA3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91641,14 +91636,16 @@ Grp: MS-Schema2006-07-15 / schA4
   OK schA4.v
 
 Grp: MS-Schema2006-07-15 / schA5
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK schA5
-  XF schA5.i
+  OK schA5.i
+    schA5.xml:5:2: schA5_d.xsd:11:20: Type has already been declared: ct-A
 
 Grp: MS-Schema2006-07-15 / schA7
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK schA7
-  XF schA7.i
+  OK schA7.i
+    schA7.xml:5:2: schA7_c.xsd:8:20: Type has already been declared: ct-A
 
 Grp: MS-Schema2006-07-15 / schA8
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -94480,9 +94477,9 @@ Grp: MS-Wildcards2006-07-15 / wildG030
     wildG030.xml:3:26: Invalid namespace for this element: "http://foo" not in "##local"
 
 Grp: MS-Wildcards2006-07-15 / wildG031
-   0.0% tests= 1 (xsd= 2 xml= 0) OK= 0 FAILED= 1
-  SP wildG031
-    wildG031a.xsd:3:28: Element "foo" has already been declared
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
+  OK wildG031
+  OK wildG031.v
 
 Grp: MS-Wildcards2006-07-15 / wildG032
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -94491,9 +94488,9 @@ Grp: MS-Wildcards2006-07-15 / wildG032
     wildG032.xml:7:11: Invalid namespace for this element: "http://bar" not in "A B C D E F ##local ##targetNamespace"
 
 Grp: MS-Wildcards2006-07-15 / wildG033
-   0.0% tests= 1 (xsd= 2 xml= 0) OK= 0 FAILED= 1
-  SP wildG033
-    wildG033a.xsd:3:45: Element "bar" has already been declared
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
+  OK wildG033
+  OK wildG033.v
 
 Grp: MS-Wildcards2006-07-15 / wildG034
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95043,9 +95040,9 @@ Grp: MS-Wildcards2006-07-15 / wildO004
   OK wildO004.v
 
 Grp: MS-Wildcards2006-07-15 / wildO005
-   0.0% tests= 1 (xsd= 2 xml= 0) OK= 0 FAILED= 1
-  SP wildO005
-    wildO005a.xsd:3:48: Attribute has already been declared: name
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
+  OK wildO005
+  OK wildO005.v
 
 Grp: MS-Wildcards2006-07-15 / wildO006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95119,10 +95116,9 @@ Grp: MS-Wildcards2006-07-15 / wildO018
   OK wildO018.v
 
 Grp: MS-Wildcards2006-07-15 / wildO019
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO019
-  XP wildO019.v
-    wildO019.xml:2:205: Attribute "name": No definition provided
+  OK wildO019.v
 
 Grp: MS-Wildcards2006-07-15 / wildO020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95175,10 +95171,9 @@ Grp: MS-Wildcards2006-07-15 / wildO028
     wildO028.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO029
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO029
-  XP wildO029.v
-    wildO029.xml:2:205: Attribute "name": No definition provided
+  OK wildO029.v
 
 Grp: MS-Wildcards2006-07-15 / wildO030
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95198,10 +95193,9 @@ Grp: MS-Wildcards2006-07-15 / wildO032
     wildO032.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
 
 Grp: MS-Wildcards2006-07-15 / wildO033
-  50.0% tests= 2 (xsd= 2 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO033
-  XP wildO033.v
-    wildO033.xml:2:205: Attribute "name": No definition provided
+  OK wildO033.v
 
 Grp: MS-Wildcards2006-07-15 / wildO034
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95374,9 +95368,10 @@ Grp: BoeingXSDTestCases / ipo2
   OK ipo_2
 
 Grp: BoeingXSDTestCases / ipo3
-   0.0% tests= 1 (xsd= 3 xml= 0) OK= 0 FAILED= 1
-  SP ipo3
-    attributeGroup "{http://www.example.com/IPO}ItemDelivery" is referenced, but not defined
+  100.0% tests= 3 (xsd= 3 xml= 2) OK= 3 FAILED= 0
+  OK ipo3
+  OK ipo_1
+  OK ipo_2
 
 Grp: BoeingXSDTestCases / ipo4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95384,9 +95379,10 @@ Grp: BoeingXSDTestCases / ipo4
     <redefine> not supported
 
 Grp: BoeingXSDTestCases / ipo5
-   0.0% tests= 1 (xsd= 3 xml= 0) OK= 0 FAILED= 1
-  SP ipo5
-    attributeGroup "{http://www.example.com/IPO}ItemDelivery" is referenced, but not defined
+  100.0% tests= 3 (xsd= 3 xml= 2) OK= 3 FAILED= 0
+  OK ipo5
+  OK ipo_1
+  OK ipo_2
 
 Grp: BoeingXSDTestCases / ipo6
   100.0% tests= 3 (xsd= 4 xml= 2) OK= 3 FAILED= 0
@@ -95394,13 +95390,13 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37034 (omitting non-accepted tests)
+Total number of tests: 37041 (omitting non-accepted tests)
    13746 XSD files (not including those parsed automatically)
-   23351 XML files
+   23358 XML files
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
-SP: XSD KO, should be OK: in_full_fail= 204
+SP: XSD KO, should be OK: in_full_fail= 198
 SF: XSD OK, should be KO: in_full_fail= 644
-XP: XML KO, should be OK: in_partial= 87 in_full_fail= 3
-XF: XML OK, should be KO: in_partial= 4 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 79 in_full_fail= 3
+XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 944 ( 2.5 %)
+Total errors: 927 ( 2.5 %)

@@ -362,7 +362,6 @@ procedure Schematest is
 
       else
          begin
-            Set_Feature (Reader, Schema_Validation_Feature, True);
             Set_Created_Grammar (Reader, No_Grammar);
             Use_Basename_In_Error_Messages (Reader, True);
             Set_Supported_Features (Reader, Features);

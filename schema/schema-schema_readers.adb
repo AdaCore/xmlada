@@ -36,7 +36,6 @@ with Sax.Utils;         use Sax.Utils;
 with Schema.Validators; use Schema.Validators;
 with Schema.Validators.Lists; use Schema.Validators.Lists;
 with Schema.Readers;    use Schema.Readers;
-with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with GNAT.IO;           use GNAT.IO;
 with Ada.Unchecked_Deallocation;
 
@@ -320,32 +319,12 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Start_Document (Handler : in out Schema_Reader) is
-      G : XML_Grammar;
    begin
-      --  Add the definition of all predefined types to the created grammar
-      --  Not needed, since that is already done by the call to Set_Parsed_URI
-      --  in Parse.
-      --  Initialize (Handler.Created_Grammar);
-
       Set_XSD_Version (Handler.Created_Grammar,
                        Handler.Supported.XSD_Version);
-
-      --  Make sure the grammar used to validate the XSD file is correct. This
-      --  won't do anything if the schema-for-schema was already added.
-      G := Get_Validating_Grammar (Handler);
-      Add_Schema_For_Schema (Get_Context (Handler'Access).all);
-      Set_Validating_Grammar (Handler, G);
-
-      Handler.Target_NS := Get_Target_NS (Handler.Created_Grammar);
-      if Handler.Target_NS = null then
-         Get_NS (Handler.Created_Grammar, "", Handler.Target_NS);
-         if Debug then
-            Output
-              ("Get_NS (Handler.Created_Grammar, """", Handler.Target_NS)");
-         end if;
-      end if;
-
       Get_NS (Handler.Created_Grammar, XML_Schema_URI, Handler.Schema_NS);
+
+      Set_Validating_Grammar (Handler, Handler.Created_Grammar);
    end Start_Document;
 
    ------------------
@@ -366,11 +345,20 @@ package body Schema.Schema_Readers is
 
    procedure Parse
      (Parser : in out Schema_Reader;
-      Input  : in out Input_Sources.Input_Source'Class) is
+      Input  : in out Input_Sources.Input_Source'Class;
+      Default_Namespace : Unicode.CES.Byte_Sequence) is
    begin
       if not URI_Was_Parsed
         (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input))
       then
+         Get_NS
+           (Parser.Created_Grammar, Default_Namespace, Parser.Target_NS);
+         if Debug then
+            Output ("Get_NS (Handler.Created_Grammar, {"
+                    & Get_Namespace_URI (Parser.Target_NS)
+                    & "}, Handler.Target_NS)");
+         end if;
+
          Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
          Set_Parsed_URI
            (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
@@ -383,6 +371,17 @@ package body Schema.Schema_Readers is
       when others =>
          Free (Parser.Contexts, Recurse => True);
          raise;
+   end Parse;
+
+   -----------
+   -- Parse --
+   -----------
+
+   procedure Parse
+     (Parser : in out Schema_Reader;
+      Input  : in out Input_Sources.Input_Source'Class) is
+   begin
+      Parse (Parser, Input, Default_Namespace => "");
    end Parse;
 
    ----------------------
@@ -764,7 +763,7 @@ package body Schema.Schema_Readers is
    begin
       Parse_Grammar
         (Handler.all,
-         URI      => "-",
+         URI      => Get_Namespace_URI (Handler.Target_NS),
          Xsd_File => Get_Value (Atts, Schema_Location_Index),
          Add_To   => Handler.Created_Grammar);
    end Create_Include;
@@ -796,7 +795,7 @@ package body Schema.Schema_Readers is
          "<redefine> not supported");
       Parse_Grammar
         (Handler.all,
-         URI      => "-",
+         URI      => Get_Namespace_URI (Handler.Target_NS),
          Xsd_File => Get_Value (Atts, Location_Index),
          Add_To   => Handler.Created_Grammar);
 
@@ -835,9 +834,12 @@ package body Schema.Schema_Readers is
          end if;
 
          if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
+            --  The namespace attribute indicates that the XSD may contain
+            --  qualified references to schema components in that namespace.
+            --  (4.2.6.1). It does not give the default targetNamespace
             Parse_Grammar
               (Handler.all,
-               URI      => "-",
+               URI      => "",
                Xsd_File => Location,
                Add_To   => Handler.Created_Grammar);
          elsif Debug then
@@ -976,7 +978,9 @@ package body Schema.Schema_Readers is
                   Form => Form);
                Is_Ref := False;
                Output (Ada_Name (Element)
-                       & " := Create_Global_Element (Handler.Target_NS, """
+                       & " := Create_Global_Element ({"
+                       & Get_Namespace_URI (Handler.Target_NS)
+                       & "}, """
                        & Get_Value (Atts, Name_Index) & """, " & Form'Img
                        & ");");
 
@@ -1380,9 +1384,9 @@ package body Schema.Schema_Readers is
            (Handler.Target_NS, C.Type_Name.all, C.Type_Validator);
          Set_Debug_Name (C.Type_Validator, "for_type_" & C.Type_Name.all);
          Output (Ada_Name (C)
-                 & " := Create_Global_Type (Handler.Target_NS, """
-                 & C.Type_Name.all
-                 & """, Validator);");
+                 & " := Create_Global_Type ({"
+                 & Get_Namespace_URI (Handler.Target_NS)
+                 & "}, """ & C.Type_Name.all & """, Validator);");
       end if;
 
       if Handler.Contexts.Block_Restriction
@@ -2458,7 +2462,7 @@ package body Schema.Schema_Readers is
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class) is
    begin
-      if Debug then
+      if False and Debug then
          Debug_Dump_Contexts (Handler, "Start");
       end if;
 
@@ -2613,7 +2617,7 @@ package body Schema.Schema_Readers is
       C : Context_Access := Handler.Contexts;
       Handled : Boolean := True;
    begin
-      if Debug then
+      if False and Debug then
          Debug_Dump_Contexts (Handler, "End");
       end if;
 
