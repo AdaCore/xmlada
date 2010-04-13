@@ -403,6 +403,7 @@ package body Schema.Readers is
    is
       Empty_Element      : Boolean := False;
       Typ, Typ_For_Mixed : XML_Type;
+      Val                : Byte_Sequence_Access;
    begin
       --  If we were in the middle of a series of Characters callback, we need
       --  to process them now
@@ -458,6 +459,21 @@ package body Schema.Readers is
                then
                   Validation_Error
                     ("No character data allowed by content model");
+               end if;
+
+               --  If we had a <simpleType> we need to normalize whitespaces
+
+               if Is_Simple_Type (Typ_For_Mixed) then
+                  Val := Do_Normalize_Whitespaces
+                    (Typ_For_Mixed, Handler.Validators.Characters);
+
+                  --  Nothing to do if replacement was done in place
+                  if Val /= null
+                    and then Val /= Handler.Validators.Characters
+                  then
+                     Free (Handler.Validators.Characters);
+                     Handler.Validators.Characters := Val;
+                  end if;
                end if;
 
                if Typ /= No_Type then
@@ -615,7 +631,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
-                   & "Start_Element: " & To_Qname (Namespace_URI, Local_Name)
+                   & "Start_Element: " & To_QName (Namespace_URI, Local_Name)
                    & ASCII.ESC & "[39m");
       end if;
 

@@ -251,6 +251,14 @@ package Schema.Validators is
    --  Normalizes whitespaces in the attribute, depending on the type
    --  represented by Validator.
 
+   function Do_Normalize_Whitespaces
+     (Typ : XML_Type;
+      Val : Unicode.CES.Byte_Sequence_Access)
+      return Unicode.CES.Byte_Sequence_Access;
+   --  Normalize whitespaces in Val.
+   --  Returns either Val itself (if replacement was done in place), null (no
+   --  change done), or a newly allocated string.
+
    ---------------
    -- ID_Htable --
    ---------------

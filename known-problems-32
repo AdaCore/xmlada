@@ -79,6 +79,8 @@ KP-32-J302-043 Lots of fixes in schema validation
                 namespace attribute
               - A sequence of <any> elements failed when the first one did
                 not match (XML/Ada never tried to match the next one)
+              - Elements with a simpleType need to normalize their whitespaces
+                before validation
 
   Status:     Fixed in 3.3.0
 

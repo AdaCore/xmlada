@@ -282,14 +282,13 @@ package body Schema.Validators is
       end if;
    end Free;
 
-   --------------------------
-   -- Normalize_Whitespace --
-   --------------------------
+   ------------------------------
+   -- Do_Normalize_Whitespaces --
+   ------------------------------
 
-   procedure Normalize_Whitespace
-     (Typ       : XML_Type;
-      Atts      : Sax.Attributes.Attributes'Class;
-      Index     : Natural)
+   function Do_Normalize_Whitespaces
+     (Typ : XML_Type;
+      Val : Byte_Sequence_Access) return Byte_Sequence_Access
    is
       Whitespace : Whitespace_Restriction := Preserve;
       Facets     : Facets_Description := Get_Facets_Description
@@ -313,17 +312,16 @@ package body Schema.Validators is
 
       case Whitespace is
          when Preserve =>
-            null;
+            return null;
 
          when Replace =>
             declare
-               Val   : Byte_Sequence := Get_Value (Atts, Index);
                Idx   : Natural := Val'First;
                First : Natural := Val'Last + 1;
             begin
                while Idx <= Val'Last loop
                   First := Idx;
-                  Encoding.Read (Val, Idx, C);
+                  Encoding.Read (Val.all, Idx, C);
 
                   if Is_White_Space (C) then
                      --  Assumes all characters we replace are encoded as
@@ -332,12 +330,11 @@ package body Schema.Validators is
                   end if;
                end loop;
 
-               Set_Value (Atts, Index, Val);
+               return Val;  --  replacement was done in place
             end;
 
          when Collapse =>
             declare
-               Val        : Byte_Sequence := Get_Value (Atts, Index);
                C          : Unicode_Char;
                Last       : Natural := Val'Last + 1;
                Idx, Idx_Output : Natural := Val'First;
@@ -345,8 +342,8 @@ package body Schema.Validators is
                Tmp        : Natural;
                Prev_Is_Whitespace : Boolean := False;
             begin
-               if Val = "" then
-                  return;  --  nothing to do
+               if Val.all = "" then
+                  return null;  --  nothing to do
                end if;
 
                --  Remove leading spaces.
@@ -355,12 +352,11 @@ package body Schema.Validators is
 
                loop
                   First := Idx;
-                  Encoding.Read (Val, Idx, C);
+                  Encoding.Read (Val.all, Idx, C);
                   exit when not Is_White_Space (C);
 
                   if Idx > Val'Last then
-                     Set_Value (Atts, Index, "");
-                     return;
+                     return new Byte_Sequence'("");
                   end if;
                end loop;
 
@@ -373,7 +369,7 @@ package body Schema.Validators is
 
                while Idx <= Val'Last loop
                   Tmp := Idx;
-                  Encoding.Read (Val, Idx, C);
+                  Encoding.Read (Val.all, Idx, C);
 
                   if Is_White_Space (C) then
                      if not Prev_Is_Whitespace then
@@ -391,9 +387,32 @@ package body Schema.Validators is
                   end if;
                end loop;
 
-               Set_Value (Atts, Index, Val (First .. Last - 1));
+               return new Byte_Sequence'(Val (First .. Last - 1));
             end;
       end case;
+   end Do_Normalize_Whitespaces;
+
+   --------------------------
+   -- Normalize_Whitespace --
+   --------------------------
+
+   procedure Normalize_Whitespace
+     (Typ       : XML_Type;
+      Atts      : Sax.Attributes.Attributes'Class;
+      Index     : Natural)
+   is
+      Val   : aliased Byte_Sequence := Get_Value (Atts, Index);
+      Val_A : constant Byte_Sequence_Access := Val'Unchecked_Access;
+      Val_B : Byte_Sequence_Access;
+   begin
+      Val_B := Do_Normalize_Whitespaces (Typ, Val_A);
+
+      if Val_B /= null then
+         Set_Value (Atts, Index, Val_B.all);
+         if Val_A /= Val_B then
+            Free (Val_B);
+         end if;
+      end if;
    end Normalize_Whitespace;
 
    --------------

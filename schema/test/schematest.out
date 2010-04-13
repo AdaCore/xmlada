@@ -45040,13 +45040,7 @@ Grp: ElemDecl / name00101m
   OK name00101m
   OK name00101m1_p
   OK name00101m1_n
-    name00101m1_n.xml:15:1: Invalid value for boolean type: "
-
-
-
-  No  
-
-"
+    name00101m1_n.xml:15:1: Invalid value for boolean type: "No"
 
 Grp: ElemDecl / name00201m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45054,10 +45048,9 @@ Grp: ElemDecl / name00201m1
   OK Positive
 
 Grp: ElemDecl / name00201m2
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK name00201m2
-  XP Positive
-    name00201m2_p.xml:17:1: string pattern not matched: false
+  OK Positive
 
 Grp: ElemDecl / name00301m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45432,10 +45425,7 @@ Grp: ElemDecl / targetns00201m
   OK targetNS00201m
   OK targetNS00201m1_p
   OK targetNS00201m1_n
-    targetNS00201m1_n.xml:14:1: Invalid integer: "
-
-  XII
-"
+    targetNS00201m1_n.xml:14:1: Invalid integer: "XII"
 
 Grp: ElemDecl / targetns00301m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -45526,17 +45516,12 @@ Grp: ElemDecl / typedef00101m
   OK typeDef00101m
   OK typeDef00101m1_p
   OK typeDef00101m1_n
-    typeDef00101m1_n.xml:16:1: Invalid value for boolean type: "
-    
-    sure
-
-"
+    typeDef00101m1_n.xml:16:1: Invalid value for boolean type: "sure"
 
 Grp: ElemDecl / typedef00201m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef00201m
-  XP typeDef00201m1_p
-    typeDef00201m1_p.xml:16:1: string pattern not matched: [01]+
+  OK typeDef00201m1_p
   OK typeDef00201m1_n
     typeDef00201m1_n.xml:16:1: string pattern not matched: [01]+
 
@@ -45552,22 +45537,14 @@ Grp: ElemDecl / typedef00203m
   OK typeDef00203m
   OK typeDef00203m1_p
   OK typeDef00203m1_n
-    typeDef00203m1_n.xml:16:1: Invalid value for boolean type: "
-
-    Yes
-
-"
+    typeDef00203m1_n.xml:16:1: Invalid value for boolean type: "Yes"
 
 Grp: ElemDecl / typedef00204m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef00204m
   OK typeDef00204m1_p
   OK typeDef00204m1_n
-    typeDef00204m1_n.xml:16:1: Invalid value for boolean type: "
-
-    Yes
-
-"
+    typeDef00204m1_n.xml:16:1: Invalid value for boolean type: "Yes"
 
 Grp: ElemDecl / typedef00205m
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45662,10 +45639,9 @@ Grp: ElemDecl / typedef00802m2
     typeDef00802m2_n.xml:14:37: Element "Element" blocks the use of restrictions of the type
 
 Grp: ElemDecl / typedef00901m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef00901m1
-  XP Positive
-    typeDef00901m1_p.xml:16:1: string pattern not matched: true|1
+  OK Positive
   OK Negative
     typeDef00901m1_n.xml:16:1: string pattern not matched: true|1
 
@@ -45700,12 +45676,7 @@ Grp: ElemDecl / typedef01401m1
   OK typeDef01401m1
   OK Positive
   OK Negative
-    typeDef01401m1_n.xml:14:1: Exponent parent not authorized in 
-
-
-    1e2
-
-
+    typeDef01401m1_n.xml:14:1: Exponent parent not authorized in 1e2
 
 Grp: ElemDecl / typedef01501m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -64402,10 +64373,9 @@ Grp: MS-DataTypes2006-07-15 / normalizedString002_2096
   OK normalizedString002_2096.v
 
 Grp: MS-DataTypes2006-07-15 / normalizedString003_2097
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK normalizedString003_2097
-  XP normalizedString003_2097.v
-    normalizedString003.xml:8:5: HT, LF and CR characters not allowed
+  OK normalizedString003_2097.v
 
 Grp: MS-DataTypes2006-07-15 / token001_2098
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -64418,16 +64388,14 @@ Grp: MS-DataTypes2006-07-15 / token002_2099
   OK token002_2099.v
 
 Grp: MS-DataTypes2006-07-15 / token003_2100
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK token003_2100
-  XP token003_2100.v
-    token003.xml:6:19: Duplicate space characters not allowed
+  OK token003_2100.v
 
 Grp: MS-DataTypes2006-07-15 / token004_2101
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK token004_2101
-  XP token004_2101.v
-    token004.xml:8:2: HT, LF and CR characters not allowed
+  OK token004_2101.v
 
 Grp: MS-DataTypes2006-07-15 / language001_2102
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -64816,7 +64784,7 @@ Grp: MS-DataTypes2006-07-15 / long006_2172
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK long006_2172
   OK long006_2172.i
-    long006.xml:6:36: Invalid integer: "-9223372036854775809 "
+    long006.xml:6:36: Invalid integer: "-9223372036854775809"
 
 Grp: MS-DataTypes2006-07-15 / long007_2173
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67058,10 +67026,9 @@ Grp: MS-Errata102006-07-15 / errE006
   OK errE006.v
 
 Grp: MS-Errata102006-07-15 / errE008
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK errE008
-  XP errE008.v
-    errE008.xml:5:19: HT, LF and CR characters not allowed
+  OK errE008.v
 
 Grp: MS-Errata102006-07-15 / errF001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91831,16 +91798,14 @@ Grp: MS-Schema2006-07-15 / schG6
     schG6_a.xsd:7:61: schG6_c.xsd:11:20: Type has already been declared: ct-A
 
 Grp: MS-Schema2006-07-15 / schG7
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK schG7
-  XP schG7.v
-    schG7.xml:17:11: Invalid integer: "123	"
+  OK schG7.v
 
 Grp: MS-Schema2006-07-15 / schG8
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK schG8
-  XP schG8.v
-    schG8.xml:11:11: Invalid integer: "123	"
+  OK schG8.v
 
 Grp: MS-Schema2006-07-15 / schG9
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93277,10 +93242,9 @@ Grp: MS-SimpleType2006-07-15 / stG009
     stG009.xml:5:3: Invalid number of elements in list, expecting at least 2
 
 Grp: MS-SimpleType2006-07-15 / stG010
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stG010
-  XP stG010.v
-    stG010.xml:5:3: Element's value not in the enumeration set
+  OK stG010.v
 
 Grp: MS-SimpleType2006-07-15 / stG011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93289,10 +93253,9 @@ Grp: MS-SimpleType2006-07-15 / stG011
     stG011.xml:5:3: Element's value not in the enumeration set
 
 Grp: MS-SimpleType2006-07-15 / stG012
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stG012
-  XP stG012.v
-    stG012.xml:5:3: string pattern not matched: [A-C]{0,2}
+  OK stG012.v
 
 Grp: MS-SimpleType2006-07-15 / stG013
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93319,9 +93282,7 @@ Grp: MS-SimpleType2006-07-15 / stH004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stH004
   OK stH004.i
-    stH004.xml:5:3: Invalid value "
-	NY
-  "
+    stH004.xml:5:3: Invalid value "NY"
 
 Grp: MS-SimpleType2006-07-15 / stH005
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95391,7 +95352,7 @@ Total number of tests: 37041 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 198
 SF: XSD OK, should be KO: in_full_fail= 644
-XP: XML KO, should be OK: in_partial= 74 in_full_fail= 3
+XP: XML KO, should be OK: in_partial= 63 in_full_fail= 3
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 922 ( 2.5 %)
+Total errors: 911 ( 2.5 %)
