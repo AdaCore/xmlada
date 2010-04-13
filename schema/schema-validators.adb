@@ -69,6 +69,9 @@ package body Schema.Validators is
    procedure Free (Element : in out XML_Element_Record);
    --  Free Element
 
+   function To_QName (Particle : XML_Particle) return Byte_Sequence;
+   --  Return the QName for the element described by particle
+
    function Move_To_Next_Particle
      (Seq   : access Sequence_Record'Class;
       Data  : Sequence_Data_Access;
@@ -2757,8 +2760,26 @@ package body Schema.Validators is
    exception
       when others =>
          Debug_Pop_Prefix;
-         raise;
+         Element_Validator := No_Element;
    end Run_Nested;
+
+   --------------
+   -- To_QName --
+   --------------
+
+   function To_QName (Particle : XML_Particle) return Byte_Sequence is
+   begin
+      case Particle.Typ is
+         when Particle_Element =>
+            return To_QName
+              (Particle.Element.Elem.NS.Namespace_URI.all,
+               Particle.Element.Elem.Local_Name.all);
+         when Particle_Any =>
+            return "any";
+         when others =>
+            return "unknown";
+      end case;
+   end To_QName;
 
    ----------------------------
    -- Validate_Start_Element --
@@ -2779,6 +2800,33 @@ package body Schema.Validators is
       pragma Unreferenced (Tmp);
       Skip_Current : Boolean;
 
+      procedure Check_Min_Occurs;
+      --  Check that D.Current was indeed seen at least the minimal required
+      --  number of times
+
+      procedure Check_Min_Occurs is
+      begin
+         if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
+            if D.Num_Occurs_Of_Current = 0
+              and then D.Previous /= null
+              and then D.Previous.Typ = Particle_Element
+              and then Namespace_URI =
+                D.Previous.Element.Elem.NS.Namespace_URI.all
+              and then Local_Name = D.Previous.Element.Elem.Local_Name.all
+            then
+               Validation_Error
+                 ("Too many occurrences of """
+                  & To_QName (Namespace_URI, Local_Name)
+                  & """ (expecting """ & To_QName (Curr.all) & """)");
+            else
+               Validation_Error
+                 ("Expecting at least"
+                  & Integer'Image (Get_Min_Occurs (D.Current))
+                  & " occurrences of """ & To_QName (Curr.all) & """");
+            end if;
+         end if;
+      end Check_Min_Occurs;
+
    begin
       Debug_Push_Prefix
         ("Validate_Start seq " & Get_Name (Validator)
@@ -2793,60 +2841,59 @@ package body Schema.Validators is
          if Element_Validator /= No_Element then
             Debug_Pop_Prefix;
             return;
+         end if;
 
-         else
-            --  We might have to try the same element again, in case it only
-            --  returned No_Element because its maxOccurs was reached, be could
-            --  itself be repeat another time:
-            --     <sequence>
-            --       <choice maxOccurs="3">
-            --          <element name="foo" maxOccurs="2" />
-            --          <element name="bar" maxOccurs="1" />
-            --  and the following instance
-            --       <foo/> <foo/> <bar/>    (the choice is repeat twice here)
+         --  We might have to try the same element again, in case it only
+         --  returned No_Element because its maxOccurs was reached, be could
+         --  itself be repeat another time:
+         --     <sequence>
+         --       <choice maxOccurs="3">
+         --          <element name="foo" maxOccurs="2" />
+         --          <element name="bar" maxOccurs="1" />
+         --  and the following instance
+         --       <foo/> <foo/> <bar/>    (the choice is repeat twice here)
 
-            Check_Nested
-              (Get (D.Current).Validator, D, Local_Name,
-               Namespace_URI, NS, Grammar,
-               Element_Validator, Skip_Current);
+         Check_Nested
+           (Get (D.Current).Validator, D, Local_Name,
+            Namespace_URI, NS, Grammar,
+            Element_Validator, Skip_Current);
 
-            if Element_Validator /= No_Element then
-               D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
-               if Get_Max_Occurs (D.Current) = Unbounded
-                 or else D.Num_Occurs_Of_Current <= Get_Max_Occurs (D.Current)
-               then
-                  Debug_Pop_Prefix;
-                  return;
-               end if;
-
-               --  We cannot raise a Validation_Error here, since there might
-               --  be other valid occurrences of this element. For instance
-               --    <choice maxOccurs="unbounded">
-               --      <sequence>
-               --          <element ref="shell" minOccurs="1" maxOccurs="1" />
-               --  and the following instance
-               --     <shell><shell>
-
-               if Debug then
-                  Debug_Output
-                    ("Giving up on sequence, since repeated too often (maxOcc="
-                     & Integer'Image (Get_Max_Occurs (D.Current)) & ")");
-               end if;
-               Element_Validator := No_Element;
-               Debug_Pop_Prefix;
-               return;
-            end if;
-
-            --  The number of calls should only be incremented when we start
-            --  the sequence initially, not when encountering the end of the
-            --  sequence
-
-            if not Move_To_Next_Particle
-              (Validator, D, Force => False, Increase_Count => False)
+         if Element_Validator /= No_Element then
+            D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
+            if Get_Max_Occurs (D.Current) = Unbounded
+              or else D.Num_Occurs_Of_Current <= Get_Max_Occurs (D.Current)
             then
                Debug_Pop_Prefix;
                return;
             end if;
+
+            --  We cannot raise a Validation_Error here, since there might
+            --  be other valid occurrences of this element. For instance
+            --    <choice maxOccurs="unbounded">
+            --      <sequence>
+            --          <element ref="shell" minOccurs="1" maxOccurs="1" />
+            --  and the following instance
+            --     <shell><shell>
+
+            if Debug then
+               Debug_Output
+                 ("Giving up on sequence, since repeated too often (maxOcc="
+                  & Integer'Image (Get_Max_Occurs (D.Current)) & ")");
+            end if;
+            Element_Validator := No_Element;
+            Debug_Pop_Prefix;
+            return;
+         end if;
+
+         --  The number of calls should only be incremented when we start
+         --  the sequence initially, not when encountering the end of the
+         --  sequence
+
+         if not Move_To_Next_Particle
+           (Validator, D, Force => False, Increase_Count => False)
+         then
+            Debug_Pop_Prefix;
+            return;
          end if;
       end if;
 
@@ -2869,40 +2916,24 @@ package body Schema.Validators is
                   end if;
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
-               elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
-                  if D.Num_Occurs_Of_Current = 0
-                    and then D.Previous /= null
-                    and then D.Previous.Typ = Particle_Element
-                    and then Namespace_URI =
-                      D.Previous.Element.Elem.NS.Namespace_URI.all
-                    and then Local_Name =
-                      D.Previous.Element.Elem.Local_Name.all
-                  then
-                     Validation_Error
-                       ("Too many occurrences of """
-                        & To_QName (Namespace_URI, Local_Name)
-                        & """ (expecting """
-                        & To_QName
-                          (Curr.Element.Elem.NS.Namespace_URI.all,
-                           Curr.Element.Elem.Local_Name.all) & """)");
-                  else
-                     Validation_Error
-                       ("Expecting at least"
-                        & Integer'Image (Get_Min_Occurs (D.Current))
-                        & " occurrences of """
-                        & To_QName
-                          (Curr.Element.Elem.NS.Namespace_URI.all,
-                           Curr.Element.Elem.Local_Name.all) & """");
-                  end if;
+               else
+                  Check_Min_Occurs;
                end if;
 
             when Particle_Any =>
-               Validate_Start_Element
-                 (Curr.Any, Local_Name, Namespace_URI, NS,
-                  null, Grammar, Element_Validator);
-               if Element_Validator /= No_Element then
-                  Tmp := Move_To_Next_Particle (Validator, D, Force => False);
-               end if;
+               begin
+                  Validate_Start_Element
+                    (Curr.Any, Local_Name, Namespace_URI, NS,
+                     null, Grammar, Element_Validator);
+                  if Element_Validator /= No_Element then
+                     Tmp := Move_To_Next_Particle
+                       (Validator, D, Force => False);
+                  end if;
+
+               exception
+                  when XML_Validation_Error =>
+                     Check_Min_Occurs;
+               end;
 
             when Particle_Nested =>
                if Debug then
@@ -2918,12 +2949,8 @@ package body Schema.Validators is
                if Element_Validator /= No_Element then
                   D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
 
-               elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current)
-                 and then not Skip_Current
-               then
-                  Validation_Error
-                    ("Expecting "
-                     & Type_Model (D.Current, First_Only => True));
+               elsif not Skip_Current then
+                  Check_Min_Occurs;
                end if;
 
             when Particle_Group | Particle_XML_Type =>

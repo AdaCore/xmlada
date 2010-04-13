@@ -77,6 +77,8 @@ KP-32-J302-043 Lots of fixes in schema validation
               - Added support for "final" attribute in <simpleType>
               - <anyAttribute> should accept multiple namespaces in its
                 namespace attribute
+              - A sequence of <any> elements failed when the first one did
+                not match (XML/Ada never tried to match the next one)
 
   Status:     Fixed in 3.3.0
 
