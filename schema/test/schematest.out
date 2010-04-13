@@ -43593,7 +43593,7 @@ Grp: suntest / test007
     test.8.n.xml:8:91: Attribute "c:foo" invalid for this element
 
 Grp: suntest / test008
-  92.3% tests= 13 (xsd= 1 xml= 12) OK= 12 FAILED= 1
+  100.0% tests= 13 (xsd= 1 xml= 12) OK= 13 FAILED= 0
   OK test
   OK test.1.n
     test.1.n.xml:8:99: Attribute "xxx" invalid for this element
@@ -43613,8 +43613,7 @@ Grp: suntest / test008
     test.9.n.xml:8:95: Attribute "xxx" invalid for this element
   OK test.2.v
   OK test.3.v
-  XP test.4.v
-    test.4.v.xml:8:101: Attribute "c:xxx" invalid for this element
+  OK test.4.v
   OK test.6.v
 
 Grp: suntest / test009
@@ -53014,10 +53013,9 @@ Grp: MS-ComplexType2006-07-15 / ctH010
   OK ctH010.v
 
 Grp: MS-ComplexType2006-07-15 / ctH011
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctH011
-  XP ctH011.v
-    ctH011.xml:2:205: Attribute "other:myAttr1" invalid for this element
+  OK ctH011.v
 
 Grp: MS-ComplexType2006-07-15 / ctH012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95348,7 +95346,7 @@ Total number of tests: 37041 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 198
 SF: XSD OK, should be KO: in_full_fail= 644
-XP: XML KO, should be OK: in_partial= 59 in_full_fail= 3
+XP: XML KO, should be OK: in_partial= 57 in_full_fail= 3
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 907 ( 2.4 %)
+Total errors: 905 ( 2.4 %)

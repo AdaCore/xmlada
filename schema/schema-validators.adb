@@ -717,7 +717,8 @@ package body Schema.Validators is
       Seen     : array (0 .. Length - 1) of Boolean := (others => False);
 
       type Any_Status is (Any_None, Any_All, Any_Not_All);
-      Seen_Any : array (0 .. Length - 1) of Any_Status := (others => Any_None);
+      type Any_Status_Array is array (0 .. Length - 1) of Any_Status;
+      Seen_Any : Any_Status_Array := (others => Any_None);
 
       use Attributes_Htable;
       Visited : Attributes_Htable.HTable (101);
@@ -728,7 +729,9 @@ package body Schema.Validators is
       --  Chech whether Named appears in Atts
 
       procedure Recursive_Check
-        (Validator : XML_Validator; Ignore_Wildcard : Boolean);
+        (Validator       : XML_Validator;
+         Ignore_Wildcard : Boolean;
+         Must_Match_All_Any : Boolean);
       procedure Recursive_Check_Named (List : Attribute_Or_Group);
       procedure Check_Any
         (List : Attribute_Or_Group; Must_Match_All_Any : Boolean);
@@ -969,22 +972,26 @@ package body Schema.Validators is
       ---------------------
 
       procedure Recursive_Check
-        (Validator : XML_Validator; Ignore_Wildcard : Boolean)
+        (Validator       : XML_Validator;
+         Ignore_Wildcard : Boolean;
+         Must_Match_All_Any : Boolean)
       is
          List   : Attribute_Validator_List_Access;
          Dep1, Dep2 : XML_Validator;
          Ignore_Dep1_Wildcard : Boolean;
          Must_Match_All_Any2 : Boolean;
       begin
-         if Debug then
-            Debug_Push_Prefix
-              ("Checking attributes from " & Get_Name (Validator)
-               & " ignore_wildcards=" & Ignore_Wildcard'Img);
-         end if;
-
          Get_Attribute_Lists
            (Validator, List,
             Dep1, Ignore_Dep1_Wildcard, Dep2, Must_Match_All_Any2);
+
+         if Debug then
+            Debug_Push_Prefix
+              ("Checking attributes from " & Get_Name (Validator)
+               & " ignore_wildcards=" & Ignore_Wildcard'Img
+               & " all_any=" & Must_Match_All_Any2'Img);
+         end if;
+
          if List /= null then
             for L in List'Range loop
                Recursive_Check_Named (List (L));
@@ -992,17 +999,46 @@ package body Schema.Validators is
          end if;
 
          if Dep1 /= null then
-            Recursive_Check (Dep1, Ignore_Wildcard or Ignore_Dep1_Wildcard);
+            Recursive_Check (Dep1, Ignore_Wildcard or Ignore_Dep1_Wildcard,
+                             Must_Match_All_Any2);
          end if;
 
          if Dep2 /= null then
-            Recursive_Check (Dep2, Ignore_Wildcard);
+            Recursive_Check (Dep2, Ignore_Wildcard, Must_Match_All_Any2);
          end if;
 
          if List /= null and then not Ignore_Wildcard then
-            for L in List'Range loop
-               Check_Any (List (L), Must_Match_All_Any2);
-            end loop;
+            --  If the policy for <anyAttribute> has changed, we restart from
+            --  scratch: we need to ensure that within the current validator
+            --  (and its dependencies), all <anyAttribute> matches for a given
+            --  attribute (or not). This computation should not be influence by
+            --  validators seen previously.
+
+            if Must_Match_All_Any2 /= Must_Match_All_Any then
+               declare
+                  Saved_Seen_Any : Any_Status_Array := Seen_Any;
+               begin
+                  for S in Seen_Any'Range loop
+                     if Seen_Any (S) = Any_Not_All then
+                        Seen_Any (S) := Any_None;
+                     end if;
+                  end loop;
+
+                  for L in List'Range loop
+                     Check_Any (List (L), Must_Match_All_Any2);
+                  end loop;
+
+                  for S in Seen_Any'Range loop
+                     if Seen_Any (S) /= Any_All then
+                        Seen_Any (S) := Saved_Seen_Any (S);
+                     end if;
+                  end loop;
+               end;
+            else
+               for L in List'Range loop
+                  Check_Any (List (L), Must_Match_All_Any2);
+               end loop;
+            end if;
          end if;
 
          Debug_Pop_Prefix;
@@ -1016,7 +1052,8 @@ package body Schema.Validators is
    begin
       Debug_Push_Prefix ("Validate_Attributes " & Get_Name (Validator));
 
-      Recursive_Check (XML_Validator (Validator), Ignore_Wildcard => False);
+      Recursive_Check (XML_Validator (Validator), Ignore_Wildcard => False,
+                       Must_Match_All_Any => False);
 
       Is_Nil := False;
 
