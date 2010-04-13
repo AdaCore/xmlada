@@ -218,12 +218,14 @@ package body Schema.Validators is
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
       Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator) is
+      Dependency2 : out XML_Validator;
+      Must_Match_All_Any_In_Dep2 : out Boolean) is
    begin
       List := Validator.Attributes;
       Dependency1 := null;
       Ignore_Wildcard_In_Dep1 := False;
       Dependency2 := null;
+      Must_Match_All_Any_In_Dep2 := False;
    end Get_Attribute_Lists;
 
    ----------------------
@@ -713,7 +715,9 @@ package body Schema.Validators is
    is
       Length   : constant Natural := Get_Length (Atts);
       Seen     : array (0 .. Length - 1) of Boolean := (others => False);
-      Seen_Any : array (0 .. Length - 1) of Boolean := (others => False);
+
+      type Any_Status is (Any_None, Any_All, Any_Not_All);
+      Seen_Any : array (0 .. Length - 1) of Any_Status := (others => Any_None);
 
       use Attributes_Htable;
       Visited : Attributes_Htable.HTable (101);
@@ -726,7 +730,8 @@ package body Schema.Validators is
       procedure Recursive_Check
         (Validator : XML_Validator; Ignore_Wildcard : Boolean);
       procedure Recursive_Check_Named (List : Attribute_Or_Group);
-      procedure Check_Any (List : Attribute_Or_Group);
+      procedure Check_Any
+        (List : Attribute_Or_Group; Must_Match_All_Any : Boolean);
       --  Check recursively the attributes provided by Validator.
 
       procedure Check_Named_Attribute
@@ -915,12 +920,13 @@ package body Schema.Validators is
       -- Check_Any --
       ---------------
 
-      procedure Check_Any (List : Attribute_Or_Group) is
+      procedure Check_Any
+        (List : Attribute_Or_Group; Must_Match_All_Any : Boolean) is
       begin
          if List.Is_Group then
             if List.Group.Attributes /= null then
                for A in List.Group.Attributes'Range loop
-                  Check_Any (List.Group.Attributes (A));
+                  Check_Any (List.Group.Attributes (A), Must_Match_All_Any);
                end loop;
             end if;
 
@@ -930,10 +936,29 @@ package body Schema.Validators is
             --  that the attribute is tested multiple times
 
             for A in 0 .. Length - 1 loop
-               if not Seen (A) then
-                  Seen_Any (A) := True;
-                  Check_Any_Attribute
-                    (Any_Attribute_Validator (List.Attr.all), A);
+               if not Seen (A)
+                 and then (Must_Match_All_Any
+                           or else Seen_Any (A) /= Any_All)
+               then
+                  begin
+                     Check_Any_Attribute
+                       (Any_Attribute_Validator (List.Attr.all), A);
+
+                     --  If there was an exception, don't mark the attribute as
+                     --  seen, it is invalid. Maybe another <anyAttribute> will
+                     --  match
+
+                     case Seen_Any (A) is
+                        when Any_None | Any_All => Seen_Any (A) := Any_All;
+                        when Any_Not_All        => null;
+                     end case;
+
+                  exception
+                     when XML_Validation_Error =>
+                        if Must_Match_All_Any then
+                           Seen_Any (A) := Any_Not_All;
+                        end if;
+                  end;
                end if;
             end loop;
          end if;
@@ -949,6 +974,7 @@ package body Schema.Validators is
          List   : Attribute_Validator_List_Access;
          Dep1, Dep2 : XML_Validator;
          Ignore_Dep1_Wildcard : Boolean;
+         Must_Match_All_Any2 : Boolean;
       begin
          if Debug then
             Debug_Push_Prefix
@@ -957,7 +983,8 @@ package body Schema.Validators is
          end if;
 
          Get_Attribute_Lists
-           (Validator, List, Dep1, Ignore_Dep1_Wildcard, Dep2);
+           (Validator, List,
+            Dep1, Ignore_Dep1_Wildcard, Dep2, Must_Match_All_Any2);
          if List /= null then
             for L in List'Range loop
                Recursive_Check_Named (List (L));
@@ -974,7 +1001,7 @@ package body Schema.Validators is
 
          if List /= null and then not Ignore_Wildcard then
             for L in List'Range loop
-               Check_Any (List (L));
+               Check_Any (List (L), Must_Match_All_Any2);
             end loop;
          end if;
 
@@ -994,7 +1021,7 @@ package body Schema.Validators is
       Is_Nil := False;
 
       for S in Seen'Range loop
-         if not Seen (S) and not Seen_Any (S) then
+         if not Seen (S) and then Seen_Any (S) /= Any_All then
             if Get_URI (Atts, S) = XML_Instance_URI then
                if Get_Local_Name (Atts, S) = "nil" then
                   if not Nillable then
@@ -2794,9 +2821,11 @@ package body Schema.Validators is
               (Particle.Element.Elem.NS.Namespace_URI.all,
                Particle.Element.Elem.Local_Name.all);
          when Particle_Any =>
-            return "any";
+            return "<any>";
+         when Particle_Nested =>
+            return Type_Model (Particle.Validator, First_Only => False);
          when others =>
-            return "unknown";
+            return "???";
       end case;
    end To_QName;
 
@@ -4632,7 +4661,8 @@ package body Schema.Validators is
                if Debug then
                   Debug_Output
                     ("Definition not found for attribute "
-                     & Get_Local_Name (Atts, Index));
+                     & To_QName (Get_URI (Atts, Index),
+                                 Get_Local_Name (Atts, Index)));
                end if;
             else
                Validate_Attribute (Attr.all, Atts, Index, Context);

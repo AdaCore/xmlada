@@ -1183,7 +1183,8 @@ private
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
       Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator);
+      Dependency2 : out XML_Validator;
+      Must_Match_All_Any_In_Dep2 : out Boolean);
    --  Return the list of attributes that need to be checked for this
    --  validator, and a set of other validators whose list of attributes also
    --  need to be checked (they in turn will be called through this subprogram

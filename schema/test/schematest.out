@@ -43580,23 +43580,23 @@ Grp: suntest / test007
   OK test.1.v
   OK test.6.v
   OK test.2.n
-    test.2.n.xml:8:91: Attribute "a:foo": Invalid namespace for {urn:a}foo
+    test.2.n.xml:8:91: Attribute "a:foo" invalid for this element
   OK test.3.n
-    test.3.n.xml:8:91: Attribute "b:foo": Invalid namespace for {urn:b}foo
+    test.3.n.xml:8:91: Attribute "b:foo" invalid for this element
   OK test.4.n
-    test.4.n.xml:8:91: Attribute "foo": Invalid namespace for foo
+    test.4.n.xml:8:91: Attribute "foo" invalid for this element
   OK test.5.n
-    test.5.n.xml:8:89: Attribute "foo": Invalid namespace for foo
+    test.5.n.xml:8:89: Attribute "foo" invalid for this element
   OK test.7.n
-    test.7.n.xml:8:91: Attribute "b:foo": Invalid namespace for {urn:b}foo
+    test.7.n.xml:8:91: Attribute "b:foo" invalid for this element
   OK test.8.n
-    test.8.n.xml:8:91: Attribute "c:foo": Invalid namespace for {urn:c}foo
+    test.8.n.xml:8:91: Attribute "c:foo" invalid for this element
 
 Grp: suntest / test008
-  76.9% tests= 13 (xsd= 1 xml= 12) OK= 10 FAILED= 3
+  92.3% tests= 13 (xsd= 1 xml= 12) OK= 12 FAILED= 1
   OK test
   OK test.1.n
-    test.1.n.xml:8:99: Attribute "xxx": Invalid namespace for xxx
+    test.1.n.xml:8:99: Attribute "xxx" invalid for this element
   OK test.10.n
     test.10.n.xml:8:97: Attribute "a:xxx" invalid for this element
   OK test.11.n
@@ -43604,19 +43604,17 @@ Grp: suntest / test008
   OK test.12.n
     test.12.n.xml:8:97: Attribute "c:xxx" invalid for this element
   OK test.5.n
-    test.5.n.xml:8:101: Attribute "xxx": Invalid namespace for xxx
+    test.5.n.xml:8:101: Attribute "xxx" invalid for this element
   OK test.7.n
-    test.7.n.xml:8:103: Attribute "b:xxx": Invalid namespace for {urn:b}xxx
+    test.7.n.xml:8:103: Attribute "b:xxx" invalid for this element
   OK test.8.n
-    test.8.n.xml:8:103: Attribute "c:xxx": Invalid namespace for {urn:c}xxx
+    test.8.n.xml:8:103: Attribute "c:xxx" invalid for this element
   OK test.9.n
     test.9.n.xml:8:95: Attribute "xxx" invalid for this element
-  XP test.2.v
-    test.2.v.xml:8:101: Attribute "a:xxx": Invalid namespace for {urn:a}xxx
-  XP test.3.v
-    test.3.v.xml:8:101: Attribute "b:xxx": Invalid namespace for {urn:b}xxx
+  OK test.2.v
+  OK test.3.v
   XP test.4.v
-    test.4.v.xml:8:101: Attribute "c:xxx": Invalid namespace for {urn:c}xxx
+    test.4.v.xml:8:101: Attribute "c:xxx" invalid for this element
   OK test.6.v
 
 Grp: suntest / test009
@@ -43765,29 +43763,29 @@ Grp: suntest / xsd004
   OK xsd004.n00
     xsd004.n00.xml:16:12: Must be a simple type, no <illegal> child allowed
   OK xsd004.n01
-    xsd004.n01.xml:14:20: Expecting at least 1 occurrences of "any"
+    xsd004.n01.xml:14:20: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n02
-    xsd004.n02.xml:14:15: Expecting at least 1 occurrences of "any"
+    xsd004.n02.xml:14:15: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n03
-    xsd004.n03.xml:14:21: Expecting at least 1 occurrences of "any"
+    xsd004.n03.xml:14:21: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n04
     xsd004.n04.xml:15:2: No character data allowed by content model
   OK xsd004.n05
-    xsd004.n05.xml:14:15: Expecting at least 1 occurrences of "any"
+    xsd004.n05.xml:14:15: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n06
-    xsd004.n06.xml:14:12: Expecting at least 1 occurrences of "any"
+    xsd004.n06.xml:14:12: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n07
-    xsd004.n07.xml:14:21: Expecting at least 1 occurrences of "any"
+    xsd004.n07.xml:14:21: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n08
-    xsd004.n08.xml:14:21: Expecting at least 1 occurrences of "any"
+    xsd004.n08.xml:14:21: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n09
-    xsd004.n09.xml:14:12: Expecting at least 1 occurrences of "any"
+    xsd004.n09.xml:14:12: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n10
-    xsd004.n10.xml:14:18: Expecting at least 1 occurrences of "any"
+    xsd004.n10.xml:14:18: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n11
-    xsd004.n11.xml:14:15: Expecting at least 1 occurrences of "any"
+    xsd004.n11.xml:14:15: Expecting at least 1 occurrences of "<any>"
   OK xsd004.n12
-    xsd004.n12.xml:14:18: Expecting at least 1 occurrences of "any"
+    xsd004.n12.xml:14:18: Expecting at least 1 occurrences of "<any>"
   OK xsd004.v00
 
 Grp: suntest / xsd005
@@ -43942,29 +43940,29 @@ Grp: suntest / xsd021
   100.0% tests= 14 (xsd= 1 xml= 13) OK= 14 FAILED= 0
   OK xsd021
   OK xsd021.n00
-    xsd021.n00.xml:14:28: Attribute "f:a": Invalid integer: "invalid"
+    xsd021.n00.xml:14:28: Attribute "f:a" invalid for this element
   OK xsd021.n01
-    xsd021.n01.xml:14:27: Attribute "z:c": Invalid integer: "not ok"
+    xsd021.n01.xml:14:27: Attribute "z:c" invalid for this element
   OK xsd021.n02
-    xsd021.n02.xml:14:38: Attribute "u:undeclared": No definition provided
+    xsd021.n02.xml:14:38: Attribute "u:undeclared" invalid for this element
   OK xsd021.n03
-    xsd021.n03.xml:14:31: Attribute "f:b": Invalid integer: "invalid"
+    xsd021.n03.xml:14:31: Attribute "f:b" invalid for this element
   OK xsd021.n04
-    xsd021.n04.xml:14:33: Attribute "f:a": Invalid namespace for {foo}a
+    xsd021.n04.xml:14:33: Attribute "f:a" invalid for this element
   OK xsd021.n05
-    xsd021.n05.xml:14:25: Attribute "f:a": Invalid namespace for {foo}a
+    xsd021.n05.xml:14:25: Attribute "f:a" invalid for this element
   OK xsd021.n06
-    xsd021.n06.xml:14:24: Attribute "f:a": Invalid namespace for {foo}a
+    xsd021.n06.xml:14:24: Attribute "f:a" invalid for this element
   OK xsd021.n07
-    xsd021.n07.xml:14:24: Attribute "b:b": Invalid namespace for {bar}b
+    xsd021.n07.xml:14:24: Attribute "b:b" invalid for this element
   OK xsd021.n08
-    xsd021.n08.xml:14:35: Attribute "local": Invalid namespace for local
+    xsd021.n08.xml:14:35: Attribute "local" invalid for this element
   OK xsd021.n09
-    xsd021.n09.xml:14:34: Attribute "f:a": Invalid integer: "invalid"
+    xsd021.n09.xml:14:34: Attribute "f:a" invalid for this element
   OK xsd021.n10
-    xsd021.n10.xml:14:30: Attribute "local": Invalid namespace for local
+    xsd021.n10.xml:14:30: Attribute "local" invalid for this element
   OK xsd021.n11
-    xsd021.n11.xml:14:28: Attribute "f:a": Invalid namespace for {foo}a
+    xsd021.n11.xml:14:28: Attribute "f:a" invalid for this element
   OK xsd021.v00
 
 Grp: suntest / xsd022
@@ -45563,7 +45561,7 @@ Grp: ElemDecl / typedef00401m
   OK typeDef00401m
   OK typeDef00401m1_p
   OK typeDef00401m1_n
-    typeDef00401m1_n.xml:18:13: Expecting at least 1 occurrences of "unknown"
+    typeDef00401m1_n.xml:18:13: Expecting at least 1 occurrences of "{ElemDecl/typeDef}Global,{ElemDecl/typeDef}Local"
 
 Grp: ElemDecl / typedef00402m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46199,7 +46197,7 @@ Grp: MGroup / compositor00101m1
   OK compositor00101m1
   OK Positive
   OK Negative
-    compositor00101m1_n.xml:13:7: Expecting at least 1 occurrences of "unknown"
+    compositor00101m1_n.xml:13:7: Expecting at least 1 occurrences of "{compositor}date,{compositor}time,{compositor}name"
 
 Grp: MGroup / compositor00102m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46276,7 +46274,7 @@ Grp: MGroup / particles00202m1
   OK particles00202m1
   OK Positive
   OK Negative
-    particles00202m1_n.xml:14:11: Expecting at least 1 occurrences of "unknown"
+    particles00202m1_n.xml:14:11: Expecting at least 1 occurrences of "({particles}date,{particles}marked)|({particles}num)"
 
 Grp: MGroup / particles00203m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46290,7 +46288,7 @@ Grp: MGroup / particles00204m1
   OK particles00204m1
   OK Positive
   OK Negative
-    particles00204m1_n.xml:14:11: Expecting at least 1 occurrences of "unknown"
+    particles00204m1_n.xml:14:11: Expecting at least 1 occurrences of "({particles}date,{particles}marked)|({particles}num)"
 
 Grp: MGroup / particles00205m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -46342,7 +46340,7 @@ Grp: MGroupDef / annotation00101m1
 Grp: MGroupDef / annotation00101m2
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotation00101m2
-    annotation00101m2.xsd:27:27: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "unknown")
+    annotation00101m2.xsd:27:27: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://w
 
 Grp: MGroupDef / annotation00101m3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -46357,7 +46355,7 @@ Grp: MGroupDef / annotation00101m4
 Grp: MGroupDef / annotation00101m5
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotation00101m5
-    annotation00101m5.xsd:27:27: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "unknown")
+    annotation00101m5.xsd:27:27: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://w
 
 Grp: MGroupDef / annotation00101m6
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47410,28 +47408,28 @@ Grp: Wildcard / nsconstraint00201m1
   OK nsConstraint00201m1
   OK Positive
   OK Negative
-    nsConstraint00201m1_n.xml:14:12: Expecting at least 1 occurrences of "any"
+    nsConstraint00201m1_n.xml:14:12: Expecting at least 1 occurrences of "<any>"
 
 Grp: Wildcard / nsconstraint00202m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK nsConstraint00202m1
   OK Positive
   OK Negative
-    nsConstraint00202m1_n.xml:14:29: Attribute "test:date": Invalid namespace for {nsConstraint}date
+    nsConstraint00202m1_n.xml:14:29: Attribute "test:date" invalid for this element
 
 Grp: Wildcard / nsconstraint00301m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK nsConstraint00301m1
   OK Positive
   OK Negative
-    nsConstraint00301m1_n.xml:15:12: Expecting at least 1 occurrences of "any"
+    nsConstraint00301m1_n.xml:15:12: Expecting at least 1 occurrences of "<any>"
 
 Grp: Wildcard / nsconstraint00302m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK nsConstraint00302m1
   OK Positive
   OK Negative
-    nsConstraint00302m1_n.xml:15:29: Attribute "test:date": Invalid namespace for {nsConstraint}date
+    nsConstraint00302m1_n.xml:15:29: Attribute "test:date" invalid for this element
 
 Grp: Wildcard / pscontents00101m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47444,20 +47442,20 @@ Grp: Wildcard / pscontents00101m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK psContents00101m2
   OK Negative
-    psContents00101m2_n.xml:13:12: Expecting at least 1 occurrences of "any"
+    psContents00101m2_n.xml:13:12: Expecting at least 1 occurrences of "<any>"
 
 Grp: Wildcard / pscontents00102m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK psContents00102m1
   OK Positive
   OK Negative
-    psContents00102m1_n.xml:13:22: Attribute "time": No definition provided
+    psContents00102m1_n.xml:13:22: Attribute "time" invalid for this element
 
 Grp: Wildcard / pscontents00102m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK psContents00102m2
   OK Negative
-    psContents00102m2_n.xml:13:29: Attribute "test:date": No definition provided
+    psContents00102m2_n.xml:13:29: Attribute "test:date" invalid for this element
 
 Grp: Wildcard / pscontents00201m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47490,7 +47488,7 @@ Grp: Wildcard / pscontents00302m1
   OK psContents00302m1
   OK Positive
   OK Negative
-    psContents00302m1_n.xml:13:29: Attribute "test:date": Invalid date "2002-xx-30"
+    psContents00302m1_n.xml:13:29: Attribute "test:date" invalid for this element
 
 Grp: Wildcard / pscontents00302m2
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -49119,7 +49117,7 @@ Grp: MS-Annotations2006-07-15 / annotB017
 Grp: MS-Annotations2006-07-15 / annotB018
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotB018
-    annotB018.xsd:12:19: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "unknown")
+    annotB018.xsd:12:19: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.or
 
 Grp: MS-Annotations2006-07-15 / annotB019
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49279,7 +49277,7 @@ Grp: MS-Annotations2006-07-15 / annotF008
 Grp: MS-Annotations2006-07-15 / annotF009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK annotF009
-    annotF009.xsd:3:29: Attribute "foo": Invalid namespace for foo
+    annotF009.xsd:3:29: Attribute "foo" invalid for this element
 
 Grp: MS-Annotations2006-07-15 / annotZ001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49723,7 +49721,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD023
   OK attgD023.i
-    attgD023.xml:1:154: Attribute "x:foo": Invalid namespace for {http://xsdtesting}foo
+    attgD023.xml:1:154: Attribute "x:foo" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD024
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -49739,7 +49737,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD026
   OK attgD026.i
-    attgD026.xml:3:33: Attribute "a:a": Invalid namespace for {foo}a
+    attgD026.xml:3:33: Attribute "a:a" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD027
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49750,7 +49748,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD028
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD028
   OK attgD028.i
-    attgD028.xml:3:45: Attribute "a:a": Invalid namespace for {bar}a
+    attgD028.xml:3:45: Attribute "a:a" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD029
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49761,7 +49759,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgD030
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD030
   OK attgD030.i
-    attgD030.xml:3:33: Attribute "a:b": Invalid namespace for {foo}b
+    attgD030.xml:3:33: Attribute "a:b" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgD031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49821,13 +49819,13 @@ Grp: MS-AttributeGroup2006-07-15 / attgD042
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgD042
   OK attgD042.i
-    attgD042.xml:3:48: Attribute "aga1": Invalid namespace for aga1
+    attgD042.xml:3:48: Attribute "aga1" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgZ001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attgZ001
   OK attgZ001.i
-    attgZ001.xml:3:21: Attribute "foo": Invalid namespace for foo
+    attgZ001.xml:3:21: Attribute "foo" invalid for this element
 
 Grp: MS-AttributeGroup2006-07-15 / attgZ002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50191,7 +50189,7 @@ Grp: MS-Attribute2006-07-15 / attG003
 Grp: MS-Attribute2006-07-15 / attH001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attH001
-    attH001.xsd:5:62: Attribute "value": Invalid namespace for value
+    attH001.xsd:5:62: Attribute "value" invalid for this element
 
 Grp: MS-Attribute2006-07-15 / attI001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53019,7 +53017,7 @@ Grp: MS-ComplexType2006-07-15 / ctH011
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK ctH011
   XP ctH011.v
-    ctH011.xml:2:205: Attribute "myAttr": Invalid namespace for myAttr
+    ctH011.xml:2:205: Attribute "other:myAttr1" invalid for this element
 
 Grp: MS-ComplexType2006-07-15 / ctH012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53137,10 +53135,9 @@ Grp: MS-ComplexType2006-07-15 / ctH034
   OK ctH034.v
 
 Grp: MS-ComplexType2006-07-15 / ctH035
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctH035
-  XP ctH035.v
-    ctH035.xml:2:201: Attribute "local": Invalid namespace for local
+  OK ctH035.v
 
 Grp: MS-ComplexType2006-07-15 / ctH036
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53198,10 +53195,9 @@ Grp: MS-ComplexType2006-07-15 / ctH046
   OK ctH046.v
 
 Grp: MS-ComplexType2006-07-15 / ctH047
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctH047
-  XP ctH047.v
-    ctH047.xml:2:182: Attribute "other:myAttr": Invalid namespace for {http://tempuri.org/xmlschema}myAttr
+  OK ctH047.v
 
 Grp: MS-ComplexType2006-07-15 / ctH048
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -53764,7 +53760,7 @@ Grp: MS-ComplexType2006-07-15 / ctL020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctL020
   OK ctL020.i
-    ctL020.xml:3:42: Attribute "myNS:testAttr": No definition provided
+    ctL020.xml:3:42: Attribute "myNS:testAttr" invalid for this element
 
 Grp: MS-ComplexType2006-07-15 / ctL021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -67576,7 +67572,7 @@ Grp: MS-Group2006-07-15 / groupI003v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK groupI003v
   OK groupI003v.i
-    groupI003.xml:3:8: Expecting at least 1 occurrences of "unknown"
+    groupI003.xml:3:8: Expecting at least 1 occurrences of "(x1,x2){ 1, 2}|(y1|y2)"
 
 Grp: MS-Group2006-07-15 / groupI004v
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -68042,7 +68038,7 @@ Grp: MS-Group2006-07-15 / groupO001
 Grp: MS-Group2006-07-15 / groupO002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO002
-    groupO002.xsd:5:20: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "unknown")
+    groupO002.xsd:5:20: Too many occurrences of "{http://www.w3.org/2001/XMLSchema}annotation" (expecting "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org
 
 Grp: MS-Group2006-07-15 / groupO003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68085,22 +68081,22 @@ Grp: MS-Group2006-07-15 / groupO009v
 Grp: MS-Group2006-07-15 / groupO010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO010
-    groupO010.xsd:5:26: Expecting at least 1 occurrences of "unknown"
+    groupO010.xsd:5:26: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-Group2006-07-15 / groupO011
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO011
-    groupO011.xsd:5:20: Expecting at least 1 occurrences of "unknown"
+    groupO011.xsd:5:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-Group2006-07-15 / groupO012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO012
-    groupO012.xsd:5:19: Expecting at least 1 occurrences of "unknown"
+    groupO012.xsd:5:19: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-Group2006-07-15 / groupO013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO013
-    groupO013.xsd:5:31: Expecting at least 1 occurrences of "unknown"
+    groupO013.xsd:5:31: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-Group2006-07-15 / groupO014
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68169,7 +68165,7 @@ Grp: MS-Group2006-07-15 / groupO026
 Grp: MS-Group2006-07-15 / groupO027
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK groupO027
-    groupO027.xsd:9:25: Expecting at least 1 occurrences of "unknown"
+    groupO027.xsd:9:25: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-IdentityConstraint2006-07-15 / idA001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -68294,7 +68290,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idA024
 Grp: MS-IdentityConstraint2006-07-15 / idA025
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idA025
-    idA025.xsd:16:28: Expecting at least 1 occurrences of "unknown"
+    idA025.xsd:16:28: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-IdentityConstraint2006-07-15 / idA026
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68344,7 +68340,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idA034
 Grp: MS-IdentityConstraint2006-07-15 / idA035
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idA035
-    idA035.xsd:9:58: Attribute "refer": Invalid namespace for refer
+    idA035.xsd:9:58: Attribute "refer" invalid for this element
 
 Grp: MS-IdentityConstraint2006-07-15 / idA036
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -68594,7 +68590,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idB024
 Grp: MS-IdentityConstraint2006-07-15 / idB025
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idB025
-    idB025.xsd:16:27: Expecting at least 1 occurrences of "unknown"
+    idB025.xsd:16:27: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-IdentityConstraint2006-07-15 / idB026
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -68644,7 +68640,7 @@ Grp: MS-IdentityConstraint2006-07-15 / idB034
 Grp: MS-IdentityConstraint2006-07-15 / idB035
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK idB035
-    idB035.xsd:9:56: Attribute "refer": Invalid namespace for refer
+    idB035.xsd:9:56: Attribute "refer" invalid for this element
 
 Grp: MS-IdentityConstraint2006-07-15 / idB036
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -73793,7 +73789,7 @@ Grp: MS-ModelGroups2006-07-15 / mgN006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgN006
   OK mgN006.i
-    mgN006.xml:3:7: Expecting at least 1 occurrences of "unknown"
+    mgN006.xml:3:7: Expecting at least 1 occurrences of "e1,e2"
 
 Grp: MS-ModelGroups2006-07-15 / mgN007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -73805,25 +73801,25 @@ Grp: MS-ModelGroups2006-07-15 / mgN008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgN008
   OK mgN008.i
-    mgN008.xml:4:7: Expecting at least 1 occurrences of "unknown"
+    mgN008.xml:4:7: Expecting at least 1 occurrences of "f1,f2"
 
 Grp: MS-ModelGroups2006-07-15 / mgN009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgN009
   OK mgN009.i
-    mgN009.xml:3:7: Expecting at least 1 occurrences of "unknown"
+    mgN009.xml:3:7: Expecting at least 1 occurrences of "e1,e2"
 
 Grp: MS-ModelGroups2006-07-15 / mgN010
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgN010
   OK mgN010.i
-    mgN010.xml:3:7: Expecting at least 1 occurrences of "unknown"
+    mgN010.xml:3:7: Expecting at least 1 occurrences of "e1,e2"
 
 Grp: MS-ModelGroups2006-07-15 / mgN011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgN011
   OK mgN011.i
-    mgN011.xml:4:7: Expecting at least 1 occurrences of "unknown"
+    mgN011.xml:4:7: Expecting at least 1 occurrences of "f1,f2"
 
 Grp: MS-ModelGroups2006-07-15 / mgN012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -73834,19 +73830,19 @@ Grp: MS-ModelGroups2006-07-15 / mgN013
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgN013
   OK mgN013.i
-    mgN013.xml:3:7: Expecting at least 1 occurrences of "unknown"
+    mgN013.xml:3:7: Expecting at least 1 occurrences of "e1,e2"
 
 Grp: MS-ModelGroups2006-07-15 / mgN014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgN014
   OK mgN014.i
-    mgN014.xml:3:7: Expecting at least 1 occurrences of "unknown"
+    mgN014.xml:3:7: Expecting at least 1 occurrences of "e1,e2"
 
 Grp: MS-ModelGroups2006-07-15 / mgN015
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK mgN015
   OK mgN015.i
-    mgN015.xml:3:7: Expecting at least 1 occurrences of "unknown"
+    mgN015.xml:3:7: Expecting at least 1 occurrences of "e1,e2"
 
 Grp: MS-ModelGroups2006-07-15 / mgN016
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -73975,12 +73971,12 @@ Grp: MS-ModelGroups2006-07-15 / mgO024
 Grp: MS-ModelGroups2006-07-15 / mgO025
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgO025
-    mgO025.xsd:11:20: Expecting at least 1 occurrences of "unknown"
+    mgO025.xsd:11:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-ModelGroups2006-07-15 / mgO026
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgO026
-    mgO026.xsd:7:15: Expecting at least 1 occurrences of "unknown"
+    mgO026.xsd:7:15: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-ModelGroups2006-07-15 / mgO027
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -74010,12 +74006,12 @@ Grp: MS-ModelGroups2006-07-15 / mgO031
 Grp: MS-ModelGroups2006-07-15 / mgO032
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgO032
-    mgO032.xsd:11:20: Expecting at least 1 occurrences of "unknown"
+    mgO032.xsd:11:20: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-ModelGroups2006-07-15 / mgO033
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK mgO033
-    mgO033.xsd:7:15: Expecting at least 1 occurrences of "unknown"
+    mgO033.xsd:7:15: Expecting at least 1 occurrences of "{http://www.w3.org/2001/XMLSchema}all|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}sequence"
 
 Grp: MS-ModelGroups2006-07-15 / mgO034
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -75553,7 +75549,7 @@ Grp: MS-Particles2006-07-15 / particlesEa007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEa007
   OK particlesEa007.i
-    particlesEa007.xml:3:10: Expecting at least 1 occurrences of "unknown"
+    particlesEa007.xml:3:10: Expecting at least 1 occurrences of "{http://xsdtesting}a1&{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEa008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75631,7 +75627,7 @@ Grp: MS-Particles2006-07-15 / particlesEa021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEa021
   OK particlesEa021.i
-    particlesEa021.xml:3:10: Expecting at least 1 occurrences of "unknown"
+    particlesEa021.xml:3:10: Expecting at least 1 occurrences of "{http://xsdtesting}a1&{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEa022
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -75712,7 +75708,7 @@ Grp: MS-Particles2006-07-15 / particlesEb011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb011
   OK particlesEb011.i
-    particlesEb011.xml:3:9: Expecting at least 1 occurrences of "unknown"
+    particlesEb011.xml:3:9: Expecting at least 1 occurrences of "{http://xsdtesting}a1,{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75730,7 +75726,7 @@ Grp: MS-Particles2006-07-15 / particlesEb014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb014
   OK particlesEb014.i
-    particlesEb014.xml:3:8: Expecting at least 1 occurrences of "unknown"
+    particlesEb014.xml:3:8: Expecting at least 1 occurrences of "{http://xsdtesting}a1,{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb015
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -75758,7 +75754,7 @@ Grp: MS-Particles2006-07-15 / particlesEb020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb020
   OK particlesEb020.i
-    particlesEb020.xml:3:9: Expecting at least 1 occurrences of "unknown"
+    particlesEb020.xml:3:9: Expecting at least 1 occurrences of "{http://xsdtesting}a1,{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75776,7 +75772,7 @@ Grp: MS-Particles2006-07-15 / particlesEb023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb023
   OK particlesEb023.i
-    particlesEb023.xml:3:6: Expecting at least 1 occurrences of "unknown"
+    particlesEb023.xml:3:6: Expecting at least 1 occurrences of "{http://xsdtesting}a1,{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb024
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75804,7 +75800,7 @@ Grp: MS-Particles2006-07-15 / particlesEb028
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb028
   OK particlesEb028.i
-    particlesEb028.xml:3:9: Expecting at least 1 occurrences of "unknown"
+    particlesEb028.xml:3:9: Expecting at least 1 occurrences of "{http://xsdtesting}a1,{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb029
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75822,7 +75818,7 @@ Grp: MS-Particles2006-07-15 / particlesEb031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb031
   OK particlesEb031.i
-    particlesEb031.xml:3:15: Expecting at least 1 occurrences of "unknown"
+    particlesEb031.xml:3:15: Expecting at least 1 occurrences of "{http://xsdtesting}a1,{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb032
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75840,7 +75836,7 @@ Grp: MS-Particles2006-07-15 / particlesEb034
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb034
   OK particlesEb034.i
-    particlesEb034.xml:3:9: Expecting at least 2 occurrences of "unknown"
+    particlesEb034.xml:3:9: Expecting at least 2 occurrences of "{http://xsdtesting}a1,{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75868,7 +75864,7 @@ Grp: MS-Particles2006-07-15 / particlesEb039
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEb039
   OK particlesEb039.i
-    particlesEb039.xml:3:6: Expecting at least 2 occurrences of "unknown"
+    particlesEb039.xml:3:6: Expecting at least 2 occurrences of "{http://xsdtesting}a1,{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEb040
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -75922,7 +75918,7 @@ Grp: MS-Particles2006-07-15 / particlesEc008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc008
   OK particlesEc008.i
-    particlesEc008.xml:3:10: Expecting at least 1 occurrences of "unknown"
+    particlesEc008.xml:3:10: Expecting at least 1 occurrences of "{http://xsdtesting}a1|{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEc009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -75950,7 +75946,7 @@ Grp: MS-Particles2006-07-15 / particlesEc014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc014
   OK particlesEc014.i
-    particlesEc014.xml:3:6: Expecting at least 1 occurrences of "unknown"
+    particlesEc014.xml:3:6: Expecting at least 1 occurrences of "{http://xsdtesting}a1|{http://xsdtesting}a2"
 
 Grp: MS-Particles2006-07-15 / particlesEc015
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76010,7 +76006,7 @@ Grp: MS-Particles2006-07-15 / particlesEc025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc025
   OK particlesEc025.i
-    particlesEc025.xml:3:8: Expecting at least 1 occurrences of "unknown"
+    particlesEc025.xml:3:8: Expecting at least 1 occurrences of "{http://xsdtesting}a|{http://xsdtesting}b"
 
 Grp: MS-Particles2006-07-15 / particlesEc026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -76097,7 +76093,7 @@ Grp: MS-Particles2006-07-15 / particlesEc041
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesEc041
   OK particlesEc041.i
-    particlesEc041.xml:3:6: Expecting at least 2 occurrences of "unknown"
+    particlesEc041.xml:3:6: Expecting at least 2 occurrences of "{http://xsdtesting}a|{http://xsdtesting}b"
 
 Grp: MS-Particles2006-07-15 / particlesEd001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -78997,7 +78993,7 @@ Grp: MS-Particles2006-07-15 / particlesZ016
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesZ016
   OK particlesZ016.i
-    particlesZ016.xml:6:6: Expecting at least 1 occurrences of "unknown"
+    particlesZ016.xml:6:6: Expecting at least 1 occurrences of "(),(E1{0, 20}|()),()"
 
 Grp: MS-Particles2006-07-15 / particlesZ017
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -79111,7 +79107,7 @@ Grp: MS-Particles2006-07-15 / particlesZ034_b
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesZ034_b
   OK particlesZ034_b.i
-    particlesZ034_b1.xml:307:24: Expecting at least 1 occurrences of "any"
+    particlesZ034_b1.xml:307:24: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Particles2006-07-15 / particlesZ035_a
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91746,7 +91742,7 @@ Grp: MS-Schema2006-07-15 / schF2
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK schF2
   XP schF2.v
-    schF2.xml:5:6: Expecting at least 1 occurrences of "unknown"
+    schF2.xml:5:6: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Schema2006-07-15 / schF3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -91843,7 +91839,7 @@ Grp: MS-Schema2006-07-15 / schG15
 Grp: MS-Schema2006-07-15 / schH1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP schH1
-    schH1_a.xsd:6:53: Attribute "id": Invalid namespace for id
+    schH1_a.xsd:6:53: Attribute "id" invalid for this element
 
 Grp: MS-Schema2006-07-15 / schH2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -91858,7 +91854,7 @@ Grp: MS-Schema2006-07-15 / schH3
 Grp: MS-Schema2006-07-15 / schH4
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK schH4
-    schH4_a.xsd:6:63: Attribute "namespace": Invalid namespace for namespace
+    schH4_a.xsd:6:63: Attribute "namespace" invalid for this element
 
 Grp: MS-Schema2006-07-15 / schH5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92553,7 +92549,7 @@ Grp: MS-SimpleType2006-07-15 / stC027
 Grp: MS-SimpleType2006-07-15 / stC028
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stC028
-    stC028.xsd:4:36: Attribute "value": Invalid namespace for value
+    stC028.xsd:4:36: Attribute "value" invalid for this element
 
 Grp: MS-SimpleType2006-07-15 / stC029
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -94282,7 +94278,7 @@ Grp: MS-Wildcards2006-07-15 / wildG003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG003
   OK wildG003.i
-    wildG003.xml:3:5: Expecting at least 1 occurrences of "any"
+    wildG003.xml:3:5: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94293,7 +94289,7 @@ Grp: MS-Wildcards2006-07-15 / wildG005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG005
   OK wildG005.i
-    wildG005.xml:3:5: Expecting at least 1 occurrences of "any"
+    wildG005.xml:3:5: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG006
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -94309,7 +94305,7 @@ Grp: MS-Wildcards2006-07-15 / wildG008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG008
   OK wildG008.i
-    wildG008.xml:6:29: Expecting at least 1 occurrences of "any"
+    wildG008.xml:6:29: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94326,7 +94322,7 @@ Grp: MS-Wildcards2006-07-15 / wildG011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG011
   OK wildG011.i
-    wildG011.xml:3:26: Expecting at least 1 occurrences of "any"
+    wildG011.xml:3:26: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94342,7 +94338,7 @@ Grp: MS-Wildcards2006-07-15 / wildG014
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG014
   OK wildG014.i
-    wildG014.xml:3:26: Expecting at least 1 occurrences of "any"
+    wildG014.xml:3:26: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG015
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94358,7 +94354,7 @@ Grp: MS-Wildcards2006-07-15 / wildG017
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG017
   OK wildG017.i
-    wildG017.xml:3:7: Expecting at least 1 occurrences of "any"
+    wildG017.xml:3:7: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG018
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -94369,13 +94365,13 @@ Grp: MS-Wildcards2006-07-15 / wildG019
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG019
   OK wildG019.i
-    wildG019.xml:5:7: Expecting at least 1 occurrences of "any"
+    wildG019.xml:5:7: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG020
   OK wildG020.i
-    wildG020.xml:3:26: Expecting at least 1 occurrences of "any"
+    wildG020.xml:3:26: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94386,7 +94382,7 @@ Grp: MS-Wildcards2006-07-15 / wildG022
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildG022
   OK wildG022.i
-    wildG022.xml:3:11: Expecting at least 1 occurrences of "any"
+    wildG022.xml:3:11: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94397,13 +94393,13 @@ Grp: MS-Wildcards2006-07-15 / wildG024
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildG024
   OK wildG024.i
-    wildG024.xml:3:11: Expecting at least 1 occurrences of "any"
+    wildG024.xml:3:11: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG025
   OK wildG025.i
-    wildG025.xml:3:7: Expecting at least 1 occurrences of "any"
+    wildG025.xml:3:7: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG026
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -94419,19 +94415,19 @@ Grp: MS-Wildcards2006-07-15 / wildG028
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildG028
   OK wildG028.i
-    wildG028.xml:3:11: Expecting at least 1 occurrences of "any"
+    wildG028.xml:3:11: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG029
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG029
   OK wildG029.i
-    wildG029.xml:3:7: Expecting at least 1 occurrences of "any"
+    wildG029.xml:3:7: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG030
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG030
   OK wildG030.i
-    wildG030.xml:3:26: Expecting at least 1 occurrences of "any"
+    wildG030.xml:3:26: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG031
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -94442,7 +94438,7 @@ Grp: MS-Wildcards2006-07-15 / wildG032
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildG032
   OK wildG032.i
-    wildG032.xml:7:11: Expecting at least 1 occurrences of "any"
+    wildG032.xml:7:11: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG033
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -94453,7 +94449,7 @@ Grp: MS-Wildcards2006-07-15 / wildG034
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG034
   OK wildG034.i
-    wildG034.xml:3:11: Expecting at least 1 occurrences of "any"
+    wildG034.xml:3:11: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG035
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -94464,7 +94460,7 @@ Grp: MS-Wildcards2006-07-15 / wildG036
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildG036
   OK wildG036.i
-    wildG036.xml:3:7: Expecting at least 1 occurrences of "any"
+    wildG036.xml:3:7: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG037
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -94480,7 +94476,7 @@ Grp: MS-Wildcards2006-07-15 / wildG039
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildG039
   OK wildG039.i
-    wildG039.xml:3:11: Expecting at least 1 occurrences of "any"
+    wildG039.xml:3:11: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildG040
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94491,13 +94487,13 @@ Grp: MS-Wildcards2006-07-15 / wildH001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildH001
   OK wildH001.i
-    wildH001.xml:3:5: Expecting at least 1 occurrences of "any"
+    wildH001.xml:3:5: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildH002
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildH002
   OK wildH002.i
-    wildH002.xml:3:11: Expecting at least 1 occurrences of "any"
+    wildH002.xml:3:11: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildH003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94518,7 +94514,7 @@ Grp: MS-Wildcards2006-07-15 / wildH006
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildH006
   OK wildH006.i
-    wildH006.xml:3:11: Expecting at least 1 occurrences of "any"
+    wildH006.xml:3:11: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildH007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94529,7 +94525,7 @@ Grp: MS-Wildcards2006-07-15 / wildH008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildH008
   OK wildH008.i
-    wildH008.xml:3:44: Expecting at least 1 occurrences of "any"
+    wildH008.xml:3:44: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildH009
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -94558,12 +94554,12 @@ Grp: MS-Wildcards2006-07-15 / wildI001
 Grp: MS-Wildcards2006-07-15 / wildI002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildI002
-    wildI002.xsd:6:129: Attribute "b": Invalid namespace for b
+    wildI002.xsd:6:129: Attribute "b" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildI003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildI003
-    wildI003.xsd:6:104: Attribute "foo": Invalid namespace for foo
+    wildI003.xsd:6:104: Attribute "foo" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildI004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94962,17 +94958,17 @@ Grp: MS-Wildcards2006-07-15 / wildQ001
 Grp: MS-Wildcards2006-07-15 / wildQ002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildQ002
-    wildQ002.xsd:7:39: Attribute "minOccurs": Invalid namespace for minOccurs
+    wildQ002.xsd:7:39: Attribute "minOccurs" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildQ003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildQ003
-    wildQ003.xsd:7:39: Attribute "maxOccurs": Invalid namespace for maxOccurs
+    wildQ003.xsd:7:39: Attribute "maxOccurs" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildQ004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK wildQ004
-    wildQ004.xsd:7:61: Attribute "minOccurs": Invalid namespace for minOccurs
+    wildQ004.xsd:7:61: Attribute "minOccurs" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -94988,7 +94984,7 @@ Grp: MS-Wildcards2006-07-15 / wildO003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO003
   OK wildO003.i
-    wildO003.xml:5:17: Attribute "att:name": Invalid namespace for {http://foobar}name
+    wildO003.xml:5:17: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO004
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95004,7 +95000,7 @@ Grp: MS-Wildcards2006-07-15 / wildO006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO006
   OK wildO006.i
-    wildO006.xml:2:142: Attribute "name": No definition provided
+    wildO006.xml:2:142: Attribute "name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95015,13 +95011,13 @@ Grp: MS-Wildcards2006-07-15 / wildO008
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO008
   OK wildO008.i
-    wildO008.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO008.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO009
   OK wildO009.i
-    wildO009.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
+    wildO009.xml:2:172: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO010
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95032,7 +95028,7 @@ Grp: MS-Wildcards2006-07-15 / wildO011
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO011
   OK wildO011.i
-    wildO011.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO011.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95048,7 +95044,7 @@ Grp: MS-Wildcards2006-07-15 / wildO014
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO014
   OK wildO014.i
-    wildO014.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO014.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO015
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95064,7 +95060,7 @@ Grp: MS-Wildcards2006-07-15 / wildO017
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO017
   OK wildO017.i
-    wildO017.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
+    wildO017.xml:2:172: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO018
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95080,7 +95076,7 @@ Grp: MS-Wildcards2006-07-15 / wildO020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO020
   OK wildO020.i
-    wildO020.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
+    wildO020.xml:2:172: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95091,7 +95087,7 @@ Grp: MS-Wildcards2006-07-15 / wildO022
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO022
   OK wildO022.i
-    wildO022.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO022.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95102,13 +95098,13 @@ Grp: MS-Wildcards2006-07-15 / wildO024
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO024
   OK wildO024.i
-    wildO024.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO024.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO025
   OK wildO025.i
-    wildO025.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
+    wildO025.xml:2:172: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO026
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95124,7 +95120,7 @@ Grp: MS-Wildcards2006-07-15 / wildO028
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO028
   OK wildO028.i
-    wildO028.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO028.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO029
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95135,7 +95131,7 @@ Grp: MS-Wildcards2006-07-15 / wildO030
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO030
   OK wildO030.i
-    wildO030.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO030.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95146,7 +95142,7 @@ Grp: MS-Wildcards2006-07-15 / wildO032
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO032
   OK wildO032.i
-    wildO032.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO032.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO033
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95157,13 +95153,13 @@ Grp: MS-Wildcards2006-07-15 / wildO034
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO034
   OK wildO034.i
-    wildO034.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO034.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildO035
   OK wildO035.i
-    wildO035.xml:2:172: Attribute "att:name": Invalid namespace for {http://foobar}name
+    wildO035.xml:2:172: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO037
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95179,7 +95175,7 @@ Grp: MS-Wildcards2006-07-15 / wildO039
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
   OK wildO039
   OK wildO039.i
-    wildO039.xml:2:194: Attribute "att:name": Invalid namespace for {http://foo}name
+    wildO039.xml:2:194: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildO040
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0
@@ -95195,7 +95191,7 @@ Grp: MS-Wildcards2006-07-15 / wildP002
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildP002
   OK wildP002.i
-    wildP002.xml:2:172: Attribute "att:name": No definition provided
+    wildP002.xml:2:172: Attribute "att:name" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildP003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95221,7 +95217,7 @@ Grp: MS-Wildcards2006-07-15 / wildZ001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildZ001
   OK wildZ001.i
-    wildZ001.xml:3:46: Expecting at least 1 occurrences of "any"
+    wildZ001.xml:3:46: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildZ002
   100.0% tests= 2 (xsd= 3 xml= 1) OK= 2 FAILED= 0
@@ -95242,13 +95238,13 @@ Grp: MS-Wildcards2006-07-15 / wildZ005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildZ005
   OK wildZ005.i
-    wildZ005.xml:2:15: Expecting at least 1 occurrences of "any"
+    wildZ005.xml:2:15: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildZ006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildZ006
   OK wildZ006.i
-    wildZ006.xml:2:8: Expecting at least 1 occurrences of "any"
+    wildZ006.xml:2:8: Expecting at least 1 occurrences of "<any>"
 
 Grp: MS-Wildcards2006-07-15 / wildZ007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95352,7 +95348,7 @@ Total number of tests: 37041 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 198
 SF: XSD OK, should be KO: in_full_fail= 644
-XP: XML KO, should be OK: in_partial= 63 in_full_fail= 3
+XP: XML KO, should be OK: in_partial= 59 in_full_fail= 3
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 911 ( 2.5 %)
+Total errors: 907 ( 2.4 %)

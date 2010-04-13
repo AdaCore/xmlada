@@ -81,6 +81,8 @@ KP-32-J302-043 Lots of fixes in schema validation
                 not match (XML/Ada never tried to match the next one)
               - Elements with a simpleType need to normalize their whitespaces
                 before validation
+              - When in a restriction, all the <anyAttribute> must match,
+                whereas in an extension only one of them has to match
 
   Status:     Fixed in 3.3.0
 

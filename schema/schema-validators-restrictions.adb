@@ -64,7 +64,8 @@ package body Schema.Validators.Restrictions is
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
       Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator);
+      Dependency2 : out XML_Validator;
+      Must_Match_All_Any_In_Dep2 : out Boolean);
    procedure Add_Facet
      (Validator   : access Restriction_XML_Validator;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -125,7 +126,8 @@ package body Schema.Validators.Restrictions is
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
       Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator) is
+      Dependency2 : out XML_Validator;
+      Must_Match_All_Any_In_Dep2 : out Boolean) is
    begin
       --  A restriction has the same list of attributes as the base type
       --  (as per Primer 4.4) plus possibly some new ones, but it doesn't
@@ -134,7 +136,9 @@ package body Schema.Validators.Restrictions is
       List := Validator.Attributes;
       Dependency1 := Validator.Base.Validator;
       Ignore_Wildcard_In_Dep1 := True;
+
       Dependency2 := Validator.Restriction;
+      Must_Match_All_Any_In_Dep2 := True;
    end Get_Attribute_Lists;
 
    ----------------------------
