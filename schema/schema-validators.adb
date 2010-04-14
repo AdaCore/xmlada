@@ -1847,18 +1847,6 @@ package body Schema.Validators is
       end if;
    end Free;
 
-   -------------------------------
-   -- Create_Facets_Description --
-   -------------------------------
-
-   function Create_Facets_Description
-     (Validator : access XML_Validator_Record) return Facets_Description
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return null;
-   end Create_Facets_Description;
-
    ----------------
    -- Get_Facets --
    ----------------

@@ -301,12 +301,10 @@ package body Schema.Validators.Simple_Types is
       type Facets_Type is new Facets_Description_Record with private;
    package Generic_Simple_Validator is
       type Facets_Type_Access is access all Facets_Type;
-      type Validator_Record is new Any_Simple_XML_Validator_Record with record
-         Facets : Facets_Type_Access := new Facets_Type;
-      end record;
+      type Validator_Record is new Any_Simple_XML_Validator_Record
+         with null record;
       type Validator is access all Validator_Record'Class;
 
-   private
       procedure Validate_Characters
         (Validator     : access Validator_Record;
          Ch            : Unicode.CES.Byte_Sequence;
@@ -317,8 +315,6 @@ package body Schema.Validators.Simple_Types is
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence);
       procedure Free (Validator : in out Validator_Record);
-      function Create_Facets_Description
-        (Validator : access Validator_Record) return Facets_Description;
       function Get_Facets
         (Validator : access Validator_Record) return Facets_Description;
       --  See doc for inherited subprograms
@@ -583,7 +579,7 @@ package body Schema.Validators.Simple_Types is
          end if;
 
          Check_Id (Context, Validator, Ch);
-         Check_Facet (Validator.Facets.all, Ch);
+         Check_Facet (Get_Facets (Validator).all, Ch);
       end Validate_Characters;
 
       ---------------
@@ -614,18 +610,6 @@ package body Schema.Validators.Simple_Types is
          Free (Any_Simple_XML_Validator_Record (Validator));
       end Free;
 
-      -------------------------------
-      -- Create_Facets_Description --
-      -------------------------------
-
-      function Create_Facets_Description
-        (Validator : access Validator_Record) return Facets_Description
-      is
-         pragma Unreferenced (Validator);
-      begin
-         return new Facets_Type;
-      end Create_Facets_Description;
-
       ----------------
       -- Get_Facets --
       ----------------
@@ -633,6 +617,9 @@ package body Schema.Validators.Simple_Types is
       function Get_Facets
         (Validator : access Validator_Record) return Facets_Description is
       begin
+         if Validator.Facets = null then
+            Validator.Facets := new Facets_Type;
+         end if;
          return Facets_Description (Validator.Facets);
       end Get_Facets;
 
@@ -741,9 +728,7 @@ package body Schema.Validators.Simple_Types is
      (Integer_Facets_Description);
 
    type Boolean_Validator_Record is new Any_Simple_XML_Validator_Record with
-      record
-         Facets : Common_Facets_Description;
-      end record;
+      null record;
    procedure Validate_Characters
      (Validator     : access Boolean_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
@@ -753,7 +738,6 @@ package body Schema.Validators.Simple_Types is
      (Validator   : access Boolean_Validator_Record;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence);
-   procedure Free (Validator : in out Boolean_Validator_Record);
    --   See doc from inherited subprograms
 
    ----------------------
@@ -1078,7 +1062,7 @@ package body Schema.Validators.Simple_Types is
            ("Invalid value for boolean type: """ & Ch & """");
       end if;
 
-      Check_Facet (Validator.Facets, Ch);
+      Check_Facet (Get_Facets (Validator).all, Ch);
 
       --  Skip leading spaces
       while First <= Ch'Last loop
@@ -1128,21 +1112,11 @@ package body Schema.Validators.Simple_Types is
    is
       Applies : Boolean;
    begin
-      Add_Facet (Validator.Facets, Facet_Name, Facet_Value, Applies);
+      Add_Facet (Get_Facets (Validator).all, Facet_Name, Facet_Value, Applies);
       if not Applies then
          Validation_Error ("Invalid facet: " & Facet_Name);
       end if;
    end Add_Facet;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out Boolean_Validator_Record) is
-   begin
-      Free (Validator.Facets);
-      Free (XML_Validator_Record (Validator));
-   end Free;
 
    -----------------------
    -- String_Get_Length --
@@ -1699,19 +1673,6 @@ package body Schema.Validators.Simple_Types is
       Validation_Error ("Invalid value """ & Ch & """");
    end Validate_Characters;
 
-   -------------------------------
-   -- Create_Facets_Description --
-   -------------------------------
-
-   function Create_Facets_Description
-     (Validator : access Any_Simple_XML_Validator_Record)
-      return Facets_Description
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return new Common_Facets_Description;
-   end Create_Facets_Description;
-
    ------------------------
    -- Check_Content_Type --
    ------------------------
@@ -1755,6 +1716,30 @@ package body Schema.Validators.Simple_Types is
    begin
       Free (Union.Unions);
       Free (Any_Simple_XML_Validator_Record (Union));
+   end Free;
+
+   ----------------
+   -- Get_Facets --
+   ----------------
+
+   function Get_Facets
+     (Validator : access Any_Simple_XML_Validator_Record)
+      return Facets_Description is
+   begin
+      if Validator.Facets = null then
+         Validator.Facets := new Common_Facets_Description;
+      end if;
+      return Validator.Facets;
+   end Get_Facets;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Validator : in out Any_Simple_XML_Validator_Record) is
+   begin
+      Free (Validator.Facets);
+      Free (XML_Validator_Record (Validator));
    end Free;
 
 end Schema.Validators.Simple_Types;

@@ -45028,13 +45028,7 @@ Grp: ElemDecl / name00101m
   OK name00101m
   OK name00101m1_p
   OK name00101m1_n
-    name00101m1_n.xml:15:1: Invalid value for boolean type: "
-
-
-
-  No  
-
-"
+    name00101m1_n.xml:15:1: Invalid value for boolean type: "No"
 
 Grp: ElemDecl / name00201m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45510,11 +45504,7 @@ Grp: ElemDecl / typedef00101m
   OK typeDef00101m
   OK typeDef00101m1_p
   OK typeDef00101m1_n
-    typeDef00101m1_n.xml:16:1: Invalid value for boolean type: "
-    
-    sure
-
-"
+    typeDef00101m1_n.xml:16:1: Invalid value for boolean type: "sure"
 
 Grp: ElemDecl / typedef00201m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -45535,22 +45525,14 @@ Grp: ElemDecl / typedef00203m
   OK typeDef00203m
   OK typeDef00203m1_p
   OK typeDef00203m1_n
-    typeDef00203m1_n.xml:16:1: Invalid value for boolean type: "
-
-    Yes
-
-"
+    typeDef00203m1_n.xml:16:1: Invalid value for boolean type: "Yes"
 
 Grp: ElemDecl / typedef00204m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef00204m
   OK typeDef00204m1_p
   OK typeDef00204m1_n
-    typeDef00204m1_n.xml:16:1: Invalid value for boolean type: "
-
-    Yes
-
-"
+    typeDef00204m1_n.xml:16:1: Invalid value for boolean type: "Yes"
 
 Grp: ElemDecl / typedef00205m
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -51339,9 +51321,8 @@ Grp: MS-ComplexType2006-07-15 / ctA015
   OK ctA015
 
 Grp: MS-ComplexType2006-07-15 / ctA016
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK ctA016
-    ctA016.xsd:3:52: Attribute "block": Invalid value "substitution"
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF ctA016
 
 Grp: MS-ComplexType2006-07-15 / ctA017
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -51384,7 +51365,7 @@ Grp: MS-ComplexType2006-07-15 / ctA024
 Grp: MS-ComplexType2006-07-15 / ctA025
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctA025
-    ctA025.xsd:3:52: Attribute "final": Invalid value "substitution"
+    ctA025.xsd:3:52: Invalid value for final: "substitution"
 
 Grp: MS-ComplexType2006-07-15 / ctA026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -52259,49 +52240,49 @@ Grp: MS-ComplexType2006-07-15 / ctD014
     ctD014.xsd:11:35: Unexpected element "{http://www.w3.org/2001/XMLSchema}encoding"
 
 Grp: MS-ComplexType2006-07-15 / ctD015
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD015
-    ctD015.xsd:11:33: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD015
+  OK ctD015.v
 
 Grp: MS-ComplexType2006-07-15 / ctD016
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD016
-    ctD016.xsd:11:27: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD016
+  OK ctD016.v
 
 Grp: MS-ComplexType2006-07-15 / ctD017
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD017
-    ctD017.xsd:11:33: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD017
+  OK ctD017.v
 
 Grp: MS-ComplexType2006-07-15 / ctD018
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD018
-    ctD018.xsd:11:33: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD018
+  OK ctD018.v
 
 Grp: MS-ComplexType2006-07-15 / ctD019
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD019
-    ctD019.xsd:11:30: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD019
+  OK ctD019.v
 
 Grp: MS-ComplexType2006-07-15 / ctD020
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD020
-    ctD020.xsd:11:33: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD020
+  OK ctD020.v
 
 Grp: MS-ComplexType2006-07-15 / ctD021
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD021
-    ctD021.xsd:11:33: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD021
+  OK ctD021.v
 
 Grp: MS-ComplexType2006-07-15 / ctD022
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD022
-    ctD022.xsd:11:30: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD022
+  OK ctD022.v
 
 Grp: MS-ComplexType2006-07-15 / ctD023
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD023
-    ctD023.xsd:11:37: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD023
+  OK ctD023.v
 
 Grp: MS-ComplexType2006-07-15 / ctD024
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52309,24 +52290,24 @@ Grp: MS-ComplexType2006-07-15 / ctD024
     ctD024.xsd:11:30: Unexpected element "{http://www.w3.org/2001/XMLSchema}period"
 
 Grp: MS-ComplexType2006-07-15 / ctD025
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD025
-    ctD025.xsd:11:32: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD025
+  OK ctD025.v
 
 Grp: MS-ComplexType2006-07-15 / ctD026
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD026
-    ctD026.xsd:11:35: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD026
+  OK ctD026.v
 
 Grp: MS-ComplexType2006-07-15 / ctD027
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD027
-    ctD027.xsd:11:38: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD027
+  OK ctD027.v
 
 Grp: MS-ComplexType2006-07-15 / ctD028
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD028
-    ctD028.xsd:11:27: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD028
+  OK ctD028.v
 
 Grp: MS-ComplexType2006-07-15 / ctD029
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -52359,9 +52340,9 @@ Grp: MS-ComplexType2006-07-15 / ctD034
     ctD034.xsd:14:44: Unexpected element "{http://www.w3.org/2001/XMLSchema}anyAttribute"
 
 Grp: MS-ComplexType2006-07-15 / ctD035
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP ctD035
-    ctD035.xsd:13:27: No facet overridable for this type
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK ctD035
+  OK ctD035.v
 
 Grp: MS-ComplexType2006-07-15 / ctD036
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -60170,7 +60151,7 @@ Grp: MS-DataTypes2006-07-15 / base64Binary_length001_1309
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK base64Binary_length001_1309
   OK base64Binary_length001_1309.i
-    base64Binary_length001.xml:4:13: Invalid length, must be 4 characters
+    base64Binary_length001.xml:4:13: Invalid value: "abcde"
 
 Grp: MS-DataTypes2006-07-15 / base64Binary_length002_1310
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -60181,7 +60162,7 @@ Grp: MS-DataTypes2006-07-15 / base64Binary_length003_1311
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK base64Binary_length003_1311
   OK base64Binary_length003_1311.i
-    base64Binary_length003.xml:4:13: Invalid length, must be 6 characters
+    base64Binary_length003.xml:4:13: Invalid value: "abcde"
 
 Grp: MS-DataTypes2006-07-15 / base64Binary_minLength001_1312
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -60197,7 +60178,7 @@ Grp: MS-DataTypes2006-07-15 / base64Binary_minLength003_1314
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK base64Binary_minLength003_1314
   OK base64Binary_minLength003_1314.i
-    base64Binary_minLength003.xml:4:13: String is too short, minimum length is 6 characters
+    base64Binary_minLength003.xml:4:13: Invalid value: "abcde"
 
 Grp: MS-DataTypes2006-07-15 / base64Binary_minLength004_1315
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -65474,7 +65455,7 @@ Grp: MS-Element2006-07-15 / elemF003
 Grp: MS-Element2006-07-15 / elemF004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemF004
-    elemF004.xsd:3:48: Attribute "final": Invalid value "substitution"
+    elemF004.xsd:3:48: Invalid value for final: "substitution"
 
 Grp: MS-Element2006-07-15 / elemF005
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -65483,17 +65464,17 @@ Grp: MS-Element2006-07-15 / elemF005
 Grp: MS-Element2006-07-15 / elemF006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemF006
-    elemF006.xsd:3:60: Attribute "final": Invalid value "restriction substitution"
+    elemF006.xsd:3:60: Invalid value for final: "substitution"
 
 Grp: MS-Element2006-07-15 / elemF007
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemF007
-    elemF007.xsd:3:58: Attribute "final": Invalid value "substitution extension"
+    elemF007.xsd:3:58: Invalid value for final: "substitution"
 
 Grp: MS-Element2006-07-15 / elemF008
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemF008
-    elemF008.xsd:3:70: Attribute "final": Invalid value "extension restriction substitution"
+    elemF008.xsd:3:70: Invalid value for final: "substitution"
 
 Grp: MS-Element2006-07-15 / elemF009
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -79059,9 +79040,8 @@ Grp: MS-Particles2006-07-15 / particlesZ030_b
     Unsupported: "complexType" in this context
 
 Grp: MS-Particles2006-07-15 / particlesZ030_c
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP particlesZ030_c
-    particlesZ030_c.xsd:32:35: No facet overridable for this type
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK particlesZ030_c
 
 Grp: MS-Particles2006-07-15 / particlesZ030_d
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -93550,7 +93530,7 @@ Grp: MS-SimpleType2006-07-15 / stZ009
 Grp: MS-SimpleType2006-07-15 / stZ010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stZ010
-    stZ010.xsd:12:29: No facet overridable for this type
+    stZ010.xsd:12:29: Invalid facet: minLength
 
 Grp: MS-SimpleType2006-07-15 / stZ011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95352,13 +95332,13 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37041 (omitting non-accepted tests)
+Total number of tests: 37055 (omitting non-accepted tests)
    13746 XSD files (not including those parsed automatically)
-   23358 XML files
+   23372 XML files
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
-SP: XSD KO, should be OK: in_full_fail= 198
-SF: XSD OK, should be KO: in_full_fail= 638
+SP: XSD KO, should be OK: in_full_fail= 183
+SF: XSD OK, should be KO: in_full_fail= 639
 XP: XML KO, should be OK: in_partial= 53 in_full_fail= 3
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 895 ( 2.4 %)
+Total errors: 881 ( 2.4 %)

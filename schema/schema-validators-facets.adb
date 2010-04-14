@@ -262,15 +262,21 @@ package body Schema.Validators.Facets is
       if From.Pattern /= null then
          Common_Facets_Description (To).Pattern :=
            new Pattern_Matcher'(From.Pattern.all);
+      else
+         Common_Facets_Description (To).Pattern := null;
       end if;
 
       if From.Pattern_String /= null then
          Common_Facets_Description (To).Pattern_String :=
            new Byte_Sequence'(From.Pattern_String.all);
+      else
+         Common_Facets_Description (To).Pattern_String := null;
       end if;
 
       Common_Facets_Description (To).Implicit_Enumeration :=
         From.Implicit_Enumeration;
+
+      Common_Facets_Description (To).Enumeration := null;
 
       if From.Enumeration /= null then
          for L in From.Enumeration'Range loop

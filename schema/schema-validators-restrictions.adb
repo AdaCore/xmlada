@@ -34,7 +34,6 @@ package body Schema.Validators.Restrictions is
       Base              : XML_Type;
       Restriction       : XML_Validator;
       Facets            : Facets_Description;
-      Facets_Merged     : Boolean := False;
    end record;
    type Restriction_Type is access Restriction_XML_Validator'Class;
    type Restriction_Data is new Validator_Data_Record with record
@@ -81,8 +80,6 @@ package body Schema.Validators.Restrictions is
    procedure Check_Content_Type
      (Validator        : access Restriction_XML_Validator;
       Should_Be_Simple : Boolean);
-   function Create_Facets_Description
-     (Validator : access Restriction_XML_Validator) return Facets_Description;
    function Get_Facets
      (Validator : access Restriction_XML_Validator) return Facets_Description;
    procedure Free (Validator : in out Restriction_XML_Validator);
@@ -111,17 +108,6 @@ package body Schema.Validators.Restrictions is
       Free (XML_Validator_Record (Validator));
    end Free;
 
-   -------------------------------
-   -- Create_Facets_Description --
-   -------------------------------
-
-   function Create_Facets_Description
-     (Validator : access Restriction_XML_Validator)
-      return Facets_Description is
-   begin
-      return Create_Facets_Description (Validator.Base.Validator);
-   end Create_Facets_Description;
-
    ----------------
    -- Get_Facets --
    ----------------
@@ -131,34 +117,32 @@ package body Schema.Validators.Restrictions is
    is
       Base_Facets : Facets_Description;
    begin
-      if not Validator.Facets_Merged then
-
+      if Validator.Facets = null then
          if Validator.Base.Validator /= null then
             Base_Facets := Get_Facets (Validator.Base.Validator);
+            if Base_Facets /= null then
+               --  ??? Doesn't work if we do not know the full facets for the
+               --  parent or if we modify any of them later on.
+               Validator.Facets := new Facets_Description_Record'Class'
+                 (Base_Facets.all);
 
-            if Validator.Facets = null then
-               Validator.Facets :=
-                 Create_Facets_Description (Validator.Base.Validator);
+               Copy (From => Base_Facets.all, To => Validator.Facets.all);
+
+               --  "pattern" are overridden in the context of restriction.
+               --  ??? If not defined in the restriction, we should still use
+               --  the parent's pattern
+               Unicode.CES.Free
+                 (Common_Facets_Description (Validator.Facets.all)
+                  .Pattern_String);
+               Common_Facets_Description (Validator.Facets.all)
+                 .Mask (Facet_Pattern) := False;
             end if;
-
-            if Base_Facets /= null and then Validator.Facets /= null then
-               --  Merge facets
-
-               if not Common_Facets_Description (Validator.Facets.all)
-                 .Mask (Facet_Whitespace)
-               then
-                  Common_Facets_Description (Validator.Facets.all).Whitespace
-                    := Common_Facets_Description (Base_Facets.all).Whitespace;
-                  Common_Facets_Description (Validator.Facets.all)
-                    .Mask (Facet_Whitespace) :=
-                    Common_Facets_Description (Base_Facets.all)
-                    .Mask (Facet_Whitespace);
-               end if;
-            end if;
-
+         else
+            Validation_Error
+              ("The type """ & Get_Local_Name (Validator.Base)
+               & """ isn't known at this point. Please check the name and"
+               & " namespace");
          end if;
-
-         Validator.Facets_Merged := True;
       end if;
 
       return Validator.Facets;
@@ -269,26 +253,13 @@ package body Schema.Validators.Restrictions is
       Facet_Value : Unicode.CES.Byte_Sequence)
    is
       Applies : Boolean;
+      Facets  : constant Facets_Description := Get_Facets (Validator);
    begin
-      if Validator.Base.Validator /= null
-        and then Validator.Facets = null
-      then
-         Validator.Facets :=
-           Create_Facets_Description (Validator.Base.Validator);
+      if Facets = null then
+         Validation_Error ("No facet overridable for this type");
       end if;
 
-      if Validator.Facets = null then
-         if Validator.Base.Validator = null then
-            Validation_Error
-              ("The type """ & Get_Local_Name (Validator.Base)
-               & """ isn't known at this point. Please check the name and"
-               & " namespace");
-         else
-            Validation_Error ("No facet overridable for this type");
-         end if;
-      end if;
-
-      Add_Facet (Validator.Facets.all, Facet_Name, Facet_Value, Applies);
+      Add_Facet (Facets.all, Facet_Name, Facet_Value, Applies);
       if not Applies then
          Validation_Error ("Invalid facet: " & Facet_Name);
       end if;
