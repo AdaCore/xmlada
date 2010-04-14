@@ -457,7 +457,7 @@ package Schema.Validators is
    --      <tag/>   and <tag></tag>
    --  If Empty_Element is true, then Ch is irrelevant
 
-   function Get_Facets_Description
+   function Create_Facets_Description
      (Validator : access XML_Validator_Record) return Facets_Description;
    --  Allocate a new record to store some values for the facets associated
    --  with Validator. This is used in restrictions or extensions of base
@@ -465,6 +465,10 @@ package Schema.Validators is
    --  no preset facets.
    --  null is returned if the type doesn't have any facet.
    --  Return value must be freed by the caller
+
+   function Get_Facets
+     (Validator : access XML_Validator_Record) return Facets_Description;
+   --  Return the facets of the validator, or null if there are no facets
 
    procedure Add_Facet
      (Validator   : access XML_Validator_Record;

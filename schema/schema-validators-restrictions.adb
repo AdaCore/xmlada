@@ -26,12 +26,15 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Schema.Validators.Facets;  use Schema.Validators.Facets;
+
 package body Schema.Validators.Restrictions is
 
    type Restriction_XML_Validator is new XML_Validator_Record with record
       Base              : XML_Type;
       Restriction       : XML_Validator;
       Facets            : Facets_Description;
+      Facets_Merged     : Boolean := False;
    end record;
    type Restriction_Type is access Restriction_XML_Validator'Class;
    type Restriction_Data is new Validator_Data_Record with record
@@ -78,7 +81,9 @@ package body Schema.Validators.Restrictions is
    procedure Check_Content_Type
      (Validator        : access Restriction_XML_Validator;
       Should_Be_Simple : Boolean);
-   function Get_Facets_Description
+   function Create_Facets_Description
+     (Validator : access Restriction_XML_Validator) return Facets_Description;
+   function Get_Facets
      (Validator : access Restriction_XML_Validator) return Facets_Description;
    procedure Free (Validator : in out Restriction_XML_Validator);
    function Is_ID (Validator : Restriction_XML_Validator) return Boolean;
@@ -106,16 +111,58 @@ package body Schema.Validators.Restrictions is
       Free (XML_Validator_Record (Validator));
    end Free;
 
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
+   -------------------------------
+   -- Create_Facets_Description --
+   -------------------------------
 
-   function Get_Facets_Description
+   function Create_Facets_Description
      (Validator : access Restriction_XML_Validator)
       return Facets_Description is
    begin
-      return Get_Facets_Description (Validator.Base.Validator);
-   end Get_Facets_Description;
+      return Create_Facets_Description (Validator.Base.Validator);
+   end Create_Facets_Description;
+
+   ----------------
+   -- Get_Facets --
+   ----------------
+
+   function Get_Facets
+     (Validator : access Restriction_XML_Validator) return Facets_Description
+   is
+      Base_Facets : Facets_Description;
+   begin
+      if not Validator.Facets_Merged then
+
+         if Validator.Base.Validator /= null then
+            Base_Facets := Get_Facets (Validator.Base.Validator);
+
+            if Validator.Facets = null then
+               Validator.Facets :=
+                 Create_Facets_Description (Validator.Base.Validator);
+            end if;
+
+            if Base_Facets /= null and then Validator.Facets /= null then
+               --  Merge facets
+
+               if not Common_Facets_Description (Validator.Facets.all)
+                 .Mask (Facet_Whitespace)
+               then
+                  Common_Facets_Description (Validator.Facets.all).Whitespace
+                    := Common_Facets_Description (Base_Facets.all).Whitespace;
+                  Common_Facets_Description (Validator.Facets.all)
+                    .Mask (Facet_Whitespace) :=
+                    Common_Facets_Description (Base_Facets.all)
+                    .Mask (Facet_Whitespace);
+               end if;
+            end if;
+
+         end if;
+
+         Validator.Facets_Merged := True;
+      end if;
+
+      return Validator.Facets;
+   end Get_Facets;
 
    -------------------------
    -- Get_Attribute_Lists --
@@ -226,7 +273,8 @@ package body Schema.Validators.Restrictions is
       if Validator.Base.Validator /= null
         and then Validator.Facets = null
       then
-         Validator.Facets := Get_Facets_Description (Validator.Base.Validator);
+         Validator.Facets :=
+           Create_Facets_Description (Validator.Base.Validator);
       end if;
 
       if Validator.Facets = null then

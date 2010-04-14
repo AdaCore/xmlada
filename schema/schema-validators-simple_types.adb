@@ -300,8 +300,9 @@ package body Schema.Validators.Simple_Types is
    generic
       type Facets_Type is new Facets_Description_Record with private;
    package Generic_Simple_Validator is
+      type Facets_Type_Access is access all Facets_Type;
       type Validator_Record is new Any_Simple_XML_Validator_Record with record
-         Facets : Facets_Type;
+         Facets : Facets_Type_Access := new Facets_Type;
       end record;
       type Validator is access all Validator_Record'Class;
 
@@ -316,7 +317,9 @@ package body Schema.Validators.Simple_Types is
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence);
       procedure Free (Validator : in out Validator_Record);
-      function Get_Facets_Description
+      function Create_Facets_Description
+        (Validator : access Validator_Record) return Facets_Description;
+      function Get_Facets
         (Validator : access Validator_Record) return Facets_Description;
       --  See doc for inherited subprograms
    end Generic_Simple_Validator;
@@ -580,7 +583,7 @@ package body Schema.Validators.Simple_Types is
          end if;
 
          Check_Id (Context, Validator, Ch);
-         Check_Facet (Validator.Facets, Ch);
+         Check_Facet (Validator.Facets.all, Ch);
       end Validate_Characters;
 
       ---------------
@@ -594,7 +597,7 @@ package body Schema.Validators.Simple_Types is
       is
          Applies : Boolean;
       begin
-         Add_Facet (Validator.Facets, Facet_Name, Facet_Value, Applies);
+         Add_Facet (Validator.Facets.all, Facet_Name, Facet_Value, Applies);
          if not Applies then
             Validation_Error ("Invalid facet: " & Facet_Name);
          end if;
@@ -606,24 +609,31 @@ package body Schema.Validators.Simple_Types is
 
       procedure Free (Validator : in out Validator_Record) is
       begin
-         Free (Validator.Facets);
+         Free (Facets_Description (Validator.Facets));
          Free (Any_Simple_XML_Validator_Record (Validator));
       end Free;
 
-      ----------------------------
-      -- Get_Facets_Description --
-      ----------------------------
+      -------------------------------
+      -- Create_Facets_Description --
+      -------------------------------
 
-      function Get_Facets_Description
+      function Create_Facets_Description
         (Validator : access Validator_Record) return Facets_Description
       is
-         --  pragma Unreferenced (Validator);
-         Result : Facets_Description;
+         pragma Unreferenced (Validator);
       begin
-         Result := new Facets_Type;
-         Copy (From => Validator.Facets, To => Result.all);
-         return Result;
-      end Get_Facets_Description;
+         return new Facets_Type;
+      end Create_Facets_Description;
+
+      ----------------
+      -- Get_Facets --
+      ----------------
+
+      function Get_Facets
+        (Validator : access Validator_Record) return Facets_Description is
+      begin
+         return Facets_Description (Validator.Facets);
+      end Get_Facets;
 
    end Generic_Simple_Validator;
 
@@ -1354,81 +1364,82 @@ package body Schema.Validators.Simple_Types is
       Create_Global_Type (G, "boolean", Tmp);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Preserve);
+      Set_Whitespace (Str.Facets.all, Preserve);
       Create_Global_Type (G, "string", Str);
 
       QN  := new QName_Validator;
       Create_Global_Type (G, "QName", QN);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Replace);  --  This should be hard-coded ???
+      Set_Whitespace (Str.Facets.all, Replace); --  This should be hard-coded
       Create_Global_Type (G, "normalizedString", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);  --  This should be hard-coded ???
+      Set_Whitespace (Str.Facets.all, Collapse);  --  This should be hard-coded
       Create_Global_Type (G, "token", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_Language_Name'Access);
+      Set_Whitespace (Str.Facets.all, Preserve); --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_Language_Name'Access);
       Created := Create_Global_Type (G, "language", Str);
       Create_Global_Attribute (XML_G, "lang", Created);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Collapse);
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_Nmtoken'Access);
+      Set_Whitespace (Str.Facets.all, Collapse);
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_Nmtoken'Access);
       Create_Global_Type (G, "NMTOKEN", Str);
 
       StrList := new String_List_Validators.Validator_Record;
-      Set_Whitespace (StrList.Facets, Collapse);
-      Set_Implicit_Enumeration (StrList.Facets, Is_Valid_Nmtokens'Access);
+      Set_Whitespace (StrList.Facets.all, Collapse);
+      Set_Implicit_Enumeration (StrList.Facets.all, Is_Valid_Nmtokens'Access);
       Create_Global_Type (G, "NMTOKENS", StrList);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_Name'Access);
+      Set_Whitespace (Str.Facets.all, Preserve); --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_Name'Access);
       Create_Global_Type (G, "Name", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
+      Set_Whitespace (Str.Facets.all, Preserve);  --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCname'Access);
       Create_Global_Type (G, "NCName", Str);
 
       Str := new ID_Validator;
-      Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
+      Set_Whitespace (Str.Facets.all, Preserve);  --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ID", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
+      Set_Whitespace (Str.Facets.all, Preserve);  --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCname'Access);
       Create_Global_Type (G, "IDREF", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Preserve);  --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCnames'Access);
+      Set_Whitespace (Str.Facets.all, Preserve);  --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCnames'Access);
       Create_Global_Type (G, "IDREFS", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCname'Access);
+      Set_Whitespace (Str.Facets.all, Preserve); --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCname'Access);
       Create_Global_Type (G, "ENTITY", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets, Preserve); --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_NCnames'Access);
+      Set_Whitespace (Str.Facets.all, Preserve); --  Inherits from String
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCnames'Access);
       Create_Global_Type (G, "ENTITIES", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Implicit_Enumeration (Str.Facets, Is_Valid_URI'Access);
+      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_URI'Access);
       Create_Global_Type (G, "anyURI", Str);
 
       Hex := new HexBinary_Validator;
-      Set_Implicit_Enumeration (Hex.Facets, Is_Valid_HexBinary'Access);
+      Set_Implicit_Enumeration (Hex.Facets.all, Is_Valid_HexBinary'Access);
       Create_Global_Type (G, "hexBinary", Hex);
 
       Base64 := new Base64Binary_Validators.Validator_Record;
-      Set_Implicit_Enumeration (Base64.Facets, Is_Valid_Base64Binary'Access);
+      Set_Implicit_Enumeration
+        (Base64.Facets.all, Is_Valid_Base64Binary'Access);
       Create_Global_Type (G, "base64Binary", Base64);
 
       Dec := new Decimal_Validators.Validator_Record;
@@ -1620,6 +1631,23 @@ package body Schema.Validators.Simple_Types is
             Max_Occurs => 1));
    end Add_Union;
 
+   ----------------
+   -- Get_Facets --
+   ----------------
+
+   function Get_Facets
+     (Validator : access XML_Union_Record) return Facets_Description
+   is
+      Applied : Boolean;
+   begin
+      if Validator.Facets = null then
+         Validator.Facets := new Common_Facets_Description;
+         Add_Facet (Validator.Facets.all, "whitespace", "collapse", Applied);
+      end if;
+
+      return Validator.Facets;
+   end Get_Facets;
+
    -------------------------
    -- Validate_Characters --
    -------------------------
@@ -1670,18 +1698,18 @@ package body Schema.Validators.Simple_Types is
       Validation_Error ("Invalid value """ & Ch & """");
    end Validate_Characters;
 
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
+   -------------------------------
+   -- Create_Facets_Description --
+   -------------------------------
 
-   function Get_Facets_Description
+   function Create_Facets_Description
      (Validator : access Any_Simple_XML_Validator_Record)
       return Facets_Description
    is
       pragma Unreferenced (Validator);
    begin
       return new Common_Facets_Description;
-   end Get_Facets_Description;
+   end Create_Facets_Description;
 
    ------------------------
    -- Check_Content_Type --

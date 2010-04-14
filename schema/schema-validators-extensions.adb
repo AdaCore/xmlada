@@ -31,6 +31,7 @@ package body Schema.Validators.Extensions is
    type Extension_XML_Validator is new XML_Validator_Record with record
       Base      : XML_Type;
       Extension : XML_Validator;
+      Facets_Merged : Boolean := False;
    end record;
    type Extension_Type is access Extension_XML_Validator'Class;
    type Extension_Data is new Validator_Data_Record with record
@@ -80,7 +81,7 @@ package body Schema.Validators.Extensions is
       Base      : access XML_Validator_Record'Class) return Boolean;
    function Get_Mixed_Content
      (Validator : access Extension_XML_Validator) return Boolean;
-   function Get_Facets_Description
+   function Get_Facets
      (Validator : access Extension_XML_Validator) return Facets_Description;
    --  See doc from inherited subprograms
 
@@ -103,19 +104,19 @@ package body Schema.Validators.Extensions is
       Must_Match_All_Any_In_Dep2 := False;
    end Get_Attribute_Lists;
 
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
+   ----------------
+   -- Get_Facets --
+   ----------------
 
-   function Get_Facets_Description
-     (Validator : access Extension_XML_Validator) return Facets_Description
-   is
+   function Get_Facets
+     (Validator : access Extension_XML_Validator) return Facets_Description is
    begin
-      --  ??? If a facet does not exist in Validator, should check in its base
-      --  type.
-      return Get_Facets_Description
-        (XML_Validator_Record (Validator.all)'Access);
-   end Get_Facets_Description;
+      if Validator.Base.Validator /= null then
+         return Get_Facets (Validator.Base.Validator);
+      end if;
+
+      return null;
+   end Get_Facets;
 
    ----------
    -- Free --

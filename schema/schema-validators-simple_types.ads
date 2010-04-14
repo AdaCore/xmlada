@@ -62,7 +62,7 @@ private package Schema.Validators.Simple_Types is
    procedure Check_Content_Type
      (Validator        : access Any_Simple_XML_Validator_Record;
       Should_Be_Simple : Boolean);
-   function Get_Facets_Description
+   function Create_Facets_Description
      (Validator : access Any_Simple_XML_Validator_Record)
       return Facets_Description;
    function Get_Mixed_Content
@@ -80,6 +80,7 @@ private package Schema.Validators.Simple_Types is
 
    type XML_Union_Record is new Any_Simple_XML_Validator_Record with record
       Unions : Particle_List := Empty_Particle_List;
+      Facets : Facets_Description;
    end record;
    type XML_Union is access all XML_Union_Record'Class;
 
@@ -95,6 +96,8 @@ private package Schema.Validators.Simple_Types is
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Context       : in out Validation_Context);
+   function Get_Facets
+     (Validator : access XML_Union_Record) return Facets_Description;
    --  See doc from inherited subprograms
 
 end Schema.Validators.Simple_Types;

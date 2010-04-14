@@ -44549,12 +44549,9 @@ Grp: CType / attrwildcard00101m1
   OK Positive
 
 Grp: CType / attributeuses00101m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK attributeUses00101m1
-  XP Positive
-    attributeUses00101m1_p.xml:15:1: Invalid integer: "
-123
-"
+  OK Positive
   OK Negative
     attributeUses00101m1_n.xml:13:77: Attribute "attr2" is required in this context
 
@@ -44629,24 +44626,16 @@ Grp: CType / derivationmethod00101m2
     derivationMethod00101m2_n.xml:15:5: No character data allowed by content model
 
 Grp: CType / derivationmethod00102m1
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK derivationMethod00102m1
-  XP Positive
-    derivationMethod00102m1_p.xml:15:1: Invalid integer: "
-123
-"
+  OK Positive
   OK Negative
-    derivationMethod00102m1_n.xml:15:1: Invalid integer: "
-abc
-"
+    derivationMethod00102m1_n.xml:15:1: Invalid integer: "abc"
 
 Grp: CType / derivationmethod00102m2
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK derivationMethod00102m2
-  XP Positive
-    derivationMethod00102m2_p.xml:15:1: Invalid integer: "
-123
-"
+  OK Positive
   OK Negative
     derivationMethod00102m2_n.xml:13:77: Attribute "t": Invalid integer: "x"
 
@@ -45039,7 +45028,13 @@ Grp: ElemDecl / name00101m
   OK name00101m
   OK name00101m1_p
   OK name00101m1_n
-    name00101m1_n.xml:15:1: Invalid value for boolean type: "No"
+    name00101m1_n.xml:15:1: Invalid value for boolean type: "
+
+
+
+  No  
+
+"
 
 Grp: ElemDecl / name00201m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45515,7 +45510,11 @@ Grp: ElemDecl / typedef00101m
   OK typeDef00101m
   OK typeDef00101m1_p
   OK typeDef00101m1_n
-    typeDef00101m1_n.xml:16:1: Invalid value for boolean type: "sure"
+    typeDef00101m1_n.xml:16:1: Invalid value for boolean type: "
+    
+    sure
+
+"
 
 Grp: ElemDecl / typedef00201m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -45536,14 +45535,22 @@ Grp: ElemDecl / typedef00203m
   OK typeDef00203m
   OK typeDef00203m1_p
   OK typeDef00203m1_n
-    typeDef00203m1_n.xml:16:1: Invalid value for boolean type: "Yes"
+    typeDef00203m1_n.xml:16:1: Invalid value for boolean type: "
+
+    Yes
+
+"
 
 Grp: ElemDecl / typedef00204m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK typeDef00204m
   OK typeDef00204m1_p
   OK typeDef00204m1_n
-    typeDef00204m1_n.xml:16:1: Invalid value for boolean type: "Yes"
+    typeDef00204m1_n.xml:16:1: Invalid value for boolean type: "
+
+    Yes
+
+"
 
 Grp: ElemDecl / typedef00205m
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53671,16 +53678,15 @@ Grp: MS-ComplexType2006-07-15 / ctL002
     ctL002.xml:3:43: Unexpected element "child"
 
 Grp: MS-ComplexType2006-07-15 / ctL003
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctL003
-  XP ctL003.v
-    ctL003.xml:4:2: HT, LF and CR characters not allowed
+  OK ctL003.v
 
 Grp: MS-ComplexType2006-07-15 / ctL004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctL004
   OK ctL004.i
-    ctL004.xml:4:3: HT, LF and CR characters not allowed
+    ctL004.xml:4:3: Unexpected element "child"
 
 Grp: MS-ComplexType2006-07-15 / ctL005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -56578,9 +56584,8 @@ Grp: MS-DataTypes2006-07-15 / integer_fractionDigits007_570
   SF integer_fractionDigits007_570
 
 Grp: MS-DataTypes2006-07-15 / integer_fractionDigits008_571
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK integer_fractionDigits008_571
-    integer_fractionDigits008.xsd:11:41: fractionDigits cannot be greater than totalDigits
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF integer_fractionDigits008_571
 
 Grp: MS-DataTypes2006-07-15 / nonPositiveInteger_pattern001_572
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -57971,9 +57976,8 @@ Grp: MS-DataTypes2006-07-15 / unsignedLong_fractionDigits007_877
   SF unsignedLong_fractionDigits007_877
 
 Grp: MS-DataTypes2006-07-15 / unsignedLong_fractionDigits008_878
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK unsignedLong_fractionDigits008_878
-    unsignedLong_fractionDigits008.xsd:11:41: fractionDigits cannot be greater than totalDigits
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SF unsignedLong_fractionDigits008_878
 
 Grp: MS-DataTypes2006-07-15 / unsignedInt_pattern001_879
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -60166,7 +60170,7 @@ Grp: MS-DataTypes2006-07-15 / base64Binary_length001_1309
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK base64Binary_length001_1309
   OK base64Binary_length001_1309.i
-    base64Binary_length001.xml:4:13: Invalid value: "abcde"
+    base64Binary_length001.xml:4:13: Invalid length, must be 4 characters
 
 Grp: MS-DataTypes2006-07-15 / base64Binary_length002_1310
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -60177,7 +60181,7 @@ Grp: MS-DataTypes2006-07-15 / base64Binary_length003_1311
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK base64Binary_length003_1311
   OK base64Binary_length003_1311.i
-    base64Binary_length003.xml:4:13: Invalid value: "abcde"
+    base64Binary_length003.xml:4:13: Invalid length, must be 6 characters
 
 Grp: MS-DataTypes2006-07-15 / base64Binary_minLength001_1312
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -60193,7 +60197,7 @@ Grp: MS-DataTypes2006-07-15 / base64Binary_minLength003_1314
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK base64Binary_minLength003_1314
   OK base64Binary_minLength003_1314.i
-    base64Binary_minLength003.xml:4:13: Invalid value: "abcde"
+    base64Binary_minLength003.xml:4:13: String is too short, minimum length is 6 characters
 
 Grp: MS-DataTypes2006-07-15 / base64Binary_minLength004_1315
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95353,8 +95357,8 @@ Total number of tests: 37041 (omitting non-accepted tests)
    23358 XML files
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 198
-SF: XSD OK, should be KO: in_full_fail= 636
-XP: XML KO, should be OK: in_partial= 57 in_full_fail= 3
+SF: XSD OK, should be KO: in_full_fail= 638
+XP: XML KO, should be OK: in_partial= 53 in_full_fail= 3
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 897 ( 2.4 %)
+Total errors: 895 ( 2.4 %)

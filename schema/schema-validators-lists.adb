@@ -38,6 +38,7 @@ package body Schema.Validators.Lists is
       Min_Length : Natural;
       Max_Length : Natural;
    end record;
+   type List_Facets is access all List_Facets_Description'Class;
    procedure Add_Facet
      (Facets      : in out List_Facets_Description;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -49,7 +50,7 @@ package body Schema.Validators.Lists is
 
    type List_Validator_Record is new Any_Simple_XML_Validator_Record with
       record
-         Facets : List_Facets_Description;
+         Facets : List_Facets;
          Base   : XML_Type;
       end record;
    type List_Validator is access all List_Validator_Record'Class;
@@ -58,7 +59,9 @@ package body Schema.Validators.Lists is
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Context       : in out Validation_Context);
-   function Get_Facets_Description
+   function Create_Facets_Description
+     (Validator : access List_Validator_Record) return Facets_Description;
+   function Get_Facets
      (Validator : access List_Validator_Record) return Facets_Description;
    procedure Free (Validator : in out List_Validator_Record);
    --  See doc from inherited subprogram
@@ -194,21 +197,38 @@ package body Schema.Validators.Lists is
 
    procedure Free (Validator : in out List_Validator_Record) is
    begin
-      Free (Validator.Facets);
+      Free (Facets_Description (Validator.Facets));
       Free (XML_Validator_Record (Validator));
    end Free;
 
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
+   -------------------------------
+   -- Create_Facets_Description --
+   -------------------------------
 
-   function Get_Facets_Description
+   function Create_Facets_Description
      (Validator : access List_Validator_Record) return Facets_Description
    is
       pragma Unreferenced (Validator);
    begin
       return Facets_Description'(new List_Facets_Description);
-   end Get_Facets_Description;
+   end Create_Facets_Description;
+
+   ----------------
+   -- Get_Facets --
+   ----------------
+
+   function Get_Facets
+     (Validator : access List_Validator_Record) return Facets_Description
+   is
+      Applied : Boolean;
+   begin
+      if Validator.Facets = null then
+         Validator.Facets := new List_Facets_Description;
+         Add_Facet (Validator.Facets.all, "whitespace", "collapse", Applied);
+      end if;
+
+      return Facets_Description (Validator.Facets);
+   end Get_Facets;
 
    -------------
    -- List_Of --
@@ -250,7 +270,7 @@ package body Schema.Validators.Lists is
                        & Get_Name (Validator));
       end if;
 
-      Check_Facet (Validator.Facets, Ch);
+      Check_Facet (Get_Facets (Validator).all, Ch);
 
       For_Each (Ch);
    end Validate_Characters;

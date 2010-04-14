@@ -293,8 +293,7 @@ package body Schema.Validators is
       Val : Byte_Sequence_Access) return Byte_Sequence_Access
    is
       Whitespace : Whitespace_Restriction := Preserve;
-      Facets     : Facets_Description := Get_Facets_Description
-        (Typ.Validator);
+      Facets     : Facets_Description := Get_Facets (Typ.Validator);
       C          : Unicode_Char;
    begin
       if Facets /= null
@@ -302,8 +301,6 @@ package body Schema.Validators is
       then
          Whitespace := Common_Facets_Description (Facets.all).Whitespace;
       end if;
-
-      Free (Facets);
 
       --  Normalize attribute value if necessary
       --  replace: All occurrences of #x9 (tab), #xA (line feed) and #xD
@@ -1850,17 +1847,29 @@ package body Schema.Validators is
       end if;
    end Free;
 
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
+   -------------------------------
+   -- Create_Facets_Description --
+   -------------------------------
 
-   function Get_Facets_Description
+   function Create_Facets_Description
      (Validator : access XML_Validator_Record) return Facets_Description
    is
       pragma Unreferenced (Validator);
    begin
       return null;
-   end Get_Facets_Description;
+   end Create_Facets_Description;
+
+   ----------------
+   -- Get_Facets --
+   ----------------
+
+   function Get_Facets
+     (Validator : access XML_Validator_Record) return Facets_Description
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return null;
+   end Get_Facets;
 
    --------------------------
    -- Create_Local_Element --

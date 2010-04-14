@@ -27,6 +27,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Attributes;    use Sax.Attributes;
@@ -1561,35 +1562,20 @@ package body Schema.Schema_Readers is
 
       if Member_Index /= -1 then
          declare
-            Members : constant Byte_Sequence := Get_Value (Atts, Member_Index);
-            Index   : Integer := Members'First;
-            Start, Last : Integer;
-            C       : Unicode_Char;
-            Typ     : XML_Type;
-         begin
-            while Index <= Members'Last loop
-               while Index <= Members'Last loop
-                  Start := Index;
-                  Encoding.Read (Members, Index, C);
-                  exit when not Is_White_Space (C);
-               end loop;
+            procedure Cb_Item (Str : Byte_Sequence);
 
-               while Index <= Members'Last loop
-                  Last := Index;
-                  Encoding.Read (Members, Index, C);
-                  exit when Is_White_Space (C);
-               end loop;
-
-               if Index > Members'Last then
-                  Last := Members'Last + 1;
-               end if;
-
-               Lookup_With_NS (Handler.all, Members (Start .. Last - 1), Typ);
+            procedure Cb_Item (Str : Byte_Sequence) is
+               Typ : XML_Type;
+            begin
+               Lookup_With_NS (Handler.all, Str, Typ);
                Add_Union (Handler.Contexts.Union, Typ);
                Output ("Add_Union ("
-                       & Ada_Name (Handler.Contexts)
-                       & ", """ & Members (Start .. Last - 1) & """)");
-            end loop;
+                       & Ada_Name (Handler.Contexts) & ", """ & Str & """)");
+            end Cb_Item;
+
+            procedure For_Each is new For_Each_Item (Cb_Item);
+         begin
+            For_Each (Get_Value (Atts, Member_Index));
          end;
       end if;
    end Create_Union;
@@ -2542,8 +2528,10 @@ package body Schema.Schema_Readers is
          case Handler.Contexts.Typ is
             when Context_Restriction =>
                Create_Restricted (Handler, Handler.Contexts);
-               Add_Facet (Handler.Contexts.Restricted, Local_Name,
-                          Get_Value (Atts, URI => "", Local_Name => "value"));
+               Add_Facet
+                 (Handler.Contexts.Restricted, Local_Name,
+                  Trim (Get_Value (Atts, URI => "", Local_Name => "value"),
+                        Ada.Strings.Both));
 
             when Context_Extension =>
                Validation_Error
