@@ -1016,7 +1016,7 @@ package body Schema.Validators is
 
             if Must_Match_All_Any2 /= Must_Match_All_Any then
                declare
-                  Saved_Seen_Any : Any_Status_Array := Seen_Any;
+                  Saved_Seen_Any : constant Any_Status_Array := Seen_Any;
                begin
                   for S in Seen_Any'Range loop
                      if Seen_Any (S) = Any_Not_All then

@@ -44467,8 +44467,9 @@ Grp: AttrDecl / ad_valconstr00101m
     AD_valConstr00101m2_n.xml:14:38: Attribute "price": value must be "12.3" (found "-1.3")
 
 Grp: AttrDecl / ad_valconstr00201m1
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF AD_valConstr00201m1
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK AD_valConstr00201m1
+    AD_valConstr00201m1.xsd:29:37: Attributes "fixed" and "default" cannot be both specified
 
 Grp: AttrDecl / ad_valconstr00201m2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -44480,8 +44481,9 @@ Grp: AttrDecl / ad_valconstr00201m3
   OK Positive
 
 Grp: AttrDecl / ad_valconstr00201m4
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF AD_valConstr00201m4
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK AD_valConstr00201m4
+    AD_valConstr00201m4.xsd:24:38: Attributes "fixed" and "default" cannot be both specified
 
 Grp: AttrDecl / ad_valconstr00201m5
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49646,8 +49648,9 @@ Grp: MS-AttributeGroup2006-07-15 / attgD007
   SF attgD007
 
 Grp: MS-AttributeGroup2006-07-15 / attgD008
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attgD008
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attgD008
+    attgD008.xsd:6:44: Attributes "type" and "ref" cannot be both specified
 
 Grp: MS-AttributeGroup2006-07-15 / attgD009
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50219,8 +50222,9 @@ Grp: MS-Attribute2006-07-15 / attI006
     attI006.xsd:14:20: Unexpected element "{http://www.w3.org/2001/XMLSchema}simpleType"
 
 Grp: MS-Attribute2006-07-15 / attKa001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKa001
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKa001
+    attKa001.xsd:4:74: Attributes "fixed" and "default" cannot be both specified
 
 Grp: MS-Attribute2006-07-15 / attKa002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50289,8 +50293,9 @@ Grp: MS-Attribute2006-07-15 / attKa015
   SF attKa015
 
 Grp: MS-Attribute2006-07-15 / attKb001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKb001
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKb001
+    attKb001.xsd:6:57: Attributes "fixed" and "default" cannot be both specified
 
 Grp: MS-Attribute2006-07-15 / attKb002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50337,8 +50342,9 @@ Grp: MS-Attribute2006-07-15 / attKb012
   SF attKb012
 
 Grp: MS-Attribute2006-07-15 / attKb013
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKb013
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKb013
+    attKb013.xsd:6:49: Attributes "type" and "ref" cannot be both specified
 
 Grp: MS-Attribute2006-07-15 / attKb014
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50367,8 +50373,9 @@ Grp: MS-Attribute2006-07-15 / attKb018a
   SF attKb018a
 
 Grp: MS-Attribute2006-07-15 / attKc001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKc001
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKc001
+    attKc001.xsd:10:56: Attributes "fixed" and "default" cannot be both specified
 
 Grp: MS-Attribute2006-07-15 / attKc002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50415,8 +50422,9 @@ Grp: MS-Attribute2006-07-15 / attKc012
   SF attKc012
 
 Grp: MS-Attribute2006-07-15 / attKc013
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKc013
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKc013
+    attKc013.xsd:13:49: Attributes "type" and "ref" cannot be both specified
 
 Grp: MS-Attribute2006-07-15 / attKc014
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95345,8 +95353,8 @@ Total number of tests: 37041 (omitting non-accepted tests)
    23358 XML files
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 198
-SF: XSD OK, should be KO: in_full_fail= 644
+SF: XSD OK, should be KO: in_full_fail= 636
 XP: XML KO, should be OK: in_partial= 57 in_full_fail= 3
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 905 ( 2.4 %)
+Total errors: 897 ( 2.4 %)

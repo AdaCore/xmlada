@@ -1951,6 +1951,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "ref");
       Form_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "form");
+      Default_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "default");
 
       Att : Attribute_Validator;
       Typ : XML_Type := No_Type;
@@ -1983,6 +1985,11 @@ package body Schema.Schema_Readers is
       end if;
 
       if Type_Index /= -1 then
+         if Ref_Index /= -1 then
+            Validation_Error
+              ("Attributes ""type"" and ""ref"" cannot be both specified");
+         end if;
+
          Lookup_With_NS
            (Handler.all, Get_Value (Atts, Type_Index), Result => Typ);
 
@@ -1993,6 +2000,11 @@ package body Schema.Schema_Readers is
               (XML_Not_Implemented'Identity,
                "Unsupported type IDREF and IDREFS");
          end if;
+      end if;
+
+      if Fixed_Index /= -1 and then Default_Index /= -1 then
+         Validation_Error
+           ("Attributes ""fixed"" and ""default"" cannot be both specified");
       end if;
 
       if Use_Index = -1 then
