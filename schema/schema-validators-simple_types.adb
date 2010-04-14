@@ -597,7 +597,8 @@ package body Schema.Validators.Simple_Types is
       is
          Applies : Boolean;
       begin
-         Add_Facet (Validator.Facets.all, Facet_Name, Facet_Value, Applies);
+         Add_Facet
+           (Get_Facets (Validator).all, Facet_Name, Facet_Value, Applies);
          if not Applies then
             Validation_Error ("Invalid facet: " & Facet_Name);
          end if;
@@ -1347,7 +1348,8 @@ package body Schema.Validators.Simple_Types is
    -------------------------------
 
    procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS) is
-      use Integer_Validators;
+      use Integer_Validators, String_Validators, String_List_Validators;
+      use HexBinary_Validators, Base64Binary_Validators, Decimal_Validators;
       use String_Facets, String_List_Facets,
           HexBinary_Facets, Base64Binary_Facets;
       Tmp     : XML_Validator;
@@ -1359,186 +1361,185 @@ package body Schema.Validators.Simple_Types is
       Dec     : Decimal_Validators.Validator;
       QN      : QName_Validators.Validator;
       Created : XML_Type;
+      Applied : Boolean;
    begin
       Tmp := new Boolean_Validator_Record;
       Create_Global_Type (G, "boolean", Tmp);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Preserve);
+      Add_Facet (Str, "whiteSpace", "preserve");
       Create_Global_Type (G, "string", Str);
 
       QN  := new QName_Validator;
       Create_Global_Type (G, "QName", QN);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Replace); --  This should be hard-coded
+      Add_Facet (Str, "whiteSpace", "replace");
       Create_Global_Type (G, "normalizedString", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Collapse);  --  This should be hard-coded
+      Add_Facet (Str, "whiteSpace", "collapse");
       Create_Global_Type (G, "token", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Preserve); --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_Language_Name'Access);
+      Add_Facet (Str, "whiteSpace", "preserve");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_Language_Name'Access);
       Created := Create_Global_Type (G, "language", Str);
       Create_Global_Attribute (XML_G, "lang", Created);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Collapse);
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_Nmtoken'Access);
+      Add_Facet (Str, "whiteSpace", "collapse");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_Nmtoken'Access);
       Create_Global_Type (G, "NMTOKEN", Str);
 
       StrList := new String_List_Validators.Validator_Record;
-      Set_Whitespace (StrList.Facets.all, Collapse);
-      Set_Implicit_Enumeration (StrList.Facets.all, Is_Valid_Nmtokens'Access);
+      Add_Facet (StrList, "whiteSpace", "collapse");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (StrList).all),
+         Is_Valid_Nmtokens'Access);
       Create_Global_Type (G, "NMTOKENS", StrList);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Preserve); --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_Name'Access);
+      Add_Facet (Str, "whiteSpace", "preserve");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_Name'Access);
       Create_Global_Type (G, "Name", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Preserve);  --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCname'Access);
+      Add_Facet (Str, "whiteSpace", "preserve");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_NCname'Access);
       Create_Global_Type (G, "NCName", Str);
 
       Str := new ID_Validator;
-      Set_Whitespace (Str.Facets.all, Preserve);  --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCname'Access);
+      Add_Facet (Str, "whiteSpace", "preserve");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_NCname'Access);
       Create_Global_Type (G, "ID", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Preserve);  --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCname'Access);
+      Add_Facet (Str, "whiteSpace", "preserve");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_NCname'Access);
       Create_Global_Type (G, "IDREF", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Preserve);  --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCnames'Access);
+      Add_Facet (Str, "whiteSpace", "preserve");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_NCnames'Access);
       Create_Global_Type (G, "IDREFS", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Preserve); --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCname'Access);
+      Add_Facet (Str, "whiteSpace", "preserve");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_NCname'Access);
       Create_Global_Type (G, "ENTITY", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Whitespace (Str.Facets.all, Preserve); --  Inherits from String
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_NCnames'Access);
+      Add_Facet (Str, "whiteSpace", "preserve");
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_NCnames'Access);
       Create_Global_Type (G, "ENTITIES", Str);
 
       Str := new String_Validators.Validator_Record;
-      Set_Implicit_Enumeration (Str.Facets.all, Is_Valid_URI'Access);
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Str).all),
+         Is_Valid_URI'Access);
       Create_Global_Type (G, "anyURI", Str);
 
       Hex := new HexBinary_Validator;
-      Set_Implicit_Enumeration (Hex.Facets.all, Is_Valid_HexBinary'Access);
+      Set_Implicit_Enumeration
+        (Common_Facets_Description (Get_Facets (Hex).all),
+         Is_Valid_HexBinary'Access);
       Create_Global_Type (G, "hexBinary", Hex);
 
       Base64 := new Base64Binary_Validators.Validator_Record;
       Set_Implicit_Enumeration
-        (Base64.Facets.all, Is_Valid_Base64Binary'Access);
+        (Common_Facets_Description (Get_Facets (Base64).all),
+         Is_Valid_Base64Binary'Access);
       Create_Global_Type (G, "base64Binary", Base64);
 
       Dec := new Decimal_Validators.Validator_Record;
       Create_Global_Type (G, "decimal", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Dec.Facets.Mask := (Facet_Fraction_Digits => True,
-                          Facet_Max_Inclusive   => True,
-                          Facet_Min_Inclusive   => True,
-                          others                => False);
-      Dec.Facets.Fraction_Digits := 0;
-      Dec.Facets.Max_Inclusive := Value ("+18446744073709551615");
-      Dec.Facets.Min_Inclusive := Value ("0");
+      Add_Facet (Get_Facets (Dec).all, "fractionDigits", "0", Applied);
+      Add_Facet
+        (Get_Facets (Dec).all, "maxInclusive", "+18446744073709551615",
+         Applied);
+      Add_Facet (Get_Facets (Dec).all, "minInclusive", "0", Applied);
       Create_Global_Type (G, "unsignedLong", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Dec.Facets.Mask := (Facet_Fraction_Digits => True,
-                          others                => False);
-      Dec.Facets.Fraction_Digits := 0;
+      Add_Facet (Get_Facets (Dec).all, "fractionDigits", "0", Applied);
       Create_Global_Type (G, "integer", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Dec.Facets.Mask := (Facet_Min_Inclusive   => True,
-                          others                => False);
-      Dec.Facets.Min_Inclusive := Value ("0");
+      Add_Facet (Get_Facets (Dec).all, "minInclusive", "0", Applied);
       Create_Global_Type (G, "nonNegativeInteger", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Dec.Facets.Mask := (Facet_Min_Inclusive   => True,
-                          others                => False);
-      Dec.Facets.Min_Inclusive := Value ("1");
+      Add_Facet (Get_Facets (Dec).all, "minInclusive", "1", Applied);
       Create_Global_Type (G, "positiveInteger", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Dec.Facets.Mask := (Facet_Max_Inclusive   => True,
-                          others                => False);
-      Dec.Facets.Max_Inclusive := Value ("0");
+      Add_Facet (Get_Facets (Dec).all, "maxInclusive", "0", Applied);
       Create_Global_Type (G, "nonPositiveInteger", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Dec.Facets.Mask := (Facet_Max_Inclusive   => True,
-                          others                => False);
-      Dec.Facets.Max_Inclusive   := Value ("-1");
+      Add_Facet (Get_Facets (Dec).all, "maxInclusive", "-1", Applied);
       Create_Global_Type (G, "negativeInteger", Dec);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
-                          Facet_Min_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Max_Inclusive   := +9_223_372_036_854_775_807;
-      Int.Facets.Min_Inclusive   := -9_223_372_036_854_775_808;
+      Add_Facet
+        (Get_Facets (Int).all, "maxInclusive", "+9223372036854775807",
+         Applied);
+      Add_Facet
+        (Get_Facets (Int).all, "minInclusive", "-9223372036854775808",
+         Applied);
       Create_Global_Type (G, "long", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
-                          Facet_Min_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Max_Inclusive := +2_147_483_647;
-      Int.Facets.Min_Inclusive := -2_147_483_648;
+      Add_Facet
+        (Get_Facets (Int).all, "maxInclusive", "+2147483647", Applied);
+      Add_Facet
+        (Get_Facets (Int).all, "minInclusive", "-2147483648", Applied);
       Create_Global_Type (G, "int", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
-                          Facet_Min_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Max_Inclusive := +32_767;
-      Int.Facets.Min_Inclusive := -32_768;
+      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+32767", Applied);
+      Add_Facet (Get_Facets (Int).all, "minInclusive", "-32768", Applied);
       Create_Global_Type (G, "short", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Max_Inclusive   => True,
-                          Facet_Min_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Max_Inclusive := +127;
-      Int.Facets.Min_Inclusive := -128;
+      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+127", Applied);
+      Add_Facet (Get_Facets (Int).all, "minInclusive", "-128", Applied);
       Create_Global_Type (G, "byte", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
-                          Facet_Max_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Max_Inclusive := +4_294_967_295;
-      Int.Facets.Min_Inclusive := 0;
+      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+4294967295", Applied);
+      Add_Facet (Get_Facets (Int).all, "minInclusive", "0", Applied);
       Create_Global_Type (G, "unsignedInt", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
-                          Facet_Max_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Max_Inclusive := +65_535;
-      Int.Facets.Min_Inclusive := 0;
+      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+65535", Applied);
+      Add_Facet (Get_Facets (Int).all, "minInclusive", "0", Applied);
       Create_Global_Type (G, "unsignedShort", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Int.Facets.Mask := (Facet_Min_Inclusive   => True,
-                          Facet_Max_Inclusive   => True,
-                          others                => False);
-      Int.Facets.Max_Inclusive := +255;
-      Int.Facets.Min_Inclusive := 0;
+      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+255", Applied);
+      Add_Facet (Get_Facets (Int).all, "minInclusive", "0", Applied);
       Create_Global_Type (G, "unsignedByte", Int);
 
       Tmp := new Float_Validators.Validator_Record;
@@ -1642,7 +1643,7 @@ package body Schema.Validators.Simple_Types is
    begin
       if Validator.Facets = null then
          Validator.Facets := new Common_Facets_Description;
-         Add_Facet (Validator.Facets.all, "whitespace", "collapse", Applied);
+         Add_Facet (Validator.Facets.all, "whiteSpace", "collapse", Applied);
       end if;
 
       return Validator.Facets;
