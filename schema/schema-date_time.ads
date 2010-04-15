@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005-2007, AdaCore            --
+--                       Copyright (C) 2005-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -234,7 +234,7 @@ private
    type Duration_T is record
       Sign             : Integer;
       Year, Month, Day : Natural;
-      Seconds          : Ada.Calendar.Day_Duration;
+      Seconds          : Duration;
    end record;
    No_Duration : constant Duration_T := (1, 0, 0, 0, 0.0);
    --  A negative duration is representated by having all fields to a negative

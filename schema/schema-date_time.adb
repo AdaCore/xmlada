@@ -615,6 +615,7 @@ package body Schema.Date_Time is
       Pos    : Integer := Ch'First;
       Tmp    : Integer;
       Processing_Time : Boolean := False;
+      Hour   : Natural;
    begin
       if Ch = "" then
          Validation_Error ("Empty string is not a valid value for duration");
@@ -686,8 +687,9 @@ package body Schema.Date_Time is
                Validation_Error ("Expecting date component in """ & Ch & """");
                return No_Duration;
             end if;
-            Result.Seconds := Result.Seconds + Day_Range
-              (Integer'Value (Ch (Pos .. Tmp - 1))) * 3600.0;
+
+            Hour := Integer'Value (Ch (Pos .. Tmp - 1));
+            Result.Seconds := Result.Seconds + Duration (Hour) * 3600.0;
 
          else
             Validation_Error

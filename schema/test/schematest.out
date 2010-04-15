@@ -18075,13 +18075,13 @@ Grp: NIST2004-01-14 / atomic-duration-pattern-7
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-duration-pattern-3
   OK NISTXML-SV-II-atomic-duration-pattern-3-1
-    NISTXML-SV-II-atomic-duration-pattern-3-1.xml:19:141: Invalid duration: "P2080Y11M20DT28H23M07S"
+    NISTXML-SV-II-atomic-duration-pattern-3-1.xml:19:141: string pattern not matched: P\d\d24Y0\dM1\dDT1\dH\d0M5\dS
   OK NISTXML-SV-II-atomic-duration-pattern-3-2
     NISTXML-SV-II-atomic-duration-pattern-3-2.xml:19:141: string pattern not matched: P\d\d24Y0\dM1\dDT1\dH\d0M5\dS
   OK NISTXML-SV-II-atomic-duration-pattern-3-3
-    NISTXML-SV-II-atomic-duration-pattern-3-3.xml:19:141: Invalid duration: "P1860Y11M01DT29H07M09S"
+    NISTXML-SV-II-atomic-duration-pattern-3-3.xml:19:141: string pattern not matched: P\d\d24Y0\dM1\dDT1\dH\d0M5\dS
   OK NISTXML-SV-II-atomic-duration-pattern-3-4
-    NISTXML-SV-II-atomic-duration-pattern-3-4.xml:19:141: Invalid duration: "P1734Y10M27DT26H39M38S"
+    NISTXML-SV-II-atomic-duration-pattern-3-4.xml:19:141: string pattern not matched: P\d\d24Y0\dM1\dDT1\dH\d0M5\dS
   OK NISTXML-SV-II-atomic-duration-pattern-3-5
     NISTXML-SV-II-atomic-duration-pattern-3-5.xml:19:141: string pattern not matched: P\d\d24Y0\dM1\dDT1\dH\d0M5\dS
 
@@ -18089,27 +18089,27 @@ Grp: NIST2004-01-14 / atomic-duration-pattern-8
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-duration-pattern-4
   OK NISTXML-SV-II-atomic-duration-pattern-4-1
-    NISTXML-SV-II-atomic-duration-pattern-4-1.xml:19:141: Invalid duration: "P2035Y04M26DT42H16M44S"
+    NISTXML-SV-II-atomic-duration-pattern-4-1.xml:19:141: string pattern not matched: P\d\d80Y\d8M1\dDT1\dH3\dM2\dS
   OK NISTXML-SV-II-atomic-duration-pattern-4-2
-    NISTXML-SV-II-atomic-duration-pattern-4-2.xml:19:141: Invalid duration: "P1953Y03M25DT56H22M31S"
+    NISTXML-SV-II-atomic-duration-pattern-4-2.xml:19:141: string pattern not matched: P\d\d80Y\d8M1\dDT1\dH3\dM2\dS
   OK NISTXML-SV-II-atomic-duration-pattern-4-3
-    NISTXML-SV-II-atomic-duration-pattern-4-3.xml:19:141: Invalid duration: "P1882Y02M01DT43H46M14S"
+    NISTXML-SV-II-atomic-duration-pattern-4-3.xml:19:141: string pattern not matched: P\d\d80Y\d8M1\dDT1\dH3\dM2\dS
   OK NISTXML-SV-II-atomic-duration-pattern-4-4
-    NISTXML-SV-II-atomic-duration-pattern-4-4.xml:19:141: Invalid duration: "P1816Y02M03DT41H50M58S"
+    NISTXML-SV-II-atomic-duration-pattern-4-4.xml:19:141: string pattern not matched: P\d\d80Y\d8M1\dDT1\dH3\dM2\dS
   OK NISTXML-SV-II-atomic-duration-pattern-4-5
-    NISTXML-SV-II-atomic-duration-pattern-4-5.xml:19:141: Invalid duration: "P1847Y04M23DT38H01M44S"
+    NISTXML-SV-II-atomic-duration-pattern-4-5.xml:19:141: string pattern not matched: P\d\d80Y\d8M1\dDT1\dH3\dM2\dS
 
 Grp: NIST2004-01-14 / atomic-duration-pattern-9
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-duration-pattern-5
   OK NISTXML-SV-II-atomic-duration-pattern-5-1
-    NISTXML-SV-II-atomic-duration-pattern-5-1.xml:19:141: Invalid duration: "P1865Y03M10DT42H54M38S"
+    NISTXML-SV-II-atomic-duration-pattern-5-1.xml:19:141: string pattern not matched: P17\d\dY\d7M\d3DT0\dH0\dM\d5S
   OK NISTXML-SV-II-atomic-duration-pattern-5-2
     NISTXML-SV-II-atomic-duration-pattern-5-2.xml:19:141: string pattern not matched: P17\d\dY\d7M\d3DT0\dH0\dM\d5S
   OK NISTXML-SV-II-atomic-duration-pattern-5-3
-    NISTXML-SV-II-atomic-duration-pattern-5-3.xml:19:141: Invalid duration: "P1905Y01M08DT26H15M16S"
+    NISTXML-SV-II-atomic-duration-pattern-5-3.xml:19:141: string pattern not matched: P17\d\dY\d7M\d3DT0\dH0\dM\d5S
   OK NISTXML-SV-II-atomic-duration-pattern-5-4
-    NISTXML-SV-II-atomic-duration-pattern-5-4.xml:19:141: Invalid duration: "P1843Y02M12DT29H32M46S"
+    NISTXML-SV-II-atomic-duration-pattern-5-4.xml:19:141: string pattern not matched: P17\d\dY\d7M\d3DT0\dH0\dM\d5S
   OK NISTXML-SV-II-atomic-duration-pattern-5-5
     NISTXML-SV-II-atomic-duration-pattern-5-5.xml:19:141: string pattern not matched: P17\d\dY\d7M\d3DT0\dH0\dM\d5S
 
@@ -63723,10 +63723,9 @@ Grp: MS-DataTypes2006-07-15 / duration015_1983
     duration015.xml:6:20: Invalid prefix for duration in "T312H"
 
 Grp: MS-DataTypes2006-07-15 / duration016_1984
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK duration016_1984
-  XP duration016_1984.v
-    duration016.xml:6:20: Invalid duration: "PT31H"
+  OK duration016_1984.v
 
 Grp: MS-DataTypes2006-07-15 / duration017_1985
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -63765,10 +63764,9 @@ Grp: MS-DataTypes2006-07-15 / duration023_1991
   OK duration023_1991.v
 
 Grp: MS-DataTypes2006-07-15 / duration024_1992
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK duration024_1992
-  XP duration024_1992.v
-    duration024.xml:6:30: Invalid duration: "P1Y2M15DT25H30M"
+  OK duration024_1992.v
 
 Grp: MS-DataTypes2006-07-15 / duration025_1993
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95310,7 +95308,7 @@ Total number of tests: 37055 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 183
 SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 27 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 25 in_full_fail= 2
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 854 ( 2.3 %)
+Total errors: 852 ( 2.3 %)
