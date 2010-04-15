@@ -84,6 +84,8 @@ KP-32-J302-043 Lots of fixes in schema validation
               - When in a restriction, all the <anyAttribute> must match,
                 whereas in an extension only one of them has to match
               - The "fixed" value must also match the type from xsi:type
+              - A "prohibited" attribute might still be accepted through a
+                <anyAttribute> if there is one in the same element
 
   Status:     Fixed in 3.3.0
 

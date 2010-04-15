@@ -711,7 +711,16 @@ package body Schema.Validators is
       Context   : in out Validation_Context)
    is
       Length   : constant Natural := Get_Length (Atts);
-      Seen     : array (0 .. Length - 1) of Boolean := (others => False);
+
+      type Attr_Status is record
+         Prohibited : Boolean := False;
+         --  Prohibited explicitly, but it might be allowed through
+         --  <anyAttribute>
+
+         Seen  : Boolean := False;
+      end record;
+      Seen : array (0 .. Length - 1) of Attr_Status :=
+        (others => (False, False));
 
       type Any_Status is (Any_None, Any_All, Any_Not_All);
       type Any_Status_Array is array (0 .. Length - 1) of Any_Status;
@@ -791,7 +800,7 @@ package body Schema.Validators is
                end case;
 
             else
-               Seen (Found) := True;
+               Seen (Found).Seen := True;
 
                case Named.Attribute_Form is
                   when Qualified =>
@@ -799,7 +808,7 @@ package body Schema.Validators is
                        and then Get_Prefix (Atts, Found) = ""
                      then
                         Validation_Error
-                          ("Attribute " & Get_Local_Name (Atts, Found)
+                          ("Attribute " & Get_Qname (Atts, Found)
                            & " must have a namespace");
                      end if;
 
@@ -810,37 +819,35 @@ package body Schema.Validators is
                           Get_Namespace_URI (Get (Context.Grammar).Target_NS)
                      then
                         Validation_Error
-                          ("Attribute " & Get_Local_Name (Atts, Found)
+                          ("Attribute " & Get_Qname (Atts, Found)
                            & " must not have a namespace");
                      end if;
                end case;
 
                case Named.Attribute_Use is
                   when Prohibited =>
-                     Validation_Error
-                       ("Attribute """ & Named.Local_Name.all
-                        & """ is prohibited in this context");
+                     Seen (Found) := (Seen       => False,
+                                      Prohibited => True);
 
                   when Optional | Required | Default =>
-                     null;
+                     --  We do not need to check id here, since that is
+                     --  automatically checked from Validate_Characters for the
+                     --  attribute
+                     --     Check_Id
+                     --       (Id_Table, Get_Type (Named.all).Validator,
+                     --        Get_Value (Atts, Found));
+
+                     Normalize_Whitespace (Get_Type (Named.all), Atts, Found);
+
+                     begin
+                        Validate_Attribute (Named.all, Atts, Found, Context);
+                     exception
+                        when E : XML_Validation_Error =>
+                           Validation_Error
+                             ("Attribute """ & Get_Qname (Atts, Found)
+                              & """: " & Exception_Message (E));
+                     end;
                end case;
-
-               --  We do not need to check id here, since that is automatically
-               --  checked from Validate_Characters for the attribute
-               --     Check_Id
-               --       (Id_Table, Get_Type (Named.all).Validator,
-               --        Get_Value (Atts, Found));
-
-               Normalize_Whitespace (Get_Type (Named.all), Atts, Found);
-
-               begin
-                  Validate_Attribute (Named.all, Atts, Found, Context);
-               exception
-                  when E : XML_Validation_Error =>
-                     Validation_Error
-                       ("Attribute """ & Get_Qname (Atts, Found)
-                        & """: " & Exception_Message (E));
-               end;
             end if;
          end if;
       end Check_Named_Attribute;
@@ -880,7 +887,7 @@ package body Schema.Validators is
          Is_Local_In_XSD : Boolean) return Integer is
       begin
          for A in 0 .. Length - 1 loop
-            if not Seen (A)
+            if not Seen (A).Seen
               and then Get_Local_Name (Atts, A) = Named.Local_Name.all
               and then ((Is_Local_In_XSD and Get_Prefix (Atts, A) = "")
                         or else Get_URI (Atts, A) = Named.NS.Namespace_URI.all)
@@ -936,7 +943,7 @@ package body Schema.Validators is
             --  that the attribute is tested multiple times
 
             for A in 0 .. Length - 1 loop
-               if not Seen (A)
+               if not Seen (A).Seen
                  and then (Must_Match_All_Any
                            or else Seen_Any (A) /= Any_All)
                then
@@ -1055,7 +1062,7 @@ package body Schema.Validators is
       Is_Nil := False;
 
       for S in Seen'Range loop
-         if not Seen (S) and then Seen_Any (S) /= Any_All then
+         if not Seen (S).Seen and then Seen_Any (S) /= Any_All then
             if Get_URI (Atts, S) = XML_Instance_URI then
                if Get_Local_Name (Atts, S) = "nil" then
                   if not Nillable then
@@ -1078,10 +1085,15 @@ package body Schema.Validators is
                      & """ invalid for this element");
                end if;
 
+            elsif Seen (S).Prohibited then
+               Validation_Error
+                 ("Attribute """ & Get_Qname (Atts, S)
+                  & """ is prohibited in this context");
+
             else
                Validation_Error
-                 ("Attribute """ & Get_Qname (Atts, S) & """ invalid for this"
-                  & " element");
+                 ("Attribute """ & Get_Qname (Atts, S)
+                  & """ invalid for this element");
             end if;
          end if;
       end loop;

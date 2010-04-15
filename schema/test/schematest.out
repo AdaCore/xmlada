@@ -44068,14 +44068,14 @@ Grp: AttrDecl / ad_name00101m2
   OK AD_name00101m2
   OK Positive
   OK Negative
-    AD_name00101m2_n.xml:19:40: Attribute number must not have a namespace
+    AD_name00101m2_n.xml:19:40: Attribute td:number must not have a namespace
 
 Grp: AttrDecl / ad_name00101m3
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK AD_name00101m3
   OK Positive
   OK Negative
-    AD_name00101m3_n.xml:19:42: Attribute price must not have a namespace
+    AD_name00101m3_n.xml:19:42: Attribute td:price must not have a namespace
 
 Grp: AttrDecl / ad_name00101m4
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -44434,7 +44434,7 @@ Grp: AttrDecl / ad_targetns00101m
     AD_targetNS00101m2_n.xml:15:44: Attribute "tNOT:price" invalid for this element
   OK AD_targetNS00101m3_p
   OK AD_targetNS00101m3_n
-    AD_targetNS00101m3_n.xml:14:41: Attribute number must not have a namespace
+    AD_targetNS00101m3_n.xml:14:41: Attribute td:number must not have a namespace
 
 Grp: AttrDecl / ad_type00101m
   100.0% tests= 5 (xsd= 1 xml= 4) OK= 5 FAILED= 0
@@ -45145,7 +45145,7 @@ Grp: ElemDecl / name00502m1
 Grp: ElemDecl / name00502m2
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK name00502m2
-    name00502m2.xsd:16:30: Attribute "ref" is prohibited in this context
+    name00502m2.xsd:16:30: Attribute "name" is required in this context
 
 Grp: ElemDecl / name00503m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45155,7 +45155,7 @@ Grp: ElemDecl / name00503m1
 Grp: ElemDecl / name00503m2
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK name00503m2
-    name00503m2.xsd:16:30: Attribute "ref" is prohibited in this context
+    name00503m2.xsd:16:30: Attribute "name" is required in this context
 
 Grp: ElemDecl / name00504m1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -45165,7 +45165,7 @@ Grp: ElemDecl / name00504m1
 Grp: ElemDecl / name00504m2
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK name00504m2
-    name00504m2.xsd:16:30: Attribute "ref" is prohibited in this context
+    name00504m2.xsd:16:30: Attribute "name" is required in this context
 
 Grp: ElemDecl / name00504m3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -45175,7 +45175,7 @@ Grp: ElemDecl / name00504m3
 Grp: ElemDecl / name00504m4
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK name00504m4
-    name00504m4.xsd:16:30: Attribute "ref" is prohibited in this context
+    name00504m4.xsd:16:30: Attribute "name" is required in this context
 
 Grp: ElemDecl / name00505m1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -45283,7 +45283,7 @@ Grp: ElemDecl / scope00201m1
 Grp: ElemDecl / scope00201m2
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK scope00201m2
-    scope00201m2.xsd:22:29: Attribute "ref" is prohibited in this context
+    scope00201m2.xsd:22:29: Attribute "name" is required in this context
 
 Grp: ElemDecl / scope00301m
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -47671,10 +47671,9 @@ Grp: MS-Additional2006-07-15 / addB033
   SF addB033
 
 Grp: MS-Additional2006-07-15 / addB034
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB034
-  XP addB034.v
-    test71818.xml:1:119: Attribute "attr" is prohibited in this context
+  OK addB034.v
 
 Grp: MS-Additional2006-07-15 / addB035
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -48152,10 +48151,9 @@ Grp: MS-Additional2006-07-15 / addB135
   OK addB135.v
 
 Grp: MS-Additional2006-07-15 / addB136
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB136
-  XP addB136.v
-    test84188.xml:4:12: Attribute "attr" is prohibited in this context
+  OK addB136.v
 
 Grp: MS-Additional2006-07-15 / addB137
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50236,7 +50234,7 @@ Grp: MS-Attribute2006-07-15 / attKa009
 Grp: MS-Attribute2006-07-15 / attKa010
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attKa010
-    attKa010.xsd:4:28: Attribute "ref" is prohibited in this context
+    attKa010.xsd:4:28: Attribute "name" is required in this context
 
 Grp: MS-Attribute2006-07-15 / attKa011
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50713,19 +50711,19 @@ Grp: MS-Attribute2006-07-15 / attMb010
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attMb010
   OK attMb010.i
-    attMb010.xml:3:59: Attribute ca1 must not have a namespace
+    attMb010.xml:3:59: Attribute x:ca1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMb011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attMb011
   OK attMb011.i
-    attMb011.xml:3:35: Attribute ca1 must not have a namespace
+    attMb011.xml:3:35: Attribute x:ca1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMb012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attMb012
   OK attMb012.i
-    attMb012.xml:3:23: Attribute ca2 must not have a namespace
+    attMb012.xml:3:23: Attribute x:ca2 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -50779,19 +50777,19 @@ Grp: MS-Attribute2006-07-15 / attMc010
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attMc010
   OK attMc010.i
-    attMc010.xml:3:50: Attribute aga1 must not have a namespace
+    attMc010.xml:3:50: Attribute x:aga1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attMc011
   OK attMc011.i
-    attMc011.xml:3:63: Attribute aga1 must not have a namespace
+    attMc011.xml:3:63: Attribute x:aga1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMc012
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attMc012
   OK attMc012.i
-    attMc012.xml:3:63: Attribute aga1 must not have a namespace
+    attMc012.xml:3:63: Attribute x:aga1 must not have a namespace
 
 Grp: MS-Attribute2006-07-15 / attMd001
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
@@ -50861,7 +50859,7 @@ Grp: MS-Attribute2006-07-15 / attP002
 Grp: MS-Attribute2006-07-15 / attP003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attP003
-    attP003.xsd:4:29: Attribute "ref" is prohibited in this context
+    attP003.xsd:4:29: Attribute "name" is required in this context
 
 Grp: MS-Attribute2006-07-15 / attP004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -51010,7 +51008,7 @@ Grp: MS-Attribute2006-07-15 / attP031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attP031
   OK attP031.i
-    attP031.xml:3:22: Attribute "att" is prohibited in this context
+    attP031.xml:3:22: Attribute "x:att" is prohibited in this context
 
 Grp: MS-Attribute2006-07-15 / attP032
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -51115,10 +51113,9 @@ Grp: MS-Attribute2006-07-15 / attZ001
     <redefine> not supported
 
 Grp: MS-Attribute2006-07-15 / attZ002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attZ002
-  XP attZ002.v
-    attZ002.xml:1:117: Attribute "attr" is prohibited in this context
+  OK attZ002.v
 
 Grp: MS-Attribute2006-07-15 / attZ004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95314,7 +95311,7 @@ Total number of tests: 37055 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 183
 SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 31 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 28 in_full_fail= 2
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 858 ( 2.3 %)
+Total errors: 855 ( 2.3 %)
