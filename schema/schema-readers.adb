@@ -37,6 +37,7 @@ with Sax.Readers;       use Sax.Readers;
 with Schema.Validators; use Schema.Validators;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.IO_Exceptions;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with GNAT.IO;               use GNAT.IO;
 with Input_Sources.File;    use Input_Sources.File;
@@ -511,7 +512,12 @@ package body Schema.Readers is
       begin
          if Type_Index /= -1 then
             declare
-               Qname : constant Byte_Sequence := Get_Value (Atts, Type_Index);
+               --  We need to trim whitespaces, because Validate_Attributes,
+               --  which does the validation, is only done after calling this
+               --  procedure
+               Qname : constant Byte_Sequence :=
+                 Ada.Strings.Fixed.Trim
+                   (Get_Value (Atts, Type_Index), Ada.Strings.Both);
                Separator : constant Integer := Split_Qname (Qname);
                NS        : XML_NS;
             begin

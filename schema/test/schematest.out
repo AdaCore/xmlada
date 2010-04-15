@@ -45583,10 +45583,9 @@ Grp: ElemDecl / typedef00502m2
   SF typeDef00502m2
 
 Grp: ElemDecl / typedef00601m
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK typeDef00601m
-  XP typeDef00601m1_p
-    typeDef00601m1_p.xml:16:7: Unknown type "     xsd:boolean     "
+  OK typeDef00601m1_p
 
 Grp: ElemDecl / typedef00701m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -95331,7 +95330,7 @@ Total number of tests: 37055 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 183
 SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 48 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 47 in_full_fail= 2
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 875 ( 2.4 %)
+Total errors: 874 ( 2.4 %)
