@@ -111,26 +111,27 @@ private
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;
    type Validator_List_Record is record
-      Element   : Schema.Validators.XML_Element;
+      Element    : Schema.Validators.XML_Element;
 
-      Typ : Schema.Validators.XML_Type;
+      Typ        : Schema.Validators.XML_Type;
       --  Typ read from the xsi:type attribute. This might be No_Type, in case
       --  there is no such attribute
 
-      Grammar   : Schema.Validators.XML_Grammar_NS;
+      Grammar    : Schema.Validators.XML_Grammar_NS;
       --  The grammar to which Element belongs
 
-      Data      : Schema.Validators.Validator_Data;
-      Is_Nil    : Boolean;          --  Whether the element has xsi:nil="true"
+      Data       : Schema.Validators.Validator_Data;
+      Is_Nil     : Boolean;          --  Whether the element has xsi:nil="true"
 
       Start_Loc  : Sax.Locators.Locator;
       --  Set when starting a sequence of Characters call from the SAX parser
+
       Characters : Unicode.CES.Byte_Sequence_Access;
       --  The current stream of characters we have seen. We need to collapse
       --  adjacent characters, so that we can validate the full contents of a
       --  tag at once, and not by parts.
 
-      Next      : Validator_List;
+      Next       : Validator_List;
    end record;
 
    type Validating_Reader is new Sax.Readers.Reader with record

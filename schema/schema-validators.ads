@@ -568,9 +568,9 @@ package Schema.Validators is
       Context      : in out Validation_Context);
    --  Return the type validator for this element
 
-   function Get_Local_Name
+   function To_QName
      (Element : XML_Element) return Unicode.CES.Byte_Sequence;
-   --  Return the local name of Element
+   --  Return the qualified name of Element
 
    procedure Set_Default
      (Element  : XML_Element;

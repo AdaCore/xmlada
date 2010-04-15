@@ -43482,13 +43482,13 @@ Grp: suntest / test004
   OK test
   OK test.1.v
   OK test.2.n
-    test.2.n.xml:9:26: Element "item2" blocks the use of extensions of the type
+    test.2.n.xml:9:26: Element "{foo}item2" blocks the use of extensions of the type
   OK test.3.n
-    test.3.n.xml:9:27: Element "item2" blocks the use of extensions of the type
+    test.3.n.xml:9:27: Element "{foo}item2" blocks the use of extensions of the type
   OK test.4.n
-    test.4.n.xml:9:27: Element "item2" blocks the use of extensions of the type
+    test.4.n.xml:9:27: Element "{foo}item2" blocks the use of extensions of the type
   OK test.5.n
-    test.5.n.xml:9:27: Element "item2" blocks the use of extensions of the type
+    test.5.n.xml:9:27: Element "{foo}item2" blocks the use of extensions of the type
 
 Grp: suntest / test005
   83.3% tests= 6 (xsd= 1 xml= 5) OK= 5 FAILED= 1
@@ -43496,13 +43496,13 @@ Grp: suntest / test005
   XP test.1.v
     test.1.v.xml:15:28: Restrictions of type "Dr" are forbidden
   OK test.2.n
-    test.2.n.xml:9:26: Element "item2" blocks the use of extensions of the type
+    test.2.n.xml:9:26: Element "{foo}item2" blocks the use of extensions of the type
   OK test.3.n
-    test.3.n.xml:9:27: Element "item2" blocks the use of extensions of the type
+    test.3.n.xml:9:27: Element "{foo}item2" blocks the use of extensions of the type
   OK test.4.n
-    test.4.n.xml:9:27: Element "item2" blocks the use of extensions of the type
+    test.4.n.xml:9:27: Element "{foo}item2" blocks the use of extensions of the type
   OK test.5.n
-    test.5.n.xml:9:27: Element "item2" blocks the use of extensions of the type
+    test.5.n.xml:9:27: Element "{foo}item2" blocks the use of extensions of the type
 
 Grp: suntest / test006
   100.0% tests= 35 (xsd= 1 xml= 34) OK= 35 FAILED= 0
@@ -45609,7 +45609,7 @@ Grp: ElemDecl / typedef00801m3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK typeDef00801m3
   OK Negative
-    typeDef00801m3_n.xml:14:71: Element "Element" blocks the use of extensions of the type
+    typeDef00801m3_n.xml:14:71: Element "{ElemDecl/typeDef}Element" blocks the use of extensions of the type
 
 Grp: ElemDecl / typedef00802m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -45622,7 +45622,7 @@ Grp: ElemDecl / typedef00802m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK typeDef00802m2
   OK Negative
-    typeDef00802m2_n.xml:14:37: Element "Element" blocks the use of restrictions of the type
+    typeDef00802m2_n.xml:14:37: Element "{ElemDecl/typeDef}Element" blocks the use of restrictions of the type
 
 Grp: ElemDecl / typedef00901m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -45682,12 +45682,11 @@ Grp: ElemDecl / valueconstraint00101m2
     valueConstraint00101m2.xsd:14:62: Invalid integer: "XII"
 
 Grp: ElemDecl / valueconstraint00201m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK valueConstraint00201m
-  XP valueConstraint00201m1_p
-    valueConstraint00201m1_p.xml:15:14: Element's value must be "12"
+  OK valueConstraint00201m1_p
   OK valueConstraint00201m1_n
-    valueConstraint00201m1_n.xml:15:14: Element's value must be "12"
+    valueConstraint00201m1_n.xml:16:16: Element's value must be "12"
 
 Grp: ElemDecl / valueconstraint00301m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45695,10 +45694,9 @@ Grp: ElemDecl / valueconstraint00301m1
   OK Positive
 
 Grp: ElemDecl / valueconstraint00301m2
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK valueConstraint00301m2
-  XP Positive
-    valueConstraint00301m2_p.xml:12:79: Element's value must be "0"
+  OK Positive
 
 Grp: ElemDecl / valueconstraint00301m3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -45802,22 +45800,20 @@ Grp: ElemDecl / valueconstraint00402m9
   OK Positive
 
 Grp: ElemDecl / valueconstraint00501m1
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK valueConstraint00501m1
-  XP Positive
-    valueConstraint00501m1_p.xml:14:38: Element's value must be "1.0E-2"
+  OK Positive
 
 Grp: ElemDecl / valueconstraint00501m2
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK valueConstraint00501m2
-  XP Positive
-    valueConstraint00501m2_p.xml:14:38: Element's value must be "1.0e-2"
+  OK Positive
 
 Grp: ElemDecl / valueconstraint00501m3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK valueConstraint00501m3
   OK Negative
-    valueConstraint00501m3_n.xml:14:38: Element's value must be "1.0E-3"
+    valueConstraint00501m3_n.xml:14:38: string pattern not matched: 1\.0[Ee]-2
 
 Grp: ElemDecl / valueconstraint00501m4
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45836,10 +45832,9 @@ Grp: ElemDecl / valueconstraint00501m6
     valueConstraint00501m6_n.xml:14:38: string pattern not matched: 1\.0[Ee]-2
 
 Grp: ElemDecl / valueconstraint00601m1
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK valueConstraint00601m1
-  XP Positive
-    valueConstraint00601m1_p.xml:12:79: Element's value must be "1.0e-2"
+  OK Positive
 
 Grp: ElemDecl / valueconstraint00601m2
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -45857,10 +45852,9 @@ Grp: ElemDecl / valueconstraint00601m4
     valueConstraint00601m4.xsd:14:63: Invalid float: "1.0F-2"
 
 Grp: ElemDecl / valueconstraint00601m5
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK valueConstraint00601m5
-  XP Positive
-    valueConstraint00601m5_p.xml:12:79: Element's value must be "1.0E-2"
+  OK Positive
 
 Grp: ElemDecl / valueconstraint00601m6
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -45933,16 +45927,15 @@ Grp: ElemDecl / valueconstraint01001m8
   OK Positive
 
 Grp: ElemDecl / valueconstraint01101m1
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK valueConstraint01101m1
-  XP Positive
-    valueConstraint01101m1_p.xml:14:43: Element's value must be "0"
+  OK Positive
 
 Grp: ElemDecl / valueconstraint01101m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK valueConstraint01101m2
   OK Negative
-    valueConstraint01101m2_n.xml:14:43: Element's value must be "-1"
+    valueConstraint01101m2_n.xml:14:43: -1 is smaller than minInclusive ( 0.E+00)
 
 Grp: ElemDecl / valueconstraint01101m3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -48596,16 +48589,14 @@ Grp: MS-Additional2006-07-15 / addD004a
   OK addD004a.v
 
 Grp: MS-Additional2006-07-15 / isDefault001
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault001
-  XP isDefault001.v
-    isdefault001.xml:1:7: Element's value must be "abc"
+  OK isDefault001.v
 
 Grp: MS-Additional2006-07-15 / isDefault002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault002
-  XP isDefault002.v
-    isdefault002.xml:1:14: Element's value must be "abc"
+  OK isDefault002.v
 
 Grp: MS-Additional2006-07-15 / isDefault003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -48619,16 +48610,14 @@ Grp: MS-Additional2006-07-15 / isDefault004
     isdefault004.xml:1:11: Element's value must be "abc"
 
 Grp: MS-Additional2006-07-15 / isDefault005
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault005
-  XP isDefault005.v
-    isdefault005.xml:2:8: Element's value must be "abc"
+  OK isDefault005.v
 
 Grp: MS-Additional2006-07-15 / isDefault006
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault006
-  XP isDefault006.v
-    isdefault006.xml:2:13: Element's value must be "abc"
+  OK isDefault006.v
 
 Grp: MS-Additional2006-07-15 / isDefault007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -48651,13 +48640,13 @@ Grp: MS-Additional2006-07-15 / isDefault010
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault010
   OK isDefault010.i
-    isdefault010.xml:2:8: Element's value must be "abc"
+    isdefault010.xml:3:13: Element's value must be "123"
 
 Grp: MS-Additional2006-07-15 / isDefault011
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault011
   OK isDefault011.i
-    isdefault011.xml:2:8: Element's value must be "abc"
+    isdefault011.xml:4:13: Element's value must be "true"
 
 Grp: MS-Additional2006-07-15 / isDefault021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -48815,10 +48804,9 @@ Grp: MS-Additional2006-07-15 / isDefault072
   OK isDefault072.v
 
 Grp: MS-Additional2006-07-15 / isDefault073
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault073
-  XP isDefault073.v
-    isdefault073.xml:3:11: Element's value must be "fixed"
+  OK isDefault073.v
 
 Grp: MS-Additional2006-07-15 / isDefault074
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -48831,10 +48819,9 @@ Grp: MS-Additional2006-07-15 / isDefault075
   OK isDefault075.v
 
 Grp: MS-Additional2006-07-15 / isDefault076
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK isDefault076
-  XP isDefault076.v
-    isdefault075.xml:1:7: Element's value must be "abc"
+  OK isDefault076.v
 
 Grp: MS-Additional2006-07-15 / isDefault077
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53952,10 +53939,9 @@ Grp: MS-ComplexType2006-07-15 / ctZ012b
   OK ctZ012b
 
 Grp: MS-ComplexType2006-07-15 / ctZ013a
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctZ013a
-  XP ctZ013a.v
-    ctZ013a.xml:1:18: Element's value must be "abc"
+  OK ctZ013a.v
 
 Grp: MS-ComplexType2006-07-15 / ctZ013b
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53966,13 +53952,13 @@ Grp: MS-ComplexType2006-07-15 / ctZ013c
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctZ013c
   OK ctZ013c.i
-    ctZ013c.xml:1:21: Element's value must be "abc"
+    ctZ013c.xml:1:21: No child allowed because "{ns}e" has a fixed value
 
 Grp: MS-ComplexType2006-07-15 / ctZ013d
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctZ013d
   OK ctZ013d.i
-    ctZ013d.xml:1:30: Element's value must be "abc"
+    ctZ013d.xml:1:30: No child allowed because "{ns}e" has a fixed value
 
 Grp: MS-ComplexType2006-07-15 / ctZ013e
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -65984,10 +65970,9 @@ Grp: MS-Element2006-07-15 / elemQ018
     elemQ018.xml:3:23: Element's value must be "Hello"
 
 Grp: MS-Element2006-07-15 / elemQ019
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemQ019
-  XP elemQ019.v
-    elemQ019.xml:3:21: Element's value must be "Hello"
+  OK elemQ019.v
 
 Grp: MS-Element2006-07-15 / elemQ020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -79126,10 +79111,9 @@ Grp: MS-Particles2006-07-15 / particlesZ039
   SF particlesZ039
 
 Grp: MS-Particles2006-07-15 / particlesZ040
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesZ040
-  XP particlesZ040.i
-    particlesZ040.xml:2:5: Element's value must be "e1"
+  OK particlesZ040.i
 
 Grp: MS-Regex2006-07-15 / reA1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95330,7 +95314,7 @@ Total number of tests: 37055 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 183
 SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 47 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 31 in_full_fail= 2
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 874 ( 2.4 %)
+Total errors: 858 ( 2.3 %)

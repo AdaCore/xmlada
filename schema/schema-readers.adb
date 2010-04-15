@@ -106,6 +106,11 @@ package body Schema.Readers is
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
 
+   function Has_Fixed (Handler : Reader'Class) return Boolean;
+   function Get_Fixed (Handler : Reader'Class) return Byte_Sequence_Access;
+   --  Whether the head validator has a fixed attribute (either defined for
+   --  the element, for the xsi:type, or its type, and return that fixed value
+
    ----------------------
    -- Set_Debug_Output --
    ----------------------
@@ -114,6 +119,36 @@ package body Schema.Readers is
    begin
       Debug := Output;
    end Set_Debug_Output;
+
+   ---------------
+   -- Has_Fixed --
+   ---------------
+
+   function Has_Fixed (Handler : Reader'Class) return Boolean is
+      H : constant Validating_Reader := Validating_Reader (Handler);
+   begin
+      if H.Validators.Element /= No_Element
+        and then Has_Fixed (H.Validators.Element)
+      then
+         return True;
+      end if;
+      return False;
+   end Has_Fixed;
+
+   ---------------
+   -- Get_Fixed --
+   ---------------
+
+   function Get_Fixed (Handler : Reader'Class) return Byte_Sequence_Access is
+      H : constant Validating_Reader := Validating_Reader (Handler);
+   begin
+      if H.Validators.Element /= No_Element
+        and then Has_Fixed (H.Validators.Element)
+      then
+         return Get_Fixed (H.Validators.Element);
+      end if;
+      return null;
+   end Get_Fixed;
 
    ----------------------------
    -- Set_Validating_Grammar --
@@ -360,49 +395,59 @@ package body Schema.Readers is
    procedure Validate_Current_Characters
      (Handler : in out Validating_Reader'Class)
    is
-      Empty_Element      : Boolean := False;
+      Empty_String       : aliased String := "";
       Typ, Typ_For_Mixed : XML_Type;
-      Val                : Byte_Sequence_Access;
+      Val, Val2          : Byte_Sequence_Access;
+      Is_Empty           : Boolean;
    begin
       --  If we were in the middle of a series of Characters callback, we need
       --  to process them now
 
       if Handler.Validators /= null then
-         if Handler.Validators.Characters = null
-           and then not Handler.Validators.Is_Nil
-         then
-            --  No character data => behave as an empty element, but we need to
-            --  test explicitely. For instance, the "minLength" facet might or
-            --  the "fixed" attribute need to test whether the empty string is
-            --  valid.
+         Is_Empty := Handler.Validators.Characters = null;
 
+         --  If no explicit character data: we might need to simulate some, so
+         --  that we can check facets like "minLength".
+
+         if Is_Empty and then not Handler.Validators.Is_Nil then
             if Handler.Validators.Element /= No_Element
               and then Has_Default (Handler.Validators.Element)
             then
-               Handler.Validators.Characters := new Byte_Sequence'
-                 (Get_Default (Handler.Validators.Element).all);
-               Characters
-                 (Handler, Get_Default (Handler.Validators.Element).all);
+               Val2 := Get_Default (Handler.Validators.Element);
+               Characters (Handler, Val2.all);
             else
-               Handler.Validators.Characters := new Byte_Sequence'("");
-               Empty_Element := True;
+               Val2 := Empty_String'Unchecked_Access;
             end if;
+         else
+            Val2 := Handler.Validators.Characters;
          end if;
 
-         if Handler.Validators.Characters /= null then
+         if Val2 /= null then
             if Handler.Validators.Is_Nil then
-               if not Empty_Element then
+               if not Is_Empty then
                   Free (Handler.Validators.Characters);
                   Validation_Error
                     ("Element has character data, but is declared as nil");
                end if;
 
-            elsif Handler.Validators.Element /= No_Element
-              and then Has_Fixed (Handler.Validators.Element)
-            then
-               if Handler.Validators.Characters.all /=
-                 Get_Fixed (Handler.Validators.Element).all
-               then
+            elsif Has_Fixed (Handler) then
+               if Is_Empty then
+                  --  If a xsi:type was specified, the fixed value must match
+                  --  it too
+
+                  if Handler.Validators.Typ /= No_Type then
+                     Validate_Characters
+                       (Get_Validator (Handler.Validators.Typ),
+                        Get_Fixed (Handler).all,
+                        Empty_Element => False,
+                        Context       => Validating_Reader (Handler).Context);
+                  end if;
+
+                  --  in 3.3.1: if the element is empty, the "fixed" value
+                  --  should be used for it, just as for "default"
+                  Characters (Handler, Get_Fixed (Handler).all);
+
+               elsif Val2.all /= Get_Fixed (Handler).all then
                   Free (Handler.Validators.Characters);
                   Validation_Error
                     ("Element's value must be """
@@ -417,7 +462,7 @@ package body Schema.Readers is
                   Typ_For_Mixed := Get_Type (Handler.Validators.Element);
                end if;
 
-               if not Empty_Element
+               if not Is_Empty
                  and then not Get_Mixed_Content (Get_Validator (Typ_For_Mixed))
                then
                   Validation_Error
@@ -427,15 +472,13 @@ package body Schema.Readers is
                --  If we had a <simpleType> we need to normalize whitespaces
 
                if Is_Simple_Type (Typ_For_Mixed) then
-                  Val := Do_Normalize_Whitespaces
-                    (Typ_For_Mixed, Handler.Validators.Characters);
+                  Val := Do_Normalize_Whitespaces (Typ_For_Mixed, Val2);
 
                   --  Nothing to do if replacement was done in place
-                  if Val /= null
-                    and then Val /= Handler.Validators.Characters
-                  then
+                  if Val /= null and then Val /= Val2 then
                      Free (Handler.Validators.Characters);
                      Handler.Validators.Characters := Val;
+                     Val2 := Val;
                   end if;
                end if;
 
@@ -446,8 +489,8 @@ package body Schema.Readers is
 
                   Validate_Characters
                     (Get_Validator (Typ),
-                     Handler.Validators.Characters.all,
-                     Empty_Element => Empty_Element,
+                     Val2.all,
+                     Empty_Element => Is_Empty,
                      Context       => Validating_Reader (Handler).Context);
                end if;
 
@@ -460,8 +503,8 @@ package body Schema.Readers is
                   Typ := Get_Type (Handler.Validators.Element);
                   Validate_Characters
                     (Get_Validator (Typ),
-                     Handler.Validators.Characters.all,
-                     Empty_Element => Empty_Element,
+                     Val2.all,
+                     Empty_Element => Is_Empty,
                      Context       => Validating_Reader (Handler).Context);
                end if;
             end if;
@@ -552,7 +595,7 @@ package body Schema.Readers is
                  and then Get_Block_On_Restriction (Element)
                then
                   Validation_Error
-                    ("Element """ & Get_Local_Name (Element)
+                    ("Element """ & To_QName (Element)
                        & """ blocks the use of restrictions of the type");
                end if;
 
@@ -560,7 +603,7 @@ package body Schema.Readers is
                  and then Get_Block_On_Extension (Element)
                then
                   Validation_Error
-                    ("Element """ & Get_Local_Name (Element)
+                    ("Element """ & To_QName (Element)
                        & """ blocks the use of extensions of the type");
                end if;
             end if;
@@ -615,6 +658,13 @@ package body Schema.Readers is
               Get_Type (Validating_Reader (Handler).Validators.Element);
          end if;
 
+         if Has_Fixed (Handler) then
+            Validation_Error
+              ("No child allowed because """
+               & To_QName (Validating_Reader (Handler).Validators.Element)
+               & """ has a fixed value");
+         end if;
+
          Validate_Start_Element
            (Get_Validator (Parent_Type),
             Local_Name, Namespace_URI, G,
@@ -634,8 +684,9 @@ package body Schema.Readers is
               ("Element """ & To_QName (Namespace_URI, Local_Name)
                & """: No matching declaration available");
          end if;
+      end if;
 
-      elsif Element /= No_Element and then Is_Abstract (Element) then
+      if Element /= No_Element and then Is_Abstract (Element) then
          Validation_Error
            ("Element """ & To_QName (Namespace_URI, Local_Name)
             & """ is abstract");

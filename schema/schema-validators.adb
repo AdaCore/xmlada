@@ -293,7 +293,7 @@ package body Schema.Validators is
       Val : Byte_Sequence_Access) return Byte_Sequence_Access
    is
       Whitespace : Whitespace_Restriction := Preserve;
-      Facets     : Facets_Description := Get_Facets (Typ.Validator);
+      Facets     : constant Facets_Description := Get_Facets (Typ.Validator);
       C          : Unicode_Char;
    begin
       if Facets /= null
@@ -1472,15 +1472,17 @@ package body Schema.Validators is
       return Attribute_Validator (Result);
    end Lookup_Attribute;
 
-   --------------------
-   -- Get_Local_Name --
-   --------------------
+   --------------
+   -- To_QName --
+   --------------
 
-   function Get_Local_Name
-     (Element : XML_Element) return Unicode.CES.Byte_Sequence is
+   function To_QName
+     (Element : XML_Element) return Unicode.CES.Byte_Sequence
+   is
    begin
-      return Element.Elem.Local_Name.all;
-   end Get_Local_Name;
+      return To_QName
+        (Get_Namespace_URI (Element.Elem.NS), Element.Elem.Local_Name.all);
+   end To_QName;
 
    --------------------
    -- Get_Local_Name --
@@ -3443,7 +3445,7 @@ package body Schema.Validators is
             if Get (D.Current).Typ = Particle_Element then
                Validation_Error
                  ("Not enough occurrences of """
-                  & Get_Local_Name (Get (D.Current).Element) & """");
+                  & To_QName (Get (D.Current).Element) & """");
             else
                Validation_Error
                  ("Not enough occurrences of current element");
@@ -5183,10 +5185,7 @@ package body Schema.Validators is
    begin
       case Particle.Typ is
          when Particle_Element =>
-            Str := Str
-              & To_QName
-              (Get_Namespace_URI (Particle.Element.Elem.NS),
-               Get_Local_Name (Particle.Element));
+            Str := Str & To_QName (Particle.Element);
          when Particle_Nested =>
             Str := Str & "("
               & Type_Model (Particle.Validator, First_Only) & ")";

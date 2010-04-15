@@ -280,7 +280,7 @@ package body Schema.Schema_Readers is
 
    function Ada_Name (Element : XML_Element) return String is
    begin
-      return "E_" & XML_To_Ada (Get_Local_Name (Element));
+      return "E_" & XML_To_Ada (To_QName (Element));
    end Ada_Name;
 
    --------------
