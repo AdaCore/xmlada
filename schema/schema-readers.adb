@@ -61,12 +61,6 @@ package body Schema.Readers is
    procedure Clear (List : in out Validator_List);
    --  Push or remove validators from the list
 
-   procedure Add_XML_Instance_Attributes
-     (Handler   : in out Validating_Reader;
-      Validator : access XML_Validator_Record'Class);
-   --  Add the standard attributes from the XMLSchema-Instance namespace to
-   --  Tmp.
-
    procedure Parse_Grammars
      (Handler  : in out Validating_Reader;
       Schema_Location : Byte_Sequence);
@@ -193,42 +187,6 @@ package body Schema.Readers is
          Pop (List);
       end loop;
    end Clear;
-
-   ---------------------------------
-   -- Add_XML_Instance_Attributes --
-   ---------------------------------
-
-   procedure Add_XML_Instance_Attributes
-     (Handler   : in out Validating_Reader;
-      Validator : access XML_Validator_Record'Class)
-   is
-      XML_G, XML_IG : XML_Grammar_NS;
-   begin
-      Get_NS (Handler.Context.Grammar, XML_Instance_URI, Result => XML_IG);
-
-      if not Has_Attribute (Validator, XML_IG, "type") then
-         Get_NS (Handler.Context.Grammar, XML_Schema_URI, Result => XML_G);
-
-         Add_Attribute
-           (Validator,
-            Create_Local_Attribute ("type", XML_IG, Lookup (XML_G, "string")),
-            Is_Local => True);
-         Add_Attribute
-           (Validator,
-            Create_Local_Attribute ("nil", XML_IG, Lookup (XML_G, "boolean")),
-            Is_Local => True);
-         Add_Attribute
-           (Validator,
-            Create_Local_Attribute ("schemaLocation", XML_IG,
-              List_Of (XML_G, Lookup (XML_G, "string"))),
-            Is_Local => True);
-         Add_Attribute
-           (Validator,
-            Create_Local_Attribute ("noNamespaceSchemaLocation", XML_IG,
-              Lookup (XML_G, "string")),
-            Is_Local => True);
-      end if;
-   end Add_XML_Instance_Attributes;
 
    ---------------------
    -- To_Absolute_URI --
@@ -691,13 +649,6 @@ package body Schema.Readers is
               ("Element """ & To_QName (Namespace_URI, Local_Name)
                & """: No matching declaration available");
          end if;
-
-         --  The toplevel elements has special attributes to point to the XSD
-         --  grammar for instance. This cannot be done automatically when
-         --  parsing the grammar, since there is no reference there as to which
-         --  node is the root.
-         Add_XML_Instance_Attributes
-           (Validating_Reader (Handler), Get_Validator (Get_Type (Element)));
       end if;
 
       if Is_Abstract (Element) then
@@ -707,6 +658,7 @@ package body Schema.Readers is
       end if;
 
       Xsi_Type := Compute_Type_From_Attribute;
+
       if Xsi_Type = No_Type then
          Typ := Get_Type (Element);
       else
@@ -780,8 +732,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
-                   & "End_Element: " & Local_Name
-                   & ASCII.ESC & "[39m");
+                   & "End_Element: " & Local_Name & ASCII.ESC & "[39m");
       end if;
 
       Validating_Reader (Handler).Context.Context := Elem;

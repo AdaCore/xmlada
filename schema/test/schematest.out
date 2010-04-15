@@ -45229,7 +45229,7 @@ Grp: ElemDecl / nillable00101m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK nillable00101m2
   OK Negative
-    nillable00101m2_n.xml:14:22: Element "{ElemDecl/nillable}root" cannot be nil
+    nillable00101m2_n.xml:14:22: Element cannot be nil
 
 Grp: ElemDecl / nillable00102m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
