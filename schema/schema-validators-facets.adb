@@ -111,7 +111,7 @@ package body Schema.Validators.Facets is
       begin
          Read (Regexp, Pos, Char);
 
-         if Char > 255 then
+         if Char > 127 then
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Unicode regexps are not supported");
@@ -306,7 +306,7 @@ package body Schema.Validators.Facets is
          Index := Value'First;
          while Index <= Value'Last loop
             Read (Value, Index, Char);
-            if Char > 255 then
+            if Char > 127 then
                Raise_Exception
                  (XML_Not_Implemented'Identity,
                   "Regexp matching with unicode not supported");

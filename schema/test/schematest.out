@@ -66475,10 +66475,9 @@ Grp: MS-Element2006-07-15 / elemU003
   OK elemU003.v
 
 Grp: MS-Element2006-07-15 / elemU004
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK elemU004
-  XP elemU004.v
-    elemU004.xml:3:13: string pattern not matched: Española
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI elemU004
+    Unicode regexps are not supported
 
 Grp: MS-Element2006-07-15 / elemU005
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -66548,8 +66547,8 @@ Grp: MS-Element2006-07-15 / elemU018
 Grp: MS-Element2006-07-15 / elemU019
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK elemU019
-  XP elemU019.v
-    elemU019.xml:8:7: string pattern not matched: .x
+  NI elemU019.v
+    Regexp matching with unicode not supported
 
 Grp: MS-Element2006-07-15 / elemU020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -84817,10 +84816,10 @@ Grp: MS-Regex2006-07-15 / reU10
     Regexp matching with unicode not supported
 
 Grp: MS-Regex2006-07-15 / reU11
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK reU11
-  OK reU11.i
-    reU11.xml:9:29: Attribute "att": string pattern not matched: \w
+  NI reU11.i
+    Regexp matching with unicode not supported
 
 Grp: MS-Regex2006-07-15 / reU12
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -85015,16 +85014,16 @@ Grp: MS-Regex2006-07-15 / reV29
     Regexp matching with unicode not supported
 
 Grp: MS-Regex2006-07-15 / reV30
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK reV30
-  OK reV30.i
-    reV30.xml:9:18: string pattern not matched: \W
+  NI reV30.i
+    Regexp matching with unicode not supported
 
 Grp: MS-Regex2006-07-15 / reV31
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK reV31
-  OK reV31.i
-    reV31.xml:9:27: Attribute "att": string pattern not matched: \W
+  NI reV31.i
+    Regexp matching with unicode not supported
 
 Grp: MS-Regex2006-07-15 / reV32
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -91513,8 +91512,8 @@ Grp: MS-Regex2006-07-15 / reZ004i
 Grp: MS-Regex2006-07-15 / reZ005v
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK reZ005v
-  XP reZ005v.v
-    valid.i.xml:54:16: string pattern not matched: [\i]
+  NI reZ005v.v
+    Regexp matching with unicode not supported
 
 Grp: MS-Regex2006-07-15 / reZ005i
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -91525,14 +91524,14 @@ Grp: MS-Regex2006-07-15 / reZ005i
 Grp: MS-Regex2006-07-15 / reZ006v
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK reZ006v
-  XP reZ006v.v
-    valid.c.xml:54:16: string pattern not matched: [\c]
+  NI reZ006v.v
+    Regexp matching with unicode not supported
 
 Grp: MS-Regex2006-07-15 / reZ006i
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK reZ006i
-  OK reZ006i.i
-    invalid.c.xml:54:16: string pattern not matched: [\c]
+  NI reZ006i.i
+    Regexp matching with unicode not supported
 
 Grp: MS-Schema2006-07-15 / schA1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95302,13 +95301,13 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37055 (omitting non-accepted tests)
+Total number of tests: 37054 (omitting non-accepted tests)
    13746 XSD files (not including those parsed automatically)
-   23372 XML files
-NI: Features not implemented: in_partial= 205 in_full_fail= 2136
+   23371 XML files
+NI: Features not implemented: in_partial= 212 in_full_fail= 2137
 SP: XSD KO, should be OK: in_full_fail= 183
 SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 25 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 21 in_full_fail= 2
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 852 ( 2.3 %)
+Total errors: 848 ( 2.3 %)
