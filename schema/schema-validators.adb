@@ -69,8 +69,19 @@ package body Schema.Validators is
    procedure Free (Element : in out XML_Element_Record);
    --  Free Element
 
+   function To_QName (Self : Named_Attribute_Validator) return Byte_Sequence;
    function To_QName (Particle : XML_Particle) return Byte_Sequence;
    --  Return the QName for the element described by particle
+
+   package QName_Attributes_Htable is new Sax.HTable
+     (Element       => Named_Attribute_Validator,
+      Empty_Element => null,
+      Free          => Do_Nothing,
+      Key           => Unicode.CES.Byte_Sequence,
+      Get_Key       => To_QName,
+      Hash          => Sax.Utils.Hash,
+      Equal         => "=");
+   --  Same as Attributes_Htable, but with QName as key
 
    function Move_To_Next_Particle
      (Seq   : access Sequence_Record'Class;
@@ -726,8 +737,8 @@ package body Schema.Validators is
       type Any_Status_Array is array (0 .. Length - 1) of Any_Status;
       Seen_Any : Any_Status_Array := (others => Any_None);
 
-      use Attributes_Htable;
-      Visited : Attributes_Htable.HTable (101);
+      use QName_Attributes_Htable;
+      Visited : QName_Attributes_Htable.HTable (101);
 
       function Find_Attribute
         (Named : Named_Attribute_Validator;
@@ -785,7 +796,7 @@ package body Schema.Validators is
       is
          Found  : Integer;
       begin
-         if Get (Visited, Named.Local_Name.all) = null then
+         if Get (Visited, To_QName (Named)) = null then
             Set (Visited, Named);
             Found := Find_Attribute (Named, Is_Local_In_XSD);
 
@@ -1483,6 +1494,15 @@ package body Schema.Validators is
       end if;
       return Attribute_Validator (Result);
    end Lookup_Attribute;
+
+   --------------
+   -- To_QName --
+   --------------
+
+   function To_QName (Self : Named_Attribute_Validator) return Byte_Sequence is
+   begin
+      return To_QName (Get_Namespace_URI (Self.NS), Self.Local_Name.all);
+   end To_QName;
 
    --------------
    -- To_QName --

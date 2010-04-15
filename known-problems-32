@@ -86,6 +86,8 @@ KP-32-J302-043 Lots of fixes in schema validation
               - The "fixed" value must also match the type from xsi:type
               - A "prohibited" attribute might still be accepted through a
                 <anyAttribute> if there is one in the same element
+              - Two attributes with different namespaces: the second one was
+                never validated
 
   Status:     Fixed in 3.3.0
 

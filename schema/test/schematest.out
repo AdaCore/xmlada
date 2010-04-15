@@ -51102,10 +51102,9 @@ Grp: MS-Attribute2006-07-15 / attQ018
     attQ018.xsd:3:45: attQ018.inc:3:55: Attribute "form" is prohibited in this context
 
 Grp: MS-Attribute2006-07-15 / attQ019
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK attQ019
-  XP attQ019.v
-    attQ019.xml:3:98: Attribute "imp:aga1" invalid for this element
+  OK attQ019.v
 
 Grp: MS-Attribute2006-07-15 / attZ001
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95311,7 +95310,7 @@ Total number of tests: 37055 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 183
 SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 28 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 27 in_full_fail= 2
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 855 ( 2.3 %)
+Total errors: 854 ( 2.3 %)
