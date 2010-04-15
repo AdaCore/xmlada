@@ -44712,12 +44712,11 @@ Grp: CType / psubstitutions00104m
     pSubstitutions00104m2_n.xml:13:84: Restrictions of type "A" are forbidden
 
 Grp: CType / targetns00101m
-  66.7% tests= 3 (xsd= 1 xml= 2) OK= 2 FAILED= 1
+  100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
   OK targetNS00101m
-  XP targetNS00101m1_p
-    targetNS00101m1_p.xml:14:2: Element "{targetNS}test": No matching declaration available
+  OK targetNS00101m1_p
   OK targetNS00101m1_n
-    targetNS00101m1_n.xml:14:2: Element "{targetNS}test": No matching declaration available
+    targetNS00101m1_n.xml:14:2: Unknown type "Test"
 
 Grp: ElemDecl / abstract00101m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -47253,28 +47252,24 @@ Grp: SType / st_name00301m
     ST_name00301m.xsd:33:23: Type has already been declared: Test
 
 Grp: SType / st_name00401m
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ST_name00401m
-  XP ST_name00401m1_p
-    ST_name00401m1_p.xml:13:68: Element "{ST_name}test": No matching declaration available
+  OK ST_name00401m1_p
 
 Grp: SType / st_targetns00101m
-  60.0% tests= 5 (xsd= 1 xml= 4) OK= 3 FAILED= 2
+  100.0% tests= 5 (xsd= 1 xml= 4) OK= 5 FAILED= 0
   OK ST_targetNS00101m
-  XP ST_targetNS00101m1_p
-    ST_targetNS00101m1_p.xml:13:112: Element "{ST_targetNS}test": No matching declaration available
+  OK ST_targetNS00101m1_p
   OK ST_targetNS00101m1_n
-    ST_targetNS00101m1_n.xml:13:112: Element "{ST_targetNS}test": No matching declaration available
-  XP ST_targetNS00101m2_p
-    ST_targetNS00101m2_p.xml:13:112: Element "{ST_targetNSa}test": No matching declaration available
+    ST_targetNS00101m1_n.xml:13:113: string pattern not matched: 1|2
+  OK ST_targetNS00101m2_p
   OK ST_targetNS00101m2_n
-    ST_targetNS00101m2_n.xml:13:112: Element "{ST_targetNSa}test": No matching declaration available
+    ST_targetNS00101m2_n.xml:13:113: string pattern not matched: 3|4
 
 Grp: SType / st_targetns00201m
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ST_targetNS00201m
-  XP ST_targetNS00201m1_p
-    ST_targetNS00201m1_p.xml:13:76: Element "{ST_targetNS}test": No matching declaration available
+  OK ST_targetNS00201m1_p
 
 Grp: SType / st_variety00101m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -48077,10 +48072,9 @@ Grp: MS-Additional2006-07-15 / addB115
     addB115.xml:5:25: Attribute a must have a namespace
 
 Grp: MS-Additional2006-07-15 / addB116
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK addB116
-  XP addB116.v
-    test75092.xml:7:27: Unexpected element "b"
+  OK addB116.v
 
 Grp: MS-Additional2006-07-15 / addB117
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -48544,7 +48538,7 @@ Grp: MS-Additional2006-07-15 / addB198d
 Grp: MS-Additional2006-07-15 / addB199
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
   OK addB199.i
-    xsiType.xml:3:31: Element "a": No matching declaration available
+    xsiType.xml:3:31: Unknown type "xsd:strЀing"
 
 Grp: MS-Additional2006-07-15 / addB200a
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -48570,12 +48564,12 @@ Grp: MS-Additional2006-07-15 / addB201
 Grp: MS-Additional2006-07-15 / addB202a
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
   OK addB202a.i
-    hexbin.xml:3:26: Element "a": No matching declaration available
+    hexbin.xml:3:29: HexBinary length must be an even number of characters
 
 Grp: MS-Additional2006-07-15 / addB202b
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
   OK addB202b.i
-    datetime.xml:3:21: Element "a": No matching declaration available
+    datetime.xml:3:30: Invalid separator in date value "2005-01-0Ѐ1"
 
 Grp: MS-Additional2006-07-15 / addD001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53942,9 +53936,8 @@ Grp: MS-ComplexType2006-07-15 / ctZ010h
   OK ctZ010h
 
 Grp: MS-ComplexType2006-07-15 / ctZ011_a
-   0.0% tests= 1 (xsd= 0 xml= 1) OK= 0 FAILED= 1
-  XP ctZ011_a.v
-    ctZ011.xml:5:2: Element "a": No matching declaration available
+  100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
+  OK ctZ011_a.v
 
 Grp: MS-ComplexType2006-07-15 / ctZ011_b
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95338,7 +95331,7 @@ Total number of tests: 37055 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 205 in_full_fail= 2136
 SP: XSD KO, should be OK: in_full_fail= 183
 SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 53 in_full_fail= 3
+XP: XML KO, should be OK: in_partial= 48 in_full_fail= 2
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 881 ( 2.4 %)
+Total errors: 875 ( 2.4 %)
