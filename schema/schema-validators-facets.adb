@@ -165,21 +165,20 @@ package body Schema.Validators.Facets is
                            Append (Tmp, '\' & C);
                         end if;
 
-                     when '-' =>
-                        if Pos <= Regexp'Last
-                          and then Regexp (Pos) = '['
-                        then
-                           Raise_Exception
-                             (XML_Not_Implemented'Identity,
-                              "Unsupported regexp construct: [...-[...]]");
-                        else
-                           Append (Tmp, '\' & C);
-                        end if;
-
                      when others =>
                         Append (Tmp, '\' & C);
                   end case;
+
                else
+                  if C = '-'
+                    and then Pos <= Regexp'Last
+                    and then Regexp (Pos) = '['
+                  then
+                     Raise_Exception
+                       (XML_Not_Implemented'Identity,
+                        "Unsupported regexp construct: [...-[...]]");
+                  end if;
+
                   Append (Tmp, C);
                end if;
             end loop;

@@ -8351,28 +8351,28 @@ Grp: NIST2004-01-14 / atomic-NCName-length-4
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-NCName-pattern-1
-    NISTSchema-SV-IV-atomic-NCName-pattern-1.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{16} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{16})$)
+  NI NISTSchema-SV-IV-atomic-NCName-pattern-1
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-NCName-pattern-2
-    NISTSchema-SV-IV-atomic-NCName-pattern-2.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{40} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{40})$)
+  NI NISTSchema-SV-IV-atomic-NCName-pattern-2
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-NCName-pattern-3
-    NISTSchema-SV-IV-atomic-NCName-pattern-3.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{27} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{27})$)
+  NI NISTSchema-SV-IV-atomic-NCName-pattern-3
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-NCName-pattern-4
-    NISTSchema-SV-IV-atomic-NCName-pattern-4.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{12} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{12})$)
+  NI NISTSchema-SV-IV-atomic-NCName-pattern-4
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-NCName-pattern-5
-    NISTSchema-SV-IV-atomic-NCName-pattern-5.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{63} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{63})$)
+  NI NISTSchema-SV-IV-atomic-NCName-pattern-5
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-NCName-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -8565,28 +8565,28 @@ Grp: NIST2004-01-14 / atomic-ID-length-4
 
 Grp: NIST2004-01-14 / atomic-ID-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-ID-pattern-1
-    NISTSchema-SV-IV-atomic-ID-pattern-1.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{11} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{11})$)
+  NI NISTSchema-SV-IV-atomic-ID-pattern-1
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-ID-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-ID-pattern-2
-    NISTSchema-SV-IV-atomic-ID-pattern-2.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{55} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{55})$)
+  NI NISTSchema-SV-IV-atomic-ID-pattern-2
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-ID-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-ID-pattern-3
-    NISTSchema-SV-IV-atomic-ID-pattern-3.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{18} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{18})$)
+  NI NISTSchema-SV-IV-atomic-ID-pattern-3
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-ID-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-ID-pattern-4
-    NISTSchema-SV-IV-atomic-ID-pattern-4.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{15} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{15})$)
+  NI NISTSchema-SV-IV-atomic-ID-pattern-4
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-ID-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-ID-pattern-5
-    NISTSchema-SV-IV-atomic-ID-pattern-5.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{36} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{36})$)
+  NI NISTSchema-SV-IV-atomic-ID-pattern-5
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-ID-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -9172,28 +9172,28 @@ Grp: NIST2004-01-14 / atomic-QName-length-4
 
 Grp: NIST2004-01-14 / atomic-QName-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-QName-pattern-1
-    NISTSchema-SV-IV-atomic-QName-pattern-1.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{40} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
+  NI NISTSchema-SV-IV-atomic-QName-pattern-1
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-QName-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-QName-pattern-2
-    NISTSchema-SV-IV-atomic-QName-pattern-2.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{20} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
+  NI NISTSchema-SV-IV-atomic-QName-pattern-2
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-QName-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-QName-pattern-3
-    NISTSchema-SV-IV-atomic-QName-pattern-3.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{33} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
+  NI NISTSchema-SV-IV-atomic-QName-pattern-3
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-QName-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-QName-pattern-4
-    NISTSchema-SV-IV-atomic-QName-pattern-4.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{27} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
+  NI NISTSchema-SV-IV-atomic-QName-pattern-4
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-QName-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-atomic-QName-pattern-5
-    NISTSchema-SV-IV-atomic-QName-pattern-5.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{58} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
+  NI NISTSchema-SV-IV-atomic-QName-pattern-5
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / atomic-QName-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -29694,28 +29694,28 @@ Grp: NIST2004-01-14 / list-NCName-length-4
 
 Grp: NIST2004-01-14 / list-NCName-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-NCName-pattern-1
-    NISTSchema-SV-IV-list-NCName-pattern-1.xsd:29:192: Invalid regular expression [\i-[:]][\c-[:]]{39} [\i-[:]][\c-[:]]{15} [\i-[:]][\c-[:]]{23} [\i-[:]][\c-[:]]{44} [\i-[:]][\c-[:]]{55} [\i-[:]][\c-[:]]{
+  NI NISTSchema-SV-IV-list-NCName-pattern-1
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-NCName-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-NCName-pattern-2
-    NISTSchema-SV-IV-list-NCName-pattern-2.xsd:29:171: Invalid regular expression [\i-[:]][\c-[:]]{7} [\i-[:]][\c-[:]]{35} [\i-[:]][\c-[:]]{46} [\i-[:]][\c-[:]]{25} [\i-[:]][\c-[:]]{53} [\i-[:]][\c-[:]]{5
+  NI NISTSchema-SV-IV-list-NCName-pattern-2
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-NCName-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-NCName-pattern-3
-    NISTSchema-SV-IV-list-NCName-pattern-3.xsd:29:130: Invalid regular expression [\i-[:]][\c-[:]]{33} [\i-[:]][\c-[:]]{63} [\i-[:]][\c-[:]]{13} [\i-[:]][\c-[:]]{35} [\i-[:]][\c-[:]]{29} (converted to ^([
+  NI NISTSchema-SV-IV-list-NCName-pattern-3
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-NCName-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-NCName-pattern-4
-    NISTSchema-SV-IV-list-NCName-pattern-4.xsd:29:234: Invalid regular expression [\i-[:]][\c-[:]]{44} [\i-[:]][\c-[:]]{50} [\i-[:]][\c-[:]]{47} [\i-[:]][\c-[:]]{60} [\i-[:]][\c-[:]]{10} [\i-[:]][\c-[:]]{
+  NI NISTSchema-SV-IV-list-NCName-pattern-4
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-NCName-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-NCName-pattern-5
-    NISTSchema-SV-IV-list-NCName-pattern-5.xsd:29:151: Invalid regular expression [\i-[:]][\c-[:]]{40} [\i-[:]][\c-[:]]{59} [\i-[:]][\c-[:]]{55} [\i-[:]][\c-[:]]{41} [\i-[:]][\c-[:]]{12} [\i-[:]][\c-[:]]{
+  NI NISTSchema-SV-IV-list-NCName-pattern-5
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-NCName-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -29908,28 +29908,28 @@ Grp: NIST2004-01-14 / list-ID-length-4
 
 Grp: NIST2004-01-14 / list-ID-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-ID-pattern-1
-    NISTSchema-SV-IV-list-ID-pattern-1.xsd:29:170: Invalid regular expression [\i-[:]][\c-[:]]{2} [\i-[:]][\c-[:]]{57} [\i-[:]][\c-[:]]{31} [\i-[:]][\c-[:]]{5} [\i-[:]][\c-[:]]{10} [\i-[:]][\c-[:]]{47} [\
+  NI NISTSchema-SV-IV-list-ID-pattern-1
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-ID-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-ID-pattern-2
-    NISTSchema-SV-IV-list-ID-pattern-2.xsd:29:191: Invalid regular expression [\i-[:]][\c-[:]]{5} [\i-[:]][\c-[:]]{36} [\i-[:]][\c-[:]]{42} [\i-[:]][\c-[:]]{37} [\i-[:]][\c-[:]]{23} [\i-[:]][\c-[:]]{20} [
+  NI NISTSchema-SV-IV-list-ID-pattern-2
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-ID-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-ID-pattern-3
-    NISTSchema-SV-IV-list-ID-pattern-3.xsd:29:214: Invalid regular expression [\i-[:]][\c-[:]]{23} [\i-[:]][\c-[:]]{17} [\i-[:]][\c-[:]]{11} [\i-[:]][\c-[:]]{50} [\i-[:]][\c-[:]]{12} [\i-[:]][\c-[:]]{53} 
+  NI NISTSchema-SV-IV-list-ID-pattern-3
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-ID-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-ID-pattern-4
-    NISTSchema-SV-IV-list-ID-pattern-4.xsd:29:129: Invalid regular expression [\i-[:]][\c-[:]]{37} [\i-[:]][\c-[:]]{30} [\i-[:]][\c-[:]]{25} [\i-[:]][\c-[:]]{3} [\i-[:]][\c-[:]]{14} (converted to ^([A-Za-
+  NI NISTSchema-SV-IV-list-ID-pattern-4
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-ID-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-ID-pattern-5
-    NISTSchema-SV-IV-list-ID-pattern-5.xsd:29:193: Invalid regular expression [\i-[:]][\c-[:]]{59} [\i-[:]][\c-[:]]{51} [\i-[:]][\c-[:]]{49} [\i-[:]][\c-[:]]{43} [\i-[:]][\c-[:]]{28} [\i-[:]][\c-[:]]{11} 
+  NI NISTSchema-SV-IV-list-ID-pattern-5
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-ID-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -30590,28 +30590,28 @@ Grp: NIST2004-01-14 / list-QName-length-4
 
 Grp: NIST2004-01-14 / list-QName-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-QName-pattern-1
-    NISTSchema-SV-IV-list-QName-pattern-1.xsd:29:319: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{45} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{60} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{3
+  NI NISTSchema-SV-IV-list-QName-pattern-1
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-QName-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-QName-pattern-2
-    NISTSchema-SV-IV-list-QName-pattern-2.xsd:29:445: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{47} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{11} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{3
+  NI NISTSchema-SV-IV-list-QName-pattern-2
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-QName-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-QName-pattern-3
-    NISTSchema-SV-IV-list-QName-pattern-3.xsd:29:235: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{55} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{21} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{1
+  NI NISTSchema-SV-IV-list-QName-pattern-3
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-QName-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-QName-pattern-4
-    NISTSchema-SV-IV-list-QName-pattern-4.xsd:29:318: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{9} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{35} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{50
+  NI NISTSchema-SV-IV-list-QName-pattern-4
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-QName-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NISTSchema-SV-IV-list-QName-pattern-5
-    NISTSchema-SV-IV-list-QName-pattern-5.xsd:29:277: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{29} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{34} ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{4
+  NI NISTSchema-SV-IV-list-QName-pattern-5
+    Unsupported regexp construct: [...-[...]]
 
 Grp: NIST2004-01-14 / list-QName-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -80316,16 +80316,14 @@ Grp: MS-Regex2006-07-15 / reF15
     reF15.xml:9:24: Attribute "att": string pattern not matched: [^-z]+
 
 Grp: MS-Regex2006-07-15 / reF17
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK reF17
-  OK reF17.i
-    reF17.xml:9:22: Attribute "att": string pattern not matched: [a-d-[b-c]]
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI reF17
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / reF18
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK reF18
-  OK reF18.i
-    reF18.xml:9:13: string pattern not matched: [a-d-[b-c]]
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI reF18
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / reF20
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -80357,22 +80355,19 @@ Grp: MS-Regex2006-07-15 / reF32
   OK reF32.v
 
 Grp: MS-Regex2006-07-15 / reF34
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK reF34
-  OK reF34.i
-    reF34.xml:9:14: string pattern not matched: [a-b-[0-9]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI reF34
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / reF36
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK reF36
-  OK reF36.i
-    reF36.xml:9:13: string pattern not matched: [a-c-[^a-c]]
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI reF36
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / reF39
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK reF39
-  OK reF39.i
-    reF39.xml:9:22: Attribute "att": string pattern not matched: [a-z-[^a]]
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI reF39
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / reF40
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -80463,8 +80458,9 @@ Grp: MS-Regex2006-07-15 / reF55
   OK reF55.v
 
 Grp: MS-Regex2006-07-15 / reF56
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK reF56
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI reF56
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / reF57
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -86528,67 +86524,58 @@ Grp: MS-Regex2006-07-15 / RegexTest_319
 
 Grp: MS-Regex2006-07-15 / RegexTest_322
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_322
-    RegexTest_322.xsd:5:45: Invalid regular expression [abcd-[d]]+ (converted to ^([abcd-[d]]+)$)
+  NI RegexTest_322
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_323
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_323
-  OK RegexTest_323.i
-    RegexTest_323.xml:1:130: Attribute "value": string pattern not matched: [\d-[357]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_323
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_324
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_324
-  OK RegexTest_324.i
-    RegexTest_324.xml:1:127: Attribute "value": string pattern not matched: [\d-[357]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_324
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_325
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_325
-  OK RegexTest_325.i
-    RegexTest_325.xml:1:129: Attribute "value": string pattern not matched: [\d-[357]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_325
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_326
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_326
-  OK RegexTest_326.i
-    RegexTest_326.xml:1:137: Attribute "value": string pattern not matched: [\w-[b-y]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_326
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_327
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_327
-  OK RegexTest_327.i
-    RegexTest_327.xml:1:125: Attribute "value": string pattern not matched: [\w-[\d]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_327
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_328
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI RegexTest_328
-    Unsupported regexp construct: \P{...}
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_329
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_329
-  OK RegexTest_329.i
-    RegexTest_329.xml:1:126: Attribute "value": string pattern not matched: [\d-[13579]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_329
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_332
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_332
-  OK RegexTest_332.i
-    RegexTest_332.xml:1:137: Attribute "value": string pattern not matched: [\w-[b-y]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_332
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_333
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_333
-  OK RegexTest_333.i
-    RegexTest_333.xml:1:137: Attribute "value": string pattern not matched: [\w-[b-y]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_333
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_334
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_334
-  OK RegexTest_334.i
-    RegexTest_334.xml:1:137: Attribute "value": string pattern not matched: [\w-[b-y]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_334
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_335
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -86607,70 +86594,63 @@ Grp: MS-Regex2006-07-15 / RegexTest_337
 
 Grp: MS-Regex2006-07-15 / RegexTest_339
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_339
-    RegexTest_339.xsd:5:47: Invalid regular expression [abcd-[def]]+ (converted to ^([abcd-[def]]+)$)
+  NI RegexTest_339
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_340
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_340
-  OK RegexTest_340.i
-    RegexTest_340.xml:1:132: Attribute "value": string pattern not matched: [\d-[357a-z]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_340
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_341
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_341
-  OK RegexTest_341.i
-    RegexTest_341.xml:1:129: Attribute "value": string pattern not matched: [\d-[de357fgA-Z]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_341
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_342
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI RegexTest_342
-    Unsupported regexp construct: \P{...}
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_343
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_343
-  OK RegexTest_343.i
-    RegexTest_343.xml:1:139: Attribute "value": string pattern not matched: [\w-[b-y\s]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_343
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_344
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI RegexTest_344
-    Unsupported regexp construct: \P{...}
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_345
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI RegexTest_345
-    Unsupported regexp construct: \P{...}
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_346
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_346
-  OK RegexTest_346.i
-    RegexTest_346.xml:1:128: Attribute "value": string pattern not matched: [\d-[13579a-zA-Z]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_346
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_347
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK RegexTest_347
-  NI RegexTest_347.i
-    Regexp matching with unicode not supported
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_347
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_348
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK RegexTest_348
-  NI RegexTest_348.i
-    Regexp matching with unicode not supported
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_348
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_349
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI RegexTest_349
-    Unsupported regexp construct: \P{...}
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_350
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_350
-  OK RegexTest_350.i
-    RegexTest_350.xml:1:140: Attribute "value": string pattern not matched: [\w-[b-y!.,]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_350
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_352
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -86689,48 +86669,43 @@ Grp: MS-Regex2006-07-15 / RegexTest_354
 
 Grp: MS-Regex2006-07-15 / RegexTest_356
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_356
-    RegexTest_356.xsd:5:47: Invalid regular expression [abc-[defg]]+ (converted to ^([abc-[defg]]+)$)
+  NI RegexTest_356
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_357
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_357
-  OK RegexTest_357.i
-    RegexTest_357.xml:1:127: Attribute "value": string pattern not matched: [\d-[abc]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_357
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_358
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_358
-  OK RegexTest_358.i
-    RegexTest_358.xml:1:125: Attribute "value": string pattern not matched: [\d-[a-zA-Z]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_358
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_359
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI RegexTest_359
-    Unsupported regexp construct: \P{...}
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_363
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   NI RegexTest_363
-    Unsupported regexp construct: \P{...}
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_364
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_364
-  OK RegexTest_364.i
-    RegexTest_364.xml:1:130: Attribute "value": string pattern not matched: [\d-[\D]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_364
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_365
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
-  OK RegexTest_365
-  NI RegexTest_365.i
-    Regexp matching with unicode not supported
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_365
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_367
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_367
-  OK RegexTest_367.i
-    RegexTest_367.xml:1:127: Attribute "value": string pattern not matched: [a-zA-Z0-9-[\s]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_367
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_370
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -86763,22 +86738,19 @@ Grp: MS-Regex2006-07-15 / RegexTest_375
     Unsupported regexp construct: \P{...}
 
 Grp: MS-Regex2006-07-15 / RegexTest_420
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_420
-  OK RegexTest_420.i
-    RegexTest_420.xml:1:128: Attribute "value": string pattern not matched: ([ ]|[\w-[0-9]])+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_420
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_421
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_421
-  OK RegexTest_421.i
-    RegexTest_421.xml:1:133: Attribute "value": string pattern not matched: ([0-9-[02468]]|[0-9-[13579]])+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_421
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_422
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_422
-  OK RegexTest_422.i
-    RegexTest_422.xml:1:142: Attribute "value": string pattern not matched: ([^0-9-[a-zAE-Z]]|[\w-[a-zAF-Z]])+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_422
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_424
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -86786,26 +86758,24 @@ Grp: MS-Regex2006-07-15 / RegexTest_424
     Unsupported regexp construct: \P{...}
 
 Grp: MS-Regex2006-07-15 / RegexTest_425
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_425
-  OK RegexTest_425.i
-    RegexTest_425.xml:1:142: Attribute "value": string pattern not matched: 98[\d-[9]][\d-[8]][\d-[0]]
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_425
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_426
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_426
-  OK RegexTest_426.i
-    RegexTest_426.xml:1:133: Attribute "value": string pattern not matched: m[\w-[^aeiou]][\w-[^aeiou]]t
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_426
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_429
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_429
-    RegexTest_429.xsd:5:50: Invalid regular expression [abcdef-[^bce]]+ (converted to ^([abcdef-[^bce]]+)$)
+  NI RegexTest_429
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_430
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_430
-    RegexTest_430.xsd:5:46: Invalid regular expression [^cde-[ag]]+ (converted to ^([^cde-[ag]]+)$)
+  NI RegexTest_430
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_433
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -86813,20 +86783,19 @@ Grp: MS-Regex2006-07-15 / RegexTest_433
     Unsupported regexp construct: \P{...}
 
 Grp: MS-Regex2006-07-15 / RegexTest_434
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_434
-  OK RegexTest_434.i
-    RegexTest_434.xml:1:150: Attribute "value": string pattern not matched: [a-zA-Z-[aeiouAEIOU]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_434
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_438
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_438
-    RegexTest_438.xsd:5:49: Invalid regular expression [abcd\-d-[bc]]+ (converted to ^([abcd\-d-[bc]]+)$)
+  NI RegexTest_438
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_439
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_439
-    RegexTest_439.xsd:5:49: Invalid regular expression [abcd\-d-[bc]]+ (converted to ^([abcd\-d-[bc]]+)$)
+  NI RegexTest_439
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_440
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -86866,24 +86835,23 @@ Grp: MS-Regex2006-07-15 / RegexTest_458
 
 Grp: MS-Regex2006-07-15 / RegexTest_459
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_459
-    RegexTest_459.xsd:5:43: Invalid regular expression [a-[a-f]] (converted to ^([a-[a-f]])$)
+  NI RegexTest_459
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_460
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_460
-    RegexTest_460.xsd:5:44: Invalid regular expression [a-[c-e]]+ (converted to ^([a-[c-e]]+)$)
+  NI RegexTest_460
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_461
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_461
-    RegexTest_461.xsd:5:44: Invalid regular expression [a-[c-e]]+ (converted to ^([a-[c-e]]+)$)
+  NI RegexTest_461
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_462
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_462
-  OK RegexTest_462.i
-    RegexTest_462.xml:1:133: Attribute "value": string pattern not matched: [a-d\--[bc]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_462
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_464
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -86938,15 +86906,14 @@ Grp: MS-Regex2006-07-15 / RegexTest_474
     RegexTest_474.xml:1:140: Attribute "value": string pattern not matched: [a\-\[\-\[\-bc]+
 
 Grp: MS-Regex2006-07-15 / RegexTest_475
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK RegexTest_475
-  OK RegexTest_475.i
-    RegexTest_475.xml:1:140: Attribute "value": string pattern not matched: [abc\--[b]]+
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI RegexTest_475
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_476
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP RegexTest_476
-    RegexTest_476.xsd:5:47: Invalid regular expression [abc\-z-[b]]+ (converted to ^([abc\-z-[b]]+)$)
+  NI RegexTest_476
+    Unsupported regexp construct: [...-[...]]
 
 Grp: MS-Regex2006-07-15 / RegexTest_477
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -95299,13 +95266,13 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37054 (omitting non-accepted tests)
+Total number of tests: 37020 (omitting non-accepted tests)
    13746 XSD files (not including those parsed automatically)
-   23371 XML files
-NI: Features not implemented: in_partial= 212 in_full_fail= 2137
-SP: XSD KO, should be OK: in_full_fail= 183
+   23337 XML files
+NI: Features not implemented: in_partial= 209 in_full_fail= 2213
+SP: XSD KO, should be OK: in_full_fail= 142
 SF: XSD OK, should be KO: in_full_fail= 638
 XP: XML KO, should be OK: in_partial= 19 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 844 ( 2.3 %)
+Total errors: 803 ( 2.2 %)
