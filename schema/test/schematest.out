@@ -91454,8 +91454,8 @@ Grp: MS-Regex2006-07-15 / reZ002
 Grp: MS-Regex2006-07-15 / reZ003v
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK reZ003v
-  XP reZ003v.v
-    reZ003v.xml:29:16: string pattern not matched: [\w]
+  NI reZ003v.v
+    Regexp matching with unicode not supported
 
 Grp: MS-Regex2006-07-15 / reZ004v
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -95256,10 +95256,10 @@ Grp: BoeingXSDTestCases / ipo6
 Total number of tests: 37038 (omitting non-accepted tests)
    13748 XSD files (not including those parsed automatically)
    23355 XML files
-NI: Features not implemented: in_partial= 209 in_full_fail= 2252
+NI: Features not implemented: in_partial= 210 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 92
 SF: XSD OK, should be KO: in_full_fail= 643
-XP: XML KO, should be OK: in_partial= 16 in_full_fail= 1
+XP: XML KO, should be OK: in_partial= 15 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 2 in_full_fail= 2
 IE: Internal error:
-Total errors: 756 ( 2.0 %)
+Total errors: 755 ( 2.0 %)

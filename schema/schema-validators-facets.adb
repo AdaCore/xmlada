@@ -147,7 +147,7 @@ package body Schema.Validators.Facets is
                         Append (Tmp, "a-z:A-Z0-9._-");
 
                      when 'w' =>
-                        Append (Tmp, "a-zA-Z0-9");
+                        Append (Tmp, "a-zA-Z0-9`");
 
                      when 'I' | 'C' =>
                         Raise_Exception
@@ -201,7 +201,7 @@ package body Schema.Validators.Facets is
                   Append (Result, "[a-z:A-Z0-9._-]");
 
                when 'w' =>
-                  Append (Result, "[a-zA-Z0-9]");
+                  Append (Result, "[a-zA-Z0-9`]");
 
                when 'I' | 'C' =>
                   Raise_Exception
