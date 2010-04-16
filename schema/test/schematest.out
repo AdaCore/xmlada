@@ -53536,16 +53536,14 @@ Grp: MS-ComplexType2006-07-15 / ctI039
     ctI039.xml:3:29: Extensions of type "fooType" are forbidden
 
 Grp: MS-ComplexType2006-07-15 / ctI040
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI040
-  XP ctI040.v
-    ctI040.xml:3:29: Restrictions of type "fooType" are forbidden
+  OK ctI040.v
 
 Grp: MS-ComplexType2006-07-15 / ctI041
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI041
-  XP ctI041.v
-    ctI041.xml:3:29: Extensions of type "fooType" are forbidden
+  OK ctI041.v
 
 Grp: MS-ComplexType2006-07-15 / ctI042
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -63932,13 +63930,13 @@ Grp: MS-DataTypes2006-07-15 / time016_2024
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK time016_2024
   OK time016_2024.i
-    time016.xml:6:23: Invalid seconds specification in time: "13:20:60"
+    time016.xml:6:23: Invalid seconds in time: "13:20:60"
 
 Grp: MS-DataTypes2006-07-15 / time017_2025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK time017_2025
   OK time017_2025.i
-    time017.xml:6:23: Invalid minutes specification in time: "13:60:00"
+    time017.xml:6:23: Invalid minutes in time: "13:60:00"
 
 Grp: MS-DataTypes2006-07-15 / time018_2026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -64008,7 +64006,7 @@ Grp: MS-DataTypes2006-07-15 / date009_2037
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK date009_2037
   OK date009_2037.i
-    date009.xml:6:25: Invalid date "2000-13-14"
+    date009.xml:6:25: Invalid month in "2000-13-14"
 
 Grp: MS-DataTypes2006-07-15 / date010_2038
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95265,7 +95263,7 @@ Total number of tests: 37038 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 209 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 92
 SF: XSD OK, should be KO: in_full_fail= 643
-XP: XML KO, should be OK: in_partial= 21 in_full_fail= 1
+XP: XML KO, should be OK: in_partial= 19 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 760 ( 2.1 %)
+Total errors: 758 ( 2.0 %)

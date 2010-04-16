@@ -61,6 +61,8 @@ package body Schema.Schema_Readers is
    procedure Output (Str : String);
    --  Output a debug string
 
+   function To_String (Blocks : Block_Status) return String;
+
    procedure Lookup_With_NS
      (Handler : in out Schema_Reader'Class;
       QName   : Byte_Sequence;
@@ -208,6 +210,17 @@ package body Schema.Schema_Readers is
          end loop;
       end if;
    end Debug_Dump_Contexts;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Blocks : Block_Status) return String is
+   begin
+      return "restr=" & Blocks (Block_Restriction)'Img
+        & " ext=" & Blocks (Block_Extension)'Img
+        & " sub=" & Blocks (Block_Substitution)'Img;
+   end To_String;
 
    -------------------------
    -- In_Redefine_Context --
@@ -1105,22 +1118,12 @@ package body Schema.Schema_Readers is
 
       if Block_Index /= -1 then
          declare
-            On_Restriction, On_Extension, On_Substitution : Boolean := False;
+            Blocks : Block_Status;
          begin
-            Compute_Blocks
-              (Get_Value (Atts, Block_Index),
-               Restrictions  => On_Restriction,
-               Extensions    => On_Extension,
-               Substitutions => On_Substitution);
-            Set_Block (Element,
-                       On_Restriction  => On_Restriction,
-                       On_Extension    => On_Extension,
-                       On_Substitution => On_Substitution);
-            Output ("Set_Block ("
-                    & Ada_Name (Element) & ", "
-                    & Boolean'Image (On_Restriction) & ", "
-                    & Boolean'Image (On_Extension) & ", "
-                    & Boolean'Image (On_Substitution) & ");");
+            Compute_Blocks (Get_Value (Atts, Block_Index), Blocks);
+            Set_Block (Element, Blocks);
+            Output ("Set_Block (" & Ada_Name (Element) & ", "
+                    & To_String (Blocks) & ")");
          end;
       end if;
 
@@ -1237,8 +1240,7 @@ package body Schema.Schema_Readers is
             Redefined_Type    => No_Type,
             Mixed_Content     => False,
             Simple_Content    => True,
-            Block_Restriction => False,
-            Block_Extension   => False,
+            Blocks            => (others => False),
             Final_Restriction => False,
             Final_Extension   => False,
             Final_Unions      => False,
@@ -1305,7 +1307,6 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "abstract");
       Name    : Byte_Sequence_Access;
       Mixed   : Boolean;
-      Dummy   : Boolean;
 
    begin
       if Abstract_Index /= -1 then
@@ -1329,8 +1330,7 @@ package body Schema.Schema_Readers is
          Redefined_Type    => No_Type,
          Mixed_Content     => Mixed,
          Simple_Content    => False,
-         Block_Restriction => False,
-         Block_Extension   => False,
+         Blocks            => Get_Block_Default (Handler.Target_NS),
          Final_Restriction => False,
          Final_Extension   => False,
          Final_Unions      => False,
@@ -1340,10 +1340,7 @@ package body Schema.Schema_Readers is
 
       if Block_Index /= -1 then
          Compute_Blocks
-           (Get_Value (Atts, Block_Index),
-            Restrictions  => Handler.Contexts.Block_Restriction,
-            Extensions    => Handler.Contexts.Block_Extension,
-            Substitutions => Dummy);
+           (Get_Value (Atts, Block_Index), Blocks => Handler.Contexts.Blocks);
       end if;
 
       if Final_Index /= -1 then
@@ -1416,17 +1413,9 @@ package body Schema.Schema_Readers is
                  & "}, """ & C.Type_Name.all & """, Validator);");
       end if;
 
-      if Handler.Contexts.Block_Restriction
-        or else Handler.Contexts.Block_Extension
-      then
-         Set_Block (Typ,
-                    On_Restriction => Handler.Contexts.Block_Restriction,
-                    On_Extension   => Handler.Contexts.Block_Extension);
-         Output ("Set_Block ("
-                 & Ada_Name (Typ) & ", "
-                 & Boolean'Image (Handler.Contexts.Block_Restriction) & ", "
-                 & Boolean'Image (Handler.Contexts.Block_Extension) & ");");
-      end if;
+      Set_Block (Typ, Handler.Contexts.Blocks);
+      Output ("Set_Block (" & Ada_Name (Typ) & ", "
+              & To_String (Handler.Contexts.Blocks) & ")");
 
       Set_Final (Typ,
                  On_Restriction => Handler.Contexts.Final_Restriction,
@@ -2264,17 +2253,12 @@ package body Schema.Schema_Readers is
 
       if Block_Index /= -1 then
          declare
-            Block : constant Byte_Sequence := Get_Value (Atts, Block_Index);
+            Blocks : Block_Status;
          begin
-            Set_Block_Default
-              (Handler.Target_NS,
-               On_Restriction => Block = "restriction" or else Block = "#all",
-               On_Extension   => Block = "extension" or else Block = "#all");
+            Compute_Blocks (Get_Value (Atts, Block_Index), Blocks);
+            Set_Block_Default (Handler.Target_NS, Blocks);
             Output ("Set_Block (Handler.Target_NS, "
-                    & Boolean'Image
-                      (Block = "restriction" or else Block = "#all")
-                    & ", " & Boolean'Image
-                      (Block = "extension" or else Block = "#all"));
+                    & To_String (Blocks) & ")");
          end;
       end if;
 

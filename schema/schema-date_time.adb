@@ -440,6 +440,11 @@ package body Schema.Date_Time is
       end if;
 
       Date.Month  := Integer'Value (Ch (Pos +  1 .. Pos +  2));
+
+      if Date.Month < 1 or else Date.Month > 12 then
+         Validation_Error ("Invalid month in """ & Ch & '"');
+      end if;
+
       Date.Day    := Integer'Value (Ch (Pos +  4 .. Pos +  5));
       Eos := Pos + 6;
 
@@ -500,8 +505,7 @@ package body Schema.Date_Time is
       Dur := Dur + Day_Range (Min) * 60.0;
 
       if Min > 59 then
-         Validation_Error
-           ("Invalid minutes specification in time: """ & Ch & """");
+         Validation_Error ("Invalid minutes in time: """ & Ch & """");
          Time := No_Time_NZ;
          return;
       end if;
@@ -525,8 +529,7 @@ package body Schema.Date_Time is
       end if;
 
       if Msec >= 60.0 then
-         Validation_Error
-           ("Invalid seconds specification in time: """ & Ch & """");
+         Validation_Error ("Invalid seconds in time: """ & Ch & """");
          Time := No_Time_NZ;
          return;
       end if;
@@ -536,8 +539,7 @@ package body Schema.Date_Time is
       if Hour > 24
         or else (Hour = 24 and then (Min /= 0 or else Msec /= 0.0))
       then
-         Validation_Error
-           ("Invalid hour specification in time: """ & Ch & """");
+         Validation_Error ("Invalid hour in time: """ & Ch & """");
          Time := No_Time_NZ;
          return;
       end if;

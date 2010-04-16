@@ -248,12 +248,15 @@ package Schema.Validators is
    function Is_Simple_Type (Typ : XML_Type) return Boolean;
    --  Whether Typ is a simple type
 
+   type Block_Type is (Block_Restriction,
+                       Block_Extension,
+                       Block_Substitution);
+   type Block_Status is array (Block_Type) of Boolean;
+
    procedure Set_Block
-     (Typ            : XML_Type;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean);
-   function Get_Block_On_Restriction (Typ : XML_Type) return Boolean;
-   function Get_Block_On_Extension (Typ : XML_Type) return Boolean;
+     (Typ    : XML_Type;
+      Blocks : Block_Status);
+   function Get_Block (Typ : XML_Type) return Block_Status;
    --  Set the "block" status of the type.
    --  This can also be done at the element's level
 
@@ -638,13 +641,9 @@ package Schema.Validators is
    --  Set the final status of the element
 
    procedure Set_Block
-     (Element         : XML_Element;
-      On_Restriction  : Boolean;
-      On_Extension    : Boolean;
-      On_Substitution : Boolean);
-   function Get_Block_On_Restriction (Element : XML_Element) return Boolean;
-   function Get_Block_On_Extension (Element : XML_Element) return Boolean;
-   function Get_Block_On_Substitution (Element : XML_Element) return Boolean;
+     (Element : XML_Element;
+      Blocks  : Block_Status);
+   function Get_Block (Element : XML_Element) return Block_Status;
    --  Set the "block" status of the element
 
    procedure Check_Qualification
@@ -874,16 +873,13 @@ package Schema.Validators is
    --  register the new type or element before using the grammar.
 
    procedure Set_Block_Default
-     (Grammar : XML_Grammar_NS;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean);
+     (Grammar : XML_Grammar_NS; Blocks  : Block_Status);
+   function Get_Block_Default (Grammar : XML_Grammar_NS) return Block_Status;
    --  Set the default value for the "block" attribute
 
    procedure Compute_Blocks
-     (Value         : Unicode.CES.Byte_Sequence;
-      Restrictions  : out Boolean;
-      Extensions    : out Boolean;
-      Substitutions : out Boolean);
+     (Value  : Unicode.CES.Byte_Sequence;
+      Blocks : out Block_Status);
    --  Compute the list of blocked elements from value. Value is a list similar
    --  to what is used for the "block" attribute of elements in a schema
 
@@ -984,8 +980,7 @@ private
       Validator  : XML_Validator;
       Simple_Type : Content_Type;
 
-      Block_Restriction : Boolean;
-      Block_Extension   : Boolean;
+      Blocks : Block_Status;
       --  The value for the "block" attribute of the type
 
       Final_Restriction : Boolean;
@@ -1045,9 +1040,7 @@ private
       --  Whether this element is final for "restriction" or "extension" or
       --  both
 
-      Block_Restriction  : Boolean;
-      Block_Extension    : Boolean;
-      Block_Substitution : Boolean;
+      Blocks : Block_Status := (others => False);
       --  The value for the "block" attribute of the element
 
       Form : Form_Type;
@@ -1453,9 +1446,7 @@ private
       --  List of elements defined in this grammar, for memory management
       --  purposes
 
-      Block_Extension    : Boolean := False;
-      Block_Restriction  : Boolean := False;
-      Block_Substitution : Boolean := False;
+      Blocks : Block_Status := (others => False);
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_NS);

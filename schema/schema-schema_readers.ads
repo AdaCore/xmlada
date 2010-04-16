@@ -142,8 +142,7 @@ private
             --  Handling of <redefine>
             Mixed_Content  : Boolean;
             Simple_Content : Boolean;
-            Block_Restriction : Boolean;
-            Block_Extension   : Boolean;
+            Blocks         : Schema.Validators.Block_Status;
             Final_Restriction : Boolean;
             Final_Extension   : Boolean;
             Final_Unions      : Boolean;

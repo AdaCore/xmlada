@@ -1389,11 +1389,10 @@ package body Schema.Validators is
    begin
       if Typ = No_Type and then Create_If_Needed then
          Typ := new XML_Type_Record'
-           (Local_Name  => new Byte_Sequence'(Local_Name),
+           (Local_Name        => new Byte_Sequence'(Local_Name),
             Validator         => null,
             Simple_Type       => Unknown_Content,
-            Block_Extension   => Grammar.Block_Extension,
-            Block_Restriction => Grammar.Block_Restriction,
+            Blocks            => Get_Block_Default (Grammar),
             Final_Extension   => False,
             Final_Restriction => False,
             Next              => null);
@@ -1760,9 +1759,7 @@ package body Schema.Validators is
          Types_For_Mem      => null,
          Atts_For_Mem       => null,
          Elems_For_Mem      => null,
-         Block_Substitution => False,
-         Block_Restriction  => False,
-         Block_Extension    => False);
+         Blocks             => (others => False));
    end Create_NS_Grammar;
 
    --------------
@@ -1919,9 +1916,7 @@ package body Schema.Validators is
          Nillable            => True,
          Final_Restriction   => False,
          Final_Extension     => False,
-         Block_Restriction   => False,
-         Block_Extension     => False,
-         Block_Substitution  => False,
+         Blocks              => (others => False),
          Is_Global           => False,
          Form                => Form,
          Fixed               => null,
@@ -2008,9 +2003,7 @@ package body Schema.Validators is
             Nillable            => True,
             Final_Restriction   => False,
             Final_Extension     => False,
-            Block_Restriction   => Grammar.Block_Restriction,
-            Block_Extension     => Grammar.Block_Extension,
-            Block_Substitution  => Grammar.Block_Substitution,
+            Blocks              => Get_Block_Default (Grammar),
             Is_Global           => True,
             Form                => Form,
             Fixed               => null,
@@ -2056,8 +2049,7 @@ package body Schema.Validators is
            (Local_Name        => new Byte_Sequence'(Local_Name),
             Validator         => XML_Validator (Validator),
             Simple_Type       => Unknown_Content,
-            Block_Extension   => Grammar.Block_Extension,
-            Block_Restriction => Grammar.Block_Restriction,
+            Blocks            => Get_Block_Default (Grammar),
             Final_Extension   => False,
             Final_Restriction => False,
             Next              => null);
@@ -2696,13 +2688,13 @@ package body Schema.Validators is
                   if G.Elem = Element then
                      Result := R;
 
-                     if G.Elem.Block_Substitution then
+                     if G.Elem.Blocks (Block_Substitution) then
                         Validation_Error
                           ("Unexpected element """ & Local_Name
                            & """ (substitutions are blocked)");
 
-                     elsif (G.Elem.Block_Extension
-                            or else G.Elem.Of_Type.Block_Extension)
+                     elsif (G.Elem.Blocks (Block_Extension)
+                            or else G.Elem.Of_Type.Blocks (Block_Extension))
                        and then Is_Extension_Of (R, Base => G)
                      then
                         Validation_Error
@@ -2710,8 +2702,8 @@ package body Schema.Validators is
                            & G.Elem.Local_Name.all
                            & """ blocks extensions");
 
-                     elsif (G.Elem.Block_Restriction
-                            or else G.Elem.Of_Type.Block_Restriction)
+                     elsif (G.Elem.Blocks (Block_Restriction)
+                            or else G.Elem.Of_Type.Blocks (Block_Restriction))
                        and then Is_Restriction_Of (R, Base => G)
                      then
                         Validation_Error
@@ -3949,8 +3941,7 @@ package body Schema.Validators is
         (Local_Name        => null,
          Validator         => XML_Validator (Validator),
          Simple_Type       => Unknown_Content,
-         Block_Extension   => False,
-         Block_Restriction => False,
+         Blocks            => (others => False),
          Final_Extension   => False,
          Final_Restriction => False,
          Next              => null);
@@ -4848,42 +4839,20 @@ package body Schema.Validators is
    ---------------
 
    procedure Set_Block
-     (Element         : XML_Element;
-      On_Restriction  : Boolean;
-      On_Extension    : Boolean;
-      On_Substitution : Boolean) is
+     (Element : XML_Element;
+      Blocks  : Block_Status) is
    begin
-      Element.Elem.Block_Restriction  := On_Restriction;
-      Element.Elem.Block_Extension    := On_Extension;
-      Element.Elem.Block_Substitution := On_Substitution;
+      Element.Elem.Blocks := Blocks;
    end Set_Block;
 
-   ------------------------------
-   -- Get_Block_On_Restriction --
-   ------------------------------
+   ---------------
+   -- Get_Block --
+   ---------------
 
-   function Get_Block_On_Restriction (Element : XML_Element) return Boolean is
+   function Get_Block (Element : XML_Element) return Block_Status is
    begin
-      return Element.Elem.Block_Restriction;
-   end Get_Block_On_Restriction;
-
-   ----------------------------
-   -- Get_Block_On_Extension --
-   ----------------------------
-
-   function Get_Block_On_Extension (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Block_Extension;
-   end Get_Block_On_Extension;
-
-   -------------------------------
-   -- Get_Block_On_Substitution --
-   -------------------------------
-
-   function Get_Block_On_Substitution (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Block_Substitution;
-   end Get_Block_On_Substitution;
+      return Element.Elem.Blocks;
+   end Get_Block;
 
    -----------------------
    -- Check_Replacement --
@@ -5296,31 +5265,20 @@ package body Schema.Validators is
    ---------------
 
    procedure Set_Block
-     (Typ            : XML_Type;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean) is
+     (Typ    : XML_Type;
+      Blocks : Block_Status) is
    begin
-      Typ.Block_Restriction := On_Restriction;
-      Typ.Block_Extension := On_Extension;
+      Typ.Blocks := Blocks;
    end Set_Block;
 
-   ------------------------------
-   -- Get_Block_On_Restriction --
-   ------------------------------
+   ---------------
+   -- Get_Block --
+   ---------------
 
-   function Get_Block_On_Restriction (Typ : XML_Type) return Boolean is
+   function Get_Block (Typ : XML_Type) return Block_Status is
    begin
-      return Typ.Block_Restriction;
-   end Get_Block_On_Restriction;
-
-   ----------------------------
-   -- Get_Block_On_Extension --
-   ----------------------------
-
-   function Get_Block_On_Extension (Typ : XML_Type) return Boolean is
-   begin
-      return Typ.Block_Extension;
-   end Get_Block_On_Extension;
+      return Typ.Blocks;
+   end Get_Block;
 
    ------------------------------
    -- Get_Final_On_Restriction --
@@ -5346,12 +5304,19 @@ package body Schema.Validators is
 
    procedure Set_Block_Default
      (Grammar : XML_Grammar_NS;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean) is
+      Blocks  : Block_Status) is
    begin
-      Grammar.Block_Restriction := On_Restriction;
-      Grammar.Block_Extension   := On_Extension;
+      Grammar.Blocks := Blocks;
    end Set_Block_Default;
+
+   -----------------------
+   -- Get_Block_Default --
+   -----------------------
+
+   function Get_Block_Default (Grammar : XML_Grammar_NS) return Block_Status is
+   begin
+      return Grammar.Blocks;
+   end Get_Block_Default;
 
    ------------------------------------------
    -- Get_Namespace_From_Parent_For_Locals --
@@ -5531,24 +5496,20 @@ package body Schema.Validators is
    --------------------
 
    procedure Compute_Blocks
-     (Value         : Unicode.CES.Byte_Sequence;
-      Restrictions  : out Boolean;
-      Extensions    : out Boolean;
-      Substitutions : out Boolean)
+     (Value  : Unicode.CES.Byte_Sequence;
+      Blocks : out Block_Status)
    is
       procedure On_Item (Str : Byte_Sequence);
       procedure On_Item (Str : Byte_Sequence) is
       begin
          if Str = "restriction" then
-            Restrictions := True;
+            Blocks (Block_Restriction) := True;
          elsif Str = "extension" then
-            Extensions := True;
+            Blocks (Block_Extension) := True;
          elsif Str = "substitution" then
-            Substitutions := True;
+            Blocks (Block_Substitution) := True;
          elsif Str = "#all" then
-            Restrictions  := True;
-            Extensions    := True;
-            Substitutions := True;
+            Blocks := (others => True);
          else
             Validation_Error
               ("Invalid value for block: """ & Str & """");
@@ -5558,9 +5519,7 @@ package body Schema.Validators is
       procedure For_Each
         is new Schema.Validators.Lists.For_Each_Item (On_Item);
    begin
-      Restrictions  := False;
-      Extensions    := False;
-      Substitutions := False;
+      Blocks := (others => False);
       For_Each (Value);
    end Compute_Blocks;
 

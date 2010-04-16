@@ -347,13 +347,13 @@ package body Schema.Validators.Restrictions is
    begin
       Had_Restriction := True;
 
-      if Validator.Base.Block_Restriction then
+      if Validator.Base.Blocks (Block_Restriction) then
          Validation_Error
            ("Restrictions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
       end if;
 
-      if Validator.Base.Block_Extension and then Had_Extension then
+      if Validator.Base.Blocks (Block_Extension) and then Had_Extension then
          Validation_Error
            ("Extensions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");

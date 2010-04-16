@@ -318,13 +318,15 @@ package body Schema.Validators.Extensions is
    begin
       Had_Extension := True;
 
-      if Validator.Base.Block_Restriction and then Had_Restriction then
+      if Validator.Base.Blocks (Block_Restriction)
+        and then Had_Restriction
+      then
          Validation_Error
            ("Restrictions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
       end if;
 
-      if Validator.Base.Block_Extension then
+      if Validator.Base.Blocks (Block_Extension) then
          Validation_Error
            ("Extensions of type """
             & Get_Local_Name (Validator.Base) & """ are forbidden");
