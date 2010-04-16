@@ -234,9 +234,6 @@ package Schema.Validators is
    --  Base doesn't need to be a Clone of some other type, since it isn't
    --  altered. See also Is_Restriction_Of below
 
-   function Get_Local_Name (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
-   --  Return the local name of the type
-
    procedure Check_Content_Type
      (Typ : XML_Type; Should_Be_Simple : Boolean);
    --  Check whether Typ is a simpleType or a complexType. See the description
@@ -531,13 +528,11 @@ package Schema.Validators is
    procedure Check_Replacement
      (Validator         : access XML_Validator_Record;
       Typ               : XML_Type;
+      Valid             : out Boolean;
       Had_Restriction   : in out Boolean;
       Had_Extension     : in out Boolean);
    --  Check whether Validator is a valid replacement for Typ (either an
    --  extension or a restriction, and not blocked by a "block" attribute).
-   --  If there is an error, an XML_Validation_Error is raised.
-   --  Otherwise, this function returns the type of replacement that is done.
-   --
    --  Had_* Indicate whether a restriction or extension was encountered while
    --  going up the inheritance tree so far.
 
@@ -594,10 +589,6 @@ package Schema.Validators is
       Element_Type : XML_Type;
       Context      : in out Validation_Context);
    --  Return the type validator for this element
-
-   function To_QName
-     (Element : XML_Element) return Unicode.CES.Byte_Sequence;
-   --  Return the qualified name of Element
 
    procedure Set_Default
      (Element  : XML_Element;
@@ -932,6 +923,8 @@ package Schema.Validators is
    --  Raise Validation_Error with a proper error message.
 
    function To_QName (Namespace_URI, Local_Name : String) return String;
+   function To_QName (Element : XML_Element) return Unicode.CES.Byte_Sequence;
+   function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
    --  Return the name as it should be displayed in error messages
 
 private

@@ -1517,14 +1517,14 @@ package body Schema.Validators is
         (Get_Namespace_URI (Element.Elem.NS), Element.Elem.Local_Name.all);
    end To_QName;
 
-   --------------------
-   -- Get_Local_Name --
-   --------------------
+   --------------
+   -- To_QName --
+   --------------
 
-   function Get_Local_Name (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
+   function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
    begin
       if Typ = No_Type then
-         return "No_Type";
+         return "???";
       elsif Typ.Local_Name = null then
          if Typ.Validator /= null then
             return "anonymous/" & Get_Name (Typ.Validator);
@@ -1534,7 +1534,7 @@ package body Schema.Validators is
       else
          return Typ.Local_Name.all;
       end if;
-   end Get_Local_Name;
+   end To_QName;
 
    --------------
    -- Get_Type --
@@ -3034,7 +3034,7 @@ package body Schema.Validators is
                      Debug_Output
                        ("Element matched in seq: "
                         & Element_Validator.Elem.Local_Name.all & ' '
-                        & Get_Local_Name (Element_Validator.Elem.Of_Type));
+                        & To_QName (Element_Validator.Elem.Of_Type));
                   end if;
                   Tmp := Move_To_Next_Particle (Validator, D, Force => False);
 
@@ -3085,8 +3085,7 @@ package body Schema.Validators is
                Debug_Output ("Found validator: "
                              & Element_Validator.Elem.Local_Name.all
                              & " type="
-                             & Get_Local_Name
-                               (Get_Type (Element_Validator)));
+                             & To_QName (Get_Type (Element_Validator)));
             end if;
             Debug_Pop_Prefix;
             return;
@@ -3860,6 +3859,7 @@ package body Schema.Validators is
       Had_Restriction, Had_Extension : Boolean := False;
       HeadPtr : constant XML_Element_Access := Head.Elem;
       ElemPtr : constant XML_Element_Access := Element.Elem;
+      Valid_Replacement : Boolean;
    begin
       --  ??? Should Head be fully defined here, so that we can check we are a
       --  possible replacement for it ?
@@ -3870,8 +3870,16 @@ package body Schema.Validators is
       then
          Check_Replacement
            (Get_Validator (Get_Type (Element)), Get_Type (Head),
+            Valid           => Valid_Replacement,
             Had_Restriction => Had_Restriction,
             Had_Extension   => Had_Extension);
+
+         if not Valid_Replacement then
+            Validation_Error
+              (To_QName (Get_Type (Element))
+               & " is not a valid replacement for "
+               & To_QName (Get_Type (Head)));
+         end if;
 
          if HeadPtr.Final_Restriction and then Had_Restriction then
             Validation_Error
@@ -4861,17 +4869,13 @@ package body Schema.Validators is
    procedure Check_Replacement
      (Validator       : access XML_Validator_Record;
       Typ             : XML_Type;
+      Valid           : out Boolean;
       Had_Restriction : in out Boolean;
       Had_Extension   : in out Boolean)
    is
       pragma Unreferenced (Validator, Had_Restriction, Had_Extension);
    begin
-      if not Is_Wildcard (Get_Validator (Typ)) then
-         Validation_Error ("Type is not a valid replacement for """
-                           & Get_Local_Name (Typ) & """");
-      else
-         Had_Restriction := True;
-      end if;
+      Valid := Is_Wildcard (Get_Validator (Typ));
    end Check_Replacement;
 
    -----------------------
@@ -5076,7 +5080,7 @@ package body Schema.Validators is
      (Typ : XML_Type; Should_Be_Simple : Boolean) is
    begin
       if Debug then
-         Debug_Output ("Check_Content_Type: " & Get_Local_Name (Typ)
+         Debug_Output ("Check_Content_Type: " & To_QName (Typ)
                        & " " & Typ.Simple_Type'Img
                        & " Expect_simple=" & Should_Be_Simple'Img);
       end if;
@@ -5096,7 +5100,7 @@ package body Schema.Validators is
       elsif Should_Be_Simple and Typ.Simple_Type = Complex_Content then
          if Typ.Local_Name /= null then
             Validation_Error
-              (Get_Local_Name (Typ) & " specified in a simpleContent context"
+              (To_QName (Typ) & " specified in a simpleContent context"
                & " must not have a complexContext");
          else
             Validation_Error ("Expecting simple type, got complex type");

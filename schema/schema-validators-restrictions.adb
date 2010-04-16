@@ -76,6 +76,7 @@ package body Schema.Validators.Restrictions is
    procedure Check_Replacement
      (Validator         : access Restriction_XML_Validator;
       Typ               : XML_Type;
+      Valid             : out Boolean;
       Had_Restriction   : in out Boolean;
       Had_Extension     : in out Boolean);
    procedure Check_Content_Type
@@ -140,7 +141,7 @@ package body Schema.Validators.Restrictions is
             end if;
          else
             Validation_Error
-              ("The type """ & Get_Local_Name (Validator.Base)
+              ("The type """ & To_QName (Validator.Base)
                & """ isn't known at this point. Please check the name and"
                & " namespace");
          end if;
@@ -340,31 +341,32 @@ package body Schema.Validators.Restrictions is
    -----------------------
 
    procedure Check_Replacement
-     (Validator         : access Restriction_XML_Validator;
-      Typ               : XML_Type;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean) is
+     (Validator       : access Restriction_XML_Validator;
+      Typ             : XML_Type;
+      Valid           : out Boolean;
+      Had_Restriction : in out Boolean;
+      Had_Extension   : in out Boolean)
+   is
+      B : constant XML_Validator := Get_Validator (Typ);
    begin
+      --  See rule in extensions implementation
+
+      Valid := (XML_Validator (Validator) = B    --  1
+                or else not Typ.Blocks (Block_Restriction));
+      if Valid then
+         Valid := XML_Validator (Validator) = B        --  2.1
+           or else Get_Validator (Validator.Base) = B; --  2.2
+
+         if not Valid
+           and then not Is_Wildcard (Get_Validator (Validator.Base)) --  2.3.1
+         then
+            Check_Replacement                       --  2.3.2
+              (Get_Validator (Validator.Base),
+               Typ, Valid, Had_Restriction, Had_Extension);
+         end if;
+      end if;
+
       Had_Restriction := True;
-
-      if Validator.Base.Blocks (Block_Restriction) then
-         Validation_Error
-           ("Restrictions of type """
-            & Get_Local_Name (Validator.Base) & """ are forbidden");
-      end if;
-
-      if Validator.Base.Blocks (Block_Extension) and then Had_Extension then
-         Validation_Error
-           ("Extensions of type """
-            & Get_Local_Name (Validator.Base) & """ are forbidden");
-      end if;
-
-      if Validator.Base /= Typ then
-         Check_Replacement
-           (Get_Validator (Validator.Base), Typ,
-            Had_Restriction => Had_Restriction,
-            Had_Extension   => Had_Extension);
-      end if;
    end Check_Replacement;
 
    --------------------
@@ -391,7 +393,7 @@ package body Schema.Validators.Restrictions is
    begin
       if Get_Final_On_Restriction (Base) then
          Validation_Error
-           ("Type """ & Get_Local_Name (Base) & """ forbids restrictions");
+           ("Type """ & To_QName (Base) & """ forbids restrictions");
       end if;
 
       Register (G, Base);

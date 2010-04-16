@@ -73,6 +73,7 @@ private package Schema.Validators.Simple_Types is
    procedure Check_Replacement
      (Validator       : access Any_Simple_XML_Validator_Record;
       Typ             : XML_Type;
+      Valid           : out Boolean;
       Had_Restriction : in out Boolean;
       Had_Extension   : in out Boolean);
    --  See doc from inherited subprograms

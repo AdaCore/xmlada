@@ -302,7 +302,7 @@ package body Schema.Schema_Readers is
 
    function Ada_Name (Typ : XML_Type) return String is
    begin
-      return "T_" & XML_To_Ada (Get_Local_Name (Typ));
+      return "T_" & XML_To_Ada (To_QName (Typ));
    end Ada_Name;
 
    -------------------------
@@ -989,8 +989,8 @@ package body Schema.Schema_Readers is
             Lookup_With_NS
               (Handler.all, Get_Value (Atts, Type_Index), Result => Typ);
 
-            if Get_Local_Name (Typ) = "IDREF"
-              or else Get_Local_Name (Typ) = "IDREFS"
+            if To_QName (Typ) = "IDREF"
+              or else To_QName (Typ) = "IDREFS"
             then
                Raise_Exception
                  (XML_Not_Implemented'Identity,
@@ -1485,8 +1485,8 @@ package body Schema.Schema_Readers is
          Lookup_With_NS
            (Handler.all, Get_Value (Atts, Base_Index), Result => Base);
 
-         if Get_Local_Name (Base) = "IDREF"
-           or else Get_Local_Name (Base) = "IDREFS"
+         if To_QName (Base) = "IDREF"
+           or else To_QName (Base) = "IDREFS"
          then
             Raise_Exception
               (XML_Not_Implemented'Identity,
@@ -1676,7 +1676,7 @@ package body Schema.Schema_Readers is
                   Set_Debug_Name
                     (Handler.Contexts.Extension,
                      "extension_of_"
-                     & Get_Local_Name (Handler.Contexts.Extension_Base));
+                     & To_QName (Handler.Contexts.Extension_Base));
                end if;
 
                Output (Ada_Name (Handler.Contexts) & " := Extension_Of ("
@@ -1996,8 +1996,8 @@ package body Schema.Schema_Readers is
          Lookup_With_NS
            (Handler.all, Get_Value (Atts, Type_Index), Result => Typ);
 
-         if Get_Local_Name (Typ) = "IDREF"
-           or else Get_Local_Name (Typ) = "IDREFS"
+         if To_QName (Typ) = "IDREF"
+           or else To_QName (Typ) = "IDREFS"
          then
             Raise_Exception
               (XML_Not_Implemented'Identity,

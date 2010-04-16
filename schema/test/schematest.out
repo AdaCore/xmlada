@@ -43449,33 +43449,33 @@ Grp: suntest / test001
   OK test
   OK test.1.v
   OK test.2.n
-    test.2.n.xml:9:30: Type is not a valid replacement for "B"
+    test.2.n.xml:9:30: empty is not a valid replacement for B
 
 Grp: suntest / test002
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK test
   OK test.1.v
   OK test.2.n
-    test.2.n.xml:9:26: Extensions of type "B" are forbidden
+    test.2.n.xml:9:26: De is not a valid replacement for B
   OK test.3.n
-    test.3.n.xml:9:27: Extensions of type "B" are forbidden
+    test.3.n.xml:9:27: Dre is not a valid replacement for B
   OK test.4.n
-    test.4.n.xml:9:27: Extensions of type "B" are forbidden
+    test.4.n.xml:9:27: Der is not a valid replacement for B
   OK test.5.n
-    test.5.n.xml:9:27: Extensions of type "B" are forbidden
+    test.5.n.xml:9:27: Dee is not a valid replacement for B
 
 Grp: suntest / test003
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK test
   OK test.1.v
   OK test.2.n
-    test.2.n.xml:9:26: Extensions of type "B" are forbidden
+    test.2.n.xml:9:26: De is not a valid replacement for B
   OK test.3.n
-    test.3.n.xml:9:27: Extensions of type "Dr" are forbidden
+    test.3.n.xml:9:27: Dre is not a valid replacement for B
   OK test.4.n
-    test.4.n.xml:9:27: Extensions of type "B" are forbidden
+    test.4.n.xml:9:27: Der is not a valid replacement for B
   OK test.5.n
-    test.5.n.xml:9:27: Extensions of type "De" are forbidden
+    test.5.n.xml:9:27: Dee is not a valid replacement for B
 
 Grp: suntest / test004
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -43491,10 +43491,9 @@ Grp: suntest / test004
     test.5.n.xml:9:27: Element "{foo}item2" blocks the use of extensions of the type
 
 Grp: suntest / test005
-  83.3% tests= 6 (xsd= 1 xml= 5) OK= 5 FAILED= 1
+  100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK test
-  XP test.1.v
-    test.1.v.xml:15:28: Restrictions of type "Dr" are forbidden
+  OK test.1.v
   OK test.2.n
     test.2.n.xml:9:26: Element "{foo}item2" blocks the use of extensions of the type
   OK test.3.n
@@ -43509,70 +43508,70 @@ Grp: suntest / test006
   OK test
   OK test.1.v
   OK test.10.n
-    test.10.n.xml:9:26: Type is not a valid replacement for "De"
+    test.10.n.xml:9:26: Dre is not a valid replacement for De
   OK test.11.n
-    test.11.n.xml:9:25: Type is not a valid replacement for "Drr"
+    test.11.n.xml:9:25: B is not a valid replacement for Drr
   OK test.12.n
-    test.12.n.xml:9:26: Type is not a valid replacement for "Drr"
+    test.12.n.xml:9:26: De is not a valid replacement for Drr
   OK test.13.n
-    test.13.n.xml:9:27: Type is not a valid replacement for "Drr"
+    test.13.n.xml:9:27: Der is not a valid replacement for Drr
   OK test.14.n
-    test.14.n.xml:9:27: Type is not a valid replacement for "Drr"
+    test.14.n.xml:9:27: Dee is not a valid replacement for Drr
   OK test.15.n
-    test.15.n.xml:9:26: Type is not a valid replacement for "Drr"
+    test.15.n.xml:9:26: Dr is not a valid replacement for Drr
   OK test.16.n
-    test.16.n.xml:9:27: Type is not a valid replacement for "Drr"
+    test.16.n.xml:9:27: Dre is not a valid replacement for Drr
   OK test.17.n
-    test.17.n.xml:9:25: Type is not a valid replacement for "Dre"
+    test.17.n.xml:9:25: B is not a valid replacement for Dre
   OK test.18.n
-    test.18.n.xml:9:26: Type is not a valid replacement for "Dre"
+    test.18.n.xml:9:26: De is not a valid replacement for Dre
   OK test.19.n
-    test.19.n.xml:9:27: Type is not a valid replacement for "Dre"
+    test.19.n.xml:9:27: Der is not a valid replacement for Dre
   OK test.2.v
   OK test.20.n
-    test.20.n.xml:9:27: Type is not a valid replacement for "Dre"
+    test.20.n.xml:9:27: Dee is not a valid replacement for Dre
   OK test.21.n
-    test.21.n.xml:9:26: Type is not a valid replacement for "Dre"
+    test.21.n.xml:9:26: Dr is not a valid replacement for Dre
   OK test.22.n
-    test.22.n.xml:9:27: Type is not a valid replacement for "Dre"
+    test.22.n.xml:9:27: Drr is not a valid replacement for Dre
   OK test.23.n
-    test.23.n.xml:9:25: Type is not a valid replacement for "Der"
+    test.23.n.xml:9:25: B is not a valid replacement for Der
   OK test.24.n
-    test.24.n.xml:9:26: Type is not a valid replacement for "Der"
+    test.24.n.xml:9:26: De is not a valid replacement for Der
   OK test.25.n
-    test.25.n.xml:9:27: Type is not a valid replacement for "Der"
+    test.25.n.xml:9:27: Dee is not a valid replacement for Der
   OK test.26.n
-    test.26.n.xml:9:26: Type is not a valid replacement for "Der"
+    test.26.n.xml:9:26: Dr is not a valid replacement for Der
   OK test.27.n
-    test.27.n.xml:9:27: Type is not a valid replacement for "Der"
+    test.27.n.xml:9:27: Dre is not a valid replacement for Der
   OK test.28.n
-    test.28.n.xml:9:27: Type is not a valid replacement for "Der"
+    test.28.n.xml:9:27: Drr is not a valid replacement for Der
   OK test.29.n
-    test.29.n.xml:9:25: Type is not a valid replacement for "Dee"
+    test.29.n.xml:9:25: B is not a valid replacement for Dee
   OK test.3.n
-    test.3.n.xml:9:24: Type is not a valid replacement for "Dr"
+    test.3.n.xml:9:24: B is not a valid replacement for Dr
   OK test.30.n
-    test.30.n.xml:9:26: Type is not a valid replacement for "Dee"
+    test.30.n.xml:9:26: De is not a valid replacement for Dee
   OK test.31.n
-    test.31.n.xml:9:27: Type is not a valid replacement for "Dee"
+    test.31.n.xml:9:27: Der is not a valid replacement for Dee
   OK test.32.n
-    test.32.n.xml:9:26: Type is not a valid replacement for "Dee"
+    test.32.n.xml:9:26: Dr is not a valid replacement for Dee
   OK test.33.n
-    test.33.n.xml:9:27: Type is not a valid replacement for "Dee"
+    test.33.n.xml:9:27: Dre is not a valid replacement for Dee
   OK test.34.n
-    test.34.n.xml:9:27: Type is not a valid replacement for "Dee"
+    test.34.n.xml:9:27: Drr is not a valid replacement for Dee
   OK test.4.n
-    test.4.n.xml:9:25: Type is not a valid replacement for "Dr"
+    test.4.n.xml:9:25: De is not a valid replacement for Dr
   OK test.5.n
-    test.5.n.xml:9:26: Type is not a valid replacement for "Dr"
+    test.5.n.xml:9:26: Der is not a valid replacement for Dr
   OK test.6.n
-    test.6.n.xml:9:26: Type is not a valid replacement for "Dr"
+    test.6.n.xml:9:26: Dee is not a valid replacement for Dr
   OK test.7.n
-    test.7.n.xml:9:24: Type is not a valid replacement for "De"
+    test.7.n.xml:9:24: B is not a valid replacement for De
   OK test.8.n
-    test.8.n.xml:9:25: Type is not a valid replacement for "De"
+    test.8.n.xml:9:25: Dr is not a valid replacement for De
   OK test.9.n
-    test.9.n.xml:9:26: Type is not a valid replacement for "De"
+    test.9.n.xml:9:26: Drr is not a valid replacement for De
 
 Grp: suntest / test007
   100.0% tests= 9 (xsd= 1 xml= 8) OK= 9 FAILED= 0
@@ -44686,7 +44685,7 @@ Grp: CType / psubstitutions00102m
   OK pSubstitutions00102m
   OK pSubstitutions00102m1_p
   OK pSubstitutions00102m1_n
-    pSubstitutions00102m1_n.xml:13:84: Extensions of type "A" are forbidden
+    pSubstitutions00102m1_n.xml:13:84: test:B is not a valid replacement for A
   OK pSubstitutions00102m2_p
   OK pSubstitutions00102m2_n
     pSubstitutions00102m2_n.xml:14:20: Unexpected element "c"
@@ -44699,17 +44698,17 @@ Grp: CType / psubstitutions00103m
     pSubstitutions00103m1_n.xml:15:10: Unexpected end of sequence, expecting "{pSubstitutions}d"
   OK pSubstitutions00103m2_p
   OK pSubstitutions00103m2_n
-    pSubstitutions00103m2_n.xml:13:84: Restrictions of type "A" are forbidden
+    pSubstitutions00103m2_n.xml:13:84: test:C is not a valid replacement for A
 
 Grp: CType / psubstitutions00104m
   100.0% tests= 5 (xsd= 1 xml= 4) OK= 5 FAILED= 0
   OK pSubstitutions00104m
   OK pSubstitutions00104m1_p
   OK pSubstitutions00104m1_n
-    pSubstitutions00104m1_n.xml:13:84: Extensions of type "A" are forbidden
+    pSubstitutions00104m1_n.xml:13:84: test:B is not a valid replacement for A
   OK pSubstitutions00104m2_p
   OK pSubstitutions00104m2_n
-    pSubstitutions00104m2_n.xml:13:84: Restrictions of type "A" are forbidden
+    pSubstitutions00104m2_n.xml:13:84: test:C is not a valid replacement for A
 
 Grp: CType / targetns00101m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -44925,17 +44924,17 @@ Grp: ElemDecl / disallowedsubst00503m2
 Grp: ElemDecl / disallowedsubst00503m3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP disallowedSubst00503m3
-    disallowedSubst00503m3.xsd:34:80: Restrictions of type "Type" are forbidden
+    disallowedSubst00503m3.xsd:34:80: derivedFromType is not a valid replacement for Type
 
 Grp: ElemDecl / disallowedsubst00503m4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP disallowedSubst00503m4
-    disallowedSubst00503m4.xsd:34:80: Restrictions of type "Type" are forbidden
+    disallowedSubst00503m4.xsd:34:80: derivedFromType is not a valid replacement for Type
 
 Grp: ElemDecl / disallowedsubst00503m5
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP disallowedSubst00503m5
-    disallowedSubst00503m5.xsd:34:80: Restrictions of type "Type" are forbidden
+    disallowedSubst00503m5.xsd:34:80: derivedFromType is not a valid replacement for Type
 
 Grp: ElemDecl / idconstrdefs00101m
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -45603,7 +45602,7 @@ Grp: ElemDecl / typedef00801m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK typeDef00801m2
   OK Negative
-    typeDef00801m2_n.xml:14:71: Extensions of type "Type" are forbidden
+    typeDef00801m2_n.xml:14:71: test:derivedType is not a valid replacement for Type
 
 Grp: ElemDecl / typedef00801m3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53483,19 +53482,19 @@ Grp: MS-ComplexType2006-07-15 / ctI030
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI030
   OK ctI030.i
-    ctI030.xml:3:29: Restrictions of type "fooType" are forbidden
+    ctI030.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-ComplexType2006-07-15 / ctI031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI031
   OK ctI031.i
-    ctI031.xml:3:29: Extensions of type "fooType" are forbidden
+    ctI031.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-ComplexType2006-07-15 / ctI032
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI032
   OK ctI032.i
-    ctI032.xml:3:29: Restrictions of type "fooType" are forbidden
+    ctI032.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-ComplexType2006-07-15 / ctI033
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53511,7 +53510,7 @@ Grp: MS-ComplexType2006-07-15 / ctI035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI035
   OK ctI035.i
-    ctI035.xml:3:29: Extensions of type "fooType" are forbidden
+    ctI035.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-ComplexType2006-07-15 / ctI036
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53527,13 +53526,13 @@ Grp: MS-ComplexType2006-07-15 / ctI038
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI038
   OK ctI038.i
-    ctI038.xml:3:29: Restrictions of type "fooType" are forbidden
+    ctI038.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-ComplexType2006-07-15 / ctI039
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI039
   OK ctI039.i
-    ctI039.xml:3:29: Extensions of type "fooType" are forbidden
+    ctI039.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-ComplexType2006-07-15 / ctI040
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53549,7 +53548,7 @@ Grp: MS-ComplexType2006-07-15 / ctI042
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI042
   OK ctI042.i
-    ctI042.xml:3:29: Restrictions of type "fooType" are forbidden
+    ctI042.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-ComplexType2006-07-15 / ctI043
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53565,7 +53564,7 @@ Grp: MS-ComplexType2006-07-15 / ctI045
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK ctI045
   OK ctI045.i
-    ctI045.xml:3:29: Extensions of type "fooType" are forbidden
+    ctI045.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-ComplexType2006-07-15 / ctI046
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66134,7 +66133,7 @@ Grp: MS-Element2006-07-15 / elemT017
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT017
   OK elemT017.i
-    elemT017.xml:3:21: SCHEMA.VALIDATORS.SIMPLE_TYPES.STRING_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
+    elemT017.xml:3:21: B is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT018
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66146,31 +66145,31 @@ Grp: MS-Element2006-07-15 / elemT019
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT019
   OK elemT019.i
-    elemT019.xml:2:26: SCHEMA.VALIDATORS.SIMPLE_TYPES.INTEGER_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
+    elemT019.xml:2:26: base-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT020
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT020
   OK elemT020.i
-    elemT020.xml:2:27: for_type_Union-A is not a valid replacement for "A"
+    elemT020.xml:2:27: Union-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT021
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT021
   OK elemT021.i
-    elemT021.xml:2:28: for_type_Union-AB is not a valid replacement for "A"
+    elemT021.xml:2:28: Union-AB is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT022
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT022
   OK elemT022.i
-    elemT022.xml:2:26: for_type_List-A is not a valid replacement for "A"
+    elemT022.xml:2:26: List-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT023
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT023
   OK elemT023.i
-    elemT023.xml:2:27: for_type_List-AB is not a valid replacement for "A"
+    elemT023.xml:2:27: List-AB is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT024
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66212,7 +66211,7 @@ Grp: MS-Element2006-07-15 / elemT031
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT031
   OK elemT031.i
-    elemT031.xml:2:21: SCHEMA.VALIDATORS.SIMPLE_TYPES.STRING_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
+    elemT031.xml:2:21: B is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT032
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66223,31 +66222,31 @@ Grp: MS-Element2006-07-15 / elemT033
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT033
   OK elemT033.i
-    elemT033.xml:2:26: SCHEMA.VALIDATORS.SIMPLE_TYPES.INTEGER_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
+    elemT033.xml:2:26: base-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT034
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT034
   OK elemT034.i
-    elemT034.xml:2:27: for_type_Union-A is not a valid replacement for "A"
+    elemT034.xml:2:27: Union-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT035
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT035
   OK elemT035.i
-    elemT035.xml:2:28: for_type_Union-AB is not a valid replacement for "A"
+    elemT035.xml:2:28: Union-AB is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT036
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT036
   OK elemT036.i
-    elemT036.xml:2:26: for_type_List-A is not a valid replacement for "A"
+    elemT036.xml:2:26: List-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT037
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT037
   OK elemT037.i
-    elemT037.xml:2:27: for_type_List-AB is not a valid replacement for "A"
+    elemT037.xml:2:27: List-AB is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT038
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66289,7 +66288,7 @@ Grp: MS-Element2006-07-15 / elemT045
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT045
   OK elemT045.i
-    elemT045.xml:2:21: SCHEMA.VALIDATORS.SIMPLE_TYPES.STRING_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
+    elemT045.xml:2:21: B is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT046
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66301,31 +66300,31 @@ Grp: MS-Element2006-07-15 / elemT047
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT047
   OK elemT047.i
-    elemT047.xml:2:26: SCHEMA.VALIDATORS.SIMPLE_TYPES.INTEGER_VALIDATORS.VALIDATOR_RECORD is not a valid replacement for "A"
+    elemT047.xml:2:26: base-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT048
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT048
   OK elemT048.i
-    elemT048.xml:2:27: for_type_Union-A is not a valid replacement for "A"
+    elemT048.xml:2:27: Union-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT049
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT049
   OK elemT049.i
-    elemT049.xml:2:28: for_type_Union-AB is not a valid replacement for "A"
+    elemT049.xml:2:28: Union-AB is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT050
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT050
   OK elemT050.i
-    elemT050.xml:2:26: for_type_List-A is not a valid replacement for "A"
+    elemT050.xml:2:26: List-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT051
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT051
   OK elemT051.i
-    elemT051.xml:2:27: for_type_List-AB is not a valid replacement for "A"
+    elemT051.xml:2:27: List-AB is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT052
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66446,7 +66445,7 @@ Grp: MS-Element2006-07-15 / elemT073
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK elemT073
   XP elemT073.v
-    elemT073.xml:2:21: Restrictions of type "base-A" are forbidden
+    elemT073.xml:2:21: A is not a valid replacement for Union-AB
 
 Grp: MS-Element2006-07-15 / elemT074
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -93668,7 +93667,7 @@ Grp: MS-SimpleType2006-07-15 / stZ056
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stZ056
   OK stZ056.i
-    test107331_10.xml:18:29: Type is not a valid replacement for "anySimpleType"
+    test107331_10.xml:18:29: xs:anyType is not a valid replacement for anySimpleType
 
 Grp: MS-SimpleType2006-07-15 / stZ057
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95263,7 +95262,7 @@ Total number of tests: 37038 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 209 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 92
 SF: XSD OK, should be KO: in_full_fail= 643
-XP: XML KO, should be OK: in_partial= 19 in_full_fail= 1
+XP: XML KO, should be OK: in_partial= 18 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 758 ( 2.0 %)
+Total errors: 757 ( 2.0 %)

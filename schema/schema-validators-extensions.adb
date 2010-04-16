@@ -70,10 +70,11 @@ package body Schema.Validators.Extensions is
       Dependency2 : out XML_Validator;
       Must_Match_All_Any_In_Dep2 : out Boolean);
    procedure Check_Replacement
-     (Validator         : access Extension_XML_Validator;
-      Typ               : XML_Type;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean);
+     (Validator       : access Extension_XML_Validator;
+      Typ             : XML_Type;
+      Valid           : out Boolean;
+      Had_Restriction : in out Boolean;
+      Had_Extension   : in out Boolean);
    procedure Check_Content_Type
      (Validator        : access Extension_XML_Validator;
       Should_Be_Simple : Boolean);
@@ -311,33 +312,41 @@ package body Schema.Validators.Extensions is
    -----------------------
 
    procedure Check_Replacement
-     (Validator         : access Extension_XML_Validator;
-      Typ               : XML_Type;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean) is
+     (Validator       : access Extension_XML_Validator;
+      Typ             : XML_Type;
+      Valid           : out Boolean;
+      Had_Restriction : in out Boolean;
+      Had_Extension   : in out Boolean)
+   is
+      B : constant XML_Validator := Get_Validator (Typ);
    begin
+      --  From 3.4.6.5 "Type Derivation OK (Complex)".
+      --  D is "Validator", B is "Typ" (not necessarily the base type of D).
+      --  All of the following must be true.
+      --  1. If B /= D, then the {derivation method} of D is not in the subset
+      --  2 One or more of the following is true:
+      --  2.1 B = D
+      --  2.2 B = D.base
+      --  2.3 All of the following are true:
+      --  2.3.1 D.{base type definition} /= xs:anyType
+      --  2.3.2 D.Base is validly derived from B
+
+      Valid := (XML_Validator (Validator) = B    --  1
+                or else not Typ.Blocks (Block_Extension));
+      if Valid then
+         Valid := XML_Validator (Validator) = B        --  2.1
+           or else Get_Validator (Validator.Base) = B; --  2.2
+
+         if not Valid
+           and then not Is_Wildcard (Get_Validator (Validator.Base)) --  2.3.1
+         then
+            Check_Replacement                       --  2.3.2
+              (Get_Validator (Validator.Base),
+               Typ, Valid, Had_Restriction, Had_Extension);
+         end if;
+      end if;
+
       Had_Extension := True;
-
-      if Validator.Base.Blocks (Block_Restriction)
-        and then Had_Restriction
-      then
-         Validation_Error
-           ("Restrictions of type """
-            & Get_Local_Name (Validator.Base) & """ are forbidden");
-      end if;
-
-      if Validator.Base.Blocks (Block_Extension) then
-         Validation_Error
-           ("Extensions of type """
-            & Get_Local_Name (Validator.Base) & """ are forbidden");
-      end if;
-
-      if Validator.Base /= Typ then
-         Check_Replacement
-           (Get_Validator (Validator.Base), Typ,
-            Had_Restriction => Had_Restriction,
-            Had_Extension   => Had_Extension);
-      end if;
    end Check_Replacement;
 
    ------------------------
@@ -388,7 +397,7 @@ package body Schema.Validators.Extensions is
    begin
       if Get_Final_On_Extension (Base) then
          Validation_Error
-           ("Type """ & Get_Local_Name (Base) & """ forbids extensions");
+           ("Type """ & To_QName (Base) & """ forbids extensions");
       end if;
 
       Register (G, Result);

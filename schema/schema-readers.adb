@@ -571,6 +571,7 @@ package body Schema.Readers is
       function Compute_Type_From_Attribute return XML_Type is
          G : XML_Grammar_NS;
          Had_Restriction, Had_Extension : Boolean := False;
+         Valid : Boolean;
          Typ : XML_Type := No_Type;
       begin
          if Type_Index /= -1 then
@@ -596,37 +597,45 @@ package body Schema.Readers is
                        Get_URI (NS), G);
                Typ := Lookup (G, Qname (Separator + 1 .. Qname'Last),
                               Create_If_Needed => False);
+
+               if Typ = No_Type then
+                  Validation_Error
+                    ("Unknown type """ & Get_Value (Atts, Type_Index) & '"');
+               end if;
+
+               if Element /= No_Element
+                 and then Get_Validator (Typ) /=
+                 Get_Validator (Get_Type (Element))
+               then
+                  Check_Replacement
+                    (Get_Validator (Typ), Get_Type (Element),
+                     Valid           => Valid,
+                     Had_Restriction => Had_Restriction,
+                     Had_Extension   => Had_Extension);
+
+                  if not Valid then
+                     Validation_Error
+                       (QName & " is not a valid replacement for "
+                        & To_QName (Get_Type (Element)));
+                  end if;
+
+                  if Had_Restriction
+                    and then Get_Block (Element)(Block_Restriction)
+                  then
+                     Validation_Error
+                       ("Element """ & To_QName (Element)
+                        & """ blocks the use of restrictions of the type");
+                  end if;
+
+                  if Had_Extension
+                    and then Get_Block (Element)(Block_Extension)
+                  then
+                     Validation_Error
+                       ("Element """ & To_QName (Element)
+                        & """ blocks the use of extensions of the type");
+                  end if;
+               end if;
             end;
-
-            if Typ = No_Type then
-               Validation_Error
-                 ("Unknown type """ & Get_Value (Atts, Type_Index) & '"');
-            end if;
-
-            if Element /= No_Element
-             and then Get_Validator (Typ) /= Get_Validator (Get_Type (Element))
-            then
-               Check_Replacement
-                 (Get_Validator (Typ), Get_Type (Element),
-                  Had_Restriction => Had_Restriction,
-                  Had_Extension   => Had_Extension);
-
-               if Had_Restriction
-                 and then Get_Block (Element)(Block_Restriction)
-               then
-                  Validation_Error
-                    ("Element """ & To_QName (Element)
-                       & """ blocks the use of restrictions of the type");
-               end if;
-
-               if Had_Extension
-                 and then Get_Block (Element)(Block_Extension)
-               then
-                  Validation_Error
-                    ("Element """ & To_QName (Element)
-                       & """ blocks the use of extensions of the type");
-               end if;
-            end if;
          end if;
          return Typ;
       end Compute_Type_From_Attribute;
