@@ -236,7 +236,9 @@ package body Schema.Validators is
       Dependency1 := null;
       Ignore_Wildcard_In_Dep1 := False;
       Dependency2 := null;
-      Must_Match_All_Any_In_Dep2 := False;
+
+      --  All <anyAttribute> in a <complexType> must match. See 3.6.2.2
+      Must_Match_All_Any_In_Dep2 := True;
    end Get_Attribute_Lists;
 
    ----------------------

@@ -95185,9 +95185,10 @@ Grp: MS-Wildcards2006-07-15 / wildZ010
   NA wildZ010.v
 
 Grp: MS-Wildcards2006-07-15 / wildZ011
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK wildZ011
-  XF wildZ011.i
+  OK wildZ011.i
+    wildZ011.xml:1:55: Attribute "x:blah" invalid for this element
 
 Grp: MS-Wildcards2006-07-15 / wildZ013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95265,6 +95266,6 @@ NI: Features not implemented: in_partial= 209 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 92
 SF: XSD OK, should be KO: in_full_fail= 643
 XP: XML KO, should be OK: in_partial= 21 in_full_fail= 1
-XF: XML OK, should be KO: in_partial= 2 in_full_fail= 2
+XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 761 ( 2.1 %)
+Total errors: 760 ( 2.1 %)
