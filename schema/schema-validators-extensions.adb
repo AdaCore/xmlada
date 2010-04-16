@@ -60,6 +60,7 @@ package body Schema.Validators.Extensions is
      (Validator     : access Extension_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
+      Mask          : in out Facets_Mask;
       Context       : in out Validation_Context);
    procedure Get_Attribute_Lists
      (Validator   : access Extension_XML_Validator;
@@ -260,37 +261,49 @@ package body Schema.Validators.Extensions is
      (Validator     : access Extension_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
+      Mask          : in out Facets_Mask;
       Context       : in out Validation_Context) is
    begin
+      if Debug then
+         Debug_Push_Prefix
+           ("Validate_Characters (ext) " & Get_Name (Validator));
+      end if;
+
       if Validator.Extension /= null then
+         Validate_Characters
+           (Validator.Extension, Ch, Empty_Element, Mask, Context);
+      else
          if Debug then
-            Debug_Output ("Validate_Characters for extension "
+            Debug_Output ("Validate_Characters (ext), testing base "
                           & Get_Name (Validator));
          end if;
 
-         Validate_Characters (Validator.Extension, Ch, Empty_Element, Context);
-      else
-         if Debug then
-            Debug_Output ("Validate_Characters for extension "
-                          & Get_Name (Validator) & ", testing base");
-         end if;
-
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element, Context);
+           (Get_Validator (Validator.Base), Ch, Empty_Element, Mask, Context);
       end if;
+
+      Debug_Pop_Prefix;
 
    exception
       when XML_Validation_Error =>
          --  If null, we have already tested
          if Validator.Extension /= null then
             if Debug then
-               Debug_Output ("Validation error in extension, testing base");
+               Debug_Output ("Validation error (ext), testing base");
             end if;
             Validate_Characters
-              (Get_Validator (Validator.Base), Ch, Empty_Element, Context);
+              (Get_Validator (Validator.Base),
+               Ch, Empty_Element, Mask, Context);
+            Debug_Pop_Prefix;
+
          else
+            Debug_Pop_Prefix;
             raise;
          end if;
+
+      when others =>
+         Debug_Pop_Prefix;
+         raise;
    end Validate_Characters;
 
    -----------------------

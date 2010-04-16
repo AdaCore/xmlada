@@ -60,6 +60,7 @@ package body Schema.Validators.Restrictions is
      (Validator     : access Restriction_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
+      Mask          : in out Facets_Mask;
       Context       : in out Validation_Context);
    procedure Get_Attribute_Lists
      (Validator   : access Restriction_XML_Validator;
@@ -273,25 +274,36 @@ package body Schema.Validators.Restrictions is
      (Validator     : access Restriction_XML_Validator;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Context       : in out Validation_Context) is
+      Mask          : in out Facets_Mask;
+      Context       : in out Validation_Context)
+   is
+      Orig_Mask : constant Facets_Mask := Mask;
+      Mask2     : Facets_Mask;
    begin
       if Debug then
-         Debug_Output
-           ("Validate_Characters for restriction " & Get_Name (Validator)
-            & " --" & Ch & "--");
+         Debug_Push_Prefix ("Validate_Chars (restr) " & Get_Name (Validator));
       end if;
 
       if Validator.Facets /= null then
-         Check_Facet (Validator.Facets.all, Ch);
+         Check_Facet (Validator.Facets.all, Ch, Mask);
       end if;
 
       if Validator.Restriction /= null then
          Validate_Characters
-           (Validator.Restriction, Ch, Empty_Element, Context);
+           (Validator.Restriction, Ch, Empty_Element, Mask, Context);
       else
+         --  We need to match the restrictions of the parent too
+         Mask2 := Orig_Mask;
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element, Context);
+           (Get_Validator (Validator.Base), Ch, Empty_Element, Mask2, Context);
+         Mask := Mask or Mask2;
       end if;
+
+      Debug_Pop_Prefix;
+   exception
+      when XML_Validation_Error =>
+         Debug_Pop_Prefix;
+         raise;
    end Validate_Characters;
 
    ----------

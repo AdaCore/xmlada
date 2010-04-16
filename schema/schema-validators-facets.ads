@@ -70,24 +70,6 @@ package Schema.Validators.Facets is
    --------------------
    --  These are the facets that are shared by most base types.
 
-   type Facets_Names is (Facet_Whitespace,
-                         Facet_Pattern,
-                         Facet_Enumeration,
-                         Facet_Implicit_Enumeration,
-                         Facet_Length,
-                         Facet_Min_Length,
-                         Facet_Max_Length,
-                         Facet_Total_Digits,
-                         Facet_Fraction_Digits,
-                         Facet_Max_Inclusive,
-                         Facet_Min_Inclusive,
-                         Facet_Max_Exclusive,
-                         Facet_Min_Exclusive);
-   type Facets_Mask is array (Facets_Names) of Boolean;
-   pragma Pack (Facets_Mask);
-   --  The list of all possible facets. Not all facets_description will support
-   --  these, however.
-
    type Common_Facets_Description is new Facets_Description_Record with record
       Settable             : Facets_Mask               := (others => True);
       Mask                 : Facets_Mask               := (others => False);
@@ -105,7 +87,8 @@ package Schema.Validators.Facets is
    procedure Free (Facets : in out Common_Facets_Description);
    procedure Check_Facet
      (Facets : in out Common_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence);
+      Value  : Unicode.CES.Byte_Sequence;
+      Mask   : in out Facets_Mask);
    procedure Copy
      (From : Common_Facets_Description;
       To   : in out Facets_Description_Record'Class);

@@ -136,6 +136,24 @@ package Schema.Validators is
    type Facets_Description_Record is abstract tagged null record;
    type Facets_Description is access all Facets_Description_Record'Class;
 
+   type Facets_Names is (Facet_Whitespace,
+                         Facet_Pattern,
+                         Facet_Enumeration,
+                         Facet_Implicit_Enumeration,
+                         Facet_Length,
+                         Facet_Min_Length,
+                         Facet_Max_Length,
+                         Facet_Total_Digits,
+                         Facet_Fraction_Digits,
+                         Facet_Max_Inclusive,
+                         Facet_Min_Inclusive,
+                         Facet_Max_Exclusive,
+                         Facet_Min_Exclusive);
+   type Facets_Mask is array (Facets_Names) of Boolean;
+   pragma Pack (Facets_Mask);
+   --  The list of all possible facets. Not all facets_description will support
+   --  these, however.
+
    procedure Add_Facet
      (Facets      : in out Facets_Description_Record;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -146,8 +164,11 @@ package Schema.Validators is
 
    procedure Check_Facet
      (Facets : in out Facets_Description_Record;
-      Value  : Unicode.CES.Byte_Sequence) is abstract;
+      Value  : Unicode.CES.Byte_Sequence;
+      Mask   : in out Facets_Mask) is abstract;
    --  Check whether Value matches Facets. Raises XML_Validator_Error otherwise
+   --  Mask indicates which facets should be check (when set to True). On exit,
+   --  the facets that have been checked have been set to False
 
    procedure Copy
      (From : Facets_Description_Record;
@@ -239,7 +260,9 @@ package Schema.Validators is
    procedure Set_Final
      (Typ            : XML_Type;
       On_Restriction : Boolean;
-      On_Extension   : Boolean);
+      On_Extension   : Boolean;
+      On_Unions      : Boolean;
+      On_Lists       : Boolean);
    function Get_Final_On_Restriction (Typ : XML_Type) return Boolean;
    function Get_Final_On_Extension   (Typ : XML_Type) return Boolean;
    --  Set the final status of the element
@@ -445,10 +468,11 @@ package Schema.Validators is
    --  Raise XML_Validation_Error in case of error
 
    procedure Validate_Characters
-     (Validator      : access XML_Validator_Record;
-      Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean;
-      Context        : in out Validation_Context);
+     (Validator     : access XML_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean;
+      Mask          : in out Facets_Mask;
+      Context       : in out Validation_Context);
    --  Check whether this Characters event is valid in the context of
    --  Validator. Multiple calls to the SAX event Characters are grouped before
    --  calling this subprogram.
@@ -608,7 +632,9 @@ package Schema.Validators is
    procedure Set_Final
      (Element : XML_Element;
       On_Restriction : Boolean;
-      On_Extension   : Boolean);
+      On_Extension   : Boolean;
+      On_Unions      : Boolean;
+      On_Lists       : Boolean);
    --  Set the final status of the element
 
    procedure Set_Block
@@ -864,7 +890,9 @@ package Schema.Validators is
    procedure Compute_Final
      (Value         : Unicode.CES.Byte_Sequence;
       Restrictions  : out Boolean;
-      Extensions    : out Boolean);
+      Extensions    : out Boolean;
+      Unions        : out Boolean;
+      Lists         : out Boolean);
    --  Compute the list of final attributes from value. Value is a list similar
    --  to what is used for the "final" attribute of elements in a schema
 

@@ -146,6 +146,8 @@ private
             Block_Extension   : Boolean;
             Final_Restriction : Boolean;
             Final_Extension   : Boolean;
+            Final_Unions      : Boolean;
+            Final_Lists       : Boolean;
 
          when Context_Element =>
             Element : Schema.Validators.XML_Element;

@@ -1163,14 +1163,13 @@ package body Schema.Validators is
      (Validator      : access XML_Validator_Record;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
+      Mask           : in out Facets_Mask;
       Context        : in out Validation_Context)
    is
-      pragma Unreferenced (Context);
+      pragma Unreferenced (Context, Ch, Empty_Element, Mask);
    begin
       if Debug then
-         Debug_Output
-           ("Validate_Character for unknown " & Get_Name (Validator)
-            & " --" & Ch & "--empty=" & Boolean'Image (Empty_Element));
+         Debug_Output ("Validate_Chars (unknown) " & Get_Name (Validator));
       end if;
    end Validate_Characters;
 
@@ -1320,8 +1319,9 @@ package body Schema.Validators is
       Index     : Natural;
       Context   : in out Validation_Context)
    is
-      Val : constant Byte_Sequence := Get_Value (Atts, Index);
+      Val   : constant Byte_Sequence := Get_Value (Atts, Index);
       Fixed : Byte_Sequence_Access;
+      Mask  : Facets_Mask := (others => True);
    begin
       if Debug then
          Debug_Output ("Checking attribute "
@@ -1332,7 +1332,7 @@ package body Schema.Validators is
       if Get_Type (Validator) /= No_Type then
          Validate_Characters
            (Get_Validator (Get_Type (Validator)), Val,
-            Empty_Element => False, Context => Context);
+            Empty_Element => False, Mask => Mask, Context => Context);
 
          if Is_ID (Get_Type (Validator)) then
             Set_Type (Atts, Index, Sax.Attributes.Id);
@@ -1607,7 +1607,9 @@ package body Schema.Validators is
    procedure Set_Type
      (Element      : XML_Element;
       Element_Type : XML_Type;
-      Context      : in out Validation_Context) is
+      Context      : in out Validation_Context)
+   is
+      Mask : Facets_Mask;
    begin
       if Element /= No_Element then
          if Element.Is_Ref then
@@ -1622,9 +1624,10 @@ package body Schema.Validators is
          --  for that element
 
          if Element.Elem.Default /= null then
+            Mask := (others => True);
             Validate_Characters
               (Get_Validator (Element_Type), Element.Elem.Default.all,
-               Empty_Element => False, Context => Context);
+               Empty_Element => False, Mask => Mask, Context => Context);
          end if;
 
          --  3.3 Element Declaration details:  Validation Rule 3.1
@@ -1632,9 +1635,10 @@ package body Schema.Validators is
          --  for that element
 
          if Element.Elem.Fixed /= null then
+            Mask := (others => True);
             Validate_Characters
               (Get_Validator (Element_Type), Element.Elem.Fixed.all,
-               Empty_Element => False, Context => Context);
+               Empty_Element => False, Mask => Mask, Context => Context);
          end if;
       end if;
    end Set_Type;
@@ -2427,7 +2431,9 @@ package body Schema.Validators is
    procedure Set_Default
      (Element  : XML_Element;
       Default  : Unicode.CES.Byte_Sequence;
-      Context  : in out Validation_Context) is
+      Context  : in out Validation_Context)
+   is
+      Mask : Facets_Mask;
    begin
       --  3.3 Element Declaration details: Can't have both
       --  "default" and "fixed"
@@ -2446,8 +2452,10 @@ package body Schema.Validators is
       if Element.Elem.Of_Type /= No_Type
         and then Get_Validator (Element.Elem.Of_Type) /= null
       then
-         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Default,
-                              Empty_Element => False, Context => Context);
+         Mask := (others => True);
+         Validate_Characters
+           (Get_Validator (Element.Elem.Of_Type), Default,
+            Empty_Element => False, Mask => Mask, Context => Context);
       end if;
 
       Free (Element.Elem.Default);
@@ -2480,7 +2488,9 @@ package body Schema.Validators is
    procedure Set_Fixed
      (Element  : XML_Element;
       Fixed    : Unicode.CES.Byte_Sequence;
-      Context  : in out Validation_Context) is
+      Context  : in out Validation_Context)
+   is
+      Mask : Facets_Mask;
    begin
       --  3.3 Element Declaration details: Can't have both
       --  "default" and "fixed"
@@ -2499,8 +2509,10 @@ package body Schema.Validators is
       if Element.Elem.Of_Type /= No_Type
         and then Get_Validator (Element.Elem.Of_Type) /= null
       then
-         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Fixed,
-                              Empty_Element => False, Context => Context);
+         Mask := (others => True);
+         Validate_Characters
+           (Get_Validator (Element.Elem.Of_Type), Fixed,
+            Empty_Element => False, Mask => Mask, Context => Context);
       end if;
 
       Free (Element.Elem.Fixed);
@@ -4802,7 +4814,11 @@ package body Schema.Validators is
    procedure Set_Final
      (Element : XML_Element;
       On_Restriction : Boolean;
-      On_Extension   : Boolean) is
+      On_Extension   : Boolean;
+      On_Unions      : Boolean;
+      On_Lists       : Boolean)
+   is
+      pragma Unreferenced (On_Unions, On_Lists);
    begin
       Element.Elem.Final_Restriction := On_Restriction;
       Element.Elem.Final_Extension   := On_Extension;
@@ -4815,8 +4831,11 @@ package body Schema.Validators is
    procedure Set_Final
      (Typ            : XML_Type;
       On_Restriction : Boolean;
-      On_Extension   : Boolean)
+      On_Extension   : Boolean;
+      On_Unions      : Boolean;
+      On_Lists       : Boolean)
    is
+      pragma Unreferenced (On_Unions, On_Lists);
    begin
       Typ.Final_Restriction := On_Restriction;
       Typ.Final_Extension   := On_Extension;
@@ -5550,7 +5569,9 @@ package body Schema.Validators is
    procedure Compute_Final
      (Value         : Unicode.CES.Byte_Sequence;
       Restrictions  : out Boolean;
-      Extensions    : out Boolean)
+      Extensions    : out Boolean;
+      Unions        : out Boolean;
+      Lists         : out Boolean)
    is
       procedure On_Item (Str : Byte_Sequence);
       procedure On_Item (Str : Byte_Sequence) is
@@ -5562,6 +5583,12 @@ package body Schema.Validators is
          elsif Str = "#all" then
             Restrictions := True;
             Extensions := True;
+            Unions     := True;
+            Lists      := True;
+         elsif Str = "union" then
+            Unions := True;
+         elsif Str = "list" then
+            Lists := True;
          else
             Validation_Error
               ("Invalid value for final: """ & Str & """");
@@ -5573,6 +5600,8 @@ package body Schema.Validators is
    begin
       Restrictions := False;
       Extensions   := False;
+      Unions       := False;
+      Lists        := False;
       For_Each (Value);
    end Compute_Final;
 

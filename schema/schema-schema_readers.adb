@@ -818,35 +818,49 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
       Namespace_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "namespace");
+      NS : XML_Grammar_NS;
    begin
-      if Location_Index = -1 or else Namespace_Index = -1 then
-         Validation_Error
-           ("schemaLocation and namespace attributes mandatory for <import>");
+      if Location_Index = -1 then
+         if Namespace_Index = -1 then
+            Validation_Error ("Missing ""namespace"" attribute");
+         end if;
+
+         declare
+            N : constant Byte_Sequence := Get_Value (Atts, Namespace_Index);
+         begin
+            Get_NS
+              (Handler.Created_Grammar, N,
+               Result => NS, Create_If_Needed => False);
+            if NS = null then
+               Validation_Error ("Cannot resolve namespace " & N);
+            end if;
+         end;
+      else
+         declare
+            Location : constant Byte_Sequence :=
+              Get_Value (Atts, Location_Index);
+            Absolute : constant Byte_Sequence := To_Absolute_URI
+              (Handler.all, Location);
+         begin
+            if Debug then
+               Put_Line ("Import: " & Absolute);
+               Put_Line ("Adding new grammar to Handler.Created_Grammar");
+            end if;
+
+            if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
+               --  The namespace attribute indicates that the XSD may contain
+               --  qualified references to schema components in that namespace.
+               --  (4.2.6.1). It does not give the default targetNamespace
+               Parse_Grammar
+                 (Handler.all,
+                  URI      => "",
+                  Xsd_File => Location,
+                  Add_To   => Handler.Created_Grammar);
+            elsif Debug then
+               Put_Line ("Already imported");
+            end if;
+         end;
       end if;
-
-      declare
-         Location : constant Byte_Sequence := Get_Value (Atts, Location_Index);
-         Absolute : constant Byte_Sequence := To_Absolute_URI
-           (Handler.all, Location);
-      begin
-         if Debug then
-            Put_Line ("Import: " & Absolute);
-            Put_Line ("Adding new grammar to Handler.Created_Grammar");
-         end if;
-
-         if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
-            --  The namespace attribute indicates that the XSD may contain
-            --  qualified references to schema components in that namespace.
-            --  (4.2.6.1). It does not give the default targetNamespace
-            Parse_Grammar
-              (Handler.all,
-               URI      => "",
-               Xsd_File => Location,
-               Add_To   => Handler.Created_Grammar);
-         elsif Debug then
-            Put_Line ("Already imported");
-         end if;
-      end;
    end Create_Import;
 
    --------------------------
@@ -1069,19 +1083,23 @@ package body Schema.Schema_Readers is
 
       if Final_Index /= -1 then
          declare
-            On_Restriction, On_Extension : Boolean := False;
+            Restrictions, Extensions, Unions, Lists : Boolean := False;
          begin
             Compute_Final
               (Get_Value (Atts, Final_Index),
-               Restrictions => On_Restriction,
-               Extensions   => On_Extension);
+               Restrictions => Restrictions,
+               Extensions   => Extensions,
+               Unions       => Unions,
+               Lists        => Lists);
             Set_Final (Element,
-                       On_Restriction => On_Restriction,
-                       On_Extension   => On_Extension);
+                       On_Restriction => Restrictions,
+                       On_Extension   => Extensions,
+                       On_Unions      => Unions,
+                       On_Lists       => Lists);
             Output ("Set_Final ("
                     & Ada_Name (Element) & ", "
-                    & Boolean'Image (On_Restriction) & ", "
-                    & Boolean'Image (On_Extension) & ");");
+                    & Boolean'Image (Restrictions) & ", "
+                    & Boolean'Image (Extensions) & ");");
          end;
       end if;
 
@@ -1223,6 +1241,8 @@ package body Schema.Schema_Readers is
             Block_Extension   => False,
             Final_Restriction => False,
             Final_Extension   => False,
+            Final_Unions      => False,
+            Final_Lists       => False,
             Level             => Handler.Contexts.Level + 1,
             Next              => Handler.Contexts);
 
@@ -1249,7 +1269,9 @@ package body Schema.Schema_Readers is
 
          Set_Final (Typ,
                     On_Restriction => Handler.Contexts.Final_Restriction,
-                    On_Extension   => Handler.Contexts.Final_Extension);
+                    On_Extension   => Handler.Contexts.Final_Extension,
+                    On_Unions      => Handler.Contexts.Final_Unions,
+                    On_Lists       => Handler.Contexts.Final_Lists);
          Output ("Set_Final ("
                  & Ada_Name (Typ) & ", "
                  & Boolean'Image (Handler.Contexts.Final_Restriction) & ", "
@@ -1311,6 +1333,8 @@ package body Schema.Schema_Readers is
          Block_Extension   => False,
          Final_Restriction => False,
          Final_Extension   => False,
+         Final_Unions      => False,
+         Final_Lists       => False,
          Level             => Handler.Contexts.Level + 1,
          Next              => Handler.Contexts);
 
@@ -1326,7 +1350,9 @@ package body Schema.Schema_Readers is
          Compute_Final
            (Get_Value (Atts, Final_Index),
             Restrictions  => Handler.Contexts.Final_Restriction,
-            Extensions    => Handler.Contexts.Final_Extension);
+            Extensions    => Handler.Contexts.Final_Extension,
+            Unions        => Handler.Contexts.Final_Unions,
+            Lists         => Handler.Contexts.Final_Lists);
       end if;
 
       --  Do not use In_Redefine_Context, since this only applies for types
@@ -1404,7 +1430,9 @@ package body Schema.Schema_Readers is
 
       Set_Final (Typ,
                  On_Restriction => Handler.Contexts.Final_Restriction,
-                 On_Extension   => Handler.Contexts.Final_Extension);
+                 On_Extension   => Handler.Contexts.Final_Extension,
+                 On_Unions      => Handler.Contexts.Final_Unions,
+                 On_Lists       => Handler.Contexts.Final_Lists);
       Output ("Set_Final ("
               & Ada_Name (Typ) & ", "
               & Boolean'Image (Handler.Contexts.Final_Restriction) & ", "

@@ -399,6 +399,7 @@ package body Schema.Readers is
       Typ, Typ_For_Mixed : XML_Type;
       Val, Val2          : Byte_Sequence_Access;
       Is_Empty           : Boolean;
+      Mask               : Facets_Mask;
    begin
       --  If we were in the middle of a series of Characters callback, we need
       --  to process them now
@@ -436,10 +437,16 @@ package body Schema.Readers is
                   --  it too
 
                   if Handler.Validators.Typ /= No_Type then
+                     if Debug then
+                        Put_Line ("characters: " & Get_Fixed (Handler).all);
+                     end if;
+
+                     Mask := (others => True);
                      Validate_Characters
                        (Get_Validator (Handler.Validators.Typ),
                         Get_Fixed (Handler).all,
                         Empty_Element => False,
+                        Mask          => Mask,
                         Context       => Validating_Reader (Handler).Context);
                   end if;
 
@@ -487,10 +494,16 @@ package body Schema.Readers is
                   --  validate with this type (which might be more restrictive
                   --  than the parent type)
 
+                  if Debug then
+                     Put_Line ("characters: " & Val2.all);
+                  end if;
+
+                  Mask := (others => True);
                   Validate_Characters
                     (Get_Validator (Typ),
                      Val2.all,
                      Empty_Element => Is_Empty,
+                     Mask          => Mask,
                      Context       => Validating_Reader (Handler).Context);
                end if;
 
@@ -500,11 +513,18 @@ package body Schema.Readers is
                --  type from XSD
 
                if Handler.Validators.Element /= No_Element then
+                  if Debug then
+                     Put_Line ("characters: " & Val2.all);
+                  end if;
+
                   Typ := Get_Type (Handler.Validators.Element);
+
+                  Mask := (others => True);
                   Validate_Characters
                     (Get_Validator (Typ),
                      Val2.all,
                      Empty_Element => Is_Empty,
+                     Mask          => Mask,
                      Context       => Validating_Reader (Handler).Context);
                end if;
             end if;

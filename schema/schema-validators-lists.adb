@@ -45,7 +45,8 @@ package body Schema.Validators.Lists is
       Applied     : out Boolean);
    procedure Check_Facet
      (Facets : in out List_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence);
+      Value  : Unicode.CES.Byte_Sequence;
+      Mask   : in out Facets_Mask);
 
    type List_Validator_Record is new Any_Simple_XML_Validator_Record with
       record
@@ -56,6 +57,7 @@ package body Schema.Validators.Lists is
      (Validator     : access List_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
+      Mask          : in out Facets_Mask;
       Context       : in out Validation_Context);
    function Get_Facets
      (Validator : access List_Validator_Record) return Facets_Description;
@@ -139,7 +141,8 @@ package body Schema.Validators.Lists is
 
    procedure Check_Facet
      (Facets : in out List_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence)
+      Value  : Unicode.CES.Byte_Sequence;
+      Mask   : in out Facets_Mask)
    is
       Length : Natural := 0;
 
@@ -153,7 +156,7 @@ package body Schema.Validators.Lists is
       procedure For_Each is new For_Each_Item (Callback);
 
    begin
-      Check_Facet (Common_Facets_Description (Facets), Value);
+      Check_Facet (Common_Facets_Description (Facets), Value, Mask);
 
       if Facets.Mask (Facet_Length)
         or else Facets.Mask (Facet_Min_Length)
@@ -161,27 +164,31 @@ package body Schema.Validators.Lists is
       then
          For_Each (Value);
 
-         if Facets.Mask (Facet_Length)
-           and then Length /= Facets.Length
-         then
-            Validation_Error ("Invalid number of elements in list, expecting"
-                              & Integer'Image (Facets.Length));
+         if Facets.Mask (Facet_Length) and Mask (Facet_Length) then
+            Mask (Facet_Length) := False;
+            if Length /= Facets.Length then
+               Validation_Error
+                 ("Invalid number of elements in list, expecting"
+                  & Integer'Image (Facets.Length));
+            end if;
          end if;
 
-         if Facets.Mask (Facet_Min_Length)
-           and then Length < Facets.Min_Length
-         then
-            Validation_Error
-              ("Invalid number of elements in list, expecting at least"
-               & Integer'Image (Facets.Min_Length));
+         if Facets.Mask (Facet_Min_Length) and Mask (Facet_Min_Length) then
+            Mask (Facet_Min_Length) := False;
+            if Length < Facets.Min_Length then
+               Validation_Error
+                 ("Invalid number of elements in list, expecting at least"
+                  & Integer'Image (Facets.Min_Length));
+            end if;
          end if;
 
-         if Facets.Mask (Facet_Max_Length)
-           and then Length > Facets.Max_Length
-         then
-            Validation_Error
-              ("Invalid number of elements in list, expecting at most"
-               & Integer'Image (Facets.Max_Length));
+         if Facets.Mask (Facet_Max_Length) and Mask (Facet_Max_Length) then
+            Mask (Facet_Max_Length) := False;
+            if Length > Facets.Max_Length then
+               Validation_Error
+                 ("Invalid number of elements in list, expecting at most"
+                  & Integer'Image (Facets.Max_Length));
+            end if;
          end if;
       end if;
    end Check_Facet;
@@ -223,28 +230,25 @@ package body Schema.Validators.Lists is
      (Validator     : access List_Validator_Record;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
+      Mask          : in out Facets_Mask;
       Context       : in out Validation_Context)
    is
       procedure Callback (Value : Unicode.CES.Byte_Sequence);
       procedure Callback (Value : Unicode.CES.Byte_Sequence) is
+         M : Facets_Mask := (others => True);
       begin
-         if Debug then
-            Debug_Output ("  In list: " & Value);
-         end if;
          Validate_Characters
-           (Get_Validator (Validator.Base), Value, Empty_Element, Context);
+           (Get_Validator (Validator.Base), Value, Empty_Element, M, Context);
       end Callback;
 
       procedure For_Each is new For_Each_Item (Callback);
 
    begin
       if Debug then
-         Debug_Output ("Validate_Characters for list --" & Ch & "--"
-                       & Get_Name (Validator));
+         Debug_Output ("Validate_Chars (list) " & Get_Name (Validator));
       end if;
 
-      Check_Facet (Get_Facets (Validator).all, Ch);
-
+      Check_Facet (Get_Facets (Validator).all, Ch, Mask);
       For_Each (Ch);
    end Validate_Characters;
 

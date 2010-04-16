@@ -292,14 +292,17 @@ package body Schema.Validators.Facets is
 
    procedure Check_Facet
      (Facets : in out Common_Facets_Description;
-      Value  : Unicode.CES.Byte_Sequence)
+      Value  : Unicode.CES.Byte_Sequence;
+      Mask   : in out Facets_Mask)
    is
-      Found : Boolean;
+      Found   : Boolean;
       Matched : Match_Array (0 .. 0);
-      Index : Integer;
-      Char  : Unicode_Char;
+      Index   : Integer;
+      Char    : Unicode_Char;
    begin
-      if Facets.Mask (Facet_Pattern) then
+      if Facets.Mask (Facet_Pattern) and Mask (Facet_Pattern) then
+         Mask (Facet_Pattern) := False;
+
          --  Check whether we have unicode char outside of ASCII
 
          Index := Value'First;
@@ -321,7 +324,8 @@ package body Schema.Validators.Facets is
          end if;
       end if;
 
-      if Facets.Mask (Facet_Enumeration) then
+      if Facets.Mask (Facet_Enumeration) and Mask (Facet_Enumeration) then
+         Mask (Facet_Enumeration) := False;
          Found := False;
          for E in Facets.Enumeration'Range loop
             if Value = Facets.Enumeration (E).all then
@@ -334,13 +338,18 @@ package body Schema.Validators.Facets is
          end if;
       end if;
 
-      if Facets.Mask (Facet_Implicit_Enumeration) then
+      if Facets.Mask (Facet_Implicit_Enumeration)
+        and Mask (Facet_Implicit_Enumeration)
+      then
+         Mask (Facet_Implicit_Enumeration) := False;
          if not Facets.Implicit_Enumeration (Value) then
             Validation_Error ("Invalid value: """ & Value & """");
          end if;
       end if;
 
-      if Facets.Mask (Facet_Whitespace) then
+      if Facets.Mask (Facet_Whitespace) and Mask (Facet_Whitespace) then
+         Mask (Facet_Whitespace) := False;
+
          case Facets.Whitespace is
             when Preserve =>
                null; --  Always valid
