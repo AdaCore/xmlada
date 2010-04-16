@@ -88,6 +88,7 @@ KP-32-J302-043 Lots of fixes in schema validation
                 <anyAttribute> if there is one in the same element
               - Two attributes with different namespaces: the second one was
                 never validated
+              - All elements are nillable by default
 
   Status:     Fixed in 3.3.0
 
