@@ -1175,6 +1175,19 @@ package body Schema.Validators is
       end if;
    end Validate_Characters;
 
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Validator : access XML_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return Value1 = Value2;
+   end Equal;
+
    -------------
    -- List_Of --
    -------------
@@ -1311,6 +1324,31 @@ package body Schema.Validators is
       return Result (1 .. Index - 1);
    end To_Graphic_String;
 
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Validator : Named_Attribute_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      if Validator.Attribute_Type = No_Type then
+         return Value1 = Value2;
+      else
+         return Equal
+           (Get_Validator (Validator.Attribute_Type), Value1, Value2);
+      end if;
+   end Equal;
+
+   function Equal
+     (Validator : Any_Attribute_Validator;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      pragma Unreferenced (Validator);
+   begin
+      return Value1 = Value2;
+   end Equal;
+
    ------------------------
    -- Validate_Attribute --
    ------------------------
@@ -1357,7 +1395,7 @@ package body Schema.Validators is
       --  it is an integer, the whitespaces are irrelevant; likewise for a list
 
       if Fixed /= null
-        and then Fixed.all /= Val
+        and then not Equal (Validator, Fixed.all, Val)
       then
          Validation_Error
            ("value must be """

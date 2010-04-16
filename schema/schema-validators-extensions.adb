@@ -85,6 +85,9 @@ package body Schema.Validators.Extensions is
      (Validator : access Extension_XML_Validator) return Boolean;
    function Get_Facets
      (Validator : access Extension_XML_Validator) return Facets_Description;
+   function Equal
+     (Validator : access Extension_XML_Validator;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    --  See doc from inherited subprograms
 
    -------------------------
@@ -306,6 +309,17 @@ package body Schema.Validators.Extensions is
          Debug_Pop_Prefix;
          raise;
    end Validate_Characters;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Validator : access Extension_XML_Validator;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      return Equal (Get_Validator (Validator.Base), Value1, Value2);
+   end Equal;
 
    -----------------------
    -- Check_Replacement --

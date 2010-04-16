@@ -364,6 +364,11 @@ package Schema.Validators is
    procedure Free (Validator : in out Attribute_Validator_Record) is abstract;
    --  Free the memory occupied by the validator
 
+   function Equal
+     (Validator : Attribute_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is abstract;
+   --  Compare the two values, depending on the type of Validator
+
    function Is_Equal
      (Attribute : Attribute_Validator_Record;
       Attr2     : Attribute_Validator_Record'Class)
@@ -480,6 +485,12 @@ package Schema.Validators is
    --  empty. This is to distinguish from the empty string:
    --      <tag/>   and <tag></tag>
    --  If Empty_Element is true, then Ch is irrelevant
+
+   function Equal
+     (Validator : access XML_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Return True if Value1 = Value2, interpreted from the type. For instance,
+   --  an decimal "1.0" is the same as "1.00".
 
    function Get_Facets
      (Validator : access XML_Validator_Record) return Facets_Description;
@@ -1150,6 +1161,9 @@ private
          Fixed          : Unicode.CES.Byte_Sequence_Access; -- or from Ref_Attr
          Value          : Unicode.CES.Byte_Sequence_Access;
       end record;
+   function Equal
+     (Validator : Named_Attribute_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    procedure Validate_Attribute
      (Validator : Named_Attribute_Validator_Record;
       Atts      : in out Sax.Attributes.Attributes'Class;
@@ -1176,6 +1190,9 @@ private
       Kind             : Namespace_Kind;
       List             : NS_List (1 .. NS_Count);
    end record;
+   function Equal
+     (Validator : Any_Attribute_Validator;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    procedure Validate_Attribute
      (Validator : Any_Attribute_Validator;
       Atts      : in out Sax.Attributes.Attributes'Class;

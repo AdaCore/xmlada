@@ -888,6 +888,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "namespace");
       Process_Contents : constant Process_Contents_Type :=
         Process_Contents_From_Atts (Atts);
+      Fixed_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "fixed");
       Kind  : Namespace_Kind;
 
       List  : NS_List (1 .. Max_Namespaces_In_Any_Attribute);
@@ -902,6 +904,12 @@ package body Schema.Schema_Readers is
 
       procedure For_Each is new For_Each_Item (Cb_Item);
    begin
+      if Fixed_Index /= -1 then
+         Raise_Exception
+           (XML_Not_Implemented'Identity,
+            """fixed"" not supported for <anyAttribute>");
+      end if;
+
       if Namespace_Index = -1 then
          Kind := Namespace_Any;
       else

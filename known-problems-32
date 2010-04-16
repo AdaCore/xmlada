@@ -89,6 +89,10 @@ KP-32-J302-043 Lots of fixes in schema validation
               - Two attributes with different namespaces: the second one was
                 never validated
               - All elements are nillable by default
+              - "fixed" does not specify the exact string the element or
+                attribute must have, but its value. For instance, if this is
+                a float attribute, specifying "1.0" as a float still allows
+                "1" as the actual value
 
   Status:     Fixed in 3.3.0
 

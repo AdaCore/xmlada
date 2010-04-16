@@ -454,11 +454,20 @@ package body Schema.Readers is
                   --  should be used for it, just as for "default"
                   Characters (Handler, Get_Fixed (Handler).all);
 
-               elsif Val2.all /= Get_Fixed (Handler).all then
-                  Free (Handler.Validators.Characters);
-                  Validation_Error
-                    ("Element's value must be """
-                     & Get_Fixed (Handler.Validators.Element).all & """");
+               else
+                  Typ := Handler.Validators.Typ;
+                  if Typ = No_Type then
+                     Typ := Get_Type (Handler.Validators.Element);
+                  end if;
+
+                  if not Equal
+                    (Get_Validator (Typ), Val2.all, Get_Fixed (Handler).all)
+                  then
+                     Free (Handler.Validators.Characters);
+                     Validation_Error
+                       ("Element's value must be """
+                        & Get_Fixed (Handler.Validators.Element).all & """");
+                  end if;
                end if;
 
             else
@@ -615,7 +624,7 @@ package body Schema.Readers is
 
                   if not Valid then
                      Validation_Error
-                       (QName & " is not a valid replacement for "
+                       (Qname & " is not a valid replacement for "
                         & To_QName (Get_Type (Element)));
                   end if;
 

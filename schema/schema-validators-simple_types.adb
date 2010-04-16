@@ -88,7 +88,20 @@ package body Schema.Validators.Simple_Types is
    function ">" (F1, F2 : XML_Float) return Boolean;
    function Image (Value : XML_Float) return String;
    function Value (Str : String) return XML_Float;
+   function Value (Ch : Byte_Sequence) return Boolean;
    --  Return the float stored in Str (including +INF, -INF)
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Facet : Valued_Facets; Value1, Value2 : Byte_Sequence) return Boolean
+   is
+      pragma Unreferenced (Facet);
+   begin
+      return Value1 = Value2;
+   end Equal;
 
    ----------
    -- "<=" --
@@ -167,6 +180,7 @@ package body Schema.Validators.Simple_Types is
    -----------
 
    function Value (Str : String) return XML_Float is
+      Found_Dot : Boolean := False;
    begin
       if Str = "NaN" then
          return XML_Float'(Kind => NaN);
@@ -225,19 +239,23 @@ package body Schema.Validators.Simple_Types is
       type T is private;
       with function Value (Ch : Unicode.CES.Byte_Sequence) return T is <>;
       with function Image (T1 : T) return Unicode.CES.Byte_Sequence is <>;
+      with function "=" (T1, T2 : T) return Boolean is <>;
       with function "<=" (T1, T2 : T) return Boolean is <>;
       with function "<" (T1, T2 : T) return Boolean is <>;
       with function ">=" (T1, T2 : T) return Boolean is <>;
       with function ">" (T1, T2 : T) return Boolean is <>;
    package Generic_Range_Facets is
-      type Range_Facets_Description is new Common_Facets_Description with
+      type Range_Facets_Description is new Valued_Facets with
          record
             Max_Inclusive  : T;
             Min_Inclusive  : T;
             Max_Exclusive  : T;
             Min_Exclusive  : T;
          end record;
-   private
+
+      function Equal
+        (Facet : Range_Facets_Description;
+         Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
       procedure Add_Facet
         (Facets      : in out Range_Facets_Description;
          Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -261,7 +279,7 @@ package body Schema.Validators.Simple_Types is
       with function Get_Length
         (Value : Unicode.CES.Byte_Sequence) return Natural;
    package Length_Facets is
-      type Length_Facets_Description is new Common_Facets_Description with
+      type Length_Facets_Description is new Valued_Facets with
          record
             Length      : Natural := Natural'Last;
             Min_Length  : Natural := 0;
@@ -285,7 +303,7 @@ package body Schema.Validators.Simple_Types is
    --  For QName, length facets always match (4.3.1.3)
 
    type Always_Match_Length_Facets_Description
-     is new Common_Facets_Description with null record;
+     is new Valued_Facets with null record;
    procedure Add_Facet
      (Facets      : in out Always_Match_Length_Facets_Description;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -300,13 +318,16 @@ package body Schema.Validators.Simple_Types is
    --  It can be used for all types which have no children nodes.
 
    generic
-      type Facets_Type is new Facets_Description_Record with private;
+      type Facets_Type is new Valued_Facets with private;
    package Generic_Simple_Validator is
       type Facets_Type_Access is access all Facets_Type;
       type Validator_Record is new Any_Simple_XML_Validator_Record
          with null record;
       type Validator is access all Validator_Record'Class;
 
+      function Equal
+        (Validator      : access Validator_Record;
+         Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
       procedure Validate_Characters
         (Validator     : access Validator_Record;
          Ch            : Unicode.CES.Byte_Sequence;
@@ -317,7 +338,6 @@ package body Schema.Validators.Simple_Types is
         (Validator   : access Validator_Record;
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence);
-      procedure Free (Validator : in out Validator_Record);
       function Get_Facets
         (Validator : access Validator_Record) return Facets_Description;
       --  See doc for inherited subprograms
@@ -328,6 +348,21 @@ package body Schema.Validators.Simple_Types is
    --------------------------
 
    package body Generic_Range_Facets is
+
+      -----------
+      -- Equal --
+      -----------
+
+      function Equal
+        (Facet : Range_Facets_Description;
+         Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
+      is
+         pragma Unreferenced (Facet);
+         V1 : constant T := Value (Value1);
+         V2 : constant T := Value (Value2);
+      begin
+         return V1 = V2;
+      end Equal;
 
       ----------
       -- Copy --
@@ -582,6 +617,18 @@ package body Schema.Validators.Simple_Types is
 
    package body Generic_Simple_Validator is
 
+      -----------
+      -- Equal --
+      -----------
+
+      function Equal
+        (Validator      : access Validator_Record;
+         Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
+      begin
+         return Equal
+           (Valued_Facets'Class (Get_Facets (Validator).all), Value1, Value2);
+      end Equal;
+
       -------------------------
       -- Validate_Characters --
       -------------------------
@@ -620,16 +667,6 @@ package body Schema.Validators.Simple_Types is
             Validation_Error ("Invalid facet: " & Facet_Name);
          end if;
       end Add_Facet;
-
-      ----------
-      -- Free --
-      ----------
-
-      procedure Free (Validator : in out Validator_Record) is
-      begin
-         Free (Facets_Description (Validator.Facets));
-         Free (Any_Simple_XML_Validator_Record (Validator));
-      end Free;
 
       ----------------
       -- Get_Facets --
@@ -763,6 +800,9 @@ package body Schema.Validators.Simple_Types is
      (Validator   : access Boolean_Validator_Record;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence);
+   function Equal
+     (Validator      : access Boolean_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    --   See doc from inherited subprograms
 
    ----------------------
@@ -1064,34 +1104,16 @@ package body Schema.Validators.Simple_Types is
       Check_Facet (Range_Facets_Description (Facets), Facet_Value, Mask);
    end Check_Facet;
 
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
+   -----------
+   -- Value --
+   -----------
 
-   procedure Validate_Characters
-     (Validator     : access Boolean_Validator_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context)
-   is
-      pragma Unreferenced (Empty_Element, Context);
+   function Value (Ch : Byte_Sequence) return Boolean is
       First : Integer := Ch'First;
       Index : Integer;
-      C : Unicode_Char;
+      C     : Unicode_Char;
+      Result : Boolean;
    begin
-      if Debug then
-         Debug_Output
-           ("Validate_Characters (boolean) " & Get_Name (Validator));
-      end if;
-
-      if Ch = "" then
-         Validation_Error
-           ("Invalid value for boolean type: """ & Ch & """");
-      end if;
-
-      Check_Facet (Get_Facets (Validator).all, Ch, Mask);
-
       --  Skip leading spaces
       while First <= Ch'Last loop
          Index := First;
@@ -1100,6 +1122,7 @@ package body Schema.Validators.Simple_Types is
       end loop;
 
       if C = Digit_Zero or C = Digit_One then
+         Result := C = Digit_One;
          if First <= Ch'Last then
             Encoding.Read (Ch, First, C);
          end if;
@@ -1108,12 +1131,15 @@ package body Schema.Validators.Simple_Types is
         and then Ch (Index .. Index + True_Sequence'Length - 1) = True_Sequence
       then
          First := Index + True_Sequence'Length;
+         Result := True;
 
       elsif Index + False_Sequence'Length - 1 <= Ch'Last
         and then Ch (Index .. Index + False_Sequence'Length - 1) =
           False_Sequence
       then
          First := Index + False_Sequence'Length;
+         Result := False;
+
       else
          Validation_Error ("Invalid value for boolean type: """ & Ch & """");
       end if;
@@ -1127,6 +1153,51 @@ package body Schema.Validators.Simple_Types is
               ("Invalid value for boolean type: """ & Ch & """");
          end if;
       end loop;
+
+      return Result;
+   end Value;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Validator      : access Boolean_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      pragma Unreferenced (Validator);
+      V1 : constant Boolean := Value (Value1);
+      V2 : constant Boolean := Value (Value2);
+   begin
+      return V1 = V2;
+   end Equal;
+
+   -------------------------
+   -- Validate_Characters --
+   -------------------------
+
+   procedure Validate_Characters
+     (Validator     : access Boolean_Validator_Record;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean;
+      Mask          : in out Facets_Mask;
+      Context       : in out Validation_Context)
+   is
+      Val : Boolean;
+      pragma Unreferenced (Empty_Element, Context, Val);
+   begin
+      if Debug then
+         Debug_Output
+           ("Validate_Characters (boolean) " & Get_Name (Validator));
+      end if;
+
+      if Ch = "" then
+         Validation_Error
+           ("Invalid value for boolean type: """ & Ch & """");
+      end if;
+
+      Check_Facet (Get_Facets (Validator).all, Ch, Mask);
+      Val := Value (Ch);
    end Validate_Characters;
 
    ---------------
@@ -1666,6 +1737,40 @@ package body Schema.Validators.Simple_Types is
 
       return Validator.Facets;
    end Get_Facets;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Validator : access XML_Union_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Iter : Particle_Iterator;
+   begin
+      if Validator.Unions /= null then
+         Iter := Start (Validator.Unions);
+         while Get (Iter) /= null loop
+            begin
+               if Equal
+                 (Get_Validator (Get (Iter).Type_Descr), Value1, Value2)
+               then
+                  Free (Iter);
+                  return True;
+               end if;
+            exception
+               when others =>
+                  null;
+            end;
+
+            Next (Iter);
+         end loop;
+
+         Free (Iter);
+      end if;
+
+      return False;
+   end Equal;
 
    -------------------------
    -- Validate_Characters --

@@ -89,6 +89,9 @@ package body Schema.Validators.Restrictions is
    function Is_Restriction_Of
      (Validator : Restriction_XML_Validator;
       Base      : access XML_Validator_Record'Class) return Boolean;
+   function Equal
+     (Validator : access Restriction_XML_Validator;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    --  See doc from inherited subprograms
 
    -----------
@@ -173,6 +176,17 @@ package body Schema.Validators.Restrictions is
       Dependency2 := Validator.Restriction;
       Must_Match_All_Any_In_Dep2 := True;
    end Get_Attribute_Lists;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Validator : access Restriction_XML_Validator;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      return Equal (Get_Validator (Validator.Base), Value1, Value2);
+   end Equal;
 
    ----------------------------
    -- Validate_Start_Element --

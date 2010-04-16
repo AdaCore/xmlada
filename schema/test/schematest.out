@@ -92669,10 +92669,9 @@ Grp: MS-SimpleType2006-07-15 / stE018
   SF stE018
 
 Grp: MS-SimpleType2006-07-15 / stE050
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stE050
-  XP stE050.v
-    stE050.xml:1:11: Element's value must be "1"
+  OK stE050.v
 
 Grp: MS-SimpleType2006-07-15 / stE051
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -92692,16 +92691,14 @@ Grp: MS-SimpleType2006-07-15 / stE053
     stE053.xml:1:13: Element's value must be "abcdefg"
 
 Grp: MS-SimpleType2006-07-15 / stE054
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK stE054
-  OK stE054.i
-    stE054.xml:1:8: Element's value must be "1.0"
+  XF stE054.i
 
 Grp: MS-SimpleType2006-07-15 / stE055
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stE055
-  XP stE055.v
-    stE055.xml:1:12: Element's value must be "1.0"
+  OK stE055.v
 
 Grp: MS-SimpleType2006-07-15 / stE056
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95262,7 +95259,7 @@ Total number of tests: 37038 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 209 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 92
 SF: XSD OK, should be KO: in_full_fail= 643
-XP: XML KO, should be OK: in_partial= 18 in_full_fail= 1
-XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
+XP: XML KO, should be OK: in_partial= 16 in_full_fail= 1
+XF: XML OK, should be KO: in_partial= 2 in_full_fail= 2
 IE: Internal error:
-Total errors: 757 ( 2.0 %)
+Total errors: 756 ( 2.0 %)
