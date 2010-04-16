@@ -80,7 +80,7 @@ package body Schema.Validators.Facets is
       Last  : constant Boolean := Missing_End_Anchor (Str);
    begin
       if Start and Last then
-         return "^" & Str & "$";
+         return "^(" & Str & ")$";
       elsif Start then
          return "^" & Str;
       elsif Last then
@@ -444,6 +444,9 @@ package body Schema.Validators.Facets is
             Convert : constant String :=
               Convert_Regexp (Facets.Pattern_String.all);
          begin
+            if Debug then
+               Put_Line ("Compiling regexp as " & Convert);
+            end if;
             Facets.Pattern := new Pattern_Matcher'(Compile (Convert));
          exception
             when  GNAT.Regpat.Expression_Error =>

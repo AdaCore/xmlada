@@ -8352,27 +8352,27 @@ Grp: NIST2004-01-14 / atomic-NCName-length-4
 Grp: NIST2004-01-14 / atomic-NCName-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-NCName-pattern-1
-    NISTSchema-SV-IV-atomic-NCName-pattern-1.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{16} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{16}$)
+    NISTSchema-SV-IV-atomic-NCName-pattern-1.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{16} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{16})$)
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-NCName-pattern-2
-    NISTSchema-SV-IV-atomic-NCName-pattern-2.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{40} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{40}$)
+    NISTSchema-SV-IV-atomic-NCName-pattern-2.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{40} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{40})$)
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-NCName-pattern-3
-    NISTSchema-SV-IV-atomic-NCName-pattern-3.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{27} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{27}$)
+    NISTSchema-SV-IV-atomic-NCName-pattern-3.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{27} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{27})$)
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-NCName-pattern-4
-    NISTSchema-SV-IV-atomic-NCName-pattern-4.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{12} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{12}$)
+    NISTSchema-SV-IV-atomic-NCName-pattern-4.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{12} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{12})$)
 
 Grp: NIST2004-01-14 / atomic-NCName-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-NCName-pattern-5
-    NISTSchema-SV-IV-atomic-NCName-pattern-5.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{63} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{63}$)
+    NISTSchema-SV-IV-atomic-NCName-pattern-5.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{63} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{63})$)
 
 Grp: NIST2004-01-14 / atomic-NCName-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -8566,27 +8566,27 @@ Grp: NIST2004-01-14 / atomic-ID-length-4
 Grp: NIST2004-01-14 / atomic-ID-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-ID-pattern-1
-    NISTSchema-SV-IV-atomic-ID-pattern-1.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{11} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{11}$)
+    NISTSchema-SV-IV-atomic-ID-pattern-1.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{11} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{11})$)
 
 Grp: NIST2004-01-14 / atomic-ID-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-ID-pattern-2
-    NISTSchema-SV-IV-atomic-ID-pattern-2.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{55} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{55}$)
+    NISTSchema-SV-IV-atomic-ID-pattern-2.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{55} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{55})$)
 
 Grp: NIST2004-01-14 / atomic-ID-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-ID-pattern-3
-    NISTSchema-SV-IV-atomic-ID-pattern-3.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{18} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{18}$)
+    NISTSchema-SV-IV-atomic-ID-pattern-3.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{18} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{18})$)
 
 Grp: NIST2004-01-14 / atomic-ID-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-ID-pattern-4
-    NISTSchema-SV-IV-atomic-ID-pattern-4.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{15} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{15}$)
+    NISTSchema-SV-IV-atomic-ID-pattern-4.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{15} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{15})$)
 
 Grp: NIST2004-01-14 / atomic-ID-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-ID-pattern-5
-    NISTSchema-SV-IV-atomic-ID-pattern-5.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{36} (converted to ^[A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{36}$)
+    NISTSchema-SV-IV-atomic-ID-pattern-5.xsd:25:49: Invalid regular expression [\i-[:]][\c-[:]]{36} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]{36})$)
 
 Grp: NIST2004-01-14 / atomic-ID-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -9173,27 +9173,27 @@ Grp: NIST2004-01-14 / atomic-QName-length-4
 Grp: NIST2004-01-14 / atomic-QName-pattern
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-QName-pattern-1
-    NISTSchema-SV-IV-atomic-QName-pattern-1.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{40} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9._
+    NISTSchema-SV-IV-atomic-QName-pattern-1.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{40} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
 
 Grp: NIST2004-01-14 / atomic-QName-pattern-1
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-QName-pattern-2
-    NISTSchema-SV-IV-atomic-QName-pattern-2.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{20} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9._
+    NISTSchema-SV-IV-atomic-QName-pattern-2.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{20} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
 
 Grp: NIST2004-01-14 / atomic-QName-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-QName-pattern-3
-    NISTSchema-SV-IV-atomic-QName-pattern-3.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{33} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9._
+    NISTSchema-SV-IV-atomic-QName-pattern-3.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{33} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
 
 Grp: NIST2004-01-14 / atomic-QName-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-QName-pattern-4
-    NISTSchema-SV-IV-atomic-QName-pattern-4.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{27} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9._
+    NISTSchema-SV-IV-atomic-QName-pattern-4.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{27} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
 
 Grp: NIST2004-01-14 / atomic-QName-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-atomic-QName-pattern-5
-    NISTSchema-SV-IV-atomic-QName-pattern-5.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{58} (converted to ^([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9._
+    NISTSchema-SV-IV-atomic-QName-pattern-5.xsd:25:70: Invalid regular expression ([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]{58} (converted to ^(([A-Za-z:_-[:]][a-z:A-Z0-9._--[:]]*:)?[A-Za-z:_-[:]][a-z:A-Z0-9.
 
 Grp: NIST2004-01-14 / atomic-QName-enumeration
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -29705,7 +29705,7 @@ Grp: NIST2004-01-14 / list-NCName-pattern-1
 Grp: NIST2004-01-14 / list-NCName-pattern-2
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-list-NCName-pattern-3
-    NISTSchema-SV-IV-list-NCName-pattern-3.xsd:29:130: Invalid regular expression [\i-[:]][\c-[:]]{33} [\i-[:]][\c-[:]]{63} [\i-[:]][\c-[:]]{13} [\i-[:]][\c-[:]]{35} [\i-[:]][\c-[:]]{29} (converted to ^[A
+    NISTSchema-SV-IV-list-NCName-pattern-3.xsd:29:130: Invalid regular expression [\i-[:]][\c-[:]]{33} [\i-[:]][\c-[:]]{63} [\i-[:]][\c-[:]]{13} [\i-[:]][\c-[:]]{35} [\i-[:]][\c-[:]]{29} (converted to ^([
 
 Grp: NIST2004-01-14 / list-NCName-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -29924,7 +29924,7 @@ Grp: NIST2004-01-14 / list-ID-pattern-2
 Grp: NIST2004-01-14 / list-ID-pattern-3
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP NISTSchema-SV-IV-list-ID-pattern-4
-    NISTSchema-SV-IV-list-ID-pattern-4.xsd:29:129: Invalid regular expression [\i-[:]][\c-[:]]{37} [\i-[:]][\c-[:]]{30} [\i-[:]][\c-[:]]{25} [\i-[:]][\c-[:]]{3} [\i-[:]][\c-[:]]{14} (converted to ^[A-Za-z
+    NISTSchema-SV-IV-list-ID-pattern-4.xsd:29:129: Invalid regular expression [\i-[:]][\c-[:]]{37} [\i-[:]][\c-[:]]{30} [\i-[:]][\c-[:]]{25} [\i-[:]][\c-[:]]{3} [\i-[:]][\c-[:]]{14} (converted to ^([A-Za-
 
 Grp: NIST2004-01-14 / list-ID-pattern-4
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -79663,8 +79663,9 @@ Grp: MS-Regex2006-07-15 / reB64
     reB64.xsd:21:41: Invalid regular expression *a (converted to *a$)
 
 Grp: MS-Regex2006-07-15 / reB65
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF reB65
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK reB65
+    reB65.xsd:19:39: Invalid regular expression {1}a (converted to ^({1}a)$)
 
 Grp: MS-Regex2006-07-15 / reB78
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -80187,22 +80188,22 @@ Grp: MS-Regex2006-07-15 / reD8
 Grp: MS-Regex2006-07-15 / reD9
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reD9
-    reD9.xsd:21:43: Invalid regular expression ((a) (converted to ^((a)$)
+    reD9.xsd:21:43: Invalid regular expression ((a) (converted to ^(((a))$)
 
 Grp: MS-Regex2006-07-15 / reD10
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reD10
-    reD10.xsd:19:39: Invalid regular expression (a)) (converted to ^(a))$)
+    reD10.xsd:19:39: Invalid regular expression (a)) (converted to ^((a)))$)
 
 Grp: MS-Regex2006-07-15 / reD11
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reD11
-    reD11.xsd:21:46: Invalid regular expression ab|(d)) (converted to ^ab|(d))$)
+    reD11.xsd:21:46: Invalid regular expression ab|(d)) (converted to ^(ab|(d)))$)
 
 Grp: MS-Regex2006-07-15 / reD12
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reD12
-    reD12.xsd:19:55: Invalid regular expression ((a*(b*)((a))*(a)))) (converted to ^((a*(b*)((a))*(a))))$)
+    reD12.xsd:19:55: Invalid regular expression ((a*(b*)((a))*(a)))) (converted to ^(((a*(b*)((a))*(a)))))$)
 
 Grp: MS-Regex2006-07-15 / reE2
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -80227,12 +80228,12 @@ Grp: MS-Regex2006-07-15 / reE5
 Grp: MS-Regex2006-07-15 / reE8
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reE8
-    reE8.xsd:19:36: Invalid regular expression ( (converted to ^($)
+    reE8.xsd:19:36: Invalid regular expression ( (converted to ^(()$)
 
 Grp: MS-Regex2006-07-15 / reE9
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reE9
-    reE9.xsd:21:40: Invalid regular expression ) (converted to ^)$)
+    reE9.xsd:21:40: Invalid regular expression ) (converted to ^())$)
 
 Grp: MS-Regex2006-07-15 / reE10
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -80242,7 +80243,7 @@ Grp: MS-Regex2006-07-15 / reE10
 Grp: MS-Regex2006-07-15 / reE11
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reE11
-    reE11.xsd:21:40: Invalid regular expression [ (converted to ^[$)
+    reE11.xsd:21:40: Invalid regular expression [ (converted to ^([)$)
 
 Grp: MS-Regex2006-07-15 / reE13
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -80468,7 +80469,7 @@ Grp: MS-Regex2006-07-15 / reF56
 Grp: MS-Regex2006-07-15 / reF57
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reF57
-    reF57.xsd:21:45: Invalid regular expression [a--b] (converted to ^[a--b]$)
+    reF57.xsd:21:45: Invalid regular expression [a--b] (converted to ^([a--b])$)
 
 Grp: MS-Regex2006-07-15 / reF58
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -80569,7 +80570,7 @@ Grp: MS-Regex2006-07-15 / reG21
 Grp: MS-Regex2006-07-15 / reG22
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP reG22
-    reG22.xsd:21:51: Invalid regular expression [\c\?a-c\?]+ (converted to ^[a-z:A-Z0-9._-\?a-c\?]+$)
+    reG22.xsd:21:51: Invalid regular expression [\c\?a-c\?]+ (converted to ^([a-z:A-Z0-9._-\?a-c\?]+)$)
 
 Grp: MS-Regex2006-07-15 / reG23
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -80632,12 +80633,12 @@ Grp: MS-Regex2006-07-15 / reG33
 Grp: MS-Regex2006-07-15 / reG34
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reG34
-    reG34.xsd:21:45: Invalid regular expression [a-\\] (converted to ^[a-\\]$)
+    reG34.xsd:21:45: Invalid regular expression [a-\\] (converted to ^([a-\\])$)
 
 Grp: MS-Regex2006-07-15 / reG35
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reG35
-    reG35.xsd:19:41: Invalid regular expression [a-\[] (converted to ^[a-\[]$)
+    reG35.xsd:19:41: Invalid regular expression [a-\[] (converted to ^([a-\[])$)
 
 Grp: MS-Regex2006-07-15 / reG36
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -80647,7 +80648,7 @@ Grp: MS-Regex2006-07-15 / reG36
 Grp: MS-Regex2006-07-15 / reG37
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reG37
-    reG37.xsd:19:40: Invalid regular expression [a-;] (converted to ^[a-;]$)
+    reG37.xsd:19:40: Invalid regular expression [a-;] (converted to ^([a-;])$)
 
 Grp: MS-Regex2006-07-15 / reG38
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -80693,7 +80694,7 @@ Grp: MS-Regex2006-07-15 / reG45
 Grp: MS-Regex2006-07-15 / reG46
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reG46
-    reG46.xsd:21:44: Invalid regular expression [>-=] (converted to ^[>-=]$)
+    reG46.xsd:21:44: Invalid regular expression [>-=] (converted to ^([>-=])$)
 
 Grp: MS-Regex2006-07-15 / reG47
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -80724,7 +80725,7 @@ Grp: MS-Regex2006-07-15 / reG51
 Grp: MS-Regex2006-07-15 / reH1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK reH1
-    reH1.xsd:21:42: Invalid regular expression [\] (converted to ^[\]$)
+    reH1.xsd:21:42: Invalid regular expression [\] (converted to ^([\])$)
 
 Grp: MS-Regex2006-07-15 / reH4
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -85436,10 +85437,9 @@ Grp: MS-Regex2006-07-15 / reDI7
   OK reDI7.v
 
 Grp: MS-Regex2006-07-15 / reDI8
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK reDI8
-  XP reDI8.v
-    reDI8.xml:9:16: string pattern not matched: ((\-|\+)?[1-127])|(\-?128)
+  OK reDI8.v
 
 Grp: MS-Regex2006-07-15 / reDI9
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -86529,7 +86529,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_319
 Grp: MS-Regex2006-07-15 / RegexTest_322
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_322
-    RegexTest_322.xsd:5:45: Invalid regular expression [abcd-[d]]+ (converted to ^[abcd-[d]]+$)
+    RegexTest_322.xsd:5:45: Invalid regular expression [abcd-[d]]+ (converted to ^([abcd-[d]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_323
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -86608,7 +86608,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_337
 Grp: MS-Regex2006-07-15 / RegexTest_339
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_339
-    RegexTest_339.xsd:5:47: Invalid regular expression [abcd-[def]]+ (converted to ^[abcd-[def]]+$)
+    RegexTest_339.xsd:5:47: Invalid regular expression [abcd-[def]]+ (converted to ^([abcd-[def]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_340
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -86690,7 +86690,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_354
 Grp: MS-Regex2006-07-15 / RegexTest_356
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_356
-    RegexTest_356.xsd:5:47: Invalid regular expression [abc-[defg]]+ (converted to ^[abc-[defg]]+$)
+    RegexTest_356.xsd:5:47: Invalid regular expression [abc-[defg]]+ (converted to ^([abc-[defg]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_357
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -86800,12 +86800,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_426
 Grp: MS-Regex2006-07-15 / RegexTest_429
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_429
-    RegexTest_429.xsd:5:50: Invalid regular expression [abcdef-[^bce]]+ (converted to ^[abcdef-[^bce]]+$)
+    RegexTest_429.xsd:5:50: Invalid regular expression [abcdef-[^bce]]+ (converted to ^([abcdef-[^bce]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_430
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_430
-    RegexTest_430.xsd:5:46: Invalid regular expression [^cde-[ag]]+ (converted to ^[^cde-[ag]]+$)
+    RegexTest_430.xsd:5:46: Invalid regular expression [^cde-[ag]]+ (converted to ^([^cde-[ag]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_433
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -86821,12 +86821,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_434
 Grp: MS-Regex2006-07-15 / RegexTest_438
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_438
-    RegexTest_438.xsd:5:49: Invalid regular expression [abcd\-d-[bc]]+ (converted to ^[abcd\-d-[bc]]+$)
+    RegexTest_438.xsd:5:49: Invalid regular expression [abcd\-d-[bc]]+ (converted to ^([abcd\-d-[bc]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_439
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_439
-    RegexTest_439.xsd:5:49: Invalid regular expression [abcd\-d-[bc]]+ (converted to ^[abcd\-d-[bc]]+$)
+    RegexTest_439.xsd:5:49: Invalid regular expression [abcd\-d-[bc]]+ (converted to ^([abcd\-d-[bc]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_440
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -86867,17 +86867,17 @@ Grp: MS-Regex2006-07-15 / RegexTest_458
 Grp: MS-Regex2006-07-15 / RegexTest_459
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_459
-    RegexTest_459.xsd:5:43: Invalid regular expression [a-[a-f]] (converted to ^[a-[a-f]]$)
+    RegexTest_459.xsd:5:43: Invalid regular expression [a-[a-f]] (converted to ^([a-[a-f]])$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_460
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_460
-    RegexTest_460.xsd:5:44: Invalid regular expression [a-[c-e]]+ (converted to ^[a-[c-e]]+$)
+    RegexTest_460.xsd:5:44: Invalid regular expression [a-[c-e]]+ (converted to ^([a-[c-e]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_461
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_461
-    RegexTest_461.xsd:5:44: Invalid regular expression [a-[c-e]]+ (converted to ^[a-[c-e]]+$)
+    RegexTest_461.xsd:5:44: Invalid regular expression [a-[c-e]]+ (converted to ^([a-[c-e]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_462
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -86946,7 +86946,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_475
 Grp: MS-Regex2006-07-15 / RegexTest_476
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP RegexTest_476
-    RegexTest_476.xsd:5:47: Invalid regular expression [abc\-z-[b]]+ (converted to ^[abc\-z-[b]]+$)
+    RegexTest_476.xsd:5:47: Invalid regular expression [abc\-z-[b]]+ (converted to ^([abc\-z-[b]]+)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_477
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -87382,17 +87382,17 @@ Grp: MS-Regex2006-07-15 / RegexTest_582
 Grp: MS-Regex2006-07-15 / RegexTest_583
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_583
-    RegexTest_583.xsd:5:40: Invalid regular expression a[b-a] (converted to ^a[b-a]$)
+    RegexTest_583.xsd:5:40: Invalid regular expression a[b-a] (converted to ^(a[b-a])$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_584
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_584
-    RegexTest_584.xsd:5:38: Invalid regular expression a[]b (converted to ^a[]b$)
+    RegexTest_584.xsd:5:38: Invalid regular expression a[]b (converted to ^(a[]b)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_585
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_585
-    RegexTest_585.xsd:5:36: Invalid regular expression a[ (converted to ^a[$)
+    RegexTest_585.xsd:5:36: Invalid regular expression a[ (converted to ^(a[)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_586
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -87590,7 +87590,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_633
 Grp: MS-Regex2006-07-15 / RegexTest_634
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_634
-    RegexTest_634.xsd:5:38: Invalid regular expression (*)b (converted to ^(*)b$)
+    RegexTest_634.xsd:5:38: Invalid regular expression (*)b (converted to ^((*)b)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_635
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -87620,12 +87620,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_640
 Grp: MS-Regex2006-07-15 / RegexTest_641
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_641
-    RegexTest_641.xsd:5:38: Invalid regular expression abc) (converted to ^abc)$)
+    RegexTest_641.xsd:5:38: Invalid regular expression abc) (converted to ^(abc))$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_642
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_642
-    RegexTest_642.xsd:5:38: Invalid regular expression (abc (converted to ^(abc$)
+    RegexTest_642.xsd:5:38: Invalid regular expression (abc (converted to ^((abc)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_643
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -87646,7 +87646,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_646
 Grp: MS-Regex2006-07-15 / RegexTest_647
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_647
-    RegexTest_647.xsd:5:37: Invalid regular expression a** (converted to ^a**$)
+    RegexTest_647.xsd:5:37: Invalid regular expression a** (converted to ^(a**)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_648
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -88067,17 +88067,17 @@ Grp: MS-Regex2006-07-15 / RegexTest_751
 Grp: MS-Regex2006-07-15 / RegexTest_752
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_752
-    RegexTest_752.xsd:5:40: Invalid regular expression a[b-a] (converted to ^a[b-a]$)
+    RegexTest_752.xsd:5:40: Invalid regular expression a[b-a] (converted to ^(a[b-a])$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_753
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_753
-    RegexTest_753.xsd:5:38: Invalid regular expression a[]b (converted to ^a[]b$)
+    RegexTest_753.xsd:5:38: Invalid regular expression a[]b (converted to ^(a[]b)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_754
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_754
-    RegexTest_754.xsd:5:36: Invalid regular expression a[ (converted to ^a[$)
+    RegexTest_754.xsd:5:36: Invalid regular expression a[ (converted to ^(a[)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_755
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -88131,7 +88131,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_766
 Grp: MS-Regex2006-07-15 / RegexTest_767
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_767
-    RegexTest_767.xsd:5:38: Invalid regular expression (*)b (converted to ^(*)b$)
+    RegexTest_767.xsd:5:38: Invalid regular expression (*)b (converted to ^((*)b)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_768
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -88161,12 +88161,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_773
 Grp: MS-Regex2006-07-15 / RegexTest_774
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_774
-    RegexTest_774.xsd:5:38: Invalid regular expression abc) (converted to ^abc)$)
+    RegexTest_774.xsd:5:38: Invalid regular expression abc) (converted to ^(abc))$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_775
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_775
-    RegexTest_775.xsd:5:38: Invalid regular expression (abc (converted to ^(abc$)
+    RegexTest_775.xsd:5:38: Invalid regular expression (abc (converted to ^((abc)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_776
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -88187,7 +88187,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_779
 Grp: MS-Regex2006-07-15 / RegexTest_780
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_780
-    RegexTest_780.xsd:5:37: Invalid regular expression a** (converted to ^a**$)
+    RegexTest_780.xsd:5:37: Invalid regular expression a** (converted to ^(a**)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_781
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -88456,7 +88456,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_849
 Grp: MS-Regex2006-07-15 / RegexTest_850
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_850
-    RegexTest_850.xsd:5:38: Invalid regular expression :(?: (converted to ^:(?:$)
+    RegexTest_850.xsd:5:38: Invalid regular expression :(?: (converted to ^(:(?:)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_851
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -88857,12 +88857,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_964
 Grp: MS-Regex2006-07-15 / RegexTest_965
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_965
-    RegexTest_965.xsd:5:44: Invalid regular expression (?(1?)a|b) (converted to ^(?(1?)a|b)$)
+    RegexTest_965.xsd:5:44: Invalid regular expression (?(1?)a|b) (converted to ^((?(1?)a|b))$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_966
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_966
-    RegexTest_966.xsd:5:45: Invalid regular expression (?(1)a|b|c) (converted to ^(?(1)a|b|c)$)
+    RegexTest_966.xsd:5:45: Invalid regular expression (?(1)a|b|c) (converted to ^((?(1)a|b|c))$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_973
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -88935,12 +88935,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_991
 Grp: MS-Regex2006-07-15 / RegexTest_992
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_992
-    RegexTest_992.xsd:5:42: Invalid regular expression [a[:xyz: (converted to ^[a[:xyz:$)
+    RegexTest_992.xsd:5:42: Invalid regular expression [a[:xyz: (converted to ^([a[:xyz:)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_993
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_993
-    RegexTest_993.xsd:5:43: Invalid regular expression [a[:xyz:] (converted to ^[a[:xyz:]$)
+    RegexTest_993.xsd:5:43: Invalid regular expression [a[:xyz:] (converted to ^([a[:xyz:])$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_994
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -89233,17 +89233,17 @@ Grp: MS-Regex2006-07-15 / RegexTest_1066
 Grp: MS-Regex2006-07-15 / RegexTest_1067
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1067
-    RegexTest_1067.xsd:5:40: Invalid regular expression a[b-a] (converted to ^a[b-a]$)
+    RegexTest_1067.xsd:5:40: Invalid regular expression a[b-a] (converted to ^(a[b-a])$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1068
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1068
-    RegexTest_1068.xsd:5:38: Invalid regular expression a[]b (converted to ^a[]b$)
+    RegexTest_1068.xsd:5:38: Invalid regular expression a[]b (converted to ^(a[]b)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1069
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1069
-    RegexTest_1069.xsd:5:36: Invalid regular expression a[ (converted to ^a[$)
+    RegexTest_1069.xsd:5:36: Invalid regular expression a[ (converted to ^(a[)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1070
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -89441,7 +89441,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_1117
 Grp: MS-Regex2006-07-15 / RegexTest_1118
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1118
-    RegexTest_1118.xsd:5:38: Invalid regular expression (*)b (converted to ^(*)b$)
+    RegexTest_1118.xsd:5:38: Invalid regular expression (*)b (converted to ^((*)b)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1119
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -89471,12 +89471,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_1124
 Grp: MS-Regex2006-07-15 / RegexTest_1125
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1125
-    RegexTest_1125.xsd:5:38: Invalid regular expression abc) (converted to ^abc)$)
+    RegexTest_1125.xsd:5:38: Invalid regular expression abc) (converted to ^(abc))$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1126
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1126
-    RegexTest_1126.xsd:5:38: Invalid regular expression (abc (converted to ^(abc$)
+    RegexTest_1126.xsd:5:38: Invalid regular expression (abc (converted to ^((abc)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1127
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -89497,7 +89497,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_1130
 Grp: MS-Regex2006-07-15 / RegexTest_1131
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1131
-    RegexTest_1131.xsd:5:37: Invalid regular expression a** (converted to ^a**$)
+    RegexTest_1131.xsd:5:37: Invalid regular expression a** (converted to ^(a**)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1132
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -89918,17 +89918,17 @@ Grp: MS-Regex2006-07-15 / RegexTest_1235
 Grp: MS-Regex2006-07-15 / RegexTest_1236
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1236
-    RegexTest_1236.xsd:5:40: Invalid regular expression a[b-a] (converted to ^a[b-a]$)
+    RegexTest_1236.xsd:5:40: Invalid regular expression a[b-a] (converted to ^(a[b-a])$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1237
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1237
-    RegexTest_1237.xsd:5:38: Invalid regular expression a[]b (converted to ^a[]b$)
+    RegexTest_1237.xsd:5:38: Invalid regular expression a[]b (converted to ^(a[]b)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1238
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1238
-    RegexTest_1238.xsd:5:36: Invalid regular expression a[ (converted to ^a[$)
+    RegexTest_1238.xsd:5:36: Invalid regular expression a[ (converted to ^(a[)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1239
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -89982,7 +89982,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_1250
 Grp: MS-Regex2006-07-15 / RegexTest_1251
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1251
-    RegexTest_1251.xsd:5:38: Invalid regular expression (*)b (converted to ^(*)b$)
+    RegexTest_1251.xsd:5:38: Invalid regular expression (*)b (converted to ^((*)b)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1252
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -90012,12 +90012,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_1257
 Grp: MS-Regex2006-07-15 / RegexTest_1258
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1258
-    RegexTest_1258.xsd:5:38: Invalid regular expression abc) (converted to ^abc)$)
+    RegexTest_1258.xsd:5:38: Invalid regular expression abc) (converted to ^(abc))$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1259
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1259
-    RegexTest_1259.xsd:5:38: Invalid regular expression (abc (converted to ^(abc$)
+    RegexTest_1259.xsd:5:38: Invalid regular expression (abc (converted to ^((abc)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1260
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -90038,7 +90038,7 @@ Grp: MS-Regex2006-07-15 / RegexTest_1263
 Grp: MS-Regex2006-07-15 / RegexTest_1264
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1264
-    RegexTest_1264.xsd:5:37: Invalid regular expression a** (converted to ^a**$)
+    RegexTest_1264.xsd:5:37: Invalid regular expression a** (converted to ^(a**)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1265
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -90815,12 +90815,12 @@ Grp: MS-Regex2006-07-15 / RegexTest_1475
 Grp: MS-Regex2006-07-15 / RegexTest_1476
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1476
-    RegexTest_1476.xsd:5:42: Invalid regular expression [a[:xyz: (converted to ^[a[:xyz:$)
+    RegexTest_1476.xsd:5:42: Invalid regular expression [a[:xyz: (converted to ^([a[:xyz:)$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1477
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK RegexTest_1477
-    RegexTest_1477.xsd:5:43: Invalid regular expression [a[:xyz:] (converted to ^[a[:xyz:]$)
+    RegexTest_1477.xsd:5:43: Invalid regular expression [a[:xyz:] (converted to ^([a[:xyz:])$)
 
 Grp: MS-Regex2006-07-15 / RegexTest_1478
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -95304,8 +95304,8 @@ Total number of tests: 37054 (omitting non-accepted tests)
    23371 XML files
 NI: Features not implemented: in_partial= 212 in_full_fail= 2137
 SP: XSD KO, should be OK: in_full_fail= 183
-SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 20 in_full_fail= 1
+SF: XSD OK, should be KO: in_full_fail= 638
+XP: XML KO, should be OK: in_partial= 19 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 846 ( 2.3 %)
+Total errors: 844 ( 2.3 %)
