@@ -55280,114 +55280,114 @@ Grp: MS-DataTypes2006-07-15 / QName_enumeration002_299
   OK QName_enumeration002_299
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length001_300
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_length001_300
-    NOTATION_length001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_length001_300
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length002_301
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_length002_301
-    NOTATION_length002.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_length002_301
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length003_302
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_length003_302
-    NOTATION_length003.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_length003_302
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length004_303
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_length004_303
-    NOTATION_length004.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_length004_303
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length005_304
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_length005_304
-    NOTATION_length005.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_length005_304
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length006_305
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_length006_305
-    NOTATION_length006.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_length006_305
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length007_306
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_length007_306
-    NOTATION_length007.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_length007_306
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength001_307
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_minLength001_307
-    NOTATION_minLength001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_minLength001_307
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength002_308
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_minLength002_308
-    NOTATION_minLength002.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_minLength002_308
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength003_309
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_minLength003_309
-    NOTATION_minLength003.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_minLength003_309
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength004_310
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_minLength004_310
-    NOTATION_minLength004.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_minLength004_310
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength005_311
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_minLength005_311
-    NOTATION_minLength005.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_minLength005_311
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength006_312
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_minLength006_312
-    NOTATION_minLength006.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_minLength006_312
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength007_313
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_minLength007_313
-    NOTATION_minLength007.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_minLength007_313
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_maxLength001_314
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_maxLength001_314
-    NOTATION_maxLength001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_maxLength001_314
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_maxLength002_315
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_maxLength002_315
-    NOTATION_maxLength002.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_maxLength002_315
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_maxLength003_316
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_maxLength003_316
-    NOTATION_maxLength003.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_maxLength003_316
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_maxLength004_317
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_maxLength004_317
-    NOTATION_maxLength004.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_maxLength004_317
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_maxLength005_318
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_maxLength005_318
-    NOTATION_maxLength005.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_maxLength005_318
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_pattern001_319
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_pattern001_319
-    NOTATION_pattern001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_pattern001_319
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_enumeration001_320
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK NOTATION_enumeration001_320
-    NOTATION_enumeration001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  NI NOTATION_enumeration001_320
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_enumeration002_321
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_enumeration002_321
-    NOTATION_enumeration002.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_enumeration002_321
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / normalizedString_length001_322
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -60445,78 +60445,78 @@ Grp: MS-DataTypes2006-07-15 / QName_enumeration004_1371
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length001_1372
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_length001_1372
-    NOTATION_length001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_length001_1372
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length002_1373
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_length002_1373
-    NOTATION_length002.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_length002_1373
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_length003_1374
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_length003_1374
-    NOTATION_length003.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_length003_1374
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength001_1375
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_minLength001_1375
-    NOTATION_minLength001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_minLength001_1375
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength002_1376
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_minLength002_1376
-    NOTATION_minLength002.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_minLength002_1376
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength003_1377
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_minLength003_1377
-    NOTATION_minLength003.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_minLength003_1377
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_minLength004_1378
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_minLength004_1378
-    NOTATION_minLength004.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_minLength004_1378
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_maxLength001_1379
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_maxLength001_1379
-    NOTATION_maxLength001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_maxLength001_1379
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_maxLength002_1380
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_maxLength002_1380
-    NOTATION_maxLength002.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_maxLength002_1380
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_maxLength003_1381
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_maxLength003_1381
-    NOTATION_maxLength003.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_maxLength003_1381
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_pattern001_1382
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_pattern001_1382
-    NOTATION_pattern001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_pattern001_1382
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_enumeration001_1383
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_enumeration001_1383
-    NOTATION_enumeration001.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_enumeration001_1383
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_enumeration002_1384
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_enumeration002_1384
-    NOTATION_enumeration002.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_enumeration002_1384
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_enumeration003_1385
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_enumeration003_1385
-    NOTATION_enumeration003.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_enumeration003_1385
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / NOTATION_enumeration004_1386
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP NOTATION_enumeration004_1386
-    NOTATION_enumeration004.xsd:7:34: The type "NOTATION" isn't known at this point. Please check the name and namespace
+  NI NOTATION_enumeration004_1386
+    Unsupported element in the schema: notation
 
 Grp: MS-DataTypes2006-07-15 / normalizedString_length001_1387
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -65121,7 +65121,7 @@ Grp: MS-DataTypes2006-07-15 / dtZ100507_2242
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK dtZ100507_2242
   OK dtZ100507_2242.i
-    test100507.xml:1:128: Unknown type "xs:NOTATION"
+    test100507.xml:1:128: Invalid QName: ""
 
 Grp: MS-DataTypes2006-07-15 / dtZ107447_2243
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92718,54 +92718,57 @@ Grp: MS-SimpleType2006-07-15 / stE055
     stE055.xml:1:12: Element's value must be "1.0"
 
 Grp: MS-SimpleType2006-07-15 / stE056
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE056
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE056
+  OK stE056.i
+    stE056.xml:1:12: Element's value must be "25.9421"
 
 Grp: MS-SimpleType2006-07-15 / stE057
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE057
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE057
+  OK stE057.v
 
 Grp: MS-SimpleType2006-07-15 / stE058
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE058
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE058
+  OK stE058.v
 
 Grp: MS-SimpleType2006-07-15 / stE059
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE059
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE059
+  OK stE059.v
 
 Grp: MS-SimpleType2006-07-15 / stE060
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE060
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE060
+  OK stE060.v
 
 Grp: MS-SimpleType2006-07-15 / stE061
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE061
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE061
+  OK stE061.v
 
 Grp: MS-SimpleType2006-07-15 / stE062
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE062
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE062
+  OK stE062.v
 
 Grp: MS-SimpleType2006-07-15 / stE063
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE063
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE063
+  OK stE063.i
+    stE063.xml:1:17: Element's value must be "abcd edfgh "
 
 Grp: MS-SimpleType2006-07-15 / stE064
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE064
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK stE064
+  OK stE064.v
 
 Grp: MS-SimpleType2006-07-15 / stE065
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP stE065
-    Type "{http://www.w3.org/2001/XMLSchema}NOTATION" was referenced but never declared
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  OK stE065
+  XP stE065.v
+    stE065.xml:1:17: Element's value must be "abcd edfgh "
 
 Grp: MS-SimpleType2006-07-15 / stE066
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -95266,13 +95269,13 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37020 (omitting non-accepted tests)
+Total number of tests: 37030 (omitting non-accepted tests)
    13746 XSD files (not including those parsed automatically)
-   23337 XML files
-NI: Features not implemented: in_partial= 209 in_full_fail= 2213
-SP: XSD KO, should be OK: in_full_fail= 142
+   23347 XML files
+NI: Features not implemented: in_partial= 209 in_full_fail= 2250
+SP: XSD KO, should be OK: in_full_fail= 111
 SF: XSD OK, should be KO: in_full_fail= 638
-XP: XML KO, should be OK: in_partial= 19 in_full_fail= 1
+XP: XML KO, should be OK: in_partial= 20 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 803 ( 2.2 %)
+Total errors: 773 ( 2.1 %)

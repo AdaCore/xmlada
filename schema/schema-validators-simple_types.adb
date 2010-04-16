@@ -1347,6 +1347,9 @@ package body Schema.Validators.Simple_Types is
       QN  := new QName_Validator;
       Create_Global_Type (G, "QName", QN);
 
+      QN  := new QName_Validator;
+      Create_Global_Type (G, "NOTATION", QN);
+
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, "whiteSpace", "replace");
       Create_Global_Type (G, "normalizedString", Str);
