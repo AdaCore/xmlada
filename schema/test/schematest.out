@@ -66960,10 +66960,9 @@ Grp: MS-Errata102006-07-15 / errE001
   OK errE001.v
 
 Grp: MS-Errata102006-07-15 / errE002
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK errE002
-  XP errE002.v
-    errE002.xml:5:19: -0 is smaller than minInclusive (0)
+  OK errE002.v
 
 Grp: MS-Errata102006-07-15 / errE003
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95306,7 +95305,7 @@ Total number of tests: 37054 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 212 in_full_fail= 2137
 SP: XSD KO, should be OK: in_full_fail= 183
 SF: XSD OK, should be KO: in_full_fail= 639
-XP: XML KO, should be OK: in_partial= 21 in_full_fail= 1
+XP: XML KO, should be OK: in_partial= 20 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 1 in_full_fail= 2
 IE: Internal error:
-Total errors: 847 ( 2.3 %)
+Total errors: 846 ( 2.3 %)

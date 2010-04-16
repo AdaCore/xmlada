@@ -169,7 +169,12 @@ package body Schema.Decimal is
          Encoding.Read (Ch, Pos, C);
       end loop;
 
-      return (Controlled with Value => new Byte_Sequence'(Ch (First .. Last)));
+      if Ch (First .. Last) = "-0" then
+         return (Controlled with Value => new Byte_Sequence'("0"));
+      else
+         return
+           (Controlled with Value => new Byte_Sequence'(Ch (First .. Last)));
+      end if;
    end Internal_Value;
 
    -----------------------
