@@ -99,6 +99,13 @@ package Schema.Validators.Facets is
       Applied     : out Boolean);
    --  See inherited documentation
 
+   function Equal
+     (Facet : Common_Facets_Description;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Compare the two values Value1 and Value2, according to the base type.
+   --  (for instance, for floats, "1.0" is the same as "1").
+   --  By default, this only compares strings
+
    procedure Set_Implicit_Enumeration
      (Facets : in out Common_Facets_Description; Validator : Value_Validator);
    procedure Set_Whitespace

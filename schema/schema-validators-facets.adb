@@ -329,7 +329,9 @@ package body Schema.Validators.Facets is
          Mask (Facet_Enumeration) := False;
          Found := False;
          for E in Facets.Enumeration'Range loop
-            if Value = Facets.Enumeration (E).all then
+            if Equal (Common_Facets_Description'Class (Facets),
+                      Value, Facets.Enumeration (E).all)
+            then
                Found := True;
             end if;
          end loop;
@@ -526,5 +528,18 @@ package body Schema.Validators.Facets is
          Unchecked_Free (List);
       end if;
    end Free;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Facet : Common_Facets_Description;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      pragma Unreferenced (Facet);
+   begin
+      return Value1 = Value2;
+   end Equal;
 
 end Schema.Validators.Facets;

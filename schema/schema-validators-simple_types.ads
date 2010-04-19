@@ -26,19 +26,10 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Schema.Validators.Facets;
-
 private package Schema.Validators.Simple_Types is
 
    procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS);
    --  Register all the predefined types
-
-   type Valued_Facets is new Schema.Validators.Facets.Common_Facets_Description
-      with null record;
-   function Equal
-     (Facet : Valued_Facets;
-      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
-   --  Compare the two values
 
    -------------------------------
    -- Any_Simple_XML_Validator --
@@ -79,6 +70,9 @@ private package Schema.Validators.Simple_Types is
    function Get_Mixed_Content
      (Validator : access Any_Simple_XML_Validator_Record) return Boolean;
    procedure Free (Validator : in out Any_Simple_XML_Validator_Record);
+   function Equal
+     (Validator      : access Any_Simple_XML_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    procedure Check_Replacement
      (Validator       : access Any_Simple_XML_Validator_Record;
       Element         : XML_Element;

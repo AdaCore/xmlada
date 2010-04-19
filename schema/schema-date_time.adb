@@ -1249,7 +1249,7 @@ package body Schema.Date_Time is
            Compare (Normalize (T1), Normalize (T2));
       begin
          if Result = Uncomparable then
-            raise Not_Comparable;
+            return False;
          else
             return Result = Equal;
          end if;

@@ -59145,16 +59145,14 @@ Grp: MS-DataTypes2006-07-15 / dateTime_enumeration004_1128
   OK dateTime_enumeration004_1128.v
 
 Grp: MS-DataTypes2006-07-15 / dateTime_enumeration005a_1129
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK dateTime_enumeration005a_1129
-  XP dateTime_enumeration005a_1129.v
-    dateTime_enumeration005a.xml:1:31: Element's value not in the enumeration set
+  OK dateTime_enumeration005a_1129.v
 
 Grp: MS-DataTypes2006-07-15 / dateTime_enumeration005b_1130
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK dateTime_enumeration005b_1130
-  XP dateTime_enumeration005b_1130.v
-    dateTime_enumeration005b.xml:1:26: Element's value not in the enumeration set
+  OK dateTime_enumeration005b_1130.v
 
 Grp: MS-DataTypes2006-07-15 / dateTime_maxInclusive001_1131
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95256,7 +95254,7 @@ Total number of tests: 37037 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 210 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 93
 SF: XSD OK, should be KO: in_full_fail= 643
-XP: XML KO, should be OK: in_partial= 13 in_full_fail= 1
+XP: XML KO, should be OK: in_partial= 11 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 2 in_full_fail= 2
 IE: Internal error:
-Total errors: 754 ( 2.0 %)
+Total errors: 752 ( 2.0 %)

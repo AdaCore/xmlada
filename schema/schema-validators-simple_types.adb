@@ -91,18 +91,6 @@ package body Schema.Validators.Simple_Types is
    function Value (Ch : Byte_Sequence) return Boolean;
    --  Return the float stored in Str (including +INF, -INF)
 
-   -----------
-   -- Equal --
-   -----------
-
-   function Equal
-     (Facet : Valued_Facets; Value1, Value2 : Byte_Sequence) return Boolean
-   is
-      pragma Unreferenced (Facet);
-   begin
-      return Value1 = Value2;
-   end Equal;
-
    ----------
    -- "<=" --
    ----------
@@ -244,7 +232,7 @@ package body Schema.Validators.Simple_Types is
       with function ">=" (T1, T2 : T) return Boolean is <>;
       with function ">" (T1, T2 : T) return Boolean is <>;
    package Generic_Range_Facets is
-      type Range_Facets_Description is new Valued_Facets with
+      type Range_Facets_Description is new Common_Facets_Description with
          record
             Max_Inclusive  : T;
             Min_Inclusive  : T;
@@ -278,7 +266,7 @@ package body Schema.Validators.Simple_Types is
       with function Get_Length
         (Value : Unicode.CES.Byte_Sequence) return Natural;
    package Length_Facets is
-      type Length_Facets_Description is new Valued_Facets with
+      type Length_Facets_Description is new Common_Facets_Description with
          record
             Length      : Natural := Natural'Last;
             Min_Length  : Natural := 0;
@@ -302,7 +290,7 @@ package body Schema.Validators.Simple_Types is
    --  For QName, length facets always match (4.3.1.3)
 
    type Always_Match_Length_Facets_Description
-     is new Valued_Facets with null record;
+     is new Common_Facets_Description with null record;
    procedure Add_Facet
      (Facets      : in out Always_Match_Length_Facets_Description;
       Facet_Name  : Unicode.CES.Byte_Sequence;
@@ -317,16 +305,13 @@ package body Schema.Validators.Simple_Types is
    --  It can be used for all types which have no children nodes.
 
    generic
-      type Facets_Type is new Valued_Facets with private;
+      type Facets_Type is new Common_Facets_Description with private;
    package Generic_Simple_Validator is
       type Facets_Type_Access is access all Facets_Type;
       type Validator_Record is new Any_Simple_XML_Validator_Record
          with null record;
       type Validator is access all Validator_Record'Class;
 
-      function Equal
-        (Validator      : access Validator_Record;
-         Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
       procedure Validate_Characters
         (Validator     : access Validator_Record;
          Ch            : Unicode.CES.Byte_Sequence;
@@ -615,18 +600,6 @@ package body Schema.Validators.Simple_Types is
    ------------------------------
 
    package body Generic_Simple_Validator is
-
-      -----------
-      -- Equal --
-      -----------
-
-      function Equal
-        (Validator      : access Validator_Record;
-         Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
-      begin
-         return Equal
-           (Valued_Facets'Class (Get_Facets (Validator).all), Value1, Value2);
-      end Equal;
 
       -------------------------
       -- Validate_Characters --
@@ -1927,5 +1900,18 @@ package body Schema.Validators.Simple_Types is
          Free (Iter);
       end if;
    end Check_Replacement_For_Union;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Validator      : access Any_Simple_XML_Validator_Record;
+      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      return Equal
+        (Common_Facets_Description'Class
+           (Get_Facets (Validator).all), Value1, Value2);
+   end Equal;
 
 end Schema.Validators.Simple_Types;

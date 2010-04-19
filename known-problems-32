@@ -92,7 +92,7 @@ KP-32-J302-043 Lots of fixes in schema validation
               - "fixed" does not specify the exact string the element or
                 attribute must have, but its value. For instance, if this is
                 a float attribute, specifying "1.0" as a float still allows
-                "1" as the actual value
+                "1" as the actual value. Same for enumerations.
 
   Status:     Fixed in 3.3.0
 
