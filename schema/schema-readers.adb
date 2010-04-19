@@ -616,8 +616,8 @@ package body Schema.Readers is
                  and then Get_Validator (Typ) /=
                  Get_Validator (Get_Type (Element))
                then
-                  Check_Replacement
-                    (Get_Validator (Typ), Get_Type (Element),
+                  Check_Replacement_For_Type
+                    (Get_Validator (Typ), Element,
                      Valid           => Valid,
                      Had_Restriction => Had_Restriction,
                      Had_Extension   => Had_Extension);

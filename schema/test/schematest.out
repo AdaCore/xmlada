@@ -44884,10 +44884,9 @@ Grp: ElemDecl / disallowedsubst00501m1
   OK Positive
 
 Grp: ElemDecl / disallowedsubst00501m2
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK disallowedSubst00501m2
-  OK Negative
-    disallowedSubst00501m2_n.xml:15:13: Invalid substitution, because "Head" blocks restrictions
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP disallowedSubst00501m2
+    disallowedSubst00501m2.xsd:30:82: derivedFromString is not a valid replacement for string
 
 Grp: ElemDecl / disallowedsubst00502m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45621,7 +45620,7 @@ Grp: ElemDecl / typedef00802m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK typeDef00802m2
   OK Negative
-    typeDef00802m2_n.xml:14:37: Element "{ElemDecl/typeDef}Element" blocks the use of restrictions of the type
+    typeDef00802m2_n.xml:14:37: derivedType is not a valid replacement for Type
 
 Grp: ElemDecl / typedef00901m1
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -66049,7 +66048,7 @@ Grp: MS-Element2006-07-15 / elemT001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT001
   OK elemT001.i
-    elemT001.xml:3:29: Element "fooTest" blocks the use of restrictions of the type
+    elemT001.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-Element2006-07-15 / elemT002
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66071,7 +66070,7 @@ Grp: MS-Element2006-07-15 / elemT005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT005
   OK elemT005.i
-    elemT005.xml:3:29: Element "fooTest" blocks the use of restrictions of the type
+    elemT005.xml:3:29: myType is not a valid replacement for fooType
 
 Grp: MS-Element2006-07-15 / elemT006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66139,7 +66138,7 @@ Grp: MS-Element2006-07-15 / elemT018
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT018
   OK elemT018.i
-    elemT018.xml:2:23: Element "test" blocks the use of restrictions of the type
+    elemT018.xml:2:23: R-A is not a valid replacement for A
 
 Grp: MS-Element2006-07-15 / elemT019
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66175,7 +66174,7 @@ Grp: MS-Element2006-07-15 / elemT024
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT024
   OK elemT024.i
-    elemT024.xml:2:24: Element "test" blocks the use of restrictions of the type
+    elemT024.xml:2:24: R-CA is not a valid replacement for CA
 
 Grp: MS-Element2006-07-15 / elemT025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66294,7 +66293,7 @@ Grp: MS-Element2006-07-15 / elemT046
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT046
   OK elemT046.i
-    elemT046.xml:2:21: Element "test" blocks the use of restrictions of the type
+    elemT046.xml:2:21: A is not a valid replacement for base-A
 
 Grp: MS-Element2006-07-15 / elemT047
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66330,7 +66329,7 @@ Grp: MS-Element2006-07-15 / elemT052
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT052
   OK elemT052.i
-    elemT052.xml:2:25: Element "test2" blocks the use of restrictions of the type
+    elemT052.xml:2:25: R-CA is not a valid replacement for CA
 
 Grp: MS-Element2006-07-15 / elemT053
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -66442,10 +66441,9 @@ Grp: MS-Element2006-07-15 / elemT072
   OK elemT072.v
 
 Grp: MS-Element2006-07-15 / elemT073
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK elemT073
-  XP elemT073.v
-    elemT073.xml:2:21: A is not a valid replacement for Union-AB
+  OK elemT073.v
 
 Grp: MS-Element2006-07-15 / elemT074
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95253,13 +95251,13 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37038 (omitting non-accepted tests)
+Total number of tests: 37037 (omitting non-accepted tests)
    13748 XSD files (not including those parsed automatically)
-   23355 XML files
+   23354 XML files
 NI: Features not implemented: in_partial= 210 in_full_fail= 2252
-SP: XSD KO, should be OK: in_full_fail= 92
+SP: XSD KO, should be OK: in_full_fail= 93
 SF: XSD OK, should be KO: in_full_fail= 643
-XP: XML KO, should be OK: in_partial= 15 in_full_fail= 1
+XP: XML KO, should be OK: in_partial= 14 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 2 in_full_fail= 2
 IE: Internal error:
 Total errors: 755 ( 2.0 %)

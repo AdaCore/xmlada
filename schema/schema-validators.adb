@@ -1954,6 +1954,7 @@ package body Schema.Validators is
          Nillable            => True,
          Final_Restriction   => False,
          Final_Extension     => False,
+         Blocks_Is_Set       => False,
          Blocks              => (others => False),
          Is_Global           => False,
          Form                => Form,
@@ -2041,6 +2042,7 @@ package body Schema.Validators is
             Nillable            => True,
             Final_Restriction   => False,
             Final_Extension     => False,
+            Blocks_Is_Set       => False,
             Blocks              => Get_Block_Default (Grammar),
             Is_Global           => True,
             Form                => Form,
@@ -3907,7 +3909,9 @@ package body Schema.Validators is
            Get_Validator (Get_Type (Head))
       then
          Check_Replacement
-           (Get_Validator (Get_Type (Element)), Get_Type (Head),
+           (Get_Validator (Get_Type (Element)),
+            Element         => Head,
+            Typ             => Get_Type (Head),
             Valid           => Valid_Replacement,
             Had_Restriction => Had_Restriction,
             Had_Extension   => Had_Extension);
@@ -4888,8 +4892,18 @@ package body Schema.Validators is
      (Element : XML_Element;
       Blocks  : Block_Status) is
    begin
+      Element.Elem.Blocks_Is_Set := True;
       Element.Elem.Blocks := Blocks;
    end Set_Block;
+
+   ---------------
+   -- Has_Block --
+   ---------------
+
+   function Has_Block (Element : XML_Element) return Boolean is
+   begin
+      return Element.Elem.Blocks_Is_Set;
+   end Has_Block;
 
    ---------------
    -- Get_Block --
@@ -4906,12 +4920,13 @@ package body Schema.Validators is
 
    procedure Check_Replacement
      (Validator       : access XML_Validator_Record;
+      Element         : XML_Element;
       Typ             : XML_Type;
       Valid           : out Boolean;
       Had_Restriction : in out Boolean;
       Had_Extension   : in out Boolean)
    is
-      pragma Unreferenced (Validator, Had_Restriction, Had_Extension);
+      pragma Unreferenced (Validator, Element, Had_Restriction, Had_Extension);
    begin
       Valid := Is_Wildcard (Get_Validator (Typ));
    end Check_Replacement;
@@ -5619,5 +5634,38 @@ package body Schema.Validators is
    begin
       return False;
    end Is_Wildcard;
+
+   --------------------------------
+   -- Check_Replacement_For_Type --
+   --------------------------------
+
+   procedure Check_Replacement_For_Type
+     (Validator         : access XML_Validator_Record'Class;
+      Element           : XML_Element;
+      Valid             : out Boolean;
+      Had_Restriction   : in out Boolean;
+      Had_Extension     : in out Boolean)
+   is
+      Typ : constant XML_Type := Get_Type (Element);
+   begin
+      if Get_Validator (Typ).all in XML_Union_Record'Class then
+         Check_Replacement_For_Union
+           (Validator,
+            XML_Union_Record (Get_Validator (Typ).all),
+            Element         => Element,
+            Valid           => Valid,
+            Had_Restriction => Had_Restriction,
+            Had_Extension   => Had_Extension);
+
+      else
+         Check_Replacement
+           (Validator,
+            Element         => Element,
+            Typ             => Typ,
+            Valid           => Valid,
+            Had_Restriction => Had_Restriction,
+            Had_Extension   => Had_Extension);
+      end if;
+   end Check_Replacement_For_Type;
 
 end Schema.Validators;

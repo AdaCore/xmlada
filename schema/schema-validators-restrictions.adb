@@ -75,6 +75,7 @@ package body Schema.Validators.Restrictions is
       Facet_Value : Unicode.CES.Byte_Sequence);
    procedure Check_Replacement
      (Validator         : access Restriction_XML_Validator;
+      Element           : XML_Element;
       Typ               : XML_Type;
       Valid             : out Boolean;
       Had_Restriction   : in out Boolean;
@@ -356,17 +357,28 @@ package body Schema.Validators.Restrictions is
 
    procedure Check_Replacement
      (Validator       : access Restriction_XML_Validator;
+      Element         : XML_Element;
       Typ             : XML_Type;
       Valid           : out Boolean;
       Had_Restriction : in out Boolean;
       Had_Extension   : in out Boolean)
    is
       B : constant XML_Validator := Get_Validator (Typ);
+      Block : Block_Status;
    begin
       --  See rule in extensions implementation
+      --  As per 3.3.4.3, "block" comes from either the element declaration, or
+      --  if there is none, from the type.
+
+      if Has_Block (Element) then
+         Block := Get_Block (Element);
+      else
+         Block := Get_Block (Typ);
+      end if;
 
       Valid := (XML_Validator (Validator) = B    --  1
-                or else not Typ.Blocks (Block_Restriction));
+                or else not Block (Block_Restriction));
+
       if Valid then
          Valid := XML_Validator (Validator) = B        --  2.1
            or else Get_Validator (Validator.Base) = B; --  2.2
@@ -375,7 +387,7 @@ package body Schema.Validators.Restrictions is
            and then not Is_Wildcard (Get_Validator (Validator.Base)) --  2.3.1
          then
             Check_Replacement                       --  2.3.2
-              (Get_Validator (Validator.Base),
+              (Get_Validator (Validator.Base), Element,
                Typ, Valid, Had_Restriction, Had_Extension);
          end if;
       end if;

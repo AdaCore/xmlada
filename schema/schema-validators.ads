@@ -538,14 +538,26 @@ package Schema.Validators is
 
    procedure Check_Replacement
      (Validator         : access XML_Validator_Record;
+      Element           : XML_Element;
       Typ               : XML_Type;
       Valid             : out Boolean;
       Had_Restriction   : in out Boolean;
       Had_Extension     : in out Boolean);
-   --  Check whether Validator is a valid replacement for Typ (either an
-   --  extension or a restriction, and not blocked by a "block" attribute).
+   --  Check whether Validator is a valid replacement for Element's type
+   --  (either an extension or a restriction, and not blocked by a "block"
+   --  attribute).
+   --  Typ is set to the type of the element. But if the element is a union, it
+   --  is set in turn to each member of the union.
    --  Had_* Indicate whether a restriction or extension was encountered while
    --  going up the inheritance tree so far.
+
+   procedure Check_Replacement_For_Type
+     (Validator         : access XML_Validator_Record'Class;
+      Element           : XML_Element;
+      Valid             : out Boolean;
+      Had_Restriction   : in out Boolean;
+      Had_Extension     : in out Boolean);
+   --  Non dispatching version which properly handles unions
 
    procedure Check_Content_Type
      (Validator        : access XML_Validator_Record;
@@ -646,6 +658,7 @@ package Schema.Validators is
      (Element : XML_Element;
       Blocks  : Block_Status);
    function Get_Block (Element : XML_Element) return Block_Status;
+   function Has_Block (Element : XML_Element) return Boolean;
    --  Set the "block" status of the element
 
    procedure Check_Qualification
@@ -1044,7 +1057,8 @@ private
       --  Whether this element is final for "restriction" or "extension" or
       --  both
 
-      Blocks : Block_Status := (others => False);
+      Blocks_Is_Set : Boolean := False;
+      Blocks        : Block_Status := (others => False);
       --  The value for the "block" attribute of the element
 
       Form : Form_Type;

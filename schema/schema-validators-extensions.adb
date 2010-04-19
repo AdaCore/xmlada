@@ -71,6 +71,7 @@ package body Schema.Validators.Extensions is
       Must_Match_All_Any_In_Dep2 : out Boolean);
    procedure Check_Replacement
      (Validator       : access Extension_XML_Validator;
+      Element         : XML_Element;
       Typ             : XML_Type;
       Valid           : out Boolean;
       Had_Restriction : in out Boolean;
@@ -327,6 +328,7 @@ package body Schema.Validators.Extensions is
 
    procedure Check_Replacement
      (Validator       : access Extension_XML_Validator;
+      Element         : XML_Element;
       Typ             : XML_Type;
       Valid           : out Boolean;
       Had_Restriction : in out Boolean;
@@ -355,7 +357,7 @@ package body Schema.Validators.Extensions is
            and then not Is_Wildcard (Get_Validator (Validator.Base)) --  2.3.1
          then
             Check_Replacement                       --  2.3.2
-              (Get_Validator (Validator.Base),
+              (Get_Validator (Validator.Base), Element,
                Typ, Valid, Had_Restriction, Had_Extension);
          end if;
       end if;
