@@ -1034,6 +1034,9 @@ package body Schema.Schema_Readers is
          then
             Validation_Error
               ("""ref"" attribute cannot be self-referencing");
+
+         elsif Ref_Index /= -1 then
+            Validation_Error ("Name and Ref cannot be both specified");
          end if;
 
       elsif Ref_Index = -1 then
@@ -1061,6 +1064,10 @@ package body Schema.Schema_Readers is
       end if;
 
       if Default_Index /= -1 then
+         if Fixed_Index /= -1 then
+            Validation_Error ("Default and Fixed cannot be both specified");
+         end if;
+
          Set_Default
            (Element, Get_Value (Atts, Default_Index),
             Get_Context (Handler).all);
@@ -1956,6 +1963,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "form");
       Default_Index : constant Integer :=
         Get_Index (Atts, URI => "", Local_Name => "default");
+      Target_NS_Index : constant Integer :=
+        Get_Index (Atts, URI => "", Local_Name => "targetNamespace");
 
       Att : Attribute_Validator;
       Typ : XML_Type := No_Type;
@@ -1981,8 +1990,32 @@ package body Schema.Schema_Readers is
       end Get_Fixed;
 
    begin
+      --  See section 3.2.3 for valid attributes combination
+
+      if Target_NS_Index /= -1 then
+         if Name_Index = -1 then
+            Validation_Error
+              ("name must be specified when targetNamespace is specified");
+         end if;
+
+         if Form_Index /= -1 then
+            Validation_Error
+              ("Cannot specify ""form"" when targetNamespace is given");
+         end if;
+
+         Raise_Exception
+           (XML_Not_Implemented'Identity,
+            "targetNamespace not supported in attribute declaration");
+      end if;
+
       if Form_Index /= -1 then
          Form := Form_Type'Value (Get_Value (Atts, Form_Index));
+
+         if Ref_Index /= -1 then
+            Validation_Error
+              ("Attributes ""form"" and ""ref"" cannot be both specified");
+         end if;
+
       else
          Form := Handler.Attribute_Form_Default;
       end if;
@@ -2024,6 +2057,20 @@ package body Schema.Schema_Readers is
                Use_Type := Optional;
             end if;
          end;
+
+         if Default_Index /= -1
+           and then Use_Type /= Optional
+         then
+            Validation_Error
+              ("Use must be ""optional"" when a default value is specified");
+         end if;
+
+         if Fixed_Index /= -1
+           and then Use_Type = Prohibited
+         then
+            Validation_Error
+              ("""prohibited"" is forbidden when a fixed value is specified");
+         end if;
       end if;
 
       Handler.Contexts := new Context'

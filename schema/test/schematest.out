@@ -44471,8 +44471,9 @@ Grp: AttrDecl / ad_valconstr00201m1
     AD_valConstr00201m1.xsd:29:37: Attributes "fixed" and "default" cannot be both specified
 
 Grp: AttrDecl / ad_valconstr00201m2
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF AD_valConstr00201m2
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK AD_valConstr00201m2
+    AD_valConstr00201m2.xsd:29:37: Use must be "optional" when a default value is specified
 
 Grp: AttrDecl / ad_valconstr00201m3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -45053,12 +45054,14 @@ Grp: ElemDecl / name00401m2
   OK Positive
 
 Grp: ElemDecl / name00401m3
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF name00401m3
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK name00401m3
+    name00401m3.xsd:19:53: Name and Ref cannot be both specified
 
 Grp: ElemDecl / name00401m4
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF name00401m4
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK name00401m4
+    name00401m4.xsd:19:53: Name and Ref cannot be both specified
 
 Grp: ElemDecl / name00401m5
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -45699,17 +45702,17 @@ Grp: ElemDecl / valueconstraint00301m2
 Grp: ElemDecl / valueconstraint00301m3
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK valueConstraint00301m3
-    valueConstraint00301m3.xsd:14:70: Attributes "fixed" and "default" conflict with each other
+    valueConstraint00301m3.xsd:14:70: Default and Fixed cannot be both specified
 
 Grp: ElemDecl / valueconstraint00301m4
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK valueConstraint00301m4
-    valueConstraint00301m4.xsd:14:70: Attributes "fixed" and "default" conflict with each other
+    valueConstraint00301m4.xsd:14:70: Default and Fixed cannot be both specified
 
 Grp: ElemDecl / valueconstraint00301m5
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK valueConstraint00301m5
-    valueConstraint00301m5.xsd:14:70: Attributes "fixed" and "default" conflict with each other
+    valueConstraint00301m5.xsd:14:70: Default and Fixed cannot be both specified
 
 Grp: ElemDecl / valueconstraint00401m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -50268,12 +50271,14 @@ Grp: MS-Attribute2006-07-15 / attKb003
   OK attKb003
 
 Grp: MS-Attribute2006-07-15 / attKb004
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKb004
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKb004
+    attKb004.xsd:6:60: Use must be "optional" when a default value is specified
 
 Grp: MS-Attribute2006-07-15 / attKb005
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKb005
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKb005
+    attKb005.xsd:6:62: Use must be "optional" when a default value is specified
 
 Grp: MS-Attribute2006-07-15 / attKb006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50288,8 +50293,9 @@ Grp: MS-Attribute2006-07-15 / attKb008
   OK attKb008
 
 Grp: MS-Attribute2006-07-15 / attKb009
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attKb009
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attKb009
+    attKb009.xsd:6:60: "prohibited" is forbidden when a fixed value is specified
 
 Grp: MS-Attribute2006-07-15 / attKb010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50300,8 +50306,9 @@ Grp: MS-Attribute2006-07-15 / attKb011
   SF attKb011
 
 Grp: MS-Attribute2006-07-15 / attKb012
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKb012
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKb012
+    attKb012.xsd:6:48: Attributes "form" and "ref" cannot be both specified
 
 Grp: MS-Attribute2006-07-15 / attKb013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50348,12 +50355,14 @@ Grp: MS-Attribute2006-07-15 / attKc003
   OK attKc003
 
 Grp: MS-Attribute2006-07-15 / attKc004
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKc004
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKc004
+    attKc004.xsd:10:59: Use must be "optional" when a default value is specified
 
 Grp: MS-Attribute2006-07-15 / attKc005
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKc005
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKc005
+    attKc005.xsd:10:61: Use must be "optional" when a default value is specified
 
 Grp: MS-Attribute2006-07-15 / attKc006
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50368,8 +50377,9 @@ Grp: MS-Attribute2006-07-15 / attKc008
   OK attKc008
 
 Grp: MS-Attribute2006-07-15 / attKc009
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK attKc009
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attKc009
+    attKc009.xsd:10:59: "prohibited" is forbidden when a fixed value is specified
 
 Grp: MS-Attribute2006-07-15 / attKc010
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -50380,8 +50390,9 @@ Grp: MS-Attribute2006-07-15 / attKc011
   SF attKc011
 
 Grp: MS-Attribute2006-07-15 / attKc012
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKc012
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKc012
+    attKc012.xsd:13:50: Attributes "form" and "ref" cannot be both specified
 
 Grp: MS-Attribute2006-07-15 / attKc013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -50991,19 +51002,19 @@ Grp: MS-Attribute2006-07-15 / attP028
   OK attP028.v
 
 Grp: MS-Attribute2006-07-15 / attP029
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attP029
-  OK attP029.v
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attP029
+    attP029.xsd:4:58: "prohibited" is forbidden when a fixed value is specified
 
 Grp: MS-Attribute2006-07-15 / attP030
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attP030
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attP030
+    attP030.xsd:4:60: Use must be "optional" when a default value is specified
 
 Grp: MS-Attribute2006-07-15 / attP031
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
-  OK attP031
-  OK attP031.i
-    attP031.xml:3:22: Attribute "x:att" is prohibited in this context
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP attP031
+    attP031.xsd:4:58: "prohibited" is forbidden when a fixed value is specified
 
 Grp: MS-Attribute2006-07-15 / attP032
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -65347,7 +65358,7 @@ Grp: MS-Element2006-07-15 / elemD002
 Grp: MS-Element2006-07-15 / elemD003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemD003
-    elemD003.xsd:3:72: Attributes "fixed" and "default" conflict with each other
+    elemD003.xsd:3:72: Default and Fixed cannot be both specified
 
 Grp: MS-Element2006-07-15 / elemD004
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -65822,12 +65833,12 @@ Grp: MS-Element2006-07-15 / elemO012
 Grp: MS-Element2006-07-15 / elemP001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemP001
-    elemP001.xsd:3:90: Attributes "fixed" and "default" conflict with each other
+    elemP001.xsd:3:90: Default and Fixed cannot be both specified
 
 Grp: MS-Element2006-07-15 / elemP002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK elemP002
-    elemP002.xsd:5:92: Attributes "fixed" and "default" conflict with each other
+    elemP002.xsd:5:92: Default and Fixed cannot be both specified
 
 Grp: MS-Element2006-07-15 / elemP003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -95248,13 +95259,13 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37037 (omitting non-accepted tests)
+Total number of tests: 37035 (omitting non-accepted tests)
    13748 XSD files (not including those parsed automatically)
-   23354 XML files
+   23352 XML files
 NI: Features not implemented: in_partial= 210 in_full_fail= 2252
-SP: XSD KO, should be OK: in_full_fail= 93
-SF: XSD OK, should be KO: in_full_fail= 643
+SP: XSD KO, should be OK: in_full_fail= 97
+SF: XSD OK, should be KO: in_full_fail= 633
 XP: XML KO, should be OK: in_partial= 11 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 2 in_full_fail= 2
 IE: Internal error:
-Total errors: 752 ( 2.0 %)
+Total errors: 746 ( 2.0 %)
