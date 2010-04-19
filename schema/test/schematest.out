@@ -60340,10 +60340,9 @@ Grp: MS-DataTypes2006-07-15 / anyURI_b001_1352
     anyURI_b001.xml:5:15: Element's value not in the enumeration set
 
 Grp: MS-DataTypes2006-07-15 / anyURI_b002_1353
-  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK anyURI_b002_1353
-  XP anyURI_b002_1353.v
-    anyURI_b002.xml:3:68: Attribute "att": Invalid value: "a名前空間名前空間名前空間名前空間名前空間名前空間名前空間名前空間名前空間名前空間名前空間名前空間
+  OK anyURI_b002_1353.v
 
 Grp: MS-DataTypes2006-07-15 / anyURI_b004_1354
   NaN% tests= 0 (xsd= 0 xml= 0) OK= 0 FAILED= 0
@@ -95257,7 +95256,7 @@ Total number of tests: 37037 (omitting non-accepted tests)
 NI: Features not implemented: in_partial= 210 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 93
 SF: XSD OK, should be KO: in_full_fail= 643
-XP: XML KO, should be OK: in_partial= 14 in_full_fail= 1
+XP: XML KO, should be OK: in_partial= 13 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 2 in_full_fail= 2
 IE: Internal error:
-Total errors: 755 ( 2.0 %)
+Total errors: 754 ( 2.0 %)

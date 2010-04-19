@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2005-2009, AdaCore               --
+--                    Copyright (C) 2005-2010, AdaCore               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -60,6 +60,23 @@ package body Sax.Utils is
       Slash              => True,
       Pound_Sign         => True,
       Tilde              => True,
+--        16#A0#    .. 16#D7FF#  => True,  --  ucschars from RFC 3987
+--        16#F900#  .. 16#FDCF#  => True,
+--        16#FDF0#  .. 16#FFEF#  => True,
+--        16#10000# .. 16#1FFFD# => True,
+--        16#20000# .. 16#2FFFD# => True,
+--        16#30000# .. 16#3FFFD# => True,
+--        16#40000# .. 16#4FFFD# => True,
+--        16#50000# .. 16#5FFFD# => True,
+--        16#60000# .. 16#6FFFD# => True,
+--        16#70000# .. 16#7FFFD# => True,
+--        16#80000# .. 16#8FFFD# => True,
+--        16#90000# .. 16#9FFFD# => True,
+--        16#A0000# .. 16#AFFFD# => True,
+--        16#B0000# .. 16#BFFFD# => True,
+--        16#C0000# .. 16#CFFFD# => True,
+--        16#D0000# .. 16#DFFFD# => True,
+--        16#E0000# .. 16#EFFFD# => True,
       others => False);
    --  Rules based on RFC 2141, at http://rfc.net/rfc2141.html,
    --  completed with rules from Uniformed Resource Identifier at
@@ -478,8 +495,12 @@ package body Sax.Utils is
             end if;
             Has_Hash := True;
 
-         elsif C not in Valid_URI_Characters'Range
-           or else not Valid_URI_Characters (C)
+         --  RFC3987 authorizes a big range of UCSchars, excluding only some of
+         --  the characters. We'll just accept them here, no point in wasting
+         --  time for a case that will never occur in practice
+
+         elsif C in Valid_URI_Characters'Range
+           and then not Valid_URI_Characters (C)
          then
             return URI_None;
          end if;
