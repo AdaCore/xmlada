@@ -49,14 +49,13 @@ with Sax.Readers;           use Sax.Readers;
 with GNAT.Command_Line;     use GNAT.Command_Line;
 
 procedure TestSchema is
-   Debug     : Boolean := False;
-   Read      : File_Input;
-   My_Reader : Validating_Reader_Access;
-   Schema    : Schema_Reader;
-   Grammar   : XML_Grammar := No_Grammar;
+   Read         : File_Input;
+   My_Reader    : Validating_Reader_Access;
+   Schema       : Schema_Reader;
+   Grammar      : XML_Grammar := No_Grammar;
    Explicit_XSD : Boolean := False;
-   Switches  : constant String := "xsd: debug base dom h";
-   DOM       : Boolean := False;
+   Switches     : constant String := "xsd: debug base dom h";
+   DOM          : Boolean := False;
 
 begin
    --  Special case: check if we want debug output, before doing anything else
@@ -73,10 +72,7 @@ begin
 
          when 'd' =>
             if Full_Switch = "debug" then
-               Debug := True;
-               Standard.Schema.Readers.Set_Debug_Output (True);
-               Standard.Schema.Validators.Set_Debug_Output (True);
-               Standard.Schema.Schema_Readers.Set_Debug_Output (True);
+               Standard.Schema.Validators.Debug := True;
             elsif Full_Switch = "dom" then
                DOM := True;
             end if;
@@ -99,11 +95,9 @@ begin
    --  is slightly more complex than a single grammar, since some checks can
    --  only be done at the end, and we need to let XML/Ada know about that.
 
-   Set_Created_Grammar (Schema, No_Grammar);
+   Set_XSD_Version (Grammar, XSD_1_0);
+   Set_Created_Grammar (Schema, Grammar);
    Initialize_Option_Scan;
-
-   Set_Supported_Features   --  not needed here, just for example
-     (Schema, (XSD_Version => XSD_1_0));
 
    loop
       case Getopt (Switches) is
@@ -141,7 +135,6 @@ begin
 
    if Explicit_XSD then
       Grammar  := Get_Created_Grammar (Schema);
-      Global_Check (Grammar);
 
       --  Validate the documents with the schemas we have just parsed.
       Set_Validating_Grammar (My_Reader.all, Grammar);

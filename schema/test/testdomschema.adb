@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -26,8 +26,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Schema.Readers;        use Schema.Readers;
---  with Schema.Schema_Grammar; use Schema.Schema_Grammar;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 with Schema.Validators;     use Schema.Validators;
 with Schema.Dom_Readers;    use Schema.Dom_Readers;
@@ -57,9 +55,7 @@ begin
             Free (Xsd_File);
             Xsd_File := new String'(Parameter);
          when 'd' =>
-            Standard.Schema.Readers.Set_Debug_Output (True);
-            Standard.Schema.Validators.Set_Debug_Output (True);
-            Standard.Schema.Schema_Readers.Set_Debug_Output (True);
+            Standard.Schema.Validators.Debug := True;
          when 's' =>
             Silent := True;
          when others =>

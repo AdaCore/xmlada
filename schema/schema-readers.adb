@@ -47,8 +47,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Schema.Readers is
 
-   Debug : Boolean := False;
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Validator_List_Record, Validator_List);
 
@@ -111,15 +109,6 @@ package body Schema.Readers is
    --  Whether the head validator has a fixed attribute (either defined for
    --  the element, for the xsi:type, or its type, and return that fixed value
 
-   ----------------------
-   -- Set_Debug_Output --
-   ----------------------
-
-   procedure Set_Debug_Output (Output : Boolean) is
-   begin
-      Debug := Output;
-   end Set_Debug_Output;
-
    ---------------
    -- Has_Fixed --
    ---------------
@@ -160,16 +149,6 @@ package body Schema.Readers is
    begin
       Reader.Context.Grammar := Grammar;
    end Set_Validating_Grammar;
-
-   ----------------------------
-   -- Get_Validating_Grammar --
-   ----------------------------
-
-   function Get_Validating_Grammar
-     (Reader : Validating_Reader) return Schema.Validators.XML_Grammar is
-   begin
-      return Reader.Context.Grammar;
-   end Get_Validating_Grammar;
 
    ----------
    -- Push --
@@ -251,6 +230,7 @@ package body Schema.Readers is
      (Handler  : in out Validating_Reader;
       URI      : Byte_Sequence;
       Xsd_File : Byte_Sequence;
+      Do_Global_Check : Boolean;
       Add_To   : in out XML_Grammar)
    is
       File     : File_Input;
@@ -313,9 +293,9 @@ package body Schema.Readers is
       Set_Created_Grammar (Schema, Add_To);
       Use_Basename_In_Error_Messages
         (Schema, Use_Basename_In_Error_Messages (Handler));
-      Parse (Schema, File, Default_Namespace => URI);
+      Parse (Schema, File,
+             Default_Namespace => URI, Do_Global_Check => Do_Global_Check);
       Close (File);
-      Add_To := Get_Created_Grammar (Schema);
 
       if Debug then
          Put_Line ("Done parsing new grammar: " & Xsd_File);
@@ -378,6 +358,7 @@ package body Schema.Readers is
            (Handler,
             URI      => Schema_Location (Start_NS .. Last_NS - 1),
             Xsd_File => Schema_Location (Start_XSD .. Last_XSD - 1),
+            Do_Global_Check => True,
             Add_To   => Handler.Context.Grammar);
 
          while Index <= Schema_Location'Last loop
@@ -668,16 +649,13 @@ package body Schema.Readers is
            (Validating_Reader (Handler),
             URI      => "",
             Xsd_File => Get_Value (Atts, No_Index),
+            Do_Global_Check => True,
             Add_To   => Validating_Reader (Handler).Context.Grammar);
       end if;
 
       if Location_Index /= -1 then
          Parse_Grammars (Validating_Reader (Handler),
                          Get_Value (Atts, Location_Index));
-      end if;
-
-      if No_Index /= -1 or else Location_Index /= -1 then
-         Global_Check (Validating_Reader (Handler).Context.Grammar);
       end if;
 
       if Validating_Reader (Handler).Context.Grammar = No_Grammar then
@@ -973,7 +951,7 @@ package body Schema.Readers is
    begin
       Validation_Error
         (To_String (Get_Locator (Except),
-         Use_Basename_In_Error_Messages (Reader))
+                    Use_Basename_In_Error_Messages (Reader))
          & ": " & String (Get_Message (Except)));
    end Validation_Error;
 

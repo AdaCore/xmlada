@@ -88,7 +88,7 @@ procedure Schematest is
    --  tests might be under discussion, and have a status of "queried". Such
    --  tests are not run.
 
-   Features : Supported_Features := All_Features;
+   XSD_Version : XSD_Versions := XSD_1_1;
 
    Xlink : constant String := "http://www.w3.org/1999/xlink";
 
@@ -145,7 +145,8 @@ procedure Schematest is
      (Group          : in out Group_Result;
       Schema         : Node;
       Base_Dir       : String;
-      Grammar        : out XML_Grammar;
+      Failed_Grammar : out Boolean;
+      Grammar        : in out XML_Grammar;
       Schema_Files   : out Unbounded_String);
    procedure Parse_Instance_Test
      (Group          : in out Group_Result;
@@ -341,7 +342,8 @@ procedure Schematest is
      (Group          : in out Group_Result;
       Schema         : Node;
       Base_Dir       : String;
-      Grammar        : out XML_Grammar;
+      Failed_Grammar : out Boolean;
+      Grammar        : in out XML_Grammar;
       Schema_Files   : out Unbounded_String)
    is
       Result   : Test_Result;
@@ -351,20 +353,20 @@ procedure Schematest is
       N        : Node := First_Child (Schema);
       Outcome  : constant Outcome_Value := Get_Expected (Schema);
    begin
-      Result.Name   := To_Unbounded_String (Name);
-      Result.Kind   := Passed;
-      Grammar       := No_Grammar;
-      Schema_Files  := Null_Unbounded_String;
+      Failed_Grammar := False;
+      Result.Name    := To_Unbounded_String (Name);
+      Result.Kind    := Passed;
+      Schema_Files   := Null_Unbounded_String;
 
       if Accepted_Only and then Get_Status (Schema) /= Accepted then
          --  Do not increment Group.Test_Count
-         Result.Kind      := Not_Accepted;
+         Result.Kind    := Not_Accepted;
+         Failed_Grammar := True;
 
       else
          begin
-            Set_Created_Grammar (Reader, No_Grammar);
+            Set_Created_Grammar (Reader, Grammar);
             Use_Basename_In_Error_Messages (Reader, True);
-            Set_Supported_Features (Reader, Features);
 
             Group.Test_Count := Group.Test_Count + 1;
 
@@ -391,11 +393,10 @@ procedure Schematest is
             end loop;
 
             Grammar := Get_Created_Grammar (Reader);
-            Global_Check (Grammar);
 
             if Outcome = Invalid then
                Result.Kind  := XSD_Should_Fail;
-               Grammar := No_Grammar;
+               Failed_Grammar := True;
             end if;
 
          exception
@@ -403,14 +404,14 @@ procedure Schematest is
                Close (Input);
                Result.Kind := Not_Implemented;
                Result.Msg  := To_Unbounded_String (Exception_Message (E));
-               Grammar     := No_Grammar;
+               Failed_Grammar := True;
 
             when E : XML_Validation_Error | XML_Fatal_Error =>
                Close (Input);
                Result.Msg  := To_Unbounded_String (Exception_Message (E));
+               Failed_Grammar := True;
                if Outcome = Valid then
-                  Result.Kind := XSD_Should_Pass;
-                  Grammar     := No_Grammar;
+                  Result.Kind    := XSD_Should_Pass;
                else
                   Result.Kind := Passed;
                end if;
@@ -419,7 +420,7 @@ procedure Schematest is
                Close (Input);
                Result.Kind := Internal_Error;
                Result.Msg  := To_Unbounded_String (Exception_Information (E));
-               Grammar     := No_Grammar;
+               Failed_Grammar := True;
          end;
       end if;
 
@@ -485,8 +486,6 @@ procedure Schematest is
                      Input);
                Result.XML := To_Unbounded_String (Get_System_Id (Input));
 
-               --  Can't comapre Grammar=No_Grammar, since some tests do not
-               --  explicitly pass a grammar
                if Failed_Grammar then
                   if Outcome = Valid then
                      Result.Kind := XML_Should_Pass;
@@ -584,18 +583,20 @@ procedure Schematest is
       Group      : Node;
       Base_Dir   : String)
    is
-      Name   : constant String := Get_Attribute (Group, "name");
-      N      : Node := First_Child (Group);
-      Schema : XML_Grammar;
-      Schema_Files : Unbounded_String;
-      Result : Group_Result;
-      Total_Errors : Natural := 0;
-      Cursor : Test_Result_Lists.Cursor;
-      Kind   : Result_Kind;
+      Name           : constant String := Get_Attribute (Group, "name");
+      N              : Node := First_Child (Group);
+      Schema         : XML_Grammar := No_Grammar;
+      Schema_Files   : Unbounded_String;
+      Result         : Group_Result;
+      Total_Errors   : Natural := 0;
+      Cursor         : Test_Result_Lists.Cursor;
+      Kind           : Result_Kind;
       Failed_Grammar : Boolean := False;
    begin
       Result.Name := To_Unbounded_String (Testset & " / " & Name);
       Result.Counts := (others => 0);
+
+      Set_XSD_Version (Schema, XSD_Version);
 
       if Find (Groups, To_String (Result.Name)) /= Group_Hash.No_Element then
          Result := Group_Hash.Element (Groups, To_String (Result.Name));
@@ -616,22 +617,19 @@ procedure Schematest is
          elsif Local_Name (N) = "schemaTest" then
             Parse_Schema_Test
               (Result, N, Base_Dir,
-               Grammar      => Schema,
-               Schema_Files => Schema_Files);
+               Failed_Grammar => Failed_Grammar,
+               Grammar        => Schema,
+               Schema_Files   => Schema_Files);
 
-            --  If Schema=No_Grammar, we failed to parse the grammar. But that
-            --  might be accepted, so we'll still run each test, marking them
-            --  all as "can't parse" (which might be the expected result)
-
+            --  If we failed to parse the grammar, that might be accepted, so
+            --  we'll still run each test, marking them all as "can't parse"
+            --  (which might be the expected result)
             --  ??? For now, we simply do not run any of the tests. But there
             --  are situations where XML/Ada report an error on the XSD rather
             --  than on the XML (for instance disallowedSubst00503m4_n where
             --  we restrict a type that has block="restriction").
 
-            if Schema = No_Grammar then
-               Failed_Grammar := True;
-               exit;
-            end if;
+            exit when Failed_Grammar;
 
          elsif Local_Name (N) = "instanceTest" then
             Parse_Instance_Test (Result, Schema_Files, N, Base_Dir, Schema,
@@ -915,7 +913,7 @@ begin
    end if;
 
    loop
-      case Getopt ("v d a h f -filter: -descr -group -hide: -feature:"
+      case Getopt ("v d a h f -filter: -descr -group -hide: -xsd10"
                    & " -cvs") is
          when 'h'    =>
             Put_Line ("-v   Verbose mode");
@@ -934,13 +932,13 @@ begin
                       & " for more up-to-date data");
             Put_Line ("--group Hide fully failed groups");
             Put_Line ("     These likely show unimplemented features");
-            Put_Line ("--feature name    Disable support for a feature");
-            Put_Line ("     Valid names are: xsd_1_0");
+            Put_Line ("--xsd10 Support for version XSD 1.0");
             return;
 
          when 'v' => Verbose := True;
          when 'd' => Debug   := True;
          when 'f' => Show_Files := True;
+
          when '-' =>
             if Full_Switch = "-group" then
                Hide_Fully_Failed_Groups := True;
@@ -948,13 +946,8 @@ begin
             elsif Full_Switch = "-cvs" then
                Check_Alternative_Dir := True;
 
-            elsif Full_Switch = "-feature" then
-               if Parameter = "xsd_1_0" then
-                  Features.XSD_Version := XSD_1_0;
-               else
-                  Put_Line ("Invalid feature name");
-                  return;
-               end if;
+            elsif Full_Switch = "-xsd10" then
+               XSD_Version := XSD_1_0;
 
             elsif Full_Switch = "-filter"
               or else Full_Switch = "-hide"
@@ -1011,9 +1004,7 @@ begin
    Parse_Disabled;
 
    if Debug then
-      Schema.Readers.Set_Debug_Output (True);
-      Schema.Validators.Set_Debug_Output (True);
-      Schema.Schema_Readers.Set_Debug_Output (True);
+      Schema.Validators.Debug := True;
    end if;
 
    Put_Line (Base_Name (Command_Name, ".exe"));

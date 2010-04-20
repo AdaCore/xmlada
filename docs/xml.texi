@@ -1589,15 +1589,11 @@ validating a file.
      Close (Read);
 
      Grammar := Get_Created_Grammar (Schema);
-     Global_Check (Grammar);
 @b{end} SchemaExample2;
 @end smallexample
 
       In the example above, the schema file itself is validated against the
-      official schema for schema files. This slows down the process slightly,
-      obviously, and is in fact not needed if you know that the file is valid.
-      In this case, you can comment out the line containing the call to
-      @code{Set_Validating_Grammar}.
+      official schema for schema files.
 
       The resulting grammar object is in fact a collection of parsed schema
       files, each associated with its own namespace. It can be kept as long as

@@ -42,8 +42,6 @@ with Ada.Unchecked_Deallocation;
 
 package body Schema.Schema_Readers is
 
-   Debug : Boolean := False;
-
    Max_Namespaces_In_Any_Attribute : constant := 50;
    --  Maximum number of namespaces for a <anyAttribute>
    --  This only impacts the parsing of the grammar, so can easily be raised if
@@ -55,7 +53,8 @@ package body Schema.Schema_Readers is
    procedure Get_Grammar_For_Namespace
      (Handler : in out Schema_Reader'Class;
       Prefix  : Byte_Sequence;
-      Grammar : out XML_Grammar_NS);
+      Grammar : out XML_Grammar_NS;
+      Create_If_Needed : Boolean := True);
    --  Return the grammar matching a given prefix
 
    procedure Output (Str : String);
@@ -76,9 +75,9 @@ package body Schema.Schema_Readers is
       QName   : Byte_Sequence;
       Result  : out XML_Group);
    procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
-      QName   : Byte_Sequence;
-      Result  : out XML_Attribute_Group);
+     (Handler    : in out Schema_Reader'Class;
+      QName      : Byte_Sequence;
+      Result     : out XML_Attribute_Group);
    --  Lookup a type or element  with a possible namespace specification
 
    function Create_Repeat
@@ -323,50 +322,26 @@ package body Schema.Schema_Readers is
      (Reader  : in out Schema_Reader;
       Grammar : Schema.Validators.XML_Grammar := No_Grammar) is
    begin
-      Reader.Supported.XSD_Version := Get_XSD_Version (Grammar);
       Reader.Created_Grammar := Grammar;
-      Reader.Check_Undefined := False;
    end Set_Created_Grammar;
-
-   --------------------
-   -- Start_Document --
-   --------------------
-
-   procedure Start_Document (Handler : in out Schema_Reader) is
-   begin
-      Set_XSD_Version (Handler.Created_Grammar,
-                       Handler.Supported.XSD_Version);
-      Get_NS (Handler.Created_Grammar, XML_Schema_URI, Handler.Schema_NS);
-
-      Set_Validating_Grammar (Handler, Handler.Created_Grammar);
-   end Start_Document;
-
-   ------------------
-   -- End_Document --
-   ------------------
-
-   procedure End_Document (Handler : in out Schema_Reader) is
-      pragma Unmodified (Handler);
-   begin
-      if Handler.Check_Undefined then
-         Global_Check (Handler.Created_Grammar);
-      end if;
-   end End_Document;
 
    -----------
    -- Parse --
    -----------
 
    procedure Parse
-     (Parser : in out Schema_Reader;
-      Input  : in out Input_Sources.Input_Source'Class;
-      Default_Namespace : Unicode.CES.Byte_Sequence) is
+     (Parser            : in out Schema_Reader;
+      Input             : in out Input_Sources.Input_Source'Class;
+      Default_Namespace : Unicode.CES.Byte_Sequence;
+      Do_Global_Check   : Boolean) is
    begin
       if not URI_Was_Parsed
         (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input))
       then
          Get_NS
            (Parser.Created_Grammar, Default_Namespace, Parser.Target_NS);
+         Get_NS (Parser.Created_Grammar, XML_Schema_URI, Parser.Schema_NS);
+
          if Debug then
             Output ("Get_NS (Handler.Created_Grammar, {"
                     & Get_Namespace_URI (Parser.Target_NS)
@@ -376,7 +351,13 @@ package body Schema.Schema_Readers is
          Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
          Set_Parsed_URI
            (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
+         Set_Validating_Grammar (Parser, Parser.Created_Grammar);
+
          Parse (Validating_Reader (Parser), Input);
+
+         if Do_Global_Check then
+            Global_Check (Parser.Target_NS);
+         end if;
 
          Set_System_Id (Parser.Target_NS, Input_Sources.Get_System_Id (Input));
       end if;
@@ -395,17 +376,9 @@ package body Schema.Schema_Readers is
      (Parser : in out Schema_Reader;
       Input  : in out Input_Sources.Input_Source'Class) is
    begin
-      Parse (Parser, Input, Default_Namespace => "");
+      Parse (Parser, Input,
+             Default_Namespace => "", Do_Global_Check => True);
    end Parse;
-
-   ----------------------
-   -- Set_Debug_Output --
-   ----------------------
-
-   procedure Set_Debug_Output (Output : Boolean) is
-   begin
-      Debug := Output;
-   end Set_Debug_Output;
 
    ------------
    -- Output --
@@ -431,7 +404,8 @@ package body Schema.Schema_Readers is
       G         : XML_Grammar_NS;
    begin
       Get_Grammar_For_Namespace
-        (Handler, QName (QName'First .. Separator - 1), G);
+        (Handler, QName (QName'First .. Separator - 1), G,
+         Create_If_Needed => False);
       Result := Lookup (G, QName (Separator + 1 .. QName'Last));
       Output
         (Ada_Name (Result) & " := Lookup (G, """
@@ -486,16 +460,15 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
-      QName   : Byte_Sequence;
-      Result  : out XML_Attribute_Group)
+     (Handler    : in out Schema_Reader'Class;
+      QName      : Byte_Sequence;
+      Result     : out XML_Attribute_Group)
    is
       Separator : constant Integer := Split_Qname (QName);
       G         : XML_Grammar_NS;
    begin
       Get_Grammar_For_Namespace
         (Handler, QName (QName'First .. Separator - 1), G);
-
       Result := Lookup_Attribute_Group
         (G, QName (Separator + 1 .. QName'Last));
       Output
@@ -779,6 +752,7 @@ package body Schema.Schema_Readers is
         (Handler.all,
          URI      => Get_Namespace_URI (Handler.Target_NS),
          Xsd_File => Get_Value (Atts, Schema_Location_Index),
+         Do_Global_Check => False,  --  Will be performed later
          Add_To   => Handler.Created_Grammar);
    end Create_Include;
 
@@ -810,6 +784,7 @@ package body Schema.Schema_Readers is
       Parse_Grammar
         (Handler.all,
          URI      => Get_Namespace_URI (Handler.Target_NS),
+         Do_Global_Check => True,
          Xsd_File => Get_Value (Atts, Location_Index),
          Add_To   => Handler.Created_Grammar);
 
@@ -867,6 +842,7 @@ package body Schema.Schema_Readers is
                Parse_Grammar
                  (Handler.all,
                   URI      => "",
+                  Do_Global_Check => True,
                   Xsd_File => Location,
                   Add_To   => Handler.Created_Grammar);
             elsif Debug then
@@ -2820,7 +2796,8 @@ package body Schema.Schema_Readers is
    procedure Get_Grammar_For_Namespace
      (Handler : in out Schema_Reader'Class;
       Prefix  : Byte_Sequence;
-      Grammar : out XML_Grammar_NS)
+      Grammar : out XML_Grammar_NS;
+      Create_If_Needed : Boolean := True)
    is
       NS : XML_NS;
    begin
@@ -2837,19 +2814,14 @@ package body Schema.Schema_Readers is
                & Get_URI (NS) & """, G);");
          end if;
 
-         Get_NS (Handler.Created_Grammar, Get_URI (NS), Grammar);
+         Get_NS (Handler.Created_Grammar, Get_URI (NS), Grammar,
+                 Create_If_Needed
+                 or else Get_URI (NS) = XML_Schema_URI);
+         if Grammar = null then
+            Validation_Error
+              ("No location declared for namespace " & Get_URI (NS));
+         end if;
       end if;
    end Get_Grammar_For_Namespace;
-
-   ----------------------------
-   -- Set_Supported_Features --
-   ----------------------------
-
-   procedure Set_Supported_Features
-     (Reader   : in out Schema_Reader;
-      Features : Supported_Features) is
-   begin
-      Reader.Supported := Features;
-   end Set_Supported_Features;
 
 end Schema.Schema_Readers;

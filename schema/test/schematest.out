@@ -43882,22 +43882,22 @@ Grp: suntest / xsd012
 Grp: suntest / xsd013.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK xsd013.e
-    Element "{http://www.w3.org/2001/XMLSchema}root" was referenced but never declared
+    xsd013.e.xsd:22:27: Declaration not found for {http://www.w3.org/2001/XMLSchema}root
 
 Grp: suntest / xsd014.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK xsd014.e
-    Element "{http://www.w3.org/2001/XMLSchema}undef" was referenced but never declared
+    xsd014.e.xsd:21:28: Declaration not found for {http://www.w3.org/2001/XMLSchema}undef
 
 Grp: suntest / xsd015.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK xsd015.e
-    Type "{http://www.w3.org/2001/XMLSchema}abc" was referenced but never declared
+    xsd015.e.xsd:26:34: Declaration not found for {http://www.w3.org/2001/XMLSchema}abc
 
 Grp: suntest / xsd016.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK xsd016.e
-    Type "{http://www.w3.org/2001/XMLSchema}abc" was referenced but never declared
+    xsd016.e.xsd:19:34: Declaration not found for {http://www.w3.org/2001/XMLSchema}abc
 
 Grp: suntest / xsd017.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -43907,12 +43907,12 @@ Grp: suntest / xsd017.e
 Grp: suntest / xsd018.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK xsd018.e
-    Type "{http://www.w3.org/2001/XMLSchema}abc" was referenced but never declared
+    xsd018.e.xsd:27:27: Declaration not found for {http://www.w3.org/2001/XMLSchema}abc
 
 Grp: suntest / xsd019.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK xsd019.e
-    xsd019.e.xsd:29:27: The type "abc" isn't known at this point. Please check the name and namespace
+    xsd019.e.xsd:28:29: Declaration not found for {http://www.w3.org/2001/XMLSchema}abc
 
 Grp: suntest / xsd020-2.e
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -47506,9 +47506,9 @@ Grp: MS-Additional2006-07-15 / addA008
   OK addA008.v
 
 Grp: MS-Additional2006-07-15 / addC001
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP addC001
-    Attribute "{http://www.w3.org/XML/1998/namespace}base" is referenced, but not defined
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK addC001
+  OK addC001.v
 
 Grp: MS-Additional2006-07-15 / addC002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -48826,9 +48826,9 @@ Grp: MS-Additional2006-07-15 / isDefault077
     isdefault076.xml:1:16: Element's value must be "abc"
 
 Grp: MS-Additional2006-07-15 / isDefault078
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SP isDefault078
-    Attribute "{http://www.w3.org/XML/1998/namespace}space" is referenced, but not defined
+  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  OK isDefault078
+  OK isDefault078.v
 
 Grp: MS-Additional2006-07-15 / isDefault079
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -49359,7 +49359,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgB012
 Grp: MS-AttributeGroup2006-07-15 / attgB013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgB013
-    attgB013.xsd:4:78: attgB013v1.imp:2:33: Attribute group has already been declared: car
+    attgB013.xsd:3:76: Type "{http://importedXSD}int" was referenced but never declared
 
 Grp: MS-AttributeGroup2006-07-15 / attgB014
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -49368,7 +49368,7 @@ Grp: MS-AttributeGroup2006-07-15 / attgB014
 Grp: MS-AttributeGroup2006-07-15 / attgB015
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK attgB015
-    attgB015.xsd:4:46: attgB015.inc:2:33: Attribute group has already been declared: car
+    attgB015.xsd:3:75: Type "{http://xsdtesting}int" was referenced but never declared
 
 Grp: MS-AttributeGroup2006-07-15 / attgC001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52164,7 +52164,7 @@ Grp: MS-ComplexType2006-07-15 / ctD002
 Grp: MS-ComplexType2006-07-15 / ctD003
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctD003
-    Type "{http://www.w3.org/2001/XMLSchema}something" was referenced but never declared
+    ctD003.xsd:10:42: Declaration not found for {http://www.w3.org/2001/XMLSchema}something
 
 Grp: MS-ComplexType2006-07-15 / ctD004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52219,7 +52219,7 @@ Grp: MS-ComplexType2006-07-15 / ctD013
 Grp: MS-ComplexType2006-07-15 / ctD014
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctD014
-    ctD014.xsd:11:35: Unexpected element "{http://www.w3.org/2001/XMLSchema}encoding"
+    ctD014.xsd:5:38: Declaration not found for {http://www.w3.org/2001/XMLSchema}binary
 
 Grp: MS-ComplexType2006-07-15 / ctD015
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -52269,7 +52269,7 @@ Grp: MS-ComplexType2006-07-15 / ctD023
 Grp: MS-ComplexType2006-07-15 / ctD024
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctD024
-    ctD024.xsd:11:30: Unexpected element "{http://www.w3.org/2001/XMLSchema}period"
+    ctD024.xsd:5:43: Declaration not found for {http://www.w3.org/2001/XMLSchema}timeInstant
 
 Grp: MS-ComplexType2006-07-15 / ctD025
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -53821,7 +53821,7 @@ Grp: MS-ComplexType2006-07-15 / ctZ001
 Grp: MS-ComplexType2006-07-15 / ctZ002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctZ002
-    Type "{http://www.w3.org/2001/XMLSchema}strong" was referenced but never declared
+    84953.xsd:4:83: Declaration not found for {http://www.w3.org/2001/XMLSchema}strong
 
 Grp: MS-ComplexType2006-07-15 / ctZ003
   50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
@@ -63363,10 +63363,9 @@ Grp: MS-DataTypes2006-07-15 / float017_1916
   OK float017_1916.v
 
 Grp: MS-DataTypes2006-07-15 / float018_1917
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK float018_1917
-  OK float018_1917.i
-    float018.xml:6:19: Invalid float: "+INF"
+  XF float018_1917.i
 
 Grp: MS-DataTypes2006-07-15 / float019_1918
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -63571,10 +63570,9 @@ Grp: MS-DataTypes2006-07-15 / double017_1955
   OK double017_1955.v
 
 Grp: MS-DataTypes2006-07-15 / double018_1956
-  100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
+  50.0% tests= 2 (xsd= 1 xml= 1) OK= 1 FAILED= 1
   OK double018_1956
-  OK double018_1956.i
-    double018.xml:6:19: Invalid float: "+INF"
+  XF double018_1956.i
 
 Grp: MS-DataTypes2006-07-15 / double019_1957
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -77652,7 +77650,7 @@ Grp: MS-Particles2006-07-15 / particlesJn010
 Grp: MS-Particles2006-07-15 / particlesJr001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK particlesJr001
-    Type "{http://importedXSD}B" was referenced but never declared
+    particlesJr001.xsd:7:32: No location declared for namespace http://importedXSD
 
 Grp: MS-Particles2006-07-15 / particlesJr002
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -91728,13 +91726,14 @@ Grp: MS-Schema2006-07-15 / schG8
   OK schG8.v
 
 Grp: MS-Schema2006-07-15 / schG9
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schG9
+   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
+  SP schG9
+    schG9_a.xsd:9:61: schG9_b.xsd:9:61: schG9_c.xsd:19:43: No location declared for namespace ns-d
 
 Grp: MS-Schema2006-07-15 / schG10
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK schG10
-    Type "{ns-c}ct-A" was referenced but never declared
+    schG10_a.xsd:8:62: schG10_b.xsd:16:43: No location declared for namespace ns-c
 
 Grp: MS-Schema2006-07-15 / schG11
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92351,7 +92350,7 @@ Grp: MS-SimpleType2006-07-15 / stC001
 Grp: MS-SimpleType2006-07-15 / stC002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stC002
-    Type "{http://www.w3.org/2001/XMLSchema}something" was referenced but never declared
+    stC002.xsd:3:42: Declaration not found for {http://www.w3.org/2001/XMLSchema}something
 
 Grp: MS-SimpleType2006-07-15 / stC003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -92397,12 +92396,12 @@ Grp: MS-SimpleType2006-07-15 / stC011
 Grp: MS-SimpleType2006-07-15 / stC012
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stC012
-    stC012.xsd:5:31: Unexpected element "{http://www.w3.org/2001/XMLSchema}duration"
+    stC012.xsd:4:43: Declaration not found for {http://www.w3.org/2001/XMLSchema}timeInstant
 
 Grp: MS-SimpleType2006-07-15 / stC013
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stC013
-    stC013.xsd:5:34: Unexpected element "{http://www.w3.org/2001/XMLSchema}encoding"
+    stC013.xsd:4:38: Declaration not found for {http://www.w3.org/2001/XMLSchema}binary
 
 Grp: MS-SimpleType2006-07-15 / stC014
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -92443,7 +92442,7 @@ Grp: MS-SimpleType2006-07-15 / stC022
 Grp: MS-SimpleType2006-07-15 / stC023
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stC023
-    stC023.xsd:5:29: Unexpected element "{http://www.w3.org/2001/XMLSchema}period"
+    stC023.xsd:4:43: Declaration not found for {http://www.w3.org/2001/XMLSchema}timeInstant
 
 Grp: MS-SimpleType2006-07-15 / stC024
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -93330,7 +93329,7 @@ Grp: MS-SimpleType2006-07-15 / stK001
 Grp: MS-SimpleType2006-07-15 / stK002
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK stK002
-    Type "{http://www.w3.org/2001/XMLSchema}timeDuration" was referenced but never declared
+    stK002.xsd:7:55: Declaration not found for {http://www.w3.org/2001/XMLSchema}timeDuration
 
 Grp: MS-SimpleType2006-07-15 / stK003
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95259,13 +95258,13 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37035 (omitting non-accepted tests)
+Total number of tests: 37037 (omitting non-accepted tests)
    13748 XSD files (not including those parsed automatically)
-   23352 XML files
+   23354 XML files
 NI: Features not implemented: in_partial= 210 in_full_fail= 2252
-SP: XSD KO, should be OK: in_full_fail= 97
+SP: XSD KO, should be OK: in_full_fail= 96
 SF: XSD OK, should be KO: in_full_fail= 633
 XP: XML KO, should be OK: in_partial= 11 in_full_fail= 1
-XF: XML OK, should be KO: in_partial= 2 in_full_fail= 2
+XF: XML OK, should be KO: in_partial= 4 in_full_fail= 2
 IE: Internal error:
-Total errors: 746 ( 2.0 %)
+Total errors: 747 ( 2.0 %)

@@ -64,7 +64,7 @@ EOF
 done
 
 
-XML="$testschema $debug"
+XML="$testschema -base $debug"
 act="act_testsuite"
 
 total=0
@@ -139,33 +139,33 @@ compare() {
 ###############
 
 expect "" "$act/basic_types-1.xml" \
-     "act_testsuite/basic_types-1.xml:11:28: 03:01:03 is greater than maxExclusive (03:01:02.5)"
+     "basic_types-1.xml:11:28: 03:01:03 is greater than maxExclusive (03:01:02.5)"
 expect "" "$act/basic_types-2.xml" \
-     "act_testsuite/basic_types-2.xml:10:28: 04:01:02 is greater than maxInclusive (03:01:02)"
+     "basic_types-2.xml:10:28: 04:01:02 is greater than maxInclusive (03:01:02)"
 expect "" "$act/basic_types-3.xml" \
-     "act_testsuite/basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.252E+04)"
+     "basic_types-3.xml:14:26: 12521 is greater than maxInclusive ( 1.252E+04)"
 expect "" "$act/E802-003.xml" ""
 expect "" "$act/uri.xml" ""
-expect "" "$act/wf.xml" "$act/wf.xml:7:86: Name differ for closing tag (expecting test, opened line 6)"
-expect "$act/ns1.xsd" "" "$act/ns1.xsd:5:30: Unexpected element \"element\""
-expect "" "$act/empty.xml" "$act/empty.xml:3:71: No character data allowed by content model"
+expect "" "$act/wf.xml" "wf.xml:7:86: Name differ for closing tag (expecting test, opened line 6)"
+expect "$act/ns1.xsd" "" "ns1.xsd:5:30: Unexpected element \"element\""
+expect "" "$act/empty.xml" "empty.xml:3:71: No character data allowed by content model"
 expect "$act/recursive_import/import.xsd" "" ""
 expect "" "$act/elementFormDefault/doc.xml" ""
 expect "" "$act/elementFormDefault/doc2.xml" ""
 expect "$act/F427-004/xmldsig-core-schema.xsd" "$act/F427-004/dsig-example.xml" ""
 expect "$act/F511-007/xmldsig-core-schema.xsd" "$act/F511-007/test.xml" ""
 expect "$act/F511-009/xmldsig-core-schema.xsd" "$act/F511-009/Untitled7-2.xml" \
-     "act_testsuite/F511-009/Untitled7-2.xml:15:67: Invalid value: \"UjBsR@409EbGhjZ0dTQUxNQUFBUUNBRU1tQ1p0dU1GUXhEUzhi\""
+     "Untitled7-2.xml:15:67: Invalid value: \"UjBsR@409EbGhjZ0dTQUxNQUFBUUNBRU1tQ1p0dU1GUXhEUzhi\""
 (cd act_testsuite/multiple_schemas; compare "multiple_schemas" "`./run.sh 2>&1`" "")
 expect "" "$act/F822-009/file.xml" ""
 expect "$act/FA16-002/6_xhtml1-frameset.xsd" "" "Unsupported type IDREF and IDREFS"
-expect "" "$act/F822-009_2/file.xml" "$act/F822-009_2/file.xml:8:2: attributeGroup \"{http://www.w3.org/2001/XMLSchema}attributes2\" is referenced, but not defined"
-expect "" "$act/G404-019/c_test.xml" "$act/G404-019/c_test.xml:16:10: Attribute \"subSystemId\" is required in this context"
+expect "" "$act/F822-009_2/file.xml" "file.xml:8:2: test.xsd:21:43: Declaration not found for {http://www.w3.org/2001/XMLSchema}attributes2"
+expect "" "$act/G404-019/c_test.xml" "c_test.xml:16:10: Attribute \"subSystemId\" is required in this context"
    #expect "" "$act/H212-023/default_H212-023.xml" "<root xsi:noNamespaceSchemaLocation=\"H212-023.xsd\"> <Acknowledge>false</Acknowledge></root>" "-dom"
 expect "$act/I723-028/test.xsd" "" ""
 expect "$act/I727-025/test.xsd" "$act/I727-025/test.xml" ""
 expect "$act/I728-012/test.xsd" "$act/I728-012/test.xml" ""
-expect "$act/I702-017/test.xsd" "$act/I702-017/test.xml" "$act/I702-017/test.xml:7:11: Too many occurrences of \"size\" (expecting \"contents\")"
+expect "$act/I702-017/test.xsd" "$act/I702-017/test.xml" "test.xml:7:11: Too many occurrences of \"size\" (expecting \"contents\")"
 expect "$act/IC10-021/pref.xsd" "$act/IC10-021/pref.xml" ""
 
 summary

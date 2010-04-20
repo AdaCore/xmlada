@@ -25,7 +25,7 @@
 -- exception does not however invalidate any other reasons why the   --
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
-
+with GNAT.IO; use GNAT.IO;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Schema.Validators.Facets;  use Schema.Validators.Facets;
 with Sax.Encodings;             use Sax.Encodings;
@@ -171,7 +171,7 @@ package body Schema.Validators.Simple_Types is
    begin
       if Str = "NaN" then
          return XML_Float'(Kind => NaN);
-      elsif Str = "INF" then
+      elsif Str = "INF" or else Str = "+INF" then
          return XML_Float'(Kind => Plus_Infinity);
       elsif Str = "-INF" then
          return XML_Float'(Kind => Minus_Infinity);

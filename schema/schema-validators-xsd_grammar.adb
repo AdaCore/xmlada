@@ -1216,6 +1216,10 @@ package body Schema.Validators.XSD_Grammar is
       Set_Type (Elem, Lookup (G, "numFacet"), Context);
       Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
 
+      --  The namespace schema
+
+      Create_Global_Attribute (XML_G, "base", Lookup (G, "string"));
+
       --  The schema instance namespace
 
       Create_Global_Attribute (XML_IG, "nil", Lookup (G, "boolean"));
@@ -1224,6 +1228,8 @@ package body Schema.Validators.XSD_Grammar is
                                List_Of (XML_IG, Lookup (G, "uriReference")));
       Create_Global_Attribute (XML_IG, "noNamespaceSchemaLocation",
                                Lookup (G, "uriReference"));
+
+      Global_Check (G);
    end Add_Schema_For_Schema;
 
 end Schema.Validators.XSD_Grammar;

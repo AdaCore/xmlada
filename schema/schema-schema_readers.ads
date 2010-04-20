@@ -44,74 +44,36 @@ package Schema.Schema_Readers is
    procedure Set_Created_Grammar
      (Reader  : in out Schema_Reader;
       Grammar : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar);
+   function Get_Created_Grammar
+     (Reader : Schema_Reader) return Schema.Validators.XML_Grammar;
    --  Start the parsing of multiple schema files.
    --  When a schema file is parsed, a new XML_Grammar_NS will be created
    --  based on the value of "targetNamespace" attribute. This should be used
    --  to cumulate several schema files into one grammar.
    --  If this isn't call, a new grammar will be created from scratch.
    --
-   --  Calling this subprogram will also disable the checks, at the end of the
-   --  parsing, that ensure that any entity (element, type, attribute,...) that
-   --  has been referenced was correctly declared.
-   --
-   --  The Grammar should initially be No_Grammar. There are also some checks
-   --  that can only be done when all schemas have been parsed and therefore
-   --  you need to call Global_Check after parsing all of them. This isn't
-   --  necessary if you are not calling Set_Created_Grammar.
-   --
-   --  For instance, if you need to parse several XSD files:
+   --  For instance, if you need to explicitly parse XSD files:
    --       Schema  : Schema_Reader;
    --       Grammar : XML_Grammar := No_Grammar;
    --
-   --       Set_Created_Grammar (Schema, No_Grammar);  --  Required
-   --       Parse (Schema, My_Input_Source1);
-   --       Parse (Schema, My_Input_Source2);
-   --       Global_Check (Grammar);
+   --       Parse (Schema, My_Input_XSD_Source1);
+   --       Parse (Schema, My_Input_XSD_Source2);
    --       Grammar := Get_Created_Grammar (Schema);
    --
-   --  If you are only parsing one schema, this could be changed to:
-   --       Parse (Schema, My_Input_Source1);
-   --       Grammar := Get_Created_Grammar (Schema);
-   --
-   --  Another small difference is in the error messages that are output in
-   --  both cases: in the first case above, errors raised by Global_Check are
-   --  not associated with a specific location in an XSD file (these error
-   --  typically indicate that a referenced element has not been defined),
-   --  whereas in the second case it will reference a location in the single
-   --  XSD file.
+   --  If you need to change the version of XSD norm (1.0 or 1.1), you should
+   --  call Set_XSD_Version on the grammar first.
 
    procedure Parse
-     (Parser : in out Schema_Reader;
-      Input  : in out Input_Sources.Input_Source'Class;
-      Default_Namespace : Unicode.CES.Byte_Sequence);
+     (Parser            : in out Schema_Reader;
+      Input             : in out Input_Sources.Input_Source'Class;
+      Default_Namespace : Unicode.CES.Byte_Sequence;
+      Do_Global_Check   : Boolean);
    --  Same as inherited parse, but you can indicate the default value for
    --  targetNamespace. In practice, this is useful when processing <include>
-   --  or <redefine> elements from another schema
-
-   function Get_Created_Grammar
-     (Reader : Schema_Reader) return Schema.Validators.XML_Grammar;
-   --  Return the grammar parsed
-
-   procedure Set_Debug_Output (Output : Boolean);
-   --  Whether extra debug output should be displayed
-
-   type Supported_Features is record
-      XSD_Version        : Schema.Validators.XSD_Versions :=
-        Schema.Validators.XSD_1_1;
-   end record;
-   All_Features : constant Supported_Features;
-   --  See Set_Supported_Features below.
-
-   procedure Set_Supported_Features
-     (Reader   : in out Schema_Reader;
-      Features : Supported_Features);
-   --  This allows you to disable the support for various schema features,
-   --  which might only be partially supported by XML/Ada, and thus run the
-   --  testsuite when disabling the tests that use this feature. In turn, that
-   --  helps ensure that the subset of schema that you are using is fully
-   --  supported by XML/Ada.
-   --  The exception XML_Not_Implemented will be raised if your schema uses one
-   --  of the features you have disabled.
+   --  or <redefine> elements from another schema, but should not be used in
+   --  other contexts.
+   --  Do_Global_Check should be True if the parser needs to check for missing
+   --  declarations when the parsing is done.
 
 private
    type Context_Type is (Context_Type_Def,
@@ -185,17 +147,12 @@ private
       end case;
    end record;
 
-   All_Features : constant Supported_Features :=
-     (XSD_Version => Schema.Validators.XSD_1_1);
-
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
       Created_Grammar : Schema.Validators.XML_Grammar :=
         Schema.Validators.No_Grammar;
       --  This is the grammar created by the Schema file. Do not mix up with
       --  Schema.Readers.Validating_Reader.Grammar, which is in this case the
       --  grammar used to validate the schema itself.
-
-      Check_Undefined : Boolean := True;
 
       Attribute_Form_Default : Schema.Validators.Form_Type :=
         Schema.Validators.Unqualified;
@@ -214,12 +171,8 @@ private
 
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;
-
-      Supported       : Supported_Features := All_Features;
    end record;
 
-   procedure Start_Document (Handler : in out Schema_Reader);
-   procedure End_Document (Handler : in out Schema_Reader);
    procedure Start_Element
      (Handler       : in out Schema_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";

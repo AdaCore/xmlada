@@ -911,12 +911,10 @@ package Schema.Validators is
    --  Initialize the internal structure of the grammar.
    --  This adds the definition for all predefined types
 
-   procedure Global_Check (Grammar : XML_Grammar);
-   --  Perform checks on the grammar, once it has been fully declared. This
-   --  must be called before you start using the grammar (see
-   --  Schema.Schema_Readers.Set_Created_Grammar), since some validation checks
-   --  can only be performed at the end, not while the grammar is being
-   --  constructed.
+   procedure Global_Check (Grammar : XML_Grammar_NS);
+   --  Perform checks on the grammar, once it has been fully declared.
+   --  This function is automatically called when a schema has been fully
+   --  parsed.
 
    function Get_Namespace_URI
      (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence;
@@ -950,6 +948,9 @@ package Schema.Validators is
    function To_QName (Element : XML_Element) return Unicode.CES.Byte_Sequence;
    function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
    --  Return the name as it should be displayed in error messages
+
+   Debug : Boolean := False;
+   --  Whether we are in debug mode
 
 private
 
@@ -1471,6 +1472,10 @@ private
       --  purposes
 
       Blocks : Block_Status := (others => False);
+
+      Checked : Boolean := False;
+      --  Whether Global_Checks has been called, ie whether we have checked for
+      --  missing declarations
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_NS);
@@ -1699,8 +1704,5 @@ private
    --  Check whether Value is a unique ID in the document.
    --  If yes, store it in Id_Table to ensure its future uniqueness.
    --  This does nothing if Validator is not associated with an ID type.
-
-   Debug : Boolean := False;
-   --  Whether we are in debug mode
 
 end Schema.Validators;

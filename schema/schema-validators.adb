@@ -1426,6 +1426,20 @@ package body Schema.Validators is
       Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
    begin
       if Typ = No_Type and then Create_If_Needed then
+         if Local_Name = "precisionDecimal"
+           and then Get_Namespace_URI (Grammar) = XML_Schema_URI
+         then
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Unsupported type: precisionDecimal");
+         end if;
+
+         if Grammar.Checked then
+            Validation_Error
+              ("Declaration not found for "
+               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+         end if;
+
          Typ := new XML_Type_Record'
            (Local_Name        => new Byte_Sequence'(Local_Name),
             Validator         => null,
@@ -1464,6 +1478,12 @@ package body Schema.Validators is
    begin
       if Result = null then
          if Create_If_Needed then
+            if Grammar.Checked then
+               Validation_Error
+                 ("Declaration not found for "
+                  & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+            end if;
+
             if Debug then
                Debug_Output ("Lookup_Element: creating forward "
                              & Grammar.Namespace_URI.all & " : "
@@ -1489,6 +1509,12 @@ package body Schema.Validators is
       Result : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
    begin
       if Result = No_XML_Group then
+         if Grammar.Checked then
+            Validation_Error
+              ("Declaration not found for "
+               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+         end if;
+
          Result := Create_Global_Group (Grammar, Local_Name);
          Result.Is_Forward_Decl := True;
       end if;
@@ -1507,6 +1533,12 @@ package body Schema.Validators is
         Attribute_Groups_Htable.Get (Grammar.Attribute_Groups.all, Local_Name);
    begin
       if Result = Empty_Attribute_Group then
+         if Grammar.Checked then
+            Validation_Error
+              ("Declaration not found for "
+               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+         end if;
+
          if Debug then
             Debug_Output ("Lookup_Attribute_Group: Create forward decl");
          end if;
@@ -1529,6 +1561,12 @@ package body Schema.Validators is
         Attributes_Htable.Get (Grammar.Attributes.all, Local_Name);
    begin
       if Result = null and then Create_If_Needed then
+         if Grammar.Checked then
+            Validation_Error
+              ("Declaration not found for "
+               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+         end if;
+
          return Create_Global_Attribute (Grammar, Local_Name, No_Type);
       end if;
       return Attribute_Validator (Result);
@@ -1793,6 +1831,7 @@ package body Schema.Validators is
          Groups             => new Groups_Htable.HTable (101),
          Attributes         => new Attributes_Htable.HTable (101),
          Attribute_Groups   => new Attribute_Groups_Htable.HTable (101),
+         Checked            => False,
          Validators_For_Mem => null,
          Types_For_Mem      => null,
          Atts_For_Mem       => null,
@@ -3845,7 +3884,6 @@ package body Schema.Validators is
                  or else Can_Be_Empty (It.Validator);
 
             when Particle_Any =>
-               --  ??? Tmp
                declare
                   Element_Validator : XML_Element;
                begin
@@ -4192,96 +4230,89 @@ package body Schema.Validators is
    -- Global_Check --
    ------------------
 
-   procedure Global_Check (Grammar : XML_Grammar) is
-      procedure Local_Check (Grammar : XML_Grammar_NS);
-      --  Check missing definitions in Grammar
+   procedure Global_Check (Grammar : XML_Grammar_NS) is
+      use Elements_Htable, Types_Htable, Attributes_Htable, Groups_Htable;
+      use Attribute_Groups_Htable;
+      Elem_Iter : Elements_Htable.Iterator := First (Grammar.Elements.all);
+      Type_Iter : Types_Htable.Iterator := First (Grammar.Types.all);
+      Attr_Iter : Attributes_Htable.Iterator :=
+        First (Grammar.Attributes.all);
+      Group_Iter : Groups_Htable.Iterator := First (Grammar.Groups.all);
+      Attr_Group_Iter : Attribute_Groups_Htable.Iterator :=
+        First (Grammar.Attribute_Groups.all);
 
-      procedure Local_Check (Grammar : XML_Grammar_NS) is
-         use Elements_Htable, Types_Htable, Attributes_Htable, Groups_Htable;
-         use Attribute_Groups_Htable;
-         Elem_Iter : Elements_Htable.Iterator := First (Grammar.Elements.all);
-         Type_Iter : Types_Htable.Iterator := First (Grammar.Types.all);
-         Attr_Iter : Attributes_Htable.Iterator :=
-           First (Grammar.Attributes.all);
-         Group_Iter : Groups_Htable.Iterator := First (Grammar.Groups.all);
-         Attr_Group_Iter : Attribute_Groups_Htable.Iterator :=
-           First (Grammar.Attribute_Groups.all);
-
-         Elem : XML_Element_Access;
-         Typ  : XML_Type;
-         Attr : Named_Attribute_Validator;
-         Group : XML_Group;
-         Attr_Group : XML_Attribute_Group;
-      begin
-         while Type_Iter /= Types_Htable.No_Iterator loop
-            Typ := Current (Type_Iter);
-            if Get_Validator (Typ) = null then
-               Validation_Error
-                 ("Type """
-                  & To_QName (Grammar.Namespace_URI.all, Typ.Local_Name.all)
-                  & """ was referenced but never declared");
-            end if;
-            Next (Grammar.Types.all, Type_Iter);
-         end loop;
-
-         while Elem_Iter /= Elements_Htable.No_Iterator loop
-            Elem := Current (Elem_Iter);
-
-            if Elem.Of_Type = No_Type then
-               Validation_Error
-                 ("Element """
-                  & To_QName (Grammar.Namespace_URI.all, Elem.Local_Name.all)
-                  & """ was referenced but never declared");
-            end if;
-
-            Next (Grammar.Elements.all, Elem_Iter);
-         end loop;
-
-         while Attr_Iter /= Attributes_Htable.No_Iterator loop
-            Attr := Current (Attr_Iter);
-            if Get_Type (Attr.all) = No_Type then
-               Validation_Error
-                 ("Attribute """
-                  & To_QName (Grammar.Namespace_URI.all, Attr.Local_Name.all)
-                  & """ is referenced, but not defined");
-            end if;
-
-            Next (Grammar.Attributes.all, Attr_Iter);
-         end loop;
-
-         while Group_Iter /= Groups_Htable.No_Iterator loop
-            Group := Current (Group_Iter);
-            if Group.Is_Forward_Decl then
-               Validation_Error
-                 ("Group """
-                  & To_QName (Grammar.Namespace_URI.all,
-                              Group.Local_Name.all)
-                  & """ is referenced, but not defined");
-            end if;
-
-            Next (Grammar.Groups.all, Group_Iter);
-         end loop;
-
-         while Attr_Group_Iter /= Attribute_Groups_Htable.No_Iterator loop
-            Attr_Group := Current (Attr_Group_Iter);
-            if Attr_Group.Is_Forward_Decl then
-               Validation_Error
-                 ("attributeGroup """
-                  & To_QName (Grammar.Namespace_URI.all,
-                              Attr_Group.Local_Name.all)
-                  & """ is referenced, but not defined");
-            end if;
-            Next (Grammar.Attribute_Groups.all, Attr_Group_Iter);
-         end loop;
-      end Local_Check;
-
-      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      Elem : XML_Element_Access;
+      Typ  : XML_Type;
+      Attr : Named_Attribute_Validator;
+      Group : XML_Group;
+      Attr_Group : XML_Attribute_Group;
    begin
-      if G /= null then
-         for NS in G.Grammars'Range loop
-            Local_Check (G.Grammars (NS));
-         end loop;
+      if Grammar.Checked then
+         return;
       end if;
+
+      Grammar.Checked := True;
+
+      while Type_Iter /= Types_Htable.No_Iterator loop
+         Typ := Current (Type_Iter);
+         if Get_Validator (Typ) = null then
+            Validation_Error
+              ("Type """
+               & To_QName (Grammar.Namespace_URI.all, Typ.Local_Name.all)
+               & """ was referenced but never declared");
+         end if;
+         Next (Grammar.Types.all, Type_Iter);
+      end loop;
+
+      while Elem_Iter /= Elements_Htable.No_Iterator loop
+         Elem := Current (Elem_Iter);
+
+         if Elem.Of_Type = No_Type then
+            Validation_Error
+              ("Element """
+               & To_QName (Grammar.Namespace_URI.all, Elem.Local_Name.all)
+               & """ was referenced but never declared");
+         end if;
+
+         Next (Grammar.Elements.all, Elem_Iter);
+      end loop;
+
+      while Attr_Iter /= Attributes_Htable.No_Iterator loop
+         Attr := Current (Attr_Iter);
+         if Get_Type (Attr.all) = No_Type then
+            Validation_Error
+              ("Attribute """
+               & To_QName (Grammar.Namespace_URI.all, Attr.Local_Name.all)
+               & """ is referenced, but not defined");
+         end if;
+
+         Next (Grammar.Attributes.all, Attr_Iter);
+      end loop;
+
+      while Group_Iter /= Groups_Htable.No_Iterator loop
+         Group := Current (Group_Iter);
+         if Group.Is_Forward_Decl then
+            Validation_Error
+              ("Group """
+               & To_QName (Grammar.Namespace_URI.all,
+                 Group.Local_Name.all)
+               & """ is referenced, but not defined");
+         end if;
+
+         Next (Grammar.Groups.all, Group_Iter);
+      end loop;
+
+      while Attr_Group_Iter /= Attribute_Groups_Htable.No_Iterator loop
+         Attr_Group := Current (Attr_Group_Iter);
+         if Attr_Group.Is_Forward_Decl then
+            Validation_Error
+              ("attributeGroup """
+               & To_QName (Grammar.Namespace_URI.all,
+                 Attr_Group.Local_Name.all)
+               & """ is referenced, but not defined");
+         end if;
+         Next (Grammar.Attribute_Groups.all, Attr_Group_Iter);
+      end loop;
    end Global_Check;
 
    ----------------

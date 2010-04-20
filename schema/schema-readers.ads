@@ -60,8 +60,6 @@ package Schema.Readers is
    procedure Set_Validating_Grammar
      (Reader  : in out Validating_Reader;
       Grammar : Schema.Validators.XML_Grammar);
-   function Get_Validating_Grammar
-     (Reader : Validating_Reader) return Schema.Validators.XML_Grammar;
    --  Create an XML reader that will validate its input file. The grammar
    --  must have been parsed first (most likely through a call to
    --  Schema.Schema_Readers.Schema_Reader or a call to Parse_Grammar below).
@@ -76,9 +74,6 @@ package Schema.Readers is
    --  Called when a validation error occurs.
    --  By default, this raises XML_Validation_Error
 
-   procedure Set_Debug_Output (Output : Boolean);
-   --  Whether we should output debug traces
-
    function To_Absolute_URI
      (Handler : Validating_Reader;
       URI     : Unicode.CES.Byte_Sequence) return Unicode.CES.Byte_Sequence;
@@ -89,6 +84,7 @@ package Schema.Readers is
      (Handler  : in out Validating_Reader;
       URI      : Unicode.CES.Byte_Sequence;
       Xsd_File : Unicode.CES.Byte_Sequence;
+      Do_Global_Check : Boolean;
       Add_To   : in out Schema.Validators.XML_Grammar);
    --  Parse the grammar to use from an XSD file, and add it to Add_To.
    --  The resulting grammar can be passed to Set_Validating_Grammar.
