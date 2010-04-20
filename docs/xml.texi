@@ -5,7 +5,7 @@
 @settitle The Ada95 XML Library
 @syncodeindex fn cp
 
-@set XMLVersion 3.3w
+@set XMLVersion 4.0w
 
 @c ----------------------------------------- MACRO
 
@@ -46,7 +46,7 @@
 
 Copyright @copyright{} 2000-2002, Emmanuel Briot
 
-Copyright @copyright{} 2003-2009, AdaCore
+Copyright @copyright{} 2003-2010, AdaCore
 
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
@@ -1588,7 +1588,7 @@ validating a file.
      Parse (Schema, Read);
      Close (Read);
 
-     Grammar := Get_Created_Grammar (Schema);
+     Grammar := Get_Grammar (Schema);
 @b{end} SchemaExample2;
 @end smallexample
 
@@ -1608,7 +1608,7 @@ validating a file.
     Read      : File_Input;
     My_Reader : Validating_Reader;
  @b{begin}
-    Set_Validating_Grammar (My_Reader, Grammar);
+    Set_Grammar (My_Reader, Grammar);
     Set_Feature (My_Reader, Schema_Validation_Feature, True);
     Open (Xml_File.all, Read);
     Parse (My_Reader, Read);

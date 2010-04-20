@@ -17,7 +17,7 @@ KP-32-J325-027 Missing obj directories
               missing object directories, which may not be part of the source
               package.
 
-  Status:     Fixes in XML/Ada 3.3.0
+  Status:     Fixes in XML/Ada 4.0.0
 
   Workaround: In the Makefile, replace "gnatmake" with "gnatmake -p"
 
@@ -94,7 +94,7 @@ KP-32-J302-043 Lots of fixes in schema validation
                 a float attribute, specifying "1.0" as a float still allows
                 "1" as the actual value. Same for enumerations.
 
-  Status:     Fixed in 3.3.0
+  Status:     Fixed in 4.0.0
 
   Workaround: None
 
@@ -104,7 +104,7 @@ KP-32-IC10-021 Incorrect validation of "date" types with timezone
               timezones (either "Z" or "+00:00" for instance). XML/Ada does not
               support these in 3.2.0 version
 
-  Status:     Fixed in 3.3.0
+  Status:     Fixed in 4.0.0
 
   Workaround: You could have two elements, one for the date the other for the
               timezone, although that's not as elegant

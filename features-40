@@ -23,10 +23,10 @@ The Set_Validating_Grammar and Set_Created_Grammar subprograms were
 merged into Set_Grammar.
 Get_Created_Grammar was renames to Get_Grammar.
 
-New features in version 3.3
+New features in version 4.0
 ---------------------------
 
-NF-33-J302-043 New exception XML_Not_Implemented (2010-03-24)
+NF-40-J302-043 New exception XML_Not_Implemented (2010-03-24)
 
    A new exception is raised when using a schema (.xsd) validator, and
    the schema uses features that are not supported by XML/Ada.
