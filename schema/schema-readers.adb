@@ -139,16 +139,26 @@ package body Schema.Readers is
       return null;
    end Get_Fixed;
 
-   ----------------------------
-   -- Set_Validating_Grammar --
-   ----------------------------
+   -----------------
+   -- Set_Grammar --
+   -----------------
 
-   procedure Set_Validating_Grammar
+   procedure Set_Grammar
      (Reader  : in out Validating_Reader;
       Grammar : Schema.Validators.XML_Grammar) is
    begin
       Reader.Context.Grammar := Grammar;
-   end Set_Validating_Grammar;
+   end Set_Grammar;
+
+   -----------------
+   -- Get_Grammar --
+   -----------------
+
+   function Get_Grammar
+     (Reader  : Validating_Reader) return Schema.Validators.XML_Grammar is
+   begin
+      return Reader.Context.Grammar;
+   end Get_Grammar;
 
    ----------
    -- Push --
@@ -230,8 +240,7 @@ package body Schema.Readers is
      (Handler  : in out Validating_Reader;
       URI      : Byte_Sequence;
       Xsd_File : Byte_Sequence;
-      Do_Global_Check : Boolean;
-      Add_To   : in out XML_Grammar)
+      Do_Global_Check : Boolean)
    is
       File     : File_Input;
       Schema   : Schema_Reader;
@@ -279,7 +288,6 @@ package body Schema.Readers is
 
       if Debug then
          Put_Line ("Parsing grammar: " & Xsd_File_Full);
-         Debug_Dump (Add_To);
       end if;
 
       Open (Xsd_File_Full, File);
@@ -289,8 +297,7 @@ package body Schema.Readers is
       --  Add_To will likely already contain the grammar for the
       --  schema-for-schema, and we won't have to recreate it in most cases.
 
-      Set_Validating_Grammar (Schema, Add_To);
-      Set_Created_Grammar (Schema, Add_To);
+      Set_Grammar (Schema, Handler.Context.Grammar);
       Use_Basename_In_Error_Messages
         (Schema, Use_Basename_In_Error_Messages (Handler));
       Parse (Schema, File,
@@ -358,8 +365,7 @@ package body Schema.Readers is
            (Handler,
             URI      => Schema_Location (Start_NS .. Last_NS - 1),
             Xsd_File => Schema_Location (Start_XSD .. Last_XSD - 1),
-            Do_Global_Check => True,
-            Add_To   => Handler.Context.Grammar);
+            Do_Global_Check => True);
 
          while Index <= Schema_Location'Last loop
             Start_NS := Index;
@@ -649,8 +655,7 @@ package body Schema.Readers is
            (Validating_Reader (Handler),
             URI      => "",
             Xsd_File => Get_Value (Atts, No_Index),
-            Do_Global_Check => True,
-            Add_To   => Validating_Reader (Handler).Context.Grammar);
+            Do_Global_Check => True);
       end if;
 
       if Location_Index /= -1 then

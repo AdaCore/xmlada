@@ -57,16 +57,22 @@ package Schema.Readers is
    --  The second variant associates a specific grammar with each of the
    --  namespaces found in the document.
 
-   procedure Set_Validating_Grammar
+   procedure Set_Grammar
      (Reader  : in out Validating_Reader;
       Grammar : Schema.Validators.XML_Grammar);
-   --  Create an XML reader that will validate its input file. The grammar
-   --  must have been parsed first (most likely through a call to
-   --  Schema.Schema_Readers.Schema_Reader or a call to Parse_Grammar below).
-   --  If other schema files need to be parsed because of the presence of a
-   --  "targetNamespace" attribute, their corresponding grammars will be added
-   --  to grammar, in their own namespace of course.
-   --  If this is not called, no validation will take place.
+   function Get_Grammar
+     (Reader  : Validating_Reader) return Schema.Validators.XML_Grammar;
+   --  Sets the grammar to use to validate the document.
+   --  When parsing a XSD files, the grammar should contain the schema for XSD
+   --  as defined by the W3C norm (although this will be automatically
+   --  initialized in this case, so calling Set_Grammar is optional). Multiple
+   --  XSD files can be parsed, and the result will be added to the same
+   --  Grammar. Get_Grammar can be used to retrieve the resulting grammar after
+   --  parsing all the XSD files.
+   --
+   --  On the other hand, when parsing XML files, Grammar must have been
+   --  initialized (in general through a call to Schema.Schema_Readers.Parse).
+   --  If Set_Grammar is not called, no validation takes place.
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;
@@ -84,10 +90,9 @@ package Schema.Readers is
      (Handler  : in out Validating_Reader;
       URI      : Unicode.CES.Byte_Sequence;
       Xsd_File : Unicode.CES.Byte_Sequence;
-      Do_Global_Check : Boolean;
-      Add_To   : in out Schema.Validators.XML_Grammar);
-   --  Parse the grammar to use from an XSD file, and add it to Add_To.
-   --  The resulting grammar can be passed to Set_Validating_Grammar.
+      Do_Global_Check : Boolean);
+   --  Parse the grammar to use from an XSD file, and add it to the current
+   --  grammar (as returned by Get_Grammar).
 
    procedure Get_Namespace_From_Prefix
      (Handler  : in out Validating_Reader;

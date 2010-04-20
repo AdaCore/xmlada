@@ -365,7 +365,7 @@ procedure Schematest is
 
       else
          begin
-            Set_Created_Grammar (Reader, Grammar);
+            Set_Grammar (Reader, Grammar);
             Use_Basename_In_Error_Messages (Reader, True);
 
             Group.Test_Count := Group.Test_Count + 1;
@@ -392,7 +392,7 @@ procedure Schematest is
                N := Next_Sibling (N);
             end loop;
 
-            Grammar := Get_Created_Grammar (Reader);
+            Grammar := Get_Grammar (Reader);
 
             if Outcome = Invalid then
                Result.Kind  := XSD_Should_Fail;
@@ -471,7 +471,7 @@ procedure Schematest is
       end if;
 
       Use_Basename_In_Error_Messages (Reader, True);
-      Set_Validating_Grammar (Reader, Grammar);
+      Set_Grammar (Reader, Grammar);
       Set_Feature (Reader, Schema_Validation_Feature, True);
 
       while N /= null loop

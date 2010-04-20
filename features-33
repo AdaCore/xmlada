@@ -12,6 +12,17 @@ An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
 
+Compatibility with previous releases
+------------------------------------
+
+This new release introduces a few changes to the API for schema
+validation. In particular, the calls to Global_Check that were
+previously needed in some cases to detect missing declarations in the
+XSD files are no longer necessary.
+The Set_Validating_Grammar and Set_Created_Grammar subprograms were
+merged into Set_Grammar.
+Get_Created_Grammar was renames to Get_Grammar.
+
 New features in version 3.3
 ---------------------------
 

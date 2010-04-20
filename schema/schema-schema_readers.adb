@@ -304,27 +304,6 @@ package body Schema.Schema_Readers is
       return "T_" & XML_To_Ada (To_QName (Typ));
    end Ada_Name;
 
-   -------------------------
-   -- Get_Created_Grammar --
-   -------------------------
-
-   function Get_Created_Grammar
-     (Reader : Schema_Reader) return Schema.Validators.XML_Grammar is
-   begin
-      return Reader.Created_Grammar;
-   end Get_Created_Grammar;
-
-   -------------------------
-   -- Set_Created_Grammar --
-   -------------------------
-
-   procedure Set_Created_Grammar
-     (Reader  : in out Schema_Reader;
-      Grammar : Schema.Validators.XML_Grammar := No_Grammar) is
-   begin
-      Reader.Created_Grammar := Grammar;
-   end Set_Created_Grammar;
-
    -----------
    -- Parse --
    -----------
@@ -333,14 +312,16 @@ package body Schema.Schema_Readers is
      (Parser            : in out Schema_Reader;
       Input             : in out Input_Sources.Input_Source'Class;
       Default_Namespace : Unicode.CES.Byte_Sequence;
-      Do_Global_Check   : Boolean) is
+      Do_Global_Check   : Boolean)
+   is
+      Grammar : XML_Grammar := Get_Grammar (Parser);
    begin
-      if not URI_Was_Parsed
-        (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input))
-      then
-         Get_NS
-           (Parser.Created_Grammar, Default_Namespace, Parser.Target_NS);
-         Get_NS (Parser.Created_Grammar, XML_Schema_URI, Parser.Schema_NS);
+      if not URI_Was_Parsed (Grammar, Input_Sources.Get_System_Id (Input)) then
+         Initialize (Grammar);
+         Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
+
+         Get_NS (Grammar, Default_Namespace, Parser.Target_NS);
+         Get_NS (Grammar, XML_Schema_URI, Parser.Schema_NS);
 
          if Debug then
             Output ("Get_NS (Handler.Created_Grammar, {"
@@ -349,9 +330,7 @@ package body Schema.Schema_Readers is
          end if;
 
          Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
-         Set_Parsed_URI
-           (Parser.Created_Grammar, Input_Sources.Get_System_Id (Input));
-         Set_Validating_Grammar (Parser, Parser.Created_Grammar);
+         Set_Parsed_URI (Grammar, Input_Sources.Get_System_Id (Input));
 
          Parse (Validating_Reader (Parser), Input);
 
@@ -752,8 +731,7 @@ package body Schema.Schema_Readers is
         (Handler.all,
          URI      => Get_Namespace_URI (Handler.Target_NS),
          Xsd_File => Get_Value (Atts, Schema_Location_Index),
-         Do_Global_Check => False,  --  Will be performed later
-         Add_To   => Handler.Created_Grammar);
+         Do_Global_Check => False);  --  Will be performed later
    end Create_Include;
 
    ---------------------
@@ -785,8 +763,7 @@ package body Schema.Schema_Readers is
         (Handler.all,
          URI      => Get_Namespace_URI (Handler.Target_NS),
          Do_Global_Check => True,
-         Xsd_File => Get_Value (Atts, Location_Index),
-         Add_To   => Handler.Created_Grammar);
+         Xsd_File => Get_Value (Atts, Location_Index));
 
       Handler.Contexts := new Context'
         (Typ            => Context_Redefine,
@@ -817,7 +794,7 @@ package body Schema.Schema_Readers is
             N : constant Byte_Sequence := Get_Value (Atts, Namespace_Index);
          begin
             Get_NS
-              (Handler.Created_Grammar, N,
+              (Get_Grammar (Handler.all), N,
                Result => NS, Create_If_Needed => False);
             if NS = null then
                Validation_Error ("Cannot resolve namespace " & N);
@@ -835,7 +812,7 @@ package body Schema.Schema_Readers is
                Put_Line ("Adding new grammar to Handler.Created_Grammar");
             end if;
 
-            if not URI_Was_Parsed (Handler.Created_Grammar, Absolute) then
+            if not URI_Was_Parsed (Get_Grammar (Handler.all), Absolute) then
                --  The namespace attribute indicates that the XSD may contain
                --  qualified references to schema components in that namespace.
                --  (4.2.6.1). It does not give the default targetNamespace
@@ -843,8 +820,7 @@ package body Schema.Schema_Readers is
                  (Handler.all,
                   URI      => "",
                   Do_Global_Check => True,
-                  Xsd_File => Location,
-                  Add_To   => Handler.Created_Grammar);
+                  Xsd_File => Location);
             elsif Debug then
                Put_Line ("Already imported");
             end if;
@@ -1352,25 +1328,23 @@ package body Schema.Schema_Readers is
    procedure Ensure_Type
      (Handler : in out Schema_Reader; C : Context_Access)
    is
-      XML_G : XML_Grammar_NS;
       Base  : XML_Type;
    begin
       if C.Type_Validator = null then
          --  Create a restriction, instead of a simple ur-Type, so that we can
          --  add attributes to it without impacting ur-Type itself
-         Get_NS (Handler.Created_Grammar, XML_Schema_URI, XML_G);
 
          if C.Simple_Content then
             Output
               ("Validator := Restriction_Of (Lookup (G, ""anySimpleType""));");
-            Base := Lookup (XML_G, "anySimpleType");
+            Base := Lookup (Handler.Schema_NS, "anySimpleType");
 
          else
             Output ("Validator := Restriction_Of (Lookup (G, ""anyType""));");
-            Base := Lookup (XML_G, "anyType");
+            Base := Lookup (Handler.Schema_NS, "anyType");
          end if;
 
-         C.Type_Validator := Restriction_Of (XML_G, Base);
+         C.Type_Validator := Restriction_Of (Handler.Schema_NS, Base);
       end if;
    end Ensure_Type;
 
@@ -1499,14 +1473,11 @@ package body Schema.Schema_Readers is
 
    procedure Create_Restricted
      (Handler : in out Schema_Reader;
-      Ctx     : Context_Access)
-   is
-      G : XML_Grammar_NS;
+      Ctx     : Context_Access) is
    begin
       if Ctx.Restricted = null then
          if Ctx.Restriction_Base = No_Type then
-            Get_NS (Handler.Created_Grammar, XML_Schema_URI, G);
-            Ctx.Restriction_Base := Lookup (G, "ur-Type");
+            Ctx.Restriction_Base := Lookup (Handler.Schema_NS, "ur-Type");
             Output ("Restriction has no base type set");
          end if;
 
@@ -2240,14 +2211,14 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "blockDefault");
    begin
       if Target_NS_Index /= -1 then
-         Get_NS (Handler.Created_Grammar, Get_Value (Atts, Target_NS_Index),
+         Get_NS (Get_Grammar (Handler.all), Get_Value (Atts, Target_NS_Index),
                  Handler.Target_NS);
          if Debug then
             Output ("Get_NS (Handler.Created_Grammar, """
                     & Get_Value (Atts, Target_NS_Index)
                     & """, Handler.Target_NS)");
          end if;
-         Set_Target_NS (Handler.Created_Grammar, Handler.Target_NS);
+         Set_Target_NS (Get_Grammar (Handler.all), Handler.Target_NS);
       end if;
 
       if Form_Default_Index /= -1 then
@@ -2814,7 +2785,7 @@ package body Schema.Schema_Readers is
                & Get_URI (NS) & """, G);");
          end if;
 
-         Get_NS (Handler.Created_Grammar, Get_URI (NS), Grammar,
+         Get_NS (Get_Grammar (Handler), Get_URI (NS), Grammar,
                  Create_If_Needed
                  or else Get_URI (NS) = XML_Schema_URI);
          if Grammar = null then

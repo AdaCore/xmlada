@@ -41,28 +41,6 @@ package Schema.Schema_Readers is
    --  An XML reader that parses an XML schema, and store the information in
    --  a grammar
 
-   procedure Set_Created_Grammar
-     (Reader  : in out Schema_Reader;
-      Grammar : Schema.Validators.XML_Grammar := Schema.Validators.No_Grammar);
-   function Get_Created_Grammar
-     (Reader : Schema_Reader) return Schema.Validators.XML_Grammar;
-   --  Start the parsing of multiple schema files.
-   --  When a schema file is parsed, a new XML_Grammar_NS will be created
-   --  based on the value of "targetNamespace" attribute. This should be used
-   --  to cumulate several schema files into one grammar.
-   --  If this isn't call, a new grammar will be created from scratch.
-   --
-   --  For instance, if you need to explicitly parse XSD files:
-   --       Schema  : Schema_Reader;
-   --       Grammar : XML_Grammar := No_Grammar;
-   --
-   --       Parse (Schema, My_Input_XSD_Source1);
-   --       Parse (Schema, My_Input_XSD_Source2);
-   --       Grammar := Get_Created_Grammar (Schema);
-   --
-   --  If you need to change the version of XSD norm (1.0 or 1.1), you should
-   --  call Set_XSD_Version on the grammar first.
-
    procedure Parse
      (Parser            : in out Schema_Reader;
       Input             : in out Input_Sources.Input_Source'Class;
@@ -148,12 +126,6 @@ private
    end record;
 
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
-      Created_Grammar : Schema.Validators.XML_Grammar :=
-        Schema.Validators.No_Grammar;
-      --  This is the grammar created by the Schema file. Do not mix up with
-      --  Schema.Readers.Validating_Reader.Grammar, which is in this case the
-      --  grammar used to validate the schema itself.
-
       Attribute_Form_Default : Schema.Validators.Form_Type :=
         Schema.Validators.Unqualified;
       Element_Form_Default : Schema.Validators.Form_Type :=

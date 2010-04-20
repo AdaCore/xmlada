@@ -62,7 +62,7 @@ package body Schema.Validators is
      (Grammar_NS_Array, Grammar_NS_Array_Access);
 
    procedure Create_NS_Grammar
-     (Grammar       : in out XML_Grammar;
+     (Grammar       : XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence);
    --  Create a new namespace in the grammar
 
@@ -1725,7 +1725,7 @@ package body Schema.Validators is
    ------------
 
    procedure Get_NS
-     (Grammar       : in out XML_Grammar;
+     (Grammar       : XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Result        : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True)
@@ -1801,15 +1801,12 @@ package body Schema.Validators is
    -----------------------
 
    procedure Create_NS_Grammar
-     (Grammar       : in out XML_Grammar;
+     (Grammar       : XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence)
    is
-      G   : XML_Grammars.Encapsulated_Access;
+      G   : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
       Tmp : Grammar_NS_Array_Access;
    begin
-      Initialize (Grammar);
-      G := Get (Grammar);
-
       if G.Grammars = null then
          G.Grammars := new Grammar_NS_Array (1 .. 1);
       else
@@ -5423,7 +5420,7 @@ package body Schema.Validators is
    -------------------
 
    procedure Set_Target_NS
-     (Grammar : in out XML_Grammar;
+     (Grammar : XML_Grammar;
       NS      : XML_Grammar_NS) is
    begin
       if Grammar /= No_Grammar then

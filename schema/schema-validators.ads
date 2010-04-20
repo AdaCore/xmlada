@@ -802,14 +802,14 @@ package Schema.Validators is
    --------------
 
    procedure Get_NS
-     (Grammar       : in out XML_Grammar;
+     (Grammar       : XML_Grammar;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Result        : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True);
    --  Return the part of the grammar specialized for a given namespace.
    --  If no such namespace exists yet in the grammar, it is created.
 
-   procedure Set_Target_NS (Grammar : in out XML_Grammar; NS : XML_Grammar_NS);
+   procedure Set_Target_NS (Grammar : XML_Grammar; NS : XML_Grammar_NS);
    function Get_Target_NS (Grammar : XML_Grammar) return XML_Grammar_NS;
    --  Set the target namespace for the grammar. This is the "targetNamespace"
    --  attribute of the <schema> node.

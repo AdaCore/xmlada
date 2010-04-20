@@ -96,7 +96,7 @@ begin
    --  only be done at the end, and we need to let XML/Ada know about that.
 
    Set_XSD_Version (Grammar, XSD_1_0);
-   Set_Created_Grammar (Schema, Grammar);
+   Set_Grammar (Schema, Grammar);
    Initialize_Option_Scan;
 
    loop
@@ -134,10 +134,8 @@ begin
    --  to make sure they are correct and leave no undefined entity.
 
    if Explicit_XSD then
-      Grammar  := Get_Created_Grammar (Schema);
-
       --  Validate the documents with the schemas we have just parsed.
-      Set_Validating_Grammar (My_Reader.all, Grammar);
+      Set_Grammar (My_Reader.all, Get_Grammar (Schema));
    end if;
 
    --  Activate validation. Even though we have a validating reader, we can

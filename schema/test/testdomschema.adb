@@ -69,11 +69,11 @@ begin
       Open (Xsd_File.all, Read);
       Parse (Schema, Read);
       Close (Read);
-      Grammar := Get_Created_Grammar (Schema);
+      Grammar := Get_Grammar (Schema);
    end if;
 
    if Xml_File.all /= "" then
-      Set_Validating_Grammar (My_Reader, Grammar);
+      Set_Grammar (My_Reader, Grammar);
       Set_Feature (My_Reader, Schema_Validation_Feature, True);
       Open (Xml_File.all, Read);
       Parse (My_Reader, Read);
