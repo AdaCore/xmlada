@@ -87,6 +87,7 @@ package Schema.Validators.Facets is
    procedure Free (Facets : in out Common_Facets_Description);
    procedure Check_Facet
      (Facets : in out Common_Facets_Description;
+      Reader : access Abstract_Validation_Reader'Class;
       Value  : Unicode.CES.Byte_Sequence;
       Mask   : in out Facets_Mask);
    procedure Copy
@@ -94,6 +95,7 @@ package Schema.Validators.Facets is
       To   : in out Facets_Description_Record'Class);
    procedure Add_Facet
      (Facets      : in out Common_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
@@ -101,6 +103,7 @@ package Schema.Validators.Facets is
 
    function Equal
      (Facet : Common_Facets_Description;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    --  Compare the two values Value1 and Value2, according to the base type.
    --  (for instance, for floats, "1.0" is the same as "1").

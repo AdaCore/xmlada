@@ -1,6 +1,35 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2007-2010, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Schema.Decimal;    use Schema.Decimal;
 with GNAT.IO;           use GNAT.IO;
 with Schema.Validators; use Schema.Validators;
+with Unicode.CES;       use Unicode.CES;
 
 procedure TestNumbers is
    procedure Assert_Nan (Num : String);
@@ -8,6 +37,12 @@ procedure TestNumbers is
 
    procedure Assert (Num1, Num2 : String; Expected : Character);
    --  Compare two numbers
+
+   type Local_Reader is new Abstract_Validation_Reader with null record;
+
+   Reader : aliased Local_Reader;
+   R      : constant Abstract_Validating_Reader_Access :=
+     Reader'Unchecked_Access;
 
    ----------------
    -- Assert_Nan --
@@ -17,7 +52,7 @@ procedure TestNumbers is
       N : Arbitrary_Precision_Number;
       pragma Unreferenced (N);
    begin
-      N := Value (Num);
+      N := Value (R, Num);
       Put_Line (Num & " should not be authorized");
    exception
       when XML_Validation_Error =>
@@ -32,23 +67,23 @@ procedure TestNumbers is
    begin
       case Expected is
          when '<' =>
-            if not (Value (Num1) < Value (Num2)) then
+            if not (Value (R, Num1) < Value (R, Num2)) then
                Put_Line (Num1 & " < " & Num2);
             end if;
-            if not (Value (Num2) > Value (Num1)) then
+            if not (Value (R, Num2) > Value (R, Num1)) then
                Put_Line (Num2 & " > " & Num1);
             end if;
 
          when '=' =>
-            if not (Value (Num1) = Value (Num2)) then
+            if not (Value (R, Num1) = Value (R, Num2)) then
                Put_Line (Num1 & " = " & Num2);
             end if;
 
          when '>' =>
-            if not (Value (Num1) > Value (Num2)) then
+            if not (Value (R, Num1) > Value (R, Num2)) then
                Put_Line (Num1 & " > " & Num2);
             end if;
-            if not (Value (Num2) < Value (Num1)) then
+            if not (Value (R, Num2) < Value (R, Num1)) then
                Put_Line (Num2 & " < " & Num1);
             end if;
 
@@ -89,38 +124,39 @@ begin
    Assert (Num1, Num5, '>');
    Assert (Num6, Num7, '>');
 
-   Check_Digits (Value (Num8), Fraction_Digits => 0, Total_Digits => 9);
-   Check_Digits (Value (Num8), Fraction_Digits => 0, Total_Digits => 8);
+   Check_Digits (R, Value (R, Num8), Fraction_Digits => 0, Total_Digits => 9);
+   Check_Digits (R, Value (R, Num8), Fraction_Digits => 0, Total_Digits => 8);
    begin
-      Check_Digits (Value (Num8), Fraction_Digits => 0, Total_Digits => 7);
+      Check_Digits
+        (R, Value (R, Num8), Fraction_Digits => 0, Total_Digits => 7);
       Put_Line ("Total_Digits=5 " & Num8);
    exception
       when XML_Validation_Error => null;
    end;
 
-   Check_Digits (Value (Num9), Total_Digits => 5);
-   Check_Digits (Value (Num9), Total_Digits => 4);
+   Check_Digits (R, Value (R, Num9), Total_Digits => 5);
+   Check_Digits (R, Value (R, Num9), Total_Digits => 4);
    begin
-      Check_Digits (Value (Num9), Total_Digits => 3);
+      Check_Digits (R, Value (R, Num9), Total_Digits => 3);
       Put_Line ("Total_Digits=3 " & Num9);
    exception
       when XML_Validation_Error => null;
    end;
 
-   Check_Digits (Value (Num9), Fraction_Digits => 2);
-   Check_Digits (Value (Num9), Fraction_Digits => 1);
+   Check_Digits (R, Value (R, Num9), Fraction_Digits => 2);
+   Check_Digits (R, Value (R, Num9), Fraction_Digits => 1);
    begin
-      Check_Digits (Value (Num9), Fraction_Digits => 0);
+      Check_Digits (R, Value (R, Num9), Fraction_Digits => 0);
       Put_Line ("Fraction_Digits=0 " & Num9);
    exception
       when XML_Validation_Error => null;
    end;
 
-   Check_Digits (Value (Num8), Fraction_Digits => 1);
-   Check_Digits (Value (Num8), Fraction_Digits => 0);
-   Check_Digits (Value (Num6), Fraction_Digits => 1);
+   Check_Digits (R, Value (R, Num8), Fraction_Digits => 1);
+   Check_Digits (R, Value (R, Num8), Fraction_Digits => 0);
+   Check_Digits (R, Value (R, Num6), Fraction_Digits => 1);
    begin
-      Check_Digits (Value (Num6), Fraction_Digits => 0);
+      Check_Digits (R, Value (R, Num6), Fraction_Digits => 0);
       Put_Line ("Fraction_Digits=0 " & Num6);
    exception
       when XML_Validation_Error => null;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -30,6 +30,7 @@ private package Schema.Validators.Restrictions is
 
    function Create_Restriction_Of
      (G           : XML_Grammar_NS;
+      Reader      : access Abstract_Validation_Reader'Class;
       Base        : XML_Type;
       Restriction : XML_Validator := null) return XML_Validator;
    --  Create new Restrictions of Base, either through a type or a group.

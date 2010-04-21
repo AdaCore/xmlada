@@ -25,7 +25,7 @@
 -- exception does not however invalidate any other reasons why the   --
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
-with GNAT.IO; use GNAT.IO;
+
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Schema.Validators.Facets;  use Schema.Validators.Facets;
 with Sax.Encodings;             use Sax.Encodings;
@@ -87,8 +87,15 @@ package body Schema.Validators.Simple_Types is
    function ">=" (F1, F2 : XML_Float) return Boolean;
    function ">" (F1, F2 : XML_Float) return Boolean;
    function Image (Value : XML_Float) return String;
-   function Value (Str : String) return XML_Float;
-   function Value (Ch : Byte_Sequence) return Boolean;
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Str    : String) return XML_Float;
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Str    : String) return Long_Long_Integer;
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : Byte_Sequence) return Boolean;
    --  Return the float stored in Str (including +INF, -INF)
 
    ----------
@@ -167,7 +174,24 @@ package body Schema.Validators.Simple_Types is
    -- Value --
    -----------
 
-   function Value (Str : String) return XML_Float is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Str    : String) return Long_Long_Integer
+   is
+      pragma Unreferenced (Reader);
+   begin
+      return Long_Long_Integer'Value (Str);
+   end Value;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Str    : String) return XML_Float
+   is
+      pragma Unreferenced (Reader);
    begin
       if Str = "NaN" then
          return XML_Float'(Kind => NaN);
@@ -224,7 +248,9 @@ package body Schema.Validators.Simple_Types is
    generic
       Type_Name : String;
       type T is private;
-      with function Value (Ch : Unicode.CES.Byte_Sequence) return T is <>;
+      with function Value
+        (Reader : access Abstract_Validation_Reader'Class;
+         Ch     : Unicode.CES.Byte_Sequence) return T is <>;
       with function Image (T1 : T) return Unicode.CES.Byte_Sequence is <>;
       with function "=" (T1, T2 : T) return Boolean is <>;
       with function "<=" (T1, T2 : T) return Boolean is <>;
@@ -241,15 +267,18 @@ package body Schema.Validators.Simple_Types is
          end record;
 
       function Equal
-        (Facet : Range_Facets_Description;
+        (Facet  : Range_Facets_Description;
+         Reader : access Abstract_Validation_Reader'Class;
          Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
       procedure Add_Facet
         (Facets      : in out Range_Facets_Description;
+         Reader      : access Abstract_Validation_Reader'Class;
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence;
          Applied     : out Boolean);
       procedure Check_Facet
         (Facets     : in out Range_Facets_Description;
+         Reader     : access Abstract_Validation_Reader'Class;
          Node_Value : Unicode.CES.Byte_Sequence;
          Mask       : in out Facets_Mask);
       procedure Copy
@@ -275,11 +304,13 @@ package body Schema.Validators.Simple_Types is
    private
       procedure Add_Facet
         (Facets      : in out Length_Facets_Description;
+         Reader      : access Abstract_Validation_Reader'Class;
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence;
          Applied     : out Boolean);
       procedure Check_Facet
         (Facets : in out Length_Facets_Description;
+         Reader : access Abstract_Validation_Reader'Class;
          Value  : Unicode.CES.Byte_Sequence;
          Mask   : in out Facets_Mask);
       procedure Copy
@@ -293,6 +324,7 @@ package body Schema.Validators.Simple_Types is
      is new Common_Facets_Description with null record;
    procedure Add_Facet
      (Facets      : in out Always_Match_Length_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
@@ -314,16 +346,19 @@ package body Schema.Validators.Simple_Types is
 
       procedure Validate_Characters
         (Validator     : access Validator_Record;
+         Reader        : access Abstract_Validation_Reader'Class;
          Ch            : Unicode.CES.Byte_Sequence;
          Empty_Element : Boolean;
-         Mask          : in out Facets_Mask;
-         Context       : in out Validation_Context);
+         Mask          : in out Facets_Mask);
       procedure Add_Facet
         (Validator   : access Validator_Record;
+         Reader      : access Abstract_Validation_Reader'Class;
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence);
       function Get_Facets
-        (Validator : access Validator_Record) return Facets_Description;
+        (Validator : access Validator_Record;
+         Reader    : access Abstract_Validation_Reader'Class)
+         return Facets_Description;
       --  See doc for inherited subprograms
    end Generic_Simple_Validator;
 
@@ -339,11 +374,12 @@ package body Schema.Validators.Simple_Types is
 
       function Equal
         (Facet : Range_Facets_Description;
+         Reader : access Abstract_Validation_Reader'Class;
          Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
       is
          pragma Unreferenced (Facet);
-         V1 : constant T := Value (Value1);
-         V2 : constant T := Value (Value2);
+         V1 : constant T := Value (Reader, Value1);
+         V2 : constant T := Value (Reader, Value2);
       begin
          return V1 = V2;
       end Equal;
@@ -370,14 +406,16 @@ package body Schema.Validators.Simple_Types is
 
       procedure Check_Facet
         (Facets     : in out Range_Facets_Description;
+         Reader     : access Abstract_Validation_Reader'Class;
          Node_Value : Unicode.CES.Byte_Sequence;
          Mask       : in out Facets_Mask)
       is
          Val : T;
       begin
-         Val := Value (Node_Value);
+         Val := Value (Reader, Node_Value);
 
-         Check_Facet (Common_Facets_Description (Facets), Node_Value, Mask);
+         Check_Facet
+           (Common_Facets_Description (Facets), Reader, Node_Value, Mask);
 
          if Facets.Mask (Facet_Max_Exclusive)
            and Mask (Facet_Max_Exclusive)
@@ -385,7 +423,7 @@ package body Schema.Validators.Simple_Types is
             Mask (Facet_Max_Exclusive) := False;
             if Facets.Max_Exclusive <= Val then
                Validation_Error
-                 (Node_Value & " is greater than maxExclusive ("
+                 (Reader, Node_Value & " is greater than maxExclusive ("
                   & Image (Facets.Max_Exclusive) & ")");
             end if;
          end if;
@@ -396,7 +434,7 @@ package body Schema.Validators.Simple_Types is
             Mask (Facet_Max_Inclusive) := False;
             if Facets.Max_Inclusive < Val then
                Validation_Error
-                 (Node_Value & " is greater than maxInclusive ("
+                 (Reader, Node_Value & " is greater than maxInclusive ("
                   & Image (Facets.Max_Inclusive) & ")");
             end if;
          end if;
@@ -407,7 +445,7 @@ package body Schema.Validators.Simple_Types is
             Mask (Facet_Min_Inclusive) := False;
             if Facets.Min_Inclusive > Val then
                Validation_Error
-                 (Node_Value & " is smaller than minInclusive ("
+                 (Reader, Node_Value & " is smaller than minInclusive ("
                   & Image (Facets.Min_Inclusive) & ")");
             end if;
          end if;
@@ -418,7 +456,7 @@ package body Schema.Validators.Simple_Types is
             Mask (Facet_Min_Exclusive) := False;
             if Facets.Min_Exclusive >= Val then
                Validation_Error
-                 (Node_Value & " is smaller than minExclusive ("
+                 (Reader, Node_Value & " is smaller than minExclusive ("
                   & Image (Facets.Min_Exclusive) & ")");
             end if;
          end if;
@@ -426,7 +464,7 @@ package body Schema.Validators.Simple_Types is
       exception
          when Constraint_Error =>
             Validation_Error
-              ("Invalid " & Type_Name & ": """ & Node_Value & """");
+              (Reader, "Invalid " & Type_Name & ": """ & Node_Value & """");
       end Check_Facet;
 
       ---------------
@@ -435,29 +473,30 @@ package body Schema.Validators.Simple_Types is
 
       procedure Add_Facet
         (Facets      : in out Range_Facets_Description;
+         Reader      : access Abstract_Validation_Reader'Class;
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence;
          Applied     : out Boolean) is
       begin
          Add_Facet
-           (Common_Facets_Description (Facets), Facet_Name, Facet_Value,
-            Applied);
+           (Common_Facets_Description (Facets), Reader,
+            Facet_Name, Facet_Value, Applied);
          if Applied then
             null;
          elsif Facet_Name = "maxInclusive" then
-            Facets.Max_Inclusive := Value (Facet_Value);
+            Facets.Max_Inclusive := Value (Reader, Facet_Value);
             Facets.Mask (Facet_Max_Inclusive) := True;
             Applied := True;
          elsif Facet_Name = "maxExclusive" then
-            Facets.Max_Exclusive := Value (Facet_Value);
+            Facets.Max_Exclusive := Value (Reader, Facet_Value);
             Facets.Mask (Facet_Max_Exclusive) := True;
             Applied := True;
          elsif Facet_Name = "minInclusive" then
-            Facets.Min_Inclusive := Value (Facet_Value);
+            Facets.Min_Inclusive := Value (Reader, Facet_Value);
             Facets.Mask (Facet_Min_Inclusive) := True;
             Applied := True;
          elsif Facet_Name = "minExclusive" then
-            Facets.Min_Exclusive := Value (Facet_Value);
+            Facets.Min_Exclusive := Value (Reader, Facet_Value);
             Facets.Mask (Facet_Min_Exclusive) := True;
             Applied := True;
          else
@@ -467,7 +506,7 @@ package body Schema.Validators.Simple_Types is
       exception
          when Constraint_Error =>
             Validation_Error
-              ("Invalid " & Facet_Name & ": """ & Facet_Value & """");
+              (Reader, "Invalid " & Facet_Name & ": """ & Facet_Value & """");
       end Add_Facet;
    end Generic_Range_Facets;
 
@@ -497,11 +536,12 @@ package body Schema.Validators.Simple_Types is
 
       procedure Add_Facet
         (Facets      : in out Length_Facets_Description;
+         Reader      : access Abstract_Validation_Reader'Class;
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence;
          Applied     : out Boolean) is
       begin
-         Add_Facet (Common_Facets_Description (Facets), Facet_Name,
+         Add_Facet (Common_Facets_Description (Facets), Reader, Facet_Name,
                     Facet_Value, Applied);
          if Applied then
             null;
@@ -528,6 +568,7 @@ package body Schema.Validators.Simple_Types is
 
       procedure Check_Facet
         (Facets : in out Length_Facets_Description;
+         Reader : access Abstract_Validation_Reader'Class;
          Value  : Unicode.CES.Byte_Sequence;
          Mask   : in out Facets_Mask)
       is
@@ -543,7 +584,8 @@ package body Schema.Validators.Simple_Types is
                Mask (Facet_Length) := False;
                if Facets.Length /= Length then
                   Validation_Error
-                    ("Invalid length, must be" & Integer'Image (Facets.Length)
+                    (Reader,
+                     "Invalid length, must be" & Integer'Image (Facets.Length)
                      & " characters");
                end if;
             end if;
@@ -551,7 +593,8 @@ package body Schema.Validators.Simple_Types is
             if Facets.Mask (Facet_Min_Length) and Mask (Facet_Min_Length) then
                Mask (Facet_Min_Length) := False;
                if Length < Facets.Min_Length then
-                  Validation_Error ("String is too short, minimum length is"
+                  Validation_Error (Reader,
+                                    "String is too short, minimum length is"
                                     & Integer'Image (Facets.Min_Length)
                                     & " characters");
                end if;
@@ -560,14 +603,15 @@ package body Schema.Validators.Simple_Types is
             if Facets.Mask (Facet_Max_Length) and Mask (Facet_Max_Length) then
                Mask (Facet_Max_Length) := False;
                if Length > Facets.Max_Length then
-                  Validation_Error ("String too long, maximum length is"
+                  Validation_Error (Reader,
+                                    "String too long, maximum length is"
                                     & Integer'Image (Facets.Max_Length)
                                     & " characters");
                end if;
             end if;
          end if;
 
-         Check_Facet (Common_Facets_Description (Facets), Value, Mask);
+         Check_Facet (Common_Facets_Description (Facets), Reader, Value, Mask);
       end Check_Facet;
    end Length_Facets;
 
@@ -577,12 +621,13 @@ package body Schema.Validators.Simple_Types is
 
    procedure Add_Facet
      (Facets      : in out Always_Match_Length_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean)
    is
    begin
-      Add_Facet (Common_Facets_Description (Facets), Facet_Name,
+      Add_Facet (Common_Facets_Description (Facets), Reader, Facet_Name,
                  Facet_Value, Applied);
       if Applied
         or else Facet_Name = "length"
@@ -607,10 +652,10 @@ package body Schema.Validators.Simple_Types is
 
       procedure Validate_Characters
         (Validator     : access Validator_Record;
+         Reader        : access Abstract_Validation_Reader'Class;
          Ch            : Unicode.CES.Byte_Sequence;
          Empty_Element : Boolean;
-         Mask          : in out Facets_Mask;
-         Context       : in out Validation_Context)
+         Mask          : in out Facets_Mask)
       is
          pragma Unreferenced (Empty_Element);
       begin
@@ -618,8 +663,8 @@ package body Schema.Validators.Simple_Types is
             Debug_Output ("Validate_Characters " & Get_Name (Validator));
          end if;
 
-         Check_Id (Context, Validator, Ch);
-         Check_Facet (Get_Facets (Validator).all, Ch, Mask);
+         Check_Id (Reader, Validator, Ch);
+         Check_Facet (Get_Facets (Validator, Reader).all, Reader, Ch, Mask);
       end Validate_Characters;
 
       ---------------
@@ -628,15 +673,17 @@ package body Schema.Validators.Simple_Types is
 
       procedure Add_Facet
         (Validator   : access Validator_Record;
+         Reader      : access Abstract_Validation_Reader'Class;
          Facet_Name  : Unicode.CES.Byte_Sequence;
          Facet_Value : Unicode.CES.Byte_Sequence)
       is
          Applies : Boolean;
       begin
          Add_Facet
-           (Get_Facets (Validator).all, Facet_Name, Facet_Value, Applies);
+           (Get_Facets (Validator, Reader).all, Reader,
+            Facet_Name, Facet_Value, Applies);
          if not Applies then
-            Validation_Error ("Invalid facet: " & Facet_Name);
+            Validation_Error (Reader, "Invalid facet: " & Facet_Name);
          end if;
       end Add_Facet;
 
@@ -645,7 +692,11 @@ package body Schema.Validators.Simple_Types is
       ----------------
 
       function Get_Facets
-        (Validator : access Validator_Record) return Facets_Description is
+        (Validator : access Validator_Record;
+         Reader    : access Abstract_Validation_Reader'Class)
+         return Facets_Description
+      is
+         pragma Unreferenced (Reader);
       begin
          if Validator.Facets = null then
             Validator.Facets := new Facets_Type;
@@ -709,6 +760,7 @@ package body Schema.Validators.Simple_Types is
      new Float_Facets_Package.Range_Facets_Description with null record;
    procedure Check_Facet
      (Facets      : in out Float_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Mask        : in out Facets_Mask);
    package Float_Validators is new Generic_Simple_Validator
@@ -724,6 +776,7 @@ package body Schema.Validators.Simple_Types is
       end record;
    procedure Add_Facet
      (Facets      : in out Decimal_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
@@ -732,14 +785,14 @@ package body Schema.Validators.Simple_Types is
       To   : in out Facets_Description_Record'Class);
    procedure Check_Facet
      (Facets      : in out Decimal_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Mask        : in out Facets_Mask);
    package Decimal_Validators is new Generic_Simple_Validator
      (Decimal_Facets_Description);
 
    package Integer_Facets_Package is new Generic_Range_Facets
-     ("integer",
-      Long_Long_Integer, Long_Long_Integer'Value, Long_Long_Integer'Image);
+     ("integer", Long_Long_Integer, Value, Long_Long_Integer'Image);
    type Integer_Facets_Description is new
      Integer_Facets_Package.Range_Facets_Description
    with record
@@ -750,11 +803,13 @@ package body Schema.Validators.Simple_Types is
       To   : in out Facets_Description_Record'Class);
    procedure Add_Facet
      (Facets      : in out Integer_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
    procedure Check_Facet
      (Facets      : in out Integer_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Mask        : in out Facets_Mask);
    package Integer_Validators is new Generic_Simple_Validator
@@ -764,16 +819,18 @@ package body Schema.Validators.Simple_Types is
       null record;
    procedure Validate_Characters
      (Validator     : access Boolean_Validator_Record;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context);
+      Mask          : in out Facets_Mask);
    procedure Add_Facet
      (Validator   : access Boolean_Validator_Record;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence);
    function Equal
      (Validator      : access Boolean_Validator_Record;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    --   See doc from inherited subprograms
 
@@ -802,10 +859,10 @@ package body Schema.Validators.Simple_Types is
       with null record;
    procedure Validate_Characters
      (Validator     : access HexBinary_Validator;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context);
+      Mask          : in out Facets_Mask);
    --  See inherited documentation
 
    function Base64Binary_Get_Length
@@ -826,10 +883,10 @@ package body Schema.Validators.Simple_Types is
      is new QName_Validators.Validator_Record with null record;
    procedure Validate_Characters
      (Validator     : access QName_Validator;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context);
+      Mask          : in out Facets_Mask);
 
    -------------------------
    -- Validate_Characters --
@@ -837,28 +894,29 @@ package body Schema.Validators.Simple_Types is
 
    procedure Validate_Characters
      (Validator     : access QName_Validator;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context)
+      Mask          : in out Facets_Mask)
    is
       pragma Unreferenced (Validator, Empty_Element, Mask);
       Pos : Integer;
       NS  : XML_NS;
    begin
       if not Is_Valid_QName (Ch) then
-         Validation_Error ("Invalid QName: """ & Ch & '"');
+         Validation_Error (Reader, "Invalid QName: """ & Ch & '"');
       end if;
 
       Pos := Ada.Strings.Fixed.Index (Ch, ":");
       if Pos >= Ch'First then
          --  Check whether the namespace is valid
          Get_Namespace_From_Prefix
-           (Handler => Validating_Reader (Context.Parser.all),
+           (Handler => Validating_Reader (Reader.all),
             Prefix  => Ch (Ch'First .. Pos - 1),
             NS      => NS);
          if NS = No_XML_NS or else Get_URI (NS) = "xmlns" then
-            Validation_Error ("No corresponding namespace in scope for """
+            Validation_Error (Reader,
+                              "No corresponding namespace in scope for """
                               & Ch (Ch'First .. Pos - 1) & '"');
          end if;
       end if;
@@ -870,18 +928,18 @@ package body Schema.Validators.Simple_Types is
 
    procedure Validate_Characters
      (Validator     : access HexBinary_Validator;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context) is
+      Mask          : in out Facets_Mask) is
    begin
       if Sax.Encodings.Encoding.Length (Ch) mod 2 /= 0 then
          Validation_Error
-           ("HexBinary length must be an even number of characters");
+           (Reader, "HexBinary length must be an even number of characters");
       end if;
       HexBinary_Validators.Validate_Characters
         (HexBinary_Validators.Validator_Record (Validator.all)'Access,
-         Ch, Empty_Element, Mask, Context);
+         Reader, Ch, Empty_Element, Mask);
    end Validate_Characters;
 
    -----------------------
@@ -945,6 +1003,7 @@ package body Schema.Validators.Simple_Types is
 
    procedure Check_Facet
      (Facets      : in out Integer_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Mask        : in out Facets_Mask)
    is
@@ -954,12 +1013,13 @@ package body Schema.Validators.Simple_Types is
          Mask (Facet_Total_Digits) := False;
          if Facet_Value'Length > Facets.Total_Digits then
             Validation_Error
-              ("The maximum number of digits is"
+              (Reader, "The maximum number of digits is"
                & Integer'Image (Facets.Total_Digits));
          end if;
       end if;
 
-      Check_Facet (Range_Facets_Description (Facets), Facet_Value, Mask);
+      Check_Facet
+        (Range_Facets_Description (Facets), Reader, Facet_Value, Mask);
    end Check_Facet;
 
    ---------------
@@ -968,6 +1028,7 @@ package body Schema.Validators.Simple_Types is
 
    procedure Add_Facet
      (Facets      : in out Integer_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean)
@@ -976,8 +1037,8 @@ package body Schema.Validators.Simple_Types is
       Val : Integer;
    begin
       Add_Facet
-        (Integer_Facets_Package.Range_Facets_Description (Facets), Facet_Name,
-         Facet_Value, Applied);
+        (Integer_Facets_Package.Range_Facets_Description (Facets),
+         Reader, Facet_Name, Facet_Value, Applied);
       if Applied then
          null;
       elsif Facet_Name = "totalDigits" then
@@ -987,7 +1048,7 @@ package body Schema.Validators.Simple_Types is
       elsif Facet_Name = "fractionDigits" then
          Val := Integer'Value (Facet_Value);
          if Val /= 0 then
-            Validation_Error ("fractionDigits must be 0 for integers");
+            Validation_Error (Reader, "fractionDigits must be 0 for integers");
          end if;
          Applied := True;
       else
@@ -1004,6 +1065,7 @@ package body Schema.Validators.Simple_Types is
 
    procedure Add_Facet
      (Facets      : in out Decimal_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean)
@@ -1011,8 +1073,8 @@ package body Schema.Validators.Simple_Types is
       use Decimal_Facets_Package;
    begin
       Add_Facet
-        (Decimal_Facets_Package.Range_Facets_Description (Facets), Facet_Name,
-         Facet_Value, Applied);
+        (Decimal_Facets_Package.Range_Facets_Description (Facets), Reader,
+         Facet_Name, Facet_Value, Applied);
       if Applied then
          null;
       elsif Facet_Name = "totalDigits" then
@@ -1022,7 +1084,7 @@ package body Schema.Validators.Simple_Types is
            and then Facets.Fraction_Digits > Facets.Total_Digits
          then
             Validation_Error
-              ("fractionDigits cannot be greater than totalDigits");
+              (Reader, "fractionDigits cannot be greater than totalDigits");
          end if;
 
          Applied := True;
@@ -1032,7 +1094,7 @@ package body Schema.Validators.Simple_Types is
            and then Facets.Fraction_Digits > Facets.Total_Digits
          then
             Validation_Error
-              ("fractionDigits cannot be greater than totalDigits");
+              (Reader, "fractionDigits cannot be greater than totalDigits");
          end if;
          Applied := True;
       else
@@ -1067,21 +1129,28 @@ package body Schema.Validators.Simple_Types is
 
    procedure Check_Facet
      (Facets      : in out Decimal_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Mask        : in out Facets_Mask)
    is
       use Decimal_Facets_Package;
    begin
-      Check_Digits (Value_No_Exponent (Facet_Value), Facets.Fraction_Digits,
-                    Facets.Total_Digits);
-      Check_Facet (Range_Facets_Description (Facets), Facet_Value, Mask);
+      Check_Digits
+        (Reader,
+         Value_No_Exponent (Reader, Facet_Value), Facets.Fraction_Digits,
+         Facets.Total_Digits);
+      Check_Facet
+        (Range_Facets_Description (Facets), Reader, Facet_Value, Mask);
    end Check_Facet;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : Byte_Sequence) return Boolean is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : Byte_Sequence) return Boolean
+   is
       First : Integer := Ch'First;
       Index : Integer;
       C     : Unicode_Char;
@@ -1114,7 +1183,8 @@ package body Schema.Validators.Simple_Types is
          Result := False;
 
       else
-         Validation_Error ("Invalid value for boolean type: """ & Ch & """");
+         Validation_Error
+           (Reader, "Invalid value for boolean type: """ & Ch & """");
       end if;
 
       --  Skip trailing spaces
@@ -1123,7 +1193,7 @@ package body Schema.Validators.Simple_Types is
          Encoding.Read (Ch, First, C);
          if not Is_White_Space (C) then
             Validation_Error
-              ("Invalid value for boolean type: """ & Ch & """");
+              (Reader, "Invalid value for boolean type: """ & Ch & """");
          end if;
       end loop;
 
@@ -1136,11 +1206,12 @@ package body Schema.Validators.Simple_Types is
 
    function Equal
      (Validator      : access Boolean_Validator_Record;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
    is
       pragma Unreferenced (Validator);
-      V1 : constant Boolean := Value (Value1);
-      V2 : constant Boolean := Value (Value2);
+      V1 : constant Boolean := Value (Reader, Value1);
+      V2 : constant Boolean := Value (Reader, Value2);
    begin
       return V1 = V2;
    end Equal;
@@ -1151,13 +1222,13 @@ package body Schema.Validators.Simple_Types is
 
    procedure Validate_Characters
      (Validator     : access Boolean_Validator_Record;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context)
+      Mask          : in out Facets_Mask)
    is
       Val : Boolean;
-      pragma Unreferenced (Empty_Element, Context, Val);
+      pragma Unreferenced (Empty_Element, Val);
    begin
       if Debug then
          Debug_Output
@@ -1166,11 +1237,11 @@ package body Schema.Validators.Simple_Types is
 
       if Ch = "" then
          Validation_Error
-           ("Invalid value for boolean type: """ & Ch & """");
+           (Reader, "Invalid value for boolean type: """ & Ch & """");
       end if;
 
-      Check_Facet (Get_Facets (Validator).all, Ch, Mask);
-      Val := Value (Ch);
+      Check_Facet (Get_Facets (Validator, Reader).all, Reader, Ch, Mask);
+      Val := Value (Reader, Ch);
    end Validate_Characters;
 
    ---------------
@@ -1179,14 +1250,17 @@ package body Schema.Validators.Simple_Types is
 
    procedure Add_Facet
      (Validator   : access Boolean_Validator_Record;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence)
    is
       Applies : Boolean;
    begin
-      Add_Facet (Get_Facets (Validator).all, Facet_Name, Facet_Value, Applies);
+      Add_Facet
+        (Get_Facets (Validator, Reader).all, Reader,
+         Facet_Name, Facet_Value, Applies);
       if not Applies then
-         Validation_Error ("Invalid facet: " & Facet_Name);
+         Validation_Error (Reader, "Invalid facet: " & Facet_Name);
       end if;
    end Add_Facet;
 
@@ -1356,6 +1430,7 @@ package body Schema.Validators.Simple_Types is
 
    procedure Check_Facet
      (Facets      : in out Float_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Mask        : in out Facets_Mask)
    is
@@ -1367,7 +1442,8 @@ package body Schema.Validators.Simple_Types is
                and Mask (Facet_Max_Exclusive))
          then
             Validation_Error
-              ("NaN is greater than all numbers, and too big in this context");
+              (Reader,
+               "NaN is greater than all numbers, and too big in this context");
          end if;
          Mask (Facet_Max_Inclusive) := False;
          Mask (Facet_Max_Exclusive) := False;
@@ -1379,7 +1455,8 @@ package body Schema.Validators.Simple_Types is
                and Mask (Facet_Max_Exclusive))
          then
             Validation_Error
-              ("INF is greater than maxInclusive and maxExclusive");
+              (Reader,
+               "INF is greater than maxInclusive and maxExclusive");
          end if;
          Mask (Facet_Max_Inclusive) := False;
          Mask (Facet_Max_Exclusive) := False;
@@ -1391,22 +1468,25 @@ package body Schema.Validators.Simple_Types is
                and Mask (Facet_Min_Exclusive))
          then
             Validation_Error
-              ("-INF is smaller than minInclusive and minExclusive");
+              (Reader, "-INF is smaller than minInclusive and minExclusive");
          end if;
          Mask (Facet_Min_Inclusive) := False;
          Mask (Facet_Min_Exclusive) := False;
       end if;
 
       Check_Facet
-        (Float_Facets_Package.Range_Facets_Description (Facets), Facet_Value,
-         Mask);
+        (Float_Facets_Package.Range_Facets_Description (Facets),
+         Reader, Facet_Value, Mask);
    end Check_Facet;
 
    -------------------------------
    -- Register_Predefined_Types --
    -------------------------------
 
-   procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS) is
+   procedure Register_Predefined_Types
+     (G, XML_G : XML_Grammar_NS;
+      Reader   : access Abstract_Validation_Reader'Class)
+   is
       use Integer_Validators, String_Validators, String_List_Validators;
       use HexBinary_Validators, Base64Binary_Validators, Decimal_Validators;
       use String_Facets, String_List_Facets,
@@ -1420,227 +1500,217 @@ package body Schema.Validators.Simple_Types is
       Dec     : Decimal_Validators.Validator;
       QN      : QName_Validators.Validator;
       Created : XML_Type;
-      Applied : Boolean;
    begin
       Tmp := new Boolean_Validator_Record;
-      Create_Global_Type (G, "boolean", Tmp);
+      Create_Global_Type (G, Reader, "boolean", Tmp);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "preserve");
-      Create_Global_Type (G, "string", Str);
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
+      Create_Global_Type (G, Reader, "string", Str);
 
       QN  := new QName_Validator;
-      Create_Global_Type (G, "QName", QN);
+      Create_Global_Type (G, Reader, "QName", QN);
 
       QN  := new QName_Validator;
-      Create_Global_Type (G, "NOTATION", QN);
+      Create_Global_Type (G, Reader, "NOTATION", QN);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "replace");
-      Create_Global_Type (G, "normalizedString", Str);
+      Add_Facet (Str, Reader, "whiteSpace", "replace");
+      Create_Global_Type (G, Reader, "normalizedString", Str);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "collapse");
-      Create_Global_Type (G, "token", Str);
+      Add_Facet (Str, Reader, "whiteSpace", "collapse");
+      Create_Global_Type (G, Reader, "token", Str);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "preserve");
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_Language_Name'Access);
-      Created := Create_Global_Type (G, "language", Str);
-      Create_Global_Attribute (XML_G, "lang", Created);
+      Created := Create_Global_Type (G, Reader, "language", Str);
+      Create_Global_Attribute (XML_G, Reader, "lang", Created);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "collapse");
+      Add_Facet (Str, Reader, "whiteSpace", "collapse");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_Nmtoken'Access);
-      Create_Global_Type (G, "NMTOKEN", Str);
+      Create_Global_Type (G, Reader, "NMTOKEN", Str);
 
       StrList := new String_List_Validators.Validator_Record;
-      Add_Facet (StrList, "whiteSpace", "collapse");
+      Add_Facet (StrList, Reader, "whiteSpace", "collapse");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (StrList).all),
+        (Common_Facets_Description (Get_Facets (StrList, Reader).all),
          Is_Valid_Nmtokens'Access);
-      Create_Global_Type (G, "NMTOKENS", StrList);
+      Create_Global_Type (G, Reader, "NMTOKENS", StrList);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "preserve");
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_Name'Access);
-      Create_Global_Type (G, "Name", Str);
+      Create_Global_Type (G, Reader, "Name", Str);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "preserve");
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCname'Access);
-      Create_Global_Type (G, "NCName", Str);
+      Create_Global_Type (G, Reader, "NCName", Str);
 
       Str := new ID_Validator;
-      Add_Facet (Str, "whiteSpace", "preserve");
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCname'Access);
-      Create_Global_Type (G, "ID", Str);
+      Create_Global_Type (G, Reader, "ID", Str);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "preserve");
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCname'Access);
-      Create_Global_Type (G, "IDREF", Str);
+      Create_Global_Type (G, Reader, "IDREF", Str);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "preserve");
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCnames'Access);
-      Create_Global_Type (G, "IDREFS", Str);
+      Create_Global_Type (G, Reader, "IDREFS", Str);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "preserve");
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCname'Access);
-      Create_Global_Type (G, "ENTITY", Str);
+      Create_Global_Type (G, Reader, "ENTITY", Str);
 
       Str := new String_Validators.Validator_Record;
-      Add_Facet (Str, "whiteSpace", "preserve");
+      Add_Facet (Str, Reader, "whiteSpace", "preserve");
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCnames'Access);
-      Create_Global_Type (G, "ENTITIES", Str);
+      Create_Global_Type (G, Reader, "ENTITIES", Str);
 
       Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Str).all),
+        (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_URI'Access);
-      Create_Global_Type (G, "anyURI", Str);
+      Create_Global_Type (G, Reader, "anyURI", Str);
 
       Hex := new HexBinary_Validator;
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Hex).all),
+        (Common_Facets_Description (Get_Facets (Hex, Reader).all),
          Is_Valid_HexBinary'Access);
-      Create_Global_Type (G, "hexBinary", Hex);
+      Create_Global_Type (G, Reader, "hexBinary", Hex);
 
       Base64 := new Base64Binary_Validators.Validator_Record;
       Set_Implicit_Enumeration
-        (Common_Facets_Description (Get_Facets (Base64).all),
+        (Common_Facets_Description (Get_Facets (Base64, Reader).all),
          Is_Valid_Base64Binary'Access);
-      Create_Global_Type (G, "base64Binary", Base64);
+      Create_Global_Type (G, Reader, "base64Binary", Base64);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Create_Global_Type (G, "decimal", Dec);
+      Create_Global_Type (G, Reader, "decimal", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Dec).all, "fractionDigits", "0", Applied);
-      Add_Facet
-        (Get_Facets (Dec).all, "maxInclusive", "+18446744073709551615",
-         Applied);
-      Add_Facet (Get_Facets (Dec).all, "minInclusive", "0", Applied);
-      Create_Global_Type (G, "unsignedLong", Dec);
+      Add_Facet (Dec, Reader, "fractionDigits", "0");
+      Add_Facet (Dec, Reader, "maxInclusive", "+18446744073709551615");
+      Add_Facet (Dec, Reader, "minInclusive", "0");
+      Create_Global_Type (G, Reader, "unsignedLong", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Dec).all, "fractionDigits", "0", Applied);
-      Create_Global_Type (G, "integer", Dec);
+      Add_Facet (Dec, Reader, "fractionDigits", "0");
+      Create_Global_Type (G, Reader, "integer", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Dec).all, "minInclusive", "0", Applied);
-      Create_Global_Type (G, "nonNegativeInteger", Dec);
+      Add_Facet (Dec, Reader, "minInclusive", "0");
+      Create_Global_Type (G, Reader, "nonNegativeInteger", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Dec).all, "minInclusive", "1", Applied);
-      Create_Global_Type (G, "positiveInteger", Dec);
+      Add_Facet (Dec, Reader, "minInclusive", "1");
+      Create_Global_Type (G, Reader, "positiveInteger", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Dec).all, "maxInclusive", "0", Applied);
-      Create_Global_Type (G, "nonPositiveInteger", Dec);
+      Add_Facet (Dec, Reader, "maxInclusive", "0");
+      Create_Global_Type (G, Reader, "nonPositiveInteger", Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Dec).all, "maxInclusive", "-1", Applied);
-      Create_Global_Type (G, "negativeInteger", Dec);
+      Add_Facet (Dec, Reader, "maxInclusive", "-1");
+      Create_Global_Type (G, Reader, "negativeInteger", Dec);
 
       Int := new Integer_Validators.Validator_Record;
-      Add_Facet
-        (Get_Facets (Int).all, "maxInclusive", "+9223372036854775807",
-         Applied);
-      Add_Facet
-        (Get_Facets (Int).all, "minInclusive", "-9223372036854775808",
-         Applied);
-      Create_Global_Type (G, "long", Int);
+      Add_Facet (Int, Reader, "maxInclusive", "+9223372036854775807");
+      Add_Facet (Int, Reader, "minInclusive", "-9223372036854775808");
+      Create_Global_Type (G, Reader, "long", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Add_Facet
-        (Get_Facets (Int).all, "maxInclusive", "+2147483647", Applied);
-      Add_Facet
-        (Get_Facets (Int).all, "minInclusive", "-2147483648", Applied);
-      Create_Global_Type (G, "int", Int);
+      Add_Facet (Int, Reader, "maxInclusive", "+2147483647");
+      Add_Facet (Int, Reader, "minInclusive", "-2147483648");
+      Create_Global_Type (G, Reader, "int", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+32767", Applied);
-      Add_Facet (Get_Facets (Int).all, "minInclusive", "-32768", Applied);
-      Create_Global_Type (G, "short", Int);
+      Add_Facet (Int, Reader, "maxInclusive", "+32767");
+      Add_Facet (Int, Reader, "minInclusive", "-32768");
+      Create_Global_Type (G, Reader, "short", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+127", Applied);
-      Add_Facet (Get_Facets (Int).all, "minInclusive", "-128", Applied);
-      Create_Global_Type (G, "byte", Int);
+      Add_Facet (Int, Reader, "maxInclusive", "+127");
+      Add_Facet (Int, Reader, "minInclusive", "-128");
+      Create_Global_Type (G, Reader, "byte", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+4294967295", Applied);
-      Add_Facet (Get_Facets (Int).all, "minInclusive", "0", Applied);
-      Create_Global_Type (G, "unsignedInt", Int);
+      Add_Facet (Int, Reader, "maxInclusive", "+4294967295");
+      Add_Facet (Int, Reader, "minInclusive", "0");
+      Create_Global_Type (G, Reader, "unsignedInt", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+65535", Applied);
-      Add_Facet (Get_Facets (Int).all, "minInclusive", "0", Applied);
-      Create_Global_Type (G, "unsignedShort", Int);
+      Add_Facet (Int, Reader, "maxInclusive", "+65535");
+      Add_Facet (Int, Reader, "minInclusive", "0");
+      Create_Global_Type (G, Reader, "unsignedShort", Int);
 
       Int := new Integer_Validators.Validator_Record;
-      Add_Facet (Get_Facets (Int).all, "maxInclusive", "+255", Applied);
-      Add_Facet (Get_Facets (Int).all, "minInclusive", "0", Applied);
-      Create_Global_Type (G, "unsignedByte", Int);
+      Add_Facet (Int, Reader, "maxInclusive", "+255");
+      Add_Facet (Int, Reader, "minInclusive", "0");
+      Create_Global_Type (G, Reader, "unsignedByte", Int);
 
       Tmp := new Float_Validators.Validator_Record;
-      Create_Global_Type (G, "float", Tmp);
+      Create_Global_Type (G, Reader, "float", Tmp);
 
       Tmp := new Float_Validators.Validator_Record;
-      Create_Global_Type (G, "double", Tmp);
+      Create_Global_Type (G, Reader, "double", Tmp);
 
       Tmp := new Time_Validators.Validator_Record;
-      Create_Global_Type (G, "time", Tmp);
+      Create_Global_Type (G, Reader, "time", Tmp);
 
       Tmp := new Date_Time_Validators.Validator_Record;
-      Create_Global_Type (G, "dateTime", Tmp);
+      Create_Global_Type (G, Reader, "dateTime", Tmp);
 
       Tmp := new GDay_Validators.Validator_Record;
-      Create_Global_Type (G, "gDay", Tmp);
+      Create_Global_Type (G, Reader, "gDay", Tmp);
 
       Tmp := new GMonth_Day_Validators.Validator_Record;
-      Create_Global_Type (G, "gMonthDay", Tmp);
+      Create_Global_Type (G, Reader, "gMonthDay", Tmp);
 
       Tmp := new GMonth_Validators.Validator_Record;
-      Create_Global_Type (G, "gMonth", Tmp);
+      Create_Global_Type (G, Reader, "gMonth", Tmp);
 
       Tmp := new GYear_Month_Validators.Validator_Record;
-      Create_Global_Type (G, "gYearMonth", Tmp);
+      Create_Global_Type (G, Reader, "gYearMonth", Tmp);
 
       Tmp := new GYear_Validators.Validator_Record;
-      Create_Global_Type (G, "gYear", Tmp);
+      Create_Global_Type (G, Reader, "gYear", Tmp);
 
       Tmp := new Date_Validators.Validator_Record;
-      Create_Global_Type (G, "date", Tmp);
+      Create_Global_Type (G, Reader, "date", Tmp);
 
       Tmp := new Duration_Validators.Validator_Record;
-      Create_Global_Type (G, "duration", Tmp);
+      Create_Global_Type (G, Reader, "duration", Tmp);
 
-      Tmp := Restriction_Of (G, Lookup (G, "anySimpleType"));
-      Add_Facet (Tmp, "whiteSpace", "collapse");
-      Create_Global_Type (G, "uriReference", Tmp);
-
+      Tmp := Restriction_Of (G, Reader, Lookup (G, Reader, "anySimpleType"));
+      Add_Facet (Tmp, Reader, "whiteSpace", "collapse");
+      Create_Global_Type (G, Reader, "uriReference", Tmp);
    end Register_Predefined_Types;
 
    ----------------------------
@@ -1648,18 +1718,20 @@ package body Schema.Validators.Simple_Types is
    ----------------------------
 
    procedure Validate_Start_Element
-     (Validator             : access Any_Simple_XML_Validator_Record;
-      Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Grammar                : XML_Grammar;
-      Element_Validator      : out XML_Element)
+     (Validator         : access Any_Simple_XML_Validator_Record;
+      Reader            : access Abstract_Validation_Reader'Class;
+      Local_Name        : Unicode.CES.Byte_Sequence;
+      Namespace_URI     : Unicode.CES.Byte_Sequence;
+      NS                : XML_Grammar_NS;
+      Data              : Validator_Data;
+      Grammar           : XML_Grammar;
+      Element_Validator : out XML_Element)
    is
       pragma Unreferenced (Validator, Data, Namespace_URI, NS, Grammar);
    begin
       Validation_Error
-        ("Must be a simple type, no <" & Local_Name & "> child allowed");
+        (Reader,
+         "Must be a simple type, no <" & Local_Name & "> child allowed");
       Element_Validator := No_Element;
    end Validate_Start_Element;
 
@@ -1669,10 +1741,11 @@ package body Schema.Validators.Simple_Types is
 
    procedure Validate_End_Element
      (Validator      : access Any_Simple_XML_Validator_Record;
+      Reader         : access Abstract_Validation_Reader'Class;
       Local_Name     : Unicode.CES.Byte_Sequence;
       Data           : Validator_Data)
    is
-      pragma Unreferenced (Validator, Local_Name, Data);
+      pragma Unreferenced (Validator, Local_Name, Data, Reader);
    begin
       null;
    end Validate_End_Element;
@@ -1683,10 +1756,11 @@ package body Schema.Validators.Simple_Types is
 
    procedure Add_Union
      (Validator : access XML_Union_Record;
+      Reader    : access Abstract_Validation_Reader'Class;
       Part      : XML_Type) is
    begin
       Append
-        (Validator.Unions, XML_Particle'
+        (Validator.Unions, Reader, XML_Particle'
            (Typ        => Particle_XML_Type,
             Type_Descr => Part,
             Next       => null,
@@ -1699,13 +1773,13 @@ package body Schema.Validators.Simple_Types is
    ----------------
 
    function Get_Facets
-     (Validator : access XML_Union_Record) return Facets_Description
-   is
-      Applied : Boolean;
+     (Validator : access XML_Union_Record;
+      Reader    : access Abstract_Validation_Reader'Class)
+      return Facets_Description is
    begin
       if Validator.Facets = null then
          Validator.Facets := new Common_Facets_Description;
-         Add_Facet (Validator.Facets.all, "whiteSpace", "collapse", Applied);
+         Add_Facet (Validator, Reader, "whiteSpace", "collapse");
       end if;
 
       return Validator.Facets;
@@ -1716,7 +1790,8 @@ package body Schema.Validators.Simple_Types is
    -----------
 
    function Equal
-     (Validator : access XML_Union_Record;
+     (Validator      : access XML_Union_Record;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
    is
       Iter : Particle_Iterator;
@@ -1726,7 +1801,8 @@ package body Schema.Validators.Simple_Types is
          while Get (Iter) /= null loop
             begin
                if Equal
-                 (Get_Validator (Get (Iter).Type_Descr), Value1, Value2)
+                 (Get_Validator (Get (Iter).Type_Descr),
+                  Reader, Value1, Value2)
                then
                   Free (Iter);
                   return True;
@@ -1751,10 +1827,10 @@ package body Schema.Validators.Simple_Types is
 
    procedure Validate_Characters
      (Union         : access XML_Union_Record;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context)
+      Mask          : in out Facets_Mask)
    is
       Iter : Particle_Iterator;
       Valid : XML_Validator;
@@ -1767,7 +1843,7 @@ package body Schema.Validators.Simple_Types is
          if Empty_Element then
             return;
          else
-            Validation_Error ("No content allowed for this union");
+            Validation_Error (Reader, "No content allowed for this union");
          end if;
       end if;
 
@@ -1776,7 +1852,7 @@ package body Schema.Validators.Simple_Types is
          begin
             Valid := Get_Validator (Get (Iter).Type_Descr);
             if Valid /= null then
-               Validate_Characters (Valid, Ch, Empty_Element, Mask, Context);
+               Validate_Characters (Valid, Reader, Ch, Empty_Element, Mask);
             end if;
 
             --  No error ? => Everything is fine
@@ -1792,7 +1868,7 @@ package body Schema.Validators.Simple_Types is
       end loop;
 
       Free (Iter);
-      Validation_Error ("Invalid value """ & Ch & """");
+      Validation_Error (Reader, "Invalid value """ & Ch & """");
    end Validate_Characters;
 
    ------------------------
@@ -1801,13 +1877,14 @@ package body Schema.Validators.Simple_Types is
 
    procedure Check_Content_Type
      (Validator        : access Any_Simple_XML_Validator_Record;
+      Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean)
    is
       pragma Unreferenced (Validator);
    begin
       if not Should_Be_Simple then
          Validation_Error
-           ("Expecting simple type, got complex type");
+           (Reader, "Expecting simple type, got complex type");
       end if;
    end Check_Content_Type;
 
@@ -1817,12 +1894,12 @@ package body Schema.Validators.Simple_Types is
 
    procedure Validate_Characters
      (Validator      : access Any_Simple_XML_Validator_Record;
+      Reader         : access Abstract_Validation_Reader'Class;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
-      Mask           : in out Facets_Mask;
-      Context        : in out Validation_Context)
+      Mask           : in out Facets_Mask)
    is
-      pragma Unreferenced (Context, Ch, Empty_Element, Mask);
+      pragma Unreferenced (Ch, Empty_Element, Mask, Reader);
    begin
       if Debug then
          Debug_Output ("Validate_Character (anySimpleType) "
@@ -1845,14 +1922,33 @@ package body Schema.Validators.Simple_Types is
    ----------------
 
    function Get_Facets
-     (Validator : access Any_Simple_XML_Validator_Record)
-      return Facets_Description is
+     (Validator : access Any_Simple_XML_Validator_Record;
+      Reader    : access Abstract_Validation_Reader'Class)
+      return Facets_Description
+   is
+      pragma Unreferenced (Reader);
    begin
       if Validator.Facets = null then
          Validator.Facets := new Common_Facets_Description;
       end if;
       return Validator.Facets;
    end Get_Facets;
+
+   ---------------
+   -- Add_Facet --
+   ---------------
+
+   procedure Add_Facet
+     (Validator   : access Any_Simple_XML_Validator_Record;
+      Reader      : access Abstract_Validation_Reader'Class;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence)
+   is
+      Applied : Boolean;
+   begin
+      Add_Facet (Get_Facets (Validator, Reader).all, Reader,
+                 Facet_Name, Facet_Value, Applied);
+   end Add_Facet;
 
    ----------
    -- Free --
@@ -1907,11 +2003,12 @@ package body Schema.Validators.Simple_Types is
 
    function Equal
      (Validator      : access Any_Simple_XML_Validator_Record;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
    begin
       return Equal
         (Common_Facets_Description'Class
-           (Get_Facets (Validator).all), Value1, Value2);
+           (Get_Facets (Validator, Reader).all), Reader, Value1, Value2);
    end Equal;
 
 end Schema.Validators.Simple_Types;

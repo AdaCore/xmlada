@@ -61,19 +61,19 @@ package body Schema.Readers is
    --  Push or remove validators from the list
 
    procedure Parse_Grammars
-     (Handler  : in out Validating_Reader;
+     (Handler         : access Validating_Reader'Class;
       Schema_Location : Byte_Sequence);
    --  Parse multiple grammars, as defined by the "schemaLocation" attribute
 
    procedure Internal_Characters
-     (Handler : in out Validating_Reader;
+     (Handler : access Validating_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence);
    --  Store Ch in the current sequence of characters. This is needed to
    --  collapse multiple calls to Characters and Ignorable_Whitespace into a
    --  single string, for validation purposes.
 
    procedure Validate_Current_Characters
-     (Handler : in out Validating_Reader'Class);
+     (Handler : access Validating_Reader'Class);
    --  Validate the current set of characters
 
    procedure Reset (Parser : in out Validating_Reader);
@@ -81,22 +81,22 @@ package body Schema.Readers is
    --  This doesn't reset the grammar
 
    procedure Hook_Start_Element
-     (Handler       : in out Reader'Class;
+     (Handler       : access Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
       Elem          : Element_Access;
       Atts          : in out Sax.Attributes.Attributes'Class);
    procedure Hook_End_Element
-     (Handler       : in out Reader'Class;
+     (Handler       : access Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
       Elem          : Element_Access);
    procedure Hook_Characters
-     (Handler : in out Reader'Class; Ch : Unicode.CES.Byte_Sequence);
+     (Handler : access Reader'Class; Ch : Unicode.CES.Byte_Sequence);
    procedure Hook_Ignorable_Whitespace
-     (Handler : in out Reader'Class;
+     (Handler : access Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence);
    procedure Hook_Set_Document_Locator
      (Handler : in out Reader'Class;
@@ -147,7 +147,7 @@ package body Schema.Readers is
      (Reader  : in out Validating_Reader;
       Grammar : Schema.Validators.XML_Grammar) is
    begin
-      Reader.Context.Grammar := Grammar;
+      Reader.Grammar := Grammar;
    end Set_Grammar;
 
    -----------------
@@ -157,7 +157,7 @@ package body Schema.Readers is
    function Get_Grammar
      (Reader  : Validating_Reader) return Schema.Validators.XML_Grammar is
    begin
-      return Reader.Context.Grammar;
+      return Reader.Grammar;
    end Get_Grammar;
 
    ----------
@@ -237,7 +237,7 @@ package body Schema.Readers is
    -------------------
 
    procedure Parse_Grammar
-     (Handler  : in out Validating_Reader;
+     (Handler  : access Validating_Reader;
       URI      : Byte_Sequence;
       Xsd_File : Byte_Sequence;
       Do_Global_Check : Boolean)
@@ -245,13 +245,13 @@ package body Schema.Readers is
       File     : File_Input;
       Schema   : Schema_Reader;
       Xsd_File_Full : constant Byte_Sequence :=
-        To_Absolute_URI (Handler, Xsd_File);
+        To_Absolute_URI (Handler.all, Xsd_File);
    begin
       if Debug then
          Put_Line ("NS=" & URI & ASCII.LF & "XSD=" & Xsd_File);
       end if;
 
-      if Get_XSD_Version (Handler.Context.Grammar) = XSD_1_0 then
+      if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
          --  Must check that no element of the same namespace was seen
          --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
          --  changed in XSD 1.1).
@@ -261,14 +261,14 @@ package body Schema.Readers is
             Local_Grammar : XML_Grammar_NS;
          begin
             Get_NS
-              (Handler.Context.Grammar,
+              (Handler.Grammar,
                Namespace_URI    => URI,
                Result           => Local_Grammar,
                Create_If_Needed => False);
 
             Find_NS_From_URI
-              (Handler,
-               Context => Handler.Context.Context,
+              (Handler.all,
+               Context => Handler.Context,
                URI     => URI,
                NS      => NS);
 
@@ -277,7 +277,8 @@ package body Schema.Readers is
               and then Xsd_File_Full /= Get_System_Id (Local_Grammar)
             then
                Validation_Error
-                 ("schemaLocation for """
+                 (Handler,
+                  "schemaLocation for """
                   & URI & """ cannot occur after the first"
                   & " element of that namespace in XSD 1.0");
             end if;
@@ -297,9 +298,9 @@ package body Schema.Readers is
       --  Add_To will likely already contain the grammar for the
       --  schema-for-schema, and we won't have to recreate it in most cases.
 
-      Set_Grammar (Schema, Handler.Context.Grammar);
+      Set_Grammar (Schema, Handler.Grammar);
       Use_Basename_In_Error_Messages
-        (Schema, Use_Basename_In_Error_Messages (Handler));
+        (Schema, Use_Basename_In_Error_Messages (Handler.all));
       Parse (Schema, File,
              Default_Namespace => URI, Do_Global_Check => Do_Global_Check);
       Close (File);
@@ -316,7 +317,7 @@ package body Schema.Readers is
          --  error when we do not find the schema, since this attribute is only
          --  a hint.
          Warning
-           (Handler,
+           (Handler.all,
             Create (Message => "Could not open file " & Xsd_File_Full,
                     Loc     => Handler.Locator));
       when others =>
@@ -329,7 +330,7 @@ package body Schema.Readers is
    --------------------
 
    procedure Parse_Grammars
-     (Handler  : in out Validating_Reader;
+     (Handler         : access Validating_Reader'Class;
       Schema_Location : Byte_Sequence)
    is
       Start_NS, Last_NS, Index : Integer;
@@ -380,7 +381,7 @@ package body Schema.Readers is
    ---------------------------------
 
    procedure Validate_Current_Characters
-     (Handler : in out Validating_Reader'Class)
+     (Handler : access Validating_Reader'Class)
    is
       Empty_String       : aliased String := "";
       Typ, Typ_For_Mixed : XML_Type;
@@ -402,7 +403,7 @@ package body Schema.Readers is
               and then Has_Default (Handler.Validators.Element)
             then
                Val2 := Get_Default (Handler.Validators.Element);
-               Characters (Handler, Val2.all);
+               Characters (Handler.all, Val2.all);
             else
                Val2 := Empty_String'Unchecked_Access;
             end if;
@@ -415,31 +416,32 @@ package body Schema.Readers is
                if not Is_Empty then
                   Free (Handler.Validators.Characters);
                   Validation_Error
-                    ("Element has character data, but is declared as nil");
+                    (Handler,
+                     "Element has character data, but is declared as nil");
                end if;
 
-            elsif Has_Fixed (Handler) then
+            elsif Has_Fixed (Handler.all) then
                if Is_Empty then
                   --  If a xsi:type was specified, the fixed value must match
                   --  it too
 
                   if Handler.Validators.Typ /= No_Type then
                      if Debug then
-                        Put_Line ("characters: " & Get_Fixed (Handler).all);
+                        Put_Line
+                          ("characters: " & Get_Fixed (Handler.all).all);
                      end if;
 
                      Mask := (others => True);
                      Validate_Characters
-                       (Get_Validator (Handler.Validators.Typ),
-                        Get_Fixed (Handler).all,
+                       (Get_Validator (Handler.Validators.Typ), Handler,
+                        Get_Fixed (Handler.all).all,
                         Empty_Element => False,
-                        Mask          => Mask,
-                        Context       => Validating_Reader (Handler).Context);
+                        Mask          => Mask);
                   end if;
 
                   --  in 3.3.1: if the element is empty, the "fixed" value
                   --  should be used for it, just as for "default"
-                  Characters (Handler, Get_Fixed (Handler).all);
+                  Characters (Handler.all, Get_Fixed (Handler.all).all);
 
                else
                   Typ := Handler.Validators.Typ;
@@ -448,11 +450,12 @@ package body Schema.Readers is
                   end if;
 
                   if not Equal
-                    (Get_Validator (Typ), Val2.all, Get_Fixed (Handler).all)
+                    (Get_Validator (Typ), Handler,
+                     Val2.all, Get_Fixed (Handler.all).all)
                   then
                      Free (Handler.Validators.Characters);
                      Validation_Error
-                       ("Element's value must be """
+                       (Handler, "Element's value must be """
                         & Get_Fixed (Handler.Validators.Element).all & """");
                   end if;
                end if;
@@ -469,13 +472,15 @@ package body Schema.Readers is
                  and then not Get_Mixed_Content (Get_Validator (Typ_For_Mixed))
                then
                   Validation_Error
-                    ("No character data allowed by content model");
+                    (Handler,
+                     "No character data allowed by content model");
                end if;
 
                --  If we had a <simpleType> we need to normalize whitespaces
 
-               if Is_Simple_Type (Typ_For_Mixed) then
-                  Val := Do_Normalize_Whitespaces (Typ_For_Mixed, Val2);
+               if Is_Simple_Type (Handler, Typ_For_Mixed) then
+                  Val := Do_Normalize_Whitespaces
+                    (Typ_For_Mixed, Handler, Val2);
 
                   --  Nothing to do if replacement was done in place
                   if Val /= null and then Val /= Val2 then
@@ -496,11 +501,10 @@ package body Schema.Readers is
 
                   Mask := (others => True);
                   Validate_Characters
-                    (Get_Validator (Typ),
+                    (Get_Validator (Typ), Handler,
                      Val2.all,
                      Empty_Element => Is_Empty,
-                     Mask          => Mask,
-                     Context       => Validating_Reader (Handler).Context);
+                     Mask          => Mask);
                end if;
 
                --  We still need to check the "fixed" restriction of the base
@@ -517,11 +521,10 @@ package body Schema.Readers is
 
                   Mask := (others => True);
                   Validate_Characters
-                    (Get_Validator (Typ),
+                    (Get_Validator (Typ), Handler,
                      Val2.all,
                      Empty_Element => Is_Empty,
-                     Mask          => Mask,
-                     Context       => Validating_Reader (Handler).Context);
+                     Mask          => Mask);
                end if;
             end if;
 
@@ -535,7 +538,7 @@ package body Schema.Readers is
    ------------------------
 
    procedure Hook_Start_Element
-     (Handler       : in out Reader'Class;
+     (Handler       : access Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
@@ -543,6 +546,8 @@ package body Schema.Readers is
       Atts          : in out Sax.Attributes.Attributes'Class)
    is
       pragma Unreferenced (Qname);
+      H : constant Validating_Reader_Access :=
+        Validating_Reader_Access (Handler);
       Type_Index     : constant Integer := Get_Index
         (Atts, URI => XML_Instance_URI, Local_Name => "type");
       No_Index       : constant Integer := Get_Index
@@ -587,16 +592,17 @@ package body Schema.Readers is
                end if;
 
                Get_Namespace_From_Prefix
-                 (Validating_Reader (Handler),
+                 (Validating_Reader (Handler.all),
                   Qname (Qname'First .. Separator - 1), NS);
-               Get_NS (Validating_Reader (Handler).Context.Grammar,
+               Get_NS (Validating_Reader (Handler.all).Grammar,
                        Get_URI (NS), G);
-               Typ := Lookup (G, Qname (Separator + 1 .. Qname'Last),
+               Typ := Lookup (G, H, Qname (Separator + 1 .. Qname'Last),
                               Create_If_Needed => False);
 
                if Typ = No_Type then
                   Validation_Error
-                    ("Unknown type """ & Get_Value (Atts, Type_Index) & '"');
+                    (H,
+                     "Unknown type """ & Get_Value (Atts, Type_Index) & '"');
                end if;
 
                if Element /= No_Element
@@ -611,7 +617,7 @@ package body Schema.Readers is
 
                   if not Valid then
                      Validation_Error
-                       (Qname & " is not a valid replacement for "
+                       (H, Qname & " is not a valid replacement for "
                         & To_QName (Get_Type (Element)));
                   end if;
 
@@ -619,7 +625,7 @@ package body Schema.Readers is
                     and then Get_Block (Element)(Block_Restriction)
                   then
                      Validation_Error
-                       ("Element """ & To_QName (Element)
+                       (H, "Element """ & To_QName (Element)
                         & """ blocks the use of restrictions of the type");
                   end if;
 
@@ -627,7 +633,7 @@ package body Schema.Readers is
                     and then Get_Block (Element)(Block_Extension)
                   then
                      Validation_Error
-                       ("Element """ & To_QName (Element)
+                       (H, "Element """ & To_QName (Element)
                         & """ blocks the use of extensions of the type");
                   end if;
                end if;
@@ -644,72 +650,68 @@ package body Schema.Readers is
                    & ASCII.ESC & "[39m");
       end if;
 
-      Validating_Reader (Handler).Context.Context := Elem;
+      H.Context := Elem;
 
-      Validate_Current_Characters (Validating_Reader (Handler));
+      Validate_Current_Characters (H);
 
       --  Get the name of the grammar to use from the element's attributes
 
       if No_Index /= -1 then
          Parse_Grammar
-           (Validating_Reader (Handler),
+           (H,
             URI      => "",
             Xsd_File => Get_Value (Atts, No_Index),
             Do_Global_Check => True);
       end if;
 
       if Location_Index /= -1 then
-         Parse_Grammars (Validating_Reader (Handler),
-                         Get_Value (Atts, Location_Index));
+         Parse_Grammars (H, Get_Value (Atts, Location_Index));
       end if;
 
-      if Validating_Reader (Handler).Context.Grammar = No_Grammar then
+      if H.Grammar = No_Grammar then
          return;  --  Always valid, since we have no grammar anyway
       end if;
 
-      Get_NS (Validating_Reader (Handler).Context.Grammar,
-              Namespace_URI, Result => G);
+      Get_NS (H.Grammar, Namespace_URI, Result => G);
 
       --  Whether this element is valid in the current context
 
-      if Validating_Reader (Handler).Validators /= null then
-         Parent_Type := Validating_Reader (Handler).Validators.Typ;
+      if H.Validators /= null then
+         Parent_Type := H.Validators.Typ;
          if Parent_Type = No_Type then
-            Parent_Type :=
-              Get_Type (Validating_Reader (Handler).Validators.Element);
+            Parent_Type := Get_Type (H.Validators.Element);
          end if;
 
-         if Has_Fixed (Handler) then
+         if Has_Fixed (Handler.all) then
             Validation_Error
-              ("No child allowed because """
-               & To_QName (Validating_Reader (Handler).Validators.Element)
+              (H, "No child allowed because """
+               & To_QName (H.Validators.Element)
                & """ has a fixed value");
          end if;
 
          Validate_Start_Element
-           (Get_Validator (Parent_Type),
+           (Get_Validator (Parent_Type), H,
             Local_Name, Namespace_URI, G,
-            Validating_Reader (Handler).Validators.Data,
-            Validating_Reader (Handler).Context.Grammar, Element);
+            H.Validators.Data, H.Grammar, Element);
       else
-         Element := Lookup_Element (G, Local_Name, False);
+         Element := Lookup_Element (G, H, Local_Name, False);
       end if;
 
       if Element = No_Element and then Type_Index = -1 then
-         if Validating_Reader (Handler).Validators /= null then
+         if H.Validators /= null then
             Validation_Error
-              ("Unexpected element """ &
+              (H, "Unexpected element """ &
                To_QName (Namespace_URI, Local_Name) & """");
          else
             Validation_Error
-              ("Element """ & To_QName (Namespace_URI, Local_Name)
+              (H, "Element """ & To_QName (Namespace_URI, Local_Name)
                & """: No matching declaration available");
          end if;
       end if;
 
       if Element /= No_Element and then Is_Abstract (Element) then
          Validation_Error
-           ("Element """ & To_QName (Namespace_URI, Local_Name)
+           (H, "Element """ & To_QName (Namespace_URI, Local_Name)
             & """ is abstract");
       end if;
 
@@ -718,7 +720,7 @@ package body Schema.Readers is
       if Xsi_Type = No_Type then
          if Element = No_Element then
             Validation_Error
-              ("Type """ & Get_Value (Atts, Type_Index)
+              (H, "Type """ & Get_Value (Atts, Type_Index)
                & """: No matching declaration available");
          else
             Typ := Get_Type (Element);
@@ -730,14 +732,15 @@ package body Schema.Readers is
       Data := Create_Validator_Data (Get_Validator (Typ));
 
       Validate_Attributes
-        (Get_Validator (Typ), Atts,
+        (Get_Validator (Typ), H, Atts,
          Element /= No_Element and then Is_Nillable (Element),
-         Is_Nil, Validating_Reader (Handler).Context);
+         Is_Nil);
 
-      if Validating_Reader (Handler).Validators /= null then
-         if Validating_Reader (Handler).Validators.Is_Nil then
+      if H.Validators /= null then
+         if H.Validators.Is_Nil then
             Validation_Error
-              ("Element is set as nil, and doesn't accept any child element");
+              (H,
+               "Element is set as nil, and doesn't accept any child element");
          end if;
       else
          --  For root element, we need to check nillable here, otherwise this
@@ -751,9 +754,9 @@ package body Schema.Readers is
          begin
             if Nil_Index /= -1 then
                if not Is_Nillable (Element) then
-                  Validation_Error ("Element """
-                                    & To_QName (Namespace_URI, Local_Name)
-                                    & """ cannot be nil");
+                  Validation_Error
+                    (H, "Element """ & To_QName (Namespace_URI, Local_Name)
+                     & """ cannot be nil");
                end if;
 
                Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
@@ -768,11 +771,11 @@ package body Schema.Readers is
         and then Has_Fixed (Element)
       then
          Validation_Error
-           ("Element cannot be nilled because"
+           (H, "Element cannot be nilled because"
             & " a fixed value is defined for it");
       end if;
 
-      Push (Validating_Reader (Handler).Validators, Element,
+      Push (H.Validators, Element,
             Xsi_Type, G, Data, Is_Nil);
 
    exception
@@ -786,13 +789,15 @@ package body Schema.Readers is
    ----------------------
 
    procedure Hook_End_Element
-     (Handler       : in out Reader'Class;
+     (Handler       : access Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
       Elem          : Element_Access)
    is
       pragma Unreferenced (Namespace_URI);
+      H : constant Validating_Reader_Access :=
+        Validating_Reader_Access (Handler);
       Typ : XML_Type;
    begin
       if Debug then
@@ -800,26 +805,24 @@ package body Schema.Readers is
                    & "End_Element: " & Local_Name & ASCII.ESC & "[39m");
       end if;
 
-      Validating_Reader (Handler).Context.Context := Elem;
+      H.Context := Elem;
 
-      if Validating_Reader (Handler).Validators /= null then
-         Validate_Current_Characters (Validating_Reader (Handler));
+      if H.Validators /= null then
+         Validate_Current_Characters (H);
 
          --  Do not check if the element is nil, since no child is expected
          --  anyway, and some validators (sequence,...) will complain
-         if not Validating_Reader (Handler).Validators.Is_Nil then
-            Typ := Validating_Reader (Handler).Validators.Typ;
+         if not H.Validators.Is_Nil then
+            Typ := H.Validators.Typ;
             if Typ = No_Type then
-               Typ := Get_Type
-                 (Validating_Reader (Handler).Validators.Element);
+               Typ := Get_Type (H.Validators.Element);
             end if;
 
             Validate_End_Element
-              (Get_Validator (Typ), Qname,
-               Validating_Reader (Handler).Validators.Data);
+              (Get_Validator (Typ), H, Qname, H.Validators.Data);
          end if;
       end if;
-      Pop (Validating_Reader (Handler).Validators);
+      Pop (H.Validators);
    end Hook_End_Element;
 
    -------------------------
@@ -827,7 +830,7 @@ package body Schema.Readers is
    -------------------------
 
    procedure Internal_Characters
-     (Handler : in out Validating_Reader;
+     (Handler : access Validating_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence)
    is
       Tmp : Byte_Sequence_Access;
@@ -849,10 +852,10 @@ package body Schema.Readers is
    ---------------------
 
    procedure Hook_Characters
-     (Handler : in out Reader'Class;
+     (Handler : access Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence) is
    begin
-      Internal_Characters (Validating_Reader (Handler), Ch);
+      Internal_Characters (Validating_Reader (Handler.all)'Access, Ch);
    end Hook_Characters;
 
    -------------------------------
@@ -860,21 +863,23 @@ package body Schema.Readers is
    -------------------------------
 
    procedure Hook_Ignorable_Whitespace
-     (Handler : in out Reader'Class;
+     (Handler : access Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence)
    is
+      H : constant Validating_Reader_Access :=
+        Validating_Reader_Access (Handler);
       Typ : XML_Type;
    begin
-      if Validating_Reader (Handler).Validators /= null then
-         Typ := Validating_Reader (Handler).Validators.Typ;
+      if H.Validators /= null then
+         Typ := H.Validators.Typ;
          if Typ = No_Type then
-            Typ := Get_Type (Validating_Reader (Handler).Validators.Element);
+            Typ := Get_Type (H.Validators.Element);
          end if;
 
-         if Is_Simple_Type (Typ)
-           and then not Validating_Reader (Handler).Validators.Is_Nil
+         if Is_Simple_Type (H, Typ)
+           and then not H.Validators.Is_Nil
          then
-            Internal_Characters (Validating_Reader (Handler), Ch);
+            Internal_Characters (H, Ch);
          end if;
       end if;
    end Hook_Ignorable_Whitespace;
@@ -886,7 +891,7 @@ package body Schema.Readers is
    procedure Reset (Parser : in out Validating_Reader) is
    begin
       Parser.Locator := No_Locator;
-      Free (Parser.Context.Id_Table);
+      Free (Parser.Id_Table);
       Clear (Parser.Validators);
    end Reset;
 
@@ -918,8 +923,7 @@ package body Schema.Readers is
                     Doc_Locator   => null);
       end if;
 
-      Initialize (Parser.Context.Grammar);
-      Parser.Context.Parser := Parser'Unrestricted_Access;
+      Initialize_Grammar (Parser'Unrestricted_Access);
       Sax.Readers.Parse (Sax.Readers.Reader (Parser), Input);
       Reset (Parser);
 
@@ -950,12 +954,11 @@ package body Schema.Readers is
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class)
-   is
-      pragma Unmodified (Reader);
+      Except : Sax.Exceptions.Sax_Parse_Exception'Class) is
    begin
       Validation_Error
-        (To_String (Get_Locator (Except),
+        (Reader'Access,
+         To_String (Get_Locator (Except),
                     Use_Basename_In_Error_Messages (Reader))
          & ": " & String (Get_Message (Except)));
    end Validation_Error;
@@ -971,18 +974,6 @@ package body Schema.Readers is
       Validating_Reader (Handler).Locator := Loc;
    end Hook_Set_Document_Locator;
 
-   -----------------
-   -- Get_Context --
-   -----------------
-
-   function Get_Context
-     (Handler : access Validating_Reader)
-      return Schema.Validators.Validation_Context_Access is
-   begin
-      --  ??? This is dangerous
-      return Handler.Context'Unrestricted_Access;
-   end Get_Context;
-
    -------------------------------
    -- Get_Namespace_From_Prefix --
    -------------------------------
@@ -994,7 +985,7 @@ package body Schema.Readers is
    begin
       Find_NS
         (Parser  => Handler,
-         Context => Handler.Context.Context,
+         Context => Handler.Context,
          Prefix  => Prefix,
          NS      => NS);
       if Get_URI (NS) = "" then

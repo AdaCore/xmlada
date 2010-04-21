@@ -547,7 +547,7 @@ package Sax.Readers is
    --  Returns No_XML_NS if the namespace is not defined
 
    type Start_Element_Hook is access procedure
-     (Handler       : in out Reader'Class;
+     (Handler       : access Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence;
@@ -563,16 +563,16 @@ package Sax.Readers is
    --  checks in any case. Standard applications should override Start_Element.
 
    type End_Element_Hook is access procedure
-     (Handler       : in out Reader'Class;
+     (Handler       : access Reader'Class;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence;
       Elem          : Element_Access);
    type Characters_Hook is access procedure
-     (Handler       : in out Reader'Class;
+     (Handler       : access Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence);
    type Whitespace_Hook is access procedure
-     (Handler       : in out Reader'Class;
+     (Handler       : access Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence);
    type Start_Prefix_Hook is access procedure
      (Handler       : in out Reader'Class;

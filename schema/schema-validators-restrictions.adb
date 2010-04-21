@@ -46,6 +46,7 @@ package body Schema.Validators.Restrictions is
      (Validator : access Restriction_XML_Validator) return Validator_Data;
    procedure Validate_Start_Element
      (Validator         : access Restriction_XML_Validator;
+      Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
@@ -54,14 +55,15 @@ package body Schema.Validators.Restrictions is
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator      : access Restriction_XML_Validator;
+      Reader         : access Abstract_Validation_Reader'Class;
       Local_Name     : Unicode.CES.Byte_Sequence;
       Data           : Validator_Data);
    procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context);
+      Mask          : in out Facets_Mask);
    procedure Get_Attribute_Lists
      (Validator   : access Restriction_XML_Validator;
       List        : out Attribute_Validator_List_Access;
@@ -71,6 +73,7 @@ package body Schema.Validators.Restrictions is
       Must_Match_All_Any_In_Dep2 : out Boolean);
    procedure Add_Facet
      (Validator   : access Restriction_XML_Validator;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence);
    procedure Check_Replacement
@@ -82,16 +85,20 @@ package body Schema.Validators.Restrictions is
       Had_Extension     : in out Boolean);
    procedure Check_Content_Type
      (Validator        : access Restriction_XML_Validator;
+      Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean);
    function Get_Facets
-     (Validator : access Restriction_XML_Validator) return Facets_Description;
+     (Validator : access Restriction_XML_Validator;
+      Reader    : access Abstract_Validation_Reader'Class)
+      return Facets_Description;
    procedure Free (Validator : in out Restriction_XML_Validator);
    function Is_ID (Validator : Restriction_XML_Validator) return Boolean;
    function Is_Restriction_Of
      (Validator : Restriction_XML_Validator;
       Base      : access XML_Validator_Record'Class) return Boolean;
    function Equal
-     (Validator : access Restriction_XML_Validator;
+     (Validator      : access Restriction_XML_Validator;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    --  See doc from inherited subprograms
 
@@ -119,13 +126,15 @@ package body Schema.Validators.Restrictions is
    ----------------
 
    function Get_Facets
-     (Validator : access Restriction_XML_Validator) return Facets_Description
+     (Validator : access Restriction_XML_Validator;
+      Reader    : access Abstract_Validation_Reader'Class)
+      return Facets_Description
    is
       Base_Facets : Facets_Description;
    begin
       if Validator.Facets = null then
          if Validator.Base.Validator /= null then
-            Base_Facets := Get_Facets (Validator.Base.Validator);
+            Base_Facets := Get_Facets (Validator.Base.Validator, Reader);
             if Base_Facets /= null then
                --  ??? Doesn't work if we do not know the full facets for the
                --  parent or if we modify any of them later on.
@@ -145,7 +154,7 @@ package body Schema.Validators.Restrictions is
             end if;
          else
             Validation_Error
-              ("The type """ & To_QName (Validator.Base)
+              (Reader, "The type """ & To_QName (Validator.Base)
                & """ isn't known at this point. Please check the name and"
                & " namespace");
          end if;
@@ -183,10 +192,11 @@ package body Schema.Validators.Restrictions is
    -----------
 
    function Equal
-     (Validator : access Restriction_XML_Validator;
+     (Validator      : access Restriction_XML_Validator;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
    begin
-      return Equal (Get_Validator (Validator.Base), Value1, Value2);
+      return Equal (Get_Validator (Validator.Base), Reader, Value1, Value2);
    end Equal;
 
    ----------------------------
@@ -195,6 +205,7 @@ package body Schema.Validators.Restrictions is
 
    procedure Validate_Start_Element
      (Validator         : access Restriction_XML_Validator;
+      Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
@@ -211,7 +222,7 @@ package body Schema.Validators.Restrictions is
 
       if Validator.Restriction /= null then
          Validate_Start_Element
-           (Validator.Restriction, Local_Name, Namespace_URI, NS,
+           (Validator.Restriction, Reader, Local_Name, Namespace_URI, NS,
             D.Restriction_Data, Grammar, Element_Validator);
 
          if Debug then
@@ -246,17 +257,19 @@ package body Schema.Validators.Restrictions is
 
    procedure Validate_End_Element
      (Validator      : access Restriction_XML_Validator;
+      Reader         : access Abstract_Validation_Reader'Class;
       Local_Name     : Unicode.CES.Byte_Sequence;
       Data           : Validator_Data)
    is
       D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
    begin
       if Validator.Restriction /= null then
-         Validate_End_Element (Validator.Restriction, Local_Name,
+         Validate_End_Element (Validator.Restriction, Reader, Local_Name,
                                D.Restriction_Data);
       else
          Validate_End_Element
-           (Get_Validator (Validator.Base), Local_Name, D.Restriction_Data);
+           (Get_Validator (Validator.Base), Reader,
+            Local_Name, D.Restriction_Data);
       end if;
    end Validate_End_Element;
 
@@ -266,19 +279,20 @@ package body Schema.Validators.Restrictions is
 
    procedure Add_Facet
      (Validator   : access Restriction_XML_Validator;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence)
    is
       Applies : Boolean;
-      Facets  : constant Facets_Description := Get_Facets (Validator);
+      Facets  : constant Facets_Description := Get_Facets (Validator, Reader);
    begin
       if Facets = null then
-         Validation_Error ("No facet overridable for this type");
+         Validation_Error (Reader, "No facet overridable for this type");
       end if;
 
-      Add_Facet (Facets.all, Facet_Name, Facet_Value, Applies);
+      Add_Facet (Facets.all, Reader, Facet_Name, Facet_Value, Applies);
       if not Applies then
-         Validation_Error ("Invalid facet: " & Facet_Name);
+         Validation_Error (Reader, "Invalid facet: " & Facet_Name);
       end if;
    end Add_Facet;
 
@@ -288,10 +302,10 @@ package body Schema.Validators.Restrictions is
 
    procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context)
+      Mask          : in out Facets_Mask)
    is
       Orig_Mask : constant Facets_Mask := Mask;
       Mask2     : Facets_Mask;
@@ -301,17 +315,18 @@ package body Schema.Validators.Restrictions is
       end if;
 
       if Validator.Facets /= null then
-         Check_Facet (Validator.Facets.all, Ch, Mask);
+         Check_Facet (Validator.Facets.all, Reader, Ch, Mask);
       end if;
 
       if Validator.Restriction /= null then
          Validate_Characters
-           (Validator.Restriction, Ch, Empty_Element, Mask, Context);
+           (Validator.Restriction, Reader, Ch, Empty_Element, Mask);
       else
          --  We need to match the restrictions of the parent too
          Mask2 := Orig_Mask;
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element, Mask2, Context);
+           (Get_Validator (Validator.Base), Reader,
+            Ch, Empty_Element, Mask2);
          Mask := Mask or Mask2;
       end if;
 
@@ -401,9 +416,10 @@ package body Schema.Validators.Restrictions is
 
    procedure Check_Content_Type
      (Validator        : access Restriction_XML_Validator;
+      Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean) is
    begin
-      Check_Content_Type (Validator.Base, Should_Be_Simple);
+      Check_Content_Type (Validator.Base, Reader, Should_Be_Simple);
    end Check_Content_Type;
 
    ---------------------------
@@ -412,6 +428,7 @@ package body Schema.Validators.Restrictions is
 
    function Create_Restriction_Of
      (G           : XML_Grammar_NS;
+      Reader      : access Abstract_Validation_Reader'Class;
       Base        : XML_Type;
       Restriction : XML_Validator := null) return XML_Validator
    is
@@ -419,7 +436,7 @@ package body Schema.Validators.Restrictions is
    begin
       if Get_Final_On_Restriction (Base) then
          Validation_Error
-           ("Type """ & To_QName (Base) & """ forbids restrictions");
+           (Reader, "Type """ & To_QName (Base) & """ forbids restrictions");
       end if;
 
       Register (G, Base);

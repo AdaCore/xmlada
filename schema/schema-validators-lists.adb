@@ -40,11 +40,13 @@ package body Schema.Validators.Lists is
    end record;
    procedure Add_Facet
      (Facets      : in out List_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
    procedure Check_Facet
      (Facets : in out List_Facets_Description;
+      Reader : access Abstract_Validation_Reader'Class;
       Value  : Unicode.CES.Byte_Sequence;
       Mask   : in out Facets_Mask);
 
@@ -55,12 +57,14 @@ package body Schema.Validators.Lists is
    type List_Validator is access all List_Validator_Record'Class;
    procedure Validate_Characters
      (Validator     : access List_Validator_Record;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context);
+      Mask          : in out Facets_Mask);
    function Get_Facets
-     (Validator : access List_Validator_Record) return Facets_Description;
+     (Validator : access List_Validator_Record;
+      Reader    : access Abstract_Validation_Reader'Class)
+      return Facets_Description;
    --  See doc from inherited subprogram
 
    ---------------
@@ -69,13 +73,15 @@ package body Schema.Validators.Lists is
 
    procedure Add_Facet
      (Facets      : in out List_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean)
    is
    begin
       Add_Facet
-        (Common_Facets_Description (Facets), Facet_Name, Facet_Value, Applied);
+        (Common_Facets_Description (Facets), Reader,
+         Facet_Name, Facet_Value, Applied);
       if Applied then
          null;
       elsif Facet_Name = "length" then
@@ -141,6 +147,7 @@ package body Schema.Validators.Lists is
 
    procedure Check_Facet
      (Facets : in out List_Facets_Description;
+      Reader : access Abstract_Validation_Reader'Class;
       Value  : Unicode.CES.Byte_Sequence;
       Mask   : in out Facets_Mask)
    is
@@ -156,7 +163,7 @@ package body Schema.Validators.Lists is
       procedure For_Each is new For_Each_Item (Callback);
 
    begin
-      Check_Facet (Common_Facets_Description (Facets), Value, Mask);
+      Check_Facet (Common_Facets_Description (Facets), Reader, Value, Mask);
 
       if Facets.Mask (Facet_Length)
         or else Facets.Mask (Facet_Min_Length)
@@ -168,7 +175,7 @@ package body Schema.Validators.Lists is
             Mask (Facet_Length) := False;
             if Length /= Facets.Length then
                Validation_Error
-                 ("Invalid number of elements in list, expecting"
+                 (Reader, "Invalid number of elements in list, expecting"
                   & Integer'Image (Facets.Length));
             end if;
          end if;
@@ -177,7 +184,8 @@ package body Schema.Validators.Lists is
             Mask (Facet_Min_Length) := False;
             if Length < Facets.Min_Length then
                Validation_Error
-                 ("Invalid number of elements in list, expecting at least"
+                 (Reader,
+                  "Invalid number of elements in list, expecting at least"
                   & Integer'Image (Facets.Min_Length));
             end if;
          end if;
@@ -186,7 +194,8 @@ package body Schema.Validators.Lists is
             Mask (Facet_Max_Length) := False;
             if Length > Facets.Max_Length then
                Validation_Error
-                 ("Invalid number of elements in list, expecting at most"
+                 (Reader,
+                  "Invalid number of elements in list, expecting at most"
                   & Integer'Image (Facets.Max_Length));
             end if;
          end if;
@@ -198,13 +207,16 @@ package body Schema.Validators.Lists is
    ----------------
 
    function Get_Facets
-     (Validator : access List_Validator_Record) return Facets_Description
+     (Validator : access List_Validator_Record;
+      Reader    : access Abstract_Validation_Reader'Class)
+      return Facets_Description
    is
       Applied : Boolean;
    begin
       if Validator.Facets = null then
          Validator.Facets := new List_Facets_Description;
-         Add_Facet (Validator.Facets.all, "whitespace", "collapse", Applied);
+         Add_Facet
+           (Validator.Facets.all, Reader, "whitespace", "collapse", Applied);
       end if;
 
       return Facets_Description (Validator.Facets);
@@ -228,17 +240,18 @@ package body Schema.Validators.Lists is
 
    procedure Validate_Characters
      (Validator     : access List_Validator_Record;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context)
+      Mask          : in out Facets_Mask)
    is
       procedure Callback (Value : Unicode.CES.Byte_Sequence);
       procedure Callback (Value : Unicode.CES.Byte_Sequence) is
          M : Facets_Mask := (others => True);
       begin
          Validate_Characters
-           (Get_Validator (Validator.Base), Value, Empty_Element, M, Context);
+           (Get_Validator (Validator.Base), Reader,
+            Value, Empty_Element, M);
       end Callback;
 
       procedure For_Each is new For_Each_Item (Callback);
@@ -248,7 +261,7 @@ package body Schema.Validators.Lists is
          Debug_Output ("Validate_Chars (list) " & Get_Name (Validator));
       end if;
 
-      Check_Facet (Get_Facets (Validator).all, Ch, Mask);
+      Check_Facet (Get_Facets (Validator, Reader).all, Reader, Ch, Mask);
       For_Each (Ch);
    end Validate_Characters;
 

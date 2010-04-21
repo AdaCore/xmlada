@@ -293,6 +293,7 @@ package body Schema.Validators.Facets is
 
    procedure Check_Facet
      (Facets : in out Common_Facets_Description;
+      Reader : access Abstract_Validation_Reader'Class;
       Value  : Unicode.CES.Byte_Sequence;
       Mask   : in out Facets_Mask)
    is
@@ -320,7 +321,7 @@ package body Schema.Validators.Facets is
          if Matched (0).First /= Value'First
            or else Matched (0).Last /= Value'Last
          then
-            Validation_Error ("string pattern not matched: "
+            Validation_Error (Reader, "string pattern not matched: "
                               & Facets.Pattern_String.all);
          end if;
       end if;
@@ -329,7 +330,7 @@ package body Schema.Validators.Facets is
          Mask (Facet_Enumeration) := False;
          Found := False;
          for E in Facets.Enumeration'Range loop
-            if Equal (Common_Facets_Description'Class (Facets),
+            if Equal (Common_Facets_Description'Class (Facets), Reader,
                       Value, Facets.Enumeration (E).all)
             then
                Found := True;
@@ -337,7 +338,8 @@ package body Schema.Validators.Facets is
          end loop;
 
          if not Found then
-            Validation_Error ("Element's value not in the enumeration set");
+            Validation_Error
+              (Reader, "Element's value not in the enumeration set");
          end if;
       end if;
 
@@ -346,7 +348,7 @@ package body Schema.Validators.Facets is
       then
          Mask (Facet_Implicit_Enumeration) := False;
          if not Facets.Implicit_Enumeration (Value) then
-            Validation_Error ("Invalid value: """ & Value & """");
+            Validation_Error (Reader, "Invalid value: """ & Value & """");
          end if;
       end if;
 
@@ -363,7 +365,8 @@ package body Schema.Validators.Facets is
                     or else Value (C) = ASCII.LF
                     or else Value (C) = ASCII.CR
                   then
-                     Validation_Error ("HT, LF and CR characters not allowed");
+                     Validation_Error
+                       (Reader, "HT, LF and CR characters not allowed");
                   end if;
                end loop;
 
@@ -373,23 +376,26 @@ package body Schema.Validators.Facets is
                     or else Value (C) = ASCII.LF
                     or else Value (C) = ASCII.CR
                   then
-                     Validation_Error ("HT, LF and CR characters not allowed");
+                     Validation_Error
+                       (Reader, "HT, LF and CR characters not allowed");
 
                   elsif Value (C) = ' '
                     and then C < Value'Last
                     and then Value (C + 1) = ' '
                   then
                      Validation_Error
-                       ("Duplicate space characters not allowed");
+                       (Reader, "Duplicate space characters not allowed");
                   end if;
                end loop;
 
                --  Leading or trailing white spaces are also forbidden
                if Value'Length /= 0 then
                   if Value (Value'First) = ' ' then
-                     Validation_Error ("Leading whitespaces not allowed");
+                     Validation_Error
+                       (Reader, "Leading whitespaces not allowed");
                   elsif Value (Value'Last) = ' ' then
-                     Validation_Error ("Trailing whitespaces not allowed");
+                     Validation_Error
+                       (Reader, "Trailing whitespaces not allowed");
                   end if;
                end if;
          end case;
@@ -402,6 +408,7 @@ package body Schema.Validators.Facets is
 
    procedure Add_Facet
      (Facets      : in out Common_Facets_Description;
+      Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Unicode.CES.Byte_Sequence;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean) is
@@ -409,7 +416,8 @@ package body Schema.Validators.Facets is
       Applied := False;
       if Facet_Name = "enumeration" then
          if not Facets.Settable (Facet_Enumeration) then
-            Validation_Error ("Enumeration facet can't be set for this type");
+            Validation_Error
+              (Reader, "Enumeration facet can't be set for this type");
          end if;
          Append (Facets.Enumeration, Facet_Value);
          Facets.Mask (Facet_Enumeration) := True;
@@ -417,7 +425,8 @@ package body Schema.Validators.Facets is
 
       elsif Facet_Name = "whiteSpace" then
          if not Facets.Settable (Facet_Whitespace) then
-            Validation_Error ("whiteSpace facet can't be set for this type");
+            Validation_Error
+              (Reader, "whiteSpace facet can't be set for this type");
          end if;
          if Facet_Value = "preserve" then
             Facets.Whitespace := Preserve;
@@ -427,14 +436,15 @@ package body Schema.Validators.Facets is
             Facets.Whitespace := Collapse;
          else
             Validation_Error
-              ("Invalid value for whiteSpace facet: " & Facet_Value);
+              (Reader, "Invalid value for whiteSpace facet: " & Facet_Value);
          end if;
          Facets.Mask (Facet_Whitespace) := True;
          Applied := True;
 
       elsif Facet_Name = "pattern" then
          if not Facets.Settable (Facet_Pattern) then
-            Validation_Error ("pattern facet can't be set for this type");
+            Validation_Error
+              (Reader, "pattern facet can't be set for this type");
          end if;
          Unchecked_Free (Facets.Pattern);
 
@@ -461,7 +471,7 @@ package body Schema.Validators.Facets is
             Facets.Pattern := new Pattern_Matcher'(Compile (Convert));
          exception
             when  GNAT.Regpat.Expression_Error =>
-               Validation_Error ("Invalid regular expression "
+               Validation_Error (Reader, "Invalid regular expression "
                                  & Facets.Pattern_String.all
                                  & " (converted to " & Convert & ")");
          end;
@@ -535,9 +545,10 @@ package body Schema.Validators.Facets is
 
    function Equal
      (Facet : Common_Facets_Description;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
    is
-      pragma Unreferenced (Facet);
+      pragma Unreferenced (Facet, Reader);
    begin
       return Value1 = Value2;
    end Equal;

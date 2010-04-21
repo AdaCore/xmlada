@@ -26,15 +26,24 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Schema.Validators;       use Schema.Validators;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Schema.Date_Time is
 
-   procedure Parse (Ch : String; Date     : out Date_NZ_T;  Eos : out Natural);
-   procedure Parse (Ch : String; Time     : out Time_NZ_T;  Eos : out Natural);
-   procedure Parse (Ch : String; TZ       : out Timezone_T);
-   procedure Parse_Year (Ch : String; Year : out Integer; Eos : out Natural);
+   procedure Parse
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String;
+      Date   : out Date_NZ_T;
+      Eos    : out Natural);
+   procedure Parse
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch : String; Time : out Time_NZ_T;  Eos : out Natural);
+   procedure Parse
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch : String; TZ : out Timezone_T);
+   procedure Parse_Year
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String; Year : out Integer; Eos : out Natural);
    --  Parse the various components of dates.
    --  On exit, Eos is set to the first unused character in Ch, except for the
    --  timezone which must finish on the last character in Ch.
@@ -373,9 +382,10 @@ package body Schema.Date_Time is
    ----------------
 
    procedure Parse_Year
-     (Ch   : String;
-      Year : out Integer;
-      Eos  : out Natural)
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String;
+      Year   : out Integer;
+      Eos    : out Natural)
    is
       Pos : Integer := Ch'First;
    begin
@@ -393,18 +403,18 @@ package body Schema.Date_Time is
       Year := Integer'Value (Ch (Ch'First .. Pos - 1));
 
       if Year = 0 then
-         Validation_Error ("Year cannot be null in: """ & Ch & """");
+         Validation_Error (Reader, "Year cannot be null in: """ & Ch & """");
          Eos  := Ch'Last;
          return;
 
       elsif Pos - Ch'First < 4 then
-         Validation_Error ("Year must include at least four digits");
+         Validation_Error (Reader, "Year must include at least four digits");
       end if;
 
       Eos := Pos;
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid year in """ & Ch & """");
+         Validation_Error (Reader, "Invalid year in """ & Ch & """");
          Year := 0;
          Eos  := Ch'Last + 1;
    end Parse_Year;
@@ -414,16 +424,17 @@ package body Schema.Date_Time is
    -----------
 
    procedure Parse
-     (Ch   : String;
-      Date : out Date_NZ_T;
-      Eos  : out Natural)
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String;
+      Date   : out Date_NZ_T;
+      Eos    : out Natural)
    is
       Max_Days : constant array (1 .. 12) of Natural :=
         (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
       Pos  : Integer;
       Leap_Year : Boolean;
    begin
-      Parse_Year (Ch, Date.Year, Pos);
+      Parse_Year (Reader, Ch, Date.Year, Pos);
 
       if Ch (Pos) /= '-'
         or else Ch (Pos + 3) /= '-'
@@ -433,7 +444,8 @@ package body Schema.Date_Time is
                  and then Ch (Pos + 6) /= '+'
                  and then Ch (Pos + 6) /= 'Z')
       then
-         Validation_Error ("Invalid separator in date value """ & Ch & """");
+         Validation_Error
+           (Reader, "Invalid separator in date value """ & Ch & """");
          Date := No_Date_NZ;
          Eos  := Ch'First;
          return;
@@ -442,7 +454,7 @@ package body Schema.Date_Time is
       Date.Month  := Integer'Value (Ch (Pos +  1 .. Pos +  2));
 
       if Date.Month < 1 or else Date.Month > 12 then
-         Validation_Error ("Invalid month in """ & Ch & '"');
+         Validation_Error (Reader, "Invalid month in """ & Ch & '"');
       end if;
 
       Date.Day    := Integer'Value (Ch (Pos +  4 .. Pos +  5));
@@ -461,7 +473,7 @@ package body Schema.Date_Time is
                  and then (Date.Day > 29
                            or else (Date.Day = 29 and then not Leap_Year)))
       then
-         Validation_Error ("Invalid date """ & Ch & """");
+         Validation_Error (Reader, "Invalid date """ & Ch & """");
          --  & Date.Year'Image & Date.Month'Img & Date.Day'Img);
          Date := No_Date_NZ;
          Eos  := Ch'Last + 1;
@@ -469,7 +481,7 @@ package body Schema.Date_Time is
 
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid date """ & Ch & """");
+         Validation_Error (Reader, "Invalid date """ & Ch & """");
          Date := No_Date_NZ;
          Eos  := Ch'Last + 1;
    end Parse;
@@ -479,9 +491,10 @@ package body Schema.Date_Time is
    -----------
 
    procedure Parse
-     (Ch   : String;
-      Time : out Time_NZ_T;
-      Eos  : out Natural)
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String;
+      Time   : out Time_NZ_T;
+      Eos    : out Natural)
    is
       --  Format is "hh:mm:ss.sss[+-]hh:mm"
       Dur : Time_NZ_T;
@@ -495,7 +508,8 @@ package body Schema.Date_Time is
       if Ch (Ch'First + 2) /= ':'
         or else Ch (Ch'First + 5) /= ':'
       then
-         Validation_Error ("Invalid separator in time: """ & Ch & """");
+         Validation_Error
+           (Reader, "Invalid separator in time: """ & Ch & """");
          Time := No_Time_NZ;
          Eos  := Ch'First;
          return;
@@ -505,14 +519,16 @@ package body Schema.Date_Time is
       Dur := Dur + Day_Range (Min) * 60.0;
 
       if Min > 59 then
-         Validation_Error ("Invalid minutes in time: """ & Ch & """");
+         Validation_Error
+           (Reader, "Invalid minutes in time: """ & Ch & """");
          Time := No_Time_NZ;
          return;
       end if;
 
       Pos := Ch'First + 8;
       if Pos = Ch'Last and then Ch (Pos) = '.' then
-         Validation_Error ("'.' must be followed by digits in """ & Ch & """");
+         Validation_Error
+           (Reader, "'.' must be followed by digits in """ & Ch & """");
       end if;
 
       if Pos < Ch'Last and then Ch (Pos) = '.' then
@@ -529,7 +545,7 @@ package body Schema.Date_Time is
       end if;
 
       if Msec >= 60.0 then
-         Validation_Error ("Invalid seconds in time: """ & Ch & """");
+         Validation_Error (Reader, "Invalid seconds in time: """ & Ch & """");
          Time := No_Time_NZ;
          return;
       end if;
@@ -539,14 +555,14 @@ package body Schema.Date_Time is
       if Hour > 24
         or else (Hour = 24 and then (Min /= 0 or else Msec /= 0.0))
       then
-         Validation_Error ("Invalid hour in time: """ & Ch & """");
+         Validation_Error (Reader, "Invalid hour in time: """ & Ch & """");
          Time := No_Time_NZ;
          return;
       end if;
 
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid time: """ & Ch & """");
+         Validation_Error (Reader, "Invalid time: """ & Ch & """");
          Time := No_Time_NZ;
          Eos  := Ch'Last + 1;
    end Parse;
@@ -556,13 +572,15 @@ package body Schema.Date_Time is
    -----------
 
    procedure Parse
-     (Ch : String;
-      TZ : out Timezone_T) is
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String;
+      TZ     : out Timezone_T) is
    begin
       if Ch'Length /= 0 then
          if Ch (Ch'First) = 'Z' then
             if Ch'Length /= 1 then
-               Validation_Error ("Invalid time zone in """ & Ch & """");
+               Validation_Error
+                 (Reader, "Invalid time zone in """ & Ch & """");
                TZ := No_Timezone;
                return;
             else
@@ -570,7 +588,7 @@ package body Schema.Date_Time is
             end if;
 
          elsif Ch'Length /= 6 then
-            Validation_Error ("Invalid time zone in """ & Ch & """");
+            Validation_Error (Reader, "Invalid time zone in """ & Ch & """");
             TZ := No_Timezone;
             return;
 
@@ -579,7 +597,8 @@ package body Schema.Date_Time is
               or else Ch (Ch'First + 3) /= ':'
             then
                Validation_Error
-                 ("Invalid time zone specification in """ & Ch & """");
+                 (Reader,
+                  "Invalid time zone specification in """ & Ch & """");
                TZ := No_Timezone;
                return;
             end if;
@@ -589,7 +608,8 @@ package body Schema.Date_Time is
               + Timezone_T'Value (Ch (Ch'First + 4 .. Ch'First + 5));
 
             if abs (TZ) > 14 * 60 then
-               Validation_Error ("Invalid time zone range in """ & Ch & """");
+               Validation_Error
+                 (Reader, "Invalid time zone range in """ & Ch & """");
                TZ := No_Timezone;
                return;
             end if;
@@ -604,7 +624,7 @@ package body Schema.Date_Time is
    exception
       when Constraint_Error =>
          Validation_Error
-           ("Invalid time zone specification in """ & Ch & """");
+           (Reader, "Invalid time zone specification in """ & Ch & """");
          TZ := No_Timezone;
    end Parse;
 
@@ -612,7 +632,10 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return Duration_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return Duration_T
+   is
       Result : Duration_T := No_Duration;
       Pos    : Integer := Ch'First;
       Tmp    : Integer;
@@ -620,7 +643,8 @@ package body Schema.Date_Time is
       Hour   : Natural;
    begin
       if Ch = "" then
-         Validation_Error ("Empty string is not a valid value for duration");
+         Validation_Error
+           (Reader, "Empty string is not a valid value for duration");
       end if;
 
       if Ch (Pos) = '-' then
@@ -631,7 +655,8 @@ package body Schema.Date_Time is
       end if;
 
       if Ch (Pos) /= 'P' then
-         Validation_Error ("Invalid prefix for duration in """ & Ch & """");
+         Validation_Error
+           (Reader, "Invalid prefix for duration in """ & Ch & """");
          return No_Duration;
       end if;
 
@@ -648,12 +673,14 @@ package body Schema.Date_Time is
          if Ch (Tmp) = 'T' then
             Processing_Time := True;
             if Tmp = Ch'Last then
-               Validation_Error ("Expecting time after T in """ & Ch & """");
+               Validation_Error
+                 (Reader, "Expecting time after T in """ & Ch & """");
             end if;
 
          elsif Ch (Tmp) = 'Y' then
             if Processing_Time then
-               Validation_Error ("Expecting time component in """ & Ch & """");
+               Validation_Error
+                 (Reader, "Expecting time component in """ & Ch & """");
                return No_Duration;
             end if;
 
@@ -669,7 +696,8 @@ package body Schema.Date_Time is
 
          elsif Ch (Tmp) = 'D' then
             if Processing_Time then
-               Validation_Error ("Expecting time component in """ & Ch & """");
+               Validation_Error
+                 (Reader, "Expecting time component in """ & Ch & """");
                return No_Duration;
             end if;
 
@@ -677,7 +705,8 @@ package body Schema.Date_Time is
 
          elsif Ch (Tmp) = 'S' then
             if not Processing_Time then
-               Validation_Error ("Expecting date component in """ & Ch & """");
+               Validation_Error
+                 (Reader, "Expecting date component in """ & Ch & """");
                return No_Duration;
             end if;
 
@@ -686,7 +715,8 @@ package body Schema.Date_Time is
 
          elsif Ch (Tmp) = 'H' then
             if not Processing_Time then
-               Validation_Error ("Expecting date component in """ & Ch & """");
+               Validation_Error
+                 (Reader, "Expecting date component in """ & Ch & """");
                return No_Duration;
             end if;
 
@@ -695,7 +725,7 @@ package body Schema.Date_Time is
 
          else
             Validation_Error
-              ("Invalid character '" & Ch (Tmp)
+              (Reader, "Invalid character '" & Ch (Tmp)
                & "' in duration: """ & Ch & """");
          end if;
 
@@ -709,19 +739,23 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return Date_Time_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return Date_Time_T
+   is
       Result : Date_Time_T;
       Eos    : Integer;
    begin
-      Parse (Ch, Result.Date, Eos);
+      Parse (Reader, Ch, Result.Date, Eos);
 
       if Ch (Eos) /= 'T' then
-         Validation_Error ("Invalid date/time separator in """ & Ch & """");
+         Validation_Error
+           (Reader, "Invalid date/time separator in """ & Ch & """");
          return No_Date_Time;
       end if;
 
-      Parse (Ch (Eos + 1 .. Ch'Last), Result.Time, Eos);
-      Parse (Ch (Eos .. Ch'Last), Result.TZ);
+      Parse (Reader, Ch (Eos + 1 .. Ch'Last), Result.Time, Eos);
+      Parse (Reader, Ch (Eos .. Ch'Last), Result.TZ);
       return Result;
    end Value;
 
@@ -729,12 +763,15 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return Date_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return Date_T
+   is
       Result : Date_T;
       Eos    : Integer;
    begin
-      Parse (Ch, Result.Date, Eos);
-      Parse (Ch (Eos .. Ch'Last), Result.TZ);
+      Parse (Reader, Ch, Result.Date, Eos);
+      Parse (Reader, Ch (Eos .. Ch'Last), Result.TZ);
       return Result;
    end Value;
 
@@ -742,21 +779,24 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return GDay_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return GDay_T
+   is
       Result : GDay_T;
    begin
       if Ch (Ch'First) /= '-'
         or else Ch (Ch'First + 1) /= '-'
         or else Ch (Ch'First + 2) /= '-'
       then
-         Validation_Error ("Invalid date """ & Ch & """");
+         Validation_Error (Reader, "Invalid date """ & Ch & """");
       end if;
       Result.Day := Integer'Value (Ch (Ch'First + 3 .. Ch'First + 4));
-      Parse (Ch (Ch'First + 5 .. Ch'Last), Result.TZ);
+      Parse (Reader, Ch (Ch'First + 5 .. Ch'Last), Result.TZ);
       return Result;
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid date """ & Ch & """");
+         Validation_Error (Reader, "Invalid date """ & Ch & """");
          return No_Gday;
    end Value;
 
@@ -764,21 +804,24 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return GMonth_Day_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return GMonth_Day_T
+   is
       Result : GMonth_Day_T;
    begin
       if Ch (Ch'First .. Ch'First + 1) /= "--"
         or else Ch (Ch'First + 4) /= '-'
       then
-         Validation_Error ("Invalid gMonthDay: """ & Ch & """");
+         Validation_Error (Reader, "Invalid gMonthDay: """ & Ch & """");
       end if;
       Result.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
       Result.Day   := Integer'Value (Ch (Ch'First + 5 .. Ch'First + 6));
-      Parse (Ch (Ch'First + 7 .. Ch'Last),  Result.TZ);
+      Parse (Reader, Ch (Ch'First + 7 .. Ch'Last),  Result.TZ);
       return Result;
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid gMonthDay: """ & Ch & """");
+         Validation_Error (Reader, "Invalid gMonthDay: """ & Ch & """");
          return No_Month_Day;
    end Value;
 
@@ -786,17 +829,20 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return GMonth_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return GMonth_T
+   is
       Result : GMonth_T;
       Index  : Natural;
    begin
       if Ch (Ch'First .. Ch'First + 1) /= "--" then
-         Validation_Error ("Invalid gMonth: """ & Ch & """");
+         Validation_Error (Reader, "Invalid gMonth: """ & Ch & """");
       end if;
       Result.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
 
       if Result.Month > 12 then
-         Validation_Error ("Invalid month:" & Result.Month'Img);
+         Validation_Error (Reader, "Invalid month:" & Result.Month'Img);
       end if;
 
       Result.TZ    := No_Timezone;
@@ -811,13 +857,13 @@ package body Schema.Date_Time is
          end if;
 
          if Index < Ch'Last then
-            Parse (Ch (Index .. Ch'Last), Result.TZ);
+            Parse (Reader, Ch (Index .. Ch'Last), Result.TZ);
          end if;
       end if;
       return Result;
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid gMonth: """ & Ch & """");
+         Validation_Error (Reader, "Invalid gMonth: """ & Ch & """");
          return No_Month;
    end Value;
 
@@ -825,12 +871,15 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return GYear_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return GYear_T
+   is
       Result : GYear_T;
       Eos    : Integer;
    begin
-      Parse_Year (Ch, Result.Year, Eos);
-      Parse (Ch (Eos .. Ch'Last), Result.TZ);
+      Parse_Year (Reader, Ch, Result.Year, Eos);
+      Parse (Reader, Ch (Eos .. Ch'Last), Result.TZ);
       return Result;
    end Value;
 
@@ -838,27 +887,30 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return GYear_Month_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch : String) return GYear_Month_T
+   is
       Result : GYear_Month_T;
       Eos    : Integer;
    begin
-      Parse_Year (Ch, Result.Year, Eos);
+      Parse_Year (Reader, Ch, Result.Year, Eos);
 
       if Ch (Eos) /= '-' then
-         Validation_Error ("Invalid gYearMonth: """ & Ch & """");
+         Validation_Error (Reader, "Invalid gYearMonth: """ & Ch & """");
       end if;
 
       Result.Month := Integer'Value (Ch (Eos + 1 .. Eos + 2));
 
       if Result.Month > 12 then
-         Validation_Error ("Invalid month:" & Result.Month'Img);
+         Validation_Error (Reader, "Invalid month:" & Result.Month'Img);
       end if;
 
-      Parse (Ch (Eos + 3 .. Ch'Last), Result.TZ);
+      Parse (Reader, Ch (Eos + 3 .. Ch'Last), Result.TZ);
       return Result;
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid gYearMonth: """ & Ch & """");
+         Validation_Error (Reader, "Invalid gYearMonth: """ & Ch & """");
          return No_Year_Month;
    end Value;
 
@@ -866,12 +918,15 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return Time_T is
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return Time_T
+   is
       Result : Time_T;
       Eos    : Integer;
    begin
-      Parse (Ch, Result.Time, Eos);
-      Parse (Ch (Eos .. Ch'Last), Result.TZ);
+      Parse (Reader, Ch, Result.Time, Eos);
+      Parse (Reader, Ch (Eos .. Ch'Last), Result.TZ);
       return Result;
    end Value;
 

@@ -28,7 +28,9 @@
 
 private package Schema.Validators.Simple_Types is
 
-   procedure Register_Predefined_Types (G, XML_G : XML_Grammar_NS);
+   procedure Register_Predefined_Types
+     (G, XML_G : XML_Grammar_NS;
+      Reader   : access Abstract_Validation_Reader'Class);
    --  Register all the predefined types
 
    -------------------------------
@@ -45,6 +47,7 @@ private package Schema.Validators.Simple_Types is
 
    procedure Validate_Start_Element
      (Validator              : access Any_Simple_XML_Validator_Record;
+      Reader                 : access Abstract_Validation_Reader'Class;
       Local_Name             : Unicode.CES.Byte_Sequence;
       Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
@@ -53,25 +56,34 @@ private package Schema.Validators.Simple_Types is
       Element_Validator      : out XML_Element);
    procedure Validate_Characters
      (Validator      : access Any_Simple_XML_Validator_Record;
+      Reader                 : access Abstract_Validation_Reader'Class;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
-      Mask           : in out Facets_Mask;
-      Context        : in out Validation_Context);
+      Mask           : in out Facets_Mask);
    procedure Validate_End_Element
      (Validator  : access Any_Simple_XML_Validator_Record;
+      Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Unicode.CES.Byte_Sequence;
       Data       : Validator_Data);
    procedure Check_Content_Type
      (Validator        : access Any_Simple_XML_Validator_Record;
+      Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean);
    function Get_Facets
-     (Validator : access Any_Simple_XML_Validator_Record)
+     (Validator : access Any_Simple_XML_Validator_Record;
+      Reader    : access Abstract_Validation_Reader'Class)
       return Facets_Description;
+   procedure Add_Facet
+     (Validator   : access Any_Simple_XML_Validator_Record;
+      Reader      : access Abstract_Validation_Reader'Class;
+      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Value : Unicode.CES.Byte_Sequence);
    function Get_Mixed_Content
      (Validator : access Any_Simple_XML_Validator_Record) return Boolean;
    procedure Free (Validator : in out Any_Simple_XML_Validator_Record);
    function Equal
      (Validator      : access Any_Simple_XML_Validator_Record;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    procedure Check_Replacement
      (Validator       : access Any_Simple_XML_Validator_Record;
@@ -95,19 +107,24 @@ private package Schema.Validators.Simple_Types is
    --  See inherited documentation
 
    procedure Add_Union
-     (Validator : access XML_Union_Record; Part : XML_Type);
+     (Validator : access XML_Union_Record;
+      Reader    : access Abstract_Validation_Reader'Class;
+      Part      : XML_Type);
    --  Add a new element to the union in Validator
 
    procedure Validate_Characters
      (Union         : access XML_Union_Record;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context);
+      Mask          : in out Facets_Mask);
    function Get_Facets
-     (Validator : access XML_Union_Record) return Facets_Description;
-   function Equal
      (Validator : access XML_Union_Record;
+      Reader    : access Abstract_Validation_Reader'Class)
+      return Facets_Description;
+   function Equal
+     (Validator      : access XML_Union_Record;
+      Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
 
    procedure Check_Replacement_For_Union

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -34,6 +34,7 @@ private package Schema.Validators.Extensions is
       Extension : XML_Validator := null) return XML_Validator;
    function Create_Extension_Of
      (G          : XML_Grammar_NS;
+      Reader     : access Abstract_Validation_Reader'Class;
       Base       : XML_Type;
       Group      : XML_Group;
       Min_Occurs : Natural := 1;

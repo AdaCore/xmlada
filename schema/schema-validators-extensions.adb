@@ -46,6 +46,7 @@ package body Schema.Validators.Extensions is
      (Validator : access Extension_XML_Validator) return Validator_Data;
    procedure Validate_Start_Element
      (Validator         : access Extension_XML_Validator;
+      Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
@@ -54,14 +55,15 @@ package body Schema.Validators.Extensions is
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator      : access Extension_XML_Validator;
+      Reader         : access Abstract_Validation_Reader'Class;
       Local_Name     : Unicode.CES.Byte_Sequence;
       Data           : Validator_Data);
    procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context);
+      Mask          : in out Facets_Mask);
    procedure Get_Attribute_Lists
      (Validator   : access Extension_XML_Validator;
       List        : out Attribute_Validator_List_Access;
@@ -78,6 +80,7 @@ package body Schema.Validators.Extensions is
       Had_Extension   : in out Boolean);
    procedure Check_Content_Type
      (Validator        : access Extension_XML_Validator;
+      Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean);
    function Is_Extension_Of
      (Validator : Extension_XML_Validator;
@@ -85,9 +88,12 @@ package body Schema.Validators.Extensions is
    function Get_Mixed_Content
      (Validator : access Extension_XML_Validator) return Boolean;
    function Get_Facets
-     (Validator : access Extension_XML_Validator) return Facets_Description;
+     (Validator : access Extension_XML_Validator;
+      Reader : access Abstract_Validation_Reader'Class)
+      return Facets_Description;
    function Equal
      (Validator : access Extension_XML_Validator;
+      Reader : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    --  See doc from inherited subprograms
 
@@ -115,10 +121,12 @@ package body Schema.Validators.Extensions is
    ----------------
 
    function Get_Facets
-     (Validator : access Extension_XML_Validator) return Facets_Description is
+     (Validator : access Extension_XML_Validator;
+      Reader : access Abstract_Validation_Reader'Class)
+      return Facets_Description is
    begin
       if Validator.Base.Validator /= null then
-         return Get_Facets (Validator.Base.Validator);
+         return Get_Facets (Validator.Base.Validator, Reader);
       end if;
 
       return null;
@@ -157,6 +165,7 @@ package body Schema.Validators.Extensions is
 
    procedure Validate_Start_Element
      (Validator         : access Extension_XML_Validator;
+      Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
@@ -185,7 +194,8 @@ package body Schema.Validators.Extensions is
                              & ')');
             end if;
             Validate_Start_Element
-              (Get_Validator (Validator.Base), Local_Name, Namespace_URI, NS,
+              (Get_Validator (Validator.Base), Reader,
+               Local_Name, Namespace_URI, NS,
                D.Base_Data, Grammar, Element_Validator);
          exception
             when XML_Validation_Error =>
@@ -203,7 +213,7 @@ package body Schema.Validators.Extensions is
                Debug_Output ("Validating extension part of the extension");
             end if;
             Validate_Start_Element
-              (Validator.Extension, Local_Name, Namespace_URI, NS,
+              (Validator.Extension, Reader, Local_Name, Namespace_URI, NS,
                D.Extension_Data, Grammar, Element_Validator);
          elsif Debug then
             Debug_Output ("Base part didn't match, but no extension defined");
@@ -222,6 +232,7 @@ package body Schema.Validators.Extensions is
 
    procedure Validate_End_Element
      (Validator      : access Extension_XML_Validator;
+      Reader         : access Abstract_Validation_Reader'Class;
       Local_Name     : Unicode.CES.Byte_Sequence;
       Data           : Validator_Data)
    is
@@ -231,12 +242,12 @@ package body Schema.Validators.Extensions is
                          & Get_Name (Validator));
       if D.Validating_Base then
          Validate_End_Element
-           (Get_Validator (Validator.Base), Local_Name, D.Base_Data);
+           (Get_Validator (Validator.Base), Reader, Local_Name, D.Base_Data);
       end if;
 
       if Validator.Extension /= null then
          Validate_End_Element
-           (Validator.Extension, Local_Name, D.Extension_Data);
+           (Validator.Extension, Reader, Local_Name, D.Extension_Data);
       end if;
 
       Debug_Pop_Prefix;
@@ -264,10 +275,10 @@ package body Schema.Validators.Extensions is
 
    procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
+      Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
-      Mask          : in out Facets_Mask;
-      Context       : in out Validation_Context) is
+      Mask          : in out Facets_Mask) is
    begin
       if Debug then
          Debug_Push_Prefix
@@ -276,7 +287,7 @@ package body Schema.Validators.Extensions is
 
       if Validator.Extension /= null then
          Validate_Characters
-           (Validator.Extension, Ch, Empty_Element, Mask, Context);
+           (Validator.Extension, Reader, Ch, Empty_Element, Mask);
       else
          if Debug then
             Debug_Output ("Validate_Characters (ext), testing base "
@@ -284,7 +295,7 @@ package body Schema.Validators.Extensions is
          end if;
 
          Validate_Characters
-           (Get_Validator (Validator.Base), Ch, Empty_Element, Mask, Context);
+           (Get_Validator (Validator.Base), Reader, Ch, Empty_Element, Mask);
       end if;
 
       Debug_Pop_Prefix;
@@ -297,8 +308,8 @@ package body Schema.Validators.Extensions is
                Debug_Output ("Validation error (ext), testing base");
             end if;
             Validate_Characters
-              (Get_Validator (Validator.Base),
-               Ch, Empty_Element, Mask, Context);
+              (Get_Validator (Validator.Base), Reader,
+               Ch, Empty_Element, Mask);
             Debug_Pop_Prefix;
 
          else
@@ -317,9 +328,10 @@ package body Schema.Validators.Extensions is
 
    function Equal
      (Validator : access Extension_XML_Validator;
+      Reader : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
    begin
-      return Equal (Get_Validator (Validator.Base), Value1, Value2);
+      return Equal (Get_Validator (Validator.Base), Reader, Value1, Value2);
    end Equal;
 
    -----------------------
@@ -370,10 +382,11 @@ package body Schema.Validators.Extensions is
    ------------------------
 
    procedure Check_Content_Type
-     (Validator : access Extension_XML_Validator;
+     (Validator        : access Extension_XML_Validator;
+      Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean) is
    begin
-      Check_Content_Type (Validator.Base, Should_Be_Simple);
+      Check_Content_Type (Validator.Base, Reader, Should_Be_Simple);
    end Check_Content_Type;
 
    -------------------------
@@ -403,6 +416,7 @@ package body Schema.Validators.Extensions is
 
    function Create_Extension_Of
      (G          : XML_Grammar_NS;
+      Reader     : access Abstract_Validation_Reader'Class;
       Base       : XML_Type;
       Group      : XML_Group;
       Min_Occurs : Natural := 1;
@@ -413,7 +427,7 @@ package body Schema.Validators.Extensions is
    begin
       if Get_Final_On_Extension (Base) then
          Validation_Error
-           ("Type """ & To_QName (Base) & """ forbids extensions");
+           (Reader, "Type """ & To_QName (Base) & """ forbids extensions");
       end if;
 
       Register (G, Result);
@@ -421,7 +435,7 @@ package body Schema.Validators.Extensions is
       Result.Base      := Base;
       C := Create_Sequence (G);
       Set_Debug_Name (C, "automatic_extension_sequence");
-      Add_Particle (C, Group, Min_Occurs, Max_Occurs);
+      Add_Particle (C, Reader, Group, Min_Occurs, Max_Occurs);
       Result.Extension := XML_Validator (C);
       return XML_Validator (Result);
    end Create_Extension_Of;

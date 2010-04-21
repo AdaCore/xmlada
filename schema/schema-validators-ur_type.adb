@@ -37,16 +37,18 @@ package body Schema.Validators.UR_Type is
 
    procedure Validate_End_Element
      (Validator      : access UR_Type_Validator;
+      Reader         : access Abstract_Validation_Reader'Class;
       Local_Name     : Unicode.CES.Byte_Sequence;
       Data           : Validator_Data);
    procedure Validate_Attributes
      (Validator         : access UR_Type_Validator;
+      Reader            : access Abstract_Validation_Reader'Class;
       Atts              : in out Sax.Attributes.Attributes'Class;
       Nillable          : Boolean;
-      Is_Nil            : out Boolean;
-      Context           : in out Validation_Context);
+      Is_Nil            : out Boolean);
    procedure Validate_Start_Element
      (Validator         : access UR_Type_Validator;
+      Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
       Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
@@ -76,13 +78,14 @@ package body Schema.Validators.UR_Type is
    ----------------------------
 
    procedure Validate_Start_Element
-     (Validator              : access UR_Type_Validator;
-      Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Grammar                : XML_Grammar;
-      Element_Validator      : out XML_Element)
+     (Validator         : access UR_Type_Validator;
+      Reader            : access Abstract_Validation_Reader'Class;
+      Local_Name        : Unicode.CES.Byte_Sequence;
+      Namespace_URI     : Unicode.CES.Byte_Sequence;
+      NS                : XML_Grammar_NS;
+      Data              : Validator_Data;
+      Grammar           : XML_Grammar;
+      Element_Validator : out XML_Element)
    is
       pragma Unreferenced (Data);
    begin
@@ -99,18 +102,18 @@ package body Schema.Validators.UR_Type is
       case Validator.Process_Contents is
          when Process_Strict =>
             Element_Validator := Lookup_Element
-              (NS, Local_Name, Create_If_Needed => False);
+              (NS, Reader, Local_Name, Create_If_Needed => False);
             if Element_Validator = No_Element then
                Validation_Error
-                 ("No definition provided for """ & Local_Name & """");
+                 (Reader, "No definition provided for """ & Local_Name & """");
             else
                Check_Qualification
-                 (Grammar, Element_Validator, Namespace_URI);
+                 (Grammar, Reader, Element_Validator, Namespace_URI);
             end if;
 
          when Process_Lax =>
             Element_Validator := Lookup_Element
-              (NS, Local_Name, Create_If_Needed => False);
+              (NS, Reader, Local_Name, Create_If_Needed => False);
 
             if Element_Validator = No_Element then
                if Debug then
@@ -140,13 +143,13 @@ package body Schema.Validators.UR_Type is
    -------------------------
 
    procedure Validate_Attributes
-     (Validator         : access UR_Type_Validator;
-      Atts              : in out Sax.Attributes.Attributes'Class;
-      Nillable          : Boolean;
-      Is_Nil            : out Boolean;
-      Context           : in out Validation_Context)
+     (Validator : access UR_Type_Validator;
+      Reader    : access Abstract_Validation_Reader'Class;
+      Atts      : in out Sax.Attributes.Attributes'Class;
+      Nillable  : Boolean;
+      Is_Nil    : out Boolean)
    is
-      pragma Unreferenced (Validator, Nillable, Atts, Context);
+      pragma Unreferenced (Validator, Nillable, Atts, Reader);
    begin
       Is_Nil := False;
    end Validate_Attributes;
@@ -156,11 +159,12 @@ package body Schema.Validators.UR_Type is
    --------------------------
 
    procedure Validate_End_Element
-     (Validator      : access UR_Type_Validator;
-      Local_Name     : Unicode.CES.Byte_Sequence;
-      Data           : Validator_Data)
+     (Validator  : access UR_Type_Validator;
+      Reader     : access Abstract_Validation_Reader'Class;
+      Local_Name : Unicode.CES.Byte_Sequence;
+      Data       : Validator_Data)
    is
-      pragma Unreferenced (Validator, Local_Name, Data);
+      pragma Unreferenced (Validator, Local_Name, Data, Reader);
    begin
       null;
    end Validate_End_Element;

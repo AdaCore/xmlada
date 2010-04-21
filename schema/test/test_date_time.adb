@@ -26,12 +26,20 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;            use Ada.Calendar;
-with Schema.Date_Time;        use Schema.Date_Time;
+with Ada.Calendar;             use Ada.Calendar;
+with Schema.Date_Time;         use Schema.Date_Time;
+with Schema.Validators;        use Schema.Validators;
 with Schema.Validators.Facets; use Schema.Validators.Facets;
-with GNAT.IO;                 use GNAT.IO;
+with GNAT.IO;                  use GNAT.IO;
+with Unicode.CES;              use Unicode.CES;
 
 procedure Test_Date_Time is
+
+   type Local_Reader is new Abstract_Validation_Reader with null record;
+
+   Reader : aliased Local_Reader;
+   R      : constant Abstract_Validating_Reader_Access :=
+     Reader'Unchecked_Access;
 
    generic
       type T is private;
@@ -164,36 +172,36 @@ procedure Test_Date_Time is
    Time4_Image : constant String := "2002-01-12T12:13:14.1234-05:02";
 
    Time5_Image : constant String := "2000-01-15T00:00:00";
-   T5          : constant Date_Time_T := Value (Time5_Image);
+   T5          : constant Date_Time_T := Value (R, Time5_Image);
    Time6_Image : constant String := "2000-02-15T00:00:00";
-   T6          : constant Date_Time_T := Value (Time6_Image);
+   T6          : constant Date_Time_T := Value (R, Time6_Image);
 
    Time7_Image : constant String := "2000-01-15T12:00:00";
-   T7          : constant Date_Time_T := Value (Time7_Image);
+   T7          : constant Date_Time_T := Value (R, Time7_Image);
    Time8_Image : constant String := "2000-01-16T12:00:00Z";
-   T8          : constant Date_Time_T := Value (Time8_Image);
+   T8          : constant Date_Time_T := Value (R, Time8_Image);
 
    Time9_Image  : constant String := "2000-01-01T12:00:00";
-   T9           : constant Date_Time_T := Value (Time9_Image);
+   T9           : constant Date_Time_T := Value (R, Time9_Image);
    Time10_Image : constant String := "1999-12-31T23:00:00Z";
-   T10          : constant Date_Time_T := Value (Time10_Image);
+   T10          : constant Date_Time_T := Value (R, Time10_Image);
 
    Time11_Image : constant String := "2000-01-16T12:00:00";
-   T11          : constant Date_Time_T := Value (Time11_Image);
+   T11          : constant Date_Time_T := Value (R, Time11_Image);
    Time12_Image : constant String := "2000-01-16T12:00:00Z";
-   T12          : constant Date_Time_T := Value (Time12_Image);
+   T12          : constant Date_Time_T := Value (R, Time12_Image);
 
    Time13_Image : constant String := "2000-01-16T00:00:00";
-   T13          : constant Date_Time_T := Value (Time13_Image);
+   T13          : constant Date_Time_T := Value (R, Time13_Image);
    Time14_Image : constant String := "2000-01-16T12:00:00Z";
-   T14          : constant Date_Time_T := Value (Time14_Image);
+   T14          : constant Date_Time_T := Value (R, Time14_Image);
 
    --  From E802-003
    T15_Image    : constant String := "2001-12-17T09:30:47-05:00";
-   T15          : constant Date_Time_T := Value (T15_Image);
+   T15          : constant Date_Time_T := Value (R, T15_Image);
 
    T16_Image    : constant String := "03:58:02.5";
-   T16          : constant Time_T := Value (T16_Image);
+   T16          : constant Time_T := Value (R, T16_Image);
 
    Duration1_Image : constant String := "P1Y3M5DT7H10M3.3S";
    Duration2_Image : constant String := "-P1Y";
@@ -201,46 +209,46 @@ procedure Test_Date_Time is
    Duration4_Image : constant String := "-P1M";
    Duration5_Image : constant String := "-P1M1D";
 
-   Dur1Y    : constant Duration_T := Value ("P1Y");
-   Dur364D  : constant Duration_T := Value ("P364D");
-   Dur365D  : constant Duration_T := Value ("P365D");
-   Dur366D  : constant Duration_T := Value ("P366D");
-   Dur367D  : constant Duration_T := Value ("P367D");
+   Dur1Y    : constant Duration_T := Value (R, "P1Y");
+   Dur364D  : constant Duration_T := Value (R, "P364D");
+   Dur365D  : constant Duration_T := Value (R, "P365D");
+   Dur366D  : constant Duration_T := Value (R, "P366D");
+   Dur367D  : constant Duration_T := Value (R, "P367D");
 
-   Dur1M  : constant Duration_T := Value ("P1M");
-   Dur27D : constant Duration_T := Value ("P27D");
-   Dur28D : constant Duration_T := Value ("P28D");
-   Dur29D : constant Duration_T := Value ("P29D");
-   Dur30D : constant Duration_T := Value ("P30D");
-   Dur31D : constant Duration_T := Value ("P31D");
-   Dur32D : constant Duration_T := Value ("P32D");
+   Dur1M  : constant Duration_T := Value (R, "P1M");
+   Dur27D : constant Duration_T := Value (R, "P27D");
+   Dur28D : constant Duration_T := Value (R, "P28D");
+   Dur29D : constant Duration_T := Value (R, "P29D");
+   Dur30D : constant Duration_T := Value (R, "P30D");
+   Dur31D : constant Duration_T := Value (R, "P31D");
+   Dur32D : constant Duration_T := Value (R, "P32D");
 
-   Dur5M   : constant Duration_T := Value ("P5M");
-   Dur149D : constant Duration_T := Value ("P149D");
-   Dur150D : constant Duration_T := Value ("P150D");
-   Dur151D : constant Duration_T := Value ("P151D");
-   Dur152D : constant Duration_T := Value ("P152D");
-   Dur153D : constant Duration_T := Value ("P153D");
-   Dur154D : constant Duration_T := Value ("P154D");
+   Dur5M   : constant Duration_T := Value (R, "P5M");
+   Dur149D : constant Duration_T := Value (R, "P149D");
+   Dur150D : constant Duration_T := Value (R, "P150D");
+   Dur151D : constant Duration_T := Value (R, "P151D");
+   Dur152D : constant Duration_T := Value (R, "P152D");
+   Dur153D : constant Duration_T := Value (R, "P153D");
+   Dur154D : constant Duration_T := Value (R, "P154D");
 
-   Time1       : constant Date_Time_T := Value (Time1_Image);
-   Time2       : constant Date_Time_T := Value (Time2_Image);
-   Dur1        : constant Duration_T  := Value (Duration1_Image);
+   Time1       : constant Date_Time_T := Value (R, Time1_Image);
+   Time2       : constant Date_Time_T := Value (R, Time2_Image);
+   Dur1        : constant Duration_T  := Value (R, Duration1_Image);
 
 begin
    Assert (Time1_Image, Image (Time1));
    Assert (Time2_Image, Image (Time2));
-   Assert (Time3_Image, Image (Date_Time_T'(Value (Time3_Image))));
+   Assert (Time3_Image, Image (Date_Time_T'(Value (R, Time3_Image))));
    Assert (T15_Image, Image (T15));
    Assert (T16_Image, Image (T16));
    Assert ("2002-01-12T12:13:14.1234-05:02",
-           Image (Date_Time_T'(Value (Time4_Image))));
+           Image (Date_Time_T'(Value (R, Time4_Image))));
 
    Assert ("P1Y3M5DT7H10M3.3S", Image (Dur1));
-   Assert ("-P1Y", Image (Duration_T'(Value (Duration2_Image))));
-   Assert ("-PT1H", Image (Duration_T'(Value (Duration3_Image))));
-   Assert ("-P1M", Image (Duration_T'(Value (Duration4_Image))));
-   Assert ("-P1M1D", Image (Duration_T'(Value (Duration5_Image))));
+   Assert ("-P1Y", Image (Duration_T'(Value (R, Duration2_Image))));
+   Assert ("-PT1H", Image (Duration_T'(Value (R, Duration3_Image))));
+   Assert ("-P1M", Image (Duration_T'(Value (R, Duration4_Image))));
+   Assert ("-P1M1D", Image (Duration_T'(Value (R, Duration5_Image))));
 
    Assert ("2001-04-17T19:23:17.3Z", Image (Time1 + Dur1));
    Assert ("12346-04-17T19:23:17.3", Image (Time2 + Dur1));
@@ -249,7 +257,7 @@ begin
    Assert (Time1, Time2, '<');
 
    Assert (Time1 + Dur1Y,
-           Date_Time_T'(Value ("2001-01-12T12:13:14Z")));
+           Date_Time_T'(Value (R, "2001-01-12T12:13:14Z")));
    Assert (Year (Value (Time1)), 2000);
    Assert (Month (Value (Time1)), 1);
    Assert (Day (Value (Time1)), 12);
@@ -286,10 +294,12 @@ begin
    --  in earlier versions of the w3c schema specification, so should be
    --  accepted. See http://books.xmlschemata.org/relaxng/ch19-77111.html
 
-   Assert (GMonth_T'(Value ("--01")), GMonth_T'(Value ("--01--")));
-   Assert (GMonth_T'(Value ("--01Z")), GMonth_T'(Value ("--01")));
-   Assert (GMonth_T'(Value ("--01+02:00")), GMonth_T'(Value ("--01+02:00")));
-   Assert (GMonth_T'(Value ("--01-04:00")), GMonth_T'(Value ("--01-04:00")));
+   Assert (GMonth_T'(Value (R, "--01")), GMonth_T'(Value (R, "--01--")));
+   Assert (GMonth_T'(Value (R, "--01Z")), GMonth_T'(Value (R, "--01")));
+   Assert
+     (GMonth_T'(Value (R, "--01+02:00")), GMonth_T'(Value (R, "--01+02:00")));
+   Assert
+     (GMonth_T'(Value (R, "--01-04:00")), GMonth_T'(Value (R, "--01-04:00")));
 
    --  Regexps
 

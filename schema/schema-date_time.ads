@@ -40,6 +40,7 @@
 --  standard part 3.
 
 with Ada.Calendar;
+with Schema.Validators;  use Schema.Validators;
 
 package Schema.Date_Time is
 
@@ -71,7 +72,9 @@ package Schema.Date_Time is
    function Image (Month : GYear_Month_T) return String;
    --  Return the string representation of the argument
 
-   function Value (Ch : String) return Duration_T;
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return Duration_T;
    --  Return the duration stored in Ch. It should contain a string of the
    --  type "PyyyyYmmM".
 
@@ -84,7 +87,9 @@ package Schema.Date_Time is
    --  use this directly, and can instead use the "+" operator below to
    --  add it directly to a date.
 
-   function Value (Ch : String) return Date_Time_T;
+   function Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : String) return Date_Time_T;
    --  Return the date stored in Ch. It should contain a string with the format
    --      yyyy-mm-ddThh:mm:ss.sss+tz:tz
    --  Any number of digits is supported for the date and the subseconds field
@@ -94,13 +99,20 @@ package Schema.Date_Time is
    --  always possible, since the range of possible dates is greater in XML
    --  than it is in Ada. In such cases, Ada.Calendar.Time_Error is raised.
 
-   function Value (Ch : String) return Time_T;
-   function Value (Ch : String) return GDay_T;
-   function Value (Ch : String) return GMonth_Day_T;
-   function Value (Ch : String) return GMonth_T;
-   function Value (Ch : String) return GYear_T;
-   function Value (Ch : String) return GYear_Month_T;
-   function Value (Ch : String) return Date_T;
+   function Value (Reader : access Abstract_Validation_Reader'Class;
+                   Ch : String) return Time_T;
+   function Value (Reader : access Abstract_Validation_Reader'Class;
+                   Ch : String) return GDay_T;
+   function Value (Reader : access Abstract_Validation_Reader'Class;
+                   Ch : String) return GMonth_Day_T;
+   function Value (Reader : access Abstract_Validation_Reader'Class;
+                   Ch : String) return GMonth_T;
+   function Value (Reader : access Abstract_Validation_Reader'Class;
+                   Ch : String) return GYear_T;
+   function Value (Reader : access Abstract_Validation_Reader'Class;
+                   Ch : String) return GYear_Month_T;
+   function Value (Reader : access Abstract_Validation_Reader'Class;
+                   Ch : String) return Date_T;
    --  Return the date stored in Ch. The format of the string is specified in
    --  the XML Schema specifications
 

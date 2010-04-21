@@ -28,7 +28,6 @@
 
 with Ada.Finalization;          use Ada.Finalization;
 with Sax.Encodings;             use Sax.Encodings;
-with Schema.Validators;         use Schema.Validators;
 with Unicode.CES;               use Unicode, Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
@@ -50,6 +49,7 @@ package body Schema.Decimal is
 
    function Internal_Value
      (Ch : Unicode.CES.Byte_Sequence;
+      Reader : access Abstract_Validation_Reader'Class;
       Allow_Exponent : Boolean) return Arbitrary_Precision_Number;
    --  Internal implementation of Value
 
@@ -72,9 +72,10 @@ package body Schema.Decimal is
    -----------
 
    function Value
-     (Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number is
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number is
    begin
-      return Internal_Value (Ch, Allow_Exponent => True);
+      return Internal_Value (Ch, Reader, Allow_Exponent => True);
    end Value;
 
    --------------------
@@ -83,6 +84,7 @@ package body Schema.Decimal is
 
    function Internal_Value
      (Ch : Unicode.CES.Byte_Sequence;
+      Reader : access Abstract_Validation_Reader'Class;
       Allow_Exponent : Boolean) return Arbitrary_Precision_Number
    is
       Pos          : Integer := Ch'First;
@@ -92,7 +94,7 @@ package body Schema.Decimal is
       Saw_Point    : Boolean := False;
    begin
       if Ch'Length = 0 then
-         Validation_Error ("Invalid: empty string used as a number");
+         Validation_Error (Reader, "Invalid: empty string used as a number");
       end if;
 
       --  Skip leading spaces (because the "whitespace" facet is always
@@ -118,7 +120,7 @@ package body Schema.Decimal is
          if C = Period then
             if Saw_Point then
                Validation_Error
-                 ("Only one decimal separator allowed in " & Ch);
+                 (Reader, "Only one decimal separator allowed in " & Ch);
             end if;
             Saw_Point := True;
 
@@ -126,18 +128,20 @@ package body Schema.Decimal is
            or else C = Latin_Small_Letter_E
          then
             if Saw_Exponent then
-               Validation_Error ("Only one exponent allowed in " & Ch);
+               Validation_Error
+                 (Reader, "Only one exponent allowed in " & Ch);
             end if;
 
             if not Allow_Exponent then
-               Validation_Error ("Exponent parent not authorized in " & Ch);
+               Validation_Error
+                 (Reader, "Exponent parent not authorized in " & Ch);
             end if;
 
             Saw_Exponent := True;
             Saw_Point := False;
 
             if Pos > Ch'Last then
-               Validation_Error ("No exponent specified in " & Ch);
+               Validation_Error (Reader, "No exponent specified in " & Ch);
             else
                declare
                   Save : constant Integer := Pos;
@@ -155,12 +159,14 @@ package body Schema.Decimal is
                while Pos <= Ch'Last loop
                   Encoding.Read (Ch, Pos, C);
                   if not Is_White_Space (C) then
-                     Validation_Error ("Invalid integer: """ & Ch & """");
+                     Validation_Error
+                       (Reader, "Invalid integer: """ & Ch & """");
                   end if;
                end loop;
                exit;
             else
-               Validation_Error ("Invalid integer: """ & Ch & """");
+               Validation_Error
+                 (Reader, "Invalid integer: """ & Ch & """");
             end if;
          end if;
 
@@ -182,9 +188,10 @@ package body Schema.Decimal is
    -----------------------
 
    function Value_No_Exponent
-     (Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number is
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number is
    begin
-      return Internal_Value (Ch, Allow_Exponent => False);
+      return Internal_Value (Ch, Reader, Allow_Exponent => False);
    end Value_No_Exponent;
 
    --------------
@@ -431,7 +438,8 @@ package body Schema.Decimal is
    ------------------
 
    procedure Check_Digits
-     (Num                           : Arbitrary_Precision_Number;
+     (Reader : access Abstract_Validation_Reader'Class;
+      Num                           : Arbitrary_Precision_Number;
       Fraction_Digits, Total_Digits : Integer := -1)
    is
       Exp : constant Long_Long_Integer := Get_Exp (Num.Value.all);
@@ -465,14 +473,14 @@ package body Schema.Decimal is
            Long_Long_Integer (Total_Digits)
          then
             Validation_Error
-              ("Number " & Num.Value.all
+              (Reader, "Number " & Num.Value.all
                & " has too many digits (totalDigits is"
                & Integer'Image (Total_Digits) & ')');
          end if;
 
          if Digits_Count > Total_Digits then
             Validation_Error
-              ("Number " & Num.Value.all
+              (Reader, "Number " & Num.Value.all
                & " has too many digits (totalDigits is"
                & Integer'Image (Total_Digits) & ")");
          end if;
@@ -483,7 +491,7 @@ package body Schema.Decimal is
            Long_Long_Integer (Fraction_Digits)
          then
             Validation_Error
-              ("Number " & Num.Value.all
+              (Reader, "Number " & Num.Value.all
                & " has too many fractional digits (fractionDigits is"
                & Integer'Image (Fraction_Digits) & ')');
          end if;

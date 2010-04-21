@@ -51,7 +51,7 @@ package body Schema.Schema_Readers is
    --  Free the memory occupied by C
 
    procedure Get_Grammar_For_Namespace
-     (Handler : in out Schema_Reader'Class;
+     (Handler : access Schema_Reader'Class;
       Prefix  : Byte_Sequence;
       Grammar : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True);
@@ -63,31 +63,32 @@ package body Schema.Schema_Readers is
    function To_String (Blocks : Block_Status) return String;
 
    procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
+     (Handler : access Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Type);
    procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
+     (Handler : access Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Element);
    procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
+     (Handler : access Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Group);
    procedure Lookup_With_NS
-     (Handler    : in out Schema_Reader'Class;
+     (Handler    : access Schema_Reader'Class;
       QName      : Byte_Sequence;
       Result     : out XML_Attribute_Group);
    --  Lookup a type or element  with a possible namespace specification
 
    function Create_Repeat
-     (Handler   : Schema_Reader;
+     (Handler   : access Schema_Reader'Class;
       Validator : access XML_Validator_Record'Class;
       Min_Occurs, Max_Occurs : Integer) return XML_Validator;
    --  Repeat Validator a number of times, by including it in a sequence if
    --  needed
 
-   procedure Ensure_Type (Handler : in out Schema_Reader; C : Context_Access);
+   procedure Ensure_Type
+     (Handler : access Schema_Reader'Class; C : Context_Access);
    --  Make sure the context (of type Context_Type_Def) has a proper
    --  type validator defined
 
@@ -103,7 +104,7 @@ package body Schema.Schema_Readers is
    --  Whether we are currently processing a <redefine> tag
 
    procedure Insert_Attribute
-     (Handler        : in out Schema_Reader;
+     (Handler        : access Schema_Reader;
       In_Context     : Context_Access;
       Attribute      : Attribute_Validator;
       Attribute_Name : Byte_Sequence;
@@ -174,12 +175,14 @@ package body Schema.Schema_Readers is
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
    --  <extension>, <union>, <list>, <choice>, <group>
 
-   function Max_Occurs_From_Value (Value : Byte_Sequence) return Integer;
+   function Max_Occurs_From_Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Value  : Byte_Sequence) return Integer;
    --  Return the value of maxOccurs from the attributes'value. This properly
    --  takes into account the "unbounded" case
 
    procedure Create_Restricted
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Ctx     : Context_Access);
    --  Applies to a Context_Restriction, ensures that the restriction has been
    --  created appropriately.
@@ -241,7 +244,10 @@ package body Schema.Schema_Readers is
    -- Max_Occurs_From_Value --
    ---------------------------
 
-   function Max_Occurs_From_Value (Value : Byte_Sequence) return Integer is
+   function Max_Occurs_From_Value
+     (Reader : access Abstract_Validation_Reader'Class;
+      Value  : Byte_Sequence) return Integer
+   is
       Index : Integer;
       C     : Unicode_Char;
    begin
@@ -259,7 +265,7 @@ package body Schema.Schema_Readers is
                   Encoding.Read (Value, Index, C);
                   if not Is_Digit (C) then
                      Validation_Error
-                       ("Value for ""maxOccurs"" must"
+                       (Reader, "Value for ""maxOccurs"" must"
                         & " be an integer or ""unbounded""");
                   end if;
                end loop;
@@ -317,7 +323,7 @@ package body Schema.Schema_Readers is
       Grammar : XML_Grammar := Get_Grammar (Parser);
    begin
       if not URI_Was_Parsed (Grammar, Input_Sources.Get_System_Id (Input)) then
-         Initialize (Grammar);
+         Initialize_Grammar (Parser'Access);
          Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
 
          Get_NS (Grammar, Default_Namespace, Parser.Target_NS);
@@ -330,12 +336,13 @@ package body Schema.Schema_Readers is
          end if;
 
          Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
-         Set_Parsed_URI (Grammar, Input_Sources.Get_System_Id (Input));
+         Set_Parsed_URI
+           (Parser'Access, Grammar, Input_Sources.Get_System_Id (Input));
 
          Parse (Validating_Reader (Parser), Input);
 
          if Do_Global_Check then
-            Global_Check (Parser.Target_NS);
+            Global_Check (Parser'Access, Parser.Target_NS);
          end if;
 
          Set_System_Id (Parser.Target_NS, Input_Sources.Get_System_Id (Input));
@@ -375,7 +382,7 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
+     (Handler : access Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Type)
    is
@@ -385,7 +392,8 @@ package body Schema.Schema_Readers is
       Get_Grammar_For_Namespace
         (Handler, QName (QName'First .. Separator - 1), G,
          Create_If_Needed => False);
-      Result := Lookup (G, QName (Separator + 1 .. QName'Last));
+      Result := Lookup
+        (G, Handler, QName (Separator + 1 .. QName'Last));
       Output
         (Ada_Name (Result) & " := Lookup (G, """
          & QName (Separator + 1 .. QName'Last) & """);");
@@ -396,7 +404,7 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
+     (Handler : access Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Element)
    is
@@ -406,7 +414,8 @@ package body Schema.Schema_Readers is
       Get_Grammar_For_Namespace
         (Handler, QName (QName'First .. Separator - 1), G);
 
-      Result := Lookup_Element (G, QName (Separator + 1 .. QName'Last));
+      Result := Lookup_Element
+        (G, Handler, QName (Separator + 1 .. QName'Last));
       Output
         (Ada_Name (Result)
          & " := Lookup_Element (G, """
@@ -418,7 +427,7 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Lookup_With_NS
-     (Handler : in out Schema_Reader'Class;
+     (Handler : access Schema_Reader'Class;
       QName   : Byte_Sequence;
       Result  : out XML_Group)
    is
@@ -428,7 +437,8 @@ package body Schema.Schema_Readers is
       Get_Grammar_For_Namespace
         (Handler, QName (QName'First .. Separator - 1), G);
 
-      Result := Lookup_Group (G, QName (Separator + 1 .. QName'Last));
+      Result := Lookup_Group
+        (G, Handler, QName (Separator + 1 .. QName'Last));
       Output
         ("Group := Lookup_Group (G, """
          & QName (Separator + 1 .. QName'Last) & """);");
@@ -439,7 +449,7 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Lookup_With_NS
-     (Handler    : in out Schema_Reader'Class;
+     (Handler    : access Schema_Reader'Class;
       QName      : Byte_Sequence;
       Result     : out XML_Attribute_Group)
    is
@@ -449,7 +459,7 @@ package body Schema.Schema_Readers is
       Get_Grammar_For_Namespace
         (Handler, QName (QName'First .. Separator - 1), G);
       Result := Lookup_Attribute_Group
-        (G, QName (Separator + 1 .. QName'Last));
+        (G, Handler, QName (Separator + 1 .. QName'Last));
       Output
         ("Attr_Group := Lookup_Attribute_Group (G, """
          & QName (Separator + 1 .. QName'Last) & """);");
@@ -477,15 +487,16 @@ package body Schema.Schema_Readers is
    begin
       if Min_Occurs_Index /= -1 then
          Min_Occurs := Max_Occurs_From_Value
-           (Get_Value (Atts, Min_Occurs_Index));
+           (Handler, Get_Value (Atts, Min_Occurs_Index));
          if Min_Occurs = Unbounded then
-            Validation_Error ("minOccurs cannot be ""unbounded""");
+            Validation_Error
+              (Handler, "minOccurs cannot be ""unbounded""");
          end if;
       end if;
 
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value
-           (Get_Value (Atts, Max_Occurs_Index));
+           (Handler, Get_Value (Atts, Max_Occurs_Index));
       end if;
 
       Handler.Contexts := new Context'
@@ -509,7 +520,7 @@ package body Schema.Schema_Readers is
 
       if Name_Index /= -1 then
          Handler.Contexts.Group := Create_Global_Group
-           (Handler.Target_NS, Get_Value (Atts, Name_Index));
+           (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
          Output (Ada_Name (Handler.Contexts)
                  & " := Create_Global_Group (Handler.Target_NS, """
                  & Get_Value (Atts, Name_Index) & """);");
@@ -535,7 +546,7 @@ package body Schema.Schema_Readers is
 
          if Handler.Contexts.Group = No_XML_Group then
             Lookup_With_NS
-              (Handler.all, Get_Value (Atts, Ref_Index),
+              (Handler, Get_Value (Atts, Ref_Index),
                Handler.Contexts.Group);
             Output (Ada_Name (Handler.Contexts) & " := Group;");
          end if;
@@ -549,14 +560,16 @@ package body Schema.Schema_Readers is
             null;  --  See Finish_Group
 
          when Context_Sequence =>
-            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Group,
+            Add_Particle (Handler.Contexts.Next.Seq, Handler,
+                          Handler.Contexts.Group,
                           Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts)
                     & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
 
          when Context_Choice =>
-            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Group,
+            Add_Particle (Handler.Contexts.Next.C, Handler,
+                          Handler.Contexts.Group,
                           Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts)
@@ -565,7 +578,7 @@ package body Schema.Schema_Readers is
          when Context_Extension =>
             Seq := Create_Sequence (Handler.Target_NS);
             Output ("Validator := Create_Sequence;");
-            Add_Particle (Seq, Handler.Contexts.Group,
+            Add_Particle (Seq, Handler, Handler.Contexts.Group,
                           Min_Occurs, Max_Occurs);
             Output ("Add_Particle (Validator, " & Ada_Name (Handler.Contexts)
                     & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
@@ -575,7 +588,7 @@ package body Schema.Schema_Readers is
          when Context_Restriction =>
             Seq := Create_Sequence (Handler.Target_NS);
             Output ("Validator := Create_Sequence;");
-            Add_Particle (Seq, Handler.Contexts.Group,
+            Add_Particle (Seq, Handler, Handler.Contexts.Group,
                           Min_Occurs, Max_Occurs);
             Output ("Add_Particle (Validator, " & Ada_Name (Handler.Contexts)
                     & Min_Occurs'Img & "," & Max_Occurs'Img& ");");
@@ -599,13 +612,14 @@ package body Schema.Schema_Readers is
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
             Seq := Create_Sequence (Handler.Target_NS);
-            Add_Particle (Seq, Handler.Contexts.Group,
+            Add_Particle (Seq, Handler, Handler.Contexts.Group,
                           Handler.Contexts.Group_Min,
                           Handler.Contexts.Group_Max);
 
             Handler.Contexts.Next.Type_Validator := Restriction_Of
-              (Handler.Target_NS,
-               Lookup (Handler.Schema_NS, "anyType"), XML_Validator (Seq));
+              (Handler.Target_NS, Handler,
+               Lookup (Handler.Schema_NS, Handler, "anyType"),
+               XML_Validator (Seq));
             Output ("Validator := Restriction_Of (Lookup (Handler.Schema.NS,"
                     & """anytype""), " & Ada_Name (Handler.Contexts));
 
@@ -647,21 +661,21 @@ package body Schema.Schema_Readers is
          end if;
 
          Handler.Contexts.Attr_Group := Lookup_Attribute_Group
-           (Handler.Target_NS, Get_Value (Atts, Name_Index));
+           (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
          Output (Ada_Name (Handler.Contexts)
                  & " := Lookup_Attribute_Group (Handler.Target_NS, """
                  & Get_Value (Atts, Name_Index) & """);");
 
       elsif Name_Index /= -1 then
          Handler.Contexts.Attr_Group := Create_Global_Attribute_Group
-           (Handler.Target_NS, Get_Value (Atts, Name_Index));
+           (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
          Output (Ada_Name (Handler.Contexts)
                  & " := Create_Global_Attribute_Group (Handler.Target_NS, """
                  & Get_Value (Atts, Name_Index) & """);");
 
       elsif Ref_Index /= -1 then
          Lookup_With_NS
-           (Handler.all, Get_Value (Atts, Ref_Index),
+           (Handler, Get_Value (Atts, Ref_Index),
             Handler.Contexts.Attr_Group);
          Output (Ada_Name (Handler.Contexts) & " := Attr_Group");
       end if;
@@ -672,10 +686,10 @@ package body Schema.Schema_Readers is
                null;
 
             when Context_Type_Def =>
-               Ensure_Type (Handler.all, Handler.Contexts.Next);
+               Ensure_Type (Handler, Handler.Contexts.Next);
                Add_Attribute_Group
                  (Handler.Contexts.Next.Type_Validator,
-                  Handler.Contexts.Attr_Group);
+                  Handler, Handler.Contexts.Attr_Group);
                Output ("Add_Attribute_Group ("
                        & Ada_Name (Handler.Contexts.Next)
                        & ", " & Ada_Name (Handler.Contexts) & ");");
@@ -693,7 +707,7 @@ package body Schema.Schema_Readers is
                end if;
 
                Add_Attribute_Group
-                 (Handler.Contexts.Next.Extension,
+                 (Handler.Contexts.Next.Extension, Handler,
                   Handler.Contexts.Attr_Group);
                Output ("Add_Attribute_Group ("
                        & Ada_Name (Handler.Contexts.Next)
@@ -701,7 +715,7 @@ package body Schema.Schema_Readers is
 
             when Context_Attribute_Group =>
                Add_Attribute_Group
-                 (Handler.Contexts.Next.Attr_Group,
+                 (Handler.Contexts.Next.Attr_Group, Handler,
                   Handler.Contexts.Attr_Group);
                Output ("Add_Attribute_Group ("
                        & Ada_Name (Handler.Contexts.Next)
@@ -728,7 +742,7 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => "", Local_Name => "schemaLocation");
    begin
       Parse_Grammar
-        (Handler.all,
+        (Handler,
          URI      => Get_Namespace_URI (Handler.Target_NS),
          Xsd_File => Get_Value (Atts, Schema_Location_Index),
          Do_Global_Check => False);  --  Will be performed later
@@ -760,7 +774,7 @@ package body Schema.Schema_Readers is
         (XML_Not_Implemented'Identity,
          "<redefine> not supported");
       Parse_Grammar
-        (Handler.all,
+        (Handler,
          URI      => Get_Namespace_URI (Handler.Target_NS),
          Do_Global_Check => True,
          Xsd_File => Get_Value (Atts, Location_Index));
@@ -787,7 +801,7 @@ package body Schema.Schema_Readers is
    begin
       if Location_Index = -1 then
          if Namespace_Index = -1 then
-            Validation_Error ("Missing ""namespace"" attribute");
+            Validation_Error (Handler, "Missing ""namespace"" attribute");
          end if;
 
          declare
@@ -797,7 +811,7 @@ package body Schema.Schema_Readers is
               (Get_Grammar (Handler.all), N,
                Result => NS, Create_If_Needed => False);
             if NS = null then
-               Validation_Error ("Cannot resolve namespace " & N);
+               Validation_Error (Handler, "Cannot resolve namespace " & N);
             end if;
          end;
       else
@@ -817,7 +831,7 @@ package body Schema.Schema_Readers is
                --  qualified references to schema components in that namespace.
                --  (4.2.6.1). It does not give the default targetNamespace
                Parse_Grammar
-                 (Handler.all,
+                 (Handler,
                   URI      => "",
                   Do_Global_Check => True,
                   Xsd_File => Location);
@@ -872,7 +886,7 @@ package body Schema.Schema_Readers is
       end if;
 
       Insert_Attribute
-        (Handler.all,
+        (Handler,
          Handler.Contexts,
          Create_Any_Attribute
            (Handler.Target_NS, Process_Contents, Kind, List (1 .. Last - 1)),
@@ -939,7 +953,7 @@ package body Schema.Schema_Readers is
       if Name_Index /= -1 then
          if Type_Index /= -1 then
             Lookup_With_NS
-              (Handler.all, Get_Value (Atts, Type_Index), Result => Typ);
+              (Handler, Get_Value (Atts, Type_Index), Result => Typ);
 
             if To_QName (Typ) = "IDREF"
               or else To_QName (Typ) = "IDREFS"
@@ -953,7 +967,7 @@ package body Schema.Schema_Readers is
          case Handler.Contexts.Typ is
             when Context_Schema | Context_Redefine =>
                Element := Create_Global_Element
-                 (Handler.Target_NS,
+                 (Handler.Target_NS, Handler,
                   Get_Value (Atts, Name_Index),
                   Form => Form);
                Is_Ref := False;
@@ -967,7 +981,7 @@ package body Schema.Schema_Readers is
                if Typ /= No_Type then
                   Output ("Set_Type (" & Ada_Name (Element) & ", "
                           & Ada_Name (Typ) & ");");
-                  Set_Type (Element, Typ, Get_Context (Handler).all);
+                  Set_Type (Element, Handler, Typ);
                end if;
             when others =>
                Element := Create_Local_Element
@@ -985,53 +999,53 @@ package body Schema.Schema_Readers is
            and then not In_Redefine_Context (Handler.all)
          then
             Validation_Error
-              ("""ref"" attribute cannot be self-referencing");
+              (Handler, """ref"" attribute cannot be self-referencing");
 
          elsif Ref_Index /= -1 then
-            Validation_Error ("Name and Ref cannot be both specified");
+            Validation_Error
+              (Handler, "Name and Ref cannot be both specified");
          end if;
 
       elsif Ref_Index = -1 then
          Validation_Error
-           ("Either ""name"" or ""ref"" attribute must be present");
+           (Handler, "Either ""name"" or ""ref"" attribute must be present");
 
       else
          Lookup_With_NS
-           (Handler.all, Get_Value (Atts, Ref_Index), Result => Element);
+           (Handler, Get_Value (Atts, Ref_Index), Result => Element);
          Is_Ref := True;
 
          --  Section 3.3.2, validity constraints 3.3.3
          if Type_Index /= -1 then
             Validation_Error
-              ("""type"" attribute cannot be specified along with ""ref""");
+              (Handler,
+               """type"" attribute cannot be specified along with ""ref""");
          end if;
       end if;
 
       if Subst_Index /= -1 then
          Lookup_With_NS
-           (Handler.all, Get_Value (Atts, Subst_Index), Result => Group);
-         Set_Substitution_Group (Element, Group);
+           (Handler, Get_Value (Atts, Subst_Index), Result => Group);
+         Set_Substitution_Group (Element, Handler, Group);
          Output ("Set_Substitution_Group ("
                  & Ada_Name (Element) & ", " & Ada_Name (Group) & ");");
       end if;
 
       if Default_Index /= -1 then
          if Fixed_Index /= -1 then
-            Validation_Error ("Default and Fixed cannot be both specified");
+            Validation_Error
+              (Handler, "Default and Fixed cannot be both specified");
          end if;
 
          Set_Default
-           (Element, Get_Value (Atts, Default_Index),
-            Get_Context (Handler).all);
+           (Element, Handler, Get_Value (Atts, Default_Index));
          Output ("Set_Default ("
                  & Ada_Name (Element) & ", """
                  & Get_Value (Atts, Default_Index) & """);");
       end if;
 
       if Fixed_Index /= -1 then
-         Set_Fixed
-           (Element, Get_Value (Atts, Fixed_Index),
-            Get_Context (Handler).all);
+         Set_Fixed (Element, Handler, Get_Value (Atts, Fixed_Index));
          Output ("Set_Fixed ("
                  & Ada_Name (Element) & ", """
                  & Get_Value (Atts, Fixed_Index) & """);");
@@ -1058,7 +1072,7 @@ package body Schema.Schema_Readers is
             Restrictions, Extensions, Unions, Lists : Boolean := False;
          begin
             Compute_Final
-              (Get_Value (Atts, Final_Index),
+              (Get_Value (Atts, Final_Index), Handler,
                Restrictions => Restrictions,
                Extensions   => Extensions,
                Unions       => Unions,
@@ -1079,7 +1093,7 @@ package body Schema.Schema_Readers is
          declare
             Blocks : Block_Status;
          begin
-            Compute_Blocks (Get_Value (Atts, Block_Index), Blocks);
+            Compute_Blocks (Get_Value (Atts, Block_Index), Handler, Blocks);
             Set_Block (Element, Blocks);
             Output ("Set_Block (" & Ada_Name (Element) & ", "
                     & To_String (Blocks) & ")");
@@ -1088,15 +1102,16 @@ package body Schema.Schema_Readers is
 
       if Min_Occurs_Index /= -1 then
          Min_Occurs := Max_Occurs_From_Value
-           (Get_Value (Atts, Min_Occurs_Index));
+           (Handler, Get_Value (Atts, Min_Occurs_Index));
          if Min_Occurs = Unbounded then
-            Validation_Error ("minOccurs can not be set to ""unbounded""");
+            Validation_Error
+              (Handler, "minOccurs can not be set to ""unbounded""");
          end if;
       end if;
 
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value
-           (Get_Value (Atts, Max_Occurs_Index));
+           (Handler, Get_Value (Atts, Max_Occurs_Index));
       end if;
 
       case Handler.Contexts.Typ is
@@ -1104,7 +1119,7 @@ package body Schema.Schema_Readers is
             null;
          when Context_Sequence =>
             Add_Particle
-              (Handler.Contexts.Seq, Element,
+              (Handler.Contexts.Seq, Handler, Element,
                Min_Occurs       => Min_Occurs,
                Max_Occurs       => Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
@@ -1112,13 +1127,15 @@ package body Schema.Schema_Readers is
                     & Boolean'Image (Ref_Index /= -1) & ','
                     & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
          when Context_Choice =>
-            Add_Particle (Handler.Contexts.C, Element, Min_Occurs, Max_Occurs);
+            Add_Particle
+              (Handler.Contexts.C, Handler, Element, Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
                     & ", " & Ada_Name (Element) & ','
                     & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
          when Context_All =>
-            Add_Particle (Handler.Contexts.All_Validator, Element,
-                          Min_Occurs, Max_Occurs);
+            Add_Particle
+              (Handler.Contexts.All_Validator, Handler, Element,
+               Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts)
                     & ", " & Ada_Name (Element) & ','
                     & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
@@ -1165,17 +1182,15 @@ package body Schema.Schema_Readers is
             end if;
 
             Set_Type
-              (Handler.Contexts.Element,
-               Get_Type (Get_Substitution_Group (Handler.Contexts.Element)),
-               Get_Context (Handler).all);
+              (Handler.Contexts.Element, Handler,
+               Get_Type (Get_Substitution_Group (Handler.Contexts.Element)));
 
          else
             --  Otherwise the type is anyType
             Output ("Set_Type (" & Ada_Name (Handler.Contexts)
                     & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
-            Set_Type (Handler.Contexts.Element,
-                      Lookup (Handler.Schema_NS, "ur-Type"),
-                      Get_Context (Handler).all);
+            Set_Type (Handler.Contexts.Element, Handler,
+                      Lookup (Handler.Schema_NS, Handler, "ur-Type"));
          end if;
       end if;
    end Finish_Element;
@@ -1223,7 +1238,7 @@ package body Schema.Schema_Readers is
       if C.Next.Typ = Context_Restriction
         and then C.Next.Restriction_Base = No_Type
       then
-         Ensure_Type (Handler.all, C);
+         Ensure_Type (Handler, C);
 
          Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
          Output (Ada_Name (C) & " := Create_Local_Type (Validator);");
@@ -1299,12 +1314,13 @@ package body Schema.Schema_Readers is
 
       if Block_Index /= -1 then
          Compute_Blocks
-           (Get_Value (Atts, Block_Index), Blocks => Handler.Contexts.Blocks);
+           (Get_Value (Atts, Block_Index), Handler,
+            Blocks => Handler.Contexts.Blocks);
       end if;
 
       if Final_Index /= -1 then
          Compute_Final
-           (Get_Value (Atts, Final_Index),
+           (Get_Value (Atts, Final_Index), Handler,
             Restrictions  => Handler.Contexts.Final_Restriction,
             Extensions    => Handler.Contexts.Final_Extension,
             Unions        => Handler.Contexts.Final_Unions,
@@ -1326,7 +1342,7 @@ package body Schema.Schema_Readers is
    -----------------
 
    procedure Ensure_Type
-     (Handler : in out Schema_Reader; C : Context_Access)
+     (Handler : access Schema_Reader'Class; C : Context_Access)
    is
       Base  : XML_Type;
    begin
@@ -1337,14 +1353,15 @@ package body Schema.Schema_Readers is
          if C.Simple_Content then
             Output
               ("Validator := Restriction_Of (Lookup (G, ""anySimpleType""));");
-            Base := Lookup (Handler.Schema_NS, "anySimpleType");
+            Base := Lookup (Handler.Schema_NS, Handler, "anySimpleType");
 
          else
             Output ("Validator := Restriction_Of (Lookup (G, ""anyType""));");
-            Base := Lookup (Handler.Schema_NS, "anyType");
+            Base := Lookup (Handler.Schema_NS, Handler, "anyType");
          end if;
 
-         C.Type_Validator := Restriction_Of (Handler.Schema_NS, Base);
+         C.Type_Validator := Restriction_Of
+           (Handler.Schema_NS, Handler, Base);
       end if;
    end Ensure_Type;
 
@@ -1356,13 +1373,13 @@ package body Schema.Schema_Readers is
       C   : constant Context_Access := Handler.Contexts;
       Typ : XML_Type;
    begin
-      Ensure_Type (Handler.all, C);
+      Ensure_Type (Handler, C);
       if C.Type_Name = null then
          Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
          Output (Ada_Name (C) & " := Create_Local_Type (Validator);");
       else
          Typ := Create_Global_Type
-           (Handler.Target_NS, C.Type_Name.all, C.Type_Validator);
+           (Handler.Target_NS, Handler, C.Type_Name.all, C.Type_Validator);
          Set_Debug_Name (C.Type_Validator, "for_type_" & C.Type_Name.all);
          Output (Ada_Name (C)
                  & " := Create_Global_Type ({"
@@ -1398,8 +1415,7 @@ package body Schema.Schema_Readers is
          when Context_Element =>
             Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (C) & ");");
-            Set_Type (Handler.Contexts.Next.Element, Typ,
-                      Get_Context (Handler).all);
+            Set_Type (Handler.Contexts.Next.Element, Handler, Typ);
          when Context_Attribute =>
             Set_Type (Handler.Contexts.Next.Attribute, Typ);
             Output ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
@@ -1435,12 +1451,12 @@ package body Schema.Schema_Readers is
             Base := Handler.Contexts.Redefined_Type;
          else
             Validation_Error
-              ("Self-referencing restriction not allowed");
+              (Handler, "Self-referencing restriction not allowed");
          end if;
 
       elsif Base_Index /= -1 then
          Lookup_With_NS
-           (Handler.all, Get_Value (Atts, Base_Index), Result => Base);
+           (Handler, Get_Value (Atts, Base_Index), Result => Base);
 
          if To_QName (Base) = "IDREF"
            or else To_QName (Base) = "IDREFS"
@@ -1455,7 +1471,7 @@ package body Schema.Schema_Readers is
       end if;
 
       if Handler.Contexts.Simple_Content then
-         Check_Content_Type (Base, Should_Be_Simple => True);
+         Check_Content_Type (Base, Handler, Should_Be_Simple => True);
       end if;
 
       Handler.Contexts := new Context'
@@ -1472,17 +1488,19 @@ package body Schema.Schema_Readers is
    -----------------------
 
    procedure Create_Restricted
-     (Handler : in out Schema_Reader;
+     (Handler : access Schema_Reader;
       Ctx     : Context_Access) is
    begin
       if Ctx.Restricted = null then
          if Ctx.Restriction_Base = No_Type then
-            Ctx.Restriction_Base := Lookup (Handler.Schema_NS, "ur-Type");
+            Ctx.Restriction_Base :=
+              Lookup (Handler.Schema_NS, Handler, "ur-Type");
             Output ("Restriction has no base type set");
          end if;
 
          Ctx.Restricted := Restriction_Of
-           (Handler.Target_NS, Ctx.Restriction_Base, Ctx.Restriction);
+           (Handler.Target_NS, Handler,
+            Ctx.Restriction_Base, Ctx.Restriction);
          Output (Ada_Name (Ctx)
                  & " := Restriction_Of ("
                  & Ada_Name (Ctx.Restriction_Base) & ", "
@@ -1496,7 +1514,7 @@ package body Schema.Schema_Readers is
 
    procedure Finish_Restriction (Handler : access Schema_Reader) is
    begin
-      Create_Restricted (Handler.all, Handler.Contexts);
+      Create_Restricted (Handler, Handler.Contexts);
 
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
@@ -1538,8 +1556,8 @@ package body Schema.Schema_Readers is
             procedure Cb_Item (Str : Byte_Sequence) is
                Typ : XML_Type;
             begin
-               Lookup_With_NS (Handler.all, Str, Typ);
-               Add_Union (Handler.Contexts.Union, Typ);
+               Lookup_With_NS (Handler, Str, Typ);
+               Add_Union (Handler.Contexts.Union, Handler, Typ);
                Output ("Add_Union ("
                        & Ada_Name (Handler.Contexts) & ", """ & Str & """)");
             end Cb_Item;
@@ -1585,7 +1603,7 @@ package body Schema.Schema_Readers is
    begin
       if Base_Index = -1 then
          Validation_Error
-           ("Attribute ""base"" required for <extensionType>");
+           (Handler, "Attribute ""base"" required for <extensionType>");
       end if;
 
       if Handler.Contexts.Type_Name /= null
@@ -1595,11 +1613,11 @@ package body Schema.Schema_Readers is
             Base := Handler.Contexts.Redefined_Type;
          else
             Validation_Error
-              ("Self-referencing extension not allowed");
+              (Handler, "Self-referencing extension not allowed");
          end if;
       else
          Lookup_With_NS
-           (Handler.all, Get_Value (Atts, Base_Index), Result => Base);
+           (Handler, Get_Value (Atts, Base_Index), Result => Base);
       end if;
 
       Handler.Contexts := new Context'
@@ -1664,7 +1682,7 @@ package body Schema.Schema_Readers is
    begin
       if Item_Type_Index /= -1 then
          Lookup_With_NS
-           (Handler.all, Get_Value (Atts, Item_Type_Index), Result => Items);
+           (Handler, Get_Value (Atts, Item_Type_Index), Result => Items);
       end if;
 
       Handler.Contexts := new Context'
@@ -1699,7 +1717,7 @@ package body Schema.Schema_Readers is
    -------------------
 
    function Create_Repeat
-     (Handler   : Schema_Reader;
+     (Handler   : access Schema_Reader'Class;
       Validator : access XML_Validator_Record'Class;
       Min_Occurs, Max_Occurs : Integer)
       return XML_Validator
@@ -1712,11 +1730,11 @@ package body Schema.Schema_Readers is
          Seq := Create_Sequence (Handler.Target_NS);
          Set_Debug_Name (Seq, "repeat_seq");
          if Validator.all in Sequence_Record'Class then
-            Add_Particle (Seq, Sequence (Validator),
+            Add_Particle (Seq, Handler, Sequence (Validator),
                           Min_Occurs => Min_Occurs,
                           Max_Occurs => Max_Occurs);
          else
-            Add_Particle (Seq, Choice (Validator),
+            Add_Particle (Seq, Handler, Choice (Validator),
                           Min_Occurs => Min_Occurs,
                           Max_Occurs => Max_Occurs);
          end if;
@@ -1746,7 +1764,7 @@ package body Schema.Schema_Readers is
 
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value
-           (Get_Value (Atts, Max_Occurs_Index));
+           (Handler, Get_Value (Atts, Max_Occurs_Index));
       end if;
 
       Handler.Contexts := new Context'
@@ -1760,25 +1778,26 @@ package body Schema.Schema_Readers is
          when Context_Type_Def =>
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             Handler.Contexts.Next.Type_Validator := Create_Repeat
-              (Handler.all, Handler.Contexts.C, Min_Occurs, Max_Occurs);
+              (Handler, Handler.Contexts.C, Min_Occurs, Max_Occurs);
          when Context_Sequence =>
-            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.C,
-                          Min_Occurs, Max_Occurs);
+            Add_Particle
+              (Handler.Contexts.Next.Seq, Handler, Handler.Contexts.C,
+               Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
          when Context_Choice =>
-            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.C,
-                          Min_Occurs, Max_Occurs);
+            Add_Particle (Handler.Contexts.Next.C, Handler,
+                          Handler.Contexts.C, Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
          when Context_Extension =>
             Output ("Validator := " & Ada_Name (Handler.Contexts));
             Handler.Contexts.Next.Extension := Create_Repeat
-              (Handler.all, Handler.Contexts.C, Min_Occurs, Max_Occurs);
+              (Handler, Handler.Contexts.C, Min_Occurs, Max_Occurs);
 
          when Context_Group =>
-            Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.C,
-                          Min_Occurs, Max_Occurs);
+            Add_Particle (Handler.Contexts.Next.Group, Handler,
+                          Handler.Contexts.C, Min_Occurs, Max_Occurs);
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
@@ -1823,7 +1842,7 @@ package body Schema.Schema_Readers is
 
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value
-           (Get_Value (Atts, Max_Occurs_Index));
+           (Handler, Get_Value (Atts, Max_Occurs_Index));
       end if;
 
       Handler.Contexts := new Context'
@@ -1837,30 +1856,30 @@ package body Schema.Schema_Readers is
          when Context_Type_Def =>
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             Handler.Contexts.Next.Type_Validator := Create_Repeat
-              (Handler.all, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
+              (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Sequence =>
-            Add_Particle (Handler.Contexts.Next.Seq, Handler.Contexts.Seq,
-                          Min_Occurs, Max_Occurs);
+            Add_Particle (Handler.Contexts.Next.Seq, Handler,
+                          Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts)
                     & "," & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
          when Context_Choice =>
-            Add_Particle (Handler.Contexts.Next.C, Handler.Contexts.Seq,
-                          Min_Occurs, Max_Occurs);
+            Add_Particle (Handler.Contexts.Next.C, Handler,
+                          Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts)
                     & "," & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
          when Context_Extension =>
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             Handler.Contexts.Next.Extension := Create_Repeat
-              (Handler.all, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
+              (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Restriction =>
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
             Handler.Contexts.Next.Restriction := Create_Repeat
-              (Handler.all, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
+              (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
          when Context_Group =>
-            Add_Particle (Handler.Contexts.Next.Group, Handler.Contexts.Seq,
-                          Min_Occurs, Max_Occurs);
+            Add_Particle (Handler.Contexts.Next.Group, Handler,
+                          Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
@@ -1926,9 +1945,10 @@ package body Schema.Schema_Readers is
          if Fixed_Index /= -1 then
             if Typ /= No_Type then
                Normalize_Whitespace  --  Depending on the type of the attribute
-                 (Typ   => Typ,
-                  Atts  => Atts,
-                  Index => Fixed_Index);
+                 (Typ    => Typ,
+                  Reader => Handler,
+                  Atts   => Atts,
+                  Index  => Fixed_Index);
             end if;
             return Get_Value (Atts, Fixed_Index);
          else
@@ -1942,12 +1962,14 @@ package body Schema.Schema_Readers is
       if Target_NS_Index /= -1 then
          if Name_Index = -1 then
             Validation_Error
-              ("name must be specified when targetNamespace is specified");
+              (Handler,
+               "name must be specified when targetNamespace is specified");
          end if;
 
          if Form_Index /= -1 then
             Validation_Error
-              ("Cannot specify ""form"" when targetNamespace is given");
+              (Handler,
+               "Cannot specify ""form"" when targetNamespace is given");
          end if;
 
          Raise_Exception
@@ -1960,7 +1982,8 @@ package body Schema.Schema_Readers is
 
          if Ref_Index /= -1 then
             Validation_Error
-              ("Attributes ""form"" and ""ref"" cannot be both specified");
+              (Handler,
+               "Attributes ""form"" and ""ref"" cannot be both specified");
          end if;
 
       else
@@ -1970,11 +1993,12 @@ package body Schema.Schema_Readers is
       if Type_Index /= -1 then
          if Ref_Index /= -1 then
             Validation_Error
-              ("Attributes ""type"" and ""ref"" cannot be both specified");
+              (Handler,
+               "Attributes ""type"" and ""ref"" cannot be both specified");
          end if;
 
          Lookup_With_NS
-           (Handler.all, Get_Value (Atts, Type_Index), Result => Typ);
+           (Handler, Get_Value (Atts, Type_Index), Result => Typ);
 
          if To_QName (Typ) = "IDREF"
            or else To_QName (Typ) = "IDREFS"
@@ -1987,7 +2011,8 @@ package body Schema.Schema_Readers is
 
       if Fixed_Index /= -1 and then Default_Index /= -1 then
          Validation_Error
-           ("Attributes ""fixed"" and ""default"" cannot be both specified");
+           (Handler,
+            "Attributes ""fixed"" and ""default"" cannot be both specified");
       end if;
 
       if Use_Index = -1 then
@@ -2009,14 +2034,16 @@ package body Schema.Schema_Readers is
            and then Use_Type /= Optional
          then
             Validation_Error
-              ("Use must be ""optional"" when a default value is specified");
+              (Handler,
+               "Use must be ""optional"" when a default value is specified");
          end if;
 
          if Fixed_Index /= -1
            and then Use_Type = Prohibited
          then
             Validation_Error
-              ("""prohibited"" is forbidden when a fixed value is specified");
+              (Handler,
+               """prohibited"" is forbidden when a fixed value is specified");
          end if;
       end if;
 
@@ -2032,6 +2059,7 @@ package body Schema.Schema_Readers is
             when Context_Schema | Context_Redefine =>
                Att := Create_Global_Attribute
                  (Local_Name     => Get_Value (Atts, Name_Index),
+                  Reader         => Handler,
                   NS             => Handler.Target_NS,
                   Attribute_Type => Typ,
                   Attribute_Use  => Use_Type,
@@ -2081,8 +2109,9 @@ package body Schema.Schema_Readers is
             G         : XML_Grammar_NS;
          begin
             Get_Grammar_For_Namespace
-              (Handler.all, QName (QName'First .. Separator - 1), G);
-            Att := Lookup_Attribute (G, QName (Separator + 1 .. QName'Last));
+              (Handler, QName (QName'First .. Separator - 1), G);
+            Att := Lookup_Attribute
+              (G, Handler, QName (Separator + 1 .. QName'Last));
 
             --  ??? We haven't normalized the value for fixed here
             Att := Create_Local_Attribute
@@ -2116,7 +2145,7 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Insert_Attribute
-     (Handler        : in out Schema_Reader;
+     (Handler        : access Schema_Reader;
       In_Context     : Context_Access;
       Attribute      : Attribute_Validator;
       Attribute_Name : Byte_Sequence;
@@ -2182,13 +2211,13 @@ package body Schema.Schema_Readers is
         and then Get_Type (Handler.Contexts.Attribute.all) = No_Type
       then
          Set_Type (Handler.Contexts.Attribute,
-                   Lookup (Handler.Schema_NS, "ur-Type"));
+                   Lookup (Handler.Schema_NS, Handler, "ur-Type"));
          Output ("Set_Type (" & Ada_Name (Handler.Contexts)
                  & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
       end if;
 
       Insert_Attribute
-        (Handler.all, Handler.Contexts.Next, Handler.Contexts.Attribute,
+        (Handler, Handler.Contexts.Next, Handler.Contexts.Attribute,
          Ada_Name (Handler.Contexts),
          Is_Local => not Handler.Contexts.Attribute_Is_Ref);
    end Finish_Attribute;
@@ -2249,7 +2278,7 @@ package body Schema.Schema_Readers is
          declare
             Blocks : Block_Status;
          begin
-            Compute_Blocks (Get_Value (Atts, Block_Index), Blocks);
+            Compute_Blocks (Get_Value (Atts, Block_Index), Handler, Blocks);
             Set_Block_Default (Handler.Target_NS, Blocks);
             Output ("Set_Block (Handler.Target_NS, "
                     & To_String (Blocks) & ")");
@@ -2307,7 +2336,7 @@ package body Schema.Schema_Readers is
 
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value
-           (Get_Value (Atts, Max_Occurs_Index));
+           (Handler, Get_Value (Atts, Max_Occurs_Index));
       end if;
 
       Process_Contents := Process_Contents_From_Atts (Atts);
@@ -2332,14 +2361,16 @@ package body Schema.Schema_Readers is
 
       case Handler.Contexts.Typ is
          when Context_Sequence =>
-            Add_Particle (Handler.Contexts.Seq, Any, Min_Occurs, Max_Occurs);
+            Add_Particle
+              (Handler.Contexts.Seq, Handler, Any, Min_Occurs, Max_Occurs);
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts)
                     & ", Validator," & Min_Occurs'Img & ","
                     & Max_Occurs'Img & ");");
 
          when Context_Choice =>
-            Add_Particle (Handler.Contexts.C, Any, Min_Occurs, Max_Occurs);
+            Add_Particle
+              (Handler.Contexts.C, Handler, Any, Min_Occurs, Max_Occurs);
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts)
                     & ", Validator," & Min_Occurs'Img & ","
@@ -2373,7 +2404,7 @@ package body Schema.Schema_Readers is
 
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value
-           (Get_Value (Atts, Max_Occurs_Index));
+           (Handler, Get_Value (Atts, Max_Occurs_Index));
       end if;
 
       Handler.Contexts := new Context'
@@ -2401,7 +2432,7 @@ package body Schema.Schema_Readers is
 
          when Context_Group =>
             Add_Particle
-              (Handler.Contexts.Next.Group,
+              (Handler.Contexts.Next.Group, Handler,
                Handler.Contexts.All_Validator);
             Output ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
@@ -2481,7 +2512,8 @@ package body Schema.Schema_Readers is
 
       if Handler.Contexts = null then
          if Local_Name /= "schema" then
-            Validation_Error ("Root element must be <schema>");
+            Validation_Error
+              (Handler'Access, "Root element must be <schema>");
          end if;
 
          Create_Schema (Handler'Access, Atts);
@@ -2512,8 +2544,9 @@ package body Schema.Schema_Readers is
             Val2 : constant Byte_Sequence :=
               Get_Non_Normalized_Value (Atts, "", "value");
          begin
-            Create_Restricted (Handler, Handler.Contexts);
-            Add_Facet (Handler.Contexts.Restricted, Local_Name, Val2);
+            Create_Restricted (Handler'Access, Handler.Contexts);
+            Add_Facet (Handler.Contexts.Restricted,
+                       Handler'Access, Local_Name, Val2);
             Output ("Add_Facet ("
                     & Ada_Name (Handler.Contexts) & ", """ & Local_Name
                     & """, unnormalized=""" & Val2 & """);");
@@ -2533,15 +2566,16 @@ package body Schema.Schema_Readers is
       then
          case Handler.Contexts.Typ is
             when Context_Restriction =>
-               Create_Restricted (Handler, Handler.Contexts);
+               Create_Restricted (Handler'Access, Handler.Contexts);
                Add_Facet
-                 (Handler.Contexts.Restricted, Local_Name,
+                 (Handler.Contexts.Restricted,
+                  Handler'Access, Local_Name,
                   Trim (Get_Value (Atts, URI => "", Local_Name => "value"),
                         Ada.Strings.Both));
 
             when Context_Extension =>
                Validation_Error
-                 ("Invalid restriction in an extension: """
+                 (Handler'Access, "Invalid restriction in an extension: """
                   & Local_Name & """");
 
             when others =>
@@ -2765,14 +2799,14 @@ package body Schema.Schema_Readers is
    -------------------------------
 
    procedure Get_Grammar_For_Namespace
-     (Handler : in out Schema_Reader'Class;
+     (Handler : access Schema_Reader'Class;
       Prefix  : Byte_Sequence;
       Grammar : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True)
    is
       NS : XML_NS;
    begin
-      Get_Namespace_From_Prefix (Handler, Prefix, NS);
+      Get_Namespace_From_Prefix (Handler.all, Prefix, NS);
 
       if NS = No_XML_NS then
          Output ("G := Handler.Target_NS;");
@@ -2785,12 +2819,13 @@ package body Schema.Schema_Readers is
                & Get_URI (NS) & """, G);");
          end if;
 
-         Get_NS (Get_Grammar (Handler), Get_URI (NS), Grammar,
+         Get_NS (Get_Grammar (Handler.all), Get_URI (NS), Grammar,
                  Create_If_Needed
                  or else Get_URI (NS) = XML_Schema_URI);
          if Grammar = null then
             Validation_Error
-              ("No location declared for namespace " & Get_URI (NS));
+              (Handler,
+               "No location declared for namespace " & Get_URI (NS));
          end if;
       end if;
    end Get_Grammar_For_Namespace;

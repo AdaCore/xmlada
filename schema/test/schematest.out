@@ -44766,7 +44766,7 @@ Grp: ElemDecl / disallowedsubst00101m
   OK disallowedSubst00101m
   OK disallowedSubst00101m1_p
   OK disallowedSubst00101m1_n
-    disallowedSubst00101m1_n.xml:17:14: Unexpected element "Member1" (substitutions are blocked)
+    disallowedSubst00101m1_n.xml:17:14: Unexpected element "{ElemDecl/disallowedSubst}Member1" (substitutions are blocked)
 
 Grp: ElemDecl / disallowedsubst00102m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44777,7 +44777,7 @@ Grp: ElemDecl / disallowedsubst00102m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00102m2
   OK Negative
-    disallowedSubst00102m2_n.xml:15:14: Unexpected element "Member1" (substitutions are blocked)
+    disallowedSubst00102m2_n.xml:15:14: Unexpected element "{ElemDecl/disallowedSubst}Member1" (substitutions are blocked)
 
 Grp: ElemDecl / disallowedsubst00105m
   100.0% tests= 3 (xsd= 1 xml= 2) OK= 3 FAILED= 0
@@ -44866,7 +44866,7 @@ Grp: ElemDecl / disallowedsubst00301m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00301m2
   OK Negative
-    disallowedSubst00301m2_n.xml:15:13: Unexpected element "Member1" (substitutions are blocked)
+    disallowedSubst00301m2_n.xml:15:13: Unexpected element "{ElemDecl/disallowedSubst}Member1" (substitutions are blocked)
 
 Grp: ElemDecl / disallowedsubst00401m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75439,19 +75439,19 @@ Grp: MS-Particles2006-07-15 / particlesDc004
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc004
   OK particlesDc004.i
-    particlesDc004.xml:3:12: Unexpected element "elem3" (substitutions are blocked)
+    particlesDc004.xml:3:12: Unexpected element "{http://xsdtesting}elem3" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesDc005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc005
   OK particlesDc005.i
-    particlesDc005.xml:3:12: Unexpected element "elem2" (substitutions are blocked)
+    particlesDc005.xml:3:12: Unexpected element "{http://xsdtesting}elem2" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesDc006
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc006
   OK particlesDc006.i
-    particlesDc006.xml:3:12: Unexpected element "elem3" (substitutions are blocked)
+    particlesDc006.xml:3:12: Unexpected element "{http://xsdtesting}elem3" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesDc007
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -75462,13 +75462,13 @@ Grp: MS-Particles2006-07-15 / particlesDc008
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc008
   OK particlesDc008.i
-    particlesDc008.xml:3:12: Unexpected element "elem2" (substitutions are blocked)
+    particlesDc008.xml:3:12: Unexpected element "{http://xsdtesting}elem2" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesDc009
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK particlesDc009
   OK particlesDc009.i
-    particlesDc009.xml:3:11: Unexpected element "elem3" (substitutions are blocked)
+    particlesDc009.xml:3:11: Unexpected element "{http://xsdtesting}elem3" (substitutions are blocked)
 
 Grp: MS-Particles2006-07-15 / particlesEa001
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0

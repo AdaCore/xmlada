@@ -32,6 +32,7 @@
 --  context of XML
 
 with Ada.Finalization;
+with Schema.Validators;  use Schema.Validators;
 with Unicode.CES;
 
 package Schema.Decimal is
@@ -44,12 +45,14 @@ package Schema.Decimal is
    --  Return a displayable version of Number
 
    function Value
-     (Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number;
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch     : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number;
    --  Convert Ch to a number.
    --  Raises a Validation_Error if this is not a valid number
 
    function Value_No_Exponent
-     (Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number;
+     (Reader : access Abstract_Validation_Reader'Class;
+      Ch : Unicode.CES.Byte_Sequence) return Arbitrary_Precision_Number;
    --  Same as value, but does not allow a "E" part
 
    function "<"  (Num1, Num2 : Arbitrary_Precision_Number) return Boolean;
@@ -60,7 +63,8 @@ package Schema.Decimal is
    --  Compare two numbers
 
    procedure Check_Digits
-     (Num                           : Arbitrary_Precision_Number;
+     (Reader : access Abstract_Validation_Reader'Class;
+      Num                           : Arbitrary_Precision_Number;
       Fraction_Digits, Total_Digits : Integer := -1);
    --  Check whether the two facets Fraction_Digits and Total_Digits match.
    --  If any of the two values is negative, no check is done for it.

@@ -4697,7 +4697,7 @@ package body Sax.Readers is
 
          if Parser.Hooks.Start_Element /= null then
             Parser.Hooks.Start_Element
-              (Parser, NS.URI.all,
+              (Parser'Unchecked_Access, NS.URI.all,
                Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last),
                Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
                Parser.Current_Node, Attributes);
@@ -4953,7 +4953,8 @@ package body Sax.Readers is
 
          if Parser.Hooks.End_Element /= null then
             Parser.Hooks.End_Element
-              (Parser, NS.URI.all, Parser.Current_Node.Name.all,
+              (Parser'Unchecked_Access, NS.URI.all,
+               Parser.Current_Node.Name.all,
                Qname_From_Name (Parser, NS_Id, Name_Id),
                Elem  => Parser.Current_Node);
          end if;
@@ -5449,7 +5450,8 @@ package body Sax.Readers is
 
                if Parser.Hooks.Characters /= null then
                   Parser.Hooks.Characters
-                    (Parser, Parser.Buffer (Id.First .. Id.Last));
+                    (Parser'Unchecked_Access,
+                     Parser.Buffer (Id.First .. Id.Last));
                end if;
 
                Characters (Parser, Parser.Buffer (Id.First .. Id.Last));
@@ -5464,7 +5466,8 @@ package body Sax.Readers is
 
                if Parser.Hooks.Characters /= null then
                   Parser.Hooks.Characters
-                    (Parser, Parser.Buffer (Id.First .. Id.Last));
+                    (Parser'Unchecked_Access,
+                     Parser.Buffer (Id.First .. Id.Last));
                end if;
 
                Characters (Parser, Parser.Buffer (Id.First .. Id.Last));
@@ -5476,7 +5479,8 @@ package body Sax.Readers is
 
                if Parser.Hooks.Whitespace /= null then
                   Parser.Hooks.Whitespace
-                    (Parser, Parser.Buffer (Id.First .. Id.Last));
+                    (Parser'Unchecked_Access,
+                     Parser.Buffer (Id.First .. Id.Last));
                end if;
 
                Ignorable_Whitespace

@@ -35,7 +35,8 @@ with Schema.Validators;
 
 package Schema.Readers is
 
-   type Validating_Reader is new Sax.Readers.Reader with private;
+   type Validating_Reader is new Schema.Validators.Abstract_Validation_Reader
+      with private;
    type Validating_Reader_Access is access all Validating_Reader'Class;
    --  To get full validation of an XML document, you must derive from this
    --  type. You must also enable the Validation_Feature feature, through a
@@ -87,7 +88,7 @@ package Schema.Readers is
    --  This is used for instance to find the location of a schema file,...
 
    procedure Parse_Grammar
-     (Handler  : in out Validating_Reader;
+     (Handler  : access Validating_Reader;
       URI      : Unicode.CES.Byte_Sequence;
       Xsd_File : Unicode.CES.Byte_Sequence;
       Do_Global_Check : Boolean);
@@ -102,11 +103,6 @@ package Schema.Readers is
    --  context.
    --  The caller must not modify the return value.
    --  Returns No_XML_NS if the prefix is not defined
-
-   function Get_Context
-     (Handler : access Validating_Reader)
-      return Schema.Validators.Validation_Context_Access;
-   --  Return the current validation context.
 
 private
    type Validator_List_Record;
@@ -135,10 +131,10 @@ private
       Next       : Validator_List;
    end record;
 
-   type Validating_Reader is new Sax.Readers.Reader with record
+   type Validating_Reader is new Schema.Validators.Abstract_Validation_Reader
+   with record
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator;
-      Context    : aliased Schema.Validators.Validation_Context;
    end record;
 
    procedure Parse

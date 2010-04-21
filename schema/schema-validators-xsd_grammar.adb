@@ -33,7 +33,9 @@ with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
 
 package body Schema.Validators.XSD_Grammar is
 
-   procedure Add_Schema_For_Schema (Grammar : in out XML_Grammar) is
+   procedure Add_Schema_For_Schema
+     (R : access Schema.Validators.Abstract_Validation_Reader'Class)
+   is
       G, XML_G, XML_IG : XML_Grammar_NS;
       Tmp2          : XML_Validator;
       Typ, Typ2     : XML_Validator;
@@ -44,361 +46,377 @@ package body Schema.Validators.XSD_Grammar is
       Gr            : XML_Group;
       Union, Union2 : XML_Validator;
       Attr          : XML_Attribute_Group;
-      Context       : Validation_Context;
    begin
-      Context := (Id_Table => null,
-                  Grammar  => Grammar,
-                  Context  => null,
-                  Parser   => null);
+      Get_NS (R.Grammar, XML_Schema_URI,   Result => G);
+      Get_NS (R.Grammar, XML_URI,          Result => XML_G);
+      Get_NS (R.Grammar, XML_Instance_URI, Result => XML_IG);
 
-      Get_NS (Grammar, XML_Schema_URI,   Result => G);
-      Get_NS (Grammar, XML_URI,          Result => XML_G);
-      Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
-
-      Create_UR_Type_Elements (G, Context.Grammar);
+      Create_UR_Type_Elements (G, R.Grammar);
 
       --  As per 3.4.7, ur-Type (ie anyType) uses a Lax processing for its
       --  children node (ie uses the grammar definition if one is found)
       Create_Global_Type
-        (G, "ur-Type",
+        (G, R, "ur-Type",
          Get_Validator
-           (Get_Type (Get_UR_Type_Element (Context.Grammar, Process_Lax))));
+           (Get_Type (Get_UR_Type_Element (R.Grammar, Process_Lax))));
 
       Create_Global_Type
-        (G, "anyType",
+        (G, R, "anyType",
          Get_Validator
-           (Get_Type (Get_UR_Type_Element (Context.Grammar, Process_Lax))));
+           (Get_Type (Get_UR_Type_Element (R.Grammar, Process_Lax))));
 
       Tmp2 := new Any_Simple_XML_Validator_Record;
-      Create_Global_Type (G, "anySimpleType", Tmp2);
+      Create_Global_Type (G, R, "anySimpleType", Tmp2);
 
-      Schema.Validators.Simple_Types.Register_Predefined_Types (G, XML_G);
+      Schema.Validators.Simple_Types.Register_Predefined_Types (G, XML_G, R);
 
       --  The "formChoice" type of schema.xsd
-      Typ := Restriction_Of (G, Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ, "enumeration", "qualified");
-      Add_Facet (Typ, "enumeration", "unqualified");
-      Create_Global_Type (G, "formChoice", Typ);
+      Typ := Restriction_Of (G, R, Lookup (G, R, "NMTOKEN"));
+      Add_Facet (Typ, R, "enumeration", "qualified");
+      Add_Facet (Typ, R, "enumeration", "unqualified");
+      Create_Global_Type (G, R, "formChoice", Typ);
 
       --  The "derivationControl" type
-      Typ := Restriction_Of (G, Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ, "enumeration", "substitution");
-      Add_Facet (Typ, "enumeration", "extension");
-      Add_Facet (Typ, "enumeration", "restriction");
-      Create_Global_Type (G, "derivationControl", Typ);
+      Typ := Restriction_Of (G, R, Lookup (G, R, "NMTOKEN"));
+      Add_Facet (Typ, R, "enumeration", "substitution");
+      Add_Facet (Typ, R, "enumeration", "extension");
+      Add_Facet (Typ, R, "enumeration", "restriction");
+      Create_Global_Type (G, R, "derivationControl", Typ);
 
       --  The "blockSet" type
-      Typ := Restriction_Of (G, Lookup (G, "token"));
-      Add_Facet (Typ, "enumeration", "#all");
+      Typ := Restriction_Of (G, R, Lookup (G, R, "token"));
+      Add_Facet (Typ, R, "enumeration", "#all");
       All_Validator := Create_Local_Type (G, Typ);
 
       Union := Create_Union (G);
-      Add_Union (Union, All_Validator);
-      Add_Union (Union, List_Of (G, Lookup (G, "derivationControl")));
-      Create_Global_Type (G, "blockSet", Union);
+      Add_Union (Union, R, All_Validator);
+      Add_Union (Union, R, List_Of (G, Lookup (G, R, "derivationControl")));
+      Create_Global_Type (G, R, "blockSet", Union);
 
       --  The "reducedDerivationControl" type
-      Typ := Restriction_Of (G, Lookup (G, "derivationControl"));
-      Add_Facet (Typ, "enumeration", "extension");
-      Add_Facet (Typ, "enumeration", "restriction");
-      Create_Global_Type (G, "reducedDerivationControl", Typ);
+      Typ := Restriction_Of (G, R, Lookup (G, R, "derivationControl"));
+      Add_Facet (Typ, R, "enumeration", "extension");
+      Add_Facet (Typ, R, "enumeration", "restriction");
+      Create_Global_Type (G, R, "reducedDerivationControl", Typ);
 
       --  The "derivationSet" type
       Union := Create_Union (G);
-      Add_Union (Union, All_Validator);
-      Add_Union (Union, List_Of (G, Lookup (G, "reducedDerivationControl")));
-      Create_Global_Type (G, "derivationSet", Union);
+      Add_Union (Union, R, All_Validator);
+      Add_Union
+        (Union, R, List_Of (G, Lookup (G, R, "reducedDerivationControl")));
+      Create_Global_Type (G, R, "derivationSet", Union);
 
       --  The "openAttrs" type
-      Typ := Restriction_Of (G, Lookup (G, "anyType"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "anyType"));
       Add_Attribute
         (Typ, Create_Any_Attribute (G, Process_Lax, Kind => Namespace_Other));
-      Create_Global_Type (G, "openAttrs", Typ);
+      Create_Global_Type (G, R, "openAttrs", Typ);
 
       --  The "annotated" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "annotated_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Extension_Of (G, Lookup (G, "openAttrs"), XML_Validator (Seq1));
-      Add_Attribute (Typ, Create_Local_Attribute ("id", G, Lookup (G, "ID")));
-      Create_Global_Type (G, "annotated", Typ);
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Typ := Extension_Of
+        (G, Lookup (G, R, "openAttrs"), XML_Validator (Seq1));
+      Add_Attribute
+        (Typ, Create_Local_Attribute ("id", G, Lookup (G, R, "ID")));
+      Create_Global_Type (G, R, "annotated", Typ);
 
       --  The "schemaTop" element  ??? Missing abstract
-      Set_Type (Create_Global_Element (G, "schemaTop", Qualified),
-                Lookup (G, "annotated"), Context);
+      Set_Type (Create_Global_Element (G, R, "schemaTop", Qualified), R,
+                Lookup (G, R, "annotated"));
 
       --  The "include" element
-      Typ := Restriction_Of (G, Lookup (G, "annotated"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "annotated"));
       Add_Attribute
         (Typ, Create_Local_Attribute ("schemaLocation", G,
-                                      Lookup (G, "uriReference"),
+                                      Lookup (G, R, "uriReference"),
                                       Attribute_Use => Required));
-      Set_Type (Create_Global_Element (G, "include", Qualified),
-                Create_Local_Type (G, Typ), Context);
+      Set_Type (Create_Global_Element (G, R, "include", Qualified), R,
+                Create_Local_Type (G, Typ));
 
       --  The "import" element
-      Typ := Restriction_Of (G, Lookup (G, "annotated"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "annotated"));
       Add_Attribute
         (Typ, Create_Local_Attribute ("namespace", G,
-                                      Lookup (G, "uriReference")));
+                                      Lookup (G, R, "uriReference")));
       Add_Attribute
         (Typ, Create_Local_Attribute ("schemaLocation", G,
-                                Lookup (G, "uriReference")));
-      Set_Type (Create_Global_Element (G, "import", Qualified),
-                Create_Local_Type (G, Typ), Context);
+                                Lookup (G, R, "uriReference")));
+      Set_Type (Create_Global_Element (G, R, "import", Qualified), R,
+                Create_Local_Type (G, Typ));
 
       --  The "schema" element
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "schema_choice1");
-      Add_Particle (Choice1, Lookup_Element (G, "include"));
-      Add_Particle (Choice1, Lookup_Element (G, "import"));
-      Add_Particle (Choice1, Lookup_Element (G, "redefine"));
-      Add_Particle (Choice1, Lookup_Element (G, "annotation"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "include"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "import"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "redefine"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "annotation"));
       Seq1    := Create_Sequence (G);
       Set_Debug_Name (Seq1, "schema_seq1");
-      Add_Particle (Seq1, Lookup_Element (G, "schemaTop"));
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"),
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "schemaTop"));
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "annotation"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Seq2    := Create_Sequence (G);
       Set_Debug_Name (Seq2, "schema_seq2");
-      Add_Particle (Seq2, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle (Seq2, Seq1, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Add_Particle
+        (Seq2, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Add_Particle
+        (Seq2, R, Seq1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Attribute
         (Seq2, Create_Local_Attribute
-           ("targetNamespace", G, Lookup (G, "uriReference")));
+           ("targetNamespace", G, Lookup (G, R, "uriReference")));
       Add_Attribute
-        (Seq2, Create_Local_Attribute ("version", G, Lookup (G, "token")));
+        (Seq2,
+         Create_Local_Attribute ("version", G, Lookup (G, R, "token")));
       Add_Attribute
         (Seq2, Create_Local_Attribute
-           ("finalDefault", G, Lookup (G, "derivationSet"),
+           ("finalDefault", G, Lookup (G, R, "derivationSet"),
             Attribute_Use     => Default,
             Value             => ""));
       Add_Attribute
         (Seq2, Create_Local_Attribute
-           ("blockDefault", G, Lookup (G, "blockSet"),
+           ("blockDefault", G, Lookup (G, R, "blockSet"),
             Attribute_Use     => Default,
             Value             => ""));
       Add_Attribute
         (Seq2, Create_Local_Attribute
-           ("attributeFormDefault", G, Lookup (G, "formChoice"),
+           ("attributeFormDefault", G, Lookup (G, R, "formChoice"),
             Attribute_Use  => Default,
             Value          => "unqualified"));
       Add_Attribute
         (Seq2, Create_Local_Attribute
-           ("elementFormDefault", G, Lookup (G, "formChoice"),
+           ("elementFormDefault", G, Lookup (G, R, "formChoice"),
             Attribute_Use     => Default,
             Value             => "unqualified"));
-      Add_Attribute (Seq2, Create_Local_Attribute ("id", G, Lookup (G, "ID")));
+      Add_Attribute
+        (Seq2, Create_Local_Attribute ("id", G, Lookup (G, R, "ID")));
       Add_Attribute (Seq2, Lookup_Attribute
-         (Grammar => XML_G, Local_Name => "lang"));
-      Set_Type (Create_Global_Element (G, "schema", Qualified),
-                Create_Local_Type (G, Seq2), Context);
+         (XML_G, R, Local_Name => "lang"));
+      Set_Type (Create_Global_Element (G, R, "schema", Qualified), R,
+                Create_Local_Type (G, Seq2));
 
       --  The "localComplexType" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "localComplexType_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "complexTypeModel"));
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "complexTypeModel"));
       Typ := Restriction_Of
-        (G, Lookup (G, "complexType"), XML_Validator (Seq1));
+        (G, R, Lookup (G, R, "complexType"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute ("name", G, Attribute_Use => Prohibited));
-      Create_Global_Type (G, "localComplexType", Typ);
+      Create_Global_Type (G, R, "localComplexType", Typ);
 
       --  The "keybase" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "keybase_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "selector"));
-      Add_Particle (Seq1, Lookup_Element (G, "field"),
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "selector"));
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "field"),
                     Min_Occurs => 1, Max_Occurs => Unbounded);
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName"),
+        (Typ, Create_Local_Attribute ("name", G, Lookup (G, R, "NCName"),
                                       Attribute_Use => Required));
-      Create_Global_Type (G, "keybase", Typ);
+      Create_Global_Type (G, R, "keybase", Typ);
 
       --  The "identityConstraint" element  ??? abstract=true
-      Set_Type (Create_Global_Element (G, "identityConstraint", Qualified),
-                Lookup (G, "keybase"), Context);
+      Set_Type (Create_Global_Element (G, R, "identityConstraint", Qualified),
+                R, Lookup (G, R, "keybase"));
 
       --  The "unique" element
-      Elem := Create_Global_Element (G, "unique", Qualified);
+      Elem := Create_Global_Element (G, R, "unique", Qualified);
       Set_Type
-        (Elem, Get_Type (Lookup_Element (G, "identityConstraint")), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "identityConstraint"));
+        (Elem, R, Get_Type (Lookup_Element (G, R, "identityConstraint")));
+      Set_Substitution_Group
+        (Elem, R, Lookup_Element (G, R, "identityConstraint"));
 
       --  The "keyref" element
-      Typ := Extension_Of (G, Lookup (G, "keybase"));
+      Typ := Extension_Of (G, Lookup (G, R, "keybase"));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("refer", G, Lookup (G, "QName"),
+                       ("refer", G, Lookup (G, R, "QName"),
                         Attribute_Use => Required));
-      Elem := Create_Global_Element (G, "keyref", Qualified);
-      Set_Type (Elem, Create_Local_Type (G, Typ), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "identityConstraint"));
+      Elem := Create_Global_Element (G, R, "keyref", Qualified);
+      Set_Type (Elem, R, Create_Local_Type (G, Typ));
+      Set_Substitution_Group
+        (Elem, R, Lookup_Element (G, R, "identityConstraint"));
 
       --  The "key" element
-      Elem := Create_Global_Element (G, "key", Qualified);
+      Elem := Create_Global_Element (G, R, "key", Qualified);
       Set_Type (Elem,
-                Get_Type (Lookup_Element (G, "identityConstraint")), Context);
+                R, Get_Type (Lookup_Element (G, R, "identityConstraint")));
       Set_Substitution_Group
-        (Elem, Lookup_Element (G, "identityConstraint"));
+        (Elem, R, Lookup_Element (G, R, "identityConstraint"));
 
       --  The "XPathExprApprox" type  Incorrect pattern
-      Typ := Restriction_Of (G, Lookup (G, "string"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "string"));
 --    Add_Facet (Typ, "pattern", "(/|//|\.|\.\.|:|::|\||(\w-[.:/|])+)+");
-      Create_Global_Type (G, "XPathExprApprox", Typ);
+      Create_Global_Type (G, R, "XPathExprApprox", Typ);
 
       --  The "XPathSpec" type"
-      Typ := Restriction_Of (G, Lookup (G, "annotated"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "annotated"));
       Add_Attribute (Typ, Create_Local_Attribute ("xpath", G,
-                                            Lookup (G, "XPathExprApprox")));
-      Create_Global_Type (G, "XPathSpec", Typ);
+                                            Lookup (G, R, "XPathExprApprox")));
+      Create_Global_Type (G, R, "XPathSpec", Typ);
 
       --  The "selector" element
-      Set_Type (Create_Global_Element (G, "selector", Qualified),
-                Lookup (G, "XPathSpec"), Context);
+      Set_Type (Create_Global_Element (G, R, "selector", Qualified), R,
+                Lookup (G, R, "XPathSpec"));
 
       --  The "field" element
-      Set_Type (Create_Global_Element (G, "field", Qualified),
-                Lookup (G, "XPathSpec"), Context);
+      Set_Type (Create_Global_Element (G, R, "field", Qualified), R,
+                Lookup (G, R, "XPathSpec"));
 
       --  The "allNNI" type"
       Union := Create_Union (G);
-      Add_Union (Union, Lookup (G, "nonNegativeInteger"));
-      Typ := Restriction_Of (G, Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ, "enumeration", "unbounded");
-      Add_Union (Union, Create_Local_Type (G, Typ));
-      Create_Global_Type (G, "allNNI", Union);
+      Add_Union (Union, R, Lookup (G, R, "nonNegativeInteger"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "NMTOKEN"));
+      Add_Facet (Typ, R, "enumeration", "unbounded");
+      Add_Union (Union, R, Create_Local_Type (G, Typ));
+      Create_Global_Type (G, R, "allNNI", Union);
 
       --  The "occurs" AttributeGroup
-      Attr := Create_Global_Attribute_Group (G, "occurs");
-      Add_Attribute (Attr,
-                     Create_Local_Attribute ("minOccurs", G,
-                                             Lookup (G, "nonNegativeInteger"),
-                                             Attribute_Use => Default,
-                                             Value => "1"));
-      Add_Attribute (Attr,
-                     Create_Local_Attribute ("maxOccurs", G,
-                                             Lookup (G, "allNNI"),
-                                             Attribute_Use => Default,
-                                             Value => "1"));
+      Attr := Create_Global_Attribute_Group (G, R, "occurs");
+      Add_Attribute
+        (Attr,
+         Create_Local_Attribute ("minOccurs", G,
+           Lookup (G, R, "nonNegativeInteger"),
+           Attribute_Use => Default, Value => "1"));
+      Add_Attribute
+        (Attr,
+         Create_Local_Attribute ("maxOccurs", G,
+           Lookup (G, R, "allNNI"),
+           Attribute_Use => Default, Value => "1"));
 
       --  From AttributeGroup "defRef"
-      Attr := Create_Global_Attribute_Group (G, "defRef");
+      Attr := Create_Global_Attribute_Group (G, R, "defRef");
       Add_Attribute (Attr, Create_Local_Attribute
-                       ("name", G, Lookup (G, "NCName")));
+                       ("name", G, Lookup (G, R, "NCName")));
       Add_Attribute (Attr, Create_Local_Attribute
-                       ("ref", G, Lookup (G, "QName")));
+                       ("ref", G, Lookup (G, R, "QName")));
 
       --  The "element" type   ??? abstract=true
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "element_seq");
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "element_choice");
-      Add_Particle (Choice1, Create_Local_Element
-                      ("simpleType", G, Lookup (G, "localSimpleType"),
+      Add_Particle (Choice1, R, Create_Local_Element
+                      ("simpleType", G, Lookup (G, R, "localSimpleType"),
                        Qualified));
-      Add_Particle (Choice1, Create_Local_Element
-                      ("complexType", G, Lookup (G, "localComplexType"),
+      Add_Particle (Choice1, R, Create_Local_Element
+                      ("complexType", G, Lookup (G, R, "localComplexType"),
                        Qualified));
-      Add_Particle (Seq1, Choice1, Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
+      Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "element_ext");
-      Create_Global_Type (G, "element", Typ);
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
-      Add_Attribute (Typ,
-                     Create_Local_Attribute ("type", G, Lookup (G, "QName")));
+      Create_Global_Type (G, R, "element", Typ);
+      Add_Attribute_Group (Typ, R, Lookup_Attribute_Group (G, R, "occurs"));
+      Add_Attribute_Group (Typ, R, Lookup_Attribute_Group (G, R, "defRef"));
+      Add_Attribute
+        (Typ,
+         Create_Local_Attribute ("type", G, Lookup (G, R, "QName")));
       Add_Attribute
         (Typ, Create_Local_Attribute
-           ("substitutionGroup", G, Lookup (G, "QName")));
+           ("substitutionGroup", G, Lookup (G, R, "QName")));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("default", G, Lookup (G, "string")));
+        (Typ, Create_Local_Attribute ("default", G, Lookup (G, R, "string")));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("fixed", G, Lookup (G, "string")));
+                       ("fixed", G, Lookup (G, R, "string")));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("nillable", G, Lookup (G, "boolean"),
+        (Typ, Create_Local_Attribute ("nillable", G, Lookup (G, R, "boolean"),
                                 Attribute_Use => Default, Value => "false"));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("abstract", G, Lookup (G, "boolean"),
+        (Typ, Create_Local_Attribute ("abstract", G, Lookup (G, R, "boolean"),
                                 Attribute_Use => Default, Value => "false"));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("final", G, Lookup (G, "derivationSet"),
-                                Attribute_Use => Default, Value => ""));
+        (Typ,
+         Create_Local_Attribute ("final", G, Lookup (G, R, "derivationSet"),
+           Attribute_Use => Default, Value => ""));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("block", G, Lookup (G, "blockSet"),
-                                Attribute_Use => Default, Value => ""));
+        (Typ,
+         Create_Local_Attribute ("block", G, Lookup (G, R, "blockSet"),
+           Attribute_Use => Default, Value => ""));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("form", G, Lookup (G, "formChoice")));
+        (Typ,
+         Create_Local_Attribute ("form", G, Lookup (G, R, "formChoice")));
 
       --  The "appinfo" element"
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "appinfo_seq");
       Seq2 := Create_Sequence (G);
-      Add_Particle (Seq1, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Add_Particle (Seq1, R, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Seq2, "appinfo_seq2");
       Add_Particle
-        (Seq2,
+        (Seq2, R,
          Create_Any (Process_Contents => Process_Lax,
                      Namespace        => "##any",
                      Target_NS        => XML_G));
       Add_Attribute
         (Seq1, Create_Local_Attribute
-           ("source", G, Lookup (G, "uriReference")));
+           ("source", G, Lookup (G, R, "uriReference")));
       Set_Mixed_Content (Seq1, True);
-      Set_Type (Create_Global_Element (G, "appinfo", Qualified),
-                Create_Local_Type (G, Seq1), Context);
+      Set_Type (Create_Global_Element (G, R, "appinfo", Qualified), R,
+                Create_Local_Type (G, Seq1));
 
       --  The "documentation" element
       Seq1 := Create_Sequence (G);
       Seq2 := Create_Sequence (G);
-      Add_Particle (Seq1, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Add_Particle (Seq1, R, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Seq1, "documentation_seq");
       Set_Debug_Name (Seq2, "documentation_seq2");
       Add_Particle
-        (Seq2,
+        (Seq2, R,
          Create_Any (Process_Contents => Process_Lax,
                      Namespace        => "##any",
                      Target_NS        => XML_G));
       Add_Attribute
         (Seq1, Create_Local_Attribute
-           ("source", G, Lookup (G, "uriReference")));
-      Add_Attribute (Seq1, Lookup_Attribute (XML_G, "lang"));
+           ("source", G, Lookup (G, R, "uriReference")));
+      Add_Attribute (Seq1, Lookup_Attribute (XML_G, R, "lang"));
       Set_Mixed_Content (Seq1, True);
-      Set_Type (Create_Global_Element (G, "documentation", Qualified),
-                Create_Local_Type (G, Seq1), Context);
+      Set_Type (Create_Global_Element (G, R, "documentation", Qualified), R,
+                Create_Local_Type (G, Seq1));
 
       --  The "annotation" element  ??? invalid
       Seq1 := Create_Sequence (G);
       Choice1 := Create_Choice (G);
-      Add_Particle (Seq1, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Add_Particle
+        (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Seq1, "annotation_seq");
       Set_Debug_Name (Choice1, "annotation_choice");
-      Add_Particle (Choice1, Lookup_Element (G, "appinfo"));
-      Add_Particle (Choice1, Lookup_Element (G, "documentation"));
-      Typ := Extension_Of (G, Lookup (G, "openAttrs"), XML_Validator (Seq1));
-      Add_Attribute (Typ, Create_Local_Attribute ("id", G, Lookup (G, "ID")));
-      Set_Type (Create_Global_Element (G, "annotation", Qualified),
-                Create_Local_Type (G, Typ), Context);
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "appinfo"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "documentation"));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "openAttrs"), XML_Validator (Seq1));
+      Add_Attribute
+        (Typ, Create_Local_Attribute ("id", G, Lookup (G, R, "ID")));
+      Set_Type (Create_Global_Element (G, R, "annotation", Qualified), R,
+                Create_Local_Type (G, Typ));
 
       --  The "topLevelElement" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "topLevelElement_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "topLevelElement_choice");
-      Add_Particle (Seq1, Choice1, Min_Occurs => 0);
-      Add_Particle (Choice1, Create_Local_Element
-                      ("simpleType", G, Lookup (G, "localSimpleType"),
+      Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
+      Add_Particle (Choice1, R, Create_Local_Element
+                      ("simpleType", G, Lookup (G, R, "localSimpleType"),
                        Qualified));
-      Add_Particle (Choice1, Create_Local_Element
-                      ("complexType", G, Lookup (G, "localComplexType"),
+      Add_Particle (Choice1, R, Create_Local_Element
+                      ("complexType", G, Lookup (G, R, "localComplexType"),
                        Qualified));
-      Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Restriction_Of (G, Lookup (G, "element"), XML_Validator (Seq1));
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "element"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "topLevelElement restriction");
       Add_Attribute
         (Typ, Create_Local_Attribute ("ref", G, Attribute_Use => Prohibited));
@@ -411,220 +429,232 @@ package body Schema.Validators.XSD_Grammar is
         (Typ, Create_Local_Attribute
            ("maxOccurs", G, Attribute_Use => Prohibited));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName"),
+        (Typ, Create_Local_Attribute ("name", G, Lookup (G, R, "NCName"),
                                 Attribute_Use => Required));
-      Create_Global_Type (G, "topLevelElement", Typ);
+      Create_Global_Type (G, R, "topLevelElement", Typ);
 
       --  The "element" element
-      Elem := Create_Global_Element (G, "element", Qualified);
-      Set_Type (Elem, Lookup (G, "topLevelElement"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
+      Elem := Create_Global_Element (G, R, "element", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "topLevelElement"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "schemaTop"));
 
       --  The "attribute" element
-      Elem := Create_Global_Element (G, "attribute", Qualified);
-      Set_Type (Elem, Lookup (G, "topLevelAttribute"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
+      Elem := Create_Global_Element (G, R, "attribute", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "topLevelAttribute"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "schemaTop"));
 
       --  The "redefinable" element  --  abstract=true
-      Elem := Create_Global_Element (G, "redefinable", Qualified);
-      Set_Type (Elem, Get_Type (Lookup_Element (G, "schemaTop")), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
+      Elem := Create_Global_Element (G, R, "redefinable", Qualified);
+      Set_Type
+        (Elem, R, Get_Type (Lookup_Element (G, R, "schemaTop")));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "schemaTop"));
 
       --  The "all" element
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "all_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
 
       Seq2 := Create_Sequence (G);
       Set_Debug_Name (Seq2, "all_seq2");
-      Add_Particle (Seq2, Lookup_Element (G, "annotation"), Min_Occurs => 0);
+      Add_Particle
+        (Seq2, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "all_choice");
-      Add_Particle (Seq2, Choice1, Min_Occurs => 0);
-      Add_Particle (Choice1, Create_Local_Element
-                      ("simpleType", G, Lookup (G, "localSimpleType"),
+      Add_Particle (Seq2, R, Choice1, Min_Occurs => 0);
+      Add_Particle (Choice1, R, Create_Local_Element
+                      ("simpleType", G, Lookup (G, R, "localSimpleType"),
                        Qualified));
-      Add_Particle (Choice1, Create_Local_Element
-                      ("complexType", G, Lookup (G, "localComplexType"),
+      Add_Particle (Choice1, R, Create_Local_Element
+                      ("complexType", G, Lookup (G, R, "localComplexType"),
                        Qualified));
-      Add_Particle (Seq2, Lookup_Element (G, "identityConstraint"),
+      Add_Particle (Seq2, R, Lookup_Element (G, R, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ2 := Restriction_Of
-        (G, Lookup (G, "localElement"), XML_Validator (Seq2));
+        (G, R, Lookup (G, R, "localElement"), XML_Validator (Seq2));
 
-      Typ := Restriction_Of (G, Lookup (G, "nonNegativeInteger"));
-      Add_Facet (Typ, "enumeration", "0");
-      Add_Facet (Typ, "enumeration", "1");
+      Typ := Restriction_Of (G, R, Lookup (G, R, "nonNegativeInteger"));
+      Add_Facet (Typ, R, "enumeration", "0");
+      Add_Facet (Typ, R, "enumeration", "1");
       Add_Attribute
         (Typ2, Create_Local_Attribute
            ("minOccurs", G, Create_Local_Type (G, Typ),
             Attribute_Use => Default, Value => "1"));
 
-      Typ := Restriction_Of (G, Lookup (G, "allNNI"));
-      Add_Facet (Typ, "enumeration", "0");
-      Add_Facet (Typ, "enumeration", "1");
+      Typ := Restriction_Of (G, R, Lookup (G, R, "allNNI"));
+      Add_Facet (Typ, R, "enumeration", "0");
+      Add_Facet (Typ, R, "enumeration", "1");
       Add_Attribute
         (Typ2, Create_Local_Attribute
            ("maxOccurs", G, Create_Local_Type (G, Typ),
             Attribute_Use => Default, Value => "1"));
 
-      Add_Particle (Seq1,
+      Add_Particle (Seq1, R,
                     Create_Local_Element
                       ("element", G, Create_Local_Type (G, Typ2), Qualified),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
 
       Typ := Restriction_Of
-        (G, Lookup (G, "explicitGroup"), XML_Validator (Seq1));
+        (G, R, Lookup (G, R, "explicitGroup"), XML_Validator (Seq1));
 
-      Typ2 := Restriction_Of (G, Lookup (G, "nonNegativeInteger"));
-      Add_Facet (Typ2, "enumeration", "1");
+      Typ2 := Restriction_Of (G, R, Lookup (G, R, "nonNegativeInteger"));
+      Add_Facet (Typ2, R, "enumeration", "1");
       Add_Attribute
         (Typ, Create_Local_Attribute
            ("minOccurs", G, Create_Local_Type (G, Typ2),
             Attribute_Use => Default, Value => "1"));
 
-      Typ2 := Restriction_Of (G, Lookup (G, "allNNI"));
-      Add_Facet (Typ2, "enumeration", "1");
+      Typ2 := Restriction_Of (G, R, Lookup (G, R, "allNNI"));
+      Add_Facet (Typ2, R, "enumeration", "1");
       Add_Attribute
         (Typ, Create_Local_Attribute
            ("maxOccurs", G, Create_Local_Type (G, Typ2),
             Attribute_Use => Default, Value => "1"));
 
-      Set_Type (Create_Global_Element (G, "all", Qualified),
-                Create_Local_Type (G, Typ), Context);
+      Set_Type (Create_Global_Element (G, R, "all", Qualified), R,
+                Create_Local_Type (G, Typ));
 
       --  The "localElement" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "localElement_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "localElement_choice");
-      Add_Particle (Seq1, Choice1, Min_Occurs => 0);
+      Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("simpleType", G, Lookup (G, "localSimpleType"), Qualified));
+        (Choice1, R, Create_Local_Element
+           ("simpleType", G, Lookup (G, R, "localSimpleType"), Qualified));
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("complexType", G, Lookup (G, "localComplexType"), Qualified));
-      Add_Particle (Seq1, Lookup_Element (G, "identityConstraint"),
+        (Choice1, R, Create_Local_Element
+           ("complexType", G, Lookup (G, R, "localComplexType"), Qualified));
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "identityConstraint"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Attribute (Seq1, Create_Local_Attribute ("substitutionGroup", G,
                                              Attribute_Use => Prohibited));
       Add_Attribute (Seq1, Create_Local_Attribute ("final", G,
                                              Attribute_Use => Prohibited));
-      Typ := Restriction_Of (G, Lookup (G, "element"), XML_Validator (Seq1));
-      Create_Global_Type (G, "localElement", Typ);
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "element"), XML_Validator (Seq1));
+      Create_Global_Type (G, R, "localElement", Typ);
 
       --  The "particle" group
-      Gr := Create_Global_Group (G, "particle");
+      Gr := Create_Global_Group (G, R, "particle");
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "particle_choice");
-      Add_Particle (Gr, Choice1);
+      Add_Particle (Gr, R, Choice1);
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("element", G, Lookup (G, "localElement"), Qualified));
+        (Choice1, R, Create_Local_Element
+           ("element", G, Lookup (G, R, "localElement"), Qualified));
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("group", G, Lookup (G, "groupRef"), Qualified));
-      Add_Particle (Choice1, Lookup_Element (G, "all"));
-      Add_Particle (Choice1, Lookup_Element (G, "choice"));
-      Add_Particle (Choice1, Lookup_Element (G, "sequence"));
-      Add_Particle (Choice1, Lookup_Element (G, "any"));
+        (Choice1, R, Create_Local_Element
+           ("group", G, Lookup (G, R, "groupRef"), Qualified));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "all"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "choice"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "sequence"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "any"));
 
       --  "group" type
       Typ := Extension_Of
-        (G,
-         Lookup (G, "annotated"),
-         Lookup_Group (G, "particle"),
+        (G, R,
+         Lookup (G, R, "annotated"),
+         Lookup_Group (G, R, "particle"),
          Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Typ, "group_ext");
-      Create_Global_Type (G, "group", Typ);
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
+      Create_Global_Type (G, R, "group", Typ);
+      Add_Attribute_Group (Typ, R, Lookup_Attribute_Group (G, R, "defRef"));
+      Add_Attribute_Group (Typ, R, Lookup_Attribute_Group (G, R, "occurs"));
 
       --  The "nestedParticle" element
-      Gr := Create_Global_Group (G, "nestedParticle");
+      Gr := Create_Global_Group (G, R, "nestedParticle");
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "nestedParticle_choice");
-      Add_Particle (Gr, Choice1);
+      Add_Particle (Gr, R, Choice1);
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("element", G, Lookup (G, "localElement"), Qualified));
+        (Choice1, R, Create_Local_Element
+           ("element", G, Lookup (G, R, "localElement"), Qualified));
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("group", G, Lookup (G, "groupRef"), Qualified));
-      Add_Particle (Choice1, Lookup_Element (G, "choice"));
-      Add_Particle (Choice1, Lookup_Element (G, "sequence"));
-      Add_Particle (Choice1, Lookup_Element (G, "any"));
+        (Choice1, R, Create_Local_Element
+           ("group", G, Lookup (G, R, "groupRef"), Qualified));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "choice"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "sequence"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "any"));
 
       --  "explicitGroup" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "explicitGroup_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"),
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "annotation"),
                     Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "nestedParticle"),
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "nestedParticle"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Restriction_Of (G, Lookup (G, "group"), XML_Validator (Seq1));
-      Create_Global_Type (G, "explicitGroup", Typ);
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "group"), XML_Validator (Seq1));
+      Create_Global_Type (G, R, "explicitGroup", Typ);
       Add_Attribute
         (Typ, Create_Local_Attribute
-           ("name", G, Lookup (G, "NCName"), Attribute_Use => Prohibited));
+           ("name", G, Lookup (G, R, "NCName"), Attribute_Use => Prohibited));
       Add_Attribute
         (Typ, Create_Local_Attribute
-           ("ref", G, Lookup (G, "QName"), Attribute_Use => Prohibited));
+           ("ref", G, Lookup (G, R, "QName"), Attribute_Use => Prohibited));
 
       --  The "choice" element
-      Set_Type (Create_Global_Element (G, "choice", Qualified),
-                Lookup (G, "explicitGroup"), Context);
+      Set_Type (Create_Global_Element (G, R, "choice", Qualified), R,
+                Lookup (G, R, "explicitGroup"));
 
       --  The "sequence" element
-      Set_Type (Create_Global_Element (G, "sequence", Qualified),
-                Lookup (G, "explicitGroup"), Context);
+      Set_Type (Create_Global_Element (G, R, "sequence", Qualified), R,
+                Lookup (G, R, "explicitGroup"));
 
       --  "groupDefParticle" group
-      Gr := Create_Global_Group (G, "groupDefParticle");
+      Gr := Create_Global_Group (G, R, "groupDefParticle");
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "groupDefParticle_choice");
-      Add_Particle (Gr, Choice1);
-      Add_Particle (Choice1, Lookup_Element (G, "all"));
-      Add_Particle (Choice1, Lookup_Element (G, "choice"));
-      Add_Particle (Choice1, Lookup_Element (G, "sequence"));
+      Add_Particle (Gr, R, Choice1);
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "all"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "choice"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "sequence"));
 
       --  The "realGroup" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "realGroup_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "groupDefParticle"),
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "groupDefParticle"),
                     Min_Occurs => 0, Max_Occurs => 1);
-      Typ := Restriction_Of (G, Lookup (G, "group"), XML_Validator (Seq1));
-      Create_Global_Type (G, "realGroup", Typ);
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "group"), XML_Validator (Seq1));
+      Create_Global_Type (G, R, "realGroup", Typ);
 
       --  The "groupRef" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "groupRef_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Restriction_Of (G, Lookup (G, "realGroup"), XML_Validator (Seq1));
-      Create_Global_Type (G, "groupRef", Typ);
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "realGroup"), XML_Validator (Seq1));
+      Create_Global_Type (G, R, "groupRef", Typ);
       Add_Attribute
         (Typ, Create_Local_Attribute
-           ("ref", G, Lookup (G, "QName"), Attribute_Use => Required));
+           ("ref", G, Lookup (G, R, "QName"), Attribute_Use => Required));
       Add_Attribute
         (Typ, Create_Local_Attribute ("name", G, Attribute_Use => Prohibited));
 
       --  The "group" element
-      Elem := Create_Global_Element (G, "group", Qualified);
-      Set_Type (Elem, Lookup (G, "namedGroup"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
+      Elem := Create_Global_Element (G, R, "group", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "namedGroup"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "redefinable"));
 
       --  The "namedGroup" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "namedGroup_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "groupDefParticle"),
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "groupDefParticle"),
                     Min_Occurs => 1, Max_Occurs => 1);
-      Typ := Restriction_Of (G, Lookup (G, "realGroup"), XML_Validator (Seq1));
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "realGroup"), XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("name", G, Lookup (G, "NCName"),
+                       ("name", G, Lookup (G, R, "NCName"),
                         Attribute_Use => Required));
       Add_Attribute (Typ, Create_Local_Attribute
                        ("ref", G, Attribute_Use => Prohibited));
@@ -632,88 +662,95 @@ package body Schema.Validators.XSD_Grammar is
                        ("minOccurs", G, Attribute_Use => Prohibited));
       Add_Attribute (Typ, Create_Local_Attribute
                        ("maxOccurs", G, Attribute_Use => Prohibited));
-      Create_Global_Type (G, "namedGroup", Typ);
+      Create_Global_Type (G, R, "namedGroup", Typ);
 
       --  The "attributeGroup" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "attributeGroup_seq");
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
-      Create_Global_Type (G, "attributeGroup", Typ);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "attrDecls"));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
+      Add_Attribute_Group (Typ, R, Lookup_Attribute_Group (G, R, "defRef"));
+      Create_Global_Type (G, R, "attributeGroup", Typ);
 
       --  The "namedAttributeGroup" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "namedAttributeGroup_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "attrDecls"));
       Typ := Restriction_Of
-        (G, Lookup (G, "attributeGroup"), XML_Validator (Seq1));
+        (G, R, Lookup (G, R, "attributeGroup"), XML_Validator (Seq1));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName"),
+        (Typ, Create_Local_Attribute ("name", G, Lookup (G, R, "NCName"),
                                 Attribute_Use => Required));
       Add_Attribute
         (Typ, Create_Local_Attribute ("ref", G, Attribute_Use => Prohibited));
-      Create_Global_Type (G, "namedAttributeGroup", Typ);
+      Create_Global_Type (G, R, "namedAttributeGroup", Typ);
 
       --  The "attributeGroup" element
-      Elem := Create_Global_Element (G, "attributeGroup", Qualified);
-      Set_Type (Elem, Lookup (G, "namedAttributeGroup"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
+      Elem := Create_Global_Element (G, R, "attributeGroup", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "namedAttributeGroup"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "redefinable"));
 
       --  The "typeDefParticle" group
-      Gr := Create_Global_Group (G, "typeDefParticle");
+      Gr := Create_Global_Group (G, R, "typeDefParticle");
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "typeDefParticle_choice");
-      Add_Particle (Gr, Choice1);
-      Add_Particle (Choice1, Create_Local_Element
-                      ("group", G, Lookup (G, "groupRef"), Qualified));
-      Add_Particle (Choice1, Lookup_Element (G, "all"));
-      Add_Particle (Choice1, Lookup_Element (G, "choice"));
-      Add_Particle (Choice1, Lookup_Element (G, "sequence"));
+      Add_Particle (Gr, R, Choice1);
+      Add_Particle (Choice1, R, Create_Local_Element
+                      ("group", G, Lookup (G, R, "groupRef"), Qualified));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "all"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "choice"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "sequence"));
 
       --  The "attribute" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "attribute_seq");
-      Add_Particle (Seq1, Create_Local_Element
+      Add_Particle (Seq1, R, Create_Local_Element
                       ("simpleType", G,
-                       Lookup (G, "localSimpleType"), Qualified),
+                       Lookup (G, R, "localSimpleType"), Qualified),
                     Min_Occurs => 0);
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "attribute_ext");
-      Create_Global_Type (G, "attribute", Typ);
-      Add_Attribute (Typ,
-                     Create_Local_Attribute ("type", G, Lookup (G, "QName")));
+      Create_Global_Type (G, R, "attribute", Typ);
+      Add_Attribute
+        (Typ,
+         Create_Local_Attribute ("type", G, Lookup (G, R, "QName")));
 
-      Typ2 := Restriction_Of (G, Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ2, "enumeration", "prohibited");
-      Add_Facet (Typ2, "enumeration", "optional");
-      Add_Facet (Typ2, "enumeration", "required");
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "defRef"));
+      Typ2 := Restriction_Of (G, R, Lookup (G, R, "NMTOKEN"));
+      Add_Facet (Typ2, R, "enumeration", "prohibited");
+      Add_Facet (Typ2, R, "enumeration", "optional");
+      Add_Facet (Typ2, R, "enumeration", "required");
+      Add_Attribute_Group (Typ, R, Lookup_Attribute_Group (G, R, "defRef"));
       Add_Attribute (Typ, Create_Local_Attribute
                        ("use", G, Create_Local_Type (G, Typ2),
                         Attribute_Use => Default,
                         Value => "optional"));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("default", G, Lookup (G, "string"),
+                       ("default", G, Lookup (G, R, "string"),
                         Attribute_Use => Optional));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("fixed", G, Lookup (G, "string"),
+                       ("fixed", G, Lookup (G, R, "string"),
                         Attribute_Use => Optional));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("form", G, Lookup (G, "formChoice")));
+        (Typ,
+         Create_Local_Attribute ("form", G, Lookup (G, R, "formChoice")));
 
       --  The "topLevelAttribute" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "topLevelAttribute_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Create_Local_Element
-                      ("simpleType", G, Lookup (G, "localSimpleType"),
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Create_Local_Element
+                      ("simpleType", G, Lookup (G, R, "localSimpleType"),
                        Qualified),
                     Min_Occurs => 0);
-      Typ := Restriction_Of (G, Lookup (G, "attribute"), XML_Validator (Seq1));
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "attribute"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "topLevelAttribute restriction");
-      Create_Global_Type (G, "topLevelAttribute", Typ);
+      Create_Global_Type (G, R, "topLevelAttribute", Typ);
       Add_Attribute
         (Typ, Create_Local_Attribute ("ref", G, Attribute_Use => Prohibited));
       Add_Attribute
@@ -721,96 +758,100 @@ package body Schema.Validators.XSD_Grammar is
       Add_Attribute
         (Typ, Create_Local_Attribute ("use", G, Attribute_Use => Prohibited));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName"),
+        (Typ, Create_Local_Attribute ("name", G, Lookup (G, R, "NCName"),
                                       Attribute_Use => Required));
 
       --  The "anyAttributes" element
-      Set_Type (Create_Global_Element (G, "anyAttribute", Qualified),
-                Lookup (G, "wildcard"), Context);
+      Set_Type (Create_Global_Element (G, R, "anyAttribute", Qualified), R,
+                Lookup (G, R, "wildcard"));
 
       --  The "namespaceList" type   ??? Incomplete
       Union := Create_Union (G);
-      Typ := Restriction_Of (G, Lookup (G, "token"));
-      Add_Facet (Typ, "enumeration", "##any");
-      Add_Facet (Typ, "enumeration", "##other");
-      Add_Union (Union, Create_Local_Type (G, Typ));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "token"));
+      Add_Facet (Typ, R, "enumeration", "##any");
+      Add_Facet (Typ, R, "enumeration", "##other");
+      Add_Union (Union, R, Create_Local_Type (G, Typ));
 
       Union2 := Create_Union (G);
-      Add_Union (Union, Create_Local_Type (G, Union2));
-      Add_Union (Union2, Lookup (G, "uriReference"));
-      Typ := Restriction_Of (G, Lookup (G, "token"));
-      Add_Facet (Typ, "enumeration", "##targetNamespace");
-      Add_Facet (Typ, "enumeration", "##local");
-      Add_Union (Union2, Create_Local_Type (G, Typ));
+      Add_Union (Union, R, Create_Local_Type (G, Union2));
+      Add_Union (Union2, R, Lookup (G, R, "uriReference"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "token"));
+      Add_Facet (Typ, R, "enumeration", "##targetNamespace");
+      Add_Facet (Typ, R, "enumeration", "##local");
+      Add_Union (Union2, R, Create_Local_Type (G, Typ));
 
-      Create_Global_Type (G, "namespaceList", Union);
+      Create_Global_Type (G, R, "namespaceList", Union);
 
       --  The "wildcard" type
-      Typ := Extension_Of (G, Lookup (G, "annotated"));
+      Typ := Extension_Of (G, Lookup (G, R, "annotated"));
       Set_Debug_Name (Typ, "annotated_restr_in_wildcard");
       Add_Attribute (Typ, Create_Local_Attribute ("namespace", G,
-                                            Lookup (G, "namespaceList"),
+                                            Lookup (G, R, "namespaceList"),
                                             Attribute_Use => Default,
                                             Value => "##any"));
-      Typ2 := Restriction_Of (G, Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ2, "enumeration", "skip");
-      Add_Facet (Typ2, "enumeration", "lax");
-      Add_Facet (Typ2, "enumeration", "strict");
+      Typ2 := Restriction_Of (G, R, Lookup (G, R, "NMTOKEN"));
+      Add_Facet (Typ2, R, "enumeration", "skip");
+      Add_Facet (Typ2, R, "enumeration", "lax");
+      Add_Facet (Typ2, R, "enumeration", "strict");
       Add_Attribute (Typ, Create_Local_Attribute ("processContents", G,
                                             Create_Local_Type (G, Typ2),
                                             Attribute_Use => Default,
                                             Value => "strict"));
-      Create_Global_Type (G, "wildcard", Typ);
+      Create_Global_Type (G, R, "wildcard", Typ);
 
       --  The "any" element   ??? Error if you put before "wildcard"
-      Typ := Extension_Of (G, Lookup (G, "wildcard"));
+      Typ := Extension_Of (G, Lookup (G, R, "wildcard"));
       Set_Debug_Name (Typ, "wildcard_ext");
-      Add_Attribute_Group (Typ, Lookup_Attribute_Group (G, "occurs"));
-      Set_Type (Create_Global_Element (G, "any", Qualified),
-                Create_Local_Type (G, Typ), Context);
+      Add_Attribute_Group (Typ, R, Lookup_Attribute_Group (G, R, "occurs"));
+      Set_Type (Create_Global_Element (G, R, "any", Qualified), R,
+                Create_Local_Type (G, Typ));
 
       --  The "attributeGroupRef"  ??? invalid
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "attributeGroupRef_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
       Typ := Restriction_Of
-        (G, Lookup (G, "attributeGroup"), XML_Validator (Seq1));
+        (G, R, Lookup (G, R, "attributeGroup"), XML_Validator (Seq1));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("ref", G, Lookup (G, "QName"),
+        (Typ, Create_Local_Attribute ("ref", G, Lookup (G, R, "QName"),
                                 Attribute_Use => Required));
       Add_Attribute
         (Typ, Create_Local_Attribute ("name", G, Attribute_Use => Prohibited));
-      Create_Global_Type (G, "attributeGroupRef", Typ);
+      Create_Global_Type (G, R, "attributeGroupRef", Typ);
 
       --  The "attrDecls" group
-      Gr := Create_Global_Group (G, "attrDecls");
+      Gr := Create_Global_Group (G, R, "attrDecls");
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "attrDecls_seq");
-      Add_Particle (Gr, Seq1);
+      Add_Particle (Gr, R, Seq1);
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "attrDecls_choice");
-      Add_Particle (Seq1, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("attribute", G, Lookup (G, "attribute"), Qualified));
+        (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("attributeGroup", G, Lookup (G, "attributeGroupRef"), Qualified));
+        (Choice1, R, Create_Local_Element
+           ("attribute", G, Lookup (G, R, "attribute"), Qualified));
       Add_Particle
-        (Seq1, Lookup_Element (G, "anyAttribute"), Min_Occurs => 0);
+        (Choice1, R, Create_Local_Element
+           ("attributeGroup", G,
+            Lookup (G, R, "attributeGroupRef"), Qualified));
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "anyAttribute"), Min_Occurs => 0);
 
       --  The "extensionType" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "extensionType_seq");
       Add_Particle
-        (Seq1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
+        (Seq1, R, Lookup_Group (G, R, "typeDefParticle"), Min_Occurs => 0);
       Add_Particle
-        (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
+        (Seq1, R, Lookup_Group (G, R, "attrDecls"));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
       Set_Debug_Name (Typ, "extensionType_ext");
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("base", G, Lookup (G, "QName")));
-      Create_Global_Type (G, "extensionType", Typ);
+                       ("base", G, Lookup (G, R, "QName")));
+      Create_Global_Type (G, R, "extensionType", Typ);
 
       --  The "restrictionType" type
       Seq1 := Create_Sequence (G);
@@ -818,418 +859,445 @@ package body Schema.Validators.XSD_Grammar is
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "restrictionType_choice");
       Add_Particle
-        (Choice1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
+        (Choice1, R, Lookup_Group (G, R, "typeDefParticle"), Min_Occurs => 0);
       Add_Particle
-        (Choice1, Lookup_Group (G, "simpleRestrictionModel"), Min_Occurs => 0);
-      Add_Particle (Seq1, Choice1);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
+        (Choice1, R,
+         Lookup_Group (G, R, "simpleRestrictionModel"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Choice1);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "attrDecls"));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("base", G, Lookup (G, "QName"),
+                       ("base", G, Lookup (G, R, "QName"),
                         Attribute_Use => Required));
-      Create_Global_Type (G, "restrictionType", Typ);
+      Create_Global_Type (G, R, "restrictionType", Typ);
 
       --  The "simpleRestrictionModel" group
-      Gr := Create_Global_Group (G, "simpleRestrictionModel");
+      Gr := Create_Global_Group (G, R, "simpleRestrictionModel");
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "simpleRestrictionModel_seq");
-      Add_Particle (Seq1, Create_Local_Element ("simpleType", G,
-                                          Lookup (G, "localSimpleType"),
+      Add_Particle (Seq1, R, Create_Local_Element ("simpleType", G,
+                                          Lookup (G, R, "localSimpleType"),
                                           Qualified),
                     Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Element (G, "facet"),
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "facet"),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle (Gr, Seq1);
+      Add_Particle (Gr, R, Seq1);
 
       --  The "simpleExtensionType"
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "simpleExtensionType_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Create_Global_Type (G, "simpleExtensionType",
-                Restriction_Of (G, Lookup (G, "extensionType"),
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "attrDecls"));
+      Create_Global_Type (G, R, "simpleExtensionType",
+                Restriction_Of (G, R, Lookup (G, R, "extensionType"),
                                 XML_Validator (Seq1)));
 
       --  The "simpleRestrictionType"
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "simpleRestrictionType_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "simpleRestrictionModel"),
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "simpleRestrictionModel"),
                     Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Create_Global_Type (G, "simpleRestrictionType",
-                Restriction_Of (G, Lookup (G, "restrictionType"),
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "attrDecls"));
+      Create_Global_Type (G, R, "simpleRestrictionType",
+                Restriction_Of (G, R, Lookup (G, R, "restrictionType"),
                                 XML_Validator (Seq1)));
 
       --  The "simpleContent" element
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "simpleContent_choice");
-      Add_Particle (Choice1, Create_Local_Element
+      Add_Particle (Choice1, R, Create_Local_Element
                       ("restriction", G,
-                       Lookup (G, "simpleRestrictionType"),
+                       Lookup (G, R, "simpleRestrictionType"),
                        Qualified));
-      Add_Particle (Choice1, Create_Local_Element
+      Add_Particle (Choice1, R, Create_Local_Element
                       ("extension", G,
-                       Lookup (G, "simpleExtensionType"),
+                       Lookup (G, R, "simpleExtensionType"),
                        Qualified));
       Typ := Extension_Of
-        (G, Lookup (G, "annotated"), XML_Validator (Choice1));
+        (G, Lookup (G, R, "annotated"), XML_Validator (Choice1));
       Set_Debug_Name (Typ, "simpleContent_ext");
-      Set_Type (Create_Global_Element (G, "simpleContent", Qualified),
-                Create_Local_Type (G, Typ), Context);
+      Set_Type (Create_Global_Element (G, R, "simpleContent", Qualified), R,
+                Create_Local_Type (G, Typ));
 
       --  The "complexRestrictionType" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "complexRestrictionType_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
       Add_Particle
-        (Seq1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
-      Typ := Restriction_Of (G, Lookup (G, "restrictionType"),
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle
+        (Seq1, R, Lookup_Group (G, R, "typeDefParticle"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "attrDecls"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "restrictionType"),
                              XML_Validator (Seq1));
-      Create_Global_Type (G, "complexRestrictionType", Typ);
+      Create_Global_Type (G, R, "complexRestrictionType", Typ);
 
       --  The "complexContent" element
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "complexContent_choice");
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("restriction", G, Lookup (G, "complexRestrictionType"),
+        (Choice1, R, Create_Local_Element
+           ("restriction", G, Lookup (G, R, "complexRestrictionType"),
             Qualified));
       Add_Particle
-        (Choice1, Create_Local_Element
-           ("extension", G, Lookup (G, "extensionType"), Qualified));
+        (Choice1, R, Create_Local_Element
+           ("extension", G, Lookup (G, R, "extensionType"), Qualified));
       Add_Attribute
-        (Choice1, Create_Local_Attribute ("mixed", G, Lookup (G, "boolean")));
+        (Choice1,
+         Create_Local_Attribute ("mixed", G, Lookup (G, R, "boolean")));
       Typ := Extension_Of
-        (G, Lookup (G, "annotated"), XML_Validator (Choice1));
-      Set_Type (Create_Global_Element (G, "complexContent", Qualified),
-                Create_Local_Type (G, Typ), Context);
+        (G, Lookup (G, R, "annotated"), XML_Validator (Choice1));
+      Set_Type (Create_Global_Element (G, R, "complexContent", Qualified), R,
+                Create_Local_Type (G, Typ));
 
       --  The "complexTypeModel" group
-      Gr := Create_Global_Group (G, "complexTypeModel");
+      Gr := Create_Global_Group (G, R, "complexTypeModel");
       Choice1 := Create_Choice (G);
       Set_Debug_Name (Choice1, "complexTypeModel_choice");
-      Add_Particle (Gr, Choice1);
-      Add_Particle (Choice1, Lookup_Element (G, "simpleContent"));
-      Add_Particle (Choice1, Lookup_Element (G, "complexContent"));
+      Add_Particle (Gr, R, Choice1);
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "simpleContent"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "complexContent"));
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "complexTypeModel_seq");
-      Add_Particle (Choice1, Seq1);
+      Add_Particle (Choice1, R, Seq1);
       Add_Particle
-        (Seq1, Lookup_Group (G, "typeDefParticle"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "attrDecls"));
+        (Seq1, R, Lookup_Group (G, R, "typeDefParticle"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "attrDecls"));
 
       --  The "complexType" type  ??? abstract=true
-      Typ := Extension_Of (G,
-                           Lookup (G, "annotated"),
-                           Lookup_Group (G, "complexTypeModel"));
+      Typ := Extension_Of (G, R,
+                           Lookup (G, R, "annotated"),
+                           Lookup_Group (G, R, "complexTypeModel"));
       Set_Debug_Name (Typ, "complexType_ext");
-      Create_Global_Type (G, "complexType", Typ);
+      Create_Global_Type (G, R, "complexType", Typ);
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("name", G, Lookup (G, "NCName")));
+                       ("name", G, Lookup (G, R, "NCName")));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("mixed", G, Lookup (G, "boolean"),
+                       ("mixed", G, Lookup (G, R, "boolean"),
                         Attribute_Use => Default,
                         Value => "false"));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("abstract", G, Lookup (G, "boolean"),
+                       ("abstract", G, Lookup (G, R, "boolean"),
                         Attribute_Use => Default,
                         Value => "false"));
       Add_Attribute
         (Typ, Create_Local_Attribute
-           ("final", G, Lookup (G, "derivationSet")));
+           ("final", G, Lookup (G, R, "derivationSet")));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("block", G, Lookup (G, "derivationSet"),
-                                Attribute_Use => Default,
-                                Value => ""));
+        (Typ,
+         Create_Local_Attribute ("block", G, Lookup (G, R, "derivationSet"),
+           Attribute_Use => Default,
+           Value => ""));
 
       --  The "topLevelComplexType" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "topLevelComplexType_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Group (G, "complexTypeModel"));
-      Typ := Restriction_Of (G, Lookup (G, "complexType"),
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Group (G, R, "complexTypeModel"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "complexType"),
                              XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("name", G, Lookup (G, "NCName"),
+                       ("name", G, Lookup (G, R, "NCName"),
                         Attribute_Use => Required));
-      Create_Global_Type (G, "topLevelComplexType", Typ);
+      Create_Global_Type (G, R, "topLevelComplexType", Typ);
 
       --  The "complexType" element
-      Elem := Create_Global_Element (G, "complexType", Qualified);
-      Set_Type (Elem, Lookup (G, "topLevelComplexType"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
+      Elem := Create_Global_Element (G, R, "complexType", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "topLevelComplexType"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "redefinable"));
 
       --  The "notation" element
-      Typ := Restriction_Of (G, Lookup (G, "annotated"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "annotated"));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("name", G, Lookup (G, "NCName"),
+                       ("name", G, Lookup (G, R, "NCName"),
                         Attribute_Use => Required));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("public", G, Lookup (G, "public"),
+                       ("public", G, Lookup (G, R, "public"),
                         Attribute_Use => Required));
       Add_Attribute (Typ, Create_Local_Attribute
-                       ("system", G, Lookup (G, "uriReference")));
-      Elem := Create_Global_Element (G, "notation", Qualified);
-      Set_Type (Elem, Create_Local_Type (G, Typ), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "schemaTop"));
+                       ("system", G, Lookup (G, R, "uriReference")));
+      Elem := Create_Global_Element (G, R, "notation", Qualified);
+      Set_Type (Elem, R, Create_Local_Type (G, Typ));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "schemaTop"));
 
       --  The "public" type
-      Create_Global_Type (G, "public", Get_Validator (Lookup (G, "token")));
+      Create_Global_Type
+        (G, R, "public", Get_Validator (Lookup (G, R, "token")));
 
       --  The "redefine" element
       Seq1 := Create_Sequence (G);
       Choice1 := Create_Choice (G);
-      Add_Particle (Seq1, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+      Add_Particle
+        (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Set_Debug_Name (Choice1, "redefine_choice");
       Set_Debug_Name (Seq1, "redefine_seq");
-      Add_Particle (Choice1, Lookup_Element (G, "annotation"));
-      Add_Particle (Choice1, Lookup_Element (G, "redefinable"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "annotation"));
+      Add_Particle (Choice1, R, Lookup_Element (G, R, "redefinable"));
       Add_Attribute
         (Seq1, Create_Local_Attribute ("schemaLocation", G,
-                                    Lookup (G, "uriReference"),
+                                    Lookup (G, R, "uriReference"),
                                     Attribute_Use => Required));
-      Typ := Extension_Of (G, Lookup (G, "openAttrs"), XML_Validator (Seq1));
-      Set_Type (Create_Global_Element (G, "redefine", Qualified),
-                Create_Local_Type (G, Typ), Context);
+      Typ := Extension_Of
+        (G, Lookup (G, R, "openAttrs"), XML_Validator (Seq1));
+      Set_Type (Create_Global_Element (G, R, "redefine", Qualified), R,
+                Create_Local_Type (G, Typ));
 
       --  From datatypes.xsd
 
       --  The "localSimpleType" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "localSimpleType_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
-      Typ := Restriction_Of (G, Lookup (G, "simpleType"),
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "simpleDerivation"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "simpleType"),
                              XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute
                        ("name", G, Attribute_Use => Prohibited));
-      Create_Global_Type (G, "localSimpleType", Typ);
+      Create_Global_Type (G, R, "localSimpleType", Typ);
 
       --  The "simpleDerivation" element  ??? abstract=true
-      Set_Type (Create_Global_Element (G, "simpleDerivation", Qualified),
-                Lookup (G, "annotated"), Context);
+      Set_Type (Create_Global_Element (G, R, "simpleDerivation", Qualified),
+                R, Lookup (G, R, "annotated"));
 
       --  The "simpleDerivationSet" type
       Union := Create_Union (G);
-      Typ := Restriction_Of (G, Lookup (G, "token"));
-      Add_Facet (Typ, "enumeration", "#all");
-      Add_Union (Union, Create_Local_Type (G, Typ));
-      Typ := Restriction_Of (G, Lookup (G, "derivationControl"));
-      Add_Facet (Typ, "enumeration", "list");
-      Add_Facet (Typ, "enumeration", "union");
-      Add_Facet (Typ, "enumeration", "restriction");
-      Add_Facet (Typ, "enumeration", "extension");
-      Add_Union (Union, List_Of (G, Create_Local_Type (G, Typ)));
-      Create_Global_Type (G, "simpleDerivationSet", Union);
+      Typ := Restriction_Of (G, R, Lookup (G, R, "token"));
+      Add_Facet (Typ, R, "enumeration", "#all");
+      Add_Union (Union, R, Create_Local_Type (G, Typ));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "derivationControl"));
+      Add_Facet (Typ, R, "enumeration", "list");
+      Add_Facet (Typ, R, "enumeration", "union");
+      Add_Facet (Typ, R, "enumeration", "restriction");
+      Add_Facet (Typ, R, "enumeration", "extension");
+      Add_Union (Union, R, List_Of (G, Create_Local_Type (G, Typ)));
+      Create_Global_Type (G, R, "simpleDerivationSet", Union);
 
       --  The "simpleType" type  ??? abstract=true
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "simpleType_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "simpleDerivation"));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName")));
+        (Typ, Create_Local_Attribute ("name", G, Lookup (G, R, "NCName")));
       Add_Attribute
         (Typ, Create_Local_Attribute
-           ("final", G, Lookup (G, "simpleDerivationSet")));
-      Create_Global_Type (G, "simpleType", Typ);
+           ("final", G, Lookup (G, R, "simpleDerivationSet")));
+      Create_Global_Type (G, R, "simpleType", Typ);
 
       --  The "topLevelSimpleType" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "topLevelSimpleType_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Add_Particle (Seq1, Lookup_Element (G, "simpleDerivation"));
-      Typ := Restriction_Of (G, Lookup (G, "simpleType"),
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Add_Particle (Seq1, R, Lookup_Element (G, R, "simpleDerivation"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "simpleType"),
                              XML_Validator (Seq1));
-      Create_Global_Type (G, "topLevelSimpleType", Typ);
+      Create_Global_Type (G, R, "topLevelSimpleType", Typ);
       Add_Attribute
-        (Typ, Create_Local_Attribute ("name", G, Lookup (G, "NCName"),
+        (Typ, Create_Local_Attribute ("name", G, Lookup (G, R, "NCName"),
          Attribute_Use => Required));
       Add_Attribute
         (Typ, Create_Any_Attribute (G, Process_Lax, Kind => Namespace_Other));
 
       --  The "simpleType" element
-      Elem := Create_Global_Element (G, "simpleType", Qualified);
-      Set_Type (Elem, Lookup (G, "topLevelSimpleType"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "redefinable"));
+      Elem := Create_Global_Element (G, R, "simpleType", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "topLevelSimpleType"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "redefinable"));
 
       --  The "restriction" element
-      Typ := Extension_Of (G,
-                           Lookup (G, "annotated"),
-                           Lookup_Group (G, "simpleRestrictionModel"));
+      Typ := Extension_Of (G, R,
+                           Lookup (G, R, "annotated"),
+                           Lookup_Group (G, R, "simpleRestrictionModel"));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("base", G, Lookup (G, "QName"),
-                                 Attribute_Use => Optional));
+        (Typ, Create_Local_Attribute ("base", G, Lookup (G, R, "QName"),
+                                      Attribute_Use => Optional));
       Set_Debug_Name (Typ, "restriction_ext");
-      Elem := Create_Global_Element (G, "restriction", Qualified);
-      Set_Type (Elem, Create_Local_Type (G, Typ), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
+      Elem := Create_Global_Element (G, R, "restriction", Qualified);
+      Set_Type (Elem, R, Create_Local_Type (G, Typ));
+      Set_Substitution_Group
+        (Elem, R, Lookup_Element (G, R, "simpleDerivation"));
 
       --  The "union" element
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "union_seq");
-      Add_Particle (Seq1,
+      Add_Particle (Seq1, R,
                     Create_Local_Element
-                      ("simpleType", G, Lookup (G, "localSimpleType"),
+                      ("simpleType", G, Lookup (G, R, "localSimpleType"),
                        Qualified),
                     Min_Occurs => 0, Max_Occurs => Unbounded);
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute ("memberTypes", G,
-                                List_Of (G, Lookup (G, "QName")),
+                                List_Of (G, Lookup (G, R, "QName")),
                                 Attribute_Use => Optional));
-      Elem := Create_Global_Element (G, "union", Qualified);
-      Set_Type (Elem, Create_Local_Type (G, Typ), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
+      Elem := Create_Global_Element (G, R, "union", Qualified);
+      Set_Type (Elem, R, Create_Local_Type (G, Typ));
+      Set_Substitution_Group
+        (Elem, R, Lookup_Element (G, R, "simpleDerivation"));
 
       --  The "list" element
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "list_seq");
-      Add_Particle (Seq1, Create_Local_Element
-                      ("simpleType", G, Lookup (G, "localSimpleType"),
+      Add_Particle (Seq1, R, Create_Local_Element
+                      ("simpleType", G, Lookup (G, R, "localSimpleType"),
                        Qualified),
                     Min_Occurs => 0);
-      Typ := Extension_Of (G, Lookup (G, "annotated"), XML_Validator (Seq1));
+      Typ := Extension_Of
+        (G, Lookup (G, R, "annotated"), XML_Validator (Seq1));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("itemType", G, Lookup (G, "QName"),
-                                Attribute_Use => Optional));
-      Elem := Create_Global_Element (G, "list", Qualified);
-      Set_Type (Elem, Create_Local_Type (G, Typ), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "simpleDerivation"));
+        (Typ, Create_Local_Attribute ("itemType", G, Lookup (G, R, "QName"),
+         Attribute_Use => Optional));
+      Elem := Create_Global_Element (G, R, "list", Qualified);
+      Set_Type (Elem, R, Create_Local_Type (G, Typ));
+      Set_Substitution_Group
+        (Elem, R, Lookup_Element (G, R, "simpleDerivation"));
 
       --  The "facet" type
-      Typ := Restriction_Of (G, Lookup (G, "annotated"));
+      Typ := Restriction_Of (G, R, Lookup (G, R, "annotated"));
       Add_Attribute
         (Typ, Create_Local_Attribute ("value", G,
-                                Lookup (G, "anySimpleType"),
+                                Lookup (G, R, "anySimpleType"),
                                 Attribute_Use => Required));
       Add_Attribute
-        (Typ, Create_Local_Attribute ("fixed", G, Lookup (G, "boolean"),
+        (Typ, Create_Local_Attribute ("fixed", G, Lookup (G, R, "boolean"),
                                 Attribute_Use => Optional));
-      Create_Global_Type (G, "facet", Typ);
+      Create_Global_Type (G, R, "facet", Typ);
 
       --  The "numFacet" type
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "numFacet_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Restriction_Of (G, Lookup (G, "facet"), XML_Validator (Seq1));
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "facet"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute
-           ("value", G, Lookup (G, "nonNegativeInteger")));
-      Create_Global_Type (G, "numFacet", Typ);
+           ("value", G, Lookup (G, R, "nonNegativeInteger")));
+      Create_Global_Type (G, R, "numFacet", Typ);
 
       --  The "facet" element  ??? abstract=true
-      Set_Type (Create_Global_Element (G, "facet", Qualified),
-                Lookup (G, "facet"), Context);
+      Set_Type (Create_Global_Element (G, R, "facet", Qualified),
+                R, Lookup (G, R, "facet"));
 
       --  The "enumeration" element
-      Elem := Create_Global_Element (G, "enumeration", Qualified);
-      Set_Type (Elem, Get_Type (Lookup_Element (G, "facet")), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Elem := Create_Global_Element (G, R, "enumeration", Qualified);
+      Set_Type (Elem, R, Get_Type (Lookup_Element (G, R, "facet")));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
 
       --  The "pattern" element
-      Elem := Create_Global_Element (G, "pattern", Qualified);
-      Set_Type (Elem, Get_Type (Lookup_Element (G, "facet")), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Elem := Create_Global_Element (G, R, "pattern", Qualified);
+      Set_Type (Elem, R, Get_Type (Lookup_Element (G, R, "facet")));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
 
       --  The "maxLength" element
-      Elem := Create_Global_Element (G, "maxLength", Qualified);
-      Set_Type (Elem, Lookup (G, "numFacet"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Elem := Create_Global_Element (G, R, "maxLength", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "numFacet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
 
       --  The "minLength" element
-      Elem := Create_Global_Element (G, "minLength", Qualified);
-      Set_Type (Elem, Lookup (G, "numFacet"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Elem := Create_Global_Element (G, R, "minLength", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "numFacet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
 
       --  The "length" element
-      Elem := Create_Global_Element (G, "length", Qualified);
-      Set_Type (Elem, Lookup (G, "numFacet"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Elem := Create_Global_Element (G, R, "length", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "numFacet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
 
       --  The "minBound" element
-      Elem := Create_Global_Element (G, "minBound", Qualified);
-      Set_Type (Elem, Lookup (G, "facet"), Context);
+      Elem := Create_Global_Element (G, R, "minBound", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "facet"));
       Set_Abstract (Elem, True);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
 
       --  The "minExclusive" element
-      Elem := Create_Global_Element (G, "minExclusive", Qualified);
-      Set_Type (Elem, Lookup (G, "facet"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "minBound"));
+      Elem := Create_Global_Element (G, R, "minExclusive", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "facet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "minBound"));
 
       --  The "minInclusive" element
-      Elem := Create_Global_Element (G, "minInclusive", Qualified);
-      Set_Type (Elem, Lookup (G, "facet"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "minBound"));
+      Elem := Create_Global_Element (G, R, "minInclusive", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "facet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "minBound"));
 
       --  The "maxBound" element
-      Elem := Create_Global_Element (G, "maxBound", Qualified);
-      Set_Type (Elem, Lookup (G, "facet"), Context);
+      Elem := Create_Global_Element (G, R, "maxBound", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "facet"));
       Set_Abstract (Elem, True);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
 
       --  The "maxExclusive" element
-      Elem := Create_Global_Element (G, "maxExclusive", Qualified);
-      Set_Type (Elem, Lookup (G, "facet"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "maxBound"));
+      Elem := Create_Global_Element (G, R, "maxExclusive", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "facet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "maxBound"));
 
       --  The "maxInclusive" element
-      Elem := Create_Global_Element (G, "maxInclusive", Qualified);
-      Set_Type (Elem, Lookup (G, "facet"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "maxBound"));
+      Elem := Create_Global_Element (G, R, "maxInclusive", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "facet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "maxBound"));
 
       --  The "whiteSpace" element
-      Elem := Create_Global_Element (G, "whiteSpace", Qualified);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Elem := Create_Global_Element (G, R, "whiteSpace", Qualified);
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Restriction_Of (G, Lookup (G, "facet"), XML_Validator (Seq1));
-      Typ2 := Restriction_Of (G, Lookup (G, "NMTOKEN"));
-      Add_Facet (Typ2, "enumeration", "preserve");
-      Add_Facet (Typ2, "enumeration", "replace");
-      Add_Facet (Typ2, "enumeration", "collapse");
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "facet"), XML_Validator (Seq1));
+      Typ2 := Restriction_Of (G, R, Lookup (G, R, "NMTOKEN"));
+      Add_Facet (Typ2, R, "enumeration", "preserve");
+      Add_Facet (Typ2, R, "enumeration", "replace");
+      Add_Facet (Typ2, R, "enumeration", "collapse");
       Add_Attribute
         (Typ, Create_Local_Attribute ("value", G,
                                       Create_Local_Type (G, Typ2)));
-      Set_Type (Elem, Create_Local_Type (G, Typ), Context);
+      Set_Type (Elem, R, Create_Local_Type (G, Typ));
 
       --  The "totalDigits" element
-      Elem := Create_Global_Element (G, "totalDigits", Qualified);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Elem := Create_Global_Element (G, R, "totalDigits", Qualified);
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
       Seq1 := Create_Sequence (G);
       Set_Debug_Name (Seq1, "totalDigits_seq");
-      Add_Particle (Seq1, Lookup_Element (G, "annotation"), Min_Occurs => 0);
-      Typ := Restriction_Of (G, Lookup (G, "numFacet"), XML_Validator (Seq1));
+      Add_Particle
+        (Seq1, R, Lookup_Element (G, R, "annotation"), Min_Occurs => 0);
+      Typ := Restriction_Of
+        (G, R, Lookup (G, R, "numFacet"), XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute
-           ("value", G, Lookup (G, "positiveInteger"),
+           ("value", G, Lookup (G, R, "positiveInteger"),
            Attribute_Use => Required));
       Add_Attribute
         (Typ, Create_Any_Attribute (G, Process_Lax, Kind => Namespace_Other));
-      Set_Type (Elem, Create_Local_Type (G, Typ), Context);
+      Set_Type (Elem, R, Create_Local_Type (G, Typ));
 
       --  The "fractionDigits" element
-      Elem := Create_Global_Element (G, "fractionDigits", Qualified);
-      Set_Type (Elem, Lookup (G, "numFacet"), Context);
-      Set_Substitution_Group (Elem, Lookup_Element (G, "facet"));
+      Elem := Create_Global_Element (G, R, "fractionDigits", Qualified);
+      Set_Type (Elem, R, Lookup (G, R, "numFacet"));
+      Set_Substitution_Group (Elem, R, Lookup_Element (G, R, "facet"));
 
       --  The namespace schema
 
-      Create_Global_Attribute (XML_G, "base", Lookup (G, "string"));
+      Create_Global_Attribute (XML_G, R, "base", Lookup (G, R, "string"));
 
       --  The schema instance namespace
 
-      Create_Global_Attribute (XML_IG, "nil", Lookup (G, "boolean"));
-      Create_Global_Attribute (XML_IG, "type", Lookup (G, "QName"));
-      Create_Global_Attribute (XML_IG, "schemaLocation",
-                               List_Of (XML_IG, Lookup (G, "uriReference")));
-      Create_Global_Attribute (XML_IG, "noNamespaceSchemaLocation",
-                               Lookup (G, "uriReference"));
+      Create_Global_Attribute (XML_IG, R, "nil", Lookup (G, R, "boolean"));
+      Create_Global_Attribute (XML_IG, R, "type", Lookup (G, R, "QName"));
+      Create_Global_Attribute
+        (XML_IG, R, "schemaLocation",
+         List_Of (XML_IG, Lookup (G, R, "uriReference")));
+      Create_Global_Attribute (XML_IG, R, "noNamespaceSchemaLocation",
+                               Lookup (G, R, "uriReference"));
 
-      Global_Check (G);
+      Global_Check (R, G);
    end Add_Schema_For_Schema;
 
 end Schema.Validators.XSD_Grammar;
