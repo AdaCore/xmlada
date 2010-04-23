@@ -1497,7 +1497,7 @@ package body Schema.Validators is
          if Grammar.Checked then
             Validation_Error
               (Reader, "#Declaration not found for "
-               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+               & To_QName (Grammar, Local_Name));
          end if;
 
          Typ := new XML_Type_Record'
@@ -1512,8 +1512,7 @@ package body Schema.Validators is
          Register (Grammar, Typ);
          if Debug then
             Debug_Output
-              ("Forward type decl: "
-               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+              ("Forward type decl: " & To_QName (Grammar, Local_Name));
          end if;
       elsif Typ = No_Type then
          if Debug then
@@ -1542,13 +1541,12 @@ package body Schema.Validators is
             if Grammar.Checked then
                Validation_Error
                  (Reader, "#Declaration not found for "
-                  & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+                  & To_QName (Grammar, Local_Name));
             end if;
 
             if Debug then
                Debug_Output ("Lookup_Element: creating forward "
-                             & Grammar.Namespace_URI.all & " : "
-                             & Local_Name);
+                             & To_QName (Grammar, Local_Name));
             end if;
             return Create_Global_Element
               (Grammar, Reader, Local_Name, Form => Unqualified);
@@ -1574,7 +1572,7 @@ package body Schema.Validators is
          if Grammar.Checked then
             Validation_Error
               (Reader, "#Declaration not found for "
-               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+               & To_QName (Grammar, Local_Name));
          end if;
 
          Result := Create_Global_Group (Grammar, Reader, Local_Name);
@@ -1599,7 +1597,7 @@ package body Schema.Validators is
          if Grammar.Checked then
             Validation_Error
               (Reader, "#Declaration not found for "
-               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+               & To_QName (Grammar, Local_Name));
          end if;
 
          if Debug then
@@ -1628,7 +1626,7 @@ package body Schema.Validators is
          if Grammar.Checked then
             Validation_Error
               (Reader, "#Declaration not found for "
-               & To_QName (Get_Namespace_URI (Grammar), Local_Name));
+               & To_QName (Grammar, Local_Name));
          end if;
 
          return Create_Global_Attribute (Grammar, Reader, Local_Name, No_Type);
@@ -2213,8 +2211,7 @@ package body Schema.Validators is
          Types_Htable.Set (Grammar.Types.all, Typ);
          if Debug then
             Debug_Output ("Creating global type {"
-                          & Get_Namespace_URI (Grammar) & '}'
-                          & Local_Name);
+                          & To_QName (Grammar, Local_Name));
          end if;
          Register (Grammar, Typ);
 

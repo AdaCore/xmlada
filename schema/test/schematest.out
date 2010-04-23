@@ -18325,13 +18325,13 @@ Grp: NIST2004-01-14 / atomic-dateTime-pattern-6
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-dateTime-pattern-2
   OK NISTXML-SV-II-atomic-dateTime-pattern-2-1
-    Invalid time: "27:42:43"
+    Invalid hour in time: "27:42:43"
   OK NISTXML-SV-II-atomic-dateTime-pattern-2-2
-    Invalid time: "47:29:29"
+    Invalid hour in time: "47:29:29"
   OK NISTXML-SV-II-atomic-dateTime-pattern-2-3
     NISTXML-SV-II-atomic-dateTime-pattern-2-3.xml:19:138: string pattern not matched: \d\d94-\d9-\d7T1\d:0\d:0\d
   OK NISTXML-SV-II-atomic-dateTime-pattern-2-4
-    Invalid time: "37:37:17"
+    Invalid hour in time: "37:37:17"
   OK NISTXML-SV-II-atomic-dateTime-pattern-2-5
     NISTXML-SV-II-atomic-dateTime-pattern-2-5.xml:19:138: string pattern not matched: \d\d94-\d9-\d7T1\d:0\d:0\d
 
@@ -18353,15 +18353,15 @@ Grp: NIST2004-01-14 / atomic-dateTime-pattern-8
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-dateTime-pattern-4
   OK NISTXML-SV-II-atomic-dateTime-pattern-4-1
-    Invalid time: "58:01:14"
+    Invalid hour in time: "58:01:14"
   OK NISTXML-SV-II-atomic-dateTime-pattern-4-2
-    Invalid time: "48:25:22"
+    Invalid hour in time: "48:25:22"
   OK NISTXML-SV-II-atomic-dateTime-pattern-4-3
-    Invalid time: "25:35:03"
+    Invalid hour in time: "25:35:03"
   OK NISTXML-SV-II-atomic-dateTime-pattern-4-4
     NISTXML-SV-II-atomic-dateTime-pattern-4-4.xml:19:138: string pattern not matched: \d\d58-\d2-2\dT0\d:1\d:3\d
   OK NISTXML-SV-II-atomic-dateTime-pattern-4-5
-    Invalid time: "24:21:49"
+    Invalid hour in time: "24:21:49"
 
 Grp: NIST2004-01-14 / atomic-dateTime-pattern-9
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -18375,7 +18375,7 @@ Grp: NIST2004-01-14 / atomic-dateTime-pattern-9
   OK NISTXML-SV-II-atomic-dateTime-pattern-5-4
     NISTXML-SV-II-atomic-dateTime-pattern-5-4.xml:19:138: string pattern not matched: \d\d59-\d3-\d4T1\d:\d9:3\d
   OK NISTXML-SV-II-atomic-dateTime-pattern-5-5
-    Invalid time: "40:44:50"
+    Invalid hour in time: "40:44:50"
 
 Grp: NIST2004-01-14 / atomic-dateTime-enumeration-5
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -18575,41 +18575,41 @@ Grp: NIST2004-01-14 / atomic-time-pattern-5
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-time-pattern-1
   OK NISTXML-SV-II-atomic-time-pattern-1-1
-    Invalid time: "56:42:06"
+    Invalid hour in time: "56:42:06"
   OK NISTXML-SV-II-atomic-time-pattern-1-2
-    Invalid time: "41:49:38"
+    Invalid hour in time: "41:49:38"
   OK NISTXML-SV-II-atomic-time-pattern-1-3
-    Invalid time: "24:51:31"
+    Invalid hour in time: "24:51:31"
   OK NISTXML-SV-II-atomic-time-pattern-1-4
-    Invalid time: "57:19:49"
+    Invalid hour in time: "57:19:49"
   OK NISTXML-SV-II-atomic-time-pattern-1-5
-    Invalid time: "41:37:05"
+    Invalid hour in time: "41:37:05"
 
 Grp: NIST2004-01-14 / atomic-time-pattern-6
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-time-pattern-2
   OK NISTXML-SV-II-atomic-time-pattern-2-1
-    Invalid time: "44:26:28"
+    Invalid hour in time: "44:26:28"
   OK NISTXML-SV-II-atomic-time-pattern-2-2
     NISTXML-SV-II-atomic-time-pattern-2-2.xml:19:119: string pattern not matched: 1\d:0\d:3\d
   OK NISTXML-SV-II-atomic-time-pattern-2-3
-    Invalid time: "47:42:05"
+    Invalid hour in time: "47:42:05"
   OK NISTXML-SV-II-atomic-time-pattern-2-4
-    Invalid time: "33:34:02"
+    Invalid hour in time: "33:34:02"
   OK NISTXML-SV-II-atomic-time-pattern-2-5
-    Invalid time: "59:17:12"
+    Invalid hour in time: "59:17:12"
 
 Grp: NIST2004-01-14 / atomic-time-pattern-7
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-time-pattern-3
   OK NISTXML-SV-II-atomic-time-pattern-3-1
-    Invalid time: "41:48:13"
+    Invalid hour in time: "41:48:13"
   OK NISTXML-SV-II-atomic-time-pattern-3-2
     NISTXML-SV-II-atomic-time-pattern-3-2.xml:19:119: string pattern not matched: 0\d:1\d:\d1
   OK NISTXML-SV-II-atomic-time-pattern-3-3
     NISTXML-SV-II-atomic-time-pattern-3-3.xml:19:119: string pattern not matched: 0\d:1\d:\d1
   OK NISTXML-SV-II-atomic-time-pattern-3-4
-    Invalid time: "25:38:35"
+    Invalid hour in time: "25:38:35"
   OK NISTXML-SV-II-atomic-time-pattern-3-5
     NISTXML-SV-II-atomic-time-pattern-3-5.xml:19:119: string pattern not matched: 0\d:1\d:\d1
 
@@ -18617,15 +18617,15 @@ Grp: NIST2004-01-14 / atomic-time-pattern-8
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
   OK NISTSchema-SV-II-atomic-time-pattern-4
   OK NISTXML-SV-II-atomic-time-pattern-4-1
-    Invalid time: "58:22:17"
+    Invalid hour in time: "58:22:17"
   OK NISTXML-SV-II-atomic-time-pattern-4-2
-    Invalid time: "47:32:47"
+    Invalid hour in time: "47:32:47"
   OK NISTXML-SV-II-atomic-time-pattern-4-3
-    Invalid time: "36:37:38"
+    Invalid hour in time: "36:37:38"
   OK NISTXML-SV-II-atomic-time-pattern-4-4
-    Invalid time: "35:38:14"
+    Invalid hour in time: "35:38:14"
   OK NISTXML-SV-II-atomic-time-pattern-4-5
-    Invalid time: "28:03:27"
+    Invalid hour in time: "28:03:27"
 
 Grp: NIST2004-01-14 / atomic-time-pattern-9
   100.0% tests= 6 (xsd= 1 xml= 5) OK= 6 FAILED= 0
@@ -63946,7 +63946,7 @@ Grp: MS-DataTypes2006-07-15 / time018_2026
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK time018_2026
   OK time018_2026.i
-    Invalid time: "25:20:00"
+    Invalid hour in time: "25:20:00"
 
 Grp: MS-DataTypes2006-07-15 / time019_2027
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -64021,7 +64021,7 @@ Grp: MS-DataTypes2006-07-15 / date011_2039
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK date011_2039
   OK date011_2039.i
-    Invalid date "123456"
+    Invalid separator in date value "123456"
 
 Grp: MS-DataTypes2006-07-15 / gYearMonth001_2040
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -92493,7 +92493,7 @@ Grp: MS-SimpleType2006-07-15 / stC034
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stC034
   OK stC034.i
-    stC034.xml:3:16: Invalid duration: "P1Y2M3DT3H2M23"
+    Invalid character ' ' in duration: "P1Y2M3DT3H2M23"
 
 Grp: MS-SimpleType2006-07-15 / stC035
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0

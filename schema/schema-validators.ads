@@ -137,9 +137,6 @@ package Schema.Validators is
       --  Mapping of IDs to elements
 
       Grammar   : XML_Grammar := No_Grammar;
-
-      Context   : Sax.Readers.Element_Access;
-      --  Current element being parsed
    end record;
    type Abstract_Validating_Reader_Access
      is access all Abstract_Validation_Reader'Class;

@@ -333,12 +333,11 @@ package body Schema.Schema_Readers is
          Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
 
          Get_NS (Grammar, Default_Namespace, Parser.Target_NS);
-         Get_NS (Grammar, XML_Schema_URI, Parser.Schema_NS);
+         Get_NS (Grammar, XML_Schema_URI,    Parser.Schema_NS);
 
          if Debug then
             Output ("Get_NS (Handler.Created_Grammar, {"
-                    & Get_Namespace_URI (Parser.Target_NS)
-                    & "}, Handler.Target_NS)");
+                    & Default_Namespace & "}, Handler.Target_NS)");
          end if;
 
          Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
@@ -978,9 +977,7 @@ package body Schema.Schema_Readers is
                   Form => Form);
                Is_Ref := False;
                Output (Ada_Name (Element)
-                       & " := Create_Global_Element ({"
-                       & Get_Namespace_URI (Handler.Target_NS)
-                       & "}, """
+                       & " := Create_Global_Element (Target_NS, """
                        & Get_Value (Atts, Name_Index) & """, " & Form'Img
                        & ");");
 
@@ -1388,9 +1385,8 @@ package body Schema.Schema_Readers is
            (Handler.Target_NS, Handler, C.Type_Name.all, C.Type_Validator);
          Set_Debug_Name (C.Type_Validator, "for_type_" & C.Type_Name.all);
          Output (Ada_Name (C)
-                 & " := Create_Global_Type ({"
-                 & Get_Namespace_URI (Handler.Target_NS)
-                 & "}, """ & C.Type_Name.all & """, Validator);");
+                 & " := Create_Global_Type (Target_NS, """
+                 & C.Type_Name.all & """, Validator);");
       end if;
 
       Set_Block (Typ, Handler.Contexts.Blocks);

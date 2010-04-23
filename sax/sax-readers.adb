@@ -580,7 +580,6 @@ package body Sax.Readers is
 
    procedure Find_NS
      (Parser  : in out Reader'Class;
-      Elem    : Element_Access;
       Prefix  : Token;
       NS      : out XML_NS;
       Include_Default_NS : Boolean := True);
@@ -1219,12 +1218,11 @@ package body Sax.Readers is
 
    procedure Find_NS
      (Parser  : in out Reader'Class;
-      Elem    : Element_Access;
       Prefix  : Token;
       NS      : out XML_NS;
       Include_Default_NS : Boolean := True) is
    begin
-      Find_NS (Parser, Elem, Parser.Buffer (Prefix.First .. Prefix.Last), NS,
+      Find_NS (Parser, Parser.Buffer (Prefix.First .. Prefix.Last), NS,
                Include_Default_NS);
       if NS = null then
          Fatal_Error
@@ -1239,12 +1237,11 @@ package body Sax.Readers is
 
    procedure Find_NS
      (Parser             : in out Reader'Class;
-      Context            : Element_Access;
       Prefix             : Byte_Sequence;
       NS                 : out XML_NS;
       Include_Default_NS : Boolean := True)
    is
-      E : Element_Access := Context;
+      E : Element_Access := Parser.Current_Node;
    begin
       loop
          --  Search in the default namespaces
@@ -1276,12 +1273,11 @@ package body Sax.Readers is
 
    procedure Find_NS_From_URI
      (Parser             : in out Reader'Class;
-      Context            : Element_Access;
       URI                : Unicode.CES.Byte_Sequence;
       NS                 : out XML_NS;
       Include_Default_NS : Boolean := True)
    is
-      E : Element_Access := Context;
+      E : Element_Access := Parser.Current_Node;
    begin
       loop
          --  Search in the default namespaces
@@ -4383,8 +4379,7 @@ package body Sax.Readers is
          Found_At : Integer;
       begin
          for J in 0 .. Get_Length (Attributes) - 1 loop
-            Find_NS (Parser, Parser.Current_Node,
-                     Get_URI (Attributes, J), NS,
+            Find_NS (Parser, Get_URI (Attributes, J), NS,
                      Include_Default_NS => False);
             if NS = null then
                Fatal_Error
@@ -4693,7 +4688,7 @@ package body Sax.Readers is
          --  And report the elements to the callbacks
 
          Set_State (Parser, Default_State);
-         Find_NS (Parser, Parser.Current_Node, Elem_NS_Id, NS);
+         Find_NS (Parser, Elem_NS_Id, NS);
 
          if Parser.Hooks.Start_Element /= null then
             Parser.Hooks.Start_Element
@@ -4949,7 +4944,7 @@ package body Sax.Readers is
       procedure End_Element (NS_Id, Name_Id : Token) is
          NS : XML_NS;
       begin
-         Find_NS (Parser, Parser.Current_Node, NS_Id, NS);
+         Find_NS (Parser, NS_Id, NS);
 
          if Parser.Hooks.End_Element /= null then
             Parser.Hooks.End_Element

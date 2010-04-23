@@ -268,7 +268,6 @@ package body Schema.Readers is
 
             Find_NS_From_URI
               (Handler.all,
-               Context => Handler.Context,
                URI     => URI,
                NS      => NS);
 
@@ -557,7 +556,7 @@ package body Schema.Readers is
       Elem          : Element_Access;
       Atts          : in out Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Qname);
+      pragma Unreferenced (Qname, Elem);
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
       Type_Index     : constant Integer := Get_Index
@@ -661,8 +660,6 @@ package body Schema.Readers is
                    & "Start_Element: " & To_QName (Namespace_URI, Local_Name)
                    & ASCII.ESC & "[39m");
       end if;
-
-      H.Context := Elem;
 
       Validate_Current_Characters (H);
 
@@ -807,7 +804,7 @@ package body Schema.Readers is
       Qname         : Unicode.CES.Byte_Sequence := "";
       Elem          : Element_Access)
    is
-      pragma Unreferenced (Namespace_URI);
+      pragma Unreferenced (Namespace_URI, Elem);
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
       Typ : XML_Type;
@@ -816,8 +813,6 @@ package body Schema.Readers is
          Put_Line (ASCII.ESC & "[33m"
                    & "End_Element: " & Local_Name & ASCII.ESC & "[39m");
       end if;
-
-      H.Context := Elem;
 
       if H.Validators /= null then
          Validate_Current_Characters (H);
@@ -995,7 +990,6 @@ package body Schema.Readers is
    begin
       Find_NS
         (Parser  => Handler,
-         Context => Handler.Context,
          Prefix  => Prefix,
          NS      => NS);
       if Get_URI (NS) = "" then

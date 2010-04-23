@@ -524,7 +524,6 @@ package Sax.Readers is
 
    procedure Find_NS
      (Parser             : in out Reader'Class;
-      Context            : Element_Access;
       Prefix             : Unicode.CES.Byte_Sequence;
       NS                 : out XML_NS;
       Include_Default_NS : Boolean := True);
@@ -537,7 +536,6 @@ package Sax.Readers is
 
    procedure Find_NS_From_URI
      (Parser             : in out Reader'Class;
-      Context            : Element_Access;
       URI                : Unicode.CES.Byte_Sequence;
       NS                 : out XML_NS;
       Include_Default_NS : Boolean := True);
