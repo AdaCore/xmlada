@@ -105,7 +105,8 @@ package body Schema.Validators.UR_Type is
               (NS, Reader, Local_Name, Create_If_Needed => False);
             if Element_Validator = No_Element then
                Validation_Error
-                 (Reader, "No definition provided for """ & Local_Name & """");
+                 (Reader,
+                  "#No definition provided for """ & Local_Name & """");
             else
                Check_Qualification
                  (Grammar, Reader, Element_Validator, Namespace_URI);

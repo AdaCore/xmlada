@@ -22,6 +22,10 @@ XSD files are no longer necessary.
 The Set_Validating_Grammar and Set_Created_Grammar subprograms were
 merged into Set_Grammar.
 Get_Created_Grammar was renames to Get_Grammar.
+In case of validation error, Parse raises the exception XML_Validation_Error
+as before; the text of the error message is no longer retrieved through
+Exception_Message (where GNAT limits its length), but through a new subprogram
+Get_Error_Message.
 
 New features in version 4.0
 ---------------------------

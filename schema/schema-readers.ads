@@ -45,6 +45,9 @@ package Schema.Readers is
    --     Parse (Validating_Reader (Your_Reader), Input);
    --  and not  Parse (Reader (Your_Reader), Input) to get validation.
    --
+   --  In case of validation error, the exception XML_Validation_Error is
+   --  raised, and you can get the error message by calling Get_Error_Message.
+   --
    --  In most cases, the reader will find by itself what variable should be
    --  used, from the contents of the XML file:
    --  It uses the attribute of the nodes to find out what grammar, for
@@ -74,6 +77,14 @@ package Schema.Readers is
    --  On the other hand, when parsing XML files, Grammar must have been
    --  initialized (in general through a call to Schema.Schema_Readers.Parse).
    --  If Set_Grammar is not called, no validation takes place.
+
+   function Get_Error_Message
+     (Reader : Validating_Reader) return Unicode.CES.Byte_Sequence;
+   --  Return the current error message
+
+   function Get_Location
+     (Reader : Validating_Reader) return Sax.Locators.Locator;
+   --  Return the current location
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;

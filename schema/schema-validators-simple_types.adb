@@ -423,7 +423,8 @@ package body Schema.Validators.Simple_Types is
             Mask (Facet_Max_Exclusive) := False;
             if Facets.Max_Exclusive <= Val then
                Validation_Error
-                 (Reader, Node_Value & " is greater than maxExclusive ("
+                 (Reader,
+                  '#' & Node_Value & " is greater than maxExclusive ("
                   & Image (Facets.Max_Exclusive) & ")");
             end if;
          end if;
@@ -434,7 +435,8 @@ package body Schema.Validators.Simple_Types is
             Mask (Facet_Max_Inclusive) := False;
             if Facets.Max_Inclusive < Val then
                Validation_Error
-                 (Reader, Node_Value & " is greater than maxInclusive ("
+                 (Reader,
+                  '#' & Node_Value & " is greater than maxInclusive ("
                   & Image (Facets.Max_Inclusive) & ")");
             end if;
          end if;
@@ -445,7 +447,8 @@ package body Schema.Validators.Simple_Types is
             Mask (Facet_Min_Inclusive) := False;
             if Facets.Min_Inclusive > Val then
                Validation_Error
-                 (Reader, Node_Value & " is smaller than minInclusive ("
+                 (Reader,
+                  '#' & Node_Value & " is smaller than minInclusive ("
                   & Image (Facets.Min_Inclusive) & ")");
             end if;
          end if;
@@ -456,7 +459,8 @@ package body Schema.Validators.Simple_Types is
             Mask (Facet_Min_Exclusive) := False;
             if Facets.Min_Exclusive >= Val then
                Validation_Error
-                 (Reader, Node_Value & " is smaller than minExclusive ("
+                 (Reader,
+                  '#' & Node_Value & " is smaller than minExclusive ("
                   & Image (Facets.Min_Exclusive) & ")");
             end if;
          end if;
@@ -464,7 +468,7 @@ package body Schema.Validators.Simple_Types is
       exception
          when Constraint_Error =>
             Validation_Error
-              (Reader, "Invalid " & Type_Name & ": """ & Node_Value & """");
+              (Reader, "#Invalid " & Type_Name & ": """ & Node_Value & """");
       end Check_Facet;
 
       ---------------
@@ -506,7 +510,8 @@ package body Schema.Validators.Simple_Types is
       exception
          when Constraint_Error =>
             Validation_Error
-              (Reader, "Invalid " & Facet_Name & ": """ & Facet_Value & """");
+              (Reader,
+               "#Invalid " & Facet_Name & ": """ & Facet_Value & """");
       end Add_Facet;
    end Generic_Range_Facets;
 
@@ -585,8 +590,8 @@ package body Schema.Validators.Simple_Types is
                if Facets.Length /= Length then
                   Validation_Error
                     (Reader,
-                     "Invalid length, must be" & Integer'Image (Facets.Length)
-                     & " characters");
+                     "#Invalid length, must be"
+                     & Integer'Image (Facets.Length) & " characters");
                end if;
             end if;
 
@@ -594,7 +599,7 @@ package body Schema.Validators.Simple_Types is
                Mask (Facet_Min_Length) := False;
                if Length < Facets.Min_Length then
                   Validation_Error (Reader,
-                                    "String is too short, minimum length is"
+                                    "#String is too short, minimum length is"
                                     & Integer'Image (Facets.Min_Length)
                                     & " characters");
                end if;
@@ -604,7 +609,7 @@ package body Schema.Validators.Simple_Types is
                Mask (Facet_Max_Length) := False;
                if Length > Facets.Max_Length then
                   Validation_Error (Reader,
-                                    "String too long, maximum length is"
+                                    "#String too long, maximum length is"
                                     & Integer'Image (Facets.Max_Length)
                                     & " characters");
                end if;
@@ -683,7 +688,7 @@ package body Schema.Validators.Simple_Types is
            (Get_Facets (Validator, Reader).all, Reader,
             Facet_Name, Facet_Value, Applies);
          if not Applies then
-            Validation_Error (Reader, "Invalid facet: " & Facet_Name);
+            Validation_Error (Reader, "#Invalid facet: " & Facet_Name);
          end if;
       end Add_Facet;
 
@@ -904,7 +909,7 @@ package body Schema.Validators.Simple_Types is
       NS  : XML_NS;
    begin
       if not Is_Valid_QName (Ch) then
-         Validation_Error (Reader, "Invalid QName: """ & Ch & '"');
+         Validation_Error (Reader, "#Invalid QName: """ & Ch & '"');
       end if;
 
       Pos := Ada.Strings.Fixed.Index (Ch, ":");
@@ -916,7 +921,7 @@ package body Schema.Validators.Simple_Types is
             NS      => NS);
          if NS = No_XML_NS or else Get_URI (NS) = "xmlns" then
             Validation_Error (Reader,
-                              "No corresponding namespace in scope for """
+                              "#No corresponding namespace in scope for """
                               & Ch (Ch'First .. Pos - 1) & '"');
          end if;
       end if;
@@ -935,7 +940,7 @@ package body Schema.Validators.Simple_Types is
    begin
       if Sax.Encodings.Encoding.Length (Ch) mod 2 /= 0 then
          Validation_Error
-           (Reader, "HexBinary length must be an even number of characters");
+           (Reader, "#HexBinary length must be an even number of characters");
       end if;
       HexBinary_Validators.Validate_Characters
         (HexBinary_Validators.Validator_Record (Validator.all)'Access,
@@ -1013,7 +1018,7 @@ package body Schema.Validators.Simple_Types is
          Mask (Facet_Total_Digits) := False;
          if Facet_Value'Length > Facets.Total_Digits then
             Validation_Error
-              (Reader, "The maximum number of digits is"
+              (Reader, "#The maximum number of digits is"
                & Integer'Image (Facets.Total_Digits));
          end if;
       end if;
@@ -1048,7 +1053,8 @@ package body Schema.Validators.Simple_Types is
       elsif Facet_Name = "fractionDigits" then
          Val := Integer'Value (Facet_Value);
          if Val /= 0 then
-            Validation_Error (Reader, "fractionDigits must be 0 for integers");
+            Validation_Error
+              (Reader, "#fractionDigits must be 0 for integers");
          end if;
          Applied := True;
       else
@@ -1084,7 +1090,7 @@ package body Schema.Validators.Simple_Types is
            and then Facets.Fraction_Digits > Facets.Total_Digits
          then
             Validation_Error
-              (Reader, "fractionDigits cannot be greater than totalDigits");
+              (Reader, "#fractionDigits cannot be greater than totalDigits");
          end if;
 
          Applied := True;
@@ -1094,7 +1100,7 @@ package body Schema.Validators.Simple_Types is
            and then Facets.Fraction_Digits > Facets.Total_Digits
          then
             Validation_Error
-              (Reader, "fractionDigits cannot be greater than totalDigits");
+              (Reader, "#fractionDigits cannot be greater than totalDigits");
          end if;
          Applied := True;
       else
@@ -1184,7 +1190,7 @@ package body Schema.Validators.Simple_Types is
 
       else
          Validation_Error
-           (Reader, "Invalid value for boolean type: """ & Ch & """");
+           (Reader, "#Invalid value for boolean type: """ & Ch & """");
       end if;
 
       --  Skip trailing spaces
@@ -1193,7 +1199,7 @@ package body Schema.Validators.Simple_Types is
          Encoding.Read (Ch, First, C);
          if not Is_White_Space (C) then
             Validation_Error
-              (Reader, "Invalid value for boolean type: """ & Ch & """");
+              (Reader, "#Invalid value for boolean type: """ & Ch & """");
          end if;
       end loop;
 
@@ -1237,7 +1243,7 @@ package body Schema.Validators.Simple_Types is
 
       if Ch = "" then
          Validation_Error
-           (Reader, "Invalid value for boolean type: """ & Ch & """");
+           (Reader, "#Invalid value for boolean type: """ & Ch & """");
       end if;
 
       Check_Facet (Get_Facets (Validator, Reader).all, Reader, Ch, Mask);
@@ -1260,7 +1266,7 @@ package body Schema.Validators.Simple_Types is
         (Get_Facets (Validator, Reader).all, Reader,
          Facet_Name, Facet_Value, Applies);
       if not Applies then
-         Validation_Error (Reader, "Invalid facet: " & Facet_Name);
+         Validation_Error (Reader, "#Invalid facet: " & Facet_Name);
       end if;
    end Add_Facet;
 
@@ -1443,7 +1449,8 @@ package body Schema.Validators.Simple_Types is
          then
             Validation_Error
               (Reader,
-               "NaN is greater than all numbers, and too big in this context");
+               "#NaN is greater than all numbers, "
+               & "and too big in this context");
          end if;
          Mask (Facet_Max_Inclusive) := False;
          Mask (Facet_Max_Exclusive) := False;
@@ -1456,7 +1463,7 @@ package body Schema.Validators.Simple_Types is
          then
             Validation_Error
               (Reader,
-               "INF is greater than maxInclusive and maxExclusive");
+               "#INF is greater than maxInclusive and maxExclusive");
          end if;
          Mask (Facet_Max_Inclusive) := False;
          Mask (Facet_Max_Exclusive) := False;
@@ -1468,7 +1475,7 @@ package body Schema.Validators.Simple_Types is
                and Mask (Facet_Min_Exclusive))
          then
             Validation_Error
-              (Reader, "-INF is smaller than minInclusive and minExclusive");
+              (Reader, "#-INF is smaller than minInclusive and minExclusive");
          end if;
          Mask (Facet_Min_Inclusive) := False;
          Mask (Facet_Min_Exclusive) := False;
@@ -1731,7 +1738,7 @@ package body Schema.Validators.Simple_Types is
    begin
       Validation_Error
         (Reader,
-         "Must be a simple type, no <" & Local_Name & "> child allowed");
+         "#Must be a simple type, no <" & Local_Name & "> child allowed");
       Element_Validator := No_Element;
    end Validate_Start_Element;
 
@@ -1843,7 +1850,7 @@ package body Schema.Validators.Simple_Types is
          if Empty_Element then
             return;
          else
-            Validation_Error (Reader, "No content allowed for this union");
+            Validation_Error (Reader, "#No content allowed for this union");
          end if;
       end if;
 
@@ -1868,7 +1875,7 @@ package body Schema.Validators.Simple_Types is
       end loop;
 
       Free (Iter);
-      Validation_Error (Reader, "Invalid value """ & Ch & """");
+      Validation_Error (Reader, "#Invalid value """ & Ch & """");
    end Validate_Characters;
 
    ------------------------
@@ -1884,7 +1891,7 @@ package body Schema.Validators.Simple_Types is
    begin
       if not Should_Be_Simple then
          Validation_Error
-           (Reader, "Expecting simple type, got complex type");
+           (Reader, "#Expecting simple type, got complex type");
       end if;
    end Check_Content_Type;
 

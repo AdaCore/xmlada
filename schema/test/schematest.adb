@@ -406,12 +406,21 @@ procedure Schematest is
                Result.Msg  := To_Unbounded_String (Exception_Message (E));
                Failed_Grammar := True;
 
-            when E : XML_Validation_Error | XML_Fatal_Error =>
+            when E : XML_Validation_Error =>
                Close (Input);
-               Result.Msg  := To_Unbounded_String (Exception_Message (E));
+               Result.Msg  := To_Unbounded_String (Get_Error_Message (Reader));
                Failed_Grammar := True;
                if Outcome = Valid then
                   Result.Kind    := XSD_Should_Pass;
+               else
+                  Result.Kind := Passed;
+               end if;
+
+            when E : XML_Fatal_Error =>
+               Close (Input);
+               Result.Msg  := To_Unbounded_String (Exception_Message (E));
+               if Outcome = Valid then
+                  Result.Kind := XSD_Should_Pass;
                else
                   Result.Kind := Passed;
                end if;
@@ -513,7 +522,17 @@ procedure Schematest is
                   Result.Kind := Not_Implemented;
                   Result.Msg  := To_Unbounded_String (Exception_Message (E));
 
-               when E : XML_Validation_Error | XML_Fatal_Error =>
+               when E : XML_Validation_Error =>
+                  Close (Input);
+                  Result.Msg  :=
+                    To_Unbounded_String (Get_Error_Message (Reader));
+                  if Outcome = Valid then
+                     Result.Kind := XML_Should_Pass;
+                  else
+                     Result.Kind := Passed;
+                  end if;
+
+               when E : XML_Fatal_Error =>
                   Close (Input);
                   Result.Msg  := To_Unbounded_String (Exception_Message (E));
                   if Outcome = Valid then

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -239,24 +239,26 @@ package body Sax.Locators is
       C    : constant Natural := Get_Column_Number (Loc);
       Line : constant String := Natural'Image (Get_Line_Number (Loc));
       Col  : constant String := Natural'Image (C);
+      Public : constant Byte_Sequence := Get_Public_Id (Loc);
    begin
-      if C /= 0 then
+      if Public = "" then
+         return "";
+      elsif C /= 0 then
          if Use_Basename then
-            return (Base_Name (Get_Public_Id (Loc)) & ':'
+            return (Base_Name (Public) & ':'
                     & Line (Line'First + 1 .. Line'Last)
                     & ':' & Col (Col'First + 1 .. Col'Last));
          else
-            return (Get_Public_Id (Loc) & ':'
+            return (Public & ':'
                     & Line (Line'First + 1 .. Line'Last)
                     & ':' & Col (Col'First + 1 .. Col'Last));
          end if;
       else
          if Use_Basename then
-            return (Base_Name (Get_Public_Id (Loc)) & ':'
-                    & Line (Line'First + 1 .. Line'Last));
+            return
+              (Base_Name (Public) & ':' & Line (Line'First + 1 .. Line'Last));
          else
-            return (Get_Public_Id (Loc) & ':'
-                    & Line (Line'First + 1 .. Line'Last));
+            return (Public & ':' & Line (Line'First + 1 .. Line'Last));
          end if;
       end if;
    end To_String;

@@ -29,6 +29,7 @@
 with Unicode.CES;
 with Sax.Attributes;
 with Sax.HTable;
+with Sax.Locators;
 with Sax.Pointers;
 with Sax.Readers;
 with Sax.Utils;
@@ -146,12 +147,15 @@ package Schema.Validators is
    procedure Validation_Error
      (Reader  : access Abstract_Validation_Reader;
       Message : Unicode.CES.Byte_Sequence);
-   --  Raises Validation_Error with a proper error message.
+   --  Sets an error message, and raise XML_Validation_Error.
+   --  The message can contain special characters like:
+   --    '#': if first character, it will be replaced by the current location
+   --         of the Reader
 
-   function Get_Error_Message
-     (Reader : Abstract_Validation_Reader)
-      return Unicode.CES.Byte_Sequence;
-   --  Return the current error message
+   function Get_Location
+     (Reader : Abstract_Validation_Reader) return Sax.Locators.Locator
+     is abstract;
+   --  Return the current location in the file
 
    procedure Free (Reader : access Abstract_Validation_Reader);
    --  Free the contents of Reader

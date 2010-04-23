@@ -28,8 +28,8 @@
 
 with Schema.Decimal;    use Schema.Decimal;
 with GNAT.IO;           use GNAT.IO;
+with Sax.Locators;      use Sax.Locators;
 with Schema.Validators; use Schema.Validators;
-with Unicode.CES;       use Unicode.CES;
 
 procedure TestNumbers is
    procedure Assert_Nan (Num : String);
@@ -39,10 +39,24 @@ procedure TestNumbers is
    --  Compare two numbers
 
    type Local_Reader is new Abstract_Validation_Reader with null record;
+   function Get_Location
+     (Reader : Local_Reader) return Sax.Locators.Locator;
 
    Reader : aliased Local_Reader;
    R      : constant Abstract_Validating_Reader_Access :=
      Reader'Unchecked_Access;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location
+     (Reader : Local_Reader) return Sax.Locators.Locator
+   is
+      pragma Unreferenced (Reader);
+   begin
+      return No_Locator;
+   end Get_Location;
 
    ----------------
    -- Assert_Nan --

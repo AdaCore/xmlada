@@ -154,7 +154,7 @@ package body Schema.Validators.Restrictions is
             end if;
          else
             Validation_Error
-              (Reader, "The type """ & To_QName (Validator.Base)
+              (Reader, "#The type """ & To_QName (Validator.Base)
                & """ isn't known at this point. Please check the name and"
                & " namespace");
          end if;
@@ -287,12 +287,12 @@ package body Schema.Validators.Restrictions is
       Facets  : constant Facets_Description := Get_Facets (Validator, Reader);
    begin
       if Facets = null then
-         Validation_Error (Reader, "No facet overridable for this type");
+         Validation_Error (Reader, "#No facet overridable for this type");
       end if;
 
       Add_Facet (Facets.all, Reader, Facet_Name, Facet_Value, Applies);
       if not Applies then
-         Validation_Error (Reader, "Invalid facet: " & Facet_Name);
+         Validation_Error (Reader, "#Invalid facet: " & Facet_Name);
       end if;
    end Add_Facet;
 
@@ -436,7 +436,7 @@ package body Schema.Validators.Restrictions is
    begin
       if Get_Final_On_Restriction (Base) then
          Validation_Error
-           (Reader, "Type """ & To_QName (Base) & """ forbids restrictions");
+           (Reader, "#Type """ & To_QName (Base) & """ forbids restrictions");
       end if;
 
       Register (G, Base);

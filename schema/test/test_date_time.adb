@@ -31,11 +31,12 @@ with Schema.Date_Time;         use Schema.Date_Time;
 with Schema.Validators;        use Schema.Validators;
 with Schema.Validators.Facets; use Schema.Validators.Facets;
 with GNAT.IO;                  use GNAT.IO;
-with Unicode.CES;              use Unicode.CES;
+with Sax.Locators;             use Sax.Locators;
 
 procedure Test_Date_Time is
 
    type Local_Reader is new Abstract_Validation_Reader with null record;
+   function Get_Location (Reader : Local_Reader) return Sax.Locators.Locator;
 
    Reader : aliased Local_Reader;
    R      : constant Abstract_Validating_Reader_Access :=
@@ -62,6 +63,18 @@ procedure Test_Date_Time is
 
    procedure Assert_Re (Re1, Re2 : String);
    --  Compare the conversion of Re1 to Re2
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location
+     (Reader : Local_Reader) return Sax.Locators.Locator
+   is
+      pragma Unreferenced (Reader);
+   begin
+      return No_Locator;
+   end Get_Location;
 
    ------------------
    -- Assert_Equal --

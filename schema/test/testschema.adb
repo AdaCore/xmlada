@@ -56,6 +56,7 @@ procedure TestSchema is
    Explicit_XSD : Boolean := False;
    Switches     : constant String := "xsd: debug base dom h";
    DOM          : Boolean := False;
+   Base_Names   : Boolean := False;
 
 begin
    --  Special case: check if we want debug output, before doing anything else
@@ -83,14 +84,6 @@ begin
       end case;
    end loop;
 
-   --  Create the parser
-
-   if DOM then
-      My_Reader := new Standard.Schema.Dom_Readers.Tree_Reader;
-   else
-      My_Reader := new Standard.Schema.Readers.Validating_Reader;
-   end if;
-
    --  We want to validate with possibly several schemas to parse first. This
    --  is slightly more complex than a single grammar, since some checks can
    --  only be done at the end, and we need to let XML/Ada know about that.
@@ -107,20 +100,14 @@ begin
                Put_Line ("Parsing schema: " & Parameter);
             end if;
 
-            begin
-               Open (Parameter, Read);
-               Parse (Schema, Read);
-               Close (Read);
-               Explicit_XSD := True;
-            exception
-               when XML_Validation_Error =>
-                  Close (Read);
-                  raise;
-            end;
+            Open (Parameter, Read);
+            Parse (Schema, Read);
+            Close (Read);
+            Explicit_XSD := True;
 
          when 'b' =>
-            Use_Basename_In_Error_Messages (Schema, True);
-            Use_Basename_In_Error_Messages (My_Reader.all, True);
+            Base_Names := True;
+            Use_Basename_In_Error_Messages (Schema, Base_Names);
 
          when 'd' =>
             null; --  Already handled
@@ -129,6 +116,16 @@ begin
             exit;
       end case;
    end loop;
+
+   --  Create the parser
+
+   if DOM then
+      My_Reader := new Standard.Schema.Dom_Readers.Tree_Reader;
+   else
+      My_Reader := new Standard.Schema.Readers.Validating_Reader;
+   end if;
+
+   Use_Basename_In_Error_Messages (My_Reader.all, Base_Names);
 
    --  If we have at least one schema, we need to perform the final checks
    --  to make sure they are correct and leave no undefined entity.
@@ -183,7 +180,16 @@ begin
    end loop;
 
 exception
-   when E : XML_Validation_Error | XML_Fatal_Error | XML_Not_Implemented =>
+   when XML_Validation_Error =>
+      if My_Reader = null then
+         Put_Line (Get_Error_Message (Schema));
+      else
+         Put_Line (Get_Error_Message (My_Reader.all));
+      end if;
+
+      Close (Read);
+
+   when E : XML_Fatal_Error | XML_Not_Implemented =>
       Put_Line (Exception_Message (E));
       Close (Read);
 end TestSchema;

@@ -35,7 +35,7 @@ with Sax.Encodings;     use Sax.Encodings;
 with Sax.Utils;         use Sax.Utils;
 with Sax.Readers;       use Sax.Readers;
 with Schema.Validators; use Schema.Validators;
-with Ada.Exceptions;    use Ada.Exceptions;
+--  with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
@@ -278,7 +278,7 @@ package body Schema.Readers is
             then
                Validation_Error
                  (Handler,
-                  "schemaLocation for """
+                  "#schemaLocation for """
                   & URI & """ cannot occur after the first"
                   & " element of that namespace in XSD 1.0");
             end if;
@@ -301,8 +301,20 @@ package body Schema.Readers is
       Set_Grammar (Schema, Handler.Grammar);
       Use_Basename_In_Error_Messages
         (Schema, Use_Basename_In_Error_Messages (Handler.all));
-      Parse (Schema, File,
-             Default_Namespace => URI, Do_Global_Check => Do_Global_Check);
+
+      begin
+         Parse (Schema, File,
+                Default_Namespace => URI, Do_Global_Check => Do_Global_Check);
+      exception
+         when XML_Validation_Error =>
+            --  Have to resolve locations and context now through
+            --  Get_Error_Message, since the error was in another parser
+            Free (Handler.Error_Msg);
+            Handler.Error_Msg :=
+              new Byte_Sequence'(Get_Error_Message (Schema));
+            raise;
+      end;
+
       Close (File);
 
       if Debug then
@@ -417,7 +429,7 @@ package body Schema.Readers is
                   Free (Handler.Validators.Characters);
                   Validation_Error
                     (Handler,
-                     "Element has character data, but is declared as nil");
+                     "#Element has character data, but is declared as nil");
                end if;
 
             elsif Has_Fixed (Handler.all) then
@@ -455,7 +467,7 @@ package body Schema.Readers is
                   then
                      Free (Handler.Validators.Characters);
                      Validation_Error
-                       (Handler, "Element's value must be """
+                       (Handler, "#Element's value must be """
                         & Get_Fixed (Handler.Validators.Element).all & """");
                   end if;
                end if;
@@ -473,7 +485,7 @@ package body Schema.Readers is
                then
                   Validation_Error
                     (Handler,
-                     "No character data allowed by content model");
+                     "#No character data allowed by content model");
                end if;
 
                --  If we had a <simpleType> we need to normalize whitespaces
@@ -602,7 +614,7 @@ package body Schema.Readers is
                if Typ = No_Type then
                   Validation_Error
                     (H,
-                     "Unknown type """ & Get_Value (Atts, Type_Index) & '"');
+                     "#Unknown type """ & Get_Value (Atts, Type_Index) & '"');
                end if;
 
                if Element /= No_Element
@@ -617,7 +629,7 @@ package body Schema.Readers is
 
                   if not Valid then
                      Validation_Error
-                       (H, Qname & " is not a valid replacement for "
+                       (H, '#' & Qname & " is not a valid replacement for "
                         & To_QName (Get_Type (Element)));
                   end if;
 
@@ -625,7 +637,7 @@ package body Schema.Readers is
                     and then Get_Block (Element)(Block_Restriction)
                   then
                      Validation_Error
-                       (H, "Element """ & To_QName (Element)
+                       (H, "#Element """ & To_QName (Element)
                         & """ blocks the use of restrictions of the type");
                   end if;
 
@@ -633,7 +645,7 @@ package body Schema.Readers is
                     and then Get_Block (Element)(Block_Extension)
                   then
                      Validation_Error
-                       (H, "Element """ & To_QName (Element)
+                       (H, "#Element """ & To_QName (Element)
                         & """ blocks the use of extensions of the type");
                   end if;
                end if;
@@ -684,7 +696,7 @@ package body Schema.Readers is
 
          if Has_Fixed (Handler.all) then
             Validation_Error
-              (H, "No child allowed because """
+              (H, "#No child allowed because """
                & To_QName (H.Validators.Element)
                & """ has a fixed value");
          end if;
@@ -700,18 +712,18 @@ package body Schema.Readers is
       if Element = No_Element and then Type_Index = -1 then
          if H.Validators /= null then
             Validation_Error
-              (H, "Unexpected element """ &
+              (H, "#Unexpected element """ &
                To_QName (Namespace_URI, Local_Name) & """");
          else
             Validation_Error
-              (H, "Element """ & To_QName (Namespace_URI, Local_Name)
+              (H, "#Element """ & To_QName (Namespace_URI, Local_Name)
                & """: No matching declaration available");
          end if;
       end if;
 
       if Element /= No_Element and then Is_Abstract (Element) then
          Validation_Error
-           (H, "Element """ & To_QName (Namespace_URI, Local_Name)
+           (H, "#Element """ & To_QName (Namespace_URI, Local_Name)
             & """ is abstract");
       end if;
 
@@ -720,7 +732,7 @@ package body Schema.Readers is
       if Xsi_Type = No_Type then
          if Element = No_Element then
             Validation_Error
-              (H, "Type """ & Get_Value (Atts, Type_Index)
+              (H, "#Type """ & Get_Value (Atts, Type_Index)
                & """: No matching declaration available");
          else
             Typ := Get_Type (Element);
@@ -740,7 +752,8 @@ package body Schema.Readers is
          if H.Validators.Is_Nil then
             Validation_Error
               (H,
-               "Element is set as nil, and doesn't accept any child element");
+               "#Element is set as nil,"
+               & " and doesn't accept any child element");
          end if;
       else
          --  For root element, we need to check nillable here, otherwise this
@@ -755,7 +768,7 @@ package body Schema.Readers is
             if Nil_Index /= -1 then
                if not Is_Nillable (Element) then
                   Validation_Error
-                    (H, "Element """ & To_QName (Namespace_URI, Local_Name)
+                    (H, "#Element """ & To_QName (Namespace_URI, Local_Name)
                      & """ cannot be nil");
                end if;
 
@@ -771,7 +784,7 @@ package body Schema.Readers is
         and then Has_Fixed (Element)
       then
          Validation_Error
-           (H, "Element cannot be nilled because"
+           (H, "#Element cannot be nilled because"
             & " a fixed value is defined for it");
       end if;
 
@@ -890,7 +903,8 @@ package body Schema.Readers is
 
    procedure Reset (Parser : in out Validating_Reader) is
    begin
-      Parser.Locator := No_Locator;
+      --  Save current location, for retrieval by Get_Error_Message
+      Parser.Locator := Get_Location (Parser);
       Free (Parser.Id_Table);
       Clear (Parser.Validators);
    end Reset;
@@ -901,9 +915,7 @@ package body Schema.Readers is
 
    procedure Parse
      (Parser : in out Validating_Reader;
-      Input  : in out Input_Sources.Input_Source'Class)
-   is
-      Loc : aliased Locator;
+      Input  : in out Input_Sources.Input_Source'Class) is
    begin
       if Get_Feature (Parser, Schema_Validation_Feature) then
          Set_Hooks (Parser,
@@ -923,26 +935,11 @@ package body Schema.Readers is
                     Doc_Locator   => null);
       end if;
 
-      Initialize_Grammar (Parser'Unrestricted_Access);
+      Initialize_Grammar (Parser'Unchecked_Access);
       Sax.Readers.Parse (Sax.Readers.Reader (Parser), Input);
       Reset (Parser);
 
    exception
-      when E : XML_Validation_Error =>
-         if Parser.Validators /= null
-           and then Parser.Validators.Start_Loc /= No_Locator
-         then
-            Copy (Loc, Parser.Validators.Start_Loc);
-         else
-            Copy (Loc, Parser.Locator);
-         end if;
-
-         Reset (Parser);
-
-         Validation_Error
-           (Parser, Create (Byte_Sequence (Exception_Message (E)),
-            Loc));
-
       when others =>
          Reset (Parser);
          raise;
@@ -954,14 +951,28 @@ package body Schema.Readers is
 
    procedure Validation_Error
      (Reader : in out Validating_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class) is
+      Except : Sax.Exceptions.Sax_Parse_Exception'Class)
+   is
+      pragma Unreferenced (Reader, Except);
    begin
-      Validation_Error
-        (Reader'Access,
-         To_String (Get_Locator (Except),
-                    Use_Basename_In_Error_Messages (Reader))
-         & ": " & String (Get_Message (Except)));
+      null;
    end Validation_Error;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location
+     (Reader : Validating_Reader) return Sax.Locators.Locator is
+   begin
+      if Reader.Validators /= null
+        and then Reader.Validators.Start_Loc /= No_Locator
+      then
+         return Reader.Validators.Start_Loc;
+      else
+         return Reader.Locator;
+      end if;
+   end Get_Location;
 
    -------------------------------
    -- Hook_Set_Document_Locator --
@@ -992,4 +1003,34 @@ package body Schema.Readers is
          NS := No_XML_NS;
       end if;
    end Get_Namespace_From_Prefix;
+
+   -----------------------
+   -- Get_Error_Message --
+   -----------------------
+
+   function Get_Error_Message
+     (Reader : Validating_Reader) return Unicode.CES.Byte_Sequence
+   is
+      Loc : constant Locator :=
+        Get_Location (Abstract_Validation_Reader'Class (Reader));
+   begin
+      if Reader.Error_Msg = null then
+         return "";
+
+      elsif Reader.Error_Msg (Reader.Error_Msg'First) = '#' then
+         if Loc /= No_Locator then
+            return To_String (Loc, Use_Basename_In_Error_Messages (Reader))
+              & ": "
+              & Reader.Error_Msg (Reader.Error_Msg'First + 1
+                                  .. Reader.Error_Msg'Last);
+         else
+            return Reader.Error_Msg (Reader.Error_Msg'First + 1
+                                     .. Reader.Error_Msg'Last);
+         end if;
+
+      else
+         return Reader.Error_Msg.all;
+      end if;
+   end Get_Error_Message;
+
 end Schema.Readers;

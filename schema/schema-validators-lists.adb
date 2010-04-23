@@ -175,7 +175,7 @@ package body Schema.Validators.Lists is
             Mask (Facet_Length) := False;
             if Length /= Facets.Length then
                Validation_Error
-                 (Reader, "Invalid number of elements in list, expecting"
+                 (Reader, "#Invalid number of elements in list, expecting"
                   & Integer'Image (Facets.Length));
             end if;
          end if;
@@ -185,7 +185,7 @@ package body Schema.Validators.Lists is
             if Length < Facets.Min_Length then
                Validation_Error
                  (Reader,
-                  "Invalid number of elements in list, expecting at least"
+                  "#Invalid number of elements in list, expecting at least"
                   & Integer'Image (Facets.Min_Length));
             end if;
          end if;
@@ -195,7 +195,7 @@ package body Schema.Validators.Lists is
             if Length > Facets.Max_Length then
                Validation_Error
                  (Reader,
-                  "Invalid number of elements in list, expecting at most"
+                  "#Invalid number of elements in list, expecting at most"
                   & Integer'Image (Facets.Max_Length));
             end if;
          end if;

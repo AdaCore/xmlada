@@ -159,7 +159,7 @@ expect "$act/F511-009/xmldsig-core-schema.xsd" "$act/F511-009/Untitled7-2.xml" \
 (cd act_testsuite/multiple_schemas; compare "multiple_schemas" "`./run.sh 2>&1`" "")
 expect "" "$act/F822-009/file.xml" ""
 expect "$act/FA16-002/6_xhtml1-frameset.xsd" "" "Unsupported type IDREF and IDREFS"
-expect "" "$act/F822-009_2/file.xml" "file.xml:8:2: test.xsd:21:43: Declaration not found for {http://www.w3.org/2001/XMLSchema}attributes2"
+expect "" "$act/F822-009_2/file.xml" "test.xsd:21:43: Declaration not found for {http://www.w3.org/2001/XMLSchema}attributes2"
 expect "" "$act/G404-019/c_test.xml" "c_test.xml:16:10: Attribute \"subSystemId\" is required in this context"
    #expect "" "$act/H212-023/default_H212-023.xml" "<root xsi:noNamespaceSchemaLocation=\"H212-023.xsd\"> <Acknowledge>false</Acknowledge></root>" "-dom"
 expect "$act/I723-028/test.xsd" "" ""

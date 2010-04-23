@@ -38,6 +38,7 @@ with Input_Sources;
 package Schema.Schema_Readers is
 
    type Schema_Reader is new Schema.Readers.Validating_Reader with private;
+   type Schema_Reader_Access is access all Schema_Reader'Class;
    --  An XML reader that parses an XML schema, and store the information in
    --  a grammar
 

@@ -34,6 +34,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.IO;                        use GNAT.IO;
 with Sax.Attributes;                 use Sax.Attributes;
 with Sax.Encodings;                  use Sax.Encodings;
+with Sax.Locators;                   use Sax.Locators;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
 with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
@@ -262,8 +263,7 @@ package body Schema.Validators is
 
    procedure Validation_Error
      (Reader  : access Abstract_Validation_Reader;
-      Message : Byte_Sequence)
-   is
+      Message : Byte_Sequence) is
    begin
       if Debug then
          Debug_Output ("Validation_Error: " & Message);
@@ -272,7 +272,7 @@ package body Schema.Validators is
       Free (Reader.Error_Msg);
       Reader.Error_Msg := new Byte_Sequence'(Message);
 
-      Raise_Exception (XML_Validation_Error'Identity, Message);
+      Raise_Exception (XML_Validation_Error'Identity);
    end Validation_Error;
 
    ----------
@@ -542,7 +542,7 @@ package body Schema.Validators is
       L : Attribute_Validator_List_Access;
    begin
       if Group = null then
-         Validation_Error (Reader, "Cannot add null attribute group");
+         Validation_Error (Reader, "#Cannot add null attribute group");
       end if;
 
       if List /= null then
@@ -707,7 +707,7 @@ package body Schema.Validators is
       pragma Unreferenced (Validator, Data, Namespace_URI, NS, Grammar);
    begin
       Validation_Error
-        (Reader, "No definition found for """ & Local_Name & """");
+        (Reader, "#No definition found for """ & Local_Name & """");
       Element_Validator := No_Element;
    end Validate_Start_Element;
 
@@ -801,7 +801,7 @@ package body Schema.Validators is
                if Seen_ID then
                   Validation_Error
                     (Reader,
-                     "Elements can have a single ID attribute in XSD 1.0");
+                     "#Elements can have a single ID attribute in XSD 1.0");
                end if;
 
                Seen_ID := True;
@@ -827,7 +827,7 @@ package body Schema.Validators is
                case Named.Attribute_Use is
                   when Required =>
                      Validation_Error
-                       (Reader, "Attribute """ & Named.Local_Name.all
+                       (Reader, "#Attribute """ & Named.Local_Name.all
                         & """ is required in this context");
                   when Prohibited | Optional | Default =>
                      null;
@@ -842,7 +842,7 @@ package body Schema.Validators is
                        and then Get_Prefix (Atts, Found) = ""
                      then
                         Validation_Error
-                          (Reader, "Attribute " & Get_Qname (Atts, Found)
+                          (Reader, "#Attribute " & Get_Qname (Atts, Found)
                            & " must have a namespace");
                      end if;
 
@@ -854,7 +854,7 @@ package body Schema.Validators is
                          (Get (Reader.Grammar).Target_NS)
                      then
                         Validation_Error
-                          (Reader, "Attribute " & Get_Qname (Atts, Found)
+                          (Reader, "#Attribute " & Get_Qname (Atts, Found)
                            & " must not have a namespace");
                      end if;
                end case;
@@ -879,9 +879,27 @@ package body Schema.Validators is
                         Validate_Attribute (Named.all, Reader, Atts, Found);
                      exception
                         when E : XML_Validation_Error =>
-                           Validation_Error
-                             (Reader, "Attribute """ & Get_Qname (Atts, Found)
-                              & """: " & Exception_Message (E));
+                           --  Avoid duplicate locations in error messages
+                           --  ??? This is just a hack for now
+
+                           declare
+                              Str : constant Byte_Sequence :=
+                                Reader.Error_Msg.all;
+                           begin
+                              if Str (Str'First) = '#' then
+                                 Free (Reader.Error_Msg);
+                                 Reader.Error_Msg := new Byte_Sequence'
+                                   ("#Attribute """ & Get_Qname (Atts, Found)
+                                    & """: "
+                                    & Str (Str'First + 1 .. Str'Last));
+                              else
+                                 Free (Reader.Error_Msg);
+                                 Reader.Error_Msg := new Byte_Sequence'
+                                   ("#Attribute """ & Get_Qname (Atts, Found)
+                                    & """: " & Str);
+                              end if;
+                              raise;
+                           end;
                      end;
                end case;
             end if;
@@ -910,9 +928,27 @@ package body Schema.Validators is
       exception
          when E : XML_Validation_Error =>
             Debug_Pop_Prefix;
-            Validation_Error
-              (Reader, "Attribute """ & Get_Qname (Atts, Index)
-               & """: " & Exception_Message (E));
+
+            --  Avoid duplicate locations in error messages
+            --  ??? This is just a hack for now
+
+            declare
+               Str : constant Byte_Sequence := Reader.Error_Msg.all;
+            begin
+               if Str (Str'First) = '#' then
+                  Free (Reader.Error_Msg);
+                  Reader.Error_Msg := new Byte_Sequence'
+                    ("#Attribute """ & Get_Qname (Atts, Index)
+                     & """: " & Str (Str'First + 1 .. Str'Last));
+               else
+                  Free (Reader.Error_Msg);
+                  Reader.Error_Msg := new Byte_Sequence'
+                    ("#Attribute """ & Get_Qname (Atts, Index)
+                     & """: " & Str);
+               end if;
+
+               raise;
+            end;
       end Check_Any_Attribute;
 
       --------------------
@@ -1103,7 +1139,7 @@ package body Schema.Validators is
             if Get_URI (Atts, S) = XML_Instance_URI then
                if Get_Local_Name (Atts, S) = "nil" then
                   if not Nillable then
-                     Validation_Error (Reader, "Element cannot be nil");
+                     Validation_Error (Reader, "#Element cannot be nil");
                   end if;
 
                   Is_Nil := Get_Value_As_Boolean (Atts, S);
@@ -1118,18 +1154,18 @@ package body Schema.Validators is
 
                else
                   Validation_Error
-                    (Reader, "Attribute """ & Get_Qname (Atts, S)
+                    (Reader, "#Attribute """ & Get_Qname (Atts, S)
                      & """ invalid for this element");
                end if;
 
             elsif Seen (S).Prohibited then
                Validation_Error
-                 (Reader, "Attribute """ & Get_Qname (Atts, S)
+                 (Reader, "#Attribute """ & Get_Qname (Atts, S)
                   & """ is prohibited in this context");
 
             else
                Validation_Error
-                 (Reader, "Attribute """ & Get_Qname (Atts, S)
+                 (Reader, "#Attribute """ & Get_Qname (Atts, S)
                   & """ invalid for this element");
             end if;
          end if;
@@ -1240,10 +1276,10 @@ package body Schema.Validators is
          if Facet_Value /= "collapse" then
             Validation_Error
               (Reader,
-               "Invalid value for restriction whiteSpace: " & Facet_Value);
+               "#Invalid value for restriction whiteSpace: " & Facet_Value);
          end if;
       else
-         Validation_Error (Reader, "Invalid restriction: " & Facet_Name);
+         Validation_Error (Reader, "#Invalid restriction: " & Facet_Name);
       end if;
    end Add_Facet;
 
@@ -1428,7 +1464,7 @@ package body Schema.Validators is
         and then not Equal (Validator, Reader, Fixed.all, Val)
       then
          Validation_Error
-           (Reader, "value must be """
+           (Reader, "#value must be """
             & To_Graphic_String (Fixed.all)
             & """ (found """ & To_Graphic_String (Val) & """)");
       end if;
@@ -1467,7 +1503,7 @@ package body Schema.Validators is
 
          if Grammar.Checked then
             Validation_Error
-              (Reader, "Declaration not found for "
+              (Reader, "#Declaration not found for "
                & To_QName (Get_Namespace_URI (Grammar), Local_Name));
          end if;
 
@@ -1512,7 +1548,7 @@ package body Schema.Validators is
          if Create_If_Needed then
             if Grammar.Checked then
                Validation_Error
-                 (Reader, "Declaration not found for "
+                 (Reader, "#Declaration not found for "
                   & To_QName (Get_Namespace_URI (Grammar), Local_Name));
             end if;
 
@@ -1544,7 +1580,7 @@ package body Schema.Validators is
       if Result = No_XML_Group then
          if Grammar.Checked then
             Validation_Error
-              (Reader, "Declaration not found for "
+              (Reader, "#Declaration not found for "
                & To_QName (Get_Namespace_URI (Grammar), Local_Name));
          end if;
 
@@ -1569,7 +1605,7 @@ package body Schema.Validators is
       if Result = Empty_Attribute_Group then
          if Grammar.Checked then
             Validation_Error
-              (Reader, "Declaration not found for "
+              (Reader, "#Declaration not found for "
                & To_QName (Get_Namespace_URI (Grammar), Local_Name));
          end if;
 
@@ -1598,7 +1634,7 @@ package body Schema.Validators is
       if Result = null and then Create_If_Needed then
          if Grammar.Checked then
             Validation_Error
-              (Reader, "Declaration not found for "
+              (Reader, "#Declaration not found for "
                & To_QName (Get_Namespace_URI (Grammar), Local_Name));
          end if;
 
@@ -1727,7 +1763,7 @@ package body Schema.Validators is
          if Element.Is_Ref then
             Validation_Error
               (Reader,
-               "Cannot mix complexType definition and ""ref"" attribute");
+               "#Cannot mix complexType definition and ""ref"" attribute");
          end if;
 
          Element.Elem.Of_Type := Element_Type;
@@ -2113,7 +2149,7 @@ package body Schema.Validators is
          if Old.Of_Type /= No_Type then
             Validation_Error
               (Reader,
-               "Element """ & Local_Name & """ has already been declared");
+               "#Element """ & Local_Name & """ has already been declared");
          end if;
 
          Old.Form := Form;
@@ -2156,7 +2192,7 @@ package body Schema.Validators is
       if Typ /= No_Type then
          if Typ.Validator /= null then
             Validation_Error
-              (Reader, "Type has already been declared: " & Local_Name);
+              (Reader, "#Type has already been declared: " & Local_Name);
          end if;
 
          if Debug then
@@ -2250,7 +2286,7 @@ package body Schema.Validators is
       if Old /= null then
          if Get_Type (Old.all) /= No_Type then
             Validation_Error
-              (Reader, "Attribute has already been declared: " & Local_Name);
+              (Reader, "#Attribute has already been declared: " & Local_Name);
          end if;
 
          Old.Attribute_Type := Attribute_Type;
@@ -2293,7 +2329,7 @@ package body Schema.Validators is
       if Group /= No_XML_Group then
          if not Group.Is_Forward_Decl then
             Validation_Error
-              (Reader, "Group has already been declared: " & Local_Name);
+              (Reader, "#Group has already been declared: " & Local_Name);
          end if;
 
          Group.Is_Forward_Decl := False;
@@ -2323,7 +2359,7 @@ package body Schema.Validators is
          if not Group.Is_Forward_Decl then
             Validation_Error
               (Reader,
-               "Attribute group has already been declared: " & Local_Name);
+               "#Attribute group has already been declared: " & Local_Name);
          end if;
 
          Group.Is_Forward_Decl := False;
@@ -2569,7 +2605,7 @@ package body Schema.Validators is
       if Element.Elem.Fixed /= null then
          Validation_Error
            (Reader,
-            "Attributes ""fixed"" and ""default"" conflict with each other");
+            "#Attributes ""fixed"" and ""default"" conflict with each other");
       end if;
 
       --  3.3 Element Declaration details:  Validation Rule 3.1
@@ -2627,7 +2663,7 @@ package body Schema.Validators is
       if Element.Elem.Default /= null then
          Validation_Error
            (Reader,
-            "Attributes ""fixed"" and ""default"" conflict with each other");
+            "#Attributes ""fixed"" and ""default"" conflict with each other");
       end if;
 
       --  3.3 Element Declaration details:  Validation Rule 3.1
@@ -2827,7 +2863,7 @@ package body Schema.Validators is
 
                      if G.Elem.Blocks (Block_Substitution) then
                         Validation_Error
-                          (Reader, "Unexpected element """
+                          (Reader, "#Unexpected element """
                            & To_QName (Namespace_URI, Local_Name)
                            & """ (substitutions are blocked)");
 
@@ -2836,7 +2872,7 @@ package body Schema.Validators is
                        and then Is_Extension_Of (R, Base => G)
                      then
                         Validation_Error
-                          (Reader, "Invalid substitution, because """
+                          (Reader, "#Invalid substitution, because """
                            & G.Elem.Local_Name.all
                            & """ blocks extensions");
 
@@ -2845,7 +2881,7 @@ package body Schema.Validators is
                        and then Is_Restriction_Of (R, Base => G)
                      then
                         Validation_Error
-                          (Reader, "Invalid substitution, because """
+                          (Reader, "#Invalid substitution, because """
                            & G.Elem.Local_Name.all
                            & """ blocks restrictions");
                      end if;
@@ -2861,7 +2897,7 @@ package body Schema.Validators is
 
       if Result /= No_Element and then Is_Abstract (Result) then
          Validation_Error
-           (Reader, '"' & Result.Elem.Local_Name.all & """ is abstract");
+           (Reader, "#""" & Result.Elem.Local_Name.all & """ is abstract");
       end if;
 
       Debug_Pop_Prefix;
@@ -3079,12 +3115,12 @@ package body Schema.Validators is
               and then Local_Name = D.Previous.Element.Elem.Local_Name.all
             then
                Validation_Error
-                 (Reader, "Too many occurrences of """
+                 (Reader, "#Too many occurrences of """
                   & To_QName (Namespace_URI, Local_Name)
                   & """ (expecting """ & To_QName (Curr.all) & """)");
             else
                Validation_Error
-                 (Reader, "Expecting at least"
+                 (Reader, "#Expecting at least"
                   & Integer'Image (Get_Min_Occurs (D.Current))
                   & " occurrences of """ & To_QName (Curr.all) & """");
             end if;
@@ -3295,7 +3331,7 @@ package body Schema.Validators is
             if not Is_Optional (D.Current) then
                Validation_Error
                  (Reader,
-                  "Expecting " & Type_Model (D.Current, First_Only => True));
+                  "#Expecting " & Type_Model (D.Current, First_Only => True));
             end if;
 
             Next (D.Current);
@@ -3308,7 +3344,7 @@ package body Schema.Validators is
                           & D.Num_Occurs_Of_Current'Img & " times, minimum is"
                           & Get_Min_Occurs (D.Current)'Img);
          end if;
-         Validation_Error (Reader, "Unexpected end of sequence, expecting """
+         Validation_Error (Reader, "#Unexpected end of sequence, expecting """
                            & Type_Model (D.Current, True) & """");
       end if;
 
@@ -3335,7 +3371,7 @@ package body Schema.Validators is
         and then Item.Min_Occurs > Item.Max_Occurs
       then
          Validation_Error
-           (Reader, "minOccurs > maxOccurs when creating particle");
+           (Reader, "#minOccurs > maxOccurs when creating particle");
       end if;
 
       if Item.Max_Occurs /= 0 then
@@ -3512,7 +3548,7 @@ package body Schema.Validators is
             if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
                Validation_Error
                  (Reader,
-                  "Not enough occurrences of current element, expecting at"
+                  "#Not enough occurrences of current element, expecting at"
                   & " least" & Integer'Image (Get_Min_Occurs (D.Current)));
             end if;
             Free (D.Current);
@@ -3636,18 +3672,18 @@ package body Schema.Validators is
          if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
             if Get (D.Current).Typ = Particle_Element then
                Validation_Error
-                 (Reader, "Not enough occurrences of """
+                 (Reader, "#Not enough occurrences of """
                   & To_QName (Get (D.Current).Element) & """");
             else
                Validation_Error
-                 (Reader, "Not enough occurrences of current element");
+                 (Reader, "#Not enough occurrences of current element");
             end if;
          end if;
 
       --  Never occurred ?
       elsif D.Num_Occurs_Of_Current = 0 then
          Validation_Error
-           (Reader, "Expecting one of """
+           (Reader, "#Expecting one of """
             & Type_Model (Validator, First_Only => True)
             & """");
       end if;
@@ -4049,21 +4085,21 @@ package body Schema.Validators is
 
          if not Valid_Replacement then
             Validation_Error
-              (Reader, To_QName (Get_Type (Element))
+              (Reader, '#' & To_QName (Get_Type (Element))
                & " is not a valid replacement for "
                & To_QName (Get_Type (Head)));
          end if;
 
          if HeadPtr.Final_Restriction and then Had_Restriction then
             Validation_Error
-              (Reader, """" & HeadPtr.Local_Name.all
+              (Reader, "#""" & HeadPtr.Local_Name.all
                & """ is final for restrictions, and cannot be substituted by"
                & """" & ElemPtr.Local_Name.all & """");
          end if;
 
          if HeadPtr.Final_Extension and then Had_Extension then
             Validation_Error
-              (Reader, """" & HeadPtr.Local_Name.all
+              (Reader, "#""" & HeadPtr.Local_Name.all
                & """ is final for extensions, and cannot be substituted by"
                & """" & ElemPtr.Local_Name.all & """");
          end if;
@@ -4071,7 +4107,7 @@ package body Schema.Validators is
 
       if ElemPtr.Substitution_Group /= No_Element then
          Validation_Error
-           (Reader, """" & ElemPtr.Local_Name.all
+           (Reader, "#""" & ElemPtr.Local_Name.all
             & """ already belongs to another substitution group");
       end if;
 
@@ -4538,7 +4574,8 @@ package body Schema.Validators is
             if D.All_Elements (Count) > Get_Max_Occurs (Tmp) then
                Validation_Error
                  (Reader,
-                  "Element """ & Local_Name & """ is repeated too many times,"
+                  "#Element """
+                  & Local_Name & """ is repeated too many times,"
                   & " maximum number of occurrences is"
                   & Integer'Image (Get_Max_Occurs (Tmp)));
             end if;
@@ -4587,7 +4624,7 @@ package body Schema.Validators is
             begin
                Free (Tmp);
                Validation_Error
-                 (Reader, "Element """ & L & """ must appear at least"
+                 (Reader, "#Element """ & L & """ must appear at least"
                   & Integer'Image (Min) & " times");
             end;
          end if;
@@ -4601,14 +4638,14 @@ package body Schema.Validators is
 
       if D.Num_Occurs < Validator.Min_Occurs then
          Validation_Error
-           (Reader, "<all> element must be repeated at least"
+           (Reader, "#<all> element must be repeated at least"
             & Integer'Image (Validator.Min_Occurs) & " times");
       elsif Validator.Max_Occurs /= Unbounded
         and then D.Num_Occurs > Validator.Max_Occurs
       then
          Validation_Error
            (Reader,
-            "<all> element was repeated too many times, expecting at most"
+            "#<all> element was repeated too many times, expecting at most"
             & Integer'Image (Validator.Max_Occurs) & " times");
       end if;
 
@@ -4729,10 +4766,10 @@ package body Schema.Validators is
          if Namespace_URI = Validator.Target_NS.Namespace_URI.all then
             Validation_Error
               (Reader,
-               "Namespace should be different from "
+               "#Namespace should be different from "
                & Validator.Target_NS.Namespace_URI.all);
          elsif Namespace_URI = "" then
-            Validation_Error (Reader, "Element must specify a namespace");
+            Validation_Error (Reader, "#Element must specify a namespace");
          end if;
 
       else
@@ -4770,7 +4807,7 @@ package body Schema.Validators is
 
          if not Valid then
             Validation_Error
-              (Reader, "Invalid namespace for this element: """
+              (Reader, "#Invalid namespace for this element: """
                & Namespace_URI & """ not in """
                & Validator.Namespace.all & """");
          end if;
@@ -4893,7 +4930,7 @@ package body Schema.Validators is
       end case;
 
       if not NS_Matches then
-         Validation_Error (Reader, "Invalid namespace for "
+         Validation_Error (Reader, "#Invalid namespace for "
                            & To_QName
                              (Get_URI (Atts, Index),
                               Get_Local_Name (Atts, Index)));
@@ -4906,7 +4943,7 @@ package body Schema.Validators is
               (G, Reader,
                Get_Local_Name (Atts, Index), Create_If_Needed => False);
             if Attr = null then
-               Validation_Error (Reader, "No definition provided");
+               Validation_Error (Reader, "#No definition provided");
             else
                Validate_Attribute (Attr.all, Reader, Atts, Index);
 
@@ -5115,7 +5152,7 @@ package body Schema.Validators is
       if Should_Be_Simple then
          Validation_Error
            (Reader,
-            "Type specified in a simpleContent context must not have a "
+            "#Type specified in a simpleContent context must not have a "
             & "complexContent");
       end if;
    end Check_Content_Type;
@@ -5168,14 +5205,15 @@ package body Schema.Validators is
         and then Namespace_URI /= ""
       then
          Validation_Error
-           (Reader, "Namespace specification not authorized in this context");
+           (Reader,
+            "#Namespace specification not authorized in this context");
 
       elsif Element.Elem.Form = Qualified
         and then Namespace_URI = ""
         and then Get (Grammar).Target_NS /= null
       then
          Validation_Error
-           (Reader, "Namespace specification is required in this context");
+           (Reader, "#Namespace specification is required in this context");
       end if;
    end Check_Qualification;
 
@@ -5299,14 +5337,15 @@ package body Schema.Validators is
          if Typ.Local_Name /= null then
             Validation_Error
               (Reader,
-               To_QName (Typ) & " specified in a simpleContent context"
+               '#' & To_QName (Typ) & " specified in a simpleContent context"
                & " must not have a complexContext");
          else
             Validation_Error
-              (Reader, "Expecting simple type, got complex type");
+              (Reader, "#Expecting simple type, got complex type");
          end if;
       elsif not Should_Be_Simple and Typ.Simple_Type = Simple_Content then
-         Validation_Error (Reader, "Expecting complex type, got simple type");
+         Validation_Error
+           (Reader, "#Expecting complex type, got simple type");
       end if;
    end Check_Content_Type;
 
@@ -5618,7 +5657,7 @@ package body Schema.Validators is
               (Reader.Id_Table.all, Value) /= No_Id
             then
                Validation_Error
-                 (Reader, "ID """ & Value & """ already defined");
+                 (Reader, "#ID """ & Value & """ already defined");
             end if;
          end if;
 
@@ -5726,7 +5765,7 @@ package body Schema.Validators is
             Blocks := (others => True);
          else
             Validation_Error
-              (Reader, "Invalid value for block: """ & Str & """");
+              (Reader, "#Invalid value for block: """ & Str & """");
          end if;
       end On_Item;
 
@@ -5767,7 +5806,7 @@ package body Schema.Validators is
             Lists := True;
          else
             Validation_Error
-              (Reader, "Invalid value for final: """ & Str & """");
+              (Reader, "#Invalid value for final: """ & Str & """");
          end if;
       end On_Item;
 

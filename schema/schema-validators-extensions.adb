@@ -427,7 +427,7 @@ package body Schema.Validators.Extensions is
    begin
       if Get_Final_On_Extension (Base) then
          Validation_Error
-           (Reader, "Type """ & To_QName (Base) & """ forbids extensions");
+           (Reader, "#Type """ & To_QName (Base) & """ forbids extensions");
       end if;
 
       Register (G, Result);
