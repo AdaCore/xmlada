@@ -2822,16 +2822,16 @@ package body Schema.Schema_Readers is
          if Debug then
             Output
               ("Get_NS (Handler.Created_Grammar, """
-               & Get_URI (NS) & """, G);");
+               & Get_URI (NS).all & """, G);");
          end if;
 
-         Get_NS (Get_Grammar (Handler.all), Get_URI (NS), Grammar,
+         Get_NS (Get_Grammar (Handler.all), Get_URI (NS).all, Grammar,
                  Create_If_Needed
-                 or else Get_URI (NS) = XML_Schema_URI);
+                 or else Get_URI (NS).all = XML_Schema_URI);
          if Grammar = null then
             Validation_Error
               (Handler,
-               "#No location declared for namespace " & Get_URI (NS));
+               "#No location declared for namespace " & Get_URI (NS).all);
          end if;
       end if;
    end Get_Grammar_For_Namespace;

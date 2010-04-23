@@ -513,7 +513,7 @@ package Sax.Readers is
    No_XML_NS : constant XML_NS;
 
    function Get_Prefix (NS : XML_NS) return Unicode.CES.Byte_Sequence;
-   function Get_URI (NS : XML_NS) return Unicode.CES.Byte_Sequence;
+   function Get_URI (NS : XML_NS) return Unicode.CES.Byte_Sequence_Access;
    --  Return the URI for this namespace
 
    function Element_Count (NS : XML_NS) return Natural;
@@ -762,18 +762,18 @@ private
    type XML_NS_Record is record
       Prefix    : Unicode.CES.Byte_Sequence_Access;
       URI       : Unicode.CES.Byte_Sequence_Access;
-      Same_As   : XML_NS;
+      Same_As   : XML_NS;  --  If set, URI is null
       Use_Count : Natural := 0;
       Next      : XML_NS;
    end record;
-   --  Same_As points to the next prefix referencing the same namespace.
+   --  Same_As points to the first prefix referencing the same namespace.
    --  A namespace must be freed before the ones it references (or you will get
    --  a Storage_Error).
    --  Use_Count will always be 0 if Same_As is not null, since the uses are
    --  incremented in only one namespace.
 
    type Element is record
-      NS             : Unicode.CES.Byte_Sequence_Access;
+      NS             : XML_NS;
       Name           : Unicode.CES.Byte_Sequence_Access;
       Parent         : Element_Access;
       Start_Line     : Natural;

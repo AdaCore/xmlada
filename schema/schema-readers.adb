@@ -606,7 +606,7 @@ package body Schema.Readers is
                  (Validating_Reader (Handler.all),
                   Qname (Qname'First .. Separator - 1), NS);
                Get_NS (Validating_Reader (Handler.all).Grammar,
-                       Get_URI (NS), G);
+                       Get_URI (NS).all, G);
                Typ := Lookup (G, H, Qname (Separator + 1 .. Qname'Last),
                               Create_If_Needed => False);
 
@@ -992,7 +992,7 @@ package body Schema.Readers is
         (Parser  => Handler,
          Prefix  => Prefix,
          NS      => NS);
-      if Get_URI (NS) = "" then
+      if Get_URI (NS)'Length = 0 then
          NS := No_XML_NS;
       end if;
    end Get_Namespace_From_Prefix;

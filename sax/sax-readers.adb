@@ -275,6 +275,8 @@ package body Sax.Readers is
 
    Null_Token : constant Token := (End_Of_Input, 1, 0, 0, 0, 0, False);
 
+   Empty_String : aliased String := "";
+
    Default_State : constant Parser_State :=
      (Name => "Def",
       Ignore_Special => False,
@@ -730,7 +732,6 @@ package body Sax.Readers is
         (Element, Element_Access);
       Tmp : constant Element_Access := Elem.Parent;
    begin
-      Free (Elem.NS);
       Free (Elem.Name);
       Free (Elem.Namespaces);
       Free_Element (Elem);
@@ -1277,7 +1278,8 @@ package body Sax.Readers is
       NS                 : out XML_NS;
       Include_Default_NS : Boolean := True)
    is
-      E : Element_Access := Parser.Current_Node;
+      E      : Element_Access := Parser.Current_Node;
+      NS_URI : Byte_Sequence_Access;
    begin
       loop
          --  Search in the default namespaces
@@ -1288,10 +1290,10 @@ package body Sax.Readers is
          end if;
 
          while NS /= null loop
-            if (Include_Default_NS
-                or else E = null
-                or else NS.URI.all /= "")
-              and then NS.URI.all = URI
+            NS_URI := Get_URI (NS);
+
+            if (Include_Default_NS or else E = null or else NS_URI.all /= "")
+              and then NS_URI.all = URI
             then
                return;
             end if;
@@ -1392,15 +1394,16 @@ package body Sax.Readers is
    begin
       NS := new XML_NS_Record'
         (Prefix    => new Byte_Sequence'(Prefix),
-         URI       => new Byte_Sequence'(URI),
+         URI       => null,
          Same_As   => null,
          Use_Count => 0,
          Next      => null);
 
       if Node /= null then
+         --  Same_As should point to the first namespace with that URI
          Tmp := Node.Namespaces;
          while Tmp /= null loop
-            if Tmp.URI.all = URI then
+            if Tmp.URI /= null and then Tmp.URI.all = URI then
                NS.Same_As := Tmp;
                exit;
             end if;
@@ -1411,12 +1414,16 @@ package body Sax.Readers is
       if NS.Same_As = null then
          Tmp := Parser.Default_Namespaces;
          while Tmp /= null loop
-            if Tmp.URI.all = URI then
+            if Tmp.URI /= null and then Tmp.URI.all = URI then
                NS.Same_As := Tmp;
                exit;
             end if;
             Tmp := Tmp.Next;
          end loop;
+      end if;
+
+      if NS.Same_As = null then
+         NS.URI := new Byte_Sequence'(URI);
       end if;
 
       if Node = null then
@@ -1436,7 +1443,7 @@ package body Sax.Readers is
          Start_Prefix_Mapping
            (Parser,
             Prefix => NS.Prefix.all,
-            URI    => NS.URI.all);
+            URI    => URI);
       end if;
    end Add_Namespace;
 
@@ -4375,7 +4382,8 @@ package body Sax.Readers is
       procedure Resolve_Attributes_Namespaces
         (Attributes : in out Sax.Attributes.Attributes)
       is
-         NS : XML_NS;
+         NS       : XML_NS;
+         URI      : Byte_Sequence_Access;
          Found_At : Integer;
       begin
          for J in 0 .. Get_Length (Attributes) - 1 loop
@@ -4386,10 +4394,12 @@ package body Sax.Readers is
                  (Parser, Error_Prefix_Not_Declared & Get_URI (Attributes, J));
             end if;
 
-            if NS.URI.all /= "" then
+            URI := Get_URI (NS);
+
+            if URI.all /= "" then
                Found_At := Get_Index
                  (Attributes,
-                  URI => NS.URI.all,
+                  URI => URI.all,
                   Local_Name => Get_Local_Name (Attributes, J));
                if Found_At /= -1 and then Found_At /= J then
                   Fatal_Error --  3.1
@@ -4398,7 +4408,7 @@ package body Sax.Readers is
                end if;
             end if;
 
-            Set_URI (Attributes, J, NS.URI.all);
+            Set_URI (Attributes, J, URI.all);
          end loop;
       end Resolve_Attributes_Namespaces;
 
@@ -4608,6 +4618,7 @@ package body Sax.Readers is
          Elem_Name_Id, Elem_NS_Id : Token;
          Attributes : Sax.Attributes.Attributes := No_Attributes;
          NS : XML_NS;
+         URI : Byte_Sequence_Access;
 
       begin
          Set_State (Parser, Tag_State);
@@ -4623,8 +4634,6 @@ package body Sax.Readers is
          Next_Token (Input, Parser, Id);
          Get_Name_NS (Id, Elem_NS_Id, Elem_Name_Id);
 
-         Parser.Current_Node.NS := new Byte_Sequence'
-           (Parser.Buffer (Elem_NS_Id.First .. Elem_NS_Id.Last));
          Parser.Current_Node.Name := new Byte_Sequence'
            (Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last));
 
@@ -4690,9 +4699,13 @@ package body Sax.Readers is
          Set_State (Parser, Default_State);
          Find_NS (Parser, Elem_NS_Id, NS);
 
+         Parser.Current_Node.NS := NS;
+
+         URI := Get_URI (NS);
+
          if Parser.Hooks.Start_Element /= null then
             Parser.Hooks.Start_Element
-              (Parser'Unchecked_Access, NS.URI.all,
+              (Parser'Unchecked_Access, URI.all,
                Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last),
                Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
                Parser.Current_Node, Attributes);
@@ -4706,7 +4719,7 @@ package body Sax.Readers is
 
          Start_Element
            (Parser,
-            Namespace_URI => NS.URI.all,
+            Namespace_URI => URI.all,
             Local_Name =>
               Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last),
             Qname => Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
@@ -4942,13 +4955,16 @@ package body Sax.Readers is
       -----------------
 
       procedure End_Element (NS_Id, Name_Id : Token) is
-         NS : XML_NS;
+         NS  : XML_NS;
+         URI : Byte_Sequence_Access;
       begin
          Find_NS (Parser, NS_Id, NS);
 
+         URI := Get_URI (NS);
+
          if Parser.Hooks.End_Element /= null then
             Parser.Hooks.End_Element
-              (Parser'Unchecked_Access, NS.URI.all,
+              (Parser'Unchecked_Access, URI.all,
                Parser.Current_Node.Name.all,
                Qname_From_Name (Parser, NS_Id, Name_Id),
                Elem  => Parser.Current_Node);
@@ -4956,7 +4972,7 @@ package body Sax.Readers is
 
          End_Element
            (Parser,
-            Namespace_URI => NS.URI.all,
+            Namespace_URI => URI.all,
             Local_Name => Parser.Current_Node.Name.all,
             Qname => Qname_From_Name (Parser, NS_Id, Name_Id));
 
@@ -5021,16 +5037,16 @@ package body Sax.Readers is
                "Unexpected closing tag", Open_Id);
 
          elsif Parser.Buffer (NS_Id.First .. NS_Id.Last) /=
-             Parser.Current_Node.NS.all
+             Parser.Current_Node.NS.Prefix.all
            or else Parser.Buffer (Name_Id.First .. Name_Id.Last) /=
              Parser.Current_Node.Name.all
          then
             --  Well-Formedness Constraint: Element Type Match
-            if Parser.Current_Node.NS.all /= "" then
+            if Parser.Current_Node.NS.Prefix.all /= "" then
                Fatal_Error
                  (Parser,  --  WF element type match
                   "Name differ for closing tag ("
-                  & "expecting " & Parser.Current_Node.NS.all & ':'
+                  & "expecting " & Parser.Current_Node.NS.Prefix.all & ':'
                   & Parser.Current_Node.Name.all
                   & ", opened line"
                   & Integer'Image (Parser.Current_Node.Start_Line)
@@ -6240,12 +6256,14 @@ package body Sax.Readers is
    -- Get_URI --
    -------------
 
-   function Get_URI (NS : XML_NS) return Unicode.CES.Byte_Sequence is
+   function Get_URI (NS : XML_NS) return Unicode.CES.Byte_Sequence_Access is
    begin
       if NS = null then
-         return "";
+         return Empty_String'Access;
+      elsif NS.Same_As /= null then
+         return NS.Same_As.URI;
       else
-         return NS.URI.all;
+         return NS.URI;
       end if;
    end Get_URI;
 

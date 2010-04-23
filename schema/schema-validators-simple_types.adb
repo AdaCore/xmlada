@@ -919,7 +919,7 @@ package body Schema.Validators.Simple_Types is
            (Handler => Validating_Reader (Reader.all),
             Prefix  => Ch (Ch'First .. Pos - 1),
             NS      => NS);
-         if NS = No_XML_NS or else Get_URI (NS) = "xmlns" then
+         if NS = No_XML_NS or else Get_URI (NS).all = "xmlns" then
             Validation_Error (Reader,
                               "#No corresponding namespace in scope for """
                               & Ch (Ch'First .. Pos - 1) & '"');
