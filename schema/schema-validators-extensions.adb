@@ -233,8 +233,11 @@ package body Schema.Validators.Extensions is
    is
       D : constant Extension_Data_Access := Extension_Data_Access (Data);
    begin
-      Debug_Push_Prefix ("Validate_End_Element <extension> "
-                         & Get_Name (Validator));
+      if Debug then
+         Debug_Push_Prefix ("Validate_End_Element <extension> "
+                            & Get_Name (Validator));
+      end if;
+
       if D.Validating_Base then
          Validate_End_Element
            (Get_Validator (Validator.Base), Reader, Local_Name, D.Base_Data);
@@ -429,7 +432,6 @@ package body Schema.Validators.Extensions is
       Register (G, Base);
       Result.Base      := Base;
       C := Create_Sequence (G);
-      Set_Debug_Name (C, "automatic_extension_sequence");
       Add_Particle (C, Reader, Group, Min_Occurs, Max_Occurs);
       Result.Extension := XML_Validator (C);
       return XML_Validator (Result);

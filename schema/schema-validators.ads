@@ -353,7 +353,7 @@ package Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
-      Value          : Unicode.CES.Byte_Sequence := "")
+      Default        : Unicode.CES.Byte_Sequence := "")
       return Attribute_Validator;
    function Create_Local_Attribute
      (Based_On       : Attribute_Validator;
@@ -361,9 +361,10 @@ package Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
-      Value          : Unicode.CES.Byte_Sequence := "")
+      Default        : Unicode.CES.Byte_Sequence := "")
       return Attribute_Validator;
    --  Create a new local attribute validator. See also Create_Global_Attribute
+   --  Default is only relevant when Attribute_Use is set to Default
 
    type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List);
    --  "Any":   any non-conflicting namespace
@@ -1020,14 +1021,9 @@ package Schema.Validators is
    procedure Debug_Dump (Grammar : XML_Grammar);
    --  Dump the grammar to stdout. This is for debug only
 
-   procedure Set_Debug_Name
-     (Typ : access XML_Validator_Record'Class; Name : String);
-   --  Will be removed
-
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether we should output debug traces
 
-   function To_QName (Namespace_URI, Local_Name : String) return String;
    function To_QName (Element : XML_Element) return Unicode.CES.Byte_Sequence;
    function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
    function To_QName
@@ -1044,6 +1040,9 @@ private
    procedure Debug_Pop_Prefix;
    --  Append a prefix to the current output
 
+   function Equal (S1, S2 : Unicode.CES.Byte_Sequence_Access) return Boolean;
+   --  Compare the byte_Sequence
+
    ---------
    -- Ids --
    ---------
@@ -1054,15 +1053,15 @@ private
    No_Id : constant Id_Ref := (Key => null);
 
    procedure Free (Id : in out Id_Ref);
-   function Get_Key (Id : Id_Ref) return Unicode.CES.Byte_Sequence;
+   function Get_Key (Id : Id_Ref) return Unicode.CES.Byte_Sequence_Access;
    package Id_Htable is new Sax.HTable
      (Element       => Id_Ref,
       Empty_Element => No_Id,
       Free          => Free,
-      Key           => Unicode.CES.Byte_Sequence,
+      Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => "=");
+      Equal         => Equal);
    type Id_Htable_Access is access Id_Htable.HTable;
    --  This table is used to store the list of IDs that have been used in the
    --  document so far, and prevent their duplication in the document.
@@ -1260,7 +1259,7 @@ private
          Attribute_Form : Form_Type;
          Attribute_Use  : Attribute_Use_Type;
          Fixed          : Unicode.CES.Byte_Sequence_Access; -- or from Ref_Attr
-         Value          : Unicode.CES.Byte_Sequence_Access;
+         Default        : Unicode.CES.Byte_Sequence_Access;
       end record;
    function Equal
      (Validator      : Named_Attribute_Validator_Record;
@@ -1347,9 +1346,6 @@ private
    -------------------
 
    type XML_Validator_Record is tagged record
-      Debug_Name : Unicode.CES.Byte_Sequence_Access;
-      --  Temporary, will be removed
-
       Attributes : Attribute_Validator_List_Access;
       --  The list of valid attributes registered for this validator.
       --  ??? Could be implemented more efficiently through a htable
@@ -1460,17 +1456,17 @@ private
    -- Grammar --
    -------------
 
-   function Get_Key (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
+   function Get_Key (Typ : XML_Type) return Unicode.CES.Byte_Sequence_Access;
    procedure Do_Nothing (Typ : in out XML_Type);
 
    package Types_Htable is new Sax.HTable
      (Element       => XML_Type,
       Empty_Element => No_Type,
       Free          => Do_Nothing,
-      Key           => Unicode.CES.Byte_Sequence,
+      Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => "=");
+      Equal         => Equal);
    type Types_Htable_Access is access Types_Htable.HTable;
    --  We store a pointer to an XML_Type_Record, since the validator might not
    --  be known when we first reference the type (it is valid in an XML schema
@@ -1480,58 +1476,59 @@ private
    --  from this table
 
    function Get_Key
-     (Element : XML_Element_Access) return Unicode.CES.Byte_Sequence;
+     (Element : XML_Element_Access) return Unicode.CES.Byte_Sequence_Access;
    procedure Do_Nothing (Element : in out XML_Element_Access);
 
    package Elements_Htable is new Sax.HTable
      (Element       => XML_Element_Access,
       Empty_Element => null,
       Free          => Do_Nothing,
-      Key           => Unicode.CES.Byte_Sequence,
+      Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => "=");
+      Equal         => Equal);
    type Elements_Htable_Access is access Elements_Htable.HTable;
 
    procedure Free (Group : in out XML_Group);
-   function Get_Key (Group : XML_Group) return Unicode.CES.Byte_Sequence;
+   function Get_Key
+     (Group : XML_Group) return Unicode.CES.Byte_Sequence_Access;
 
    package Groups_Htable is new Sax.HTable
      (Element       => XML_Group,
       Empty_Element => No_XML_Group,
       Free          => Free,
-      Key           => Unicode.CES.Byte_Sequence,
+      Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => "=");
+      Equal         => Equal);
    type Groups_Htable_Access is access Groups_Htable.HTable;
 
    function Get_Key
-     (Att : Named_Attribute_Validator) return Unicode.CES.Byte_Sequence;
+     (Att : Named_Attribute_Validator) return Unicode.CES.Byte_Sequence_Access;
    procedure Do_Nothing (Att : in out Named_Attribute_Validator);
 
    package Attributes_Htable is new Sax.HTable
      (Element       => Named_Attribute_Validator,
       Empty_Element => null,
       Free          => Do_Nothing,
-      Key           => Unicode.CES.Byte_Sequence,
+      Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => "=");
+      Equal         => Equal);
    type Attributes_Htable_Access is access Attributes_Htable.HTable;
 
    function Get_Key
-     (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence;
+     (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence_Access;
    procedure Free (Att : in out XML_Attribute_Group);
 
    package Attribute_Groups_Htable is new Sax.HTable
      (Element       => XML_Attribute_Group,
       Empty_Element => Empty_Attribute_Group,
       Free          => Free,
-      Key           => Unicode.CES.Byte_Sequence,
+      Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => "=");
+      Equal         => Equal);
    type Attribute_Groups_Htable_Access
      is access Attribute_Groups_Htable.HTable;
 

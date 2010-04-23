@@ -512,6 +512,18 @@ package Sax.Readers is
    type XML_NS is private;
    No_XML_NS : constant XML_NS;
 
+   function To_QName
+     (Namespace_URI, Local_Name : Unicode.CES.Byte_Sequence)
+      return Unicode.CES.Byte_Sequence;
+   function To_QName (Elem : Element_Access) return Unicode.CES.Byte_Sequence;
+   --  Return the qualified name "{namespace_uri}local_name"
+
+   function Get_NS (Elem : Element_Access) return XML_NS;
+   function Get_Local_Name
+     (Elem : Element_Access) return Unicode.CES.Byte_Sequence_Access;
+   pragma Inline (Get_NS, Get_Local_Name);
+   --  Return the name and local name of the element
+
    function Get_Prefix (NS : XML_NS) return Unicode.CES.Byte_Sequence;
    function Get_URI (NS : XML_NS) return Unicode.CES.Byte_Sequence_Access;
    --  Return the URI for this namespace
@@ -545,12 +557,9 @@ package Sax.Readers is
    --  Returns No_XML_NS if the namespace is not defined
 
    type Start_Element_Hook is access procedure
-     (Handler       : access Reader'Class;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Qname         : Unicode.CES.Byte_Sequence;
-      Element       : Element_Access;
-      Atts          : in out Sax.Attributes.Attributes'Class);
+     (Handler : access Reader'Class;
+      Element : Element_Access;
+      Atts    : in out Sax.Attributes.Attributes'Class);
    --  This hook should take the opportunity of normalizing attribute values
    --  if necessary (basic normalization is already done by the SAX parser,
    --  but based on information extracted from schemas, further normalization
@@ -561,33 +570,14 @@ package Sax.Readers is
    --  checks in any case. Standard applications should override Start_Element.
 
    type End_Element_Hook is access procedure
-     (Handler       : access Reader'Class;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Qname         : Unicode.CES.Byte_Sequence;
-      Elem          : Element_Access);
+     (Handler : access Reader'Class; Elem : Element_Access);
    type Characters_Hook is access procedure
-     (Handler       : access Reader'Class;
-      Ch            : Unicode.CES.Byte_Sequence);
+     (Handler : access Reader'Class; Ch : Unicode.CES.Byte_Sequence);
    type Whitespace_Hook is access procedure
-     (Handler       : access Reader'Class;
-      Ch            : Unicode.CES.Byte_Sequence);
-   type Start_Prefix_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Prefix        : Unicode.CES.Byte_Sequence;
-      URI           : Unicode.CES.Byte_Sequence);
-   type End_Prefix_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Prefix        : Unicode.CES.Byte_Sequence);
+     (Handler : access Reader'Class; Ch : Unicode.CES.Byte_Sequence);
    type Set_Doc_Locator_Hook is access procedure
      (Handler       : in out Reader'Class;
       Loc           : in out Sax.Locators.Locator);
-
-   type Get_Error_Location_Hook is access function
-     (Handler       : Reader'Class) return Sax.Locators.Locator;
-   --  Return the location that should be used when raising an exception.
-   --  It should return null if the default location (ie the one corresponding
-   --  to the curernt position in the stream) should be used
 
    function Get_Hooks_Data (Handler : Reader) return Hook_Data_Access;
    --  Return the hook data that was set through Set_Hooks. This could be null
@@ -599,10 +589,7 @@ package Sax.Readers is
       End_Element    : End_Element_Hook     := null;
       Characters     : Characters_Hook      := null;
       Whitespace     : Whitespace_Hook      := null;
-      Start_Prefix   : Start_Prefix_Hook    := null;
-      End_Prefix     : End_Prefix_Hook      := null;
-      Doc_Locator    : Set_Doc_Locator_Hook := null;
-      Error_Location : Get_Error_Location_Hook := null);
+      Doc_Locator    : Set_Doc_Locator_Hook := null);
    --  Set a list of hooks to be called before calling the usual primitive
    --  operations. These override hooks that were defined previously.
    --  Data will be passed to each of the hook. It is automatically
@@ -614,15 +601,12 @@ package Sax.Readers is
 
 private
    type Parser_Hooks is record
-      Data           : Hook_Data_Access     := null;
-      Start_Element  : Start_Element_Hook   := null;
-      End_Element    : End_Element_Hook     := null;
-      Characters     : Characters_Hook      := null;
-      Whitespace     : Whitespace_Hook      := null;
-      Start_Prefix   : Start_Prefix_Hook    := null;
-      End_Prefix     : End_Prefix_Hook      := null;
-      Doc_Locator    : Set_Doc_Locator_Hook := null;
-      Error_Location : Get_Error_Location_Hook := null;
+      Data          : Hook_Data_Access     := null;
+      Start_Element : Start_Element_Hook   := null;
+      End_Element   : End_Element_Hook     := null;
+      Characters    : Characters_Hook      := null;
+      Whitespace    : Whitespace_Hook      := null;
+      Doc_Locator   : Set_Doc_Locator_Hook := null;
    end record;
 
    Entities_Table_Size : constant := 50;

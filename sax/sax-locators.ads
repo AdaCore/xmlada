@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -43,11 +43,18 @@ package Sax.Locators is
 
    procedure Set_Line_Number (Loc : in out Locator; Line : Natural := 0);
    function Get_Line_Number (Loc : Locator) return Natural;
+   pragma Inline (Get_Line_Number, Set_Line_Number);
    --  Return the line number where the current document event ends
 
    procedure Set_Column_Number (Loc : in out Locator; Column : Natural := 0);
    function Get_Column_Number  (Loc : Locator) return Natural;
+   pragma Inline (Get_Column_Number, Set_Column_Number);
    --  Return the column number where the current document event ends
+
+   procedure Increase_Column_Number (Loc : in out Locator; Inc : Natural := 1);
+   pragma Inline (Increase_Column_Number);
+   --  Increment the column number. This assume Loc has already been
+   --  initialized
 
    procedure Set_System_Id
      (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence);
@@ -97,6 +104,10 @@ package Sax.Locators is
    --  Set the column number for the locator.
    --  Set this to zero if the column is unknown.
 
+   procedure Increase_Column_Number
+     (Loc : access Locator_Record; Inc : Natural := 1);
+   --  Increase the column number
+
    procedure Set_Line_Number
      (Loc : access Locator_Record; Line : Natural := 0);
    --  Set the line number for the locator
@@ -111,7 +122,7 @@ package Sax.Locators is
 
    procedure Copy (Loc : access Locator_Record; Source : Locator);
    --  Copy the location information from Source to Loc
-   --  This calls the Set_* functions below, so that you don't need to
+   --  This calls the Set_* functions, so that you don't need to
    --  rewrite it for all your classes.
 
 private
@@ -129,9 +140,4 @@ private
    package Locators is new Sax.Pointers.Smart_Pointers (Locator_Record);
    type Locator is new Locators.Pointer;
    No_Locator : constant Locator := Locator (Locators.Null_Pointer);
-
-   pragma Inline (Get_Line_Number);
-   pragma Inline (Get_Column_Number);
-   pragma Inline (Set_Line_Number);
-   pragma Inline (Set_Column_Number);
 end Sax.Locators;

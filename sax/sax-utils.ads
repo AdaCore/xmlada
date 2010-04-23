@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005-2009, AdaCore            --
+--                       Copyright (C) 2005-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -111,6 +111,8 @@ package Sax.Utils is
 
    function Hash
      (Key : Unicode.CES.Byte_Sequence) return Interfaces.Unsigned_32;
+   function Hash
+     (Key : Unicode.CES.Byte_Sequence_Access) return Interfaces.Unsigned_32;
    --  Hash-code used for all htables indexed on strings
 
    function Split_Qname (Qname : Unicode.CES.Byte_Sequence) return Integer;

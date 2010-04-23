@@ -810,10 +810,6 @@ package body Sax.Readers is
       Id2 : Token := Id;
       Loc : Locator;
    begin
-      if Parser.Hooks.Error_Location /= null then
-         Loc := Parser.Hooks.Error_Location (Parser);
-      end if;
-
       if Loc = No_Locator then
          Loc := Parser.Locator;
       end if;
@@ -860,10 +856,6 @@ package body Sax.Readers is
       Id2 : Token := Id;
       Loc : Locator;
    begin
-      if Parser.Hooks.Error_Location /= null then
-         Loc := Parser.Hooks.Error_Location (Parser);
-      end if;
-
       if Loc = No_Locator then
          Loc := Parser.Locator;
       end if;
@@ -896,10 +888,6 @@ package body Sax.Readers is
       Id2 : Token := Id;
       Loc : Locator;
    begin
-      if Parser.Hooks.Error_Location /= null then
-         Loc := Parser.Hooks.Error_Location (Parser);
-      end if;
-
       if Loc = No_Locator then
          Loc := Parser.Locator;
       end if;
@@ -1031,8 +1019,7 @@ package body Sax.Readers is
          end if;
 
          Parser.Last_Read_Is_Valid := True;
-         Set_Column_Number
-           (Parser.Locator, Get_Column_Number (Parser.Locator) + 1);
+         Increase_Column_Number (Parser.Locator);
          Internal (Parser.Inputs.Input.all);
 
       --  Else read from the initial input stream
@@ -1046,8 +1033,7 @@ package body Sax.Readers is
 
       else
          Parser.Last_Read_Is_Valid := True;
-         Set_Column_Number
-           (Parser.Locator, Get_Column_Number (Parser.Locator) + 1);
+         Increase_Column_Number (Parser.Locator);
          Internal (Input);
       end if;
 
@@ -1436,10 +1422,6 @@ package body Sax.Readers is
 
       --  Report the event, except for the default namespace
       if Report_Event then
-         if Parser.Hooks.Start_Prefix /= null then
-            Parser.Hooks.Start_Prefix (Parser, NS.Prefix.all, NS.URI.all);
-         end if;
-
          Start_Prefix_Mapping
            (Parser,
             Prefix => NS.Prefix.all,
@@ -4618,7 +4600,6 @@ package body Sax.Readers is
          Elem_Name_Id, Elem_NS_Id : Token;
          Attributes : Sax.Attributes.Attributes := No_Attributes;
          NS : XML_NS;
-         URI : Byte_Sequence_Access;
 
       begin
          Set_State (Parser, Tag_State);
@@ -4701,14 +4682,9 @@ package body Sax.Readers is
 
          Parser.Current_Node.NS := NS;
 
-         URI := Get_URI (NS);
-
          if Parser.Hooks.Start_Element /= null then
             Parser.Hooks.Start_Element
-              (Parser'Unchecked_Access, URI.all,
-               Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last),
-               Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
-               Parser.Current_Node, Attributes);
+              (Parser'Unchecked_Access, Parser.Current_Node, Attributes);
          end if;
 
          --  This does not take into account the use of the namespace by the
@@ -4719,7 +4695,7 @@ package body Sax.Readers is
 
          Start_Element
            (Parser,
-            Namespace_URI => URI.all,
+            Namespace_URI => Get_URI (NS).all,
             Local_Name =>
               Parser.Buffer (Elem_Name_Id.First .. Elem_Name_Id.Last),
             Qname => Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
@@ -4964,10 +4940,7 @@ package body Sax.Readers is
 
          if Parser.Hooks.End_Element /= null then
             Parser.Hooks.End_Element
-              (Parser'Unchecked_Access, URI.all,
-               Parser.Current_Node.Name.all,
-               Qname_From_Name (Parser, NS_Id, Name_Id),
-               Elem  => Parser.Current_Node);
+              (Parser'Unchecked_Access, Parser.Current_Node);
          end if;
 
          End_Element
@@ -4986,10 +4959,6 @@ package body Sax.Readers is
          --  Close all the namespaces
          NS := Parser.Current_Node.Namespaces;
          while NS /= null loop
-            if Parser.Hooks.End_Prefix /= null then
-               Parser.Hooks.End_Prefix (Parser, NS.Prefix.all);
-            end if;
-
             End_Prefix_Mapping (Parser, NS.Prefix.all);
             NS := NS.Next;
          end loop;
@@ -5566,10 +5535,7 @@ package body Sax.Readers is
       End_Element    : End_Element_Hook   := null;
       Characters     : Characters_Hook    := null;
       Whitespace     : Whitespace_Hook    := null;
-      Start_Prefix   : Start_Prefix_Hook  := null;
-      End_Prefix     : End_Prefix_Hook    := null;
-      Doc_Locator    : Set_Doc_Locator_Hook := null;
-      Error_Location : Get_Error_Location_Hook := null) is
+      Doc_Locator    : Set_Doc_Locator_Hook := null) is
    begin
       if Handler.Hooks.Data /= null then
          Free (Handler.Hooks.Data.all);
@@ -5582,10 +5548,7 @@ package body Sax.Readers is
          End_Element    => End_Element,
          Characters     => Characters,
          Whitespace     => Whitespace,
-         Start_Prefix   => Start_Prefix,
-         End_Prefix     => End_Prefix,
-         Doc_Locator    => Doc_Locator,
-         Error_Location => Error_Location);
+         Doc_Locator    => Doc_Locator);
    end Set_Hooks;
 
    -----------
@@ -5634,10 +5597,6 @@ package body Sax.Readers is
             if NS.Prefix.all /= ""
               and then NS.Prefix.all /= Xmlns_Sequence
             then
-               if Parser.Hooks.End_Prefix /= null then
-                  Parser.Hooks.End_Prefix (Parser, NS.Prefix.all);
-               end if;
-
                End_Prefix_Mapping (Reader'Class (Parser), NS.Prefix.all);
             end if;
             NS := NS.Next;
@@ -6306,5 +6265,45 @@ package body Sax.Readers is
 
       Tmp.Use_Count := Tmp.Use_Count + Inc;
    end Increment_Count;
+
+   ------------
+   -- Get_NS --
+   ------------
+
+   function Get_NS (Elem : Element_Access) return XML_NS is
+   begin
+      return Elem.NS;
+   end Get_NS;
+
+   --------------------
+   -- Get_Local_Name --
+   --------------------
+
+   function Get_Local_Name
+     (Elem : Element_Access) return Unicode.CES.Byte_Sequence_Access is
+   begin
+      return Elem.Name;
+   end Get_Local_Name;
+
+   --------------
+   -- To_QName --
+   --------------
+
+   function To_QName
+     (Namespace_URI, Local_Name : Byte_Sequence)
+      return Unicode.CES.Byte_Sequence is
+   begin
+      if Namespace_URI = "" then
+         return Local_Name;
+      else
+         return '{' & Namespace_URI & '}' & Local_Name;
+      end if;
+   end To_QName;
+
+   function To_QName
+     (Elem : Element_Access) return Unicode.CES.Byte_Sequence is
+   begin
+      return To_QName (Elem.NS.URI.all, Elem.Name.all);
+   end To_QName;
 
 end Sax.Readers;

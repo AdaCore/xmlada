@@ -1383,7 +1383,6 @@ package body Schema.Schema_Readers is
       else
          Typ := Create_Global_Type
            (Handler.Target_NS, Handler, C.Type_Name.all, C.Type_Validator);
-         Set_Debug_Name (C.Type_Validator, "for_type_" & C.Type_Name.all);
          Output (Ada_Name (C)
                  & " := Create_Global_Type (Target_NS, """
                  & C.Type_Name.all & """, Validator);");
@@ -1522,8 +1521,6 @@ package body Schema.Schema_Readers is
          when Context_Type_Def =>
             Handler.Contexts.Next.Type_Validator :=
               Handler.Contexts.Restricted;
-            Set_Debug_Name (Handler.Contexts.Next.Type_Validator,
-                            Ada_Name (Handler.Contexts));
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
          when others =>
             Output ("Can't handler nested restrictions");
@@ -1643,16 +1640,6 @@ package body Schema.Schema_Readers is
                  (Handler.Target_NS,
                   Handler.Contexts.Extension_Base,
                   Handler.Contexts.Extension);
-               Set_Debug_Name (Handler.Contexts.Next.Type_Validator,
-                               Ada_Name (Handler.Contexts));
-
-               if Handler.Contexts.Extension /= null then
-                  Set_Debug_Name
-                    (Handler.Contexts.Extension,
-                     "extension_of_"
-                     & To_QName (Handler.Contexts.Extension_Base));
-               end if;
-
                Output (Ada_Name (Handler.Contexts) & " := Extension_Of ("
                        & Ada_Name (Handler.Contexts.Extension_Base)
                        & ", Validator);");
@@ -1730,7 +1717,6 @@ package body Schema.Schema_Readers is
          return XML_Validator (Validator);
       else
          Seq := Create_Sequence (Handler.Target_NS);
-         Set_Debug_Name (Seq, "repeat_seq");
          if Validator.all in Sequence_Record'Class then
             Add_Particle (Seq, Handler, Sequence (Validator),
                           Min_Occurs => Min_Occurs,
@@ -1886,10 +1872,6 @@ package body Schema.Schema_Readers is
             Output ("Add_Particle ("
                     & Ada_Name (Handler.Contexts.Next)
                     & ", " & Ada_Name (Handler.Contexts) & ");");
-            Set_Debug_Name
-              (Handler.Contexts.Seq,
-               "seq_in_group__"
-               & Get_Local_Name (Handler.Contexts.Next.Group));
          when Context_Schema | Context_Attribute | Context_Element
             | Context_All | Context_Union
             | Context_List | Context_Redefine | Context_Attribute_Group =>
@@ -2091,8 +2073,7 @@ package body Schema.Schema_Readers is
                   Attribute_Use  => Use_Type,
                   Attribute_Form => Form,
                   Has_Fixed      => Fixed_Index /= -1,
-                  Fixed          => Get_Fixed,
-                  Value          => "");
+                  Fixed          => Get_Fixed);
 
                if Debug then
                   Output (Ada_Name (Handler.Contexts)
@@ -2123,8 +2104,7 @@ package body Schema.Schema_Readers is
                Attribute_Use  => Use_Type,
                Attribute_Form => Form,
                Has_Fixed      => Fixed_Index /= -1,
-               Fixed          => Get_Fixed,
-               Value          => "");
+               Fixed          => Get_Fixed);
 
             if Debug then
                Output

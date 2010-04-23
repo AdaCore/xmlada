@@ -81,20 +81,15 @@ package body Schema.Readers is
    --  This doesn't reset the grammar
 
    procedure Hook_Start_Element
-     (Handler       : access Reader'Class;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Elem          : Element_Access;
-      Atts          : in out Sax.Attributes.Attributes'Class);
+     (Handler : access Reader'Class;
+      Elem    : Element_Access;
+      Atts    : in out Sax.Attributes.Attributes'Class);
    procedure Hook_End_Element
-     (Handler       : access Reader'Class;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Elem          : Element_Access);
+     (Handler : access Reader'Class;
+      Elem    : Element_Access);
    procedure Hook_Characters
-     (Handler : access Reader'Class; Ch : Unicode.CES.Byte_Sequence);
+     (Handler : access Reader'Class;
+      Ch      : Unicode.CES.Byte_Sequence);
    procedure Hook_Ignorable_Whitespace
      (Handler : access Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence);
@@ -550,13 +545,9 @@ package body Schema.Readers is
 
    procedure Hook_Start_Element
      (Handler       : access Reader'Class;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
       Elem          : Element_Access;
       Atts          : in out Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Qname, Elem);
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
       Type_Index     : constant Integer := Get_Index
@@ -657,7 +648,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
-                   & "Start_Element: " & To_QName (Namespace_URI, Local_Name)
+                   & "Start_Element: " & To_QName (Elem)
                    & ASCII.ESC & "[39m");
       end if;
 
@@ -681,7 +672,7 @@ package body Schema.Readers is
          return;  --  Always valid, since we have no grammar anyway
       end if;
 
-      Get_NS (H.Grammar, Namespace_URI, Result => G);
+      Get_NS (H.Grammar, Get_URI (Get_NS (Elem)).all, Result => G);
 
       --  Whether this element is valid in the current context
 
@@ -700,27 +691,25 @@ package body Schema.Readers is
 
          Validate_Start_Element
            (Get_Validator (Parent_Type), H,
-            Local_Name, G, H.Validators.Data, Element);
+            Get_Local_Name (Elem).all, G, H.Validators.Data, Element);
       else
-         Element := Lookup_Element (G, H, Local_Name, False);
+         Element := Lookup_Element (G, H, Get_Local_Name (Elem).all, False);
       end if;
 
       if Element = No_Element and then Type_Index = -1 then
          if H.Validators /= null then
             Validation_Error
-              (H, "#Unexpected element """ &
-               To_QName (Namespace_URI, Local_Name) & """");
+              (H, "#Unexpected element """ & To_QName (Elem) & """");
          else
             Validation_Error
-              (H, "#Element """ & To_QName (Namespace_URI, Local_Name)
+              (H, "#Element """ & To_QName (Elem)
                & """: No matching declaration available");
          end if;
       end if;
 
       if Element /= No_Element and then Is_Abstract (Element) then
          Validation_Error
-           (H, "#Element """ & To_QName (Namespace_URI, Local_Name)
-            & """ is abstract");
+           (H, "#Element """ & To_QName (Elem) & """ is abstract");
       end if;
 
       Xsi_Type := Compute_Type_From_Attribute;
@@ -764,8 +753,7 @@ package body Schema.Readers is
             if Nil_Index /= -1 then
                if not Is_Nillable (Element) then
                   Validation_Error
-                    (H, "#Element """ & To_QName (Namespace_URI, Local_Name)
-                     & """ cannot be nil");
+                    (H, "#Element """ & To_QName (Elem) & """ cannot be nil");
                end if;
 
                Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
@@ -798,20 +786,16 @@ package body Schema.Readers is
    ----------------------
 
    procedure Hook_End_Element
-     (Handler       : access Reader'Class;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Elem          : Element_Access)
+     (Handler : access Reader'Class;
+      Elem    : Element_Access)
    is
-      pragma Unreferenced (Namespace_URI, Elem);
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
       Typ : XML_Type;
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
-                   & "End_Element: " & Local_Name & ASCII.ESC & "[39m");
+                   & "End_Element: " & To_QName (Elem) & ASCII.ESC & "[39m");
       end if;
 
       if H.Validators /= null then
@@ -826,7 +810,8 @@ package body Schema.Readers is
             end if;
 
             Validate_End_Element
-              (Get_Validator (Typ), H, Qname, H.Validators.Data);
+              (Get_Validator (Typ), H, Get_Local_Name (Elem).all,
+               H.Validators.Data);
          end if;
       end if;
       Pop (H.Validators);
@@ -924,8 +909,6 @@ package body Schema.Readers is
                     End_Element   => null,
                     Characters    => null,
                     Whitespace    => null,
-                    Start_Prefix  => null,
-                    End_Prefix    => null,
                     Doc_Locator   => null);
       end if;
 

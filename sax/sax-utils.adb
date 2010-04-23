@@ -382,6 +382,12 @@ package body Sax.Utils is
       return Interfaces.Unsigned_32 (Tmp);
    end Hash;
 
+   function Hash
+     (Key : Unicode.CES.Byte_Sequence_Access) return Interfaces.Unsigned_32 is
+   begin
+      return Hash (Key.all);
+   end Hash;
+
    -----------------
    -- Split_Qname --
    -----------------

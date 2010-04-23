@@ -35,6 +35,7 @@ with GNAT.IO;                        use GNAT.IO;
 with Sax.Attributes;                 use Sax.Attributes;
 with Sax.Encodings;                  use Sax.Encodings;
 with Sax.Locators;                   use Sax.Locators;
+with Sax.Readers;                    use Sax.Readers;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
 with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
@@ -73,6 +74,7 @@ package body Schema.Validators is
    function To_QName (Self : Named_Attribute_Validator) return Byte_Sequence;
    function To_QName (Particle : XML_Particle) return Byte_Sequence;
    function To_QName (Element : XML_Element_Access) return Byte_Sequence;
+   pragma Inline (To_QName);
    --  Return the QName for the element described by particle
 
    package QName_Attributes_Htable is new Sax.HTable
@@ -583,7 +585,7 @@ package body Schema.Validators is
    procedure Free (Validator : in out Named_Attribute_Validator_Record) is
    begin
       Free (Validator.Local_Name);
-      Free (Validator.Value);
+      Free (Validator.Default);
    end Free;
 
    -------------------
@@ -678,11 +680,7 @@ package body Schema.Validators is
    function Get_Name
      (Validator : access XML_Validator_Record'Class) return String is
    begin
-      if Validator.Debug_Name = null then
-         return External_Tag (Validator'Tag);
-      else
-         return Validator.Debug_Name.all;
-      end if;
+      return External_Tag (Validator'Tag);
    end Get_Name;
 
    ----------------------------
@@ -1120,7 +1118,9 @@ package body Schema.Validators is
       end Recursive_Check;
 
    begin
-      Debug_Push_Prefix ("Validate_Attributes " & Get_Name (Validator));
+      if Debug then
+         Debug_Push_Prefix ("Validate_Attributes " & Get_Name (Validator));
+      end if;
 
       Recursive_Check (XML_Validator (Validator), Ignore_Wildcard => False,
                        Must_Match_All_Any => False);
@@ -1288,7 +1288,7 @@ package body Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
-      Value          : Unicode.CES.Byte_Sequence := "")
+      Default        : Unicode.CES.Byte_Sequence := "")
       return Attribute_Validator
    is
       Result : constant Attribute_Validator :=
@@ -1300,10 +1300,15 @@ package body Schema.Validators is
            Attribute_Form => Attribute_Form,
            Attribute_Use  => Attribute_Use,
            Fixed          => null,
-           Value          => new Unicode.CES.Byte_Sequence'(Value),
+           Default        => null,
            Next           => null);
 
    begin
+      if Default'Length /= 0 then
+         Named_Attribute_Validator_Record (Result.all).Default :=
+           new Unicode.CES.Byte_Sequence'(Default);
+      end if;
+
       if Has_Fixed then
          Named_Attribute_Validator_Record (Result.all).Fixed :=
            new Unicode.CES.Byte_Sequence'(Fixed);
@@ -1323,7 +1328,7 @@ package body Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False;
-      Value          : Unicode.CES.Byte_Sequence := "")
+      Default        : Unicode.CES.Byte_Sequence := "")
       return Attribute_Validator
    is
       --  We cannot extract the type from Based_On yet, because it might not
@@ -1339,10 +1344,15 @@ package body Schema.Validators is
            Attribute_Form => Attribute_Form,
            Attribute_Use  => Attribute_Use,
            Fixed          => null,
-           Value          => new Unicode.CES.Byte_Sequence'(Value),
+           Default        => new Unicode.CES.Byte_Sequence'(Default),
            Next           => null);
 
    begin
+      if Default'Length /= 0 then
+         Named_Attribute_Validator_Record (Result.all).Default :=
+           new Unicode.CES.Byte_Sequence'(Default);
+      end if;
+
       if Has_Fixed then
          Named_Attribute_Validator_Record (Result.all).Fixed :=
            new Unicode.CES.Byte_Sequence'(Fixed);
@@ -1469,7 +1479,6 @@ package body Schema.Validators is
 
    procedure Free (Validator : in out XML_Validator_Record) is
    begin
-      Free (Validator.Debug_Name);
       Free (Validator.Attributes);
    end Free;
 
@@ -1483,7 +1492,8 @@ package body Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence;
       Create_If_Needed : Boolean := True) return XML_Type
    is
-      Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
+      Typ : XML_Type := Types_Htable.Get
+        (Grammar.Types.all, Local_Name'Unrestricted_Access);
    begin
       if Typ = No_Type and then Create_If_Needed then
          if Local_Name = "precisionDecimal"
@@ -1534,7 +1544,7 @@ package body Schema.Validators is
       Create_If_Needed : Boolean := True) return XML_Element
    is
       Result : constant XML_Element_Access := Elements_Htable.Get
-        (Grammar.Elements.all, Local_Name);
+        (Grammar.Elements.all, Local_Name'Unrestricted_Access);
    begin
       if Result = null then
          if Create_If_Needed then
@@ -1566,7 +1576,8 @@ package body Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Group
    is
-      Result : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
+      Result : XML_Group := Groups_Htable.Get
+        (Grammar.Groups.all, Local_Name'Unrestricted_Access);
    begin
       if Result = No_XML_Group then
          if Grammar.Checked then
@@ -1590,8 +1601,8 @@ package body Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group
    is
-      Result : XML_Attribute_Group :=
-        Attribute_Groups_Htable.Get (Grammar.Attribute_Groups.all, Local_Name);
+      Result : XML_Attribute_Group := Attribute_Groups_Htable.Get
+        (Grammar.Attribute_Groups.all, Local_Name'Unrestricted_Access);
    begin
       if Result = Empty_Attribute_Group then
          if Grammar.Checked then
@@ -1619,8 +1630,8 @@ package body Schema.Validators is
       Local_Name    : Unicode.CES.Byte_Sequence;
       Create_If_Needed : Boolean := True) return Attribute_Validator
    is
-      Result : constant Named_Attribute_Validator :=
-        Attributes_Htable.Get (Grammar.Attributes.all, Local_Name);
+      Result : constant Named_Attribute_Validator := Attributes_Htable.Get
+        (Grammar.Attributes.all, Local_Name'Unrestricted_Access);
    begin
       if Result = null and then Create_If_Needed then
          if Grammar.Checked then
@@ -1646,7 +1657,7 @@ package body Schema.Validators is
    function To_QName
      (NS : XML_Grammar_NS; Local : Byte_Sequence) return Byte_Sequence is
    begin
-      return To_QName (NS.Namespace_URI.all, Local);
+      return Sax.Readers.To_QName (NS.Namespace_URI.all, Local);
    end To_QName;
 
    function To_QName (Element : XML_Element_Access) return Byte_Sequence is
@@ -1665,14 +1676,24 @@ package body Schema.Validators is
       if Typ = No_Type then
          return "???";
       elsif Typ.Local_Name = null then
-         if Typ.Validator /= null then
-            return "anonymous/" & Get_Name (Typ.Validator);
-         else
-            return "anonymous";
-         end if;
+         return "anonymous";
       else
          return Typ.Local_Name.all;
       end if;
+   end To_QName;
+
+   function To_QName (Particle : XML_Particle) return Byte_Sequence is
+   begin
+      case Particle.Typ is
+         when Particle_Element =>
+            return To_QName (Particle.Element.Elem);
+         when Particle_Any =>
+            return "<any>";
+         when Particle_Nested =>
+            return Type_Model (Particle.Validator, First_Only => False);
+         when others =>
+            return "???";
+      end case;
    end To_QName;
 
    --------------
@@ -2089,7 +2110,7 @@ package body Schema.Validators is
      (Grammar : XML_Grammar_NS; Local_Name : Byte_Sequence) return XML_Type
    is
       Old : constant XML_Type := Types_Htable.Get
-        (Grammar.Types.all, Local_Name);
+        (Grammar.Types.all, Local_Name'Unrestricted_Access);
       Result : XML_Type;
    begin
       if Old /= No_Type then
@@ -2108,7 +2129,7 @@ package body Schema.Validators is
      (Grammar : XML_Grammar_NS; Local_Name : Byte_Sequence) return XML_Group
    is
       Old : constant XML_Group := Groups_Htable.Get
-        (Grammar.Groups.all, Local_Name);
+        (Grammar.Groups.all, Local_Name'Unrestricted_Access);
 --        Result : XML_Group;
    begin
       if Old /= No_XML_Group then
@@ -2135,7 +2156,7 @@ package body Schema.Validators is
       Form       : Form_Type) return XML_Element
    is
       Old : XML_Element_Access := Elements_Htable.Get
-        (Grammar.Elements.all, Local_Name);
+        (Grammar.Elements.all, Local_Name'Unrestricted_Access);
    begin
       if Old /= null then
          if Old.Of_Type /= No_Type then
@@ -2179,7 +2200,8 @@ package body Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence;
       Validator  : access XML_Validator_Record'Class) return XML_Type
    is
-      Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
+      Typ : XML_Type := Types_Htable.Get
+        (Grammar.Types.all, Local_Name'Unrestricted_Access);
    begin
       if Typ /= No_Type then
          if Typ.Validator /= null then
@@ -2214,10 +2236,6 @@ package body Schema.Validators is
                           & To_QName (Grammar, Local_Name));
          end if;
          Register (Grammar, Typ);
-
-         if Debug and then Typ.Validator.Debug_Name = null then
-            Set_Debug_Name (Typ.Validator, Local_Name);
-         end if;
       end if;
 
       return Typ;
@@ -2271,8 +2289,8 @@ package body Schema.Validators is
       Fixed          : Unicode.CES.Byte_Sequence := "";
       Has_Fixed      : Boolean := False) return Attribute_Validator
    is
-      Old : Named_Attribute_Validator :=
-        Attributes_Htable.Get (NS.Attributes.all, Local_Name);
+      Old : Named_Attribute_Validator := Attributes_Htable.Get
+        (NS.Attributes.all, Local_Name'Unrestricted_Access);
    begin
       if Old /= null then
          if Get_Type (Old.all) /= No_Type then
@@ -2290,7 +2308,7 @@ package body Schema.Validators is
             Attribute_Form => Attribute_Form,
             Attribute_Use  => Attribute_Use,
             Fixed          => null,
-            Value          => null,
+            Default        => null,
             Next           => null);
 
          Register (NS, Old);
@@ -2315,7 +2333,8 @@ package body Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Group
    is
-      Group : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
+      Group : XML_Group := Groups_Htable.Get
+        (Grammar.Groups.all, Local_Name'Unrestricted_Access);
    begin
       if Group /= No_XML_Group then
          if not Group.Is_Forward_Decl then
@@ -2344,7 +2363,7 @@ package body Schema.Validators is
       Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group
    is
       Group : XML_Attribute_Group := Attribute_Groups_Htable.Get
-        (NS.Attribute_Groups.all, Local_Name);
+        (NS.Attribute_Groups.all, Local_Name'Unrestricted_Access);
    begin
       if Group /= Empty_Attribute_Group then
          if not Group.Is_Forward_Decl then
@@ -2730,14 +2749,23 @@ package body Schema.Validators is
       Unchecked_Free (Att);
    end Free;
 
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (S1, S2 : Unicode.CES.Byte_Sequence_Access) return Boolean is
+   begin
+      return S1.all = S2.all;
+   end Equal;
+
    -------------
    -- Get_Key --
    -------------
 
    function Get_Key
-     (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence is
+     (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence_Access is
    begin
-      return Att.Local_Name.all;
+      return Att.Local_Name;
    end Get_Key;
 
    -------------
@@ -2745,9 +2773,18 @@ package body Schema.Validators is
    -------------
 
    function Get_Key
-     (Element : XML_Element_Access) return Unicode.CES.Byte_Sequence is
+     (Element : XML_Element_Access) return Unicode.CES.Byte_Sequence_Access is
    begin
-      return Element.Local_Name.all;
+      return Element.Local_Name;
+   end Get_Key;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Typ : XML_Type) return Unicode.CES.Byte_Sequence_Access is
+   begin
+      return Typ.Local_Name;
    end Get_Key;
 
    -------------
@@ -2755,9 +2792,9 @@ package body Schema.Validators is
    -------------
 
    function Get_Key
-     (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
+     (Group : XML_Group) return Unicode.CES.Byte_Sequence_Access is
    begin
-      return Typ.Local_Name.all;
+      return Group.Local_Name;
    end Get_Key;
 
    -------------
@@ -2765,19 +2802,10 @@ package body Schema.Validators is
    -------------
 
    function Get_Key
-     (Group : XML_Group) return Unicode.CES.Byte_Sequence is
+     (Att : Named_Attribute_Validator) return Unicode.CES.Byte_Sequence_Access
+   is
    begin
-      return Group.Local_Name.all;
-   end Get_Key;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key
-     (Att : Named_Attribute_Validator) return Unicode.CES.Byte_Sequence is
-   begin
-      return Att.Local_Name.all;
+      return Att.Local_Name;
    end Get_Key;
 
    -------------------------------
@@ -2977,7 +3005,9 @@ package body Schema.Validators is
    is
       Applies : Boolean;
    begin
-      Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
+      if Debug then
+         Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
+      end if;
 
       Applies_To_Tag (Nested, Reader, Local_Name, NS, Applies, Skip_Current);
 
@@ -3018,8 +3048,10 @@ package body Schema.Validators is
       NS                : XML_Grammar_NS;
       Element_Validator : out XML_Element) is
    begin
-      Debug_Push_Prefix ("Run_Nested: " & Get_Name (Validator)
-                         & " -> " & Get_Name (Data.Nested));
+      if Debug then
+         Debug_Push_Prefix ("Run_Nested: " & Get_Name (Validator)
+                            & " -> " & Get_Name (Data.Nested));
+      end if;
 
       Validate_Start_Element
         (Data.Nested, Reader, Local_Name, NS,
@@ -3036,26 +3068,6 @@ package body Schema.Validators is
          Debug_Pop_Prefix;
          Element_Validator := No_Element;
    end Run_Nested;
-
-   --------------
-   -- To_QName --
-   --------------
-
-   function To_QName (Particle : XML_Particle) return Byte_Sequence is
-   begin
-      case Particle.Typ is
-         when Particle_Element =>
-            return To_QName
-              (Particle.Element.Elem.NS.Namespace_URI.all,
-               Particle.Element.Elem.Local_Name.all);
-         when Particle_Any =>
-            return "<any>";
-         when Particle_Nested =>
-            return Type_Model (Particle.Validator, First_Only => False);
-         when others =>
-            return "???";
-      end case;
-   end To_QName;
 
    ----------------------------
    -- Validate_Start_Element --
@@ -3102,11 +3114,13 @@ package body Schema.Validators is
       end Check_Min_Occurs;
 
    begin
-      Debug_Push_Prefix
-        ("Validate_Start seq " & Get_Name (Validator)
-         & " occurs=" & D.Num_Occurs_Of_Current'Img
-         & " has_nested=" & Boolean'Image (D.Nested /= null)
-         & ' ' & To_QName (NS, Local_Name));
+      if Debug then
+         Debug_Push_Prefix
+           ("Validate_Start seq " & Get_Name (Validator)
+            & " occurs=" & D.Num_Occurs_Of_Current'Img
+            & " has_nested=" & Boolean'Image (D.Nested /= null)
+            & ' ' & To_QName (NS, Local_Name));
+      end if;
 
       if D.Nested /= null then
          Run_Nested
@@ -3285,8 +3299,10 @@ package body Schema.Validators is
    is
       D : constant Sequence_Data_Access := Sequence_Data_Access (Data);
    begin
-      Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator)
-                         & " occurs=" & D.Num_Occurs_Of_Current'Img);
+      if Debug then
+         Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator)
+                            & " occurs=" & D.Num_Occurs_Of_Current'Img);
+      end if;
 
       if D.Nested /= null then
          Validate_End_Element (D.Nested, Reader, Local_Name, D.Nested_Data);
@@ -3491,11 +3507,13 @@ package body Schema.Validators is
       end Check_Particle;
 
    begin
-      Debug_Push_Prefix
-        ("Validate_Start choice " & Get_Name (Validator)
-         & " occurs=" & D.Num_Occurs_Of_Current'Img
-         & " has_nested=" & Boolean'Image (D.Nested /= null)
-         & ' ' & To_QName (NS, Local_Name));
+      if Debug then
+         Debug_Push_Prefix
+           ("Validate_Start choice " & Get_Name (Validator)
+            & " occurs=" & D.Num_Occurs_Of_Current'Img
+            & " has_nested=" & Boolean'Image (D.Nested /= null)
+            & ' ' & To_QName (NS, Local_Name));
+      end if;
 
       if D.Nested /= null then
          Run_Nested
@@ -3866,7 +3884,9 @@ package body Schema.Validators is
       Item : XML_Particle_Access;
 
    begin
-      Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
+      if Debug then
+         Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
+      end if;
       Skip_Current := False;
 
       loop
@@ -3953,7 +3973,10 @@ package body Schema.Validators is
       Item : Particle_Iterator := Start (Group.Particles);
       It   : XML_Particle_Access;
    begin
-      Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
+      if Debug then
+         Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
+      end if;
+
       while Get (Item) /= null loop
          It := Get (Item);
          case It.Typ is
@@ -4157,17 +4180,6 @@ package body Schema.Validators is
             Min_Occurs => Min_Occurs,
             Max_Occurs => Max_Occurs));
    end Add_Particle;
-
-   --------------------
-   -- Set_Debug_Name --
-   --------------------
-
-   procedure Set_Debug_Name
-     (Typ : access XML_Validator_Record'Class; Name : String) is
-   begin
-      Free (Typ.Debug_Name);
-      Typ.Debug_Name := new Unicode.CES.Byte_Sequence'(Name);
-   end Set_Debug_Name;
 
    ----------
    -- Free --
@@ -4493,8 +4505,10 @@ package body Schema.Validators is
       --  Check whether there are still some candidates. It isn't the case if
       --  we have already matches all elements as many times as possible
 
-      Debug_Push_Prefix
-        ("Validate_Start_Element <all>: " & Get_Name (Validator));
+      if Debug then
+         Debug_Push_Prefix
+           ("Validate_Start_Element <all>: " & Get_Name (Validator));
+      end if;
 
       while Get (Tmp) /= null loop
          if D.All_Elements (Count) < Get_Max_Occurs (Tmp) then
@@ -4571,8 +4585,10 @@ package body Schema.Validators is
       D     : constant All_Data_Access := All_Data_Access (Data);
       Count : Positive := 1;
    begin
-      Debug_Push_Prefix ("Validate_End_Element <all> "
-                         & Get_Name (Validator));
+      if Debug then
+         Debug_Push_Prefix ("Validate_End_Element <all> "
+                            & Get_Name (Validator));
+      end if;
 
       while Get (Tmp) /= null loop
          if D.All_Elements (Count) < Get_Min_Occurs (Tmp) then
@@ -4659,7 +4675,9 @@ package body Schema.Validators is
    is
       Current : Particle_Iterator;
    begin
-      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
+      if Debug then
+         Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
+      end if;
 
       Current := Start (Group.Particles);
       while Get (Current) /= null loop
@@ -4797,9 +4815,9 @@ package body Schema.Validators is
    -- Get_Key --
    -------------
 
-   function Get_Key (Id : Id_Ref) return Unicode.CES.Byte_Sequence is
+   function Get_Key (Id : Id_Ref) return Unicode.CES.Byte_Sequence_Access is
    begin
-      return Id.Key.all;
+      return Id.Key;
    end Get_Key;
 
    ----------
@@ -5127,11 +5145,9 @@ package body Schema.Validators is
 
    procedure Debug_Push_Prefix (Append : String) is
    begin
-      if Debug then
-         Debug_Output (ASCII.ESC & "[36m" & Append
-                       & ASCII.ESC & "[39m");
-         Debug_Prefixes_Level := Debug_Prefixes_Level + 1;
-      end if;
+      Debug_Output (ASCII.ESC & "[36m" & Append
+                    & ASCII.ESC & "[39m");
+      Debug_Prefixes_Level := Debug_Prefixes_Level + 1;
    end Debug_Push_Prefix;
 
    ----------------------
@@ -5192,7 +5208,9 @@ package body Schema.Validators is
    is
       Current : Particle_Iterator;
    begin
-      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
+      if Debug then
+         Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
+      end if;
 
       Current := Start (Group.Particles);
       while Get (Current) /= null loop
@@ -5230,7 +5248,9 @@ package body Schema.Validators is
    is
       Current : Particle_Iterator;
    begin
-      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
+      if Debug then
+         Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
+      end if;
 
       Current := Start (Group.Particles);
       while Get (Current) /= null loop
@@ -5581,19 +5601,6 @@ package body Schema.Validators is
    end Add_Union;
 
    --------------
-   -- To_QName --
-   --------------
-
-   function To_QName (Namespace_URI, Local_Name : String) return String is
-   begin
-      if Namespace_URI = "" then
-         return Local_Name;
-      else
-         return '{' & Namespace_URI & '}' & Local_Name;
-      end if;
-   end To_QName;
-
-   --------------
    -- Check_Id --
    --------------
 
@@ -5608,7 +5615,7 @@ package body Schema.Validators is
             Reader.Id_Table := new Id_Htable.HTable (101);
          else
             if Id_Htable.Get
-              (Reader.Id_Table.all, Value) /= No_Id
+              (Reader.Id_Table.all, Value'Unrestricted_Access) /= No_Id
             then
                Validation_Error
                  (Reader, "#ID """ & Value & """ already defined");
