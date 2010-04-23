@@ -50,10 +50,8 @@ package body Schema.Validators.UR_Type is
      (Validator         : access UR_Type_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
    function Is_Wildcard
      (Validator : access UR_Type_Validator) return Boolean;
@@ -81,18 +79,15 @@ package body Schema.Validators.UR_Type is
      (Validator         : access UR_Type_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element)
    is
       pragma Unreferenced (Data);
    begin
       if Debug then
          Debug_Output
-           ("Validate_Start_Element "
-            & To_QName (Namespace_URI, Local_Name)
+           ("Validate_Start_Element " & To_QName (NS, Local_Name)
             & " NS=" & Get_Namespace_URI (NS)
             & " (parent=UR_Type, " & Validator.Process_Contents'Img & ")");
       end if;
@@ -108,8 +103,7 @@ package body Schema.Validators.UR_Type is
                  (Reader,
                   "#No definition provided for """ & Local_Name & """");
             else
-               Check_Qualification
-                 (Grammar, Reader, Element_Validator, Namespace_URI);
+               Check_Qualification (Reader, Element_Validator, NS);
             end if;
 
          when Process_Lax =>
@@ -121,7 +115,7 @@ package body Schema.Validators.UR_Type is
                   Debug_Output ("Definition not found for " & Local_Name);
                end if;
                Element_Validator := Get_UR_Type_Element
-                 (Grammar, Validator.Process_Contents);
+                 (Reader.Grammar, Validator.Process_Contents);
             else
                if Debug then
                   Debug_Output ("Definition found for " & Local_Name);
@@ -135,7 +129,7 @@ package body Schema.Validators.UR_Type is
             end if;
 
             Element_Validator := Get_UR_Type_Element
-              (Grammar, Validator.Process_Contents);
+              (Reader.Grammar, Validator.Process_Contents);
       end case;
    end Validate_Start_Element;
 

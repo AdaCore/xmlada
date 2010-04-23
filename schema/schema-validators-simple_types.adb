@@ -1728,13 +1728,11 @@ package body Schema.Validators.Simple_Types is
      (Validator         : access Any_Simple_XML_Validator_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element)
    is
-      pragma Unreferenced (Validator, Data, Namespace_URI, NS, Grammar);
+      pragma Unreferenced (Validator, Data, NS);
    begin
       Validation_Error
         (Reader,

@@ -72,6 +72,7 @@ package body Schema.Validators is
 
    function To_QName (Self : Named_Attribute_Validator) return Byte_Sequence;
    function To_QName (Particle : XML_Particle) return Byte_Sequence;
+   function To_QName (Element : XML_Element_Access) return Byte_Sequence;
    --  Return the QName for the element described by particle
 
    package QName_Attributes_Htable is new Sax.HTable
@@ -100,9 +101,7 @@ package body Schema.Validators is
       Data              : access Group_Model_Data_Record'Class;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element;
       Skip_Current      : out Boolean);
    --  Check whether Nested matches Local_Name.
@@ -120,9 +119,7 @@ package body Schema.Validators is
       Data              : access Group_Model_Data_Record'Class;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
    --  Run the nested group of Validator, if there is any.
    --  On exit, Element_Validator is set to No_Element if either the nested
@@ -132,9 +129,7 @@ package body Schema.Validators is
      (Element            : XML_Element_Access;
       Reader             : access Abstract_Validation_Reader'Class;
       Local_Name         : Unicode.CES.Byte_Sequence;
-      Namespace_URI      : Unicode.CES.Byte_Sequence;
-      Parent_NS          : XML_Grammar_NS;
-      Grammar            : XML_Grammar;
+      NS                 : XML_Grammar_NS;
       Is_Local_Element   : Boolean;
       Check_All_In_Group : Boolean := True) return XML_Element;
    --  Check whether any element in the substitution group of Validator can
@@ -698,13 +693,11 @@ package body Schema.Validators is
      (Validator         : access XML_Validator_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element)
    is
-      pragma Unreferenced (Validator, Data, Namespace_URI, NS, Grammar);
+      pragma Unreferenced (Validator, Data, NS);
    begin
       Validation_Error
         (Reader, "#No definition found for """ & Local_Name & """");
@@ -878,7 +871,7 @@ package body Schema.Validators is
                      begin
                         Validate_Attribute (Named.all, Reader, Atts, Found);
                      exception
-                        when E : XML_Validation_Error =>
+                        when XML_Validation_Error =>
                            --  Avoid duplicate locations in error messages
                            --  ??? This is just a hack for now
 
@@ -926,7 +919,7 @@ package body Schema.Validators is
          Debug_Pop_Prefix;
 
       exception
-         when E : XML_Validation_Error =>
+         when XML_Validation_Error =>
             Debug_Pop_Prefix;
 
             --  Avoid duplicate locations in error messages
@@ -1649,24 +1642,25 @@ package body Schema.Validators is
 
    function To_QName (Self : Named_Attribute_Validator) return Byte_Sequence is
    begin
-      return To_QName (Get_Namespace_URI (Self.NS), Self.Local_Name.all);
+      return To_QName (Self.NS, Self.Local_Name.all);
    end To_QName;
-
-   --------------
-   -- To_QName --
-   --------------
 
    function To_QName
-     (Element : XML_Element) return Unicode.CES.Byte_Sequence
-   is
+     (NS : XML_Grammar_NS; Local : Byte_Sequence) return Byte_Sequence is
    begin
-      return To_QName
-        (Get_Namespace_URI (Element.Elem.NS), Element.Elem.Local_Name.all);
+      return To_QName (NS.Namespace_URI.all, Local);
    end To_QName;
 
-   --------------
-   -- To_QName --
-   --------------
+   function To_QName (Element : XML_Element_Access) return Byte_Sequence is
+   begin
+      return To_QName (Element.NS, Element.Local_Name.all);
+   end To_QName;
+
+   function To_QName
+     (Element : XML_Element) return Unicode.CES.Byte_Sequence is
+   begin
+      return To_QName (Element.Elem);
+   end To_QName;
 
    function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
    begin
@@ -2797,9 +2791,7 @@ package body Schema.Validators is
      (Element            : XML_Element_Access;
       Reader             : access Abstract_Validation_Reader'Class;
       Local_Name         : Unicode.CES.Byte_Sequence;
-      Namespace_URI      : Unicode.CES.Byte_Sequence;
-      Parent_NS          : XML_Grammar_NS;
-      Grammar            : XML_Grammar;
+      NS                 : XML_Grammar_NS;
       Is_Local_Element   : Boolean;
       Check_All_In_Group : Boolean := True) return XML_Element
    is
@@ -2808,32 +2800,28 @@ package body Schema.Validators is
         Element.Local_Name.all = Local_Name;
    begin
       if Debug then
-         Debug_Push_Prefix ("SubstitutionGroup, can " & Namespace_URI
-                            & ":" & Local_Name & " replace "
-                            & Get_Namespace_URI (Parent_NS)
-                            & ":" & Element.Local_Name.all
-                            & " element.form="
-                            & Element.Form'Img);
+         Debug_Push_Prefix ("SubstitutionGroup, can "
+                            & To_QName (NS, Local_Name)
+                            & " replace " & To_QName (Element)
+                            & " element.form=" & Element.Form'Img);
       end if;
 
       --  Shortcut if Element itself is the validator for (namespace, local)
 
-      if Local_Matches
-        and then Get_Namespace_URI (Element.NS) = Namespace_URI
-      then
+      if Local_Matches and then Element.NS = NS then
          Result := (Elem => Element, Is_Ref => True);
-         Check_Qualification (Grammar, Reader, Result, Namespace_URI);
+         Check_Qualification (Reader, Result, NS);
 
       elsif Is_Local_Element
         and then Element.Form = Unqualified
-        and then Namespace_URI = ""
+        and then NS.Namespace_URI'Length = 0
         and then Local_Matches
       then
          Result := (Elem => Element, Is_Ref => True);
-         Check_Qualification (Grammar, Reader, Result, Namespace_URI);
+         Check_Qualification (Reader, Result, NS);
 
-      elsif Local_Matches and then Namespace_URI = "" then
-         Check_Qualification (Grammar, Reader, (Element, True), Namespace_URI);
+      elsif Local_Matches and then NS.Namespace_URI'Length = 0 then
+         Check_Qualification (Reader, (Element, True), NS);
       end if;
 
       --  Search for the global element (namespace_uri, local_name), and check
@@ -2844,7 +2832,7 @@ package body Schema.Validators is
             R : XML_Element;
             G : XML_Element;
          begin
-            R := Lookup_Element (Parent_NS, Reader, Local_Name, False);
+            R := Lookup_Element (NS, Reader, Local_Name, False);
             if R /= No_Element then
                G := R.Elem.Substitution_Group;
                while G /= No_Element loop
@@ -2864,7 +2852,7 @@ package body Schema.Validators is
                      if G.Elem.Blocks (Block_Substitution) then
                         Validation_Error
                           (Reader, "#Unexpected element """
-                           & To_QName (Namespace_URI, Local_Name)
+                           & To_QName (NS, Local_Name)
                            & """ (substitutions are blocked)");
 
                      elsif (G.Elem.Blocks (Block_Extension)
@@ -2873,8 +2861,7 @@ package body Schema.Validators is
                      then
                         Validation_Error
                           (Reader, "#Invalid substitution, because """
-                           & G.Elem.Local_Name.all
-                           & """ blocks extensions");
+                           & To_QName (G.Elem) & """ blocks extensions");
 
                      elsif (G.Elem.Blocks (Block_Restriction)
                             or else G.Elem.Of_Type.Blocks (Block_Restriction))
@@ -2882,8 +2869,7 @@ package body Schema.Validators is
                      then
                         Validation_Error
                           (Reader, "#Invalid substitution, because """
-                           & G.Elem.Local_Name.all
-                           & """ blocks restrictions");
+                           & To_QName (G.Elem) & """ blocks restrictions");
                      end if;
 
                      exit;
@@ -2988,9 +2974,7 @@ package body Schema.Validators is
       Data              : access Group_Model_Data_Record'Class;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element;
       Skip_Current      : out Boolean)
    is
@@ -2998,17 +2982,15 @@ package body Schema.Validators is
    begin
       Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
 
-      Applies_To_Tag
-        (Nested, Reader, Local_Name, Namespace_URI, NS,
-         Grammar, Applies, Skip_Current);
+      Applies_To_Tag (Nested, Reader, Local_Name, NS, Applies, Skip_Current);
 
       if Applies then
          Data.Nested      := Group_Model (Nested);
          Data.Nested_Data := Create_Validator_Data (Nested);
 
          Validate_Start_Element
-           (Data.Nested, Reader, Local_Name, Namespace_URI, NS,
-            Data.Nested_Data, Grammar, Element_Validator);
+           (Data.Nested, Reader, Local_Name, NS,
+            Data.Nested_Data, Element_Validator);
 
          if Element_Validator = No_Element then
             Validate_End_Element
@@ -3036,17 +3018,15 @@ package body Schema.Validators is
       Data              : access Group_Model_Data_Record'Class;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element) is
    begin
       Debug_Push_Prefix ("Run_Nested: " & Get_Name (Validator)
                          & " -> " & Get_Name (Data.Nested));
 
       Validate_Start_Element
-        (Data.Nested, Reader, Local_Name, Namespace_URI, NS,
-         Data.Nested_Data, Grammar, Element_Validator);
+        (Data.Nested, Reader, Local_Name, NS,
+         Data.Nested_Data, Element_Validator);
 
       if Element_Validator = No_Element then
          Free_Nested_Group (Group_Model_Data (Data));
@@ -3088,10 +3068,8 @@ package body Schema.Validators is
      (Validator         : access Sequence_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element)
    is
       D         : constant Sequence_Data_Access := Sequence_Data_Access (Data);
@@ -3110,13 +3088,12 @@ package body Schema.Validators is
             if D.Num_Occurs_Of_Current = 0
               and then D.Previous /= null
               and then D.Previous.Typ = Particle_Element
-              and then Namespace_URI =
-                D.Previous.Element.Elem.NS.Namespace_URI.all
+              and then NS = D.Previous.Element.Elem.NS
               and then Local_Name = D.Previous.Element.Elem.Local_Name.all
             then
                Validation_Error
                  (Reader, "#Too many occurrences of """
-                  & To_QName (Namespace_URI, Local_Name)
+                  & To_QName (NS, Local_Name)
                   & """ (expecting """ & To_QName (Curr.all) & """)");
             else
                Validation_Error
@@ -3132,12 +3109,11 @@ package body Schema.Validators is
         ("Validate_Start seq " & Get_Name (Validator)
          & " occurs=" & D.Num_Occurs_Of_Current'Img
          & " has_nested=" & Boolean'Image (D.Nested /= null)
-         & ' ' & To_QName (Namespace_URI, Local_Name));
+         & ' ' & To_QName (NS, Local_Name));
 
       if D.Nested /= null then
          Run_Nested
-           (Validator, D, Reader, Local_Name, Namespace_URI, NS,
-            Grammar, Element_Validator);
+           (Validator, D, Reader, Local_Name, NS, Element_Validator);
          if Element_Validator /= No_Element then
             Debug_Pop_Prefix;
             return;
@@ -3155,8 +3131,7 @@ package body Schema.Validators is
 
          Check_Nested
            (Get (D.Current).Validator, D, Reader, Local_Name,
-            Namespace_URI, NS, Grammar,
-            Element_Validator, Skip_Current);
+            NS, Element_Validator, Skip_Current);
 
          if Element_Validator /= No_Element then
             D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
@@ -3204,8 +3179,8 @@ package body Schema.Validators is
          case Curr.Typ is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
-                 (Curr.Element.Elem, Reader, Local_Name, Namespace_URI, NS,
-                  Grammar, Is_Local_Element => not Curr.Element.Is_Ref);
+                 (Curr.Element.Elem, Reader, Local_Name, NS,
+                  Is_Local_Element => not Curr.Element.Is_Ref);
 
                if Element_Validator /= No_Element then
                   if Debug then
@@ -3223,8 +3198,8 @@ package body Schema.Validators is
             when Particle_Any =>
                begin
                   Validate_Start_Element
-                    (Curr.Any, Reader, Local_Name, Namespace_URI, NS,
-                     null, Grammar, Element_Validator);
+                    (Curr.Any, Reader, Local_Name, NS,
+                     null, Element_Validator);
                   if Element_Validator /= No_Element then
                      Tmp := Move_To_Next_Particle
                        (Validator, D, Force => False);
@@ -3243,8 +3218,7 @@ package body Schema.Validators is
                end if;
                Check_Nested
                  (Curr.Validator, D, Reader, Local_Name,
-                  Namespace_URI, NS,
-                  Grammar, Element_Validator, Skip_Current);
+                  NS, Element_Validator, Skip_Current);
 
                if Element_Validator /= No_Element then
                   D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
@@ -3485,10 +3459,8 @@ package body Schema.Validators is
      (Validator         : access Choice_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element)
    is
       D     : constant Choice_Data_Access := Choice_Data_Access (Data);
@@ -3503,18 +3475,17 @@ package body Schema.Validators is
          case It.Typ is
             when Particle_Element =>
                Element_Validator := Check_Substitution_Groups
-                 (It.Element.Elem, Reader, Local_Name, Namespace_URI, NS,
-                  Grammar, Is_Local_Element => not It.Element.Is_Ref);
+                 (It.Element.Elem, Reader, Local_Name, NS,
+                  Is_Local_Element => not It.Element.Is_Ref);
 
             when Particle_Nested =>
                Check_Nested
-                 (It.Validator, D, Reader, Local_Name, Namespace_URI, NS,
-                  Grammar, Element_Validator, Skip_Current);
+                 (It.Validator, D, Reader, Local_Name, NS,
+                  Element_Validator, Skip_Current);
 
             when Particle_Any =>
                Validate_Start_Element
-                 (It.Any, Reader, Local_Name, Namespace_URI, NS,
-                  null, Grammar, Element_Validator);
+                 (It.Any, Reader, Local_Name, NS, null, Element_Validator);
 
             when Particle_Group | Particle_XML_Type =>
                --  Not possible, since the iterator hides these
@@ -3527,12 +3498,11 @@ package body Schema.Validators is
         ("Validate_Start choice " & Get_Name (Validator)
          & " occurs=" & D.Num_Occurs_Of_Current'Img
          & " has_nested=" & Boolean'Image (D.Nested /= null)
-         & ' ' & To_QName (Namespace_URI, Local_Name));
+         & ' ' & To_QName (NS, Local_Name));
 
       if D.Nested /= null then
          Run_Nested
-           (Validator, D, Reader, Local_Name, Namespace_URI, NS,
-            Grammar, Element_Validator);
+           (Validator, D, Reader, Local_Name, NS, Element_Validator);
          if Element_Validator /= No_Element then
             Debug_Pop_Prefix;
             return;
@@ -3873,14 +3843,11 @@ package body Schema.Validators is
      (Group         : access Group_Model_Record;
       Reader        : access Abstract_Validation_Reader'Class;
       Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Grammar       : XML_Grammar;
       Applies       : out Boolean;
       Skip_Current  : out Boolean)
    is
-      pragma Unreferenced
-        (Group, Local_Name, Namespace_URI, NS, Grammar, Reader);
+      pragma Unreferenced (Group, Local_Name, NS, Reader);
    begin
       Applies := False;
       Skip_Current := False;
@@ -3894,9 +3861,7 @@ package body Schema.Validators is
      (Group         : access Sequence_Record;
       Reader        : access Abstract_Validation_Reader'Class;
       Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Grammar       : XML_Grammar;
       Applies       : out Boolean;
       Skip_Current  : out Boolean)
    is
@@ -3914,22 +3879,22 @@ package body Schema.Validators is
          case Item.Typ is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
-                 (Item.Element.Elem, Reader, Local_Name, Namespace_URI, NS,
-                  Grammar, Is_Local_Element => not Item.Element.Is_Ref)
+                 (Item.Element.Elem, Reader, Local_Name, NS,
+                  Is_Local_Element => not Item.Element.Is_Ref)
                  /= No_Element;
 
             when Particle_Nested =>
                Applies_To_Tag
-                 (Item.Validator, Reader, Local_Name, Namespace_URI, NS,
-                  Grammar, Applies, Skip_Current);
+                 (Item.Validator, Reader, Local_Name, NS,
+                  Applies, Skip_Current);
 
             when Particle_Any =>
                declare
                   Element_Validator : XML_Element;
                begin
                   Validate_Start_Element
-                    (Item.Any, Reader, Local_Name, Namespace_URI, NS, null,
-                     Grammar, Element_Validator);
+                    (Item.Any, Reader, Local_Name, NS, null,
+                     Element_Validator);
                   Applies := True;
                exception
                   when XML_Validation_Error =>
@@ -3984,9 +3949,7 @@ package body Schema.Validators is
      (Group         : access Choice_Record;
       Reader        : access Abstract_Validation_Reader'Class;
       Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Grammar       : XML_Grammar;
       Applies       : out Boolean;
       Skip_Current  : out Boolean)
    is
@@ -3999,14 +3962,14 @@ package body Schema.Validators is
          case It.Typ is
             when Particle_Element =>
                Applies := Check_Substitution_Groups
-                 (It.Element.Elem, Reader, Local_Name, Namespace_URI, NS,
-                  Grammar, Is_Local_Element => not It.Element.Is_Ref)
+                 (It.Element.Elem, Reader, Local_Name, NS,
+                  Is_Local_Element => not It.Element.Is_Ref)
                  /= No_Element;
 
             when Particle_Nested =>
                Applies_To_Tag
-                 (It.Validator, Reader, Local_Name, Namespace_URI,
-                  NS, Grammar, Applies, Skip_Current);
+                 (It.Validator, Reader, Local_Name,
+                  NS, Applies, Skip_Current);
                Applies := Applies
                  or else Can_Be_Empty (It.Validator);
 
@@ -4015,8 +3978,8 @@ package body Schema.Validators is
                   Element_Validator : XML_Element;
                begin
                   Validate_Start_Element
-                    (It.Any, Reader, Local_Name, Namespace_URI, NS, null,
-                     Grammar, Element_Validator);
+                    (It.Any, Reader, Local_Name, NS, null,
+                     Element_Validator);
                   Applies := True;
                exception
                   when XML_Validation_Error =>
@@ -4522,10 +4485,8 @@ package body Schema.Validators is
      (Validator         : access XML_All_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element)
    is
       Tmp     : Particle_Iterator := Start (Validator.Particles);
@@ -4566,8 +4527,8 @@ package body Schema.Validators is
 
       while Get (Tmp) /= null loop
          Element_Validator := Check_Substitution_Groups
-           (Get (Tmp).Element.Elem, Reader, Local_Name, Namespace_URI, NS,
-            Grammar, Is_Local_Element => not Get (Tmp).Element.Is_Ref);
+           (Get (Tmp).Element.Elem, Reader, Local_Name, NS,
+            Is_Local_Element => not Get (Tmp).Element.Is_Ref);
 
          if Element_Validator /= No_Element then
             D.All_Elements (Count) := D.All_Elements (Count) + 1;
@@ -4739,10 +4700,8 @@ package body Schema.Validators is
      (Validator         : access XML_Any_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element)
    is
       pragma Unreferenced (Data);
@@ -4763,12 +4722,12 @@ package body Schema.Validators is
          null;
 
       elsif Validator.Namespace.all = "##other" then
-         if Namespace_URI = Validator.Target_NS.Namespace_URI.all then
+         if NS = Validator.Target_NS then
             Validation_Error
               (Reader,
                "#Namespace should be different from "
                & Validator.Target_NS.Namespace_URI.all);
-         elsif Namespace_URI = "" then
+         elsif NS.Namespace_URI'Length = 0 then
             Validation_Error (Reader, "#Element must specify a namespace");
          end if;
 
@@ -4794,12 +4753,13 @@ package body Schema.Validators is
             if Validator.Namespace
               (Start .. Last - 1) = "##targetNamespace"
             then
-               Valid := Namespace_URI = Validator.Target_NS.Namespace_URI.all;
+               Valid := NS = Validator.Target_NS;
             elsif Validator.Namespace (Start .. Last - 1) = "##local" then
-               Valid := Namespace_URI = "";
+               Valid := NS.Namespace_URI'Length = 0;
             else
                Valid :=
-                 Namespace_URI = Validator.Namespace (Start .. Last - 1);
+                 Get_Namespace_URI (NS) =
+                 Validator.Namespace (Start .. Last - 1);
             end if;
 
             exit when Valid;
@@ -4808,7 +4768,7 @@ package body Schema.Validators is
          if not Valid then
             Validation_Error
               (Reader, "#Invalid namespace for this element: """
-               & Namespace_URI & """ not in """
+               & NS.Namespace_URI.all & """ not in """
                & Validator.Namespace.all & """");
          end if;
       end if;
@@ -4816,10 +4776,8 @@ package body Schema.Validators is
       Validate_Start_Element
         (Get_Validator
            (Get_Type (Get_UR_Type_Element
-            (Grammar, Validator.Process_Contents))),
-         Reader,
-         Local_Name, Namespace_URI, NS, null,
-         Grammar, Element_Validator);
+            (Reader.Grammar, Validator.Process_Contents))),
+         Reader, Local_Name, NS, null, Element_Validator);
 
       Debug_Pop_Prefix;
 
@@ -5195,22 +5153,21 @@ package body Schema.Validators is
    -------------------------
 
    procedure Check_Qualification
-     (Grammar       : XML_Grammar;
-      Reader        : access Abstract_Validation_Reader'Class;
+     (Reader        : access Abstract_Validation_Reader'Class;
       Element       : XML_Element;
-      Namespace_URI : Unicode.CES.Byte_Sequence) is
+      NS            : XML_Grammar_NS) is
    begin
       if not Is_Global (Element)
         and then Element.Elem.Form = Unqualified
-        and then Namespace_URI /= ""
+        and then NS.Namespace_URI'Length /= 0
       then
          Validation_Error
            (Reader,
             "#Namespace specification not authorized in this context");
 
       elsif Element.Elem.Form = Qualified
-        and then Namespace_URI = ""
-        and then Get (Grammar).Target_NS /= null
+        and then NS.Namespace_URI'Length = 0
+        and then Get (Reader.Grammar).Target_NS /= null
       then
          Validation_Error
            (Reader, "#Namespace specification is required in this context");
@@ -5873,20 +5830,5 @@ package body Schema.Validators is
    begin
       Free (Reader.Error_Msg);
    end Free;
-
-   -----------------------
-   -- Get_Error_Message --
-   -----------------------
-
-   function Get_Error_Message
-     (Reader : Abstract_Validation_Reader)
-      return Unicode.CES.Byte_Sequence is
-   begin
-      if Reader.Error_Msg = null then
-         return "";
-      else
-         return Reader.Error_Msg.all;
-      end if;
-   end Get_Error_Message;
 
 end Schema.Validators;

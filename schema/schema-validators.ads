@@ -460,18 +460,13 @@ package Schema.Validators is
      (Validator              : access XML_Validator_Record;
       Reader                 : access Abstract_Validation_Reader'Class;
       Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
    --  Check whether this Start_Element event is valid in the context of the
    --  validator. Data is the result of Create_Validator_Data.
    --
-   --  NS is the *apparent* namespace, ie for local elements it is
-   --  resolved to the parent element's namespace automatically.
-   --  Namespace_URI is the actual namespace found in the XML file, possibly
-   --  the empty string for an unqualified element.
+   --  NS is the namespace for the element.
    --
    --  Element_Validator is set, on exit, to the validator that should be used
    --  to validate the next element.
@@ -712,10 +707,9 @@ package Schema.Validators is
    --  Set the "block" status of the element
 
    procedure Check_Qualification
-     (Grammar       : XML_Grammar;
-      Reader        : access Abstract_Validation_Reader'Class;
+     (Reader        : access Abstract_Validation_Reader'Class;
       Element       : XML_Element;
-      Namespace_URI : Unicode.CES.Byte_Sequence);
+      NS            : XML_Grammar_NS);
    --  Check whether the element should have been qualified or not,
    --  depending on its "form" attribute.
    --  Namespace_URI is the namespace as read in the file.
@@ -1039,6 +1033,9 @@ package Schema.Validators is
    function To_QName (Namespace_URI, Local_Name : String) return String;
    function To_QName (Element : XML_Element) return Unicode.CES.Byte_Sequence;
    function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
+   function To_QName
+     (NS : XML_Grammar_NS; Local : Unicode.CES.Byte_Sequence)
+      return Unicode.CES.Byte_Sequence;
    --  Return the name as it should be displayed in error messages
 
    Debug : Boolean := False;
@@ -1606,9 +1603,7 @@ private
      (Group         : access Group_Model_Record;
       Reader        : access Abstract_Validation_Reader'Class;
       Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Grammar       : XML_Grammar;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
    --  Whether Group can process Local_Name. This is used for group_models
@@ -1649,10 +1644,8 @@ private
      (Validator              : access XML_Any_Record;
       Reader                 : access Abstract_Validation_Reader'Class;
       Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
-      Grammar                : XML_Grammar;
       Element_Validator      : out XML_Element);
    function Get_Namespace_From_Parent_For_Locals
      (Validator : access XML_Any_Record) return Boolean;
@@ -1683,10 +1676,8 @@ private
      (Validator         : access Sequence_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator      : access Sequence_Record;
@@ -1699,9 +1690,7 @@ private
      (Group         : access Sequence_Record;
       Reader        : access Abstract_Validation_Reader'Class;
       Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Grammar       : XML_Grammar;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
    function Can_Be_Empty (Group : access Sequence_Record) return Boolean;
@@ -1728,10 +1717,8 @@ private
      (Validator         : access Choice_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator      : access Choice_Record;
@@ -1744,9 +1731,7 @@ private
      (Group         : access Choice_Record;
       Reader        : access Abstract_Validation_Reader'Class;
       Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
       NS            : XML_Grammar_NS;
-      Grammar       : XML_Grammar;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
    function Can_Be_Empty (Group : access Choice_Record) return Boolean;
@@ -1776,10 +1761,8 @@ private
      (Validator         : access XML_All_Record;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator      : access XML_All_Record;

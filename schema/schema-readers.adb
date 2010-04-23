@@ -703,8 +703,7 @@ package body Schema.Readers is
 
          Validate_Start_Element
            (Get_Validator (Parent_Type), H,
-            Local_Name, Namespace_URI, G,
-            H.Validators.Data, H.Grammar, Element);
+            Local_Name, G, H.Validators.Data, Element);
       else
          Element := Lookup_Element (G, H, Local_Name, False);
       end if;

@@ -48,10 +48,8 @@ package body Schema.Validators.Extensions is
      (Validator         : access Extension_XML_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element);
    procedure Validate_End_Element
      (Validator      : access Extension_XML_Validator;
@@ -167,10 +165,8 @@ package body Schema.Validators.Extensions is
      (Validator         : access Extension_XML_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
       Local_Name        : Unicode.CES.Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
-      Grammar           : XML_Grammar;
       Element_Validator : out XML_Element)
    is
       D : constant Extension_Data_Access := Extension_Data_Access (Data);
@@ -195,8 +191,7 @@ package body Schema.Validators.Extensions is
             end if;
             Validate_Start_Element
               (Get_Validator (Validator.Base), Reader,
-               Local_Name, Namespace_URI, NS,
-               D.Base_Data, Grammar, Element_Validator);
+               Local_Name, NS, D.Base_Data, Element_Validator);
          exception
             when XML_Validation_Error =>
                if Debug then
@@ -213,8 +208,8 @@ package body Schema.Validators.Extensions is
                Debug_Output ("Validating extension part of the extension");
             end if;
             Validate_Start_Element
-              (Validator.Extension, Reader, Local_Name, Namespace_URI, NS,
-               D.Extension_Data, Grammar, Element_Validator);
+              (Validator.Extension, Reader, Local_Name, NS,
+               D.Extension_Data, Element_Validator);
          elsif Debug then
             Debug_Output ("Base part didn't match, but no extension defined");
          end if;

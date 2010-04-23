@@ -44784,7 +44784,7 @@ Grp: ElemDecl / disallowedsubst00105m
   OK disallowedSubst00105m
   OK disallowedSubst00105m1_p
   OK disallowedSubst00105m1_n
-    disallowedSubst00105m1_n.xml:17:14: Invalid substitution, because "Head" blocks extensions
+    disallowedSubst00105m1_n.xml:17:14: Invalid substitution, because "{ElemDecl/disallowedSubst}Head" blocks extensions
 
 Grp: ElemDecl / disallowedsubst00106m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -44795,7 +44795,7 @@ Grp: ElemDecl / disallowedsubst00106m2
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00106m2
   OK Negative
-    disallowedSubst00106m2_n.xml:15:14: Invalid substitution, because "Head" blocks extensions
+    disallowedSubst00106m2_n.xml:15:14: Invalid substitution, because "{ElemDecl/disallowedSubst}Head" blocks extensions
 
 Grp: ElemDecl / disallowedsubst00202m1
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -44903,13 +44903,13 @@ Grp: ElemDecl / disallowedsubst00502m3
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00502m3
   OK Negative
-    disallowedSubst00502m3_n.xml:15:13: Invalid substitution, because "Head" blocks extensions
+    disallowedSubst00502m3_n.xml:15:13: Invalid substitution, because "{ElemDecl/disallowedSubst}Head" blocks extensions
 
 Grp: ElemDecl / disallowedsubst00502m4
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK disallowedSubst00502m4
   OK Negative
-    disallowedSubst00502m4_n.xml:15:13: Invalid substitution, because "Head" blocks extensions
+    disallowedSubst00502m4_n.xml:15:13: Invalid substitution, because "{ElemDecl/disallowedSubst}Head" blocks extensions
 
 Grp: ElemDecl / disallowedsubst00503m1
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
