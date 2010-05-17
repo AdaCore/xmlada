@@ -388,6 +388,15 @@ package body Sax.Utils is
       return Hash (Key.all);
    end Hash;
 
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (S1, S2 : Unicode.CES.Byte_Sequence_Access) return Boolean is
+   begin
+      return S1.all = S2.all;
+   end Equal;
+
    -----------------
    -- Split_Qname --
    -----------------

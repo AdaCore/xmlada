@@ -34,8 +34,8 @@ with Sax.Locators;      use Sax.Locators;
 with Sax.Encodings;     use Sax.Encodings;
 with Sax.Utils;         use Sax.Utils;
 with Sax.Readers;       use Sax.Readers;
+with Sax.Symbols;       use Sax.Symbols;
 with Schema.Validators; use Schema.Validators;
---  with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
@@ -597,7 +597,7 @@ package body Schema.Readers is
                  (Validating_Reader (Handler.all),
                   Qname (Qname'First .. Separator - 1), NS);
                Get_NS (Validating_Reader (Handler.all).Grammar,
-                       Get_URI (NS).all, G);
+                       Get_Symbol (Handler.all, Get_URI (NS)).all, G);
                Typ := Lookup (G, H, Qname (Separator + 1 .. Qname'Last),
                               Create_If_Needed => False);
 
@@ -648,7 +648,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
-                   & "Start_Element: " & To_QName (Elem)
+                   & "Start_Element: " & To_QName (H.all, Elem)
                    & ASCII.ESC & "[39m");
       end if;
 
@@ -672,7 +672,8 @@ package body Schema.Readers is
          return;  --  Always valid, since we have no grammar anyway
       end if;
 
-      Get_NS (H.Grammar, Get_URI (Get_NS (Elem)).all, Result => G);
+      Get_NS (H.Grammar, Get_Symbol (H.all, Get_URI (Get_NS (Elem))).all,
+              Result => G);
 
       --  Whether this element is valid in the current context
 
@@ -691,25 +692,28 @@ package body Schema.Readers is
 
          Validate_Start_Element
            (Get_Validator (Parent_Type), H,
-            Get_Local_Name (Elem).all, G, H.Validators.Data, Element);
+            Get_Symbol (H.all, Get_Local_Name (Elem)).all,
+            G, H.Validators.Data, Element);
       else
-         Element := Lookup_Element (G, H, Get_Local_Name (Elem).all, False);
+         Element := Lookup_Element
+           (G, H,
+            Get_Symbol (H.all, Get_Local_Name (Elem)).all, False);
       end if;
 
       if Element = No_Element and then Type_Index = -1 then
          if H.Validators /= null then
             Validation_Error
-              (H, "#Unexpected element """ & To_QName (Elem) & """");
+              (H, "#Unexpected element """ & To_QName (H.all, Elem) & """");
          else
             Validation_Error
-              (H, "#Element """ & To_QName (Elem)
+              (H, "#Element """ & To_QName (H.all, Elem)
                & """: No matching declaration available");
          end if;
       end if;
 
       if Element /= No_Element and then Is_Abstract (Element) then
          Validation_Error
-           (H, "#Element """ & To_QName (Elem) & """ is abstract");
+           (H, "#Element """ & To_QName (H.all, Elem) & """ is abstract");
       end if;
 
       Xsi_Type := Compute_Type_From_Attribute;
@@ -753,7 +757,8 @@ package body Schema.Readers is
             if Nil_Index /= -1 then
                if not Is_Nillable (Element) then
                   Validation_Error
-                    (H, "#Element """ & To_QName (Elem) & """ cannot be nil");
+                    (H, "#Element """
+                     & To_QName (H.all, Elem) & """ cannot be nil");
                end if;
 
                Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
@@ -795,7 +800,8 @@ package body Schema.Readers is
    begin
       if Debug then
          Put_Line (ASCII.ESC & "[33m"
-                   & "End_Element: " & To_QName (Elem) & ASCII.ESC & "[39m");
+                   & "End_Element: "
+                   & To_QName (H.all, Elem) & ASCII.ESC & "[39m");
       end if;
 
       if H.Validators /= null then
@@ -810,7 +816,8 @@ package body Schema.Readers is
             end if;
 
             Validate_End_Element
-              (Get_Validator (Typ), H, Get_Local_Name (Elem).all,
+              (Get_Validator (Typ), H,
+               Get_Symbol (H.all, Get_Local_Name (Elem)).all,
                H.Validators.Data);
          end if;
       end if;
@@ -913,6 +920,8 @@ package body Schema.Readers is
       end if;
 
       Initialize_Grammar (Parser'Unchecked_Access);
+      Parser.Xmlns := Find_Symbol (Parser, "xmlns");
+
       Sax.Readers.Parse (Sax.Readers.Reader (Parser), Input);
       Reset (Parser);
 
@@ -975,7 +984,7 @@ package body Schema.Readers is
         (Parser  => Handler,
          Prefix  => Prefix,
          NS      => NS);
-      if Get_URI (NS)'Length = 0 then
+      if Get_URI (NS) = Empty_String then
          NS := No_XML_NS;
       end if;
    end Get_Namespace_From_Prefix;

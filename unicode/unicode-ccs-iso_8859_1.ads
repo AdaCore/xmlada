@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -44,5 +43,5 @@ package Unicode.CCS.Iso_8859_1 is
 
    Iso_8859_1_Character_Set : constant Character_Set :=
      (To_Unicode => To_Unicode'Access,
-      To_Cs      => To_Iso_8859_1'Access);
+      To_CS      => To_Iso_8859_1'Access);
 end Unicode.CCS.Iso_8859_1;

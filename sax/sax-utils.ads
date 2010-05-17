@@ -115,6 +115,9 @@ package Sax.Utils is
      (Key : Unicode.CES.Byte_Sequence_Access) return Interfaces.Unsigned_32;
    --  Hash-code used for all htables indexed on strings
 
+   function Equal (S1, S2 : Unicode.CES.Byte_Sequence_Access) return Boolean;
+   --  Compare the byte_Sequence
+
    function Split_Qname (Qname : Unicode.CES.Byte_Sequence) return Integer;
    --  Return an index so that:
    --     Qname (Qname'First .. Result - 1) = <prefix>

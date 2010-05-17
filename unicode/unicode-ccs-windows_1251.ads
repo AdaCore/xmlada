@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                    Copyright (C) 2008-2010, AdaCore               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -37,6 +37,6 @@ package Unicode.CCS.Windows_1251 is
 
    Windows_1251_Character_Set : constant Character_Set :=
      (To_Unicode => To_Unicode'Access,
-      To_Cs      => To_Windows_1251'Access);
+      To_CS      => To_Windows_1251'Access);
 
 end Unicode.CCS.Windows_1251;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -529,7 +529,8 @@ package body Debug_Readers is
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Element_Decl ("
-                   & Name & ", " & To_String (Model)
+                   & Name & ", "
+                   & To_String (Get_Symbol_Table (Handler).all, Model)
                    & ") at " & Location (Handler));
       end if;
    end Element_Decl;
@@ -574,8 +575,8 @@ package body Debug_Readers is
             Put_Line ("Sax.Attribute_Decl ("
                       & Ename & ", " & Aname
                       & ", " & Attribute_Type'Image (Typ) & ", "
-                      & To_String (Content) & ", "
-                      & Default_Declaration'Image (Value_Default)
+                      & To_String (Get_Symbol_Table (Handler).all, Content)
+                      & ", " & Default_Declaration'Image (Value_Default)
                       & ", " & Value & ") at " & Location (Handler));
          else
             Put_Line ("Sax.Attribute_Decl ("

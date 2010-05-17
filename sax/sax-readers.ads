@@ -26,12 +26,15 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with Input_Sources;
 with Interfaces;
 with Sax.Locators;
 with Sax.Exceptions;
 with Sax.Attributes;
 with Sax.Models;
+with Sax.Symbols;
+with Sax.Pointers;
 with Unicode;
 with Unicode.CES;
 with Sax.HTable;
@@ -43,12 +46,28 @@ package Sax.Readers is
    type Reader_Access is access all Reader'Class;
 
    procedure Parse
-     (Parser : in out Reader;
-      Input  : in out Input_Sources.Input_Source'Class);
+     (Parser  : in out Reader;
+      Input   : in out Input_Sources.Input_Source'Class);
    --  Parse an XML stream, and calls the appropriate SAX callbacks for each
    --  event.
    --  This is not re-entrant: you can not call Parse with the same Parser
    --  argument in one of the SAX callbacks. This has undefined behavior.
+
+   package Symbol_Table_Pointers is new Sax.Pointers.Smart_Pointers
+     (Encapsulated => Sax.Symbols.Symbol_Table_Record);
+   subtype Symbol_Table is Symbol_Table_Pointers.Pointer;
+
+   procedure Set_Symbol_Table
+     (Parser  : in out Reader;
+      Symbols : Symbol_Table);
+   --  Symbols is the symbol table to use. Most of the time, it should be left
+   --  to null, but you might want to share it with other parsers for
+   --  efficiency (in which case you will need to provide a task-safe version
+   --  of the symbol table).
+   --  If Symbols is null (or this subprogram is not called) a symbol table
+   --  will be created just for that parser and discarded along with the parser
+   --
+   --  This subprogram must be called before calling Parse.
 
    function Get_Feature (Parser : Reader; Name : String) return Boolean;
    --  lookup the value of a feature
@@ -515,18 +534,30 @@ package Sax.Readers is
    function To_QName
      (Namespace_URI, Local_Name : Unicode.CES.Byte_Sequence)
       return Unicode.CES.Byte_Sequence;
-   function To_QName (Elem : Element_Access) return Unicode.CES.Byte_Sequence;
+   function To_QName
+     (Parser : Reader'Class;
+      Elem   : Element_Access) return Unicode.CES.Byte_Sequence;
    --  Return the qualified name "{namespace_uri}local_name"
 
    function Get_NS (Elem : Element_Access) return XML_NS;
-   function Get_Local_Name
-     (Elem : Element_Access) return Unicode.CES.Byte_Sequence_Access;
+   function Get_Local_Name (Elem : Element_Access) return Sax.Symbols.Symbol;
    pragma Inline (Get_NS, Get_Local_Name);
    --  Return the name and local name of the element
 
-   function Get_Prefix (NS : XML_NS) return Unicode.CES.Byte_Sequence;
-   function Get_URI (NS : XML_NS) return Unicode.CES.Byte_Sequence_Access;
+   function Get_Prefix (NS : XML_NS) return Sax.Symbols.Symbol;
+   function Get_URI (NS : XML_NS)    return Sax.Symbols.Symbol;
    --  Return the URI for this namespace
+
+   function Get_Symbol
+     (Parser : Reader'Class; Sym : Sax.Symbols.Symbol)
+      return Unicode.CES.Byte_Sequence_Access;
+   function Find_Symbol
+     (Parser : Reader'Class;
+      Str : Unicode.CES.Byte_Sequence) return Sax.Symbols.Symbol;
+   function Get_Symbol_Table
+     (Parser : Reader'Class)
+      return Symbol_Table_Pointers.Encapsulated_Access;
+   --  Manipulation of symbols
 
    function Element_Count (NS : XML_NS) return Natural;
    --  Return the count of elements (or attributes) seen so far in this
@@ -629,9 +660,9 @@ private
    --  substitution ourselves.
 
    type Entity_Entry is record
-      Name         : Unicode.CES.Byte_Sequence_Access;
-      Value        : Unicode.CES.Byte_Sequence_Access;
-      Public       : Unicode.CES.Byte_Sequence_Access;
+      Name         : Sax.Symbols.Symbol;
+      Value        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Public       : Sax.Symbols.Symbol;
 
       External     : Boolean;
       --  Whether the entity references an external document
@@ -648,24 +679,25 @@ private
    end record;
    type Entity_Entry_Access is access Entity_Entry;
 
-   procedure Free (Entity : in out Entity_Entry_Access);
-   function Get_Key (Entity : Entity_Entry_Access) return String;
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Entity_Entry, Entity_Entry_Access);
+   function Get_Key (Entity : Entity_Entry_Access) return Sax.Symbols.Symbol;
 
    package Entity_Table is new Sax.HTable
      (Element       => Entity_Entry_Access,
       Empty_Element => null,
       Free          => Free,
-      Key           => String,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => Standard."=");
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
 
    type Entity_Input_Source;
    type Entity_Input_Source_Access is access Entity_Input_Source;
    type Entity_Input_Source is record
       External : Boolean;
       Next  : Entity_Input_Source_Access;
-      Name  : Unicode.CES.Byte_Sequence_Access;
+      Name  : Sax.Symbols.Symbol;
       --  Name of the entity
 
       Handle_Strings : Boolean := True;
@@ -744,8 +776,8 @@ private
    type XML_NS is access XML_NS_Record;
    No_XML_NS : constant XML_NS := null;
    type XML_NS_Record is record
-      Prefix    : Unicode.CES.Byte_Sequence_Access;
-      URI       : Unicode.CES.Byte_Sequence_Access;
+      Prefix    : Sax.Symbols.Symbol;
+      URI       : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Same_As   : XML_NS;  --  If set, URI is null
       Use_Count : Natural := 0;
       Next      : XML_NS;
@@ -758,7 +790,7 @@ private
 
    type Element is record
       NS             : XML_NS;
-      Name           : Unicode.CES.Byte_Sequence_Access;
+      Name           : Sax.Symbols.Symbol;
       Parent         : Element_Access;
       Start_Line     : Natural;
       Start_Id       : Natural;
@@ -770,40 +802,40 @@ private
 
    type Attributes_Ptr is access all Sax.Attributes.Attributes'Class;
    type Attributes_Entry is record
-      Element_Name : Unicode.CES.Byte_Sequence_Access;
+      Element_Name : Sax.Symbols.Symbol;
       Attributes   : Attributes_Ptr;
    end record;
-   Null_Attribute : constant Attributes_Entry := (null, null);
+   Null_Attribute : constant Attributes_Entry := (Sax.Symbols.No_Symbol, null);
 
    procedure Free (Att : in out Attributes_Entry);
-   function Get_Key (Att : Attributes_Entry) return String;
+   function Get_Key (Att : Attributes_Entry) return Sax.Symbols.Symbol;
 
    package Attributes_Table is new Sax.HTable
      (Element       => Attributes_Entry,
       Empty_Element => Null_Attribute,
       Free          => Free,
-      Key           => String,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => Standard."=");
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
 
    type Notation_Entry is record
-      Name             : Unicode.CES.Byte_Sequence_Access;
+      Name             : Sax.Symbols.Symbol;
       Declaration_Seen : Boolean;
    end record;
-   Null_Notation : constant Notation_Entry := (null, False);
+   Null_Notation : constant Notation_Entry := (Sax.Symbols.No_Symbol, False);
 
    procedure Free (Notation : in out Notation_Entry);
-   function Get_Key (Notation : Notation_Entry) return String;
+   function Get_Key (Notation : Notation_Entry) return Sax.Symbols.Symbol;
 
    package Notations_Table is new Sax.HTable
      (Element       => Notation_Entry,
       Empty_Element => Null_Notation,
       Free          => Free,
-      Key           => String,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => Standard."=");
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    --  For notations, we simply store whether they have been defined or not,
    --  and then only for validating parsers
 
@@ -815,6 +847,15 @@ private
 
       Locator       : Sax.Locators.Locator;
       Current_Node  : Element_Access;
+
+      Symbols        : Symbol_Table;
+      Lt_Sequence    : Sax.Symbols.Symbol;
+      Gt_Sequence    : Sax.Symbols.Symbol;
+      Amp_Sequence   : Sax.Symbols.Symbol;
+      Apos_Sequence  : Sax.Symbols.Symbol;
+      Quot_Sequence  : Sax.Symbols.Symbol;
+      Xmlns_Sequence : Sax.Symbols.Symbol;
+      --  The symbol table, and a few predefined symbols
 
       Inputs        : Entity_Input_Source_Access;
       --  Entities and parameter entities are processed inline (if we
@@ -839,7 +880,7 @@ private
 
       Entities : Entity_Table.HTable (Entities_Table_Size);
 
-      DTD_Name : Unicode.CES.Byte_Sequence_Access;
+      DTD_Name : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       --  Name of the DTD, and also name of the root element (in case we have
       --  a validating parser). This is left to null for non-validating
       --  parsers.

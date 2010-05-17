@@ -30,6 +30,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Schema.Validators.Facets;  use Schema.Validators.Facets;
 with Sax.Encodings;             use Sax.Encodings;
 with Sax.Readers;               use Sax.Readers;
+with Sax.Symbols;               use Sax.Symbols;
 with Sax.Utils;                 use Sax.Utils;
 with Schema.Date_Time;          use Schema.Date_Time;
 with Schema.Decimal;            use Schema.Decimal;
@@ -919,7 +920,7 @@ package body Schema.Validators.Simple_Types is
            (Handler => Validating_Reader (Reader.all),
             Prefix  => Ch (Ch'First .. Pos - 1),
             NS      => NS);
-         if NS = No_XML_NS or else Get_URI (NS).all = "xmlns" then
+         if NS = No_XML_NS or else Get_URI (NS) = Reader.Xmlns then
             Validation_Error (Reader,
                               "#No corresponding namespace in scope for """
                               & Ch (Ch'First .. Pos - 1) & '"');

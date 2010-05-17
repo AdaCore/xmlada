@@ -33,6 +33,7 @@ with Sax.Locators;
 with Sax.Pointers;
 with Sax.Readers;
 with Sax.Utils;
+with Sax.Symbols;
 
 package Schema.Validators is
 
@@ -137,6 +138,9 @@ package Schema.Validators is
       --  Mapping of IDs to elements
 
       Grammar   : XML_Grammar := No_Grammar;
+
+      Xmlns     : Sax.Symbols.Symbol;
+      --  Predefined symbols
    end record;
    type Abstract_Validating_Reader_Access
      is access all Abstract_Validation_Reader'Class;
@@ -1040,9 +1044,6 @@ private
    procedure Debug_Pop_Prefix;
    --  Append a prefix to the current output
 
-   function Equal (S1, S2 : Unicode.CES.Byte_Sequence_Access) return Boolean;
-   --  Compare the byte_Sequence
-
    ---------
    -- Ids --
    ---------
@@ -1061,7 +1062,7 @@ private
       Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => Equal);
+      Equal         => Sax.Utils.Equal);
    type Id_Htable_Access is access Id_Htable.HTable;
    --  This table is used to store the list of IDs that have been used in the
    --  document so far, and prevent their duplication in the document.
@@ -1466,7 +1467,7 @@ private
       Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => Equal);
+      Equal         => Sax.Utils.Equal);
    type Types_Htable_Access is access Types_Htable.HTable;
    --  We store a pointer to an XML_Type_Record, since the validator might not
    --  be known when we first reference the type (it is valid in an XML schema
@@ -1486,7 +1487,7 @@ private
       Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => Equal);
+      Equal         => Sax.Utils.Equal);
    type Elements_Htable_Access is access Elements_Htable.HTable;
 
    procedure Free (Group : in out XML_Group);
@@ -1500,7 +1501,7 @@ private
       Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => Equal);
+      Equal         => Sax.Utils.Equal);
    type Groups_Htable_Access is access Groups_Htable.HTable;
 
    function Get_Key
@@ -1514,7 +1515,7 @@ private
       Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => Equal);
+      Equal         => Sax.Utils.Equal);
    type Attributes_Htable_Access is access Attributes_Htable.HTable;
 
    function Get_Key
@@ -1528,7 +1529,7 @@ private
       Key           => Unicode.CES.Byte_Sequence_Access,
       Get_Key       => Get_Key,
       Hash          => Sax.Utils.Hash,
-      Equal         => Equal);
+      Equal         => Sax.Utils.Equal);
    type Attribute_Groups_Htable_Access
      is access Attribute_Groups_Htable.HTable;
 

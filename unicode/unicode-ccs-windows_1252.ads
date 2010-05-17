@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2005                          --
---                            AdaCore                                --
+--                       Copyright (C) 2005-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -38,5 +37,5 @@ package Unicode.CCS.Windows_1252 is
 
    Windows_1252_Character_Set : constant Character_Set :=
      (To_Unicode => To_Unicode'Access,
-      To_Cs      => To_Windows_1252'Access);
+      To_CS      => To_Windows_1252'Access);
 end Unicode.CCS.Windows_1252;

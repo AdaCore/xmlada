@@ -65,7 +65,7 @@ package body Schema.Validators is
 
    procedure Create_NS_Grammar
      (Grammar       : XML_Grammar;
-      Namespace_URI : Unicode.CES.Byte_Sequence);
+      Namespace_URI : Byte_Sequence);
    --  Create a new namespace in the grammar
 
    procedure Free (Element : in out XML_Element_Record);
@@ -1811,7 +1811,7 @@ package body Schema.Validators is
 
    procedure Get_NS
      (Grammar       : XML_Grammar;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Namespace_URI : Byte_Sequence;
       Result        : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True)
    is
@@ -2748,15 +2748,6 @@ package body Schema.Validators is
       Free (Att.Attributes);
       Unchecked_Free (Att);
    end Free;
-
-   -----------
-   -- Equal --
-   -----------
-
-   function Equal (S1, S2 : Unicode.CES.Byte_Sequence_Access) return Boolean is
-   begin
-      return S1.all = S2.all;
-   end Equal;
 
    -------------
    -- Get_Key --

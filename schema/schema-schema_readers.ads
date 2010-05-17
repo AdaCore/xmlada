@@ -29,11 +29,12 @@
 --  This package provides a SAX Reader that parses an XML Schema file, and
 --  creates the appropriate data structure
 
-with Sax.Attributes;
-with Schema.Readers;
-with Unicode.CES;
-with Schema.Validators;
 with Input_Sources;
+with Sax.Attributes;
+with Sax.Symbols;
+with Schema.Readers;
+with Schema.Validators;
+with Unicode.CES;
 
 package Schema.Schema_Readers is
 
@@ -141,6 +142,8 @@ private
       In_Annotation   : Boolean := False;
       --  Whether we are processing an <annotation> node, in which case we
       --  need to ignore all children
+
+      XML_Schema_URI  : Sax.Symbols.Symbol;
 
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;

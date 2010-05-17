@@ -1,3 +1,31 @@
+---------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                    Copyright (C) 2005-2010, AdaCore               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Ada.Unchecked_Deallocation;
@@ -6,7 +34,9 @@ with Sax.Encodings;             use Sax.Encodings;
 
 package body Sax.Models is
 
-   function To_String (Model : Element_Model) return Unicode.CES.Byte_Sequence;
+   function To_String
+     (Symbols : Sax.Symbols.Symbol_Table_Record'Class;
+      Model   : Element_Model) return Unicode.CES.Byte_Sequence;
    --  Same as To_String, applies to an Element_Model_Ptr
 
    ---------
@@ -78,13 +108,15 @@ package body Sax.Models is
    -- To_String --
    ---------------
 
-   function To_String (Model : Content_Model) return Unicode.CES.Byte_Sequence
+   function To_String
+     (Symbols : Sax.Symbols.Symbol_Table_Record'Class;
+      Model   : Content_Model) return Unicode.CES.Byte_Sequence
    is
    begin
       if Model.Model = null then
          return "";
       else
-         return To_String (Model.Model.all);
+         return To_String (Symbols, Model.Model.all);
       end if;
    end To_String;
 
@@ -92,7 +124,9 @@ package body Sax.Models is
    -- To_String --
    ---------------
 
-   function To_String (Model : Element_Model) return Unicode.CES.Byte_Sequence
+   function To_String
+     (Symbols : Sax.Symbols.Symbol_Table_Record'Class;
+      Model   : Element_Model) return Unicode.CES.Byte_Sequence
    is
       Str : Unbounded_String;
    begin
@@ -107,7 +141,7 @@ package body Sax.Models is
             return Any_Sequence;
 
          when Element_Ref =>
-            return Model.Name.all;
+            return Sax.Symbols.Get (Symbols, Model.Name).all;
 
          when Any_Of | Sequence =>
             for J in Model.List'Range loop
@@ -125,7 +159,7 @@ package body Sax.Models is
                   raise Invalid_Content_Model;
                end if;
 
-               Append (Str, To_String (Model.List (J).all));
+               Append (Str, To_String (Symbols, Model.List (J).all));
                if J /= Model.List'Last then
                   if Model.Content = Any_Of then
                      Append (Str, Vertical_Line_Sequence);
@@ -145,11 +179,13 @@ package body Sax.Models is
             end if;
 
             if Model.Min = 0 and then Model.Max = Positive'Last then
-               return To_String (Model.Elem.all) & Star_Sequence;
+               return To_String (Symbols, Model.Elem.all) & Star_Sequence;
             elsif Model.Min = 0 and then Model.Max = 1 then
-               return To_String (Model.Elem.all) & Question_Mark_Sequence;
+               return To_String
+                 (Symbols, Model.Elem.all) & Question_Mark_Sequence;
             elsif Model.Min = 1 and then Model.Max = Positive'Last then
-               return To_String (Model.Elem.all) & Plus_Sign_Sequence;
+               return To_String
+                 (Symbols, Model.Elem.all) & Plus_Sign_Sequence;
             else
                raise Invalid_Content_Model;
             end if;
@@ -168,9 +204,7 @@ package body Sax.Models is
    begin
       if Model /= null then
          case Model.Content is
-            when Character_Data | Anything | Empty => null;
-            when Element_Ref =>
-               Free (Model.Name);
+            when Character_Data | Anything | Empty | Element_Ref => null;
             when Any_Of | Sequence =>
                for J in Model.List'Range loop
                   Free (Model.List (J));
