@@ -29,7 +29,7 @@
 with Sax.Exceptions;
 with Sax.Locators;
 with Input_Sources;
-with Sax.Readers;
+with Sax.Utils;
 with Unicode.CES;
 with Schema.Validators;
 
@@ -109,7 +109,7 @@ package Schema.Readers is
    procedure Get_Namespace_From_Prefix
      (Handler  : in out Validating_Reader;
       Prefix   : Unicode.CES.Byte_Sequence;
-      NS       : out Sax.Readers.XML_NS);
+      NS       : out Sax.Utils.XML_NS);
    --  Get the namespace associated with a given prefix, in the current
    --  context.
    --  The caller must not modify the return value.

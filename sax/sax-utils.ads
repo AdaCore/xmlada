@@ -31,8 +31,12 @@
 
 with Unicode.CES;
 with Interfaces;
+with Sax.Pointers;
+with Sax.Symbols;
 
 package Sax.Utils is
+
+   type XML_Versions is (XML_1_0, XML_1_1);
 
    function Is_Valid_Language_Name
      (Lang : Unicode.CES.Byte_Sequence) return Boolean;
@@ -81,7 +85,8 @@ package Sax.Utils is
    type URI_Type is (URI_Absolute, URI_Relative_Ref, URI_None);
 
    function Check_URI
-     (Name : Unicode.CES.Byte_Sequence) return URI_Type;
+     (Name : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return URI_Type;
    --  Check whether Name is a URI, and its type if it is. This is RFC 3986,
    --  see http://www.ietf.org/rfc/rfc3986.txt.
 
@@ -96,7 +101,8 @@ package Sax.Utils is
    --  See http://www.faqs.org/rfcs/rfc2141.html
 
    function Is_Valid_IRI
-     (Name : Unicode.CES.Byte_Sequence) return Boolean;
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Name is a valid IRI (Internationalized Resource Identifier), as
    --  per Namespaces in XML 1.1 definition
    --  See http://www.w3.org/TR/xml-names11/#dt-IRI
@@ -126,4 +132,75 @@ package Sax.Utils is
    function Collapse_Whitespaces (Str : String) return String;
    --  Collapse whitespaces in Str, according to the attributes normalization
    --  rule
+
+   -------------
+   -- Symbols --
+   -------------
+
+   package Symbol_Table_Pointers is new Sax.Pointers.Smart_Pointers
+     (Encapsulated => Sax.Symbols.Symbol_Table_Record);
+   subtype Symbol_Table is Symbol_Table_Pointers.Pointer;
+
+   ----------------
+   -- Namespaces --
+   ----------------
+
+   type XML_NS is private;
+   No_XML_NS : constant XML_NS;
+   --  A namespace and its prefix in the XML file (there might be multiple
+   --  prefixes for a given namespace_URI)
+
+   function Get_Prefix (NS : XML_NS) return Sax.Symbols.Symbol;
+   function Get_URI (NS : XML_NS)    return Sax.Symbols.Symbol;
+   pragma Inline (Get_Prefix, Get_URI);
+   --  Return the URI for this namespace
+
+   procedure Increment_Count (NS : XML_NS);
+   function Element_Count (NS : XML_NS) return Natural;
+   --  Return the count of elements (or attributes) seen so far in this
+   --  namespace. This does not include the count of uses in the current
+   --  context (that is for the <element> we are currently parsing or its
+   --  attributes).
+
+   function Next_In_List (NS : XML_NS) return XML_NS;
+   --  Return the next namespace in the list
+
+   procedure Free (NS : in out XML_NS);
+   --  Free NS and its successors in the list
+
+   function Find_NS_In_List
+     (List   : XML_NS;
+      Prefix : Sax.Symbols.Symbol;
+      Include_Default_NS : Boolean := True;
+      List_Is_From_Element : Boolean) return XML_NS;
+   function Find_NS_From_URI_In_List
+     (List : XML_NS; URI : Sax.Symbols.Symbol) return XML_NS;
+   --  Find in List the first matching the prefix.
+   --  If Include_Default_NS is False, this will not return the "" namespace
+
+   procedure Add_NS_To_List
+     (List               : in out XML_NS;
+      Default_Namespaces : XML_NS;
+      Prefix, URI        : Sax.Symbols.Symbol);
+   --  Add a new namespace to the list (which might be empty to start with)
+
+private
+
+   type XML_NS_Record;
+   type XML_NS is access XML_NS_Record;
+   No_XML_NS : constant XML_NS := null;
+
+   type XML_NS_Record is record
+      Prefix    : Sax.Symbols.Symbol;
+      URI       : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Same_As   : XML_NS;  --  If set, URI is null
+      Use_Count : Natural := 0;
+      Next      : XML_NS;
+   end record;
+   --  Same_As points to the first prefix referencing the same namespace.
+   --  A namespace must be freed before the ones it references (or you will get
+   --  a Storage_Error).
+   --  Use_Count will always be 0 if Same_As is not null, since the uses are
+   --  incremented in only one namespace.
+
 end Sax.Utils;

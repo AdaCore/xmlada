@@ -29,7 +29,6 @@
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Schema.Validators.Facets;  use Schema.Validators.Facets;
 with Sax.Encodings;             use Sax.Encodings;
-with Sax.Readers;               use Sax.Readers;
 with Sax.Symbols;               use Sax.Symbols;
 with Sax.Utils;                 use Sax.Utils;
 with Schema.Date_Time;          use Schema.Date_Time;
@@ -707,7 +706,7 @@ package body Schema.Validators.Simple_Types is
          if Validator.Facets = null then
             Validator.Facets := new Facets_Type;
          end if;
-         return Facets_Description (Validator.Facets);
+         return Validator.Facets;
       end Get_Facets;
 
    end Generic_Simple_Validator;

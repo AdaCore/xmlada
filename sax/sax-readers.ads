@@ -34,7 +34,7 @@ with Sax.Exceptions;
 with Sax.Attributes;
 with Sax.Models;
 with Sax.Symbols;
-with Sax.Pointers;
+with Sax.Utils;            use Sax.Utils;
 with Unicode;
 with Unicode.CES;
 with Sax.HTable;
@@ -52,10 +52,6 @@ package Sax.Readers is
    --  event.
    --  This is not re-entrant: you can not call Parse with the same Parser
    --  argument in one of the SAX callbacks. This has undefined behavior.
-
-   package Symbol_Table_Pointers is new Sax.Pointers.Smart_Pointers
-     (Encapsulated => Sax.Symbols.Symbol_Table_Record);
-   subtype Symbol_Table is Symbol_Table_Pointers.Pointer;
 
    procedure Set_Symbol_Table
      (Parser  : in out Reader;
@@ -528,8 +524,6 @@ package Sax.Readers is
 
    type Element is private;
    type Element_Access is access Element;
-   type XML_NS is private;
-   No_XML_NS : constant XML_NS;
 
    function To_QName
      (Namespace_URI, Local_Name : Unicode.CES.Byte_Sequence)
@@ -544,9 +538,8 @@ package Sax.Readers is
    pragma Inline (Get_NS, Get_Local_Name);
    --  Return the name and local name of the element
 
-   function Get_Prefix (NS : XML_NS) return Sax.Symbols.Symbol;
-   function Get_URI (NS : XML_NS)    return Sax.Symbols.Symbol;
-   --  Return the URI for this namespace
+   procedure Initialize_Symbols (Parser : in out Reader'Class);
+   --  Initialize the symbol table with some predefined symbols
 
    function Get_Symbol
      (Parser : Reader'Class; Sym : Sax.Symbols.Symbol)
@@ -558,12 +551,6 @@ package Sax.Readers is
      (Parser : Reader'Class)
       return Symbol_Table_Pointers.Encapsulated_Access;
    --  Manipulation of symbols
-
-   function Element_Count (NS : XML_NS) return Natural;
-   --  Return the count of elements (or attributes) seen so far in this
-   --  namespace. This does not include the count of uses in the current
-   --  context (that is for the <element> we are currently parsing or its
-   --  attributes).
 
    procedure Find_NS
      (Parser             : in out Reader'Class;
@@ -580,8 +567,7 @@ package Sax.Readers is
    procedure Find_NS_From_URI
      (Parser             : in out Reader'Class;
       URI                : Unicode.CES.Byte_Sequence;
-      NS                 : out XML_NS;
-      Include_Default_NS : Boolean := True);
+      NS                 : out XML_NS);
    --  Return the XML_NS for URI. There could be several, and the most recent
    --  one is returned (that is with the prefix that was defined last in the
    --  current context.
@@ -772,22 +758,6 @@ private
       --  True if Opening_Parenthesis should be reported separately
    end record;
 
-   type XML_NS_Record;
-   type XML_NS is access XML_NS_Record;
-   No_XML_NS : constant XML_NS := null;
-   type XML_NS_Record is record
-      Prefix    : Sax.Symbols.Symbol;
-      URI       : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Same_As   : XML_NS;  --  If set, URI is null
-      Use_Count : Natural := 0;
-      Next      : XML_NS;
-   end record;
-   --  Same_As points to the first prefix referencing the same namespace.
-   --  A namespace must be freed before the ones it references (or you will get
-   --  a Storage_Error).
-   --  Use_Count will always be 0 if Same_As is not null, since the uses are
-   --  incremented in only one namespace.
-
    type Element is record
       NS             : XML_NS;
       Name           : Sax.Symbols.Symbol;
@@ -838,8 +808,6 @@ private
       Equal         => Sax.Symbols."=");
    --  For notations, we simply store whether they have been defined or not,
    --  and then only for validating parsers
-
-   type XML_Versions is (XML_1_0, XML_1_1);
 
    type Reader is tagged record
       Buffer_Length : Natural := 0;

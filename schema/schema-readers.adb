@@ -920,6 +920,8 @@ package body Schema.Readers is
       end if;
 
       Initialize_Grammar (Parser'Unchecked_Access);
+
+      Initialize_Symbols (Parser);
       Parser.Xmlns := Find_Symbol (Parser, "xmlns");
 
       Sax.Readers.Parse (Sax.Readers.Reader (Parser), Input);
@@ -978,7 +980,7 @@ package body Schema.Readers is
    procedure Get_Namespace_From_Prefix
      (Handler  : in out Validating_Reader;
       Prefix   : Unicode.CES.Byte_Sequence;
-      NS       : out Sax.Readers.XML_NS) is
+      NS       : out Sax.Utils.XML_NS) is
    begin
       Find_NS
         (Parser  => Handler,

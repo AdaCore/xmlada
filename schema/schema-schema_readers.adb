@@ -336,6 +336,7 @@ package body Schema.Schema_Readers is
          Get_NS (Grammar, Default_Namespace, Parser.Target_NS);
          Get_NS (Grammar, XML_Schema_URI,    Parser.Schema_NS);
 
+         Initialize_Symbols (Parser);
          Parser.XML_Schema_URI := Find_Symbol (Parser, XML_Schema_URI);
 
          if Debug then
@@ -1579,8 +1580,7 @@ package body Schema.Schema_Readers is
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator :=
-              XML_Validator (Handler.Contexts.Union);
+            Handler.Contexts.Next.Type_Validator := Handler.Contexts.Union;
             Output ("Validator := " & Ada_Name (Handler.Contexts) & ";");
 
          when others =>

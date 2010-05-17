@@ -219,7 +219,7 @@ package body Schema.Validators.Lists is
            (Validator.Facets.all, Reader, "whitespace", "collapse", Applied);
       end if;
 
-      return Facets_Description (Validator.Facets);
+      return Validator.Facets;
    end Get_Facets;
 
    -------------

@@ -26,9 +26,11 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with Interfaces;                use Interfaces;
 with Unicode.CES;               use Unicode, Unicode.CES;
 with Sax.Encodings;             use Sax.Encodings;
+with Sax.Symbols;               use Sax.Symbols;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
 package body Sax.Utils is
@@ -37,7 +39,7 @@ package body Sax.Utils is
    pragma Pack (Unichar_Boolean_Array);
 
    Valid_URI_Characters : constant Unichar_Boolean_Array
-     (Exclamation_Mark .. Tilde) :=
+     (16#00# .. 16#9F#) :=
      (Digit_Zero .. Digit_Nine => True,
       Latin_Capital_Letter_A .. Latin_Capital_Letter_Z => True,
       Latin_Small_Letter_A .. Latin_Small_Letter_Z => True,
@@ -417,7 +419,8 @@ package body Sax.Utils is
    ---------------
 
    function Check_URI
-     (Name : Unicode.CES.Byte_Sequence) return URI_Type
+     (Name : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return URI_Type
    is
       Index      : Integer := Name'First;
       C          : Unicode_Char;
@@ -514,8 +517,18 @@ package body Sax.Utils is
          --  the characters. We'll just accept them here, no point in wasting
          --  time for a case that will never occur in practice
 
-         elsif C not in Valid_URI_Characters'Range
-           or else not Valid_URI_Characters (C)
+         elsif Version = XML_1_0
+           and then (C not in Valid_URI_Characters'Range
+                     or else not Valid_URI_Characters (C))
+         then
+            return URI_None;
+
+         elsif Version = XML_1_1
+           and then
+             ((C in Valid_URI_Characters'Range
+               and then not Valid_URI_Characters (C))
+              or else (C >= 16#D800# and then C <= 16#FDEF#)
+              or else (C >= 16#FFF0# and then C <= 16#FFFF#))
          then
             return URI_None;
          end if;
@@ -568,9 +581,11 @@ package body Sax.Utils is
    ------------------
 
    function Is_Valid_IRI
-     (Name : Unicode.CES.Byte_Sequence) return Boolean is
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean is
    begin
-      return Check_URI (Name) = URI_Absolute or else Is_Valid_URN (Name);
+      return Check_URI (Name, Version) = URI_Absolute
+        or else Is_Valid_URN (Name);
    end Is_Valid_IRI;
 
    ---------------------------
@@ -661,5 +676,170 @@ package body Sax.Utils is
          end if;
       end;
    end Collapse_Whitespaces;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (NS : in out XML_NS) is
+      procedure Free_NS is new Ada.Unchecked_Deallocation
+        (XML_NS_Record, XML_NS);
+      Tmp : XML_NS;
+   begin
+      while NS /= null loop
+         Tmp := NS.Next;
+         Free_NS (NS);
+         NS := Tmp;
+      end loop;
+   end Free;
+
+   -------------
+   -- Get_URI --
+   -------------
+
+   function Get_URI (NS : XML_NS) return Symbol is
+   begin
+      if NS = null then
+         return Empty_String;
+      else
+         return NS.URI;
+      end if;
+   end Get_URI;
+
+   ----------------
+   -- Get_Prefix --
+   ----------------
+
+   function Get_Prefix (NS : XML_NS) return Symbol is
+   begin
+      if NS = null then
+         return Empty_String;
+      else
+         return NS.Prefix;
+      end if;
+   end Get_Prefix;
+
+   -------------------
+   -- Element_Count --
+   -------------------
+
+   function Element_Count (NS : XML_NS) return Natural is
+   begin
+      if NS = null then
+         return 0;
+      else
+         return NS.Use_Count;
+      end if;
+   end Element_Count;
+
+   ---------------------
+   -- Increment_Count --
+   ---------------------
+
+   procedure Increment_Count (NS : XML_NS) is
+      Tmp : XML_NS := NS;
+   begin
+      while Tmp.Same_As /= null loop
+         Tmp := Tmp.Same_As;
+      end loop;
+
+      Tmp.Use_Count := Tmp.Use_Count + 1;
+   end Increment_Count;
+
+   ------------------
+   -- Next_In_List --
+   ------------------
+
+   function Next_In_List (NS : XML_NS) return XML_NS is
+   begin
+      return NS.Next;
+   end Next_In_List;
+
+   ---------------------
+   -- Find_NS_In_List --
+   ---------------------
+
+   function Find_NS_In_List
+     (List   : XML_NS;
+      Prefix : Sax.Symbols.Symbol;
+      Include_Default_NS : Boolean := True;
+      List_Is_From_Element : Boolean) return XML_NS
+   is
+      NS : XML_NS := List;
+   begin
+      while NS /= No_XML_NS loop
+         if (Include_Default_NS
+             or else not List_Is_From_Element
+             or else NS.Prefix /= Empty_String)
+           and then NS.Prefix = Prefix
+         then
+            return NS;
+         end if;
+         NS := NS.Next;
+      end loop;
+      return null;
+   end Find_NS_In_List;
+
+   ------------------------------
+   -- Find_NS_From_URI_In_List --
+   ------------------------------
+
+   function Find_NS_From_URI_In_List
+     (List : XML_NS; URI : Sax.Symbols.Symbol) return XML_NS
+   is
+      NS : XML_NS := List;
+   begin
+      while NS /= No_XML_NS loop
+         if NS.URI = URI then
+            return NS;
+         end if;
+         NS := NS.Next;
+      end loop;
+      return null;
+   end Find_NS_From_URI_In_List;
+
+   --------------------
+   -- Add_NS_To_List --
+   --------------------
+
+   procedure Add_NS_To_List
+     (List : in out XML_NS;
+      Default_Namespaces : XML_NS;
+      Prefix, URI : Symbol)
+   is
+      NS, Tmp : XML_NS;
+   begin
+      NS := new XML_NS_Record'
+        (Prefix    => Prefix,
+         URI       => URI,
+         Same_As   => null,
+         Use_Count => 0,
+         Next      => List);
+
+      if List /= null then
+         --  Same_As should point to the first namespace with that URI
+         Tmp := List;
+         while Tmp /= null loop
+            if Tmp.URI = NS.URI then
+               NS.Same_As := Tmp;
+               exit;
+            end if;
+            Tmp := Tmp.Next;
+         end loop;
+      end if;
+
+      if NS.Same_As = null then
+         Tmp := Default_Namespaces;
+         while Tmp /= null loop
+            if Tmp.URI = NS.URI then
+               NS.Same_As := Tmp;
+               exit;
+            end if;
+            Tmp := Tmp.Next;
+         end loop;
+      end if;
+
+      List := NS;
+   end Add_NS_To_List;
 
 end Sax.Utils;

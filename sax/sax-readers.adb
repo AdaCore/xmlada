@@ -39,7 +39,6 @@ with Sax.Exceptions;            use Sax.Exceptions;
 with Sax.Locators;              use Sax.Locators;
 with Sax.Models;                use Sax.Models;
 with Sax.Symbols;               use Sax.Symbols;
-with Sax.Utils;                 use Sax.Utils;
 with Unchecked_Deallocation;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
@@ -544,9 +543,6 @@ package body Sax.Readers is
    function Find_Symbol (Parser : Reader'Class; T : Token) return Symbol;
    --  Return the value of the symbol
 
-   procedure Initialize_Symbols (Parser : in out Reader'Class);
-   --  Initialize the symbol table with some predefined symbols
-
    procedure Reset_Buffer
      (Parser : in out Reader'Class; Id : Token := Null_Token);
    --  Clears the internal buffer in Parser.
@@ -558,6 +554,9 @@ package body Sax.Readers is
 
    function Get_State (Parser : Reader'Class) return Parser_State;
    --  Return the current state.
+
+   procedure Close_Namespaces (Parser : in out Reader'Class; List : XML_NS);
+   --  Close all namespaces in the list, and report appropriate SAX events
 
    procedure Check_Valid_Name_Or_NCname
      (Parser : in out Reader'Class;
@@ -592,9 +591,6 @@ package body Sax.Readers is
       Include_Default_NS : Boolean := True);
    --  Internal version of Find_NS
 
-   procedure Increment_Count (NS : XML_NS; Inc : Natural := 1);
-   --  Increment the use_count for NS
-
    function Qname_From_Name (Parser : Reader'Class; Prefix, Local_Name : Token)
       return Byte_Sequence;
    --  Create the qualified name from the namespace URI and the local name.
@@ -620,9 +616,6 @@ package body Sax.Readers is
       Prefix : Byte_Sequence;
       Str    : Byte_Sequence);
    --  Create a new default namespace in the parser
-
-   procedure Free (NS : in out XML_NS);
-   --  Free NS and its successors in the list
 
    procedure Free (Parser : in out Reader'Class);
    --  Free the memory allocated for the parser, including the namespaces,
@@ -1215,21 +1208,6 @@ package body Sax.Readers is
       end if;
    end Test_Valid_Char;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (NS : in out XML_NS) is
-      Tmp : XML_NS;
-      procedure Free_NS is new Unchecked_Deallocation (XML_NS_Record, XML_NS);
-   begin
-      while NS /= null loop
-         Tmp := NS.Next;
-         Free_NS (NS);
-         NS := Tmp;
-      end loop;
-   end Free;
-
    -------------
    -- Find_NS --
    -------------
@@ -1242,7 +1220,7 @@ package body Sax.Readers is
    begin
       Find_NS (Parser, Parser.Buffer (Prefix.First .. Prefix.Last), NS,
                Include_Default_NS);
-      if NS = null then
+      if NS = No_XML_NS then
          Fatal_Error
            (Parser, Error_Prefix_Not_Declared &
             Parser.Buffer (Prefix.First .. Prefix.Last));
@@ -1265,23 +1243,14 @@ package body Sax.Readers is
    begin
       loop
          if E = null then
-            NS := Parser.Default_Namespaces;
+            NS := Find_NS_In_List
+              (Parser.Default_Namespaces, Pref, Include_Default_NS, False);
          else
-            NS := E.Namespaces;
+            NS := Find_NS_In_List
+              (E.Namespaces, Pref, Include_Default_NS, True);
          end if;
 
-         while NS /= null loop
-            if (Include_Default_NS
-                or else E = null
-                or else NS.Prefix /= Empty_String)
-              and then NS.Prefix = Pref
-            then
-               return;
-            end if;
-            NS := NS.Next;
-         end loop;
-
-         exit when E = null;
+         exit when NS /= No_XML_NS or else E = null;
          E := E.Parent;
       end loop;
    end Find_NS;
@@ -1293,8 +1262,7 @@ package body Sax.Readers is
    procedure Find_NS_From_URI
      (Parser             : in out Reader'Class;
       URI                : Unicode.CES.Byte_Sequence;
-      NS                 : out XML_NS;
-      Include_Default_NS : Boolean := True)
+      NS                 : out XML_NS)
    is
       E      : Element_Access := Parser.Current_Node;
       NS_URI : constant Symbol := Find_Symbol (Parser, URI);
@@ -1302,23 +1270,12 @@ package body Sax.Readers is
       loop
          --  Search in the default namespaces
          if E = null then
-            NS := Parser.Default_Namespaces;
+            NS := Find_NS_From_URI_In_List (Parser.Default_Namespaces, NS_URI);
          else
-            NS := E.Namespaces;
+            NS := Find_NS_From_URI_In_List (E.Namespaces, NS_URI);
          end if;
 
-         while NS /= null loop
-            if (Include_Default_NS
-                or else E = null
-                or else NS.URI /= Empty_String)
-              and then NS.URI = NS_URI
-            then
-               return;
-            end if;
-            NS := NS.Next;
-         end loop;
-
-         exit when E = null;
+         exit when NS /= No_XML_NS or else E = null;
          E := E.Parent;
       end loop;
    end Find_NS_From_URI;
@@ -1407,49 +1364,15 @@ package body Sax.Readers is
       Node         : Element_Access;
       Prefix       : Symbol;
       URI          : Symbol;
-      Report_Event : Boolean := True)
-   is
-      NS, Tmp : XML_NS;
+      Report_Event : Boolean := True) is
    begin
-      NS := new XML_NS_Record'
-        (Prefix    => Prefix,
-         URI       => URI,
-         Same_As   => null,
-         Use_Count => 0,
-         Next      => null);
-
-      if Node /= null then
-         --  Same_As should point to the first namespace with that URI
-         Tmp := Node.Namespaces;
-         while Tmp /= null loop
-            if Tmp.URI = NS.URI then
-               NS.Same_As := Tmp;
-               exit;
-            end if;
-            Tmp := Tmp.Next;
-         end loop;
-      end if;
-
-      if NS.Same_As = null then
-         Tmp := Parser.Default_Namespaces;
-         while Tmp /= null loop
-            if Tmp.URI = NS.URI then
-               NS.Same_As := Tmp;
-               exit;
-            end if;
-            Tmp := Tmp.Next;
-         end loop;
-      end if;
-
       if Node = null then
-         NS.Next := Parser.Default_Namespaces;
-         Parser.Default_Namespaces := NS;
+         Add_NS_To_List (Parser.Default_Namespaces, No_XML_NS, Prefix, URI);
       else
-         NS.Next := Node.Namespaces;
-         Node.Namespaces := NS;
+         Add_NS_To_List
+           (Node.Namespaces, Parser.Default_Namespaces, Prefix, URI);
       end if;
 
-      --  Report the event, except for the default namespace
       if Report_Event then
          Start_Prefix_Mapping
            (Parser,
@@ -4091,90 +4014,93 @@ package body Sax.Readers is
                   Fatal_Error (Parser, Error_Attlist_Type);
             end case;
 
-            Next_Token_Skip_Spaces (Input, Parser, Default_Id, True);
-            if Default_Id.Typ = Implied then
-               Default_Decl := Sax.Attributes.Implied;
-            elsif Default_Id.Typ = Required then
-               Default_Decl := Sax.Attributes.Required;
-            else
-               Id := Default_Id;
-               if Default_Id.Typ = Fixed then
-                  Next_Token_Skip_Spaces (Input, Parser, Id, True);
-                  Default_Decl := Sax.Attributes.Fixed;
+            declare
+               QName : constant Byte_Sequence :=
+                 Qname_From_Name (Parser, NS_Id, Name_Id);
+            begin
+               Next_Token_Skip_Spaces (Input, Parser, Default_Id, True);
+               if Default_Id.Typ = Implied then
+                  Default_Decl := Sax.Attributes.Implied;
+               elsif Default_Id.Typ = Required then
+                  Default_Decl := Sax.Attributes.Required;
                else
-                  Default_Decl := Sax.Attributes.Default;
-               end if;
-
-               if Id.Typ = Double_String_Delimiter
-                 or else Id.Typ = Single_String_Delimiter
-               then
-                  Get_String
-                    (Id, Attlist_Str_Def_State, Default_Start, Default_End,
-                     Normalize => True, Collapse_Spaces => True);
-
-                  --  Errata 9 on XML 1.0 specs: the default value must be
-                  --  syntactically correct. Validity will only be checked if
-                  --  the attribute is used.
-                  if Parser.Feature_Validation then
-                     Check_Attribute_Value
-                       (Parser,
-                        Qname     => Qname_From_Name (Parser, NS_Id, Name_Id),
-                        Typ       => Att_Type,
-                        Value     => Parser.Buffer
-                          (Default_Start.First .. Default_End.Last),
-                        Error_Loc => Default_Start);
+                  Id := Default_Id;
+                  if Default_Id.Typ = Fixed then
+                     Next_Token_Skip_Spaces (Input, Parser, Id, True);
+                     Default_Decl := Sax.Attributes.Fixed;
+                  else
+                     Default_Decl := Sax.Attributes.Default;
                   end if;
-               else
-                  Fatal_Error
-                    (Parser, "Invalid default value for attribute");
+
+                  if Id.Typ = Double_String_Delimiter
+                    or else Id.Typ = Single_String_Delimiter
+                  then
+                     Get_String
+                       (Id, Attlist_Str_Def_State, Default_Start, Default_End,
+                        Normalize => True, Collapse_Spaces => True);
+
+                     --  Errata 9 on XML 1.0 specs: the default value must be
+                     --  syntactically correct. Validity will only be checked
+                     --  if the attribute is used.
+
+                     if Parser.Feature_Validation then
+                        Check_Attribute_Value
+                          (Parser,
+                           Qname     => QName,
+                           Typ       => Att_Type,
+                           Value     => Parser.Buffer
+                             (Default_Start.First .. Default_End.Last),
+                           Error_Loc => Default_Start);
+                     end if;
+                  else
+                     Fatal_Error
+                       (Parser, "Invalid default value for attribute");
+                  end if;
                end if;
-            end if;
 
-            if Parser.Feature_Validation
-              and then Att_Type = Sax.Attributes.Id
-              and then Default_Decl /= Sax.Attributes.Implied
-              and then Default_Decl /= Sax.Attributes.Required
-            then
-               Error
+               if Parser.Feature_Validation
+                 and then Att_Type = Sax.Attributes.Id
+                 and then Default_Decl /= Sax.Attributes.Implied
+                 and then Default_Decl /= Sax.Attributes.Required
+               then
+                  Error
+                    (Parser,
+                     "Default value for an ID attribute must be"
+                     & " IMPLIED or REQUIRED",
+                     Default_Id);
+               end if;
+
+               --  Always report the attribute, even when we know the value
+               --  won't be used. We can't do it coherently otherwise, in case
+               --  an attribute is seen in the external subset, and then
+               --  overriden in the internal subset.
+               M2 := Create_Model (M);
+               Attribute_Decl
                  (Parser,
-                  "Default value for an ID attribute must be"
-                  & " IMPLIED or REQUIRED",
-                  Default_Id);
-            end if;
+                  Ename => Parser.Buffer (Ename_Id.First .. Ename_Id.Last),
+                  Aname => QName,
+                  Typ   => Att_Type,
+                  Content => M2,
+                  Value_Default => Default_Decl,
+                  Value => Parser.Buffer
+                    (Default_Start.First .. Default_End.Last));
 
-            --  Always report the attribute, even when we know the value
-            --  won't be used. We can't do it coherently otherwise, in case
-            --  an attribute is seen in the external subset, and then
-            --  overriden in the internal subset.
-            M2 := Create_Model (M);
-            Attribute_Decl
-              (Parser,
-               Ename => Parser.Buffer (Ename_Id.First .. Ename_Id.Last),
-               Aname => Qname_From_Name (Parser, NS_Id, Name_Id),
-               Typ   => Att_Type,
-               Content => M2,
-               Value_Default => Default_Decl,
-               Value => Parser.Buffer
-                 (Default_Start.First .. Default_End.Last));
+               if Get_Index (Attr.all, QName) = -1 then
+                  --  The URI cannot be resolved at this point, since it will
+                  --  depend on the contents of the document at the place where
+                  --  the attribute is used.
 
-            if Get_Index
-              (Attr.all,
-               Qname => Qname_From_Name (Parser, NS_Id, Name_Id)) = -1
-            then
-               --  The URI cannot be resolved at this point, since it will
-               --  depend on the contents of the document at the place where
-               --  the attribute is used.
-
-               Add_Attribute
-                 (Attr.all,
-                  "",
-                  Parser.Buffer (Name_Id.First .. Name_Id.Last),
-                  Qname_From_Name (Parser, NS_Id, Name_Id),
-                  Att_Type,
-                  M2,
-                  Parser.Buffer (Default_Start.First .. Default_End.Last),
-                  Default_Decl);
-            end if;
+                  Add_Attribute
+                    (Attr.all,
+                     "",
+                     Parser.Buffer (Name_Id.First .. Name_Id.Last),
+                     Qname_From_Name (Parser, NS_Id, Name_Id),
+                     Att_Type,
+                     M2,
+                     Parser.Buffer (Default_Start.First .. Default_End.Last),
+                     Default_Decl);
+               end if;
+            end;
 
             Unref (M2);
             --  M will be freed automatically when the Default_Atts field is
@@ -4271,7 +4197,9 @@ package body Sax.Readers is
          declare
             URI : constant String := Get_String (URI_S, URI_E);
          begin
-            if URI /= "" and then not Is_Valid_IRI (URI) then
+            if URI /= ""
+              and then not Is_Valid_IRI (URI, Version => Parser.XML_Version)
+            then
                Error
                  (Parser,
                   "Invalid absolute IRI (Internationalized Resource"
@@ -4368,7 +4296,7 @@ package body Sax.Readers is
         (DTD_Attr   : Attributes_Ptr;
          Attributes : in out Sax.Attributes.Attributes) is
       begin
-         --  Add all the default attributes to the element
+         --  Add all the default attributes to the element.
          --  We shouldn't add an attribute if it was overriden by the user
 
          if DTD_Attr /= null then
@@ -4388,13 +4316,29 @@ package body Sax.Readers is
                      if Parser.Feature_Namespace_Prefixes
                        or else not Is_Xmlns
                      then
-                        Add_Attribute (Attributes,
-                                       Prefix,
-                                       Get_Local_Name (DTD_Attr.all, J),
-                                       Get_Qname (DTD_Attr.all, J),
-                                       Get_Type (DTD_Attr.all, J),
-                                       Get_Content (DTD_Attr.all, J),
-                                       Get_Value (DTD_Attr.all, J));
+                        Add_Attribute
+                          (Attributes,
+                           Prefix,
+                           Get_Local_Name (DTD_Attr.all, J),
+                           Get_Qname (DTD_Attr.all, J),
+                           Get_Type (DTD_Attr.all, J),
+                           Get_Content (DTD_Attr.all, J),
+                           Get_Value (DTD_Attr.all, J));
+
+--                          Find_NS
+--                            (Parser => Parser,
+--                             Prefix => Prefix,
+--                             NS     => NS,
+--                             Include_Default_NS => True);
+--
+--                          Add_Attribute
+--                            (Attr       => Attributes,
+--                             Symbols    => Parser.Symbols,
+--                             NS         => NS,
+--                             Local_Name => Get_Local_Name (DTD_Attr.all, J),
+--                             Att_Type   => Get_Type (DTD_Attr.all, J),
+--                             Content    => Get_Content (DTD_Attr.all, J),
+--                             Value      => Get_Value (DTD_Attr.all, J));
                      end if;
 
                      --  Is this a namespace declaration ?
@@ -4432,15 +4376,15 @@ package body Sax.Readers is
          for J in 0 .. Get_Length (Attributes) - 1 loop
             Find_NS (Parser, Get_URI (Attributes, J), NS,
                      Include_Default_NS => False);
-            if NS = null then
+            if NS = No_XML_NS then
                Fatal_Error
                  (Parser, Error_Prefix_Not_Declared & Get_URI (Attributes, J));
             end if;
 
-            if NS.URI /= Empty_String then
+            if Get_URI (NS) /= Empty_String then
                Found_At := Get_Index
                  (Attributes,
-                  URI        => Get_Symbol (Parser, NS.URI).all,
+                  URI        => Get_Symbol (Parser, Get_URI (NS)).all,
                   Local_Name => Get_Local_Name (Attributes, J));
                if Found_At /= -1 and then Found_At /= J then
                   Fatal_Error --  3.1
@@ -4449,7 +4393,7 @@ package body Sax.Readers is
                end if;
             end if;
 
-            Set_URI (Attributes, J, Get_Symbol (Parser, NS.URI).all);
+            Set_URI (Attributes, J, Get_Symbol (Parser, Get_URI (NS)).all);
          end loop;
       end Resolve_Attributes_Namespaces;
 
@@ -4665,9 +4609,9 @@ package body Sax.Readers is
          Set_State (Parser, Tag_State);
 
          Parser.Current_Node := new Element'
-           (NS             => null,
+           (NS             => No_XML_NS,
             Name           => No_Symbol,
-            Namespaces     => null,
+            Namespaces     => No_XML_NS,
             Start_Line     => Id.Line,
             Start_Id       => Id.Input_Id,
             Parent         => Parser.Current_Node);
@@ -4751,11 +4695,11 @@ package body Sax.Readers is
          --  attributes.
          --  ??? That would be costly to again do a Find_NS for each of the
          --  attributes.
-         Increment_Count (NS, 1);
+         Increment_Count (NS);
 
          Start_Element
            (Parser,
-            Namespace_URI => Get_Symbol (Parser, NS.URI).all,
+            Namespace_URI => Get_Symbol (Parser, Get_URI (NS)).all,
             Local_Name    =>
               Get_Symbol (Parser, Parser.Current_Node.Name).all,
             Qname   => Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id),
@@ -5001,7 +4945,7 @@ package body Sax.Readers is
 
          End_Element
            (Parser,
-            Namespace_URI => Get_Symbol (Parser, NS.URI).all,
+            Namespace_URI => Get_Symbol (Parser, Get_URI (NS)).all,
             Local_Name => Get_Symbol (Parser, Parser.Current_Node.Name).all,
             Qname => Qname_From_Name (Parser, NS_Id, Name_Id));
 
@@ -5012,12 +4956,7 @@ package body Sax.Readers is
             Error (Parser, Error_Entity_Self_Contained, Id);
          end if;
 
-         --  Close all the namespaces
-         NS := Parser.Current_Node.Namespaces;
-         while NS /= null loop
-            End_Prefix_Mapping (Parser, Get_Symbol (Parser, NS.Prefix).all);
-            NS := NS.Next;
-         end loop;
+         Close_Namespaces (Parser, Parser.Current_Node.Namespaces);
 
          --  Move back to the parent node (after freeing the current node)
          Free (Parser.Current_Node);
@@ -5062,16 +5001,17 @@ package body Sax.Readers is
                "Unexpected closing tag", Open_Id);
 
          elsif Parser.Buffer (NS_Id.First .. NS_Id.Last) /=
-           Get_Symbol (Parser, Parser.Current_Node.NS.Prefix).all
+           Get_Symbol (Parser, Get_Prefix (Parser.Current_Node.NS)).all
            or else Parser.Buffer (Name_Id.First .. Name_Id.Last) /=
            Get_Symbol (Parser, Parser.Current_Node.Name).all
          then
             --  Well-Formedness Constraint: Element Type Match
-            if Parser.Current_Node.NS.Prefix /= Empty_String then
+            if Get_Prefix (Parser.Current_Node.NS) /= Empty_String then
                Fatal_Error
                  (Parser,  --  WF element type match
                   "Name differ for closing tag (expecting "
-                  & Get_Symbol (Parser, Parser.Current_Node.NS.Prefix).all
+                  & Get_Symbol
+                    (Parser, Get_Prefix (Parser.Current_Node.NS)).all
                   & ':' & Get_Symbol (Parser, Parser.Current_Node.Name).all
                   & ", opened line"
                   & Integer'Image (Parser.Current_Node.Start_Line)
@@ -5627,6 +5567,24 @@ package body Sax.Readers is
       Parser.Xmlns_Sequence := Find_Symbol (Parser, Xmlns_Sequence);
    end Initialize_Symbols;
 
+   ----------------------
+   -- Close_Namespaces --
+   ----------------------
+
+   procedure Close_Namespaces (Parser : in out Reader'Class; List : XML_NS) is
+      NS : XML_NS := List;
+   begin
+      while NS /= No_XML_NS loop
+         if Get_Prefix (NS) /= Empty_String
+           and then Get_Prefix (NS) /= Parser.Xmlns_Sequence
+         then
+            End_Prefix_Mapping
+              (Parser, Get_Symbol (Parser, Get_Prefix (NS)).all);
+         end if;
+         NS := Next_In_List (NS);
+      end loop;
+   end Close_Namespaces;
+
    -----------
    -- Parse --
    -----------
@@ -5666,21 +5624,7 @@ package body Sax.Readers is
 
       Start_Document (Reader'Class (Parser));
       Syntactic_Parse (Parser, Input);
-
-      --  Close all the namespaces
-      declare
-         NS : XML_NS := Parser.Default_Namespaces;
-      begin
-         while NS /= null loop
-            if NS.Prefix /= Empty_String
-              and then NS.Prefix /= Parser.Xmlns_Sequence
-            then
-               End_Prefix_Mapping
-                 (Reader'Class (Parser), Get_Symbol (Parser, NS.Prefix).all);
-            end if;
-            NS := NS.Next;
-         end loop;
-      end;
+      Close_Namespaces (Parser, Parser.Default_Namespaces);
 
       --  All the nodes must have been closed at the end of the document
       if Parser.Current_Node /= null then
@@ -6277,59 +6221,6 @@ package body Sax.Readers is
       return Parser.Basename_In_Messages;
    end Use_Basename_In_Error_Messages;
 
-   -------------
-   -- Get_URI --
-   -------------
-
-   function Get_URI (NS : XML_NS) return Symbol is
-   begin
-      if NS = null then
-         return Empty_String;
-      else
-         return NS.URI;
-      end if;
-   end Get_URI;
-
-   ----------------
-   -- Get_Prefix --
-   ----------------
-
-   function Get_Prefix (NS : XML_NS) return Symbol is
-   begin
-      if NS = null then
-         return Empty_String;
-      else
-         return NS.Prefix;
-      end if;
-   end Get_Prefix;
-
-   -------------------
-   -- Element_Count --
-   -------------------
-
-   function Element_Count (NS : XML_NS) return Natural is
-   begin
-      if NS = null then
-         return 0;
-      else
-         return NS.Use_Count;
-      end if;
-   end Element_Count;
-
-   ---------------------
-   -- Increment_Count --
-   ---------------------
-
-   procedure Increment_Count (NS : XML_NS; Inc : Natural := 1) is
-      Tmp : XML_NS := NS;
-   begin
-      while Tmp.Same_As /= null loop
-         Tmp := Tmp.Same_As;
-      end loop;
-
-      Tmp.Use_Count := Tmp.Use_Count + Inc;
-   end Increment_Count;
-
    ------------
    -- Get_NS --
    ------------
@@ -6371,7 +6262,7 @@ package body Sax.Readers is
      (Parser : Reader'Class;
       Elem   : Element_Access) return Unicode.CES.Byte_Sequence is
    begin
-      return To_QName (Get_Symbol (Parser, Elem.NS.URI).all,
+      return To_QName (Get_Symbol (Parser, Get_URI (Elem.NS)).all,
                        Get_Symbol (Parser, Elem.Name).all);
    end To_QName;
 
