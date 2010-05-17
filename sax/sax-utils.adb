@@ -505,8 +505,8 @@ package body Sax.Utils is
          --  the characters. We'll just accept them here, no point in wasting
          --  time for a case that will never occur in practice
 
-         elsif C in Valid_URI_Characters'Range
-           and then not Valid_URI_Characters (C)
+         elsif C not in Valid_URI_Characters'Range
+           or else not Valid_URI_Characters (C)
          then
             return URI_None;
          end if;
