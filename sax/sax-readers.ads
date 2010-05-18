@@ -777,7 +777,7 @@ private
    type Tmp_Attribute is record
       Prefix       : Sax.Symbols.Symbol;
       Local_Name   : Sax.Symbols.Symbol;
-      Value        : Unicode.CES.Byte_Sequence_Access;
+      Value        : Sax.Symbols.Symbol;
       Att_Type     : Sax.Attributes.Attribute_Type := Sax.Attributes.Cdata;
       Default_Decl : Sax.Attributes.Default_Declaration :=
         Sax.Attributes.Default;
