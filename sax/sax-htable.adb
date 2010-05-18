@@ -32,8 +32,6 @@ with Interfaces; use Interfaces;
 package body Sax.HTable is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Element, Element_Ptr);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Htable_Item, Item_Ptr);
 
    -----------
@@ -46,8 +44,7 @@ package body Sax.HTable is
       for Index in Hash_Table.Table'Range loop
          Item := Hash_Table.Table (Index);
          while Item /= null loop
-            Free (Item.Elem.all);
-            Unchecked_Free (Item.Elem);
+            Free (Item.Elem);
             Tmp := Item;
             Item := Item.Next;
             Unchecked_Free (Tmp);
@@ -66,7 +63,7 @@ package body Sax.HTable is
         Hash (Get_Key (E)) mod Hash_Table.Size + 1;
    begin
       Hash_Table.Table (Index) := new Htable_Item'
-        (Elem => new Element'(E),
+        (Elem => E,
          Next => Hash_Table.Table (Index));
    end Set;
 
@@ -93,8 +90,8 @@ package body Sax.HTable is
         (Hash (K) mod Hash_Table.Size + 1);
    begin
       while Elmt /= null loop
-         if Equal (Get_Key (Elmt.Elem.all), K) then
-            return Elmt.Elem;
+         if Equal (Get_Key (Elmt.Elem), K) then
+            return Elmt.Elem'Access;
          end if;
 
          Elmt := Elmt.Next;
@@ -115,10 +112,9 @@ package body Sax.HTable is
       if Elmt = null then
          return;
 
-      elsif Equal (Get_Key (Elmt.Elem.all), K) then
+      elsif Equal (Get_Key (Elmt.Elem), K) then
          Hash_Table.Table (Index) := Elmt.Next;
-         Free (Elmt.Elem.all);
-         Unchecked_Free (Elmt.Elem);
+         Free (Elmt.Elem);
          Unchecked_Free (Elmt);
 
       else
@@ -128,11 +124,10 @@ package body Sax.HTable is
             if Next_Elmt = null then
                return;
 
-            elsif Equal (Get_Key (Next_Elmt.Elem.all), K) then
+            elsif Equal (Get_Key (Next_Elmt.Elem), K) then
                Elmt.Next := Next_Elmt.Next;
 
-               Free (Next_Elmt.Elem.all);
-               Unchecked_Free (Next_Elmt.Elem);
+               Free (Next_Elmt.Elem);
                Unchecked_Free (Next_Elmt);
                return;
             end if;
@@ -187,7 +182,7 @@ package body Sax.HTable is
 
    function Current (Iter : Iterator) return Element is
    begin
-      return Iter.Item.Elem.all;
+      return Iter.Item.Elem;
    end Current;
 
 end Sax.HTable;

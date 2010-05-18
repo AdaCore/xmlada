@@ -29,7 +29,7 @@
 with Interfaces;
 
 generic
-   type Element (<>) is private;
+   type Element is private;
    --  The type of element to be stored
 
    Empty_Element : Element;
@@ -45,7 +45,7 @@ generic
 package Sax.HTable is
 
    type HTable (Size : Interfaces.Unsigned_32) is private;
-   type Element_Ptr is access Element;
+   type Element_Ptr is access all Element;
 
    procedure Reset (Hash_Table : in out HTable);
    --  Resets the hash table by freeing all the elements.
@@ -86,7 +86,7 @@ private
    type Htable_Item;
    type Item_Ptr is access Htable_Item;
    type Htable_Item is record
-      Elem : Element_Ptr;
+      Elem : aliased Element;
       Next : Item_Ptr;
    end record;
 
