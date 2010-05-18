@@ -48161,12 +48161,12 @@ Grp: MS-Additional2006-07-15 / addB137
 Grp: MS-Additional2006-07-15 / addB138
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
   OK addB138.i
-    test84002_a.xsd:4:11: Cannot use an empty URI for namespaces
+    test84002_a.xsd:4:8: Cannot use an empty URI for namespaces
 
 Grp: MS-Additional2006-07-15 / addB139
   100.0% tests= 1 (xsd= 0 xml= 1) OK= 1 FAILED= 0
   OK addB139.i
-    test84002_b.xsd:3:11: Cannot use an empty URI for namespaces
+    test84002_b.xsd:3:8: Cannot use an empty URI for namespaces
 
 Grp: MS-Additional2006-07-15 / addB140
   100.0% tests= 2 (xsd= 2 xml= 1) OK= 2 FAILED= 0

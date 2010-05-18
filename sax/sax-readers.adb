@@ -612,14 +612,6 @@ package body Sax.Readers is
    --  Create the qualified name from the namespace URI and the local name.
 
    procedure Add_Namespace
-     (Parser : in out Reader'Class;
-      Node   : Element_Access;
-      Prefix, URI_Start, URI_End : Token;
-      Report_Event : Boolean := True);
-   --  Create a new prefix mapping (an XML namespace). If Node is null, then
-   --  the mapping is added as a default namespace
-
-   procedure Add_Namespace
      (Parser       : in out Reader'Class;
       Node         : Element_Access;
       Prefix       : Symbol;
@@ -629,8 +621,7 @@ package body Sax.Readers is
 
    procedure Add_Namespace_No_Event
      (Parser : in out Reader'Class;
-      Prefix : Byte_Sequence;
-      Str    : Byte_Sequence);
+      Prefix, URI : Symbol);
    --  Create a new default namespace in the parser
 
    procedure Free (Parser : in out Reader'Class);
@@ -1386,39 +1377,10 @@ package body Sax.Readers is
 
    procedure Add_Namespace_No_Event
      (Parser : in out Reader'Class;
-      Prefix : Byte_Sequence;
-      Str    : Byte_Sequence)
-   is
-      Pref, URI : Token;
+      Prefix, URI : Symbol) is
    begin
-      Pref.First := Parser.Buffer_Length + 1;
-      Put_In_Buffer (Parser, Prefix);
-      Pref.Last := Parser.Buffer_Length;
-      URI.First := Parser.Buffer_Length + 1;
-      Put_In_Buffer (Parser, Str);
-      URI.Last := Parser.Buffer_Length;
-      Add_Namespace (Parser, null, Pref, URI, URI, Report_Event => False);
-      Reset_Buffer (Parser, Pref);
+      Add_Namespace (Parser, null, Prefix, URI, Report_Event => False);
    end Add_Namespace_No_Event;
-
-   -------------------
-   -- Add_Namespace --
-   -------------------
-
-   procedure Add_Namespace
-     (Parser                     : in out Reader'Class;
-      Node                       : Element_Access;
-      Prefix, URI_Start, URI_End : Token;
-      Report_Event               : Boolean := True) is
-   begin
-      Add_Namespace
-        (Parser       => Parser,
-         Node         => Node,
-         Prefix       => Find_Symbol (Parser, Prefix),
-         URI          => Find_Symbol
-           (Parser, Parser.Buffer (URI_Start.First .. URI_End.Last)),
-         Report_Event => Report_Event);
-   end Add_Namespace;
 
    -------------------
    -- Add_Namespace --
@@ -3387,7 +3349,8 @@ package body Sax.Readers is
       --  the element we want to keep it virgin until we have called the
       --  validation hook.
 
-      procedure Check_And_Define_Namespace (Prefix, URI_S, URI_E : Token);
+      procedure Check_And_Define_Namespace
+        (Prefix, URI : Symbol; Location : Token_Location);
       --  An attribute defining a namespace was found. Check that the values
       --  are valid, and register the new namespace. If Prefix is Null_Token,
       --  the default namespace is defined
@@ -4264,55 +4227,53 @@ package body Sax.Readers is
       --------------------------------
 
       procedure Check_And_Define_Namespace
-        (Prefix, URI_S, URI_E : Token) is
+        (Prefix, URI : Symbol; Location : Token_Location) is
       begin
-         if Prefix = Null_Token then
-            if URI_S.First > URI_E.Last then
+         if Prefix = Empty_String then
+            if URI = Empty_String then
                --  [2] Empty value is legal for the default namespace, and
                --  provides unbinding
                null;
             end if;
 
          else
-            if Get_String (Prefix) = Xmlns_Sequence then
+            if Prefix = Parser.Xmlns_Sequence then
                Fatal_Error  --  NS 3
-                 (Parser, "Cannot redefine the xmlns prefix", Prefix);
+                 (Parser, "Cannot redefine the xmlns prefix", Location);
 
-            elsif URI_S.First > URI_E.Last then
+            elsif URI = Empty_String then
                Fatal_Error
                  (Parser,  --  NS 2.2
-                  "Cannot use an empty URI for namespaces", URI_S);
+                  "Cannot use an empty URI for namespaces", Location);
 
-            elsif Get_String (Prefix) = Xml_Sequence then
-               if Get_String (URI_S, URI_E) /= Namespaces_URI_Sequence then
+            elsif Prefix = Parser.Xml_Sequence then
+               if URI /= Parser.Namespaces_URI_Sequence then
                   Fatal_Error  --  NS 3
-                    (Parser, "Cannot redefine the xml prefix", Prefix);
+                    (Parser, "Cannot redefine the xml prefix", Location);
                end if;
 
-            elsif Get_String (URI_S, URI_E) = Namespaces_URI_Sequence then
+            elsif URI = Parser.Namespaces_URI_Sequence then
                Fatal_Error
                  (Parser,  --  NS 3
                   "Cannot bind the namespace URI to a prefix other"
-                  & " than xml", Prefix);
+                  & " than xml", Location);
             end if;
          end if;
 
-         declare
-            URI : constant String := Get_String (URI_S, URI_E);
-         begin
-            if URI /= ""
-              and then not Is_Valid_IRI (URI, Version => Parser.XML_Version)
-            then
-               Error
-                 (Parser,
-                  "Invalid absolute IRI (Internationalized Resource"
-                  & " Identifier) for namespace: """ & URI & """",
-                  URI_S);
-               --  NS 2
-            end if;
-         end;
+         if URI /= Empty_String
+           and then not Is_Valid_IRI
+             (Get_Symbol (Parser, URI).all, Version => Parser.XML_Version)
+         then
+            Error
+              (Parser,
+               "Invalid absolute IRI (Internationalized Resource"
+               & " Identifier) for namespace: """
+               & Get_Symbol (Parser, URI).all & """",
+               Location);
+            --  NS 2
+         end if;
 
-         Add_Namespace (Parser, Parser.Current_Node, Prefix, URI_S, URI_E);
+         Add_Namespace (Parser, Parser.Current_Node, Prefix, URI);
       end Check_And_Define_Namespace;
 
       ----------------------------
@@ -4594,7 +4555,9 @@ package body Sax.Readers is
               and then Attr_Prefix = Parser.Xmlns_Sequence
             then
                Check_And_Define_Namespace
-                 (Attr_Name_Id, Value_Start, Value_End);
+                 (Prefix   => Attr_Name,
+                  URI      => Attr_Value,
+                  Location => Attr_Name_Id.Location);
                Add_Attr := Parser.Feature_Namespace_Prefixes;
 
             --  Is this the declaration of the default namespace (xmlns="uri")
@@ -4618,7 +4581,10 @@ package body Sax.Readers is
                   end if;
                end if;
 
-               Check_And_Define_Namespace (Null_Token, Value_Start, Value_End);
+               Check_And_Define_Namespace
+                 (Prefix   => Empty_String,
+                  URI      => Attr_Value,
+                  Location => Attr_Name_Id.Location);
                Add_Attr := Parser.Feature_Namespace_Prefixes;
 
             else
@@ -5711,6 +5677,9 @@ package body Sax.Readers is
       Parser.Apos_Sequence  := Find_Symbol (Parser, Apos_Sequence);
       Parser.Quot_Sequence  := Find_Symbol (Parser, Quot_Sequence);
       Parser.Xmlns_Sequence := Find_Symbol (Parser, Xmlns_Sequence);
+      Parser.Xml_Sequence   := Find_Symbol (Parser, Xml_Sequence);
+      Parser.Namespaces_URI_Sequence :=
+        Find_Symbol (Parser, Namespaces_URI_Sequence);
    end Initialize_Symbols;
 
    ----------------------
@@ -5756,11 +5725,15 @@ package body Sax.Readers is
       Initialize_Symbols (Parser);
 
       Add_Namespace_No_Event
-        (Parser, Xml_Sequence,
-         Encodings.From_Utf32
-         (Basic_8bit.To_Utf32 ("http://www.w3.org/XML/1998/namespace")));
-      Add_Namespace_No_Event (Parser, Xmlns_Sequence, Xmlns_Sequence);
-      Add_Namespace_No_Event (Parser, "", "");
+        (Parser,
+         Prefix => Parser.Xml_Sequence,
+         URI    => Find_Symbol
+           (Parser,
+            Encodings.From_Utf32
+              (Basic_8bit.To_Utf32 ("http://www.w3.org/XML/1998/namespace"))));
+      Add_Namespace_No_Event
+        (Parser, Parser.Xmlns_Sequence, Parser.Xmlns_Sequence);
+      Add_Namespace_No_Event (Parser, Empty_String, Empty_String);
 
       if Parser.Hooks.Doc_Locator /= null then
          Parser.Hooks.Doc_Locator (Parser, Parser.Locator);

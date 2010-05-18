@@ -848,6 +848,8 @@ private
       Apos_Sequence  : Sax.Symbols.Symbol;
       Quot_Sequence  : Sax.Symbols.Symbol;
       Xmlns_Sequence : Sax.Symbols.Symbol;
+      Namespaces_URI_Sequence : Sax.Symbols.Symbol;
+      Xml_Sequence            : Sax.Symbols.Symbol;
       --  The symbol table, and a few predefined symbols
 
       Inputs        : Entity_Input_Source_Access;

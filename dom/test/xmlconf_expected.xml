@@ -1333,7 +1333,7 @@ Did you want to use &amp;amp;?</test>
   <test id="rmt-ns10-024"
     >024.xml:3:7: No DTD defined for this document</test>
   <test id="rmt-ns10-023"
-    >023.xml:4:18: Cannot use an empty URI for namespaces</test>
+    >023.xml:4:15: Cannot use an empty URI for namespaces</test>
   <test id="rmt-ns10-022"
     >022.xml:3:5: No DTD defined for this document</test>
   <test id="rmt-ns10-021"
@@ -1362,11 +1362,11 @@ Did you want to use &amp;amp;?</test>
   <test id="rmt-ns10-009"
     >009.xml:16:19: Attributes may appear only once: a:attr</test>
   <test id="rmt-ns10-006"
-    >006.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "http://example.org/rosé"</test>
+    >006.xml:7:6: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "http://example.org/rosé"</test>
   <test id="rmt-ns10-005"
-    >005.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "#beeblebrox"</test>
+    >005.xml:7:6: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "#beeblebrox"</test>
   <test id="rmt-ns10-004"
-    >004.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "namespaces/zaphod"</test>
+    >004.xml:7:6: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "namespaces/zaphod"</test>
   <test id="rmt-e2e-61"
     >E61.xml:2:1: Non-white space found at top level</test>
   <test id="rmt-e2e-57"
