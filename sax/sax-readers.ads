@@ -758,22 +758,42 @@ private
       --  True if Opening_Parenthesis should be reported separately
    end record;
 
+   type Token_Location is record
+      Line, Column : Natural; --   Line and col within the current stream
+      Input_Id : Natural;     --   Id of the input source in which Token was
+                              --   read.
+   end record;
+   Null_Location : constant Token_Location := (0, 0, 0);
+
    type Element is record
       NS             : XML_NS;
       Name           : Sax.Symbols.Symbol;
       Parent         : Element_Access;
-      Start_Line     : Natural;
-      Start_Id       : Natural;
-      --  Id of the Input source for the start tag. End tag must end on the
-      --  same entity.
+      Start          : Token_Location;  --  Start tag location
       Namespaces     : XML_NS;
       --  Namespaces defined for that element and its children
    end record;
 
-   type Attributes_Ptr is access all Sax.Attributes.Attributes'Class;
+   type Tmp_Attribute is record
+      Prefix       : Sax.Symbols.Symbol;
+      Local_Name   : Sax.Symbols.Symbol;
+      Value        : Unicode.CES.Byte_Sequence_Access;
+      Att_Type     : Sax.Attributes.Attribute_Type := Sax.Attributes.Cdata;
+      Default_Decl : Sax.Attributes.Default_Declaration :=
+        Sax.Attributes.Default;
+      Location     : Token_Location;  --  Where the declaration occurred
+   end record;
+   --  An attribute as read in the XML stream. This is used to temporarily
+   --  store the list of attributes until we have parsed all the namespace
+   --  declarations, after which a regular list of attributes is created.
+
+   type Tmp_Attribute_List is array (Natural range <>) of Tmp_Attribute;
+   type Tmp_Attribute_List_Access is access all Tmp_Attribute_List;
+   --  A list of attributes.
+
    type Attributes_Entry is record
       Element_Name : Sax.Symbols.Symbol;
-      Attributes   : Attributes_Ptr;
+      Attributes   : Tmp_Attribute_List_Access;
    end record;
    Null_Attribute : constant Attributes_Entry := (Sax.Symbols.No_Symbol, null);
 
@@ -812,6 +832,11 @@ private
    type Reader is tagged record
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
+
+      Attributes       : Tmp_Attribute_List_Access;
+      Attributes_Count : Natural := 0;
+      --  List of attributes for the current element. This array is to limit
+      --  the number of memory allocations, by reusing it for each element.
 
       Locator       : Sax.Locators.Locator;
       Current_Node  : Element_Access;

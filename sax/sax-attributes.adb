@@ -365,21 +365,6 @@ package body Sax.Attributes is
    ---------------
 
    function Get_Index
-     (Attr  : Attributes;
-      Qname : Unicode.CES.Byte_Sequence) return Integer
-   is
-      J : Integer;
-      Tmp : Attribute_Access;
-   begin
-      Get (Attr, Qname, J, Tmp);
-      return J;
-   end Get_Index;
-
-   ---------------
-   -- Get_Index --
-   ---------------
-
-   function Get_Index
      (Attr       : Attributes;
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence)

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -365,7 +365,7 @@ package body DOM.Core is
    is
       Index     : Natural := Name'First;
       Colon_Pos : Natural;
-      C         : Unicode_Char;
+      C         : Unicode_Char := 0;
       Candidate : Node_Name_Def;
    begin
       --  ??? Test for Invalid_Character_Err

@@ -2285,8 +2285,8 @@ package body Schema.Schema_Readers is
    function Process_Contents_From_Atts
      (Atts : Sax.Attributes.Attributes'Class) return Process_Contents_Type
    is
-      Process_Contents_Index : constant Integer :=
-        Get_Index (Atts, "processContents");
+      Process_Contents_Index : constant Integer := Get_Index
+        (Atts, Local_Name => "processContents", URI => "");
    begin
       if Process_Contents_Index = -1 then
          return Process_Strict;
@@ -2308,7 +2308,7 @@ package body Schema.Schema_Readers is
       Atts    : Sax.Attributes.Attributes'Class)
    is
       Namespace_Index        : constant Integer := Get_Index
-        (Atts, "namespace");
+        (Atts, Local_Name => "namespace", URI => "");
       Min_Occurs_Index       : constant Integer := Get_Index
         (Atts, URI => "", Local_Name => "minOccurs");
       Max_Occurs_Index       : constant Integer := Get_Index

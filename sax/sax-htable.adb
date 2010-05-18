@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -75,18 +75,32 @@ package body Sax.HTable is
    ---------
 
    function Get (Hash_Table : HTable; K : Key) return Element is
+      Tmp : constant Element_Ptr := Get_Ptr (Hash_Table, K);
+   begin
+      if Tmp = null then
+         return Empty_Element;
+      else
+         return Tmp.all;
+      end if;
+   end Get;
+
+   -------------
+   -- Get_Ptr --
+   -------------
+
+   function Get_Ptr (Hash_Table : HTable; K : Key) return Element_Ptr is
       Elmt : Item_Ptr := Hash_Table.Table
         (Hash (K) mod Hash_Table.Size + 1);
    begin
       while Elmt /= null loop
          if Equal (Get_Key (Elmt.Elem.all), K) then
-            return Elmt.Elem.all;
+            return Elmt.Elem;
          end if;
 
          Elmt := Elmt.Next;
       end loop;
-      return Empty_Element;
-   end Get;
+      return null;
+   end Get_Ptr;
 
    ------------
    -- Remove --

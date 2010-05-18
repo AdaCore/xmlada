@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                XML/Ada - An XML suite for Ada95                   --
+--                                                                   --
+--                       Copyright (C) 2004-2010, AdaCore            --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Interfaces;
 
 generic
@@ -17,6 +45,7 @@ generic
 package Sax.HTable is
 
    type HTable (Size : Interfaces.Unsigned_32) is private;
+   type Element_Ptr is access Element;
 
    procedure Reset (Hash_Table : in out HTable);
    --  Resets the hash table by freeing all the elements.
@@ -25,6 +54,7 @@ package Sax.HTable is
    --  Insert the element pointer in the HTable
 
    function Get (Hash_Table : HTable; K : Key) return Element;
+   function Get_Ptr (Hash_Table : HTable; K : Key) return Element_Ptr;
    --  Returns the latest inserted element pointer with the given Key
    --  or Empty_Element if none.
 
@@ -52,8 +82,6 @@ package Sax.HTable is
    --  Return the element pointed to by Iter.
 
 private
-
-   type Element_Ptr is access Element;
 
    type Htable_Item;
    type Item_Ptr is access Htable_Item;

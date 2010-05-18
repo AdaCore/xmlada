@@ -161,11 +161,11 @@
      >id07.xml:12:2: &attribute_is_ncname;idrefs</test>
   <test id="attr09"
      >attr09.xml:7:18: &attribute_is_ncname;value
-attr09.xml:18:41: [VC] Attribute not declared in DTD: name
+attr09.xml:18:17: [VC] Attribute not declared in DTD: name
 attr09.xml:18:6: &attribute_is_ncname;value</test>
   <test id="attr10"
      >attr10.xml:7:19: &attribute_is_ncname;value
-attr10.xml:18:41: [VC] Attribute not declared in DTD: name
+attr10.xml:18:17: [VC] Attribute not declared in DTD: name
 attr10.xml:18:6: &attribute_is_ncname;value</test>
   <test id="o-p06fail1"
      >p06fail1.xml:12:2: &attribute_is_ncname;refs</test>
@@ -1312,7 +1312,7 @@ Did you want to use &amp;amp;?</test>
 037.xml:6:8: [VC] No attribute allowed for element bar
 037.xml:6:19: [VC] No attribute allowed for element bar</test>
   <test id="rmt-ns10-036"
-    >036.xml:6:29: Attributes may appear only once: b:attr</test>
+    >036.xml:6:19: Attributes may appear only once: a:attr</test>
   <test id="rmt-ns10-035"
     >035.xml:6:19: Attributes may appear only once: a:attr</test>
   <test id="rmt-ns10-034"
@@ -1358,13 +1358,13 @@ Did you want to use &amp;amp;?</test>
   <test id="rmt-ns10-013"
     >013.xml:4:9: Attributes must have an explicit value</test>
   <test id="rmt-ns10-012"
-    >012.xml:16:29: Attributes may appear only once: b:attr</test>
+    >012.xml:16:19: Attributes may appear only once: a:attr</test>
   <test id="rmt-ns10-011"
-    >011.xml:17:29: Attributes may appear only once: b:attr</test>
+    >011.xml:17:19: Attributes may appear only once: a:attr</test>
   <test id="rmt-ns10-010"
-    >010.xml:16:29: Attributes may appear only once: b:attr</test>
+    >010.xml:16:19: Attributes may appear only once: a:attr</test>
   <test id="rmt-ns10-009"
-    >009.xml:16:29: Attributes may appear only once: b:attr</test>
+    >009.xml:16:19: Attributes may appear only once: a:attr</test>
   <test id="rmt-ns10-006"
     >006.xml:7:13: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "http://example.org/rosé"</test>
   <test id="rmt-ns10-005"
@@ -2358,9 +2358,9 @@ Did you want to use &amp;amp;?</test>
    <test id="ibm-invalid-P28-ibm28i01.xml"
      >ibm28i01.xml:7:8: [VC 2.8] Name of root element doesn't match name of DTD ('tiger')</test>
    <test id="ibm-invalid-P41-ibm41i01.xml"
-     >ibm41i01.xml:9:20: [VC] Attribute not declared in DTD: attr1</test>
+     >ibm41i01.xml:9:6: [VC] Attribute not declared in DTD: attr1</test>
    <test id="ibm-invalid-P41-ibm41i02.xml"
-     >ibm41i02.xml:10:54: [VC 3.3.2] Fixed attribute 'attr3' must have the defined value</test>
+     >ibm41i02.xml:10:33: [VC 3.3.2] Fixed attribute 'attr3' must have the defined value</test>
    <test id="ibm-invalid-P49-ibm49i01.xml"
      >entity %choice1:1:2: Entity values must be self-contained
 entity %choice1:1:2: Replacement text for entities must be properly nested</test>
@@ -2414,7 +2414,7 @@ ibm58i02.xml:9:42: Notation must be declared: uuencode</test>
    <test id="ibm-invalid-P60-ibm60i01.xml"
      >ibm60i01.xml:13:6: [VC 3.3.2] Required attribute 'chapter' must be defined</test>
    <test id="ibm-invalid-P60-ibm60i02.xml"
-     >ibm60i02.xml:10:26: [VC 3.3.2] Fixed attribute 'chapter' must have the defined value</test>
+     >ibm60i02.xml:10:6: [VC 3.3.2] Fixed attribute 'chapter' must have the defined value</test>
    <test id="ibm-invalid-P60-ibm60i04.xml"
      >ibm60i04.xml:8:41: Attribute must contain Nmtokens: namevalue</test>
    <test id="ibm-invalid-P68-ibm68i01.xml"

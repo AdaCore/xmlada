@@ -58,11 +58,6 @@ package Sax.Attributes is
    --  index is out of bounds.
    --  Indexes are zero-based.
 
-   function Get_Index (Attr : Attributes; Qname : Unicode.CES.Byte_Sequence)
-      return Integer;
-   --  Look up the index of an attribute by XML 1.0 qualified name.
-   --  (-1) is returned if there is no match
-
    function Get_Index
      (Attr       : Attributes;
       URI        : Unicode.CES.Byte_Sequence;
