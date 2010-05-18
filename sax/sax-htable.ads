@@ -90,7 +90,15 @@ private
       Next : Item_Ptr;
    end record;
 
-   type Item_Array is array (Interfaces.Unsigned_32 range <>) of Item_Ptr;
+   type First_Item is record
+      Elem : aliased Element;
+      Next : Item_Ptr;
+      Set  : Boolean := False;
+   end record;
+
+   type Item_Array is array (Interfaces.Unsigned_32 range <>) of First_Item;
+   --  The first element is not an Item_Ptr to save one call to malloc for each
+   --  first key in buckets.
 
    type HTable (Size : Interfaces.Unsigned_32) is record
       Table : Item_Array (1 .. Size);
@@ -98,8 +106,10 @@ private
 
    type Iterator is record
       Index : Interfaces.Unsigned_32;
+      Elem  : Element_Ptr;
       Item  : Item_Ptr;
    end record;
 
-   No_Iterator : constant Iterator := (Interfaces.Unsigned_32'Last, null);
+   No_Iterator : constant Iterator :=
+     (Interfaces.Unsigned_32'Last, null, null);
 end Sax.HTable;

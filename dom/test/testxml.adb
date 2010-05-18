@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2008, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -530,8 +530,10 @@ procedure Testxml is
       procedure Cleanup is
       begin
          Free (Msg);
-         Close (Input.all);
-         Unchecked_Free (Input);
+         if Input /= null then
+            Close (Input.all);
+            Unchecked_Free (Input);
+         end if;
          Free (Reader.Error_Msg);
          Free (Reader);
       end Cleanup;
@@ -664,12 +666,12 @@ procedure Testxml is
          end if;
 
       when E : others =>
-         Cleanup;
          New_Line;
          Put_Line (Standard_Error, '[' & ID & "] Unexpected error for " & URI);
          Put_Line (Standard_Error,
                    "   [" & Sections & "] " & Trim (Description));
          Put_Line (Standard_Error, Exception_Information (E));
+         Cleanup;
          return Single_Failure;
    end Run_Test;
 

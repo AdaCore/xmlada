@@ -335,10 +335,6 @@ attr10.xml:18:6: &attribute_is_ncname;value</test>
     >005.ent:2:1: Undefined entity '%e'</test>
   <test id="invalid--dtd06"
     >dtd06.xml:3:5: Undefined entity '%undefined'</test>
-  <test id="not-wf-sa-001"
-    >001.ent:1:1: Entity cannot reference itself</test>
-  <test id="not-wf-sa-002"
-    >002.ent:1:21: 'encoding' must be specified for &lt;?xml?&gt; in external entities</test>
   <test id="not-wf-not-sa-001"
     >001.ent:3:2: Conditional section must be properly terminated</test>
   <test id="not-wf-not-sa-002"

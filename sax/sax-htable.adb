@@ -42,15 +42,19 @@ package body Sax.HTable is
       Item, Tmp : Item_Ptr;
    begin
       for Index in Hash_Table.Table'Range loop
-         Item := Hash_Table.Table (Index);
-         while Item /= null loop
-            Free (Item.Elem);
-            Tmp := Item;
-            Item := Item.Next;
-            Unchecked_Free (Tmp);
-         end loop;
+         if Hash_Table.Table (Index).Set then
+            Free (Hash_Table.Table (Index).Elem);
+            Item := Hash_Table.Table (Index).Next;
 
-         Hash_Table.Table (Index) := null;
+            while Item /= null loop
+               Free (Item.Elem);
+               Tmp := Item;
+               Item := Item.Next;
+               Unchecked_Free (Tmp);
+            end loop;
+
+            Hash_Table.Table (Index).Set := False;
+         end if;
       end loop;
    end Reset;
 
@@ -62,9 +66,16 @@ package body Sax.HTable is
       Index : constant Unsigned_32 :=
         Hash (Get_Key (E)) mod Hash_Table.Size + 1;
    begin
-      Hash_Table.Table (Index) := new Htable_Item'
-        (Elem => E,
-         Next => Hash_Table.Table (Index));
+      if Hash_Table.Table (Index).Set then
+         Hash_Table.Table (Index).Next := new Htable_Item'
+           (Elem => E,
+            Next => Hash_Table.Table (Index).Next);
+      else
+         Hash_Table.Table (Index) :=
+           (Elem => E,
+            Next => null,
+            Set  => True);
+      end if;
    end Set;
 
    ---------
@@ -86,16 +97,24 @@ package body Sax.HTable is
    -------------
 
    function Get_Ptr (Hash_Table : HTable; K : Key) return Element_Ptr is
-      Elmt : Item_Ptr := Hash_Table.Table
-        (Hash (K) mod Hash_Table.Size + 1);
+      H : constant Unsigned_32 := Hash (K) mod Hash_Table.Size + 1;
+      Elmt : Item_Ptr;
    begin
-      while Elmt /= null loop
-         if Equal (Get_Key (Elmt.Elem), K) then
-            return Elmt.Elem'Access;
-         end if;
+      if Hash_Table.Table (H).Set then
+         if Equal (Get_Key (Hash_Table.Table (H).Elem), K) then
+            return Hash_Table.Table (H).Elem'Unrestricted_Access;
+         else
+            Elmt := Hash_Table.Table (H).Next;
 
-         Elmt := Elmt.Next;
-      end loop;
+            while Elmt /= null loop
+               if Equal (Get_Key (Elmt.Elem), K) then
+                  return Elmt.Elem'Access;
+               end if;
+
+               Elmt := Elmt.Next;
+            end loop;
+         end if;
+      end if;
       return null;
    end Get_Ptr;
 
@@ -106,26 +125,35 @@ package body Sax.HTable is
    procedure Remove (Hash_Table : in out HTable; K : Key) is
       Index     : constant Unsigned_32 :=
         Hash (K) mod Hash_Table.Size + 1;
-      Elmt      : Item_Ptr := Hash_Table.Table (Index);
+      Elmt      : Item_Ptr;
       Next_Elmt : Item_Ptr;
    begin
-      if Elmt = null then
+      if not Hash_Table.Table (Index).Set then
          return;
 
-      elsif Equal (Get_Key (Elmt.Elem), K) then
-         Hash_Table.Table (Index) := Elmt.Next;
-         Free (Elmt.Elem);
-         Unchecked_Free (Elmt);
+      elsif Equal (Get_Key (Hash_Table.Table (Index).Elem), K) then
+         Free (Hash_Table.Table (Index).Elem);
+         Elmt := Hash_Table.Table (Index).Next;  --  second element in list
+         if Elmt = null then
+            Hash_Table.Table (Index).Set := False;
+         else
+            Hash_Table.Table (Index).Elem := Elmt.Elem;
+            Hash_Table.Table (Index).Next := Elmt.Next;  --  to third element
+            Unchecked_Free (Elmt); --  no longer needed, was copied to first
+         end if;
 
       else
+         Next_Elmt := Hash_Table.Table (Index).Next;
          loop
-            Next_Elmt :=  Elmt.Next;
-
             if Next_Elmt = null then
                return;
 
             elsif Equal (Get_Key (Next_Elmt.Elem), K) then
-               Elmt.Next := Next_Elmt.Next;
+               if Elmt = null then
+                  Hash_Table.Table (Index).Next := Next_Elmt.Next;
+               else
+                  Elmt.Next := Next_Elmt.Next;
+               end if;
 
                Free (Next_Elmt.Elem);
                Unchecked_Free (Next_Elmt);
@@ -133,6 +161,7 @@ package body Sax.HTable is
             end if;
 
             Elmt := Next_Elmt;
+            Next_Elmt :=  Elmt.Next;
          end loop;
       end if;
    end Remove;
@@ -144,9 +173,10 @@ package body Sax.HTable is
    function First (Hash_Table : HTable) return Iterator is
    begin
       for Index in Hash_Table.Table'Range loop
-         if Hash_Table.Table (Index) /= null then
+         if Hash_Table.Table (Index).Set then
             return (Index => Index,
-                    Item  => Hash_Table.Table (Index));
+                    Elem  => Hash_Table.Table (Index).Elem'Unrestricted_Access,
+                    Item => null);
          end if;
       end loop;
 
@@ -161,28 +191,34 @@ package body Sax.HTable is
    begin
       pragma Assert (Iter /= No_Iterator);
 
-      Iter.Item := Iter.Item.Next;
+      if Iter.Item = null then
+         Iter.Item := Hash_Table.Table (Iter.Index).Next;
+      else
+         Iter.Item := Iter.Item.Next;
+      end if;
 
       if Iter.Item /= null then
+         Iter.Elem := Iter.Item.Elem'Unrestricted_Access;
          return;
       end if;
 
       loop
          Iter.Index := Unsigned_32'Succ (Iter.Index);
          exit when Iter.Index > Hash_Table.Table'Last
-           or else Hash_Table.Table (Iter.Index) /= null;
+           or else Hash_Table.Table (Iter.Index).Set;
       end loop;
 
       if Iter.Index > Hash_Table.Table'Last then
          Iter := No_Iterator;
       else
-         Iter.Item := Hash_Table.Table (Iter.Index);
+         Iter.Item := null;
+         Iter.Elem := Hash_Table.Table (Iter.Index).Elem'Unrestricted_Access;
       end if;
    end Next;
 
    function Current (Iter : Iterator) return Element is
    begin
-      return Iter.Item.Elem;
+      return Iter.Elem.all;
    end Current;
 
 end Sax.HTable;
