@@ -377,6 +377,18 @@ package body Sax.Attributes is
       return J;
    end Get_Index;
 
+   ---------------
+   -- Get_Index --
+   ---------------
+
+   function Get_Index
+     (Attr       : Attributes;
+      Local_Name : Unicode.CES.Byte_Sequence)  --  no namespace
+      return Integer is
+   begin
+      return Get_Index (Attr, URI => "", Local_Name => Local_Name);
+   end Get_Index;
+
    ----------------
    -- Get_Length --
    ----------------

@@ -63,6 +63,10 @@ package Sax.Attributes is
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence)
       return Integer;
+   function Get_Index
+     (Attr       : Attributes;
+      Local_Name : Unicode.CES.Byte_Sequence)  --  no namespace
+      return Integer;
    --  Look up the index of an attribute by Namespace name
    --  (-1) is returned if there is no match
 
