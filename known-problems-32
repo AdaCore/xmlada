@@ -17,7 +17,7 @@ KP-32-J325-027 Missing obj directories
               missing object directories, which may not be part of the source
               package.
 
-  Status:     Fixes in XML/Ada 4.0.0
+  Status:     Fixes in XML/Ada 3.2.1
 
   Workaround: In the Makefile, replace "gnatmake" with "gnatmake -p"
 
