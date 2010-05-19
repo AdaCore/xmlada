@@ -64,17 +64,17 @@ shared relocatable:
 	${MAKE} LIBRARY_TYPE=relocatable build_library_type
 
 obj: force
-	${GNATMAKE} -Punicode/unicode.gpr ${MAKE_ARGS}
-	${GNATMAKE} -Pinput_sources/input_sources.gpr ${MAKE_ARGS}
-	${GNATMAKE} -Psax/sax.gpr ${MAKE_ARGS}
-	${GNATMAKE} -Pdom/dom.gpr ${MAKE_ARGS}
-	${GNATMAKE} -Pschema/schema.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Punicode/unicode.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Pinput_sources/input_sources.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Psax/sax.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Pdom/dom.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Pschema/schema.gpr ${MAKE_ARGS}
 
 test: force
-	${GNATMAKE} -Punicode/test/unicode_test.gpr ${MAKE_ARGS}
-	${GNATMAKE} -Psax/test/sax_test.gpr ${MAKE_ARGS}
-	${GNATMAKE} -Pdom/test/dom_test.gpr ${MAKE_ARGS}
-	${GNATMAKE} -Pschema/test/schema_test.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Punicode/test/unicode_test.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Psax/test/sax_test.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Pdom/test/dom_test.gpr ${MAKE_ARGS}
+	${GNATMAKE} -p -Pschema/test/schema_test.gpr ${MAKE_ARGS}
 
 run_test: force
 	@cd unicode/test; ./test_unicode
