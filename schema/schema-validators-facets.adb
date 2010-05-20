@@ -26,11 +26,13 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
 with GNAT.IO; use GNAT.IO;
 with Ada.Exceptions;        use Ada.Exceptions;
 with Unicode.CES;           use Unicode, Unicode.CES;
 with Unicode.CES.Utf8;      use Unicode.CES.Utf8;
 with Ada.Strings.Unbounded;
+with Sax.Symbols;           use Sax.Symbols;
 
 package body Schema.Validators.Facets is
 
@@ -409,12 +411,12 @@ package body Schema.Validators.Facets is
    procedure Add_Facet
      (Facets      : in out Common_Facets_Description;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean) is
    begin
       Applied := False;
-      if Facet_Name = "enumeration" then
+      if Facet_Name = Reader.Enumeration then
          if not Facets.Settable (Facet_Enumeration) then
             Validation_Error
               (Reader, "#Enumeration facet can't be set for this type");
@@ -423,7 +425,7 @@ package body Schema.Validators.Facets is
          Facets.Mask (Facet_Enumeration) := True;
          Applied := True;
 
-      elsif Facet_Name = "whiteSpace" then
+      elsif Facet_Name = Reader.Whitespace then
          if not Facets.Settable (Facet_Whitespace) then
             Validation_Error
               (Reader, "#whiteSpace facet can't be set for this type");
@@ -441,7 +443,7 @@ package body Schema.Validators.Facets is
          Facets.Mask (Facet_Whitespace) := True;
          Applied := True;
 
-      elsif Facet_Name = "pattern" then
+      elsif Facet_Name = Reader.Pattern then
          if not Facets.Settable (Facet_Pattern) then
             Validation_Error
               (Reader, "#pattern facet can't be set for this type");

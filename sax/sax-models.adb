@@ -35,8 +35,7 @@ with Sax.Encodings;             use Sax.Encodings;
 package body Sax.Models is
 
    function To_String
-     (Symbols : Sax.Symbols.Symbol_Table_Record'Class;
-      Model   : Element_Model) return Unicode.CES.Byte_Sequence;
+     (Model   : Element_Model) return Unicode.CES.Byte_Sequence;
    --  Same as To_String, applies to an Element_Model_Ptr
 
    ---------
@@ -109,14 +108,12 @@ package body Sax.Models is
    ---------------
 
    function To_String
-     (Symbols : Sax.Symbols.Symbol_Table_Record'Class;
-      Model   : Content_Model) return Unicode.CES.Byte_Sequence
-   is
+     (Model : Content_Model) return Unicode.CES.Byte_Sequence is
    begin
       if Model.Model = null then
          return "";
       else
-         return To_String (Symbols, Model.Model.all);
+         return To_String (Model.Model.all);
       end if;
    end To_String;
 
@@ -125,8 +122,7 @@ package body Sax.Models is
    ---------------
 
    function To_String
-     (Symbols : Sax.Symbols.Symbol_Table_Record'Class;
-      Model   : Element_Model) return Unicode.CES.Byte_Sequence
+     (Model   : Element_Model) return Unicode.CES.Byte_Sequence
    is
       Str : Unbounded_String;
    begin
@@ -141,7 +137,7 @@ package body Sax.Models is
             return Any_Sequence;
 
          when Element_Ref =>
-            return Sax.Symbols.Get (Symbols, Model.Name).all;
+            return Sax.Symbols.Get (Model.Name).all;
 
          when Any_Of | Sequence =>
             for J in Model.List'Range loop
@@ -159,7 +155,7 @@ package body Sax.Models is
                   raise Invalid_Content_Model;
                end if;
 
-               Append (Str, To_String (Symbols, Model.List (J).all));
+               Append (Str, To_String (Model.List (J).all));
                if J /= Model.List'Last then
                   if Model.Content = Any_Of then
                      Append (Str, Vertical_Line_Sequence);
@@ -179,13 +175,11 @@ package body Sax.Models is
             end if;
 
             if Model.Min = 0 and then Model.Max = Positive'Last then
-               return To_String (Symbols, Model.Elem.all) & Star_Sequence;
+               return To_String (Model.Elem.all) & Star_Sequence;
             elsif Model.Min = 0 and then Model.Max = 1 then
-               return To_String
-                 (Symbols, Model.Elem.all) & Question_Mark_Sequence;
+               return To_String (Model.Elem.all) & Question_Mark_Sequence;
             elsif Model.Min = 1 and then Model.Max = Positive'Last then
-               return To_String
-                 (Symbols, Model.Elem.all) & Plus_Sign_Sequence;
+               return To_String (Model.Elem.all) & Plus_Sign_Sequence;
             else
                raise Invalid_Content_Model;
             end if;

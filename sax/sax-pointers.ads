@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2007, AdaCore                 --
+--                       Copyright (C) 2007-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -80,6 +80,9 @@ package Sax.Pointers is
       function Get (P : Pointer) return Encapsulated_Access;
       pragma Inline (Get);
       --  Return the data pointed to by P
+
+      function "=" (P1, P2 : Pointer) return Boolean;
+      --  Whether the two pointers point to the same data
 
    private
       type Pointer is new Ada.Finalization.Controlled with record

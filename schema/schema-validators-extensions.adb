@@ -26,6 +26,9 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+with Sax.Symbols;  use Sax.Symbols;
+
 package body Schema.Validators.Extensions is
 
    type Extension_XML_Validator is new XML_Validator_Record with record
@@ -44,52 +47,52 @@ package body Schema.Validators.Extensions is
    procedure Free (Data : in out Extension_Data);
    function Create_Validator_Data
      (Validator : access Extension_XML_Validator) return Validator_Data;
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator         : access Extension_XML_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator      : access Extension_XML_Validator;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Symbol;
       Data           : Validator_Data);
-   procedure Validate_Characters
+   overriding procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
       Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Mask          : in out Facets_Mask);
-   procedure Get_Attribute_Lists
+   overriding procedure Get_Attribute_Lists
      (Validator   : access Extension_XML_Validator;
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
       Ignore_Wildcard_In_Dep1 : out Boolean;
       Dependency2 : out XML_Validator;
       Must_Match_All_Any_In_Dep2 : out Boolean);
-   procedure Check_Replacement
+   overriding procedure Check_Replacement
      (Validator       : access Extension_XML_Validator;
       Element         : XML_Element;
       Typ             : XML_Type;
       Valid           : out Boolean;
       Had_Restriction : in out Boolean;
       Had_Extension   : in out Boolean);
-   procedure Check_Content_Type
+   overriding procedure Check_Content_Type
      (Validator        : access Extension_XML_Validator;
       Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean);
-   function Is_Extension_Of
+   overriding function Is_Extension_Of
      (Validator : Extension_XML_Validator;
       Base      : access XML_Validator_Record'Class) return Boolean;
-   function Get_Mixed_Content
+   overriding function Get_Mixed_Content
      (Validator : access Extension_XML_Validator) return Boolean;
-   function Get_Facets
+   overriding function Get_Facets
      (Validator : access Extension_XML_Validator;
       Reader : access Abstract_Validation_Reader'Class)
       return Facets_Description;
-   function Equal
+   overriding function Equal
      (Validator : access Extension_XML_Validator;
       Reader : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
@@ -161,10 +164,10 @@ package body Schema.Validators.Extensions is
    -- Validate_Start_Element --
    ----------------------------
 
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator         : access Extension_XML_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element)
@@ -225,10 +228,10 @@ package body Schema.Validators.Extensions is
    -- Validate_End_Element --
    --------------------------
 
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator      : access Extension_XML_Validator;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Symbol;
       Data           : Validator_Data)
    is
       D : constant Extension_Data_Access := Extension_Data_Access (Data);
@@ -260,7 +263,7 @@ package body Schema.Validators.Extensions is
    -- Get_Mixed_Content --
    -----------------------
 
-   function Get_Mixed_Content
+   overriding function Get_Mixed_Content
      (Validator : access Extension_XML_Validator) return Boolean is
    begin
       return Get_Mixed_Content (XML_Validator_Record (Validator.all)'Access)
@@ -271,7 +274,7 @@ package body Schema.Validators.Extensions is
    -- Validate_Characters --
    -------------------------
 
-   procedure Validate_Characters
+   overriding procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
       Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
@@ -324,7 +327,7 @@ package body Schema.Validators.Extensions is
    -- Equal --
    -----------
 
-   function Equal
+   overriding function Equal
      (Validator : access Extension_XML_Validator;
       Reader : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
@@ -336,7 +339,7 @@ package body Schema.Validators.Extensions is
    -- Check_Replacement --
    -----------------------
 
-   procedure Check_Replacement
+   overriding procedure Check_Replacement
      (Validator       : access Extension_XML_Validator;
       Element         : XML_Element;
       Typ             : XML_Type;
@@ -379,7 +382,7 @@ package body Schema.Validators.Extensions is
    -- Check_Content_Type --
    ------------------------
 
-   procedure Check_Content_Type
+   overriding procedure Check_Content_Type
      (Validator        : access Extension_XML_Validator;
       Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean) is
@@ -441,7 +444,7 @@ package body Schema.Validators.Extensions is
    -- Is_Extension_Of --
    ---------------------
 
-   function Is_Extension_Of
+   overriding function Is_Extension_Of
      (Validator : Extension_XML_Validator;
       Base      : access XML_Validator_Record'Class) return Boolean
    is

@@ -48368,7 +48368,7 @@ Grp: MS-Additional2006-07-15 / addB182
 Grp: MS-Additional2006-07-15 / addB183
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
   SP addB183
-    test113911.xsd:30:69: Duplicate space characters not allowed
+    test113911.xsd:18:59: Duplicate space characters not allowed
 
 Grp: MS-Additional2006-07-15 / addB184
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0

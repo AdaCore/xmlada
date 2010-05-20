@@ -216,6 +216,64 @@ package Sax.Readers is
    --  if your callback returns. You should always raise an exception.
    --  Default action is to raise an exception Fatal_Error;
 
+   ----------------
+   -- Attributes --
+   ----------------
+   --  Although there is a more complete attributes API in the package
+   --  Sax.Attributes, the following types are used for those more efficient
+   --  callbacks. The following attributes do not require any memory allocation
+   --  however they are only valid while the parser has not been destroyed.
+
+   type Sax_Attribute is private;
+   type Sax_Attribute_List is private;
+   --  A lighter weight version of attributes than Attributes,
+   --  based on symbols.
+
+   function Get_Index
+     (List : Sax_Attribute_List;
+      URI  : Sax.Symbols.Symbol;
+      Local_Name : Sax.Symbols.Symbol) return Integer;
+   --  Return the index of the attribute within the list, or -1 if not found
+
+   function Get_Value
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   function Get_Non_Normalized_Value
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   function Get_Value_As_Boolean
+     (List : Sax_Attribute_List; Index : Integer) return Boolean;
+   pragma Inline (Get_Value, Get_Non_Normalized_Value, Get_Value_As_Boolean);
+   --  Return the value of the corresponding attribute
+
+   procedure Set_Normalized_Value
+     (List : Sax_Attribute_List; Index : Integer; Value : Sax.Symbols.Symbol);
+   pragma Inline (Set_Normalized_Value);
+   --  Set the normalized value of the attribute
+
+   function Get_Type
+     (List : Sax_Attribute_List; Index : Integer)
+      return Sax.Attributes.Attribute_Type;
+   procedure Set_Type
+     (List : Sax_Attribute_List; Index : Integer;
+      Typ  : Sax.Attributes.Attribute_Type);
+   pragma Inline (Get_Type, Set_Type);
+   --  Return the type of the attribute
+
+   function Get_Length (List : Sax_Attribute_List) return Natural;
+   pragma Inline (Get_Length);
+   --  Return the number of attributes in the list
+
+   function Get_Prefix
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   function Get_URI
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   function Get_Local_Name
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   function Get_Qname
+     (List : Sax_Attribute_List; Index : Integer)
+      return Unicode.CES.Byte_Sequence;
+   pragma Inline (Get_Prefix, Get_URI, Get_Local_Name, Get_Qname);
+   --  Return the various name components of the attribute
+
    ----------------------
    -- Content Handlers --
    ----------------------
@@ -259,11 +317,6 @@ package Sax.Readers is
       Prefix  : Sax.Symbols.Symbol) is null;
    --  End the scope of a prefix-URI mapping.
    --  This will always occur after the corresponding End_Element event.
-
-   type Sax_Attribute is private;
-   type Sax_Attribute_List is array (Natural range <>) of Sax_Attribute;
-   --  A lighter weight version of attributes than Sax.Attributes.Attributes,
-   --  based on symbols.
 
    procedure Start_Element
      (Handler       : in out Sax_Reader;
@@ -540,11 +593,10 @@ package Sax.Readers is
    type Element_Access is access Element;
 
    function To_QName
-     (Namespace_URI, Local_Name : Unicode.CES.Byte_Sequence)
+     (Namespace_URI, Local_Name : Sax.Symbols.Symbol)
       return Unicode.CES.Byte_Sequence;
    function To_QName
-     (Parser : Sax_Reader'Class;
-      Elem   : Element_Access) return Unicode.CES.Byte_Sequence;
+     (Elem   : Element_Access) return Unicode.CES.Byte_Sequence;
    --  Return the qualified name "{namespace_uri}local_name"
 
    function Get_NS (Elem : Element_Access) return XML_NS;
@@ -552,23 +604,23 @@ package Sax.Readers is
    pragma Inline (Get_NS, Get_Local_Name);
    --  Return the name and local name of the element
 
-   procedure Initialize_Symbols (Parser : in out Sax_Reader'Class);
+   procedure Initialize_Symbols (Parser : in out Sax_Reader);
    --  Initialize the symbol table with some predefined symbols
 
-   function Get_Symbol
-     (Parser : Sax_Reader'Class; Sym : Sax.Symbols.Symbol)
-      return Unicode.CES.Byte_Sequence_Access;
    function Find_Symbol
      (Parser : Sax_Reader'Class;
       Str : Unicode.CES.Byte_Sequence) return Sax.Symbols.Symbol;
-   function Get_Symbol_Table
-     (Parser : Sax_Reader'Class)
-      return Symbol_Table_Pointers.Encapsulated_Access;
+   function Get_Symbol_Table (Parser : Sax_Reader'Class) return Symbol_Table;
    --  Manipulation of symbols
 
    procedure Find_NS
      (Parser             : Sax_Reader'Class;
       Prefix             : Unicode.CES.Byte_Sequence;
+      NS                 : out XML_NS;
+      Include_Default_NS : Boolean := True);
+   procedure Find_NS
+     (Parser             : Sax_Reader'Class;
+      Prefix             : Sax.Symbols.Symbol;
       NS                 : out XML_NS;
       Include_Default_NS : Boolean := True);
    --  Search the namespace associated with a given prefix in the scope of
@@ -580,7 +632,7 @@ package Sax.Readers is
 
    procedure Find_NS_From_URI
      (Parser             : in out Sax_Reader'Class;
-      URI                : Unicode.CES.Byte_Sequence;
+      URI                : Sax.Symbols.Symbol;
       NS                 : out XML_NS);
    --  Return the XML_NS for URI. There could be several, and the most recent
    --  one is returned (that is with the prefix that was defined last in the
@@ -590,7 +642,7 @@ package Sax.Readers is
    type Start_Element_Hook is access procedure
      (Handler : access Sax_Reader'Class;
       Element : Element_Access;
-      Atts    : in out Sax.Attributes.Attributes'Class);
+      Atts    : in out Sax_Attribute_List);
    --  This hook should take the opportunity of normalizing attribute values
    --  if necessary (basic normalization is already done by the SAX parser,
    --  but based on information extracted from schemas, further normalization
@@ -857,6 +909,7 @@ private
       Prefix       : Sax.Symbols.Symbol;
       Local_Name   : Sax.Symbols.Symbol;
       Value        : Sax.Symbols.Symbol;
+      Non_Normalized_Value : Sax.Symbols.Symbol;
       NS           : Sax.Utils.XML_NS := Sax.Utils.No_XML_NS;
       Att_Type     : Sax.Attributes.Attribute_Type := Sax.Attributes.Cdata;
       Default_Decl : Sax.Attributes.Default_Declaration :=
@@ -867,12 +920,18 @@ private
    --  store the list of attributes until we have parsed all the namespace
    --  declarations, after which a regular list of attributes is created.
 
-   type Sax_Attribute_List_Access is access all Sax_Attribute_List;
+   type Sax_Attribute_Array is array (Natural range <>) of Sax_Attribute;
+   type Sax_Attribute_Array_Access is access all Sax_Attribute_Array;
    --  A list of attributes.
+
+   type Sax_Attribute_List is record
+      Count : Natural := 0;
+      List  : Sax_Attribute_Array_Access;
+   end record;
 
    type Attributes_Entry is record
       Element_Name : Sax.Symbols.Symbol;
-      Attributes   : Sax_Attribute_List_Access;
+      Attributes   : Sax_Attribute_Array_Access;
    end record;
    Null_Attribute : constant Attributes_Entry := (Sax.Symbols.No_Symbol, null);
 
@@ -912,8 +971,7 @@ private
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
 
-      Attributes       : Sax_Attribute_List_Access;
-      Attributes_Count : Natural := 0;
+      Attributes       : Sax_Attribute_List;
       --  List of attributes for the current element. This array is to limit
       --  the number of memory allocations, by reusing it for each element.
 
@@ -921,7 +979,7 @@ private
       Current_Node  : Element_Access;
 
       Symbols        : Symbol_Table;
-      Lt_Sequence    : Sax.Symbols.Symbol;
+      Lt_Sequence    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Gt_Sequence    : Sax.Symbols.Symbol;
       Amp_Sequence   : Sax.Symbols.Symbol;
       Apos_Sequence  : Sax.Symbols.Symbol;
@@ -929,6 +987,8 @@ private
       Xmlns_Sequence : Sax.Symbols.Symbol;
       Namespaces_URI_Sequence : Sax.Symbols.Symbol;
       Xml_Sequence            : Sax.Symbols.Symbol;
+      Symbol_Percent   : Sax.Symbols.Symbol;
+      Symbol_Ampersand : Sax.Symbols.Symbol;
       --  The symbol table, and a few predefined symbols
 
       Inputs        : Entity_Input_Source_Access;

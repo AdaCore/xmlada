@@ -26,7 +26,10 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 with Schema.Validators.Facets;  use Schema.Validators.Facets;
+with Sax.Symbols;               use Sax.Symbols;
 
 package body Schema.Validators.Restrictions is
 
@@ -44,57 +47,58 @@ package body Schema.Validators.Restrictions is
    procedure Free (Data : in out Restriction_Data);
    function Create_Validator_Data
      (Validator : access Restriction_XML_Validator) return Validator_Data;
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator         : access Restriction_XML_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator      : access Restriction_XML_Validator;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Symbol;
       Data           : Validator_Data);
-   procedure Validate_Characters
+   overriding procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
       Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Mask          : in out Facets_Mask);
-   procedure Get_Attribute_Lists
+   overriding procedure Get_Attribute_Lists
      (Validator   : access Restriction_XML_Validator;
       List        : out Attribute_Validator_List_Access;
       Dependency1 : out XML_Validator;
       Ignore_Wildcard_In_Dep1 : out Boolean;
       Dependency2 : out XML_Validator;
       Must_Match_All_Any_In_Dep2 : out Boolean);
-   procedure Add_Facet
+   overriding procedure Add_Facet
      (Validator   : access Restriction_XML_Validator;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence);
-   procedure Check_Replacement
+   overriding procedure Check_Replacement
      (Validator         : access Restriction_XML_Validator;
       Element           : XML_Element;
       Typ               : XML_Type;
       Valid             : out Boolean;
       Had_Restriction   : in out Boolean;
       Had_Extension     : in out Boolean);
-   procedure Check_Content_Type
+   overriding procedure Check_Content_Type
      (Validator        : access Restriction_XML_Validator;
       Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean);
-   function Get_Facets
+   overriding function Get_Facets
      (Validator : access Restriction_XML_Validator;
       Reader    : access Abstract_Validation_Reader'Class)
       return Facets_Description;
-   procedure Free (Validator : in out Restriction_XML_Validator);
-   function Is_ID (Validator : Restriction_XML_Validator) return Boolean;
-   function Is_Restriction_Of
+   overriding procedure Free (Validator : in out Restriction_XML_Validator);
+   overriding function Is_ID
+     (Validator : Restriction_XML_Validator) return Boolean;
+   overriding function Is_Restriction_Of
      (Validator : Restriction_XML_Validator;
       Base      : access XML_Validator_Record'Class) return Boolean;
-   function Equal
+   overriding function Equal
      (Validator      : access Restriction_XML_Validator;
       Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
@@ -204,7 +208,7 @@ package body Schema.Validators.Restrictions is
    procedure Validate_Start_Element
      (Validator         : access Restriction_XML_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element)
@@ -225,7 +229,7 @@ package body Schema.Validators.Restrictions is
             if Element_Validator /= No_Element then
                Debug_Output
                  ("Validate_Start_Element: end of restriction, result="
-                  & Element_Validator.Elem.Local_Name.all);
+                  & Get (Element_Validator.Elem.Local_Name).all);
             else
                Debug_Output
                  ("Validate_Start_Element: end of restriction, no"
@@ -251,10 +255,10 @@ package body Schema.Validators.Restrictions is
    -- Validate_End_Element --
    --------------------------
 
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator      : access Restriction_XML_Validator;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Symbol;
       Data           : Validator_Data)
    is
       D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
@@ -273,10 +277,10 @@ package body Schema.Validators.Restrictions is
    -- Add_Facet --
    ---------------
 
-   procedure Add_Facet
+   overriding procedure Add_Facet
      (Validator   : access Restriction_XML_Validator;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence)
    is
       Applies : Boolean;
@@ -288,7 +292,7 @@ package body Schema.Validators.Restrictions is
 
       Add_Facet (Facets.all, Reader, Facet_Name, Facet_Value, Applies);
       if not Applies then
-         Validation_Error (Reader, "#Invalid facet: " & Facet_Name);
+         Validation_Error (Reader, "#Invalid facet: " & Get (Facet_Name).all);
       end if;
    end Add_Facet;
 
@@ -296,7 +300,7 @@ package body Schema.Validators.Restrictions is
    -- Validate_Characters --
    -------------------------
 
-   procedure Validate_Characters
+   overriding procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
       Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
@@ -347,7 +351,7 @@ package body Schema.Validators.Restrictions is
    -- Create_Validator_Data --
    ---------------------------
 
-   function Create_Validator_Data
+   overriding function Create_Validator_Data
      (Validator : access Restriction_XML_Validator) return Validator_Data
    is
       D : constant Restriction_Data_Access := new Restriction_Data;
@@ -366,7 +370,7 @@ package body Schema.Validators.Restrictions is
    -- Check_Replacement --
    -----------------------
 
-   procedure Check_Replacement
+   overriding procedure Check_Replacement
      (Validator       : access Restriction_XML_Validator;
       Element         : XML_Element;
       Typ             : XML_Type;
@@ -410,7 +414,7 @@ package body Schema.Validators.Restrictions is
    -- Is_Simple_Type --
    --------------------
 
-   procedure Check_Content_Type
+   overriding procedure Check_Content_Type
      (Validator        : access Restriction_XML_Validator;
       Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean) is
@@ -449,7 +453,7 @@ package body Schema.Validators.Restrictions is
    -- Is_Restriction_Of --
    -----------------------
 
-   function Is_Restriction_Of
+   overriding function Is_Restriction_Of
      (Validator : Restriction_XML_Validator;
       Base      : access XML_Validator_Record'Class) return Boolean
    is

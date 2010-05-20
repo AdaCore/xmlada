@@ -529,8 +529,7 @@ package body Debug_Readers is
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Element_Decl ("
-                   & Name & ", "
-                   & To_String (Get_Symbol_Table (Handler).all, Model)
+                   & Name & ", " & To_String (Model)
                    & ") at " & Location (Handler));
       end if;
    end Element_Decl;
@@ -575,7 +574,7 @@ package body Debug_Readers is
             Put_Line ("Sax.Attribute_Decl ("
                       & Ename & ", " & Aname
                       & ", " & Attribute_Type'Image (Typ) & ", "
-                      & To_String (Get_Symbol_Table (Handler).all, Content)
+                      & To_String (Content)
                       & ", " & Default_Declaration'Image (Value_Default)
                       & ", " & Value & ") at " & Location (Handler));
          else

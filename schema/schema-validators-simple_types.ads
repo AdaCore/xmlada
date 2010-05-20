@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 private package Schema.Validators.Simple_Types is
 
    procedure Register_Predefined_Types
@@ -45,45 +47,46 @@ private package Schema.Validators.Simple_Types is
    --  Validates a "SimpleType" XML datatype, ie accepts any contents but
    --  elements and attributes
 
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator              : access Any_Simple_XML_Validator_Record;
       Reader                 : access Abstract_Validation_Reader'Class;
-      Local_Name             : Unicode.CES.Byte_Sequence;
+      Local_Name             : Sax.Symbols.Symbol;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
       Element_Validator      : out XML_Element);
-   procedure Validate_Characters
+   overriding procedure Validate_Characters
      (Validator      : access Any_Simple_XML_Validator_Record;
-      Reader                 : access Abstract_Validation_Reader'Class;
+      Reader         : access Abstract_Validation_Reader'Class;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
       Mask           : in out Facets_Mask);
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator  : access Any_Simple_XML_Validator_Record;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence;
+      Local_Name : Sax.Symbols.Symbol;
       Data       : Validator_Data);
-   procedure Check_Content_Type
+   overriding procedure Check_Content_Type
      (Validator        : access Any_Simple_XML_Validator_Record;
       Reader           : access Abstract_Validation_Reader'Class;
       Should_Be_Simple : Boolean);
-   function Get_Facets
+   overriding function Get_Facets
      (Validator : access Any_Simple_XML_Validator_Record;
       Reader    : access Abstract_Validation_Reader'Class)
       return Facets_Description;
-   procedure Add_Facet
+   overriding procedure Add_Facet
      (Validator   : access Any_Simple_XML_Validator_Record;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Sax.Symbols.Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence);
-   function Get_Mixed_Content
+   overriding function Get_Mixed_Content
      (Validator : access Any_Simple_XML_Validator_Record) return Boolean;
-   procedure Free (Validator : in out Any_Simple_XML_Validator_Record);
-   function Equal
+   overriding procedure Free
+     (Validator : in out Any_Simple_XML_Validator_Record);
+   overriding function Equal
      (Validator      : access Any_Simple_XML_Validator_Record;
       Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
-   procedure Check_Replacement
+   overriding procedure Check_Replacement
      (Validator       : access Any_Simple_XML_Validator_Record;
       Element         : XML_Element;
       Typ             : XML_Type;

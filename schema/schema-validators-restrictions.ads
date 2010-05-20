@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 private package Schema.Validators.Restrictions is
 
    function Create_Restriction_Of

@@ -26,47 +26,33 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Interfaces;                 use Interfaces;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Unicode.CES;                use Unicode.CES;
+with System.Address_Image;
 
 package body Sax.Symbols is
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Name_Entries_Array, Name_Entries_Access);
+   -----------------
+   -- Debug_Print --
+   -----------------
 
-   Initial_Entries_Size : constant := 50;
-   Entries_Increment    : constant := 50;
-
-   Cst_Empty_String : aliased String := "";
-
-   subtype One_Char_Sequence is Byte_Sequence (1 .. 1);
-   One_Char_Strings :
-     array (Symbol range 2 .. 255) of aliased One_Char_Sequence;
-
-   function Hash (Str : Byte_Sequence) return Hash_Index_Type;
-   pragma Inline (Hash);
-   --  Compute hash code for Str. We consider the bytes, not the characters,
-   --  for efficiency
-
-   procedure Initialize;
-   --  Initialize this package
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize is
+   function Debug_Print (S : Symbol) return String is
    begin
-      for C in One_Char_Strings'Range loop
-         One_Char_Strings (C) := (1 => Character'Val (Integer (C)));
-      end loop;
-   end Initialize;
+      if S = No_Symbol then
+         return "<Symbol: null>";
+      else
+         return "<Symbol: " & System.Address_Image (S.all'Address)
+           & " {" & S.all & "}>";
+      end if;
+   end Debug_Print;
 
    ----------
    -- Hash --
    ----------
 
-   function Hash (Str : Byte_Sequence) return Hash_Index_Type is
+   function Hash (Str : Cst_Byte_Sequence_Access) return Unsigned_32 is
    begin
       --  For the cases of 1-12 characters, all characters participate in the
       --  hash. The positioning is randomized, with the bias that characters
@@ -214,6 +200,39 @@ package body Sax.Symbols is
       end case;
    end Hash;
 
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Str : Symbol) return Cst_Byte_Sequence_Access is
+   begin
+      return Cst_Byte_Sequence_Access (Str);
+   end Get_Key;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Str : in out Symbol) is
+      function Convert is new Ada.Unchecked_Conversion
+        (Symbol, Byte_Sequence_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Byte_Sequence, Byte_Sequence_Access);
+      S : Byte_Sequence_Access := Convert (Str);
+   begin
+      Unchecked_Free (S);
+      Str := No_Symbol;
+   end Free;
+
+   ---------------
+   -- Key_Equal --
+   ---------------
+
+   function Key_Equal (Key1, Key2 : Cst_Byte_Sequence_Access) return Boolean is
+   begin
+      return Key1.all = Key2.all;
+   end Key_Equal;
+
    ----------
    -- Find --
    ----------
@@ -222,61 +241,18 @@ package body Sax.Symbols is
      (Table : access Symbol_Table_Record;
       Str   : Unicode.CES.Byte_Sequence) return Symbol
    is
-      New_Id     : Symbol;
-      Hash_Index : Hash_Index_Type; --  Computed hash index
-      Tmp        : Name_Entries_Access;
+      Result : Symbol;
    begin
       if Str'Length = 0 then
          return Empty_String;
-
-      elsif Str'Length = 1 then
-         return Character'Pos (Str (Str'First));
-
       else
-         Hash_Index := Hash (Str);
-         New_Id := Table.Hash (Hash_Index);
+         Result := String_Htable.Get (Table.Hash, Str'Unrestricted_Access);
 
-         if New_Id = No_Symbol then
-            Table.Hash (Hash_Index) := Table.Entries_Last + 1;
-
-         else
-            loop
-               if Str = Table.Entries (New_Id).Value.all then
-                  return New_Id;
-               end if;
-
-               if Table.Entries (New_Id).Hash_Link /= No_Symbol then
-                  New_Id := Table.Entries (New_Id).Hash_Link;
-               else
-                  Table.Entries (New_Id).Hash_Link := Table.Entries_Last + 1;
-                  exit;
-               end if;
-            end loop;
+         if Result = No_Symbol then
+            Result := new Byte_Sequence'(Str);
+            String_Htable.Set (Table.Hash, Result);
          end if;
-
-         --  We fall through here only if a matching entry was not found in the
-         --  hash table. We now create a new entry. The hash
-         --  link pointing to the new entry (Entries_Last+1) has been set.
-
-         if Table.Entries = null then
-            Table.Entries := new Name_Entries_Array
-              (256 .. 256 + Initial_Entries_Size);
-            Table.Entries_Last := 255;
-
-         elsif Table.Entries_Last = Table.Entries'Last then
-            Tmp := Table.Entries;
-            Table.Entries := new Name_Entries_Array
-              (Table.Entries'First .. Table.Entries'Last + Entries_Increment);
-            Table.Entries (Tmp'Range) := Tmp.all;
-            Unchecked_Free (Tmp);
-         end if;
-
-         Table.Entries_Last := Table.Entries_Last + 1;
-         Table.Entries (Table.Entries_Last) := Name_Entry'
-           (Value     => new Unicode.CES.Byte_Sequence'(Str),
-            Hash_Link => No_Symbol);
-
-         return Table.Entries_Last;
+         return Result;
       end if;
    end Find;
 
@@ -284,19 +260,9 @@ package body Sax.Symbols is
    -- Get --
    ---------
 
-   function Get
-     (Table : Symbol_Table_Record;
-      Sym   : Symbol) return Unicode.CES.Byte_Sequence_Access is
+   function Get (Sym : Symbol) return Cst_Byte_Sequence_Access is
    begin
-      if Sym = No_Symbol then
-         return null;
-      elsif Sym = Empty_String then
-         return Cst_Empty_String'Access;
-      elsif Sym < 256 then
-         return Byte_Sequence (One_Char_Strings (Sym))'Unrestricted_Access;
-      else
-         return Table.Entries (Sym).Value;
-      end if;
+      return Cst_Byte_Sequence_Access (Sym);
    end Get;
 
    ----------
@@ -305,14 +271,7 @@ package body Sax.Symbols is
 
    procedure Free (Table : in out Symbol_Table_Record) is
    begin
-      if Table.Entries /= null then
-         for E in Table.Entries'Range loop
-            if Table.Entries (E).Value /= null then
-               Free (Table.Entries (E).Value);
-            end if;
-         end loop;
-         Unchecked_Free (Table.Entries);
-      end if;
+      String_Htable.Reset (Table.Hash);
    end Free;
 
    ----------
@@ -321,9 +280,7 @@ package body Sax.Symbols is
 
    function Hash (S : Sax.Symbols.Symbol) return Interfaces.Unsigned_32 is
    begin
-      return Interfaces.Unsigned_32 (S);
+      return Hash (Cst_Byte_Sequence_Access (S));
    end Hash;
 
-begin
-   Initialize;
 end Sax.Symbols;

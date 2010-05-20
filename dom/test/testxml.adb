@@ -42,6 +42,8 @@ with Input_Sources.Http; use Input_Sources.Http;
 with Input_Sources;      use Input_Sources;
 with Sax.Encodings;      use Sax.Encodings;
 with Sax.Readers;        use Sax.Readers;
+with Sax.Symbols;        use Sax.Symbols;
+with Sax.Utils;          use Sax.Utils;
 with Testxml_Support;    use Testxml_Support;
 with Unicode.CES;        use Unicode.CES;
 with Unicode.Encodings;  use Unicode.Encodings;
@@ -104,6 +106,8 @@ procedure Testxml is
    Auto_Run : Boolean := False;
    Verbose : Boolean := False;
    Pretty_Print : Boolean := False;
+
+   Symbols : Symbol_Table;
 
    type Testcases_Result is record
       Success_Count   : Natural := 0;
@@ -279,6 +283,8 @@ procedure Testxml is
       Set_Feature (Reader, Validation_Feature, Validate);
       Set_Feature (Reader, Test_Valid_Chars_Feature, Valid_Chars);
 
+      Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
+
       Parse (Reader, Read.all);
 
       if Reader.Had_Error then
@@ -337,6 +343,8 @@ procedure Testxml is
       Set_Feature (Expected, Validation_Feature, True);
       Parse (Expected, Input);
       Close (Input);
+
+      Set_Symbol_Table (Tests, Symbols);  --  optional, for efficiency
 
       Open ("tests/xmlconf.xml", Input);
       Parse (Tests, Input);
@@ -538,6 +546,8 @@ procedure Testxml is
          Free (Reader);
       end Cleanup;
    begin
+      Set_Symbol_Table (Reader, Symbols);  --  Optional, for efficiency
+
       if Verbose then
          Put_Line ("Running " & Base & " " & URI);
       end if;
@@ -877,6 +887,17 @@ procedure Testxml is
    end Run_Invalid_Test;
 
 begin
+   --  Since we are going to create multiple parsers, we will share the symbol
+   --  table, which saves on the number of calls to malloc().
+   --  This is however optional, since a parser would create its own symbol
+   --  table when appropriate
+
+   declare
+      S : constant Symbol_Table_Access := new Symbol_Table_Record;
+   begin
+      Symbols := Symbol_Table_Pointers.Allocate (S);
+   end;
+
    --  Parse the command line
    loop
       case Getopt

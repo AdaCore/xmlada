@@ -26,9 +26,12 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 with Sax.Exceptions;
 with Sax.Locators;
 with Input_Sources;
+with Sax.Symbols;
 with Sax.Utils;
 with Unicode.CES;
 with Schema.Validators;
@@ -77,6 +80,15 @@ package Schema.Readers is
    --  On the other hand, when parsing XML files, Grammar must have been
    --  initialized (in general through a call to Schema.Schema_Readers.Parse).
    --  If Set_Grammar is not called, no validation takes place.
+   --
+   --  If a symbol table was set for this reader, the grammar must have been
+   --  created with the same symbol table.
+
+   overriding procedure Set_Symbol_Table
+     (Parser  : in out Validating_Reader;
+      Symbols : Sax.Utils.Symbol_Table);
+   --  Override the symbol table. If a grammar was already set for this parser,
+   --  the symbol table must be the same as in the grammar.
 
    function Get_Error_Message
      (Reader : Validating_Reader) return Unicode.CES.Byte_Sequence;
@@ -94,14 +106,14 @@ package Schema.Readers is
 
    function To_Absolute_URI
      (Handler : Validating_Reader;
-      URI     : Unicode.CES.Byte_Sequence) return Unicode.CES.Byte_Sequence;
+      URI     : Sax.Symbols.Symbol) return Sax.Symbols.Symbol;
    --  Convert a URI read in the input stream of Handler to an absolute URI.
    --  This is used for instance to find the location of a schema file,...
 
    procedure Parse_Grammar
      (Handler  : access Validating_Reader;
-      URI      : Unicode.CES.Byte_Sequence;
-      Xsd_File : Unicode.CES.Byte_Sequence;
+      URI      : Sax.Symbols.Symbol;
+      Xsd_File : Sax.Symbols.Symbol;
       Do_Global_Check : Boolean);
    --  Parse the grammar to use from an XSD file, and add it to the current
    --  grammar (as returned by Get_Grammar).

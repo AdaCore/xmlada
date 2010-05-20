@@ -26,10 +26,13 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Simple_Types; use  Schema.Validators.Simple_Types;
 with Unicode;                        use Unicode;
 with Sax.Encodings;                  use Sax.Encodings;
+with Sax.Symbols;                    use Sax.Symbols;
 
 package body Schema.Validators.Lists is
 
@@ -38,13 +41,13 @@ package body Schema.Validators.Lists is
       Min_Length : Natural;
       Max_Length : Natural;
    end record;
-   procedure Add_Facet
+   overriding procedure Add_Facet
      (Facets      : in out List_Facets_Description;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
-   procedure Check_Facet
+   overriding procedure Check_Facet
      (Facets : in out List_Facets_Description;
       Reader : access Abstract_Validation_Reader'Class;
       Value  : Unicode.CES.Byte_Sequence;
@@ -55,13 +58,13 @@ package body Schema.Validators.Lists is
          Base   : XML_Type;
       end record;
    type List_Validator is access all List_Validator_Record'Class;
-   procedure Validate_Characters
+   overriding procedure Validate_Characters
      (Validator     : access List_Validator_Record;
       Reader        : access Abstract_Validation_Reader'Class;
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Mask          : in out Facets_Mask);
-   function Get_Facets
+   overriding function Get_Facets
      (Validator : access List_Validator_Record;
       Reader    : access Abstract_Validation_Reader'Class)
       return Facets_Description;
@@ -74,7 +77,7 @@ package body Schema.Validators.Lists is
    procedure Add_Facet
      (Facets      : in out List_Facets_Description;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean)
    is
@@ -84,15 +87,15 @@ package body Schema.Validators.Lists is
          Facet_Name, Facet_Value, Applied);
       if Applied then
          null;
-      elsif Facet_Name = "length" then
+      elsif Facet_Name = Reader.Length then
          Facets.Mask (Facet_Length) := True;
          Facets.Length := Natural'Value (Facet_Value);
          Applied := True;
-      elsif Facet_Name = "minLength" then
+      elsif Facet_Name = Reader.Minlength then
          Facets.Mask (Facet_Min_Length) := True;
          Facets.Min_Length := Natural'Value (Facet_Value);
          Applied := True;
-      elsif Facet_Name = "maxLength" then
+      elsif Facet_Name = Reader.Maxlength then
          Facets.Mask (Facet_Max_Length) := True;
          Facets.Max_Length := Natural'Value (Facet_Value);
          Applied := True;
@@ -216,7 +219,8 @@ package body Schema.Validators.Lists is
       if Validator.Facets = null then
          Validator.Facets := new List_Facets_Description;
          Add_Facet
-           (Validator.Facets.all, Reader, "whitespace", "collapse", Applied);
+           (Validator.Facets.all, Reader,
+            Reader.Whitespace, "collapse", Applied);
       end if;
 
       return Validator.Facets;

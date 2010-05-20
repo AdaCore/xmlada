@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 with GNAT.Regpat;  use GNAT.Regpat;
 with Ada.Unchecked_Deallocation;
 
@@ -84,19 +86,19 @@ package Schema.Validators.Facets is
    end record;
    --  Facets shared by all basic types
 
-   procedure Free (Facets : in out Common_Facets_Description);
-   procedure Check_Facet
+   overriding procedure Free (Facets : in out Common_Facets_Description);
+   overriding procedure Check_Facet
      (Facets : in out Common_Facets_Description;
       Reader : access Abstract_Validation_Reader'Class;
       Value  : Unicode.CES.Byte_Sequence;
       Mask   : in out Facets_Mask);
-   procedure Copy
+   overriding procedure Copy
      (From : Common_Facets_Description;
       To   : in out Facets_Description_Record'Class);
-   procedure Add_Facet
+   overriding procedure Add_Facet
      (Facets      : in out Common_Facets_Description;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Sax.Symbols.Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean);
    --  See inherited documentation

@@ -52,6 +52,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Input_Sources.File;        use Input_Sources, Input_Sources.File;
 with Sax.Readers;               use Sax.Readers;
+with Sax.Symbols;               use Sax.Symbols;
+with Sax.Utils;                 use Sax.Utils;
 with Schema.Readers;            use Schema.Readers;
 with Schema.Schema_Readers;     use Schema.Schema_Readers;
 with Schema.Validators;         use Schema.Validators;
@@ -78,6 +80,11 @@ procedure Schematest is
 
    Show_Descr : Boolean := False;
    --  Whether to show group descriptions
+
+   Symbols : Symbol_Table;
+   --  Shared symbol table (optional, this would be created automatically by
+   --  each parser otherwise, it is just more efficient in the number of calls
+   --  to malloc this way)
 
    Hide_Fully_Failed_Groups : Boolean := False;
    --  If True, fully failed groups are not displayed, assuming this is an
@@ -353,6 +360,10 @@ procedure Schematest is
       N        : Node := First_Child (Schema);
       Outcome  : constant Outcome_Value := Get_Expected (Schema);
    begin
+      if Verbose then
+         Put_Line ("Parse_Schema_Test: " & Name);
+      end if;
+
       Failed_Grammar := False;
       Result.Name    := To_Unbounded_String (Name);
       Result.Kind    := Passed;
@@ -365,6 +376,7 @@ procedure Schematest is
 
       else
          begin
+            Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
             Set_Grammar (Reader, Grammar);
             Use_Basename_In_Error_Messages (Reader, True);
 
@@ -382,6 +394,11 @@ procedure Schematest is
                         (Get_Attribute_NS (N, Xlink, "href"),
                          Base_Dir, Resolve_Links => False),
                     Input);
+
+                  if Verbose then
+                     Put_Line ("  Will parse: " & Get_System_Id (Input));
+                  end if;
+
                   Result.XSD := To_Unbounded_String (Get_System_Id (Input));
                   Append (Schema_Files, Result.XSD);
 
@@ -456,6 +473,10 @@ procedure Schematest is
       Input    : File_Input;
       Tmp_Gr   : Group_Result;
    begin
+      if Verbose then
+         Put_Line ("Parse_Instance_Test: " & Name);
+      end if;
+
       if Find (Groups, To_String (Group.Name) & " / " & Name) /=
         Group_Hash.No_Element
       then
@@ -479,6 +500,7 @@ procedure Schematest is
          return;
       end if;
 
+      Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
       Use_Basename_In_Error_Messages (Reader, True);
       Set_Grammar (Reader, Grammar);
       Set_Feature (Reader, Schema_Validation_Feature, True);
@@ -691,6 +713,8 @@ procedure Schematest is
       N      : Node;
       Name   : Unbounded_String;
    begin
+      Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
+
       Load (Filename, Input);
       Parse (Reader, Input);
       Close (Input);
@@ -726,6 +750,8 @@ procedure Schematest is
       Reader : Tree_Reader;
       N      : Node;
    begin
+      Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
+
       Load (Filename, Input);
       Parse (Reader, Input);
       Close (Input);
@@ -930,6 +956,17 @@ begin
       Put_Line (Standard_Error, "No such directory: " & Testdir);
       return;
    end if;
+
+   --  Since we are going to create multiple parsers, we will share the symbol
+   --  table, which saves on the number of calls to malloc().
+   --  This is however optional, since a parser would create its own symbol
+   --  table when appropriate
+
+   declare
+      S : constant Symbol_Table_Access := new Symbol_Table_Record;
+   begin
+      Symbols := Symbol_Table_Pointers.Allocate (S);
+   end;
 
    loop
       case Getopt ("v d a h f -filter: -descr -group -hide: -xsd10"

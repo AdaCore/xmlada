@@ -26,14 +26,15 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 with Unicode.CES;
-with Sax.Attributes;
 with Sax.HTable;
 with Sax.Locators;
 with Sax.Pointers;
 with Sax.Readers;
-with Sax.Utils;
 with Sax.Symbols;
+with Sax.Utils;
 
 package Schema.Validators is
 
@@ -75,9 +76,8 @@ package Schema.Validators is
 
    procedure Set_System_Id
      (Grammar   : XML_Grammar_NS;
-      System_Id : Unicode.CES.Byte_Sequence);
-   function Get_System_Id
-     (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence;
+      System_Id : Sax.Symbols.Symbol);
+   function Get_System_Id (Grammar : XML_Grammar_NS) return Sax.Symbols.Symbol;
    --  The URI from which we loaded the schema
 
    procedure Set_XSD_Version
@@ -85,6 +85,15 @@ package Schema.Validators is
       XSD_Version : XSD_Versions);
    function Get_XSD_Version (Grammar : XML_Grammar) return XSD_Versions;
    --  Set the version of XSD accepted by this grammar
+
+   function Get_Symbol_Table
+     (Grammar : XML_Grammar) return Sax.Utils.Symbol_Table;
+   procedure Set_Symbol_Table
+     (Grammar : XML_Grammar; Symbols : Sax.Utils.Symbol_Table);
+   --  The symbol table used to create the grammar.
+   --  Any parser using this grammmar must also use the same symbol table,
+   --  otherwise no validation can succeed (this is ensured by special tests in
+   --  Set_Grammar and Set_Symbol_Table).
 
    No_Grammar : constant XML_Grammar;
    --  No Grammar has been defined
@@ -102,7 +111,7 @@ package Schema.Validators is
    --  apply to global elements, that always need to be qualified (or found in
    --  the default namespace).
    --  Note that elements defined in a <group> are considered local only if
-   --  they do not use the "ref" attribute, otherwise they are considered
+   --  they do not use the R.Ref attribute, otherwise they are considered
    --  global and therefore the "form" does not apply to them.
 
    type Process_Contents_Type is (Process_Strict, Process_Lax, Process_Skip);
@@ -130,7 +139,7 @@ package Schema.Validators is
    --  implementation of those.
 
    type Abstract_Validation_Reader
-     is abstract new Sax.Readers.Reader
+     is abstract new Sax.Readers.Sax_Reader
    with record
       Error_Msg : Unicode.CES.Byte_Sequence_Access;
 
@@ -139,11 +148,174 @@ package Schema.Validators is
 
       Grammar   : XML_Grammar := No_Grammar;
 
-      Xmlns     : Sax.Symbols.Symbol;
-      --  Predefined symbols
+      All_NNI                : Sax.Symbols.Symbol; --  "allNNI"
+      Annotated              : Sax.Symbols.Symbol; --  "annotated"
+      Annotation             : Sax.Symbols.Symbol; --  "annotation"
+      Any                    : Sax.Symbols.Symbol; --  "any"
+      Any_Attribute          : Sax.Symbols.Symbol; --  "anyAttribute"
+      Any_Namespace          : Sax.Symbols.Symbol;  --  "##any"
+      Any_Simple_Type        : Sax.Symbols.Symbol; --  "anySimpleType"
+      Anytype                : Sax.Symbols.Symbol;  --  "anyType"
+      Appinfo                : Sax.Symbols.Symbol; --  "appinfo"
+      Attr_Decls             : Sax.Symbols.Symbol; --  "attrDecls"
+      Attribute              : Sax.Symbols.Symbol; --  "attribute"
+      Attribute_Group        : Sax.Symbols.Symbol; --  "attributeGroup"
+      Attribute_Group_Ref    : Sax.Symbols.Symbol; -- "attributeGroupRef"
+      Base                   : Sax.Symbols.Symbol; --  "base"
+      Block                  : Sax.Symbols.Symbol; --  "block"
+      Block_Default          : Sax.Symbols.Symbol; --  "blockDefault"
+      Block_Set              : Sax.Symbols.Symbol; --  "blockSet"
+      Choice                 : Sax.Symbols.Symbol; --  "choice"
+      Complex_Content        : Sax.Symbols.Symbol; --  "complexContent"
+      Complex_Extension_Type : Sax.Symbols.Symbol; --  "complexExtensionType"
+      Complex_Restriction_Type : Sax.Symbols.Symbol;
+      Complex_Type           : Sax.Symbols.Symbol; --  "complexType"
+      Complex_Type_Model     : Sax.Symbols.Symbol; -- "complexTypeModel"
+      Def_Ref                : Sax.Symbols.Symbol; --  "defRef"
+      Default                : Sax.Symbols.Symbol; --  "default"
+      Derivation_Control     : Sax.Symbols.Symbol; -- "derivationControl"
+      Derivation_Set         : Sax.Symbols.Symbol; --  "derivationSet"
+      Documentation          : Sax.Symbols.Symbol; --  "documentation"
+      Element                : Sax.Symbols.Symbol; --  "element"
+      Enumeration            : Sax.Symbols.Symbol;  --  "enumeration"
+      Explicit_Group         : Sax.Symbols.Symbol; --  "explicitGroup"
+      Extension              : Sax.Symbols.Symbol; --  "extension"
+      Extension_Type         : Sax.Symbols.Symbol; --  "extensionType"
+      Facet                  : Sax.Symbols.Symbol; --  "facet"
+      Field                  : Sax.Symbols.Symbol; -- "field"
+      Final                  : Sax.Symbols.Symbol; --  "final"
+      Final_Default          : Sax.Symbols.Symbol; --  "finalDefault"
+      Fixed                  : Sax.Symbols.Symbol; --  "fixed"
+      Form                   : Sax.Symbols.Symbol; --  "form"
+      Form_Choice            : Sax.Symbols.Symbol; -- "formChoice
+      Fraction_Digits        : Sax.Symbols.Symbol;
+      Group                  : Sax.Symbols.Symbol; --  "group"
+      Group_Def_Particle     : Sax.Symbols.Symbol; --  "groupDefParticle"
+      Group_Ref              : Sax.Symbols.Symbol; --  "groupRef"
+      Id                     : Sax.Symbols.Symbol; --  "id"
+      Identity_Constraint    : Sax.Symbols.Symbol; --  "identityConstraint"
+      Import                 : Sax.Symbols.Symbol; --  "import"
+      Include                : Sax.Symbols.Symbol; --  "include"
+      Item_Type              : Sax.Symbols.Symbol; --  "itemType"
+      Key                    : Sax.Symbols.Symbol; --  "key"
+      Keybase                : Sax.Symbols.Symbol; --  "keybase"
+      Keyref                 : Sax.Symbols.Symbol; --  "keyref"
+      Lang                   : Sax.Symbols.Symbol; --  "lang"
+      Lax                    : Sax.Symbols.Symbol; --  "lax"
+      Length                 : Sax.Symbols.Symbol;
+      List                   : Sax.Symbols.Symbol; --  "list"
+      Local                  : Sax.Symbols.Symbol;
+      Local_Complex_Type     : Sax.Symbols.Symbol; --  "localComplexType"
+      Local_Element          : Sax.Symbols.Symbol; --  "localElement"
+      Local_Simple_Type      : Sax.Symbols.Symbol; --  "localSimpleType"
+      MaxExclusive           : Sax.Symbols.Symbol;
+      MaxInclusive           : Sax.Symbols.Symbol;
+      MaxOccurs              : Sax.Symbols.Symbol;
+      Max_Bound              : Sax.Symbols.Symbol; --  "maxBound"
+      Maxlength              : Sax.Symbols.Symbol;  --  "maxLength"
+      Member_Types           : Sax.Symbols.Symbol; --  "memberTypes"
+      MinExclusive           : Sax.Symbols.Symbol;
+      MinInclusive           : Sax.Symbols.Symbol;
+      MinOccurs              : Sax.Symbols.Symbol;
+      Min_Bound              : Sax.Symbols.Symbol; --  "minBound"
+      Minlength              : Sax.Symbols.Symbol;  --  "minLength"
+      Mixed                  : Sax.Symbols.Symbol; --  "mixed"
+      NCName                 : Sax.Symbols.Symbol; --  "NCName"
+      NMTOKEN                : Sax.Symbols.Symbol; --  "NMTOKEN"
+      Name                   : Sax.Symbols.Symbol;
+      Named_Attribute_Group  : Sax.Symbols.Symbol; --  "namedAttributeGroup"
+      Named_Group            : Sax.Symbols.Symbol; --  "namedGroup"
+      Namespace              : Sax.Symbols.Symbol;
+      Namespace_List         : Sax.Symbols.Symbol; --  "namespaceList"
+      Namespace_Target       : Sax.Symbols.Symbol; --  "targetNamespace"
+      Nested_Particle        : Sax.Symbols.Symbol; --  "nestedParticle"
+      Nil                    : Sax.Symbols.Symbol;
+      Nillable               : Sax.Symbols.Symbol; --  "nillable"
+      No_Namespace_Schema_Location : Sax.Symbols.Symbol;
+      Non_Negative_Integer   : Sax.Symbols.Symbol; --  "nonNegativeInteger"
+      Notation               : Sax.Symbols.Symbol; -- "notation"
+      Num_Facet              : Sax.Symbols.Symbol; --  "numFacet"
+      Occurs                 : Sax.Symbols.Symbol; -- "occurs"
+      Open_Attrs             : Sax.Symbols.Symbol; --  "openAttrs"
+      Optional               : Sax.Symbols.Symbol; --  "optional"
+      Other_Namespace        : Sax.Symbols.Symbol;
+      Particle               : Sax.Symbols.Symbol; --  "particle"
+      Pattern                : Sax.Symbols.Symbol;
+      Positive_Integer       : Sax.Symbols.Symbol;
+      Precision_Decimal      : Sax.Symbols.Symbol;
+      Process_Contents       : Sax.Symbols.Symbol; --  "processContents"
+      Prohibited             : Sax.Symbols.Symbol; --  "prohibited"
+      Public                 : Sax.Symbols.Symbol; --  "public"
+      QName                  : Sax.Symbols.Symbol; --  "QName"
+      Qualified              : Sax.Symbols.Symbol; --  "qualified"
+      Real_Group             : Sax.Symbols.Symbol; -- "realGroup"
+      Redefinable            : Sax.Symbols.Symbol; --  "redefinable"
+      Redefine               : Sax.Symbols.Symbol; --  "redefine"
+      Reduced_Derivation_Control : Sax.Symbols.Symbol;
+      Ref                    : Sax.Symbols.Symbol;
+      Refer                  : Sax.Symbols.Symbol; --  "refer"
+      Required               : Sax.Symbols.Symbol; --  "required"
+      Restriction            : Sax.Symbols.Symbol; --  "restriction"
+      Restriction_Type       : Sax.Symbols.Symbol; --  "restrictionType"
+      S_1                    : Sax.Symbols.Symbol; --  "1"
+      S_Abstract             : Sax.Symbols.Symbol; --  "abstract"
+      S_All                  : Sax.Symbols.Symbol; --  "all"
+      S_Attribute_Form_Default : Sax.Symbols.Symbol; --  "attributeFormDefault"
+      S_Boolean              : Sax.Symbols.Symbol; --  "boolean"
+      S_Element_Form_Default : Sax.Symbols.Symbol; --  "elementFormDefault"
+      S_False                : Sax.Symbols.Symbol; --  "false"
+      S_Schema               : Sax.Symbols.Symbol; --  "schema"
+      S_String               : Sax.Symbols.Symbol; --  "string"
+      S_Use                  : Sax.Symbols.Symbol; --  "use"
+      Schema_Location        : Sax.Symbols.Symbol;
+      Schema_Top             : Sax.Symbols.Symbol; --  "schemaTop"
+      Selector               : Sax.Symbols.Symbol; --  "selector"
+      Sequence               : Sax.Symbols.Symbol; --  "sequence"
+      Simple_Content         : Sax.Symbols.Symbol; --  "simpleContent"
+      Simple_Derivation      : Sax.Symbols.Symbol; --  "simpleDerivation"
+      Simple_Derivation_Set  : Sax.Symbols.Symbol; --  "simpleDerivationSet"
+      Simple_Extension_Type  : Sax.Symbols.Symbol; --  "simpleExtensionType"
+      Simple_Restriction_Model : Sax.Symbols.Symbol;
+      Simple_Restriction_Type  : Sax.Symbols.Symbol;
+      Simple_Type            : Sax.Symbols.Symbol; --  "simpleType"
+      Source                 : Sax.Symbols.Symbol; --  "source"
+      Strict                 : Sax.Symbols.Symbol; --  "strict"
+      Substitution_Group     : Sax.Symbols.Symbol; --  "substitutionGroup"
+      System                 : Sax.Symbols.Symbol; --  "system"
+      Target_Namespace       : Sax.Symbols.Symbol; --  "##targetNamespace"
+      Token                  : Sax.Symbols.Symbol; --  "token"
+      Top_Level_Attribute    : Sax.Symbols.Symbol; --  "topLevelAttribute"
+      Top_Level_Complex_Type : Sax.Symbols.Symbol; --  "topLevelComplexType"
+      Top_Level_Element      : Sax.Symbols.Symbol; --  "topLevelElement"
+      Top_Level_Simple_Type  : Sax.Symbols.Symbol; --  "topLevelSimpleType"
+      Total_Digits           : Sax.Symbols.Symbol;
+      Typ                    : Sax.Symbols.Symbol;
+      Type_Def_Particle      : Sax.Symbols.Symbol; --  "typeDefParticle"
+      UC_ID                  : Sax.Symbols.Symbol; --  "ID"
+      URI_Reference          : Sax.Symbols.Symbol; --  "uriReference"
+      Unbounded              : Sax.Symbols.Symbol;
+      Union                  : Sax.Symbols.Symbol; --  "union"
+      Unique                 : Sax.Symbols.Symbol; -- "unique"
+      Unqualified            : Sax.Symbols.Symbol; --  "unqualified"
+      Ur_Type                : Sax.Symbols.Symbol; --  "ur-Type"
+      Value                  : Sax.Symbols.Symbol; --  "value"
+      Version                : Sax.Symbols.Symbol; --  "version"
+      Whitespace             : Sax.Symbols.Symbol;
+      Wildcard               : Sax.Symbols.Symbol; --  "wildcard"
+      XML_Instance_URI       : Sax.Symbols.Symbol;
+      XML_Schema_URI         : Sax.Symbols.Symbol;
+      XML_URI                : Sax.Symbols.Symbol; --  XML_URI
+      XPath                  : Sax.Symbols.Symbol; --  "xpath"
+      XPath_Expr_Approx      : Sax.Symbols.Symbol; --  "XPathExprApprox"
+      XPath_Spec             : Sax.Symbols.Symbol; --  "XPathSpec"
+      Xmlns                  : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
    end record;
    type Abstract_Validating_Reader_Access
      is access all Abstract_Validation_Reader'Class;
+
+   overriding procedure Initialize_Symbols
+     (Parser : in out Abstract_Validation_Reader);
+   --  See inherited documentation
 
    procedure Validation_Error
      (Reader  : access Abstract_Validation_Reader;
@@ -206,7 +378,7 @@ package Schema.Validators is
    procedure Add_Facet
      (Facets      : in out Facets_Description_Record;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Sax.Symbols.Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence;
       Applied     : out Boolean) is abstract;
    --  Set the value of a facet.
@@ -326,19 +498,16 @@ package Schema.Validators is
    procedure Normalize_Whitespace
      (Typ    : XML_Type;
       Reader : access Abstract_Validation_Reader'Class;
-      Atts   : Sax.Attributes.Attributes'Class;
+      Atts   : Sax.Readers.Sax_Attribute_List;
       Index  : Natural);
    --  Normalizes whitespaces in the attribute, depending on the type
    --  represented by Validator.
 
    function Do_Normalize_Whitespaces
-     (Typ    : XML_Type;
-      Reader : access Abstract_Validation_Reader'Class;
-      Val    : Unicode.CES.Byte_Sequence_Access)
-      return Unicode.CES.Byte_Sequence_Access;
+     (Typ     : XML_Type;
+      Reader  : access Abstract_Validation_Reader'Class;
+      Val     : Sax.Symbols.Symbol) return Sax.Symbols.Symbol;
    --  Normalize whitespaces in Val.
-   --  Returns either Val itself (if replacement was done in place), null (no
-   --  change done), or a newly allocated string.
 
    -------------------------
    -- Attribute_Validator --
@@ -350,22 +519,20 @@ package Schema.Validators is
    type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
 
    function Create_Local_Attribute
-     (Local_Name     : Unicode.CES.Byte_Sequence;
+     (Local_Name     : Sax.Symbols.Symbol;
       NS             : XML_Grammar_NS;
-      Attribute_Type : XML_Type                  := No_Type;
-      Attribute_Form : Form_Type                 := Unqualified;
-      Attribute_Use  : Attribute_Use_Type        := Optional;
-      Fixed          : Unicode.CES.Byte_Sequence := "";
-      Has_Fixed      : Boolean := False;
-      Default        : Unicode.CES.Byte_Sequence := "")
+      Attribute_Type : XML_Type           := No_Type;
+      Attribute_Form : Form_Type          := Unqualified;
+      Attribute_Use  : Attribute_Use_Type := Optional;
+      Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Default        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
       return Attribute_Validator;
    function Create_Local_Attribute
      (Based_On       : Attribute_Validator;
       Attribute_Form : Form_Type                 := Unqualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
-      Fixed          : Unicode.CES.Byte_Sequence := "";
-      Has_Fixed      : Boolean := False;
-      Default        : Unicode.CES.Byte_Sequence := "")
+      Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Default        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
       return Attribute_Validator;
    --  Create a new local attribute validator. See also Create_Global_Attribute
    --  Default is only relevant when Attribute_Use is set to Default
@@ -376,8 +543,7 @@ package Schema.Validators is
    --  Namespace_List can contain "##local", "##targetNamespace" or actual
    --  namespaces.
 
-   type NS_List
-     is array (Natural range <>) of Unicode.CES.Byte_Sequence_Access;
+   type NS_List is array (Natural range <>) of Sax.Symbols.Symbol;
    Empty_NS_List : constant NS_List;
 
    function Create_Any_Attribute
@@ -392,14 +558,14 @@ package Schema.Validators is
    procedure Validate_Attribute
      (Validator : Attribute_Validator_Record;
       Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Readers.Sax_Attribute_List;
       Index     : Natural) is abstract;
    --  Return True if Value is valid for this attribute.
    --  Sets the type of the attribute (per sax-attributes) to ID if we have an
    --  ID attribute.
    --  Raise XML_Validation_Error in case of error
 
-   procedure Free (Validator : in out Attribute_Validator_Record) is abstract;
+   procedure Free (Validator : in out Attribute_Validator_Record) is null;
    --  Free the memory occupied by the validator
 
    function Equal
@@ -461,7 +627,7 @@ package Schema.Validators is
    procedure Validate_Start_Element
      (Validator              : access XML_Validator_Record;
       Reader                 : access Abstract_Validation_Reader'Class;
-      Local_Name             : Unicode.CES.Byte_Sequence;
+      Local_Name             : Sax.Symbols.Symbol;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
       Element_Validator      : out XML_Element);
@@ -481,7 +647,7 @@ package Schema.Validators is
    procedure Validate_Attributes
      (Validator : access XML_Validator_Record;
       Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Readers.Sax_Attribute_List;
       Nillable  : Boolean;
       Is_Nil    : out Boolean);
    --  Check whether this list of attributes is valid for elements associated
@@ -502,7 +668,7 @@ package Schema.Validators is
    procedure Validate_End_Element
      (Validator      : access XML_Validator_Record;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Sax.Symbols.Symbol;
       Data           : Validator_Data);
    --  Check whether this End_Element event is valid.
    --  This is called for the node associated with the validator itself, not
@@ -539,7 +705,7 @@ package Schema.Validators is
    procedure Add_Facet
      (Validator   : access XML_Validator_Record;
       Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
+      Facet_Name  : Sax.Symbols.Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence);
    --  Add a restriction to the set of possible values for Validator.
    --  The valid list of restrictions and their values depends on the type
@@ -557,7 +723,7 @@ package Schema.Validators is
    function Has_Attribute
      (Validator  : access XML_Validator_Record;
       NS         : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return Boolean;
+      Local_Name : Sax.Symbols.Symbol) return Boolean;
    --  Whether the given attribute was already added to Validator
 
    procedure Add_Attribute_Group
@@ -627,7 +793,7 @@ package Schema.Validators is
    --------------
 
    function Create_Local_Element
-     (Local_Name : Unicode.CES.Byte_Sequence;
+     (Local_Name : Sax.Symbols.Symbol;
       NS         : XML_Grammar_NS;
       Of_Type    : XML_Type;
       Form       : Form_Type) return XML_Element;
@@ -663,10 +829,9 @@ package Schema.Validators is
    procedure Set_Default
      (Element  : XML_Element;
       Reader   : access Abstract_Validation_Reader'Class;
-      Default  : Unicode.CES.Byte_Sequence);
+      Default  : Sax.Symbols.Symbol);
    function Has_Default (Element : XML_Element) return Boolean;
-   function Get_Default
-     (Element : XML_Element) return Unicode.CES.Byte_Sequence_Access;
+   function Get_Default (Element : XML_Element) return Sax.Symbols.Symbol;
    --  Manipulation of the "default" attribute.
    --  The value returned by Get_Default mustn't be altered or freed, and
    --  will be null if the attribute wasn't set. We return a pointer for
@@ -675,10 +840,9 @@ package Schema.Validators is
    procedure Set_Fixed
      (Element  : XML_Element;
       Reader   : access Abstract_Validation_Reader'Class;
-      Fixed    : Unicode.CES.Byte_Sequence);
+      Fixed    : Sax.Symbols.Symbol);
    function Has_Fixed (Element : XML_Element) return Boolean;
-   function Get_Fixed
-     (Element : XML_Element) return Unicode.CES.Byte_Sequence_Access;
+   function Get_Fixed (Element : XML_Element) return Sax.Symbols.Symbol;
    --  Manipulation of the "fixed" attribute
    --  The value returned by Get_Fixed mustn't be altered or freed, and
    --  will be null if the attribute wasn't set. We return a pointer for
@@ -734,7 +898,7 @@ package Schema.Validators is
 
    function Create_Any
      (Process_Contents : Process_Contents_Type := Process_Strict;
-      Namespace        : Unicode.CES.Byte_Sequence;
+      Namespace        : Sax.Symbols.Symbol;
       Target_NS        : XML_Grammar_NS) return XML_Any;
    --  Create a new validator for <any>
 
@@ -767,8 +931,7 @@ package Schema.Validators is
    --  Base doesn't need to be a Clone of some other type, since it isn't
    --  altered
 
-   function Get_Local_Name
-     (Group : XML_Group) return Unicode.CES.Byte_Sequence;
+   function Get_Local_Name (Group : XML_Group) return Sax.Symbols.Symbol;
    --  Return the local name of the group
 
    ---------------
@@ -875,7 +1038,7 @@ package Schema.Validators is
 
    procedure Get_NS
      (Grammar       : XML_Grammar;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Namespace_URI : Sax.Symbols.Symbol;
       Result        : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True);
    --  Return the part of the grammar specialized for a given namespace.
@@ -889,26 +1052,26 @@ package Schema.Validators is
    function Lookup_Element
      (Grammar       : XML_Grammar_NS;
       Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Unicode.CES.Byte_Sequence;
+      Local_Name    : Sax.Symbols.Symbol;
       Create_If_Needed : Boolean := True) return XML_Element;
    function Lookup
      (Grammar       : XML_Grammar_NS;
       Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Unicode.CES.Byte_Sequence;
+      Local_Name    : Sax.Symbols.Symbol;
       Create_If_Needed : Boolean := True) return XML_Type;
    function Lookup_Group
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
+      Local_Name : Sax.Symbols.Symbol) return XML_Group;
    function Lookup_Attribute
      (Grammar       : XML_Grammar_NS;
       Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Unicode.CES.Byte_Sequence;
+      Local_Name    : Sax.Symbols.Symbol;
       Create_If_Needed : Boolean := True) return Attribute_Validator;
    function Lookup_Attribute_Group
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
+      Local_Name : Sax.Symbols.Symbol) return XML_Attribute_Group;
    --  Return the type validator to use for elements with name Local_Name.
    --  "null" is returned if there is no validator defined for these elements.
    --  The returned value must be freed by the user.
@@ -921,51 +1084,51 @@ package Schema.Validators is
    function Create_Global_Type
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence;
+      Local_Name : Sax.Symbols.Symbol;
       Validator  : access XML_Validator_Record'Class) return XML_Type;
    function Create_Global_Element
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence;
+      Local_Name : Sax.Symbols.Symbol;
       Form       : Form_Type) return XML_Element;
    function Create_Global_Group
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
+      Local_Name : Sax.Symbols.Symbol) return XML_Group;
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Sax.Symbols.Symbol;
       Attribute_Type : XML_Type;
       Attribute_Form : Form_Type                 := Qualified;
       Attribute_Use  : Attribute_Use_Type        := Optional;
-      Fixed          : Unicode.CES.Byte_Sequence := "";
-      Has_Fixed      : Boolean := False) return Attribute_Validator;
+      Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
+      return Attribute_Validator;
    function Create_Global_Attribute_Group
      (NS         : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group;
+      Local_Name : Sax.Symbols.Symbol) return XML_Attribute_Group;
    --  Register a new type or element in the grammar.
 
    procedure Create_Global_Type
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence;
+      Local_Name : Sax.Symbols.Symbol;
       Validator  : access XML_Validator_Record'Class);
    procedure Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Sax.Symbols.Symbol;
       Attribute_Type : XML_Type);
    --  Same as above, but doesn't return the newly created type. Use Lookup if
    --  you need access to it later on
 
    function Redefine_Type
      (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Type;
+      Local_Name : Sax.Symbols.Symbol) return XML_Type;
    function Redefine_Group
      (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group;
+      Local_Name : Sax.Symbols.Symbol) return XML_Group;
    --  Indicate that a given type or element is being redefined inside a
    --  <redefine> tag. The old definition is returned, and all types that
    --  were referencing it will now refer to a new, invalid type. You need to
@@ -1006,19 +1169,19 @@ package Schema.Validators is
    --  parsed.
 
    function Get_Namespace_URI
-     (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence;
+     (Grammar : XML_Grammar_NS) return Sax.Symbols.Symbol;
    --  Return the namespace URI associated with Grammar
 
    function URI_Was_Parsed
      (Grammar : XML_Grammar;
-      URI     : Unicode.CES.Byte_Sequence) return Boolean;
+      URI     : Sax.Symbols.Symbol) return Boolean;
    --  Return True if the schema at URI was already parsed and included in
    --  Grammar. URI must be an absolute URI.
 
    procedure Set_Parsed_URI
      (Reader  : access Abstract_Validation_Reader'Class;
       Grammar : in out XML_Grammar;
-      URI     : Unicode.CES.Byte_Sequence);
+      URI     : Sax.Symbols.Symbol);
    --  Indicate that the schema found at URI was fully parsed and integrated
    --  into Grammar. It can then be tested through URI_Was_Parsed.
 
@@ -1030,8 +1193,7 @@ package Schema.Validators is
 
    function To_QName (Element : XML_Element) return Unicode.CES.Byte_Sequence;
    function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
-   function To_QName
-     (NS : XML_Grammar_NS; Local : Unicode.CES.Byte_Sequence)
+   function To_QName (NS : XML_Grammar_NS; Local : Sax.Symbols.Symbol)
       return Unicode.CES.Byte_Sequence;
    --  Return the name as it should be displayed in error messages
 
@@ -1049,20 +1211,20 @@ private
    ---------
 
    type Id_Ref is record
-      Key : Unicode.CES.Byte_Sequence_Access;
+      Key : Sax.Symbols.Symbol;
    end record;
-   No_Id : constant Id_Ref := (Key => null);
+   No_Id : constant Id_Ref := (Key => Sax.Symbols.No_Symbol);
 
    procedure Free (Id : in out Id_Ref);
-   function Get_Key (Id : Id_Ref) return Unicode.CES.Byte_Sequence_Access;
+   function Get_Key (Id : Id_Ref) return Sax.Symbols.Symbol;
    package Id_Htable is new Sax.HTable
      (Element       => Id_Ref,
       Empty_Element => No_Id,
       Free          => Free,
-      Key           => Unicode.CES.Byte_Sequence_Access,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Sax.Utils.Hash,
-      Equal         => Sax.Utils.Equal);
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    type Id_Htable_Access is access Id_Htable.HTable;
    --  This table is used to store the list of IDs that have been used in the
    --  document so far, and prevent their duplication in the document.
@@ -1080,8 +1242,8 @@ private
    type Content_Type is (Simple_Content, Complex_Content, Unknown_Content);
 
    type XML_Type_Record is record
-      Local_Name : Unicode.CES.Byte_Sequence_Access;
-      Validator  : XML_Validator;
+      Local_Name  : Sax.Symbols.Symbol;
+      Validator   : XML_Validator;
       Simple_Type : Content_Type;
 
       Blocks : Block_Status;
@@ -1125,13 +1287,13 @@ private
    -----------------
 
    type XML_Element_Record is record
-      Local_Name : Unicode.CES.Byte_Sequence_Access;
+      Local_Name : Sax.Symbols.Symbol;
       NS         : XML_Grammar_NS;
       Of_Type    : XML_Type;
       Substitution_Group : XML_Element := No_Element;
 
-      Default    : Unicode.CES.Byte_Sequence_Access;
-      Fixed      : Unicode.CES.Byte_Sequence_Access;
+      Default    : Sax.Symbols.Symbol;
+      Fixed      : Sax.Symbols.Symbol;
 
       Is_Abstract : Boolean;
       --  Whether the corresponding type is abstract
@@ -1184,7 +1346,7 @@ private
    type String_List_Record;
    type String_List is access String_List_Record;
    type String_List_Record is record
-      Str  : Unicode.CES.Byte_Sequence_Access;
+      Str  : Sax.Symbols.Symbol;
       Next : String_List;
    end record;
    --  We will use Ada2005 containers when the compiler is more widely
@@ -1196,6 +1358,8 @@ private
    type Process_Contents_Array is array (Process_Contents_Type) of XML_Element;
 
    type XML_Grammar_Record is new Sax.Pointers.Root_Encapsulated with record
+      Symbols  : Sax.Utils.Symbol_Table;
+
       Grammars : Grammar_NS_Array_Access;
       --  All the namespaces known for that grammar
 
@@ -1254,13 +1418,13 @@ private
 
    type Named_Attribute_Validator_Record is new Attribute_Validator_Record with
       record
-         Local_Name     : Unicode.CES.Byte_Sequence_Access;
+         Local_Name     : Sax.Symbols.Symbol;
          Ref_Attr       : Named_Attribute_Validator;
          Attribute_Type : XML_Type;   --  or read from Ref_Attr the first time
          Attribute_Form : Form_Type;
          Attribute_Use  : Attribute_Use_Type;
-         Fixed          : Unicode.CES.Byte_Sequence_Access; -- or from Ref_Attr
-         Default        : Unicode.CES.Byte_Sequence_Access;
+         Fixed          : Sax.Symbols.Symbol; -- or from Ref_Attr
+         Default        : Sax.Symbols.Symbol;
       end record;
    function Equal
      (Validator      : Named_Attribute_Validator_Record;
@@ -1269,9 +1433,8 @@ private
    procedure Validate_Attribute
      (Validator : Named_Attribute_Validator_Record;
       Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Readers.Sax_Attribute_List;
       Index     : Natural);
-   procedure Free (Validator : in out Named_Attribute_Validator_Record);
    function Is_Equal
      (Attribute : Named_Attribute_Validator_Record;
       Attr2     : Attribute_Validator_Record'Class)
@@ -1283,7 +1446,7 @@ private
      (Attr : Named_Attribute_Validator_Record) return XML_Type;
    function Is_ID (Attr : Named_Attribute_Validator_Record) return Boolean;
 
-   Empty_NS_List : constant NS_List := (1 .. 0 => null);
+   Empty_NS_List : constant NS_List := (1 .. 0 => Sax.Symbols.No_Symbol);
 
    type Any_Attribute_Validator (NS_Count : Natural) is
      new Attribute_Validator_Record
@@ -1299,9 +1462,8 @@ private
    procedure Validate_Attribute
      (Validator : Any_Attribute_Validator;
       Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Readers.Sax_Attribute_List;
       Index     : Natural);
-   procedure Free (Validator : in out Any_Attribute_Validator);
    function Is_Equal
      (Attribute : Any_Attribute_Validator;
       Attr2     : Attribute_Validator_Record'Class)
@@ -1335,7 +1497,7 @@ private
    ---------------------
 
    type XML_Attribute_Group_Record is record
-      Local_Name : Unicode.CES.Byte_Sequence_Access;
+      Local_Name : Sax.Symbols.Symbol;
       Attributes : Attribute_Validator_List_Access;
       Is_Forward_Decl : Boolean;
    end record;
@@ -1446,7 +1608,7 @@ private
    ----------------------
 
    type XML_Group_Record is record
-      Local_Name : Unicode.CES.Byte_Sequence_Access;
+      Local_Name : Sax.Symbols.Symbol;
       Particles  : Particle_List;
       Is_Forward_Decl : Boolean;
       --  Set to true if the group was defined as a call to Lookup, but never
@@ -1457,17 +1619,17 @@ private
    -- Grammar --
    -------------
 
-   function Get_Key (Typ : XML_Type) return Unicode.CES.Byte_Sequence_Access;
+   function Get_Key (Typ : XML_Type) return Sax.Symbols.Symbol;
    procedure Do_Nothing (Typ : in out XML_Type);
 
    package Types_Htable is new Sax.HTable
      (Element       => XML_Type,
       Empty_Element => No_Type,
       Free          => Do_Nothing,
-      Key           => Unicode.CES.Byte_Sequence_Access,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Sax.Utils.Hash,
-      Equal         => Sax.Utils.Equal);
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    type Types_Htable_Access is access Types_Htable.HTable;
    --  We store a pointer to an XML_Type_Record, since the validator might not
    --  be known when we first reference the type (it is valid in an XML schema
@@ -1476,66 +1638,62 @@ private
    --  the grammar_ns itself, so the hash table should never free a pointer
    --  from this table
 
-   function Get_Key
-     (Element : XML_Element_Access) return Unicode.CES.Byte_Sequence_Access;
+   function Get_Key (Element : XML_Element_Access) return Sax.Symbols.Symbol;
    procedure Do_Nothing (Element : in out XML_Element_Access);
 
    package Elements_Htable is new Sax.HTable
      (Element       => XML_Element_Access,
       Empty_Element => null,
       Free          => Do_Nothing,
-      Key           => Unicode.CES.Byte_Sequence_Access,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Sax.Utils.Hash,
-      Equal         => Sax.Utils.Equal);
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    type Elements_Htable_Access is access Elements_Htable.HTable;
 
    procedure Free (Group : in out XML_Group);
-   function Get_Key
-     (Group : XML_Group) return Unicode.CES.Byte_Sequence_Access;
-
+   function Get_Key (Group : XML_Group) return Sax.Symbols.Symbol;
    package Groups_Htable is new Sax.HTable
      (Element       => XML_Group,
       Empty_Element => No_XML_Group,
       Free          => Free,
-      Key           => Unicode.CES.Byte_Sequence_Access,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Sax.Utils.Hash,
-      Equal         => Sax.Utils.Equal);
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    type Groups_Htable_Access is access Groups_Htable.HTable;
 
    function Get_Key
-     (Att : Named_Attribute_Validator) return Unicode.CES.Byte_Sequence_Access;
+     (Att : Named_Attribute_Validator) return Sax.Symbols.Symbol;
    procedure Do_Nothing (Att : in out Named_Attribute_Validator);
 
    package Attributes_Htable is new Sax.HTable
      (Element       => Named_Attribute_Validator,
       Empty_Element => null,
       Free          => Do_Nothing,
-      Key           => Unicode.CES.Byte_Sequence_Access,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Sax.Utils.Hash,
-      Equal         => Sax.Utils.Equal);
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    type Attributes_Htable_Access is access Attributes_Htable.HTable;
 
-   function Get_Key
-     (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence_Access;
+   function Get_Key (Att : XML_Attribute_Group) return Sax.Symbols.Symbol;
    procedure Free (Att : in out XML_Attribute_Group);
 
    package Attribute_Groups_Htable is new Sax.HTable
      (Element       => XML_Attribute_Group,
       Empty_Element => Empty_Attribute_Group,
       Free          => Free,
-      Key           => Unicode.CES.Byte_Sequence_Access,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Sax.Utils.Hash,
-      Equal         => Sax.Utils.Equal);
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    type Attribute_Groups_Htable_Access
      is access Attribute_Groups_Htable.HTable;
 
    type XML_Grammar_NS_Record is record
-      Namespace_URI     : Unicode.CES.Byte_Sequence_Access;
-      System_ID         : Unicode.CES.Byte_Sequence_Access;
+      Namespace_URI     : Sax.Symbols.Symbol;
+      System_ID         : Sax.Symbols.Symbol;
       Types             : Types_Htable_Access;
       Elements          : Elements_Htable_Access;
       Groups            : Groups_Htable_Access;
@@ -1597,7 +1755,7 @@ private
    procedure Applies_To_Tag
      (Group         : access Group_Model_Record;
       Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Unicode.CES.Byte_Sequence;
+      Local_Name    : Sax.Symbols.Symbol;
       NS            : XML_Grammar_NS;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
@@ -1631,14 +1789,14 @@ private
 
    type XML_Any_Record is new XML_Validator_Record with record
       Process_Contents : Process_Contents_Type;
-      Namespace        : Unicode.CES.Byte_Sequence_Access;
+      Namespace        : Sax.Symbols.Symbol;
       Target_NS        : XML_Grammar_NS;
    end record;
 
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator              : access XML_Any_Record;
       Reader                 : access Abstract_Validation_Reader'Class;
-      Local_Name             : Unicode.CES.Byte_Sequence;
+      Local_Name             : Sax.Symbols.Symbol;
       NS                     : XML_Grammar_NS;
       Data                   : Validator_Data;
       Element_Validator      : out XML_Element);
@@ -1667,29 +1825,30 @@ private
    procedure Free (Data : in out Sequence_Data);
    --  See inherited documentation
 
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator         : access Sequence_Record;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Sax.Symbols.Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator      : access Sequence_Record;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Sax.Symbols.Symbol;
       Data           : Validator_Data);
-   function Create_Validator_Data
+   overriding function Create_Validator_Data
      (Validator : access Sequence_Record) return Validator_Data;
-   procedure Applies_To_Tag
+   overriding procedure Applies_To_Tag
      (Group         : access Sequence_Record;
       Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Unicode.CES.Byte_Sequence;
+      Local_Name    : Sax.Symbols.Symbol;
       NS            : XML_Grammar_NS;
       Applies      : out Boolean;
       Skip_Current : out Boolean);
-   function Can_Be_Empty (Group : access Sequence_Record) return Boolean;
-   function Type_Model
+   overriding function Can_Be_Empty
+     (Group : access Sequence_Record) return Boolean;
+   overriding function Type_Model
      (Validator  : access Sequence_Record;
       First_Only : Boolean) return Unicode.CES.Byte_Sequence;
    --  See doc for inherited subprograms
@@ -1708,29 +1867,30 @@ private
    procedure Free (Data : in out Choice_Data);
    --  See inherited documentation
 
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator         : access Choice_Record;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Sax.Symbols.Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator      : access Choice_Record;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Sax.Symbols.Symbol;
       Data           : Validator_Data);
-   function Create_Validator_Data
+   overriding function Create_Validator_Data
      (Validator : access Choice_Record) return Validator_Data;
-   procedure Applies_To_Tag
+   overriding procedure Applies_To_Tag
      (Group         : access Choice_Record;
       Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Unicode.CES.Byte_Sequence;
+      Local_Name    : Sax.Symbols.Symbol;
       NS            : XML_Grammar_NS;
       Applies       : out Boolean;
       Skip_Current  : out Boolean);
-   function Can_Be_Empty (Group : access Choice_Record) return Boolean;
-   function Type_Model
+   overriding function Can_Be_Empty
+     (Group : access Choice_Record) return Boolean;
+   overriding function Type_Model
      (Validator  : access Choice_Record;
       First_Only : Boolean) return Unicode.CES.Byte_Sequence;
    --  See doc for inherited subprograms
@@ -1752,24 +1912,24 @@ private
       end record;
    type All_Data_Access is access all All_Data'Class;
 
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator         : access XML_All_Record;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Sax.Symbols.Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator      : access XML_All_Record;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Sax.Symbols.Symbol;
       Data           : Validator_Data);
-   function Create_Validator_Data
+   overriding function Create_Validator_Data
      (Validator : access XML_All_Record) return Validator_Data;
-   function Type_Model
+   overriding function Type_Model
      (Validator  : access XML_All_Record;
       First_Only : Boolean) return Unicode.CES.Byte_Sequence;
-   function Can_Be_Empty
+   overriding function Can_Be_Empty
      (Group : access XML_All_Record) return Boolean;
    --  See doc for inherited subprograms
 

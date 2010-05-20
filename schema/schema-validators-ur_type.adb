@@ -26,7 +26,9 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Sax.Attributes; use Sax.Attributes;
+pragma Ada_05;
+with Sax.Readers;    use Sax.Readers;
+with Sax.Symbols;    use Sax.Symbols;
 
 package body Schema.Validators.UR_Type is
 
@@ -35,27 +37,27 @@ package body Schema.Validators.UR_Type is
    end record;
    type UR_Type_Access is access all UR_Type_Validator'Class;
 
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator      : access UR_Type_Validator;
       Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Unicode.CES.Byte_Sequence;
+      Local_Name     : Symbol;
       Data           : Validator_Data);
-   procedure Validate_Attributes
+   overriding procedure Validate_Attributes
      (Validator         : access UR_Type_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
-      Atts              : in out Sax.Attributes.Attributes'Class;
+      Atts              : in out Sax.Readers.Sax_Attribute_List;
       Nillable          : Boolean;
       Is_Nil            : out Boolean);
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator         : access UR_Type_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element);
-   function Is_Wildcard
+   overriding function Is_Wildcard
      (Validator : access UR_Type_Validator) return Boolean;
-   function Get_Mixed_Content
+   overriding function Get_Mixed_Content
      (Validator : access UR_Type_Validator) return Boolean;
    --  See doc for inherited subprograms
 
@@ -63,7 +65,7 @@ package body Schema.Validators.UR_Type is
    -- Get_Mixed_Content --
    -----------------------
 
-   function Get_Mixed_Content
+   overriding function Get_Mixed_Content
      (Validator : access UR_Type_Validator) return Boolean
    is
       pragma Unreferenced (Validator);
@@ -75,10 +77,10 @@ package body Schema.Validators.UR_Type is
    -- Validate_Start_Element --
    ----------------------------
 
-   procedure Validate_Start_Element
+   overriding procedure Validate_Start_Element
      (Validator         : access UR_Type_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Unicode.CES.Byte_Sequence;
+      Local_Name        : Symbol;
       NS                : XML_Grammar_NS;
       Data              : Validator_Data;
       Element_Validator : out XML_Element)
@@ -100,7 +102,8 @@ package body Schema.Validators.UR_Type is
             if Element_Validator = No_Element then
                Validation_Error
                  (Reader,
-                  "#No definition provided for """ & Local_Name & """");
+                  "#No definition provided for """
+                  & Get (Local_Name).all & """");
             else
                Check_Qualification (Reader, Element_Validator, NS);
             end if;
@@ -111,13 +114,15 @@ package body Schema.Validators.UR_Type is
 
             if Element_Validator = No_Element then
                if Debug then
-                  Debug_Output ("Definition not found for " & Local_Name);
+                  Debug_Output ("Definition not found for "
+                                & Get (Local_Name).all);
                end if;
                Element_Validator := Get_UR_Type_Element
                  (Reader.Grammar, Validator.Process_Contents);
             else
                if Debug then
-                  Debug_Output ("Definition found for " & Local_Name);
+                  Debug_Output ("Definition found for "
+                                & Get (Local_Name).all);
                end if;
             end if;
 
@@ -136,10 +141,10 @@ package body Schema.Validators.UR_Type is
    -- Validate_Attributes --
    -------------------------
 
-   procedure Validate_Attributes
+   overriding procedure Validate_Attributes
      (Validator : access UR_Type_Validator;
       Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Attributes.Attributes'Class;
+      Atts      : in out Sax.Readers.Sax_Attribute_List;
       Nillable  : Boolean;
       Is_Nil    : out Boolean)
    is
@@ -152,10 +157,10 @@ package body Schema.Validators.UR_Type is
    -- Validate_End_Element --
    --------------------------
 
-   procedure Validate_End_Element
+   overriding procedure Validate_End_Element
      (Validator  : access UR_Type_Validator;
       Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Unicode.CES.Byte_Sequence;
+      Local_Name : Symbol;
       Data       : Validator_Data)
    is
       pragma Unreferenced (Validator, Local_Name, Data, Reader);
@@ -179,7 +184,7 @@ package body Schema.Validators.UR_Type is
    -- Is_Wildcard --
    -----------------
 
-   function Is_Wildcard
+   overriding function Is_Wildcard
      (Validator : access UR_Type_Validator) return Boolean
    is
       pragma Unreferenced (Validator);
@@ -192,7 +197,8 @@ package body Schema.Validators.UR_Type is
    -----------------------------
 
    procedure Create_UR_Type_Elements
-     (Schema_NS : Schema.Validators.XML_Grammar_NS;
+     (Reader    : access Schema.Validators.Abstract_Validation_Reader'Class;
+      Schema_NS : Schema.Validators.XML_Grammar_NS;
       Grammar   : XML_Grammar)
    is
       Validator : UR_Type_Access;
@@ -202,9 +208,9 @@ package body Schema.Validators.UR_Type is
          Validator := new UR_Type_Validator;
          Validator.Process_Contents := P;
          Typ := Create_Local_Type (Schema_NS, Validator);
-         Typ.Local_Name := new Unicode.CES.Byte_Sequence'("ur-Type" & P'Img);
+         Typ.Local_Name := Find_Symbol (Reader.all, "ur-Type" & P'Img);
          Get (Grammar).UR_Type_Elements (P) := Create_Local_Element
-           ("", Schema_NS, Typ, Qualified);
+           (Empty_String, Schema_NS, Typ, Qualified);
       end loop;
    end Create_UR_Type_Elements;
 

@@ -31,6 +31,7 @@
 --  is copied from namet.adb, in the GNAT sources
 
 with Interfaces;
+with Sax.HTable;
 with Sax.Pointers;
 with Unicode.CES;
 
@@ -43,11 +44,8 @@ package Sax.Symbols is
    --  the symbol is to be shared between multiple tasks.
 
    type Symbol is private;
-   No_Symbol    : constant Symbol;
-   Empty_String : constant Symbol;
-
-   Symbol_Percent   : constant Symbol;
-   Symbol_Ampersand : constant Symbol;
+   No_Symbol        : constant Symbol;
+   Empty_String     : constant Symbol;
 
    function Find
      (Table : access Symbol_Table_Record;
@@ -56,60 +54,53 @@ package Sax.Symbols is
    --  Comparing Symbol is the same as comparing the string itself, but much
    --  faster.
 
-   function Get
-     (Table : Symbol_Table_Record;
-      Sym   : Symbol) return Unicode.CES.Byte_Sequence_Access;
+   type Cst_Byte_Sequence_Access is access constant Unicode.CES.Byte_Sequence;
+
+   function Get (Sym : Symbol) return Cst_Byte_Sequence_Access;
+   pragma Inline_Always (Get);
    --  The string associated with the symbol.
    --  The returned string must not be deallocated, it points to internal data
 
    procedure Free (Table : in out Symbol_Table_Record);
    --  Free the table
 
-   function Hash (S : Sax.Symbols.Symbol) return Interfaces.Unsigned_32;
-   --  Return the symbol
+   function Hash (S : Symbol) return Interfaces.Unsigned_32;
+   --  Returns a hash for the symbol
+
+   function Debug_Print (S : Symbol) return String;
+   --  Return a displaying version of symbol (debugging purposes only)
 
 private
+   type Symbol is new Cst_Byte_Sequence_Access;
+
+   Cst_Empty_String     : aliased constant Unicode.CES.Byte_Sequence := "";
+
+   No_Symbol        : constant Symbol := null;
+   Empty_String     : constant Symbol := Cst_Empty_String'Access;
+
+   function Get_Key (Str : Symbol) return Cst_Byte_Sequence_Access;
+   procedure Free (Str : in out Symbol);
+   function Hash
+     (Str : Cst_Byte_Sequence_Access) return Interfaces.Unsigned_32;
+   function Key_Equal (Key1, Key2 : Cst_Byte_Sequence_Access) return Boolean;
+   pragma Inline (Hash, Get_Key, Key_Equal);
+
+   package String_Htable is new Sax.HTable
+     (Element       => Symbol,
+      Empty_Element => No_Symbol,
+      Free          => Free,
+      Key           => Cst_Byte_Sequence_Access,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => Key_Equal);
+
    Hash_Num : constant := 2**12;
    --  Number of headers in the hash table. Current hash algorithm is closely
    --  tailored to this choice, so it can only be changed if a corresponding
    --  change is made to the hash algorithm.
 
-   Hash_Max : constant := Hash_Num - 1;
-   --  Indexes in the hash header table run from 0 to Hash_Num - 1
-
-   subtype Hash_Index_Type is Integer range 0 .. Hash_Max;
-   --  Range of hash index values
-
-   type Symbol is new Natural;
-   No_Symbol        : constant Symbol := 0;
-   Empty_String     : constant Symbol := 1;
-   Symbol_Percent   : constant Symbol := Character'Pos ('%');
-   Symbol_Ampersand : constant Symbol := Character'Pos ('&');
-
-   --  Below 255 is for one-character string. These are not actually entered in
-   --  the tables.
-
-   type Hash_Table_Array is array (Hash_Index_Type) of Symbol;
-   --  The hash table is used to locate existing entries in the names table.
-   --  The entries point to the first names table entry whose hash value
-   --  matches the hash code. Then subsequent names table entries with the
-   --  same hash code value are linked through the Hash_Link fields.
-
-   type Name_Entry is record
-      Value     : Unicode.CES.Byte_Sequence_Access;
-      Hash_Link : Symbol := No_Symbol;
-      --  Link to next entry in names table for same hash code
-   end record;
-
-   type Name_Entries_Array is array (Symbol range <>) of Name_Entry;
-   type Name_Entries_Access is access all Name_Entries_Array;
-   --  The entries start at 256. Below that is for one
-   --  character latin-1 strings
-
    type Symbol_Table_Record is new Sax.Pointers.Root_Encapsulated with record
-      Hash    : Hash_Table_Array := (others => No_Symbol);
-      Entries : Name_Entries_Access;
-      Entries_Last : Symbol := 255;
+      Hash    : String_Htable.HTable (Hash_Num);
    end record;
 
 end Sax.Symbols;

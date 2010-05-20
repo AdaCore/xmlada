@@ -103,8 +103,7 @@ package Sax.Models is
    --  pointer, since this points directly into the Content_Model structure
 
    function To_String
-     (Symbols : Sax.Symbols.Symbol_Table_Record'Class;
-      Model   : Content_Model) return Unicode.CES.Byte_Sequence;
+     (Model : Content_Model) return Unicode.CES.Byte_Sequence;
    --  Return the string to put in an XML file to describe Model
    --  Invalid_Content_Model is raised if Model can not be described in a
    --  DTD.

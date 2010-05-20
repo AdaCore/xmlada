@@ -29,9 +29,12 @@
 --  This package provides a SAX Reader that parses an XML Schema file, and
 --  creates the appropriate data structure
 
+pragma Ada_05;
+
 with Input_Sources;
-with Sax.Attributes;
+with Sax.Readers;
 with Sax.Symbols;
+with Sax.Utils;
 with Schema.Readers;
 with Schema.Validators;
 with Unicode.CES;
@@ -46,7 +49,7 @@ package Schema.Schema_Readers is
    procedure Parse
      (Parser            : in out Schema_Reader;
       Input             : in out Input_Sources.Input_Source'Class;
-      Default_Namespace : Unicode.CES.Byte_Sequence;
+      Default_Namespace : Sax.Symbols.Symbol;
       Do_Global_Check   : Boolean);
    --  Same as inherited parse, but you can indicate the default value for
    --  targetNamespace. In practice, this is useful when processing <include>
@@ -78,7 +81,7 @@ private
       Level : Integer;
       case Typ is
          when Context_Type_Def =>
-            Type_Name      : Unicode.CES.Byte_Sequence_Access;
+            Type_Name      : Sax.Symbols.Symbol;
             Type_Validator : Schema.Validators.XML_Validator;
             Redefined_Type : Schema.Validators.XML_Type;
             --  Handling of <redefine>
@@ -143,26 +146,22 @@ private
       --  Whether we are processing an <annotation> node, in which case we
       --  need to ignore all children
 
-      XML_Schema_URI  : Sax.Symbols.Symbol;
-
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;
    end record;
 
-   procedure Start_Element
+   overriding procedure Start_Element
      (Handler       : in out Schema_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class);
-   procedure End_Element
+      NS            : Sax.Utils.XML_NS;
+      Local_Name    : Sax.Symbols.Symbol;
+      Atts          : Sax.Readers.Sax_Attribute_List);
+   overriding procedure End_Element
      (Handler       : in out Schema_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "");
-   procedure Characters
+      NS            : Sax.Utils.XML_NS;
+      Local_Name    : Sax.Symbols.Symbol);
+   overriding procedure Characters
      (Handler : in out Schema_Reader; Ch : Unicode.CES.Byte_Sequence);
-   procedure Parse
+   overriding procedure Parse
      (Parser : in out Schema_Reader;
       Input  : in out Input_Sources.Input_Source'Class);
 
