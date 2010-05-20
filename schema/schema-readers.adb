@@ -81,26 +81,26 @@ package body Schema.Readers is
    --  This doesn't reset the grammar
 
    procedure Hook_Start_Element
-     (Handler : access Reader'Class;
+     (Handler : access Sax_Reader'Class;
       Elem    : Element_Access;
       Atts    : in out Sax.Attributes.Attributes'Class);
    procedure Hook_End_Element
-     (Handler : access Reader'Class;
+     (Handler : access Sax_Reader'Class;
       Elem    : Element_Access);
    procedure Hook_Characters
-     (Handler : access Reader'Class;
+     (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence);
    procedure Hook_Ignorable_Whitespace
-     (Handler : access Reader'Class;
+     (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence);
    procedure Hook_Set_Document_Locator
-     (Handler : in out Reader'Class;
+     (Handler : in out Sax_Reader'Class;
       Loc     : in out Sax.Locators.Locator);
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
 
-   function Has_Fixed (Handler : Reader'Class) return Boolean;
-   function Get_Fixed (Handler : Reader'Class) return Byte_Sequence_Access;
+   function Has_Fixed (Handler : Sax_Reader'Class) return Boolean;
+   function Get_Fixed (Handler : Sax_Reader'Class) return Byte_Sequence_Access;
    --  Whether the head validator has a fixed attribute (either defined for
    --  the element, for the xsi:type, or its type, and return that fixed value
 
@@ -108,7 +108,7 @@ package body Schema.Readers is
    -- Has_Fixed --
    ---------------
 
-   function Has_Fixed (Handler : Reader'Class) return Boolean is
+   function Has_Fixed (Handler : Sax_Reader'Class) return Boolean is
       H : constant Validating_Reader := Validating_Reader (Handler);
    begin
       if H.Validators.Element /= No_Element
@@ -123,7 +123,9 @@ package body Schema.Readers is
    -- Get_Fixed --
    ---------------
 
-   function Get_Fixed (Handler : Reader'Class) return Byte_Sequence_Access is
+   function Get_Fixed
+     (Handler : Sax_Reader'Class) return Byte_Sequence_Access
+   is
       H : constant Validating_Reader := Validating_Reader (Handler);
    begin
       if H.Validators.Element /= No_Element
@@ -261,20 +263,22 @@ package body Schema.Readers is
                Result           => Local_Grammar,
                Create_If_Needed => False);
 
-            Find_NS_From_URI
-              (Handler.all,
-               URI     => URI,
-               NS      => NS);
+            if Local_Grammar /= null then
+               Find_NS_From_URI
+                 (Handler.all,
+                  URI     => URI,
+                  NS      => NS);
 
-            if NS /= No_XML_NS
-              and then Element_Count (NS) > 0
-              and then Xsd_File_Full /= Get_System_Id (Local_Grammar)
-            then
-               Validation_Error
-                 (Handler,
-                  "#schemaLocation for """
-                  & URI & """ cannot occur after the first"
-                  & " element of that namespace in XSD 1.0");
+               if NS /= No_XML_NS
+                 and then Element_Count (NS) > 0
+                 and then Xsd_File_Full /= Get_System_Id (Local_Grammar)
+               then
+                  Validation_Error
+                    (Handler,
+                     "#schemaLocation for """
+                     & URI & """ cannot occur after the first"
+                     & " element of that namespace in XSD 1.0");
+               end if;
             end if;
          end;
       end if;
@@ -544,7 +548,7 @@ package body Schema.Readers is
    ------------------------
 
    procedure Hook_Start_Element
-     (Handler       : access Reader'Class;
+     (Handler       : access Sax_Reader'Class;
       Elem          : Element_Access;
       Atts          : in out Sax.Attributes.Attributes'Class)
    is
@@ -791,7 +795,7 @@ package body Schema.Readers is
    ----------------------
 
    procedure Hook_End_Element
-     (Handler : access Reader'Class;
+     (Handler : access Sax_Reader'Class;
       Elem    : Element_Access)
    is
       H : constant Validating_Reader_Access :=
@@ -851,7 +855,7 @@ package body Schema.Readers is
    ---------------------
 
    procedure Hook_Characters
-     (Handler : access Reader'Class;
+     (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence) is
    begin
       Internal_Characters (Validating_Reader (Handler.all)'Access, Ch);
@@ -862,7 +866,7 @@ package body Schema.Readers is
    -------------------------------
 
    procedure Hook_Ignorable_Whitespace
-     (Handler : access Reader'Class;
+     (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence)
    is
       H : constant Validating_Reader_Access :=
@@ -967,7 +971,7 @@ package body Schema.Readers is
    -------------------------------
 
    procedure Hook_Set_Document_Locator
-     (Handler : in out Reader'Class;
+     (Handler : in out Sax_Reader'Class;
       Loc     : in out Sax.Locators.Locator) is
    begin
       Validating_Reader (Handler).Locator := Loc;

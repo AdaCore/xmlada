@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -26,6 +25,8 @@
 -- exception does not however invalidate any other reasons why the   --
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
+
+pragma Ada_05;
 
 with Sax.Readers;          use Sax.Readers;
 with Sax.Attributes;
@@ -52,6 +53,45 @@ package DOM.Readers is
    --  iF Warnings_As_Error is True, then all warnings will raise a fatal error
    --  exception, just like a fatal error. Otherwise, warnings are ignored.
 
+   overriding procedure Start_Document (Handler : in out Tree_Reader);
+   overriding procedure Start_Element
+     (Handler       : in out Tree_Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence := "";
+      Local_Name    : Unicode.CES.Byte_Sequence := "";
+      Qname         : Unicode.CES.Byte_Sequence := "";
+      Atts          : Sax.Attributes.Attributes'Class);
+   overriding procedure End_Element
+     (Handler : in out Tree_Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence := "";
+      Local_Name    : Unicode.CES.Byte_Sequence := "";
+      Qname         : Unicode.CES.Byte_Sequence := "");
+   overriding procedure Characters
+     (Handler : in out Tree_Reader;
+      Ch      : Unicode.CES.Byte_Sequence);
+   overriding procedure Ignorable_Whitespace
+     (Handler : in out Tree_Reader;
+      Ch      : Unicode.CES.Byte_Sequence);
+   overriding procedure Processing_Instruction
+     (Handler : in out Tree_Reader;
+      Target  : Unicode.CES.Byte_Sequence;
+      Data    : Unicode.CES.Byte_Sequence);
+   overriding procedure Start_DTD
+     (Handler   : in out Tree_Reader;
+      Name      : Unicode.CES.Byte_Sequence;
+      Public_Id : Unicode.CES.Byte_Sequence := "";
+      System_Id : Unicode.CES.Byte_Sequence := "");
+   overriding procedure End_DTD (Handler : in out Tree_Reader);
+   overriding procedure Comment
+     (Handler : in out Tree_Reader;
+      Comment : Unicode.CES.Byte_Sequence);
+   overriding procedure Error
+     (Handler : in out Tree_Reader;
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
+   overriding procedure Warning
+     (Handler : in out Tree_Reader;
+      Except : Sax.Exceptions.Sax_Parse_Exception'Class);
+   --  See inherited documentation
+
 private
 
    type Tree_Reader is new Reader with record
@@ -59,45 +99,6 @@ private
       Current_Node               : Node;
       Internal_Encoding          : Unicode.CES.Encoding_Scheme;
       In_DTD                     : Boolean := False;
-
       Warnings_As_Error          : Boolean := False;
    end record;
-
-   procedure Start_Document (Handler : in out Tree_Reader);
-   procedure Start_Element
-     (Handler       : in out Tree_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class);
-   procedure End_Element
-     (Handler : in out Tree_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "");
-   procedure Characters
-     (Handler : in out Tree_Reader;
-      Ch      : Unicode.CES.Byte_Sequence);
-   procedure Ignorable_Whitespace
-     (Handler : in out Tree_Reader;
-      Ch      : Unicode.CES.Byte_Sequence);
-   procedure Processing_Instruction
-     (Handler : in out Tree_Reader;
-      Target  : Unicode.CES.Byte_Sequence;
-      Data    : Unicode.CES.Byte_Sequence);
-   procedure Start_DTD
-     (Handler   : in out Tree_Reader;
-      Name      : Unicode.CES.Byte_Sequence;
-      Public_Id : Unicode.CES.Byte_Sequence := "";
-      System_Id : Unicode.CES.Byte_Sequence := "");
-   procedure End_DTD (Handler : in out Tree_Reader);
-   procedure Comment
-     (Handler : in out Tree_Reader;
-      Comment : Unicode.CES.Byte_Sequence);
-   procedure Error
-     (Handler : in out Tree_Reader;
-      Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
-   procedure Warning
-     (Handler : in out Tree_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class);
 end DOM.Readers;

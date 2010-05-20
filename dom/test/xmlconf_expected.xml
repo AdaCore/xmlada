@@ -1308,9 +1308,9 @@ Did you want to use &amp;amp;?</test>
 037.xml:6:8: [VC] No attribute allowed for element bar
 037.xml:6:19: [VC] No attribute allowed for element bar</test>
   <test id="rmt-ns10-036"
-    >036.xml:6:19: Attributes may appear only once: a:attr</test>
+     >036.xml:6:19: Attributes may appear only once: {http://example.org/~wilbur}attr</test>
   <test id="rmt-ns10-035"
-    >035.xml:6:19: Attributes may appear only once: a:attr</test>
+     >035.xml:6:19: Attributes may appear only once: {http://example.org/~wilbur}attr</test>
   <test id="rmt-ns10-034"
     >034.xml:3:5: No DTD defined for this document</test>
   <test id="rmt-ns10-032"
@@ -1354,13 +1354,13 @@ Did you want to use &amp;amp;?</test>
   <test id="rmt-ns10-013"
     >013.xml:4:9: Attributes must have an explicit value</test>
   <test id="rmt-ns10-012"
-    >012.xml:16:19: Attributes may appear only once: a:attr</test>
+     >012.xml:16:19: Attributes may appear only once: {urn:xyzzy}attr</test>
   <test id="rmt-ns10-011"
-    >011.xml:17:19: Attributes may appear only once: a:attr</test>
+     >011.xml:17:19: Attributes may appear only once: {http://example.org/~wilbur}attr</test>
   <test id="rmt-ns10-010"
-    >010.xml:16:19: Attributes may appear only once: a:attr</test>
+     >010.xml:16:19: Attributes may appear only once: {http://example.org/~wilbur}attr</test>
   <test id="rmt-ns10-009"
-    >009.xml:16:19: Attributes may appear only once: a:attr</test>
+     >009.xml:16:19: Attributes may appear only once: {http://example.org/~wilbur}attr</test>
   <test id="rmt-ns10-006"
     >006.xml:7:6: Invalid absolute IRI (Internationalized Resource Identifier) for namespace: "http://example.org/rosé"</test>
   <test id="rmt-ns10-005"
