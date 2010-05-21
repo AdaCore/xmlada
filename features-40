@@ -27,6 +27,14 @@ as before; the text of the error message is no longer retrieved through
 Exception_Message (where GNAT limits its length), but through a new subprogram
 Get_Error_Message.
 
+Various optimizations were performed on the code (impacting all modules,
+but especially the schema validation). They significantly reduce the number
+of calls to malloc and memcpy by using a symbol table rather than access
+to strings. These symbols are also made available to you through new
+callbacks (Start_Element, End_Element,...) with different profiles. A new
+tagged type Sax_Reader was added for that purpose. Existing code based on
+Reader will still work, although it will be less efficient in most cases.
+
 New features in version 4.0
 ---------------------------
 
