@@ -1285,27 +1285,15 @@ package body Sax.Readers is
       NS      : out XML_NS;
       Include_Default_NS : Boolean := True) is
    begin
-      Find_NS (Parser, Parser.Buffer (Prefix.First .. Prefix.Last), NS,
-               Include_Default_NS);
+      Find_NS
+        (Parser,
+         Find_Symbol (Parser, Parser.Buffer (Prefix.First .. Prefix.Last)),
+         NS, Include_Default_NS);
       if NS = No_XML_NS then
          Fatal_Error
            (Parser, Error_Prefix_Not_Declared &
             Parser.Buffer (Prefix.First .. Prefix.Last));
       end if;
-   end Find_NS;
-
-   -------------
-   -- Find_NS --
-   -------------
-
-   procedure Find_NS
-     (Parser             : Sax_Reader'Class;
-      Prefix             : Byte_Sequence;
-      NS                 : out XML_NS;
-      Include_Default_NS : Boolean := True)
-   is
-   begin
-      Find_NS (Parser, Find_Symbol (Parser, Prefix), NS, Include_Default_NS);
    end Find_NS;
 
    -------------
@@ -5725,7 +5713,7 @@ package body Sax.Readers is
       Set_Document_Locator (Sax_Reader'Class (Parser), Parser.Locator);
 
       Start_Document (Sax_Reader'Class (Parser));
-      Syntactic_Parse (Parser, Input);
+      Syntactic_Parse (Sax_Reader'Class (Parser), Input);
       Close_Namespaces (Parser, Parser.Default_Namespaces);
 
       --  All the nodes must have been closed at the end of the document

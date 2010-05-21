@@ -30,6 +30,7 @@ pragma Ada_05;
 
 with GNAT.Regpat;  use GNAT.Regpat;
 with Ada.Unchecked_Deallocation;
+with Sax.Symbols;  use Sax.Symbols;
 
 package Schema.Validators.Facets is
 
@@ -37,19 +38,13 @@ package Schema.Validators.Facets is
    --  Byte_Sequence_List --
    -------------------------
 
-   type Byte_Sequence_List is array (Natural range <>)
-      of Unicode.CES.Byte_Sequence_Access;
-   type Byte_Sequence_List_Access is access Byte_Sequence_List;
+   type Symbol_List is array (Natural range <>) of Symbol;
+   type Symbol_List_Access is access Symbol_List;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Byte_Sequence_List, Byte_Sequence_List_Access);
+     (Symbol_List, Symbol_List_Access);
 
-   procedure Free (List : in out Byte_Sequence_List_Access);
-   --  Free the contents of List, including contained sequences
-
-   procedure Append
-     (List  : in out Byte_Sequence_List_Access;
-      Value : Unicode.CES.Byte_Sequence);
+   procedure Append (List  : in out Symbol_List_Access; Value : Symbol);
    --  Append a new value to List
 
    ------------
@@ -79,9 +74,9 @@ package Schema.Validators.Facets is
 
       Whitespace           : Whitespace_Restriction    := Collapse;
       Pattern              : Pattern_Matcher_Access    := null;
-      Pattern_String       : Unicode.CES.Byte_Sequence_Access      := null;
+      Pattern_String       : Symbol := No_Symbol;
       Implicit_Enumeration : Value_Validator           := null;
-      Enumeration          : Byte_Sequence_List_Access := null;
+      Enumeration          : Symbol_List_Access := null;
       --  ??? Could use a htable here for faster access
    end record;
    --  Facets shared by all basic types

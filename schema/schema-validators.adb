@@ -34,6 +34,7 @@ with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada.Tags;                       use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 with GNAT.IO;                        use GNAT.IO;
+with Interfaces;                     use Interfaces;
 with Sax.Attributes;                 use Sax.Attributes;
 with Sax.Encodings;                  use Sax.Encodings;
 with Sax.Locators;                   use Sax.Locators;
@@ -71,21 +72,25 @@ package body Schema.Validators is
    --  Create a new namespace in the grammar
 
    function To_QName
-     (Self   : Named_Attribute_Validator) return Byte_Sequence;
-   function To_QName
      (Particle : XML_Particle) return Byte_Sequence;
    function To_QName
      (Element : XML_Element_Access) return Byte_Sequence;
    pragma Inline (To_QName);
    --  Return the QName for the element described by particle
 
+   type Qname_Symbol is record
+      URI, Local_Name : Symbol;
+   end record;
+   function Get_Key (Self : Named_Attribute_Validator) return Qname_Symbol;
+   function Hash (Qname : Qname_Symbol) return Interfaces.Unsigned_32;
+
    package QName_Attributes_Htable is new Sax.HTable
      (Element       => Named_Attribute_Validator,
       Empty_Element => null,
       Free          => Do_Nothing,
-      Key           => Unicode.CES.Byte_Sequence,
-      Get_Key       => To_QName,
-      Hash          => Sax.Utils.Hash,
+      Key           => Qname_Symbol,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
       Equal         => "=");
    --  Same as Attributes_Htable, but with QName as key
 
@@ -322,6 +327,7 @@ package body Schema.Validators is
       Facets     : constant Facets_Description :=
         Get_Facets (Typ.Validator, Reader);
       C          : Unicode_Char;
+      Changed    : Boolean := False;
    begin
       if Facets /= null
         and then Facets.all in Common_Facets_Description'Class
@@ -353,11 +359,16 @@ package body Schema.Validators is
                   if Is_White_Space (C) then
                      --  Assumes all characters we replace are encoded as
                      --  single byte
+                     Changed := Changed or C /= 32;
                      Val2 (First) := ' ';
                   end if;
                end loop;
 
-               return Find_Symbol (Reader.all, Val2);
+               if Changed then
+                  return Find_Symbol (Reader.all, Val2);
+               else
+                  return Val;
+               end if;
             end;
 
          when Collapse =>
@@ -401,10 +412,13 @@ package body Schema.Validators is
 
                   if Is_White_Space (C) then
                      if not Prev_Is_Whitespace then
+                        Changed := Changed or C /= 32;
                         Last := Idx_Output;
                         V (Idx_Output) := ' ';
                         Idx_Output := Idx_Output + 1;
                         Prev_Is_Whitespace := True;
+                     else
+                        Changed := True;
                      end if;
                   else
                      V (Idx_Output .. Idx_Output + Idx - Tmp - 1) :=
@@ -415,7 +429,11 @@ package body Schema.Validators is
                   end if;
                end loop;
 
-               return Find_Symbol (Reader.all, V (First .. Last - 1));
+               if Changed then
+                  return Find_Symbol (Reader.all, V (First .. Last - 1));
+               else
+                  return Val;
+               end if;
             end;
       end case;
    end Do_Normalize_Whitespaces;
@@ -544,8 +562,9 @@ package body Schema.Validators is
             end if;
          end loop;
 
-         L := new Attribute_Validator_List'
-           (List.all & Attribute_Or_Group'(Is_Group => True, Group => Group));
+         L := new Attribute_Validator_List (List'First .. List'Last + 1);
+         L (List'Range) := List.all;
+         L (L'Last) := Attribute_Or_Group'(Is_Group => True, Group => Group);
          Unchecked_Free (List);
          List := L;
       else
@@ -565,7 +584,9 @@ package body Schema.Validators is
       L : Element_List_Access;
    begin
       if List /= null then
-         L := new Element_List'(List.all & Element.Elem);
+         L := new Element_List (List'First .. List'Last + 1);
+         L (List'Range) := List.all;
+         L (L'Last) := Element.Elem;
          Unchecked_Free (List);
          List := L;
       else
@@ -708,6 +729,25 @@ package body Schema.Validators is
       return Validator.Mixed_Content;
    end Get_Mixed_Content;
 
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Self : Named_Attribute_Validator) return Qname_Symbol is
+   begin
+      return (URI        => Self.NS.Namespace_URI,
+              Local_Name => Self.Local_Name);
+   end Get_Key;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Qname : Qname_Symbol) return Interfaces.Unsigned_32 is
+   begin
+      return Sax.Symbols.Hash (Qname.Local_Name);
+   end Hash;
+
    -------------------------
    -- Validate_Attributes --
    -------------------------
@@ -794,7 +834,7 @@ package body Schema.Validators is
       is
          Found  : Integer;
       begin
-         if Get (Visited, To_QName (Named)) = null then
+         if Get (Visited, Get_Key (Named)) = null then
             Set (Visited, Named);
             Found := Find_Attribute (Named, Is_Local_In_XSD);
 
@@ -1614,11 +1654,6 @@ package body Schema.Validators is
    --------------
    -- To_QName --
    --------------
-
-   function To_QName (Self : Named_Attribute_Validator) return Byte_Sequence is
-   begin
-      return To_QName (Self.NS, Self.Local_Name);
-   end To_QName;
 
    function To_QName
      (NS     : XML_Grammar_NS; Local : Sax.Symbols.Symbol)

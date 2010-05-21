@@ -148,9 +148,8 @@ package body Schema.Validators.Restrictions is
                --  "pattern" are overridden in the context of restriction.
                --  ??? If not defined in the restriction, we should still use
                --  the parent's pattern
-               Unicode.CES.Free
-                 (Common_Facets_Description (Validator.Facets.all)
-                  .Pattern_String);
+               Common_Facets_Description (Validator.Facets.all)
+                 .Pattern_String := No_Symbol;
                Common_Facets_Description (Validator.Facets.all)
                  .Mask (Facet_Pattern) := False;
             end if;

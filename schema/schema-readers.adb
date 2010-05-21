@@ -657,7 +657,9 @@ package body Schema.Readers is
 
                Get_Namespace_From_Prefix
                  (Validating_Reader (Handler.all),
-                  Qname (Qname'First .. Separator - 1), NS);
+                  Find_Symbol
+                    (Handler.all, Qname (Qname'First .. Separator - 1)),
+                  NS);
                Get_NS
                  (Validating_Reader (Handler.all).Grammar, Get_URI (NS), G);
                Local_Name := Find_Symbol
@@ -1038,7 +1040,7 @@ package body Schema.Readers is
 
    procedure Get_Namespace_From_Prefix
      (Handler  : in out Validating_Reader;
-      Prefix   : Unicode.CES.Byte_Sequence;
+      Prefix   : Symbol;
       NS       : out Sax.Utils.XML_NS) is
    begin
       Find_NS

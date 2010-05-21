@@ -29,10 +29,10 @@
 pragma Ada_05;
 with GNAT.IO; use GNAT.IO;
 with Ada.Exceptions;        use Ada.Exceptions;
+with Sax.Readers;           use Sax.Readers;
 with Unicode.CES;           use Unicode, Unicode.CES;
 with Unicode.CES.Utf8;      use Unicode.CES.Utf8;
 with Ada.Strings.Unbounded;
-with Sax.Symbols;           use Sax.Symbols;
 
 package body Schema.Validators.Facets is
 
@@ -244,10 +244,8 @@ package body Schema.Validators.Facets is
          Unchecked_Free (Facets.Pattern);
       end if;
 
-      Free (Facets.Pattern_String);
-
       if Facets.Enumeration /= null then
-         Free (Facets.Enumeration);
+         Unchecked_Free (Facets.Enumeration);
       end if;
    end Free;
 
@@ -268,24 +266,15 @@ package body Schema.Validators.Facets is
          Common_Facets_Description (To).Pattern := null;
       end if;
 
-      if From.Pattern_String /= null then
-         Common_Facets_Description (To).Pattern_String :=
-           new Byte_Sequence'(From.Pattern_String.all);
-      else
-         Common_Facets_Description (To).Pattern_String := null;
-      end if;
-
+      Common_Facets_Description (To).Pattern_String := From.Pattern_String;
       Common_Facets_Description (To).Implicit_Enumeration :=
         From.Implicit_Enumeration;
 
       Common_Facets_Description (To).Enumeration := null;
 
       if From.Enumeration /= null then
-         for L in From.Enumeration'Range loop
-            Append
-              (Common_Facets_Description (To).Enumeration,
-               From.Enumeration (L).all);
-         end loop;
+         Common_Facets_Description (To).Enumeration :=
+           new Symbol_List'(From.Enumeration.all);
       end if;
    end Copy;
 
@@ -324,7 +313,7 @@ package body Schema.Validators.Facets is
            or else Matched (0).Last /= Value'Last
          then
             Validation_Error (Reader, "#string pattern not matched: "
-                              & Facets.Pattern_String.all);
+                              & Get (Facets.Pattern_String).all);
          end if;
       end if;
 
@@ -333,7 +322,7 @@ package body Schema.Validators.Facets is
          Found := False;
          for E in Facets.Enumeration'Range loop
             if Equal (Common_Facets_Description'Class (Facets), Reader,
-                      Value, Facets.Enumeration (E).all)
+                      Value, Get (Facets.Enumeration (E)).all)
             then
                Found := True;
             end if;
@@ -421,7 +410,7 @@ package body Schema.Validators.Facets is
             Validation_Error
               (Reader, "#Enumeration facet can't be set for this type");
          end if;
-         Append (Facets.Enumeration, Facet_Value);
+         Append (Facets.Enumeration, Find_Symbol (Reader.all, Facet_Value));
          Facets.Mask (Facet_Enumeration) := True;
          Applied := True;
 
@@ -450,22 +439,20 @@ package body Schema.Validators.Facets is
          end if;
          Unchecked_Free (Facets.Pattern);
 
-         if Facets.Pattern_String = null then
-            Free (Facets.Pattern_String);
-            Facets.Pattern_String := new Byte_Sequence'(Facet_Value);
+         if Facets.Pattern_String = No_Symbol then
+            Facets.Pattern_String := Find_Symbol (Reader.all, Facet_Value);
          else
             declare
-               Tmp : constant Byte_Sequence := Facets.Pattern_String.all;
+               Tmp : constant Byte_Sequence := Get (Facets.Pattern_String).all;
             begin
-               Free (Facets.Pattern_String);
-               Facets.Pattern_String :=
-                 new Byte_Sequence'('(' & Tmp & ")|(" & Facet_Value & ')');
+               Facets.Pattern_String := Find_Symbol
+                 (Reader.all, '(' & Tmp & ")|(" & Facet_Value & ')');
             end;
          end if;
 
          declare
             Convert : constant String :=
-              Convert_Regexp (Facets.Pattern_String.all);
+              Convert_Regexp (Get (Facets.Pattern_String).all);
          begin
             if Debug then
                Put_Line ("Compiling regexp as " & Convert);
@@ -474,7 +461,7 @@ package body Schema.Validators.Facets is
          exception
             when  GNAT.Regpat.Expression_Error =>
                Validation_Error (Reader, "#Invalid regular expression "
-                                 & Facets.Pattern_String.all
+                                 & Get (Facets.Pattern_String).all
                                  & " (converted to " & Convert & ")");
          end;
 
@@ -512,34 +499,21 @@ package body Schema.Validators.Facets is
    ------------
 
    procedure Append
-     (List  : in out Byte_Sequence_List_Access;
-      Value : Unicode.CES.Byte_Sequence)
+     (List  : in out Symbol_List_Access;
+      Value : Symbol)
    is
-      L : Byte_Sequence_List_Access := List;
+      L : Symbol_List_Access := List;
    begin
       if List /= null then
-         L := new Byte_Sequence_List'(List.all & new Byte_Sequence'(Value));
+         L := new Symbol_List (List'First .. List'Last + 1);
+         L (List'Range) := List.all;
+         L (L'Last) := Value;
          Unchecked_Free (List);
          List := L;
       else
-         List := new Byte_Sequence_List'(1 => new Byte_Sequence'(Value));
+         List := new Symbol_List'(1 => Value);
       end if;
    end Append;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Byte_Sequence_List_Access) is
-   begin
-      if List /= null then
-         for L in List'Range loop
-            Free (List (L));
-         end loop;
-
-         Unchecked_Free (List);
-      end if;
-   end Free;
 
    -----------
    -- Equal --

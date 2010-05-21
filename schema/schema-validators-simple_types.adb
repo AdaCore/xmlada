@@ -922,7 +922,7 @@ package body Schema.Validators.Simple_Types is
          --  Check whether the namespace is valid
          Get_Namespace_From_Prefix
            (Handler => Validating_Reader (Reader.all),
-            Prefix  => Ch (Ch'First .. Pos - 1),
+            Prefix  => Find_Symbol (Reader.all, Ch (Ch'First .. Pos - 1)),
             NS      => NS);
          if NS = No_XML_NS or else Get_URI (NS) = Reader.Xmlns then
             Validation_Error (Reader,

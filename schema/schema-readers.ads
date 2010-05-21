@@ -120,7 +120,7 @@ package Schema.Readers is
 
    procedure Get_Namespace_From_Prefix
      (Handler  : in out Validating_Reader;
-      Prefix   : Unicode.CES.Byte_Sequence;
+      Prefix   : Sax.Symbols.Symbol;
       NS       : out Sax.Utils.XML_NS);
    --  Get the namespace associated with a given prefix, in the current
    --  context.

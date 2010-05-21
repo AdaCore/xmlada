@@ -615,11 +615,6 @@ package Sax.Readers is
 
    procedure Find_NS
      (Parser             : Sax_Reader'Class;
-      Prefix             : Unicode.CES.Byte_Sequence;
-      NS                 : out XML_NS;
-      Include_Default_NS : Boolean := True);
-   procedure Find_NS
-     (Parser             : Sax_Reader'Class;
       Prefix             : Sax.Symbols.Symbol;
       NS                 : out XML_NS;
       Include_Default_NS : Boolean := True);

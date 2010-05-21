@@ -54,7 +54,7 @@ package body Schema.Schema_Readers is
 
    procedure Get_Grammar_For_Namespace
      (Handler : access Schema_Reader'Class;
-      Prefix  : Byte_Sequence;
+      Prefix  : Symbol;
       Grammar : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True);
    --  Return the grammar matching a given prefix
@@ -408,7 +408,8 @@ package body Schema.Schema_Readers is
         Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last));
    begin
       Get_Grammar_For_Namespace
-        (Handler, Val (Val'First .. Separator - 1), G,
+        (Handler,
+         Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)), G,
          Create_If_Needed => False);
       Result := Lookup (G, Handler, Local_Name);
       if Debug then
@@ -434,7 +435,8 @@ package body Schema.Schema_Readers is
         Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last));
    begin
       Get_Grammar_For_Namespace
-        (Handler, Val (Val'First .. Separator - 1), G);
+        (Handler,
+         Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)), G);
 
       Result := Lookup_Element (G, Handler, Local_Name);
       if Debug then
@@ -461,7 +463,8 @@ package body Schema.Schema_Readers is
         Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last));
    begin
       Get_Grammar_For_Namespace
-        (Handler, Val (Val'First .. Separator - 1), G);
+        (Handler,
+         Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)), G);
 
       Result := Lookup_Group (G, Handler, Local_Name);
       if Debug then
@@ -487,7 +490,8 @@ package body Schema.Schema_Readers is
         Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last));
    begin
       Get_Grammar_For_Namespace
-        (Handler, Val (Val'First .. Separator - 1), G);
+        (Handler,
+         Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)), G);
       Result := Lookup_Attribute_Group (G, Handler, Local_Name);
       if Debug then
          Output
@@ -2270,7 +2274,9 @@ package body Schema.Schema_Readers is
             G         : XML_Grammar_NS;
          begin
             Get_Grammar_For_Namespace
-              (Handler, QName (QName'First .. Separator - 1), G);
+              (Handler,
+               Find_Symbol (Handler.all, QName (QName'First .. Separator - 1)),
+               G);
             Att := Lookup_Attribute (G, Handler, Local_Name);
 
             --  ??? We haven't normalized the value for fixed here
@@ -2993,7 +2999,7 @@ package body Schema.Schema_Readers is
 
    procedure Get_Grammar_For_Namespace
      (Handler : access Schema_Reader'Class;
-      Prefix  : Byte_Sequence;
+      Prefix  : Symbol;
       Grammar : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True)
    is
