@@ -186,6 +186,7 @@ package body Schema.Readers is
            "The grammar and the reader must use the same symbol table";
       end if;
 
+      Parser.Xmlns := No_Symbol;  --  Will force another lookup next time
       Set_Symbol_Table (Sax_Reader (Parser), Symbols);
    end Set_Symbol_Table;
 

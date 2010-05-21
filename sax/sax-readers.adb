@@ -6074,6 +6074,7 @@ package body Sax.Readers is
      (Parser  : in out Sax_Reader;
       Symbols : Symbol_Table) is
    begin
+      Parser.Lt_Sequence := No_Symbol;
       Parser.Symbols := Symbols;
    end Set_Symbol_Table;
 
