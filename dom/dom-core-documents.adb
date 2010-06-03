@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -28,6 +28,8 @@
 
 with DOM.Core.Nodes;            use DOM.Core.Nodes;
 with DOM.Core.Elements;         use DOM.Core.Elements;
+with Sax.Symbols;               use Sax.Symbols;
+with Sax.Utils;                 use Sax.Utils;
 
 package body DOM.Core.Documents is
    use Nodes_Htable;
@@ -79,7 +81,7 @@ package body DOM.Core.Documents is
         (Node_Type  => Element_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Name       => From_Qualified_Name (Doc, Tag_Name, null),
+         Name       => From_Qualified_Name (Doc, Tag_Name, No_Symbol),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element;
@@ -98,7 +100,8 @@ package body DOM.Core.Documents is
          Parent          => Doc,
          Parent_Is_Owner => True,
          Name       => From_Qualified_Name
-           (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
+           (Doc, Qualified_Name,
+            Find (Symbol_Table_Pointers.Get (Doc.Symbols), Namespace_URI)),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element_NS;
@@ -181,11 +184,13 @@ package body DOM.Core.Documents is
       --  ??? Test for Invalid_Character_Err
       --  ??? Must raise Not_Supported_Err for HTML documents
       return new Node_Record'
-        (Node_Type => Processing_Instruction_Node,
+        (Node_Type       => Processing_Instruction_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Target    => new DOM_String'(Target),
-         Pi_Data   => new DOM_String'(Data));
+         Target          => Find
+           (Symbol_Table_Pointers.Get (Doc.Symbols), Target),
+         Pi_Data         => Find
+           (Symbol_Table_Pointers.Get (Doc.Symbols), Data));
    end Create_Processing_Instruction;
 
    ----------------------
@@ -203,8 +208,8 @@ package body DOM.Core.Documents is
          Specified       => False,
          Owner_Element   => Doc,
          Is_Id           => False,
-         Attr_Name       => From_Qualified_Name (Doc, Name, null),
-         Attr_Value      => null);
+         Attr_Name       => From_Qualified_Name (Doc, Name, No_Symbol),
+         Attr_Value      => No_Symbol);
    end Create_Attribute;
 
    -------------------------
@@ -224,8 +229,9 @@ package body DOM.Core.Documents is
          Owner_Element   => Doc,
          Is_Id           => False,
          Attr_Name       => From_Qualified_Name
-           (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
-         Attr_Value      => null);
+           (Doc, Qualified_Name, Find
+              (Symbol_Table_Pointers.Get (Doc.Symbols), Namespace_URI)),
+         Attr_Value      => No_Symbol);
    end Create_Attribute_NS;
 
    -----------------------------
@@ -242,7 +248,8 @@ package body DOM.Core.Documents is
         (Node_Type => Entity_Reference_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Entity_Reference_Name => new DOM_String'(Name));
+         Entity_Reference_Name => Find
+              (Symbol_Table_Pointers.Get (Doc.Symbols), Name));
    end Create_Entity_Reference;
 
    ------------------------------
@@ -303,12 +310,15 @@ package body DOM.Core.Documents is
    -----------------------
 
    function Get_Element_By_Id
-     (Doc : Document; Element_Id : DOM_String) return Node is
+     (Doc : Document; Element_Id : DOM_String) return Node
+   is
+      N : Symbol;
    begin
       if Doc.Ids = null then
          return null;
       else
-         return Get (Doc.Ids.all, Element_Id'Unrestricted_Access).N;
+         N := Find (Symbol_Table_Pointers.Get (Doc.Symbols), Element_Id);
+         return Get (Doc.Ids.all, N).N;
       end if;
    end Get_Element_By_Id;
 

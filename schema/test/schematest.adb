@@ -473,6 +473,7 @@ procedure Schematest is
       Name     : constant String := Get_Attribute (Test, "name");
       Outcome  : constant Outcome_Value := Get_Expected (Test);
       N        : Node := First_Child (Test);
+      Inst_Reader   : Validating_Reader;
       Input    : File_Input;
       Tmp_Gr   : Group_Result;
    begin

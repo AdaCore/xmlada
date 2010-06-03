@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -32,25 +32,15 @@
 --  two views of the tree: Object-oriented throught the Element, Document,...
 --  types; and direct access through the Node interface.
 
+pragma Ada_05;
+
 with Unicode.CES;
 with Ada.Unchecked_Deallocation;
-with Interfaces;
 with Sax.HTable;
+with Sax.Symbols;
+with Sax.Utils;
 
 package DOM.Core is
-
-   Shared_Strings : constant Boolean := True;
-   --  Set this to true if the name of namespaces and elements should be shared
-   --  among nodes.
-   --  This can result in dramatic memory use reduction (more than 30% is
-   --  possible if you have lots of nodes).
-   --  Speed difference is very minor: even though we have to do a hash-table
-   --  lookup every time, we also save on the number of system calls to
-   --  malloc().
-
-   Shared_Node_Names : constant Boolean := True;
-   --  Whether the local_name+prefix+namespace are shared between nodes. This
-   --  also results in memory usage reduction.
 
    Default_Node_List_Growth_Factor : constant Float := 1.0;
    --  Set to 1.0 the buffer is doubled in size (growth factor is 100%).
@@ -136,6 +126,7 @@ package DOM.Core is
 
    function Create_Document
      (Implementation : DOM_Implementation;
+      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table;
       NameSpace_URI  : DOM_String := "";
       Qualified_Name : DOM_String := "";
       Doc_Type       : Node := null) return Node;
@@ -146,6 +137,10 @@ package DOM.Core is
    --  with the document.
    --  Wrong_Document_Err is raised if Doc_Type has already been used for
    --  another document.
+   --  Symbols should be used to specify the symbol table used by the parser
+   --  that generates the DOM. It is needed because the various string elements
+   --  in the tree are represented as symbols and the correct symbol table must
+   --  be specified.
 
    procedure Set_Node_List_Growth_Factor (Factor : Float);
    --  Set the growth factor, see Default_Node_List_Growth_Factor
@@ -229,78 +224,28 @@ private
    type Named_Node_Map is new Node_List;
    Null_Node_Map : constant Named_Node_Map := (null, -1);
 
-   ---------------------
-   --  Shared_Strings --
-   ---------------------
-   --  If Shared_Strings is True, then the namespaces and node names are not
-   --  duplicated for each node in the tree, This provides significant memory
-   --  usage reduction.
-
-   type Shared_String is record
-      Str : DOM_String_Access;
-   end record;
-   --  Use a constrained type, so that we have thin pointers later on to access
-   --  the name, this saves 4 bytes per node in the tree.
-
-   type Shared_String_Access is access Shared_String;
-   No_String : constant Shared_String_Access := null;
-
-   procedure Force_Free (Str : in out Shared_String_Access);
-   --  Free the memory pointed to by Str. Warning: Do not use this if you are
-   --  using Shared_Strings, use Free_Unless_Shared instead.
-
-   procedure Free_Unless_Shared (Str : in out Shared_String_Access);
-   --  Reset Str to null, and free the memory if needed
-
-   function Get_Key
-     (Str : Shared_String_Access) return DOM_String_Access;
-   function Hash (Key : DOM_String_Access) return Interfaces.Unsigned_32;
-   function Key_Equal (Key1, Key2 : DOM_String_Access) return Boolean;
-
-   package String_Htable is new Sax.HTable
-     (Element       => Shared_String_Access,
-      Empty_Element => No_String,
-      Free          => Force_Free,
-      Key           => DOM_String_Access,
-      Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => Key_Equal);
-   type String_Htable_Access is access String_Htable.HTable;
-
-   function Internalize_String
-     (Doc  : Document; Name : DOM_String) return Shared_String_Access;
-   --  Return an internal version of Name, meant to save space in the
-   --  DOM tree
-
-   procedure Clone_Shared
-     (Dest   : out Shared_String_Access;
-      Source : Shared_String_Access);
-   pragma Inline (Clone_Shared);
-   --  Clone the value of Source into Dest, so that whatever happens to Source,
-   --  Dest remains readable.
-
    ------------------
    -- Nodes htable --
    ------------------
 
    type Node_String is record
       N   : Node;
-      Key : DOM_String_Access;
+      Key : Sax.Symbols.Symbol;
    end record;
-   No_Node_String : constant Node_String := (null, null);
+   No_Node_String : constant Node_String := (null, Sax.Symbols.No_Symbol);
 
    procedure Free (N : in out Node_String);
-   function Get_Key (N : Node_String) return DOM_String_Access;
+   function Get_Key (N : Node_String) return Sax.Symbols.Symbol;
    pragma Inline (Free, Get_Key);
 
    package Nodes_Htable is new Sax.HTable
      (Element       => Node_String,
       Empty_Element => No_Node_String,
       Free          => Free,
-      Key           => DOM_String_Access,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => Key_Equal);
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    type Nodes_Htable_Access is access Nodes_Htable.HTable;
 
    -------------------
@@ -310,82 +255,38 @@ private
    --  grouped in the same type for ease of use
 
    type Node_Name_Def is record
-      Prefix     : Shared_String_Access;
-      Local_Name : Shared_String_Access;
-      Namespace  : Shared_String_Access;
+      Prefix     : Sax.Symbols.Symbol;
+      Local_Name : Sax.Symbols.Symbol;
+      Namespace  : Sax.Symbols.Symbol;
    end record;
    No_Node_Name : constant Node_Name_Def :=
-     (Prefix => null, Local_Name => null, Namespace => null);
+     (Prefix     => Sax.Symbols.No_Symbol,
+      Local_Name => Sax.Symbols.No_Symbol,
+      Namespace  => Sax.Symbols.No_Symbol);
 
    function Qualified_Name (N : Node_Name_Def) return DOM_String;
    pragma Inline (Qualified_Name);
    --  Return the qualified name of N
 
-   function Get_Prefix (N : Node_Name_Def) return DOM_String;
    procedure Set_Prefix
-     (Doc : Document; N : in out Node_Name_Def; Prefix : DOM_String);
+     (N : in out Node_Name_Def; Prefix : Sax.Symbols.Symbol);
    pragma Inline (Set_Prefix);
    --  Return or set the prefix of N
-
-   function Get_Local_Name (N : Node_Name_Def) return DOM_String;
-   --  Return the local name of N
-
-   function Get_Namespace_URI (N : Node_Name_Def) return DOM_String;
-   --  Return the namespace of N
-
-   procedure Clone (Dest : out Node_Name_Def; Source : Node_Name_Def);
-   pragma Inline (Clone);
-   --  Clone Source
-
-   procedure Force_Free (N : in out Node_Name_Def);
-   pragma Inline (Force_Free);
-   --  Free the contents of N
-
-   -----------------------
-   --  Shared_Node_Name --
-   -----------------------
-   --  The Node_Name_Def above can be shared to save even more memory.
-
-   type Shared_Node_Name_Def is access Node_Name_Def;
-
-   procedure Force_Free (N : in out Shared_Node_Name_Def);
-   --  Free the contents of N. Warning: Do not call this yourself, if the
-   --  strings are shared. Call Free_Unless_Shared instead
-
-   procedure Free_Unless_Shared (N : in out Shared_Node_Name_Def);
-   pragma Inline (Free_Unless_Shared);
-   --  Free N unless we use Shared_Node_Names
-
-   function Self (N : Shared_Node_Name_Def) return Node_Name_Def;
-   --  Return N itself
-
-   function Equal (N1, N2 : Node_Name_Def) return Boolean;
-   --  Whether N1 and N2 are the same
-
-   function Hash (N : Node_Name_Def) return Interfaces.Unsigned_32;
-   --  Return a hash code
-
-   package Node_Name_Htable is new Sax.HTable
-     (Element       => Shared_Node_Name_Def,
-      Empty_Element => null,
-      Free          => Force_Free,
-      Key           => Node_Name_Def,
-      Get_Key       => Self,
-      Hash          => Hash,
-      Equal         => Equal);
-   type Node_Name_Htable_Access is access Node_Name_Htable.HTable;
 
    function From_Qualified_Name
      (Doc       : Document;
       Name      : DOM_String;
-      Namespace : Shared_String_Access := null) return Shared_Node_Name_Def;
+      Namespace : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
+      return Node_Name_Def;
+   pragma Inline (From_Qualified_Name);
+
+   function From_Qualified_Name
+     (Doc       : Document;
+      Name      : Sax.Symbols.Symbol;
+      Namespace : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
+      return Node_Name_Def;
    --  Build a node name from its qualified name. This is shared if
    --  Shared_Node_Names is True
-
-   procedure Clone_Node_Name
-     (Dest   : out Shared_Node_Name_Def;
-      Source : Shared_Node_Name_Def);
-   pragma Inline (Clone_Node_Name);
 
    -----------------
    -- Node_Record --
@@ -402,13 +303,13 @@ private
       Parent   : Node;
       case Node_Type is
          when Element_Node =>
-            Name       : Shared_Node_Name_Def;
+            Name       : Node_Name_Def;
             Children   : Node_List;
             Attributes : Named_Node_Map;
 
          when Attribute_Node =>
-            Attr_Name       : Shared_Node_Name_Def;
-            Attr_Value      : DOM_String_Access;
+            Attr_Name       : Node_Name_Def;
+            Attr_Value      : Sax.Symbols.Symbol;
 
             Owner_Element   : Node;
             --  Generally an Element, but it can be a Document if the attribute
@@ -426,22 +327,24 @@ private
             Cdata : DOM_String_Access;
 
          when Entity_Reference_Node =>
-            Entity_Reference_Name : DOM_String_Access;
+            Entity_Reference_Name : Sax.Symbols.Symbol;
 
          when Entity_Node =>
-            Entity_Name : DOM_String_Access;
+            Entity_Name : Sax.Symbols.Symbol;
             --  ??? Allows children for the substitution of the entity
 
          when Processing_Instruction_Node =>
-            Target  : DOM_String_Access;
-            Pi_Data : DOM_String_Access;
+            Target  : Sax.Symbols.Symbol;
+            Pi_Data : Sax.Symbols.Symbol;
 
          when Comment_Node =>
             Comment : DOM_String_Access;
 
          when Document_Node =>
-            Shared_Strings : String_Htable_Access;
-            Node_Names     : Node_Name_Htable_Access;
+            Symbols        : Sax.Utils.Symbol_Table;
+            --  Keep a handle on the symbol table to ensure the symbols remain
+            --  valid while the tree exists
+
             Doc_Children   : Node_List;
             Doc_Type       : Node;
             Implementation : DOM_Implementation;
@@ -469,13 +372,13 @@ private
 
    procedure Document_Add_Id
      (Doc  : Document;
-      Id   : DOM_String;
+      Id   : Sax.Symbols.Symbol;
       Elem : Element);
    --  Store in the document as fast access to Elem by its ID
 
    procedure Document_Remove_Id
      (Doc  : Document;
-      Id   : DOM_String);
+      Id   : Sax.Symbols.Symbol);
    --  Remove an ID associated with Elem in the fast htable access
 
 end DOM.Core;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            AdaCore                                --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -29,6 +28,7 @@
 
 with DOM.Core.Attrs;     use DOM.Core.Attrs;
 with DOM.Core.Documents; use DOM.Core.Documents;
+with Sax.Symbols;        use Sax.Symbols;
 
 package body DOM.Core.Elements is
    use Nodes_Htable;
@@ -279,13 +279,9 @@ package body DOM.Core.Elements is
 
       if Is_Id then
          Document_Add_Id
-           (Owner_Document (Elem),
-            Id   => Value (Id_Attr),
-            Elem => Elem);
+           (Owner_Document (Elem), Id => Id_Attr.Attr_Value, Elem => Elem);
       else
-         Document_Remove_Id
-           (Owner_Document (Elem),
-            Id  => Value (Id_Attr));
+         Document_Remove_Id (Owner_Document (Elem), Id  => Id_Attr.Attr_Value);
       end if;
    end Set_Id_Attribute;
 
@@ -310,13 +306,9 @@ package body DOM.Core.Elements is
 
       if Is_Id then
          Document_Add_Id
-           (Owner_Document (Elem),
-            Id   => Value (Id_Attr),
-            Elem => Elem);
+           (Owner_Document (Elem), Id   => Id_Attr.Attr_Value, Elem => Elem);
       else
-         Document_Remove_Id
-           (Owner_Document (Elem),
-            Id  => Value (Id_Attr));
+         Document_Remove_Id (Owner_Document (Elem), Id  => Id_Attr.Attr_Value);
       end if;
    end Set_Id_Attribute_NS;
 
@@ -335,13 +327,9 @@ package body DOM.Core.Elements is
 
       if Is_Id then
          Document_Add_Id
-           (Owner_Document (Elem),
-            Id   => Value (Id_Attr),
-            Elem => Elem);
+           (Owner_Document (Elem), Id   => Id_Attr.Attr_Value, Elem => Elem);
       else
-         Document_Remove_Id
-           (Owner_Document (Elem),
-            Id  => Value (Id_Attr));
+         Document_Remove_Id (Owner_Document (Elem), Id  => Id_Attr.Attr_Value);
       end if;
    end Set_Id_Attribute_Node;
 

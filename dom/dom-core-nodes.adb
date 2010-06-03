@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2008, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -28,11 +28,12 @@
 
 with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Text_IO.Text_Streams;
-with DOM.Core.Attrs;            use DOM.Core.Attrs;
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Sax.Encodings;             use Sax.Encodings;
+with Sax.Symbols;               use Sax.Symbols;
+with Sax.Utils;                 use Sax.Utils;
 with Unicode.Encodings;         use Unicode.Encodings;
 
 package body DOM.Core.Nodes is
@@ -75,11 +76,6 @@ package body DOM.Core.Nodes is
    --  Sort alphabetically the contents of Map (this is based on the value
    --  of Node_Name).
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (String_Htable.HTable, String_Htable_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Node_Name_Htable.HTable, Node_Name_Htable_Access);
-
    --------------------
    -- Child_Is_Valid --
    --------------------
@@ -121,10 +117,10 @@ package body DOM.Core.Nodes is
    begin
       case N.Node_Type is
          when Element_Node =>
-            return Qualified_Name (N.Name.all);
+            return Qualified_Name (N.Name);
 
          when Attribute_Node =>
-            return Qualified_Name (N.Attr_Name.all);
+            return Qualified_Name (N.Attr_Name);
 
          when Text_Node =>
             --  ??? Should this return an encoded string instead ?
@@ -134,16 +130,16 @@ package body DOM.Core.Nodes is
             return "#cdata-section";
 
          when Entity_Reference_Node =>
-            pragma Assert (N.Entity_Reference_Name /= null);
-            return N.Entity_Reference_Name.all;
+            pragma Assert (N.Entity_Reference_Name /= No_Symbol);
+            return Get (N.Entity_Reference_Name).all;
 
          when Entity_Node =>
-            pragma Assert (N.Entity_Name /= null);
-            return N.Entity_Name.all;
+            pragma Assert (N.Entity_Name /= No_Symbol);
+            return Get (N.Entity_Name).all;
 
          when Processing_Instruction_Node =>
-            pragma Assert (N.Target /= null);
-            return N.Target.all;
+            pragma Assert (N.Target /= No_Symbol);
+            return Get (N.Target).all;
 
          when Comment_Node =>
             return "#comment";
@@ -172,8 +168,8 @@ package body DOM.Core.Nodes is
    begin
       case N.Node_Type is
          when Attribute_Node =>
-            pragma Assert (N.Attr_Value /= null);
-            return N.Attr_Value.all;
+            pragma Assert (N.Attr_Value /= No_Symbol);
+            return Get (N.Attr_Value).all;
 
          when Text_Node =>
             pragma Assert (N.Text /= null);
@@ -184,8 +180,8 @@ package body DOM.Core.Nodes is
             return N.Cdata.all;
 
          when Processing_Instruction_Node =>
-            pragma Assert (N.Pi_Data /= null);
-            return N.Pi_Data.all;
+            pragma Assert (N.Pi_Data /= No_Symbol);
+            return Get (N.Pi_Data).all;
 
          when Comment_Node =>
             pragma Assert (N.Comment /= null);
@@ -206,8 +202,8 @@ package body DOM.Core.Nodes is
          when Attribute_Node =>
             --  ??? If Specified is False, we should make a copy and assign
             --  it to the owner element
-            Free (N.Attr_Value);
-            N.Attr_Value := new DOM_String'(Value);
+            N.Attr_Value := Find
+              (Symbol_Table_Pointers.Get (Owner_Document (N).Symbols), Value);
             N.Specified := True;
 
          when Text_Node =>
@@ -219,8 +215,8 @@ package body DOM.Core.Nodes is
             N.Cdata := new DOM_String'(Value);
 
          when Processing_Instruction_Node =>
-            Free (N.Pi_Data);
-            N.Pi_Data := new DOM_String'(Value);
+            N.Pi_Data := Find
+              (Symbol_Table_Pointers.Get (Owner_Document (N).Symbols), Value);
 
          when Comment_Node =>
             Free (N.Comment);
@@ -390,8 +386,18 @@ package body DOM.Core.Nodes is
    function Namespace_URI (N : Node) return DOM_String is
    begin
       case N.Node_Type is
-         when Element_Node   => return Get_Namespace_URI (N.Name.all);
-         when Attribute_Node => return Get_Namespace_URI (N.Attr_Name.all);
+         when Element_Node   =>
+            if N.Name.Namespace = No_Symbol then
+               return "";
+            else
+               return Get (N.Name.Namespace).all;
+            end if;
+         when Attribute_Node =>
+            if N.Attr_Name.Namespace = No_Symbol then
+               return "";
+            else
+               return Get (N.Attr_Name.Namespace).all;
+            end if;
          when others         => return "";
       end case;
    end Namespace_URI;
@@ -403,8 +409,18 @@ package body DOM.Core.Nodes is
    function Prefix (N : Node) return DOM_String is
    begin
       case N.Node_Type is
-         when Element_Node   => return Get_Prefix (N.Name.all);
-         when Attribute_Node => return Get_Prefix (N.Attr_Name.all);
+         when Element_Node   =>
+            if N.Name.Prefix = No_Symbol then
+               return "";
+            else
+               return Get (N.Name.Prefix).all;
+            end if;
+         when Attribute_Node =>
+            if N.Attr_Name.Prefix = No_Symbol then
+               return "";
+            else
+               return Get (N.Attr_Name.Prefix).all;
+            end if;
          when others         => return "";
       end case;
    end Prefix;
@@ -423,8 +439,12 @@ package body DOM.Core.Nodes is
       end if;
 
       case N.Node_Type is
-         when Element_Node   => Set_Prefix (Doc, N.Name.all, Prefix);
-         when Attribute_Node => Set_Prefix (Doc, N.Attr_Name.all, Prefix);
+         when Element_Node   =>
+            N.Name.Prefix := Find
+              (Symbol_Table_Pointers.Get (Doc.Symbols), Prefix);
+         when Attribute_Node =>
+            N.Attr_Name.Prefix := Find
+              (Symbol_Table_Pointers.Get (Doc.Symbols), Prefix);
          when others         => null;
       end case;
    end Set_Prefix;
@@ -436,8 +456,8 @@ package body DOM.Core.Nodes is
    function Local_Name (N : Node) return DOM_String is
    begin
       case N.Node_Type is
-         when Element_Node   => return Get_Local_Name (N.Name.all);
-         when Attribute_Node => return Get_Local_Name (N.Attr_Name.all);
+         when Element_Node   => return Get (N.Name.Local_Name).all;
+         when Attribute_Node => return Get (N.Attr_Name.Local_Name).all;
          when others         => return "";
       end case;
    end Local_Name;
@@ -618,17 +638,14 @@ package body DOM.Core.Nodes is
 
       case N.Node_Type is
          when Element_Node =>
-            Clone_Node_Name (Clone.Name, Source => N.Name);
+            Clone.Name := N.Name;
             Clone.Children := Clone_List (N.Children, Deep);
             Clone.Attributes := Named_Node_Map
               (Clone_List (Node_List (N.Attributes), True));
 
          when Attribute_Node =>
-            Clone_Node_Name (Clone.Attr_Name, Source => N.Attr_Name);
-
-            if N.Attr_Value /= null then
-               Clone.Attr_Value := new DOM_String'(N.Attr_Value.all);
-            end if;
+            Clone.Attr_Name := N.Attr_Name;
+            Clone.Attr_Value := N.Attr_Value;
 
          when Text_Node =>
             if N.Text /= null then
@@ -641,17 +658,14 @@ package body DOM.Core.Nodes is
             end if;
 
          when Entity_Reference_Node =>
-            pragma Assert (N.Entity_Reference_Name /= null);
-            Clone.Entity_Reference_Name :=
-              new DOM_String'(N.Entity_Reference_Name.all);
+            Clone.Entity_Reference_Name := N.Entity_Reference_Name;
 
          when Entity_Node =>
-            pragma Assert (N.Entity_Name /= null);
-            Clone.Entity_Name := new DOM_String'(N.Entity_Name.all);
+            Clone.Entity_Name := N.Entity_Name;
 
          when Processing_Instruction_Node =>
-            Clone.Target := new DOM_String'(N.Target.all);
-            Clone.Pi_Data := new DOM_String'(N.Pi_Data.all);
+            Clone.Target  := N.Target;
+            Clone.Pi_Data := N.Pi_Data;
 
          when Comment_Node =>
             pragma Assert (N.Comment /= null);
@@ -974,7 +988,6 @@ package body DOM.Core.Nodes is
       end if;
       case N.Node_Type is
          when Element_Node =>
-            Free_Unless_Shared (N.Name);
             --  If we have an ID attribute, remove the element from the
             --  htable
 
@@ -983,7 +996,7 @@ package body DOM.Core.Nodes is
                   if Attr (N.Attributes.Items (Att)).Is_Id then
                      Document_Remove_Id
                        (Owner_Document (N),
-                        Value (Attr (N.Attributes.Items (Att))));
+                        N.Attributes.Items (Att).Attr_Value);
                   end if;
                end loop;
             end if;
@@ -992,8 +1005,7 @@ package body DOM.Core.Nodes is
             Free (N.Children, Deep);
 
          when Attribute_Node =>
-            Free_Unless_Shared (N.Attr_Name);
-            Free (N.Attr_Value);
+            null;
 
          when Text_Node =>
             Free (N.Text);
@@ -1002,28 +1014,24 @@ package body DOM.Core.Nodes is
             Free (N.Cdata);
 
          when Entity_Reference_Node =>
-            Free (N.Entity_Reference_Name);
+            null;
 
          when Entity_Node =>
-            Free (N.Entity_Name);
+            null;
 
          when Processing_Instruction_Node =>
-            Free (N.Target);
-            Free (N.Pi_Data);
+            null;
 
          when Comment_Node =>
             Free (N.Comment);
 
          when Document_Node =>
             Free (N.Doc_Children, Deep);
-            String_Htable.Reset (N.Shared_Strings.all);
-            Unchecked_Free (N.Shared_Strings);
-            Node_Name_Htable.Reset (N.Node_Names.all);
-            Unchecked_Free (N.Node_Names);
             if N.Ids /= null then
                Nodes_Htable.Reset (N.Ids.all);
                Unchecked_Free (N.Ids);
             end if;
+            N.Symbols := No_Symbol_Table;
 
          when Document_Type_Node =>
             Free (N.Document_Type_Name);
@@ -1178,10 +1186,7 @@ package body DOM.Core.Nodes is
         Unicode.Encodings.Get_By_Name ("utf-8");
       Collapse_Empty_Nodes  : Boolean := True)
    is
-      use Node_Name_Htable;
-
-      Namespaces : Node_Name_Htable_Access :=
-        new Node_Name_Htable.HTable (127);
+      Namespaces : Nodes_Htable.HTable (127);
       --  Namespaces defined so far
 
       procedure Recursive_Print (N : Node);
@@ -1324,26 +1329,28 @@ package body DOM.Core.Nodes is
                  (Stream,
                   Less_Than_Sequence
                   & Question_Mark_Sequence
-                  & N.Target.all, Encoding);
+                  & Get (N.Target).all, Encoding);
 
-               if N.Pi_Data'Length = 0 then
+               if N.Pi_Data = Empty_String then
                   Put (Stream, Space_Sequence, Encoding);
 
                else
                   declare
+                     P : constant Cst_Byte_Sequence_Access := Get (N.Pi_Data);
                      C : Unicode_Char;
-                     Index : Natural := N.Pi_Data'First;
+                     Index : Natural := P'First;
                   begin
-                     Sax.Encodings.Encoding.Read (N.Pi_Data.all, Index, C);
+                     Sax.Encodings.Encoding.Read (P.all, Index, C);
 
                      if C /= Space then
                         Put (Stream, Space_Sequence, Encoding);
                      end if;
                   end;
                end if;
+
                Put
                  (Stream,
-                  N.Pi_Data.all & Question_Mark_Sequence
+                  Get (N.Pi_Data).all & Question_Mark_Sequence
                   & Greater_Than_Sequence, Encoding);
                Newline;
 
@@ -1421,11 +1428,7 @@ package body DOM.Core.Nodes is
    begin
       Recursive_Print (N);
 
-      if not Shared_Strings then
-         Reset (Namespaces.all);
-      end if;
-
-      Unchecked_Free (Namespaces);
+      Nodes_Htable.Reset (Namespaces);
    end Write;
 
    -----------
@@ -1514,8 +1517,9 @@ package body DOM.Core.Nodes is
                Character'Write (Stream, ASCII.LF);
 
             when Processing_Instruction_Node =>
-               String'Write (Stream, Prefix & "PI: " & N.Target.all);
-               String'Write (Stream, Prefix & "   Data: " & N.Pi_Data.all);
+               String'Write (Stream, Prefix & "PI: " & Get (N.Target).all);
+               String'Write
+                 (Stream, Prefix & "   Data: " & Get (N.Pi_Data).all);
 
             when Comment_Node =>
                String'Write (Stream, Prefix & "Comment: " & Node_Value (N));

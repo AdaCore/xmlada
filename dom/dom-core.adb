@@ -30,16 +30,13 @@ with Unicode.CES;   use Unicode.CES;
 with Sax.Encodings; use Sax.Encodings;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Unicode;       use Unicode;
-with Interfaces;    use Interfaces;
+with Sax.Symbols;   use Sax.Symbols;
+with Sax.Utils;     use Sax.Utils;
 
 package body DOM.Core is
    use Nodes_Htable;
 
    Node_List_Growth_Factor : Float := Default_Node_List_Growth_Factor;
-
-   function Internalize_Node_Name
-     (Doc  : Document; Name : Node_Name_Def) return Shared_Node_Name_Def;
-   --  Return a shared version of Name
 
    ---------------------------------
    -- Set_Node_List_Growth_Factor --
@@ -56,6 +53,7 @@ package body DOM.Core is
 
    function Create_Document
      (Implementation : DOM_Implementation;
+      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table;
       NameSpace_URI  : DOM_String := "";
       Qualified_Name : DOM_String := "";
       Doc_Type       : Node := null) return Node
@@ -73,8 +71,7 @@ package body DOM.Core is
          Parent_Is_Owner => False,
          Implementation => Implementation,
          Ids            => null,
-         Node_Names     => new Node_Name_Htable.HTable (127),
-         Shared_Strings => new String_Htable.HTable (127));
+         Symbols        => Symbols);
    end Create_Document;
 
    -----------------
@@ -142,217 +139,73 @@ package body DOM.Core is
       Free (List.Items);
    end Free;
 
-   ----------------
-   -- Force_Free --
-   ----------------
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Shared_String, Shared_String_Access);
-
-   procedure Force_Free (Str : in out Shared_String_Access) is
-   begin
-      if Str /= No_String then
-         Unicode.CES.Free (Str.Str);
-         Unchecked_Free (Str);
-         Str := No_String;
-      end if;
-   end Force_Free;
-
-   ------------------------
-   -- Free_Unless_Shared --
-   ------------------------
-
-   procedure Free_Unless_Shared (Str : in out Shared_String_Access) is
-   begin
-      if Shared_Strings then
-         Str := No_String;
-      else
-         Force_Free (Str);
-      end if;
-   end Free_Unless_Shared;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Str : Shared_String_Access) return DOM_String_Access is
-   begin
-      return Str.Str;
-   end Get_Key;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (Key : DOM_String_Access) return Interfaces.Unsigned_32 is
-      type Uns is mod 2 ** 32;
-      function Rotate_Left (Value : Uns; Amount : Natural) return Uns;
-      pragma Import (Intrinsic, Rotate_Left);
-
-      Tmp : Uns := 0;
-   begin
-      for J in Key'Range loop
-         Tmp := Rotate_Left (Tmp, 1) + Character'Pos (Key (J));
-      end loop;
-
-      return Interfaces.Unsigned_32 (Tmp);
-   end Hash;
-
-   ---------------
-   -- Key_Equal --
-   ---------------
-
-   function Key_Equal (Key1, Key2 : DOM_String_Access) return Boolean is
-   begin
-      return Key1.all = Key2.all;
-   end Key_Equal;
-
-   ------------------------
-   -- Internalize_String --
-   ------------------------
-
-   function Internalize_String
-     (Doc  : Document;
-      Name : DOM_String) return Shared_String_Access
-   is
-      Result : Shared_String_Access;
-   begin
-      if Shared_Strings then
-         Result := String_Htable.Get
-             (Doc.Shared_Strings.all, Name'Unrestricted_Access);
-
-         if Result = null then
-            Result := new Shared_String'
-              (Str => new DOM_String'(Name));
-            String_Htable.Set (Doc.Shared_Strings.all, Result);
-         end if;
-      else
-         Result := new Shared_String'(Str => new DOM_String'(Name));
-      end if;
-      return Result;
-   end Internalize_String;
-
-   ------------------
-   -- Clone_Shared --
-   ------------------
-
-   procedure Clone_Shared
-     (Dest   : out Shared_String_Access;
-      Source : Shared_String_Access) is
-   begin
-      if Shared_Strings then
-         Dest := Source;
-      elsif Source = null then
-         Dest := null;
-      else
-         Dest := new Shared_String'(Str => new DOM_String'(Source.Str.all));
-      end if;
-   end Clone_Shared;
-
-   ---------------------------
-   -- Internalize_Node_Name --
-   ---------------------------
-
-   function Internalize_Node_Name
-     (Doc  : Document; Name : Node_Name_Def) return Shared_Node_Name_Def
-   is
-      Result : Shared_Node_Name_Def;
-   begin
-      if Shared_Node_Names then
-         Result := Node_Name_Htable.Get (Doc.Node_Names.all, Name);
-
-         if Result = null then
-            Result := new Node_Name_Def'(Name);
-            Node_Name_Htable.Set (Doc.Node_Names.all, Result);
-         end if;
-      else
-         Result := new Node_Name_Def'(Name);
-      end if;
-      return Result;
-   end Internalize_Node_Name;
-
-   ---------------------
-   -- Clone_Node_Name --
-   ---------------------
-
-   procedure Clone_Node_Name
-     (Dest   : out Shared_Node_Name_Def;
-      Source : Shared_Node_Name_Def) is
-   begin
-      if Shared_Node_Names then
-         Dest := Source;
-      elsif Source = null then
-         Dest := null;
-      else
-         Dest := new Node_Name_Def;
-         Clone (Dest.all, Source.all);
-      end if;
-   end Clone_Node_Name;
-
    --------------------
    -- Qualified_Name --
    --------------------
 
    function Qualified_Name (N : Node_Name_Def) return DOM_String is
    begin
-      pragma Assert (N.Local_Name /= null);
-      if N.Prefix = null then
-         return N.Local_Name.Str.all;
+      pragma Assert (N.Local_Name /= No_Symbol);
+      if N.Prefix = No_Symbol then
+         return Get (N.Local_Name).all;
       else
-         return N.Prefix.Str.all & Colon_Sequence & N.Local_Name.Str.all;
+         return Get (N.Prefix).all & Colon_Sequence & Get (N.Local_Name).all;
       end if;
    end Qualified_Name;
-
-   ----------------
-   -- Get_Prefix --
-   ----------------
-
-   function Get_Prefix (N : Node_Name_Def) return DOM_String is
-   begin
-      if N.Prefix = null then
-         return "";
-      else
-         return N.Prefix.Str.all;
-      end if;
-   end Get_Prefix;
 
    ----------------
    -- Set_Prefix --
    ----------------
 
-   procedure Set_Prefix
-     (Doc : Document; N : in out Node_Name_Def; Prefix : DOM_String) is
+   procedure Set_Prefix (N : in out Node_Name_Def; Prefix : Symbol) is
    begin
       --  ??? We're supposed to check that Prefix is valid, and raise
       --  Invalid_Character_Err otherwise
 
-      Free_Unless_Shared (N.Prefix);
-      N.Prefix := Internalize_String (Doc, Prefix);
+      N.Prefix := Prefix;
    end Set_Prefix;
 
-   -----------
-   -- Clone --
-   -----------
+   -------------------------
+   -- From_Qualified_Name --
+   -------------------------
 
-   procedure Clone (Dest : out Node_Name_Def; Source : Node_Name_Def) is
+   function From_Qualified_Name
+     (Doc       : Document;
+      Name      : Sax.Symbols.Symbol;
+      Namespace : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
+      return Node_Name_Def
+   is
+      N         : constant Cst_Byte_Sequence_Access := Get (Name);
+      Index     : Natural := N'First;
+      Colon_Pos : Natural;
+      C         : Unicode_Char := 0;
    begin
-      Clone_Shared (Dest.Prefix, Source => Source.Prefix);
-      Clone_Shared (Dest.Local_Name, Source => Source.Local_Name);
-      Clone_Shared (Dest.Namespace, Source => Source.Namespace);
-   end Clone;
+      --  ??? Test for Invalid_Character_Err
+      --  ??? Must convert Tag_Name to uppercase for HTML documents
+      --  ??? Test for Namespace_Err
 
-   ----------------
-   -- Force_Free --
-   ----------------
+      while Index <= N'Last loop
+         Colon_Pos := Index;
+         Encoding.Read (N.all, Index, C);
+         exit when C = Colon;
+      end loop;
 
-   procedure Force_Free (N : in out Node_Name_Def) is
-   begin
-      if not Shared_Strings then
-         Free_Unless_Shared (N.Prefix);
-         Free_Unless_Shared (N.Local_Name);
-         Free_Unless_Shared (N.Namespace);
+      if C = Colon then
+         return
+           (Prefix     =>
+              Find (Symbol_Table_Pointers.Get (Doc.Symbols),
+                    N (N'First .. Colon_Pos - 1)),
+            Local_Name =>
+              Find (Symbol_Table_Pointers.Get (Doc.Symbols),
+                    N (Index .. N'Last)),
+            Namespace  => Namespace);
+      else
+         return
+           (Prefix     => No_Symbol,
+            Local_Name => Name,
+            Namespace  => Namespace);
       end if;
-   end Force_Free;
+   end From_Qualified_Name;
 
    -------------------------
    -- From_Qualified_Name --
@@ -361,187 +214,29 @@ package body DOM.Core is
    function From_Qualified_Name
      (Doc       : Document;
       Name      : DOM_String;
-      Namespace : Shared_String_Access := null) return Shared_Node_Name_Def
-   is
-      Index     : Natural := Name'First;
-      Colon_Pos : Natural;
-      C         : Unicode_Char := 0;
-      Candidate : Node_Name_Def;
+      Namespace : Symbol := No_Symbol) return Node_Name_Def is
    begin
-      --  ??? Test for Invalid_Character_Err
-      --  ??? Must convert Tag_Name to uppercase for HTML documents
-      --  ??? Test for Namespace_Err
-
-      while Index <= Name'Last loop
-         Colon_Pos := Index;
-         Encoding.Read (Name, Index, C);
-         exit when C = Colon;
-      end loop;
-
-      if Shared_Strings then
-         if C = Colon then
-            Candidate :=
-              (Prefix     =>
-                 Internalize_String (Doc, Name (Name'First .. Colon_Pos - 1)),
-               Local_Name =>
-                 Internalize_String (Doc, Name (Index .. Name'Last)),
-               Namespace  => Namespace);
-         else
-            Candidate :=
-              (Prefix     => null,
-               Local_Name => Internalize_String (Doc, Name),
-               Namespace  => Namespace);
-         end if;
-
-         return Internalize_Node_Name (Doc, Candidate);
-
-      else
-         if C = Colon then
-            Candidate :=
-              (Prefix     =>
-                 Internalize_String (Doc, Name (Name'First .. Colon_Pos - 1)),
-               Local_Name =>
-                 Internalize_String (Doc, Name (Index .. Name'Last)),
-               Namespace  => Namespace);
-         else
-            Candidate :=
-              (Prefix     => null,
-               Local_Name => Internalize_String (Doc, Name),
-               Namespace  => Namespace);
-         end if;
-
-         --  Memory leak if  not Shared_Strings and Shared_Node_Names and
-         --  the node already exists
-         return Internalize_Node_Name (Doc, Candidate);
-      end if;
+      return From_Qualified_Name
+        (Doc,
+         Find (Symbol_Table_Pointers.Get (Doc.Symbols), Name),
+         Namespace);
    end From_Qualified_Name;
-
-   --------------------
-   -- Get_Local_Name --
-   --------------------
-
-   function Get_Local_Name (N : Node_Name_Def) return DOM_String is
-   begin
-      pragma Assert (N.Local_Name /= null);
-      return N.Local_Name.Str.all;
-   end Get_Local_Name;
-
-   -----------------------
-   -- Get_Namespace_URI --
-   -----------------------
-
-   function Get_Namespace_URI (N : Node_Name_Def) return DOM_String is
-   begin
-      if N.Namespace /= No_String then
-         return N.Namespace.Str.all;
-      else
-         return "";
-      end if;
-   end Get_Namespace_URI;
-
-   ----------
-   -- Self --
-   ----------
-
-   function Self (N : Shared_Node_Name_Def) return Node_Name_Def is
-   begin
-      return N.all;
-   end Self;
-
-   -----------
-   -- Equal --
-   -----------
-
-   function Equal (N1, N2 : Node_Name_Def) return Boolean is
-      function Is_Equal (N1, N2 : Shared_String_Access) return Boolean;
-
-      function Is_Equal (N1, N2 : Shared_String_Access) return Boolean is
-      begin
-         if N1.Str = null then
-            if N2.Str /= null then
-               return False;
-            end if;
-         else
-            if N2.Str = null
-              or else N1.Str.all /= N2.Str.all
-            then
-               return False;
-            end if;
-         end if;
-         return True;
-      end Is_Equal;
-
-   begin
-      if Shared_Strings then
-         return N1.Prefix = N2.Prefix
-           and then N1.Local_Name = N2.Local_Name
-           and then N1.Namespace = N2.Namespace;
-      else
-         return Is_Equal (N1.Prefix, N2.Prefix)
-           and then N1.Local_Name.Str.all = N2.Local_Name.Str.all
-           and then Is_Equal (N1.Namespace, N2.Namespace);
-      end if;
-   end Equal;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (N : Node_Name_Def) return Interfaces.Unsigned_32 is
-      Tmp : Interfaces.Unsigned_32 := 0;
-   begin
-      if N.Prefix /= No_String then
-         Tmp := Hash (N.Prefix.Str);
-      end if;
-
-      if N.Namespace /= No_String then
-         Tmp := Tmp + Hash (N.Namespace.Str);
-      end if;
-
-      return Tmp + Hash (N.Local_Name.Str);
-   end Hash;
-
-   ----------------
-   -- Force_Free --
-   ----------------
-
-   procedure Force_Free (N : in out Shared_Node_Name_Def) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Node_Name_Def, Shared_Node_Name_Def);
-   begin
-      if N /= null then
-         Force_Free (N.all);
-         Unchecked_Free (N);
-      end if;
-   end Force_Free;
-
-   ------------------------
-   -- Free_Unless_Shared --
-   ------------------------
-
-   procedure Free_Unless_Shared (N : in out Shared_Node_Name_Def) is
-   begin
-      if Shared_Node_Names then
-         N := null;
-      else
-         Force_Free (N);
-      end if;
-   end Free_Unless_Shared;
 
    ----------
    -- Free --
    ----------
 
    procedure Free (N : in out Node_String) is
+      pragma Unreferenced (N);
    begin
-      Free (N.Key);
+      null;
    end Free;
 
    -------------
    -- Get_Key --
    -------------
 
-   function Get_Key (N : Node_String) return DOM_String_Access is
+   function Get_Key (N : Node_String) return Symbol is
    begin
       return N.Key;
    end Get_Key;
@@ -552,14 +247,14 @@ package body DOM.Core is
 
    procedure Document_Add_Id
      (Doc  : Document;
-      Id   : DOM_String;
+      Id   : Symbol;
       Elem : Element) is
    begin
       if Doc.Ids = null then
          Doc.Ids := new Nodes_Htable.HTable (203);
       end if;
 
-      Set (Doc.Ids.all, (N => Node (Elem), Key => new DOM_String'(Id)));
+      Set (Doc.Ids.all, (N => Node (Elem), Key => Id));
    end Document_Add_Id;
 
    ------------------------
@@ -567,11 +262,11 @@ package body DOM.Core is
    ------------------------
 
    procedure Document_Remove_Id
-     (Doc  : Document;
-      Id  : DOM_String) is
+     (Doc : Document;
+      Id  : Symbol) is
    begin
       if Doc.Ids /= null then
-         Remove (Doc.Ids.all, Id'Unrestricted_Access);
+         Remove (Doc.Ids.all, Id);
       end if;
    end Document_Remove_Id;
 

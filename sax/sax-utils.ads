@@ -140,6 +140,8 @@ package Sax.Utils is
    package Symbol_Table_Pointers is new Sax.Pointers.Smart_Pointers
      (Encapsulated => Sax.Symbols.Symbol_Table_Record);
    subtype Symbol_Table is Symbol_Table_Pointers.Pointer;
+   No_Symbol_Table : constant Symbol_Table :=
+     Symbol_Table_Pointers.Null_Pointer;
 
    ----------------
    -- Namespaces --

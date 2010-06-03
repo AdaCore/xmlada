@@ -44,7 +44,8 @@ package body DOM.Readers is
    procedure Start_Document (Handler : in out Tree_Reader) is
       Implementation : DOM_Implementation;
    begin
-      Handler.Tree := Create_Document (Implementation);
+      Handler.Tree := Create_Document
+        (Implementation, Symbols => Get_Symbol_Table (Handler));
       Handler.Current_Node := Handler.Tree;
    end Start_Document;
 

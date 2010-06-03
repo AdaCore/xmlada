@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2006-2007, AdaCore                   --
+--                Copyright (C) 2006-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -34,6 +34,7 @@ with DOM.Core.Nodes;       use DOM.Core.Nodes;
 with DOM.Core.Documents;   use DOM.Core.Documents;
 with DOM.Core.Elements;    use DOM.Core.Elements;
 with DOM.Core.Character_Datas; use DOM.Core.Character_Datas;
+with Sax.Readers;          use Sax.Readers;
 
 package body Schema.Dom_Readers is
 
@@ -44,7 +45,8 @@ package body Schema.Dom_Readers is
    procedure Start_Document (Handler : in out Tree_Reader) is
       Implementation : DOM_Implementation;
    begin
-      Handler.Tree := Create_Document (Implementation);
+      Handler.Tree := Create_Document
+        (Implementation, Symbols => Get_Symbol_Table (Handler));
       Handler.Current_Node := Handler.Tree;
    end Start_Document;
 
