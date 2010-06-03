@@ -5,6 +5,9 @@ config.status
 distrib/xmlada_shared.gpr
 docs/Makefile
 docs/xml.html
+docs/xml.info
+docs/xml.pdf
+docs/xml.txt
 sax/test/testsax
 dom/test/tests
 dom/test/testxml
@@ -27,3 +30,4 @@ b~*.ad*
 *.a
 *.so.*
 *.so
+*.lexch
