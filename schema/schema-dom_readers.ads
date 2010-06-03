@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2006-2007, AdaCore                   --
+--                Copyright (C) 2006-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -29,8 +29,12 @@
 --  This package provides a reader that generates a DOM tree and validates
 --  the XML stream while it creates the tree.
 
-with Sax.Attributes;
+pragma Ada_05;
+
 with Sax.Exceptions;
+with Sax.Readers;
+with Sax.Utils;
+with Sax.Symbols;
 with Schema.Readers;
 with Unicode.CES;
 with DOM.Core;        use DOM.Core;
@@ -64,41 +68,39 @@ private
       Warnings_As_Error : Boolean := False;
    end record;
 
-   procedure Start_Document (Handler : in out Tree_Reader);
-   procedure Start_Element
+   overriding procedure Start_Document (Handler : in out Tree_Reader);
+   overriding procedure Start_Element
      (Handler       : in out Tree_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class);
-   procedure End_Element
+      NS            : Sax.Utils.XML_NS;
+      Local_Name    : Sax.Symbols.Symbol;
+      Atts          : Sax.Readers.Sax_Attribute_List);
+   overriding procedure End_Element
      (Handler       : in out Tree_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "");
-   procedure Characters
+      NS            : Sax.Utils.XML_NS;
+      Local_Name    : Sax.Symbols.Symbol);
+   overriding procedure Characters
      (Handler : in out Tree_Reader;
       Ch      : Unicode.CES.Byte_Sequence);
-   procedure Ignorable_Whitespace
+   overriding procedure Ignorable_Whitespace
      (Handler : in out Tree_Reader;
       Ch      : Unicode.CES.Byte_Sequence);
-   procedure Processing_Instruction
+   overriding procedure Processing_Instruction
      (Handler : in out Tree_Reader;
       Target  : Unicode.CES.Byte_Sequence;
       Data    : Unicode.CES.Byte_Sequence);
-   procedure Start_DTD
+   overriding procedure Start_DTD
      (Handler   : in out Tree_Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence := "";
       System_Id : Unicode.CES.Byte_Sequence := "");
-   procedure End_DTD (Handler : in out Tree_Reader);
-   procedure Comment
+   overriding procedure End_DTD (Handler : in out Tree_Reader);
+   overriding procedure Comment
      (Handler : in out Tree_Reader;
       Comment : Unicode.CES.Byte_Sequence);
-   procedure Error
+   overriding procedure Error
      (Handler : in out Tree_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
-   procedure Warning
+   overriding procedure Warning
      (Handler : in out Tree_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
 

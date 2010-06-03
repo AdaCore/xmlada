@@ -29,14 +29,15 @@
 pragma Ada_05;
 
 with Sax.Readers;          use Sax.Readers;
-with Sax.Attributes;
 with Sax.Exceptions;
+with Sax.Symbols;
+with Sax.Utils;
 with Unicode.CES;
 with DOM.Core;             use DOM.Core;
 
 package DOM.Readers is
 
-   type Tree_Reader is new Reader with private;
+   type Tree_Reader is new Sax_Reader with private;
    type Tree_Reader_Access is access all Tree_Reader'Class;
    --  Special SAX Reader that creates a DOM tree in its callbacks.
    --  Note that in case of a fatal error, it is your responsability to
@@ -56,15 +57,13 @@ package DOM.Readers is
    overriding procedure Start_Document (Handler : in out Tree_Reader);
    overriding procedure Start_Element
      (Handler       : in out Tree_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class);
+      NS            : Sax.Utils.XML_NS;
+      Local_Name    : Sax.Symbols.Symbol;
+      Atts          : Sax.Readers.Sax_Attribute_List);
    overriding procedure End_Element
-     (Handler : in out Tree_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "");
+     (Handler       : in out Tree_Reader;
+      NS            : Sax.Utils.XML_NS;
+      Local_Name    : Sax.Symbols.Symbol);
    overriding procedure Characters
      (Handler : in out Tree_Reader;
       Ch      : Unicode.CES.Byte_Sequence);

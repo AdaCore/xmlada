@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2008, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -39,6 +39,9 @@ package DOM.Core.Nodes is
    function Node_Name (N : Node) return DOM_String;
    --  Return the name of the tag.
    --  Its meaning depends on the type of the node, see the DOM specifications.
+   --  For an <element> node, this returns the qualified name, in the form of
+   --  "prefix:local_name". See below for subprograms to get each of the
+   --  components separately instead.
 
    function Node_Value (N : Node) return DOM_String;
    --  Return the value of the node.
@@ -96,6 +99,7 @@ package DOM.Core.Nodes is
    --  a tree already, it doesn't work for isolated nodes.
 
    function Local_Name (N : Node) return DOM_String;
+   function Local_Name (N : Node) return Sax.Symbols.Symbol;
    --  Return the local name of N (second part of the qualified name). This is
    --  null if the node was created with a DOM level 1 method (no namespace at
    --  creation time).
@@ -186,6 +190,8 @@ package DOM.Core.Nodes is
 
    function Get_Named_Item
      (Map : Named_Node_Map; Name : DOM_String) return Node;
+   function Get_Named_Item
+     (Map : Named_Node_Map; Name : Sax.Symbols.Symbol) return Node;
    --  Retrieve a node specified by name.
    --  null is returned if no such node exists
    --  Consider using Get_Named_Item_NS instead for DOM level 2
@@ -220,6 +226,10 @@ package DOM.Core.Nodes is
      (Map           : Named_Node_Map;
       Namespace_URI : DOM_String;
       Local_Name    : DOM_String) return Node;
+   function Get_Named_Item_NS
+     (Map           : Named_Node_Map;
+      Namespace_URI : Sax.Symbols.Symbol;
+      Local_Name    : Sax.Symbols.Symbol) return Node;
    --  Retrieve a node specified by its (namespace, local_name)
 
    procedure Set_Named_Item_NS

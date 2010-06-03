@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -46,9 +46,14 @@ package DOM.Core.Documents is
    --  characters.
 
    function Create_Element_NS
-     (Doc : Document;
-      Namespace_URI : DOM_String;
+     (Doc            : Document;
+      Namespace_URI  : DOM_String;
       Qualified_Name : DOM_String) return Element;
+   function Create_Element_NS
+     (Doc            : Document;
+      Namespace_URI  : Sax.Symbols.Symbol;
+      Prefix         : Sax.Symbols.Symbol;
+      Local_Name     : Sax.Symbols.Symbol) return Element;
    --  Create a new element, and its default attributes.
    --  Invalid_Character_Err is raised if Tag_Name contains invalid
    --  characters.
@@ -91,6 +96,11 @@ package DOM.Core.Documents is
      (Doc : Document;
       Namespace_URI : DOM_String;
       Qualified_Name : DOM_String) return Attr;
+   function Create_Attribute_NS
+     (Doc           : Document;
+      Namespace_URI : Sax.Symbols.Symbol;
+      Prefix        : Sax.Symbols.Symbol;
+      Local_Name    : Sax.Symbols.Symbol) return Attr;
    --  Create a new attribute.
    --  Use Set_Attribute to associate it with an element.
    --  Invalid_Character_Err raised if Name is invalid

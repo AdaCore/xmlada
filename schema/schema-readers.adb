@@ -100,8 +100,8 @@ package body Schema.Readers is
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
 
-   function Has_Fixed (Handler : Sax_Reader'Class) return Boolean;
-   function Get_Fixed (Handler : Sax_Reader'Class) return Symbol;
+   function Has_Fixed (Handler : access Sax_Reader'Class) return Boolean;
+   function Get_Fixed (Handler : access Sax_Reader'Class) return Symbol;
    --  Whether the head validator has a fixed attribute (either defined for
    --  the element, for the xsi:type, or its type, and return that fixed value
 
@@ -109,8 +109,9 @@ package body Schema.Readers is
    -- Has_Fixed --
    ---------------
 
-   function Has_Fixed (Handler : Sax_Reader'Class) return Boolean is
-      H : constant Validating_Reader := Validating_Reader (Handler);
+   function Has_Fixed (Handler : access Sax_Reader'Class) return Boolean is
+      H : constant Validating_Reader_Access :=
+        Validating_Reader_Access (Handler);
    begin
       if H.Validators.Element /= No_Element
         and then Has_Fixed (H.Validators.Element)
@@ -124,8 +125,9 @@ package body Schema.Readers is
    -- Get_Fixed --
    ---------------
 
-   function Get_Fixed (Handler : Sax_Reader'Class) return Symbol is
-      H : constant Validating_Reader := Validating_Reader (Handler);
+   function Get_Fixed (Handler : access Sax_Reader'Class) return Symbol is
+      H : constant Validating_Reader_Access :=
+        Validating_Reader_Access (Handler);
    begin
       if H.Validators.Element /= No_Element then
          return Get_Fixed (H.Validators.Element);
@@ -485,7 +487,7 @@ package body Schema.Readers is
                      "#Element has character data, but is declared as nil");
                end if;
 
-            elsif Has_Fixed (Handler.all) then
+            elsif Has_Fixed (Handler) then
                if Is_Empty then
                   --  If a xsi:type was specified, the fixed value must match
                   --  it too
@@ -493,20 +495,20 @@ package body Schema.Readers is
                   if Handler.Validators.Typ /= No_Type then
                      if Debug then
                         Put_Line
-                          ("characters: " & Get (Get_Fixed (Handler.all)).all);
+                          ("characters: " & Get (Get_Fixed (Handler)).all);
                      end if;
 
                      Mask := (others => True);
                      Validate_Characters
                        (Get_Validator (Handler.Validators.Typ), Handler,
-                        Get (Get_Fixed (Handler.all)).all,
+                        Get (Get_Fixed (Handler)).all,
                         Empty_Element => False,
                         Mask          => Mask);
                   end if;
 
                   --  in 3.3.1: if the element is empty, the "fixed" value
                   --  should be used for it, just as for "default"
-                  Characters (Handler.all, Get (Get_Fixed (Handler.all)).all);
+                  Characters (Handler.all, Get (Get_Fixed (Handler)).all);
 
                else
                   Typ := Handler.Validators.Typ;
@@ -516,7 +518,7 @@ package body Schema.Readers is
 
                   if not Equal
                     (Get_Validator (Typ), Handler,
-                     Val2.all, Get (Get_Fixed (Handler.all)).all)
+                     Val2.all, Get (Get_Fixed (Handler)).all)
                   then
                      Free (Handler.Validators.Characters);
                      Validation_Error
@@ -752,7 +754,7 @@ package body Schema.Readers is
             Parent_Type := Get_Type (H.Validators.Element);
          end if;
 
-         if Has_Fixed (Handler.all) then
+         if Has_Fixed (Handler) then
             Validation_Error
               (H, "#No child allowed because """
                & To_QName (H.Validators.Element)

@@ -82,6 +82,15 @@ procedure Schematest is
    --  Whether to show group descriptions
 
    Symbols : Symbol_Table;
+   Test_Set_Ref : Symbol;
+   Test_Group   : Symbol;
+   S_Annotation : Symbol;
+   S_Schema_Test, S_Instance_Test, S_Documentation, S_Description : Symbol;
+   S_Instance_Document, S_Schema_Document, S_Current, S_Expected : Symbol;
+
+   S_Validity, S_Status, S_Name, S_Href, S_Schema_Version : Symbol;
+   S_Release_Date, S_Xlink : Symbol;
+
    --  Shared symbol table (optional, this would be created automatically by
    --  each parser otherwise, it is just more efficient in the number of calls
    --  to malloc this way)
@@ -96,8 +105,6 @@ procedure Schematest is
    --  tests are not run.
 
    XSD_Version : XSD_Versions := XSD_1_1;
-
-   Xlink : constant String := "http://www.w3.org/1999/xlink";
 
    type Result_Kind is (Passed,
                         Not_Accepted,
@@ -167,8 +174,8 @@ procedure Schematest is
       Failed_Grammar : Boolean);
    --  Run the testsuite whose description is in Filename
 
-   function Get_Attribute (N : Node; Attribute : String) return String;
-   function Get_Attribute_NS (N : Node; URI, Local : String) return String;
+   function Get_Attribute (N : Node; Attribute : Symbol) return String;
+   function Get_Attribute_NS (N : Node; URI, Local : Symbol) return String;
    --  Query an attribute from N. The empty string is returned if the attribute
    --  does not exists
 
@@ -267,7 +274,7 @@ procedure Schematest is
    -- Get_Attribute --
    -------------------
 
-   function Get_Attribute (N : Node; Attribute : String) return String is
+   function Get_Attribute (N : Node; Attribute : Symbol) return String is
       Attr : constant Node := Get_Named_Item (Attributes (N), Attribute);
    begin
       if Attr = null then
@@ -281,7 +288,7 @@ procedure Schematest is
    -- Get_Attribute_NS --
    ----------------------
 
-   function Get_Attribute_NS (N : Node; URI, Local : String) return String is
+   function Get_Attribute_NS (N : Node; URI, Local : Symbol) return String is
       Attr : constant Node := Get_Named_Item_NS
         (Attributes (N), URI, Local);
    begin
@@ -300,10 +307,10 @@ procedure Schematest is
       N2 : Node := First_Child (N);
    begin
       while N2 /= null loop
-         if Local_Name (N2) = "expected" then
-            if Get_Attribute (N2, "validity") = "valid" then
+         if Local_Name (N2) = S_Expected then
+            if Get_Attribute (N2, S_Validity) = "valid" then
                return Valid;
-            elsif Get_Attribute (N2, "validity") = "invalid" then
+            elsif Get_Attribute (N2, S_Validity) = "invalid" then
                return Invalid;
             end if;
 
@@ -321,19 +328,19 @@ procedure Schematest is
       N2 : Node := First_Child (N);
    begin
       while N2 /= null loop
-         if Local_Name (N2) = "current" then
-            if Get_Attribute (N2, "status") = "accepted"
-              or else Get_Attribute (N2, "status") = "stable"
+         if Local_Name (N2) = S_Current then
+            if Get_Attribute (N2, S_Status) = "accepted"
+              or else Get_Attribute (N2, S_Status) = "stable"
             then
                return Accepted;
-            elsif Get_Attribute (N2, "status") = "queried"
-              or else Get_Attribute (N2, "status") = "disputed-spec"
-              or else Get_Attribute (N2, "status") = "disputed-test"
-              or else Get_Attribute (N2, "status") = "disputedTest"
+            elsif Get_Attribute (N2, S_Status) = "queried"
+              or else Get_Attribute (N2, S_Status) = "disputed-spec"
+              or else Get_Attribute (N2, S_Status) = "disputed-test"
+              or else Get_Attribute (N2, S_Status) = "disputedTest"
             then
                return Queried;
             else
-               Put_Line ("Invalid status: " & Get_Attribute (N2, "status"));
+               Put_Line ("Invalid status: " & Get_Attribute (N2, S_Status));
                raise Program_Error;
             end if;
 
@@ -357,7 +364,7 @@ procedure Schematest is
       Schema_Files   : out Unbounded_String)
    is
       Result   : Test_Result;
-      Name     : constant String := Get_Attribute (Schema, "name");
+      Name     : constant String := Get_Attribute (Schema, S_Name);
       XSD_Reader   : Schema_Reader;
       Input    : File_Input;
       N        : Node := First_Child (Schema);
@@ -386,7 +393,7 @@ procedure Schematest is
             Group.Test_Count := Group.Test_Count + 1;
 
             while N /= null loop
-               if Local_Name (N) = "schemaDocument" then
+               if Local_Name (N) = S_Schema_Document then
                   Group.Parsed_XSD := Group.Parsed_XSD + 1;
 
                   if Schema_Files /= Null_Unbounded_String then
@@ -394,7 +401,7 @@ procedure Schematest is
                   end if;
 
                   Load (Normalize_Pathname
-                        (Get_Attribute_NS (N, Xlink, "href"),
+                        (Get_Attribute_NS (N, S_Xlink, S_Href),
                          Base_Dir, Resolve_Links => False),
                     Input);
 
@@ -470,7 +477,7 @@ procedure Schematest is
       Failed_Grammar : Boolean)
    is
       Result   : Test_Result;
-      Name     : constant String := Get_Attribute (Test, "name");
+      Name     : constant String := Get_Attribute (Test, S_Name);
       Outcome  : constant Outcome_Value := Get_Expected (Test);
       N        : Node := First_Child (Test);
       Inst_Reader   : Validating_Reader;
@@ -510,13 +517,13 @@ procedure Schematest is
       Set_Feature (Inst_Reader, Schema_Validation_Feature, True);
 
       while N /= null loop
-         if Local_Name (N) = "instanceDocument" then
+         if Local_Name (N) = S_Instance_Document then
             begin
                Group.Parsed_XML := Group.Parsed_XML + 1;
 
                Result.Kind := Passed;
                Load (Normalize_Pathname
-                     (Get_Attribute_NS (N, Xlink, "href"),
+                     (Get_Attribute_NS (N, S_Xlink, S_Href),
                       Base_Dir, Resolve_Links => False),
                      Input);
                Result.XML := To_Unbounded_String (Get_System_Id (Input));
@@ -593,10 +600,10 @@ procedure Schematest is
       N2, N3 : Node;
    begin
       while N /= null loop
-         if Local_Name (N) = "documentation" then
+         if Local_Name (N) = S_Documentation then
             N2 := First_Child (N);
             while N2 /= null loop
-               if Local_Name (N2) = "Description" then
+               if Local_Name (N2) = S_Description then
                   N3 := First_Child (N2);
                   while N3 /= null loop
                      Append (Result.Descr, Node_Value (N3));
@@ -629,7 +636,7 @@ procedure Schematest is
       Base_Dir   : String;
       Schema     : in out XML_Grammar)
    is
-      Name           : constant String := Get_Attribute (Group, "name");
+      Name           : constant String := Get_Attribute (Group, S_Name);
       N              : Node := First_Child (Group);
       Schema_Files   : Unbounded_String;
       Result         : Group_Result;
@@ -659,10 +666,10 @@ procedure Schematest is
       end if;
 
       while N /= null loop
-         if Local_Name (N) = "annotation" then
+         if Local_Name (N) = S_Annotation then
             Set_Description (Result, N);
 
-         elsif Local_Name (N) = "schemaTest" then
+         elsif Local_Name (N) = S_Schema_Test then
             Parse_Schema_Test
               (Result, N, Base_Dir,
                Failed_Grammar => Failed_Grammar,
@@ -679,7 +686,7 @@ procedure Schematest is
 
             exit when Failed_Grammar;
 
-         elsif Local_Name (N) = "instanceTest" then
+         elsif Local_Name (N) = S_Instance_Test then
             Parse_Instance_Test (Result, Schema_Files, N, Base_Dir, Schema,
                                  Failed_Grammar);
          end if;
@@ -727,7 +734,7 @@ procedure Schematest is
       Close (Input);
 
       N := Get_Element (Get_Tree (Reader));
-      Name := To_Unbounded_String (Get_Attribute (N, "name"));
+      Name := To_Unbounded_String (Get_Attribute (N, S_Name));
 
       if Verbose then
          Put_Line ("Testset: " & To_String (Name));
@@ -735,7 +742,7 @@ procedure Schematest is
 
       N := First_Child (N);
       while N /= null loop
-         if Local_Name (N) = "testGroup" then
+         if Local_Name (N) = Test_Group then
             Run_Test_Group
               (Testset    => To_String (Name),
                Group      => N,
@@ -766,15 +773,15 @@ procedure Schematest is
       Close (Input);
 
       N := Get_Element (Get_Tree (Reader));
-      Put_Line ("Version: " & Get_Attribute (N, "schemaVersion"));
-      Put_Line ("Release: " & Get_Attribute (N, "releaseDate"));
+      Put_Line ("Version: " & Get_Attribute (N, S_Schema_Version));
+      Put_Line ("Release: " & Get_Attribute (N, S_Release_Date));
 
       N := First_Child (N);
       while N /= null loop
-         if Local_Name (N) = "testSetRef" then
+         if Local_Name (N) = Test_Set_Ref then
             Run_Testset
               (Normalize_Pathname
-                 (Get_Attribute_NS (N, Xlink, "href"),
+                 (Get_Attribute_NS (N, S_Xlink, S_Href),
                   Dir_Name (Filename),
                   Resolve_Links => False),
                Schema => Schema);
@@ -976,6 +983,25 @@ begin
       S : constant Symbol_Table_Access := new Symbol_Table_Record;
    begin
       Symbols := Symbol_Table_Pointers.Allocate (S);
+
+      Test_Set_Ref := Find (S, "testSetRef");
+      Test_Group   := Find (S, "testGroup");
+      S_Annotation := Find (S, "annotation");
+      S_Schema_Test := Find (S, "schemaTest");
+      S_Instance_Test := Find (S, "instanceTest");
+      S_Documentation := Find (S, "documentation");
+      S_Description   := Find (S, "Description");
+      S_Instance_Document := Find (S, "instanceDocument");
+      S_Schema_Document := Find (S, "schemaDocument");
+      S_Current := Find (S, "current");
+      S_Expected := Find (S, "expected");
+      S_Validity := Find (S, "validity");
+      S_Status   := Find (S, "status");
+      S_Name     := Find (S, "name");
+      S_Href     := Find (S, "href");
+      S_Schema_Version := Find (S, "schemaVersion");
+      S_Release_Date   := Find (S, "releaseDate");
+      S_Xlink := Find (S, "http://www.w3.org/1999/xlink");
    end;
 
    loop

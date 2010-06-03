@@ -26,7 +26,9 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
 with Sax.Attributes;       use Sax.Attributes;
+with Sax.Utils;            use Sax.Utils;
 with Unicode;              use Unicode;
 with Unicode.CES;          use Unicode.CES;
 with DOM.Core.Attrs;       use DOM.Core.Attrs;
@@ -54,29 +56,30 @@ package body Schema.Dom_Readers is
    -- Start_Element --
    -------------------
 
-   procedure Start_Element
+   overriding procedure Start_Element
      (Handler       : in out Tree_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class)
+      NS            : Sax.Utils.XML_NS;
+      Local_Name    : Sax.Symbols.Symbol;
+      Atts          : Sax.Readers.Sax_Attribute_List)
    is
       Att, Att2 : Attr;
-      pragma Warnings (Off, Local_Name);
       pragma Warnings (Off, Att2);
    begin
       Handler.Current_Node := Append_Child
         (Handler.Current_Node,
-         Create_Element_NS (Handler.Tree,
-                            Namespace_URI => Namespace_URI,
-                            Qualified_Name => Qname));
+         Create_Element_NS
+           (Handler.Tree,
+            Namespace_URI => Get_URI (NS),
+            Prefix        => Get_Prefix (NS),
+            Local_Name    => Local_Name));
 
       --  Insert the attributes in the right order.
-      for J in 0 .. Get_Length (Atts) - 1 loop
+      for J in 1 .. Get_Length (Atts) loop
          Att := Create_Attribute_NS
            (Handler.Tree,
             Namespace_URI  => Get_URI (Atts, J),
-            Qualified_Name => Get_Qname (Atts, J));
+            Prefix         => Get_Prefix (Atts, J),
+            Local_Name     => Get_Local_Name (Atts, J));
          Set_Value (Att, Get_Value (Atts, J));
          Att2 := Set_Attribute_Node (Handler.Current_Node, Att);
          if Get_Type (Atts, J) = Id then
@@ -89,15 +92,13 @@ package body Schema.Dom_Readers is
    -- End_Element --
    -----------------
 
-   procedure End_Element
-     (Handler : in out Tree_Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "")
+   overriding procedure End_Element
+     (Handler       : in out Tree_Reader;
+      NS            : Sax.Utils.XML_NS;
+      Local_Name    : Sax.Symbols.Symbol)
    is
-      pragma Warnings (Off, Namespace_URI);
+      pragma Warnings (Off, NS);
       pragma Warnings (Off, Local_Name);
-      pragma Warnings (Off, Qname);
    begin
       Handler.Current_Node := Parent_Node (Handler.Current_Node);
    end End_Element;

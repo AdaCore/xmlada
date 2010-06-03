@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2005                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -59,5 +58,15 @@ package body DOM.Core.Attrs is
    begin
       return Att.Is_Id;
    end Is_Id;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Att : Attr; Value : Sax.Symbols.Symbol) is
+   begin
+      Att.Attr_Value := Value;
+      Att.Specified := True;
+   end Set_Value;
 
 end DOM.Core.Attrs;

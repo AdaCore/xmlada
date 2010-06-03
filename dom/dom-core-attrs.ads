@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -44,6 +43,7 @@ package DOM.Core.Attrs is
 
    procedure Set_Value (Att : Attr; Value : DOM_String)
       renames DOM.Core.Nodes.Set_Node_Value;
+   procedure Set_Value (Att : Attr; Value : Sax.Symbols.Symbol);
    --  Set the value of the attribute
 
    function Owner_Element (Att : Attr) return Element;

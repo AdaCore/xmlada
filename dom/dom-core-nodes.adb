@@ -76,6 +76,9 @@ package body DOM.Core.Nodes is
    --  Sort alphabetically the contents of Map (this is based on the value
    --  of Node_Name).
 
+   function Namespace_URI (N : Node) return Symbol;
+   --  Internal version returning symbols
+
    --------------------
    -- Child_Is_Valid --
    --------------------
@@ -385,20 +388,29 @@ package body DOM.Core.Nodes is
 
    function Namespace_URI (N : Node) return DOM_String is
    begin
+      return Get (Namespace_URI (N)).all;
+   end Namespace_URI;
+
+   -------------------
+   -- Namespace_URI --
+   -------------------
+
+   function Namespace_URI (N : Node) return Symbol is
+   begin
       case N.Node_Type is
          when Element_Node   =>
             if N.Name.Namespace = No_Symbol then
-               return "";
+               return Empty_String;
             else
-               return Get (N.Name.Namespace).all;
+               return N.Name.Namespace;
             end if;
          when Attribute_Node =>
             if N.Attr_Name.Namespace = No_Symbol then
-               return "";
+               return Empty_String;
             else
-               return Get (N.Attr_Name.Namespace).all;
+               return N.Attr_Name.Namespace;
             end if;
-         when others         => return "";
+         when others         => return Empty_String;
       end case;
    end Namespace_URI;
 
@@ -459,6 +471,19 @@ package body DOM.Core.Nodes is
          when Element_Node   => return Get (N.Name.Local_Name).all;
          when Attribute_Node => return Get (N.Attr_Name.Local_Name).all;
          when others         => return "";
+      end case;
+   end Local_Name;
+
+   ----------------
+   -- Local_Name --
+   ----------------
+
+   function Local_Name (N : Node) return Sax.Symbols.Symbol is
+   begin
+      case N.Node_Type is
+         when Element_Node   => return N.Name.Local_Name;
+         when Attribute_Node => return N.Attr_Name.Local_Name;
+         when others         => return Empty_String;
       end case;
    end Local_Name;
 
@@ -795,6 +820,23 @@ package body DOM.Core.Nodes is
    end Get_Named_Item;
 
    --------------------
+   -- Get_Named_Item --
+   --------------------
+
+   function Get_Named_Item
+     (Map : Named_Node_Map; Name : Sax.Symbols.Symbol) return Node is
+   begin
+      for J in 0 .. Map.Last loop
+         if Namespace_URI (Map.Items (J)) = Empty_String
+           and then Local_Name (Map.Items (J)) = Name
+         then
+            return Map.Items (J);
+         end if;
+      end loop;
+      return null;
+   end Get_Named_Item;
+
+   --------------------
    -- Set_Named_Item --
    --------------------
 
@@ -887,6 +929,25 @@ package body DOM.Core.Nodes is
      (Map           : Named_Node_Map;
       Namespace_URI : DOM_String;
       Local_Name    : DOM_String) return Node is
+   begin
+      for J in 0 .. Map.Last loop
+         if DOM.Core.Nodes.Namespace_URI (Map.Items (J)) = Namespace_URI
+           and then DOM.Core.Nodes.Local_Name (Map.Items (J)) = Local_Name
+         then
+            return Map.Items (J);
+         end if;
+      end loop;
+      return null;
+   end Get_Named_Item_NS;
+
+   --------------------
+   -- Get_Named_Item --
+   --------------------
+
+   function Get_Named_Item_NS
+     (Map           : Named_Node_Map;
+      Namespace_URI : Symbol;
+      Local_Name    : Symbol) return Node is
    begin
       for J in 0 .. Map.Last loop
          if DOM.Core.Nodes.Namespace_URI (Map.Items (J)) = Namespace_URI

@@ -106,6 +106,28 @@ package body DOM.Core.Documents is
          Attributes => Null_Node_Map);
    end Create_Element_NS;
 
+   -----------------------
+   -- Create_Element_NS --
+   -----------------------
+
+   function Create_Element_NS
+     (Doc            : Document;
+      Namespace_URI  : Sax.Symbols.Symbol;
+      Prefix         : Sax.Symbols.Symbol;
+      Local_Name     : Sax.Symbols.Symbol) return Element is
+   begin
+      return new Node_Record'
+        (Node_Type       => Element_Node,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
+         Name            =>
+           (Local_Name => Local_Name,
+            Prefix     => Prefix,
+            Namespace  => Namespace_URI),
+         Children        => Null_List,
+         Attributes      => Null_Node_Map);
+   end Create_Element_NS;
+
    ------------------------------
    -- Create_Document_Fragment --
    ------------------------------
@@ -231,6 +253,30 @@ package body DOM.Core.Documents is
          Attr_Name       => From_Qualified_Name
            (Doc, Qualified_Name, Find
               (Symbol_Table_Pointers.Get (Doc.Symbols), Namespace_URI)),
+         Attr_Value      => No_Symbol);
+   end Create_Attribute_NS;
+
+   -------------------------
+   -- Create_Attribute_NS --
+   -------------------------
+
+   function Create_Attribute_NS
+     (Doc           : Document;
+      Namespace_URI : Sax.Symbols.Symbol;
+      Prefix        : Sax.Symbols.Symbol;
+      Local_Name    : Sax.Symbols.Symbol) return Attr is
+   begin
+      return new Node_Record'
+        (Node_Type       => Attribute_Node,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
+         Specified       => False,
+         Owner_Element   => Doc,
+         Is_Id           => False,
+         Attr_Name       =>
+           (Local_Name => Local_Name,
+            Namespace  => Namespace_URI,
+            Prefix     => Prefix),
          Attr_Value      => No_Symbol);
    end Create_Attribute_NS;
 

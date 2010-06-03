@@ -146,7 +146,7 @@ package body DOM.Core is
    function Qualified_Name (N : Node_Name_Def) return DOM_String is
    begin
       pragma Assert (N.Local_Name /= No_Symbol);
-      if N.Prefix = No_Symbol then
+      if N.Prefix = No_Symbol or N.Prefix = Empty_String then
          return Get (N.Local_Name).all;
       else
          return Get (N.Prefix).all & Colon_Sequence & Get (N.Local_Name).all;
