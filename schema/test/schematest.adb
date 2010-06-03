@@ -358,7 +358,7 @@ procedure Schematest is
    is
       Result   : Test_Result;
       Name     : constant String := Get_Attribute (Schema, "name");
-      Reader   : Schema_Reader;
+      XSD_Reader   : Schema_Reader;
       Input    : File_Input;
       N        : Node := First_Child (Schema);
       Outcome  : constant Outcome_Value := Get_Expected (Schema);
@@ -379,9 +379,9 @@ procedure Schematest is
 
       else
          begin
-            Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
-            Set_Grammar (Reader, Grammar);
-            Use_Basename_In_Error_Messages (Reader, True);
+            Set_Symbol_Table (XSD_Reader, Symbols);  --  optional (efficiency)
+            Set_Grammar (XSD_Reader, Grammar);
+            Use_Basename_In_Error_Messages (XSD_Reader, True);
 
             Group.Test_Count := Group.Test_Count + 1;
 
@@ -405,14 +405,14 @@ procedure Schematest is
                   Result.XSD := To_Unbounded_String (Get_System_Id (Input));
                   Append (Schema_Files, Result.XSD);
 
-                  Parse (Reader, Input);
+                  Parse (XSD_Reader, Input);
                   Close (Input);
                end if;
 
                N := Next_Sibling (N);
             end loop;
 
-            Grammar := Get_Grammar (Reader);
+            Grammar := Get_Grammar (XSD_Reader);
 
             if Outcome = Invalid then
                Result.Kind  := XSD_Should_Fail;
@@ -428,7 +428,8 @@ procedure Schematest is
 
             when XML_Validation_Error =>
                Close (Input);
-               Result.Msg  := To_Unbounded_String (Get_Error_Message (Reader));
+               Result.Msg  :=
+                 To_Unbounded_String (Get_Error_Message (XSD_Reader));
                Failed_Grammar := True;
                if Outcome = Valid then
                   Result.Kind    := XSD_Should_Pass;
@@ -472,7 +473,6 @@ procedure Schematest is
       Name     : constant String := Get_Attribute (Test, "name");
       Outcome  : constant Outcome_Value := Get_Expected (Test);
       N        : Node := First_Child (Test);
-      Reader   : Validating_Reader;
       Input    : File_Input;
       Tmp_Gr   : Group_Result;
    begin
@@ -503,10 +503,10 @@ procedure Schematest is
          return;
       end if;
 
-      Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
-      Use_Basename_In_Error_Messages (Reader, True);
-      Set_Grammar (Reader, Grammar);
-      Set_Feature (Reader, Schema_Validation_Feature, True);
+      Set_Symbol_Table (Inst_Reader, Symbols);  --  optional, for efficiency
+      Use_Basename_In_Error_Messages (Inst_Reader, True);
+      Set_Grammar (Inst_Reader, Grammar);
+      Set_Feature (Inst_Reader, Schema_Validation_Feature, True);
 
       while N /= null loop
          if Local_Name (N) = "instanceDocument" then
@@ -533,7 +533,7 @@ procedure Schematest is
                   end if;
 
                else
-                  Parse (Reader, Input);
+                  Parse (Inst_Reader, Input);
                   Close (Input);
 
                   if Outcome = Invalid then
@@ -550,7 +550,7 @@ procedure Schematest is
                when XML_Validation_Error =>
                   Close (Input);
                   Result.Msg  :=
-                    To_Unbounded_String (Get_Error_Message (Reader));
+                    To_Unbounded_String (Get_Error_Message (Inst_Reader));
                   if Outcome = Valid then
                      Result.Kind := XML_Should_Pass;
                   else
