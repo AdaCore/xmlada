@@ -35,7 +35,7 @@ package body Schema.Validators.XSD_Grammar is
    procedure Add_Schema_For_Schema
      (R : access Schema.Validators.Abstract_Validation_Reader'Class)
    is
-      G, XML_G, XML_IG : XML_Grammar_NS;
+      G, XML_G      : XML_Grammar_NS;
       Tmp2          : XML_Validator;
       Typ, Typ2     : XML_Validator;
       Seq1, Seq2    : Sequence;
@@ -76,7 +76,6 @@ package body Schema.Validators.XSD_Grammar is
    begin
       Get_NS (R.Grammar, R.XML_Schema_URI,   Result => G);
       Get_NS (R.Grammar, R.XML_URI,          Result => XML_G);
-      Get_NS (R.Grammar, R.XML_Instance_URI, Result => XML_IG);
 
       Create_UR_Type_Elements (R, G, R.Grammar);
 
@@ -1140,15 +1139,6 @@ package body Schema.Validators.XSD_Grammar is
       --  The namespace schema
 
       Create_Global_Attribute (XML_G, R, R.Base, Str);
-
-      --  The schema instance namespace
-
-      Create_Global_Attribute (XML_IG, R, R.Nil, Bool);
-      Create_Global_Attribute (XML_IG, R, R.Typ, QNAME);
-      Create_Global_Attribute
-        (XML_IG, R, R.Schema_Location, List_Of (XML_IG, uriReference));
-      Create_Global_Attribute
-        (XML_IG, R, R.No_Namespace_Schema_Location, uriReference);
 
       Global_Check (R, G);
    end Add_Schema_For_Schema;

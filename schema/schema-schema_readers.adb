@@ -2223,6 +2223,21 @@ package body Schema.Schema_Readers is
 
       if Name_Index /= -1 then
          case Handler.Contexts.Next.Typ is
+            when Context_Attribute_Group | Context_Type_Def =>
+               null;
+
+            when others =>
+               if Get_Namespace_URI (Handler.Target_NS) =
+                 Handler.XML_Instance_URI
+               then
+                  Validation_Error
+                    (Handler,
+                     "Invalid target namespace for attribute declaration: """
+                     & Get (Get_Namespace_URI (Handler.Target_NS)).all & """");
+               end if;
+         end case;
+
+         case Handler.Contexts.Next.Typ is
             when Context_Schema | Context_Redefine =>
                Att := Create_Global_Attribute
                  (Local_Name     => Get_Value (Atts, Name_Index),

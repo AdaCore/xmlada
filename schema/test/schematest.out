@@ -50254,8 +50254,9 @@ Grp: MS-Attribute2006-07-15 / attKa014
     attKa014.xsd:4:52: Attribute "name": Invalid value: "xmlns:a"
 
 Grp: MS-Attribute2006-07-15 / attKa015
-   0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
-  SF attKa015
+  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
+  OK attKa015
+    Invalid target namespace for attribute declaration: "http://www.w3.org/2001/XMLSchema-instance"
 
 Grp: MS-Attribute2006-07-15 / attKb001
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
@@ -52169,7 +52170,7 @@ Grp: MS-ComplexType2006-07-15 / ctD003
 Grp: MS-ComplexType2006-07-15 / ctD004
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
   OK ctD004
-    ctD004.xsd:10:40: Type specified in a simpleContent context must not have a complexContent
+    ctD004.xsd:10:40: anyType specified in a simpleContent context must not have a complexContext
 
 Grp: MS-ComplexType2006-07-15 / ctD005
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -95263,8 +95264,8 @@ Total number of tests: 37037 (omitting non-accepted tests)
    23354 XML files
 NI: Features not implemented: in_partial= 210 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 96
-SF: XSD OK, should be KO: in_full_fail= 633
+SF: XSD OK, should be KO: in_full_fail= 632
 XP: XML KO, should be OK: in_partial= 11 in_full_fail= 1
 XF: XML OK, should be KO: in_partial= 4 in_full_fail= 2
 IE: Internal error:
-Total errors: 747 ( 2.0 %)
+Total errors: 746 ( 2.0 %)

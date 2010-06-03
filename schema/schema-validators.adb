@@ -429,7 +429,10 @@ package body Schema.Validators is
                   end if;
                end loop;
 
-               if Changed then
+               if Changed
+                 or else First /= V'First
+                 or else Last - 1 /= V'Last
+               then
                   return Find_Symbol (Reader.all, V (First .. Last - 1));
                else
                   return Val;
@@ -2435,6 +2438,56 @@ package body Schema.Validators is
 
       Free (Grammar.Parsed_Locations);
    end Free;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Grammar : in out XML_Grammar) is
+      G     : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      Count : Natural := 0;
+      Tmp   : Grammar_NS_Array_Access;
+   begin
+      if Debug then
+         Put_Line ("Partial reset of the grammar");
+      end if;
+
+      if G = null then
+         return;
+      end if;
+
+      Tmp := G.Grammars;
+
+      if Tmp /= null then
+         for NS in Tmp'Range loop
+            if Get (Tmp (NS).Namespace_URI).all /= XML_Schema_URI
+              and then Get (Tmp (NS).Namespace_URI).all /= XML_URI
+            then
+               Free (Tmp (NS));
+            else
+               Count := Count + 1;
+            end if;
+         end loop;
+
+         if Count /= 0 then
+            G.Grammars := new Grammar_NS_Array (1 .. Count);
+            Count := G.Grammars'First;
+            for NS in Tmp'Range loop
+               if Tmp (NS) /= null then
+                  G.Grammars (Count) := Tmp (NS);
+                  Count := Count + 1;
+               end if;
+            end loop;
+         else
+            Unchecked_Free (G.Grammars);
+         end if;
+
+         Unchecked_Free (Tmp);
+      end if;
+
+      Free (G.Parsed_Locations);
+      G.Target_NS := null;
+   end Reset;
 
    --------------------
    -- URI_Was_Parsed --

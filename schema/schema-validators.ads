@@ -1161,6 +1161,17 @@ package Schema.Validators is
    --  Initialize the internal structure of the grammar.
    --  This adds the definition for all predefined types
 
+   procedure Reset (Grammar : in out XML_Grammar);
+   --  Partial reset of the grammar: all the namespace-specific grammars are
+   --  deleted, except for the grammar used to validate the XSD files
+   --  themselves. This is mostly convenient if you want to reuse a grammar
+   --  to handle _lots_ of unrelated XSD files (if your application only uses
+   --  a few of these, you can easily store them all in the same grammar, but
+   --  if you have hundreds of them, it might be more memory-efficient to
+   --  discard the namespaces you no longer use).
+   --  Keeping the grammar for the XSD files provides a minor optimization,
+   --  avoiding the need to recreate it the next time you parse a XSD file.
+
    procedure Global_Check
      (Reader  : access Abstract_Validation_Reader'Class;
       Grammar : XML_Grammar_NS);
