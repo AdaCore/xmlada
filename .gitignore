@@ -31,3 +31,4 @@ b~*.ad*
 *.so.*
 *.so
 *.lexch
+*.dll
