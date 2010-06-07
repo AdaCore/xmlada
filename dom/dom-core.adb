@@ -53,16 +53,23 @@ package body DOM.Core is
 
    function Create_Document
      (Implementation : DOM_Implementation;
-      Symbols        : Sax.Utils.Symbol_Table;
+      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table;
       NameSpace_URI  : DOM_String := "";
       Qualified_Name : DOM_String := "";
       Doc_Type       : Node := null) return Node
    is
       pragma Warnings (Off, NameSpace_URI);
       pragma Warnings (Off, Qualified_Name);
+      use Symbol_Table_Pointers;
+      Sym : Sax.Utils.Symbol_Table := Symbols;
+      Tmp : Symbol_Table_Access;
    begin
       pragma Assert
         (Doc_Type = null or else Doc_Type.Node_Type = Document_Type_Node);
+      if Sym = No_Symbol_Table then
+         Tmp := new Symbol_Table_Record;
+         Sym := Symbol_Table_Pointers.Allocate (Tmp);
+      end if;
       return new Node_Record'
         (Node_Type      => Document_Node,
          Parent         => null,

@@ -58,6 +58,9 @@ package DOM.Core.Documents is
    --  Invalid_Character_Err is raised if Tag_Name contains invalid
    --  characters.
    --  Namespace_Err raised if Qualified_Name is incorrect.
+   --  The version with Symbols is more efficient, but the symbols
+   --  must be from the symbol table used by the document, ie the
+   --  one you passed to Create_Document.
 
    function Create_Document_Fragment (Doc : Document) return Document_Fragment;
    --  Create an empty document fragment;
