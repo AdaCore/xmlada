@@ -126,7 +126,7 @@ package DOM.Core is
 
    function Create_Document
      (Implementation : DOM_Implementation;
-      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table;
+      Symbols        : Sax.Utils.Symbol_Table;
       NameSpace_URI  : DOM_String := "";
       Qualified_Name : DOM_String := "";
       Doc_Type       : Node := null) return Node;
@@ -140,7 +140,8 @@ package DOM.Core is
    --  Symbols should be used to specify the symbol table used by the parser
    --  that generates the DOM. It is needed because the various string elements
    --  in the tree are represented as symbols and the correct symbol table must
-   --  be specified.
+   --  be specified. You can get it from the parser itself by using
+   --  Get_Symbol_Table.
 
    procedure Set_Node_List_Growth_Factor (Factor : Float);
    --  Set the growth factor, see Default_Node_List_Growth_Factor

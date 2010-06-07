@@ -53,7 +53,7 @@ package body DOM.Core is
 
    function Create_Document
      (Implementation : DOM_Implementation;
-      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table;
+      Symbols        : Sax.Utils.Symbol_Table;
       NameSpace_URI  : DOM_String := "";
       Qualified_Name : DOM_String := "";
       Doc_Type       : Node := null) return Node
