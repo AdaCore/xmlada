@@ -32,7 +32,7 @@ with Sax.Symbols;               use Sax.Symbols;
 with Sax.Utils;                 use Sax.Utils;
 
 package body DOM.Core.Documents is
-   use Nodes_Htable;
+   use Nodes_Htable, Symbol_Table_Pointers;
 
    --------------
    -- Doc_Type --
@@ -81,7 +81,8 @@ package body DOM.Core.Documents is
         (Node_Type  => Element_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Name       => From_Qualified_Name (Doc, Tag_Name, No_Symbol),
+         Name       => From_Qualified_Name
+           (Doc, Doc.Symbols, Find (Doc.Symbols, Tag_Name)),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element;
@@ -100,8 +101,10 @@ package body DOM.Core.Documents is
          Parent          => Doc,
          Parent_Is_Owner => True,
          Name       => From_Qualified_Name
-           (Doc, Qualified_Name,
-            Find (Symbol_Table_Pointers.Get (Doc.Symbols), Namespace_URI)),
+           (Doc,
+            Doc.Symbols,
+            Find (Doc.Symbols, Qualified_Name),
+            Find (Doc.Symbols, Namespace_URI)),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element_NS;
@@ -112,18 +115,28 @@ package body DOM.Core.Documents is
 
    function Create_Element_NS
      (Doc            : Document;
+      Symbols        : Sax.Utils.Symbol_Table;
       Namespace_URI  : Sax.Symbols.Symbol;
       Prefix         : Sax.Symbols.Symbol;
-      Local_Name     : Sax.Symbols.Symbol) return Element is
+      Local_Name     : Sax.Symbols.Symbol) return Element
+   is
+      Name : Node_Name_Def;
    begin
+      if Symbols = Doc.Symbols then
+         Name := (Local_Name => Local_Name,
+                  Prefix     => Prefix,
+                  Namespace  => Namespace_URI);
+      else
+         Name := (Local_Name => Convert (Doc.Symbols, Local_Name),
+                  Prefix     => Convert (Doc.Symbols, Prefix),
+                  Namespace  => Convert (Doc.Symbols, Namespace_URI));
+      end if;
+
       return new Node_Record'
         (Node_Type       => Element_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Name            =>
-           (Local_Name => Local_Name,
-            Prefix     => Prefix,
-            Namespace  => Namespace_URI),
+         Name            => Name,
          Children        => Null_List,
          Attributes      => Null_Node_Map);
    end Create_Element_NS;
@@ -230,7 +243,8 @@ package body DOM.Core.Documents is
          Specified       => False,
          Owner_Element   => Doc,
          Is_Id           => False,
-         Attr_Name       => From_Qualified_Name (Doc, Name, No_Symbol),
+         Attr_Name       => From_Qualified_Name
+           (Doc, Doc.Symbols, Find (Doc.Symbols, Name)),
          Attr_Value      => No_Symbol);
    end Create_Attribute;
 
@@ -251,8 +265,9 @@ package body DOM.Core.Documents is
          Owner_Element   => Doc,
          Is_Id           => False,
          Attr_Name       => From_Qualified_Name
-           (Doc, Qualified_Name, Find
-              (Symbol_Table_Pointers.Get (Doc.Symbols), Namespace_URI)),
+           (Doc, Doc.Symbols,
+            Find (Doc.Symbols, Qualified_Name),
+            Find (Doc.Symbols, Namespace_URI)),
          Attr_Value      => No_Symbol);
    end Create_Attribute_NS;
 
@@ -262,10 +277,23 @@ package body DOM.Core.Documents is
 
    function Create_Attribute_NS
      (Doc           : Document;
+      Symbols       : Symbol_Table;
       Namespace_URI : Sax.Symbols.Symbol;
       Prefix        : Sax.Symbols.Symbol;
-      Local_Name    : Sax.Symbols.Symbol) return Attr is
+      Local_Name    : Sax.Symbols.Symbol) return Attr
+   is
+      Name : Node_Name_Def;
    begin
+      if Symbols = Doc.Symbols then
+         Name := (Local_Name => Local_Name,
+                  Namespace  => Namespace_URI,
+                  Prefix     => Prefix);
+      else
+         Name := (Local_Name => Convert (Doc.Symbols, Local_Name),
+                  Namespace  => Convert (Doc.Symbols, Namespace_URI),
+                  Prefix     => Convert (Doc.Symbols, Prefix));
+      end if;
+
       return new Node_Record'
         (Node_Type       => Attribute_Node,
          Parent          => Doc,
@@ -273,10 +301,7 @@ package body DOM.Core.Documents is
          Specified       => False,
          Owner_Element   => Doc,
          Is_Id           => False,
-         Attr_Name       =>
-           (Local_Name => Local_Name,
-            Namespace  => Namespace_URI,
-            Prefix     => Prefix),
+         Attr_Name       => Name,
          Attr_Value      => No_Symbol);
    end Create_Attribute_NS;
 
@@ -294,8 +319,7 @@ package body DOM.Core.Documents is
         (Node_Type => Entity_Reference_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Entity_Reference_Name => Find
-              (Symbol_Table_Pointers.Get (Doc.Symbols), Name));
+         Entity_Reference_Name => Find (Doc.Symbols, Name));
    end Create_Entity_Reference;
 
    ------------------------------
@@ -363,7 +387,7 @@ package body DOM.Core.Documents is
       if Doc.Ids = null then
          return null;
       else
-         N := Find (Symbol_Table_Pointers.Get (Doc.Symbols), Element_Id);
+         N := Find (Doc.Symbols, Element_Id);
          return Get (Doc.Ids.all, N).N;
       end if;
    end Get_Element_By_Id;

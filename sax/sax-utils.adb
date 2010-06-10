@@ -842,4 +842,41 @@ package body Sax.Utils is
       List := NS;
    end Add_NS_To_List;
 
+   --------------
+   -- Allocate --
+   --------------
+
+   function Allocate return Symbol_Table is
+      S : Symbol_Table_Access;
+   begin
+      S := new Symbol_Table_Record;
+      return Symbol_Table_Pointers.Allocate (S);
+   end Allocate;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find
+     (Table : Symbol_Table; Str : Unicode.CES.Byte_Sequence)
+      return Sax.Symbols.Symbol is
+   begin
+      return Find (Symbol_Table_Pointers.Get (Table), Str);
+   end Find;
+
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert
+     (Table : Symbol_Table; Sym : Sax.Symbols.Symbol)
+      return Sax.Symbols.Symbol is
+   begin
+      if Sym = No_Symbol then
+         return No_Symbol;
+      else
+         return Find (Table, Get (Sym).all);
+      end if;
+   end Convert;
+
 end Sax.Utils;

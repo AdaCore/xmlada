@@ -34,7 +34,7 @@ with Sax.Symbols;   use Sax.Symbols;
 with Sax.Utils;     use Sax.Utils;
 
 package body DOM.Core is
-   use Nodes_Htable;
+   use Nodes_Htable, Symbol_Table_Pointers;
 
    Node_List_Growth_Factor : Float := Default_Node_List_Growth_Factor;
 
@@ -53,14 +53,14 @@ package body DOM.Core is
 
    function Create_Document
      (Implementation : DOM_Implementation;
-      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table;
       NameSpace_URI  : DOM_String := "";
       Qualified_Name : DOM_String := "";
-      Doc_Type       : Node := null) return Node
+      Doc_Type       : Node := null;
+      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table)
+      return Node
    is
       pragma Warnings (Off, NameSpace_URI);
       pragma Warnings (Off, Qualified_Name);
-      use Symbol_Table_Pointers;
       Sym : Sax.Utils.Symbol_Table := Symbols;
       Tmp : Symbol_Table_Access;
    begin
@@ -178,6 +178,7 @@ package body DOM.Core is
 
    function From_Qualified_Name
      (Doc       : Document;
+      Symbols   : Sax.Utils.Symbol_Table;
       Name      : Sax.Symbols.Symbol;
       Namespace : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
       return Node_Name_Def
@@ -199,12 +200,14 @@ package body DOM.Core is
 
       if C = Colon then
          return
-           (Prefix     =>
-              Find (Symbol_Table_Pointers.Get (Doc.Symbols),
-                    N (N'First .. Colon_Pos - 1)),
-            Local_Name =>
-              Find (Symbol_Table_Pointers.Get (Doc.Symbols),
-                    N (Index .. N'Last)),
+           (Prefix     => Find (Doc.Symbols, N (N'First .. Colon_Pos - 1)),
+            Local_Name => Find (Doc.Symbols, N (Index .. N'Last)),
+            Namespace  => Namespace);
+
+      elsif Symbols /= Doc.Symbols then
+         return
+           (Prefix     => Find (Doc.Symbols, Get (Name).all),
+            Local_Name => Find (Doc.Symbols, Get (Namespace).all),
             Namespace  => Namespace);
       else
          return
@@ -212,21 +215,6 @@ package body DOM.Core is
             Local_Name => Name,
             Namespace  => Namespace);
       end if;
-   end From_Qualified_Name;
-
-   -------------------------
-   -- From_Qualified_Name --
-   -------------------------
-
-   function From_Qualified_Name
-     (Doc       : Document;
-      Name      : DOM_String;
-      Namespace : Symbol := No_Symbol) return Node_Name_Def is
-   begin
-      return From_Qualified_Name
-        (Doc,
-         Find (Symbol_Table_Pointers.Get (Doc.Symbols), Name),
-         Namespace);
    end From_Qualified_Name;
 
    ----------

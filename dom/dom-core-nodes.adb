@@ -205,8 +205,7 @@ package body DOM.Core.Nodes is
          when Attribute_Node =>
             --  ??? If Specified is False, we should make a copy and assign
             --  it to the owner element
-            N.Attr_Value := Find
-              (Symbol_Table_Pointers.Get (Owner_Document (N).Symbols), Value);
+            N.Attr_Value := Find (Owner_Document (N).Symbols, Value);
             N.Specified := True;
 
          when Text_Node =>
@@ -218,8 +217,7 @@ package body DOM.Core.Nodes is
             N.Cdata := new DOM_String'(Value);
 
          when Processing_Instruction_Node =>
-            N.Pi_Data := Find
-              (Symbol_Table_Pointers.Get (Owner_Document (N).Symbols), Value);
+            N.Pi_Data := Find (Owner_Document (N).Symbols, Value);
 
          when Comment_Node =>
             Free (N.Comment);
@@ -452,11 +450,9 @@ package body DOM.Core.Nodes is
 
       case N.Node_Type is
          when Element_Node   =>
-            N.Name.Prefix := Find
-              (Symbol_Table_Pointers.Get (Doc.Symbols), Prefix);
+            N.Name.Prefix := Find (Doc.Symbols, Prefix);
          when Attribute_Node =>
-            N.Attr_Name.Prefix := Find
-              (Symbol_Table_Pointers.Get (Doc.Symbols), Prefix);
+            N.Attr_Name.Prefix := Find (Doc.Symbols, Prefix);
          when others         => null;
       end case;
    end Set_Prefix;

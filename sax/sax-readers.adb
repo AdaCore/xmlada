@@ -5627,15 +5627,13 @@ package body Sax.Readers is
    ------------------------
 
    procedure Initialize_Symbols (Parser : in out Sax_Reader) is
-      S : Symbol_Table_Access;
    begin
       if Parser.Lt_Sequence = No_Symbol then
          if Get (Parser.Symbols) = null then
             if Debug_Internal then
                Put_Line ("Initialize_Symbols: creating new table");
             end if;
-            S := new Symbol_Table_Record;
-            Parser.Symbols := Allocate (S);
+            Parser.Symbols := Sax.Utils.Allocate;
          end if;
 
          Parser.Lt_Sequence    := Find_Symbol (Parser, Lt_Sequence);

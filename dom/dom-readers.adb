@@ -71,6 +71,7 @@ package body DOM.Readers is
         (Handler.Current_Node,
          Create_Element_NS
            (Handler.Tree,
+            Symbols        => Get_Symbol_Table (Handler),
             Namespace_URI  => Get_URI (NS),
             Prefix         => Get_Prefix (NS),
             Local_Name     => Local_Name));
@@ -79,6 +80,7 @@ package body DOM.Readers is
       for J in 1 .. Get_Length (Atts) loop
          Att := Create_Attribute_NS
            (Handler.Tree,
+            Symbols       => Get_Symbol_Table (Handler),
             Namespace_URI => Get_URI (Atts, J),
             Prefix        => Get_Prefix (Atts, J),
             Local_Name    => Get_Local_Name (Atts, J));

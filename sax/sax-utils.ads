@@ -143,6 +143,21 @@ package Sax.Utils is
    No_Symbol_Table : constant Symbol_Table :=
      Symbol_Table_Pointers.Null_Pointer;
 
+   function Allocate return Symbol_Table;
+   --  Return a new symbol table
+
+   function Find
+     (Table : Symbol_Table; Str : Unicode.CES.Byte_Sequence)
+      return Sax.Symbols.Symbol;
+   --  Creates a new symbol in the symbol table.
+
+   function Convert
+     (Table : Symbol_Table; Sym : Sax.Symbols.Symbol)
+      return Sax.Symbols.Symbol;
+   pragma Inline (Convert);
+   --  Store Sym in Table (this is not needed if it was already allocated in
+   --  that table, although it is harmless).
+
    ----------------
    -- Namespaces --
    ----------------

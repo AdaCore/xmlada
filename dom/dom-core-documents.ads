@@ -51,6 +51,7 @@ package DOM.Core.Documents is
       Qualified_Name : DOM_String) return Element;
    function Create_Element_NS
      (Doc            : Document;
+      Symbols        : Sax.Utils.Symbol_Table;
       Namespace_URI  : Sax.Symbols.Symbol;
       Prefix         : Sax.Symbols.Symbol;
       Local_Name     : Sax.Symbols.Symbol) return Element;
@@ -58,9 +59,9 @@ package DOM.Core.Documents is
    --  Invalid_Character_Err is raised if Tag_Name contains invalid
    --  characters.
    --  Namespace_Err raised if Qualified_Name is incorrect.
-   --  The version with Symbols is more efficient, but the symbols
-   --  must be from the symbol table used by the document, ie the
-   --  one you passed to Create_Document.
+   --  The version with Symbols is more efficient.
+   --  Symbol_Table is the table in which the symbols were allocated, to ensure
+   --  they are valid while the document is in use.
 
    function Create_Document_Fragment (Doc : Document) return Document_Fragment;
    --  Create an empty document fragment;
@@ -101,6 +102,7 @@ package DOM.Core.Documents is
       Qualified_Name : DOM_String) return Attr;
    function Create_Attribute_NS
      (Doc           : Document;
+      Symbols       : Sax.Utils.Symbol_Table;
       Namespace_URI : Sax.Symbols.Symbol;
       Prefix        : Sax.Symbols.Symbol;
       Local_Name    : Sax.Symbols.Symbol) return Attr;

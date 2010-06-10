@@ -126,10 +126,11 @@ package DOM.Core is
 
    function Create_Document
      (Implementation : DOM_Implementation;
-      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table;
       NameSpace_URI  : DOM_String := "";
       Qualified_Name : DOM_String := "";
-      Doc_Type       : Node := null) return Node;
+      Doc_Type       : Node := null;
+      Symbols        : Sax.Utils.Symbol_Table := Sax.Utils.No_Symbol_Table)
+      return Node;
    --  Create an new document with its element.
    --  Note that NameSpace_URI can be the empty string if you do not want
    --  to use namespaces.
@@ -142,8 +143,8 @@ package DOM.Core is
    --  in the tree are represented as symbols and the correct symbol table must
    --  be specified. You can get it from the parser itself by using
    --  Get_Symbol_Table. Optionally, you can pass an explicit No_Symbol_Table
-   --  to create one automatically, but this should not be done if the document
-   --  is created by a parser.
+   --  to create one automatically. It is recommended to share the table with
+   --  the parser whenever possible for maximum efficient.
    --  In general, the document is created from the Start_Document callback
    --  of a tree_reader, so the simplest is to call the inherited
    --  Start_Document.
@@ -281,18 +282,13 @@ private
 
    function From_Qualified_Name
      (Doc       : Document;
-      Name      : DOM_String;
-      Namespace : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
-      return Node_Name_Def;
-   pragma Inline (From_Qualified_Name);
-
-   function From_Qualified_Name
-     (Doc       : Document;
+      Symbols   : Sax.Utils.Symbol_Table;
       Name      : Sax.Symbols.Symbol;
       Namespace : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
       return Node_Name_Def;
    --  Build a node name from its qualified name. This is shared if
-   --  Shared_Node_Names is True
+   --  Shared_Node_Names is True.
+   --  Symbols is the symbol table in which Name and Namespace were created.
 
    -----------------
    -- Node_Record --
