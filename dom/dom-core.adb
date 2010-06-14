@@ -78,7 +78,7 @@ package body DOM.Core is
          Parent_Is_Owner => False,
          Implementation => Implementation,
          Ids            => null,
-         Symbols        => Symbols);
+         Symbols        => Sym);
    end Create_Document;
 
    -----------------
