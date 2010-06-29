@@ -64022,7 +64022,7 @@ Grp: MS-DataTypes2006-07-15 / date011_2039
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK date011_2039
   OK date011_2039.i
-    Invalid separator in date value "123456"
+    Invalid date "123456"
 
 Grp: MS-DataTypes2006-07-15 / gYearMonth001_2040
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
@@ -92494,7 +92494,7 @@ Grp: MS-SimpleType2006-07-15 / stC034
   100.0% tests= 2 (xsd= 1 xml= 1) OK= 2 FAILED= 0
   OK stC034
   OK stC034.i
-    Invalid character ' ' in duration: "P1Y2M3DT3H2M23"
+    Missing qualifier after last digit in duration "P1Y2M3DT3H2M23"
 
 Grp: MS-SimpleType2006-07-15 / stC035
   100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0

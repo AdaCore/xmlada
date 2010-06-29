@@ -38,6 +38,10 @@ Reader will still work, although it will be less efficient in most cases.
 New features in version 4.0
 ---------------------------
 
+NF-40-J610-021 XML/Ada is compatible with pragma Ravenscar (2010-06-29)
+
+   XML/Ada is now compatible with the ravenscar profile
+
 NF-40-J302-043 New exception XML_Not_Implemented (2010-03-24)
 
    A new exception is raised when using a schema (.xsd) validator, and

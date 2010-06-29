@@ -26,7 +26,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;             use Ada.Calendar;
 with Schema.Date_Time;         use Schema.Date_Time;
 with Schema.Validators;        use Schema.Validators;
 with Schema.Validators.Facets; use Schema.Validators.Facets;
@@ -271,9 +270,9 @@ begin
 
    Assert (Time1 + Dur1Y,
            Date_Time_T'(Value (R, "2001-01-12T12:13:14Z")));
-   Assert (Year (Value (Time1)), 2000);
-   Assert (Month (Value (Time1)), 1);
-   Assert (Day (Value (Time1)), 12);
+   Assert (Year (Time1), 2000);
+   Assert (Month (Time1), 1);
+   Assert (Day (Time1), 12);
 
    --  Examples from the XML Schema standard
    Assert    (T5, T6, '<');

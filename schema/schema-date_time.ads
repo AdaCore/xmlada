@@ -39,7 +39,6 @@
 --  precise semantics of the comparison of dates is defined in the XML Schema
 --  standard part 3.
 
-with Ada.Calendar;
 with Schema.Validators;  use Schema.Validators;
 
 package Schema.Date_Time is
@@ -78,11 +77,13 @@ package Schema.Date_Time is
    --  Return the duration stored in Ch. It should contain a string of the
    --  type "PyyyyYmmM".
 
+   subtype Day_Duration is Duration range 0.0 .. 86_400.0;
+
    function Sign    (Duration : Duration_T) return Integer;
    function Year    (Duration : Duration_T) return Natural;
    function Month   (Duration : Duration_T) return Natural;
    function Day     (Duration : Duration_T) return Natural;
-   function Seconds (Duration : Duration_T) return Ada.Calendar.Day_Duration;
+   function Seconds (Duration : Duration_T) return Day_Duration;
    --  Return the components of the duration. In general, you do not need to
    --  use this directly, and can instead use the "+" operator below to
    --  add it directly to a date.
@@ -94,10 +95,10 @@ package Schema.Date_Time is
    --      yyyy-mm-ddThh:mm:ss.sss+tz:tz
    --  Any number of digits is supported for the date and the subseconds field
 
-   function Value (Date : Date_Time_T) return Ada.Calendar.Time;
-   --  Try and convert Date into a standard Ada date. This conversion is not
-   --  always possible, since the range of possible dates is greater in XML
-   --  than it is in Ada. In such cases, Ada.Calendar.Time_Error is raised.
+   function Year (Date : Date_Time_T) return Integer;
+   function Month (Date : Date_Time_T) return Natural;
+   function Day (Date : Date_Time_T) return Natural;
+   --  Return the components of Date
 
    function Value (Reader : access Abstract_Validation_Reader'Class;
                    Ch : String) return Time_T;

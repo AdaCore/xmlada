@@ -497,13 +497,11 @@ package body Schema.Date_Time is
       Eos    : out Natural)
    is
       --  Format is "hh:mm:ss.sss[+-]hh:mm"
-      Dur : Time_NZ_T;
       Pos : Integer;
       Hour, Min : Integer;
       Msec : Day_Range := 0.0;
    begin
       Hour := Integer'Value (Ch (Ch'First .. Ch'First + 1));
-      Dur  := Day_Range (Hour) * 3600.0;
 
       if Ch (Ch'First + 2) /= ':'
         or else Ch (Ch'First + 5) /= ':'
@@ -516,7 +514,6 @@ package body Schema.Date_Time is
       end if;
 
       Min := Integer'Value (Ch (Ch'First + 3 .. Ch'First + 4));
-      Dur := Dur + Day_Range (Min) * 60.0;
 
       if Min > 59 then
          Validation_Error
@@ -550,8 +547,6 @@ package body Schema.Date_Time is
          return;
       end if;
 
-      Time := Dur + Msec;
-
       if Hour > 24
         or else (Hour = 24 and then (Min /= 0 or else Msec /= 0.0))
       then
@@ -559,6 +554,8 @@ package body Schema.Date_Time is
          Time := No_Time_NZ;
          return;
       end if;
+
+      Time  := Day_Range (Hour) * 3600.0 + Day_Range (Min) * 60.0 + Msec;
 
    exception
       when Constraint_Error =>
@@ -669,6 +666,12 @@ package body Schema.Date_Time is
          loop
             Tmp := Tmp + 1;
          end loop;
+
+         if Tmp > Ch'Last then
+            Validation_Error
+              (Reader, "Missing qualifier after last digit in duration """
+               & Ch & """");
+         end if;
 
          if Ch (Tmp) = 'T' then
             Processing_Time := True;
@@ -1095,7 +1098,7 @@ package body Schema.Date_Time is
    -- Seconds --
    -------------
 
-   function Seconds (Duration : Duration_T) return Ada.Calendar.Day_Duration is
+   function Seconds (Duration : Duration_T) return Day_Duration is
    begin
       return Duration.Seconds;
    end Seconds;
@@ -1104,7 +1107,7 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Date : Date_Time_T) return Ada.Calendar.Time is
+   function Year (Date : Date_Time_T) return Integer is
       D : Date_Time_T := Date;
    begin
       if D.TZ /= No_Timezone then
@@ -1112,16 +1115,30 @@ package body Schema.Date_Time is
          D := Normalize (D);
       end if;
 
-      return Ada.Calendar.Time_Of
-        (Year    => Ada.Calendar.Year_Number (D.Date.Year),
-         Month   => Ada.Calendar.Month_Number (D.Date.Month),
-         Day     => Ada.Calendar.Day_Number (D.Date.Day),
-         Seconds => D.Time);
-   exception
-      when Constraint_Error =>
-         --  Some components of the date are out of scope
-         raise Ada.Calendar.Time_Error;
-   end Value;
+      return D.Date.Year;
+   end Year;
+
+   function Month (Date : Date_Time_T) return Natural is
+      D : Date_Time_T := Date;
+   begin
+      if D.TZ /= No_Timezone then
+         D.Time := D.Time - Time_NZ_T (D.TZ) * 60.0;
+         D := Normalize (D);
+      end if;
+
+      return D.Date.Month;
+   end Month;
+
+   function Day (Date : Date_Time_T) return Natural is
+      D : Date_Time_T := Date;
+   begin
+      if D.TZ /= No_Timezone then
+         D.Time := D.Time - Time_NZ_T (D.TZ) * 60.0;
+         D := Normalize (D);
+      end if;
+
+      return D.Date.Day;
+   end Day;
 
    -------------
    -- Compare --
