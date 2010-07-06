@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -31,7 +31,7 @@ with DOM.Core.Nodes;   use DOM.Core.Nodes;
 package DOM.Core.Elements is
 
    function Get_Tag_Name (Elem : Element) return DOM_String
-      renames DOM.Core.Nodes.Node_Value;
+      renames DOM.Core.Nodes.Node_Name;
    --  Return the tag of the element
 
    --------------------------
