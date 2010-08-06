@@ -106,12 +106,11 @@ package body Schema.Date_Time is
       with function Normalize (T1 : T) return T is <>;
       with function Compare (T1, T2 : T) return Compare_Result is <>;
    package Comparators is
-      function "<"   (T1, T2 : T) return Boolean;
-      function "<="  (T1, T2 : T) return Boolean;
-      function Equal (T1, T2 : T) return Boolean;
-      --  Note: Calling this "=" is illegal in Ada 2012.
-      function ">"   (T1, T2 : T) return Boolean;
-      function ">="  (T1, T2 : T) return Boolean;
+      function "<"  (T1, T2 : T) return Boolean;
+      function "<=" (T1, T2 : T) return Boolean;
+      function "="  (T1, T2 : T) return Boolean;
+      function ">"  (T1, T2 : T) return Boolean;
+      function ">=" (T1, T2 : T) return Boolean;
    end Comparators;
    --  Generate the comparison functions for various types
 
@@ -119,11 +118,11 @@ package body Schema.Date_Time is
       type T is private;
       with function To_Date_Time (T1 : T) return Date_Time_T is <>;
    package DT_Comparators is
-      function "<"   (T1, T2 : T) return Boolean;
-      function "<="  (T1, T2 : T) return Boolean;
-      function Equal (T1, T2 : T) return Boolean;
-      function ">"   (T1, T2 : T) return Boolean;
-      function ">="  (T1, T2 : T) return Boolean;
+      function "<"  (T1, T2 : T) return Boolean;
+      function "<=" (T1, T2 : T) return Boolean;
+      function "="  (T1, T2 : T) return Boolean;
+      function ">"  (T1, T2 : T) return Boolean;
+      function ">=" (T1, T2 : T) return Boolean;
    end DT_Comparators;
 
    ------------------
@@ -1313,11 +1312,11 @@ package body Schema.Date_Time is
          end if;
       end "<=";
 
-      -----------
-      -- Equal --
-      -----------
+      ---------
+      -- "=" --
+      ---------
 
-      function Equal (T1, T2 : T)  return Boolean is
+      function "=" (T1, T2 : T)  return Boolean is
          Result : constant Compare_Result :=
            Compare (Normalize (T1), Normalize (T2));
       begin
@@ -1326,7 +1325,7 @@ package body Schema.Date_Time is
          else
             return Result = Equal;
          end if;
-      end Equal;
+      end "=";
 
       ---------
       -- ">" --
@@ -1383,14 +1382,14 @@ package body Schema.Date_Time is
          return To_Date_Time (T1) <= To_Date_Time (T2);
       end "<=";
 
-      -----------
-      -- Equal --
-      -----------
+      ---------
+      -- "=" --
+      ---------
 
-      function Equal  (T1, T2 : T) return Boolean is
+      function "="  (T1, T2 : T) return Boolean is
       begin
          return To_Date_Time (T1) = To_Date_Time (T2);
-      end Equal;
+      end "=";
 
       ---------
       -- ">" --
@@ -1415,23 +1414,21 @@ package body Schema.Date_Time is
    package Date_Comp is new DT_Comparators (Date_T);
    function "<"  (Date1, Date2 : Date_T) return Boolean renames Date_Comp."<";
    function "<=" (Date1, Date2 : Date_T) return Boolean renames Date_Comp."<=";
-   function "="  (Date1, Date2 : Date_T) return Boolean
-                  renames Date_Comp.Equal;
+   function "="  (Date1, Date2 : Date_T) return Boolean renames Date_Comp."=";
    function ">"  (Date1, Date2 : Date_T) return Boolean renames Date_Comp.">";
    function ">=" (Date1, Date2 : Date_T) return Boolean renames Date_Comp.">=";
 
    package Time_Comp is new DT_Comparators (Time_T);
    function "<"  (Time1, Time2 : Time_T) return Boolean renames Time_Comp."<";
    function "<=" (Time1, Time2 : Time_T) return Boolean renames Time_Comp."<=";
-   function "="  (Time1, Time2 : Time_T) return Boolean
-                  renames Time_Comp.Equal;
+   function "="  (Time1, Time2 : Time_T) return Boolean renames Time_Comp."=";
    function ">"  (Time1, Time2 : Time_T) return Boolean renames Time_Comp.">";
    function ">=" (Time1, Time2 : Time_T) return Boolean renames Time_Comp.">=";
 
    package Day_T_Comp is new DT_Comparators (GDay_T);
    function "<"  (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp."<";
    function "<=" (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp."<=";
-   function "="  (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp.Equal;
+   function "="  (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp."=";
    function ">"  (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp.">";
    function ">=" (Day1, Day2 : GDay_T) return Boolean renames Day_T_Comp.">=";
 
@@ -1441,7 +1438,7 @@ package body Schema.Date_Time is
    function "<=" (Day1, Day2 : GMonth_Day_T) return Boolean
                   renames Month_Day_T_Comp."<=";
    function "="  (Day1, Day2 : GMonth_Day_T) return Boolean
-                  renames Month_Day_T_Comp.Equal;
+                  renames Month_Day_T_Comp."=";
    function ">"  (Day1, Day2 : GMonth_Day_T) return Boolean
                   renames Month_Day_T_Comp.">";
    function ">=" (Day1, Day2 : GMonth_Day_T) return Boolean
@@ -1453,7 +1450,7 @@ package body Schema.Date_Time is
    function "<=" (Month1, Month2 : GMonth_T) return Boolean
                   renames Month_T_Comp."<=";
    function "="  (Month1, Month2 : GMonth_T) return Boolean
-                  renames Month_T_Comp.Equal;
+                  renames Month_T_Comp."=";
    function ">"  (Month1, Month2 : GMonth_T) return Boolean
                   renames Month_T_Comp.">";
    function ">=" (Month1, Month2 : GMonth_T) return Boolean
@@ -1465,7 +1462,7 @@ package body Schema.Date_Time is
    function "<=" (Month1, Month2 : GYear_Month_T) return Boolean
                   renames Year_Month_T_Comp."<=";
    function "="  (Month1, Month2 : GYear_Month_T) return Boolean
-                  renames Year_Month_T_Comp.Equal;
+                  renames Year_Month_T_Comp."=";
    function ">"  (Month1, Month2 : GYear_Month_T) return Boolean
                   renames Year_Month_T_Comp.">";
    function ">=" (Month1, Month2 : GYear_Month_T) return Boolean
@@ -1477,20 +1474,20 @@ package body Schema.Date_Time is
    function "<=" (Year1, Year2 : GYear_T) return Boolean
                   renames Year_T_Comp."<=";
    function "="  (Year1, Year2 : GYear_T) return Boolean
-                  renames Year_T_Comp.Equal;
+                  renames Year_T_Comp."=";
    function ">"  (Year1, Year2 : GYear_T) return Boolean
                   renames Year_T_Comp.">";
    function ">=" (Year1, Year2 : GYear_T) return Boolean
                   renames Year_T_Comp.">=";
 
    package Date_Time_T_Comp is new Comparators (Date_Time_T);
-   function "<"  (Time1, Time2 : Date_Time_T)  return Boolean
+   function "<" (Time1, Time2 : Date_Time_T)  return Boolean
      renames Date_Time_T_Comp."<";
    function "<=" (Time1, Time2 : Date_Time_T) return Boolean
      renames Date_Time_T_Comp."<=";
-   function "="  (Time1, Time2 : Date_Time_T)  return Boolean
-     renames Date_Time_T_Comp.Equal;
-   function ">"  (Time1, Time2 : Date_Time_T)  return Boolean
+   function "=" (Time1, Time2 : Date_Time_T)  return Boolean
+     renames Date_Time_T_Comp."=";
+   function ">" (Time1, Time2 : Date_Time_T)  return Boolean
      renames Date_Time_T_Comp.">";
    function ">=" (Time1, Time2 : Date_Time_T) return Boolean
      renames Date_Time_T_Comp.">=";
@@ -1501,7 +1498,7 @@ package body Schema.Date_Time is
    function "<=" (Duration1, Duration2 : Duration_T) return Boolean
      renames Duration_T_Comp."<=";
    function "="  (Duration1, Duration2 : Duration_T) return Boolean
-     renames Duration_T_Comp.Equal;
+     renames Duration_T_Comp."=";
    function ">"  (Duration1, Duration2 : Duration_T) return Boolean
      renames Duration_T_Comp.">";
    function ">=" (Duration1, Duration2 : Duration_T) return Boolean
