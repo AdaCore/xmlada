@@ -1890,6 +1890,7 @@ package body Schema.Validators.Simple_Types is
    is
       Iter : Particle_Iterator;
       Valid : XML_Validator;
+      Tmp : Facets_Mask;
    begin
       if Debug then
          Debug_Output ("Validate_Characters (union) " & Get_Name (Union));
@@ -1908,7 +1909,8 @@ package body Schema.Validators.Simple_Types is
          begin
             Valid := Get_Validator (Get (Iter).Type_Descr);
             if Valid /= null then
-               Validate_Characters (Valid, Reader, Ch, Empty_Element, Mask);
+               Tmp := Mask;
+               Validate_Characters (Valid, Reader, Ch, Empty_Element, Tmp);
             end if;
 
             --  No error ? => Everything is fine
