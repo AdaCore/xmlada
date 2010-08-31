@@ -135,6 +135,10 @@ package body Input_Sources.File is
    begin
       From.Es.Read (From.Buffer.all, From.Index, C);
       C := From.Cs.To_Unicode (C);
+   exception
+      --  For a file input, an incomplete encoding is invalid.
+      when Incomplete_Encoding =>
+         raise Invalid_Encoding;
    end Next_Char;
 
    ---------

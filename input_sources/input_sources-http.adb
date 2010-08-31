@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -326,6 +326,13 @@ package body Input_Sources.Http is
    begin
       From.Es.Read (From.Buffer.all, From.Index, C);
       C := From.Cs.To_Unicode (C);
+
+   exception
+      --  The whole page has been fully loaded in the Open step.
+      --  Hence if the buffer ends with an Incomplete_Encoding, this
+      --  is a fatale error.
+      when Incomplete_Encoding =>
+         raise Invalid_Encoding;
    end Next_Char;
 
    ---------

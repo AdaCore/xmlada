@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -77,7 +76,7 @@ package body Unicode.CES.Utf32 is
       Char  : out Unicode_Char) is
    begin
       if Index > Str'Last - 3 then
-         raise Invalid_Encoding;
+         raise Incomplete_Encoding;
       else
          Char := Character'Pos (Str (Index))
            + Character'Pos (Str (Index + 1)) * (2 ** 8)
@@ -97,7 +96,7 @@ package body Unicode.CES.Utf32 is
       Char  : out Unicode_Char) is
    begin
       if Index > Str'Last - 3 then
-         raise Invalid_Encoding;
+         raise Incomplete_Encoding;
       else
          Char := Character'Pos (Str (Index + 3))
            + Character'Pos (Str (Index + 2)) * (2 ** 8)

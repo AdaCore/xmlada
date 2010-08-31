@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -81,6 +80,9 @@ package Unicode.CES.Utf32 is
       Index : in out Positive;
       Char  : out Unicode_Char);
    --  Return the character starting at location Index in Str
+   --  Invalid_Encoding is raised if not valid byte sequence starts at Index.
+   --  Incomplete_Encoding is raised if there is not enough characters for
+   --  a valid encoding.
 
    procedure Encode_BE
      (Char   : Unicode_Char;

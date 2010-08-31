@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -139,17 +138,17 @@ package body Unicode.CES.Utf8 is
          raise Invalid_Encoding;
       end if;
 
-      if Str'Last < Len then
-         raise Invalid_Encoding;
-      end if;
-
-      for Count in Index + 1 .. Len loop
+      for Count in Index + 1 .. Natural'Min (Len, Str'Last) loop
          C := Character'Pos (Str (Count));
          if (C and 16#C0#) /= 16#80# then
             raise Invalid_Encoding;
          end if;
          Val := (Val * (2 ** 6)) or (C and 16#3f#);
       end loop;
+
+      if Str'Last < Len then
+         raise Incomplete_Encoding;
+      end if;
 
       Index := Len + 1;
       Char  := Val;

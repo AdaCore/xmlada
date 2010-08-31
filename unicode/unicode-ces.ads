@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -120,7 +119,9 @@ package Unicode.CES is
    --  This function returns the character at position Index in the byte
    --  sequence Str, and moves Index to the start of the next character.
    --  If Str doesn't contain enough bytes for a valid encoding of a character,
-   --  Invalid_Encoding is raised.
+   --  Incomplete_Encoding is raised.
+   --  If Str contains an invalid byte sequence at Index, Invalid_Encoding
+   --  is raised.
 
    type Width_Function is access
      function (Char : Unicode.Unicode_Char) return Natural;
@@ -164,6 +165,11 @@ package Unicode.CES is
    ----------------
 
    Invalid_Encoding : exception;
-   --  Raised whener the byte sequence associated with a given encoding
+   --  Raised whenever the byte sequence associated with a given encoding
    --  scheme is not valid.
+
+   Incomplete_Encoding : exception;
+   --  Raised whenever the byte sequence associated with a given encoding
+   --  scheme is incomplete.
+
 end Unicode.CES;

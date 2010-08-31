@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -122,6 +121,11 @@ package body Input_Sources.Strings is
       C    : out Unicode.Unicode_Char) is
    begin
       From.Encoding.Read (From.Buffer.all, From.Index, C);
+
+   exception
+      --  For a String input, an incomplete encoding is invalid.
+      when Incomplete_Encoding =>
+         raise Invalid_Encoding;
    end Next_Char;
 
    ---------

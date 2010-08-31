@@ -38,6 +38,13 @@ Reader will still work, although it will be less efficient in most cases.
 New features in version 4.0
 ---------------------------
 
+NF-40-J818-003 Unicode: new exception Incomplete_Encoding (2010-08-31)
+
+   A new exception was defined in the unicode module. This exception is
+   used to distinguish between cases where we might simply be missing
+   some characters (and thus should wait for more) with cases where the
+   encoding is indeed invalid.
+
 NF-40-J610-021 XML/Ada is compatible with pragma Ravenscar (2010-06-29)
 
    XML/Ada is now compatible with the ravenscar profile

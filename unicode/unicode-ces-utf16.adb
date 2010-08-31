@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2006                     --
---                             AdaCore                               --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -106,7 +105,7 @@ package body Unicode.CES.Utf16 is
       C, D : Unicode_Char;
    begin
       if Index + 1 > Str'Last then
-         raise Invalid_Encoding;
+         raise Incomplete_Encoding;
       end if;
 
       C := Character'Pos (Str (Index + 1)) * 256 + Character'Pos (Str (Index));
@@ -114,7 +113,7 @@ package body Unicode.CES.Utf16 is
       --  High surrogate value
       if C in 16#D800# .. 16#DBFF# then
          if Index + 3 > Str'Last then
-            raise Invalid_Encoding;
+            raise Incomplete_Encoding;
          end if;
          D := Character'Pos (Str (Index + 3)) * 256
            + Character'Pos (Str (Index + 2));
@@ -146,7 +145,7 @@ package body Unicode.CES.Utf16 is
       C, D : Unicode_Char;
    begin
       if Index + 1 > Str'Last then
-         raise Invalid_Encoding;
+         raise Incomplete_Encoding;
       end if;
 
       C := Character'Pos (Str (Index)) * 256 + Character'Pos (Str (Index + 1));
@@ -154,7 +153,7 @@ package body Unicode.CES.Utf16 is
       --  High surrogate value
       if C in 16#D800# .. 16#DBFF# then
          if Index + 3 > Str'Last then
-            raise Invalid_Encoding;
+            raise Incomplete_Encoding;
          end if;
          D := Character'Pos (Str (Index + 2)) * 256
            + Character'Pos (Str (Index + 3));

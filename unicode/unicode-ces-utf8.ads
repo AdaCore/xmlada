@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -82,8 +81,8 @@ package Unicode.CES.Utf8 is
    --  Return the character starting at location Index in Str, and move Index
    --  to the beginning of the next location
    --  Invalid_Encoding is raised if not valid byte sequence starts at Index.
-   --  Constraint_Error is raised if Index does not point to a valid character
-   --  in Str.
+   --  Incomplete_Encoding is raised if there is not enough characters for
+   --  a valid encoding.
 
    function Width (Char : Unicode_Char) return Natural;
    --  Return the number of bytes occupied by the Utf8 representation of Char
