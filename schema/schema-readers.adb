@@ -40,7 +40,6 @@ with Schema.Validators; use Schema.Validators;
 with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with GNAT.IO;               use GNAT.IO;
 with Input_Sources.File;    use Input_Sources.File;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 
@@ -146,13 +145,14 @@ package body Schema.Readers is
       use Symbol_Table_Pointers;
    begin
       if Debug then
-         Put_Line ("Set_Grammar, should we set the parser's symbol table ?");
+         Debug_Output
+           ("Set_Grammar, should we set the parser's symbol table ?");
       end if;
 
       if Grammar /= No_Grammar then
          if Get (Get_Symbol_Table (Reader)) = null then
             if Debug then
-               Put_Line ("Set parser's symbol table");
+               Debug_Output ("Set parser's symbol table");
             end if;
 
             Set_Symbol_Table (Reader, Get_Symbol_Table (Grammar));
@@ -294,10 +294,8 @@ package body Schema.Readers is
       S_File_Full : constant Symbol := To_Absolute_URI (Handler.all, Xsd_File);
    begin
       if Debug then
-         Put_Line ("NS="
-                   & Get (URI).all
-                   & ASCII.LF & "XSD="
-                   & Get (Xsd_File).all);
+         Debug_Output ("Parse_Grammar NS={" & Get (URI).all
+                       & "} XSD={" & Get (Xsd_File).all & "}");
       end if;
 
       if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
@@ -339,7 +337,7 @@ package body Schema.Readers is
       --  Do not reparse the grammar if we already know about it
 
       if Debug then
-         Put_Line ("Parsing grammar: " & Get (S_File_Full).all);
+         Output_Seen ("Parsing grammar: " & Get (S_File_Full).all);
       end if;
 
       Open (Get (S_File_Full).all, File);
@@ -370,12 +368,19 @@ package body Schema.Readers is
       Close (File);
 
       if Debug then
-         Put_Line ("Done parsing new grammar: " & Get (Xsd_File).all);
+         Output_Seen ("Done parsing new grammar: " & Get (Xsd_File).all);
       end if;
 
    exception
       when Ada.IO_Exceptions.Name_Error =>
          Close (File);
+
+         if Debug then
+            Debug_Output
+              (ASCII.LF
+               & "!!!! Could not open file " & Get (S_File_Full).all
+               & ASCII.LF);
+         end if;
 
          --  According to XML Schema Primer 0, section 5.6, this is not an
          --  error when we do not find the schema, since this attribute is only
@@ -494,7 +499,7 @@ package body Schema.Readers is
 
                   if Handler.Validators.Typ /= No_Type then
                      if Debug then
-                        Put_Line
+                        Output_Seen
                           ("characters: " & Get (Get_Fixed (Handler)).all);
                      end if;
 
@@ -567,7 +572,7 @@ package body Schema.Readers is
                   --  than the parent type)
 
                   if Debug then
-                     Put_Line ("characters: " & Val2.all);
+                     Output_Seen ("characters: " & Val2.all);
                   end if;
 
                   Mask := (others => True);
@@ -585,7 +590,7 @@ package body Schema.Readers is
 
                if Handler.Validators.Element /= No_Element then
                   if Debug then
-                     Put_Line ("characters: " & Val2.all);
+                     Output_Seen ("characters: " & Val2.all);
                   end if;
 
                   Typ := Get_Type (Handler.Validators.Element);
@@ -656,8 +661,9 @@ package body Schema.Readers is
                NS        : XML_NS;
             begin
                if Debug then
-                  Put_Line ("Getting element definition from type attribute: "
-                            & Qname);
+                  Debug_Output
+                    ("Getting element definition from type attribute: "
+                     & Qname);
                end if;
 
                Get_Namespace_From_Prefix
@@ -719,9 +725,7 @@ package body Schema.Readers is
       G : XML_Grammar_NS;
    begin
       if Debug then
-         Put_Line (ASCII.ESC & "[33m"
-                   & "Start_Element: " & To_QName (Elem)
-                   & ASCII.ESC & "[39m");
+         Output_Seen ("Start_Element: " & To_QName (Elem));
       end if;
 
       Validate_Current_Characters (H);
@@ -868,9 +872,7 @@ package body Schema.Readers is
       Typ : XML_Type;
    begin
       if Debug then
-         Put_Line (ASCII.ESC & "[33m"
-                   & "End_Element: "
-                   & To_QName (Elem) & ASCII.ESC & "[39m");
+         Output_Seen ("End_Element: " & To_QName (Elem));
       end if;
 
       if H.Validators /= null then
@@ -971,6 +973,11 @@ package body Schema.Readers is
      (Parser : in out Validating_Reader;
       Input  : in out Input_Sources.Input_Source'Class) is
    begin
+      if Debug then
+         Output_Action
+           ("Parsing XML file " & Input_Sources.Get_System_Id (Input));
+      end if;
+
       if Get_Feature (Parser, Schema_Validation_Feature) then
          Set_Hooks (Parser,
                     Start_Element => Hook_Start_Element'Access,

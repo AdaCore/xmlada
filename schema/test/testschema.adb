@@ -73,7 +73,7 @@ begin
 
          when 'd' =>
             if Full_Switch = "debug" then
-               Standard.Schema.Validators.Debug := True;
+               Standard.Schema.Set_Debug_Output (True);
             elsif Full_Switch = "dom" then
                DOM := True;
             end if;
@@ -95,11 +95,6 @@ begin
    loop
       case Getopt (Switches) is
          when 'x' =>
-            if Debug then
-               New_Line;
-               Put_Line ("Parsing schema: " & Parameter);
-            end if;
-
             Open (Parameter, Read);
             Parse (Schema, Read);
             Close (Read);
@@ -149,11 +144,6 @@ begin
          List : Node_List;
       begin
          exit when Xml_File'Length = 0;
-
-         if Debug then
-            New_Line;
-            Put_Line ("Parsing XML file: " & Xml_File);
-         end if;
 
          Open (Xml_File, Read);
          Parse (My_Reader.all, Read);

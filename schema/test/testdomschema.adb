@@ -55,7 +55,7 @@ begin
             Free (Xsd_File);
             Xsd_File := new String'(Parameter);
          when 'd' =>
-            Standard.Schema.Validators.Debug := True;
+            Standard.Schema.Set_Debug_Output (True);
          when 's' =>
             Silent := True;
          when others =>

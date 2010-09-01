@@ -1096,7 +1096,7 @@ begin
    Parse_Disabled;
 
    if Debug then
-      Schema.Validators.Debug := True;
+      Schema.Set_Debug_Output (True);
    end if;
 
    Put_Line (Base_Name (Command_Name, ".exe"));

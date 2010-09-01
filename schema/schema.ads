@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -26,6 +26,50 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+private with Ada.Tags;
+
 package Schema is
+
+   procedure Set_Debug_Output (Output : Boolean);
+   --  Whether we should output debug traces
+
+private
+
+   -----------
+   -- Debug --
+   -----------
+   --  The following subprograms are used to print debug traces for XML/Ada
+   --  itself, and should not be used in user applications
+
+   type Debug_Output_Mode is
+     (Debug_Default,
+      Debug_Seen,    --  to show elements seen in XML stream
+      Debug_Action); --  to show actions performed on the grammars
+
+   procedure Debug_Push_Prefix
+     (Append : String; Mode : Debug_Output_Mode := Debug_Default);
+   procedure Debug_Pop_Prefix;
+   --  Append a prefix to the current output
+
+   function Debug_Tag_Name (Self : Ada.Tags.Tag) return String;
+   --  Return the external name for Self
+
+   procedure Debug_Output
+     (Str : String; Mode : Debug_Output_Mode := Debug_Default);
+   pragma Inline (Debug_Output);
+   --  Display a string for debugging purposes
+
+   procedure Output_Action (Str : String);
+   procedure Output_Seen (Str : String);
+   pragma Inline (Output_Action, Output_Seen);
+   --  Same as Debug_Output (Str, Debug_Action);
+   --  or Debug_Output (Debug_Seen);
+
+   Debug : Boolean := False;
+   --  Whether we are in debug mode.
+   --  The above subprograms do nothing if not in debug mode, but this
+   --  variable can be used to avoid preparing strings for display if we are
+   --  not going to display them afterward.
 
 end Schema;

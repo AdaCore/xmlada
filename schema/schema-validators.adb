@@ -31,9 +31,7 @@ pragma Ada_05;
 with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Exceptions;                 use Ada.Exceptions;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
-with Ada.Tags;                       use Ada.Tags;
 with Ada.Unchecked_Deallocation;
-with GNAT.IO;                        use GNAT.IO;
 with Interfaces;                     use Interfaces;
 with Sax.Attributes;                 use Sax.Attributes;
 with Sax.Encodings;                  use Sax.Encodings;
@@ -48,6 +46,7 @@ with Schema.Validators.Lists;        use Schema.Validators.Lists;
 with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
 with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
+with System.Address_Image;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
@@ -67,9 +66,13 @@ package body Schema.Validators is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Grammar_NS_Array, Grammar_NS_Array_Access);
 
-   procedure Create_NS_Grammar
-     (Grammar : XML_Grammar; Namespace_URI : Sax.Symbols.Symbol);
+   function Create_NS_Grammar
+     (Grammar       : XML_Grammar;
+      Namespace_URI : Sax.Symbols.Symbol) return XML_Grammar_NS;
    --  Create a new namespace in the grammar
+
+   function Debug_Name (Grammar : XML_Grammar_NS) return String;
+   --  Debug output of Grammar
 
    function To_QName
      (Particle : XML_Particle) return Byte_Sequence;
@@ -194,19 +197,6 @@ package body Schema.Validators is
    function To_Graphic_String (Str : Byte_Sequence) return String;
    --  Convert non-graphic characters in Str to make them visible in a display
 
-   Debug_Prefixes_Level : Natural := 0;
-   --  Provide Debug_Output body early to allow it to be inlined
-
-   ------------------
-   -- Debug_Output --
-   ------------------
-
-   procedure Debug_Output (Str : String) is
-   begin
-      Put ((1 .. Debug_Prefixes_Level * 2 => ' '));
-      Put_Line (Str);
-   end Debug_Output;
-
    ------------------------------
    -- Attribute_Validator_List --
    ------------------------------
@@ -251,15 +241,6 @@ package body Schema.Validators is
       --  All <anyAttribute> in a <complexType> must match. See 3.6.2.2
       Must_Match_All_Any_In_Dep2 := True;
    end Get_Attribute_Lists;
-
-   ----------------------
-   -- Set_Debug_Output --
-   ----------------------
-
-   procedure Set_Debug_Output (Output : Boolean) is
-   begin
-      Debug := Output;
-   end Set_Debug_Output;
 
    ----------------------
    -- Validation_Error --
@@ -689,7 +670,7 @@ package body Schema.Validators is
    function Get_Name
      (Validator : access XML_Validator_Record'Class) return String is
    begin
-      return External_Tag (Validator'Tag);
+      return Debug_Tag_Name (Validator'Tag);
    end Get_Name;
 
    ----------------------------
@@ -1085,8 +1066,8 @@ package body Schema.Validators is
 
          if Debug then
             Debug_Push_Prefix
-              ("Checking attributes from " & Get_Name (Validator)
-               & " ignore_wildcards=" & Ignore_Wildcard'Img
+              ("Check attr (" & Get_Name (Validator)
+               & ") ign_wild=" & Ignore_Wildcard'Img
                & " all_any=" & Must_Match_All_Any2'Img);
          end if;
 
@@ -1853,14 +1834,19 @@ package body Schema.Validators is
          for G in Get (Grammar).Grammars'Range loop
             if Get (Grammar).Grammars (G).Namespace_URI = Namespace_URI then
                Result := Get (Grammar).Grammars (G);
+               if Debug then
+                  Debug_Output ("  Get_NS -> " & Debug_Name (Result));
+               end if;
                return;
             end if;
          end loop;
       end if;
 
       if Create_If_Needed then
-         Create_NS_Grammar (Grammar, Namespace_URI);
-         Result := Get (Grammar).Grammars (Get (Grammar).Grammars'Last);
+         Result := Create_NS_Grammar (Grammar, Namespace_URI);
+         if Debug then
+            Debug_Output ("  Get_NS new -> " & Debug_Name (Result));
+         end if;
       else
          Result := null;
       end if;
@@ -1920,9 +1906,9 @@ package body Schema.Validators is
    -- Create_NS_Grammar --
    -----------------------
 
-   procedure Create_NS_Grammar
+   function Create_NS_Grammar
      (Grammar       : XML_Grammar;
-      Namespace_URI : Symbol)
+      Namespace_URI : Sax.Symbols.Symbol) return XML_Grammar_NS
    is
       G   : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
       Tmp : Grammar_NS_Array_Access;
@@ -1937,7 +1923,7 @@ package body Schema.Validators is
       end if;
 
       if Debug then
-         Debug_Output ("Create_NS_Grammar: " & Get (Namespace_URI).all);
+         Debug_Output ("Create_NS_Grammar: " & Debug_Print (Namespace_URI));
       end if;
 
       G.Grammars (G.Grammars'Last) := new XML_Grammar_NS_Record'
@@ -1954,6 +1940,8 @@ package body Schema.Validators is
          Atts_For_Mem       => null,
          Elems_For_Mem      => null,
          Blocks             => (others => False));
+
+      return G.Grammars (G.Grammars'Last);
    end Create_NS_Grammar;
 
    --------------
@@ -2051,24 +2039,23 @@ package body Schema.Validators is
       if Debug then
          Str := G.Parsed_Locations;
          while Str /= null loop
-            Put_Line ("   Parsed location: " & Get (Str.Str).all);
+            Debug_Output ("   Parsed location: " & Get (Str.Str).all);
             Str := Str.Next;
          end loop;
 
          if G.Grammars /= null then
             for NS in G.Grammars'Range  loop
-               Put_Line ("   NS="
+               Debug_Output ("   NS="
                          & Get (G.Grammars (NS).Namespace_URI).all);
 
-               Put ("      Elements:");
+               Debug_Output ("      Elements:");
                Elem := First (G.Grammars (NS).Elements.all);
                while Elem /= Elements_Htable.No_Iterator loop
-                  Put (' '
-                       & Get (Elements_Htable.Current (Elem).Local_Name).all);
+                  Debug_Output
+                    (' '
+                     & Get (Elements_Htable.Current (Elem).Local_Name).all);
                   Next (G.Grammars (NS).Elements.all, Elem);
                end loop;
-               New_Line;
-
             end loop;
          end if;
 
@@ -2166,20 +2153,35 @@ package body Schema.Validators is
    is
       Old : constant XML_Group := Groups_Htable.Get
         (Grammar.Groups.all, Local_Name);
---        Result : XML_Group;
    begin
       if Old /= No_XML_Group then
          Old.Is_Forward_Decl := True;
          return Old;
---           Result := new XML_Group_Record'(Old.all);
---           Old.all := (Particles       => Empty_Particle_List,
---                       Local_Name      => new Byte_Sequence'(Local_Name),
---                       Is_Forward_Decl => True);
---           Groups_Htable.Set (Grammar.Groups.all, Result);
---           return Result;
       end if;
       return No_XML_Group;
    end Redefine_Group;
+
+   ----------------
+   -- Debug_Name --
+   ----------------
+
+   function Debug_Name (Grammar : XML_Grammar_NS) return String is
+      S : Symbol;
+   begin
+      if Grammar = null then
+         return "<Grammar: null>";
+      else
+         S := Grammar.Namespace_URI;
+         if S = No_Symbol then
+            return "<Grammar: "
+              & System.Address_Image (Grammar.all'Address) & " no ns>";
+         else
+            return "<Grammar: "
+              & System.Address_Image (Grammar.all'Address)
+              & " {" & Get (S).all & "}>";
+         end if;
+      end if;
+   end Debug_Name;
 
    ---------------------------
    -- Create_Global_Element --
@@ -2194,6 +2196,13 @@ package body Schema.Validators is
       Old : XML_Element_Access := Elements_Htable.Get
         (Grammar.Elements.all, Local_Name);
    begin
+      if Debug then
+         Output_Action
+           ("Create_Global_Element ("
+            & Debug_Name (Grammar) & ", "
+            & Debug_Print (Local_Name) & ", " & Form'Img & ")");
+      end if;
+
       if Old /= null then
          if Old.Of_Type /= No_Type then
             Validation_Error
@@ -2427,7 +2436,7 @@ package body Schema.Validators is
    procedure Free (Grammar : in out XML_Grammar_Record) is
    begin
       if Debug then
-         Put_Line ("Freeing grammar");
+         Debug_Output ("Freeing grammar");
       end if;
       if Grammar.Grammars /= null then
          for NS in Grammar.Grammars'Range loop
@@ -2449,7 +2458,7 @@ package body Schema.Validators is
       Tmp   : Grammar_NS_Array_Access;
    begin
       if Debug then
-         Put_Line ("Partial reset of the grammar");
+         Debug_Output ("Partial reset of the grammar");
       end if;
 
       if G = null then
@@ -2502,13 +2511,13 @@ package body Schema.Validators is
          L := Get (Grammar).Parsed_Locations;
          while L /= null loop
             if Debug then
-               Put_Line ("URI_Was_Parsed ("
-                         & Get (URI).all & ") ? Compare with "
-                         & Get (L.Str).all);
+               Debug_Output ("URI_Was_Parsed ("
+                             & Get (URI).all & ") ? Compare with "
+                             & Get (L.Str).all);
             end if;
             if L.Str = URI then
                if Debug then
-                  Put_Line ("    => Yes, already parsed");
+                  Debug_Output ("    => Yes, already parsed");
                end if;
                return True;
             end if;
@@ -2530,7 +2539,7 @@ package body Schema.Validators is
       Initialize_Grammar (Reader);
 
       if Debug then
-         Put_Line ("Set_Parsed_UI: " & Get (URI).all);
+         Debug_Output ("Set_Parsed_UI: " & Get (URI).all);
       end if;
       Get (Grammar).Parsed_Locations := new String_List_Record'
         (Str  => URI,
@@ -2882,7 +2891,7 @@ package body Schema.Validators is
          Debug_Push_Prefix ("SubstitutionGroup, can "
                             & To_QName (NS, Local_Name)
                             & " replace " & To_QName (Element)
-                            & " element.form=" & Element.Form'Img);
+                            & " form=" & Element.Form'Img);
       end if;
 
       --  Shortcut if Element itself is the validator for (namespace, local)
@@ -5183,28 +5192,6 @@ package body Schema.Validators is
       return Element.Elem.Is_Global;
    end Is_Global;
 
-   -----------------------
-   -- Debug_Push_Prefix --
-   -----------------------
-
-   procedure Debug_Push_Prefix (Append : String) is
-   begin
-      Debug_Output (ASCII.ESC & "[36m" & Append
-                    & ASCII.ESC & "[39m");
-      Debug_Prefixes_Level := Debug_Prefixes_Level + 1;
-   end Debug_Push_Prefix;
-
-   ----------------------
-   -- Debug_Pop_Prefix --
-   ----------------------
-
-   procedure Debug_Pop_Prefix is
-   begin
-      if Debug then
-         Debug_Prefixes_Level := Debug_Prefixes_Level - 1;
-      end if;
-   end Debug_Pop_Prefix;
-
    -------------------------
    -- Check_Qualification --
    -------------------------
@@ -5884,8 +5871,8 @@ package body Schema.Validators is
 
       if Parser.Grammar /= No_Grammar then
          if Debug then
-            Put_Line ("Initialize_Symbols, grammar is not null,"
-                      & " setting its symbol table if needed");
+            Debug_Output ("Initialize_Symbols, grammar is not null,"
+                          & " setting its symbol table if needed");
          end if;
 
          if Get (Parser.Grammar).Symbols =

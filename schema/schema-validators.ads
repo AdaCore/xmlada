@@ -1199,23 +1199,13 @@ package Schema.Validators is
    procedure Debug_Dump (Grammar : XML_Grammar);
    --  Dump the grammar to stdout. This is for debug only
 
-   procedure Set_Debug_Output (Output : Boolean);
-   --  Whether we should output debug traces
-
    function To_QName (Element : XML_Element) return Unicode.CES.Byte_Sequence;
    function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
    function To_QName (NS : XML_Grammar_NS; Local : Sax.Symbols.Symbol)
       return Unicode.CES.Byte_Sequence;
    --  Return the name as it should be displayed in error messages
 
-   Debug : Boolean := False;
-   --  Whether we are in debug mode
-
 private
-
-   procedure Debug_Push_Prefix (Append : String);
-   procedure Debug_Pop_Prefix;
-   --  Append a prefix to the current output
 
    ---------
    -- Ids --
@@ -1943,10 +1933,6 @@ private
    overriding function Can_Be_Empty
      (Group : access XML_All_Record) return Boolean;
    --  See doc for inherited subprograms
-
-   procedure Debug_Output (Str : String);
-   pragma Inline (Debug_Output);
-   --  Display a string for debugging purposes
 
    function Get_Name
      (Validator : access XML_Validator_Record'Class) return String;

@@ -27,7 +27,6 @@
 -----------------------------------------------------------------------
 
 pragma Ada_05;
-with GNAT.IO; use GNAT.IO;
 with Ada.Exceptions;        use Ada.Exceptions;
 with Sax.Readers;           use Sax.Readers;
 with Unicode.CES;           use Unicode, Unicode.CES;
@@ -455,7 +454,7 @@ package body Schema.Validators.Facets is
               Convert_Regexp (Get (Facets.Pattern_String).all);
          begin
             if Debug then
-               Put_Line ("Compiling regexp as " & Convert);
+               Debug_Output ("Compiling regexp as " & Convert);
             end if;
             Facets.Pattern := new Pattern_Matcher'(Compile (Convert));
          exception
