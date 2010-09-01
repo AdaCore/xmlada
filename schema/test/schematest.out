@@ -92113,13 +92113,9 @@ Grp: MS-Schema2006-07-15 / schZ011_d
 
 Grp: MS-Schema2006-07-15 / schZ012_a (disabled)
 
-Grp: MS-Schema2006-07-15 / schZ012_b
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schZ012_b
+Grp: MS-Schema2006-07-15 / schZ012_b (disabled)
 
-Grp: MS-Schema2006-07-15 / schZ012_c
-  100.0% tests= 1 (xsd= 1 xml= 0) OK= 1 FAILED= 0
-  OK schZ012_c
+Grp: MS-Schema2006-07-15 / schZ012_c (disabled)
 
 Grp: MS-Schema2006-07-15 / schZ013
    0.0% tests= 1 (xsd= 1 xml= 0) OK= 0 FAILED= 1
@@ -95259,8 +95255,8 @@ Grp: BoeingXSDTestCases / ipo6
   OK ipo_1
   OK ipo_2
 
-Total number of tests: 37037 (omitting non-accepted tests)
-   13748 XSD files (not including those parsed automatically)
+Total number of tests: 37035 (omitting non-accepted tests)
+   13746 XSD files (not including those parsed automatically)
    23354 XML files
 NI: Features not implemented: in_partial= 210 in_full_fail= 2252
 SP: XSD KO, should be OK: in_full_fail= 96
