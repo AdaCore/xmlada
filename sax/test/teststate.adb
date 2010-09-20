@@ -93,6 +93,7 @@ procedure TestState is
    procedure Test2;
    procedure Test3;
    procedure Test4;
+   procedure Test5;
    --  Various tests
 
    ------------
@@ -343,9 +344,57 @@ procedure TestState is
       Free (N);
    end Test4;
 
+   -----------
+   -- Test5 --
+   -----------
+
+   procedure Test5 is
+      Name : constant String := "Test5, camera";
+      --  Test with nested NFA
+
+      N : NFA_Access := new NFA;
+      On, Off : State;                --  the super states
+      Mode_Record, Mode_Play : State; --  the inner states of [On]
+      Nested_On : Nested_NFA;
+
+   begin
+      N.Initialize;
+
+      On := N.Add_State;   --  state 2
+      Off := N.Add_State;  --  state 3
+
+      Mode_Record := N.Add_State;  --  state 4
+      Nested_On := N.Create_Nested (Mode_Record);
+      N.Set_Nested (On, Nested_On);
+
+      Mode_Play := N.Add_State;  --  state 5
+      N.Add_Transition (Mode_Record, Mode_Play,   (Char, 'p'));
+      N.Add_Transition (Mode_Play, Mode_Record,   (Char, 'r'));
+
+      N.Add_Transition (Mode_Record, Final_State, (Char, 't')); --  timeout...
+      N.On_Nested_Exit (On, Off, (Char, 't'));   -- ... goes to Off state
+
+      N.Add_Transition (On, Off, (Char, '0'));
+      N.Add_Transition (Off, On, (Char, '1'));
+
+      N.Add_Empty_Transition (Start_State, Off);  --  Off is both start and end
+      N.Add_Empty_Transition (Off, Final_State);
+
+      Assert (Name, N, "1p0");  --  going to play mode, then switch off
+      Assert (Name, N, "1pr0");
+      Assert (Name, N, "10");
+      Assert (Name, N, "1t");   --  timed out => switched off
+
+      Assert_Error (Name, N, "1q", 2,  "t|p|0");
+      Assert_Error (Name, N, "1pq", 3, "r|0");
+
+      Free (N);
+   end Test5;
+
 begin
    Test1;
    Test2;
    Test3;
    Test4;
+   Test5;
 end TestState;

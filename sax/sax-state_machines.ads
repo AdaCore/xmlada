@@ -130,6 +130,103 @@ package Sax.State_Machines is
    --  version to the next.
    --  If [Compact] is True then the output does not include newlines.
 
+   ----------------------------------------
+   -- Hierarchical finite state machines --
+   ----------------------------------------
+   --  It is possible to build hierarchical state machines: in such machines,
+   --  some of the states will contain nested state machines.
+   --  For instance:
+   --                +----2-----+
+   --                |          |---'b'--> 7
+   --      1 ------->|-4->5-->6----------> 3
+   --                |          |
+   --                +----------+
+   --
+   --  In the case above, the machine could be in both state 2 (the superstate)
+   --  and in state 5 (the inner state).
+   --  When an input is processed, all active states (super and inner) will
+   --  proceed the event. If 5 matches, we might go to 6. Next time, if 6
+   --  matches, we would exit 2 and go to 3.
+   --  But when 2 and 5 are active, it is also possible that 2 itself matches,
+   --  and then we go to 3 whatever inner state we were in at the same time.
+   --
+   --  The above would be created as follows. Note that this example also does
+   --  not assume that the nested NFA has been created before we create the
+   --  toplevel NFA.
+   --
+   --     S1 := N.Add_State; S2 := N.Add_State; S3 := N.Add_State;
+   --     N.Add_Transition (S1, S2, ...);  --  will enter "2" and nested NFA
+   --                                      --  so activate S4
+   --     N.Add_Transition (S2, S7, 'b');  --  will exit nested NFA whatever
+   --                                      --  state we are in.
+   --
+   --  Later on we create the nested automaton:
+   --     S4 := N.Add_State;
+   --     S5 := N.Add_State;  N.Add_Transition (S4, S5, ...);
+   --     S6 := N.Add_State;  N.Add_Transition (S5, S6, ...);
+   --
+   --     E := N.Create_Nested (S4);
+   --     N.Set_Nested (E);  --  Wraps E (we could have several states wrapping
+   --                        --  the same nested)
+   --     N.On_Nested_Exit (S2, S3);  --  on exit of nested NFA, moves to 3
+   --
+   --  It is possible to build state machines that cannot be executed later on:
+   --  if the state machine within 2 is the same as the outer state machine
+   --  (therefore we have a recursive state machine, somewhat), and we have an
+   --  empty transition from 1 to 4, then the initial state would require
+   --  infinite storage for the NFA_Matcher: we start in state 1, which through
+   --  the empty transition is the same as state 4 (and therefore state 2 is
+   --  also active). But in this recursive NFA, state 4 is another instance
+   --  equivalent to state 1. In turn, we have another nested state 1, then
+   --  another,... ad infinitum. So you should always have a non-empty
+   --  transition into a nested state machine (in thhe schema above, transition
+   --  from 1->4 should not be empty.
+   --
+   --  It is invalid to add a transition from one of the nested states from one
+   --  of the outer states. The nested automaton must be fully independent,
+   --  since it might be reused in several places.
+
+   type Nested_NFA is private;
+
+   function Create_Nested
+     (Self : access NFA'Class; From : State) return Nested_NFA;
+   --  Marks the part of the machine starting at [From] and ending at [To] as
+   --  a nested automaton. It is possible that some states have been created
+   --  between the two that do not belong to the nested automaton, this isn't
+   --  an issue.
+   --  The state [From] is the default state for the nested automaton. For
+   --  instance, a camera has two superstates: "on" and "off". The "on" state
+   --  has a nested NFA for "record" and "playback" modes. By default, if you
+   --  enter the "on" state, the "record" mode is also selected. However, using
+   --  the appropriate camera button, it is possible to enter the "playback"
+   --  button directly.
+   --
+   --  Within the nested NFA, transitions to [Final_State] play a special role:
+   --  upon reaching it, the nested automaton will be terminated, and control
+   --  returned to the super state (that state is one of the states for which
+   --  we have called Set_Nested). Any empty transition for the superstate will
+   --  be navigated to find out the new list of active states.
+   --
+   --  No further internal transition must be added to the nested automaton
+   --  after this call, since its states have been marked specially. It is
+   --  still valid to add transitions to the ouside.
+
+   procedure Set_Nested (Self : access NFA; S : State; Nested : Nested_NFA);
+   --  Setup state [S] so that it includes a nested NFA defined by [Nested]
+
+   procedure On_Nested_Exit
+     (Self      : access NFA;
+      From      : State;
+      To        : State;
+      On_Symbol : Transition_Symbol);
+   procedure On_Empty_Nested_Exit
+     (Self      : access NFA;
+      From      : State;
+      To        : State);
+   --  When the nested NFA in [From] is terminated (because it has reached
+   --  [Final_State] after processing [On_Symbol]), a transition from [From] to
+   --  [To] is performed. [Set_Nested] must have been called for [From] first.
+
    -------------------------------------------
    -- Non-deterministic automatons matching --
    -------------------------------------------
@@ -170,7 +267,7 @@ package Sax.State_Machines is
    --  Print on stdout some debug information for [Self]
 
 private
-   type Transition_Id is new Natural;
+   type Transition_Id is new Natural range 0 .. 2 ** 16 - 1;
    type Transition (Is_Empty : Boolean := True) is record
       To_State       : State;
       Next_For_State : Transition_Id;
@@ -182,9 +279,18 @@ private
    end record;
    No_Transition : constant Transition_Id := 0;
 
+   Start_State : constant State := 1;           --  Exists in NFA.States
+   Final_State : constant State := State'Last;  --  Not shown in NFA.States
+   No_State    : constant State := Final_State - 1;
+
    type State_Data is record
       First_Transition : Transition_Id;
+      On_Nested_Exit   : Transition_Id;
+      Nested           : State := No_State;
    end record;
+   --  [Nested], if defined, indicates that this state contains a nested
+   --  state machine, for which the default is Nested. Any transition to this
+   --  state will also activate [Nested].
 
    package Transition_Tables is new GNAT.Dynamic_Tables
      (Table_Component_Type => Transition,
@@ -193,10 +299,6 @@ private
       Table_Initial        => 100,
       Table_Increment      => 50);
    subtype Transition_Table is Transition_Tables.Instance;
-
-   Start_State : constant State := 1;           --  Exists in NFA.States
-   Final_State : constant State := State'Last;  --  Not shown in NFA.States
-   No_State    : constant State := Final_State - 1;
 
    package State_Tables is new GNAT.Dynamic_Tables
      (Table_Component_Type => State_Data,
@@ -207,20 +309,38 @@ private
    subtype State_Table is State_Tables.Instance;
 
    type NFA is tagged record
-      States      : State_Table;
-      Transitions : Transition_Table;
+      States       : State_Table;
+      Transitions  : Transition_Table;
    end record;
 
-   type Boolean_State_Array is array (State range <>) of Boolean;
+   type Nested_NFA is record
+      Default_Start : State;
+   end record;
+
+   type Active is mod 4;
+   for Active'Size use 2;
+   State_Inactive      : constant Active := 2#00#;
+   State_Active        : constant Active := 2#01#;
+   State_Future_Active : constant Active := 2#10#;
+
+   type Boolean_State_Array is array (State range <>) of Active;
+   type Boolean_State_Array_Access is access all Boolean_State_Array;
    pragma Pack (Boolean_State_Array);
 
-   type NFA_Matcher_Record (Last : State) is record
-      NFA      : NFA_Access;
-      In_Final : Boolean;
-      Current  : Boolean_State_Array (State_Tables.First .. Last);
-      --  The states we are currently in
+   type NFA_Matcher_Record;
+   type NFA_Matcher_List is access all NFA_Matcher_Record;
+
+   type NFA_Matcher is record
+      NFA        : NFA_Access;
+      In_Final   : Boolean;
+      Current    : Boolean_State_Array_Access;
+      Nested     : NFA_Matcher_List;
    end record;
 
-   type NFA_Matcher is access all NFA_Matcher_Record;
+   type NFA_Matcher_Record is record
+      Super_State : State;
+      Matcher     : NFA_Matcher;
+      Next        : NFA_Matcher_List;
+   end record;
 
 end Sax.State_Machines;
