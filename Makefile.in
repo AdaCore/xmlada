@@ -78,6 +78,7 @@ test: force
 
 run_test: force
 	@cd unicode/test; ./test_unicode
+	@make --no-print-directory -C sax/test tests
 	@make --no-print-directory -C dom/test tests
 	@make --no-print-directory -C schema/test tests
 run_test_valgrind: test

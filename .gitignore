@@ -1,4 +1,4 @@
-Makefile
+./Makefile
 Makefile.314
 config.log
 config.status
@@ -9,6 +9,7 @@ docs/xml.info
 docs/xml.pdf
 docs/xml.txt
 sax/test/testsax
+sax/test/teststate
 dom/test/tests
 dom/test/testxml
 dom/test/tostring

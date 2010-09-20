@@ -1,0 +1,4 @@
+tests: force
+	@./teststate
+
+force:
