@@ -88,10 +88,7 @@ private
             Mixed_Content  : Boolean;
             Simple_Content : Boolean;
             Blocks         : Schema.Validators.Block_Status;
-            Final_Restriction : Boolean;
-            Final_Extension   : Boolean;
-            Final_Unions      : Boolean;
-            Final_Lists       : Boolean;
+            Final          : Schema.Validators.Final_Status;
 
          when Context_Element =>
             Element : Schema.Validators.XML_Element;

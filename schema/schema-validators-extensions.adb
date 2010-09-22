@@ -426,7 +426,7 @@ package body Schema.Validators.Extensions is
       Result : constant Extension_Type := new Extension_XML_Validator;
       C      : Sequence;
    begin
-      if Get_Final_On_Extension (Base) then
+      if Get_Final (Base)(Final_Extension) then
          Validation_Error
            (Reader, "#Type """ & To_QName (Base) & """ forbids extensions");
       end if;

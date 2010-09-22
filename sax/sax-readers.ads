@@ -237,6 +237,8 @@ package Sax.Readers is
 
    function Get_Value
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   --  Returns No_Symbol if Index is negative
+
    function Get_Non_Normalized_Value
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
    function Get_Value_As_Boolean

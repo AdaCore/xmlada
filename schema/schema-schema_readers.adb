@@ -59,6 +59,7 @@ package body Schema.Schema_Readers is
    --  Return the grammar matching a given prefix
 
    function To_String (Blocks : Block_Status) return String;
+   function To_String (Final  : Final_Status) return String;
 
    procedure Lookup_With_NS
      (Handler : access Schema_Reader'Class;
@@ -101,6 +102,21 @@ package body Schema.Schema_Readers is
    function In_Redefine_Context
      (Handler : Schema_Reader'Class) return Boolean;
    --  Whether we are currently processing a <redefine> tag
+
+   procedure Compute_Blocks
+     (Atts    : Sax_Attribute_List;
+      Handler : access Schema_Reader'Class;
+      Blocks  : out Block_Status;
+      Is_Set  : out Boolean;
+      Attr_Name : Symbol);
+   --  Compute the list of blocked elements from the attribute "block".
+
+   procedure Compute_Final
+     (Atts    : Sax_Attribute_List;
+      Handler : access Schema_Reader'Class;
+      Final   : out Final_Status);
+   --  Compute the list of final attributes from value. Value is a list similar
+   --  to what is used for the "final" attribute of elements in a schema
 
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
@@ -226,6 +242,18 @@ package body Schema.Schema_Readers is
       return "restr=" & Blocks (Block_Restriction)'Img
         & " ext=" & Blocks (Block_Extension)'Img
         & " sub=" & Blocks (Block_Substitution)'Img;
+   end To_String;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Final : Final_Status) return String is
+   begin
+      return "restr=" & Final (Final_Restriction)'Img
+        & " ext=" & Final (Final_Extension)'Img
+        & " union=" & Final (Final_Union)'Img
+        & " list=" & Final (Final_List)'Img;
    end To_String;
 
    -------------------------
@@ -1006,19 +1034,18 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.S_Abstract);
       Nillable_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Nillable);
-      Final_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Final);
-      Block_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Block);
       Form_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Form);
 
+      Blocks : Block_Status;
+      Final  : Final_Status;
       Min_Occurs, Max_Occurs : Integer := 1;
       Element : XML_Element;
       Typ     : XML_Type := No_Type;
       Group   : XML_Element;
       Form    : Form_Type;
       Is_Ref  : Boolean;
+      Is_Set  : Boolean;
 
    begin
       if Form_Index /= -1 then
@@ -1161,42 +1188,12 @@ package body Schema.Schema_Readers is
          end if;
       end if;
 
-      if Final_Index /= -1 then
-         declare
-            Restrictions, Extensions, Unions, Lists : Boolean := False;
-         begin
-            Compute_Final
-              (Get (Get_Value (Atts, Final_Index)).all, Handler,
-               Restrictions => Restrictions,
-               Extensions   => Extensions,
-               Unions       => Unions,
-               Lists        => Lists);
-            Set_Final (Element,
-                       On_Restriction => Restrictions,
-                       On_Extension   => Extensions,
-                       On_Unions      => Unions,
-                       On_Lists       => Lists);
-            if Debug then
-               Output_Action ("Set_Final ("
-                       & Ada_Name (Element) & ", "
-                       & Boolean'Image (Restrictions) & ", "
-                       & Boolean'Image (Extensions) & ");");
-            end if;
-         end;
-      end if;
+      Compute_Final (Atts, Handler, Final);
+      Set_Final (Element, Final);
 
-      if Block_Index /= -1 then
-         declare
-            Blocks : Block_Status;
-         begin
-            Compute_Blocks
-              (Get (Get_Value (Atts, Block_Index)).all, Handler, Blocks);
-            Set_Block (Element, Blocks);
-            if Debug then
-               Output_Action ("Set_Block (" & Ada_Name (Element) & ", "
-                       & To_String (Blocks) & ")");
-            end if;
-         end;
+      Compute_Blocks (Atts, Handler, Blocks, Is_Set, Handler.Block);
+      if Is_Set then
+         Set_Block (Element, Blocks);
       end if;
 
       if Min_Occurs_Index /= -1 then
@@ -1323,11 +1320,8 @@ package body Schema.Schema_Readers is
             Redefined_Type    => No_Type,
             Mixed_Content     => False,
             Simple_Content    => True,
-            Blocks            => (others => False),
-            Final_Restriction => False,
-            Final_Extension   => False,
-            Final_Unions      => False,
-            Final_Lists       => False,
+            Blocks            => No_Block,
+            Final             => (others => False),
             Level             => Handler.Contexts.Level + 1,
             Next              => Handler.Contexts);
 
@@ -1355,16 +1349,11 @@ package body Schema.Schema_Readers is
               (Ada_Name (C) & " := Create_Local_Type (Validator);");
          end if;
 
-         Set_Final (Typ,
-                    On_Restriction => Handler.Contexts.Final_Restriction,
-                    On_Extension   => Handler.Contexts.Final_Extension,
-                    On_Unions      => Handler.Contexts.Final_Unions,
-                    On_Lists       => Handler.Contexts.Final_Lists);
+         Set_Final (Typ, Handler.Contexts.Final);
          if Debug then
             Output_Action ("Set_Final ("
-                    & Ada_Name (Typ) & ", "
-                    & Boolean'Image (Handler.Contexts.Final_Restriction) & ", "
-                    & Boolean'Image (Handler.Contexts.Final_Extension) & ");");
+                           & Ada_Name (Typ) & ", "
+                           & To_String (Handler.Contexts.Final) & ");");
             Output_Action ("Setting base type for restriction");
          end if;
 
@@ -1375,6 +1364,97 @@ package body Schema.Schema_Readers is
       end if;
    end Finish_Simple_Type;
 
+   --------------------
+   -- Compute_Blocks --
+   --------------------
+
+   procedure Compute_Blocks
+     (Atts    : Sax_Attribute_List;
+      Handler : access Schema_Reader'Class;
+      Blocks  : out Block_Status;
+      Is_Set  : out Boolean;
+      Attr_Name : Symbol)
+   is
+      Block_Index : constant Integer :=
+        Get_Index (Atts, Empty_String, Attr_Name);
+
+      procedure On_Item (Str : Byte_Sequence);
+      procedure On_Item (Str : Byte_Sequence) is
+      begin
+         if Str = "restriction" then
+            Blocks (Block_Restriction) := True;
+         elsif Str = "extension" then
+            Blocks (Block_Extension) := True;
+         elsif Str = "substitution" then
+            Blocks (Block_Substitution) := True;
+         elsif Str = "#all" then
+            Blocks := (others => True);
+         else
+            Validation_Error
+              (Handler, "#Invalid value for block: """ & Str & """");
+         end if;
+      end On_Item;
+
+      procedure For_Each
+        is new Schema.Validators.Lists.For_Each_Item (On_Item);
+   begin
+      Is_Set := Block_Index /= -1;
+      Blocks := No_Block;
+
+      if Block_Index /= -1 then
+         For_Each (Get (Get_Value (Atts, Block_Index)).all);
+
+         if Debug then
+            Output_Action ("Set_Block (" & To_String (Blocks) & ")");
+         end if;
+      end if;
+   end Compute_Blocks;
+
+   -------------------
+   -- Compute_Final --
+   -------------------
+
+   procedure Compute_Final
+     (Atts    : Sax_Attribute_List;
+      Handler : access Schema_Reader'Class;
+      Final   : out Final_Status)
+   is
+      Final_Index : constant Integer :=
+        Get_Index (Atts, Empty_String, Handler.Final);
+
+      procedure On_Item (Str : Byte_Sequence);
+      procedure On_Item (Str : Byte_Sequence) is
+      begin
+         if Str = "restriction" then
+            Final (Final_Restriction) := True;
+         elsif Str = "extension" then
+            Final (Final_Extension)   := True;
+         elsif Str = "#all" then
+            Final := (others => True);
+         elsif Str = "union" then
+            Final (Final_Union)       := True;
+         elsif Str = "list" then
+            Final (Final_List)        := True;
+         else
+            Validation_Error
+              (Handler, "#Invalid value for final: """ & Str & """");
+         end if;
+      end On_Item;
+
+      procedure For_Each
+         is new Schema.Validators.Lists.For_Each_Item (On_Item);
+   begin
+      Final := (others => False);
+
+      if Final_Index /= -1 then
+         For_Each (Get (Get_Value (Atts, Final_Index)).all);
+
+         if Debug then
+            Output_Action ("Set_Final (" & To_String (Final) & ")");
+         end if;
+      end if;
+   end Compute_Final;
+
    -------------------------
    -- Create_Complex_Type --
    -------------------------
@@ -1383,18 +1463,11 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Name_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Name);
       Mixed_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Mixed);
-      Block_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Block);
-      Final_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Final);
       Abstract_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.S_Abstract);
-      Name    : Symbol := No_Symbol;
-      Mixed   : Boolean;
+      Is_Set : Boolean;
 
    begin
       if Abstract_Index /= -1 then
@@ -1404,51 +1477,36 @@ package body Schema.Schema_Readers is
             "Unsupported ""abstract"" attribute for complexType");
       end if;
 
-      if Name_Index /= -1 then
-         Name := Get_Value (Atts, Name_Index);
-      end if;
-
-      Mixed := Mixed_Index /= -1
-        and then Get_Value_As_Boolean (Atts, Mixed_Index);
-
       Handler.Contexts := new Context'
         (Typ               => Context_Type_Def,
-         Type_Name         => Name,
+         Type_Name         => Get_Value
+           (Atts, Get_Index (Atts, Empty_String, Handler.Name)),
          Type_Validator    => null,
          Redefined_Type    => No_Type,
-         Mixed_Content     => Mixed,
+         Mixed_Content     => Mixed_Index /= -1
+           and then Get_Value_As_Boolean (Atts, Mixed_Index),
          Simple_Content    => False,
-         Blocks            => Get_Block_Default (Handler.Target_NS),
-         Final_Restriction => False,
-         Final_Extension   => False,
-         Final_Unions      => False,
-         Final_Lists       => False,
+         Blocks            => No_Block,
+         Final             => (others => False),
          Level             => Handler.Contexts.Level + 1,
          Next              => Handler.Contexts);
 
-      if Block_Index /= -1 then
-         Compute_Blocks
-           (Get (Get_Value (Atts, Block_Index)).all, Handler,
-            Blocks => Handler.Contexts.Blocks);
+      Compute_Blocks
+        (Atts, Handler, Handler.Contexts.Blocks, Is_Set, Handler.Block);
+      if not Is_Set then
+         Handler.Contexts.Blocks := Get_Block_Default (Handler.Target_NS);
       end if;
 
-      if Final_Index /= -1 then
-         Compute_Final
-           (Get (Get_Value (Atts, Final_Index)).all, Handler,
-            Restrictions  => Handler.Contexts.Final_Restriction,
-            Extensions    => Handler.Contexts.Final_Extension,
-            Unions        => Handler.Contexts.Final_Unions,
-            Lists         => Handler.Contexts.Final_Lists);
-      end if;
+      Compute_Final  (Atts, Handler, Handler.Contexts.Final);
 
       --  Do not use In_Redefine_Context, since this only applies for types
       --  that are redefined
       if Handler.Contexts.Next.Typ = Context_Redefine then
          Handler.Contexts.Redefined_Type := Redefine_Type
-           (Handler.Target_NS, Name);
+           (Handler.Target_NS, Handler.Contexts.Type_Name);
          if Debug then
             Output_Action ("Validator := Redefine_Type (Handler.Target_NS, """
-                    & Get (Name).all & """);");
+                    & Get (Handler.Contexts.Type_Name).all & """);");
          end if;
       end if;
    end Create_Complex_Type;
@@ -1518,20 +1576,15 @@ package body Schema.Schema_Readers is
          Output_Action ("Set_Block (" & Ada_Name (Typ) & ", "
                  & To_String (Handler.Contexts.Blocks) & ")");
          Output_Action ("Set_Final ("
-                 & Ada_Name (Typ) & ", "
-                 & Boolean'Image (Handler.Contexts.Final_Restriction) & ", "
-                 & Boolean'Image (Handler.Contexts.Final_Extension) & ");");
+                        & Ada_Name (Typ) & ", "
+                        & To_String (Handler.Contexts.Final) & ");");
          Output_Action ("Set_Mixed_Content ("
            & Ada_Name (C) & ", "
            & Boolean'Image (Handler.Contexts.Mixed_Content
              or Handler.Contexts.Simple_Content) & ");");
       end if;
 
-      Set_Final (Typ,
-                 On_Restriction => Handler.Contexts.Final_Restriction,
-                 On_Extension   => Handler.Contexts.Final_Extension,
-                 On_Unions      => Handler.Contexts.Final_Unions,
-                 On_Lists       => Handler.Contexts.Final_Lists);
+      Set_Final (Typ, Handler.Contexts.Final);
       Set_Mixed_Content
         (Get_Validator (Typ), Handler.Contexts.Mixed_Content
                               or Handler.Contexts.Simple_Content);
@@ -2451,8 +2504,8 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.S_Element_Form_Default);
       Attr_Form_Default_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.S_Attribute_Form_Default);
-      Block_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Block_Default);
+      Blocks : Block_Status;
+      Is_Set : Boolean;
    begin
       if Target_NS_Index /= -1 then
          if Debug then
@@ -2498,18 +2551,9 @@ package body Schema.Schema_Readers is
          end if;
       end if;
 
-      if Block_Index /= -1 then
-         declare
-            Blocks : Block_Status;
-         begin
-            Compute_Blocks
-              (Get (Get_Value (Atts, Block_Index)).all, Handler, Blocks);
-            Set_Block_Default (Handler.Target_NS, Blocks);
-            if Debug then
-               Output_Action ("Set_Block (Handler.Target_NS, "
-                       & To_String (Blocks) & ")");
-            end if;
-         end;
+      Compute_Blocks (Atts, Handler, Blocks, Is_Set, Handler.Block_Default);
+      if Is_Set then
+         Set_Block_Default (Handler.Target_NS, Blocks);
       end if;
 
       Handler.Contexts := new Context'

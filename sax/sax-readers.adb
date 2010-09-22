@@ -6111,7 +6111,11 @@ package body Sax.Readers is
    function Get_Value
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol is
    begin
-      return List.List (Index).Value;
+      if Index < 0 then
+         return No_Symbol;
+      else
+         return List.List (Index).Value;
+      end if;
    end Get_Value;
 
    ------------------------------

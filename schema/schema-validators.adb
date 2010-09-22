@@ -1505,8 +1505,7 @@ package body Schema.Validators is
             Validator         => null,
             Simple_Type       => Unknown_Content,
             Blocks            => Get_Block_Default (Grammar),
-            Final_Extension   => False,
-            Final_Restriction => False,
+            Final             => (others => False),
             Next              => null);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Register (Grammar, Typ);
@@ -1939,7 +1938,7 @@ package body Schema.Validators is
          Types_For_Mem      => null,
          Atts_For_Mem       => null,
          Elems_For_Mem      => null,
-         Blocks             => (others => False));
+         Blocks             => No_Block);
 
       return G.Grammars (G.Grammars'Last);
    end Create_NS_Grammar;
@@ -2108,10 +2107,9 @@ package body Schema.Validators is
          Default             => No_Symbol,
          Is_Abstract         => False,
          Nillable            => True,
-         Final_Restriction   => False,
-         Final_Extension     => False,
+         Final               => (others => False),
          Blocks_Is_Set       => False,
-         Blocks              => (others => False),
+         Blocks              => No_Block,
          Is_Global           => False,
          Form                => Form,
          Fixed               => No_Symbol,
@@ -2221,10 +2219,9 @@ package body Schema.Validators is
             Default             => No_Symbol,
             Is_Abstract         => False,
             Nillable            => True,
-            Final_Restriction   => False,
-            Final_Extension     => False,
+            Final               => (others => False),
             Blocks_Is_Set       => False,
-            Blocks              => Get_Block_Default (Grammar),
+            Blocks              => No_Block,
             Is_Global           => True,
             Form                => Form,
             Fixed               => No_Symbol,
@@ -2274,8 +2271,7 @@ package body Schema.Validators is
             Validator         => XML_Validator (Validator),
             Simple_Type       => Unknown_Content,
             Blocks            => Get_Block_Default (Grammar),
-            Final_Extension   => False,
-            Final_Restriction => False,
+            Final             => (others => False),
             Next              => null);
          Types_Htable.Set (Grammar.Types.all, Typ);
          if Debug then
@@ -2943,16 +2939,18 @@ package body Schema.Validators is
                            & To_QName (NS, Local_Name)
                            & """ (substitutions are blocked)");
 
-                     elsif (G.Elem.Blocks (Block_Extension)
-                            or else G.Elem.Of_Type.Blocks (Block_Extension))
+                     elsif
+                       (G.Elem.Blocks (Block_Extension)
+                        or else G.Elem.Of_Type.Blocks (Block_Extension))
                        and then Is_Extension_Of (R, Base => G)
                      then
                         Validation_Error
                           (Reader, "#Invalid substitution, because """
                            & To_QName (G.Elem) & """ blocks extensions");
 
-                     elsif (G.Elem.Blocks (Block_Restriction)
-                            or else G.Elem.Of_Type.Blocks (Block_Restriction))
+                     elsif
+                       (G.Elem.Blocks (Block_Restriction) or else
+                          G.Elem.Of_Type.Blocks (Block_Restriction))
                        and then Is_Restriction_Of (R, Base => G)
                      then
                         Validation_Error
@@ -4137,14 +4135,14 @@ package body Schema.Validators is
                & To_QName (Get_Type (Head)));
          end if;
 
-         if HeadPtr.Final_Restriction and then Had_Restriction then
+         if HeadPtr.Final (Final_Restriction) and then Had_Restriction then
             Validation_Error
               (Reader, "#""" & Get (HeadPtr.Local_Name).all
                & """ is final for restrictions, and cannot be substituted by"
                & """" & Get (ElemPtr.Local_Name).all & """");
          end if;
 
-         if HeadPtr.Final_Extension and then Had_Extension then
+         if HeadPtr.Final (Final_Extension) and then Had_Extension then
             Validation_Error
               (Reader, "#""" & Get (HeadPtr.Local_Name).all
                & """ is final for extensions, and cannot be substituted by"
@@ -4204,9 +4202,8 @@ package body Schema.Validators is
         (Local_Name        => No_Symbol,
          Validator         => XML_Validator (Validator),
          Simple_Type       => Unknown_Content,
-         Blocks            => (others => False),
-         Final_Extension   => False,
-         Final_Restriction => False,
+         Blocks            => No_Block,
+         Final             => (others => False),
          Next              => null);
       Register (Grammar, Result);
       return Result;
@@ -5057,34 +5054,18 @@ package body Schema.Validators is
    -- Set_Final --
    ---------------
 
-   procedure Set_Final
-     (Element : XML_Element;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean;
-      On_Unions      : Boolean;
-      On_Lists       : Boolean)
-   is
-      pragma Unreferenced (On_Unions, On_Lists);
+   procedure Set_Final (Element : XML_Element; Final : Final_Status) is
    begin
-      Element.Elem.Final_Restriction := On_Restriction;
-      Element.Elem.Final_Extension   := On_Extension;
+      Element.Elem.Final := Final;
    end Set_Final;
 
    ---------------
    -- Set_Final --
    ---------------
 
-   procedure Set_Final
-     (Typ            : XML_Type;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean;
-      On_Unions      : Boolean;
-      On_Lists       : Boolean)
-   is
-      pragma Unreferenced (On_Unions, On_Lists);
+   procedure Set_Final (Typ : XML_Type; Final : Final_Status) is
    begin
-      Typ.Final_Restriction := On_Restriction;
-      Typ.Final_Extension   := On_Extension;
+      Typ.Final := Final;
    end Set_Final;
 
    ---------------
@@ -5530,23 +5511,14 @@ package body Schema.Validators is
       return Typ.Blocks;
    end Get_Block;
 
-   ------------------------------
-   -- Get_Final_On_Restriction --
-   ------------------------------
+   ---------------
+   -- Get_Final --
+   ---------------
 
-   function Get_Final_On_Restriction (Typ : XML_Type) return Boolean is
+   function Get_Final (Typ : XML_Type) return Final_Status is
    begin
-      return Typ.Final_Restriction;
-   end Get_Final_On_Restriction;
-
-   ----------------------------
-   -- Get_Final_On_Extension --
-   ----------------------------
-
-   function Get_Final_On_Extension (Typ : XML_Type) return Boolean is
-   begin
-      return Typ.Final_Extension;
-   end Get_Final_On_Extension;
+      return Typ.Final;
+   end Get_Final;
 
    -----------------------
    -- Set_Block_Default --
@@ -5726,83 +5698,6 @@ package body Schema.Validators is
         (Element.Elem.Of_Type.Validator.all,
          Base.Elem.Of_Type.Validator);
    end Is_Restriction_Of;
-
-   --------------------
-   -- Compute_Blocks --
-   --------------------
-
-   procedure Compute_Blocks
-     (Value  : Unicode.CES.Byte_Sequence;
-      Reader : access Abstract_Validation_Reader'Class;
-      Blocks : out Block_Status)
-   is
-      procedure On_Item (Str : Byte_Sequence);
-      procedure On_Item (Str : Byte_Sequence) is
-      begin
-         if Str = "restriction" then
-            Blocks (Block_Restriction) := True;
-         elsif Str = "extension" then
-            Blocks (Block_Extension) := True;
-         elsif Str = "substitution" then
-            Blocks (Block_Substitution) := True;
-         elsif Str = "#all" then
-            Blocks := (others => True);
-         else
-            Validation_Error
-              (Reader, "#Invalid value for block: """ & Str & """");
-         end if;
-      end On_Item;
-
-      procedure For_Each
-        is new Schema.Validators.Lists.For_Each_Item (On_Item);
-   begin
-      Blocks := (others => False);
-      For_Each (Value);
-   end Compute_Blocks;
-
-   -------------------
-   -- Compute_Final --
-   -------------------
-
-   procedure Compute_Final
-     (Value         : Unicode.CES.Byte_Sequence;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Restrictions  : out Boolean;
-      Extensions    : out Boolean;
-      Unions        : out Boolean;
-      Lists         : out Boolean)
-   is
-      procedure On_Item (Str : Byte_Sequence);
-      procedure On_Item (Str : Byte_Sequence) is
-      begin
-         if Str = "restriction" then
-            Restrictions := True;
-         elsif Str = "extension" then
-            Extensions := True;
-         elsif Str = "#all" then
-            Restrictions := True;
-            Extensions := True;
-            Unions     := True;
-            Lists      := True;
-         elsif Str = "union" then
-            Unions := True;
-         elsif Str = "list" then
-            Lists := True;
-         else
-            Validation_Error
-              (Reader, "#Invalid value for final: """ & Str & """");
-         end if;
-      end On_Item;
-
-      procedure For_Each
-         is new Schema.Validators.Lists.For_Each_Item (On_Item);
-   begin
-      Restrictions := False;
-      Extensions   := False;
-      Unions       := False;
-      Lists        := False;
-      For_Each (Value);
-   end Compute_Final;
 
    -----------------
    -- Is_Wildcard --

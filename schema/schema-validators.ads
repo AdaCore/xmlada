@@ -477,22 +477,23 @@ package Schema.Validators is
                        Block_Extension,
                        Block_Substitution);
    type Block_Status is array (Block_Type) of Boolean;
+   pragma Pack (Block_Status);
+   No_Block : constant Block_Status := (others => False);
 
-   procedure Set_Block
-     (Typ    : XML_Type;
-      Blocks : Block_Status);
+   procedure Set_Block (Typ    : XML_Type; Blocks : Block_Status);
    function Get_Block (Typ : XML_Type) return Block_Status;
    --  Set the "block" status of the type.
    --  This can also be done at the element's level
 
-   procedure Set_Final
-     (Typ            : XML_Type;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean;
-      On_Unions      : Boolean;
-      On_Lists       : Boolean);
-   function Get_Final_On_Restriction (Typ : XML_Type) return Boolean;
-   function Get_Final_On_Extension   (Typ : XML_Type) return Boolean;
+   type Final_Type is (Final_Restriction,
+                       Final_Extension,
+                       Final_Union,
+                       Final_List);
+   type Final_Status is array (Final_Type) of Boolean;
+   pragma Pack (Final_Status);
+
+   procedure Set_Final (Typ : XML_Type; Final : Final_Status);
+   function Get_Final (Typ : XML_Type) return Final_Status;
    --  Set the final status of the element
 
    procedure Normalize_Whitespace
@@ -857,12 +858,7 @@ package Schema.Validators is
    --  Whether the element is nillable (this only adds support for the
    --  attribute xsi:nil
 
-   procedure Set_Final
-     (Element : XML_Element;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean;
-      On_Unions      : Boolean;
-      On_Lists       : Boolean);
+   procedure Set_Final (Element : XML_Element; Final : Final_Status);
    --  Set the final status of the element
 
    procedure Set_Block
@@ -1139,23 +1135,6 @@ package Schema.Validators is
    function Get_Block_Default (Grammar : XML_Grammar_NS) return Block_Status;
    --  Set the default value for the "block" attribute
 
-   procedure Compute_Blocks
-     (Value  : Unicode.CES.Byte_Sequence;
-      Reader : access Abstract_Validation_Reader'Class;
-      Blocks : out Block_Status);
-   --  Compute the list of blocked elements from value. Value is a list similar
-   --  to what is used for the "block" attribute of elements in a schema
-
-   procedure Compute_Final
-     (Value         : Unicode.CES.Byte_Sequence;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Restrictions  : out Boolean;
-      Extensions    : out Boolean;
-      Unions        : out Boolean;
-      Lists         : out Boolean);
-   --  Compute the list of final attributes from value. Value is a list similar
-   --  to what is used for the "final" attribute of elements in a schema
-
    procedure Initialize_Grammar
      (Reader  : access Abstract_Validation_Reader'Class);
    --  Initialize the internal structure of the grammar.
@@ -1250,8 +1229,7 @@ private
       Blocks : Block_Status;
       --  The value for the "block" attribute of the type
 
-      Final_Restriction : Boolean;
-      Final_Extension   : Boolean;
+      Final : Final_Status;
       --  Whether this element is final for "restriction" or "extension" or
       --  both
 
@@ -1302,13 +1280,12 @@ private
       Nillable    : Boolean;
       --  Whether the element is nillable
 
-      Final_Restriction : Boolean;
-      Final_Extension   : Boolean;
+      Final       : Final_Status;
       --  Whether this element is final for "restriction" or "extension" or
       --  both
 
       Blocks_Is_Set : Boolean := False;
-      Blocks        : Block_Status := (others => False);
+      Blocks        : Block_Status := No_Block;
       --  The value for the "block" attribute of the element
 
       Form : Form_Type;
@@ -1719,7 +1696,7 @@ private
       --  List of elements defined in this grammar, for memory management
       --  purposes
 
-      Blocks : Block_Status := (others => False);
+      Blocks : Block_Status := No_Block;
 
       Checked : Boolean := False;
       --  Whether Global_Checks has been called, ie whether we have checked for

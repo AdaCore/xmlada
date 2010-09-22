@@ -702,7 +702,7 @@ package body Schema.Readers is
                   end if;
 
                   if Had_Restriction
-                    and then Get_Block (Element)(Block_Restriction)
+                    and then Get_Block (Element) (Block_Restriction)
                   then
                      Validation_Error
                        (H, "#Element """ & To_QName (Element)
@@ -710,7 +710,7 @@ package body Schema.Readers is
                   end if;
 
                   if Had_Extension
-                    and then Get_Block (Element)(Block_Extension)
+                    and then Get_Block (Element) (Block_Extension)
                   then
                      Validation_Error
                        (H, "#Element """ & To_QName (Element)

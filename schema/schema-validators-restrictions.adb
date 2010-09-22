@@ -433,7 +433,7 @@ package body Schema.Validators.Restrictions is
    is
       Result : constant Restriction_Type := new Restriction_XML_Validator;
    begin
-      if Get_Final_On_Restriction (Base) then
+      if Get_Final (Base)(Final_Restriction) then
          Validation_Error
            (Reader, "#Type """ & To_QName (Base) & """ forbids restrictions");
       end if;
