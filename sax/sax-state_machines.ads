@@ -29,6 +29,18 @@
 --  This package implements state machines (non-deterministic, aka NFA, and
 --  deterministic, aka DFA).
 
+--  ??? Would be nice to have:
+--  - Quick save-to-string and restore features
+--    This could limit the number of memory allocations and speed up the
+--    creation of a state machine, but is difficult to do because of callbacks
+--  - User data for states
+--    In XML, the data would include the callbacks to check attributes and
+--    characters.
+--  - Merge: merging two state machines
+--    For instance, in XML we can have multiple grammars each with its own
+--    schema
+--  - Iterators to iterate over all live states
+
 with GNAT.Dynamic_Tables;
 
 generic
@@ -123,8 +135,16 @@ package Sax.State_Machines is
    --  No error is reported if Min_Occurs > Max_Occurs. But nothing is done
    --  either.
 
+   type Dump_Mode is (Dump_Multiline, Dump_Compact, Dump_Dot);
+   --  The type of dump we can do for the graph:
+   --  [Dump_Multiline]: Each state is displayed on one line
+   --  [Dump_Compact]:   Output is on a single line
+   --  [Dump_Dot):       Output that can be cut-and-pasted to use by the
+   --                    graphviz suite to display a graphical representation
+
    function Dump
-     (Self : access NFA'Class; Compact : Boolean := False) return String;
+     (Self    : access NFA'Class;
+      Mode    : Dump_Mode := Dump_Compact) return String;
    --  Dump the NFA into a string.
    --  This is mostly for debug reasons, and the output might change from one
    --  version to the next.
