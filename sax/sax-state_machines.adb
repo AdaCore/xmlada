@@ -753,6 +753,7 @@ package body Sax.State_Machines is
 
       Has_Active : Boolean;
    begin
+      Self.In_Final := False;
       Process_Matcher (Self, Success);
       Change_States (Self, Has_Active => Has_Active, Preserve => not Success);
    end Process;

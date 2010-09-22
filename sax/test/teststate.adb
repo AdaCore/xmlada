@@ -355,6 +355,7 @@ procedure TestState is
       N : NFA_Access := new NFA;
       On, Off : State;                --  the super states
       Mode_Record, Mode_Play : State; --  the inner states of [On]
+      Mode_Stays_On : State;
       Nested_On : Nested_NFA;
 
    begin
@@ -368,8 +369,10 @@ procedure TestState is
       N.Set_Nested (On, Nested_On);
 
       Mode_Play := N.Add_State;  --  state 5
+      Mode_Stays_On := N.Add_State; --  state 6
       N.Add_Transition (Mode_Record, Mode_Play,   (Char, 'p'));
       N.Add_Transition (Mode_Play, Mode_Record,   (Char, 'r'));
+      N.Add_Transition (Mode_Record, Mode_Stays_On, (Char, 'f'));
 
       N.Add_Transition (Mode_Record, Final_State, (Char, 't')); --  timeout...
       N.On_Nested_Exit (On, Off, (Char, 't'));   -- ... goes to Off state
@@ -380,9 +383,12 @@ procedure TestState is
       N.Add_Empty_Transition (Start_State, Off);  --  Off is both start and end
       N.Add_Empty_Transition (Off, Final_State);
 
+      N.Add_Transition (Mode_Stays_On, Mode_Stays_On, (Char, '0'));
+      --  Override the superstate's transition (which will not happen)
+
       Assert
         (" <start>(,S3) S3(,<final>)(1,S2) S2(0,S3){nested:S4}"
-         & " S4(t,<final>)(p,S5) S5(r,S4)",
+         & " S4(t,<final>)(f,S6)(p,S5) S6(0,S6) S5(r,S4)",
          Dump (N, Dump_Compact),
          Name);
 
@@ -390,8 +396,9 @@ procedure TestState is
       Assert (Name, N, "1pr0");
       Assert (Name, N, "10");
       Assert (Name, N, "1t");   --  timed out => switched off
+      Assert (Name, N, "1f0", Final => False);  --  in stays on mode
 
-      Assert_Error (Name, N, "1q", 2,  "t|p|0");
+      Assert_Error (Name, N, "1q", 2,  "t|f|p|0");
       Assert_Error (Name, N, "1pq", 3, "r|0");
 
       --  Put_Line (Dump (N, Dump_Dot));
