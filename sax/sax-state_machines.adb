@@ -67,7 +67,8 @@ package body Sax.State_Machines is
          State_Data'
            (Nested           => No_State,
             On_Nested_Exit   => No_Transition,
-            First_Transition => No_Transition));
+            First_Transition => No_Transition,
+            Data             => Default_Data));
    end Initialize;
 
    ----------
@@ -118,12 +119,15 @@ package body Sax.State_Machines is
    -- Add_State --
    ---------------
 
-   function Add_State (Self : access NFA) return State is
+   function Add_State
+     (Self : access NFA; Data : State_User_Data := Default_Data) return State
+   is
    begin
       Append
         (Self.States,
          State_Data'
            (Nested           => No_State,
+            Data             => Data,
             On_Nested_Exit   => No_Transition,
             First_Transition => No_Transition));
       return Last (Self.States);
@@ -505,6 +509,19 @@ package body Sax.State_Machines is
          Unchecked_Free (N);
       end if;
    end Remove_From_List;
+
+   ---------------------------
+   -- For_Each_Active_State --
+   ---------------------------
+
+   procedure For_Each_Active_State (Self : NFA_Matcher) is
+   begin
+      for S in Self.Current'Range loop
+         if (Self.Current (S) and State_Active) /= 0 then
+            Callback (S, Self.NFA.States.Table (S).Data);
+         end if;
+      end loop;
+   end For_Each_Active_State;
 
    -------------
    -- Process --

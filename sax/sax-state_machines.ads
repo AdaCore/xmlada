@@ -33,13 +33,9 @@
 --  - Quick save-to-string and restore features
 --    This could limit the number of memory allocations and speed up the
 --    creation of a state machine, but is difficult to do because of callbacks
---  - User data for states
---    In XML, the data would include the callbacks to check attributes and
---    characters.
 --  - Merge: merging two state machines
 --    For instance, in XML we can have multiple grammars each with its own
 --    schema
---  - Iterators to iterate over all live states
 
 with GNAT.Dynamic_Tables;
 
@@ -62,6 +58,10 @@ generic
    with function Image (Sym : Transition_Symbol) return String;
    --  Display Sym.
 
+   type State_User_Data is private;
+   Default_Data : State_User_Data;
+   --  User data associated with each state
+
 package Sax.State_Machines is
 
    type State is new Positive;
@@ -82,7 +82,8 @@ package Sax.State_Machines is
    procedure Free (Automaton : in out NFA_Access);
    --  Free the memory allocated to [Self]
 
-   function Add_State (Self : access NFA) return State;
+   function Add_State
+     (Self : access NFA; Data : State_User_Data := Default_Data) return State;
    --  Add a new state into the table.
 
    Start_State : constant State;
@@ -264,6 +265,11 @@ package Sax.State_Machines is
    --  The matcher holds a reference to [Self], so is only valid while [Self]
    --  is in the scope.
 
+   generic
+      with procedure Callback (S : State; Data : State_User_Data) is <>;
+   procedure For_Each_Active_State (Self : NFA_Matcher);
+   --  Iterates over all currently active states
+
    function In_Final (Self : NFA_Matcher) return Boolean;
    --  Whether [Self] is in the final step: if True, it means that all input
    --  processed so far matches the state machine. It is possible to keep
@@ -307,6 +313,7 @@ private
       First_Transition : Transition_Id;
       On_Nested_Exit   : Transition_Id;
       Nested           : State := No_State;
+      Data             : State_User_Data;
    end record;
    --  [Nested], if defined, indicates that this state contains a nested
    --  state machine, for which the default is Nested. Any transition to this

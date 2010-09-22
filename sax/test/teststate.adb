@@ -65,11 +65,16 @@ procedure TestState is
       end case;
    end Image;
 
+   type State_User_Data is null record;
+   Default_State_Data : constant State_User_Data := (null record);
+
    package Character_Machines is new Sax.State_Machines
      (Symbol            => Character,
       Transition_Symbol => Transition_Descr,
       Image             => Image,
-      Match             => Match);
+      Match             => Match,
+      State_User_Data   => State_User_Data,
+      Default_Data      => Default_State_Data);
    use Character_Machines;
 
    procedure Display_Result (Msg, Str : String; S : Positive);
@@ -390,7 +395,7 @@ procedure TestState is
       Assert_Error (Name, N, "1q", 2,  "t|p|0");
       Assert_Error (Name, N, "1pq", 3, "r|0");
 
-      Put_Line (Dump (N, Dump_Dot));
+      --  Put_Line (Dump (N, Dump_Dot));
       Free (N);
    end Test5;
 
