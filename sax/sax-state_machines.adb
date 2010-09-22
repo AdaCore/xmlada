@@ -52,6 +52,9 @@ package body Sax.State_Machines is
    --  Returns a new matcher, initially in state [S] (and all empty transitions
    --  form it).
 
+   function Image (S : State) return String;
+   --  Display [S], for [Dump]
+
    ----------------
    -- Initialize --
    ----------------
@@ -883,6 +886,100 @@ package body Sax.State_Machines is
       Self.States.Table (S).Nested := Nested.Default_Start;
    end Set_Nested;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (S : State) return String is
+      Str : constant String := State'Image (S);
+   begin
+      return "S" & Str (Str'First + 1 .. Str'Last);
+   end Image;
+
+   ----------
+   -- Dump --
+   ----------
+
+   function Dump
+     (Self   : access NFA;
+      Nested : Nested_NFA;
+      Mode   : Dump_Mode := Dump_Compact) return String
+   is
+      Dumped : array (State_Tables.First .. Last (Self.States)) of Boolean :=
+        (others => False);
+      Result : Unbounded_String;
+
+      procedure Internal (S : State);
+
+      procedure Internal (S : State) is
+         T : Transition_Id;
+      begin
+         if Dumped (S) then
+            return;
+         end if;
+
+         Dumped (S) := True;
+
+         if S = Start_State then
+            Append (Result, " <start>");
+         else
+            Append (Result, " " & Image (S));
+         end if;
+
+         T := Self.States.Table (S).First_Transition;
+         while T /= No_Transition loop
+            declare
+               Tr : Transition renames Self.Transitions.Table (T);
+            begin
+               if Tr.Is_Empty then
+                  Append (Result, "(");
+               else
+                  Append (Result, "(" & Image (Tr.Sym));
+               end if;
+
+               if Tr.To_State = Final_State then
+                  Append (Result, ",<final>)");
+               else
+                  Append (Result, "," & Image (Tr.To_State) & ")");
+               end if;
+
+               T := Tr.Next_For_State;
+            end;
+         end loop;
+
+         if Self.States.Table (S).Nested /= No_State then
+            Append
+              (Result,
+               "{nested:" & Image (Self.States.Table (S).Nested) & "}");
+            Append
+              (Result,
+               Dump (Self,
+                 Nested => (Default_Start => Self.States.Table (S).Nested),
+                 Mode   => Mode));
+         end if;
+
+         T := Self.States.Table (S).First_Transition;
+         while T /= No_Transition loop
+            declare
+               Tr : Transition renames Self.Transitions.Table (T);
+            begin
+               if Tr.To_State /= Final_State then
+                  Internal (Tr.To_State);
+               end if;
+               T := Tr.Next_For_State;
+            end;
+         end loop;
+
+         if Mode = Dump_Multiline then
+            Append (Result, ASCII.LF);
+         end if;
+      end Internal;
+
+   begin
+      Internal (Nested.Default_Start);
+      return To_String (Result);
+   end Dump;
+
    ----------
    -- Dump --
    ----------
@@ -896,7 +993,9 @@ package body Sax.State_Machines is
 
       Result : Unbounded_String;
 
-      function Image (S : State) return String;
+      procedure Newline;
+      --  Append a newline to [Result] if needed
+
       function Image_Dot
         (S : State; Nested_In : State := No_State) return String;
       procedure Dump_Dot
@@ -905,11 +1004,13 @@ package body Sax.State_Machines is
         (S : State; First : Transition_Id; Nested_In : State; Prefix : String;
          Recurse : Boolean := False);
 
-      function Image (S : State) return String is
-         Str : constant String := State'Image (S);
+      procedure Newline is
       begin
-         return "S" & Str (Str'First + 1 .. Str'Last);
-      end Image;
+         case Mode is
+            when Dump_Compact | Dump_Dot_Compact => null;
+            when others => Append (Result, ASCII.LF);
+         end case;
+      end Newline;
 
       function Image_Dot
         (S : State; Nested_In : State := No_State) return String is
@@ -968,20 +1069,23 @@ package body Sax.State_Machines is
 
                if not Tr.Is_Empty then
                   Append (Result, "label=""" & Image (Tr.Sym) & """");
+               else
+                  Append (Result, "style=dashed");
                end if;
 
                if Self.States.Table (S).Nested /= No_State then
-                  Append (Result, " ltail=""" & Image_Dot (S) & """");
+                  Append (Result, " ltail=" & Image_Dot (S));
                end if;
 
                if Tr.To_State /= Final_State
                  and then Self.States.Table (Tr.To_State).Nested /= No_State
                then
                   Append
-                    (Result, " lhead=""" & Image_Dot (Tr.To_State) & """");
+                    (Result, " lhead=" & Image_Dot (Tr.To_State));
                end if;
 
-               Append (Result, "];" & ASCII.LF);
+               Append (Result, "];");
+               Newline;
 
                if Recurse then
                   Dump_Dot (Tr.To_State, Nested_In, Prefix);
@@ -998,17 +1102,26 @@ package body Sax.State_Machines is
          T : Transition_Id;
       begin
          Append
-           (Result,
-            Prefix & "subgraph " & Image_Dot (S, Nested_In) & "{" & ASCII.LF);
-         Append (Result, Prefix & "  label=""" & Image (S) & """;" & ASCII.LF);
+           (Result, Prefix & "subgraph " & Image_Dot (S, Nested_In) & "{");
+         Newline;
+         Append (Result, Prefix & " label=""" & Image (S) & """;");
+         Newline;
          Append
-           (Result, Prefix & "  node[shape=doublecircle]; "
+           (Result, Prefix & " node[shape=doublecircle]; "
             & Image_Dot (Self.States.Table (S).Nested, S)
-            & " " & Image_Dot (Final_State, S) & ";" & ASCII.LF);
-         Append (Result, Prefix & "  node [shape = circle];" & ASCII.LF);
+            & " " & Image_Dot (Final_State, S) & ";");
+         Newline;
+         Append (Result, Prefix & " node [shape = circle];");
+         Newline;
 
-         Dump_Dot (Self.States.Table (S).Nested, S, Prefix & "  ");
-         Append (Result, Prefix & "};" & ASCII.LF);
+         if Mode = Dump_Dot then
+            Dump_Dot (Self.States.Table (S).Nested, S, Prefix & " ");
+         else
+            Dump_Dot (Self.States.Table (S).Nested, S, "");
+         end if;
+
+         Append (Result, Prefix & "};");
+         Newline;
 
          T := Self.States.Table (S).On_Nested_Exit;
          while T /= No_Transition loop
@@ -1017,7 +1130,7 @@ package body Sax.State_Machines is
             begin
                Append
                  (Result,
-                  Prefix & Image_Dot (Final_State, S) & " -> "
+                  Prefix & Image_Dot (Final_State, S) & "->"
                   & Image_Dot (Tr.To_State, Nested_In)
                   & " [label=""on_exit");
 
@@ -1025,8 +1138,8 @@ package body Sax.State_Machines is
                   Append (Result, ":" & Image (Tr.Sym));
                end if;
 
-               Append
-                 (Result, """ ltail=""" & Image_Dot (S) & """];" & ASCII.LF);
+               Append (Result, """ ltail=""" & Image_Dot (S) & """];");
+               Newline;
 
                T := Tr.Next_For_State;
             end;
@@ -1052,68 +1165,31 @@ package body Sax.State_Machines is
             Recurse => True);
       end Dump_Dot;
 
-      T : Transition_Id;
    begin
       case Mode is
          when Dump_Multiline | Dump_Compact =>
-            Append (Result, "Transitions:" & Last (Self.Transitions)'Img);
+            return Dump (Self   => Self,
+                         Nested => (Default_Start => Start_State),
+                         Mode   => Mode);
 
-            if Mode = Dump_Multiline then
-               Append (Result, ASCII.LF);
-            end if;
-
-            for S in State_Tables.First .. Last (Self.States) loop
-               if S = Start_State then
-                  Append (Result, " <start>");
-               else
-                  Append (Result, " " & Image (S));
-               end if;
-
-               if Self.States.Table (S).Nested /= No_State then
-                  Append
-                    (Result,
-                     "{nested:" & Image (Self.States.Table (S).Nested) & "}");
-               end if;
-
-               T := Self.States.Table (S).First_Transition;
-               while T /= No_Transition loop
-                  declare
-                     Tr : Transition renames Self.Transitions.Table (T);
-                  begin
-                     if Tr.Is_Empty then
-                        Append (Result, "(");
-                     else
-                        Append (Result, "(" & Image (Tr.Sym));
-                     end if;
-
-                     if Tr.To_State = Final_State then
-                        Append (Result, ",<final>)");
-                     else
-                        Append (Result, "," & Image (Tr.To_State) & ")");
-                     end if;
-
-                     T := Tr.Next_For_State;
-                  end;
-               end loop;
-
-               if Mode = Dump_Multiline then
-                  Append (Result, ASCII.LF);
-               end if;
-            end loop;
-
-         when Dump_Dot =>
+         when Dump_Dot | Dump_Dot_Compact =>
             Append (Result, "/* Use   dot -O -Tpdf file.dot */" & ASCII.LF);
-            Append (Result, "digraph finite_state_machine {" & ASCII.LF);
-            Append (Result, "  compound=true;" & ASCII.LF);
-            Append (Result, "  rankdir=LR;" & ASCII.LF);
-            Append (Result, "  node [shape = doublecircle]; "
+            Append (Result, "digraph finite_state_machine{");
+            Newline;
+            Append (Result, "compound=true;");
+            Newline;
+            Append (Result, "rankdir=LR;");
+            Newline;
+            Append (Result, "node [shape = doublecircle]; "
                     & Image_Dot (Start_State)
-                    & " " & Image_Dot (Final_State) & ";" & ASCII.LF);
-            Append (Result, "  node [shape = circle];" & ASCII.LF);
+                    & " " & Image_Dot (Final_State) & ";");
+            Newline;
+            Append (Result, "node [shape = circle];");
+            Newline;
 
             for S in State_Tables.First .. Last (Self.States) loop
                if Self.States.Table (S).Nested /= No_State then
-                  Dump_With_Nested (S, Nested_In => No_State, Prefix => "  ");
+                  Dump_With_Nested (S, Nested_In => No_State, Prefix => " ");
                end if;
             end loop;
 
@@ -1122,7 +1198,7 @@ package body Sax.State_Machines is
                   Dumped (S) := True;
                   Dump_Dot_Transitions
                     (S,
-                     Self.States.Table (S).First_Transition, No_State, "  ");
+                     Self.States.Table (S).First_Transition, No_State, " ");
                end if;
             end loop;
 

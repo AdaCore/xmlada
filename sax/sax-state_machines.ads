@@ -86,6 +86,7 @@ package Sax.State_Machines is
      (Self : access NFA; Data : State_User_Data := Default_Data) return State;
    --  Add a new state into the table.
 
+   No_State    : constant State;
    Start_State : constant State;
    Final_State : constant State;
    --  The start and final states of an automation
@@ -136,7 +137,8 @@ package Sax.State_Machines is
    --  No error is reported if Min_Occurs > Max_Occurs. But nothing is done
    --  either.
 
-   type Dump_Mode is (Dump_Multiline, Dump_Compact, Dump_Dot);
+   type Dump_Mode is
+     (Dump_Multiline, Dump_Compact, Dump_Dot, Dump_Dot_Compact);
    --  The type of dump we can do for the graph:
    --  [Dump_Multiline]: Each state is displayed on one line
    --  [Dump_Compact]:   Output is on a single line
@@ -208,6 +210,7 @@ package Sax.State_Machines is
    --  since it might be reused in several places.
 
    type Nested_NFA is private;
+   No_Nested : constant Nested_NFA;
 
    function Create_Nested
      (Self : access NFA'Class; From : State) return Nested_NFA;
@@ -247,6 +250,12 @@ package Sax.State_Machines is
    --  When the nested NFA in [From] is terminated (because it has reached
    --  [Final_State] after processing [On_Symbol]), a transition from [From] to
    --  [To] is performed. [Set_Nested] must have been called for [From] first.
+
+   function Dump
+     (Self   : access NFA;
+      Nested : Nested_NFA;
+      Mode   : Dump_Mode := Dump_Compact) return String;
+   --  Dump the NFA into a string.
 
    -------------------------------------------
    -- Non-deterministic automatons matching --
@@ -343,6 +352,7 @@ private
    type Nested_NFA is record
       Default_Start : State;
    end record;
+   No_Nested : constant Nested_NFA := (Default_Start => No_State);
 
    type Active is mod 4;
    for Active'Size use 2;

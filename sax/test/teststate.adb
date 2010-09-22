@@ -219,8 +219,8 @@ procedure TestState is
       N.Repeat (S2, S3, 2, 2);  --  Make the "{2}" for the choice
 
       Assert
-        ("Transitions: 12 <start>(a,S2) S2(d,S5)(c,S4) S3(b,<final>)(,S6)"
-         & " S4(,S6) S5(,S6) S6(c,S8)(d,S7)(,S2) S7(,S3) S8(,S3)",
+        (" <start>(a,S2) S2(d,S5)(c,S4) S5(,S6) S6(c,S8)(d,S7)(,S2) S8(,S3)"
+         & " S3(b,<final>)(,S6) S7(,S3) S4(,S6)",
          Dump (N, Dump_Compact),
          Regexp);
 
@@ -269,8 +269,8 @@ procedure TestState is
 
       N.Add_Transition (S2, Final_State, (Char, 'b'));
 
-      Assert ("Transitions: 10 <start>(a,S3) S2(b,<final>) S3(a,S4) S4(a,S5)"
-              & " S5(,S2)(a,S6) S6(,S2)(a,S7) S7(,S2)(a,S2)",
+      Assert (" <start>(a,S3) S3(a,S4) S4(a,S5) S5(,S2)(a,S6) S2(b,<final>)"
+              & " S6(,S2)(a,S7) S7(,S2)(a,S2)",
               Dump (N, Dump_Compact),
               Regexp);
 
@@ -325,9 +325,8 @@ procedure TestState is
       N.Add_Empty_Transition (E, Final_State);
 
       Assert
-        ("Transitions: 13 <start>(a,S2) S2(b,S4) S3(,S5) S4(,S3)(b,S3)"
-         & " S5(d,S8)(c,S7) S6(<.>,S9) S7(,S6) S8(,S6) S9(e,S10)"
-         & " S10(,<final>)(,S9)",
+        (" <start>(a,S2) S2(b,S4) S4(,S3)(b,S3) S3(,S5) S5(d,S8)(c,S7)"
+         & " S8(,S6) S6(<.>,S9) S9(e,S10) S10(,<final>)(,S9) S7(,S6)",
          Dump (N, Dump_Compact),
          Regexp);
 
@@ -382,7 +381,7 @@ procedure TestState is
       N.Add_Empty_Transition (Off, Final_State);
 
       Assert
-        ("Transitions: 8 <start>(,S3) S2{nested:S4}(0,S3) S3(,<final>)(1,S2)"
+        (" <start>(,S3) S3(,<final>)(1,S2) S2(0,S3){nested:S4}"
          & " S4(t,<final>)(p,S5) S5(r,S4)",
          Dump (N, Dump_Compact),
          Name);
