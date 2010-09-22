@@ -214,10 +214,8 @@ procedure TestState is
       N.Repeat (S2, S3, 2, 2);  --  Make the "{2}" for the choice
 
       Assert
-        ("Transitions: 12 <start> (a, 2) 2 (d, 5)(c, 4)"
-         & " 3 (b,<final>)(<>, 6)"
-          & " 4 (<>, 6) 5 (<>, 6) 6 (c, 8)(d, 7)(<>, 2)"
-         & " 7 (<>, 3) 8 (<>, 3)",
+        ("Transitions: 12 <start>(a, 2) 2(d, 5)(c, 4) 3(b,<final>)(<>, 6)"
+         & " 4(<>, 6) 5(<>, 6) 6(c, 8)(d, 7)(<>, 2) 7(<>, 3) 8(<>, 3)",
          Dump (N, Compact => True),
          Regexp);
 
@@ -266,9 +264,8 @@ procedure TestState is
 
       N.Add_Transition (S2, Final_State, (Char, 'b'));
 
-      Assert ("Transitions: 10 <start> (a, 3) 2 (b,<final>) 3 (a, 4)"
-              & " 4 (a, 5) 5 (<>, 2)(a, 6) 6 (<>, 2)(a, 7)"
-              & " 7 (<>, 2)(a, 2)",
+      Assert ("Transitions: 10 <start>(a, 3) 2(b,<final>) 3(a, 4) 4(a, 5)"
+              & " 5(<>, 2)(a, 6) 6(<>, 2)(a, 7) 7(<>, 2)(a, 2)",
               Dump (N, Compact => True),
               Regexp);
 
@@ -323,10 +320,9 @@ procedure TestState is
       N.Add_Empty_Transition (E, Final_State);
 
       Assert
-        ("Transitions: 13 <start> (a, 2) 2 (b, 4) 3 (<>, 5)"
-         & " 4 (<>, 3)(b, 3)"
-         & " 5 (d, 8)(c, 7) 6 (<.>, 9) 7 (<>, 6) 8 (<>, 6) 9 (e, 10)"
-         & " 10 (<>,<final>)(<>, 9)",
+        ("Transitions: 13 <start>(a, 2) 2(b, 4) 3(<>, 5) 4(<>, 3)(b, 3)"
+         & " 5(d, 8)(c, 7) 6(<.>, 9) 7(<>, 6) 8(<>, 6) 9(e, 10)"
+         & " 10(<>,<final>)(<>, 9)",
          Dump (N, Compact => True),
          Regexp);
 
@@ -379,6 +375,12 @@ procedure TestState is
 
       N.Add_Empty_Transition (Start_State, Off);  --  Off is both start and end
       N.Add_Empty_Transition (Off, Final_State);
+
+      Assert
+        ("Transitions: 8 <start>(<>, 3) 2{nested: 4}(0, 3) 3(<>,<final>)(1, 2)"
+         & " 4(t,<final>)(p, 5) 5(r, 4)",
+         Dump (N, Compact => True),
+         Name);
 
       Assert (Name, N, "1p0");  --  going to play mode, then switch off
       Assert (Name, N, "1pr0");

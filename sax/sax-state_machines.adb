@@ -876,7 +876,7 @@ package body Sax.State_Machines is
       T : Transition_Id;
       Result : Unbounded_String;
    begin
-      Append (Result, "Transitions:" & Last (Self.Transitions)'Img & " ");
+      Append (Result, "Transitions:" & Last (Self.Transitions)'Img);
 
       if not Compact then
          Append (Result, ASCII.LF);
@@ -884,14 +884,14 @@ package body Sax.State_Machines is
 
       for S in State_Tables.First .. Last (Self.States) loop
          if S = Start_State then
-            Append (Result, "<start> ");
+            Append (Result, " <start>");
          else
-            Append (Result, S'Img & " ");
+            Append (Result, S'Img);
          end if;
 
          if Self.States.Table (S).Nested /= No_State then
             Append
-              (Result, "{nested:" & Self.States.Table (S).Nested'Img & "} ");
+              (Result, "{nested:" & Self.States.Table (S).Nested'Img & "}");
          end if;
 
          T := Self.States.Table (S).First_Transition;
