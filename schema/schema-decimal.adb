@@ -604,7 +604,7 @@ package body Schema.Decimal is
    begin
       if Str = "NaN" then
          return XML_Float'(Kind => NaN);
-      elsif Str = "INF" or else Str = "+INF" then
+      elsif Str = "INF" then
          return XML_Float'(Kind => Plus_Infinity);
       elsif Str = "-INF" then
          return XML_Float'(Kind => Minus_Infinity);
