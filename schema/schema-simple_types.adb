@@ -672,6 +672,7 @@ package body Schema.Simple_Types is
                   --  [Ch1] is a valid value. For instance, if Fixed="1.0" and
                   --  the union is "int float", only the comparison with float
                   --  should be done.
+                  --  See 4.2.1 in the datatypes standard.
                   --  ??? The above is not implemented, is this needed (stE054)
 
                   if Equal

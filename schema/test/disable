@@ -10,3 +10,8 @@ MS-Schema2006-07-15 / schZ012_c
 MS-Regex2006-07-15 / reZ001 / reZ001.v
   --  The regexp pattern obviously matches the attribute value, as confirmed
   --  by using Perl
+
+MS-SimpleType2006-07-15 / stE054 / stE054.i
+  --  Disabled because "1.0" and "1" are both the same xsd:double value.
+  --  Seems the test should validate. According to 4.2.1 in the datatypes
+  --  standard, equality is checked in terms of value space, not strings.
