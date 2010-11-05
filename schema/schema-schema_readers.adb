@@ -750,11 +750,6 @@ package body Schema.Schema_Readers is
 
          if S /= No_State then
             Attr.Descr.Simple_Type := NFA.Get_Data (S).Descr.Simple_Content;
-         else
-            Validation_Error
-              (Parser,
-               "Unknown attribute type for " & To_QName (Attr.Typ),
-               Attr.Loc);
          end if;
       end Resolve_Attribute_Type;
 
