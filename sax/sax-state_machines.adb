@@ -571,6 +571,7 @@ package body Sax.State_Machines is
          Has_Next  : Boolean := False;
          N         : NFA_Matcher_List;
          Event_Processed_In_Nested : Boolean;
+         Nested_In_Final : Boolean;
 
       begin
          --  For each currently live state:
@@ -585,6 +586,7 @@ package body Sax.State_Machines is
          for S in Self.Current'Range loop
             if (Self.Current (S) and State_Active) /= 0 then  --  if active
                Event_Processed_In_Nested := False;
+               Nested_In_Final := True;
 
                --  Find the nested NFA, if any
                N := Self.Nested;
@@ -596,13 +598,16 @@ package body Sax.State_Machines is
                   Process_Matcher (N.Matcher, Success);
 
                   if Success then
+                     Nested_In_Final := N.Matcher.In_Final;
                      Event_Processed_In_Nested := True;
 
                      if N.Matcher.In_Final then
                         --  Exits the nested NFA, and thus transitions from its
-                        --  super state (which is no longer active).
-                        --  Do not keep [N] for next turn (on [Next_Nested])
+                        --  super state. The super state, however, remains
+                        --  active until we do transition from it.
 
+                        Has_Next := True;
+                        Mark_Active (Self, N.Super_State, State_Future_Active);
                         Process_Transitions
                           (Self,
                            Self.NFA.States.Table
@@ -617,6 +622,7 @@ package body Sax.State_Machines is
                      end if;
 
                   else
+                     Nested_In_Final := False;
                      --  Error: nothing matches anymore in the nested NFA. We
                      --  terminate it, but keep processing this event in its
                      --  superstate (for instance, a camera in state "on" has a
@@ -629,7 +635,10 @@ package body Sax.State_Machines is
                   end if;
                end if;
 
-               if not Event_Processed_In_Nested then
+               if not Event_Processed_In_Nested
+                 and then (Nested_In_Final
+                           or else not Self.NFA.Nested_Must_Be_Final)
+               then
                   Process_Transitions
                     (Self,
                      Self.NFA.States.Table (S).First_Transition,
@@ -769,6 +778,22 @@ package body Sax.State_Machines is
       T    : Transition_Id;
       N    : NFA_Matcher_List := Self.Nested;
 
+      function Nested_In_Final (S : State) return Boolean;
+      function Nested_In_Final (S : State) return Boolean is
+         N    : NFA_Matcher_List := Self.Nested;
+      begin
+         Put_Line ("Nested_In_Final " & S'Img);
+         while N /= null loop
+            if N.Super_State = S then
+               Put_Line ("  => Matcher in final " & N.Matcher.In_Final'Img);
+               return N.Matcher.In_Final;
+            end if;
+            N := N.Next;
+         end loop;
+         Put_Line ("  => default to True");
+         return True;
+      end Nested_In_Final;
+
    begin
       while N /= null loop
          declare
@@ -787,22 +812,30 @@ package body Sax.State_Machines is
 
       for S in Self.Current'Range loop
          if (Self.Current (S) and State_Active) /= 0 then
-            T := Self.NFA.States.Table (S).First_Transition;
-            while T /= No_Transition loop
-               declare
-                  Tr : Transition renames Self.NFA.Transitions.Table (T);
-               begin
-                  if not Tr.Is_Empty then
-                     if Msg /= Null_Unbounded_String then
-                        Append (Msg, "|");
+            --  If we have either no nested NFA, or we don't need to be in a
+            --  final state, or we are in a final state
+
+            if Self.NFA.States.Table (S).Nested = No_State
+              or else not Self.NFA.Nested_Must_Be_Final
+              or else Nested_In_Final (S)
+            then
+               T := Self.NFA.States.Table (S).First_Transition;
+               while T /= No_Transition loop
+                  declare
+                     Tr : Transition renames Self.NFA.Transitions.Table (T);
+                  begin
+                     if not Tr.Is_Empty then
+                        if Msg /= Null_Unbounded_String then
+                           Append (Msg, "|");
+                        end if;
+
+                        Append (Msg, Image (Tr.Sym));
                      end if;
 
-                     Append (Msg, Image (Tr.Sym));
-                  end if;
-
-                  T := Tr.Next_For_State;
-               end;
-            end loop;
+                     T := Tr.Next_For_State;
+                  end;
+               end loop;
+            end if;
          end if;
       end loop;
 
@@ -841,12 +874,6 @@ package body Sax.State_Machines is
       To        : State;
       On_Symbol : Transition_Symbol) is
    begin
-      if Self.States.Table (From).Nested = No_State then
-         Raise_Exception
-           (Program_Error'Identity,
-            "On_Nested_Exit must be called on a state with a nested NFA");
-      end if;
-
       Append
         (Self.Transitions,
          Transition'
@@ -866,12 +893,6 @@ package body Sax.State_Machines is
       From      : State;
       To        : State) is
    begin
-      if Self.States.Table (From).Nested = No_State then
-         Raise_Exception
-           (Program_Error'Identity,
-            "On_Nested_Exit must be called on a state with a nested NFA");
-      end if;
-
       Append
         (Self.Transitions,
          Transition'
@@ -961,10 +982,12 @@ package body Sax.State_Machines is
             return "End";
          else
             if Self.States.Table (S).Nested /= No_State then
-               return ":" & Node_Label (Self, Self.States.Table (S).Nested);
+               return Node_Name (S)
+                 & ":" & Node_Label (Self, Self.States.Table (S).Nested);
 
             else
-               return State_Image (S, Self.States.Table (S).Data);
+               return Node_Name (S)
+                 & " " & State_Image (S, Self.States.Table (S).Data);
             end if;
          end if;
       end Node_Label;
@@ -1215,6 +1238,8 @@ package body Sax.State_Machines is
             Append (Result, "Total states:" & Last (Self.States)'Img
                     & ASCII.LF);
             Append (Result, "Use   dot -O -Tpdf file.dot" & ASCII.LF);
+            Append (Result, "Nested must be final: "
+                    & Self.Nested_Must_Be_Final'Img & ASCII.LF);
             Append (Result, "digraph finite_state_machine{");
             Newline;
             Append (Result, "compound=true;");
@@ -1260,12 +1285,13 @@ package body Sax.State_Machines is
    -- Debug_Print --
    -----------------
 
-   procedure Debug_Print (Self : NFA_Matcher) is
+   procedure Debug_Print
+     (Self : NFA_Matcher; Mode : Dump_Mode := Dump_Multiline)
+   is
       procedure Internal (M : NFA_Matcher; Prefix : String);
       procedure Internal (M : NFA_Matcher; Prefix : String) is
          N : NFA_Matcher_List := M.Nested;
       begin
-         Put (Prefix & "Active:");
          for C in M.Current'Range loop
             if (M.Current (C) and State_Active) /= 0 then
                Put (C'Img);
@@ -1273,8 +1299,13 @@ package body Sax.State_Machines is
          end loop;
 
          while N /= null loop
-            Internal (N.Matcher, Prefix => Prefix & "  +Nested("
-                      & N.Super_State'Img & "): ");
+            if Mode = Dump_Multiline then
+               New_Line;
+            end if;
+            Put (Prefix & " [" & N.Super_State'Img & ":");
+            Internal (N.Matcher, Prefix => Prefix & "   ");
+            Put ("]");
+
             N := N.Next;
          end loop;
       end Internal;
@@ -1314,12 +1345,26 @@ package body Sax.State_Machines is
       Alias : State;
    begin
       for A in State_Tables.First .. Last (Self.States) loop
-         Alias := Self.States.Table (A).Alias_Of;
-         if Alias /= No_State then
-            Self.States.Table (A).Data := Self.States.Table (Alias).Data;
-            Self.States.Table (A).Nested := Self.States.Table (Alias).Nested;
-         end if;
+         declare
+            S : State_Data renames Self.States.Table (A);
+         begin
+            Alias := S.Alias_Of;
+            if Alias /= No_State then
+               S.Data := Self.States.Table (Alias).Data;
+               S.Nested := Self.States.Table (Alias).Nested;
+            end if;
+         end;
       end loop;
    end Resolve_Aliases;
+
+   ------------------------------
+   -- Set_Nested_Must_Be_Final --
+   ------------------------------
+
+   procedure Set_Nested_Must_Be_Final
+     (Self : access NFA; Must_Be_Final : Boolean) is
+   begin
+      Self.Nested_Must_Be_Final := Must_Be_Final;
+   end Set_Nested_Must_Be_Final;
 
 end Sax.State_Machines;

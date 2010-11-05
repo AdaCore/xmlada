@@ -161,6 +161,10 @@ private
    with record
       Validators : Validator_List;
       Locator    : Sax.Locators.Locator;
+
+      Matcher    : Schema.Validators.Schema_State_Machines.NFA_Matcher;
+      Nesting_Level : Natural := 0;
+      Last_Start_Level : Natural := 0;
    end record;
 
    procedure Parse

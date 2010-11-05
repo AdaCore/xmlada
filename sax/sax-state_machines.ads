@@ -154,8 +154,13 @@ package Sax.State_Machines is
    --  When an input is processed, all active states (super and inner) will
    --  proceed the event. If 5 matches, we might go to 6. Next time, if 6
    --  matches, we would exit 2 and go to 3.
+   --
    --  But when 2 and 5 are active, it is also possible that 2 itself matches,
    --  and then we go to 3 whatever inner state we were in at the same time.
+   --  This is the usual behavior (as defined for instance in UML). However,
+   --  this package has a mode ([Nested_Must_Be_Final]) whereby the transitions
+   --  from the superstate are only considered if the nested NFA is in a
+   --  final state.
    --
    --  The above would be created as follows. Note that this example also does
    --  not assume that the nested NFA has been created before we create the
@@ -225,6 +230,12 @@ package Sax.State_Machines is
 
    function Get_Start_State (Self : Nested_NFA) return State;
    --  Return the start state that was defined for the nested NFA
+
+   procedure Set_Nested_Must_Be_Final
+     (Self : access NFA; Must_Be_Final : Boolean);
+   --  Activates the [Nested_Must_Be_Final] mode.
+   --  In this mode, the transitions from a superstate are only considered if
+   --  the nested NFA is in a final state.
 
    procedure On_Nested_Exit
      (Self      : access NFA;
@@ -354,7 +365,8 @@ package Sax.State_Machines is
 
    end Pretty_Printers;
 
-   procedure Debug_Print (Self : NFA_Matcher);
+   procedure Debug_Print
+     (Self : NFA_Matcher; Mode : Dump_Mode := Dump_Multiline);
    --  Print on stdout some debug information for [Self]
 
 private
@@ -404,6 +416,7 @@ private
    type NFA is tagged record
       States       : State_Table;
       Transitions  : Transition_Table;
+      Nested_Must_Be_Final : Boolean := False;
    end record;
 
    type Nested_NFA is record

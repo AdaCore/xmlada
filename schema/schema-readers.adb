@@ -46,6 +46,7 @@ with Schema.Schema_Readers; use Schema.Schema_Readers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Schema.Readers is
+   use Schema_State_Machines, Schema_State_Machines_PP;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Validator_List_Record, Validator_List);
@@ -723,9 +724,14 @@ package body Schema.Readers is
       end Compute_Type_From_Attribute;
 
       G : XML_Grammar_NS;
+      Success : Boolean;
    begin
+      H.Nesting_Level := H.Nesting_Level + 1;
+      H.Last_Start_Level := H.Nesting_Level;
+
       if Debug then
-         Output_Seen ("Start_Element: " & To_QName (Elem));
+         Output_Seen ("Start_Element: " & To_QName (Elem)
+                      & " (level" & H.Nesting_Level'Img & ")");
       end if;
 
       Validate_Current_Characters (H);
@@ -749,6 +755,22 @@ package body Schema.Readers is
       end if;
 
       Get_NS (H.Grammar, Get_URI (Get_NS (Elem)), Result => G);
+
+      Process
+        (H.Matcher,
+         Input   => (Kind => Transition_Symbol,
+                     Name => (NS    => Get_Namespace_URI (G),
+                              Local => Get_Local_Name (Elem))),
+         Success => Success);
+
+      if Debug then
+         Debug_Print (H.Matcher);
+      end if;
+
+      if not Success then
+         Validation_Error
+           (H, "MANU State_Machine reported an error");
+      end if;
 
       --  Whether this element is valid in the current context
 
@@ -870,10 +892,35 @@ package body Schema.Readers is
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
       Typ : XML_Type;
+      Success : Boolean;
    begin
       if Debug then
-         Output_Seen ("End_Element: " & To_QName (Elem));
+         Output_Seen ("End_Element: " & To_QName (Elem)
+                      & " (level" & H.Nesting_Level'Img
+                      & " last_start=" & H.Last_Start_Level'Img
+                      & ")");
       end if;
+
+      if H.Nesting_Level /= H.Last_Start_Level then
+         Process
+           (H.Matcher,
+            Input   => (Kind => Transition_Close_Nested),
+            Success => Success);
+
+         if Debug then
+            Debug_Print (H.Matcher);
+         end if;
+
+         if not Success then
+            Validation_Error
+              (H, "MANU State_Machine reported an error on <close>, expected "
+               & Expected (H.Matcher));
+         end if;
+
+         H.Last_Start_Level := H.Nesting_Level;
+      end if;
+
+      H.Nesting_Level := H.Nesting_Level - 1;
 
       if H.Validators /= null then
          Validate_Current_Characters (H);
@@ -962,6 +1009,7 @@ package body Schema.Readers is
       --  Save current location, for retrieval by Get_Error_Message
       Parser.Locator := Get_Location (Parser);
       Free (Parser.Id_Table);
+      Free (Parser.Matcher);
       Clear (Parser.Validators);
    end Reset;
 
@@ -978,6 +1026,9 @@ package body Schema.Readers is
            ("Parsing XML file " & Input_Sources.Get_System_Id (Input));
       end if;
 
+      Initialize_Symbols (Parser);
+      Initialize_Grammar (Parser'Unchecked_Access);
+
       if Get_Feature (Parser, Schema_Validation_Feature) then
          Set_Hooks (Parser,
                     Start_Element => Hook_Start_Element'Access,
@@ -985,6 +1036,8 @@ package body Schema.Readers is
                     Characters    => Hook_Characters'Access,
                     Whitespace    => Hook_Ignorable_Whitespace'Access,
                     Doc_Locator   => Hook_Set_Document_Locator'Access);
+
+         Parser.Matcher := Get_NFA (Parser.Grammar).Start_Match;
       else
          Set_Hooks (Parser,
                     Start_Element => null,
@@ -993,9 +1046,6 @@ package body Schema.Readers is
                     Whitespace    => null,
                     Doc_Locator   => null);
       end if;
-
-      Initialize_Symbols (Parser);
-      Initialize_Grammar (Parser'Unchecked_Access);
 
       Sax.Readers.Parse (Sax.Readers.Sax_Reader (Parser), Input);
       Reset (Parser);

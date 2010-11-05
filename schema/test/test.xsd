@@ -11,7 +11,7 @@
   <xsd:sequence>
     <xsd:sequence>
       <xsd:element ref="my_string" />
-      <xsd:element ref="zip" maxOccurs="2" />
+      <xsd:element ref="zip" maxOccurs="3" />
       <xsd:element ref="strs"/>
     </xsd:sequence>
     <xsd:sequence>
@@ -28,7 +28,6 @@
    <xsd:element name="zipcode" type="xsd:string" maxOccurs="2"/>
    <xsd:element name="code_postal" type="xsd:string"/>
   </xsd:choice>
-  <xsd:element name="foo" type="xsd:string"/>
  </xsd:sequence>
 </xsd:complexType>
 <xsd:element name="zip" type="Tzip" />

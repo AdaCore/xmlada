@@ -1121,12 +1121,7 @@ package body Schema.Schema_Readers is
 
             Handler.NFA.Add_Transition (Ctxt.Start_State, S, On_Symbol);
             Handler.NFA.Repeat (Ctxt.Start_State, S, Min_Occurs, Max);
-
-            if Handler.NFA.Get_Nested (S) /= No_Nested then
-               Handler.NFA.On_Empty_Nested_Exit (S, Ctxt.Last_State);
-            else
-               Handler.NFA.Add_Empty_Transition (S, Ctxt.Last_State);
-            end if;
+            Handler.NFA.Add_Empty_Transition (S, Ctxt.Last_State);
 
             if Debug then
                Output_Action
@@ -1138,12 +1133,7 @@ package body Schema.Schema_Readers is
             --  A schema adds like a "or" for all its <element> nodes
             Handler.NFA.Add_Transition (Ctxt.Start_State, S, On_Symbol);
             Handler.NFA.Repeat (Ctxt.Start_State, S, Min_Occurs, Max);
-
-            if Handler.NFA.Get_Nested (S) /= No_Nested then
-               Handler.NFA.On_Empty_Nested_Exit (S, Final_State);
-            else
-               Handler.NFA.Add_Empty_Transition (S, Final_State);
-            end if;
+            Handler.NFA.Add_Empty_Transition (S, Final_State);
 
          when others =>
             Raise_Exception

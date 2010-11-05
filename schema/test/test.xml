@@ -26,7 +26,7 @@
      <str>c</str>
   </strs>
 
-  <strs3>
+  <!--  <strs3>
      <str>a</str>
      <str3>b</str3>
   </strs3>
@@ -35,6 +35,7 @@
      <str2>a</str2>
      <str3>b</str3>
   </strs3>
+  -->
 
   <!-- Invalid
   <strs3>
@@ -43,14 +44,17 @@
   </strs3>
   -->
 
-  <strs2>
+  <strs>
      <str>a</str>
      <str2>b</str2>
-  </strs2>
+     <str>c</str>
+  </strs>
 
-  <strs2>
-     <str3>c</str3>
-  </strs2>
+  <strs>
+     <str>a</str>
+     <str2>b</str2>
+     <str>c</str>
+  </strs>
 
   <!-- Invalid
   <strs2>

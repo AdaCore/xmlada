@@ -1908,6 +1908,7 @@ package body Schema.Validators is
          G := new XML_Grammar_Record;
          G.NFA := new Schema_State_Machines.NFA;
          G.NFA.Initialize;
+         G.NFA.Set_Nested_Must_Be_Final (True);
          Grammar  := Allocate (G);
       end if;
 
@@ -2048,6 +2049,7 @@ package body Schema.Validators is
          Actual_G         := new XML_Grammar_Record;
          Actual_G.NFA := new Schema_State_Machines.NFA;
          Actual_G.NFA.Initialize;
+         Actual_G.NFA.Set_Nested_Must_Be_Final (True);
          Reader.Grammar   := Allocate (Actual_G);
          Actual_G.Symbols := Get_Symbol_Table (Reader.all);
       end if;
