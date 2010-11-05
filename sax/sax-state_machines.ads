@@ -141,7 +141,7 @@ package Sax.State_Machines is
      (Self       : access NFA;
       From, To   : State;
       Min_Occurs : Natural := 1;
-      Max_Occurs : Positive := 1);
+      Max_Occurs : Natural := 1);
    --  Modify the automaton to repat the subautomaton From_State .. To_State a
    --  specific number of times.
    --  Note that this requires expansion (for instance "e{3,4}" is expanded to
@@ -374,7 +374,7 @@ package Sax.State_Machines is
    end Pretty_Printers;
 
 private
-   type Transition_Id is new Natural range 0 .. 2 ** 16 - 1;
+   type Transition_Id is new State;
    type Transition (Is_Empty : Boolean := True) is record
       To_State       : State;
       Next_For_State : Transition_Id;

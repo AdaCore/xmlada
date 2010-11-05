@@ -215,7 +215,7 @@ package body Sax.State_Machines is
      (Self       : access NFA;
       From, To   : State;
       Min_Occurs : Natural := 1;
-      Max_Occurs : Positive := 1)
+      Max_Occurs : Natural := 1)
    is
       function Clone_And_Append (Newfrom : State) return State;
       --  Duplicate the automaton NewFrom..To
@@ -459,6 +459,10 @@ package body Sax.State_Machines is
          return;  --  Nothing to do
       elsif Min_Occurs > Max_Occurs then
          return;  --  As documented, nothing is done
+      elsif Max_Occurs = 0 then
+         Self.States.Table (From).First_Transition := No_Transition;
+         Add_Empty_Transition (Self, From, To);
+         return;
       elsif Min_Occurs = 0 and then Max_Occurs = 1 then
          N := Add_Stateless;
          Add_Empty_Transition (Self, From, To);
@@ -535,6 +539,7 @@ package body Sax.State_Machines is
    is
       T          : Transition_Id;
       From_Index : Matcher_State_Index;  --  Where we added [From]
+      Tmp        : Matcher_State_Index;
    begin
       if Debug then
          Put_Line ("Mark_Active " & From'Img);
@@ -547,7 +552,6 @@ package body Sax.State_Machines is
       if Is_Active (Self, List_Start, From) then
          return;
       end if;
-
       --  Always leave the Final_State first in the list
 
       if List_Start /= No_Matcher_State
@@ -596,10 +600,18 @@ package body Sax.State_Machines is
          if Self.NFA.States.Table (From).Nested /= No_State
            and then Self.Active.Table (From_Index).Nested = No_Matcher_State
          then
+            --  We can't pass directly Self.Active.Table (From_Index) as a
+            --  parameter to Mark_Active: if the table Self.Active is
+            --  reallocated during that call, the address we passed becomes
+            --  invalid, and as a result the table is not updated and we might
+            --  event get a storage_error.
+
+            Tmp := Self.Active.Table (From_Index).Nested;
             Mark_Active
               (Self,
-               List_Start => Self.Active.Table (From_Index).Nested,
+               List_Start => Tmp,
                From       => Self.NFA.States.Table (From).Nested);
+            Self.Active.Table (From_Index).Nested := Tmp;
          end if;
       end if;
    end Mark_Active;
