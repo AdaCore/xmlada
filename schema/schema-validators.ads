@@ -232,6 +232,9 @@ package Schema.Validators is
       Block          : Block_Status := No_Block;
       Final          : Final_Status := (others => False);
 
+      Restriction_Of : Type_Index := No_Type_Index;
+      Extension_Of   : Type_Index := No_Type_Index;
+
       Simple_Content : Schema.Simple_Types.Simple_Type_Index :=
         Schema.Simple_Types.No_Simple_Type_Index;
       --  set if we have a simpleType or simpleContent
@@ -538,7 +541,8 @@ package Schema.Validators is
 
    procedure Check_Substitution_Group_OK
      (Handler : access Abstract_Validation_Reader'Class;
-      New_Type : Type_Index; Old_Type : Type_Index);
+      New_Type, Old_Type : Type_Index;
+      Loc : Sax.Locators.Location);
    --  Verifies that [New_Type] is a valid substitution for [Old_Type],
    --  according to 3.3.6.3.
    --  If not, raises a [Validation_Error]

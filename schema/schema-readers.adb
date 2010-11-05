@@ -568,7 +568,8 @@ package body Schema.Readers is
                   exit when S = No_State;
 
                   Check_Substitution_Group_OK
-                    (H, TRef.Typ, NFA.Get_Data (S).Simple);
+                    (H, TRef.Typ, NFA.Get_Data (S).Simple,
+                     Loc => H.Current_Location);
 
                   if Nested_Start /= No_State then
                      if Debug then

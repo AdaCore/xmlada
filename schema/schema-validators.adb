@@ -836,6 +836,8 @@ package body Schema.Validators is
                Attributes      => Empty_Attribute_List,
                Block           => No_Block,
                Final           => (others => False),
+               Restriction_Of  => No_Type_Index,
+               Extension_Of    => No_Type_Index,
                Simple_Content  => Simple,
                Mixed           => False,
                Is_Abstract     => False,
@@ -1880,65 +1882,34 @@ package body Schema.Validators is
 
    procedure Check_Substitution_Group_OK
      (Handler : access Abstract_Validation_Reader'Class;
-      New_Type : Type_Index; Old_Type : Type_Index)
+      New_Type, Old_Type : Type_Index;
+      Loc     : Sax.Locators.Location)
    is
-      pragma Unreferenced (Handler, New_Type, Old_Type);
+      NFA : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
+      Old_Descr : constant access Type_Descr := NFA.Get_Type_Descr (Old_Type);
+      New_Descr : constant access Type_Descr := NFA.Get_Type_Descr (New_Type);
+      pragma Unreferenced (New_Descr, Old_Descr, Loc);
    begin
-      null;
---        case Details.Kind is
---           when Type_Extension =>
---              Get_Type_Descr
---                (Name          => Details.Extension.Base,
---                 Loc           => Details.Extension.Loc,
---                 NFA_Type      => NFA_Type,
---                 Internal_Type => Internal_Type);
---
---              Descr := Get_Type_Descr (NFA, NFA_Type);
---
---              if Descr.Block (Block_Substitution) then
---                 Validation_Error
---                   (Parser,
---                    To_QName (Details.Extension.Base)
---                    & " blocks substitutions",
---                    Details.Extension.Loc);
---              end if;
---
---           when others =>
---              null;  --  Should not have been called
---        end case;
+      if New_Type = Old_Type then
+         return;
+      end if;
 
---                 if Element /= No_Element
---                   and then Get_Validator (Typ) /=
---                   Get_Validator (Get_Type (Element))
---                 then
---                    Check_Replacement_For_Type
---                      (Get_Validator (Typ), Element,
---                       Valid           => Valid,
---                       Had_Restriction => Had_Restriction,
---                       Had_Extension   => Had_Extension);
---
---                    if not Valid then
---                       Validation_Error
---                         (H, '#' & Qname & " is not a valid replacement for "
---                          & To_QName (Get_Type (Element)));
---                    end if;
---
---                    if Had_Restriction
---                      and then Get_Block (Element) (Block_Restriction)
---                    then
---                       Validation_Error
---                         (H, "#Element """ & To_QName (Element)
---                          & """ blocks the use of restrictions of the type");
---                    end if;
---
---                    if Had_Extension
---                      and then Get_Block (Element) (Block_Extension)
---                    then
---                       Validation_Error
---                         (H, "#Element """ & To_QName (Element)
---                          & """ blocks the use of extensions of the type");
---                    end if;
---                 end if;
+      --  The following test should apply on the substituted element, not its
+      --  type.
+--        if Old_Descr.Block (Block_Substitution) then
+--           Validation_Error
+--        (Handler, To_QName (Old_Descr.Name) & " blocks substitutions", Loc);
+--        end if;
+
+--  Validation_Error
+--    (H, '#' & Qname & " is not a valid replacement for "
+--     & To_QName (Get_Type (Element)));
+--  Validation_Error
+--    (H, "#Element """ & To_QName (Element)
+--     & """ blocks the use of restrictions of the type");
+--  Validation_Error
+--    (H, "#Element """ & To_QName (Element)
+--     & """ blocks the use of extensions of the type");
    end Check_Substitution_Group_OK;
 
    ------------------
