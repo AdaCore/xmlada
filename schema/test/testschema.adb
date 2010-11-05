@@ -170,6 +170,7 @@ begin
    end loop;
 
    Free (My_Reader);
+   Free (Schema);
 
 exception
    when XML_Validation_Error =>
@@ -181,6 +182,7 @@ exception
 
       Close (Read);
       Free (My_Reader);
+      Free (Schema);
 
    when Standard.Schema.XML_Not_Implemented =>
       if My_Reader = null then
@@ -191,9 +193,11 @@ exception
 
       Close (Read);
       Free (My_Reader);
+      Free (Schema);
 
    when E : XML_Fatal_Error =>
       Put_Line (Exception_Message (E));
       Close (Read);
       Free (My_Reader);
+      Free (Schema);
 end TestSchema;

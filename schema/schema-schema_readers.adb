@@ -935,6 +935,11 @@ package body Schema.Schema_Readers is
       end if;
 
       Reset (Types);
+
+   exception
+      when others =>
+         Reset (Types);
+         raise;
    end Create_NFA;
 
    ----------
