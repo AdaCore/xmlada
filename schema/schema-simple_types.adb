@@ -150,34 +150,35 @@ package body Schema.Simple_Types is
          if Length /= Descr.String_Length then
             return Find
               (Symbols,
-               "#Invalid length, must be"
+               "Invalid length, must be"
                & Integer'Image (Descr.String_Length) & " characters");
          end if;
       end if;
 
       if Descr.String_Min_Length /= 0 then
-         if Length /= -1 then
+         if Length = -1 then
             Length := Get_Length (Ch);
          end if;
 
          if Length < Descr.String_Min_Length then
             return Find
               (Symbols,
-               "#String is too short, minimum length is"
+               "String is too short (Length " & Integer'Image (Length)
+               & "), minimum length is"
                & Integer'Image (Descr.String_Min_Length)
                & " characters");
          end if;
       end if;
 
       if Descr.String_Max_Length /= 0 then
-         if Length /= -1 then
+         if Length = -1 then
             Length := Get_Length (Ch);
          end if;
 
          if Length > Descr.String_Max_Length then
             return Find
               (Symbols,
-               "#String is too long, maximum length is"
+               "String is too long, maximum length is"
                & Integer'Image (Descr.String_Max_Length)
                & " characters");
          end if;
@@ -938,7 +939,7 @@ package body Schema.Simple_Types is
       Val := False;
 
       if Ch = "" then
-         Error := Find (Symbols, "#Invalid value for boolean type: """"");
+         Error := Find (Symbols, "Invalid value for boolean type: """"");
          return;
       end if;
 
@@ -973,7 +974,7 @@ package body Schema.Simple_Types is
 
       else
          Error := Find
-           (Symbols, "#Invalid value for boolean type: """ & Ch & """");
+           (Symbols, "Invalid value for boolean type: """ & Ch & """");
          return;
       end if;
 
@@ -983,7 +984,7 @@ package body Schema.Simple_Types is
          Encoding.Read (Ch, First, C);
          if not Is_White_Space (C) then
             Error := Find
-              (Symbols, "#Invalid value for boolean type: """ & Ch & """");
+              (Symbols, "Invalid value for boolean type: """ & Ch & """");
             return;
          end if;
       end loop;
@@ -1025,7 +1026,7 @@ package body Schema.Simple_Types is
          Val := Value (Ch);
       exception
          when Constraint_Error =>
-            Error := Find (Symbols, "#Invalid value: """ & Ch & """");
+            Error := Find (Symbols, "Invalid value: """ & Ch & """");
             return;
       end;
       Error := No_Symbol;
