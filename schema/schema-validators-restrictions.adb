@@ -47,18 +47,6 @@ package body Schema.Validators.Restrictions is
    procedure Free (Data : in out Restriction_Data);
    function Create_Validator_Data
      (Validator : access Restriction_XML_Validator) return Validator_Data;
-   overriding procedure Validate_Start_Element
-     (Validator         : access Restriction_XML_Validator;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element);
-   overriding procedure Validate_End_Element
-     (Validator      : access Restriction_XML_Validator;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Symbol;
-      Data           : Validator_Data);
    overriding procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
       Reader        : access Abstract_Validation_Reader'Class;
@@ -199,78 +187,6 @@ package body Schema.Validators.Restrictions is
    begin
       return Equal (Get_Validator (Validator.Base), Reader, Value1, Value2);
    end Equal;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator         : access Restriction_XML_Validator;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element)
-   is
-      D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
-   begin
-      if Debug then
-         Debug_Push_Prefix
-           ("Validate_Start_Element for restriction " & Get_Name (Validator));
-      end if;
-
-      if Validator.Restriction /= null then
-         Validate_Start_Element
-           (Validator.Restriction, Reader, Local_Name, NS,
-            D.Restriction_Data, Element_Validator);
-
-         if Debug then
-            if Element_Validator /= No_Element then
-               Debug_Output
-                 ("Validate_Start_Element: end of restriction, result="
-                  & Get (Element_Validator.Elem.Local_Name).all);
-            else
-               Debug_Output
-                 ("Validate_Start_Element: end of restriction, no"
-                  & " match from restriction");
-            end if;
-         end if;
-
-      else
-         --  We never need to analyze the base, since all relevant elements are
-         --  already duplicates in the restriction part (or else the element
-         --  must be null)
-         null;
-      end if;
-
-      Debug_Pop_Prefix;
-   exception
-      when others =>
-         Debug_Pop_Prefix;
-         raise;
-   end Validate_Start_Element;
-
-   --------------------------
-   -- Validate_End_Element --
-   --------------------------
-
-   overriding procedure Validate_End_Element
-     (Validator      : access Restriction_XML_Validator;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Symbol;
-      Data           : Validator_Data)
-   is
-      D : constant Restriction_Data_Access := Restriction_Data_Access (Data);
-   begin
-      if Validator.Restriction /= null then
-         Validate_End_Element (Validator.Restriction, Reader, Local_Name,
-                               D.Restriction_Data);
-      else
-         Validate_End_Element
-           (Get_Validator (Validator.Base), Reader,
-            Local_Name, D.Restriction_Data);
-      end if;
-   end Validate_End_Element;
 
    ---------------
    -- Add_Facet --

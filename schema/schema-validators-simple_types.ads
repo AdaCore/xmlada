@@ -47,24 +47,12 @@ private package Schema.Validators.Simple_Types is
    --  Validates a "SimpleType" XML datatype, ie accepts any contents but
    --  elements and attributes
 
-   overriding procedure Validate_Start_Element
-     (Validator              : access Any_Simple_XML_Validator_Record;
-      Reader                 : access Abstract_Validation_Reader'Class;
-      Local_Name             : Sax.Symbols.Symbol;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Element_Validator      : out XML_Element);
    overriding procedure Validate_Characters
      (Validator      : access Any_Simple_XML_Validator_Record;
       Reader         : access Abstract_Validation_Reader'Class;
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
       Mask           : in out Facets_Mask);
-   overriding procedure Validate_End_Element
-     (Validator  : access Any_Simple_XML_Validator_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Sax.Symbols.Symbol;
-      Data       : Validator_Data);
    overriding procedure Check_Content_Type
      (Validator        : access Any_Simple_XML_Validator_Record;
       Reader           : access Abstract_Validation_Reader'Class;

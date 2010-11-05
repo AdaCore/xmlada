@@ -37,24 +37,6 @@ package body Schema.Validators.UR_Type is
    end record;
    type UR_Type_Access is access all UR_Type_Validator'Class;
 
-   overriding procedure Validate_End_Element
-     (Validator      : access UR_Type_Validator;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Symbol;
-      Data           : Validator_Data);
---     overriding procedure Validate_Attributes
---       (Validator         : access UR_Type_Validator;
---        Reader            : access Abstract_Validation_Reader'Class;
---        Atts              : in out Sax.Readers.Sax_Attribute_List;
---        Nillable          : Boolean;
---        Is_Nil            : out Boolean);
-   overriding procedure Validate_Start_Element
-     (Validator         : access UR_Type_Validator;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element);
    overriding function Is_Wildcard
      (Validator : access UR_Type_Validator) return Boolean;
    overriding function Get_Mixed_Content
@@ -77,65 +59,65 @@ package body Schema.Validators.UR_Type is
    -- Validate_Start_Element --
    ----------------------------
 
-   overriding procedure Validate_Start_Element
-     (Validator         : access UR_Type_Validator;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element)
-   is
-      pragma Unreferenced (Data);
-   begin
-      if Debug then
-         Debug_Output
-           ("Validate_Start_Element " & To_QName (NS, Local_Name)
-            & " (parent=UR_Type, " & Validator.Process_Contents'Img & ")");
-      end if;
-
-      --  ur-Type and anyType accept anything
-
-      case Validator.Process_Contents is
-         when Process_Strict =>
-            Element_Validator := Lookup_Element
-              (NS, Reader, Local_Name, Create_If_Needed => False);
-            if Element_Validator = No_Element then
-               Validation_Error
-                 (Reader,
-                  "#No definition provided for """
-                  & Get (Local_Name).all & """");
-            else
-               Check_Qualification (Reader, Element_Validator, NS);
-            end if;
-
-         when Process_Lax =>
-            Element_Validator := Lookup_Element
-              (NS, Reader, Local_Name, Create_If_Needed => False);
-
-            if Element_Validator = No_Element then
-               if Debug then
-                  Debug_Output ("Definition not found for "
-                                & Get (Local_Name).all);
-               end if;
-               Element_Validator := Get_UR_Type_Element
-                 (Reader.Grammar, Validator.Process_Contents);
-            else
-               if Debug then
-                  Debug_Output ("Definition found for "
-                                & Get (Local_Name).all);
-               end if;
-            end if;
-
-         when Process_Skip =>
-            if Debug then
-               Debug_Output
-                 ("Children will be validated with UR-Type, because of SKIP");
-            end if;
-
-            Element_Validator := Get_UR_Type_Element
-              (Reader.Grammar, Validator.Process_Contents);
-      end case;
-   end Validate_Start_Element;
+--     overriding procedure Validate_Start_Element
+--       (Validator         : access UR_Type_Validator;
+--        Reader            : access Abstract_Validation_Reader'Class;
+--        Local_Name        : Symbol;
+--        NS                : XML_Grammar_NS;
+--        Data              : Validator_Data;
+--        Element_Validator : out XML_Element)
+--     is
+--        pragma Unreferenced (Data);
+--     begin
+--        if Debug then
+--           Debug_Output
+--             ("Validate_Start_Element " & To_QName (NS, Local_Name)
+--              & " (parent=UR_Type, " & Validator.Process_Contents'Img & ")");
+--        end if;
+--
+--        --  ur-Type and anyType accept anything
+--
+--        case Validator.Process_Contents is
+--           when Process_Strict =>
+--              Element_Validator := Lookup_Element
+--                (NS, Reader, Local_Name, Create_If_Needed => False);
+--              if Element_Validator = No_Element then
+--                 Validation_Error
+--                   (Reader,
+--                    "#No definition provided for """
+--                    & Get (Local_Name).all & """");
+--              else
+--                 Check_Qualification (Reader, Element_Validator, NS);
+--              end if;
+--
+--           when Process_Lax =>
+--              Element_Validator := Lookup_Element
+--                (NS, Reader, Local_Name, Create_If_Needed => False);
+--
+--              if Element_Validator = No_Element then
+--                 if Debug then
+--                    Debug_Output ("Definition not found for "
+--                                  & Get (Local_Name).all);
+--                 end if;
+--                 Element_Validator := Get_UR_Type_Element
+--                   (Reader.Grammar, Validator.Process_Contents);
+--              else
+--                 if Debug then
+--                    Debug_Output ("Definition found for "
+--                                  & Get (Local_Name).all);
+--                 end if;
+--              end if;
+--
+--           when Process_Skip =>
+--              if Debug then
+--                 Debug_Output
+--               ("Children will be validated with UR-Type, because of SKIP");
+--              end if;
+--
+--              Element_Validator := Get_UR_Type_Element
+--                (Reader.Grammar, Validator.Process_Contents);
+--        end case;
+--     end Validate_Start_Element;
 
    -------------------------
    -- Validate_Attributes --
@@ -152,21 +134,6 @@ package body Schema.Validators.UR_Type is
 --     begin
 --        Is_Nil := False;
 --     end Validate_Attributes;
-
-   --------------------------
-   -- Validate_End_Element --
-   --------------------------
-
-   overriding procedure Validate_End_Element
-     (Validator  : access UR_Type_Validator;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol;
-      Data       : Validator_Data)
-   is
-      pragma Unreferenced (Validator, Local_Name, Data, Reader);
-   begin
-      null;
-   end Validate_End_Element;
 
    -------------------------
    -- Get_UR_Type_Element --

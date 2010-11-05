@@ -693,26 +693,6 @@ package Schema.Validators is
    --  ends. This function is called once when the element starts.
    --  By default, this returns null, and no data is associated.
 
-   procedure Validate_Start_Element
-     (Validator              : access XML_Validator_Record;
-      Reader                 : access Abstract_Validation_Reader'Class;
-      Local_Name             : Sax.Symbols.Symbol;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Element_Validator      : out XML_Element);
-   --  Check whether this Start_Element event is valid in the context of the
-   --  validator. Data is the result of Create_Validator_Data.
-   --
-   --  NS is the namespace for the element.
-   --
-   --  Element_Validator is set, on exit, to the validator that should be used
-   --  to validate the next element.
-   --  Element_Validator should be set to null if no validation could be
-   --  performed and the control should be given back to the caller (for
-   --  instance in the case of nested sequences and choices).
-   --
-   --  Raise XML_Validation_Error in case of error
-
    procedure Validate_Attributes
      (Attributes : Attribute_Validator_List_Access;
       Reader    : access Abstract_Validation_Reader'Class;
@@ -733,16 +713,6 @@ package Schema.Validators is
    --
    --  Sets the type of the attributes (through Sax.Attributes.Set_Type) to Id
    --  if the corresponding attribute is an id.
-
-   procedure Validate_End_Element
-     (Validator      : access XML_Validator_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Sax.Symbols.Symbol;
-      Data           : Validator_Data);
-   --  Check whether this End_Element event is valid.
-   --  This is called for the node associated with the validator itself, not
-   --  for the child, as opposed to what is done for Validate_Start_Element.
-   --  Raise XML_Validation_Error in case of error
 
    procedure Validate_Characters
      (Validator     : access XML_Validator_Record;
@@ -983,13 +953,6 @@ package Schema.Validators is
    No_XML_Group : constant XML_Group;
    --  A group of elements, Create through a call to Create_Global_Group
 
-   procedure Add_Particle
-     (Group      : in out XML_Group;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Particle   : access Group_Model_Record'Class;
-      Min_Occurs : Natural := 1; Max_Occurs : Natural := 1);
-   --  Add a new particle in the group
-
    function Extension_Of
      (G          : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
@@ -1020,65 +983,11 @@ package Schema.Validators is
    --  that sequence.
    --  If Max_Occurs = Unbounded, the number of repeats is unbounded
 
-   procedure Add_Particle
-     (Seq        : access Sequence_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : XML_Element;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1);
-   procedure Add_Particle
-     (Seq        : access Sequence_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : Sequence;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-   procedure Add_Particle
-     (Seq        : access Sequence_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : Choice;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-   procedure Add_Particle
-     (Seq        : access Sequence_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : XML_Any;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-   procedure Add_Particle
-     (Seq        : access Sequence_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : XML_Group;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-
    function Create_Choice (G : XML_Grammar_NS) return Choice;
    --  Create a new empty choice.
    --  (Min_Occurs, Max_Occurs) indicate the number of repetition allowed for
    --  that choice.
    --  If Max_Occurs = Unbounded, the number of repeats is unbounded
-
-   procedure Add_Particle
-     (C          : access Choice_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : XML_Element;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1);
-   procedure Add_Particle
-     (C          : access Choice_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : Sequence;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-   procedure Add_Particle
-     (C          : access Choice_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : Choice;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-   procedure Add_Particle
-     (C          : access Choice_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : XML_Any;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
-   procedure Add_Particle
-     (C          : access Choice_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : XML_Group;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1);
 
    -------------
    -- XML_All --
@@ -1093,14 +1002,6 @@ package Schema.Validators is
       Max_Occurs : Integer := 1) return XML_All;
    --  Return a new validator that checks that all its elements appear the
    --  right number of time
-
-   subtype Zero_Or_One is Integer range 0 .. 1;
-   procedure Add_Particle
-     (Validator  : access XML_All_Record;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Item       : XML_Element;
-      Min_Occurs : Zero_Or_One := 1; Max_Occurs : Zero_Or_One := 1);
-   --  Add a new element to Validator
 
    --------------
    -- Grammars --
@@ -1821,23 +1722,6 @@ private
    procedure Free_Nested_Group (Data : Group_Model_Data);
    --  Free the nested group and its data, if any
 
-   procedure Applies_To_Tag
-     (Group         : access Group_Model_Record;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Sax.Symbols.Symbol;
-      NS            : XML_Grammar_NS;
-      Applies       : out Boolean;
-      Skip_Current  : out Boolean);
-   --  Whether Group can process Local_Name. This is used for group_models
-   --  nested in a choice, so that we can find out which one should be applied
-   --  (given the restrictions in schema, only one of them can apply).
-   --  If Group should be called to validate Local_Name, Applies is set to
-   --  True.
-   --  If Local_Name is not handled by Group, Applies is set to False.
-   --  However, if Skip_Current is then set to true, then the group
-   --  matches in fact an empty item, and Local_Name should be passed over to
-   --  the successor of Group in its parent sequence or choice.
-
    function Can_Be_Empty
      (Group : access Group_Model_Record) return Boolean;
    --  Whether having no child is acceptable for Group
@@ -1862,13 +1746,6 @@ private
       Target_NS        : XML_Grammar_NS;
    end record;
 
-   overriding procedure Validate_Start_Element
-     (Validator              : access XML_Any_Record;
-      Reader                 : access Abstract_Validation_Reader'Class;
-      Local_Name             : Sax.Symbols.Symbol;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Element_Validator      : out XML_Element);
    function Get_Namespace_From_Parent_For_Locals
      (Validator : access XML_Any_Record) return Boolean;
    procedure Free (Any : in out XML_Any_Record);
@@ -1894,27 +1771,8 @@ private
    procedure Free (Data : in out Sequence_Data);
    --  See inherited documentation
 
-   overriding procedure Validate_Start_Element
-     (Validator         : access Sequence_Record;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Sax.Symbols.Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element);
-   overriding procedure Validate_End_Element
-     (Validator      : access Sequence_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Sax.Symbols.Symbol;
-      Data           : Validator_Data);
    overriding function Create_Validator_Data
      (Validator : access Sequence_Record) return Validator_Data;
-   overriding procedure Applies_To_Tag
-     (Group         : access Sequence_Record;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Sax.Symbols.Symbol;
-      NS            : XML_Grammar_NS;
-      Applies      : out Boolean;
-      Skip_Current : out Boolean);
    overriding function Can_Be_Empty
      (Group : access Sequence_Record) return Boolean;
    overriding function Type_Model
@@ -1936,27 +1794,8 @@ private
    procedure Free (Data : in out Choice_Data);
    --  See inherited documentation
 
-   overriding procedure Validate_Start_Element
-     (Validator         : access Choice_Record;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Sax.Symbols.Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element);
-   overriding procedure Validate_End_Element
-     (Validator      : access Choice_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Sax.Symbols.Symbol;
-      Data           : Validator_Data);
    overriding function Create_Validator_Data
      (Validator : access Choice_Record) return Validator_Data;
-   overriding procedure Applies_To_Tag
-     (Group         : access Choice_Record;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Sax.Symbols.Symbol;
-      NS            : XML_Grammar_NS;
-      Applies       : out Boolean;
-      Skip_Current  : out Boolean);
    overriding function Can_Be_Empty
      (Group : access Choice_Record) return Boolean;
    overriding function Type_Model
@@ -1981,18 +1820,6 @@ private
       end record;
    type All_Data_Access is access all All_Data'Class;
 
-   overriding procedure Validate_Start_Element
-     (Validator         : access XML_All_Record;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Sax.Symbols.Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element);
-   overriding procedure Validate_End_Element
-     (Validator      : access XML_All_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Sax.Symbols.Symbol;
-      Data           : Validator_Data);
    overriding function Create_Validator_Data
      (Validator : access XML_All_Record) return Validator_Data;
    overriding function Type_Model

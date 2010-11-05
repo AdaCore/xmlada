@@ -27,7 +27,6 @@
 -----------------------------------------------------------------------
 
 pragma Ada_05;
-with Sax.Symbols;  use Sax.Symbols;
 
 package body Schema.Validators.Extensions is
 
@@ -47,18 +46,6 @@ package body Schema.Validators.Extensions is
    procedure Free (Data : in out Extension_Data);
    function Create_Validator_Data
      (Validator : access Extension_XML_Validator) return Validator_Data;
-   overriding procedure Validate_Start_Element
-     (Validator         : access Extension_XML_Validator;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element);
-   overriding procedure Validate_End_Element
-     (Validator      : access Extension_XML_Validator;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Symbol;
-      Data           : Validator_Data);
    overriding procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
       Reader        : access Abstract_Validation_Reader'Class;
@@ -159,105 +146,6 @@ package body Schema.Validators.Extensions is
       D.Base_Data   := Create_Validator_Data (Get_Validator (Validator.Base));
       return Validator_Data (D);
    end Create_Validator_Data;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   overriding procedure Validate_Start_Element
-     (Validator         : access Extension_XML_Validator;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Local_Name        : Symbol;
-      NS                : XML_Grammar_NS;
-      Data              : Validator_Data;
-      Element_Validator : out XML_Element)
-   is
-      D : constant Extension_Data_Access := Extension_Data_Access (Data);
-   begin
-      if Debug then
-         Debug_Push_Prefix
-           ("Validate_Start_Element for extension " & Get_Name (Validator));
-      end if;
-
-      Element_Validator := No_Element;
-
-      --  If we have a sequence with optional elements, it is possible that
-      --  none of these matched, but this isn't an error. In this case, we keep
-      --  looking in the base type
-
-      if D.Validating_Base then
-         begin
-            if Debug then
-               Debug_Output ("Validating base part of the extension ("
-                             & Get_Name (Get_Validator (Validator.Base))
-                             & ')');
-            end if;
-            Validate_Start_Element
-              (Get_Validator (Validator.Base), Reader,
-               Local_Name, NS, D.Base_Data, Element_Validator);
-         exception
-            when XML_Validation_Error =>
-               if Debug then
-                  Debug_Output ("Validation error in base, testing extension");
-               end if;
-               Element_Validator := No_Element;
-         end;
-      end if;
-
-      if Element_Validator = No_Element then
-         D.Validating_Base := False;
-         if Validator.Extension /= null then
-            if Debug then
-               Debug_Output ("Validating extension part of the extension");
-            end if;
-            Validate_Start_Element
-              (Validator.Extension, Reader, Local_Name, NS,
-               D.Extension_Data, Element_Validator);
-         elsif Debug then
-            Debug_Output ("Base part didn't match, but no extension defined");
-         end if;
-      end if;
-
-      Debug_Pop_Prefix;
-   exception
-      when others =>
-         Debug_Pop_Prefix;
-   end Validate_Start_Element;
-
-   --------------------------
-   -- Validate_End_Element --
-   --------------------------
-
-   overriding procedure Validate_End_Element
-     (Validator      : access Extension_XML_Validator;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Symbol;
-      Data           : Validator_Data)
-   is
-      D : constant Extension_Data_Access := Extension_Data_Access (Data);
-   begin
-      if Debug then
-         Debug_Push_Prefix ("Validate_End_Element <extension> "
-                            & Get_Name (Validator));
-      end if;
-
-      if D.Validating_Base then
-         Validate_End_Element
-           (Get_Validator (Validator.Base), Reader, Local_Name, D.Base_Data);
-      end if;
-
-      if Validator.Extension /= null then
-         Validate_End_Element
-           (Validator.Extension, Reader, Local_Name, D.Extension_Data);
-      end if;
-
-      Debug_Pop_Prefix;
-
-   exception
-      when others =>
-         Debug_Pop_Prefix;
-         raise;
-   end Validate_End_Element;
 
    -----------------------
    -- Get_Mixed_Content --
@@ -423,6 +311,7 @@ package body Schema.Validators.Extensions is
       Min_Occurs : Natural := 1;
       Max_Occurs : Integer := 1) return XML_Validator
    is
+      pragma Unreferenced (Group, Min_Occurs, Max_Occurs);
       Result : constant Extension_Type := new Extension_XML_Validator;
       C      : Sequence;
    begin
@@ -435,7 +324,7 @@ package body Schema.Validators.Extensions is
       Register (G, Base);
       Result.Base      := Base;
       C := Create_Sequence (G);
-      Add_Particle (C, Reader, Group, Min_Occurs, Max_Occurs);
+      --  Add_Particle (C, Reader, Group, Min_Occurs, Max_Occurs);
       Result.Extension := XML_Validator (C);
       return XML_Validator (Result);
    end Create_Extension_Of;

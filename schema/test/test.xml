@@ -3,7 +3,7 @@
 <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation='test.xsd' >
   <my_string>
-    <size>10</size>
+    <size>-10</size>
     <contents>ManuManuMa</contents>
   </my_string>
 
@@ -25,24 +25,6 @@
      <str2>b</str2>
      <str>c</str>
   </strs>
-
-  <!--  <strs3>
-     <str>a</str>
-     <str3>b</str3>
-  </strs3>
-
-  <strs3>
-     <str2>a</str2>
-     <str3>b</str3>
-  </strs3>
-  -->
-
-  <!-- Invalid
-  <strs3>
-     <str3>a</str3>
-     <str3>b</str3>
-  </strs3>
-  -->
 
   <strs>
      <str>a</str>

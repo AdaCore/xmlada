@@ -30,6 +30,8 @@ with Schema.Validators;              use Schema.Validators;
 with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
 
+pragma Warnings (Off);  --  ??? Temporary
+
 package body Schema.Validators.XSD_Grammar is
 
    procedure Add_Schema_For_Schema
@@ -169,10 +171,10 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "annotated" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
       Typ := Extension_Of (G, Openattrs, XML_Validator (Seq1));
-      Add_Attribute
-        (Typ, Create_Local_Attribute (R.Id, G, Lookup (G, R, R.UC_ID)));
+--        Add_Attribute
+--          (Typ, Create_Local_Attribute (R.Id, G, Lookup (G, R, R.UC_ID)));
       Annotated := Create_Global_Type (G, R, R.Annotated, Typ);
 
       --  The "schemaTop" element  ??? Missing abstract
@@ -198,19 +200,19 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "schema" element
       Choice1 := Create_Choice (G);
-      Add_Particle (Choice1, R, Lookup_Element (G, R, R.Include));
-      Add_Particle (Choice1, R, Lookup_Element (G, R, R.Import));
-      Add_Particle (Choice1, R, Lookup_Element (G, R, R.Redefine));
-      Add_Particle (Choice1, R, Annotation);
+--        Add_Particle (Choice1, R, Lookup_Element (G, R, R.Include));
+--        Add_Particle (Choice1, R, Lookup_Element (G, R, R.Import));
+--        Add_Particle (Choice1, R, Lookup_Element (G, R, R.Redefine));
+--        Add_Particle (Choice1, R, Annotation);
       Seq1    := Create_Sequence (G);
-      Add_Particle (Seq1, R, SchemaTop);
-      Add_Particle (Seq1, R, Annotation,
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Seq1, R, SchemaTop);
+--        Add_Particle (Seq1, R, Annotation,
+--                      Min_Occurs => 0, Max_Occurs => Unbounded);
       Seq2    := Create_Sequence (G);
-      Add_Particle
-        (Seq2, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle
-        (Seq2, R, Seq1, Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle
+--          (Seq2, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle
+--          (Seq2, R, Seq1, Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Attribute
         (Seq2, Create_Local_Attribute (R.Namespace_Target, G, uriReference));
       Add_Attribute (Seq2, Create_Local_Attribute (R.Version, G, Token));
@@ -241,8 +243,8 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "localComplexType" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, complexTypeModel);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, complexTypeModel);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Complex_Type), XML_Validator (Seq1));
       Add_Attribute
@@ -251,9 +253,9 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "keybase" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Lookup_Element (G, R, R.Selector));
-      Add_Particle (Seq1, R, Lookup_Element (G, R, R.Field),
-                    Min_Occurs => 1, Max_Occurs => Unbounded);
+--        Add_Particle (Seq1, R, Lookup_Element (G, R, R.Selector));
+--        Add_Particle (Seq1, R, Lookup_Element (G, R, R.Field),
+--                      Min_Occurs => 1, Max_Occurs => Unbounded);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute (R.Name, G, NCNAME,
@@ -328,13 +330,13 @@ package body Schema.Validators.XSD_Grammar is
       --  The R.Element type   ??? abstract=true
       Seq1 := Create_Sequence (G);
       Choice1 := Create_Choice (G);
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Simple_Type, G, localSimpleType, Qualified));
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Complex_Type, G, localComplexType, Qualified));
-      Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
-      Add_Particle (Seq1, R, identityConstraint,
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Simple_Type, G, localSimpleType, Qualified));
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Complex_Type, G, localComplexType, Qualified));
+--        Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, identityConstraint,
+--                      Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Create_Global_Type (G, R, R.Element, Typ);
       Add_Attribute_Group (Typ, R, Occurs);
@@ -363,12 +365,12 @@ package body Schema.Validators.XSD_Grammar is
       --  The "appinfo" element"
       Seq1 := Create_Sequence (G);
       Seq2 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle
-        (Seq2, R,
-         Create_Any (Process_Contents => Process_Lax,
-                     Namespace        => R.Any_Namespace,
-                     Target_NS        => XML_G));
+--     Add_Particle (Seq1, R, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle
+--          (Seq2, R,
+--           Create_Any (Process_Contents => Process_Lax,
+--                       Namespace        => R.Any_Namespace,
+--                       Target_NS        => XML_G));
       Add_Attribute
         (Seq1, Create_Local_Attribute (R.Source, G, uriReference));
       Set_Mixed_Content (Seq1, True);
@@ -378,12 +380,12 @@ package body Schema.Validators.XSD_Grammar is
       --  The "documentation" element
       Seq1 := Create_Sequence (G);
       Seq2 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle
-        (Seq2, R,
-         Create_Any (Process_Contents => Process_Lax,
-                     Namespace        => R.Any_Namespace,
-                     Target_NS        => XML_G));
+--     Add_Particle (Seq1, R, Seq2, Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle
+--          (Seq2, R,
+--           Create_Any (Process_Contents => Process_Lax,
+--                       Namespace        => R.Any_Namespace,
+--                       Target_NS        => XML_G));
       Add_Attribute
         (Seq1, Create_Local_Attribute (R.Source, G, uriReference));
       Add_Attribute (Seq1, Lookup_Attribute (XML_G, R, R.Lang));
@@ -394,10 +396,10 @@ package body Schema.Validators.XSD_Grammar is
       --  The "annotation" element  ??? invalid
       Seq1 := Create_Sequence (G);
       Choice1 := Create_Choice (G);
-      Add_Particle
-        (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle (Choice1, R, Lookup_Element (G, R, R.Appinfo));
-      Add_Particle (Choice1, R, Lookup_Element (G, R, R.Documentation));
+--        Add_Particle
+--          (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Choice1, R, Lookup_Element (G, R, R.Appinfo));
+--        Add_Particle (Choice1, R, Lookup_Element (G, R, R.Documentation));
       Typ := Extension_Of (G, Openattrs, XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute (R.Id, G, Lookup (G, R, R.UC_ID)));
@@ -405,15 +407,15 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "topLevelElement" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
       Choice1 := Create_Choice (G);
-      Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Simple_Type, G, localSimpleType, Qualified));
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Complex_Type, G, localComplexType, Qualified));
-      Add_Particle (Seq1, R, identityConstraint,
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Simple_Type, G, localSimpleType, Qualified));
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Complex_Type, G, localComplexType, Qualified));
+--        Add_Particle (Seq1, R, identityConstraint,
+--                      Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Element), XML_Validator (Seq1));
       Add_Attribute
@@ -447,18 +449,18 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "all" element
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
 
       Seq2 := Create_Sequence (G);
-      Add_Particle (Seq2, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq2, R, Annotation, Min_Occurs => 0);
       Choice1 := Create_Choice (G);
-      Add_Particle (Seq2, R, Choice1, Min_Occurs => 0);
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Simple_Type, G, localSimpleType, Qualified));
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Complex_Type, G, localComplexType, Qualified));
-      Add_Particle (Seq2, R, identityConstraint,
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Seq2, R, Choice1, Min_Occurs => 0);
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Simple_Type, G, localSimpleType, Qualified));
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Complex_Type, G, localComplexType, Qualified));
+--        Add_Particle (Seq2, R, identityConstraint,
+--                      Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ2 := Restriction_Of
         (G, R, Lookup (G, R, R.Local_Element), XML_Validator (Seq2));
 
@@ -478,10 +480,10 @@ package body Schema.Validators.XSD_Grammar is
            (R.MaxOccurs, G, Create_Local_Type (G, Typ),
             Attribute_Use => Default, Default => R.S_1));
 
-      Add_Particle (Seq1, R,
-                    Create_Local_Element
-                      (R.Element, G, Create_Local_Type (G, Typ2), Qualified),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Seq1, R,
+--                      Create_Local_Element
+--                      (R.Element, G, Create_Local_Type (G, Typ2), Qualified),
+--                      Min_Occurs => 0, Max_Occurs => Unbounded);
 
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Explicit_Group), XML_Validator (Seq1));
@@ -504,17 +506,17 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "localElement" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
       Choice1 := Create_Choice (G);
-      Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Simple_Type, G, localSimpleType, Qualified));
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Complex_Type, G, localComplexType, Qualified));
-      Add_Particle (Seq1, R, identityConstraint,
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Seq1, R, Choice1, Min_Occurs => 0);
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Simple_Type, G, localSimpleType, Qualified));
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Complex_Type, G, localComplexType, Qualified));
+--        Add_Particle (Seq1, R, identityConstraint,
+--                      Min_Occurs => 0, Max_Occurs => Unbounded);
       Add_Attribute (Seq1, Create_Local_Attribute (R.Substitution_Group, G,
                                              Attribute_Use => Prohibited));
       Add_Attribute (Seq1, Create_Local_Attribute (R.Final, G,
@@ -526,17 +528,17 @@ package body Schema.Validators.XSD_Grammar is
       --  The "particle" group
       Gr := Create_Global_Group (G, R, R.Particle);
       Choice1 := Create_Choice (G);
-      Add_Particle (Gr, R, Choice1);
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Element, G, Lookup (G, R, R.Local_Element), Qualified));
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Group, G, Lookup (G, R, R.Group_Ref), Qualified));
-      Add_Particle (Choice1, R, All_E);
-      Add_Particle (Choice1, R, Choice);
-      Add_Particle (Choice1, R, Sequence);
-      Add_Particle (Choice1, R, Any);
+--        Add_Particle (Gr, R, Choice1);
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Element, G, Lookup (G, R, R.Local_Element), Qualified));
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Group, G, Lookup (G, R, R.Group_Ref), Qualified));
+--        Add_Particle (Choice1, R, All_E);
+--        Add_Particle (Choice1, R, Choice);
+--        Add_Particle (Choice1, R, Sequence);
+--        Add_Particle (Choice1, R, Any);
 
       --  R.Group type
       Typ := Extension_Of
@@ -550,22 +552,22 @@ package body Schema.Validators.XSD_Grammar is
       --  The "nestedParticle" element
       Gr := Create_Global_Group (G, R, R.Nested_Particle);
       Choice1 := Create_Choice (G);
-      Add_Particle (Gr, R, Choice1);
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Element, G, Lookup (G, R, R.Local_Element), Qualified));
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Group, G, Lookup (G, R, R.Group_Ref), Qualified));
-      Add_Particle (Choice1, R, Choice);
-      Add_Particle (Choice1, R, Sequence);
-      Add_Particle (Choice1, R, Any);
+--        Add_Particle (Gr, R, Choice1);
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Element, G, Lookup (G, R, R.Local_Element), Qualified));
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Group, G, Lookup (G, R, R.Group_Ref), Qualified));
+--        Add_Particle (Choice1, R, Choice);
+--        Add_Particle (Choice1, R, Sequence);
+--        Add_Particle (Choice1, R, Any);
 
       --  "explicitGroup" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, Lookup_Group (G, R, R.Nested_Particle),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Lookup_Group (G, R, R.Nested_Particle),
+--                      Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Group), XML_Validator (Seq1));
       Create_Global_Type (G, R, R.Explicit_Group, Typ);
@@ -584,23 +586,23 @@ package body Schema.Validators.XSD_Grammar is
 
       --  "groupDefParticle" group
       Choice1 := Create_Choice (G);
-      Add_Particle (groupDefParticle, R, Choice1);
-      Add_Particle (Choice1, R, All_E);
-      Add_Particle (Choice1, R, Choice);
-      Add_Particle (Choice1, R, Sequence);
+--        Add_Particle (groupDefParticle, R, Choice1);
+--        Add_Particle (Choice1, R, All_E);
+--        Add_Particle (Choice1, R, Choice);
+--        Add_Particle (Choice1, R, Sequence);
 
       --  The "realGroup" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, groupDefParticle,
-                    Min_Occurs => 0, Max_Occurs => 1);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, groupDefParticle,
+--                      Min_Occurs => 0, Max_Occurs => 1);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Group), XML_Validator (Seq1));
       Create_Global_Type (G, R, R.Real_Group, Typ);
 
       --  The "groupRef" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Real_Group), XML_Validator (Seq1));
       Create_Global_Type (G, R, R.Group_Ref, Typ);
@@ -617,8 +619,8 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "namedGroup" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, groupDefParticle);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, groupDefParticle);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Real_Group), XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute
@@ -633,15 +635,15 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The R.Attribute_Group type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, attrDecls);
+--        Add_Particle (Seq1, R, attrDecls);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Add_Attribute_Group (Typ, R, defRef);
       Create_Global_Type (G, R, R.Attribute_Group, Typ);
 
       --  The R.Named_Attribute_Group type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, attrDecls);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, attrDecls);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Attribute_Group), XML_Validator (Seq1));
       Add_Attribute
@@ -659,18 +661,18 @@ package body Schema.Validators.XSD_Grammar is
       --  The "typeDefParticle" group
       typeDefParticle := Create_Global_Group (G, R, R.Type_Def_Particle);
       Choice1 := Create_Choice (G);
-      Add_Particle (typeDefParticle, R, Choice1);
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Group, G, Lookup (G, R, R.Group_Ref), Qualified));
-      Add_Particle (Choice1, R, All_E);
-      Add_Particle (Choice1, R, Choice);
-      Add_Particle (Choice1, R, Sequence);
+--        Add_Particle (typeDefParticle, R, Choice1);
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Group, G, Lookup (G, R, R.Group_Ref), Qualified));
+--        Add_Particle (Choice1, R, All_E);
+--        Add_Particle (Choice1, R, Choice);
+--        Add_Particle (Choice1, R, Sequence);
 
       --  The "attribute" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Create_Local_Element
-                      (R.Simple_Type, G, localSimpleType, Qualified),
-                    Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Create_Local_Element
+--                        (R.Simple_Type, G, localSimpleType, Qualified),
+--                      Min_Occurs => 0);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Create_Global_Type (G, R, R.Attribute, Typ);
       Add_Attribute (Typ, Create_Local_Attribute (R.Typ, G, QNAME));
@@ -692,10 +694,10 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "topLevelAttribute" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, Create_Local_Element
-                      (R.Simple_Type, G, localSimpleType, Qualified),
-                    Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Create_Local_Element
+--                        (R.Simple_Type, G, localSimpleType, Qualified),
+--                      Min_Occurs => 0);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Attribute), XML_Validator (Seq1));
       Create_Global_Type (G, R, R.Top_Level_Attribute, Typ);
@@ -754,7 +756,7 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "attributeGroupRef"  ??? invalid
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
       Typ := Restriction_Of
         (G, R, Lookup (G, R, R.Attribute_Group), XML_Validator (Seq1));
       Add_Attribute
@@ -766,24 +768,24 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "attrDecls" group
       Seq1 := Create_Sequence (G);
-      Add_Particle (attrDecls, R, Seq1);
+--        Add_Particle (attrDecls, R, Seq1);
       Choice1 := Create_Choice (G);
-      Add_Particle
-        (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Attribute, G, Lookup (G, R, R.Attribute), Qualified));
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Attribute_Group, G,
-            Lookup (G, R, R.Attribute_Group_Ref), Qualified));
-      Add_Particle
-        (Seq1, R, Lookup_Element (G, R, R.Any_Attribute), Min_Occurs => 0);
+--        Add_Particle
+--          (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Attribute, G, Lookup (G, R, R.Attribute), Qualified));
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Attribute_Group, G,
+--              Lookup (G, R, R.Attribute_Group_Ref), Qualified));
+--        Add_Particle
+--          (Seq1, R, Lookup_Element (G, R, R.Any_Attribute), Min_Occurs => 0);
 
       --  The "extensionType" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, typeDefParticle, Min_Occurs => 0);
-      Add_Particle (Seq1, R, attrDecls);
+--        Add_Particle (Seq1, R, typeDefParticle, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, attrDecls);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute (R.Base, G, QNAME));
       Create_Global_Type (G, R, R.Extension_Type, Typ);
@@ -791,10 +793,10 @@ package body Schema.Validators.XSD_Grammar is
       --  The "restrictionType" type
       Seq1 := Create_Sequence (G);
       Choice1 := Create_Choice (G);
-      Add_Particle (Choice1, R, typeDefParticle, Min_Occurs => 0);
-      Add_Particle (Choice1, R, simpleRestrictionModel, Min_Occurs => 0);
-      Add_Particle (Seq1, R, Choice1);
-      Add_Particle (Seq1, R, attrDecls);
+--        Add_Particle (Choice1, R, typeDefParticle, Min_Occurs => 0);
+--        Add_Particle (Choice1, R, simpleRestrictionModel, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Choice1);
+--        Add_Particle (Seq1, R, attrDecls);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute
                        (R.Base, G, QNAME, Attribute_Use => Required));
@@ -802,61 +804,61 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "simpleRestrictionModel" group
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Create_Local_Element
-                    (R.Simple_Type, G, localSimpleType, Qualified),
-                    Min_Occurs => 0);
-      Add_Particle (Seq1, R, Facet, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle (simpleRestrictionModel, R, Seq1);
+--        Add_Particle (Seq1, R, Create_Local_Element
+--                      (R.Simple_Type, G, localSimpleType, Qualified),
+--                      Min_Occurs => 0);
+--    Add_Particle (Seq1, R, Facet, Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (simpleRestrictionModel, R, Seq1);
 
       --  The "simpleExtensionType"
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, attrDecls);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, attrDecls);
       Create_Global_Type (G, R, R.Simple_Extension_Type,
                 Restriction_Of (G, R, Lookup (G, R, R.Extension_Type),
                                 XML_Validator (Seq1)));
 
       --  The "simpleRestrictionType"
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, simpleRestrictionModel, Min_Occurs => 0);
-      Add_Particle (Seq1, R, attrDecls);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, simpleRestrictionModel, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, attrDecls);
       Create_Global_Type (G, R, R.Simple_Restriction_Type,
                 Restriction_Of (G, R, Lookup (G, R, R.Restriction_Type),
                                 XML_Validator (Seq1)));
 
       --  The "simpleContent" element
       Choice1 := Create_Choice (G);
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Restriction, G,
-                       Lookup (G, R, R.Simple_Restriction_Type),
-                       Qualified));
-      Add_Particle (Choice1, R, Create_Local_Element
-                      (R.Extension, G,
-                       Lookup (G, R, R.Simple_Extension_Type),
-                       Qualified));
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Restriction, G,
+--                         Lookup (G, R, R.Simple_Restriction_Type),
+--                         Qualified));
+--        Add_Particle (Choice1, R, Create_Local_Element
+--                        (R.Extension, G,
+--                         Lookup (G, R, R.Simple_Extension_Type),
+--                         Qualified));
       Typ := Extension_Of (G, Annotated, XML_Validator (Choice1));
       Set_Type (Create_Global_Element (G, R, R.Simple_Content, Qualified), R,
                 Create_Local_Type (G, Typ));
 
       --  The "complexRestrictionType" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, typeDefParticle, Min_Occurs => 0);
-      Add_Particle (Seq1, R, attrDecls);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, typeDefParticle, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, attrDecls);
       Typ := Restriction_Of (G, R, Lookup (G, R, R.Restriction_Type),
                              XML_Validator (Seq1));
       Create_Global_Type (G, R, R.Complex_Restriction_Type, Typ);
 
       --  The "complexContent" element
       Choice1 := Create_Choice (G);
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Restriction, G, Lookup (G, R, R.Complex_Restriction_Type),
-            Qualified));
-      Add_Particle
-        (Choice1, R, Create_Local_Element
-           (R.Extension, G, Lookup (G, R, R.Extension_Type), Qualified));
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Restriction, G, Lookup (G, R, R.Complex_Restriction_Type),
+--              Qualified));
+--        Add_Particle
+--          (Choice1, R, Create_Local_Element
+--             (R.Extension, G, Lookup (G, R, R.Extension_Type), Qualified));
       Add_Attribute (Choice1, Create_Local_Attribute (R.Mixed, G, Bool));
       Typ := Extension_Of (G, Annotated, XML_Validator (Choice1));
       Set_Type (Create_Global_Element (G, R, R.Complex_Content, Qualified), R,
@@ -864,13 +866,13 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "complexTypeModel" group
       Choice1 := Create_Choice (G);
-      Add_Particle (complexTypeModel, R, Choice1);
-      Add_Particle (Choice1, R, Lookup_Element (G, R, R.Simple_Content));
-      Add_Particle (Choice1, R, Lookup_Element (G, R, R.Complex_Content));
+--        Add_Particle (complexTypeModel, R, Choice1);
+--        Add_Particle (Choice1, R, Lookup_Element (G, R, R.Simple_Content));
+--        Add_Particle (Choice1, R, Lookup_Element (G, R, R.Complex_Content));
       Seq1 := Create_Sequence (G);
-      Add_Particle (Choice1, R, Seq1);
-      Add_Particle (Seq1, R, typeDefParticle, Min_Occurs => 0);
-      Add_Particle (Seq1, R, attrDecls);
+--        Add_Particle (Choice1, R, Seq1);
+--        Add_Particle (Seq1, R, typeDefParticle, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, attrDecls);
 
       --  The R.Complex_Type type  ??? abstract=true
       Typ := Extension_Of (G, R, Annotated, complexTypeModel);
@@ -890,8 +892,8 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "topLevelComplexType" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, complexTypeModel);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, complexTypeModel);
       Typ := Restriction_Of (G, R, Lookup (G, R, R.Complex_Type),
                              XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute
@@ -921,10 +923,10 @@ package body Schema.Validators.XSD_Grammar is
       --  The "redefine" element
       Seq1 := Create_Sequence (G);
       Choice1 := Create_Choice (G);
-      Add_Particle
-        (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
-      Add_Particle (Choice1, R, Annotation);
-      Add_Particle (Choice1, R, Redefinable);
+--        Add_Particle
+--          (Seq1, R, Choice1, Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Choice1, R, Annotation);
+--        Add_Particle (Choice1, R, Redefinable);
       Add_Attribute
         (Seq1, Create_Local_Attribute
            (R.Schema_Location, G, uriReference, Attribute_Use => Required));
@@ -936,8 +938,8 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "localSimpleType" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, SimpleDerivation);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, SimpleDerivation);
       Typ := Restriction_Of (G, R, Lookup (G, R, R.Simple_Type),
                              XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute
@@ -962,7 +964,7 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The R.Simple_Type type  ??? abstract=true
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, SimpleDerivation);
+--        Add_Particle (Seq1, R, SimpleDerivation);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Add_Attribute (Typ, Create_Local_Attribute (R.Name, G, NCNAME));
       Add_Attribute
@@ -972,8 +974,8 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "topLevelSimpleType" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
-      Add_Particle (Seq1, R, SimpleDerivation);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, SimpleDerivation);
       Typ := Restriction_Of (G, R, Lookup (G, R, R.Simple_Type),
                              XML_Validator (Seq1));
       Create_Global_Type (G, R, R.Top_Level_Simple_Type, Typ);
@@ -999,10 +1001,10 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "union" element
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R,
-                    Create_Local_Element
-                      (R.Simple_Type, G, localSimpleType, Qualified),
-                    Min_Occurs => 0, Max_Occurs => Unbounded);
+--        Add_Particle (Seq1, R,
+--                      Create_Local_Element
+--                        (R.Simple_Type, G, localSimpleType, Qualified),
+--                      Min_Occurs => 0, Max_Occurs => Unbounded);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute (R.Member_Types, G,
@@ -1014,9 +1016,9 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "list" element
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Create_Local_Element
-                      (R.Simple_Type, G, localSimpleType, Qualified),
-                    Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Create_Local_Element
+--                        (R.Simple_Type, G, localSimpleType, Qualified),
+--                      Min_Occurs => 0);
       Typ := Extension_Of (G, Annotated, XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute (R.Item_Type, G, QNAME,
@@ -1038,7 +1040,7 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The "numFacet" type
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
       Typ := Restriction_Of (G, R, Facet_Type, XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute (R.Value, G, nonNegativeInteger));
@@ -1106,7 +1108,7 @@ package body Schema.Validators.XSD_Grammar is
       Elem := Create_Global_Element (G, R, R.Whitespace, Qualified);
       Set_Substitution_Group (Elem, R, Facet);
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
       Typ := Restriction_Of (G, R, Facet_Type, XML_Validator (Seq1));
       Typ2 := Restriction_Of (G, R, NMTOKEN);
       Add_Facet (Typ2, R, R.Enumeration, "preserve");
@@ -1121,7 +1123,7 @@ package body Schema.Validators.XSD_Grammar is
       Elem := Create_Global_Element (G, R, R.Total_Digits, Qualified);
       Set_Substitution_Group (Elem, R, Facet);
       Seq1 := Create_Sequence (G);
-      Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
+--        Add_Particle (Seq1, R, Annotation, Min_Occurs => 0);
       Typ := Restriction_Of (G, R, numFacet, XML_Validator (Seq1));
       Add_Attribute
         (Typ, Create_Local_Attribute
