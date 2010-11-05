@@ -426,10 +426,11 @@ procedure Schematest is
             end if;
 
          exception
-            when E : Standard.Schema.XML_Not_Implemented =>
+            when Standard.Schema.XML_Not_Implemented =>
                Close (Input);
                Result.Kind := Not_Implemented;
-               Result.Msg  := To_Unbounded_String (Exception_Message (E));
+               Result.Msg  := To_Unbounded_String
+                  (Get_Error_Message (XSD_Reader));
                Failed_Grammar := True;
 
             when XML_Validation_Error =>
@@ -557,10 +558,11 @@ procedure Schematest is
                end if;
 
             exception
-               when E : Standard.Schema.XML_Not_Implemented =>
+               when Standard.Schema.XML_Not_Implemented =>
                   Close (Input);
                   Result.Kind := Not_Implemented;
-                  Result.Msg  := To_Unbounded_String (Exception_Message (E));
+                  Result.Msg  := To_Unbounded_String
+                     (Get_Error_Message (Inst_Reader));
 
                when XML_Validation_Error =>
                   Close (Input);

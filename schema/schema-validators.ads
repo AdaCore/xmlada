@@ -558,6 +558,8 @@ package Schema.Validators is
       Loc     : Sax.Locators.Location := Sax.Locators.No_Location;
       Except  : Ada.Exceptions.Exception_Id := XML_Validation_Error'Identity);
    --  Sets an error message, and raise XML_Validation_Error.
+   --  If [Message] starts with "#", this indicates a non-implemented
+   --  feature, and XML_Not_Implemented is raised instead.
 
    function Get_Error_Message
      (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence;

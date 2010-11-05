@@ -121,15 +121,20 @@ package body Schema.Validators is
          Debug_Output ("Validation_Error: " & Message);
       end if;
 
-      Reader.Error_Msg := Find_Symbol (Reader.all, Message);
-
       if Loc /= No_Location then
          Reader.Error_Location := Loc;
       else
          Reader.Error_Location := Reader.Current_Location;
       end if;
 
-      Raise_Exception (Except);
+      if Message (Message'First) = '#' then
+         Reader.Error_Msg := Find_Symbol
+           (Reader.all, Message (Message'First + 1 .. Message'Last));
+         raise XML_Not_Implemented;
+      else
+         Reader.Error_Msg := Find_Symbol (Reader.all, Message);
+         Raise_Exception (Except);
+      end if;
    end Validation_Error;
 
    -----------------------

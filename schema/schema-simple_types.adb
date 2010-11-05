@@ -762,8 +762,9 @@ package body Schema.Simple_Types is
          while Index <= Ch'Last loop
             Encoding.Read (Ch, Index, Char);
             if Char > 127 then
+               --  Start with '#' because this is a non-implemented feature
                Error := Find
-                 (Symbols, "Regexp matching with unicode not supported");
+                 (Symbols, "#Regexp matching with unicode not supported");
                return;
             end if;
          end loop;
