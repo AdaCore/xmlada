@@ -17,8 +17,8 @@ new:
 	-@tr -d '\r' < schematest.tmp.out > schematest.tmp
 	-@diff -u schematest.out schematest.tmp
 
-# Explain how the NOT IMPLEMENTED features are split
-not_implemented:
-	@grep "NOT IMPLEMENTED" schematest.out | perl -pi -e  's/ *NOT IMPLEMENTED //; s/\S+:\d+:\d+://g; s/^\s+//' | sort | uniq -c | sort -n
+# Explain how the various errors are split:
+errors:
+	@egrep "^  -" schematest.out | perl -pi -e  's/\S+:\d+:\d+://g; s/^\s+//' | sort | uniq -c | sort -n
 
 force:

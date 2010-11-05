@@ -997,7 +997,9 @@ package body Sax.State_Machines is
    procedure Replace_State
      (Self : in out NFA_Matcher;
       Iter : Active_State_Iterator;
-      S    : State) is
+      S    : State)
+   is
+      M : Matcher_State_Index;
    begin
       if Iter.Current_Level /= No_Matcher_State then
          Self.Active.Table (Iter.States (Iter.Current_Level)).S := S;
@@ -1008,10 +1010,11 @@ package body Sax.State_Machines is
                List_Start => Self.First_Active,
                From       => S);
          else
+            M :=  Self.Active.Table
+              (Iter.States (Iter.Current_Level - 1)).Nested;
             Mark_Active_No_Check
               (Self,
-               List_Start => Self.Active.Table
-                 (Iter.States (Iter.Current_Level - 1)).Nested,
+               List_Start => M,
                From       => S);
          end if;
       end if;

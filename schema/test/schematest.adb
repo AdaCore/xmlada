@@ -437,7 +437,7 @@ procedure Schematest is
                Close (Input);
                Result.Result := Not_Implemented;
                Result.Msg  := To_Unbounded_String
-                  ("NOT IMPLEMENTED " & Get_Error_Message (XSD_Reader));
+                  (Get_Error_Message (XSD_Reader));
                Failed_Grammar := True;
 
             when XML_Validation_Error =>
@@ -570,7 +570,7 @@ procedure Schematest is
                   Close (Input);
                   Result.Result := Not_Implemented;
                   Result.Msg  := To_Unbounded_String
-                     ("NOT IMPLEMENTED " & Get_Error_Message (Inst_Reader));
+                    (Get_Error_Message (Inst_Reader));
 
                when XML_Validation_Error =>
                   Close (Input);
@@ -891,7 +891,13 @@ procedure Schematest is
                end if;
 
                if Test.Msg /= "" then
-                  Put_Line ("    " & To_String (Test.Msg));
+                  case Test.Result is
+                     when Passed          => Put ("  -OK ");
+                     when Failed          => Put ("  -KO ");
+                     when Not_Implemented => Put ("  -NI ");
+                     when Internal_Error  => Put ("  -IE ");
+                  end case;
+                  Put_Line (To_String (Test.Msg));
                end if;
             end if;
 

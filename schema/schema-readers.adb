@@ -744,6 +744,7 @@ package body Schema.Readers is
                Validation_Error
                  (H, "No type found for " & To_QName (Element_QName));
             elsif Descr.Complex_Content /= No_State then
+               Free (H.Matcher);
                H.Matcher := Get_NFA (H.Grammar).Start_Match
                  (Start_At => Descr.Complex_Content);
             else
@@ -751,6 +752,7 @@ package body Schema.Readers is
                --  ends up with no state data, and we need to set it to the
                --  appropriate simpleType. Can't use Replace_State for this.
 
+               Free (H.Matcher);
                H.Matcher := Get_NFA (H.Grammar).Start_Match
                  (Start_At => NFA.Simple_Nested);
 

@@ -2154,11 +2154,8 @@ package body Schema.Validators is
    begin
       NFA.Matched_Through_Any := False;
       Process (Matcher, Input => Sym, Success => Success);
-
-      if Success then
-         Through_Any     := NFA.Matched_Through_Any;
-         Through_Process := NFA.Matched_Process_Content;
-      end if;
+      Through_Any     := NFA.Matched_Through_Any;
+      Through_Process := NFA.Matched_Process_Content;
    end Do_Match;
 
    ------------------
