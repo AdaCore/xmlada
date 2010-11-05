@@ -479,7 +479,9 @@ package body Schema.Simple_Types is
                              others => <>), Token);
       T := Register ("boolean",  (Kind => Primitive_Boolean, others => <>),
                      Any_Simple_Type);
-      T := Register ("QName",    (Kind => Primitive_QName, others => <>),
+      T := Register ("QName", (Kind => Primitive_QName,
+                               Mask => Whitespace_Mask,
+                               others => <>),
                      Any_Simple_Type);
       T := Register ("NOTATION", (Kind => Primitive_Notation, others => <>),
                      Any_Simple_Type);
@@ -493,11 +495,11 @@ package body Schema.Simple_Types is
         Any_Simple_Type);
       Name := Register ("Name",     (Kind       => Primitive_Name,
                                      Mask       => Whitespace_Mask,
-                                     Whitespace => Preserve,
+                                     Whitespace => Collapse,
                                      others => <>), Token);
       NCName := Register ("NCName",   (Kind       => Primitive_NCName,
                                        Mask       => Whitespace_Mask,
-                                       Whitespace => Preserve,
+                                       Whitespace => Collapse,
                                        others => <>), Name);
       T := Register ("ID",       (Kind       => Primitive_ID,
                                   Mask       => Whitespace_Mask,
@@ -520,6 +522,7 @@ package body Schema.Simple_Types is
                                   Whitespace => Preserve,
                                   others => <>), Any_Simple_Type);
       T := Register ("anyURI",   (Kind => Primitive_Any_URI,
+                                  Mask => Whitespace_Mask,
                                   others => <>), Any_Simple_Type);
       T := Register ("hexBinary", (Kind => Primitive_HexBinary,
                                    others => <>), Any_Simple_Type);

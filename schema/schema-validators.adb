@@ -953,7 +953,8 @@ package body Schema.Validators is
       Descr    : Simple_Type_Descr;
    begin
       if Debug then
-         Debug_Output ("Validate attribute " & To_QName (Attr.Name));
+         Debug_Output ("Validate attribute " & To_QName (Attr.Name)
+                       & " simpleType=" & Attr.Simple_Type'Img);
       end if;
 
       if Attr.Simple_Type = No_Simple_Type_Index then
