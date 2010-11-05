@@ -106,6 +106,9 @@ private
       Typ          : Qualified_Name      := No_Qualified_Name;
       Local_Type   : Internal_Type_Index := No_Internal_Type_Index;
       Ref          : Qualified_Name      := No_Qualified_Name;
+
+      Target_NS    : Sax.Symbols.Symbol  := Sax.Symbols.No_Symbol;
+      --  For the handling of <anyAttribute>
    end record;
    No_Internal_Attribute : constant Internal_Attribute_Descr := (others => <>);
 
@@ -155,7 +158,7 @@ private
          when Type_Sequence    => First_In_Seq    : Type_Details_Access;
          when Type_Choice      => First_In_Choice : Type_Details_Access;
          when Type_Element     => Element         : Element_Descr;
-         when Type_Any         => Any             : Any_Descr;
+         when Type_Any         => Any             : Internal_Any_Descr;
          when Type_Group       => Group           : Group_Descr;
          when Type_Extension   => Extension       : Extension_Descr;
          when Type_Restriction => Restriction     : Restriction_Descr;

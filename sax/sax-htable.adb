@@ -68,8 +68,26 @@ package body Sax.HTable is
       Hashed     : Interfaces.Unsigned_32)
    is
       Index : constant Unsigned_32 := Hashed mod Hash_Table.Size + 1;
+      Item  : Item_Ptr;
    begin
       if Hash_Table.Table (Index).Set then
+         --  Check whether we already have the item
+
+         if Equal (Get_Key (Hash_Table.Table (Index).Elem), Get_Key (E)) then
+            Hash_Table.Table (Index).Elem := E;
+            return;
+         else
+            Item := Hash_Table.Table (Index).Next;
+            while Item /= null loop
+               if Equal (Get_Key (Item.Elem), Get_Key (E)) then
+                  Item.Elem := E;
+                  return;
+               end if;
+
+               Item := Item.Next;
+            end loop;
+         end if;
+
          Hash_Table.Table (Index).Next := new Htable_Item'
            (Elem => E,
             Next => Hash_Table.Table (Index).Next);
@@ -260,7 +278,7 @@ package body Sax.HTable is
    -- Next --
    ----------
 
-   procedure Next (Hash_Table : in out HTable; Iter : in out Iterator) is
+   procedure Next (Hash_Table : HTable; Iter : in out Iterator) is
    begin
       pragma Assert (Iter /= No_Iterator);
 

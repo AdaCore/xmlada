@@ -124,10 +124,42 @@ package Schema.Validators is
 
    type Any_Descr is record
       Process_Contents : Process_Contents_Type := Process_Strict;
-      Namespace        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Target_NS        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      No_Namespaces    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Namespaces       : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      --  The combined list of namespaces. This could include ##any and
+      --  ##local, since there is no way to represent them otherwise, but will
+      --  not include ##targetNamespace which must be resolved first.
+      --  No_Namespaces is the list of namespaces we must not match, and
+      --  replaces the use of ##other in the list of namespaces. (note that if
+      --  a namespace matches [Namespaces], it will match even if it is in
+      --  [No_Namespaces].
+      --
+      --  Combining <anyAttribute>:
+      --  - when we have an extension, we must match any of the namespaces
+      --    either from the base or from the extension.
+      --  - when we have a restriction, we restrict the list of valid
+      --    namespaces.
    end record;
    No_Any_Descr : constant Any_Descr := (others => <>);
+
+   type Internal_Any_Descr is record
+      Target_NS        : Sax.Symbols.Symbol;
+      Process_Contents : Process_Contents_Type := Process_Strict;
+      Namespaces       : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+   end record;
+   --  We need to temporarily store the target_NS, in case we are parsing
+   --  multiple grammars before we generate the NFA
+
+   function Combine
+     (Grammar             : XML_Grammar;
+      Base_Any            : Any_Descr;
+      Local_Process       : Process_Contents_Type;
+      Local               : Sax.Symbols.Symbol;  --  includes ##other
+      As_Restriction      : Boolean;
+      Target_NS           : Sax.Symbols.Symbol) return Any_Descr;
+   --  Combines [Base_Any] and [Local_Any] into a single one.
+   --  [Base_Any] can be No_Any_Descr if we simply want to resolve
+   --  ##targetNamespace and ##other in [Local_Any]
 
    function Match_Any
      (Any : Any_Descr; Name : Qualified_Name) return Boolean;
@@ -192,6 +224,7 @@ package Schema.Validators is
       case Is_Any is
          when True =>
             Any          : Any_Descr := No_Any_Descr;
+            --  There is a single such attribute in a list, always first
 
          when False =>
             Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
@@ -610,17 +643,23 @@ package Schema.Validators is
    --  if the corresponding attribute is an id.
 
    procedure Add_Attribute
-     (NFA       : access Schema_NFA'Class;
-      List      : in out Attribute_Validator_List;
-      Attribute : Attribute_Descr);
+     (Grammar        : XML_Grammar;
+      List           : in out Attribute_Validator_List;
+      Attribute      : Attribute_Descr;
+      As_Restriction : Boolean;
+      Target_NS      : Sax.Symbols.Symbol);
    procedure Add_Attributes
-     (NFA        : access Schema_NFA'Class;
-      List       : in out Attribute_Validator_List;
-      Attributes : Attribute_Validator_List);
+     (Grammar        : XML_Grammar;
+      List           : in out Attribute_Validator_List;
+      Attributes     : Attribute_Validator_List;
+      As_Restriction : Boolean);
    --  Add a valid attribute to Validator.
    --  Is_Local should be true if the attribute is local, or False if this is
    --  a reference to a global attribute.
    --  The second version copies elements from [Attributes] into [List].
+   --  [As_Restriction] is used when including a <anyAttribute>. Since there
+   --  can be only one in the list, this is merged with any existing
+   --  <anyAttribute>. [Target_NS] is also used in this context
 
    --------------
    -- Grammars --
@@ -643,8 +682,9 @@ package Schema.Validators is
    --  avoiding the need to recreate it the next time you parse a XSD file.
 
    procedure Create_Global_Attribute
-     (NFA  : access Schema_NFA'Class;
-      Attr : Attribute_Descr);
+     (Grammar   : XML_Grammar;
+      Attr      : Attribute_Descr;
+      Target_NS : Sax.Symbols.Symbol);
    function Create_Simple_Type
      (NFA   : access Schema_NFA'Class;
       Descr : Schema.Simple_Types.Simple_Type_Descr)

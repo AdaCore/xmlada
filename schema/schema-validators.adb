@@ -30,6 +30,7 @@ pragma Ada_05;
 
 with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Exceptions;                 use Ada.Exceptions;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Interfaces;                     use Interfaces;
 with Sax.Attributes;                 use Sax.Attributes;
@@ -77,6 +78,26 @@ package body Schema.Validators is
    --  Resets the contents of G.Simple_Types by resizing the table and freeing
    --  needed data
    --  If [To] is [No_Simple_Type_Index], the table is freed
+
+   function To_String (Any : Any_Descr) return String;
+   --  Debug only
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Any : Any_Descr) return String is
+      Str : Unbounded_String;
+   begin
+      Append (Str, "{" & Any.Process_Contents'Img);
+      if Any.Namespaces /= No_Symbol then
+         Append (Str, " ns={" & Get (Any.Namespaces).all & "}");
+      end if;
+      if Any.No_Namespaces /= No_Symbol then
+         Append (Str, " no_ns={" & Get (Any.No_Namespaces).all & "}");
+      end if;
+      return To_String (Str) & "}";
+   end To_String;
 
    ----------------------
    -- Validation_Error --
@@ -159,24 +180,61 @@ package body Schema.Validators is
    -------------------
 
    procedure Add_Attribute
-     (NFA       : access Schema_NFA'Class;
-      List      : in out Attribute_Validator_List;
-      Attribute : Attribute_Descr)
+     (Grammar        : XML_Grammar;
+      List           : in out Attribute_Validator_List;
+      Attribute      : Attribute_Descr;
+      As_Restriction : Boolean;
+      Target_NS      : Sax.Symbols.Symbol)
    is
+      NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
       L   : Attribute_Validator_List := List;
       Tmp : Attribute_Validator_List;
    begin
-      if Debug then
-         if Attribute.Is_Any then
-            Debug_Output ("Adding <anyAttribute>");
-         else
+      if Attribute.Is_Any then
+         if Debug then
+            Debug_Output ("Adding <anyAttribute> "
+                          & Get (Attribute.Any.Namespaces).all);
+         end if;
+
+         --  Does list include a <anyAttribute> already ?
+         while L /= Empty_Attribute_List loop
+            if NFA.Attributes.Table (L).Is_Any then
+               NFA.Attributes.Table (L).Any :=
+                 Combine
+                   (Grammar        => Grammar,
+                    Base_Any       => NFA.Attributes.Table (L).Any,
+                    Local_Process  => Attribute.Any.Process_Contents,
+                    Local          => Attribute.Any.Namespaces,
+                    As_Restriction => As_Restriction,
+                    Target_NS      => Target_NS);
+               return;
+            end if;
+
+            L := NFA.Attributes.Table (L).Next;
+         end loop;
+
+         --  there was no <anyAttribute>, so we simply add it to the list
+         Append
+           (NFA.Attributes,
+            Attribute_Descr'
+              (Is_Any => True,
+               Next   => List,
+               Any    => Combine
+                 (Grammar        => Grammar,
+                  Base_Any       => No_Any_Descr,
+                  Local_Process  => Attribute.Any.Process_Contents,
+                  Local          => Attribute.Any.Namespaces,
+                  As_Restriction => As_Restriction,
+                  Target_NS      => Target_NS)));
+         List := Last (NFA.Attributes);
+
+      else
+         if Debug then
             Debug_Output
               ("Adding attribute " & To_QName (Attribute.Name)
                & " Use_Type=" & Attribute.Use_Type'Img);
          end if;
-      end if;
 
-      if not Attribute.Is_Any then
          while L /= Empty_Attribute_List loop
             if not NFA.Attributes.Table (L).Is_Any
               and then NFA.Attributes.Table (L).Name = Attribute.Name
@@ -189,11 +247,11 @@ package body Schema.Validators is
             end if;
             L := NFA.Attributes.Table (L).Next;
          end loop;
-      end if;
 
-      Append (NFA.Attributes, Attribute);
-      NFA.Attributes.Table (Last (NFA.Attributes)).Next := List;
-      List := Last (NFA.Attributes);
+         Append (NFA.Attributes, Attribute);
+         NFA.Attributes.Table (Last (NFA.Attributes)).Next := List;
+         List := Last (NFA.Attributes);
+      end if;
    end Add_Attribute;
 
    --------------------
@@ -201,14 +259,17 @@ package body Schema.Validators is
    --------------------
 
    procedure Add_Attributes
-     (NFA        : access Schema_NFA'Class;
-      List       : in out Attribute_Validator_List;
-      Attributes : Attribute_Validator_List)
+     (Grammar        : XML_Grammar;
+      List           : in out Attribute_Validator_List;
+      Attributes     : Attribute_Validator_List;
+      As_Restriction : Boolean)
    is
-      L : Attribute_Validator_List := Attributes;
+      NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
+      L   : Attribute_Validator_List := Attributes;
    begin
       while L /= Empty_Attribute_List loop
-         Add_Attribute (NFA, List, NFA.Attributes.Table (L));
+         Add_Attribute (Grammar, List, NFA.Attributes.Table (L),
+                        As_Restriction, Target_NS => No_Symbol);
          L := NFA.Attributes.Table (L).Next;
       end loop;
    end Add_Attributes;
@@ -245,40 +306,315 @@ package body Schema.Validators is
       end;
    end To_Attribute_Array;
 
+   -------------
+   -- Combine --
+   -------------
+
+   function Combine
+     (Grammar             : XML_Grammar;
+      Base_Any            : Any_Descr;
+      Local_Process       : Process_Contents_Type;
+      Local               : Sax.Symbols.Symbol;
+      As_Restriction      : Boolean;
+      Target_NS           : Sax.Symbols.Symbol) return Any_Descr
+   is
+      use Id_Htable;
+      Namespaces    : Id_Htable.HTable (127);
+      No_Namespaces : Id_Htable.HTable (127);
+      Tmp           : Id_Htable.HTable (127);
+      --  Use this htable just to store unique strings, could be anything
+
+      Result : Any_Descr;
+      Base_Is_Any, Local_Is_Any : Boolean;
+
+      Symbols : constant Symbol_Table := Get (Grammar).Symbols;
+
+      procedure Callback (Str : Byte_Sequence);
+      procedure Add_To_Table (Sym : Symbol; Table : in out Id_Htable.HTable);
+
+      procedure Merge (Sym : Symbol);
+      --  Take all namespaces in [Sym], and copy, in [Namespaces], those that
+      --  are also in [Tmp], but not in [No_Namespaces]
+
+      function To_Symbol (Table : Id_Htable.HTable) return Symbol;
+      --  Return the list of strings in Table
+
+      -----------
+      -- Merge --
+      -----------
+
+      procedure Merge (Sym : Symbol) is
+         procedure Callback (Str : Byte_Sequence);
+         procedure Do_Merge (S : Symbol);
+
+         procedure Do_Merge (S : Symbol) is
+         begin
+            if (Base_Any.Namespaces = No_Symbol
+                or else Id_Htable.Get (Tmp, S) /= No_Id)
+              and then Id_Htable.Get (No_Namespaces, S) = No_Id
+            then
+               Set (Namespaces, (Key => S));
+            end if;
+         end Do_Merge;
+
+         procedure Callback (Str : Byte_Sequence) is
+         begin
+            if Str = "##targetNamespace" then
+               Do_Merge (Target_NS);
+            elsif Str = "##other" then
+               if Target_NS /= No_Symbol then
+                  Set (No_Namespaces, (Key => Target_NS));
+               end if;
+
+               Set (No_Namespaces, (Key => Find (Symbols, "##local")));
+            else
+               Do_Merge (Find (Symbols, Str));  --  including ##any, ##local
+            end if;
+         end Callback;
+
+         procedure All_Add is new For_Each_Item (Callback);
+      begin
+         if Sym /= No_Symbol then
+            All_Add (Get (Sym).all);
+         end if;
+      end Merge;
+
+      ------------------
+      -- Add_To_Table --
+      ------------------
+
+      procedure Add_To_Table (Sym : Symbol; Table : in out Id_Htable.HTable) is
+         procedure Callback (Str : Byte_Sequence);
+         procedure Callback (Str : Byte_Sequence) is
+         begin
+            Set (Table, (Key => Find (Symbols, Str)));
+         end Callback;
+
+         procedure All_Add is new For_Each_Item (Callback);
+      begin
+         if Sym /= No_Symbol then
+            All_Add (Get (Sym).all);
+         end if;
+      end Add_To_Table;
+
+      ---------------
+      -- To_Symbol --
+      ---------------
+
+      function To_Symbol (Table : Id_Htable.HTable) return Symbol is
+         Str  : Unbounded_String;
+         S    : Id_Ref;
+         Iter : Iterator := Id_Htable.First (Table);
+      begin
+         if Iter = No_Iterator then
+            return No_Symbol;
+         end if;
+
+         while Iter /= No_Iterator loop
+            S := Current (Iter);
+
+            if Str = Null_Unbounded_String then
+               Append (Str, Get (S.Key).all);
+            else
+               Append (Str, " " & Get (S.Key).all);
+            end if;
+
+            Id_Htable.Next (Table, Iter);
+         end loop;
+
+         return Find (Get (Grammar).Symbols, To_String (Str));
+      end To_Symbol;
+
+      --------------
+      -- Callback --
+      --------------
+
+      procedure Callback (Str : Byte_Sequence) is
+      begin
+         if Str = "##targetNamespace" then
+            if Target_NS = Empty_String then
+               Set (Namespaces, (Key => Find (Symbols, "##local")));
+            else
+               Set (Namespaces, (Key => Target_NS));
+            end if;
+
+         elsif Str = "##other" then
+            if Target_NS /= No_Symbol then
+               Set (No_Namespaces, (Key => Target_NS));
+            end if;
+
+            Set (No_Namespaces, (Key => Find (Symbols, "##local")));
+         else
+            Set (Namespaces,
+                 (Key => Find (Symbols, Str))); --  including ##any, ##local
+         end if;
+      end Callback;
+
+      procedure All_Items is new For_Each_Item (Callback);
+
+   begin
+      if Base_Any = No_Any_Descr then
+         All_Items (Get (Local).all);
+         return Any_Descr'
+           (Process_Contents => Local_Process,
+            No_Namespaces    => To_Symbol (No_Namespaces),
+            Namespaces       => To_Symbol (Namespaces));
+      end if;
+
+      Local_Is_Any := Local /= No_Symbol and then Get (Local).all = "##any";
+
+      if As_Restriction then
+         --  The list of "Namespaces" is the intersection of the two.
+         --  From this, remove the list of the base's "No_Namespaces".
+         --  We preserve those "No_Namespaces" into the new type, though.
+
+         Add_To_Table (Base_Any.No_Namespaces, No_Namespaces);
+
+         if Local_Is_Any then
+            if Base_Any.Namespaces /= No_Symbol then
+               Add_To_Table (Base_Any.Namespaces, Namespaces);
+            elsif Local /= No_Symbol then
+               Add_To_Table (Local, Namespaces);
+            end if;
+
+         else
+            Add_To_Table (Base_Any.Namespaces, Tmp);
+            Merge (Local);
+         end if;
+
+      else
+         --  If the base type or the extension contains ##any, we will still
+         --  accept any namespace
+
+         Base_Is_Any := Base_Any.Namespaces /= No_Symbol
+           and then Get (Base_Any.Namespaces).all = "##any";
+
+         if Base_Is_Any then
+            Add_To_Table (Base_Any.Namespaces, Namespaces); --  ##any
+
+         elsif Local_Is_Any then
+            if Base_Any.No_Namespaces /= No_Symbol then
+               Add_To_Table (Base_Any.No_Namespaces, No_Namespaces);
+            elsif Local /= No_Symbol then
+               Add_To_Table (Local, Namespaces);  --  ##any
+            end if;
+
+         else
+            --  None of the two is ##any, so we just combine them. Since we
+            --  have an extension, the attributes will have to match any of
+            --  the namespaces.
+
+            Add_To_Table (Base_Any.Namespaces, Namespaces);
+            Add_To_Table (Base_Any.No_Namespaces, No_Namespaces);
+
+            if Local /= No_Symbol then
+               All_Items (Get (Local).all);
+            end if;
+         end if;
+      end if;
+
+      Result.Process_Contents := Local_Process;
+      Result.Namespaces       := To_Symbol (Namespaces);
+      Result.No_Namespaces    := To_Symbol (No_Namespaces);
+
+      --  ??? If .Namespaces contain one common NS with .No_Namespaces, then
+      --  we really have a ##any
+
+      if Debug then
+         if Local /= No_Symbol then
+            Debug_Output ("Combine " & To_String (Base_Any)
+                          & " and {" & Local_Process'Img
+                          & " " & Get (Local).all & " target="
+                          & Get (Target_NS).all & "} restr="
+                          & As_Restriction'Img & " => "
+                          & To_String (Result));
+         else
+            Debug_Output ("Combine " & To_String (Base_Any)
+                          & " and {" & Local_Process'Img & " target="
+                          & Get (Target_NS).all & "} restr="
+                          & As_Restriction'Img & " => "
+                          & To_String (Result));
+         end if;
+      end if;
+
+      Id_Htable.Reset (Namespaces);
+      Id_Htable.Reset (No_Namespaces);
+      Id_Htable.Reset (Tmp);
+
+      return Result;
+   end Combine;
+
    ---------------
    -- Match_Any --
    ---------------
 
    function Match_Any
-     (Any : Any_Descr; Name : Qualified_Name) return Boolean is
+     (Any : Any_Descr; Name : Qualified_Name) return Boolean
+   is
+      Matches       : Boolean := False;
+      Invalid_No_NS : Boolean := False;
+
+      procedure Callback (Str : Byte_Sequence);
+      procedure Negate_Callback (Str : Byte_Sequence);
+
+      procedure Negate_Callback (Str : Byte_Sequence) is
+      begin
+         if Str = "##local" then
+            Invalid_No_NS := Invalid_No_NS or else Name.NS = Empty_String;
+         else
+            Invalid_No_NS := Invalid_No_NS or else Get (Name.NS).all = Str;
+         end if;
+      end Negate_Callback;
+
+      procedure Callback (Str : Byte_Sequence) is
+      begin
+         if Matches then
+            null;
+         elsif Str = "##local" then
+            Matches := Name.NS = Empty_String;
+         else
+            Matches := Get (Name.NS).all = Str;
+         end if;
+      end Callback;
+
+      procedure All_Items is new For_Each_Item (Callback);
+      procedure Negate_All_Items is new For_Each_Item (Negate_Callback);
+
    begin
-      if Get (Any.Namespace).all = "##any" then
+      if Debug then
+         Debug_Output
+           ("match <any>: " & To_String (Any) & " and " & To_QName (Name));
+      end if;
+
+      if Any.Namespaces /= No_Symbol
+        and then Get (Any.Namespaces).all = "##any"
+      then
          return True;
-      elsif Get (Any.Namespace).all = "##other" then
-         return Name.NS /= Any.Target_NS;
+      end if;
+
+      if Any.Namespaces /= No_Symbol then
+         All_Items (Get (Any.Namespaces).all);
+      end if;
+
+      if Any.No_Namespaces /= No_Symbol then
+         Negate_All_Items (Get (Any.No_Namespaces).all);
+      end if;
+
+      if Debug then
+         Debug_Output ("Matches=" & Matches'Img
+                       & " Invalid_No_NS=" & Invalid_No_NS'Img);
+      end if;
+
+      if Any.Namespaces /= No_Symbol
+        and then Any.No_Namespaces /= No_Symbol
+      then
+         return Matches or else not Invalid_No_NS;
+      elsif Any.Namespaces /= No_Symbol then
+         return Matches;
+      elsif Any.No_Namespaces /= No_Symbol then
+         return not Invalid_No_NS;
       else
-         declare
-            Matches : Boolean := False;
-
-            procedure Callback (Str : Byte_Sequence);
-            procedure Callback (Str : Byte_Sequence) is
-            begin
-               if Matches then
-                  null;
-               elsif Str = "##targetNamespace" then
-                  Matches := Name.NS = Any.Target_NS;
-               elsif Str = "##local" then
-                  Matches := Name.NS = Empty_String;
-               else
-                  Matches := Get (Name.NS).all = Str;
-               end if;
-            end Callback;
-
-            procedure All_Items is new For_Each_Item (Callback);
-         begin
-            All_Items (Get (Any.Namespace).all);
-            return Matches;
-         end;
+         return False;
       end if;
    end Match_Any;
 
@@ -299,21 +635,14 @@ package body Schema.Validators is
       Valid_Attrs  : Attribute_Validator_Array :=
         To_Attribute_Array (NFA, Attributes);
 
-      type Any_Status is (Any_None, Any_All, Any_Not_All);
-
       type Attr_Status is record
          Prohibited : Boolean := False;
          --  Prohibited explicitly, but it might be allowed through
          --  <anyAttribute>
 
-         Any : Any_Status := Any_None;
-         --  Whether this attribute was matched by none, one, or all
-         --  <anyAttribute>
-
          Seen  : Boolean := False;
       end record;
-      Seen : array (1 .. Length) of Attr_Status :=
-        (others => (False, Any_None, False));
+      Seen : array (1 .. Length) of Attr_Status := (others => (False, False));
 
       function Find_Attribute (Attr : Attribute_Descr) return Integer;
       --  Chech whether Named appears in Atts
@@ -356,9 +685,7 @@ package body Schema.Validators is
          Attr   : Attribute_Descr
            renames NFA.Attributes.Table (Valid_Attrs (Index).Validator);
       begin
-         if not Valid_Attrs (Index).Visited
-           and then not Attr.Is_Any
-         then
+         if not Valid_Attrs (Index).Visited then
             if Debug then
                Debug_Output
                  ("Checking attribute: "
@@ -412,7 +739,6 @@ package body Schema.Validators is
                            & " <anyAttribute>");
                      end if;
                      Seen (Found) := (Seen       => False,
-                                      Any        => Seen (Found).Any,
                                       Prohibited => True);
 
                   when Optional | Required | Default =>
@@ -456,85 +782,80 @@ package body Schema.Validators is
          return -1;
       end Find_Attribute;
 
+      Any_Attribute : Attribute_Validator_Index :=
+        Attribute_Validator_Index'Last;
+      --  Index of the single <anyAttribute> in the list, if any
+
    begin
-      for L in Valid_Attrs'Range loop
-         Check_Named_Attribute (L);
-      end loop;
+      --  All the xsi:* attributes should be valid, whatever the schema
 
-      --  Now handle <anyAttribute>: we need to ensure that within the current
-      --  validator (and its dependencies), all <anyAttribute> matches for a
-      --  given attribute (or not)
+      for S in Seen'Range loop
+         if Get_URI (Atts, S) = Reader.XML_Instance_URI then
+            if Get_Local_Name (Atts, S) = Reader.Nil then
+               if not Nillable then
+                  Validation_Error (Reader, "Element cannot be nil");
+               end if;
 
-      for L in Valid_Attrs'Range loop
-         declare
-            Attr   : Attribute_Descr
-               renames NFA.Attributes.Table (Valid_Attrs (L).Validator);
-         begin
-            --  ??? If we have an <extension> we should match attributes from
-            --  either the base or the extension.
-            --  ??? If we have a <restriction>, as implemented here, we should
-            --  match all <anyAttribute>
+               Is_Nil := Get_Value_As_Boolean (Atts, S);
+               Seen (S).Seen := True;
 
-            if Attr.Is_Any then
-               for S in Seen'Range loop
-                  if not Seen (S).Seen then
-                     if not Match_Any
-                       (Attr.Any,
-                        (NS => Get_URI (Atts, S),
-                         Local => Get_Local_Name (Atts, S)))
-                     then
-                        Seen (S).Any := Any_Not_All;
-
-                     --  Don't change it if we have Any_Not_All
-                     elsif Seen (S).Any = Any_None then
-                        Seen (S).Any := Any_All;
-                     end if;
-                  end if;
-               end loop;
+               --  Following attributes are always valid
+               --  See "Element Locally Valid (Complex Type)" 3.4.4.2
+            elsif Get_Local_Name (Atts, S) = Reader.Typ
+              or else Get_Local_Name (Atts, S) = Reader.Schema_Location
+              or else Get_Local_Name (Atts, S) =
+              Reader.No_Namespace_Schema_Location
+            then
+               Seen (S).Seen := True;
             end if;
-         end;
+         end if;
       end loop;
+
+      for L in Valid_Attrs'Range loop
+         if NFA.Attributes.Table (Valid_Attrs (L).Validator).Is_Any then
+            Any_Attribute := L;
+         else
+            Check_Named_Attribute (L);
+         end if;
+      end loop;
+
+      if Any_Attribute /= Attribute_Validator_Index'Last then
+         declare
+            Attr   : Attribute_Descr renames
+              NFA.Attributes.Table (Valid_Attrs (Any_Attribute).Validator);
+         begin
+            for S in Seen'Range loop
+               if not Seen (S).Seen then
+                  Seen (S).Seen := Match_Any
+                    (Attr.Any,
+                     (NS    => Get_URI (Atts, S),
+                      Local => Get_Local_Name (Atts, S)));
+
+                  if not Seen (S).Seen then
+                     Validation_Error
+                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                        & """ does not match attribute wildcard");
+                  end if;
+
+                  Seen (S).Prohibited := False;
+               end if;
+            end loop;
+         end;
+      end if;
 
       Is_Nil := False;
 
       for S in Seen'Range loop
-         if not Seen (S).Seen and then Seen (S).Any /= Any_All then
-            if Get_URI (Atts, S) = Reader.XML_Instance_URI then
-               if Get_Local_Name (Atts, S) = Reader.Nil then
-                  if not Nillable then
-                     Validation_Error (Reader, "Element cannot be nil");
-                  end if;
+         if Seen (S).Prohibited then
+            Validation_Error
+              (Reader, "Attribute """ & Get_Qname (Atts, S)
+               & """ is prohibited in this context "
+               & To_QName (Typ.Name));
 
-                  Is_Nil := Get_Value_As_Boolean (Atts, S);
-
-                  --  Following attributes are always valid
-                  --  See "Element Locally Valid (Complex Type)" 3.4.4.2
-               elsif Get_Local_Name (Atts, S) = Reader.Typ
-                 or else Get_Local_Name (Atts, S) = Reader.Schema_Location
-                 or else Get_Local_Name (Atts, S) =
-                 Reader.No_Namespace_Schema_Location
-               then
-                  null;
-
-               else
-                  Validation_Error
-                    (Reader, "Attribute """ & Get_Qname (Atts, S)
-                     & """ invalid for type "
-                     & To_QName (Typ.Name));
-               end if;
-
-            elsif Seen (S).Prohibited then
-               Validation_Error
-                 (Reader, "Attribute """ & Get_Qname (Atts, S)
-                  & """ is prohibited in this context "
-                  & To_QName (Typ.Name));
-
-            else
-               Validation_Error
-                 (Reader, "Attribute """ & Get_Qname (Atts, S)
-                  & """ invalid for type "
-                  & To_QName (Typ.Name));
-            end if;
+         elsif not Seen (S).Seen then
+            Validation_Error
+              (Reader, "Attribute """ & Get_Qname (Atts, S)
+               & """ invalid for type " & To_QName (Typ.Name));
          end if;
       end loop;
 
@@ -736,13 +1057,16 @@ package body Schema.Validators is
    -----------------------------
 
    procedure Create_Global_Attribute
-     (NFA  : access Schema_NFA'Class;
-      Attr : Attribute_Descr)
+     (Grammar   : XML_Grammar;
+      Attr      : Attribute_Descr;
+      Target_NS : Sax.Symbols.Symbol)
    is
       use Reference_HTables;
+      NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
       List : Attribute_Validator_List := Empty_Attribute_List;
    begin
-      Add_Attribute (NFA, List, Attr);
+      Add_Attribute
+        (Grammar, List, Attr, As_Restriction => False, Target_NS => Target_NS);
       Set
         (NFA.References.all,
          (Kind => Ref_Attribute, Name => Attr.Name, Attributes => List));
@@ -864,12 +1188,13 @@ package body Schema.Validators is
            (Is_Any      => True,
             Any         => Any_Descr'
               (Process_Contents => Process_Lax,
-               Namespace        => Reader.Any_Namespace,
-               Target_NS        => No_Symbol),
+               No_Namespaces    => No_Symbol,
+               Namespaces       => Reader.Any_Namespace),
             Next        => Empty_Attribute_List);
 
       begin
-         G.NFA.Add_Attribute (List, Attr);
+         Add_Attribute (Reader.Grammar, List, Attr, As_Restriction => False,
+                        Target_NS => Reader.XML_Schema_URI);
          Index := Create_Type
            (G.NFA,
             Type_Descr'
@@ -887,12 +1212,13 @@ package body Schema.Validators is
 
          G.NFA.Set_Nested (S2, Ur_Type);
 
+         pragma Assert (Reader.Any_Namespace /= No_Symbol);
          G.NFA.Add_Transition
            (S1, S2,
             (Kind => Transition_Any,
              Any  => (Process_Contents => Process_Lax,
-                      Namespace        => Reader.Any_Namespace,
-                      Target_NS        => No_Symbol)));
+                      Namespaces       => Reader.Any_Namespace,
+                      No_Namespaces    => No_Symbol)));
 
          S3 := G.NFA.Add_State;
          G.NFA.On_Empty_Nested_Exit (S2, S3);
@@ -921,13 +1247,13 @@ package body Schema.Validators is
          Attr := (Is_Any => False,
                   Name => (NS => Reader.XML_URI, Local => Reader.Lang),
                   others => <>);
-         Create_Global_Attribute (G.NFA, Attr);
+         Create_Global_Attribute (Reader.Grammar, Attr, Reader.XML_URI);
 
          Attr := (Is_Any => False,
                   Name =>
                     (NS => Reader.XML_URI, Local => Find (G.Symbols, "space")),
                   others => <>);
-         Create_Global_Attribute (G.NFA, Attr);
+         Create_Global_Attribute (Reader.Grammar, Attr, Reader.XML_URI);
 
          Add_Schema_For_Schema (Reader);
 

@@ -371,7 +371,8 @@ package body Schema.Schema_Readers is
       procedure Add_Attributes
         (List             : in out Attribute_Validator_List;
          Attrs            : Attr_Array_Access;
-         Processed_Groups : in out AttrGroup_HTables.Instance);
+         Processed_Groups : in out AttrGroup_HTables.Instance;
+         As_Restriction   : Boolean);
       --  Create List from the list of attributes or attribute groups in
       --  [Attrs].
 
@@ -886,7 +887,12 @@ package body Schema.Schema_Readers is
             when Type_Any =>
                S := NFA.Add_State;
                NFA.Add_Transition
-                 (From, S, (Transition_Any, Details.Any));
+                 (From, S, (Transition_Any,
+                  Combine (Parser.Grammar, No_Any_Descr,
+                           Local_Process  => Details.Any.Process_Contents,
+                           Local          => Details.Any.Namespaces,
+                           As_Restriction => False,
+                           Target_NS      => Details.Any.Target_NS)));
                Nested_End := NFA.Add_State;
                NFA.Add_Transition (S, Nested_End, (Kind => Transition_Close));
          end case;
@@ -931,9 +937,10 @@ package body Schema.Schema_Readers is
       --------------------
 
       procedure Add_Attributes
-        (List  : in out Attribute_Validator_List;
-         Attrs : Attr_Array_Access;
-         Processed_Groups : in out AttrGroup_HTables.Instance)
+        (List             : in out Attribute_Validator_List;
+         Attrs            : Attr_Array_Access;
+         Processed_Groups : in out AttrGroup_HTables.Instance;
+         As_Restriction   : Boolean)
       is
          Gr   : AttrGroup_Descr;
          TRef : Global_Reference;
@@ -962,7 +969,9 @@ package body Schema.Schema_Readers is
                            Attrs (A).Loc);
                      else
                         Set (Processed_Groups, Gr.Name, Gr);
-                        Add_Attributes (List, Gr.Attributes, Processed_Groups);
+                        Add_Attributes
+                          (List, Gr.Attributes, Processed_Groups,
+                           As_Restriction);
                      end if;
 
                   when Kind_Attribute =>
@@ -978,11 +987,17 @@ package body Schema.Schema_Readers is
                               Attrs (A).Loc);
                         end if;
 
-                        Add_Attributes (NFA, List, TRef.Attributes);
+                        Add_Attributes
+                          (Parser.Grammar,
+                           List, TRef.Attributes, As_Restriction);
 
                      else
                         Resolve_Attribute_Type (Attrs (A).Attr);
-                        Add_Attribute (NFA, List, Attrs (A).Attr.Descr);
+
+                        Add_Attribute
+                          (Parser.Grammar,
+                           List, Attrs (A).Attr.Descr, As_Restriction,
+                           Attrs (A).Attr.Target_NS);
                      end if;
                end case;
             end loop;
@@ -1200,7 +1215,8 @@ package body Schema.Schema_Readers is
          Attr2 := Attr;
          Resolve_Attribute_Type (Attr2);
 
-         Create_Global_Attribute (NFA, Attr2.Descr);
+         Create_Global_Attribute
+           (Parser.Grammar, Attr2.Descr, Target_NS => Attr.Target_NS);
       end Create_Global_Attributes;
 
       ------------------
@@ -1227,7 +1243,8 @@ package body Schema.Schema_Readers is
 
             elsif Info.Details = null then
                --  No character data is allowed, but we might have attributes
-               Add_Attributes (List, Info.Attributes, Processed_Groups);
+               Add_Attributes (List, Info.Attributes, Processed_Groups,
+                               As_Restriction => True);
 
             elsif Info.Details.Kind = Type_Extension then
                Ty := Get (Ref.all, (Info.Details.Extension.Base, Ref_Type));
@@ -1248,11 +1265,13 @@ package body Schema.Schema_Readers is
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (NFA, List, Get_Type_Descr (NFA, Ty.Typ).Attributes);
+                    (Parser.Grammar, List,
+                     Get_Type_Descr (NFA, Ty.Typ).Attributes,
+                     As_Restriction => False);
                end if;
 
                Add_Attributes (List, Info.Details.Extension.Attributes,
-                               Processed_Groups);
+                               Processed_Groups, As_Restriction => False);
 
             elsif Info.Details.Kind = Type_Restriction then
                --  ??? Should check Final and Block, too
@@ -1269,14 +1288,17 @@ package body Schema.Schema_Readers is
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (NFA, List, Get_Type_Descr (NFA, Ty.Typ).Attributes);
+                    (Parser.Grammar, List,
+                     Get_Type_Descr (NFA, Ty.Typ).Attributes,
+                     As_Restriction => True);
                end if;
 
                Add_Attributes (List, Info.Details.Restriction.Attributes,
-                               Processed_Groups);
+                               Processed_Groups, As_Restriction => True);
 
             else
-               Add_Attributes (List, Info.Attributes, Processed_Groups);
+               Add_Attributes (List, Info.Attributes, Processed_Groups,
+                               As_Restriction => True);
             end if;
          end Recursive_Add_Attributes;
 
@@ -2131,14 +2153,14 @@ package body Schema.Schema_Readers is
    begin
       Att.Attr.Descr := (Is_Any => True, others => <>);
       Att.Loc := Handler.Current_Location;
-      Att.Attr.Descr.Any.Namespace := Handler.Any_Namespace;
-      Att.Attr.Descr.Any.Target_NS := Handler.Target_NS;
+      Att.Attr.Descr.Any.Namespaces := Handler.Any_Namespace;
+      Att.Attr.Target_NS := Handler.Target_NS;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
             if Local = Handler.Namespace then
-               Att.Attr.Descr.Any.Namespace := Get_Value (Atts, J);
+               Att.Attr.Descr.Any.Namespaces := Get_Value (Atts, J);
             elsif Local = Handler.Process_Contents then
                Att.Attr.Descr.Any.Process_Contents :=
                  Process_Contents_From_Atts (Handler, Atts, J);
@@ -3364,19 +3386,19 @@ package body Schema.Schema_Readers is
       Atts    : Sax_Attribute_List)
    is
       Details : Type_Details_Access;
-      Any     : Any_Descr;
+      Any     : Internal_Any_Descr;
       Local   : Symbol;
       Min_Occurs, Max_Occurs : Integer := 1;
 
    begin
-      Any.Target_NS := Handler.Target_NS;
-      Any.Namespace := Handler.Any_Namespace;
+      Any.Target_NS  := Handler.Target_NS;
+      Any.Namespaces := Handler.Any_Namespace;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
             if Local = Handler.Namespace then
-               Any.Namespace := Get_Value (Atts, J);
+               Any.Namespaces := Get_Value (Atts, J);
             elsif Local = Handler.Process_Contents then
                Any.Process_Contents :=
                  Process_Contents_From_Atts (Handler, Atts, J);

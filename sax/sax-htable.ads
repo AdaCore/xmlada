@@ -89,7 +89,7 @@ package Sax.HTable is
    --  element.
 
    procedure Next
-     (Hash_Table : in out HTable;
+     (Hash_Table : HTable;
       Iter       : in out Iterator);
    --  Move to the next element in the htash table, that hasn't been returned
    --  yet. All the elements in the table will eventually be visited if there
