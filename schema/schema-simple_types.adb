@@ -1113,7 +1113,7 @@ package body Schema.Simple_Types is
    begin
       if Encoding.Length (Ch) mod 2 /= 0 then
          return Find
-           (Symbols, "#HexBinary length must be an even number of characters");
+           (Symbols, "HexBinary length must be an even number of characters");
       end if;
 
       if not Is_Valid_HexBinary (Ch) then

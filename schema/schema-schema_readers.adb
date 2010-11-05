@@ -286,7 +286,7 @@ package body Schema.Schema_Readers is
                   Encoding.Read (Val.all, Pos, C);
                   if not Is_Digit (C) then
                      Validation_Error
-                       (Reader, "#Value for ""maxOccurs"" must"
+                       (Reader, "Value for ""maxOccurs"" must"
                         & " be an integer or ""unbounded""");
                   end if;
                end loop;
@@ -1790,7 +1790,7 @@ package body Schema.Schema_Readers is
          Min_Occurs := Max_Occurs_From_Value (Handler, Atts, Min_Occurs_Index);
          if Min_Occurs = Unbounded then
             Validation_Error
-              (Handler, "#minOccurs cannot be ""unbounded""");
+              (Handler, "minOccurs cannot be ""unbounded""");
          end if;
       end if;
 
@@ -2126,7 +2126,7 @@ package body Schema.Schema_Readers is
    begin
       if Location_Index = -1 then
          if Namespace_Index = -1 then
-            Validation_Error (Handler, "#Missing ""namespace"" attribute");
+            Validation_Error (Handler, "Missing ""namespace"" attribute");
          end if;
 
 --           Get_NS
@@ -2134,7 +2134,7 @@ package body Schema.Schema_Readers is
 --              Result => NS, Create_If_Needed => False);
 --           if NS = null then
 --              Validation_Error
---                (Handler, "#Cannot resolve namespace "
+--                (Handler, "Cannot resolve namespace "
 --                 & Get (Get_Value (Atts, Namespace_Index)).all);
 --           end if;
       else
@@ -2246,29 +2246,29 @@ package body Schema.Schema_Readers is
            and then not In_Redefine_Context (Handler.all)
          then
             Validation_Error
-              (Handler, "#""ref"" attribute cannot be self-referencing");
+              (Handler, """ref"" attribute cannot be self-referencing");
 
          elsif Info.Ref /= No_Qualified_Name then
             Validation_Error
-              (Handler, "#Name and Ref cannot be both specified");
+              (Handler, "Name and Ref cannot be both specified");
          end if;
 
       elsif Info.Ref = No_Qualified_Name then
          Validation_Error
-           (Handler, "#Either ""name"" or ""ref"" attribute must be present");
+           (Handler, "Either ""name"" or ""ref"" attribute must be present");
 
       else
          --  Section 3.3.2, validity constraints 3.3.3
          if Info.Typ /= No_Qualified_Name then
             Validation_Error
               (Handler,
-               "#""type"" attribute cannot be specified along with ""ref""");
+               """type"" attribute cannot be specified along with ""ref""");
          end if;
       end if;
 
       if Info.Default /= No_Symbol and then Info.Fixed /= No_Symbol then
          Validation_Error
-           (Handler, "#Default and Fixed cannot be both specified");
+           (Handler, "Default and Fixed cannot be both specified");
       end if;
 
       if Info.Ref /= No_Qualified_Name then
@@ -2457,7 +2457,7 @@ package body Schema.Schema_Readers is
             Blocks := (others => True);
          else
             Validation_Error
-              (Handler, "#Invalid value for block: """ & Str & """");
+              (Handler, "Invalid value for block: """ & Str & """");
          end if;
       end On_Item;
 
@@ -2518,7 +2518,7 @@ package body Schema.Schema_Readers is
             Final (Final_List)        := True;
          else
             Validation_Error
-              (Handler, "#Invalid value for final: """ & Str & """");
+              (Handler, "Invalid value for final: """ & Str & """");
          end if;
       end On_Item;
 
@@ -2803,7 +2803,7 @@ package body Schema.Schema_Readers is
 
       if Ext.Base = No_Qualified_Name then
          Validation_Error
-           (Handler, "#Attribute ""base"" required for <extensionType>");
+           (Handler, "Attribute ""base"" required for <extensionType>");
       end if;
 
       if Handler.Shared.Types.Table (In_Type).Is_Simple
@@ -3146,13 +3146,13 @@ package body Schema.Schema_Readers is
          if Att.Attr.Descr.Name /= No_Qualified_Name then
             Validation_Error
               (Handler,
-               "#name must be specified when targetNamespace is specified");
+               "name must be specified when targetNamespace is specified");
          end if;
 
          if Has_Form then
             Validation_Error
               (Handler,
-               "#Cannot specify ""form"" when targetNamespace is given");
+               "Cannot specify ""form"" when targetNamespace is given");
          end if;
 
          Validation_Error
@@ -3164,14 +3164,14 @@ package body Schema.Schema_Readers is
       if Has_Form and then Att.Attr.Ref /= No_Qualified_Name then
          Validation_Error
            (Handler,
-            "#Attributes ""form"" and ""ref"" cannot be both specified");
+            "Attributes ""form"" and ""ref"" cannot be both specified");
       end if;
 
       if Att.Attr.Typ /= No_Qualified_Name then
          if Att.Attr.Ref /= No_Qualified_Name then
             Validation_Error
               (Handler,
-               "#Attributes ""type"" and ""ref"" cannot be both specified");
+               "Attributes ""type"" and ""ref"" cannot be both specified");
          end if;
       end if;
 
@@ -3180,7 +3180,7 @@ package body Schema.Schema_Readers is
       then
          Validation_Error
            (Handler,
-            "#Attributes ""fixed"" and ""default"" cannot be both specified");
+            "Attributes ""fixed"" and ""default"" cannot be both specified");
       end if;
 
       if Att.Attr.Descr.Default /= No_Symbol
@@ -3188,7 +3188,7 @@ package body Schema.Schema_Readers is
       then
          Validation_Error
            (Handler,
-            "#Use must be ""optional"" when a default value is specified");
+            "Use must be ""optional"" when a default value is specified");
       end if;
 
       if Att.Attr.Descr.Fixed /= No_Symbol
@@ -3196,7 +3196,7 @@ package body Schema.Schema_Readers is
       then
          Validation_Error
            (Handler,
-            "#""prohibited"" is forbidden when"
+            """prohibited"" is forbidden when"
             & " a fixed value is specified");
       end if;
 
@@ -3453,7 +3453,6 @@ package body Schema.Schema_Readers is
    is
       H   : constant Schema_Reader_Access := Handler'Unchecked_Access;
       Ctx : Context_Access;
---        Val : Integer;
    begin
       if Debug then
          Output_Seen ("Start " & Get (Local_Name).all
@@ -3467,7 +3466,7 @@ package body Schema.Schema_Readers is
 
       if Handler.Contexts = null then
          if Local_Name /= Handler.S_Schema then
-            Validation_Error (H, "#Root element must be <schema>");
+            Validation_Error (H, "Root element must be <schema>");
          end if;
 
          Create_Schema (H, Atts);

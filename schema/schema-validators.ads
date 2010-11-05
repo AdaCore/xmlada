@@ -558,9 +558,6 @@ package Schema.Validators is
       Loc     : Sax.Locators.Location := Sax.Locators.No_Location;
       Except  : Ada.Exceptions.Exception_Id := XML_Validation_Error'Identity);
    --  Sets an error message, and raise XML_Validation_Error.
-   --  The message can contain special characters like:
-   --    '#': if first character, it will be replaced by the current location
-   --         of the Reader
 
    function Get_Error_Message
      (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence;

@@ -709,7 +709,7 @@ package body Schema.Readers is
 
 --        if Element /= No_Element and then Is_Abstract (Element) then
 --           Validation_Error
---             (H, "#Element """ & To_QName (Elem) & """ is abstract");
+--             (H, "Element """ & To_QName (Elem) & """ is abstract");
 --        end if;
 
       Compute_Type_From_Attribute;

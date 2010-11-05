@@ -140,7 +140,6 @@ package body Schema.Validators is
      (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence
    is
       Loc : Location;
-      First : Natural;
    begin
       if Reader.Error_Msg = No_Symbol then
          return "";
@@ -151,22 +150,15 @@ package body Schema.Validators is
             Loc := Reader.Current_Location;
          end if;
 
-         --  Backward compatibility: '#' used to indicate we want the location
-         --  displayed, but that should no longer be necessary now.
          declare
             Error : constant Cst_Byte_Sequence_Access :=
               Get (Reader.Error_Msg);
          begin
-            First := Error'First;
-            if Error (First) = '#' then
-               First := First + 1;
-            end if;
-
             if Loc /= No_Location then
                return To_String (Loc, Use_Basename_In_Error_Messages (Reader))
-                 & ": " & Error (First .. Error'Last);
+                 & ": " & Error.all;
             else
-               return Error (First .. Error'Last);
+               return Error.all;
             end if;
          end;
       end if;
@@ -662,7 +654,7 @@ package body Schema.Validators is
                if Seen_ID then
                   Validation_Error
                     (Reader,
-                     "#Elements can have a single ID attribute in XSD 1.0");
+                     "Elements can have a single ID attribute in XSD 1.0");
                end if;
 
                Seen_ID := True;
@@ -951,7 +943,7 @@ package body Schema.Validators is
 
          if not Is_Equal then
             Validation_Error
-              (Reader, "#value must be """
+              (Reader, "value must be """
                & To_Graphic_String (Get (Attr.Fixed).all)
                & """ (found """ & To_Graphic_String (Val.all) & """)");
          end if;
@@ -1503,81 +1495,6 @@ package body Schema.Validators is
       return Get (Grammar).NFA.References;
    end Get_References;
 
-   -----------------
-   -- Set_Default --
-   -----------------
-
---     procedure Set_Default
---       (Element  : XML_Element;
---        Reader   : access Abstract_Validation_Reader'Class;
---        Default  : Symbol)
---     is
---        Mask : Facets_Mask;
---     begin
---        --  3.3 Element Declaration details: Can't have both
---        --  "default" and "fixed"
---
---        if Element.Elem.Fixed /= No_Symbol then
---           Validation_Error
---             (Reader,
---           "#Attributes ""fixed"" and ""default"" conflict with each other");
---        end if;
---
---        --  3.3 Element Declaration details:  Validation Rule 3.1
---        --  The "default" attribute of element must match the validation rule
---        --  for that element.
---     --  Test whether we have a forward reference to the type, in which case
---        --  default will be checked when we know the actual type
---
---        if Element.Elem.Of_Type /= No_Type
---          and then Get_Validator (Element.Elem.Of_Type) /= null
---        then
---           Mask := (others => True);
---           Validate_Characters
---             (Get_Validator (Element.Elem.Of_Type), Reader,
---              Get (Default).all, Empty_Element => False, Mask => Mask);
---        end if;
---
---        Element.Elem.Default := Default;
---     end Set_Default;
-   ---------------
-   -- Set_Fixed --
-   ---------------
-
---     procedure Set_Fixed
---       (Element  : XML_Element;
---        Reader   : access Abstract_Validation_Reader'Class;
---        Fixed    : Symbol)
---     is
---        Mask : Facets_Mask;
---     begin
---        --  3.3 Element Declaration details: Can't have both
---        --  "default" and "fixed"
---
---        if Element.Elem.Default /= No_Symbol then
---           Validation_Error
---             (Reader,
---          "#Attributes ""fixed"" and ""default"" conflict with each other");
---        end if;
---
---        --  3.3 Element Declaration details:  Validation Rule 3.1
---        --  The "fixed" attribute of element must match the validation rule
---        --  for that element
---     --  Test whether we have a forward reference to the type, in which case
---        --  default will be checked when we know the actual type
---
---        if Element.Elem.Of_Type /= No_Type
---          and then Get_Validator (Element.Elem.Of_Type) /= null
---        then
---           Mask := (others => True);
---           Validate_Characters
---             (Get_Validator (Element.Elem.Of_Type), Reader, Get (Fixed).all,
---              Empty_Element => False, Mask => Mask);
---        end if;
---
---        Element.Elem.Fixed := Fixed;
---     end Set_Fixed;
-
    ----------------------------
    -- Set_Substitution_Group --
    ----------------------------
@@ -1609,21 +1526,21 @@ package body Schema.Validators is
 --
 --           if not Valid_Replacement then
 --              Validation_Error
---                (Reader, '#' & To_QName (Get_Type (Element))
+--                (Reader, To_QName (Get_Type (Element))
 --                 & " is not a valid replacement for "
 --                 & To_QName (Get_Type (Head)));
 --           end if;
 --
 --           if HeadPtr.Final (Final_Restriction) and then Had_Restriction then
 --              Validation_Error
---                (Reader, "#""" & Get (HeadPtr.Local_Name).all
+--                (Reader, """" & Get (HeadPtr.Local_Name).all
 --              & """ is final for restrictions, and cannot be substituted by"
 --                 & """" & Get (ElemPtr.Local_Name).all & """");
 --           end if;
 --
 --           if HeadPtr.Final (Final_Extension) and then Had_Extension then
 --              Validation_Error
---                (Reader, "#""" & Get (HeadPtr.Local_Name).all
+--                (Reader, """" & Get (HeadPtr.Local_Name).all
 --                 & """ is final for extensions, and cannot be substituted by"
 --                 & """" & Get (ElemPtr.Local_Name).all & """");
 --           end if;
@@ -1631,7 +1548,7 @@ package body Schema.Validators is
 --
 --        if ElemPtr.Substitution_Group /= No_Element then
 --           Validation_Error
---             (Reader, "#""" & Get (ElemPtr.Local_Name).all
+--             (Reader, """" & Get (ElemPtr.Local_Name).all
 --              & """ already belongs to another substitution group");
 --        end if;
 --
