@@ -51,7 +51,7 @@ with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
 package body Schema.Validators is
-   use XML_Grammars, Schema_State_Machines;
+   use XML_Grammars;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Element_List, Element_List_Access);
@@ -1504,7 +1504,8 @@ package body Schema.Validators is
          Output_Seen ("MANU Lookup, creating "
                       & To_QName (Grammar, Local_Name));
 
-         S := Grammar.NFA.Add_State;
+         S := Grammar.NFA.Add_State
+           ((Type_Name => Local_Name));
          Typ := new XML_Type_Record'
            (Local_Name        => Local_Name,
             Validator         => null,
@@ -2273,8 +2274,7 @@ package body Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Symbol;
       Validator  : access XML_Validator_Record'Class;
-      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
-        Schema.Validators.Schema_State_Machines.No_Nested) return XML_Type
+      NFA        : Nested_NFA := No_Nested) return XML_Type
    is
       Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
    begin
@@ -2328,8 +2328,7 @@ package body Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Symbol;
       Validator  : access XML_Validator_Record'Class;
-      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA  :=
-        Schema.Validators.Schema_State_Machines.No_Nested)
+      NFA        : Nested_NFA  := No_Nested)
    is
       Typ : constant XML_Type :=
               Create_Global_Type (Grammar, Reader, Local_Name, Validator, NFA);
@@ -4251,8 +4250,7 @@ package body Schema.Validators is
    function Create_Local_Type
      (Grammar    : XML_Grammar_NS;
       Validator  : access XML_Validator_Record'Class;
-      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
-        Schema.Validators.Schema_State_Machines.No_Nested) return XML_Type
+      NFA        : Nested_NFA := No_Nested) return XML_Type
    is
       Result : XML_Type;
    begin
@@ -6039,6 +6037,19 @@ package body Schema.Validators is
          when Transition_Symbol       => return To_QName (Trans.Name);
          when Transition_Close_Nested => return "<close>";
       end case;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (S : State; Data : State_User_Data) return String is
+   begin
+      if Data.Type_Name /= No_Symbol then
+         return Get (Data.Type_Name).all;
+      else
+         return Schema_State_Machines.Default_Image (S, Data);
+      end if;
    end Image;
 
 end Schema.Validators;

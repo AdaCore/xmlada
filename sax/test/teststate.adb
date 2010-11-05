@@ -77,6 +77,9 @@ procedure TestState is
       Default_Data      => Default_State_Data);
    use Character_Machines;
 
+   package PP is new Character_Machines.Pretty_Printers;
+   use PP;
+
    procedure Display_Result (Msg, Str : String; S : Positive);
    --  Display the result of a test
 

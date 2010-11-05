@@ -137,22 +137,6 @@ package Sax.State_Machines is
    --  No error is reported if Min_Occurs > Max_Occurs. But nothing is done
    --  either.
 
-   type Dump_Mode is
-     (Dump_Multiline, Dump_Compact, Dump_Dot, Dump_Dot_Compact);
-   --  The type of dump we can do for the graph:
-   --  [Dump_Multiline]: Each state is displayed on one line
-   --  [Dump_Compact]:   Output is on a single line
-   --  [Dump_Dot):       Output that can be cut-and-pasted to use by the
-   --                    graphviz suite to display a graphical representation
-
-   function Dump
-     (Self    : access NFA'Class;
-      Mode    : Dump_Mode := Dump_Compact) return String;
-   --  Dump the NFA into a string.
-   --  This is mostly for debug reasons, and the output might change from one
-   --  version to the next.
-   --  If [Compact] is True then the output does not include newlines.
-
    ----------------------------------------
    -- Hierarchical finite state machines --
    ----------------------------------------
@@ -255,12 +239,6 @@ package Sax.State_Machines is
    --  [Final_State] after processing [On_Symbol]), a transition from [From] to
    --  [To] is performed. [Set_Nested] must have been called for [From] first.
 
-   function Dump
-     (Self   : access NFA;
-      Nested : Nested_NFA;
-      Mode   : Dump_Mode := Dump_Compact) return String;
-   --  Dump the NFA into a string.
-
    -------------------------------------------
    -- Non-deterministic automatons matching --
    -------------------------------------------
@@ -301,6 +279,47 @@ package Sax.State_Machines is
    function Expected (Self : NFA_Matcher) return String;
    --  Return a textual description of the valid input symbols from the current
    --  state. This should be used for error messages for instance.
+
+   -------------------------
+   -- Dumping information --
+   -------------------------
+   --  The following subprograms are used mostly for debugging, and can be used
+   --  to visualize the contents of a state machine, either textually or
+   --  graphically
+
+   function Default_Image (S : State; Data : State_User_Data) return String;
+   --  The default display for states (only displays the state number)
+
+   type Dump_Mode is
+     (Dump_Multiline, Dump_Compact, Dump_Dot, Dump_Dot_Compact);
+   --  The type of dump we can do for the graph:
+   --  [Dump_Multiline]: Each state is displayed on one line
+   --  [Dump_Compact]:   Output is on a single line
+   --  [Dump_Dot):       Output that can be cut-and-pasted to use by the
+   --                    graphviz suite to display a graphical representation
+
+   generic
+      with function State_Image
+        (S : State; Data : State_User_Data) return String is Default_Image;
+      --  This function is never called for the final state, which has no
+      --  user data associated with it. Nor it is called for the start state.
+
+   package Pretty_Printers is
+      function Dump
+        (Self    : access NFA'Class;
+         Mode    : Dump_Mode := Dump_Compact) return String;
+      --  Dump the NFA into a string.
+      --  This is mostly for debug reasons, and the output might change from
+      --  one version to the next.
+      --  If [Compact] is True then the output does not include newlines.
+
+      function Dump
+        (Self   : access NFA'Class;
+         Nested : Nested_NFA;
+         Mode   : Dump_Mode := Dump_Compact) return String;
+      --  Dump the NFA into a string.
+
+   end Pretty_Printers;
 
    procedure Debug_Print (Self : NFA_Matcher);
    --  Print on stdout some debug information for [Self]

@@ -42,7 +42,7 @@ with Schema.Readers;    use Schema.Readers;
 with Ada.Unchecked_Deallocation;
 
 package body Schema.Schema_Readers is
-   use Schema_State_Machines;
+   use Schema_State_Machines, Schema_State_Machines_PP;
 
    Max_Namespaces_In_Any_Attribute : constant := 50;
    --  Maximum number of namespaces for a <anyAttribute>
@@ -1074,9 +1074,6 @@ package body Schema.Schema_Readers is
             end if;
 
          when Context_Choice =>
-            if Ctxt.Last_State = No_State then
-               Ctxt.Last_State := Handler.NFA.Add_State;
-            end if;
             return Ctxt.Last_State;
 
          when others =>
@@ -1429,9 +1426,17 @@ package body Schema.Schema_Readers is
       --  attach data to the intermediate state, like the callbacks for the
       --  element's type (or the nested NFA).
 
-      S := Handler.NFA.Add_State;
       if Typ /= No_Type then
-         Handler.NFA.Set_Nested (S, Get_NFA (Typ));
+         if Get_NFA (Typ) /= No_Nested then
+            S := Handler.NFA.Add_State
+              ((Type_Name => No_Symbol));
+            Handler.NFA.Set_Nested (S, Get_NFA (Typ));
+         else
+            S := Handler.NFA.Add_State
+              ((Type_Name => Get_Value (Atts, Type_Index)));
+         end if;
+      else
+         S := Handler.NFA.Add_State ((Type_Name => No_Symbol));
       end if;
 
       Handler.Contexts := new Context'
@@ -1684,7 +1689,8 @@ package body Schema.Schema_Readers is
          N := Get_NFA (Typ);
          S := Get_Start_State (N);
       else
-         S := Handler.NFA.Add_State;
+         S := Handler.NFA.Add_State
+           ((Type_Name => No_Symbol));
          N := Handler.NFA.Create_Nested (S);
       end if;
 
@@ -2195,7 +2201,8 @@ package body Schema.Schema_Readers is
       Handler.Contexts := new Context'
         (Typ         => Context_Choice,
          Start_State => Get_Last_State (Handler, Handler.Contexts),
-         Last_State  => Handler.NFA.Add_State,
+         Last_State  => Handler.NFA.Add_State
+           ((Type_Name => No_Symbol)),
          C           => Create_Choice (Handler.Target_NS),
          Level       => Handler.Contexts.Level + 1,
          Next        => Handler.Contexts);

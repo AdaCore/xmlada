@@ -147,11 +147,15 @@ package Schema.Validators is
          end case;
       end record;
 
+   type State_User_Data is record
+      Type_Name : Sax.Symbols.Symbol;  --  Debug only
+   end record;
+   Default_User_Data : constant State_User_Data :=
+     (Type_Name => Sax.Symbols.No_Symbol);
+
    function Match (Trans, Sym : Transition_Event) return Boolean;
    function Image (Trans : Transition_Event) return String;
-
-   type State_User_Data is null record;
-   Default_User_Data : constant State_User_Data := (null record);
+   --  Needed for the instantiation of Sax.State_Machines
 
    package Schema_State_Machines is new Sax.State_Machines
       (Symbol            => Transition_Event,
@@ -160,6 +164,14 @@ package Schema.Validators is
        Image             => Image,
        State_User_Data   => State_User_Data,
        Default_Data      => Default_User_Data);
+   use Schema_State_Machines;
+
+   function Image
+     (S : Schema_State_Machines.State; Data : State_User_Data) return String;
+   --  Needed for the instantiation of Pretty_Printers
+
+   package Schema_State_Machines_PP
+     is new Schema_State_Machines.Pretty_Printers (Image);
 
    function Get_NFA
      (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access;
@@ -455,15 +467,12 @@ package Schema.Validators is
    function Create_Local_Type
      (Grammar    : XML_Grammar_NS;
       Validator  : access XML_Validator_Record'Class;
-      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
-        Schema.Validators.Schema_State_Machines.No_Nested)
-      return XML_Type;
+      NFA        : Nested_NFA := No_Nested) return XML_Type;
    --  Create a new local type.
    --  This type cannot be looked up in the grammar later on. See the function
    --  Create_Global_Type below if you need this capability
 
-   function Get_NFA
-     (Typ : XML_Type) return Schema_State_Machines.Nested_NFA;
+   function Get_NFA (Typ : XML_Type) return Nested_NFA;
    --  Returns the state machine used to validate [Typ]
 
    function Get_Validator (Typ : XML_Type) return XML_Validator;
@@ -1133,9 +1142,7 @@ package Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Sax.Symbols.Symbol;
       Validator  : access XML_Validator_Record'Class;
-      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
-        Schema.Validators.Schema_State_Machines.No_Nested)
-      return XML_Type;
+      NFA        : Nested_NFA := No_Nested) return XML_Type;
    function Create_Global_Element
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
@@ -1165,8 +1172,7 @@ package Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Sax.Symbols.Symbol;
       Validator  : access XML_Validator_Record'Class;
-      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
-        Schema.Validators.Schema_State_Machines.No_Nested);
+      NFA        : Nested_NFA := No_Nested);
    procedure Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Reader         : access Abstract_Validation_Reader'Class;
@@ -1290,7 +1296,7 @@ private
       --  Whether this element is final for "restriction" or "extension" or
       --  both
 
-      NFA   : Schema.Validators.Schema_State_Machines.Nested_NFA;
+      NFA   : Nested_NFA;
       --  The nested state-machine for that type
 
       Next : XML_Type;
