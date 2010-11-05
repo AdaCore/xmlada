@@ -149,7 +149,7 @@ private
             Redefined_Type : Schema.Validators.XML_Type; --  <redefine>
 
          when Context_Element =>
-            Element        : Type_Details_Access;
+            Element        : Element_Descr;
          when Context_Sequence =>
             Seq            : Type_Details_Access;
          when Context_Choice =>

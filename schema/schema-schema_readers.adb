@@ -1399,17 +1399,20 @@ package body Schema.Schema_Readers is
       end if;
 
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
-      Details := new Type_Details'
-        (Kind         => Type_Element,
-         Min_Occurs   => Min_Occurs,
-         Max_Occurs   => Max_Occurs,
-         Next         => null,
-         Element      => Info);
       Handler.Contexts := new Context'
         (Typ            => Context_Element,
-         Element        => Details,
+         Element        => Info,
          Next           => Handler.Contexts);
-      Insert_In_Type (Handler, Details);
+
+      if Handler.Contexts.Next.Typ /= Context_Schema then
+         Details := new Type_Details'
+           (Kind         => Type_Element,
+            Min_Occurs   => Min_Occurs,
+            Max_Occurs   => Max_Occurs,
+            Next         => null,
+            Element      => Info);
+         Insert_In_Type (Handler, Details);
+      end if;
    end Create_Element;
 
    --------------------
@@ -1418,7 +1421,7 @@ package body Schema.Schema_Readers is
 
    procedure Finish_Element (Handler : access Schema_Reader'Class) is
       Ctx  : constant Context_Access := Handler.Contexts;
-      Info : constant Element_Descr := Ctx.Element.Element;
+      Info : constant Element_Descr := Ctx.Element;
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Schema | Context_Redefine =>
@@ -1736,7 +1739,7 @@ package body Schema.Schema_Readers is
 
       case Handler.Contexts.Next.Typ is
          when Context_Element =>
-            Handler.Contexts.Next.Element.Element.Local_Type :=
+            Handler.Contexts.Next.Element.Local_Type :=
               Handler.Contexts.Type_Info;
 
          when others =>
