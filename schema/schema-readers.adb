@@ -236,6 +236,14 @@ package body Schema.Readers is
                Empty_Element => Is_Empty);
 
          elsif not Data.Descr.Mixed then
+            if Debug then
+               Debug_Output ("No character data for "
+                             & To_QName (Data.Descr.Name) & S'Img);
+               Debug_Output
+                 ("Got "
+                  & Handler.Characters
+                    (1 .. Integer'Min (20, Handler.Characters_Count)) & "--");
+            end if;
             Validation_Error
               (Handler,
                "No character data allowed by content model");
@@ -383,6 +391,11 @@ package body Schema.Readers is
       procedure For_Each_Active is new For_Each_Active_State (Callback);
 
    begin
+      if Debug then
+         Debug_Print
+           (Handler.Matcher, Dump_Compact, "Validate_Current_Char: ");
+      end if;
+
       --  If we were in the middle of a series of Characters callback, we need
       --  to process them now
 
@@ -391,7 +404,9 @@ package body Schema.Readers is
       end if;
 
       Is_Empty := Handler.Characters_Count = 0;
-      For_Each_Active (Handler.Matcher);
+      For_Each_Active (Handler.Matcher,
+                       Ignore_If_Nested => True,
+                       Ignore_If_Default => True);
 
       --  Reset the characters buffer
       Handler.Characters_Count := 0;
@@ -548,15 +563,9 @@ package body Schema.Readers is
 --        G : XML_Grammar_NS;
       Success : Boolean;
    begin
-      H.Nesting_Level := H.Nesting_Level + 1;
-      H.Last_Start_Level := H.Nesting_Level;
-
       if Debug then
          Output_Seen ("Start_Element: " & To_QName (Elem)
-                      & " " & To_String (H.Locator)
-                      & " (level" & H.Nesting_Level'Img
-                      & " last_start=" & H.Last_Start_Level'Img
-                      & ")");
+                      & " " & To_String (H.Locator));
       end if;
 
       Validate_Current_Characters (H);
@@ -718,10 +727,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Output_Seen ("End_Element: " & To_QName (Elem)
-                      & " " & To_String (H.Locator)
-                      & " (level" & H.Nesting_Level'Img
-                      & " last_start=" & H.Last_Start_Level'Img
-                      & ")");
+                      & " " & To_String (H.Locator));
       end if;
 
       Validate_Current_Characters (H);
@@ -740,9 +746,6 @@ package body Schema.Readers is
            (H, "State_Machine reported an error on <close>, expected "
             & Expected (H.Matcher));
       end if;
-
-      H.Last_Start_Level := H.Nesting_Level;
-      H.Nesting_Level := H.Nesting_Level - 1;
    end Hook_End_Element;
 
    -------------------------
@@ -806,42 +809,23 @@ package body Schema.Readers is
       procedure Callback (Self : access NFA'Class; S : State);
       procedure Callback (Self : access NFA'Class; S : State) is
       begin
-         if Self.Get_Data (S).Descr.Simple_Content /= No_Simple_Type_Index
-           or else Self.Get_Data (S).Descr.Mixed
-         then
+         if Self.Get_Data (S).Descr.Simple_Content /= No_Simple_Type_Index then
+            Store := True;
+         elsif Self.Get_Data (S).Descr.Mixed then
             Store := True;
          end if;
       end Callback;
 
       procedure For_Each_Active is new For_Each_Active_State (Callback);
 
---        Typ : XML_Type;
    begin
-      --  ??? This criteria is likely incorrect. However, we should not rely
-      --  on the list of currently active states: when a tag is closed, but
-      --  before we move into the next tag, the old state is still active in
-      --  the NFA, but should not be used (perhaps we should ignore nested NFA
-      --  in this case ?)
-      if H.Nesting_Level >= H.Last_Start_Level then
-         For_Each_Active (H.Matcher);
+      For_Each_Active (H.Matcher,
+                       Ignore_If_Nested => True,
+                       Ignore_If_Default => True);
 
-         if Store then
-            Internal_Characters (H, Ch);
-         end if;
+      if Store then
+         Internal_Characters (H, Ch);
       end if;
-
---        if H.Validators /= null then
---           Typ := H.Validators.Typ;
---           if Typ = No_Type then
---              Typ := Get_Type (H.Validators.Element);
---           end if;
---
---           if Is_Simple_Type (H, Typ)
---             and then not H.Validators.Is_Nil
---           then
---            Internal_Characters (H, Ch);
---           end if;
---        end if;
    end Hook_Ignorable_Whitespace;
 
    -----------

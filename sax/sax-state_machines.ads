@@ -290,12 +290,15 @@ package Sax.State_Machines is
         (Self : access NFA'Class;
          S    : State) is <>;
    procedure For_Each_Active_State
-     (Self             : NFA_Matcher;
-      Ignore_If_Nested : Boolean := False);
+     (Self              : NFA_Matcher;
+      Ignore_If_Nested  : Boolean := False;
+      Ignore_If_Default : Boolean := False);
    --  Iterates over all currently active states.
    --  If [Ignore_If_Nested] is true, the states with a nested NFA are not
    --  returned unless their nested NFA is in a final state (that's because we
    --  would be ignoring events on them otherwise).
+   --  If {Ignore_If_Default] is true, the states for which no user data was
+   --  set are never returned.
 
    function In_Final (Self : NFA_Matcher) return Boolean;
    --  Whether [Self] is in the final step: if True, it means that all input

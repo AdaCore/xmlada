@@ -354,9 +354,20 @@ package body Schema.Schema_Readers is
       procedure Get_Type_Descr
         (Name  : Qualified_Name;
          Loc   : Location;
+         Ty    : out Type_Index;
          Descr : out Type_Descr;
          S     : out State);
-      --  Return the type (either from the local XSD or global type)
+      --  Lookup the type information in the grammar. This type information
+      --  could be in several places:
+      --    - Either defined in the current XSD and its <input>: in that case,
+      --      [Ty] will be set to a value other than [No_Type_Index].
+      --    - Or in a previously loaded XSD. In that case, [Ty] is set to
+      --      [No_Type_Index]
+      --  In all cases, [Descr] will contain the type's attributes, and
+      --  [S] will contain the nested NFA for that type. That nested NFA might
+      --  not be complete yet if the type is defined in the current XSD (but
+      --  in such a case [Shared.Types.Table (Ty).Details] will contain the
+      --  details.
 
       function Lookup_Simple_Type
         (Name : Qualified_Name;
@@ -447,7 +458,7 @@ package body Schema.Schema_Readers is
                   end if;
 
                else
-                  Get_Type_Descr (Real.Typ, Info.Loc, Descr, S);
+                  Get_Type_Descr (Real.Typ, Info.Loc, Typ, Descr, S);
                end if;
 
                if Info.Substitution_Group /= No_Qualified_Name then
@@ -514,10 +525,10 @@ package body Schema.Schema_Readers is
       procedure Get_Type_Descr
         (Name  : Qualified_Name;
          Loc   : Location;
+         Ty    : out Type_Index;
          Descr : out Type_Descr;
          S     : out State)
       is
-         Ty  : Type_Index;
          TRef : Global_Reference;
       begin
          Ty := Get (Types, Name);
@@ -527,13 +538,13 @@ package body Schema.Schema_Readers is
                Validation_Error
                  (Parser, "Unknown type " & To_QName (Name), Loc);
             else
-               S     := TRef.Typ;
-               Descr := NFA.Get_Data (S).Descr;
+               S := TRef.Typ;
             end if;
          else
-            S     := Shared.Types.Table (Ty).S;
-            Descr := NFA.Get_Data (S).Descr;
+            S := Shared.Types.Table (Ty).S;
          end if;
+
+         Descr := NFA.Get_Data (S).Descr;
       end Get_Type_Descr;
 
       ------------------------
@@ -627,7 +638,6 @@ package body Schema.Schema_Readers is
          S  : State;
          T  : Type_Details_Access;
          Gr : Group_Descr;
-         Ty : Type_Index;
          Count : Natural := 0;
       begin
          if Details = null then
@@ -707,23 +717,65 @@ package body Schema.Schema_Readers is
                  (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
 
             when Type_Extension =>
-               Ty := Get (Types, Details.Extension.Base);
-               pragma Assert (Ty /= No_Type_Index);
-               --  Checked in [Create_Nested_For_Type]
+               declare
+                  TyIndex : Type_Index;  --  If based in current XSD
+                  Ty      : Type_Descr;  --  Attributes of the base type
+                  TyS     : State;       --  Nested NFA for the base
+               begin
+                  Get_Type_Descr
+                    (Name  => Details.Extension.Base,
+                     Loc   => No_Location,
+                     Ty    => TyIndex,
+                     Descr => Ty,
+                     S     => TyS);
 
-               Process_Details
-                 (Shared.Types.Table (Ty).Details, Start, From, S);
-               Process_Details
-                 (Details.Extension.Details, Start, S, Nested_End);
+                  if Ty.Simple_Content = No_Simple_Type_Index then
+                     if TyIndex /= No_Type_Index then
+                        --  We have all the details, and just have to copy them
+                        Process_Details
+                          (Shared.Types.Table (TyIndex).Details,
+                           Start, From, S);
+
+                     else
+                        --  ??? Should copy the nested NFA for TyS
+                        Validation_Error
+                          (Parser,
+                           "Extension's base in a different file "
+                           & To_QName (Details.Extension.Base),
+                           Details.Extension.Loc,
+                           XML_Not_Implemented'Identity);
+                     end if;
+
+                     Process_Details
+                       (Details.Extension.Details, Start, S, Nested_End);
+                  else
+                     --  ??? Should handle simple types
+                     Nested_End := Start;
+                  end if;
+               end;
+--
+--                 Ty := Get (Types, Details.Extension.Base);
+--                 pragma Assert (Ty /= No_Type_Index,
+--                                "Base not found: "
+--                                & To_QName (Details.Extension.Base));
+--                 --  Checked in [Create_Nested_For_Type]
+--
+--                 Process_Details
+--                   (Shared.Types.Table (Ty).Details, Start, From, S);
+--                 Process_Details
+--                   (Details.Extension.Details, Start, S, Nested_End);
 
             when Type_Restriction =>
                declare
-                  Ty : Type_Descr;
-                  S  : State;
+                  TyIndex : Type_Index;  --  If based in current XSD
+                  Ty      : Type_Descr;  --  Attributes of the base type
+                  TyS     : State;       --  Nested NFA for the base
+                  pragma Unreferenced (TyS);
                begin
                   Get_Type_Descr
                     (Name  => Details.Restriction.Base,
                      Loc   => No_Location,
+                     Ty    => TyIndex,
                      Descr => Ty,
                      S     => S);
 
@@ -2514,6 +2566,8 @@ package body Schema.Schema_Readers is
       Local : Symbol;
       Details : Type_Details_Access;
    begin
+      Ext.Loc := Get_Location (Handler.Locator);
+
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
@@ -3208,10 +3262,14 @@ package body Schema.Schema_Readers is
          Create_Group (H, Atts);
 
       elsif Local_Name = Handler.Simple_Content then
-         null;
+         Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
+         pragma Assert (Ctx.Typ = Context_Type_Def);
+         Handler.Shared.Types.Table (Ctx.Type_Info).Descr.Mixed := True;
 
       elsif Local_Name = Handler.Complex_Content then
-         null;
+         Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
+         pragma Assert (Ctx.Typ = Context_Type_Def);
+         Handler.Shared.Types.Table (Ctx.Type_Info).Descr.Mixed := False;
 
       elsif Local_Name = Handler.Attribute_Group then
          Create_Attribute_Group (H, Atts);

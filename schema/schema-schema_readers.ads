@@ -129,6 +129,7 @@ private
       Base           : Qualified_Name := No_Qualified_Name;
       Details        : Type_Details_Access;
       Attributes     : Attr_Array_Access;
+      Loc            : Sax.Locators.Location;
    end record;
 
    type Restriction_Descr is record

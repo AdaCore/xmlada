@@ -635,17 +635,26 @@ package body Sax.State_Machines is
 
    procedure For_Each_Active_State
      (Self             : NFA_Matcher;
-      Ignore_If_Nested : Boolean := False) is
+      Ignore_If_Nested : Boolean := False;
+      Ignore_If_Default : Boolean := False)
+   is
+      S2 : State;
    begin
       for S in 1 .. Last (Self.Active) loop
-         if Self.Active.Table (S).S /= Final_State
+         S2 := Self.Active.Table (S).S;
+
+         if S2 /= Final_State
            and then
              (Self.Active.Table (S).Nested = No_Matcher_State
               or else not Ignore_If_Nested
               or else Self.Active.Table (Self.Active.Table (S).Nested).S =
                 Final_State)
          then
-            Callback (Self.NFA, Self.Active.Table (S).S);
+            if not Ignore_If_Default
+              or else Self.NFA.States.Table (S2).Data /= Default_Data
+            then
+               Callback (Self.NFA, S2);
+            end if;
          end if;
       end loop;
    end For_Each_Active_State;

@@ -135,8 +135,6 @@ private
    with record
       Locator          : Sax.Locators.Locator;
       Matcher          : Schema.Validators.Schema_State_Machines.NFA_Matcher;
-      Nesting_Level    : Natural := 0;
-      Last_Start_Level : Natural := 0;
 
       Characters       : Unicode.CES.Byte_Sequence_Access;
       Characters_Count : Natural := 0;
