@@ -2025,50 +2025,26 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
---        Namespace_Index : constant Integer :=
---          Get_Index (Atts, Empty_String, Handler.Namespace);
---        Process_Index : constant Integer :=
---          Get_Index (Atts, Empty_String, Handler.Process_Contents);
---        Process_Contents : constant Process_Contents_Type :=
---          Process_Contents_From_Atts (Handler, Atts, Process_Index);
---        Kind  : Namespace_Kind;
-
---        List  : NS_List (1 .. Max_Namespaces_In_Any_Attribute);
---        Last  : Integer := List'First;
---
---        procedure Cb_Item (Str : Byte_Sequence);
---        procedure Cb_Item (Str : Byte_Sequence) is
---        begin
---           List (Last) := Find_Symbol (Handler.all, Str);
---           Last := Last + 1;
---        end Cb_Item;
---
---        procedure For_Each is new For_Each_Item (Cb_Item);
+      Local : Symbol;
+      Att   : Attr_Descr (Kind => Kind_Attribute);
    begin
-      null;
---        if Namespace_Index = -1 then
---           Kind := Namespace_Any;
---        else
---           declare
---              Val : constant Symbol := Get_Value (Atts, Namespace_Index);
---           begin
---              if Val = Handler.Other_Namespace then
---                 Kind := Namespace_Other;
---              elsif Val = Handler.Any_Namespace then
---                 Kind := Namespace_Any;
---              else
---                 Kind := Namespace_List;
---                 For_Each (Get (Val).all);
---              end if;
---           end;
---        end if;
+      Att.Attr.Descr := (Is_Any => True, others => <>);
+      Att.Loc := Handler.Current_Location;
+      Att.Attr.Descr.Any.Namespace := Handler.Any_Namespace;
 
---        Insert_Attribute
---          (Handler,
---           Handler.Contexts (Handler.Contexts_Last),
---           Create_Any_Attribute
---           (Handler.Target_NS, Process_Contents, Kind, List (1 .. Last - 1))
---           Is_Local => False);
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Namespace then
+               Att.Attr.Descr.Any.Namespace := Get_Value (Atts, J);
+            elsif Local = Handler.Process_Contents then
+               Att.Attr.Descr.Any.Process_Contents :=
+                 Process_Contents_From_Atts (Handler, Atts, J);
+            end if;
+         end if;
+      end loop;
+
+      Insert_Attribute (Handler, Handler.Contexts_Last, Att);
    end Create_Any_Attribute;
 
    --------------------
@@ -2860,11 +2836,15 @@ package body Schema.Schema_Readers is
                  (Handler, "Invalid element in simple type");
             end if;
 
-            --  ??? This test is not needed if we are validating the XSD
-            if Handler.Shared.Types.Table (Ctx.Type_Info).Details /= null then
-               Free (Element);
-               Validation_Error (Handler, "Invalid element");
+            if Debug and then
+              Handler.Shared.Types.Table (Ctx.Type_Info).Details /= null
+            then
+               Debug_Output ("Insert_In_Type, type already has details "
+                             & " when inserting " & Element.Kind'Img);
             end if;
+
+            pragma Assert
+              (Handler.Shared.Types.Table (Ctx.Type_Info).Details = null);
 
             Handler.Shared.Types.Table (Ctx.Type_Info).Details := Element;
 
@@ -2986,6 +2966,7 @@ package body Schema.Schema_Readers is
       Has_Form : Boolean := False;
 
    begin
+      Att.Attr.Descr := (Is_Any => False, others => <>);
       Att.Attr.Descr.Form := Handler.Attribute_Form_Default;
       Att.Loc := Handler.Current_Location;
 
@@ -3018,13 +2999,8 @@ package body Schema.Schema_Readers is
                else
                   Att.Attr.Descr.Use_Type := Optional;
                end if;
+
             elsif Local = Handler.Fixed then
---            Normalize_Whitespace  --  Depending on the type of the attribute
---                   (Typ    => Typ,
---                    Reader => Handler,
---                    Atts   => Atts,
---                    Index  => Fixed_Index);
---              end if;
                Att.Attr.Descr.Fixed := Get_Value (Atts, J);
             elsif Local = Handler.Ref then
                Att.Attr.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
@@ -3144,8 +3120,7 @@ package body Schema.Schema_Readers is
                Attribute.Attr.Descr.Name, Attribute.Attr);
 
          when Context_Extension =>
-            Append
-              (Ctx.Extension.Extension.Attributes, Attribute);
+            Append (Ctx.Extension.Extension.Attributes, Attribute);
 
          when Context_Simple_Extension =>
             pragma Assert
@@ -3160,13 +3135,7 @@ package body Schema.Schema_Readers is
                Attribute);
 
          when Context_Restriction =>
-            null;
---              Create_Restricted (Handler, In_Context);
---            Append (In_Context.Restricted, Attribute, Is_Local => Is_Local);
---              if Debug then
---             Output_Action ("Add_Attribute (" & Ada_Name (In_Context) & ", "
---                         & Attribute_Name & ");");
---              end if;
+            Append (Ctx.Restriction.Restriction.Attributes, Attribute);
 
          when Context_Simple_Restriction =>
             null;

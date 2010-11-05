@@ -127,6 +127,11 @@ package Schema.Validators is
       Namespace        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Target_NS        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
    end record;
+   No_Any_Descr : constant Any_Descr := (others => <>);
+
+   function Match_Any
+     (Any : Any_Descr; Name : Qualified_Name) return Boolean;
+   --  Whether [Name] matches the namespaces in [Any]
 
    type Transition_Event is record
       Name    : Qualified_Name;
@@ -178,20 +183,28 @@ package Schema.Validators is
 
    type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
 
-   type Attribute_Descr is record
-      Name         : Qualified_Name     := No_Qualified_Name;
-      Simple_Type  : Schema.Simple_Types.Simple_Type_Index :=
-        Schema.Simple_Types.No_Simple_Type_Index;
-      Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Next         : Attribute_Validator_List := Empty_Attribute_List;
-      Use_Type     : Attribute_Use_Type := Optional;
-      Form         : Form_Type          := Qualified;
-      Is_Local     : Boolean            := True;
+   type Attribute_Descr (Is_Any : Boolean := True) is record
+      Next      : Attribute_Validator_List := Empty_Attribute_List;
+
+      case Is_Any is
+         when True =>
+            Any          : Any_Descr := No_Any_Descr;
+
+         when False =>
+            Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+            Name         : Qualified_Name     := No_Qualified_Name;
+            Simple_Type  : Schema.Simple_Types.Simple_Type_Index :=
+              Schema.Simple_Types.No_Simple_Type_Index;
+            Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+            Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+            Use_Type     : Attribute_Use_Type := Optional;
+            Form         : Form_Type          := Qualified;
+            Is_Local     : Boolean            := True;
+      end case;
    end record;
    pragma Pack (Attribute_Descr);
-   No_Attribute_Descr : constant Attribute_Descr := (others => <>);
+   No_Attribute_Descr : constant Attribute_Descr :=
+     (Is_Any => False, others => <>);
 
    function Image (Trans : Transition_Descr) return String;
    --  Needed for the instantiation of Sax.State_Machines

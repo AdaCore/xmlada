@@ -1008,33 +1008,8 @@ package body Schema.Readers is
          when Transition_Any =>
             if Sym.Closing then
                return False;
-            elsif Get (Trans.Any.Namespace).all = "##any" then
-               return True;
-            elsif Get (Trans.Any.Namespace).all = "##other" then
-               return Sym.Name.NS /= Trans.Any.Target_NS;
             else
-               declare
-                  Matches : Boolean := True;
-
-                  procedure Callback (Str : Byte_Sequence);
-                  procedure Callback (Str : Byte_Sequence) is
-                  begin
-                     if Matches then
-                        null;
-                     elsif Str = "##targetNamespace" then
-                        Matches := Sym.Name.NS = Trans.Any.Target_NS;
-                     elsif Str = "##local" then
-                        Matches := Sym.Name.NS = Empty_String;
-                     else
-                        Matches := Get (Sym.Name.NS).all = Str;
-                     end if;
-                  end Callback;
-
-                  procedure All_Items is new For_Each_Item (Callback);
-               begin
-                  All_Items (Get (Trans.Any.Namespace).all);
-                  return Matches;
-               end;
+               return Match_Any (Trans.Any, Sym.Name);
             end if;
       end case;
    end Match;

@@ -38,6 +38,7 @@ with Sax.Readers;                    use Sax.Readers;
 with Sax.Symbols;                    use Sax.Symbols;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
+with Schema.Validators.Lists;        use Schema.Validators.Lists;
 with Schema.Simple_Types;            use Schema.Simple_Types;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
@@ -163,13 +164,32 @@ package body Schema.Validators is
       Attribute : Attribute_Descr)
    is
       L   : Attribute_Validator_List := List;
+      Tmp : Attribute_Validator_List;
    begin
-      while L /= Empty_Attribute_List loop
-         if NFA.Attributes.Table (L).Name = Attribute.Name then
-            return;
+      if Debug then
+         if Attribute.Is_Any then
+            Debug_Output ("Adding <anyAttribute>");
+         else
+            Debug_Output
+              ("Adding attribute " & To_QName (Attribute.Name)
+               & " Use_Type=" & Attribute.Use_Type'Img);
          end if;
-         L := NFA.Attributes.Table (L).Next;
-      end loop;
+      end if;
+
+      if not Attribute.Is_Any then
+         while L /= Empty_Attribute_List loop
+            if not NFA.Attributes.Table (L).Is_Any
+              and then NFA.Attributes.Table (L).Name = Attribute.Name
+            then
+               --  Override use_type, form,... from the <restriction>
+               Tmp := NFA.Attributes.Table (L).Next;
+               NFA.Attributes.Table (L) := Attribute;
+               NFA.Attributes.Table (L).Next := Tmp;
+               return;
+            end if;
+            L := NFA.Attributes.Table (L).Next;
+         end loop;
+      end if;
 
       Append (NFA.Attributes, Attribute);
       NFA.Attributes.Table (Last (NFA.Attributes)).Next := List;
@@ -225,6 +245,43 @@ package body Schema.Validators is
       end;
    end To_Attribute_Array;
 
+   ---------------
+   -- Match_Any --
+   ---------------
+
+   function Match_Any
+     (Any : Any_Descr; Name : Qualified_Name) return Boolean is
+   begin
+      if Get (Any.Namespace).all = "##any" then
+         return True;
+      elsif Get (Any.Namespace).all = "##other" then
+         return Name.NS /= Any.Target_NS;
+      else
+         declare
+            Matches : Boolean := True;
+
+            procedure Callback (Str : Byte_Sequence);
+            procedure Callback (Str : Byte_Sequence) is
+            begin
+               if Matches then
+                  null;
+               elsif Str = "##targetNamespace" then
+                  Matches := Name.NS = Any.Target_NS;
+               elsif Str = "##local" then
+                  Matches := Name.NS = Empty_String;
+               else
+                  Matches := Get (Name.NS).all = Str;
+               end if;
+            end Callback;
+
+            procedure All_Items is new For_Each_Item (Callback);
+         begin
+            All_Items (Get (Any.Namespace).all);
+            return Matches;
+         end;
+      end if;
+   end Match_Any;
+
    -------------------------
    -- Validate_Attributes --
    -------------------------
@@ -237,35 +294,31 @@ package body Schema.Validators is
       Nillable   : Boolean;
       Is_Nil     : out Boolean)
    is
-      Attributes : constant Attribute_Validator_List := Typ.Attributes;
-      Length : constant Natural := Get_Length (Atts);
-      Attrs  : Attribute_Validator_Array :=
+      Attributes   : constant Attribute_Validator_List := Typ.Attributes;
+      Length       : constant Natural := Get_Length (Atts);
+      Valid_Attrs  : Attribute_Validator_Array :=
         To_Attribute_Array (NFA, Attributes);
+
+      type Any_Status is (Any_None, Any_All, Any_Not_All);
 
       type Attr_Status is record
          Prohibited : Boolean := False;
          --  Prohibited explicitly, but it might be allowed through
          --  <anyAttribute>
 
+         Any : Any_Status := Any_None;
+         --  Whether this attribute was matched by none, one, or all
+         --  <anyAttribute>
+
          Seen  : Boolean := False;
       end record;
-      Seen : array (1 .. Length) of Attr_Status := (others => (False, False));
-
-      type Any_Status is (Any_None, Any_All, Any_Not_All);
-      type Any_Status_Array is array (1 .. Length) of Any_Status;
-      Seen_Any : constant Any_Status_Array := (others => Any_None);
-      pragma Unreferenced (Any_Not_All);
+      Seen : array (1 .. Length) of Attr_Status :=
+        (others => (False, Any_None, False));
 
       function Find_Attribute (Attr : Attribute_Descr) return Integer;
       --  Chech whether Named appears in Atts
 
-      --        procedure Check_Any
-      --          (List : Attribute_Descr; Must_Match_All_Any : Boolean);
-      --  Check recursively the attributes provided by Validator.
-
       procedure Check_Named_Attribute (Index : Attribute_Validator_Index);
-      --        procedure Check_Any_Attribute
-      --          (Any : Any_Attribute_Validator; Index : Integer);
       --  Check a named attribute or a wildcard attribute
 
       procedure Check_Single_ID;
@@ -301,10 +354,19 @@ package body Schema.Validators is
       procedure Check_Named_Attribute (Index : Attribute_Validator_Index) is
          Found  : Integer;
          Attr   : Attribute_Descr
-           renames NFA.Attributes.Table (Attrs (Index).Validator);
+           renames NFA.Attributes.Table (Valid_Attrs (Index).Validator);
       begin
-         if not Attrs (Index).Visited then
-            Attrs (Index).Visited := True;
+         if not Valid_Attrs (Index).Visited
+           and then not Attr.Is_Any
+         then
+            if Debug then
+               Debug_Output
+                 ("Checking attribute: "
+                  & To_QName
+                    (NFA.Attributes.Table
+                       (Valid_Attrs (Index).Validator).Name));
+            end if;
+            Valid_Attrs (Index).Visited := True;
             Found := Find_Attribute (Attr);
 
             if Found = -1 then
@@ -344,7 +406,13 @@ package body Schema.Validators is
 
                case Attr.Use_Type is
                   when Prohibited =>
+                     if Debug then
+                        Debug_Output
+                          ("Marking as prohibited, might be accepted by"
+                           & " <anyAttribute>");
+                     end if;
                      Seen (Found) := (Seen       => False,
+                                      Any        => Seen (Found).Any,
                                       Prohibited => True);
 
                   when Optional | Required | Default =>
@@ -364,52 +432,6 @@ package body Schema.Validators is
          end if;
       end Check_Named_Attribute;
 
-      -------------------------
-      -- Check_Any_Attribute --
-      -------------------------
-
-      --        procedure Check_Any_Attribute
-      --          (Any   : Any_Attribute_Validator;
-      --           Index : Integer) is
-      --        begin
-      --           if Debug then
-      --              Debug_Push_Prefix
-      --                ("Checking any attribute index="
-      --                 & Index'Img & " name="
-      --                 & To_QName (Get_URI (Atts, Index),
-      --                             Get_Local_Name (Atts, Index)));
-      --           end if;
-      --
-      --           Validate_Attribute (Any, Reader, Atts, Index);
-      --
-      --           Debug_Pop_Prefix;
-      --
-      --        exception
-      --           when XML_Validation_Error =>
-      --              Debug_Pop_Prefix;
-      --
-      --              --  Avoid duplicate locations in error messages
-      --              --  ??? This is just a hack for now
-      --
-      --              declare
-      --                 Str : constant Byte_Sequence := Reader.Error_Msg.all;
-      --              begin
-      --                 if Str (Str'First) = '#' then
-      --                    Free (Reader.Error_Msg);
-      --                    Reader.Error_Msg := new Byte_Sequence'
-      --                      ("#Attribute """ & Get_Qname (Atts, Index)
-      --                       & """: " & Str (Str'First + 1 .. Str'Last));
-      --                 else
-      --                    Free (Reader.Error_Msg);
-      --                    Reader.Error_Msg := new Byte_Sequence'
-      --                      ("#Attribute """ & Get_Qname (Atts, Index)
-      --                       & """: " & Str);
-      --                 end if;
-      --
-      --                 raise;
-      --              end;
-      --        end Check_Any_Attribute;
-
       --------------------
       -- Find_Attribute --
       --------------------
@@ -425,7 +447,8 @@ package body Schema.Validators is
                         or else Get_URI (Atts, A) = Attr.Name.NS)
             then
                if Debug then
-                  Debug_Output ("Found attribute: " & To_QName (Attr.Name));
+                  Debug_Output ("Found attribute: " & To_QName (Attr.Name)
+                                & " at index" & A'Img);
                end if;
                return A;
             end if;
@@ -433,90 +456,44 @@ package body Schema.Validators is
          return -1;
       end Find_Attribute;
 
-      ---------------
-      -- Check_Any --
-      ---------------
-
-      --        procedure Check_Any
-      --          (List : Attribute_Descr; Must_Match_All_Any : Boolean) is
-      --        begin
-      --           if List.Validator.all in Any_Attribute_Validator'Class then
-      --      --  From 3.4.2 (intersection of anyAttribute), an attribute must
-      --    --  match *all* the anyAttribute, so we do not modify Seen yet, so
-      --              --  that the attribute is tested multiple times
-      --
-      --              for A in 1 .. Length loop
-      --                 if not Seen (A).Seen
-      --                   and then (Must_Match_All_Any
-      --                             or else Seen_Any (A) /= Any_All)
-      --                 then
-      --                    begin
-      --                       Check_Any_Attribute
-      --                   (Any_Attribute_Validator (List.Validator.all), A);
-      --
-      --            --  If there was an exception, don't mark the attribute as
-      --            --  seen, it is invalid. Maybe another <anyAttribute> will
-      --                       --  match
-      --
-      --                       case Seen_Any (A) is
-      --                   when Any_None | Any_All => Seen_Any (A) := Any_All;
-      --                          when Any_Not_All        => null;
-      --                       end case;
-      --
-      --                    exception
-      --                       when XML_Validation_Error =>
-      --                          if Must_Match_All_Any then
-      --                             Seen_Any (A) := Any_Not_All;
-      --                          end if;
-      --                    end;
-      --                 end if;
-      --              end loop;
-      --           end if;
-      --        end Check_Any;
-
    begin
-      for L in Attrs'Range loop
+      for L in Valid_Attrs'Range loop
          Check_Named_Attribute (L);
       end loop;
 
-      --        if Attributes /= null and then not Ignore_Wildcard then
-      --     --  If the policy for <anyAttribute> has changed, we restart from
-      --      --  scratch: we need to ensure that within the current validator
-      --    --  (and its dependencies), all <anyAttribute> matches for a given
-      --   --  attribute (or not). This computation should not be influence by
-      --           --  validators seen previously.
-      --
-      --           if Must_Match_All_Any2 /= Must_Match_All_Any then
-      --              declare
-      --               Saved_Seen_Any : constant Any_Status_Array := Seen_Any;
-      --              begin
-      --                 for S in Seen_Any'Range loop
-      --                    if Seen_Any (S) = Any_Not_All then
-      --                       Seen_Any (S) := Any_None;
-      --                    end if;
-      --                 end loop;
-      --
-      --                 for L in List'Range loop
-      --                    Check_Any (List (L), Must_Match_All_Any2);
-      --                 end loop;
-      --
-      --                 for S in Seen_Any'Range loop
-      --                    if Seen_Any (S) /= Any_All then
-      --                       Seen_Any (S) := Saved_Seen_Any (S);
-      --                    end if;
-      --                 end loop;
-      --              end;
-      --           else
-      --              for L in List'Range loop
-      --                 Check_Any (List (L), Must_Match_All_Any2);
-      --              end loop;
-      --           end if;
-      --        end if;
+      --  Now handle <anyAttribute>: we need to ensure that within the current
+      --  validator (and its dependencies), all <anyAttribute> matches for a
+      --  given attribute (or not)
+
+      for L in Valid_Attrs'Range loop
+         declare
+            Attr   : Attribute_Descr
+               renames NFA.Attributes.Table (Valid_Attrs (L).Validator);
+         begin
+            if Attr.Is_Any then
+               for S in Seen'Range loop
+                  if not Seen (S).Seen then
+                     if not Match_Any
+                       (Attr.Any,
+                        (NS => Get_URI (Atts, S),
+                         Local => Get_Local_Name (Atts, S)))
+                     then
+                        Seen (S).Any := Any_Not_All;
+
+                     --  Don't change it if we have Any_Not_All
+                     elsif Seen (S).Any = Any_None then
+                        Seen (S).Any := Any_All;
+                     end if;
+                  end if;
+               end loop;
+            end if;
+         end;
+      end loop;
 
       Is_Nil := False;
 
       for S in Seen'Range loop
-         if not Seen (S).Seen and then Seen_Any (S) /= Any_All then
+         if not Seen (S).Seen and then Seen (S).Any /= Any_All then
             if Get_URI (Atts, S) = Reader.XML_Instance_URI then
                if Get_Local_Name (Atts, S) = Reader.Nil then
                   if not Nillable then
@@ -548,15 +525,6 @@ package body Schema.Validators is
                   & To_QName (Typ.Name));
 
             else
-               if Debug then
-                  for A in Attrs'Range loop
-                     Debug_Output
-                       ("Valid: "
-                        & To_QName
-                          (NFA.Attributes.Table (Attrs (A).Validator).Name));
-                  end loop;
-               end if;
-
                Validation_Error
                  (Reader, "Attribute """ & Get_Qname (Atts, S)
                   & """ invalid for type "
@@ -895,11 +863,13 @@ package body Schema.Validators is
       then
          Do_Register (G.Symbols);
 
-         Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Lang),
+         Attr := (Is_Any => False,
+                  Name => (NS => Reader.XML_URI, Local => Reader.Lang),
                   others => <>);
          Create_Global_Attribute (G.NFA, Attr);
 
-         Attr := (Name =>
+         Attr := (Is_Any => False,
+                  Name =>
                     (NS => Reader.XML_URI, Local => Find (G.Symbols, "space")),
                   others => <>);
          Create_Global_Attribute (G.NFA, Attr);
