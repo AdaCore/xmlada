@@ -2194,13 +2194,18 @@ package body Schema.Schema_Readers is
    is
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
+      Ctx2 : Context_Access;
    begin
       if Ctx.Typ = Context_Simple_Restriction then
          --  We are in a <simpleType><restriction><simpleType> context
+
+         Ctx2 := Handler.Contexts (Handler.Contexts_Last - 1)'Access;
+         pragma Assert (Ctx2.Typ = Context_Type_Def);
+
          Push_Context
            (Handler,
             (Typ       => Context_Type_Def,
-             Type_Info => No_Type_Index));
+             Type_Info => Ctx2.Type_Info));
       else
          Prepare_Type (Handler, Atts, Is_Simple => True);
       end if;
