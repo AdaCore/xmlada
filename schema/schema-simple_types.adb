@@ -364,13 +364,6 @@ package body Schema.Simple_Types is
       Ch            : Unicode.CES.Byte_Sequence) return Symbol;
    --  Check [Ch] for one of the primitive types, including facets
 
-   function Equal_String
-     (Descr : Simple_Type_Descr;
-      Symbols : Symbol_Table;
-      Ch1   : Symbol;
-      Ch2   : Byte_Sequence) return Boolean;
-   --  Compare values
-
    function Anchor (Str : String) return String;
    --  Return an anchored version of Str ("^...$").
    --  In XML, regexps are always anchored, as per the beginning of [G]
@@ -673,7 +666,7 @@ package body Schema.Simple_Types is
    begin
       case Descr.Kind is
          when Primitive_String .. Primitive_HexBinary =>
-            Is_Equal := Equal_String (Descr, Symbols, Ch1, Ch2);
+            Is_Equal := Get (Ch1).all = Ch2;
          when Primitive_Boolean   =>
             Is_Equal := Equal_Boolean (Symbols, Ch1, Ch2);
          when Primitive_Float | Primitive_Double  =>
@@ -1742,21 +1735,6 @@ package body Schema.Simple_Types is
          Fraction_Digits => Descr.Fraction_Digits,
          Total_Digits    => Descr.Total_Digits);
    end Validate_Decimal;
-
-   ------------------
-   -- Equal_String --
-   ------------------
-
-   function Equal_String
-     (Descr : Simple_Type_Descr;
-      Symbols : Symbol_Table;
-      Ch1   : Symbol;
-      Ch2   : Byte_Sequence) return Boolean
-   is
-      pragma Unreferenced (Descr, Symbols);
-   begin
-      return Get (Ch1).all = Ch2;
-   end Equal_String;
 
    --------------------
    -- Convert_Regexp --

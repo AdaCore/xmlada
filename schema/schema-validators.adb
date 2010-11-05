@@ -188,17 +188,56 @@ package body Schema.Validators is
          Target_NS      => Any.Target_NS);
    end Add_Any_Attribute;
 
+   ---------------------
+   -- Normalize_Fixed --
+   ---------------------
+
+   procedure Normalize_Fixed
+     (Parser  : access Abstract_Validation_Reader'Class;
+      Simple  : Simple_Type_Index;
+      Fixed   : in out Sax.Symbols.Symbol;
+      Loc     : Sax.Locators.Location)
+   is
+   begin
+      if Fixed /= No_Symbol
+        and then Simple /= No_Simple_Type_Index
+      then
+         declare
+            Simple_Descr : constant Simple_Type_Descr :=
+              Get_NFA (Parser.Grammar).Get_Simple_Type (Simple);
+            Norm  : Byte_Sequence := Get (Fixed).all;
+            Last  : Integer := Norm'Last;
+         begin
+            Validate_Simple_Type
+              (Reader        => Parser,
+               Simple_Type   => Simple,
+               Ch            => Norm,
+               Loc           => Loc);
+
+            --  Normalize whitespaces, for faster comparison later
+            --  on.
+
+            if Simple_Descr.Mask (Facet_Whitespace) then
+               Normalize_Whitespace
+                 (Simple_Descr.Whitespace, Norm, Last);
+               Fixed := Find_Symbol (Parser.all, Norm (Norm'First .. Last));
+            end if;
+         end;
+      end if;
+   end Normalize_Fixed;
+
    -------------------
    -- Add_Attribute --
    -------------------
 
    procedure Add_Attribute
-     (Grammar        : XML_Grammar;
+     (Parser         : access Abstract_Validation_Reader'Class;
       List           : in out Attributes_List;
       Attribute      : Attribute_Descr;
-      Ref            : Named_Attribute_List := Empty_Named_Attribute_List)
+      Ref            : Named_Attribute_List := Empty_Named_Attribute_List;
+      Loc            : Sax.Locators.Location)
    is
-      NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
+      NFA : constant Schema_NFA_Access := Get_NFA (Parser.Grammar);
       L   : Named_Attribute_List := List.Named;
       Tmp : Named_Attribute_List;
       Attr : Attribute_Descr := Attribute;
@@ -214,8 +253,13 @@ package body Schema.Validators is
          if NFA.Attributes.Table (L).Name = Attribute.Name then
             --  Override use_type, form,... from the <restriction>
             Tmp := NFA.Attributes.Table (L).Next;
-            NFA.Attributes.Table (L) := Attribute;
+
+            Attr := Attribute;
+            Normalize_Fixed (Parser, Attr.Simple_Type, Attr.Fixed, Loc);
+
+            NFA.Attributes.Table (L) := Attr;
             NFA.Attributes.Table (L).Next := Tmp;
+
             return;
          end if;
          L := NFA.Attributes.Table (L).Next;
@@ -231,6 +275,8 @@ package body Schema.Validators is
          end if;
       end if;
 
+      Normalize_Fixed (Parser, Attr.Simple_Type, Attr.Fixed, Loc);
+
       Append (NFA.Attributes, Attr);
       NFA.Attributes.Table (Last (NFA.Attributes)).Next := List.Named;
       List.Named := Last (NFA.Attributes);
@@ -241,21 +287,22 @@ package body Schema.Validators is
    --------------------
 
    procedure Add_Attributes
-     (Grammar        : XML_Grammar;
+     (Parser         : access Abstract_Validation_Reader'Class;
       List           : in out Attributes_List;
       Attributes     : Attributes_List;
-      As_Restriction : Boolean)
+      As_Restriction : Boolean;
+      Loc            : Sax.Locators.Location)
    is
-      NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
+      NFA : constant Schema_NFA_Access := Get_NFA (Parser.Grammar);
       L   : Named_Attribute_List := Attributes.Named;
    begin
       while L /= Empty_Named_Attribute_List loop
-         Add_Attribute (Grammar, List, NFA.Attributes.Table (L));
+         Add_Attribute (Parser, List, NFA.Attributes.Table (L), Loc => Loc);
          L := NFA.Attributes.Table (L).Next;
       end loop;
 
       Add_Any_Attribute
-        (Grammar, List,
+        (Parser.Grammar, List,
          Internal_Any_Descr'
            (Target_NS        => Empty_String,
             Process_Contents => Attributes.Any.Process_Contents,
@@ -1063,14 +1110,15 @@ package body Schema.Validators is
    -----------------------------
 
    procedure Create_Global_Attribute
-     (Grammar   : XML_Grammar;
-      Attr      : Attribute_Descr)
+     (Parser    : access Abstract_Validation_Reader'Class;
+      Attr      : Attribute_Descr;
+      Loc       : Sax.Locators.Location)
    is
       use Reference_HTables;
-      NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
+      NFA : constant Schema_NFA_Access := Get_NFA (Parser.Grammar);
       List : Attributes_List := No_Attributes;
    begin
-      Add_Attribute (Grammar, List, Attr);
+      Add_Attribute (Parser, List, Attr, Loc => Loc);
       Set
         (NFA.References.all,
          (Kind => Ref_Attribute, Name => Attr.Name, Attributes => List));
@@ -1267,13 +1315,13 @@ package body Schema.Validators is
          Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Lang),
                   Form => Qualified,
                   others => <>);
-         Create_Global_Attribute (Reader.Grammar, Attr);
+         Create_Global_Attribute (Reader'Access, Attr, No_Location);
 
          Attr := (Name =>
                     (NS => Reader.XML_URI, Local => Find (G.Symbols, "space")),
                   Form => Qualified,
                   others => <>);
-         Create_Global_Attribute (Reader.Grammar, Attr);
+         Create_Global_Attribute (Reader'Access, Attr, No_Location);
 
          --  Added support for <ur-Type>
 

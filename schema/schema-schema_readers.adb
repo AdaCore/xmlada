@@ -488,7 +488,7 @@ package body Schema.Schema_Readers is
 
                if NFA_Type /= No_Type_Index then
                   Data.all := State_Data'(Simple   => NFA_Type,
-                                          Fixed    => Info.Fixed,
+                                          Fixed    => No_Symbol, --  See below
                                           Default  => Info.Default,
                                           Nillable => Info.Nillable,
                                           Block    => Info.Block);
@@ -498,34 +498,27 @@ package body Schema.Schema_Readers is
                        (Get_Type_Descr (NFA, NFA_Type).Complex_Content));
                else
                   NFA.Set_Nested (S1, NFA.Ur_Type (Process_Lax));
-                  Data.Fixed    := Info.Fixed;
                   Data.Default  := Info.Default;
                   Data.Block    := Info.Block;
                   Data.Nillable := Info.Nillable;
                end if;
+
+               --  Check that the fixed value is valid
+
+               if Info.Fixed /= No_Symbol
+                 and then NFA.Get_Data (S1).Simple /= No_Type_Index
+               then
+                  Normalize_Fixed
+                    (Parser => Parser,
+                     Simple => Get_Type_Descr
+                       (NFA, NFA.Get_Data (S1).Simple).Simple_Content,
+                     Fixed  => Info.Fixed,
+                     Loc    => Info.Loc);
+               end if;
+
+               Data.Fixed := Info.Fixed;
             end;
          end if;
-
-         --  Check that the fixed value is valid
-
-         declare
-            Simple : Simple_Type_Index;
-         begin
-            if Info.Fixed /= No_Symbol
-              and then NFA.Get_Data (S1).Simple /= No_Type_Index
-            then
-               Simple :=
-                 Get_Type_Descr (NFA, NFA.Get_Data (S1).Simple).Simple_Content;
-
-               if Simple /= No_Simple_Type_Index then
-                  Validate_Simple_Type
-                    (Reader        => Parser,
-                     Simple_Type   => Simple,
-                     Ch            => Get (Info.Fixed).all,
-                     Loc           => Info.Loc);
-               end if;
-            end if;
-         end;
 
          --  Link with previous element
 
@@ -1010,9 +1003,10 @@ package body Schema.Schema_Readers is
                         end if;
 
                         Add_Attribute
-                          (Parser.Grammar, List,
+                          (Parser, List,
                            Attribute => Attrs (A).Attr.Descr,
-                           Ref       => TRef.Attributes.Named);
+                           Ref       => TRef.Attributes.Named,
+                           Loc       => Attrs (A).Loc);
 
                      else
                         Resolve_Attribute_Type (Attrs (A).Attr);
@@ -1025,7 +1019,8 @@ package body Schema.Schema_Readers is
 
                         else
                            Add_Attribute
-                             (Parser.Grammar, List, Attrs (A).Attr.Descr);
+                             (Parser, List, Attrs (A).Attr.Descr,
+                              Loc => Attrs (A).Loc);
                         end if;
                      end if;
                end case;
@@ -1239,7 +1234,7 @@ package body Schema.Schema_Readers is
          Attr2 := Attr;
          Resolve_Attribute_Type (Attr2);
 
-         Create_Global_Attribute (Parser.Grammar, Attr2.Descr);
+         Create_Global_Attribute (Parser, Attr2.Descr, No_Location);
       end Create_Global_Attributes;
 
       ------------------
@@ -1289,9 +1284,9 @@ package body Schema.Schema_Readers is
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (Parser.Grammar, List,
+                    (Parser, List,
                      Get_Type_Descr (NFA, Ty.Typ).Attributes,
-                     As_Restriction => False);
+                     As_Restriction => False, Loc => Info.Loc);
                end if;
 
                Add_Attributes (List, Info.Attributes,
@@ -1312,9 +1307,9 @@ package body Schema.Schema_Readers is
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (Parser.Grammar, List,
+                    (Parser, List,
                      Get_Type_Descr (NFA, Ty.Typ).Attributes,
-                     As_Restriction => True);
+                     As_Restriction => True, Loc => Info.Loc);
                end if;
 
                Had_Any := False;

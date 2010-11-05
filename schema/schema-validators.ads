@@ -602,6 +602,13 @@ package Schema.Validators is
       Loc           : Sax.Locators.Location);
    --  Validate [Ch] as a simpleType
 
+   procedure Normalize_Fixed
+     (Parser  : access Abstract_Validation_Reader'Class;
+      Simple  : Schema.Simple_Types.Simple_Type_Index;
+      Fixed   : in out Sax.Symbols.Symbol;
+      Loc     : Sax.Locators.Location);
+   --  Normalize whitespaces in [Fixed] according to the simple type
+
    function Equal
      (Reader        : access Abstract_Validation_Reader'Class;
       Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
@@ -645,15 +652,17 @@ package Schema.Validators is
       Any            : Internal_Any_Descr;
       As_Restriction : Boolean);
    procedure Add_Attribute
-     (Grammar        : XML_Grammar;
+     (Parser         : access Abstract_Validation_Reader'Class;
       List           : in out Attributes_List;
       Attribute      : Attribute_Descr;
-      Ref            : Named_Attribute_List := Empty_Named_Attribute_List);
+      Ref            : Named_Attribute_List := Empty_Named_Attribute_List;
+      Loc            : Sax.Locators.Location);
    procedure Add_Attributes
-     (Grammar        : XML_Grammar;
+     (Parser         : access Abstract_Validation_Reader'Class;
       List           : in out Attributes_List;
       Attributes     : Attributes_List;
-      As_Restriction : Boolean);
+      As_Restriction : Boolean;
+      Loc            : Sax.Locators.Location);
    --  Add a valid attribute to Validator.
    --  Is_Local should be true if the attribute is local, or False if this is
    --  a reference to a global attribute.
@@ -685,8 +694,9 @@ package Schema.Validators is
    --  avoiding the need to recreate it the next time you parse a XSD file.
 
    procedure Create_Global_Attribute
-     (Grammar   : XML_Grammar;
-      Attr      : Attribute_Descr);
+     (Parser    : access Abstract_Validation_Reader'Class;
+      Attr      : Attribute_Descr;
+      Loc       : Sax.Locators.Location);
    function Create_Simple_Type
      (NFA   : access Schema_NFA'Class;
       Descr : Schema.Simple_Types.Simple_Type_Descr)
