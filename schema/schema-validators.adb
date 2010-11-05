@@ -50,6 +50,15 @@ package body Schema.Validators is
    function To_Graphic_String (Str : Byte_Sequence) return String;
    --  Convert non-graphic characters in Str to make them visible in a display
 
+   function Match
+     (Self       : access NFA'Class;
+      From_State : State;
+      Trans      : Transition_Descr;
+      Sym        : Transition_Event) return Boolean;
+   --  Whether [Sym] matches [Trans]
+
+   procedure Process is new Schema_State_Machines.Process (Match);
+
    type Attribute_Validator_Data is record
       Validator : Attribute_Validator_List;  --  Index into the table
       Visited   : Boolean;
@@ -1255,11 +1264,11 @@ package body Schema.Validators is
                   others => <>);
          Create_Global_Attribute (Reader.Grammar, Attr, Reader.XML_URI);
 
-         Add_Schema_For_Schema (Reader);
-
          --  Added support for <ur-Type>
 
          G.NFA.Ur_Type := Create_UR_Type;
+
+         Add_Schema_For_Schema (Reader);
 
          --  Save the current state, so that we can restore the grammar to just
          --  this metaschema.
@@ -2383,5 +2392,77 @@ package body Schema.Validators is
             Since               => NFA.Metaschema_NFA_Last);
       end if;
    end Dump_Dot_NFA;
+
+   -----------
+   -- Match --
+   -----------
+
+   function Match
+     (Self       : access NFA'Class;
+      From_State : State;
+      Trans      : Transition_Descr;
+      Sym        : Transition_Event) return Boolean
+   is
+      Result : Boolean;
+   begin
+      case Trans.Kind is
+         when Transition_Close =>
+            Result := Sym.Closing;
+
+         when Transition_Symbol =>
+            if Sym.Closing then
+               Result := False;
+            else
+               if From_State = Start_State then
+                  --  At toplevel, always qualified
+                  Result := Trans.Name = Sym.Name;
+               else
+                  case Trans.Form is
+                  when Unqualified =>
+                     Result := (NS => Empty_String, Local => Trans.Name.Local)
+                       = Sym.Name;
+                  when Qualified =>
+                     Result := Trans.Name = Sym.Name;
+                  end case;
+               end if;
+            end if;
+
+         when Transition_Any =>
+            if Sym.Closing then
+               Result := False;
+            else
+               Result := Match_Any (Trans.Any, Sym.Name);
+               if Result then
+                  Schema_NFA_Access (Self).Matched_Through_Any := True;
+                  Schema_NFA_Access (Self).Matched_Process_Content :=
+                    Trans.Any.Process_Contents;
+               end if;
+            end if;
+      end case;
+
+      return Result;
+   end Match;
+
+   --------------
+   -- Do_Match --
+   --------------
+
+   procedure Do_Match
+     (Matcher         : in out Schema_State_Machines.NFA_Matcher;
+      NFA             : access Schema_NFA'Class;
+      Sym             : Transition_Event;
+      Success         : out Boolean;
+      Through_Any     : out Boolean;
+      Through_Process : out Process_Contents_Type)
+   is
+   begin
+      NFA.Matched_Through_Any := False;
+      Process (Matcher, Input => Sym, Success => Success);
+
+      if Success then
+         Through_Any     := NFA.Matched_Through_Any;
+         Through_Process := NFA.Matched_Process_Content;
+      end if;
+   end Do_Match;
 
 end Schema.Validators;

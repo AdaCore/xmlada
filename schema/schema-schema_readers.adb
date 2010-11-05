@@ -885,7 +885,9 @@ package body Schema.Schema_Readers is
                end;
 
             when Type_Any =>
-               S := NFA.Add_State;
+               S := NFA.Add_State; --   ((Simple => 1, others => <>));
+               NFA.Set_Nested (S, Ur_Type (NFA));
+
                NFA.Add_Transition
                  (From, S, (Transition_Any,
                   Combine (Parser.Grammar, No_Any_Descr,
@@ -893,8 +895,10 @@ package body Schema.Schema_Readers is
                            Local          => Details.Any.Namespaces,
                            As_Restriction => False,
                            Target_NS      => Details.Any.Target_NS)));
+
                Nested_End := NFA.Add_State;
-               NFA.Add_Transition (S, Nested_End, (Kind => Transition_Close));
+--             NFA.Add_Transition (S, Nested_End, (Kind => Transition_Close));
+               NFA.On_Empty_Nested_Exit (S, Nested_End);
          end case;
 
          --  Avoid extreme cases, that would result in huge NFA.

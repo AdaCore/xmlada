@@ -61,15 +61,6 @@ package body Schema.Readers is
    --  Reset the state of the parser so that we can parse other documents.
    --  This doesn't reset the grammar
 
-   function Match
-     (Self       : access NFA'Class;
-      From_State : State;
-      Trans      : Transition_Descr;
-      Sym        : Transition_Event) return Boolean;
-   --  Whether [Sym] matches [Trans]
-
-   procedure Process is new Schema_State_Machines.Process (Match);
-
    procedure Hook_Start_Element
      (Handler : access Sax_Reader'Class;
       Elem    : Element_Access;
@@ -532,6 +523,92 @@ package body Schema.Readers is
       --  does not affect the NFA itself, but the NFA_Matcher, so is only
       --  temporary and does not affect over running matchers.
 
+      procedure Replace_State
+        (Check_Substitution : Boolean;
+         Nested_Start       : State;
+         Simple             : Type_Index);
+      --  Replace the current most nested NFA with [Nested_Start], to override
+      --  the type. This might mean replacing a nested NFA or a state data,
+      --  depending on whether we have a simpleType or complexType
+
+      -------------------
+      -- Replace_State --
+      -------------------
+
+      procedure Replace_State
+        (Check_Substitution : Boolean;
+         Nested_Start       : State;
+         Simple             : Type_Index)
+      is
+         Iter      : Active_State_Iterator;
+         S, Prev_S : State := No_State;
+         Prev_Data : State_Data := No_State_Data;
+         Data      : State_Data;
+      begin
+         Iter := For_Each_Active_State
+           (H.Matcher,
+            Ignore_If_Default => True, Ignore_If_Nested => False);
+         loop
+            S := Current (H.Matcher, Iter);
+            exit when S = No_State;
+
+            if Has_Active_Nested (H.Matcher, Iter) then
+               --  An state with a nested NFA indicates an element (the
+               --  nested is its type). From the element, we might get a
+               --  special list of blocked restrictions or extensions),
+               --  but we do not want to check anything else
+               Prev_Data := Current_Data (H.Matcher, Iter);
+               Prev_S    := S;
+
+            else
+               Data := Current_Data (H.Matcher, Iter);
+
+               if Check_Substitution then
+                  if Prev_S /= No_State
+                    and then Get_Start_State (NFA.Get_Nested (Prev_S)) = S
+                  then
+                     Check_Substitution_Group_OK
+                       (H, Simple, Data.Simple,
+                        Loc           => H.Current_Location,
+                        Element_Block => Prev_Data.Block);
+                  else
+                     Check_Substitution_Group_OK
+                       (H, Simple, Data.Simple,
+                        Loc           => H.Current_Location,
+                        Element_Block => Data.Block);
+                  end if;
+               end if;
+
+               if Nested_Start /= No_State then
+                  if Debug then
+                     Debug_Output
+                       ("Because of xsi:type, replace state" & S'Img
+                        & " with" & Nested_Start'Img);
+                  end if;
+                  Replace_State (H.Matcher, Iter, Nested_Start);
+                  --  Override (temporarily) the current state
+               else
+                  if Debug then
+                     Debug_Output ("Override state data" & S'Img
+                                   & " to type" & Simple'Img);
+                  end if;
+                  Override_Data
+                    (H.Matcher, Iter,
+                     State_Data'
+                       (Simple => Simple,
+                        Fixed  => Current_Data (H.Matcher, Iter).Fixed,
+                        Block  => Current_Data (H.Matcher, Iter).Block));
+               end if;
+            end if;
+
+            Next (H.Matcher, Iter);
+         end loop;
+
+         if Debug then
+            Debug_Print (H.Matcher, Dump_Compact, "After substitution:");
+         end if;
+      end Replace_State;
+
       ---------------------------------
       -- Compute_Type_From_Attribute --
       ---------------------------------
@@ -540,8 +617,6 @@ package body Schema.Readers is
          Xsi_Type_Index     : constant Integer := Get_Index
            (Atts, H.XML_Instance_URI, H.Typ);
          TRef : Global_Reference;
-         Data : State_Data;
-         Prev_Data : State_Data := No_State_Data;
       begin
          if Xsi_Type_Index /= -1 then
             declare
@@ -553,9 +628,6 @@ package body Schema.Readers is
                Prefix    : Symbol;
                NS        : XML_NS;
                Typ       : Qualified_Name;
-               Iter      : Active_State_Iterator;
-               S, Prev_S : State := No_State;
-               Nested_Start : State;
             begin
                Prefix := Find_Symbol
                  (H.all, Qname (Qname'First .. Separator - 1));
@@ -578,68 +650,11 @@ package body Schema.Readers is
                   Validation_Error (H, "Unknown type " & To_QName (Typ));
                end if;
 
-               Nested_Start := Get_Type_Descr (NFA, TRef.Typ).Complex_Content;
-
-               Iter := For_Each_Active_State
-                 (H.Matcher,
-                  Ignore_If_Default => True, Ignore_If_Nested => False);
-               loop
-                  S := Current (H.Matcher, Iter);
-                  exit when S = No_State;
-
-                  if Has_Active_Nested (H.Matcher, Iter) then
-                     --  An state with a nested NFA indicates an element (the
-                     --  nested is its type). From the element, we might get a
-                     --  special list of blocked restrictions or extensions),
-                     --  but we do not want to check anything else
-                     Prev_Data := Current_Data (H.Matcher, Iter);
-                     Prev_S    := S;
-
-                  else
-                     Data := Current_Data (H.Matcher, Iter);
-
-                     if Prev_S /= No_State
-                       and then Get_Start_State (NFA.Get_Nested (Prev_S)) = S
-                     then
-                        Check_Substitution_Group_OK
-                          (H, TRef.Typ, Data.Simple,
-                           Loc           => H.Current_Location,
-                           Element_Block => Prev_Data.Block);
-                     else
-                        Check_Substitution_Group_OK
-                          (H, TRef.Typ, Data.Simple,
-                           Loc           => H.Current_Location,
-                           Element_Block => Data.Block);
-                     end if;
-
-                     if Nested_Start /= No_State then
-                        if Debug then
-                           Debug_Output
-                             ("Because of xsi:type, replace state" & S'Img
-                              & " with" & Nested_Start'Img);
-                        end if;
-                        Replace_State (H.Matcher, Iter, Nested_Start);
-                        --  Override (temporarily) the current state
-                     else
-                        if Debug then
-                           Debug_Output ("Override state data" & S'Img
-                                         & " to type" & TRef.Typ'Img);
-                        end if;
-                        Override_Data
-                          (H.Matcher, Iter,
-                           State_Data'
-                             (Simple => TRef.Typ,
-                              Fixed  => Current_Data (H.Matcher, Iter).Fixed,
-                              Block  => Current_Data (H.Matcher, Iter).Block));
-                     end if;
-                  end if;
-
-                  Next (H.Matcher, Iter);
-               end loop;
-
-               if Debug then
-                  Debug_Print (H.Matcher, Dump_Compact, "After substitution:");
-               end if;
+               Replace_State
+                 (Check_Substitution => True,
+                  Nested_Start =>
+                    Get_Type_Descr (NFA, TRef.Typ).Complex_Content,
+                  Simple       => TRef.Typ);
             end;
          end if;
       end Compute_Type_From_Attribute;
@@ -649,9 +664,17 @@ package body Schema.Readers is
       Is_Nil  : Boolean;
       S       : State;
       Ty      : Type_Index;
+      Through_Any : Boolean;
+      Through_Process : Process_Contents_Type;
+      TRef    : Global_Reference;
+
+      Element_QName : constant Qualified_Name :=
+        (NS    => Get_URI (Get_NS (Elem)),
+         Local => Get_Local_Name (Elem));
+
    begin
       if Debug then
-         Output_Seen ("Start_Element: " & To_QName (Elem)
+         Output_Seen ("Start_Element: " & To_QName (Element_QName)
                       & " " & To_String (H.Current_Location));
       end if;
 
@@ -691,56 +714,59 @@ package body Schema.Readers is
            (Start_At => Start_State);
       end if;
 
-      Process
-        (H.Matcher,
-         Input   => (Closing => False,
-                     Name    => (NS    => Get_URI (Get_NS (Elem)),
-                                 Local => Get_Local_Name (Elem))),
-         Success => Success);
+      Do_Match
+        (Matcher => H.Matcher,
+         NFA     => Get_NFA (H.Grammar),
+         Sym     => (Closing => False, Name => Element_QName),
+         Success         => Success,
+         Through_Any     => Through_Any,
+         Through_Process => Through_Process);
+
+      if not Success then
+         Validation_Error
+           (H, "Unexpected element """
+            & To_QName (Element_QName) & """: expecting """
+            & Expected (H.Matcher) & '"');
+      end if;
 
       if Debug then
          Debug_Print (H.Matcher, Dump_Compact, "After: ");
       end if;
 
-      if not Success then
-         Validation_Error
-           (H, "Unexpected element """
-            & To_QName (Elem) & """: expecting """
-            & Expected (H.Matcher) & '"');
+      if Through_Any then
+         case Through_Process is
+            when Process_Skip =>
+               null;  --  Already handled in the NFA, state is setup as urType
+               TRef := No_Global_Reference;
+
+            when Process_Lax =>
+               TRef := Reference_HTables.Get
+                 (Get_References (H.Grammar).all,
+                  (Element_QName, Ref_Element));
+
+            when Process_Strict =>
+               --  Find the definition for this element, if possible
+
+               TRef := Reference_HTables.Get
+                 (Get_References (H.Grammar).all,
+                  (Element_QName, Ref_Element));
+               if TRef = No_Global_Reference then
+                  Validation_Error
+                    (H, "No definition found for "
+                     & To_QName (Element_QName));
+               end if;
+         end case;
+
+         if TRef /= No_Global_Reference then
+            --  Replace the current most nested state in the machine with the
+            --  new type
+
+            Replace_State
+              (Check_Substitution => False,
+               Nested_Start => Get_Start_State (NFA.Get_Nested (TRef.Element)),
+               Simple       => NFA.Get_Data (TRef.Element).Simple);
+         end if;
       end if;
-
-      --  Whether this element is valid in the current context
-
---        if H.Validators /= null then
---           Parent_Type := H.Validators.Typ;
---           if Parent_Type = No_Type then
---              Parent_Type := Get_Type (H.Validators.Element);
---           end if;
---
---           if Has_Fixed (Handler) then
---              Validation_Error
---                (H, "#No child allowed because """
---                 & To_QName (H.Validators.Element)
---                 & """ has a fixed value");
---           end if;
-
---           Validate_Start_Element
---             (Get_Validator (Parent_Type), H, Get_Local_Name (Elem),
---              G, H.Validators.Data, Element);
---        else
---           Element := Lookup_Element (G, H, Get_Local_Name (Elem), False);
---        end if;
-
---        if Element = No_Element and then Type_Index = -1 then
---           if H.Validators /= null then
---              Validation_Error
---                (H, "#Unexpected element """ & To_QName (Elem) & """");
---           else
---              Validation_Error
---                (H, "#Element """ & To_QName (Elem)
---                 & """: No matching declaration available");
---           end if;
---        end if;
 
 --        if Element /= No_Element and then Is_Abstract (Element) then
 --           Validation_Error
@@ -829,6 +855,8 @@ package body Schema.Readers is
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
       Success : Boolean;
+      Through_Any : Boolean;
+      Through_Process : Process_Contents_Type;
    begin
       if Debug then
          Output_Seen
@@ -838,15 +866,18 @@ package body Schema.Readers is
 
       Validate_Current_Characters (H, Loc => Start_Tag_End_Location (Elem));
 
-      Process
+      Do_Match
         (H.Matcher,
-         (Closing => True,
-          Name    => (NS    => Get_URI (Get_NS (Elem)),
-                      Local => Get_Local_Name (Elem))),
-         Success);
+         Get_NFA (H.Grammar),
+         Sym => (Closing => True,
+                 Name    => (NS    => Get_URI (Get_NS (Elem)),
+                             Local => Get_Local_Name (Elem))),
+         Success         => Success,
+         Through_Any     => Through_Any,
+         Through_Process => Through_Process);
 
       if Debug then
-         Debug_Print (H.Matcher, Dump_Compact, "After end element:");
+         Debug_Print (H.Matcher, Dump_Compact, "After end element: ");
       end if;
 
       if not Success then
@@ -1030,48 +1061,5 @@ package body Schema.Readers is
          Unchecked_Free (Reader);
       end if;
    end Free;
-
-   -----------
-   -- Match --
-   -----------
-
-   function Match
-     (Self       : access NFA'Class;
-      From_State : State;
-      Trans      : Transition_Descr;
-      Sym        : Transition_Event) return Boolean
-   is
-      pragma Unreferenced (Self);
-   begin
-      case Trans.Kind is
-         when Transition_Close =>
-            return Sym.Closing;
-
-         when Transition_Symbol =>
-            if Sym.Closing then
-               return False;
-            else
-               if From_State = Start_State then
-                  --  At toplevel, always qualified
-                  return Trans.Name = Sym.Name;
-               else
-                  case Trans.Form is
-                  when Unqualified =>
-                     return (NS => Empty_String, Local => Trans.Name.Local) =
-                       Sym.Name;
-                  when Qualified =>
-                     return Trans.Name = Sym.Name;
-                  end case;
-               end if;
-            end if;
-
-         when Transition_Any =>
-            if Sym.Closing then
-               return False;
-            else
-               return Match_Any (Trans.Any, Sym.Name);
-            end if;
-      end case;
-   end Match;
 
 end Schema.Readers;

@@ -301,6 +301,16 @@ package Schema.Validators is
    type Schema_NFA is new Schema_State_Machines.NFA with private;
    type Schema_NFA_Access is access all Schema_NFA'Class;
 
+   procedure Do_Match
+     (Matcher         : in out Schema_State_Machines.NFA_Matcher;
+      NFA             : access Schema_NFA'Class;
+      Sym             : Transition_Event;
+      Success         : out Boolean;
+      Through_Any     : out Boolean;
+      Through_Process : out Process_Contents_Type);
+   --  Process the next event through NFA, and report whether it matched
+   --  through a <any>
+
    function Ur_Type
      (NFA : access Schema_NFA'Class) return Schema_State_Machines.Nested_NFA;
    --  Return the nested NFA for <ur-Type>
@@ -793,6 +803,9 @@ private
       Types        : Types_Tables.Instance;
 
       Ur_Type      : Schema_State_Machines.State;
+
+      Matched_Through_Any     : Boolean := False;
+      Matched_Process_Content : Process_Contents_Type;
 
       Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
       Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;
