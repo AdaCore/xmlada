@@ -84,9 +84,10 @@ package body Schema.Schema_Readers is
    --  Whether we are currently processing a <redefine> tag
 
    function Resolve_QName
-     (Handler : access Schema_Reader'Class;
-      QName   : Sax.Symbols.Symbol;
-      NS_If_Empty : Sax.Symbols.Symbol := Empty_String) return Qualified_Name;
+     (Handler     : access Schema_Reader'Class;
+      QName       : Sax.Symbols.Symbol;
+      NS_If_Empty : Sax.Symbols.Symbol := Empty_String;
+      Loc         : Location) return Qualified_Name;
    --  Resolve namespaces for QName.
    --  [NS_If_Empty] is used if no namespace was found for the element. This
    --  will often be the target namespace of the schema.
@@ -1211,23 +1212,38 @@ package body Schema.Schema_Readers is
             Ty    : Global_Reference;
             Index : Internal_Type_Index;
             Had_Any : Boolean := False;
+            Base    : Qualified_Name;
+            As_Restriction : Boolean;
          begin
             if Info.Is_Simple then
                --  A simpleType has no attribute
                return;
-
             elsif Info.Details = null then
+               Add_Attributes (List, Info.Attributes, Processed_Groups,
+                               As_Restriction => True, Had_Any => Had_Any);
+               return;
+            end if;
+
+            if Info.Details.Kind = Type_Extension then
+               Base           := Info.Details.Extension.Base;
+               As_Restriction := False;
+            elsif Info.Details.Kind = Type_Restriction then
+               Base           := Info.Details.Restriction.Base;
+               As_Restriction := True;
+            else
+               Base           := No_Qualified_Name;
+            end if;
+
+            if Base = No_Qualified_Name then
                --  No character data is allowed, but we might have attributes
                Add_Attributes (List, Info.Attributes, Processed_Groups,
                                As_Restriction => True, Had_Any => Had_Any);
 
-            elsif Info.Details.Kind = Type_Extension then
-               Ty := Get (Ref.all, (Info.Details.Extension.Base, Ref_Type));
+            elsif not As_Restriction then
+               Ty := Get (Ref.all, (Base, Ref_Type));
                if Ty = No_Global_Reference then
                   Validation_Error
-                    (Parser, "No type """
-                     & To_QName (Info.Details.Extension.Base) & """",
-                     Info.Loc);
+                    (Parser, "No type """ & To_QName (Base) & """", Info.Loc);
                end if;
 
                --  If the base type is in the current package, we might not
@@ -1235,7 +1251,7 @@ package body Schema.Schema_Readers is
                --  attributes already computed in the grammar, since it is
                --  complete.
 
-               Index := Get (Types, Info.Details.Extension.Base);
+               Index := Get (Types, Base);
                if Index /= No_Internal_Type_Index then
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
@@ -1249,16 +1265,14 @@ package body Schema.Schema_Readers is
                                Processed_Groups, As_Restriction => False,
                                Had_Any => Had_Any);
 
-            elsif Info.Details.Kind = Type_Restriction then
-               Ty := Get (Ref.all, (Info.Details.Restriction.Base, Ref_Type));
+            else
+               Ty := Get (Ref.all, (Base, Ref_Type));
                if Ty = No_Global_Reference then
                   Validation_Error
-                    (Parser, "No type """
-                     & To_QName (Info.Details.Restriction.Base) & """",
-                     Info.Loc);
+                    (Parser, "No type """ & To_QName (Base) & """", Info.Loc);
                end if;
 
-               Index := Get (Types, Info.Details.Restriction.Base);
+               Index := Get (Types, Base);
                if Index /= No_Internal_Type_Index then
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
@@ -1280,10 +1294,6 @@ package body Schema.Schema_Readers is
                if not Had_Any then
                   List.Any := No_Any_Descr;  --  Nothing matches
                end if;
-
-            else
-               Add_Attributes (List, Info.Attributes, Processed_Groups,
-                               As_Restriction => True, Had_Any => Had_Any);
             end if;
          end Recursive_Add_Attributes;
 
@@ -1432,8 +1442,6 @@ package body Schema.Schema_Readers is
 
       if Debug then
          Output_Action ("NFA: " & Dump_Dot_NFA (Get_Grammar (Parser.all)));
-         Output_Action ("NFA: " & Dump_Dot_NFA
-           (Get_Grammar (Parser.all), Create_Nested (NFA, 22)));
       end if;
 
       Reset (Types);
@@ -1703,9 +1711,10 @@ package body Schema.Schema_Readers is
    -------------------
 
    function Resolve_QName
-     (Handler : access Schema_Reader'Class;
-      QName   : Sax.Symbols.Symbol;
-      NS_If_Empty : Sax.Symbols.Symbol := Empty_String) return Qualified_Name
+     (Handler     : access Schema_Reader'Class;
+      QName       : Sax.Symbols.Symbol;
+      NS_If_Empty : Sax.Symbols.Symbol := Empty_String;
+      Loc         : Location) return Qualified_Name
    is
       Val       : Cst_Byte_Sequence_Access;
       Separator : Integer;
@@ -1725,10 +1734,20 @@ package body Schema.Schema_Readers is
            (Handler  => Handler.all,
             Prefix   => Prefix,
             NS       => NS);
-         Result :=
-           (NS    => Get_URI (NS),
-            Local =>
-              Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last)));
+
+         if NS = No_XML_NS and then Prefix /= Empty_String then
+            Validation_Error
+              (Handler,
+               "Cannot resolve namespace prefix "
+               & Val (Val'First .. Separator - 1),
+               Loc);
+
+         else
+            Result :=
+              (NS    => Get_URI (NS),
+               Local =>
+                 Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last)));
+         end if;
 
          if Result.NS = Empty_String then
             Result.NS := NS_If_Empty;
@@ -1857,7 +1876,9 @@ package body Schema.Schema_Readers is
                Group.Name := (NS    => Handler.Target_NS,
                               Local => Get_Value (Atts, J));
             elsif Name.Local = Handler.Ref then
-               Group.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
+               Group.Ref := Resolve_QName
+                 (Handler, Get_Value (Atts, J),
+                  Loc => Get_Location (Atts, J));
             end if;
          end if;
       end loop;
@@ -1927,7 +1948,9 @@ package body Schema.Schema_Readers is
                Group.Name := (NS    => Handler.Target_NS,
                               Local => Get_Value (Atts, J));
             elsif Name.Local = Handler.Ref then
-               Group.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
+               Group.Ref := Resolve_QName
+                 (Handler, Get_Value (Atts, J),
+                  Loc => Get_Location (Atts, J));
             end if;
          end if;
       end loop;
@@ -2211,15 +2234,20 @@ package body Schema.Schema_Readers is
             if Name.Local = Handler.Typ then
                Info.Typ := Resolve_QName
                  (Handler, Get_Value (Atts, J),
-                  NS_If_Empty => Handler.Target_NS);
+                  NS_If_Empty => Handler.Target_NS,
+                  Loc         => Get_Location (Atts, J));
             elsif Name.Local = Handler.Name then
                Info.Name := (NS    => Handler.Target_NS,
                              Local => Get_Value (Atts, J));
             elsif Name.Local = Handler.Ref then
-               Info.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
+               Info.Ref := Resolve_QName
+                 (Handler, Get_Value (Atts, J),
+                  Loc => Get_Location (Atts, J));
             elsif Name.Local = Handler.Substitution_Group then
                Info.Substitution_Group :=
-                 Resolve_QName (Handler, Get_Value (Atts, J));
+                 Resolve_QName
+                   (Handler, Get_Value (Atts, J),
+                    Loc => Get_Location (Atts, J));
             elsif Name.Local = Handler.Default then
                Info.Default := Get_Value (Atts, J);
             elsif Name.Local = Handler.Fixed then
@@ -2601,7 +2629,9 @@ package body Schema.Schema_Readers is
          Name := Get_Name (Atts, J);
          if Name.NS = Empty_String then
             if Name.Local = Handler.Base then
-               Restr.Base := Resolve_QName (Handler, Get_Value (Atts, J));
+               Restr.Base := Resolve_QName
+                 (Handler, Get_Value (Atts, J), Handler.Target_NS,
+                  Get_Location (Atts, J));
             end if;
          end if;
       end loop;
@@ -2618,6 +2648,17 @@ package body Schema.Schema_Readers is
               (Handler,
                "Unsupported type IDREF and IDREFS",
                Except => XML_Not_Implemented'Identity);
+         end if;
+
+         if not Handler.Shared.Types.Table (In_Type).Is_Simple then
+            Details := new Type_Details'
+              (Kind        => Type_Restriction,
+               Min_Occurs  => (False, 1),
+               Max_Occurs  => (False, 1),
+               In_Process  => False,
+               Next        => null,
+               Restriction => Restr);
+            Insert_In_Type (Handler, Details);
          end if;
 
          Push_Context
@@ -2678,10 +2719,11 @@ package body Schema.Schema_Readers is
 
       procedure Add_Union (Str : Byte_Sequence) is
          Sym  : constant Symbol := Find_Symbol (Handler.all, Str);
-         Name : constant Qualified_Name :=
-           Resolve_QName (Handler, Sym, Handler.Target_NS);
          Ctx : constant Context_Access :=
            Handler.Contexts (Handler.Contexts_Last)'Access;
+         Name : constant Qualified_Name :=
+           Resolve_QName (Handler, Sym, Handler.Target_NS,
+                          Loc => Ctx.Union.Loc);
       begin
          Add_Type_Member
            (Handler,
@@ -2753,7 +2795,9 @@ package body Schema.Schema_Readers is
          Name := Get_Name (Atts, J);
          if Name.NS = Empty_String then
             if Name.Local = Handler.Base then
-               Ext.Base := Resolve_QName (Handler, Get_Value (Atts, J));
+               Ext.Base := Resolve_QName
+                 (Handler, Get_Value (Atts, J), Handler.Target_NS,
+                  Loc => Get_Location (Atts, J));
             end if;
          end if;
       end loop;
@@ -2769,6 +2813,17 @@ package body Schema.Schema_Readers is
       then
          if Debug then
             Debug_Output ("Create extension: in simpleContent or simpleType");
+         end if;
+
+         if not Handler.Shared.Types.Table (In_Type).Is_Simple then
+            Details := new Type_Details'
+              (Kind       => Type_Extension,
+               Min_Occurs => (False, 1),
+               Max_Occurs => (False, 1),
+               In_Process => False,
+               Next       => null,
+               Extension  => Ext);
+            Insert_In_Type (Handler, Details);
          end if;
 
          Push_Context
@@ -2808,7 +2863,6 @@ package body Schema.Schema_Readers is
    begin
       if Ctx.Typ = Context_Simple_Extension then
          pragma Assert (Next.Typ = Context_Type_Def);  --  a simple type
-
          Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
       end if;
    end Finish_Extension;
@@ -2835,7 +2889,9 @@ package body Schema.Schema_Readers is
          Name := Get_Name (Atts, J);
          if Name.NS = Empty_String then
             if Name.Local = Handler.Item_Type then
-               Name := Resolve_QName (Handler, Get_Value (Atts, J));
+               Name := Resolve_QName
+                 (Handler, Get_Value (Atts, J), Handler.Target_NS,
+                  Loc => Get_Location (Atts, J));
                Add_Type_Member
                  (Handler,
                   Handler.Contexts (Handler.Contexts_Last).List.List_Items,
@@ -3058,7 +3114,9 @@ package body Schema.Schema_Readers is
                Att.Attr.Descr.Name := (NS    => Handler.Target_NS,
                                        Local => Get_Value (Atts, J));
             elsif Name.Local = Handler.Typ then
-               Att.Attr.Typ  := Resolve_QName (Handler, Get_Value (Atts, J));
+               Att.Attr.Typ  := Resolve_QName
+                 (Handler, Get_Value (Atts, J),
+                  Loc => Get_Location (Atts, J));
 
                if Att.Attr.Typ =
                  (NS => Handler.XML_Schema_URI, Local => Handler.IDREF)
@@ -3084,7 +3142,9 @@ package body Schema.Schema_Readers is
             elsif Name.Local = Handler.Fixed then
                Att.Attr.Descr.Fixed := Get_Value (Atts, J);
             elsif Name.Local = Handler.Ref then
-               Att.Attr.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
+               Att.Attr.Ref := Resolve_QName
+                 (Handler, Get_Value (Atts, J),
+                  Loc => Get_Location (Atts, J));
             elsif Name.Local = Handler.Form then
                Att.Attr.Descr.Form :=
                  Form_Type'Value (Get (Get_Value (Atts, J)).all);

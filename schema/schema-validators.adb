@@ -1326,6 +1326,11 @@ package body Schema.Validators is
                   others => <>);
          Create_Global_Attribute (Reader'Access, Attr, No_Location);
 
+         Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Base),
+                  Form => Qualified,
+                  others => <>);
+         Create_Global_Attribute (Reader'Access, Attr, No_Location);
+
          --  Added support for <ur-Type>
 
          G.NFA.Ur_Type := Create_UR_Type (Process_Lax);
