@@ -34,12 +34,6 @@ private package Schema.Validators.Extensions is
      (G         : XML_Grammar_NS;
       Base      : XML_Type;
       Extension : XML_Validator := null) return XML_Validator;
-   function Create_Extension_Of
-     (G          : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Base       : XML_Type;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return XML_Validator;
    --  Create new extensions of Base, either through a type or a group.
 
 end Schema.Validators.Extensions;

@@ -27,7 +27,8 @@
 <xsd:group name="toplevel">
  <xsd:sequence>
   <xsd:element ref="my_string" />
-  <xsd:element ref="zip" maxOccurs="3" />
+  <xsd:element ref="zip"  maxOccurs="3" />
+  <xsd:element ref="zipb" maxOccurs="3" />
   <xsd:element ref="strs"/>
  </xsd:sequence>
 </xsd:group>
@@ -47,6 +48,18 @@
 </xsd:attributeGroup>
 
 <xsd:complexType name="Tzip">
+ <xsd:complexContent>
+   <xsd:extension base="Tzip_base">
+     <xsd:sequence>
+        <xsd:element name="foo" type="xsd:string"/>
+     </xsd:sequence>
+     <xsd:attributeGroup ref="Tzip_attrs"/>
+   </xsd:extension>
+ </xsd:complexContent>
+</xsd:complexType>
+<xsd:element name="zip" type="Tzip" />
+
+<xsd:complexType name="Tzip_base">
  <xsd:sequence>
   <xsd:choice>
    <xsd:element name="zipcode" type="xsd:string" maxOccurs="2"/>
@@ -54,9 +67,8 @@
   </xsd:choice>
  </xsd:sequence>
  <xsd:attribute name="attr1" type="xsd:string" use="optional"/>
- <xsd:attributeGroup ref="Tzip_attrs"/>
 </xsd:complexType>
-<xsd:element name="zip" type="Tzip" />
+<xsd:element name="zipb" type="Tzip_base" />
 
 <xsd:element name="my_string" type="AdaString" />
 <xsd:complexType name="AdaString">

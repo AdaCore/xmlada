@@ -198,7 +198,6 @@ package body Schema.Schema_Readers is
    procedure Finish_Restriction  (Handler : access Schema_Reader'Class);
    procedure Finish_All          (Handler : access Schema_Reader'Class);
    procedure Finish_Attribute    (Handler : access Schema_Reader'Class);
-   procedure Finish_Extension    (Handler : access Schema_Reader'Class);
    procedure Finish_Union        (Handler : access Schema_Reader'Class);
    procedure Finish_List         (Handler : access Schema_Reader'Class);
    procedure Finish_Group        (Handler : access Schema_Reader'Class);
@@ -502,10 +501,16 @@ package body Schema.Schema_Readers is
          Start      : State;
          Nested_End : out State)
       is
-         S : State;
-         T : Type_Details_Access;
+         S  : State;
+         T  : Type_Details_Access;
          Gr : Group_Descr;
+         Ty : Type_Index;
       begin
+         if Details = null then
+            Nested_End := Start;
+            return;
+         end if;
+
          case Details.Kind is
             when Type_Empty =>
                null;
@@ -541,6 +546,16 @@ package body Schema.Schema_Readers is
                      & """");
                end if;
                Process_Details (Gr.Details, Start, Nested_End);
+               NFA.Repeat
+                 (Start, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
+
+            when Type_Extension =>
+               Ty := Get (Parser.Global_Types, Details.Extension.Base);
+               pragma Assert (Ty /= No_Type_Index);
+               --  Checked in [Create_Nested_For_Type]
+
+               Process_Details (Parser.Types.Table (Ty).Details, Start, S);
+               Process_Details (Details.Extension.Details, S, Nested_End);
 
             when Type_Any =>
                Nested_End := NFA.Add_State (Default_User_Data);
@@ -589,13 +604,30 @@ package body Schema.Schema_Readers is
       ----------------------------
 
       procedure Create_Nested_For_Type (Info : in out Type_Descr) is
-         S : State;
+         S    : State;
          List : Attribute_Validator_List_Access;
+         Ty   : Type_Index;
       begin
          if not Info.Simple_Content then
-            Add_Attributes (List, Info.Attributes);
+            if Info.Details /= null
+              and then Info.Details.Kind = Type_Extension
+            then
+               --  ??? Should check Final and Block, too
+               Ty := Get (Parser.Global_Types, Info.Details.Extension.Base);
+               if Ty = No_Type_Index then
+                  Validation_Error
+                    (Parser, "No type """
+                     & To_QName (Info.Details.Extension.Base) & """");
+               end if;
+
+               Add_Attributes (List, Parser.Types.Table (Ty).Attributes);
+               Add_Attributes (List, Info.Details.Extension.Attributes);
+            else
+               Add_Attributes (List, Info.Attributes);
+            end if;
+
             S := NFA.Add_State
-              ((Type_Name   => Info.Name,
+              ((Type_Name   => Info.Name.Local,
                 Attributes  => List,
                 Simple_Type => null));
             Info.NFA := NFA.Create_Nested (S);
@@ -1052,31 +1084,15 @@ package body Schema.Schema_Readers is
 --
 --           Handler.Contexts.Attr_Group := Lookup_Attribute_Group
 --             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
---           if Debug then
---              Output_Action
---                (Ada_Name (Handler.Contexts)
---                 & " := Lookup_Attribute_Group (Handler.Target_NS, """
---                 & Get (Get_Value (Atts, Name_Index)).all & """);");
---           end if;
 --
 --        elsif Name_Index /= -1 then
 --           Handler.Contexts.Attr_Group := Create_Global_Attribute_Group
 --             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
---           if Debug then
---              Output_Action
---                (Ada_Name (Handler.Contexts)
---                 & " := Create_Global_Attribute_Group (Handler.Target_NS, """
---                 & Get (Get_Value (Atts, Name_Index)).all & """);");
---           end if;
 --
 --        elsif Ref_Index /= -1 then
 --           Lookup_With_NS
 --             (Handler, Get_Value (Atts, Ref_Index),
 --              Handler.Contexts.Attr_Group);
---           if Debug then
---              Output_Action
---                (Ada_Name (Handler.Contexts) & " := Attr_Group");
---           end if;
 --        end if;
 --
 --        if not In_Redefine then
@@ -1089,53 +1105,25 @@ package body Schema.Schema_Readers is
 --                 Add_Attribute_Group
 --                   (Handler.Contexts.Next.Type_Validator,
 --                    Handler, Handler.Contexts.Attr_Group);
---                 if Debug then
---                    Output_Action
---                      ("Add_Attribute_Group ("
---                       & Ada_Name (Handler.Contexts.Next)
---                       & ", " & Ada_Name (Handler.Contexts) & ");");
---                 end if;
 --
 --              when Context_Extension =>
 --                 if Handler.Contexts.Next.Extension = null then
 --                    Handler.Contexts.Next.Extension := Extension_Of
 --                      (Handler.Target_NS,
 --                       Handler.Contexts.Next.Extension_Base, null);
---                    if Debug then
---                       Output_Action
---                         (Ada_Name (Handler.Contexts.Next)
---                          & " := Extension_Of ("
---                          & Ada_Name (Handler.Contexts.Next.Extension_Base)
---                          & ", null);");
---                    end if;
 --                    Handler.Contexts.Next.Extension_Base := No_Type;
 --                 end if;
 --
 --                 Add_Attribute_Group
 --                   (Handler.Contexts.Next.Extension, Handler,
 --                    Handler.Contexts.Attr_Group);
---                 if Debug then
---                    Output_Action
---                      ("Add_Attribute_Group ("
---                       & Ada_Name (Handler.Contexts.Next)
---                       & ", " & Ada_Name (Handler.Contexts) & ");");
---                 end if;
 --
 --              when Context_Attribute_Group =>
 --                 Add_Attribute_Group
 --                   (Handler.Contexts.Next.Attr_Group, Handler,
 --                    Handler.Contexts.Attr_Group);
---                 if Debug then
---                    Output_Action ("Add_Attribute_Group ("
---                            & Ada_Name (Handler.Contexts.Next)
---                            & ", " & Ada_Name (Handler.Contexts) & ");");
---                 end if;
 --
 --              when others =>
---                 if Debug then
---                    Output_Action
---                      ("Context is " & Handler.Contexts.Next.Typ'Img);
---                 end if;
 --                 Raise_Exception
 --                   (XML_Not_Implemented'Identity,
 --                    "Unsupported: ""attributeGroup"" in this context");
@@ -1160,6 +1148,12 @@ package body Schema.Schema_Readers is
                  (Handler.Contexts.Next.Type_Info).Attributes,
                (Kind      => Kind_Group,
                 Group_Ref => Handler.Contexts.Attr_Group.Ref));
+         when Context_Extension =>
+            Append
+              (Handler.Contexts.Next.Extension.Extension.Attributes,
+               (Kind      => Kind_Group,
+                Group_Ref => Handler.Contexts.Attr_Group.Ref));
+
          when others =>
             null;
       end case;
@@ -1732,7 +1726,8 @@ package body Schema.Schema_Readers is
             if Local = Handler.Mixed then
                Info.Mixed := Get_Value_As_Boolean (Atts, J, False);
             elsif Local = Handler.Name then
-               Info.Name := Get_Value (Atts, J);
+               Info.Name := (NS    => Get_Namespace_URI (Handler.Target_NS),
+                             Local => Get_Value (Atts, J));
             elsif Local = Handler.Block then
                Compute_Blocks (Atts, Handler, Info.Block, Is_Set, J);
             elsif Local = Handler.Final then
@@ -1751,11 +1746,7 @@ package body Schema.Schema_Readers is
       Append (Handler.Types, Info);
       case Handler.Contexts.Typ is
          when Context_Schema | Context_Redefine =>
-            Set
-              (Handler.Global_Types,
-               (NS    => Get_Namespace_URI (Handler.Target_NS),
-                Local => Info.Name),
-               Last (Handler.Types));
+            Set (Handler.Global_Types, Info.Name, Last (Handler.Types));
          when others =>
             null;
       end case;
@@ -1771,10 +1762,10 @@ package body Schema.Schema_Readers is
       --  that are redefined
       if Handler.Contexts.Next.Typ = Context_Redefine then
          Handler.Contexts.Redefined_Type := Redefine_Type
-           (Handler.Target_NS, Info.Name);
+           (Handler.Target_NS, Info.Name.Local);
          if Debug then
             Output_Action ("Validator := Redefine_Type (Handler.Target_NS, """
-                    & Get (Info.Name).all & """);");
+                    & To_QName (Info.Name) & """);");
          end if;
       end if;
    end Create_Complex_Type;
@@ -1833,7 +1824,7 @@ package body Schema.Schema_Readers is
       Info : Type_Descr renames Handler.Types.Table (C.Type_Info);
    begin
       Ensure_Type (Handler, C);
-      if Info.Name = No_Symbol then
+      if Info.Name = No_Qualified_Name then
          Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
          if Debug then
             Output_Action
@@ -1841,11 +1832,11 @@ package body Schema.Schema_Readers is
          end if;
       else
          Typ := Create_Global_Type
-           (Handler.Target_NS, Handler, Info.Name, C.Type_Validator);
+           (Handler.Target_NS, Handler, Info.Name.Local, C.Type_Validator);
          if Debug then
             Output_Action (Ada_Name (C)
                     & " := Create_Global_Type (Target_NS, """
-                    & Get (Info.Name).all & """, Validator);");
+                    & To_QName (Info.Name) & """, Validator);");
          end if;
       end if;
 
@@ -1911,9 +1902,9 @@ package body Schema.Schema_Readers is
       Info : Type_Descr
          renames Handler.Types.Table (Handler.Contexts.Type_Info);
    begin
-      if Info.Name /= No_Symbol
+      if Info.Name /= No_Qualified_Name
         and then Base_Index /= -1
-        and then Get_Value (Atts, Base_Index) = Info.Name
+        and then Get_Value (Atts, Base_Index) = Info.Name.Local
       then
          if In_Redefine_Context (Handler.all) then
             Base := Handler.Contexts.Redefined_Type;
@@ -2081,74 +2072,47 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Base_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Base);
-      Base_Name : Qualified_Name;
-      Base : XML_Type;
       Info : Type_Descr
-        renames Handler.Types.Table (Handler.Contexts.Type_Info);
+         renames Handler.Types.Table (Handler.Contexts.Type_Info);
+      Ext   : Extension_Descr;
+      Local : Symbol;
+      Details : Type_Details_Access;
    begin
-      if Base_Index = -1 then
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Base then
+               Ext.Base := Resolve_QName (Handler, Get_Value (Atts, J));
+            end if;
+         end if;
+      end loop;
+
+      if Ext.Base = No_Qualified_Name then
          Validation_Error
            (Handler, "#Attribute ""base"" required for <extensionType>");
       end if;
 
-      if Get_Value (Atts, Base_Index) = Info.Name then
-         if In_Redefine_Context (Handler.all) then
-            Base := Handler.Contexts.Redefined_Type;
-         else
+      if Ext.Base = Info.Name then
+--           if In_Redefine_Context (Handler.all) then
+--              Base := Handler.Contexts.Redefined_Type;
+--           else
             Validation_Error
               (Handler, "#Self-referencing extension not allowed");
-         end if;
-      else
-         Base_Name := Resolve_QName (Handler, Get_Value (Atts, Base_Index));
-         Lookup_With_NS (Handler, Base_Name, Result => Base);
+--           end if;
       end if;
 
+      Details := new Type_Details'
+        (Kind       => Type_Extension,
+         Min_Occurs => 1,
+         Max_Occurs => 1,
+         Next       => null,
+         Extension  => Ext);
+      Insert_In_Type (Handler, Details);
       Handler.Contexts := new Context'
-        (Typ            => Context_Extension,
-         Extension_Base => Base,
-         Extension      => null,
-         Next           => Handler.Contexts);
+        (Typ       => Context_Extension,
+         Extension => Details,
+         Next      => Handler.Contexts);
    end Create_Extension;
-
-   ----------------------
-   -- Finish_Extension --
-   ----------------------
-
-   procedure Finish_Extension (Handler : access Schema_Reader'Class) is
-   begin
-      case Handler.Contexts.Next.Typ is
-         when Context_Type_Def =>
-            if Handler.Contexts.Extension_Base /= No_Type then
-               Handler.Contexts.Next.Type_Validator := Extension_Of
-                 (Handler.Target_NS,
-                  Handler.Contexts.Extension_Base,
-                  Handler.Contexts.Extension);
-               if Debug then
-                  Output_Action
-                    (Ada_Name (Handler.Contexts) & " := Extension_Of ("
-                     & Ada_Name (Handler.Contexts.Extension_Base)
-                     & ", Validator);");
-               end if;
-            else
-               Handler.Contexts.Next.Type_Validator :=
-                 Handler.Contexts.Extension;
-               if Debug then
-                  Output_Action
-                    (Ada_Name (Handler.Contexts) & " := Validator;");
-               end if;
-            end if;
-
-         when others =>
-            if Debug then
-               Output_Action ("Can't handle nested extensions");
-            end if;
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""extension"" in this context");
-      end case;
-   end Finish_Extension;
 
    -----------------
    -- Create_List --
@@ -2229,6 +2193,7 @@ package body Schema.Schema_Readers is
    begin
       case Ctx.Typ is
          when Context_Type_Def =>
+            pragma Assert (Handler.Types.Table (Ctx.Type_Info).Details = null);
             Handler.Types.Table (Ctx.Type_Info).Details := Element;
 
          when Context_Sequence =>
@@ -2241,7 +2206,11 @@ package body Schema.Schema_Readers is
             pragma Assert (Ctx.Group.Details = null);
             Ctx.Group.Details := Element;
 
-         when Context_Extension | Context_Restriction =>
+         when Context_Extension =>
+            pragma Assert (Ctx.Extension.Extension.Details = null);
+            Ctx.Extension.Extension.Details := Element;
+
+         when Context_Restriction =>
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Support for """ & Element.Kind'Img
@@ -2569,27 +2538,11 @@ package body Schema.Schema_Readers is
             null;
 
          when Context_Extension =>
-            --  If there is no extension at this point, there won't be any as
-            --  per the XML schema, since the attributes come last
-            if In_Context.Extension = null then
-               In_Context.Extension := Extension_Of
-                 (Handler.Target_NS, In_Context.Extension_Base, null);
-               if Debug then
-                  Output_Action (Ada_Name (In_Context) & " := Extension_Of ("
-                          & Ada_Name (In_Context.Extension_Base)
-                          & ", null);");
-               end if;
-               In_Context.Extension_Base := No_Type;
-            end if;
-
---              Append (In_Context.Extension,
---                      (Kind     => Kind_Attribute,
---                       Attr     => Attribute,
---                       Is_Local => Is_Local));
---              if Debug then
---             Output_Action ("Add_Attribute (" & Ada_Name (In_Context) & ", "
---                         & Attribute_Name & ");");
---              end if;
+            Append
+              (In_Context.Extension.Extension.Attributes,
+               (Kind     => Kind_Attribute,
+                Attr     => Attribute,
+                Is_Local => Is_Local));
 
          when Context_Restriction =>
             null;
@@ -3063,7 +3016,7 @@ package body Schema.Schema_Readers is
          Finish_Restriction (H);
 
       elsif Local_Name = Handler.Extension then
-         Finish_Extension (H);
+         null;
 
       elsif Local_Name = Handler.Attribute then
          Finish_Attribute (H);
@@ -3205,6 +3158,7 @@ package body Schema.Schema_Readers is
             when Type_Sequence  => Free (Self.First_In_Seq);
             when Type_Choice    => Free (Self.First_In_Choice);
             when Type_Group     => Free (Self.Group.Details);
+            when Type_Extension => Free (Self.Extension.Details);
          end case;
 
          Unchecked_Free (Self);

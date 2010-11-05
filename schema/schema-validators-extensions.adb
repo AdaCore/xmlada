@@ -263,31 +263,6 @@ package body Schema.Validators.Extensions is
       return XML_Validator (Result);
    end Create_Extension_Of;
 
-   -------------------------
-   -- Create_Extension_Of --
-   -------------------------
-
-   function Create_Extension_Of
-     (G          : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Base       : XML_Type;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return XML_Validator
-   is
-      pragma Unreferenced (Min_Occurs, Max_Occurs);
-      Result : constant Extension_Type := new Extension_XML_Validator;
-   begin
-      if Get_Final (Base)(Final_Extension) then
-         Validation_Error
-           (Reader, "#Type """ & To_QName (Base) & """ forbids extensions");
-      end if;
-
-      Register (G, Result);
-      Register (G, Base);
-      Result.Base      := Base;
-      return XML_Validator (Result);
-   end Create_Extension_Of;
-
    ---------------------
    -- Is_Extension_Of --
    ---------------------

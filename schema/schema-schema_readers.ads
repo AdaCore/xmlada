@@ -68,7 +68,7 @@ private
    No_Type_Index : constant Type_Index := -1;
 
    type Type_Kind is (Type_Empty, Type_Sequence, Type_Choice, Type_Element,
-                      Type_Any, Type_Group);
+                      Type_Any, Type_Group, Type_Extension);
 
    type Type_Details;
    type Type_Details_Access is access all Type_Details;
@@ -117,6 +117,12 @@ private
    end record;
    No_AttrGroup_Descr : constant AttrGroup_Descr := (others => <>);
 
+   type Extension_Descr is record
+      Base           : Qualified_Name := No_Qualified_Name;
+      Details        : Type_Details_Access;
+      Attributes     : Attr_Array_Access;
+   end record;
+
    type Type_Details (Kind : Type_Kind := Type_Empty) is record
       Min_Occurs, Max_Occurs : Integer;
       Next : Type_Details_Access;
@@ -127,11 +133,12 @@ private
          when Type_Element   => Element         : Element_Descr;
          when Type_Any       => Any             : Any_Descr;
          when Type_Group     => Group           : Group_Descr;
+         when Type_Extension => Extension       : Extension_Descr;
       end case;
    end record;
 
    type Type_Descr is record
-      Name           : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Name           : Qualified_Name := No_Qualified_Name;
       Block          : Block_Status := No_Block;
       Final          : Final_Status := (others => False);
       Mixed          : Boolean := False;
@@ -170,16 +177,18 @@ private
       Next        : Context_Access;
 
       case Typ is
-         when Context_Type_Def =>
+         when Context_Type_Def        =>
             Type_Info      : Type_Index;
             Type_Validator : Schema.Validators.XML_Validator;
             Redefined_Type : Schema.Validators.XML_Type; --  <redefine>
-         when Context_Element  => Element        : Element_Descr;
-         when Context_Sequence => Seq            : Type_Details_Access;
-         when Context_Choice   => Choice         : Type_Details_Access;
+         when Context_Element         => Element    : Element_Descr;
+         when Context_Sequence        => Seq        : Type_Details_Access;
+         when Context_Choice          => Choice     : Type_Details_Access;
          when Context_Attribute_Group => Attr_Group : AttrGroup_Descr;
-         when Context_Schema | Context_Redefine => null;
-         when Context_Group    => Group          : Group_Descr;
+         when Context_Schema          => null;
+         when Context_Redefine        => null;
+         when Context_Group           => Group      : Group_Descr;
+         when Context_Extension       => Extension  : Type_Details_Access;
 
          when Context_All =>
             null;
@@ -188,11 +197,6 @@ private
             Restriction : Schema.Validators.XML_Validator;
             Restricted  : Schema.Validators.XML_Validator; --  result
             Restriction_Base : Schema.Validators.XML_Type;
-         when Context_Extension =>
-            Extension_Base : Schema.Validators.XML_Type;
-            Extension      : Schema.Validators.XML_Validator;
-            --  Extension_Base set to null if Extension is the result of the
-            --  call to Extension_Of already
          when Context_Union =>
             Union : Schema.Validators.XML_Validator;
          when Context_List =>
