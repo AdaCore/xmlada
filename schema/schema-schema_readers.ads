@@ -95,6 +95,7 @@ private
       Name           : Qualified_Name := No_Qualified_Name;
       Ref            : Qualified_Name := No_Qualified_Name;
       Details        : Type_Details_Access;
+      Loc            : Sax.Locators.Location;
    end record;
    No_Group_Descr : constant Group_Descr := (others => <>);
 
@@ -136,9 +137,15 @@ private
       Base           : Qualified_Name := No_Qualified_Name;
       Details        : Type_Details_Access;
       Attributes     : Attr_Array_Access;
+      Loc            : Sax.Locators.Location;
    end record;
 
    type Type_Details (Kind : Type_Kind := Type_Empty) is record
+      In_Process : Boolean := False;
+      --  Set to true while we are creating the NFA for this details. This is
+      --  used to prevent infinite recursion, for instance when an extension
+      --  indirectly uses itself as a base.
+
       Min_Occurs, Max_Occurs : Integer;
       Next : Type_Details_Access;
       case Kind is
@@ -170,6 +177,10 @@ private
                              Simple_Type_List);
    type Internal_Simple_Type_Descr (Kind : Simple_Type_Kind := Simple_Type)
    is record
+      In_Process : Boolean := False;
+      --  Used to prevent infinite recursion when for instance a union's member
+      --  is derived from this union.
+
       Loc : Sax.Locators.Location := Sax.Locators.No_Location;
       case Kind is
          when Simple_Type             => null;

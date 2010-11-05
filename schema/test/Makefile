@@ -13,7 +13,8 @@ new:
 	-@./testsuite > testsuite.tmp.out 2>&1
 	-@tr -d '\r' < testsuite.tmp.out > testsuite.tmp
 	-@diff -c testsuite.out testsuite.tmp
-	-@./schematest --xsd10 > schematest.tmp.out
+	#-@./schematest --xsd10 > schematest.tmp.out
+	-@./schematest --xsd10 -f
 	-@tr -d '\r' < schematest.tmp.out > schematest.tmp
 	-@diff -c schematest.out schematest.tmp
 force:

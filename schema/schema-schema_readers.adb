@@ -373,8 +373,9 @@ package body Schema.Schema_Readers is
       --  Search for the simpleType [Name]
 
       procedure Add_Attributes
-        (List  : in out Attribute_Validator_List;
-         Attrs : Attr_Array_Access);
+        (List             : in out Attribute_Validator_List;
+         Attrs            : Attr_Array_Access;
+         Processed_Groups : in out AttrGroup_HTables.Instance);
       --  Create List from the list of attributes or attribute groups in
       --  [Attrs].
 
@@ -643,6 +644,8 @@ package body Schema.Schema_Readers is
             return;
          end if;
 
+         Details.In_Process := True;
+
          case Details.Kind is
             when Type_Empty =>
                null;
@@ -705,9 +708,18 @@ package body Schema.Schema_Readers is
                Gr := Get (Parser.Shared.Global_Groups, Details.Group.Ref);
                if Gr = No_Group_Descr then
                   Validation_Error
-                    (Parser, "No group """ & To_QName (Details.Group.Ref)
-                     & """");
+                    (Parser,
+                     "No group """ & To_QName (Details.Group.Ref) & '"',
+                     Details.Group.Loc);
+
+               elsif Gr.Details.In_Process then
+                  Validation_Error
+                    (Parser,
+                     "Circular group reference for "
+                     & To_QName (Details.Group.Ref),
+                     Details.Group.Loc);
                end if;
+
                Process_Details (Gr.Details, Start, From, Nested_End);
 
             when Type_Extension =>
@@ -726,6 +738,14 @@ package body Schema.Schema_Readers is
                   if Ty.Simple_Content = No_Simple_Type_Index then
                      if TyIndex /= No_Type_Index then
                         --  We have all the details, and just have to copy them
+                        if Shared.Types.Table (TyIndex).Details.In_Process then
+                           Validation_Error
+                             (Parser,
+                              "Circular inheritance of type "
+                              & To_QName (Details.Extension.Base),
+                              Details.Extension.Loc);
+                        end if;
+
                         Process_Details
                           (Shared.Types.Table (TyIndex).Details,
                            Start, From, S);
@@ -747,17 +767,6 @@ package body Schema.Schema_Readers is
                      Nested_End := Start;
                   end if;
                end;
---
---                 Ty := Get (Types, Details.Extension.Base);
---                 pragma Assert (Ty /= No_Type_Index,
---                                "Base not found: "
---                                & To_QName (Details.Extension.Base));
---                 --  Checked in [Create_Nested_For_Type]
---
---                 Process_Details
---                   (Shared.Types.Table (Ty).Details, Start, From, S);
---                 Process_Details
---                   (Details.Extension.Details, Start, S, Nested_End);
 
             when Type_Restriction =>
                declare
@@ -774,6 +783,17 @@ package body Schema.Schema_Readers is
                      S     => S);
 
                   if Ty.Simple_Content = No_Simple_Type_Index then
+
+                     if TyIndex /= No_Type_Index
+                       and then Shared.Types.Table (TyIndex).Details.In_Process
+                     then
+                        Validation_Error
+                          (Parser,
+                           "Circular inheritance of type "
+                           & To_QName (Details.Restriction.Base),
+                           Details.Restriction.Loc);
+                     end if;
+
                      Process_Details
                        (Details.Restriction.Details, Start, From, Nested_End);
                   else
@@ -791,6 +811,8 @@ package body Schema.Schema_Readers is
          end case;
 
          NFA.Repeat (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
+
+         Details.In_Process := False;
       end Process_Details;
 
       ----------------------------
@@ -826,7 +848,8 @@ package body Schema.Schema_Readers is
 
       procedure Add_Attributes
         (List  : in out Attribute_Validator_List;
-         Attrs : Attr_Array_Access)
+         Attrs : Attr_Array_Access;
+         Processed_Groups : in out AttrGroup_HTables.Instance)
       is
          Gr   : AttrGroup_Descr;
          TRef : Global_Reference;
@@ -844,8 +867,18 @@ package body Schema.Schema_Readers is
                            "Reference to undefined attributeGroup: "
                            & To_QName (Attrs (A).Group_Ref),
                            Attrs (A).Loc);
+
+                     elsif Get (Processed_Groups, Gr.Name) /=
+                       No_AttrGroup_Descr
+                     then
+                        Validation_Error
+                          (Parser,
+                           "attributeGroup """ & To_QName (Attrs (A).Group_Ref)
+                           & """ has circular reference",
+                           Attrs (A).Loc);
                      else
-                        Add_Attributes (List, Gr.Attributes);
+                        Set (Processed_Groups, Gr.Name, Gr);
+                        Add_Attributes (List, Gr.Attributes, Processed_Groups);
                      end if;
 
                   when Kind_Attribute =>
@@ -885,6 +918,13 @@ package body Schema.Schema_Readers is
       begin
          pragma Assert (Info.Is_Simple);
 
+         if Info.Simple.In_Process then
+            Validation_Error
+              (Parser,
+               "Circular inheritance of type " & To_QName (Info.Descr.Name),
+               Info.Loc);
+         end if;
+
          if Data.Descr.Simple_Content /= No_Simple_Type_Index then
             if Debug then
                Debug_Output ("Create_Simple_Type: already done "
@@ -898,6 +938,8 @@ package body Schema.Schema_Readers is
                           & To_QName (Info.Descr.Name)
                           & " " & Info.Simple.Kind'Img);
          end if;
+
+         Info.Simple.In_Process := True;
 
          case Info.Simple.Kind is
             when Simple_Type =>
@@ -987,6 +1029,8 @@ package body Schema.Schema_Readers is
                       (Parser.Grammar, Info.Descr.Name, Base);
                end;
          end case;
+
+         Info.Simple.In_Process := False;
       end Create_Simple_Type;
 
       ----------------------------
@@ -1038,6 +1082,11 @@ package body Schema.Schema_Readers is
          S1    : State;
          List  : Attribute_Validator_List := Empty_Attribute_List;
 
+         Processed_Groups : AttrGroup_HTables.Instance;
+         --  ??? If this table is here, we can't have an <extension> with the
+         --  same attributeGroup as its base type. Maybe this should be local
+         --  to Recursive_Add_Attributes instead
+
          procedure Recursive_Add_Attributes (Info : Internal_Type_Descr);
          procedure Recursive_Add_Attributes (Info : Internal_Type_Descr) is
             Ty    : Global_Reference;
@@ -1049,7 +1098,7 @@ package body Schema.Schema_Readers is
 
             elsif Info.Details = null then
                --  No character data is allowed, but we might have attributes
-               Add_Attributes (List, Info.Attributes);
+               Add_Attributes (List, Info.Attributes, Processed_Groups);
 
             elsif Info.Details.Kind = Type_Extension then
                Ty := Get (Ref.all, (Info.Details.Extension.Base, Ref_Type));
@@ -1074,7 +1123,8 @@ package body Schema.Schema_Readers is
                      List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
                end if;
 
-               Add_Attributes (List, Info.Details.Extension.Attributes);
+               Add_Attributes (List, Info.Details.Extension.Attributes,
+                               Processed_Groups);
 
             elsif Info.Details.Kind = Type_Restriction then
                --  ??? Should check Final and Block, too
@@ -1095,10 +1145,11 @@ package body Schema.Schema_Readers is
                      List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
                end if;
 
-               Add_Attributes (List, Info.Details.Restriction.Attributes);
+               Add_Attributes (List, Info.Details.Restriction.Attributes,
+                               Processed_Groups);
 
             else
-               Add_Attributes (List, Info.Attributes);
+               Add_Attributes (List, Info.Attributes, Processed_Groups);
             end if;
          end Recursive_Add_Attributes;
 
@@ -1111,13 +1162,20 @@ package body Schema.Schema_Readers is
                              & To_QName (Info.Descr.Name));
             end if;
 
-            Recursive_Add_Attributes (Info);
-            NFA.Get_Data (Info.S).Descr.Attributes := List;
             Process_Details
               (Details    => Info.Details,
                Start      => Info.S,
                From       => Info.S,
                Nested_End => S1);
+
+            --  Add the attributes only after we did the details, so that we
+            --  know there is no infinite recursion between the base types of
+            --  extensions and restrictions
+
+            Recursive_Add_Attributes (Info);
+            Reset (Processed_Groups);
+            NFA.Get_Data (Info.S).Descr.Attributes := List;
+
             NFA.Add_Transition
               (S1, Final_State, (Kind => Transition_Close));
          end if;
@@ -1549,6 +1607,8 @@ package body Schema.Schema_Readers is
       Local   : Symbol;
       Details : Type_Details_Access;
    begin
+      Group.Loc := Get_Location (Handler.Locator);
+
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
@@ -1572,6 +1632,7 @@ package body Schema.Schema_Readers is
               (Kind       => Type_Group,
                Min_Occurs => Min_Occurs,
                Max_Occurs => Max_Occurs,
+               In_Process => False,
                Next       => null,
                Group      => Group);
             Insert_In_Type (Handler, Details);
@@ -2020,6 +2081,7 @@ package body Schema.Schema_Readers is
            (Kind         => Type_Element,
             Min_Occurs   => Min_Occurs,
             Max_Occurs   => Max_Occurs,
+            In_Process   => False,
             Next         => null,
             Element      => Info);
          Insert_In_Type (Handler, Details);
@@ -2371,6 +2433,7 @@ package body Schema.Schema_Readers is
       Local      : Symbol;
       In_Type    : constant Type_Index := Ctx.Type_Info;
    begin
+      Restr.Loc := Get_Location (Handler.Locator);
       Restr.Base := (NS    => Handler.XML_Schema_URI,
                      Local => Handler.Any_Simple_Type);
 
@@ -2411,6 +2474,7 @@ package body Schema.Schema_Readers is
            (Handler,
             (Typ         => Context_Simple_Restriction,
              Simple      => (Kind             => Simple_Type_Restriction,
+                             In_Process       => False,
                              Restriction_Base => Restr.Base,
                              Facets      => No_Facets,
                              Loc         => Get_Location (Handler.Locator))));
@@ -2420,6 +2484,7 @@ package body Schema.Schema_Readers is
            (Kind        => Type_Restriction,
             Min_Occurs  => 1,
             Max_Occurs  => 1,
+            In_Process  => False,
             Next        => null,
             Restriction => Restr);
          Insert_In_Type (Handler, Details);
@@ -2479,6 +2544,7 @@ package body Schema.Schema_Readers is
         (Handler,
          (Typ   => Context_Union,
           Union => (Kind             => Simple_Type_Union,
+                    In_Process       => False,
                     Loc              => Get_Location (Handler.Locator),
                     Union_Items      => (others => No_Type_Member))));
 
@@ -2558,6 +2624,7 @@ package body Schema.Schema_Readers is
         (Kind       => Type_Extension,
          Min_Occurs => 1,
          Max_Occurs => 1,
+         In_Process => False,
          Next       => null,
          Extension  => Ext);
       Insert_In_Type (Handler, Details);
@@ -2582,6 +2649,7 @@ package body Schema.Schema_Readers is
         (Handler,
          (Typ   => Context_List,
           List  => (Kind       => Simple_Type_List,
+                    In_Process => False,
                     Loc        => Get_Location (Handler.Locator),
                     List_Items => (others => No_Type_Member))));
 
@@ -2722,6 +2790,7 @@ package body Schema.Schema_Readers is
         (Kind            => Type_Choice,
          Min_Occurs      => Min_Occurs,
          Max_Occurs      => Max_Occurs,
+         In_Process      => False,
          Next            => null,
          First_In_Choice => null);
       Insert_In_Type (Handler, Choice);
@@ -2747,6 +2816,7 @@ package body Schema.Schema_Readers is
         (Kind         => Type_Sequence,
          Min_Occurs   => Min_Occurs,
          Max_Occurs   => Max_Occurs,
+         In_Process   => False,
          Next         => null,
          First_In_Seq => null);
       Insert_In_Type (Handler, Seq);
@@ -3086,6 +3156,7 @@ package body Schema.Schema_Readers is
         (Kind       => Type_Any,
          Min_Occurs => Min_Occurs,
          Max_Occurs => Max_Occurs,
+         In_Process => False,
          Next       => null,
          Any        => Any);
       Insert_In_Type (Handler, Details);
@@ -3107,6 +3178,7 @@ package body Schema.Schema_Readers is
         (Kind         => Type_All,
          Min_Occurs   => Min_Occurs,
          Max_Occurs   => Max_Occurs,
+         In_Process   => False,
          Next         => null,
          First_In_All => null);
       Insert_In_Type (Handler, Details);
