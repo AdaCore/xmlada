@@ -90,7 +90,9 @@ procedure TestState is
       end case;
    end Image;
 
-   function State_Image (S : State; Data : State_User_Data) return String;
+   function State_Image
+     (Self : access NFA'Class; S : State; Data : State_User_Data)
+      return String;
    package PP is new Character_Machines.Pretty_Printers (State_Image);
    use PP;
 
@@ -124,8 +126,11 @@ procedure TestState is
    -- State_Image --
    -----------------
 
-   function State_Image (S : State; Data : State_User_Data) return String is
-      pragma Unreferenced (S);
+   function State_Image
+     (Self : access NFA'Class; S : State; Data : State_User_Data)
+      return String
+   is
+      pragma Unreferenced (Self, S);
    begin
       if Data = 0 then
          return "";

@@ -63,8 +63,8 @@ package Schema.Schema_Readers is
 private
    use Schema.Validators;
 
-   type Type_Index is new Integer;
-   No_Type_Index : constant Type_Index := -1;
+   type Internal_Type_Index is new Integer;
+   No_Internal_Type_Index : constant Internal_Type_Index := -1;
 
    type Type_Kind is (Type_Empty, Type_Sequence, Type_Choice, Type_Element,
                       Type_Any, Type_Group, Type_Extension, Type_Restriction,
@@ -76,7 +76,7 @@ private
    type Element_Descr is record
       Name               : Qualified_Name     := No_Qualified_Name;
       Typ                : Qualified_Name     := No_Qualified_Name;
-      Local_Type         : Type_Index         := No_Type_Index;
+      Local_Type         : Internal_Type_Index := No_Internal_Type_Index;
       Ref                : Qualified_Name     := No_Qualified_Name;
       Form               : Form_Type          := Unqualified;
       Default            : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
@@ -102,10 +102,10 @@ private
    No_Group_Descr : constant Group_Descr := (others => <>);
 
    type Internal_Attribute_Descr is record
-      Descr        : Attribute_Descr    := No_Attribute_Descr;
-      Typ          : Qualified_Name     := No_Qualified_Name;
-      Local_Type   : Type_Index         := No_Type_Index;
-      Ref          : Qualified_Name     := No_Qualified_Name;
+      Descr        : Attribute_Descr     := No_Attribute_Descr;
+      Typ          : Qualified_Name      := No_Qualified_Name;
+      Local_Type   : Internal_Type_Index := No_Internal_Type_Index;
+      Ref          : Qualified_Name      := No_Qualified_Name;
    end record;
    No_Internal_Attribute : constant Internal_Attribute_Descr := (others => <>);
 
@@ -164,10 +164,11 @@ private
    end record;
 
    type Type_Member is record
-      Name  : Qualified_Name := No_Qualified_Name;
-      Local : Type_Index := No_Type_Index;
+      Name  : Qualified_Name      := No_Qualified_Name;
+      Local : Internal_Type_Index := No_Internal_Type_Index;
    end record;
-   No_Type_Member : constant Type_Member := (No_Qualified_Name, No_Type_Index);
+   No_Type_Member : constant Type_Member :=
+     (No_Qualified_Name, No_Internal_Type_Index);
    --  Only one of the two fields is set. These are the possible members of a
    --  union or list.
 
@@ -208,8 +209,8 @@ private
    subtype List_Type_Descr  is Internal_Simple_Type_Descr (Simple_Type_List);
 
    type Internal_Type_Descr (Is_Simple : Boolean := False) is record
-      Descr      : Type_Descr;
-      S          : Schema_State_Machines.State;
+      Properties : Type_Descr;   --  Properties of the type, read in XSD
+      In_NFA     : Type_Index;   --  As created in the NFA
       Loc        : Sax.Locators.Location := Sax.Locators.No_Location;
 
       case Is_Simple is
@@ -255,7 +256,7 @@ private
 
    type Context (Typ : Context_Type := Context_Schema) is record
       case Typ is
-         when Context_Type_Def        => Type_Info   : Type_Index;
+         when Context_Type_Def        => Type_Info   : Internal_Type_Index;
          when Context_Element         =>
             Element      : Element_Descr;
             Elem_Details : Type_Details_Access;
@@ -281,7 +282,7 @@ private
 
    package Type_Tables is new GNAT.Dynamic_Tables
      (Table_Component_Type => Internal_Type_Descr,
-      Table_Index_Type     => Type_Index,
+      Table_Index_Type     => Internal_Type_Index,
       Table_Low_Bound      => 1,
       Table_Initial        => 200,
       Table_Increment      => 100);

@@ -232,26 +232,36 @@ package body Schema.Readers is
 --        Typ, Typ_For_Mixed : XML_Type;
 --        Val2               : Cst_Byte_Sequence_Access;
 --        S1, S2             : Symbol;
-         Data : constant State_Data_Access := Get_Data (Self, S);
+         Descr : constant access Type_Descr := Get_Type_Descr (Self, S);
       begin
-         if Data.Descr.Simple_Content /= No_Simple_Type_Index then
-            if Debug then
+         if Descr.Simple_Content /= No_Simple_Type_Index then
+            if Debug and not Is_Empty then
                Debug_Output
                  ("Validate characters ("
-                  & To_QName (Data.Descr.Name) & "): "
+                  & To_QName (Descr.Name) & "): "
                   & Handler.Characters (1 .. Handler.Characters_Count) & "--");
             end if;
 
-            Validate_Simple_Type
-              (Handler, Data.Descr.Simple_Content,
-               Handler.Characters (1 .. Handler.Characters_Count),
-               Empty_Element => Is_Empty,
-               Loc           => Loc);
+            if Handler.Characters_Count = 0 then
+               Validate_Simple_Type
+                 (Handler, Descr.Simple_Content,
+                  "",
+                  Empty_Element => Is_Empty,
+                  Loc           => Loc);
+            else
+               Validate_Simple_Type
+                 (Handler, Descr.Simple_Content,
+                  Handler.Characters (1 .. Handler.Characters_Count),
+                  Empty_Element => Is_Empty,
+                  Loc           => Loc);
+            end if;
 
-         elsif not Data.Descr.Mixed then
+         elsif not Descr.Mixed
+           and then not Is_Empty
+         then
             if Debug then
                Debug_Output ("No character data for "
-                             & To_QName (Data.Descr.Name) & S'Img);
+                             & To_QName (Descr.Name) & S'Img);
                Debug_Output
                  ("Got "
                   & Handler.Characters
@@ -403,11 +413,11 @@ package body Schema.Readers is
       end Callback;
 
       procedure Find_Whitespace (Self : access NFA'Class; S : State) is
+         Descr : constant access Type_Descr := Get_Type_Descr (Self, S);
       begin
-         if Self.Get_Data (S).Descr.Simple_Content /= No_Simple_Type_Index then
+         if Descr.Simple_Content /= No_Simple_Type_Index then
             Whitespace := Get_Simple_Type
-              (Get_NFA (Handler.Grammar),
-               Self.Get_Data (S).Descr.Simple_Content).Whitespace;
+              (Get_NFA (Handler.Grammar), Descr.Simple_Content).Whitespace;
          end if;
       end Find_Whitespace;
 
@@ -421,18 +431,13 @@ package body Schema.Readers is
            (Handler.Matcher, Dump_Compact, "Validate_Current_Char: ");
       end if;
 
-      --  If we were in the middle of a series of Characters callback, we need
-      --  to process them now
-
-      if Handler.Characters_Count = 0 then
-         return;
+      if Handler.Characters_Count /= 0 then
+         Find_Whitespace_Type (Handler.Matcher,
+                               Ignore_If_Nested => True,
+                               Ignore_If_Default => True);
+         Normalize_Whitespace
+           (Whitespace, Handler.Characters.all, Handler.Characters_Count);
       end if;
-
-      Find_Whitespace_Type (Handler.Matcher,
-                            Ignore_If_Nested => True,
-                            Ignore_If_Default => True);
-      Normalize_Whitespace
-        (Whitespace, Handler.Characters.all, Handler.Characters_Count);
 
       Is_Empty := Handler.Characters_Count = 0;
       For_Each_Active (Handler.Matcher,
@@ -572,7 +577,7 @@ package body Schema.Readers is
          --  the nested NFA.
 
          Data2 := Self.Get_Data (S);
-         if Data2.all = Default_User_Data then
+         if Data2.all = No_Type_Index then
             return;  --  This is a dummy node, ignore
          end if;
 
@@ -581,7 +586,8 @@ package body Schema.Readers is
          end if;
 
          Validate_Attributes
-           (Get_NFA (H.Grammar), Data2.Descr, H, Atts,
+           (Get_NFA (H.Grammar),
+            Get_Type_Descr (Schema_NFA_Access (Self), Data2.all), H, Atts,
             Nillable  => False,  --  Is_Nillable (Element),
             Is_Nil    => Is_Nil);
       end Validate_Attributes_Cb;
@@ -856,10 +862,11 @@ package body Schema.Readers is
 
       procedure Callback (Self : access NFA'Class; S : State);
       procedure Callback (Self : access NFA'Class; S : State) is
+         Descr : constant access Type_Descr := Get_Type_Descr (Self, S);
       begin
-         if Self.Get_Data (S).Descr.Simple_Content /= No_Simple_Type_Index then
+         if Descr.Simple_Content /= No_Simple_Type_Index then
             Store := True;
-         elsif Self.Get_Data (S).Descr.Mixed then
+         elsif Descr.Mixed then
             Store := True;
          end if;
       end Callback;

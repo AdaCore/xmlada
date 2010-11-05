@@ -144,8 +144,10 @@ package Schema.Validators is
             when Transition_Symbol =>
                Name : Qualified_Name;
                Form : Form_Type := Qualified;
-            when Transition_Close  => null;
-            when Transition_Any    => Any : Any_Descr;
+            when Transition_Close  =>
+               null;
+            when Transition_Any    =>
+               Any : Any_Descr;
          end case;
       end record;
 
@@ -166,21 +168,13 @@ package Schema.Validators is
    type Final_Status is array (Final_Type) of Boolean;
    pragma Pack (Final_Status);
 
-   type Type_Descr is record
-      Name           : Qualified_Name := No_Qualified_Name;
-      Attributes     : Attribute_Validator_List := Empty_Attribute_List;
-      Block          : Block_Status := No_Block;
-      Final          : Final_Status := (others => False);
-
-      Simple_Content : Schema.Simple_Types.Simple_Type_Index :=
-        Schema.Simple_Types.No_Simple_Type_Index;
-      --  set if we have a simple type
-
-      Mixed          : Boolean := False;
-      Is_Abstract    : Boolean := False;
-   end record;
-   pragma Pack (Type_Descr);
-   No_Type_Descr : constant Type_Descr := (others => <>);
+   type Type_Index is new Natural;
+   No_Type_Index : constant Type_Index := 0;
+   --  Index into a global table that contains the [Type_Descr].
+   --  Going through a table instead of storing directly a [Type_Descr] (for
+   --  instance in NFA states) reduces memory usage, but more importantly
+   --  means that we can modify the type even once the NFA has been created,
+   --  and still impact all states that reference that type.
 
    type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
 
@@ -199,13 +193,6 @@ package Schema.Validators is
    pragma Pack (Attribute_Descr);
    No_Attribute_Descr : constant Attribute_Descr := (others => <>);
 
-   type State_User_Data is record
-      Descr       : Type_Descr;
-   end record;
-   Default_User_Data : constant State_User_Data := (Descr => No_Type_Descr);
-   --  All types (complexType or simpleType) are associated with a state in the
-   --  NFA, which is used to hold the properties of that type.
-
    function Image (Trans : Transition_Descr) return String;
    --  Needed for the instantiation of Sax.State_Machines
 
@@ -213,14 +200,36 @@ package Schema.Validators is
       (Symbol              => Transition_Event,
        Transition_Symbol   => Transition_Descr,
        Image               => Image,
-       State_User_Data     => State_User_Data,
-       Default_Data        => Default_User_Data,
+       State_User_Data     => Type_Index,
+       Default_Data        => No_Type_Index,
        Default_State_Count => 200,       --  XSD metaschema takes 904 states
        Default_Transition_Count => 200); --  XSD metaschema takes 1096
    use Schema_State_Machines;
 
+   type Type_Descr is record
+      Name           : Qualified_Name := No_Qualified_Name;
+      Attributes     : Attribute_Validator_List := Empty_Attribute_List;
+      Block          : Block_Status := No_Block;
+      Final          : Final_Status := (others => False);
+
+      Simple_Content : Schema.Simple_Types.Simple_Type_Index :=
+        Schema.Simple_Types.No_Simple_Type_Index;
+      --  set if we have a simpleType or simpleContent
+
+      Mixed          : Boolean := False;
+      Is_Abstract    : Boolean := False;
+
+      Complex_Content : Schema_State_Machines.State :=
+        Schema_State_Machines.No_State;
+      --  The start of the nested NFA for a complexType
+   end record;
+   pragma Pack (Type_Descr);
+   No_Type_Descr : constant Type_Descr := (others => <>);
+
    function Image
-     (S : Schema_State_Machines.State; Data : State_User_Data) return String;
+     (Self : access NFA'Class;
+      S    : Schema_State_Machines.State;
+      Data : Type_Index) return String;
    --  Needed for the instantiation of Pretty_Printers
 
    package Schema_State_Machines_PP
@@ -238,14 +247,14 @@ package Schema.Validators is
       Name : Qualified_Name;
       case Kind is
          when Ref_Element   => Element    : State;
-         when Ref_Type      => Typ        : State;  --  Start of nested NFA
+         when Ref_Type      => Typ        : Type_Index;
          when Ref_Group     => Gr_Start, Gr_End : State;
          when Ref_Attribute | Ref_AttrGroup =>
             Attributes : Attribute_Validator_List;
       end case;
    end record;
    No_Global_Reference : constant Global_Reference :=
-     (Ref_Type, Name => No_Qualified_Name, Typ => No_State);
+     (Ref_Type, Name => No_Qualified_Name, Typ => No_Type_Index);
    --  The global elements in a grammar that can be referenced from another
    --  grammar (or from an XML file).
 
@@ -278,7 +287,17 @@ package Schema.Validators is
      (NFA    : access Schema_NFA'Class;
       Simple : Schema.Simple_Types.Simple_Type_Index)
       return Schema.Simple_Types.Simple_Type_Descr;
+   pragma Inline (Get_Simple_Type);
    --  Return the simple type corresponding to the index
+
+   function Get_Type_Descr
+     (NFA   : access Schema_NFA'Class;
+      Index : Type_Index) return access Type_Descr;
+   function Get_Type_Descr
+     (Self  : access NFA'Class;
+      S     : State) return access Type_Descr;
+   pragma Inline (Get_Type_Descr);
+   --  Return the type description at that index
 
    ---------------
    -- ID_Htable --
@@ -524,7 +543,7 @@ package Schema.Validators is
 
    procedure Validate_Attributes
      (NFA       : access Schema_NFA'Class;
-      Typ       : Type_Descr;
+      Typ       : access Type_Descr;
       Reader    : access Abstract_Validation_Reader'Class;
       Atts      : in out Sax.Readers.Sax_Attribute_List;
       Nillable  : Boolean;
@@ -580,13 +599,16 @@ package Schema.Validators is
    procedure Create_Global_Attribute
      (NFA  : access Schema_NFA'Class;
       Attr : Attribute_Descr);
-   function Create_Global_Simple_Type
+   function Create_Simple_Type
      (NFA   : access Schema_NFA'Class;
-      Name  : Qualified_Name;
       Descr : Schema.Simple_Types.Simple_Type_Descr)
       return Schema.Simple_Types.Simple_Type_Index;
+   function Create_Type
+     (NFA   : access Schema_NFA'Class;
+      Descr : Type_Descr) return Type_Index;
    --  Register a global attribute or type.
-   --  [Name] can be No_Qualified_Name
+   --  [Name] or [Descr.Name] can be [No_Qualified_Name], in which case a local
+   --  type is created (ie not registered in the list of global elements).
 
    procedure Add_Facet
      (Grammar      : XML_Grammar;
@@ -654,6 +676,13 @@ private
       Table_Initial        => 200,
       Table_Increment      => 200);
 
+   package Types_Tables is new GNAT.Dynamic_Tables
+     (Table_Component_Type => Type_Descr,
+      Table_Index_Type     => Type_Index,
+      Table_Low_Bound      => No_Type_Index + 1,
+      Table_Initial        => 300,
+      Table_Increment      => 100);
+
    --------------
    -- Grammars --
    --------------
@@ -675,11 +704,13 @@ private
       References   : Reference_HTable;
       Attributes   : Attributes_Tables.Instance;
       Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
+      Types        : Types_Tables.Instance;
 
       Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
       Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;
       Metaschema_Attributes_Last   : Attribute_Validator_List;
       Metaschema_Enumerations_Last : Schema.Simple_Types.Enumeration_Index;
+      Metaschema_Types_Last        : Type_Index;
       --  Last state for the metaschema XSD (for Reset)
    end record;
 

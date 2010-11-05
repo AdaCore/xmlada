@@ -322,8 +322,8 @@ package body Schema.Schema_Readers is
 
       package Type_HTables is new GNAT.Dynamic_HTables.Simple_HTable
         (Header_Num => Header_Num,
-         Element    => Type_Index,
-         No_Element => No_Type_Index,
+         Element    => Internal_Type_Index,
+         No_Element => No_Internal_Type_Index,
          Key        => Qualified_Name,
          Hash       => Hash,
          Equal      => "=");
@@ -348,29 +348,21 @@ package body Schema.Schema_Readers is
       --  <element>. A link is created [From]->[S1].
       --  [Start] is the first element of the current nested machine.
 
-      procedure Create_Nested_For_Type (J : Type_Index);
-      --  Create a a nested machine (with only the start state) for [Info]
-
-      procedure Create_Simple_Type (J : Type_Index);
+      function Create_Simple_Type
+        (J : Internal_Type_Index) return Simple_Type_Index;
       --  Create the new simple type info at index [J]
 
       procedure Get_Type_Descr
-        (Name  : Qualified_Name;
-         Loc   : Location;
-         Ty    : out Type_Index;
-         Descr : out Type_Descr;
-         S     : out State);
+        (Name          : Qualified_Name;
+         Loc           : Location;
+         NFA_Type      : out Type_Index;
+         Internal_Type : out Internal_Type_Index);
       --  Lookup the type information in the grammar. This type information
       --  could be in several places:
       --    - Either defined in the current XSD and its <input>: in that case,
-      --      [Ty] will be set to a value other than [No_Type_Index].
-      --    - Or in a previously loaded XSD. In that case, [Ty] is set to
-      --      [No_Type_Index]
-      --  In all cases, [Descr] will contain the type's attributes, and
-      --  [S] will contain the nested NFA for that type. That nested NFA might
-      --  not be complete yet if the type is defined in the current XSD (but
-      --  in such a case [Shared.Types.Table (Ty).Details] will contain the
-      --  details.
+      --      [Internal_Type] will be set.
+      --    - Or in a previously loaded XSD. In that case, it is set to
+      --      [No_Internal_Type_Index]
 
       function Lookup_Simple_Type
         (Name : Qualified_Name;
@@ -403,7 +395,6 @@ package body Schema.Schema_Readers is
          S1, S2 : out State)
       is
          pragma Unreferenced (Start);
-         Typ       : Type_Index;
          Real      : Element_Descr;
          Trans     : Transition_Descr;
          TRef      : Global_Reference := No_Global_Reference;
@@ -422,11 +413,14 @@ package body Schema.Schema_Readers is
             return;
          end if;
 
+         S1 := NFA.Add_State;
+
          if Debug then
             Debug_Output ("Create_Element_State S1 for element "
-                          & To_QName (Info.Name) & To_QName (Info.Ref));
+                          & To_QName (Info.Name) & To_QName (Info.Ref)
+                          & S1'Img);
          end if;
-         S1 := NFA.Add_State (Default_User_Data);
+
          Info.S := S1;
 
          --  Resolve element references
@@ -439,24 +433,28 @@ package body Schema.Schema_Readers is
                   Validation_Error
                     (Parser, "Unknown refed element " & To_QName (Info.Ref),
                      Info.Loc);
-               else
-                  S := TRef.Element;
-                  Trans := (Transition_Symbol, Info.Ref, Info.Form);
                end if;
+
+               S := TRef.Element;
+               Trans := (Transition_Symbol, Info.Ref, Info.Form);
+
             else
                Trans := (Transition_Symbol, Real.Name, Info.Form);
                S := Real.S;
             end if;
 
-            if Debug then
-               Debug_Output ("opying data from" & S'Img & " to" & S1'Img);
+            if S /= No_State then
+               if Debug then
+                  Debug_Output ("copying data from" & S'Img & " to" & S1'Img);
+               end if;
+               NFA.Get_Data (S1).all := NFA.Get_Data (S).all;
+               NFA.Set_Nested (S1, NFA.Get_Nested (S));
             end if;
-            NFA.Get_Data (S1).Descr := NFA.Get_Data (S).Descr;
-            NFA.Set_Nested (S1, NFA.Get_Nested (S));
 
          else
             declare
-               Descr     : Type_Descr;
+               NFA_Type      : Type_Index;
+               Internal_Type : Internal_Type_Index;
             begin
                Real := Info;
                Trans := (Transition_Symbol, Real.Name, Info.Form);
@@ -464,23 +462,15 @@ package body Schema.Schema_Readers is
                --  Create nested NFA for the type, if needed
 
                if Real.Typ /= No_Qualified_Name then
-                  Get_Type_Descr (Real.Typ, Info.Loc, Typ, Descr, S);
+                  Get_Type_Descr (Real.Typ, Info.Loc, NFA_Type, Internal_Type);
 
-               elsif Real.Local_Type /= No_Type_Index then
-                  Typ := Real.Local_Type;
-                  Descr := Shared.Types.Table (Typ).Descr;
-                  S := Shared.Types.Table (Typ).S;
-
-                  if S = No_State then
-                     Validation_Error
-                       (Parser, "Unknown type for element "
-                        & To_QName (Real.Name) & To_QName (Info.Ref),
-                        Info.Loc);
-                  end if;
+               elsif Real.Local_Type /= No_Internal_Type_Index then
+                  Internal_Type := Real.Local_Type;
+                  NFA_Type := Shared.Types.Table (Internal_Type).In_NFA;
 
                else
                   --  "<anyType>" (3.3.2.1 {type definition})
-                  S := No_State;
+                  NFA_Type := No_Type_Index;
                end if;
 
                if Info.Substitution_Group /= No_Qualified_Name then
@@ -489,12 +479,12 @@ package body Schema.Schema_Readers is
                   null;
                end if;
 
-               if S /= No_State then
-                  NFA.Get_Data (S1).Descr := Descr;
-
-                  if Descr.Simple_Content = No_Simple_Type_Index then
-                     NFA.Set_Nested (S1, NFA.Create_Nested (S));
-                  end if;
+               if NFA_Type /= No_Type_Index then
+                  NFA.Get_Data (S1).all := NFA_Type;
+                  NFA.Set_Nested
+                    (S1,
+                     NFA.Create_Nested
+                       (Get_Type_Descr (NFA, NFA_Type).Complex_Content));
                end if;
             end;
          end if;
@@ -543,28 +533,25 @@ package body Schema.Schema_Readers is
       --------------------
 
       procedure Get_Type_Descr
-        (Name  : Qualified_Name;
-         Loc   : Location;
-         Ty    : out Type_Index;
-         Descr : out Type_Descr;
-         S     : out State)
+        (Name          : Qualified_Name;
+         Loc           : Location;
+         NFA_Type      : out Type_Index;
+         Internal_Type : out Internal_Type_Index)
       is
          TRef : Global_Reference;
       begin
-         Ty := Get (Types, Name);
-         if Ty = No_Type_Index then
+         Internal_Type := Get (Types, Name);
+         if Internal_Type = No_Internal_Type_Index then
             TRef := Get (Ref.all, (Name, Ref_Type));
             if TRef = No_Global_Reference then
                Validation_Error
                  (Parser, "Unknown type " & To_QName (Name), Loc);
-            else
-               S := TRef.Typ;
             end if;
-         else
-            S := Shared.Types.Table (Ty).S;
-         end if;
 
-         Descr := NFA.Get_Data (S).Descr;
+            NFA_Type := TRef.Typ;
+         else
+            NFA_Type := Shared.Types.Table (Internal_Type).In_NFA;
+         end if;
       end Get_Type_Descr;
 
       ------------------------
@@ -576,7 +563,6 @@ package body Schema.Schema_Readers is
       is
          TRef   : Global_Reference;
          Simple : Simple_Type_Index;
-         Ty     : Type_Index;
       begin
          TRef := Get (Ref.all, (Name, Ref_Type));
          if TRef = No_Global_Reference then
@@ -584,16 +570,14 @@ package body Schema.Schema_Readers is
               (Parser, "Unknown type " & To_QName (Name), Loc);
          end if;
 
-         Simple := NFA.Get_Data (TRef.Typ).Descr.Simple_Content;
+         Simple := Get_Type_Descr (NFA, TRef.Typ).Simple_Content;
 
          if Simple = No_Simple_Type_Index then
             if Debug then
                Debug_Output ("Lookup_Simple_Type: generate "
                              & To_QName (Name) & " early");
             end if;
-            Ty := Get (Types, Name);
-            Create_Simple_Type (Ty);
-            Simple := NFA.Get_Data (TRef.Typ).Descr.Simple_Content;
+            Simple := Create_Simple_Type (Get (Types, Name));
          end if;
 
          return Simple;
@@ -684,7 +668,7 @@ package body Schema.Schema_Readers is
 
             when Type_Choice =>
                T := Details.First_In_Choice;
-               Nested_End := NFA.Add_State (Default_User_Data);
+               Nested_End := NFA.Add_State;
                while T /= null loop
                   Process_Details (T, Start, From, S);
                   NFA.Add_Empty_Transition (S, Nested_End);
@@ -711,7 +695,7 @@ package body Schema.Schema_Readers is
                         T := T.Next;
                      end loop;
 
-                     Nested_End := NFA.Add_State (Default_User_Data);
+                     Nested_End := NFA.Add_State;
                      All_Permutations (A, Permut, Permut'First);
                   end;
                end if;
@@ -745,26 +729,27 @@ package body Schema.Schema_Readers is
 
             when Type_Extension =>
                declare
-                  TyIndex : Type_Index;  --  If based in current XSD
-                  Ty      : Type_Descr;  --  Attributes of the base type
-                  TyS     : State;       --  Nested NFA for the base
+                  NFA_Type  : Type_Index;  --  Attributes of the base type
+                  Internal_Type : Internal_Type_Index;
                begin
                   Get_Type_Descr
-                    (Name  => Details.Extension.Base,
-                     Loc   => No_Location,
-                     Ty    => TyIndex,
-                     Descr => Ty,
-                     S     => TyS);
+                    (Name          => Details.Extension.Base,
+                     Loc           => No_Location,
+                     NFA_Type      => NFA_Type,
+                     Internal_Type => Internal_Type);
 
-                  if Ty.Simple_Content = No_Simple_Type_Index then
-                     if TyIndex /= No_Type_Index then
+                  if Get_Type_Descr (NFA, NFA_Type).Simple_Content =
+                    No_Simple_Type_Index
+                  then
+                     if Internal_Type /= No_Internal_Type_Index then
                         --  We have all the details, and just have to copy them
                         --  Details might be null, for instance for an
                         --  <extension> that just adds attributes
 
-                        if Shared.Types.Table (TyIndex).Details /= null
+                        if Shared.Types.Table (Internal_Type).Details /= null
                           and then
-                            Shared.Types.Table (TyIndex).Details.In_Process
+                            Shared.Types.Table (Internal_Type)
+                            .Details.In_Process
                         then
                            Validation_Error
                              (Parser,
@@ -774,7 +759,7 @@ package body Schema.Schema_Readers is
                         end if;
 
                         Process_Details
-                          (Shared.Types.Table (TyIndex).Details,
+                          (Shared.Types.Table (Internal_Type).Details,
                            Start, From, S);
 
                      else
@@ -797,23 +782,23 @@ package body Schema.Schema_Readers is
 
             when Type_Restriction =>
                declare
-                  TyIndex : Type_Index;  --  If based in current XSD
-                  Ty      : Type_Descr;  --  Attributes of the base type
-                  TyS     : State;       --  Nested NFA for the base
-                  pragma Unreferenced (TyS);
+                  Internal : Internal_Type_Index;
+                  NFA_Type : Type_Index;  --  Attributes of the base type
                begin
                   Get_Type_Descr
-                    (Name  => Details.Restriction.Base,
-                     Loc   => No_Location,
-                     Ty    => TyIndex,
-                     Descr => Ty,
-                     S     => S);
+                    (Name          => Details.Restriction.Base,
+                     Loc           => No_Location,
+                     NFA_Type      => NFA_Type,
+                     Internal_Type => Internal);
 
-                  if Ty.Simple_Content = No_Simple_Type_Index then
+                  if Get_Type_Descr (NFA, NFA_Type).Simple_Content =
+                    No_Simple_Type_Index
+                  then
 
-                     if TyIndex /= No_Type_Index
-                       and then Shared.Types.Table (TyIndex).Details /= null
-                       and then Shared.Types.Table (TyIndex).Details.In_Process
+                     if Internal /= No_Internal_Type_Index
+                       and then Shared.Types.Table (Internal).Details /= null
+                       and then
+                         Shared.Types.Table (Internal).Details.In_Process
                      then
                         Validation_Error
                           (Parser,
@@ -831,7 +816,7 @@ package body Schema.Schema_Readers is
                end;
 
             when Type_Any =>
-               S := NFA.Add_State (Default_User_Data);
+               S := NFA.Add_State;
                NFA.Add_Transition
                  (From, S, (Transition_Any, Details.Any));
                Nested_End := NFA.Add_State;
@@ -853,23 +838,23 @@ package body Schema.Schema_Readers is
       procedure Resolve_Attribute_Type
         (Attr : in out Internal_Attribute_Descr)
       is
-         TRef : Global_Reference;
-         S    : State;
+         TRef     : Global_Reference;
+         NFA_Type : Type_Index;  --  In NFA
       begin
-         if Attr.Local_Type /= No_Type_Index then
-            S := Shared.Types.Table (Attr.Local_Type).S;
+         if Attr.Local_Type /= No_Internal_Type_Index then
+            NFA_Type := Shared.Types.Table (Attr.Local_Type).In_NFA;
+            Attr.Descr.Simple_Type :=
+              Get_Type_Descr (NFA, NFA_Type).Simple_Content;
          else
             TRef := Get (Ref.all, (Attr.Typ, Ref_Type));
             if TRef = No_Global_Reference then
                --  ??? Type should be ur-type (3.2.2)
-               S := No_State;
-            else
-               S := TRef.Typ;
-            end if;
-         end if;
+               null;
 
-         if S /= No_State then
-            Attr.Descr.Simple_Type := NFA.Get_Data (S).Descr.Simple_Content;
+            else
+               Attr.Descr.Simple_Type :=
+                 Get_Type_Descr (NFA, TRef.Typ).Simple_Content;
+            end if;
          end if;
       end Resolve_Attribute_Type;
 
@@ -940,43 +925,47 @@ package body Schema.Schema_Readers is
       -- Create_Simple_Type --
       ------------------------
 
-      procedure Create_Simple_Type (J : Type_Index) is
+      function Create_Simple_Type
+        (J : Internal_Type_Index) return Simple_Type_Index
+      is
          Info : Internal_Type_Descr renames Shared.Types.Table (J);
          Simple : Simple_Type_Descr;
          Index_In_Simple : Natural;
-         Data : constant State_Data_Access := NFA.Get_Data (Info.S);
          Internal : Internal_Simple_Type_Descr;
+         Result : Simple_Type_Index;
 
       begin
+         Result := Get_Type_Descr (NFA, Info.In_NFA).Simple_Content;
+         if Result /= No_Simple_Type_Index then
+            if Debug then
+               Debug_Output ("Create_Simple_Type: already done "
+                             & To_QName (Info.Properties.Name));
+            end if;
+            return Result;
+         end if;
+
          if Info.Is_Simple then
             Internal := Info.Simple;
          else
             Internal := Info.Simple_Content;
-
             if Internal.Kind = Simple_Type_None then
                --  Not a simple type, nothing to do
-               return;
+               return No_Simple_Type_Index;
             end if;
          end if;
 
          if Internal.In_Process then
             Validation_Error
               (Parser,
-               "Circular inheritance of type " & To_QName (Info.Descr.Name),
+               "Circular inheritance of type "
+               & To_QName (Info.Properties.Name),
                Info.Loc);
          end if;
 
-         if Data.Descr.Simple_Content /= No_Simple_Type_Index then
-            if Debug then
-               Debug_Output ("Create_Simple_Type: already done "
-                             & To_QName (Info.Descr.Name));
-            end if;
-            return;
-         end if;
-
          if Debug then
-            Debug_Output ("Create_Simple_Type " & To_QName (Info.Descr.Name)
-                          & " " & Internal.Kind'Img);
+            Debug_Output
+              ("Create_Simple_Type " & To_QName (Info.Properties.Name)
+               & " " & Internal.Kind'Img);
          end if;
 
          if Info.Is_Simple then
@@ -986,8 +975,13 @@ package body Schema.Schema_Readers is
          end if;
 
          case Internal.Kind is
-            when Simple_Type | Simple_Type_None =>
+            when Simple_Type_None =>
+               return No_Simple_Type_Index;
+
+            when Simple_Type =>
+               --  ??? Shouldn't we set Simple_Content as well ?
                null;
+
             when Simple_Type_Union =>
                Simple := (Kind => Facets_Union,
                           Union => (others => No_Simple_Type_Index),
@@ -995,26 +989,25 @@ package body Schema.Schema_Readers is
                Index_In_Simple := Simple.Union'First;
 
                for U in Internal.Union_Items'Range loop
-                  exit when Internal.Union_Items (U) = No_Type_Member;
+                  declare
+                     Member : constant Type_Member := Internal.Union_Items (U);
+                  begin
+                     exit when Member = No_Type_Member;
 
-                  if Internal.Union_Items (U).Name /= No_Qualified_Name then
-                     Simple.Union (Index_In_Simple) :=
-                       Lookup_Simple_Type
-                         (Internal.Union_Items (U).Name, Internal.Loc);
-                  else
-                     Create_Simple_Type (Internal.Union_Items (U).Local);
-                     Simple.Union (Index_In_Simple) :=
-                       NFA.Get_Data
-                         (Shared.Types.Table
-                              (Internal.Union_Items (U).Local).S)
-                       .Descr.Simple_Content;
-                  end if;
+                     if Member.Name /= No_Qualified_Name then
+                        Simple.Union (Index_In_Simple) :=
+                          Lookup_Simple_Type (Member.Name, Internal.Loc);
+                     else
+                        Simple.Union (Index_In_Simple) :=
+                          Create_Simple_Type (Member.Local);
+                     end if;
 
-                  Index_In_Simple := Index_In_Simple + 1;
+                     Index_In_Simple := Index_In_Simple + 1;
+                  end;
                end loop;
 
-               Data.Descr.Simple_Content :=
-                 Create_Global_Simple_Type (NFA, Info.Descr.Name, Simple);
+               Result := Create_Simple_Type (NFA, Simple);
+               Get_Type_Descr (NFA, Info.In_NFA).Simple_Content := Result;
 
             when Simple_Type_List =>
                Simple := (Kind      => Facets_List,
@@ -1022,46 +1015,50 @@ package body Schema.Schema_Readers is
                           others    => <>);
 
                for U in Internal.List_Items'Range loop
-                  exit when Internal.List_Items (U) = No_Type_Member;
-
-                  if Internal.List_Items (U).Name /= No_Qualified_Name then
-                     Simple.List_Item :=
-                       Lookup_Simple_Type
-                         (Internal.List_Items (U).Name, Internal.Loc);
-                  else
-                     Create_Simple_Type (Internal.List_Items (U).Local);
-                     Simple.List_Item :=
-                       NFA.Get_Data
-                         (Shared.Types.Table (Internal.List_Items (U).Local).S)
-                       .Descr.Simple_Content;
-                  end if;
+                  declare
+                     Member : constant Type_Member := Internal.List_Items (U);
+                  begin
+                     exit when Member = No_Type_Member;
+                     if Member.Name /= No_Qualified_Name then
+                        Simple.List_Item :=
+                          Lookup_Simple_Type (Member.Name, Internal.Loc);
+                     else
+                        Simple.List_Item :=
+                          Create_Simple_Type (Member.Local);
+                     end if;
+                  end;
                end loop;
 
-               Data.Descr.Simple_Content :=
-                 Create_Global_Simple_Type (NFA, Info.Descr.Name, Simple);
+               Result := Create_Simple_Type (NFA, Simple);
+               Get_Type_Descr (NFA, Info.In_NFA).Simple_Content := Result;
 
             when Simple_Type_Restriction | Simple_Type_Extension =>
                declare
                   Base  : Simple_Type_Descr;
                   Error : Symbol;
                   Loc   : Location;
+                  NFA_Simple : Simple_Type_Index;
                begin
-                  Base := Copy (Get_Simple_Type
-                    (NFA,
-                     Lookup_Simple_Type
-                       (Internal.Restriction_Base, Internal.Loc)));
+                  NFA_Simple := Lookup_Simple_Type
+                    (Internal.Restriction_Base, Internal.Loc);
 
-                  Override (Simple  => Base,
-                            Facets  => Internal.Facets,
-                            Symbols => Get_Symbol_Table (Parser.all),
-                            Error   => Error,
-                            Error_Loc => Loc);
-                  if Error /= No_Symbol then
-                     Validation_Error (Parser, Get (Error).all, Loc);
+                  if NFA_Simple = No_Simple_Type_Index then
+                     Base := Any_Simple_Type;
+
+                  else
+                     Base := Copy (Get_Simple_Type (NFA, NFA_Simple));
+                     Override (Simple  => Base,
+                               Facets  => Internal.Facets,
+                               Symbols => Get_Symbol_Table (Parser.all),
+                               Error   => Error,
+                               Error_Loc => Loc);
+                     if Error /= No_Symbol then
+                        Validation_Error (Parser, Get (Error).all, Loc);
+                     end if;
                   end if;
 
-                  Data.Descr.Simple_Content :=
-                    Create_Global_Simple_Type (NFA, Info.Descr.Name, Base);
+                  Result := Create_Simple_Type (NFA, Base);
+                  Get_Type_Descr (NFA, Info.In_NFA).Simple_Content := Result;
                end;
          end case;
 
@@ -1070,25 +1067,9 @@ package body Schema.Schema_Readers is
          else
             Info.Simple_Content.In_Process := False;
          end if;
+
+         return Result;
       end Create_Simple_Type;
-
-      ----------------------------
-      -- Create_Nested_For_Type --
-      ----------------------------
-
-      procedure Create_Nested_For_Type (J : Type_Index) is
-         Info : Internal_Type_Descr renames Shared.Types.Table (J);
-      begin
-         Info.S := NFA.Add_State ((Descr => Info.Descr));
-
-         --  Do we have a global element ?
-         if Info.Descr.Name /= No_Qualified_Name then
-            Set
-              (Ref.all,
-               (Kind => Ref_Type, Name => Info.Descr.Name, Typ  => Info.S));
-            Set (Types, Info.Descr.Name, J);
-         end if;
-      end Create_Nested_For_Type;
 
       ------------------------------
       -- Create_Global_Attributes --
@@ -1128,7 +1109,7 @@ package body Schema.Schema_Readers is
          procedure Recursive_Add_Attributes (Info : Internal_Type_Descr);
          procedure Recursive_Add_Attributes (Info : Internal_Type_Descr) is
             Ty    : Global_Reference;
-            Index : Type_Index;
+            Index : Internal_Type_Index;
          begin
             if Info.Is_Simple then
                --  A simpleType has no attribute
@@ -1153,11 +1134,11 @@ package body Schema.Schema_Readers is
                --  complete.
 
                Index := Get (Types, Info.Details.Extension.Base);
-               if Index /= No_Type_Index then
+               if Index /= No_Internal_Type_Index then
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (NFA, List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
+                    (NFA, List, Get_Type_Descr (NFA, Ty.Typ).Attributes);
                end if;
 
                Add_Attributes (List, Info.Details.Extension.Attributes,
@@ -1174,11 +1155,11 @@ package body Schema.Schema_Readers is
                end if;
 
                Index := Get (Types, Info.Details.Restriction.Base);
-               if Index /= No_Type_Index then
+               if Index /= No_Internal_Type_Index then
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (NFA, List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
+                    (NFA, List, Get_Type_Descr (NFA, Ty.Typ).Attributes);
                end if;
 
                Add_Attributes (List, Info.Details.Restriction.Attributes,
@@ -1195,33 +1176,38 @@ package body Schema.Schema_Readers is
          else
             if Debug then
                Debug_Output ("Process complexType "
-                             & To_QName (Info.Descr.Name));
+                             & To_QName (Info.Properties.Name));
             end if;
 
-            pragma Assert (Info.S /= No_State);
+            declare
+               Descr : constant access Type_Descr :=
+                 Get_Type_Descr (NFA, Info.In_NFA);
+            begin
+               pragma Assert (Descr.Complex_Content /= No_State);
 
-            Process_Details
-              (Details    => Info.Details,
-               Start      => Info.S,
-               From       => Info.S,
-               Nested_End => S1);
+               Process_Details
+                 (Details    => Info.Details,
+                  Start      => Descr.Complex_Content,
+                  From       => Descr.Complex_Content,
+                  Nested_End => S1);
 
-            --  Add the attributes only after we did the details, so that we
-            --  know there is no infinite recursion between the base types of
-            --  extensions and restrictions
+               --  Add the attributes only after we did the details, so that we
+               --  know there is no infinite recursion between the base types
+               --  of extensions and restrictions
 
-            if Debug then
-               Debug_Output ("Process attributes for complexType "
-                             & To_QName (Info.Descr.Name) & " State="
-                             & Info.S'Img);
-            end if;
+               if Debug then
+                  Debug_Output ("Process attributes for complexType "
+                                & To_QName (Info.Properties.Name) & " State="
+                                & Descr.Complex_Content'Img);
+               end if;
 
-            Recursive_Add_Attributes (Info);
-            NFA.Get_Data (Info.S).Descr.Attributes := List;
+               Recursive_Add_Attributes (Info);
+               Descr.Attributes := List;
 
-            Reset (Processed_Groups);
-            NFA.Add_Transition
-              (S1, Final_State, (Kind => Transition_Close));
+               Reset (Processed_Groups);
+               NFA.Add_Transition
+                 (S1, Final_State, (Kind => Transition_Close));
+            end;
          end if;
 
       exception
@@ -1233,25 +1219,54 @@ package body Schema.Schema_Readers is
       Element_Info : Element_Descr;
       Attr : Internal_Attribute_Descr;
       Previous_Snapshot : constant NFA_Snapshot := Get_Snapshot (NFA);
+      S : State;
+
+      Ignored : Simple_Type_Index;
+      pragma Unreferenced (Ignored);
 
    begin
       if Debug then
          Debug_Output ("Create_NFA");
       end if;
 
-      --  Prepare the nested machines for the global types. These are empty,
-      --  but we need to know the global elements and groups to be able to
-      --  complete them.
+      --  Prepare the entries for the types. These are empty to start with, but
+      --  they are needed to be able to create the more complex types, and the
+      --  global element.
 
       for J in Type_Tables.First .. Last (Shared.Types) loop
-         Create_Nested_For_Type (J);
+         --  Create the empty nested NFA if needed
+
+         S := No_State;
+
+         if not Shared.Types.Table (J).Is_Simple then
+            S := NFA.Add_State;
+            Shared.Types.Table (J).Properties.Complex_Content := S;
+            if Debug then
+               Debug_Output
+                 ("Created state for complexContent "
+                  & To_QName (Shared.Types.Table (J).Properties.Name)
+                  & S'Img);
+            end if;
+         end if;
+
+         Shared.Types.Table (J).In_NFA :=
+           Create_Type (NFA, Shared.Types.Table (J).Properties);
+
+         if S /= No_State then
+            --  At least .Complex_Content has changed, so we need to reset data
+            NFA.Set_Data (S, Shared.Types.Table (J).In_NFA);
+         end if;
+
+         if Shared.Types.Table (J).Properties.Name /= No_Qualified_Name then
+            Set (Types, Shared.Types.Table (J).Properties.Name, J);
+         end if;
       end loop;
 
       --  Process the simple types (must be in a separate loop, since a
       --  restriction or a union needs to know about its base type)
 
       for J in Type_Tables.First .. Last (Shared.Types) loop
-         Create_Simple_Type (J);
+         Ignored := Create_Simple_Type (J);
       end loop;
 
       --  Prepare the entries for the global attributes
@@ -2410,30 +2425,33 @@ package body Schema.Schema_Readers is
       Info   : Internal_Type_Descr (Is_Simple => Is_Simple);
       Is_Set : Boolean;
       Local  : Symbol;
+      Props  : Type_Descr;
 --        Redefined : XML_Type := No_Type;
 
    begin
       Info.Loc := Handler.Current_Location;
-      Info.Descr.Block := Handler.Target_Block_Default;
+      Props.Block := Handler.Target_Block_Default;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
             if Local = Handler.Mixed then
-               Info.Descr.Mixed := Get_Value_As_Boolean (Atts, J, False);
+               Props.Mixed := Get_Value_As_Boolean (Atts, J, False);
             elsif Local = Handler.Name then
-               Info.Descr.Name :=
+               Props.Name :=
                  (NS    => Handler.Target_NS,
                   Local => Get_Value (Atts, J));
             elsif Local = Handler.Block then
-               Compute_Blocks (Atts, Handler, Info.Descr.Block, Is_Set, J);
+               Compute_Blocks (Atts, Handler, Props.Block, Is_Set, J);
             elsif Local = Handler.Final then
-               Info.Descr.Final := Compute_Final (Atts, Handler, J);
+               Props.Final := Compute_Final (Atts, Handler, J);
             elsif Local = Handler.S_Abstract then
-               Info.Descr.Is_Abstract := Get_Value_As_Boolean (Atts, J, False);
+               Props.Is_Abstract := Get_Value_As_Boolean (Atts, J, False);
             end if;
          end if;
       end loop;
+
+      Info.Properties := Props;
 
       Append (Handler.Shared.Types, Info);
 
@@ -2489,7 +2507,7 @@ package body Schema.Schema_Readers is
       Restr      : Restriction_Descr;
       Details    : Type_Details_Access;
       Local      : Symbol;
-      In_Type    : constant Type_Index := Ctx.Type_Info;
+      In_Type    : constant Internal_Type_Index := Ctx.Type_Info;
    begin
       Restr.Loc := Handler.Current_Location;
       Restr.Base := (NS    => Handler.XML_Schema_URI,
@@ -2503,17 +2521,6 @@ package body Schema.Schema_Readers is
             end if;
          end if;
       end loop;
-
-      if In_Type /= No_Type_Index then
-         if Handler.Shared.Types.Table (In_Type).Descr.Name = Restr.Base then
-            --  if In_Redefine_Context (Handler.all) then
-            --    Base := Handler.Contexts.Redefined_Type;
-            --  else
-            Validation_Error
-              (Handler, "#Self-referencing restriction not allowed");
-            --  end if;
-         end if;
-      end if;
 
       if Handler.Shared.Types.Table (In_Type).Is_Simple
         or else Handler.Shared.Types.Table (In_Type).Simple_Content.Kind /=
@@ -2600,7 +2607,7 @@ package body Schema.Schema_Readers is
          Add_Type_Member
            (Handler,
             Ctx.Union.Union_Items,
-            (Name => Name, Local => No_Type_Index),
+            (Name => Name, Local => No_Internal_Type_Index),
             Ctx.Union.Loc);
       end Add_Union;
 
@@ -2656,12 +2663,10 @@ package body Schema.Schema_Readers is
    is
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
-      Info : Internal_Type_Descr
-        renames Handler.Shared.Types.Table (Ctx.Type_Info);
       Ext   : Extension_Descr;
       Local : Symbol;
       Details : Type_Details_Access;
-      In_Type : constant Type_Index := Ctx.Type_Info;
+      In_Type : constant Internal_Type_Index := Ctx.Type_Info;
    begin
       Ext.Loc := Handler.Current_Location;
 
@@ -2677,15 +2682,6 @@ package body Schema.Schema_Readers is
       if Ext.Base = No_Qualified_Name then
          Validation_Error
            (Handler, "#Attribute ""base"" required for <extensionType>");
-      end if;
-
-      if Ext.Base = Info.Descr.Name then
---           if In_Redefine_Context (Handler.all) then
---              Base := Handler.Contexts.Redefined_Type;
---           else
-            Validation_Error
-              (Handler, "#Self-referencing extension not allowed");
---           end if;
       end if;
 
       if Handler.Shared.Types.Table (In_Type).Is_Simple
@@ -2769,7 +2765,7 @@ package body Schema.Schema_Readers is
                Add_Type_Member
                  (Handler,
                   Handler.Contexts (Handler.Contexts_Last).List.List_Items,
-                  (Name => Name, Local => No_Type_Index),
+                  (Name => Name, Local => No_Internal_Type_Index),
                   Handler.Current_Location);
             end if;
          end if;
@@ -2790,7 +2786,7 @@ package body Schema.Schema_Readers is
    begin
       case Next.Typ is
          when Context_Type_Def =>
-            if Next.Type_Info = No_Type_Index then
+            if Next.Type_Info = No_Internal_Type_Index then
                --  within a <simpleType><restriction><simpleType><list>
                pragma Assert (Next_Next.Typ = Context_Simple_Restriction);
                Next_Next.Simple := Ctx.List;
@@ -3438,12 +3434,12 @@ package body Schema.Schema_Readers is
            (Kind       => Simple_Type,
             In_Process => False,
             Loc        => Handler.Current_Location);
-         Handler.Shared.Types.Table (Ctx.Type_Info).Descr.Mixed := True;
+         Handler.Shared.Types.Table (Ctx.Type_Info).Properties.Mixed := True;
 
       elsif Local_Name = Handler.Complex_Content then
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
          pragma Assert (Ctx.Typ = Context_Type_Def);
-         Handler.Shared.Types.Table (Ctx.Type_Info).Descr.Mixed := False;
+         Handler.Shared.Types.Table (Ctx.Type_Info).Properties.Mixed := False;
 
       elsif Local_Name = Handler.Attribute_Group then
          Create_Attribute_Group (H, Atts);

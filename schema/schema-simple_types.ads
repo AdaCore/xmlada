@@ -161,6 +161,9 @@ package Schema.Simple_Types is
       end case;
    end record;
 
+   Any_Simple_Type : constant Simple_Type_Descr :=
+     (Kind => Facets_String, Whitespace => Preserve, others => <>);
+
    function Copy (Descr : Simple_Type_Descr) return Simple_Type_Descr;
    --  return a deep copy of [Copy] (duplicates the pattern)
 

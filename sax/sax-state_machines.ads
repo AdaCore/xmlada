@@ -105,6 +105,7 @@ package Sax.State_Machines is
    --  [Self], thus making them start states in effect.
    --  These two states always exist.
 
+   procedure Set_Data (Self : access NFA; S : State; Data : State_User_Data);
    function Get_Data (Self : access NFA; S : State) return State_Data_Access;
    --  Returns an access to the state's user data. This can be modified in
    --  place, but the access type should not be stored since it still belongs
@@ -357,7 +358,9 @@ package Sax.State_Machines is
    --  to visualize the contents of a state machine, either textually or
    --  graphically
 
-   function Default_Image (S : State; Data : State_User_Data) return String;
+   function Default_Image
+     (Self : access NFA'Class; S : State; Data : State_User_Data)
+      return String;
    --  The default display for states (only displays the state number)
 
    type Dump_Mode is
@@ -370,7 +373,9 @@ package Sax.State_Machines is
 
    generic
       with function State_Image
-        (S : State; Data : State_User_Data) return String is Default_Image;
+        (Self : access NFA'Class;
+         S    : State;
+         Data : State_User_Data) return String is Default_Image;
       --  This function is never called for the final state, which has no
       --  user data associated with it. Nor it is called for the start state.
 
@@ -429,7 +434,7 @@ private
 
    Start_State : constant State := 1;           --  Exists in NFA.States
    Final_State : constant State := State'Last;  --  Not shown in NFA.States
-   No_State    : constant State := Final_State - 1;
+   No_State    : constant State := 0;
 
    type State_Data is record
       First_Transition : Transition_Id;

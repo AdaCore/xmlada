@@ -231,7 +231,7 @@ package body Schema.Validators is
 
    procedure Validate_Attributes
      (NFA        : access Schema_NFA'Class;
-      Typ        : Type_Descr;
+      Typ        : access Type_Descr;
       Reader     : access Abstract_Validation_Reader'Class;
       Atts       : in out Sax.Readers.Sax_Attribute_List;
       Nillable   : Boolean;
@@ -714,6 +714,7 @@ package body Schema.Validators is
    ------------------------------
 
    procedure Create_Grammar_If_Needed (Grammar : in out XML_Grammar) is
+      use Types_Tables;
       G : XML_Grammars.Encapsulated_Access;
    begin
       if Grammar = No_Grammar then
@@ -722,6 +723,7 @@ package body Schema.Validators is
          G.NFA.Initialize (States_Are_Statefull => True);
          Init (G.NFA.Attributes);
          Init (G.NFA.Enumerations);
+         Init (G.NFA.Types);
          G.NFA.References :=
            new Reference_HTables.HTable (Size => Reference_HTable_Size);
          Simple_Type_Tables.Init (G.NFA.Simple_Types);
@@ -773,40 +775,43 @@ package body Schema.Validators is
          (Kind => Ref_Attribute, Name => Attr.Name, Attributes => List));
    end Create_Global_Attribute;
 
-   -------------------------------
-   -- Create_Global_Simple_Type --
-   -------------------------------
+   ------------------------
+   -- Create_Simple_Type --
+   ------------------------
 
-   function Create_Global_Simple_Type
-     (NFA     : access Schema_NFA'Class;
-      Name    : Qualified_Name;
-      Descr   : Simple_Type_Descr) return Simple_Type_Index
+   function Create_Simple_Type
+     (NFA   : access Schema_NFA'Class;
+      Descr : Schema.Simple_Types.Simple_Type_Descr)
+      return Schema.Simple_Types.Simple_Type_Index
    is
-      use Reference_HTables, Simple_Type_Tables;
-      S    : State;
-      Info : Type_Descr;
+      use Simple_Type_Tables;
    begin
       Append (NFA.Simple_Types, Descr);
+      return Last (NFA.Simple_Types);
+   end Create_Simple_Type;
 
-      if Name /= No_Qualified_Name then
+   -----------------
+   -- Create_Type --
+   -----------------
+
+   function Create_Type
+     (NFA   : access Schema_NFA'Class;
+      Descr : Type_Descr) return Type_Index
+   is
+      use Reference_HTables, Types_Tables;
+   begin
+      Append (NFA.Types, Descr);
+
+      if Descr.Name /= No_Qualified_Name then
          if Debug then
-            Debug_Output ("Create_global_simple_type: " & To_QName (Name)
-                          & " at index" & Last (NFA.Simple_Types)'Img);
+            Debug_Output ("Create_global_type: " & To_QName (Descr.Name)
+                          & " at index" & Last (NFA.Types)'Img);
          end if;
-         Info := Type_Descr'
-           (Name           => Name,
-            Attributes     => Empty_Attribute_List,
-            Block          => No_Block,
-            Final          => (others => False),
-            Simple_Content => Last (NFA.Simple_Types),
-            Mixed          => False,
-            Is_Abstract    => False);
-         S := NFA.Add_State ((Descr => Info));
-         Set (NFA.References.all, (Ref_Type, Info.Name, S));
+         Set (NFA.References.all, (Ref_Type, Descr.Name, Last (NFA.Types)));
       end if;
 
-      return Last (NFA.Simple_Types);
-   end Create_Global_Simple_Type;
+      return Last (NFA.Types);
+   end Create_Type;
 
    ---------------------
    -- Get_Simple_Type --
@@ -819,6 +824,28 @@ package body Schema.Validators is
    begin
       return NFA.Simple_Types.Table (Simple);
    end Get_Simple_Type;
+
+   --------------------
+   -- Get_Type_Descr --
+   --------------------
+
+   function Get_Type_Descr
+     (NFA   : access Schema_NFA'Class;
+      Index : Type_Index) return access Type_Descr is
+   begin
+      return NFA.Types.Table (Index)'Unrestricted_Access;
+   end Get_Type_Descr;
+
+   --------------------
+   -- Get_Type_Descr --
+   --------------------
+
+   function Get_Type_Descr
+     (Self  : access NFA'Class;
+      S     : State) return access Type_Descr is
+   begin
+      return Get_Type_Descr (Schema_NFA_Access (Self), Self.Get_Data (S).all);
+   end Get_Type_Descr;
 
    ------------------------
    -- Initialize_Grammar --
@@ -833,14 +860,24 @@ package body Schema.Validators is
       procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr);
 
       procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr) is
-         Index : Simple_Type_Index;
+         Simple : Simple_Type_Index;
+         Index  : Type_Index;
          pragma Unreferenced (Index);
       begin
-         Index := Create_Global_Simple_Type
+         Simple := Create_Simple_Type (G.NFA, Descr);
+         Index := Create_Type
            (G.NFA,
-            (NS    => Reader.XML_Schema_URI,
-             Local => Find (G.Symbols, Local)),
-            Descr);
+            Type_Descr'
+              (Name            =>
+                 (NS    => Reader.XML_Schema_URI,
+                  Local => Find (G.Symbols, Local)),
+               Attributes      => Empty_Attribute_List,
+               Block           => No_Block,
+               Final           => (others => False),
+               Simple_Content  => Simple,
+               Mixed           => False,
+               Is_Abstract     => False,
+               Complex_Content => No_State));
       end Register;
 
       procedure Do_Register is new Register_Predefined_Types (Register);
@@ -876,6 +913,7 @@ package body Schema.Validators is
            Attributes_Tables.Last (G.NFA.Attributes);
          G.NFA.Metaschema_Enumerations_Last :=
            Enumeration_Tables.Last (G.NFA.Enumerations);
+         G.NFA.Metaschema_Types_Last := Types_Tables.Last (G.NFA.Types);
       end if;
    end Initialize_Grammar;
 
@@ -955,7 +993,7 @@ package body Schema.Validators is
             when Ref_Element =>
                R := Exists (NFA.Metaschema_NFA_Last, TRef.Element);
             when Ref_Type =>
-               R := Exists (NFA.Metaschema_NFA_Last, TRef.Typ);
+               R := TRef.Typ <= NFA.Metaschema_Types_Last;
             when Ref_Group =>
                R := Exists (NFA.Metaschema_NFA_Last, TRef.Gr_Start);
             when Ref_Attribute | Ref_AttrGroup =>
@@ -986,6 +1024,7 @@ package body Schema.Validators is
            (NFA.Enumerations, NFA.Metaschema_Enumerations_Last);
          Attributes_Tables.Set_Last
            (NFA.Attributes, NFA.Metaschema_Attributes_Last);
+         Types_Tables.Set_Last (NFA.Types, NFA.Metaschema_Types_Last);
 
          Reset_Simple_Types (NFA, NFA.Metaschema_Simple_Types_Last);
          Remove_All (NFA.References.all);
@@ -1692,14 +1731,23 @@ package body Schema.Validators is
    -- Image --
    -----------
 
-   function Image (S : State; Data : State_User_Data) return String is
+   function Image
+     (Self : access NFA'Class;
+      S    : Schema_State_Machines.State;
+      Data : Type_Index) return String
+   is
       pragma Unreferenced (S);
+      Local : Symbol;
    begin
-      if Data.Descr.Name.Local = No_Symbol then
+      if Data = No_Type_Index then
          return "";
       else
-         return Get (Data.Descr.Name.Local).all;
-         --  return To_QName (Data.Descr.Name);
+         Local := Schema_NFA_Access (Self).Types.Table (Data).Name.Local;
+         if Local = No_Symbol then
+            return "";
+         else
+            return Get (Local).all;
+         end if;
       end if;
    end Image;
 

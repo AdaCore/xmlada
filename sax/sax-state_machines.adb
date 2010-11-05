@@ -146,6 +146,15 @@ package body Sax.State_Machines is
    end Add_State;
 
    --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data (Self : access NFA; S : State; Data : State_User_Data) is
+   begin
+      Self.States.Table (S).Data := Data;
+   end Set_Data;
+
+   --------------
    -- Get_Data --
    --------------
 
@@ -782,8 +791,8 @@ package body Sax.State_Machines is
             --  Or we always want to return the states anyway
             --  Or the nested state has completed
 
-            if Self.Active.Table (S).Nested = No_Matcher_State
-              or else not Ignore_If_Nested
+            if not Ignore_If_Nested
+              or else Self.Active.Table (S).Nested = No_Matcher_State
               or else Self.Active.Table (Self.Active.Table (S).Nested).S =
                 Final_State
             then
@@ -1121,8 +1130,10 @@ package body Sax.State_Machines is
    -- Default_Image --
    -------------------
 
-   function Default_Image (S : State; Data : State_User_Data) return String is
-      pragma Unreferenced (Data);
+   function Default_Image
+     (Self : access NFA'Class; S : State; Data : State_User_Data) return String
+   is
+      pragma Unreferenced (Self, Data);
       Str : constant String := State'Image (S);
    begin
       return "S" & Str (Str'First + 1 .. Str'Last);
@@ -1138,7 +1149,8 @@ package body Sax.State_Machines is
         (Self : access NFA'Class;
          S    : State) return String;
       function Node_Name
-        (S : State; Nested_In : State := No_State) return String;
+        (Self : access NFA'Class; S : State; Nested_In : State := No_State)
+         return String;
       procedure Append_Node
         (Self : access NFA'Class;
          S : State; R : in out Unbounded_String;
@@ -1149,18 +1161,19 @@ package body Sax.State_Machines is
       ---------------
 
       function Node_Name
-        (S : State; Nested_In : State := No_State) return String is
+        (Self : access NFA'Class; S : State; Nested_In : State := No_State)
+         return String is
       begin
          if S = Start_State then
             return "Start";
          elsif S = Final_State then
             if Nested_In /= No_State then
-               return "Sf" & Node_Name (Nested_In);
+               return "Sf" & Node_Name (Self, Nested_In);
             else
                return "Sf";
             end if;
          else
-            return Default_Image (S, Default_Data);
+            return Default_Image (Self, S, Default_Data);
          end if;
       end Node_Name;
 
@@ -1179,21 +1192,21 @@ package body Sax.State_Machines is
          else
             declare
                Img : constant String :=
-                 State_Image (S, Self.States.Table (S).Data);
+                 State_Image (Self, S, Self.States.Table (S).Data);
             begin
                if Img = "" then
                   if Self.States.Table (S).Nested /= No_State then
-                     return Node_Name (S)
+                     return Node_Name (Self, S)
                        & ":" & Node_Label (Self, Self.States.Table (S).Nested);
                   else
-                     return Node_Name (S);
+                     return Node_Name (Self, S);
                   end if;
                else
                   if Self.States.Table (S).Nested /= No_State then
-                     return Node_Name (S) & "_" & Img
+                     return Node_Name (Self, S) & "_" & Img
                        & ":" & Node_Label (Self, Self.States.Table (S).Nested);
                   else
-                     return Node_Name (S) & "_" & Img;
+                     return Node_Name (Self, S) & "_" & Img;
                   end if;
                end if;
             end;
@@ -1209,7 +1222,7 @@ package body Sax.State_Machines is
          S : State; R : in out Unbounded_String;
          Nested_In : State := No_State)
       is
-         Name  : constant String := Node_Name (S, Nested_In);
+         Name  : constant String := Node_Name (Self, S, Nested_In);
          Label : constant String := Node_Label (Self, S);
       begin
          Append (R, Name);
@@ -1278,7 +1291,7 @@ package body Sax.State_Machines is
                         Append (Result, "(Exit_" & Image (Tr.Sym));
                   end case;
 
-                  Append (Result, "," & Node_Name (Tr.To_State) & ")");
+                  Append (Result, "," & Node_Name (Self, Tr.To_State) & ")");
 
                   T := Tr.Next_For_State;
                end;
@@ -1370,8 +1383,8 @@ package body Sax.State_Machines is
                begin
                   if Tr.To_State > Since.States then
                      Append (Result,
-                             Prefix & Node_Name (S, Nested_In)
-                             & "->" & Node_Name (Tr.To_State, Nested_In)
+                             Prefix & Node_Name (Self, S, Nested_In)
+                             & "->" & Node_Name (Self, Tr.To_State, Nested_In)
                              & "[");
 
                      case Tr.Kind is
@@ -1406,7 +1419,7 @@ package body Sax.State_Machines is
          -----------------
 
          procedure Dump_Nested (S : State) is
-            Name  : constant String := Node_Name (S);
+            Name  : constant String := Node_Name (Self, S);
             Label : constant String := Node_Label (Self, S);
          begin
             if S > Since.States then
