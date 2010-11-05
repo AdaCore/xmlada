@@ -292,6 +292,16 @@ package body Schema.Readers is
            (Whitespace, Handler.Characters.all, Handler.Characters_Count);
       end if;
 
+      if Fixed /= No_Symbol
+        and then Get (Fixed).all /=
+        Handler.Characters (1 .. Handler.Characters_Count)
+      then
+         Validation_Error
+           (Handler,
+            "Invalid character content (fixed to """
+            & Get (Fixed).all & """)");
+      end if;
+
       Iter := For_Each_Active_State (Handler.Matcher,
                                      Ignore_If_Nested => True,
                                      Ignore_If_Default => True);
