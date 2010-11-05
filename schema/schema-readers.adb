@@ -441,12 +441,14 @@ package body Schema.Readers is
         (Atts, H.XML_Instance_URI, H.Schema_Location);
       NFA            : constant Schema_NFA_Access := Get_NFA (H.Grammar);
 
-      procedure Compute_Type_From_Attribute;
+      function Compute_Type_From_Attribute return State;
       --  If xsi:type was specified, verify that the given type is a valid
       --  substitution for the original type in the NFA, and replace the
       --  current nested automaton with the one for the type. The replacement
       --  does not affect the NFA itself, but the NFA_Matcher, so is only
       --  temporary and does not affect over running matchers.
+      --
+      --  Return the first state in the nested NFA to represent that type
 
       procedure Replace_State
         (Check_Substitution : Boolean;
@@ -569,10 +571,11 @@ package body Schema.Readers is
       -- Compute_Type_From_Attribute --
       ---------------------------------
 
-      procedure Compute_Type_From_Attribute is
+      function Compute_Type_From_Attribute return State is
          Xsi_Type_Index     : constant Integer := Get_Index
            (Atts, H.XML_Instance_URI, H.Typ);
          TRef : Global_Reference;
+         Result : State := No_State;
       begin
          if Xsi_Type_Index /= -1 then
             declare
@@ -606,13 +609,14 @@ package body Schema.Readers is
                   Validation_Error (H, "Unknown type " & To_QName (Typ));
                end if;
 
+               Result := Get_Type_Descr (NFA, TRef.Typ).Complex_Content;
                Replace_State
                  (Check_Substitution => True,
-                  Nested_Start =>
-                    Get_Type_Descr (NFA, TRef.Typ).Complex_Content,
+                  Nested_Start => Result,
                   Simple       => TRef.Typ);
             end;
          end if;
+         return Result;
       end Compute_Type_From_Attribute;
 
       Success : Boolean;
@@ -623,6 +627,8 @@ package body Schema.Readers is
       Through_Process : Process_Contents_Type;
       TRef    : Global_Reference;
       Descr   : access Type_Descr;
+
+      Had_Matcher : constant Boolean := H.Matcher /= No_NFA_Matcher;
 
       Element_QName : constant Qualified_Name :=
         (NS    => Get_URI (Get_NS (Elem)),
@@ -661,7 +667,7 @@ package body Schema.Readers is
       --  we have seen the toplevel element, which might result in parsing
       --  additional grammars, and finding the target NS
 
-      if H.Matcher = No_NFA_Matcher then
+      if not Had_Matcher then
          if Debug then
             Debug_Output ("Creating NFA matcher");
          end if;
@@ -682,7 +688,18 @@ package body Schema.Readers is
          Debug_Print (H.Matcher, Dump_Compact, "After: ");
       end if;
 
-      if not Success then
+      if not Had_Matcher and not Success then
+         --  Seeing the toplevel is never incorrect. We just need to find
+         --  out what its type would be, and use this for the matcher
+
+         S := Compute_Type_From_Attribute;
+         if S = No_State then
+            Validation_Error (H, "No type found for the root element");
+         end if;
+
+         H.Matcher := Get_NFA (H.Grammar).Start_Match (Start_At => S);
+
+      elsif not Success then
          Validation_Error
            (H, "Unexpected element """
             & To_QName (Element_QName) & """: expecting """
@@ -734,7 +751,7 @@ package body Schema.Readers is
 --             (H, "Element """ & To_QName (Elem) & """ is abstract");
 --        end if;
 
-      Compute_Type_From_Attribute;
+      S := Compute_Type_From_Attribute;
 
       --  Validate the attributes
 
