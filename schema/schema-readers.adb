@@ -39,7 +39,6 @@ with Schema.Validators;   use Schema.Validators;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
-with Schema.Validators.Lists; use Schema.Validators.Lists;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Schema.Readers is

@@ -39,7 +39,6 @@ with Sax.Symbols;                    use Sax.Symbols;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Simple_Types;            use Schema.Simple_Types;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
-with Schema.Validators.Lists;        use Schema.Validators.Lists;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
@@ -1562,66 +1561,6 @@ package body Schema.Validators is
    begin
       return Get (Grammar).NFA.References;
    end Get_References;
-
-   ----------------------------
-   -- Set_Substitution_Group --
-   ----------------------------
-
---     procedure Set_Substitution_Group
---       (Element : XML_Element;
---        Reader  : access Abstract_Validation_Reader'Class;
---        Head    : XML_Element)
---     is
---        Had_Restriction, Had_Extension : Boolean := False;
---        HeadPtr : constant XML_Element_Access := Head.Elem;
---        ElemPtr : constant XML_Element_Access := Element.Elem;
---        Valid_Replacement : Boolean;
---     begin
---    --  ??? Should Head be fully defined here, so that we can check we are a
---        --  possible replacement for it ?
---        if Get_Validator (Get_Type (Element)) /= null
---          and then Get_Validator (Get_Type (Head)) /= null
---          and then Get_Validator (Get_Type (Element)) /=
---          Get_Validator (Get_Type (Head))
---        then
---           Check_Replacement
---             (Get_Validator (Get_Type (Element)),
---              Element         => Head,
---              Typ             => Get_Type (Head),
---              Valid           => Valid_Replacement,
---              Had_Restriction => Had_Restriction,
---              Had_Extension   => Had_Extension);
---
---           if not Valid_Replacement then
---              Validation_Error
---                (Reader, To_QName (Get_Type (Element))
---                 & " is not a valid replacement for "
---                 & To_QName (Get_Type (Head)));
---           end if;
---
---           if HeadPtr.Final (Final_Restriction) and then Had_Restriction then
---              Validation_Error
---                (Reader, """" & Get (HeadPtr.Local_Name).all
---              & """ is final for restrictions, and cannot be substituted by"
---                 & """" & Get (ElemPtr.Local_Name).all & """");
---           end if;
---
---           if HeadPtr.Final (Final_Extension) and then Had_Extension then
---              Validation_Error
---                (Reader, """" & Get (HeadPtr.Local_Name).all
---                 & """ is final for extensions, and cannot be substituted by"
---                 & """" & Get (ElemPtr.Local_Name).all & """");
---           end if;
---        end if;
---
---        if ElemPtr.Substitution_Group /= No_Element then
---           Validation_Error
---             (Reader, """" & Get (ElemPtr.Local_Name).all
---              & """ already belongs to another substitution group");
---        end if;
---
---        ElemPtr.Substitution_Group := Head;
---     end Set_Substitution_Group;
 
    ------------------------
    -- Initialize_Symbols --

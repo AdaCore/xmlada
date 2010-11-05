@@ -137,6 +137,15 @@ package Sax.Utils is
    --  Collapse whitespaces in Str, according to the attributes normalization
    --  rule
 
+   -----------
+   -- Lists --
+   -----------
+
+   generic
+      with procedure Callback (Str : Unicode.CES.Byte_Sequence);
+   procedure For_Each_Item (Ch : Unicode.CES.Byte_Sequence);
+   --  Iterate over each element of the list
+
    -------------
    -- Symbols --
    -------------

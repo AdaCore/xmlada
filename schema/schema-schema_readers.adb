@@ -36,12 +36,11 @@ with Sax.Exceptions;    use Sax.Exceptions;
 with Sax.Locators;      use Sax.Locators;
 with Sax.Symbols;       use Sax.Symbols;
 with Sax.Utils;         use Sax.Utils;
-with Schema.Simple_Types;     use Schema.Simple_Types;
-with Schema.Validators.Lists; use Schema.Validators.Lists;
-with Schema.Readers;    use Schema.Readers;
+with Schema.Simple_Types; use Schema.Simple_Types;
+with Schema.Readers;      use Schema.Readers;
 with Ada.Unchecked_Deallocation;
 with Ada.IO_Exceptions;
-with Input_Sources.File;    use Input_Sources.File;
+with Input_Sources.File;  use Input_Sources.File;
 
 package body Schema.Schema_Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
@@ -225,12 +224,6 @@ package body Schema.Schema_Readers is
       Index  : Integer) return Integer;
    --  Return the value of maxOccurs from the attributes'value. This properly
    --  takes into account the "unbounded" case
-
---     procedure Create_Restricted
---       (Handler : access Schema_Reader'Class;
---        Ctx     : Context_Access);
-   --  Applies to a Context_Restriction, ensures that the restriction has been
-   --  created appropriately.
 
    ---------------
    -- To_String --
@@ -1885,58 +1878,6 @@ package body Schema.Schema_Readers is
                     (Typ   => Context_Group,
                      Group => Group));
 
-      --  Do not use In_Redefine_Context, since this only applies for types
-      --  that are redefined
-
---        if Handler.Contexts.Next.Typ = Context_Redefine then
---           Handler.Contexts.Redefined_Group := Redefine_Group
---             (Handler.Target_NS, Get_Value (Atts, Name_Index));
---           if Debug then
---              Output_Action (Ada_Name (Handler.Contexts)
---                             & " := Redefine_Group (Handler.Target_NS, """
---                          & Get (Get_Value (Atts, Name_Index)).all & """);");
---           end if;
---        end if;
-
---        if Name_Index /= -1 then
---           Handler.Contexts.Group := Create_Global_Group
---             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
---           if Debug then
---              Output_Action
---                (Ada_Name (Handler.Contexts)
---                 & " := Create_Global_Group (Handler.Target_NS, """
---                 & Get (Get_Value (Atts, Name_Index)).all & """);");
---           end if;
---
---        elsif Ref_Index /= -1 then
---           if In_Redefine_Context (Handler.all) then
---              Tmp := Handler.Contexts;
---              while Tmp /= null loop
---                 if Tmp.Typ = Context_Group
---                   and then Tmp.Next.Typ = Context_Redefine
---                   and then Get_Local_Name (Tmp.Group) =
---                   Get_Value (Atts, Ref_Index)
---                 then
---                    Handler.Contexts.Group := Tmp.Redefined_Group;
---                    Output_Action
---                      (Ada_Name (Handler.Contexts)
---                       & " := <old definition of group>;");
---                    exit;
---                 end if;
---                 Tmp := Tmp.Next;
---              end loop;
---           end if;
---
---           if Handler.Contexts.Group = No_XML_Group then
---              Lookup_With_NS
---                (Handler, Get_Value (Atts, Ref_Index),
---                 Handler.Contexts.Group);
---              if Debug then
---                 Output_Action
---                   (Ada_Name (Handler.Contexts) & " := Group;");
---              end if;
---           end if;
---        end if;
    end Create_Group;
 
    ------------------
@@ -2134,21 +2075,12 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.Schema_Location);
       Namespace_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Namespace);
---        NS : XML_Grammar_NS;
    begin
       if Location_Index = -1 then
          if Namespace_Index = -1 then
             Validation_Error (Handler, "Missing ""namespace"" attribute");
          end if;
 
---           Get_NS
---             (Get_Grammar (Handler.all), Get_Value (Atts, Namespace_Index),
---              Result => NS, Create_If_Needed => False);
---           if NS = null then
---              Validation_Error
---                (Handler, "Cannot resolve namespace "
---                 & Get (Get_Value (Atts, Namespace_Index)).all);
---           end if;
       else
          declare
             Location : constant Symbol := Get_Value (Atts, Location_Index);
@@ -2362,40 +2294,6 @@ package body Schema.Schema_Readers is
             --  We might have added the type definition
             Ctx.Elem_Details.Element := Ctx.Element;
       end case;
-
---        if Info.Ref = No_Qualified_Name
---          and then Get_Type (Ctx.Element) = No_Type
---        then
---          --  From 3.3.2.1, the type should be that of the substitutionGroup
---           --  attribute if there is any
---
---           if Get_Substitution_Group (Ctx.Element) /= No_Element then
---              if Debug then
---                 Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
---                         & " from substitution group");
---              end if;
---
---          if Get_Type (Get_Substitution_Group (Ctx.Element)) = No_Type then
---                 Raise_Exception
---                   (XML_Not_Implemented'Identity,
---                  "Not supported: type computed from substitutionGroup when"
---                    & " the group has not been fully defined yet");
---              end if;
---
---              Set_Type
---                (Ctx.Element, Handler,
---                 Get_Type (Get_Substitution_Group (Ctx.Element)));
---
---           else
---              --  Otherwise the type is anyType
---              if Debug then
---                 Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
---                         & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
---              end if;
---              Set_Type (Ctx.Element, Handler,
---                      Lookup (Handler.Schema_NS, Handler, Handler.Ur_Type));
---           end if;
---        end if;
    end Finish_Element;
 
    ------------------------
@@ -2511,8 +2409,7 @@ package body Schema.Schema_Readers is
          end if;
       end On_Item;
 
-      procedure For_Each
-        is new Schema.Validators.Lists.For_Each_Item (On_Item);
+      procedure For_Each is new For_Each_Item (On_Item);
    begin
       Is_Set := Index /= -1;
       Blocks := No_Block;
@@ -2572,8 +2469,7 @@ package body Schema.Schema_Readers is
          end if;
       end On_Item;
 
-      procedure For_Each
-         is new Schema.Validators.Lists.For_Each_Item (On_Item);
+      procedure For_Each is new For_Each_Item (On_Item);
    begin
       Final := (others => False);
 
@@ -2601,7 +2497,6 @@ package body Schema.Schema_Readers is
       Is_Set : Boolean;
       Name   : Qualified_Name;
       Props  : Type_Descr;
---        Redefined : XML_Type := No_Type;
 
    begin
       Info.Loc := Handler.Current_Location;
@@ -2632,12 +2527,6 @@ package body Schema.Schema_Readers is
       Info.Properties := Props;
 
       Append (Handler.Shared.Types, Info);
-
-      --  Do not use In_Redefine_Context, since this only applies for types
-      --  that are redefined
---        if Ctx.Typ = Context_Redefine then
---      Redefined := Redefine_Type (Handler.Target_NS, Info.Descr.Name.Local);
---        end if;
 
       Push_Context
         (Handler,

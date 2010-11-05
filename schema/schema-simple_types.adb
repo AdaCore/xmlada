@@ -33,7 +33,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Sax.Encodings;             use Sax.Encodings;
-with Schema.Validators.Lists;   use Schema.Validators.Lists;
 with Unicode;                   use Unicode;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 

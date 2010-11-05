@@ -1001,4 +1001,44 @@ package body Sax.Utils is
       return NS.System_Id;
    end Get_System_Id;
 
+   -------------------
+   -- For_Each_Item --
+   -------------------
+
+   procedure For_Each_Item (Ch : Unicode.CES.Byte_Sequence) is
+      Index : Integer := Ch'First;
+      Last, Start  : Integer;
+      C     : Unicode_Char;
+   begin
+      --  Ch might be from an attribute (in which case it might have been
+      --  normalized first), or for the value of a mixed element, in which case
+      --  no element has taken place. We therefore need to skip initial spaces
+
+      while Index <= Ch'Last loop
+         --  Skip leading spaces
+         while Index <= Ch'Last loop
+            Start := Index;
+            Encoding.Read (Ch, Index, C);
+            exit when not Is_White_Space (C);
+            Start := Ch'Last + 1;
+         end loop;
+
+         exit when Start > Ch'Last;
+
+         --  Move to first whitespace after word
+         while Index <= Ch'Last loop
+            Last := Index;
+            Encoding.Read (Ch, Index, C);
+            exit when Index > Ch'Last or else Is_White_Space (C);
+         end loop;
+
+         if Index > Ch'Last and then not Is_White_Space (C) then
+            Callback (Ch (Start .. Index - 1));
+            exit;
+         else
+            Callback (Ch (Start .. Last - 1)); --  Last points to a whitespace
+         end if;
+      end loop;
+   end For_Each_Item;
+
 end Sax.Utils;
