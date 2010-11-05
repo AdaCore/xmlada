@@ -53,10 +53,10 @@ package body Schema.Schema_Readers is
    --  Default number of nested levels in a schema.
    --  If the actual schema uses more, we will simply reallocate some memory.
 
---     Max_Namespaces_In_Any_Attribute : constant := 50;
-   --  Maximum number of namespaces for a <anyAttribute>
-   --  This only impacts the parsing of the grammar, so can easily be raised if
-   --  need be.
+   Max_Max_Occurs : constant := 300;
+   --  Maximum value for maxOccurs.
+   --  Higher values result in an explosion in the number of states in the NFA,
+   --  so should not be used for now.
 
    procedure Push_Context
      (Handler : access Schema_Reader'Class; Ctx : Context);
@@ -785,6 +785,7 @@ package body Schema.Schema_Readers is
                   if Ty.Simple_Content = No_Simple_Type_Index then
 
                      if TyIndex /= No_Type_Index
+                       and then Shared.Types.Table (TyIndex).Details /= null
                        and then Shared.Types.Table (TyIndex).Details.In_Process
                      then
                         Validation_Error
@@ -810,7 +811,10 @@ package body Schema.Schema_Readers is
                NFA.Add_Transition (S, Nested_End, (Kind => Transition_Close));
          end case;
 
-         NFA.Repeat (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
+         --  Avoid extreme cases, that would result in huge NFA.
+
+         Nested_End := NFA.Repeat
+           (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
 
          Details.In_Process := False;
       end Process_Details;
@@ -1172,10 +1176,15 @@ package body Schema.Schema_Readers is
             --  know there is no infinite recursion between the base types of
             --  extensions and restrictions
 
+            if Debug then
+               Debug_Output ("Process attributes for complexType "
+                             & To_QName (Info.Descr.Name));
+            end if;
+
             Recursive_Add_Attributes (Info);
-            Reset (Processed_Groups);
             NFA.Get_Data (Info.S).Descr.Attributes := List;
 
+            Reset (Processed_Groups);
             NFA.Add_Transition
               (S1, Final_State, (Kind => Transition_Close));
          end if;
@@ -1569,6 +1578,15 @@ package body Schema.Schema_Readers is
 
       if Max_Occurs_Index /= -1 then
          Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
+      end if;
+
+      if Max_Occurs /= Unbounded
+        and then Max_Occurs > Max_Max_Occurs
+      then
+         Validation_Error
+           (Handler,
+            "maxOccurs is too big, consider using ""unbounded""",
+            Except => XML_Not_Implemented'Identity);
       end if;
    end Get_Occurs;
 

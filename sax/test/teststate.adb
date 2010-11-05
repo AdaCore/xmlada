@@ -288,15 +288,15 @@ procedure TestState is
       N.Add_Transition (S2, S5, (Char, 'd'));
       N.Add_Empty_Transition (S5, S3);
 
-      N.Repeat (S2, S3, 1, Natural'Last);  --  Make the "+" for the choice
+      S3 := N.Repeat (S2, S3, 1, Natural'Last); --  Make the "+" for the choice
 
       N.Add_Transition (S3, Final_State, (Char, 'b'));
 
-      N.Repeat (S2, S3, 2, 2);  --  Make the "{2}" for the choice
+      S3 := N.Repeat (S2, S3, 2, 2);  --  Make the "{2}" for the choice
 
       Assert
-        (" Start(a,S2) S2(d,S5)(c,S4) S5(,S6) S6(c,S8)(d,S7)(,S2) S8(,S3)"
-         & " S3(b,Sf)(,S6) S7(,S3) S4(,S6)",
+        (" Start(a,S2) S2(d,S5)(c,S4) S5(,S3) S3(c,S8)(d,S6)(,S2) S8(,S7)"
+         & " S7(b,Sf)(,S3) S6(,S7) S4(,S3)",
          Dump (N, Dump_Compact),
          Regexp);
 
@@ -358,12 +358,12 @@ procedure TestState is
 
       S2 := N.Add_State;
       N.Add_Transition (Start_State, S2, (Char, 'a'));
-      N.Repeat (Start_State, S2, 3, 6);
+      S2 := N.Repeat (Start_State, S2, 3, 6);
 
       N.Add_Transition (S2, Final_State, (Char, 'b'));
 
-      Assert (" Start(a,S3) S3(a,S4) S4(a,S5) S5(,S2)(a,S6) S2(b,Sf)"
-              & " S6(,S2)(a,S7) S7(,S2)(a,S2)",
+      Assert (" Start(a,S2) S2(a,S3) S3(a,S4) S4(a,S5)(,S7) S5(a,S6)(,S7)"
+              & " S6(a,S7)(,S7) S7(b,Sf)",
               Dump (N, Dump_Compact),
               Regexp);
 
@@ -398,7 +398,7 @@ procedure TestState is
 
       B := N.Add_State;
       N.Add_Transition (A, B, (Char, 'b'));
-      N.Repeat (A, B, Min_Occurs => 1, Max_Occurs => 2);
+      B := N.Repeat (A, B, Min_Occurs => 1, Max_Occurs => 2);
 
       Choice1 := N.Add_State;
       Choice2 := N.Add_State;
@@ -417,12 +417,12 @@ procedure TestState is
 
       E := N.Add_State;
       N.Add_Transition (Dot, E, (Char, 'e'));
-      N.Repeat (Dot, E, 1, Natural'Last);
+      E := N.Repeat (Dot, E, 1, Natural'Last);
 
       N.Add_Empty_Transition (E, Final_State);
 
       Assert
-        (" Start(a,S2) S2(b,S4) S4(,S3)(b,S3) S3(,S5) S5(d,S8)(c,S7)"
+        (" Start(a,S2) S2(b,S3) S3(b,S4)(,S4) S4(,S5) S5(d,S8)(c,S7)"
          & " S8(,S6) S6(<.>,S9) S9(e,S10) S10(,Sf)(,S9) S7(,S6)",
          Dump (N, Dump_Compact),
          Regexp);
@@ -527,7 +527,7 @@ procedure TestState is
          S4 := N.Add_State (4);
          N.Add_Empty_Transition (Start_State, S2);
          N.Add_Transition (S2, S3, (Char, 'a'));
-         N.Repeat (S2, S3, Min, Max);
+         S3 := N.Repeat (S2, S3, Min, Max);
          N.Add_Transition (S3, S4, (Char, 'b'));
 
          Assert
@@ -543,8 +543,8 @@ procedure TestState is
       end if;
 
       Internal (False, 0, 1, " Start(,S2) S2_2(,S3)(a,S3) S3_3(b,S4) S4_4");
-      Internal (True, 0, 1, " Start(,S2) S2_2(,S3)(a,S5) S3(b,S4) S4_4"
-                & " S5_3(,S3)");
+      Internal (True, 0, 1, " Start(,S2) S2_2(,S5)(a,S3) S5(b,S4) S4_4"
+                & " S3_3(,S5)");
 
       Internal (False, 1, Natural'Last,
                 " Start(,S2) S2_2(a,S3) S3_3(b,S4)(,S2) S4_4");
@@ -554,20 +554,20 @@ procedure TestState is
       Internal (False, 0, Natural'Last,
                 " Start(,S2) S2_2(,S3)(a,S3) S3_3(b,S4)(,S2) S4_4");
       Internal (True, 0, Natural'Last,
-                " Start(,S2) S2_2(,S3)(a,S5) S3(b,S4)(,S2) S4_4"
-                & " S5_3(,S3)");
+                " Start(,S2) S2_2(,S5)(a,S3) S5(b,S4)(,S2) S4_4"
+                & " S3_3(,S5)");
 
       Internal (False, 0, 3,
-                " Start(,S2) S2_2(,S3)(a,S5) S3_3(b,S4) S4_4 S5_3(,S3)(a,S6)"
-                & " S6_3(,S3)(a,S3)");
+                " Start(,S2) S2_2(,S6)(a,S3) S6_3(b,S4) S4_4 S3_3(a,S5)(,S6)"
+                & " S5_3(a,S6)(,S6)");
       Internal (True, 0, 3,
-                " Start(,S2) S2_2(,S3)(a,S5) S3(b,S4) S4_4 S5_3(,S3)(a,S6)"
-                & " S6_3(,S3)(a,S7) S7_3(,S3)");
+                " Start(,S2) S2_2(,S7)(a,S3) S7(b,S4) S4_4 S3_3(a,S5)(,S7)"
+                & " S5_3(a,S6)(,S7) S6_3(,S7)");
 
       Internal (False, 2, Natural'Last,
-                " Start(,S2) S2_2(a,S5) S5_3(a,S3) S3_3(b,S4)(,S5) S4_4");
+                " Start(,S2) S2_2(a,S3) S3_3(a,S5) S5_3(b,S4)(,S3) S4_4");
       Internal (True, 2, Natural'Last,
-                " Start(,S2) S2_2(a,S5) S5_3(a,S3) S3_3(b,S4)(,S5) S4_4");
+                " Start(,S2) S2_2(a,S3) S3_3(a,S5) S5_3(b,S4)(,S3) S4_4");
    end Test6;
 
    -----------
@@ -597,7 +597,7 @@ procedure TestState is
          N.On_Empty_Nested_Exit (S2, S4);
          N.On_Nested_Exit (S2, S4, (Char, 'a'));
 
-         N.Repeat (Start_State, S4, Min, Max);
+         S4 := N.Repeat (Start_State, S4, Min, Max);
 
          Assert
            (Expected,
@@ -616,17 +616,17 @@ procedure TestState is
          " Start(,S4)(b,S2) S4_4 S2_2:S3_3(Exit_a,S4)(Exit,S4) S3_3(a,Sf)");
       Internal
         (True, 0, 1,
-         " Start(,S4)(b,S2) S4 S2_2:S3_3(Exit_a,S5)(Exit,S5)"
-         & " S5_4(,S4) S3_3(a,Sf)");
+         " Start(,S5)(b,S2) S5 S2_2:S3_3(Exit_a,S4)(Exit,S4)"
+         & " S4_4(,S5) S3_3(a,Sf)");
 
       Internal
         (False, 1, 2,
-         " Start(b,S2) S2_2:S3_3(Exit_a,S5)(Exit,S5)"
-         & " S5_4(,S4)(b,S6) S4_4 S6_2:S3_3(Exit,S4)(Exit_a,S4) S3_3(a,Sf)");
+         " Start(b,S2) S2_2:S3_3(Exit_a,S4)(Exit,S4)"
+         & " S4_4(b,S5)(,S6) S5_2:S3_3(Exit,S6)(Exit_a,S6) S6_4 S3_3(a,Sf)");
       Internal
         (True, 1, 2,
-         " Start(b,S2) S2_2:S3_3(Exit_a,S5)(Exit,S5)"
-         & " S5_4(,S4)(b,S6) S4 S6_2:S3_3(Exit,S7)(Exit_a,S7) S7_4(,S4)"
+         " Start(b,S2) S2_2:S3_3(Exit_a,S4)(Exit,S4)"
+         & " S4_4(b,S5)(,S7) S5_2:S3_3(Exit,S6)(Exit_a,S6) S6_4(,S7) S7"
          & " S3_3(a,Sf)");
    end Test7;
 

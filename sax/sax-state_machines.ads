@@ -60,7 +60,7 @@ generic
 
 package Sax.State_Machines is
 
-   type State is new Natural range 0 .. 2 ** 16 - 1;
+   type State is new Natural; --   range 0 .. 2 ** 16 - 1;
    --  A state of a state machine
 
    type State_Data_Access is access all State_User_Data;
@@ -137,11 +137,11 @@ package Sax.State_Machines is
    --  considered as in [To_State]. Both states are basically equivalent.
    --  You cannot add transitions from the final state
 
-   procedure Repeat
+   function Repeat
      (Self       : access NFA;
       From, To   : State;
       Min_Occurs : Natural := 1;
-      Max_Occurs : Natural := 1);
+      Max_Occurs : Natural := 1) return State;
    --  Modify the automaton to repat the subautomaton From_State .. To_State a
    --  specific number of times.
    --  Note that this requires expansion (for instance "e{3,4}" is expanded to
@@ -151,11 +151,14 @@ package Sax.State_Machines is
    --     A := N.Add_State;
    --     B := N.Add_State;
    --     N.Add_Transition (A, B, 'b');
-   --     N.Repeat (A, B, 2, 3);
-   --  On exit, A and B are still the two ends of the sub-automaton, so you
-   --  would still connect to B if you have further states to add. You should
-   --  not, however, directly connect from or to any state within A..B (since
-   --  they might have been duplicated).
+   --     C := N.Repeat (A, B, 2, 3);
+   --
+   --  On exit, [From] and [To] are still the original sub-automaton. The
+   --  returned value is the end state of the repeated automaton (ie it plays
+   --  the same role as [To] in the original NFA.
+   --  You would connect to the returned state if you have further states to
+   --  add. You should not, however, directly connect from or to any state
+   --  within [From]..[To] (since they might have been duplicated).
    --
    --  No error is reported if Min_Occurs > Max_Occurs. But nothing is done
    --  either.

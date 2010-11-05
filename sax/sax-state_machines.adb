@@ -211,239 +211,336 @@ package body Sax.State_Machines is
    -- Repeat --
    ------------
 
-   procedure Repeat
+   function Repeat
      (Self       : access NFA;
       From, To   : State;
       Min_Occurs : Natural := 1;
-      Max_Occurs : Natural := 1)
+      Max_Occurs : Natural := 1) return State
    is
-      function Clone_And_Append (Newfrom : State) return State;
-      --  Duplicate the automaton NewFrom..To
-      --     -|Newfrom|--E--|To|--
+      type State_Array is
+        array (State_Tables.First .. Last (Self.States)) of State;
+
+      procedure Clone_And_Count_Nodes
+        (Cloned       : in out State_Array;
+         Cloned_Count : out Natural);
+      --  Clone all nodes internal to the subautomaton.
+      --  The algorithm is as follows: starting from [From], we follow all
+      --  transitions until we reach [To]. We do not follow any transition
+      --  from [To]. In the end, the internal nodes are the ones with an
+      --  an entry in [Cloned].
+
+      function Complete_All_Clones
+        (Cloned : State_Array; Cloned_Count : Natural; Max : Natural)
+         return State;
+      --  [Clone_And_Count_Nodes] was used to do one clone of the internal
+      --  nodes (and count them). This procedure does the remaining number of
+      --  clones for [Max_Occurs] repeats.
+      --  On exit, [From} has been cloned to [Cloned (From)],
+      --  [Cloned (From)+Cloned_Count], [Cloned (From)+Cloned_Count*2],...
+      --  Returns the final node in the cloned automaton.
+
+      procedure Clone_Transitions
+        (Cloned : State_Array;
+         Cloned_Count : Natural;
+         New_To : State;
+         Max    : Natural);
+      --  Clone all transitions for all cloned nodes. Only the transitions
+      --  leading to internal nodes are cloned
+      --     |From|--|To| -- .. |Cloned (From)+Offset|...
       --  becomes
-      --     -|Newfrom|--E--|Newto|--E--|To|
-      --  and Newto is returned.
+      --     |From|--|To| -- .. |Cloned (From)+Offset|...|<returned state>|
+      --  [New_To] is the final node in the cloned automaton
 
-      procedure Rename_State (Old_State, New_State : State);
-      --  Replace all references to [Old_State] with references to [New_State]
-      --  This doesn't change transitions.
-
-      function Add_Stateless return State;
+      function Add_Stateless (New_To : State) return State;
       --  Add a new stateless (ie with no user data) state at the end of the
       --  subautomaton.
-      --     -|From|--E--|To|--
+      --     ...--|New_To|--
       --  becomes
-      --     -|From|--E--|N|--|To|
-      --  where N is returned, has the user data of To, and To does not have
-      --  any user data.
+      --     ...--|N|--|New_To|
+      --  where N is returned, has the user data of New_To, and New_To does not
+      --  have any user data.
 
-      ------------------
-      -- Rename_State --
-      ------------------
+      ---------------------------
+      -- Clone_And_Count_Nodes --
+      ---------------------------
 
-      procedure Rename_State (Old_State, New_State : State) is
-      begin
-         for T in Transition_Tables.First .. Last (Self.Transitions) loop
-            if Self.Transitions.Table (T).To_State = Old_State then
-               Self.Transitions.Table (T).To_State := New_State;
-            end if;
-         end loop;
+      procedure Clone_And_Count_Nodes
+        (Cloned       : in out State_Array;
+         Cloned_Count : out Natural)
+      is
+         procedure Internal (S : State);
+         procedure Do_Transitions (First : Transition_Id);
 
-         Self.States.Table (New_State).Nested  :=
-           Self.States.Table (Old_State).Nested;
-         Self.States.Table (Old_State).Nested := No_State;
-      end Rename_State;
-
-      ----------------------
-      -- Clone_And_Append --
-      ----------------------
-
-      function Clone_And_Append (Newfrom : State) return State is
-         New_To : constant State := Add_State (Self);
-
-         Cloned : array (State_Tables.First .. Last (Self.States)) of State :=
-           (others => No_State);
-         --  Id of the clones corresponding to the states in Newfrom..To
-
-         procedure Clone_Internal_Nodes (S : State);
-         --  Clone all nodes internal to the subautomation.
-         --  The algorithm is as follows: starting from [From], we follow all
-         --  transitions until we reach [To]. We do not follow any transition
-         --  from [To]. In the end, the internal nodes are the ones with an
-         --  an entry in [Cloned].
-
-         procedure Clone_Transitions;
-         --  Clone all transitions for all cloned nodes. Only the transitions
-         --  leading to internal nodes are cloned
-
-         --------------------------
-         -- Clone_Internal_Nodes --
-         --------------------------
-
-         procedure Clone_Internal_Nodes (S : State) is
-            T   : Transition_Id;
+         procedure Do_Transitions (First : Transition_Id) is
+            T : Transition_Id := First;
          begin
-            if S = Newfrom then
-               Cloned (Newfrom) := New_To;
-            elsif S = New_To then
-               return;  --  Do not follow transitions from [To]
-            else
-               Cloned (S) := Add_State (Self, Self.States.Table (S).Data);
-               Self.States.Table (Cloned (S)).Nested :=
-                 Self.States.Table (S).Nested;
-            end if;
-
-            T := Self.States.Table (S).First_Transition;
             while T /= No_Transition loop
                declare
                   Tr : Transition renames Self.Transitions.Table (T);
                begin
                   if Tr.To_State = Final_State then
                      null;
-                  elsif Cloned (Tr.To_State) = No_State then
-                     Clone_Internal_Nodes (Tr.To_State);
+                  else
+                     Internal (Tr.To_State);
                   end if;
                   T := Tr.Next_For_State;
                end;
             end loop;
-         end Clone_Internal_Nodes;
+         end Do_Transitions;
 
-         -----------------------
-         -- Clone_Transitions --
-         -----------------------
+         procedure Internal (S : State) is
+         begin
+            if S = Final_State then
+               return;
+            elsif Cloned (S) /= No_State then
+               return;
+            elsif S = From then
+               Cloned (From) := To; --  Do not duplicate data or nested
 
-         procedure Clone_Transitions is
-            procedure Do_Transitions
-              (S : State; First : Transition_Id; On_Exit : Boolean);
+               if Debug then
+                  Put_Line ("From:Clone(" & From'Img & ") = "
+                            & Cloned (From)'Img & " don't copy data");
+               end if;
+            else
+               Cloned_Count := Cloned_Count + 1;
+               Cloned (S) := Add_State (Self, Self.States.Table (S).Data);
+               if Debug then
+                  Put_Line ("Clone(" & S'Img & ") = " & Cloned (S)'Img);
+               end if;
+               Self.States.Table (Cloned (S)).Nested :=
+                 Self.States.Table (S).Nested;
 
-            procedure Do_Transitions
-              (S : State; First : Transition_Id; On_Exit : Boolean)
-            is
-               T   : Transition_Id;
-               Tmp : State;
-            begin
-               T := First;
-               while T /= No_Transition loop
-                  declare
-                     --  Not a "renames", because Self.Transitions might be
-                     --  resized within this loop
-                     Tr : constant Transition := Self.Transitions.Table (T);
-                  begin
-                     if Tr.To_State = Final_State then
-                        Tmp := Final_State;
-                        if Cloned (S) = To then
-                           Tmp := No_State; --  No copy, will be done later
-                        end if;
-                     elsif Tr.To_State > Cloned'Last then
-                        Tmp := No_State;  --  Link to the outside
-                     else
-                        Tmp := Cloned (Tr.To_State);
+               if S = To then
+                  return;  --  No need to examine transitions from [To]
+               end if;
+            end if;
+
+            Do_Transitions (Self.States.Table (S).First_Transition);
+            Do_Transitions (Self.States.Table (S).On_Nested_Exit);
+         end Internal;
+      begin
+         Cloned_Count := 0;
+         Internal (From);
+      end Clone_And_Count_Nodes;
+
+      -------------------------
+      -- Complete_All_Clones --
+      -------------------------
+
+      function Complete_All_Clones
+        (Cloned : State_Array; Cloned_Count : Natural; Max : Natural)
+         return State
+      is
+         Tmp    : State;
+      begin
+         if Max <= 2 then
+            if Min_Occurs = Max_Occurs
+              or else Max_Occurs = Natural'Last
+            then
+               return Cloned (To);
+            else
+               return Add_Stateless (Cloned (To));
+            end if;
+         end if;
+
+         --  Reserve immediately the space for all the other repetitions, to
+         --  limit calls to malloc()
+         Set_Last
+           (Self.States,
+            Last (Self.States) + State (Cloned_Count * (Max - 2)));
+
+         for C in Cloned'Range loop
+            if Cloned (C) /= No_State then
+               for R in 1 .. Max - 2 loop
+                  Tmp := Cloned (C) + State (R * Cloned_Count);
+
+                  if C /= From then
+                     Self.States.Table (Tmp) :=
+                       State_Data'
+                         (Nested           => Self.States.Table (C).Nested,
+                          Data             => Self.States.Table (C).Data,
+                          On_Nested_Exit   => No_Transition,
+                          First_Transition => No_Transition);
+                     if Debug then
+                        Put_Line
+                          ("Extra clone(" & C'Img & ") at " & Tmp'Img);
                      end if;
 
-                     if Tmp /= No_State then
+                  else
+                     if Debug then
+                        Tmp := Cloned (To) + State ((R - 1) * Cloned_Count);
+                        Put_Line
+                          ("Extra clone(" & C'Img & ") at " & Tmp'Img
+                           & " (don't copy data)");
+                     end if;
+                  end if;
+               end loop;
+            end if;
+         end loop;
+
+         --  If needed, add an extra node at the end
+
+         if Min_Occurs = Max_Occurs
+           or else Max_Occurs = Natural'Last
+         then
+            return Cloned (To) + State ((Max - 2) * Cloned_Count);
+         else
+            return Add_Stateless
+              (Cloned (To) + State ((Max - 2) * Cloned_Count));
+         end if;
+      end Complete_All_Clones;
+
+      -----------------------
+      -- Clone_Transitions --
+      -----------------------
+
+      procedure Clone_Transitions
+        (Cloned : State_Array;
+         Cloned_Count : Natural;
+         New_To : State;
+         Max    : Natural)
+      is
+         procedure Do_Transitions
+           (S : State; First : Transition_Id; On_Exit : Boolean);
+
+         procedure Do_Transitions
+           (S : State; First : Transition_Id; On_Exit : Boolean)
+         is
+            T   : Transition_Id;
+            Tmp : State;
+            Offs1, Offs2 : State;
+         begin
+            T := First;
+            while T /= No_Transition loop
+               declare
+                  --  Not a "renames", because Self.Transitions might be
+                  --  resized within this loop
+                  Tr : constant Transition := Self.Transitions.Table (T);
+               begin
+                  if Tr.To_State = Final_State then
+                     Tmp := Final_State;
+                     if Cloned (S) = Cloned (To) then
+                        Tmp := No_State; --  No copy, will be done later
+                     end if;
+                  elsif Tr.To_State > Cloned'Last then
+                     Tmp := No_State;  --  Link to the outside
+                  else
+                     Tmp := Cloned (Tr.To_State);
+                  end if;
+
+                  if Tmp /= No_State then
+                     for R in 0 .. Max - 2 loop
+                        if S = From then
+                           --  Since the first clone of [From] is already in
+                           --  the NFA, the computation of the following clones
+                           --  is more complex: the user might have inserted
+                           --  more states in the NFA after inserting [To], so
+                           --  the clones are not in the same order
+
+                           if R = 0 then
+                              Offs1 := Cloned (From);
+                           else
+                              Offs1 :=
+                                Cloned (To) + State ((R - 1) * Cloned_Count);
+                           end if;
+
+                        else
+                           Offs1 := Cloned (S) + State (R * Cloned_Count);
+                        end if;
+
+                        Offs2 := Tmp + State (R * Cloned_Count);
+
                         if Tr.Is_Empty then
                            if On_Exit then
-                              On_Empty_Nested_Exit (Self, Cloned (S), Tmp);
+                              On_Empty_Nested_Exit (Self, Offs1, Offs2);
                            else
-                              Add_Empty_Transition (Self, Cloned (S), Tmp);
+                              if Debug then
+                                 Put_Line
+                                   ("Empty: from" & Offs1'Img
+                                    & " to" & Offs2'Img & " R=" & R'Img);
+                              end if;
+                              Add_Empty_Transition (Self, Offs1, Offs2);
                            end if;
                         else
                            if On_Exit then
-                              On_Nested_Exit (Self, Cloned (S), Tmp, Tr.Sym);
+                              On_Nested_Exit (Self, Offs1, Offs2, Tr.Sym);
                            else
-                              Add_Transition (Self, Cloned (S), Tmp, Tr.Sym);
+                              if Debug then
+                                 Put_Line ("Trans: from" & Offs1'Img
+                                           & " to" & Offs2'Img & " on "
+                                           & Image (Tr.Sym));
+                              end if;
+                              Add_Transition (Self, Offs1, Offs2, Tr.Sym);
                            end if;
                         end if;
-                     end if;
-
-                     T := Tr.Next_For_State;
-                  end;
-               end loop;
-            end Do_Transitions;
-
-            Prev : Transition_Id;
-            T   : Transition_Id;
-         begin
-            Self.States.Table (New_To) := Self.States.Table (To);
-            Self.States.Table (To).First_Transition := No_Transition;
-
-            for S in reverse Cloned'Range loop
-               if Cloned (S) /= No_State then
-                  Do_Transitions
-                    (S, Self.States.Table (S).First_Transition, False);
-                  Do_Transitions
-                    (S, Self.States.Table (S).On_Nested_Exit, True);
-               end if;
-            end loop;
-
-            --  Last pass to move external transition from [New_To] to [To],
-            --  ie from the end of the sub-automaton
-
-            Prev := No_Transition;
-            T := Self.States.Table (New_To).First_Transition;
-
-            while T /= No_Transition loop
-               declare
-                  Tr : Transition renames Self.Transitions.Table (T);
-                  Next : constant Transition_Id := Tr.Next_For_State;
-               begin
-                  if Tr.To_State = Final_State
-                    or else
-                      (Tr.To_State /= To
-                       and then Tr.To_State <= Cloned'Last
-                       and then Cloned (Tr.To_State) = No_State)
-                  then
-                     if Prev = No_Transition then
-                        Self.States.Table (New_To).First_Transition :=
-                          Tr.Next_For_State;
-                     else
-                        Self.Transitions.Table (Prev).Next_For_State :=
-                          Tr.Next_For_State;
-                     end if;
-
-                     Tr.Next_For_State :=
-                       Self.States.Table (To).First_Transition;
-                     Self.States.Table (To).First_Transition := T;
-
-                  else
-                     Prev := T;
+                     end loop;
                   end if;
 
-                  T := Next;
+                  T := Tr.Next_For_State;
                end;
             end loop;
-         end Clone_Transitions;
+         end Do_Transitions;
 
+         Prev   : Transition_Id;
+         T      : Transition_Id;
       begin
-         --  Replace [To] with a new node, so that [To] is still
-         --  the end state.
+         for S in reverse Cloned'Range loop
+            if Cloned (S) /= No_State then
+               Do_Transitions
+                 (S, Self.States.Table (S).First_Transition, False);
+               Do_Transitions
+                 (S, Self.States.Table (S).On_Nested_Exit, True);
+            end if;
+         end loop;
 
-         Rename_State (To, New_To);
+         --  Last pass to move external transition from [To] to [New_To],
+         --  ie from the end of the sub-automaton
 
-         --  Need to duplicate Newfrom..Newto into Newto..To
+         Prev   := No_Transition;
+         T      := Self.States.Table (To).First_Transition;
 
-         Cloned (New_To) := To;
-         Clone_Internal_Nodes (Newfrom);
+         while T /= No_Transition loop
+            declare
+               Tr : Transition renames Self.Transitions.Table (T);
+               Next : constant Transition_Id := Tr.Next_For_State;
+            begin
+               if Tr.To_State = Final_State
+                 or else
+                   (Tr.To_State /= To
+                    and then Tr.To_State <= Cloned'Last
+                    and then Cloned (Tr.To_State) = No_State)
+               then
+                  if Prev = No_Transition then
+                     Self.States.Table (To).First_Transition :=
+                       Tr.Next_For_State;
+                  else
+                     Self.Transitions.Table (Prev).Next_For_State :=
+                       Tr.Next_For_State;
+                  end if;
 
-         Clone_Transitions;
+                  Tr.Next_For_State :=
+                    Self.States.Table (New_To).First_Transition;
+                  Self.States.Table (New_To).First_Transition := T;
+               else
+                  Prev := T;
+               end if;
 
-         return New_To;
-      end Clone_And_Append;
+               T := Next;
+            end;
+         end loop;
+      end Clone_Transitions;
 
       -------------------
       -- Add_Stateless --
       -------------------
 
-      function Add_Stateless return State is
-         N : State := To;
+      function Add_Stateless (New_To : State) return State is
+         N : State := New_To;
       begin
          if Self.States_Are_Statefull then
             --  Add extra stateless node
-            N := Add_State (Self, Self.States.Table (To).Data);
-            Self.States.Table (To).Data := Default_Data;
-
-            Rename_State (To, N);
-            Add_Empty_Transition (Self, N, To);
+            N := Add_State (Self);
+            Add_Empty_Transition (Self, New_To, N);
          end if;
          return N;
       end Add_Stateless;
@@ -451,60 +548,91 @@ package body Sax.State_Machines is
       N : State;
 
    begin
+      if Debug then
+         Put_Line ("Repeat" & Min_Occurs'Img & Max_Occurs'Img);
+      end if;
+
       --  First the simple and usual cases (that cover the usual "*", "+" and
       --  "?" operators in regular expressions. It is faster to first handle
       --  those, since we don't need any additional new state for those.
 
       if Min_Occurs = 1 and then Max_Occurs = 1 then
-         return;  --  Nothing to do
+         return To;  --  Nothing to do
       elsif Min_Occurs > Max_Occurs then
-         return;  --  As documented, nothing is done
+         return To;  --  As documented, nothing is done
       elsif Max_Occurs = 0 then
          Self.States.Table (From).First_Transition := No_Transition;
          Add_Empty_Transition (Self, From, To);
-         return;
+         return To;
       elsif Min_Occurs = 0 and then Max_Occurs = 1 then
-         N := Add_Stateless;
-         Add_Empty_Transition (Self, From, To);
-         return;
+         N := Add_Stateless (To);
+         Add_Empty_Transition (Self, From, N);
+         return N;
       elsif Min_Occurs = 1 and then Max_Occurs = Natural'Last then
          Add_Empty_Transition (Self, From => To, To => From);
-         return;
+         return To;
       elsif Min_Occurs = 0 and then Max_Occurs = Natural'Last then
-         N := Add_Stateless;
-         Add_Empty_Transition (Self, From, To);
-         Add_Empty_Transition (Self, From => To, To => From);
-         return;
+         N := Add_Stateless (To);
+         Add_Empty_Transition (Self, From, N);
+         Add_Empty_Transition (Self, N, From);
+         return N;
       end if;
 
       --  We now deal with the more complex cases (always Max_Occurs > 1)
 
-      N := From;
+      declare
+         Cloned : State_Array := (others => No_State);
+         Cloned_Count : Natural := 0;
+         --  Number of nodes in the subautomaton to clone.
 
-      if Max_Occurs = Natural'Last then
-         for M in 1 .. Min_Occurs - 1 loop
-            N := Clone_And_Append (N);  --  N_Prev..To becomes N_Prev..N..To
-         end loop;
-         Add_Empty_Transition (Self, To, N);  --  unlimited
+         New_To : State;
 
-      else
-         declare
-            Local_Ends : array (0 .. Max_Occurs - 1) of State;
-         begin
-            Local_Ends (0) := From;
+      begin
+         Clone_And_Count_Nodes (Cloned, Cloned_Count);
 
-            for M in 1 .. Max_Occurs - 1 loop
-               N := Clone_And_Append (N);
-               Local_Ends (M) := N;
+         if Max_Occurs = Natural'Last then
+            New_To := Complete_All_Clones (Cloned, Cloned_Count, Min_Occurs);
+            Clone_Transitions (Cloned, Cloned_Count, New_To, Min_Occurs);
+
+            if Min_Occurs > 2 then
+               N := Cloned (To) + State ((Min_Occurs - 2) * Cloned_Count);
+            elsif Min_Occurs = 2 then
+               N := Cloned (From);
+            else
+               raise Program_Error;  --  cases 0..* and 1..* already handled
+            end if;
+
+            Add_Empty_Transition (Self, New_To, N);
+            if Debug then
+               Put_Line ("Empty trans from" & New_To'Img & " to" & N'Img);
+            end if;
+
+            return New_To;
+
+         else
+            New_To := Complete_All_Clones (Cloned, Cloned_Count, Max_Occurs);
+
+            if Min_Occurs = 0 then
+               Add_Empty_Transition (Self, From, New_To);
+            end if;
+
+            for R in Integer'Max (0, Min_Occurs - 1) .. Max_Occurs - 2 loop
+               if R = 0 then
+                  N := Cloned (From);
+               else
+                  N := Cloned (To) + State ((R - 1) * Cloned_Count);
+               end if;
+
+               if Debug then
+                  Put_Line ("Empty trans from" & N'Img & " to" & New_To'Img);
+               end if;
+               Add_Empty_Transition (Self, N, New_To);
             end loop;
 
-            N := Add_Stateless;
-
-            for L in Min_Occurs .. Local_Ends'Last loop
-               Add_Empty_Transition (Self, Local_Ends (L), To);
-            end loop;
-         end;
-      end if;
+            Clone_Transitions (Cloned, Cloned_Count, New_To, Max_Occurs);
+            return New_To;
+         end if;
+      end;
    end Repeat;
 
    ---------------
