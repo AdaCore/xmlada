@@ -215,15 +215,8 @@ package body Schema.Schema_Readers is
    procedure Get_Occurs
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List;
-      Min_Occurs, Max_Occurs : out Integer);
+      Min_Occurs, Max_Occurs : out Occurrences);
    --  Get the "minOccurs" and "maxOccurs" attributes
-
-   function Max_Occurs_From_Value
-     (Reader : access Abstract_Validation_Reader'Class;
-      Atts   : Sax_Attribute_List;
-      Index  : Integer) return Integer;
-   --  Return the value of maxOccurs from the attributes'value. This properly
-   --  takes into account the "unbounded" case
 
    ---------------
    -- To_String --
@@ -251,45 +244,6 @@ package body Schema.Schema_Readers is
       end loop;
       return False;
    end In_Redefine_Context;
-
-   ---------------------------
-   -- Max_Occurs_From_Value --
-   ---------------------------
-
-   function Max_Occurs_From_Value
-     (Reader : access Abstract_Validation_Reader'Class;
-      Atts   : Sax_Attribute_List;
-      Index  : Integer) return Integer
-   is
-      Value : constant Symbol := Get_Value (Atts, Index);
-   begin
-      if Value = Reader.Unbounded then
-         return Unbounded;
-      else
-         declare
-            Val : constant Cst_Byte_Sequence_Access := Get (Value);
-            Pos : Integer;
-            C   : Unicode_Char;
-         begin
-            return Integer'Value (Val.all);
-         exception
-            when Constraint_Error =>
-               --  Either we have an integer too big to fit in Integer, or we
-               --  do not have an integer at all
-               Pos := Val'First;
-               while Pos <= Val'Last loop
-                  Encoding.Read (Val.all, Pos, C);
-                  if not Is_Digit (C) then
-                     Validation_Error
-                       (Reader, "Value for ""maxOccurs"" must"
-                        & " be an integer or ""unbounded""");
-                  end if;
-               end loop;
-
-               return Integer'Last;
-         end;
-      end if;
-   end Max_Occurs_From_Value;
 
    ----------------
    -- Create_NFA --
@@ -900,14 +854,20 @@ package body Schema.Schema_Readers is
                            Target_NS      => Details.Any.Target_NS)));
 
                Nested_End := NFA.Add_State;
---             NFA.Add_Transition (S, Nested_End, (Kind => Transition_Close));
                NFA.On_Empty_Nested_Exit (S, Nested_End);
          end case;
 
          --  Avoid extreme cases, that would result in huge NFA.
 
-         Nested_End := NFA.Repeat
-           (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
+         if Details.Max_Occurs.Unbounded then
+            Nested_End := NFA.Repeat
+              (From, Nested_End, Details.Min_Occurs.Value,
+               Natural'Last);
+         else
+            Nested_End := NFA.Repeat
+              (From, Nested_End, Details.Min_Occurs.Value,
+               Details.Max_Occurs.Value);
+         end if;
 
          Details.In_Process := False;
       end Process_Details;
@@ -1770,30 +1730,66 @@ package body Schema.Schema_Readers is
    procedure Get_Occurs
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List;
-      Min_Occurs, Max_Occurs : out Integer)
+      Min_Occurs, Max_Occurs : out Occurrences)
    is
       Min_Occurs_Index : constant Integer :=
         Get_Index (Atts, URI => Empty_String, Local_Name => Handler.MinOccurs);
       Max_Occurs_Index : constant Integer :=
         Get_Index (Atts, URI => Empty_String, Local_Name => Handler.MaxOccurs);
+
+      function Occurs_From_Value (Index  : Integer) return Occurrences;
+      --  Return the value of maxOccurs from the attributes'value. This
+      --  properly takes into account the "unbounded" case
+
+      function Occurs_From_Value (Index  : Integer) return Occurrences is
+         Value : constant Symbol := Get_Value (Atts, Index);
+      begin
+         if Value = Handler.Unbounded then
+            return (Unbounded => True);
+         else
+            declare
+               Val : constant Cst_Byte_Sequence_Access := Get (Value);
+               Pos : Integer;
+               C   : Unicode_Char;
+            begin
+               return (Unbounded => False, Value => Natural'Value (Val.all));
+            exception
+               when Constraint_Error =>
+                  --  Either we have an integer too big to fit in Integer, or
+                  --  we do not have an integer at all
+                  Pos := Val'First;
+                  while Pos <= Val'Last loop
+                     Encoding.Read (Val.all, Pos, C);
+                     if not Is_Digit (C) then
+                        Validation_Error
+                          (Handler, "Value for ""maxOccurs"" must"
+                           & " be an integer or ""unbounded""");
+                     end if;
+                  end loop;
+
+                  return (Unbounded => False, Value => Natural'Last);
+            end;
+         end if;
+      end Occurs_From_Value;
+
    begin
-      Min_Occurs := 1;
-      Max_Occurs := 1;
+      Min_Occurs := (False, 1);
+      Max_Occurs := (False, 1);
 
       if Min_Occurs_Index /= -1 then
-         Min_Occurs := Max_Occurs_From_Value (Handler, Atts, Min_Occurs_Index);
-         if Min_Occurs = Unbounded then
+         Min_Occurs := Occurs_From_Value (Min_Occurs_Index);
+         if Min_Occurs.Unbounded then
             Validation_Error
               (Handler, "minOccurs cannot be ""unbounded""");
          end if;
       end if;
 
       if Max_Occurs_Index /= -1 then
-         Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
+         Max_Occurs := Occurs_From_Value (Max_Occurs_Index);
       end if;
 
-      if Max_Occurs /= Unbounded
-        and then Max_Occurs > Max_Max_Occurs
+      if not Max_Occurs.Unbounded
+        and then Max_Occurs.Value > Max_Max_Occurs
       then
          Validation_Error
            (Handler,
@@ -1832,7 +1828,7 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
-      Min_Occurs, Max_Occurs : Integer := 1;
+      Min_Occurs, Max_Occurs : Occurrences := (False, 1);
       Group   : Group_Descr;
       Name    : Qualified_Name;
       Details : Type_Details_Access;
@@ -2180,7 +2176,7 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
-      Min_Occurs, Max_Occurs : Integer := 1;
+      Min_Occurs, Max_Occurs : Occurrences := (False, 1);
       Info    : Element_Descr;
       Name    : Qualified_Name;
       Details : Type_Details_Access;
@@ -2617,8 +2613,8 @@ package body Schema.Schema_Readers is
       else
          Details := new Type_Details'
            (Kind        => Type_Restriction,
-            Min_Occurs  => 1,
-            Max_Occurs  => 1,
+            Min_Occurs  => (False, 1),
+            Max_Occurs  => (False, 1),
             In_Process  => False,
             Next        => null,
             Restriction => Restr);
@@ -2765,8 +2761,8 @@ package body Schema.Schema_Readers is
       else
          Details := new Type_Details'
            (Kind       => Type_Extension,
-            Min_Occurs => 1,
-            Max_Occurs => 1,
+            Min_Occurs => (False, 1),
+            Max_Occurs => (False, 1),
             In_Process => False,
             Next       => null,
             Extension  => Ext);
@@ -2971,7 +2967,7 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts : Sax_Attribute_List)
    is
-      Min_Occurs, Max_Occurs : Integer := 1;
+      Min_Occurs, Max_Occurs : Occurrences := (False, 1);
       Choice  : Type_Details_Access;
    begin
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
@@ -2997,7 +2993,7 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Min_Occurs, Max_Occurs : Integer := 1;
+      Min_Occurs, Max_Occurs : Occurrences := (False, 1);
       Seq  : Type_Details_Access;
    begin
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
@@ -3332,7 +3328,7 @@ package body Schema.Schema_Readers is
       Details : Type_Details_Access;
       Any     : Internal_Any_Descr;
       Name    : Qualified_Name;
-      Min_Occurs, Max_Occurs : Integer := 1;
+      Min_Occurs, Max_Occurs : Occurrences := (False, 1);
 
    begin
       Any.Target_NS  := Handler.Target_NS;
@@ -3369,7 +3365,7 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Min_Occurs, Max_Occurs : Integer := 1;
+      Min_Occurs, Max_Occurs : Occurrences := (False, 1);
       Details : Type_Details_Access;
    begin
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);

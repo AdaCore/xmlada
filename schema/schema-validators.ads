@@ -83,8 +83,15 @@ package Schema.Validators is
    No_Grammar : constant XML_Grammar;
    --  No Grammar has been defined
 
-   Unbounded : constant Integer := Integer'Last;
-   --  To indicate that a Max_Occurs is set to unbounded
+   type Occurrences (Unbounded : Boolean := False) is record
+      case Unbounded is
+         when True =>
+            null;
+         when False =>
+            Value : Natural;
+      end case;
+   end record;
+   --  The number of occurrences
 
    type Form_Type is (Qualified, Unqualified);
    --  Whether locally declared elements need to be qualified or whether
