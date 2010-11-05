@@ -764,8 +764,9 @@ package body Schema.Readers is
 
       if not Success then
          Validation_Error
-           (H, "State_Machine reported an error on <close>, expected "
-            & Expected (H.Matcher));
+           (H,
+            "Unexpected end of sequence, expecting """
+            & Expected (H.Matcher) & '"');
       end if;
    end Hook_End_Element;
 

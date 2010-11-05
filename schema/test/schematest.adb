@@ -778,7 +778,6 @@ procedure Schematest is
                  (Get_Attribute_NS (N, S_Xlink, S_Href),
                   Dir_Name (Filename),
                   Resolve_Links => False));
-            exit; --  MANU
          end if;
 
          N := Next_Sibling (N);

@@ -443,7 +443,10 @@ package body Schema.Schema_Readers is
             Descr     : Type_Descr;
          begin
             if S = No_State then
-               if Real.Typ = No_Qualified_Name then
+               if Real.Typ /= No_Qualified_Name then
+                  Get_Type_Descr (Real.Typ, Info.Loc, Typ, Descr, S);
+
+               elsif Real.Local_Type /= No_Type_Index then
                   Typ := Real.Local_Type;
                   Descr := Shared.Types.Table (Typ).Descr;
                   S := Shared.Types.Table (Typ).S;
@@ -456,7 +459,9 @@ package body Schema.Schema_Readers is
                   end if;
 
                else
-                  Get_Type_Descr (Real.Typ, Info.Loc, Typ, Descr, S);
+                  --  "<anyType>" (3.3.2.1 {type definition})
+                  S := No_State;
+
                end if;
 
                if Info.Substitution_Group /= No_Qualified_Name then
@@ -465,10 +470,12 @@ package body Schema.Schema_Readers is
                   null;
                end if;
 
-               if Descr.Simple_Content /= No_Simple_Type_Index then
-                  NFA.Get_Data (S1).Descr := Descr;
-               else
-                  NFA.Set_Nested (S1, NFA.Create_Nested (S));
+               if S /= No_State then
+                  if Descr.Simple_Content /= No_Simple_Type_Index then
+                     NFA.Get_Data (S1).Descr := Descr;
+                  else
+                     NFA.Set_Nested (S1, NFA.Create_Nested (S));
+                  end if;
                end if;
             end if;
          end;

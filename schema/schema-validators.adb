@@ -1632,14 +1632,14 @@ package body Schema.Validators is
    begin
       case Trans.Kind is
          when Transition_Symbol       =>
-            --  return To_QName (Trans.Name);
             if Trans.Name.Local = No_Symbol then
                return "";
             else
-               return Get (Trans.Name.Local).all;
+               return To_QName (Trans.Name);
+               --  return Get (Trans.Name.Local).all;
             end if;
          when Transition_Close => return "close element";
-         when Transition_Any          => return "<any>";
+         when Transition_Any   => return "<any>";
       end case;
    end Image;
 
