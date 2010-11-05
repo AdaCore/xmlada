@@ -1151,6 +1151,8 @@ package body Schema.Schema_Readers is
                      Override (Simple  => Base,
                                Facets  => Internal.Facets,
                                Symbols => Get_Symbol_Table (Parser.all),
+                               As_Restriction => Internal.Kind =
+                                 Simple_Type_Restriction,
                                Error   => Error,
                                Error_Loc => Loc);
                      if Error /= No_Symbol then

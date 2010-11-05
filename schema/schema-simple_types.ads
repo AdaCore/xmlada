@@ -28,7 +28,6 @@
 
 pragma Ada_05;
 
-with Ada.Unchecked_Deallocation;
 with GNAT.Dynamic_Tables;
 with GNAT.Regpat;         use GNAT.Regpat;
 with Sax.Locators;        use Sax.Locators;
@@ -76,8 +75,20 @@ package Schema.Simple_Types is
      );
 
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Pattern_Matcher, Pattern_Matcher_Access);
+   type Pattern_Facet is record
+      Str     : Sax.Symbols.Symbol;      --  The pattern itself
+      Pattern : Pattern_Matcher_Access;  --  The compiled pattern
+   end record;
+   type Pattern_Matcher_Array is array (Natural range <>) of Pattern_Facet;
+   type Pattern_Matcher_Array_Access is access all Pattern_Matcher_Array;
+   procedure Free (Arr : in out Pattern_Matcher_Array_Access);
+   --  A type might be subject to multiple patterns:
+   --    - When we extend a base type, we must match either the base's patterns
+   --      or the patterns set in the extenstion. This does not increase the
+   --      number of patterns, we just merge them with "|".
+   --    - When we restrict a base type, we must match both the base's patterns
+   --      and the patterns set in the extenstion. This increases the number of
+   --      patterns
 
    type Simple_Type_Array is array (Natural range <>) of Simple_Type_Index;
 
@@ -99,8 +110,7 @@ package Schema.Simple_Types is
      (Kind : Primitive_Simple_Type_Kind := Primitive_Boolean)
    is record
       Mask           : Facets_Mask            := (others => False);
-      Pattern_String : Sax.Symbols.Symbol     := Sax.Symbols.No_Symbol;
-      Pattern        : Pattern_Matcher_Access := null;
+      Pattern        : Pattern_Matcher_Array_Access := null;
       Whitespace     : Whitespace_Restriction := Collapse;
       Enumeration    : Enumeration_Index      := No_Enumeration_Index;
 
@@ -263,6 +273,7 @@ package Schema.Simple_Types is
      (Simple     : in out Simple_Type_Descr;
       Facets     : All_Facets;
       Symbols    : Sax.Utils.Symbol_Table;
+      As_Restriction : Boolean;
       Error      : out Sax.Symbols.Symbol;
       Error_Loc  : out Sax.Locators.Location);
    --  Override [Simple] with the facets defined in [Facets], but keep those

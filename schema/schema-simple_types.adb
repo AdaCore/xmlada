@@ -28,6 +28,7 @@
 
 pragma Ada_05;
 
+with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
@@ -39,6 +40,11 @@ with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 package body Schema.Simple_Types is
 
    use Simple_Type_Tables, Enumeration_Tables;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Pattern_Matcher_Array, Pattern_Matcher_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Pattern_Matcher, Pattern_Matcher_Access);
 
    generic
       with function Get_Length (Ch : Byte_Sequence) return Natural;
@@ -721,7 +727,7 @@ package body Schema.Simple_Types is
          end;
       end if;
 
-      if Descr.Mask (Facet_Pattern) then
+      if Descr.Mask (Facet_Pattern) and then Descr.Pattern /= null then
 
          --  Check whether we have unicode char outside of ASCII
 
@@ -734,15 +740,17 @@ package body Schema.Simple_Types is
             end if;
          end loop;
 
-         Match (Descr.Pattern.all, String (Ch), Matched);
-         if Matched (0).First /= Ch'First
-           or else Matched (0).Last /= Ch'Last
-         then
-            return Find
-              (Symbols,
-               "string pattern not matched: "
-               & Get (Descr.Pattern_String).all);
-         end if;
+         for P in Descr.Pattern'Range loop
+            Match (Descr.Pattern (P).Pattern.all, String (Ch), Matched);
+            if Matched (0).First /= Ch'First
+              or else Matched (0).Last /= Ch'Last
+            then
+               return Find
+                 (Symbols,
+                  "string pattern not matched: "
+                  & Get (Descr.Pattern (P).Str).all);
+            end if;
+         end loop;
       end if;
 
       if Descr.Mask (Facet_Whitespace) then
@@ -1957,10 +1965,32 @@ package body Schema.Simple_Types is
      (Simple     : in out Simple_Type_Descr;
       Facets     : All_Facets;
       Symbols    : Sax.Utils.Symbol_Table;
+      As_Restriction : Boolean;
       Error      : out Sax.Symbols.Symbol;
       Error_Loc  : out Sax.Locators.Location)
    is
+      function Compile_Regexp (Str : Symbol) return Pattern_Matcher_Access;
+
+      function Compile_Regexp (Str : Symbol) return Pattern_Matcher_Access is
+         Convert : constant String := Convert_Regexp (Get (Str).all);
+      begin
+         if Debug then
+            Debug_Output ("Compiling regexp as " & Convert);
+         end if;
+
+         return new Pattern_Matcher'(Compile (Convert));
+      exception
+         when  GNAT.Regpat.Expression_Error =>
+            Error_Loc := Facets (Facet_Pattern).Loc;
+            Error := Find
+              (Symbols,
+               "Invalid regular expression "
+               & Get (Str).all & " (converted to " & Convert & ")");
+            return null;
+      end Compile_Regexp;
+
       Val : Symbol;
+      Tmp : Pattern_Matcher_Array_Access;
    begin
       if Facets (Facet_Whitespace) /= No_Facet_Value then
          Val := Facets (Facet_Whitespace).Value;
@@ -1983,35 +2013,51 @@ package body Schema.Simple_Types is
       if Facets (Facet_Pattern) /= No_Facet_Value then
          Val := Facets (Facet_Pattern).Value;
 
-         if Simple.Pattern_String = No_Symbol then
-            Simple.Pattern_String := Val;
+         if As_Restriction then
+            --  We must match all patterns (from base and from extension), and
+            --  we cannot combine them. So we need to add one more pattern to
+            --  the facets.
+            --  [Simple] is a copy of the base type, and will be the new
+            --  restriction on exit.
+
+            if Simple.Pattern = null then
+               Simple.Pattern := new Pattern_Matcher_Array (1 .. 1);
+            else
+               Tmp := Simple.Pattern;
+               Simple.Pattern :=
+                 new Pattern_Matcher_Array (Tmp'First .. Tmp'Last + 1);
+               Simple.Pattern (Tmp'Range) := Tmp.all;
+               Unchecked_Free (Tmp);
+            end if;
+
+            Simple.Pattern (Simple.Pattern'Last) :=
+              (Str     => Val,
+               Pattern => Compile_Regexp (Val));
+
          else
-            Simple.Pattern_String := Find
-              (Symbols,
-               '(' & Get (Simple.Pattern_String).all
-               & ")|(" & Get (Val).all & ')');
+            --  We must combine the base's patterns with the extension's
+            --  pattern, since the type must match either of those.
+            --  The number of patterns does not change
+
+            if Simple.Pattern = null then
+               Simple.Pattern := new Pattern_Matcher_Array'
+                 (1 => (Str => Val, Pattern => Compile_Regexp (Val)));
+            else
+               for P in Simple.Pattern'Range loop
+                  Simple.Pattern (P).Str := Find
+                    (Symbols,
+                     '(' & Get (Simple.Pattern (P).Str).all
+                     & ")(" & Get (Val).all & ')');
+                  Unchecked_Free (Simple.Pattern (P).Pattern);
+                  Simple.Pattern (P).Pattern :=
+                    Compile_Regexp (Simple.Pattern (P).Str);
+               end loop;
+            end if;
          end if;
 
-         Unchecked_Free (Simple.Pattern);
-
-         declare
-            Convert : constant String :=
-              Convert_Regexp (Get (Simple.Pattern_String).all);
-         begin
-            if Debug then
-               Debug_Output ("Compiling regexp as " & Convert);
-            end if;
-            Simple.Pattern := new Pattern_Matcher'(Compile (Convert));
-         exception
-            when  GNAT.Regpat.Expression_Error =>
-               Error_Loc := Facets (Facet_Pattern).Loc;
-               Error := Find
-                 (Symbols,
-                  "Invalid regular expression "
-                  & Get (Simple.Pattern_String).all
-                  & " (converted to " & Convert & ")");
-               return;
-         end;
+         if Error /= No_Symbol then
+            return;
+         end if;
 
          Simple.Mask (Facet_Pattern) := True;
       end if;
@@ -2273,9 +2319,28 @@ package body Schema.Simple_Types is
       Result : Simple_Type_Descr := Descr;
    begin
       if Descr.Pattern /= null then
-         Result.Pattern := new Pattern_Matcher'(Descr.Pattern.all);
+         Result.Pattern := new Pattern_Matcher_Array (Descr.Pattern'Range);
+         for P in Descr.Pattern'Range loop
+            Result.Pattern (P) :=
+              (Str     => Descr.Pattern (P).Str,
+               Pattern => new Pattern_Matcher'(Descr.Pattern (P).Pattern.all));
+         end loop;
       end if;
       return Result;
    end Copy;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Arr : in out Pattern_Matcher_Array_Access) is
+   begin
+      if Arr /= null then
+         for A in Arr'Range loop
+            Unchecked_Free (Arr (A).Pattern);
+         end loop;
+         Unchecked_Free (Arr);
+      end if;
+   end Free;
 
 end Schema.Simple_Types;

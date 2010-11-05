@@ -1007,9 +1007,7 @@ package body Schema.Validators is
       To  : Simple_Type_Index := No_Simple_Type_Index) is
    begin
       for S in To + 1 .. Simple_Type_Tables.Last (NFA.Simple_Types) loop
-         if NFA.Simple_Types.Table (S).Pattern /= null then
-            Unchecked_Free (NFA.Simple_Types.Table (S).Pattern);
-         end if;
+         Free (NFA.Simple_Types.Table (S).Pattern);
       end loop;
 
       if To = No_Simple_Type_Index then
