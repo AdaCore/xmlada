@@ -1,0 +1,145 @@
+--  The following tests are apparently wrong, given the errata E14
+--  http://www.w3.org/XML/xml-V10-2e-errata
+ibm-invalid-P50-ibm50i01.xml
+ibm-not-wf-p28a-ibm28an01.xml
+not-wf-not-sa-009
+not-wf-sa-074
+not-wf-sa-104
+not-wf-sa-182
+rmt-ns10-033
+
+--  Comparing the XML output of the following tests requires partial output
+--  of the DOCTYPE, whereas other tests don't. Not sure why exactly.
+
+ibm-valid-P28-ibm28v02.xml
+ibm-valid-P29-ibm29v01.xml
+ibm-valid-P29-ibm29v02.xml
+
+--  The following tests require support of DOCTYPE validation, which
+--  XML/Ada does not provide
+rmt-e2e-15h
+rmt-e2e-15g
+rmt-e2e-15d
+rmt-e2e-15c
+rmt-e2e-15b
+rmt-e2e-15a
+ibm-invalid-P60-ibm60i03
+
+ibm-invalid-P59-ibm59i01
+attr07
+   --  enums
+
+ibm-invalid-P56-ibm56i10
+ibm-invalid-P56-ibm56i08
+ibm-invalid-P56-ibm56i06
+ibm-invalid-P56-ibm56i02
+ibm-invalid-P56-ibm56i10.xml
+ibm-invalid-P56-ibm56i08.xml
+ibm-invalid-P56-ibm56i06.xml
+ibm-invalid-P56-ibm56i02.xml
+id09
+id08
+   --  ids and idrefs
+
+id03
+   --  one ide per elemenet
+
+id02
+   --  id is unique
+
+ibm-invalid-P45-ibm45i01
+ibm-invalid-P39-ibm39i04
+   --  <!ELEM
+
+--  The following tests have invalid content model
+rmt-e2e-55
+rmt-e2e-34
+rmt-e2e-2a
+ibm-invalid-P51-ibm51i03
+ibm-invalid-P39-ibm39i02
+ibm-invalid-P39-ibm39i01
+ibm-invalid-P39-ibm39i03
+optional25
+optional24
+optional23
+optional22
+optional21
+optional20
+optional19
+optional18
+optional17
+optional16
+optional15
+optional14
+optional13
+optional12
+optional11
+optional10
+optional09
+optional08
+optional07
+optional06
+optional05
+optional04
+optional03
+optional02
+optional01
+inv-dtd03
+el03
+el01
+el05
+
+ibm-invalid-P60-ibm60i03.xml
+ibm-invalid-P59-ibm59i01.xml
+ibm-invalid-P51-ibm51i03.xml
+ibm-invalid-P45-ibm45i01.xml
+ibm-invalid-P39-ibm39i04.xml
+ibm-invalid-P39-ibm39i03.xml
+ibm-invalid-P39-ibm39i02.xml
+ibm-invalid-P39-ibm39i01.xml
+ibm-invalid-P32-ibm32i04.xml
+ibm-invalid-P32-ibm32i03.xml
+ibm-invalid-P32-ibm32i01.xml
+inv-not-sa12
+inv-not-sa11
+inv-not-sa10
+inv-not-sa09
+inv-not-sa07
+inv-not-sa06
+inv-not-sa05
+inv-not-sa04
+inv-not-sa01
+   --  standalone
+
+empty
+   --  whitespace
+
+o-p75pass1
+o-p74pass1
+   --  missing element decl
+
+attr04
+attr03
+   --  notations must be declared
+
+invalid-not-sa-022
+   --  conditional section
+
+el06
+el02
+   --  Empty element
+
+attr16
+attr15
+   --  default attribute value
+
+inv-not-sa14
+   --  CDATA as whitespace
+
+el04
+inv-dtd01
+   --  duplicate element decl
+
+--  not-wf-sa-084
+   --  Incorrect error message
+

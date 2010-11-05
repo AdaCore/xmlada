@@ -1,5 +1,6 @@
 tests: force
-	@./testxml -auto -silent
+	@./testxml -auto > testxml.tmp.out
+	@ diff testxml.out testxml.tmp.out
 	@cd act_testsuite; ./run
 
 force:
