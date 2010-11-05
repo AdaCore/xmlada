@@ -738,7 +738,13 @@ package body Schema.Schema_Readers is
                   if Ty.Simple_Content = No_Simple_Type_Index then
                      if TyIndex /= No_Type_Index then
                         --  We have all the details, and just have to copy them
-                        if Shared.Types.Table (TyIndex).Details.In_Process then
+                        --  Details might be null, for instance for an
+                        --  <extension> that just adds attributes
+
+                        if Shared.Types.Table (TyIndex).Details /= null
+                          and then
+                            Shared.Types.Table (TyIndex).Details.In_Process
+                        then
                            Validation_Error
                              (Parser,
                               "Circular inheritance of type "
@@ -2756,8 +2762,12 @@ package body Schema.Schema_Readers is
          when Context_Type_Def =>
             pragma Assert
               (not Handler.Shared.Types.Table (Ctx.Type_Info).Is_Simple);
-            pragma Assert
-              (Handler.Shared.Types.Table (Ctx.Type_Info).Details = null);
+
+            --  ??? This test is not needed if we are validating the XSD
+            if Handler.Shared.Types.Table (Ctx.Type_Info).Details /= null then
+               Validation_Error (Handler, "Invalid element");
+            end if;
+
             Handler.Shared.Types.Table (Ctx.Type_Info).Details := Element;
 
          when Context_Sequence =>

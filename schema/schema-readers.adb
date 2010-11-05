@@ -167,9 +167,6 @@ package body Schema.Readers is
       elsif U (U'First) /= '/'
         and then U (U'First) /= '\'
       then
-         Debug_Output ("MANU Normalizing "
-                       & Get (Get_System_Id (Handler.Locator)).all
-                       & "   " & U.all);
          return Find_Symbol
            (Handler,
             Dir_Name (Get (Get_System_Id (Handler.Locator)).all) & U.all);

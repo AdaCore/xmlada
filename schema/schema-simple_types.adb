@@ -1779,7 +1779,10 @@ package body Schema.Simple_Types is
                     (Get (Facets (Facet_Fraction_Digits).Value).all);
                end if;
 
-               if Simple.Fraction_Digits > Simple.Total_Digits then
+               if Simple.Fraction_Digits /= Natural'Last
+                 and then Simple.Total_Digits /= Positive'Last
+                 and then Simple.Fraction_Digits > Simple.Total_Digits
+               then
                   Error_Loc := Facets (Facet_Fraction_Digits).Loc;
                   Error := Find
                     (Symbols,
