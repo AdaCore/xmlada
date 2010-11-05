@@ -113,6 +113,7 @@ private
       Simple_Content : Boolean := False;
       Details        : Type_Details_Access;
       NFA            : Schema.Validators.Schema_State_Machines.Nested_NFA;
+      Attributes     : Attribute_Validator_List_Access;
    end record;
 
    type Schema_Descr is record

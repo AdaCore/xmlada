@@ -538,7 +538,7 @@ package body Schema.Schema_Readers is
          if not Info.Simple_Content then
             S := NFA.Add_State
               ((Type_Name   => Info.Name,
-                Attributes  => null,
+                Attributes  => Info.Attributes,
                 Simple_Type => null));
             Info.NFA := NFA.Create_Nested (S);
          end if;
@@ -2480,10 +2480,9 @@ package body Schema.Schema_Readers is
    begin
       case In_Context.Typ is
          when Context_Type_Def =>
-            null;
---              Add_Attribute
---                (Handler.NFA.Get_Data (In_Context.Start_State).Attributes,
---                 Attribute);
+            Add_Attribute
+              (Handler.Types.Table (In_Context.Type_Info).Attributes,
+               Attribute);
 
          when Context_Schema | Context_Redefine =>
             null;
