@@ -182,7 +182,17 @@ exception
       Close (Read);
       Free (My_Reader);
 
-   when E : XML_Fatal_Error | XML_Not_Implemented =>
+   when XML_Not_Implemented =>
+      if My_Reader = null then
+         Put_Line ("NOT IMPLEMENTED: " & Get_Error_Message (Schema));
+      else
+         Put_Line ("NOT IMPLEMENTED: " & Get_Error_Message (My_Reader.all));
+      end if;
+
+      Close (Read);
+      Free (My_Reader);
+
+   when E : XML_Fatal_Error =>
       Put_Line (Exception_Message (E));
       Close (Read);
       Free (My_Reader);

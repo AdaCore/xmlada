@@ -86,6 +86,7 @@ private
       Is_Abstract        : Boolean            := False;
       Nillable           : Boolean            := False;
       Has_Block          : Boolean            := False;
+      Loc                : Sax.Locators.Location := Sax.Locators.No_Location;
    end record;
    No_Element_Descr : constant Element_Descr := (others => <>);
 

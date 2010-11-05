@@ -361,7 +361,8 @@ package body Schema.Schema_Readers is
                TRef := Get (Ref.all, (Info.Ref, Ref_Element));
                if TRef = No_Global_Reference then
                   Validation_Error
-                    (Parser, "Unknown refed type " & To_QName (Info.Ref));
+                    (Parser, "Unknown refed type " & To_QName (Info.Ref),
+                     Info.Loc);
                else
                   S := TRef.Element;
                   NFA.Get_Data (S1).Descr := NFA.Get_Data (S).Descr;
@@ -648,7 +649,18 @@ package body Schema.Schema_Readers is
                      end if;
 
                   when Kind_Attribute =>
-                     if Attrs (A).Attr.Local_Type /= No_Type_Index then
+                     if Attrs (A).Attr.Ref /= No_Qualified_Name then
+                        TRef := Get
+                          (Ref.all, (Attrs (A).Attr.Ref, Ref_Attribute));
+                        if TRef = No_Global_Reference then
+                           Validation_Error
+                             (Parser,
+                              "Unknown referenced attribute: "
+                              & To_QName (Attrs (A).Attr.Ref),
+                              Attrs (A).Attr.Loc);
+                        end if;
+
+                     elsif Attrs (A).Attr.Local_Type /= No_Type_Index then
                         S := Shared.Types.Table (Attrs (A).Attr.Local_Type).S;
                      else
                         TRef := Get (Ref.all, (Attrs (A).Attr.Typ, Ref_Type));
@@ -657,6 +669,7 @@ package body Schema.Schema_Readers is
                              (Parser,
                               "Unknown type for attribute """
                               & To_QName (Attrs (A).Attr.Descr.Name)
+                              & To_QName (Attrs (A).Attr.Ref)
                               & """: " & To_QName (Attrs (A).Attr.Typ),
                               Attrs (A).Attr.Loc);
                         end if;
@@ -1140,7 +1153,8 @@ package body Schema.Schema_Readers is
          when Context_Schema | Context_Redefine =>
             null;
 
-         when Context_Sequence | Context_Choice | Context_Extension =>
+         when Context_Sequence | Context_Choice | Context_Extension
+            | Context_Restriction =>
             Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
             Details := new Type_Details'
               (Kind       => Type_Group,
@@ -1151,9 +1165,10 @@ package body Schema.Schema_Readers is
             Insert_In_Type (Handler, Details);
 
          when others =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""group"" in this context");
+            Validation_Error
+              (Handler,
+               "Unsupported ""group"" in this context",
+              Except => XML_Not_Implemented'Identity);
       end case;
 
       Push_Context (Handler,
@@ -1552,6 +1567,8 @@ package body Schema.Schema_Readers is
       Details : Type_Details_Access;
 
    begin
+      Info.Loc := Get_Location (Get_Locator (Handler.all));
+
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);

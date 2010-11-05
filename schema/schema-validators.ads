@@ -28,6 +28,7 @@
 
 pragma Ada_05;
 
+with Ada.Exceptions;
 with GNAT.Dynamic_HTables;
 with Interfaces;
 with Unicode.CES;
@@ -234,11 +235,9 @@ package Schema.Validators is
                            Ref_AttrGroup);
    type Global_Reference (Kind : Reference_Kind := Ref_Element) is record
       case Kind is
-         when Ref_Element   =>
-            Element : State;
-            --  Tr : Transition_Event;
+         when Ref_Element   => Element : State;
          when Ref_Type      => Typ : State;  --  Start of nested NFA
-         when Ref_Attribute => null; --  Attr_Validator : Attribute_Descr;
+         when Ref_Attribute => Attr : State;
          when Ref_Group     => Gr_Start, Gr_End : State;
          when Ref_AttrGroup => Attributes : Attribute_Validator_List_Access;
       end case;
@@ -466,7 +465,8 @@ package Schema.Validators is
    procedure Validation_Error
      (Reader  : access Abstract_Validation_Reader;
       Message : Unicode.CES.Byte_Sequence;
-      Loc     : Sax.Locators.Location := Sax.Locators.No_Location);
+      Loc     : Sax.Locators.Location := Sax.Locators.No_Location;
+      Except  : Ada.Exceptions.Exception_Id := XML_Validation_Error'Identity);
    --  Sets an error message, and raise XML_Validation_Error.
    --  The message can contain special characters like:
    --    '#': if first character, it will be replaced by the current location

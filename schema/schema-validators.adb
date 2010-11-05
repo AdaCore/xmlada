@@ -95,7 +95,8 @@ package body Schema.Validators is
    procedure Validation_Error
      (Reader  : access Abstract_Validation_Reader;
       Message : Byte_Sequence;
-      Loc     : Sax.Locators.Location := Sax.Locators.No_Location) is
+      Loc     : Sax.Locators.Location := Sax.Locators.No_Location;
+      Except  : Exception_Id := XML_Validation_Error'Identity) is
    begin
       if Debug then
          Debug_Output ("Validation_Error: " & Message);
@@ -111,7 +112,7 @@ package body Schema.Validators is
            (Get_Locator (Abstract_Validation_Reader'Class (Reader.all)));
       end if;
 
-      Raise_Exception (XML_Validation_Error'Identity);
+      Raise_Exception (Except);
    end Validation_Error;
 
    -----------------------

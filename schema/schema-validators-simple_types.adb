@@ -1532,6 +1532,10 @@ package body Schema.Validators.Simple_Types is
       Int     : Integer_Validators.Validator;
       Dec     : Decimal_Validators.Validator;
       QN      : QName_Validators.Validator;
+
+      use Reference_HTables;
+      Ref : constant access Reference_HTables.Instance := Get_References (G);
+      TRef     : Global_Reference;
    begin
       Tmp := new Boolean_Validator_Record;
       Create_Global_Type (G, (X, Reader.S_Boolean), Tmp);
@@ -1560,6 +1564,11 @@ package body Schema.Validators.Simple_Types is
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_Language_Name'Access);
       Create_Global_Type (G, (X, S_Language), Str);
+
+      TRef := Get (Ref.all, ((X, S_Language), Ref_Type));
+      Set (Ref.all, ((Reader.XML_URI, Reader.Lang), Ref_Attribute),
+           (Ref_Attribute, TRef.Typ));
+
 --        Create_Global_Attribute (XML_G, Reader, Reader.Lang, Created);
 
       Str := new String_Validators.Validator_Record;
