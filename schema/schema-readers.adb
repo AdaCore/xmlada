@@ -997,7 +997,7 @@ package body Schema.Readers is
       Trans      : Transition_Descr;
       Sym        : Transition_Event) return Boolean
    is
-      pragma Unreferenced (Self, From_State);
+      pragma Unreferenced (Self);
    begin
       case Trans.Kind is
          when Transition_Close =>
@@ -1007,11 +1007,18 @@ package body Schema.Readers is
             if Sym.Closing then
                return False;
             else
-               return Trans.Name = Sym.Name
-                 or else
-                   (Trans.Form = Unqualified  --  Namespace is not mandatory?
-                    and then (NS => Empty_String, Local => Trans.Name.Local) =
-                      Sym.Name);
+               if From_State = Start_State then
+                  --  At toplevel, always qualified
+                  return Trans.Name = Sym.Name;
+               else
+                  case Trans.Form is
+                  when Unqualified =>
+                     return (NS => Empty_String, Local => Trans.Name.Local) =
+                       Sym.Name;
+                  when Qualified =>
+                     return Trans.Name = Sym.Name;
+                  end case;
+               end if;
             end if;
 
          when Transition_Any =>
