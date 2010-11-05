@@ -1856,4 +1856,105 @@ package body Schema.Simple_Types is
       --  ??? Should detect unused facets and report errors
    end Override;
 
+   --------------------------
+   -- Normalize_Whitespace --
+   --------------------------
+
+   procedure Normalize_Whitespace
+     (Whitespace : Schema.Simple_Types.Whitespace_Restriction;
+      Val        : in out Unicode.CES.Byte_Sequence;
+      Last       : in out Natural)
+   is
+   begin
+      case Whitespace is
+         when Preserve =>
+            return;  --  Nothing to do
+
+         when Replace =>
+            declare
+               Idx   : Natural := Val'First;
+               First : Natural := Last + 1;
+               C     : Unicode_Char;
+            begin
+               while Idx <= Last loop
+                  First := Idx;
+                  Encoding.Read (Val, Idx, C);
+
+                  if Is_White_Space (C) then
+                     --  Assumes all characters we replace are encoded as
+                     --  single byte
+                     Val (First) := ' ';
+                  end if;
+               end loop;
+
+               --  Length of string does not change
+            end;
+
+         when Collapse =>
+            if Val = "" then
+               return;  --  nothing to do
+            end if;
+
+            declare
+               C       : Unicode_Char;
+               Idx, Idx_Output : Natural := Val'First;
+               First   : Natural := Last + 1;
+               Tmp     : Natural;
+               Last_Space : Natural := Last + 1;
+               Prev_Is_Whitespace : Boolean := False;
+            begin
+               --  Remove leading spaces.
+
+               loop
+                  First := Idx;
+                  Encoding.Read (Val, Idx, C);
+                  exit when not Is_White_Space (C);
+
+                  if Idx > Last then
+                     Last := 0;
+                     return;  --  Empty string
+                  end if;
+               end loop;
+
+               if First /= Val'First then
+                  Val (1 .. Last - First + 1) := Val (First .. Last);
+                  Last := Last - First + 1;
+               end if;
+
+               Idx := First;
+               Idx_Output := Val'First;
+
+               --  Iterate and replace all whitespaces. Mark the spot of the
+               --  last whitespace so that we can ignore trailing spaces.
+               --  At the same time, we can copy to Idx_Output, since the
+               --  output string will always be at least as short as Val.
+
+               while Idx <= Last loop
+                  Tmp := Idx;
+                  Encoding.Read (Val, Idx, C);
+
+                  --  Copy, if needed, the character we just read
+                  if Is_White_Space (C) then
+                     if not Prev_Is_Whitespace then
+                        Val (Idx_Output) := ' ';
+                        Last_Space := Idx_Output;
+                        Idx_Output := Idx_Output + 1;
+                        Prev_Is_Whitespace := True;
+                     end if;
+                  else
+                     Val (Idx_Output .. Idx_Output + Idx - Tmp - 1) :=
+                       Val (Tmp .. Idx - 1);
+                     Idx_Output := Idx_Output + Idx - Tmp;
+                     Last_Space := Idx_Output;  --  after this char
+                     Prev_Is_Whitespace := False;
+                  end if;
+               end loop;
+
+               --  Now skip trailing whitespaces if any
+
+               Last := Last_Space - 1;
+            end;
+      end case;
+   end Normalize_Whitespace;
+
 end Schema.Simple_Types;

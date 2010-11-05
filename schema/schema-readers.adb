@@ -215,9 +215,12 @@ package body Schema.Readers is
      (Handler : access Validating_Reader'Class;
       Loc     : Location)
    is
-      Is_Empty           : Boolean;
+      Is_Empty   : Boolean;
+      Whitespace : Whitespace_Restriction := Preserve;
 
       procedure Callback (Self : access NFA'Class; S : State);
+      procedure Find_Whitespace (Self : access NFA'Class; S : State);
+
       procedure Callback (Self : access NFA'Class; S : State) is
 --        Typ, Typ_For_Mixed : XML_Type;
 --        Val2               : Cst_Byte_Sequence_Access;
@@ -392,6 +395,17 @@ package body Schema.Readers is
 --           end if;
       end Callback;
 
+      procedure Find_Whitespace (Self : access NFA'Class; S : State) is
+      begin
+         if Self.Get_Data (S).Descr.Simple_Content /= No_Simple_Type_Index then
+            Whitespace := Get_Simple_Type
+              (Handler.Grammar,
+               Self.Get_Data (S).Descr.Simple_Content).Whitespace;
+         end if;
+      end Find_Whitespace;
+
+      procedure Find_Whitespace_Type
+         is new For_Each_Active_State (Find_Whitespace);
       procedure For_Each_Active is new For_Each_Active_State (Callback);
 
    begin
@@ -407,12 +421,17 @@ package body Schema.Readers is
          return;
       end if;
 
+      Find_Whitespace_Type (Handler.Matcher,
+                            Ignore_If_Nested => True,
+                            Ignore_If_Default => True);
+      Normalize_Whitespace
+        (Whitespace, Handler.Characters.all, Handler.Characters_Count);
+
       Is_Empty := Handler.Characters_Count = 0;
       For_Each_Active (Handler.Matcher,
                        Ignore_If_Nested => True,
                        Ignore_If_Default => True);
 
-      --  Reset the characters buffer
       Handler.Characters_Count := 0;
    end Validate_Current_Characters;
 
@@ -792,7 +811,7 @@ package body Schema.Readers is
      (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence) is
    begin
-      Internal_Characters (Validating_Reader (Handler.all)'Access, Ch);
+      Internal_Characters (Validating_Reader_Access (Handler), Ch);
    end Hook_Characters;
 
    -------------------------------

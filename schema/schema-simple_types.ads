@@ -254,4 +254,11 @@ package Schema.Simple_Types is
    --  facets that are not defined. Sets [Error] to a symbol if one of the
    --  facets is invalid for [Simple].
 
+   procedure Normalize_Whitespace
+     (Whitespace : Schema.Simple_Types.Whitespace_Restriction;
+      Val        : in out Unicode.CES.Byte_Sequence;
+      Last       : in out Natural);
+   --  Normalize in place the whitespaces in [Val (1 .. Last)], and change
+   --  [Last] as appropriate (always smaller or equal to the input parameter)
+
 end Schema.Simple_Types;
