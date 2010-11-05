@@ -147,7 +147,7 @@ expect "" "$act/basic_types-3.xml" \
 expect "" "$act/E802-003.xml" ""
 expect "" "$act/uri.xml" ""
 expect "" "$act/wf.xml" "wf.xml:7:86: Name differ for closing tag (expecting test, opened line 6)"
-expect "$act/ns1.xsd" "" "ns1.xsd:5:30: Unexpected element \"element\": expecting \"{http://www.w3.org/2001/XMLSchema}annotation|{http://www.w3.org/2001/XMLSchema}any|{http://www.w3.org/2001/XMLSchema}sequence|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/XMLSchema}element|close parent\""
+expect "$act/ns1.xsd" "" "ns1.xsd:5:30: Unexpected element \"element\": expecting \"close parent|{http://www.w3.org/2001/XMLSchema}any|{http://www.w3.org/2001/XMLSchema}sequence|{http://www.w3.org/2001/XMLSchema}choice|{http://www.w3.org/2001/XMLSchema}group|{http://www.w3.org/2001/XMLSchema}element|{http://www.w3.org/2001/XMLSchema}annotation\""
 expect "" "$act/empty.xml" "empty.xml:3:69: No character data allowed by content model"
 expect "$act/recursive_import/import.xsd" "" ""
 expect "" "$act/elementFormDefault/doc.xml" ""

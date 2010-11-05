@@ -303,8 +303,19 @@ package Sax.State_Machines is
    --  The matcher holds a reference to [Self], so is only valid while [Self]
    --  is in the scope.
 
-   type Active_State_Iterator is private;
+   type Active_State_Iterator (<>) is private;
    No_Active_State_Iterator : constant Active_State_Iterator;
+   --  Intended use is:
+   --     declare
+   --        Iter : Active_State_Iterator := For_Each_Active_State (Matcher);
+   --     begin
+   --        loop
+   --           S := Current (Matcher, Iter);
+   --           exit when S = No_State;
+   --           ...
+   --           Next (Matcher, Iter);
+   --        end loop;
+   --     end;
 
    function For_Each_Active_State
      (Self              : NFA_Matcher;
@@ -323,10 +334,9 @@ package Sax.State_Machines is
    --  [Current] returns [No_State] when there are no remaining active
    --  states.
 
-   function Has_Active_Nested
-     (Self : NFA_Matcher; Iter : Active_State_Iterator) return Boolean;
-   --  Whether the active state for [Iter] has a nested NFA with its own
-   --  active state (that would be returned later by [Iter].
+   function Has_Parent (Iter : Active_State_Iterator) return Boolean;
+   function Parent (Iter : Active_State_Iterator) return Active_State_Iterator;
+   --  Return the parent state of the current state.
 
    function Current_Data
      (Self : NFA_Matcher; Iter : Active_State_Iterator) return State_User_Data;
@@ -509,7 +519,6 @@ private
 
    type Matcher_State is record
       S      : State;
-      --  Set to [No_State] if this was explicitly de-activated
 
       Data_Is_Overridden : Boolean         := False;
       Overridden_Data    : State_User_Data := Default_Data;
@@ -531,19 +540,24 @@ private
       Table_Low_Bound      => No_Matcher_State + 1,
       Table_Initial        => 15,
       Table_Increment      => 10);
-   subtype Matcher_State_Array is Matcher_State_Arrays.Instance;
 
-   type Active_State_Iterator is record
+   type Matcher_State_Array
+     is array (Matcher_State_Index range <>) of Matcher_State_Index;
+   --  Each element in the array is the currently active state at that level.
+   --  so Arr(2) is nested in Arr(1),...
+
+   type Active_State_Iterator (Max : Matcher_State_Index) is record
       Ignore_If_Nested  : Boolean;
       Ignore_If_Default : Boolean;
-      Current           : Matcher_State_Index := No_Matcher_State;
+      States            : Matcher_State_Array (1 .. Max);
+      Current_Level     : Matcher_State_Index := No_Matcher_State;
    end record;
    No_Active_State_Iterator : constant Active_State_Iterator :=
-     (False, False, No_Matcher_State);
+     (0, False, False, (1 .. 0 => No_Matcher_State), No_Matcher_State);
 
    type NFA_Matcher is record
       NFA          : NFA_Access;
-      Active       : Matcher_State_Array;
+      Active       : Matcher_State_Arrays.Instance;
       First_Active : Matcher_State_Index := No_Matcher_State;
    end record;
    No_NFA_Matcher : constant NFA_Matcher := (null, others => <>);

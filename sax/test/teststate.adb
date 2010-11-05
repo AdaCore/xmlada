@@ -443,7 +443,7 @@ procedure TestState is
       Assert (Regexp, N, "abcfe");
       Assert (Regexp, N, "abdfe");
       Assert (Regexp, N, "abdee");
-      Assert_Error (Regexp, N, "abe", 3, "b|d|c");
+      Assert_Error (Regexp, N, "abe", 3, "d|c|b");
 
       Assert (Regexp, N, "abbcfe");
       Assert_Error (Regexp, N, "abbbcfe", 4, "d|c");
@@ -512,7 +512,7 @@ procedure TestState is
       Assert (Name, N, "1f0", Final => False);  --  in stays on mode
 
       Assert_Error (Name, N, "1q", 2,  "0|t|f|p");
-      Assert_Error (Name, N, "1pq", 3, "r|0");
+      Assert_Error (Name, N, "1pq", 3, "0|r");
 
       --  Put_Line (Dump (N, Dump_Dot));
       Free (N);

@@ -70,9 +70,9 @@ package body Sax.State_Machines is
    --  Whether [S] is marked as active in the given list
 
    procedure Internal_Next
-     (Self     : NFA_Matcher;
-      Iter     : in out Active_State_Iterator;
-      Start_At : Matcher_State_Index);
+     (Self       : NFA_Matcher;
+      Iter       : in out Active_State_Iterator;
+      Move_First : Boolean);
    --  Internal implementation of the matcher iterator
 
    ----------------
@@ -790,60 +790,21 @@ package body Sax.State_Machines is
 
    function Current_Data
      (Self : NFA_Matcher; Iter : Active_State_Iterator)
-      return State_User_Data is
+      return State_User_Data
+   is
+      Current : Matcher_State_Index;
    begin
-      if Iter.Current = No_Matcher_State then
+      if Iter.Current_Level = No_Matcher_State then
          return Default_Data;
-      elsif Self.Active.Table (Iter.Current).Data_Is_Overridden then
-         return Self.Active.Table (Iter.Current).Overridden_Data;
       else
-         return Self.NFA.States.Table
-           (Self.Active.Table (Iter.Current).S).Data;
+         Current := Iter.States (Iter.Current_Level);
+         if Self.Active.Table (Current).Data_Is_Overridden then
+            return Self.Active.Table (Current).Overridden_Data;
+         else
+            return Self.NFA.States.Table (Self.Active.Table (Current).S).Data;
+         end if;
       end if;
    end Current_Data;
-
-   -------------------
-   -- Internal_Next --
-   -------------------
-
-   procedure Internal_Next
-     (Self     : NFA_Matcher;
-      Iter     : in out Active_State_Iterator;
-      Start_At : Matcher_State_Index)
-   is
-      S2 : State;
-   begin
-      for S in Start_At .. Last (Self.Active) loop
-         S2 := Self.Active.Table (S).S;
-
-         if S2 /= Final_State and then S2 /= No_State then
-            --  Either we have no nested automaton
-            --  Or we always want to return the states anyway
-            --  Or the nested state has completed
-
-            if not Iter.Ignore_If_Nested
-              or else Self.Active.Table (S).Nested = No_Matcher_State
-              or else Self.Active.Table (Self.Active.Table (S).Nested).S =
-                Final_State
-            then
-               if not Iter.Ignore_If_Default
-                 or else
-                   (Self.Active.Table (S).Data_Is_Overridden
-                    and then Self.Active.Table (S).Overridden_Data /=
-                      Default_Data)
-                 or else
-                   (not Self.Active.Table (S).Data_Is_Overridden
-                    and then Self.NFA.States.Table (S2).Data /= Default_Data)
-               then
-                  Iter.Current := S;
-                  return;
-               end if;
-            end if;
-         end if;
-      end loop;
-
-      Iter.Current := No_Matcher_State;
-   end Internal_Next;
 
    ---------------------------
    -- For_Each_Active_State --
@@ -854,23 +815,116 @@ package body Sax.State_Machines is
       Ignore_If_Nested  : Boolean := False;
       Ignore_If_Default : Boolean := False) return Active_State_Iterator
    is
-      Iter : Active_State_Iterator;
+      Iter : Active_State_Iterator (Last (Self.Active));
    begin
       Iter.Ignore_If_Nested  := Ignore_If_Nested;
       Iter.Ignore_If_Default := Ignore_If_Default;
-      Internal_Next (Self, Iter, Start_At => 1);
+
+      if Iter.Max /= 0 then
+         Iter.States (1) := Self.First_Active;
+         Iter.Current_Level := 1;
+         Internal_Next (Self, Iter, Move_First => False);
+
+      else
+         Iter.Current_Level := No_Matcher_State;
+      end if;
+
       return Iter;
    end For_Each_Active_State;
+
+   -------------------
+   -- Internal_Next --
+   -------------------
+
+   procedure Internal_Next
+     (Self       : NFA_Matcher;
+      Iter       : in out Active_State_Iterator;
+      Move_First : Boolean)
+   is
+      procedure Move_To_Next;
+      procedure Move_To_Next is
+         Current : Matcher_State_Index;
+      begin
+         --  First explore the nested states of the current state, if any
+
+         Current := Iter.States (Iter.Current_Level);
+         if Self.Active.Table (Current).Nested /= No_Matcher_State then
+            Iter.Current_Level := Iter.Current_Level + 1;
+            Iter.States (Iter.Current_Level) :=
+              Self.Active.Table (Current).Nested;
+            return;
+         end if;
+
+         --  Else move to the next state in the current level
+
+         Iter.States (Iter.Current_Level) :=
+           Self.Active.Table (Current).Next;
+
+         --  Else move to the next state in the previous level (recursively)
+
+         while Iter.States (Iter.Current_Level) = No_Matcher_State loop
+            Iter.Current_Level := Iter.Current_Level - 1;
+            exit when Iter.Current_Level = No_Matcher_State;
+
+            Iter.States (Iter.Current_Level) :=
+              Self.Active.Table (Iter.States (Iter.Current_Level)).Next;
+         end loop;
+      end Move_To_Next;
+
+      Current : Matcher_State_Index;
+      S2      : State;
+
+   begin
+      if Iter.Current_Level = No_Matcher_State then
+         return;
+      end if;
+
+      if Move_First then
+         Move_To_Next;
+      end if;
+
+      while Iter.Current_Level /= No_Matcher_State loop
+         --  Is the state we found acceptable ?
+         Current := Iter.States (Iter.Current_Level);
+
+         S2 := Self.Active.Table (Current).S;
+
+         if S2 /= Final_State and then S2 /= No_State then
+            --  Either we have no nested automaton
+            --  Or we always want to return the states anyway
+            --  Or the nested state has completed
+
+            if not Iter.Ignore_If_Nested
+              or else Self.Active.Table (Current).Nested = No_Matcher_State
+              or else Self.Active.Table (Self.Active.Table (Current).Nested).S
+                = Final_State
+            then
+               if not Iter.Ignore_If_Default
+                 or else
+                   (Self.Active.Table (Current).Data_Is_Overridden
+                    and then Self.Active.Table (Current).Overridden_Data /=
+                      Default_Data)
+                 or else
+                   (not Self.Active.Table (Current).Data_Is_Overridden
+                    and then Self.NFA.States.Table (S2).Data /= Default_Data)
+               then
+                  return;
+               end if;
+            end if;
+         end if;
+
+         Move_To_Next;
+      end loop;
+   end Internal_Next;
 
    ----------
    -- Next --
    ----------
 
    procedure Next
-     (Self : NFA_Matcher; Iter : in out Active_State_Iterator)
-   is
+     (Self : NFA_Matcher; Iter : in out Active_State_Iterator) is
    begin
-      Internal_Next (Self, Iter, Start_At => Iter.Current + 1);
+      Internal_Next (Self, Iter, Move_First => True);
    end Next;
 
    -------------
@@ -878,28 +932,41 @@ package body Sax.State_Machines is
    -------------
 
    function Current
-     (Self : NFA_Matcher; Iter : Active_State_Iterator) return State is
+     (Self : NFA_Matcher; Iter : Active_State_Iterator) return State
+   is
+      Current : Matcher_State_Index;
    begin
-      if Iter.Current = No_Matcher_State then
+      if Iter.Current_Level = No_Matcher_State then
          return No_State;
       else
-         return Self.Active.Table (Iter.Current).S;
+         Current := Iter.States (Iter.Current_Level);
+         return Self.Active.Table (Current).S;
       end if;
    end Current;
 
-   -----------------------
-   -- Has_Active_Nested --
-   -----------------------
+   ----------------
+   -- Has_Parent --
+   ----------------
 
-   function Has_Active_Nested
-     (Self : NFA_Matcher; Iter : Active_State_Iterator) return Boolean is
+   function Has_Parent (Iter : Active_State_Iterator) return Boolean is
    begin
-      if Iter.Current = No_Matcher_State then
-         return False;
-      else
-         return Self.Active.Table (Iter.Current).Nested /= No_Matcher_State;
-      end if;
-   end Has_Active_Nested;
+      return Iter.Current_Level > No_Matcher_State + 1;
+   end Has_Parent;
+
+   ------------
+   -- Parent --
+   ------------
+
+   function Parent
+     (Iter : Active_State_Iterator) return Active_State_Iterator is
+   begin
+      return Active_State_Iterator'
+        (Max               => Iter.Max,
+         Ignore_If_Default => Iter.Ignore_If_Default,
+         Ignore_If_Nested  => Iter.Ignore_If_Nested,
+         States            => Iter.States,
+         Current_Level     => Iter.Current_Level - 1);
+   end Parent;
 
    -------------------
    -- Replace_State --
@@ -910,8 +977,8 @@ package body Sax.State_Machines is
       Iter : Active_State_Iterator;
       S    : State) is
    begin
-      if Iter.Current /= No_Matcher_State then
-         Self.Active.Table (Iter.Current).S := S;
+      if Iter.Current_Level /= No_Matcher_State then
+         Self.Active.Table (Iter.States (Iter.Current_Level)).S := S;
       end if;
    end Replace_State;
 
@@ -922,11 +989,14 @@ package body Sax.State_Machines is
    procedure Override_Data
      (Self : NFA_Matcher;
       Iter : Active_State_Iterator;
-      Data : State_User_Data) is
+      Data : State_User_Data)
+   is
+      Current : Matcher_State_Index;
    begin
-      if Iter.Current /= No_Matcher_State then
-         Self.Active.Table (Iter.Current).Data_Is_Overridden := True;
-         Self.Active.Table (Iter.Current).Overridden_Data := Data;
+      if Iter.Current_Level /= No_Matcher_State then
+         Current := Iter.States (Iter.Current_Level);
+         Self.Active.Table (Current).Data_Is_Overridden := True;
+         Self.Active.Table (Current).Overridden_Data := Data;
       end if;
    end Override_Data;
 

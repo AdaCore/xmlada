@@ -216,15 +216,12 @@ package body Schema.Readers is
       Is_Empty   : Boolean;
       Whitespace : Whitespace_Restriction := Preserve;
       NFA  : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
-      Iter : Active_State_Iterator;
       S    : State;
       Descr : access Type_Descr;
       Fixed : Symbol := No_Symbol;
       Data  : State_Data;
       Ty    : Type_Index;
       Is_Equal : Boolean;
-      Prev_S : State := No_State;
-      Prev_Fixed : Symbol;
 
    begin
       if Debug then
@@ -237,45 +234,41 @@ package body Schema.Readers is
       --  is attached to an state with a nested state (ie the state
       --  representing the element itself).
 
-      Iter := For_Each_Active_State (Handler.Matcher,
-                                     Ignore_If_Nested  => False,
-                                     Ignore_If_Default => True);
-      loop
-         S := Current (Handler.Matcher, Iter);
-         exit when S = No_State;
+      declare
+         Iter : Active_State_Iterator :=
+           For_Each_Active_State (Handler.Matcher,
+                                  Ignore_If_Nested  => True,
+                                  Ignore_If_Default => True);
+      begin
+         loop
+            S := Current (Handler.Matcher, Iter);
+            exit when S = No_State;
 
-         if Has_Active_Nested (Handler.Matcher, Iter) then
-            Prev_Fixed := Current_Data (Handler.Matcher, Iter).Fixed;
-            Prev_S := Get_Start_State (NFA.Get_Nested (S));
-         end if;
+            Data := Current_Data (Handler.Matcher, Iter);
 
-         Data := Current_Data (Handler.Matcher, Iter);
+            if Fixed = No_Symbol then
+               Fixed := Data.Fixed;
 
-         if Fixed = No_Symbol then
-            Fixed := Data.Fixed;
-
-            --  Get the "fixed" value from the element
-            --   (if it has a complexType)
-            if Fixed = No_Symbol
-              and then Prev_S /= No_State
-              and then Prev_S = S
-            then
-               Fixed := Prev_Fixed;
+               --  Get the "fixed" value from the element
+               --   (if it has a complexType)
+               if Fixed = No_Symbol then
+                  Fixed := Current_Data (Handler.Matcher, Parent (Iter)).Fixed;
+               end if;
             end if;
-         end if;
 
-         --  Unless we have a <any> type
-         if Data.Simple /= No_Type_Index then
-            Descr := Get_Type_Descr (NFA, Data.Simple);
-            if Descr.Simple_Content /= No_Simple_Type_Index then
-               Whitespace := Get_Simple_Type
-                 (Get_NFA (Handler.Grammar), Descr.Simple_Content)
-                 .Whitespace;
+            --  Unless we have a <any> type
+            if Data.Simple /= No_Type_Index then
+               Descr := Get_Type_Descr (NFA, Data.Simple);
+               if Descr.Simple_Content /= No_Simple_Type_Index then
+                  Whitespace := Get_Simple_Type
+                    (Get_NFA (Handler.Grammar), Descr.Simple_Content)
+                    .Whitespace;
+               end if;
             end if;
-         end if;
 
-         Next (Handler.Matcher, Iter);
-      end loop;
+            Next (Handler.Matcher, Iter);
+         end loop;
+      end;
 
       Is_Empty := Handler.Characters_Count = 0;
 
@@ -302,190 +295,97 @@ package body Schema.Readers is
          end if;
       end if;
 
-      Iter := For_Each_Active_State (Handler.Matcher,
-                                     Ignore_If_Nested => True,
-                                     Ignore_If_Default => True);
-      loop
-         S := Current (Handler.Matcher, Iter);
-         exit when S = No_State;
+      declare
+         Iter : Active_State_Iterator :=
+           For_Each_Active_State (Handler.Matcher,
+                                  Ignore_If_Nested => True,
+                                  Ignore_If_Default => True);
+      begin
+         loop
+            S := Current (Handler.Matcher, Iter);
+            exit when S = No_State;
 
-         Ty := Current_Data (Handler.Matcher, Iter).Simple;
+            Ty := Current_Data (Handler.Matcher, Iter).Simple;
 
-         if Ty /= No_Type_Index then
-            Descr := Get_Type_Descr (NFA, Ty);
-
-            if Descr.Simple_Content /= No_Simple_Type_Index then
-               if Debug and not Is_Empty then
-                  Debug_Output
-                    ("Validate characters ("
-                     & To_QName (Descr.Name) & "): "
-                     & Handler.Characters (1 .. Handler.Characters_Count)
-                     & "--");
-               end if;
-
-               if Handler.Characters_Count = 0 then
-                  Validate_Simple_Type
-                    (Handler, Descr.Simple_Content,
-                     "",
-                     Empty_Element => Is_Empty,
-                     Loc           => Loc);
-               else
-                  Validate_Simple_Type
-                    (Handler, Descr.Simple_Content,
-                     Handler.Characters (1 .. Handler.Characters_Count),
-                     Empty_Element => Is_Empty,
-                     Loc           => Loc);
-               end if;
-
-            elsif not Descr.Mixed
-              and then not Is_Empty
-            then
-               if Debug then
-                  Debug_Output ("No character data for "
-                                & To_QName (Descr.Name) & S'Img);
-                  Debug_Output
-                    ("Got "
-                     & Handler.Characters
-                       (1 .. Integer'Min (20, Handler.Characters_Count))
-                     & "--");
-               end if;
-               Validation_Error
-                 (Handler,
-                  "No character data allowed by content model",
-                  Loc);
-            end if;
-
-            --  We now know we have a valid character content, and we need
-            --  to check it is equal to the fixed value. We also know that
-            --  fixed matches the type, since it was checked when the XSD
-            --  was parsed.
-
-            if Fixed /= No_Symbol then
-               if Debug then
-                  Debug_Output ("Element has fixed value: """
-                                & Get (Fixed).all & '"');
-               end if;
+            if Ty /= No_Type_Index then
+               Descr := Get_Type_Descr (NFA, Ty);
 
                if Descr.Simple_Content /= No_Simple_Type_Index then
-                  Is_Equal := Equal
-                    (Reader      => Handler,
-                     Simple_Type => Descr.Simple_Content,
-                     Ch1 => Fixed,
-                     Ch2 =>
-                       Handler.Characters (1 .. Handler.Characters_Count));
-               else
-                  Is_Equal := Get (Fixed).all =
-                    Handler.Characters (1 .. Handler.Characters_Count);
-               end if;
+                  if Debug and not Is_Empty then
+                     Debug_Output
+                       ("Validate characters ("
+                        & To_QName (Descr.Name) & "): "
+                        & Handler.Characters (1 .. Handler.Characters_Count)
+                        & "--");
+                  end if;
 
-               if not Is_Equal then
+                  if Handler.Characters_Count = 0 then
+                     Validate_Simple_Type
+                       (Handler, Descr.Simple_Content,
+                        "",
+                        Empty_Element => Is_Empty,
+                        Loc           => Loc);
+                  else
+                     Validate_Simple_Type
+                       (Handler, Descr.Simple_Content,
+                        Handler.Characters (1 .. Handler.Characters_Count),
+                        Empty_Element => Is_Empty,
+                        Loc           => Loc);
+                  end if;
+
+               elsif not Descr.Mixed
+                 and then not Is_Empty
+               then
+                  if Debug then
+                     Debug_Output ("No character data for "
+                                   & To_QName (Descr.Name) & S'Img);
+                     Debug_Output
+                       ("Got "
+                        & Handler.Characters
+                          (1 .. Integer'Min (20, Handler.Characters_Count))
+                        & "--");
+                  end if;
                   Validation_Error
                     (Handler,
-                     "Invalid character content (fixed to """
-                     & Get (Fixed).all & """)");
+                     "No character data allowed by content model",
+                     Loc);
+               end if;
+
+               --  We now know we have a valid character content, and we need
+               --  to check it is equal to the fixed value. We also know that
+               --  fixed matches the type, since it was checked when the XSD
+               --  was parsed.
+
+               if Fixed /= No_Symbol then
+                  if Debug then
+                     Debug_Output ("Element has fixed value: """
+                                   & Get (Fixed).all & '"');
+                  end if;
+
+                  if Descr.Simple_Content /= No_Simple_Type_Index then
+                     Is_Equal := Equal
+                       (Reader      => Handler,
+                        Simple_Type => Descr.Simple_Content,
+                        Ch1 => Fixed,
+                        Ch2 =>
+                          Handler.Characters (1 .. Handler.Characters_Count));
+                  else
+                     Is_Equal := Get (Fixed).all =
+                       Handler.Characters (1 .. Handler.Characters_Count);
+                  end if;
+
+                  if not Is_Equal then
+                     Validation_Error
+                       (Handler,
+                        "Invalid character content (fixed to """
+                        & Get (Fixed).all & """)");
+                  end if;
                end if;
             end if;
-         end if;
 
-            --  If no explicit character data: we might need to simulate some,
-            --  so that we can check facets like "minLength".
-
---           if Is_Empty and then not Handler.Validators.Is_Nil then
---              if Handler.Validators.Element /= No_Element
---                and then Has_Default (Handler.Validators.Element)
---              then
---                 Val2 := Get (Get_Default (Handler.Validators.Element));
---                 Characters (Handler.all, Val2.all);
---              else
---                 Val2 := Get (Empty_String);
---              end if;
---           else
---           Val2 := Cst_Byte_Sequence_Access (Handler.Validators.Characters);
---           end if;
-
---           if Val2 /= null then
---              if Handler.Validators.Is_Nil then
---                 if not Is_Empty then
---                    Free (Handler.Validators.Characters);
---                    Validation_Error
---                      (Handler,
---                     "#Element has character data, but is declared as nil");
---                 end if;
---
---              else
---                 Typ := Handler.Validators.Typ;
---                 if Typ /= No_Type then
---                    Typ_For_Mixed := Typ;
---                 else
---                    Typ_For_Mixed := Get_Type (Handler.Validators.Element);
---                 end if;
---
---                 if not Is_Empty
---               and then not Get_Mixed_Content (Get_Validator (Typ_For_Mixed))
---                 then
---                    Validation_Error
---                      (Handler,
---                       "#No character data allowed by content model");
---                 end if;
---
---               --  If we had a <simpleType> we need to normalize whitespaces
---
---                 if Is_Simple_Type (Handler, Typ_For_Mixed) then
---                    --  ??? Not efficient
---                    S1 := Find_Symbol (Handler.all, Val2.all);
---                S2 := Do_Normalize_Whitespaces (Typ_For_Mixed, Handler, S1);
---
---                    --  Nothing to do if replacement was done in place
---                    if S1 /= S2 then
---                       Free (Handler.Validators.Characters);
---
---                       Val2 := Get (S2);
---                       Handler.Validators.Characters :=
---                         new Byte_Sequence'(Val2.all);
---                    end if;
---                 end if;
---
---                 if Typ /= No_Type then
---                    --  If the element specified a xsi:attribute, we need to
---                 --  validate with this type (which might be more restrictive
---                    --  than the parent type)
---
---                    if Debug then
---                       Output_Seen ("characters: " & Val2.all);
---                    end if;
---
---                    Mask := (others => True);
---                    Validate_Characters
---                      (Get_Validator (Typ), Handler,
---                       Val2.all,
---                       Empty_Element => Is_Empty,
---                       Mask          => Mask);
---                 end if;
---
---              --  We still need to check the "fixed" restriction of the base
---              --  type, so ask the base type. So whether there was a xsi:type
---              --  or not, we still need to validate the attributes with that
---                 --  type from XSD
---
---                 if Handler.Validators.Element /= No_Element then
---                    if Debug then
---                       Output_Seen ("characters: " & Val2.all);
---                    end if;
---
---                    Typ := Get_Type (Handler.Validators.Element);
---
---                    Mask := (others => True);
---                    Validate_Characters
---                      (Get_Validator (Typ), Handler,
---                       Val2.all,
---                       Empty_Element => Is_Empty,
---                       Mask          => Mask);
---                 end if;
---              end if;
---           end if;
-
-         Next (Handler.Matcher, Iter);
-      end loop;
+            Next (Handler.Matcher, Iter);
+         end loop;
+      end;
 
       Handler.Characters_Count := 0;
    end Validate_Current_Characters;
@@ -531,83 +431,81 @@ package body Schema.Readers is
          Nested_Start       : State;
          Simple             : Type_Index)
       is
-         Iter      : Active_State_Iterator;
-         S, Prev_S : State := No_State;
-         Prev_Data : State_Data := No_State_Data;
+         S         : State := No_State;
          Data      : State_Data;
+         Parent_Data : State_Data;
+         Iter      : Active_State_Iterator :=
+           For_Each_Active_State
+             (H.Matcher, Ignore_If_Default => True, Ignore_If_Nested => True);
       begin
-         Iter := For_Each_Active_State
-           (H.Matcher,
-            Ignore_If_Default => True, Ignore_If_Nested => False);
          loop
             S := Current (H.Matcher, Iter);
             exit when S = No_State;
 
-            if Has_Active_Nested (H.Matcher, Iter) then
-               --  An state with a nested NFA indicates an element (the
-               --  nested is its type). From the element, we might get a
-               --  special list of blocked restrictions or extensions),
-               --  but we do not want to check anything else
-               Prev_Data := Current_Data (H.Matcher, Iter);
-               Prev_S    := S;
+            Data := Current_Data (H.Matcher, Iter);
 
-            else
-               Data := Current_Data (H.Matcher, Iter);
+            if Check_Substitution then
+               --  On the first nested state of the parent ? We should get the
+               --  attributes from the parent
+               if Has_Parent (Iter)
+                 and then Get_Start_State
+                   (NFA.Get_Nested (Current (H.Matcher, Parent (Iter)))) = S
+               then
+                  Parent_Data := Current_Data (H.Matcher, Parent (Iter));
+                  Check_Substitution_Group_OK
+                    (H, Simple, Data.Simple,
+                     Loc           => H.Current_Location,
+                     Element_Block => Parent_Data.Block);
 
-               if Check_Substitution then
-                  if Prev_S /= No_State
-                    and then Get_Start_State (NFA.Get_Nested (Prev_S)) = S
-                  then
-                     Check_Substitution_Group_OK
-                       (H, Simple, Data.Simple,
-                        Loc           => H.Current_Location,
-                        Element_Block => Prev_Data.Block);
-                  else
-                     Check_Substitution_Group_OK
-                       (H, Simple, Data.Simple,
-                        Loc           => H.Current_Location,
-                        Element_Block => Data.Block);
-                  end if;
-               end if;
-
-               if Nested_Start /= No_State then
-                  if Debug then
-                     Debug_Output
-                       ("Because of xsi:type, replace state" & S'Img
-                        & " with" & Nested_Start'Img);
-                  end if;
-                  Replace_State (H.Matcher, Iter, Nested_Start);
-                  --  Override (temporarily) the current state
                else
-                  if Debug then
-                     Debug_Output ("Override state data" & S'Img
-                                   & " to type" & Simple'Img);
-                  end if;
+                  Check_Substitution_Group_OK
+                    (H, Simple, Data.Simple,
+                     Loc           => H.Current_Location,
+                     Element_Block => Data.Block);
+               end if;
+            end if;
 
-                  Override_Data
-                    (H.Matcher, Iter,
-                     State_Data'
-                       (Simple => Simple,
-                        Fixed  => Current_Data (H.Matcher, Iter).Fixed,
-                        Block  => Current_Data (H.Matcher, Iter).Block));
+            if Nested_Start /= No_State then
+               if Debug then
+                  Debug_Output
+                    ("Because of xsi:type, replace state" & S'Img
+                     & " with" & Nested_Start'Img);
+               end if;
+               Replace_State (H.Matcher, Iter, Nested_Start);
+               --  Override (temporarily) the current state
+            else
+               --  Need to modify the nested NFA too: if we replaced a
+               --  complexType ("anyType" for instance) with a simple type,
+               --  we should no longer accept any element.
+               --  However, if we simply disable all states in the nested
+               --  NFA, that doesn't work either, since we will not accept
+               --  the "close element" for the simpleType. But we cannot
+               --  modify the NFA either, which should remain static.
 
-                  --  Need to modify the nested NFA too: if we replaced a
-                  --  complexType ("anyType" for instance) with a simple type,
-                  --  we should no longer accept any element.
-                  --  However, if we simply disable all states in the nested
-                  --  NFA, that doesn't work either, since we will not accept
-                  --  the "close element" for the simpleType. But we cannot
-                  --  modify the NFA either, which should remain static.
-                  --  And we somehow select the before-final state in the NFA
-                  --  to accept the <close>, Validate_Current_Characters will
-                  --  not check the right state for contents validity.
+               if Debug then
+                  Debug_Output ("Override state data"
+                                &  Current (H.Matcher, Iter)'Img
+                                & " to type" & Simple'Img);
+               end if;
+               Override_Data
+                 (H.Matcher, Iter,
+                  State_Data'
+                    (Simple => Simple,
+                     Fixed  => Current_Data (H.Matcher, Iter).Fixed,
+                     Block  => Current_Data (H.Matcher, Iter).Block));
 
-                  if Prev_S /= No_State
-                    and then NFA.Get_Nested (Prev_S) /= No_Nested
+               if Has_Parent (Iter) then
+                  --  If we are on the first state of the parent, that means
+                  --  we just entered the parent (which is the element having
+                  --  the xsi:type). So we substitute the nested NFA *for the
+                  --  parent*.
+
+                  if Get_Start_State
+                    (NFA.Get_Nested (Current (H.Matcher, Parent (Iter)))) = S
                   then
                      if Debug then
                         Debug_Output
-                          ("Also replace nested complexType, now just"
+                          ("Replace nested complexType, now just"
                            & " accepting <close>");
                      end if;
                      Replace_State (H.Matcher, Iter, NFA.Simple_Nested);
@@ -674,7 +572,6 @@ package body Schema.Readers is
       end Compute_Type_From_Attribute;
 
       Success : Boolean;
-      Iter    : Active_State_Iterator;
       Is_Nil  : Boolean;
       S       : State;
       Ty      : Type_Index;
@@ -776,6 +673,11 @@ package body Schema.Readers is
             --  Replace the current most nested state in the machine with the
             --  new type
 
+            if Debug then
+               Debug_Output ("Found valid declaration for "
+                             & To_QName (Element_QName));
+            end if;
+
             Replace_State
               (Check_Substitution => False,
                Nested_Start => Get_Start_State (NFA.Get_Nested (TRef.Element)),
@@ -792,46 +694,56 @@ package body Schema.Readers is
 
       --  Validate the attributes
 
-      Iter := For_Each_Active_State
-        (H.Matcher, Ignore_If_Nested => True, Ignore_If_Default => True);
-      loop
-         S := Current (H.Matcher, Iter);
-         exit when S = No_State;
+      declare
+         Iter    : Active_State_Iterator :=
+           For_Each_Active_State
+             (H.Matcher, Ignore_If_Nested => True, Ignore_If_Default => True);
+      begin
+         loop
+            S := Current (H.Matcher, Iter);
+            exit when S = No_State;
 
-         --  The list of valid attributes is attached to the type, that is to
-         --  the nested NFA.
+            --  The list of valid attributes is attached to the type, that is
+            --  to the nested NFA.
 
-         if Debug then
-            Debug_Output ("Checking attributes for state" & S'Img);
-         end if;
+            Ty := Current_Data (H.Matcher, Iter).Simple;
 
-         Ty := NFA.Get_Data (S).Simple;
-         if Ty /= No_Type_Index then --  otherwise with have a <any> type
+            if Debug then
+               Debug_Output ("Checking attributes for state" & S'Img
+                             & " type_index=" & Ty'Img);
+            end if;
 
-            --  Check whether the actual type is abstract. This cannot be
-            --  checked when the grammar is created because of
-            --  substitutionGroup and xsi:type
+            if Ty /= No_Type_Index then --  otherwise with have a <any> type
 
-            Descr := NFA.Get_Type_Descr (Ty);
-            if Descr.Is_Abstract then
-               if Descr.Name /= No_Qualified_Name then
-                  Validation_Error
-                    (H, "Type " & To_QName (Descr.Name) & " is abstract");
-               else
-                  Validation_Error (H, "Type is abstract");
+               --  Check whether the actual type is abstract. This cannot be
+               --  checked when the grammar is created because of
+               --  substitutionGroup and xsi:type
+
+               Descr := NFA.Get_Type_Descr (Ty);
+               if Descr.Is_Abstract then
+                  if Descr.Name /= No_Qualified_Name then
+                     Validation_Error
+                       (H, "Type " & To_QName (Descr.Name) & " is abstract");
+                  else
+                     Validation_Error (H, "Type is abstract");
+                  end if;
+               end if;
+
+               Validate_Attributes
+                 (Get_NFA (H.Grammar),
+                  Descr,
+                  H, Atts,
+                  Nillable  => False,  --  Is_Nillable (Element),
+                  Is_Nil    => Is_Nil);
+            else
+               if Debug then
+                  Debug_Output ("A <anyType>, all attributes are valid");
                end if;
             end if;
 
-            Validate_Attributes
-              (Get_NFA (H.Grammar),
-               Descr,
-               H, Atts,
-               Nillable  => False,  --  Is_Nillable (Element),
-               Is_Nil    => Is_Nil);
-         end if;
-
-         Next (H.Matcher, Iter);
-      end loop;
+            Next (H.Matcher, Iter);
+         end loop;
+      end;
 
 --        if H.Validators /= null then
 --           if H.Validators.Is_Nil then

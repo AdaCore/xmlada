@@ -372,7 +372,7 @@ package body Schema.Schema_Readers is
          Attrs            : Attr_Array_Access;
          Processed_Groups : in out AttrGroup_HTables.Instance;
          As_Restriction   : Boolean;
-         Had_Any          : out Boolean);
+         Had_Any          : in out Boolean);
       --  Create List from the list of attributes or attribute groups in
       --  [Attrs]. [Had_Any] is set to true if a <anyAttribute> was
       --  encountered. The caller should first set it to False.
@@ -956,7 +956,7 @@ package body Schema.Schema_Readers is
          Attrs            : Attr_Array_Access;
          Processed_Groups : in out AttrGroup_HTables.Instance;
          As_Restriction   : Boolean;
-         Had_Any          : out Boolean)
+         Had_Any          : in out Boolean)
       is
          Gr   : AttrGroup_Descr;
          TRef : Global_Reference;
@@ -1316,7 +1316,7 @@ package body Schema.Schema_Readers is
                                Processed_Groups, As_Restriction => True,
                                Had_Any => Had_Any);
 
-               --  Alwayd add <anyAttribute>, even if none was given in the
+               --  Always add <anyAttribute>, even if none was given in the
                --  restriction (in which case none should exist for the type
                --  either);
 
@@ -1359,7 +1359,8 @@ package body Schema.Schema_Readers is
                if Debug then
                   Debug_Output ("Process attributes for complexType "
                                 & To_QName (Info.Properties.Name) & " State="
-                                & Descr.Complex_Content'Img);
+                                & Descr.Complex_Content'Img
+                                & " type_index=" & Info.In_NFA'Img);
                end if;
 
                Recursive_Add_Attributes (Info);
