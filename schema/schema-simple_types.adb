@@ -2169,49 +2169,56 @@ package body Schema.Simple_Types is
       if Facets (Facet_Pattern) /= No_Facet_Value then
          Val := Facets (Facet_Pattern).Value;
 
-         if As_Restriction then
-            --  We must match all patterns (from base and from extension), and
-            --  we cannot combine them. So we need to add one more pattern to
-            --  the facets.
-            --  [Simple] is a copy of the base type, and will be the new
-            --  restriction on exit.
+         begin
+            if As_Restriction then
+               --  We must match all patterns (from base and from extension),
+               --  and we cannot combine them. So we need to add one more
+               --  pattern to the facets.
+               --  [Simple] is a copy of the base type, and will be the new
+               --  restriction on exit.
 
-            if Simple.Pattern = null then
-               Simple.Pattern := new Pattern_Matcher_Array (1 .. 1);
+               if Simple.Pattern = null then
+                  Simple.Pattern := new Pattern_Matcher_Array (1 .. 1);
+               else
+                  Tmp := Simple.Pattern;
+                  Simple.Pattern :=
+                    new Pattern_Matcher_Array (Tmp'First .. Tmp'Last + 1);
+                  Simple.Pattern (Tmp'Range) := Tmp.all;
+                  Unchecked_Free (Tmp);
+               end if;
+
+               Simple.Pattern (Simple.Pattern'Last) :=
+                 (Str     => Val,
+                  Pattern => Compile_Regexp (Val));
+
             else
-               Tmp := Simple.Pattern;
-               Simple.Pattern :=
-                 new Pattern_Matcher_Array (Tmp'First .. Tmp'Last + 1);
-               Simple.Pattern (Tmp'Range) := Tmp.all;
-               Unchecked_Free (Tmp);
+               --  We must combine the base's patterns with the extension's
+               --  pattern, since the type must match either of those.
+               --  The number of patterns does not change
+
+               if Simple.Pattern = null then
+                  Simple.Pattern := new Pattern_Matcher_Array'
+                    (1 => (Str => Val, Pattern => Compile_Regexp (Val)));
+               else
+                  for P in Simple.Pattern'Range loop
+                     Simple.Pattern (P).Str := Find
+                       (Symbols,
+                        '(' & Get (Simple.Pattern (P).Str).all
+                        & ")|(" & Get (Val).all & ')');
+                     Unchecked_Free (Simple.Pattern (P).Pattern);
+                     Simple.Pattern (P).Pattern :=
+                       Compile_Regexp (Simple.Pattern (P).Str);
+                  end loop;
+               end if;
             end if;
 
-            Simple.Pattern (Simple.Pattern'Last) :=
-              (Str     => Val,
-               Pattern => Compile_Regexp (Val));
-
-         else
-            --  We must combine the base's patterns with the extension's
-            --  pattern, since the type must match either of those.
-            --  The number of patterns does not change
-
-            if Simple.Pattern = null then
-               Simple.Pattern := new Pattern_Matcher_Array'
-                 (1 => (Str => Val, Pattern => Compile_Regexp (Val)));
-            else
-               for P in Simple.Pattern'Range loop
-                  Simple.Pattern (P).Str := Find
-                    (Symbols,
-                     '(' & Get (Simple.Pattern (P).Str).all
-                     & ")|(" & Get (Val).all & ')');
-                  Unchecked_Free (Simple.Pattern (P).Pattern);
-                  Simple.Pattern (P).Pattern :=
-                    Compile_Regexp (Simple.Pattern (P).Str);
-               end loop;
-            end if;
-         end if;
+         exception
+            when E : XML_Not_Implemented =>
+               Error := Find (Symbols, '#' & Exception_Message (E));
+         end;
 
          if Error /= No_Symbol then
+            Error_Loc := Facets (Facet_Pattern).Loc;
             return;
          end if;
 
