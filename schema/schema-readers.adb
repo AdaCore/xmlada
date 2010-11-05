@@ -494,41 +494,36 @@ package body Schema.Readers is
       begin
          if Type_Index /= -1 then
             declare
-               --  We need to trim whitespaces, because Validate_Attributes,
-               --  which does the validation, is only done after calling this
-               --  procedure
                Qname : constant Byte_Sequence :=
                  Ada.Strings.Fixed.Trim
                    (Get (Get_Value (Atts, Type_Index)).all,
                     Ada.Strings.Both);
---                 Local_Name : Symbol;
                Separator : constant Integer := Split_Qname (Qname);
+               Prefix    : Symbol;
                NS        : XML_NS;
+               Typ       : Qualified_Name;
+               TRef      : Global_Reference;
             begin
+               Prefix := Find_Symbol
+                 (H.all, Qname (Qname'First .. Separator - 1));
+               Get_Namespace_From_Prefix (H.all, Prefix, NS);
+
+               Typ := (NS    => Get_URI (NS),
+                       Local => Find_Symbol
+                         (H.all, Qname (Separator + 1 .. Qname'Last)));
+
                if Debug then
                   Debug_Output
                     ("Getting element definition from type attribute: "
-                     & Qname);
+                     & To_QName (Typ));
                end if;
 
-               Get_Namespace_From_Prefix
-                 (Validating_Reader (Handler.all),
-                  Find_Symbol
-                    (Handler.all, Qname (Qname'First .. Separator - 1)),
-                  NS);
---                 Get_NS
---                 (Validating_Reader (Handler.all).Grammar, Get_URI (NS), G);
---                 Local_Name := Find_Symbol
---                   (Handler.all, Qname (Separator + 1 .. Qname'Last));
+               TRef := Reference_HTables.Get
+                 (Get_References (H.Grammar).all, (Typ, Ref_Type));
 
---                 Typ := Lookup (G, H, Local_Name, Create_If_Needed => False);
---
---                 if Typ = No_Type then
---                    Validation_Error
---                      (H,
---                       "#Unknown type """
---                       & Get (Get_Value (Atts, Type_Index)).all & '"');
---                 end if;
+               if TRef = No_Global_Reference then
+                  Validation_Error (H, "Unknown type " & To_QName (Typ));
+               end if;
 
 --                 if Element /= No_Element
 --                   and then Get_Validator (Typ) /=
@@ -657,8 +652,6 @@ package body Schema.Readers is
             & Expected (H.Matcher) & '"');
       end if;
 
-      Validate_All_Attributes (H.Matcher, Ignore_If_Nested => True);
-
       --  Whether this element is valid in the current context
 
 --        if H.Validators /= null then
@@ -713,12 +706,9 @@ package body Schema.Readers is
 --        end if;
 --
 --        Data := Create_Validator_Data (Get_Validator (Typ));
---
---        Validate_Attributes
---          (Get_Validator (Typ), H, Atts,
---           Element /= No_Element and then Is_Nillable (Element),
---           Is_Nil);
---
+
+      Validate_All_Attributes (H.Matcher, Ignore_If_Nested => True);
+
 --        if H.Validators /= null then
 --           if H.Validators.Is_Nil then
 --              Validation_Error
