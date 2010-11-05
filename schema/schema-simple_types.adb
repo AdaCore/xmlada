@@ -1845,17 +1845,23 @@ package body Schema.Simple_Types is
       Value        : Sax.Symbols.Symbol;
       Loc          : Sax.Locators.Location)
    is
-      Val : constant Symbol := Find
-        (Symbols, Trim (Get (Value).all, Ada.Strings.Both));
+      Val : Symbol;
    begin
+      if Get (Facet_Name).all = "pattern" then
+         --  Do not normalize the value
+         Facets (Facet_Pattern) := (Value, No_Enumeration_Index, Loc);
+         return;
+      end if;
+
+      Val := Find
+        (Symbols, Trim (Get (Value).all, Ada.Strings.Both));
+
       if Get (Facet_Name).all = "whiteSpace" then
          Facets (Facet_Whitespace) := (Val, No_Enumeration_Index, Loc);
       elsif Get (Facet_Name).all = "enumeration" then
          Append (Enumerations, (Value => Val,
                                 Next  => Facets (Facet_Enumeration).Enum));
          Facets (Facet_Enumeration) := (No_Symbol, Last (Enumerations), Loc);
-      elsif Get (Facet_Name).all = "pattern" then
-         Facets (Facet_Pattern) := (Val, No_Enumeration_Index, Loc);
       elsif Get (Facet_Name).all = "minInclusive" then
          Facets (Facet_Min_Inclusive) := (Val, No_Enumeration_Index, Loc);
       elsif Get (Facet_Name).all = "maxInclusive" then

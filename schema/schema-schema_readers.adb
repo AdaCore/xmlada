@@ -3486,6 +3486,19 @@ package body Schema.Schema_Readers is
       elsif Local_Name = Handler.Any_Attribute then
          Create_Any_Attribute (H, Atts);
 
+      elsif Local_Name = Handler.Pattern then
+         Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
+         pragma Assert (Ctx.Typ = Context_Simple_Restriction);
+         pragma Assert (Ctx.Simple.Kind = Simple_Type_Restriction);
+         --  Use the non-normalized value for <pattern>
+         Add_Facet
+           (Grammar    => Handler.Grammar,
+            Facets     => Ctx.Simple.Facets,
+            Facet_Name => Local_Name,
+            Value      => Get_Non_Normalized_Value
+              (Atts, Get_Index (Atts, Empty_String, Handler.Value)),
+            Loc        => Handler.Current_Location);
+
       elsif Local_Name = Handler.Maxlength
         or else Local_Name = Handler.Minlength
         or else Local_Name = Handler.Length
@@ -3497,7 +3510,6 @@ package body Schema.Schema_Readers is
         or else Local_Name = Handler.MaxExclusive
         or else Local_Name = Handler.MinInclusive
         or else Local_Name = Handler.MinExclusive
-        or else Local_Name = Handler.Pattern
       then
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
          pragma Assert (Ctx.Typ = Context_Simple_Restriction);
