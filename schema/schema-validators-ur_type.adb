@@ -31,28 +31,28 @@ pragma Ada_05;
 
 package body Schema.Validators.UR_Type is
 
-   type UR_Type_Validator is new XML_Validator_Record with record
-      Process_Contents : Process_Contents_Type := Process_Strict;
-   end record;
-   type UR_Type_Access is access all UR_Type_Validator'Class;
+--     type UR_Type_Validator is new XML_Validator_Record with record
+--        Process_Contents : Process_Contents_Type := Process_Strict;
+--     end record;
+--     type UR_Type_Access is access all UR_Type_Validator'Class;
+--
+--     overriding function Is_Wildcard
+--       (Validator : access UR_Type_Validator) return Boolean;
+--     overriding function Get_Mixed_Content
+--       (Validator : access UR_Type_Validator) return Boolean;
+--     --  See doc for inherited subprograms
 
-   overriding function Is_Wildcard
-     (Validator : access UR_Type_Validator) return Boolean;
-   overriding function Get_Mixed_Content
-     (Validator : access UR_Type_Validator) return Boolean;
-   --  See doc for inherited subprograms
-
-   -----------------------
-   -- Get_Mixed_Content --
-   -----------------------
-
-   overriding function Get_Mixed_Content
-     (Validator : access UR_Type_Validator) return Boolean
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return True;
-   end Get_Mixed_Content;
+--     -----------------------
+--     -- Get_Mixed_Content --
+--     -----------------------
+--
+--     overriding function Get_Mixed_Content
+--       (Validator : access UR_Type_Validator) return Boolean
+--     is
+--        pragma Unreferenced (Validator);
+--     begin
+--        return True;
+--     end Get_Mixed_Content;
 
    ----------------------------
    -- Validate_Start_Element --
@@ -150,13 +150,13 @@ package body Schema.Validators.UR_Type is
    -- Is_Wildcard --
    -----------------
 
-   overriding function Is_Wildcard
-     (Validator : access UR_Type_Validator) return Boolean
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return True;
-   end Is_Wildcard;
+--     overriding function Is_Wildcard
+--       (Validator : access UR_Type_Validator) return Boolean
+--     is
+--        pragma Unreferenced (Validator);
+--     begin
+--        return True;
+--     end Is_Wildcard;
 
    -----------------------------
    -- Create_UR_Type_Elements --
@@ -167,17 +167,18 @@ package body Schema.Validators.UR_Type is
       Grammar   : XML_Grammar)
    is
       pragma Unreferenced (Grammar, Reader);
-      Validator : UR_Type_Access;
+--        Validator : UR_Type_Access;
 --        Typ       : XML_Type;
    begin
-      for P in Process_Contents_Type loop
-         Validator := new UR_Type_Validator;
-         Validator.Process_Contents := P;
+      null;
+--        for P in Process_Contents_Type loop
+--           Validator := new UR_Type_Validator;
+--           Validator.Process_Contents := P;
 --           Typ := Create_Local_Type (Schema_NS, Validator);
 --           Typ.Local_Name := Find_Symbol (Reader.all, "ur-Type" & P'Img);
 --           Get (Grammar).UR_Type_Elements (P) := Create_Local_Element
 --             (Empty_String, Schema_NS, Typ, Qualified);
-      end loop;
+--        end loop;
    end Create_UR_Type_Elements;
 
 end Schema.Validators.UR_Type;

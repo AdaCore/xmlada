@@ -28,9 +28,6 @@
 
 package Schema.Validators.Lists is
 
-   function List_Of (Typ : XML_Type) return XML_Validator;
-   --  Return a validator for a list of Typ
-
    generic
       with procedure Callback (Str : Unicode.CES.Byte_Sequence);
    procedure For_Each_Item (Ch : Unicode.CES.Byte_Sequence);

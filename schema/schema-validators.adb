@@ -136,19 +136,19 @@ package body Schema.Validators is
    -- Do_Normalize_Whitespaces --
    ------------------------------
 
-   function Do_Normalize_Whitespaces
-     (Typ     : XML_Type;
-      Reader  : access Abstract_Validation_Reader'Class;
-      Val     : Sax.Symbols.Symbol) return Sax.Symbols.Symbol
-   is
-      pragma Unreferenced (Typ, Reader);
+--     function Do_Normalize_Whitespaces
+--       (Typ     : XML_Type;
+--        Reader  : access Abstract_Validation_Reader'Class;
+--        Val     : Sax.Symbols.Symbol) return Sax.Symbols.Symbol
+--     is
+--        pragma Unreferenced (Typ, Reader);
 --        Whitespace : Whitespace_Restriction := Preserve;
 --        Facets     : constant Facets_Description :=
 --          Get_Facets (Typ.Validator, Reader);
 --        C          : Unicode_Char;
 --        Changed    : Boolean := False;
-   begin
-      return Val;
+--     begin
+--        return Val;
 
 --        if Facets /= null
 --          and then Facets.all in Common_Facets_Description'Class
@@ -260,47 +260,7 @@ package body Schema.Validators is
 --                 end if;
 --              end;
 --        end case;
-   end Do_Normalize_Whitespaces;
-
-   --------------------------
-   -- Normalize_Whitespace --
-   --------------------------
-
-   procedure Normalize_Whitespace
-     (Typ    : XML_Type;
-      Reader : access Abstract_Validation_Reader'Class;
-      Atts   : Sax.Readers.Sax_Attribute_List;
-      Index  : Natural) is
-   begin
-      Set_Normalized_Value
-        (Atts, Index,
-         Do_Normalize_Whitespaces (Typ, Reader, Get_Value (Atts, Index)));
-   end Normalize_Whitespace;
-
-   --     --------------
-   --     -- Is_Equal --
-   --     --------------
-   --
-   --     function Is_Equal
-   --       (Attribute : Named_Attribute_Validator_Record;
-   --        Attr2     : Attribute_Validator_Record'Class)
-   --       return Boolean is
-   --     begin
-   --        return Attr2 in Named_Attribute_Validator_Record'Class
-   --          and then Attribute.NS = Attr2.NS
-   --          and then Attribute.Local_Name =
-   --            Named_Attribute_Validator_Record (Attr2).Local_Name;
-   --     end Is_Equal;
-   --
-   --     function Is_Equal
-   --       (Attribute : Any_Attribute_Validator;
-   --        Attr2     : Attribute_Validator_Record'Class)
-   --       return Boolean is
-   --     begin
-   --        return Attr2 in Any_Attribute_Validator'Class
-   --          and then Attribute.NS = Attr2.NS
-   --          and then Attribute.Kind = Any_Attribute_Validator (Attr2).Kind;
-   --     end Is_Equal;
+--     end Do_Normalize_Whitespaces;
 
    -----------
    -- Is_ID --
@@ -354,37 +314,6 @@ package body Schema.Validators is
          L := G.Attributes.Table (L).Next;
       end loop;
    end Add_Attributes;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name
-     (Validator : access XML_Validator_Record'Class) return String is
-   begin
-      return Debug_Tag_Name (Validator'Tag);
-   end Get_Name;
-
-   -----------------------
-   -- Set_Mixed_Content --
-   -----------------------
-
-   procedure Set_Mixed_Content
-     (Validator : access XML_Validator_Record;
-      Mixed     : Boolean) is
-   begin
-      Validator.Mixed_Content := Mixed;
-   end Set_Mixed_Content;
-
-   -----------------------
-   -- Get_Mixed_Content --
-   -----------------------
-
-   function Get_Mixed_Content
-     (Validator : access XML_Validator_Record) return Boolean is
-   begin
-      return Validator.Mixed_Content;
-   end Get_Mixed_Content;
 
    ------------------------
    -- To_Attribute_Array --
@@ -775,91 +704,6 @@ package body Schema.Validators is
       Check_Single_ID;
    end Validate_Attributes;
 
-   -----------
-   -- Is_ID --
-   -----------
-
-   function Is_ID (Typ : XML_Type) return Boolean is
-   begin
-      return Typ.Validator /= null and then Is_ID (Typ.Validator.all);
-   end Is_ID;
-
-   -----------
-   -- Is_ID --
-   -----------
-
-   function Is_ID (Validator : XML_Validator_Record) return Boolean is
-      pragma Unreferenced (Validator);
-   begin
-      return False;
-   end Is_ID;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator      : access XML_Validator_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean;
-      Mask           : in out Facets_Mask)
-   is
-      pragma Unreferenced (Ch, Empty_Element, Mask, Reader);
-   begin
-      if Debug then
-         Debug_Output ("Validate_Chars (unknown) " & Get_Name (Validator));
-      end if;
-   end Validate_Characters;
-
-   -----------
-   -- Equal --
-   -----------
-
-   function Equal
-     (Validator      : access XML_Validator_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
-   is
-      pragma Unreferenced (Validator, Reader);
-   begin
-      return Value1 = Value2;
-   end Equal;
-
-   -------------
-   -- List_Of --
-   -------------
-
-   --     function List_Of
-   --       (Grammar : XML_Grammar_NS; Typ : XML_Type) return XML_Type is
-   --     begin
-   --        return Create_Local_Type (Grammar, List_Of (Typ));
-   --     end List_Of;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access XML_Validator_Record;
-      Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Symbol;
-      Facet_Value : Unicode.CES.Byte_Sequence)
-   is
-      pragma Unreferenced (Validator);
-   begin
-      if Facet_Name = Reader.Whitespace then
-         if Facet_Value /= "collapse" then
-            Validation_Error
-              (Reader,
-               "#Invalid value for restriction whiteSpace: " & Facet_Value);
-         end if;
-      else
-         Validation_Error
-           (Reader, "#Invalid restriction: " & Get (Facet_Name).all);
-      end if;
-   end Add_Facet;
-
    -----------------------
    -- To_Graphic_String --
    -----------------------
@@ -1109,34 +953,6 @@ package body Schema.Validators is
    -- Free --
    ----------
 
-   procedure Free (Facets : in out Facets_Description) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Facets_Description_Record'Class, Facets_Description);
-   begin
-      if Facets /= null then
-         Free (Facets.all);
-         Unchecked_Free (Facets);
-      end if;
-   end Free;
-
-   ----------------
-   -- Get_Facets --
-   ----------------
-
-   function Get_Facets
-     (Validator : access XML_Validator_Record;
-      Reader    : access Abstract_Validation_Reader'Class)
-      return Facets_Description
-   is
-      pragma Unreferenced (Validator, Reader);
-   begin
-      return null;
-   end Get_Facets;
-
-   ----------
-   -- Free --
-   ----------
-
    procedure Free (Grammar : in out XML_Grammar_Record) is
    begin
       if Debug then
@@ -1370,19 +1186,6 @@ package body Schema.Validators is
 --        ElemPtr.Substitution_Group := Head;
 --     end Set_Substitution_Group;
 
-   -------------------
-   -- Get_Validator --
-   -------------------
-
-   function Get_Validator (Typ : XML_Type) return XML_Validator is
-   begin
-      if Typ = null then
-         return null;
-      else
-         return Typ.Validator;
-      end if;
-   end Get_Validator;
-
    ----------
    -- Free --
    ----------
@@ -1611,139 +1414,32 @@ package body Schema.Validators is
 --        return Typ.Simple_Type = Simple_Content;
 --     end Is_Simple_Type;
 
-   ---------------
-   -- Set_Block --
-   ---------------
-
-   procedure Set_Block
-     (Typ    : XML_Type;
-      Blocks : Block_Status) is
-   begin
-      Typ.Blocks := Blocks;
-   end Set_Block;
-
-   ---------------
-   -- Get_Block --
-   ---------------
-
-   function Get_Block (Typ : XML_Type) return Block_Status is
-   begin
-      return Typ.Blocks;
-   end Get_Block;
-
-   ---------------
-   -- Get_Final --
-   ---------------
-
-   function Get_Final (Typ : XML_Type) return Final_Status is
-   begin
-      return Typ.Final;
-   end Get_Final;
-
-   ---------------
-   -- Add_Union --
-   ---------------
-
-   procedure Add_Union
-     (Validator : access XML_Validator_Record'Class;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Part      : Type_Descr)
-   is
-      pragma Unreferenced (Validator, Reader, Part);
-   begin
-      null;
---        Schema.Validators.Simple_Types.Add_Union
---          (XML_Union (Validator), Reader, Part);
-   end Add_Union;
-
    --------------
    -- Check_Id --
    --------------
 
-   procedure Check_Id
-     (Reader    : access Abstract_Validation_Reader'Class;
-      Validator : access XML_Validator_Record'Class;
-      Value     : Unicode.CES.Byte_Sequence)
-   is
-      Val : Symbol;
-   begin
-      if Is_ID (Validator.all) then
-         Val := Find_Symbol (Reader.all, Value);
-
-         if Reader.Id_Table = null then
-            Reader.Id_Table := new Id_Htable.HTable (101);
-         else
-            if Id_Htable.Get (Reader.Id_Table.all, Val) /= No_Id then
-               Validation_Error
-                 (Reader, "#ID """ & Value & """ already defined");
-            end if;
-         end if;
-
-         Id_Htable.Set (Reader.Id_Table.all, Id_Ref'(Key => Val));
-      end if;
-   end Check_Id;
-
-   ---------------------
-   -- Is_Extension_Of --
-   ---------------------
-
-   function Is_Extension_Of
-     (Validator : XML_Validator_Record;
-      Base      : access XML_Validator_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Validator, Base);
-   begin
-      return False;
-   end Is_Extension_Of;
-
-   ---------------------
-   -- Is_Extension_Of --
-   ---------------------
-
---     function Is_Extension_Of
---       (Element : XML_Element; Base : XML_Element) return Boolean is
+--     procedure Check_Id
+--       (Reader    : access Abstract_Validation_Reader'Class;
+--        Validator : access XML_Validator_Record'Class;
+--        Value     : Unicode.CES.Byte_Sequence)
+--     is
+--        Val : Symbol;
 --     begin
---        return Is_Extension_Of
---          (Element.Elem.Of_Type.Validator.all,
---           Base.Elem.Of_Type.Validator);
---     end Is_Extension_Of;
-
-   -----------------------
-   -- Is_Restriction_Of --
-   -----------------------
-
-   function Is_Restriction_Of
-     (Validator : XML_Validator_Record;
-      Base      : access XML_Validator_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Validator, Base);
-   begin
-      return False;
-   end Is_Restriction_Of;
-
-   -----------------------
-   -- Is_Restriction_Of --
-   -----------------------
-
---     function Is_Restriction_Of
---       (Element : XML_Element; Base : XML_Element) return Boolean is
---     begin
---        return Is_Restriction_Of
---          (Element.Elem.Of_Type.Validator.all,
---           Base.Elem.Of_Type.Validator);
---     end Is_Restriction_Of;
-
-   -----------------
-   -- Is_Wildcard --
-   -----------------
-
-   function Is_Wildcard
-     (Validator : access XML_Validator_Record) return Boolean
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return False;
-   end Is_Wildcard;
+--        if Is_ID (Validator.all) then
+--           Val := Find_Symbol (Reader.all, Value);
+--
+--           if Reader.Id_Table = null then
+--              Reader.Id_Table := new Id_Htable.HTable (101);
+--           else
+--              if Id_Htable.Get (Reader.Id_Table.all, Val) /= No_Id then
+--                 Validation_Error
+--                   (Reader, "#ID """ & Value & """ already defined");
+--              end if;
+--           end if;
+--
+--           Id_Htable.Set (Reader.Id_Table.all, Id_Ref'(Key => Val));
+--        end if;
+--     end Check_Id;
 
    ----------
    -- Free --
