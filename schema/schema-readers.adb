@@ -441,7 +441,9 @@ package body Schema.Readers is
         (Atts, H.XML_Instance_URI, H.Schema_Location);
       NFA            : constant Schema_NFA_Access := Get_NFA (H.Grammar);
 
-      function Compute_Type_From_Attribute return State;
+      procedure Compute_Type_From_Attribute
+        (Result_Index : out Type_Index;
+         Result       : out Type_Descr_Access);
       --  If xsi:type was specified, verify that the given type is a valid
       --  substitution for the original type in the NFA, and replace the
       --  current nested automaton with the one for the type. The replacement
@@ -571,13 +573,18 @@ package body Schema.Readers is
       -- Compute_Type_From_Attribute --
       ---------------------------------
 
-      function Compute_Type_From_Attribute return State is
+      procedure Compute_Type_From_Attribute
+        (Result_Index : out Type_Index;
+         Result       : out Type_Descr_Access)
+      is
          Xsi_Type_Index     : constant Integer := Get_Index
            (Atts, H.XML_Instance_URI, H.Typ);
          TRef : Global_Reference;
-         Result : State := No_State;
       begin
-         if Xsi_Type_Index /= -1 then
+         if Xsi_Type_Index = -1 then
+            Result_Index := No_Type_Index;
+            Result       := null;
+         else
             declare
                Qname : constant Byte_Sequence :=
                  Ada.Strings.Fixed.Trim
@@ -609,14 +616,14 @@ package body Schema.Readers is
                   Validation_Error (H, "Unknown type " & To_QName (Typ));
                end if;
 
-               Result := Get_Type_Descr (NFA, TRef.Typ).Complex_Content;
+               Result_Index := TRef.Typ;
+               Result := Type_Descr_Access (Get_Type_Descr (NFA, TRef.Typ));
                Replace_State
                  (Check_Substitution => True,
-                  Nested_Start => Result,
+                  Nested_Start => Result.Complex_Content,
                   Simple       => TRef.Typ);
             end;
          end if;
-         return Result;
       end Compute_Type_From_Attribute;
 
       Success : Boolean;
@@ -626,7 +633,6 @@ package body Schema.Readers is
       Through_Any : Boolean;
       Through_Process : Process_Contents_Type;
       TRef    : Global_Reference;
-      Descr   : access Type_Descr;
 
       Had_Matcher : constant Boolean := H.Matcher /= No_NFA_Matcher;
 
@@ -692,12 +698,44 @@ package body Schema.Readers is
          --  Seeing the toplevel is never incorrect. We just need to find
          --  out what its type would be, and use this for the matcher
 
-         S := Compute_Type_From_Attribute;
-         if S = No_State then
-            Validation_Error (H, "No type found for the root element");
-         end if;
+         declare
+            Descr   : Type_Descr_Access;
+            Index   : Type_Index;
+         begin
+            Compute_Type_From_Attribute (Index, Descr);
+            if Descr = null then
+               Validation_Error
+                 (H, "No type found for " & To_QName (Element_QName));
+            elsif Descr.Complex_Content /= No_State then
+               H.Matcher := Get_NFA (H.Grammar).Start_Match
+                 (Start_At => Descr.Complex_Content);
+            else
+               --  Just expect a "close". The current active state, however,
+               --  ends up with no state data, and we need to set it to the
+               --  appropriate simpleType. Can't use Replace_State for this.
 
-         H.Matcher := Get_NFA (H.Grammar).Start_Match (Start_At => S);
+               H.Matcher := Get_NFA (H.Grammar).Start_Match
+                 (Start_At => NFA.Simple_Nested);
+
+               declare
+                  Iter : constant Active_State_Iterator :=
+                    For_Each_Active_State
+                      (H.Matcher, Ignore_If_Default => False,
+                       Ignore_If_Nested => True);
+                  Data      : State_Data;
+               begin
+                  Data := Current_Data (H.Matcher, Iter);
+                  Override_Data
+                    (H.Matcher, Iter,
+                     State_Data'
+                       (Simple   => Index,
+                        Nillable => Data.Nillable,
+                        Fixed    => Data.Fixed,
+                        Default  => Data.Default,
+                        Block    => Data.Block));
+               end;
+            end if;
+         end;
 
       elsif not Success then
          Validation_Error
@@ -751,7 +789,12 @@ package body Schema.Readers is
 --             (H, "Element """ & To_QName (Elem) & """ is abstract");
 --        end if;
 
-      S := Compute_Type_From_Attribute;
+      declare
+         Descr   : Type_Descr_Access;
+         Index   : Type_Index;
+      begin
+         Compute_Type_From_Attribute (Index, Descr);
+      end;
 
       --  Validate the attributes
 
@@ -789,21 +832,26 @@ package body Schema.Readers is
                --  checked when the grammar is created because of
                --  substitutionGroup and xsi:type
 
-               Descr := NFA.Get_Type_Descr (Data.Simple);
-               if Descr.Is_Abstract then
-                  if Descr.Name /= No_Qualified_Name then
-                     Validation_Error
-                       (H, "Type " & To_QName (Descr.Name) & " is abstract");
-                  else
-                     Validation_Error (H, "Type is abstract");
+               declare
+                  Descr : constant access Type_Descr :=
+                    NFA.Get_Type_Descr (Data.Simple);
+               begin
+                  if Descr.Is_Abstract then
+                     if Descr.Name /= No_Qualified_Name then
+                        Validation_Error
+                          (H,
+                           "Type " & To_QName (Descr.Name) & " is abstract");
+                     else
+                        Validation_Error (H, "Type is abstract");
+                     end if;
                   end if;
-               end if;
 
-               Validate_Attributes
-                 (Get_NFA (H.Grammar),
-                  Descr,
-                  H, Atts,
-                  Is_Nil    => Nil_Index);
+                  Validate_Attributes
+                    (Get_NFA (H.Grammar),
+                     Descr,
+                     H, Atts,
+                     Is_Nil    => Nil_Index);
+               end;
             else
                if Debug then
                   Debug_Output ("A <anyType>, all attributes are valid");

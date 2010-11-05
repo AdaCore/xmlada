@@ -274,6 +274,7 @@ package Schema.Validators is
         Schema_State_Machines.No_State;
       --  The start of the nested NFA for a complexType
    end record;
+   type Type_Descr_Access is access all Type_Descr;
    pragma Pack (Type_Descr);
    No_Type_Descr : constant Type_Descr := (others => <>);
 
