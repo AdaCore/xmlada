@@ -603,8 +603,8 @@ package body Schema.Readers is
       if not Success then
          Validation_Error
            (H, "#Unexpected element """
-            & To_QName (Elem) & """: expecting "
-            & Expected (H.Matcher));
+            & To_QName (Elem) & """: expecting """
+            & Expected (H.Matcher) & '"');
       end if;
 
       Validate_All_Attributes (H.Matcher, Ignore_If_Nested => True);
@@ -726,19 +726,15 @@ package body Schema.Readers is
       Success : Boolean;
    begin
       if Debug then
-         Output_Seen ("End_Element: " & To_QName (Elem)
-                      & " " & To_String (H.Locator));
+         Output_Seen
+           ("End_Element: " & To_QName (Elem) & " " & To_String (H.Locator));
       end if;
 
       Validate_Current_Characters (H);
 
-      Process
-        (H.Matcher,
-         Input   => (Kind => Transition_Close),
-         Success => Success);
-
+      Process (H.Matcher, (Kind => Transition_Close), Success);
       if Debug then
-         Debug_Print (H.Matcher, Dump_Compact);
+         Debug_Print (H.Matcher, Dump_Compact, "After end element:");
       end if;
 
       if not Success then

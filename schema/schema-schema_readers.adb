@@ -1355,6 +1355,14 @@ package body Schema.Schema_Readers is
            (Handler.all,
             Create (Message => "Could not open file " & Get (S_File_Full).all,
                     Loc     => Get_Locator (Handler.all)));
+
+      when XML_Not_Implemented | XML_Validation_Error =>
+         --  Copy the error message and location from Schema to Handler
+         Close (File);
+         Handler.Error_Msg := Schema.Error_Msg;
+         Handler.Error_Location := Schema.Error_Location;
+         raise;
+
       when others =>
          Close (File);
          raise;
@@ -1763,8 +1771,17 @@ package body Schema.Schema_Readers is
               (Next.Extension.Extension.Attributes,
                (Kind      => Kind_Group,
                 Group_Ref => Ctx.Attr_Group.Ref));
+         when Context_Attribute_Group =>
+            Append
+              (Next.Attr_Group.Attributes,
+               (Kind      => Kind_Group,
+                Group_Ref => Ctx.Attr_Group.Ref));
+
          when others =>
-            null;
+            Validation_Error
+              (Handler,
+               "Invalid context for attributeGroup: " & Next.Typ'Img,
+               Except => XML_Not_Implemented'Identity);
       end case;
    end Finish_Attribute_Group;
 

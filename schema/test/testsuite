@@ -165,7 +165,7 @@ expect "" "$act/G404-019/c_test.xml" "c_test.xml:16:10: Attribute \"subSystemId\
 expect "$act/I723-028/test.xsd" "" ""
 expect "$act/I727-025/test.xsd" "$act/I727-025/test.xml" ""
 expect "$act/I728-012/test.xsd" "$act/I728-012/test.xml" ""
-expect "$act/I702-017/test.xsd" "$act/I702-017/test.xml" "test.xml:7:11: Too many occurrences of \"size\" (expecting \"contents\")"
+expect "$act/I702-017/test.xsd" "$act/I702-017/test.xml" "test.xml:7:11: Unexpected element \"size\": expecting \"contents\""
 expect "$act/IC10-021/pref.xsd" "$act/IC10-021/pref.xml" ""
 
 summary
