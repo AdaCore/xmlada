@@ -107,7 +107,7 @@ private
       Local_Type   : Internal_Type_Index := No_Internal_Type_Index;
       Ref          : Qualified_Name      := No_Qualified_Name;
 
-      Target_NS    : Sax.Symbols.Symbol  := Sax.Symbols.No_Symbol;
+      Any          : Internal_Any_Descr  := No_Internal_Any_Descr;
       --  For the handling of <anyAttribute>
    end record;
    No_Internal_Attribute : constant Internal_Attribute_Descr := (others => <>);

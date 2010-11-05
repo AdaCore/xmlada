@@ -368,12 +368,14 @@ package body Schema.Schema_Readers is
       --  Search for the simpleType [Name]
 
       procedure Add_Attributes
-        (List             : in out Attribute_Validator_List;
+        (List             : in out Attributes_List;
          Attrs            : Attr_Array_Access;
          Processed_Groups : in out AttrGroup_HTables.Instance;
-         As_Restriction   : Boolean);
+         As_Restriction   : Boolean;
+         Had_Any          : out Boolean);
       --  Create List from the list of attributes or attribute groups in
-      --  [Attrs].
+      --  [Attrs]. [Had_Any] is set to true if a <anyAttribute> was
+      --  encountered. The caller should first set it to False.
 
       procedure Create_Global_Attributes (Attr : Internal_Attribute_Descr);
       --  Register a global attribute.
@@ -951,10 +953,11 @@ package body Schema.Schema_Readers is
       --------------------
 
       procedure Add_Attributes
-        (List             : in out Attribute_Validator_List;
+        (List             : in out Attributes_List;
          Attrs            : Attr_Array_Access;
          Processed_Groups : in out AttrGroup_HTables.Instance;
-         As_Restriction   : Boolean)
+         As_Restriction   : Boolean;
+         Had_Any          : out Boolean)
       is
          Gr   : AttrGroup_Descr;
          TRef : Global_Reference;
@@ -985,7 +988,7 @@ package body Schema.Schema_Readers is
                         Set (Processed_Groups, Gr.Name, Gr);
                         Add_Attributes
                           (List, Gr.Attributes, Processed_Groups,
-                           As_Restriction);
+                           As_Restriction, Had_Any);
                      end if;
 
                   when Kind_Attribute =>
@@ -1008,10 +1011,16 @@ package body Schema.Schema_Readers is
                      else
                         Resolve_Attribute_Type (Attrs (A).Attr);
 
-                        Add_Attribute
-                          (Parser.Grammar,
-                           List, Attrs (A).Attr.Descr, As_Restriction,
-                           Attrs (A).Attr.Target_NS);
+                        if Attrs (A).Attr.Any /= No_Internal_Any_Descr then
+                           Had_Any := True;
+                           Add_Any_Attribute
+                             (Parser.Grammar, List, Attrs (A).Attr.Any,
+                              As_Restriction);
+
+                        else
+                           Add_Attribute
+                             (Parser.Grammar, List, Attrs (A).Attr.Descr);
+                        end if;
                      end if;
                end case;
             end loop;
@@ -1214,7 +1223,9 @@ package body Schema.Schema_Readers is
                         "A global attribute cannot define ref");
          pragma Assert (Attr.Descr.Name /= No_Qualified_Name,
                         "A global attribute must have a name");
-         pragma Assert (Attr.Descr.Next = Empty_Attribute_List,
+         pragma Assert (Attr.Any = No_Internal_Any_Descr,
+                        "A global attribute is not <anyAttribute>");
+         pragma Assert (Attr.Descr.Next = Empty_Named_Attribute_List,
                         "Global attributes cannot be in a list");
          pragma Assert (Attr.Descr.Simple_Type = No_Simple_Type_Index,
                         "Type of global attributes should be undefined here");
@@ -1222,8 +1233,7 @@ package body Schema.Schema_Readers is
          Attr2 := Attr;
          Resolve_Attribute_Type (Attr2);
 
-         Create_Global_Attribute
-           (Parser.Grammar, Attr2.Descr, Target_NS => Attr.Target_NS);
+         Create_Global_Attribute (Parser.Grammar, Attr2.Descr);
       end Create_Global_Attributes;
 
       ------------------
@@ -1232,7 +1242,7 @@ package body Schema.Schema_Readers is
 
       procedure Process_Type (Info : in out Internal_Type_Descr) is
          S1    : State;
-         List  : Attribute_Validator_List := Empty_Attribute_List;
+         List  : Attributes_List := No_Attributes;
 
          Processed_Groups : AttrGroup_HTables.Instance;
          --  ??? If this table is here, we can't have an <extension> with the
@@ -1243,6 +1253,7 @@ package body Schema.Schema_Readers is
          procedure Recursive_Add_Attributes (Info : Internal_Type_Descr) is
             Ty    : Global_Reference;
             Index : Internal_Type_Index;
+            Had_Any : Boolean := False;
          begin
             if Info.Is_Simple then
                --  A simpleType has no attribute
@@ -1251,7 +1262,7 @@ package body Schema.Schema_Readers is
             elsif Info.Details = null then
                --  No character data is allowed, but we might have attributes
                Add_Attributes (List, Info.Attributes, Processed_Groups,
-                               As_Restriction => True);
+                               As_Restriction => True, Had_Any => Had_Any);
 
             elsif Info.Details.Kind = Type_Extension then
                Ty := Get (Ref.all, (Info.Details.Extension.Base, Ref_Type));
@@ -1278,10 +1289,10 @@ package body Schema.Schema_Readers is
                end if;
 
                Add_Attributes (List, Info.Details.Extension.Attributes,
-                               Processed_Groups, As_Restriction => False);
+                               Processed_Groups, As_Restriction => False,
+                               Had_Any => Had_Any);
 
             elsif Info.Details.Kind = Type_Restriction then
-               --  ??? Should check Final and Block, too
                Ty := Get (Ref.all, (Info.Details.Restriction.Base, Ref_Type));
                if Ty = No_Global_Reference then
                   Validation_Error
@@ -1300,12 +1311,22 @@ package body Schema.Schema_Readers is
                      As_Restriction => True);
                end if;
 
+               Had_Any := False;
                Add_Attributes (List, Info.Details.Restriction.Attributes,
-                               Processed_Groups, As_Restriction => True);
+                               Processed_Groups, As_Restriction => True,
+                               Had_Any => Had_Any);
+
+               --  Alwayd add <anyAttribute>, even if none was given in the
+               --  restriction (in which case none should exist for the type
+               --  either);
+
+               if not Had_Any then
+                  List.Any := No_Any_Descr;  --  Nothing matches
+               end if;
 
             else
                Add_Attributes (List, Info.Attributes, Processed_Groups,
-                               As_Restriction => True);
+                               As_Restriction => True, Had_Any => Had_Any);
             end if;
          end Recursive_Add_Attributes;
 
@@ -2142,18 +2163,18 @@ package body Schema.Schema_Readers is
       Name  : Qualified_Name;
       Att   : Attr_Descr (Kind => Kind_Attribute);
    begin
-      Att.Attr.Descr := (Is_Any => True, others => <>);
       Att.Loc := Handler.Current_Location;
-      Att.Attr.Descr.Any.Namespaces := Handler.Any_Namespace;
-      Att.Attr.Target_NS := Handler.Target_NS;
+      Att.Attr.Any := (Namespaces       => Handler.Any_Namespace,
+                       Target_NS        => Handler.Target_NS,
+                       Process_Contents => Process_Strict);
 
       for J in 1 .. Get_Length (Atts) loop
          Name := Get_Name (Atts, J);
          if Name.NS = Empty_String then
             if Name.Local = Handler.Namespace then
-               Att.Attr.Descr.Any.Namespaces := Get_Value (Atts, J);
+               Att.Attr.Any.Namespaces := Get_Value (Atts, J);
             elsif Name.Local = Handler.Process_Contents then
-               Att.Attr.Descr.Any.Process_Contents :=
+               Att.Attr.Any.Process_Contents :=
                  Process_Contents_From_Atts (Handler, Atts, J);
             end if;
          end if;
@@ -3063,7 +3084,6 @@ package body Schema.Schema_Readers is
       Has_Form : Boolean := False;
 
    begin
-      Att.Attr.Descr := (Is_Any => False, others => <>);
       Att.Attr.Descr.Form := Handler.Attribute_Form_Default;
       Att.Loc := Handler.Current_Location;
 

@@ -59,7 +59,7 @@ package body Schema.Validators is
    procedure Process is new Schema_State_Machines.Process (Match);
 
    type Attribute_Validator_Data is record
-      Validator : Attribute_Validator_List;  --  Index into the table
+      Validator : Named_Attribute_List;  --  Index into the table
       Visited   : Boolean;
    end record;
    type Attribute_Validator_Index is new Natural;
@@ -67,7 +67,7 @@ package body Schema.Validators is
      of Attribute_Validator_Data;
    function To_Attribute_Array
      (NFA        : access Schema_NFA'Class;
-      Attributes : Attribute_Validator_List) return Attribute_Validator_Array;
+      Attributes : Attributes_List) return Attribute_Validator_Array;
    --  The data required to validate attributes
 
    procedure Create_Grammar_If_Needed (Grammar : in out XML_Grammar);
@@ -172,83 +172,58 @@ package body Schema.Validators is
       end if;
    end Get_Error_Message;
 
+   -----------------------
+   -- Add_Any_Attribute --
+   -----------------------
+
+   procedure Add_Any_Attribute
+     (Grammar        : XML_Grammar;
+      List           : in out Attributes_List;
+      Any            : Internal_Any_Descr;
+      As_Restriction : Boolean) is
+   begin
+      List.Any := Combine
+        (Grammar        => Grammar,
+         Base_Any       => List.Any,
+         Local_Process  => Any.Process_Contents,
+         Local          => Any.Namespaces,
+         As_Restriction => As_Restriction,
+         Target_NS      => Any.Target_NS);
+   end Add_Any_Attribute;
+
    -------------------
    -- Add_Attribute --
    -------------------
 
    procedure Add_Attribute
      (Grammar        : XML_Grammar;
-      List           : in out Attribute_Validator_List;
-      Attribute      : Attribute_Descr;
-      As_Restriction : Boolean;
-      Target_NS      : Sax.Symbols.Symbol)
+      List           : in out Attributes_List;
+      Attribute      : Attribute_Descr)
    is
       NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
-      L   : Attribute_Validator_List := List;
-      Tmp : Attribute_Validator_List;
+      L   : Named_Attribute_List := List.Named;
+      Tmp : Named_Attribute_List;
    begin
-      if Attribute.Is_Any then
-         if Debug then
-            Debug_Output ("Adding <anyAttribute> "
-                          & Get (Attribute.Any.Namespaces).all);
-         end if;
-
-         --  Does list include a <anyAttribute> already ?
-         while L /= Empty_Attribute_List loop
-            if NFA.Attributes.Table (L).Is_Any then
-               NFA.Attributes.Table (L).Any :=
-                 Combine
-                   (Grammar        => Grammar,
-                    Base_Any       => NFA.Attributes.Table (L).Any,
-                    Local_Process  => Attribute.Any.Process_Contents,
-                    Local          => Attribute.Any.Namespaces,
-                    As_Restriction => As_Restriction,
-                    Target_NS      => Target_NS);
-               return;
-            end if;
-
-            L := NFA.Attributes.Table (L).Next;
-         end loop;
-
-         --  there was no <anyAttribute>, so we simply add it to the list
-         Append
-           (NFA.Attributes,
-            Attribute_Descr'
-              (Is_Any => True,
-               Next   => List,
-               Any    => Combine
-                 (Grammar        => Grammar,
-                  Base_Any       => No_Any_Descr,
-                  Local_Process  => Attribute.Any.Process_Contents,
-                  Local          => Attribute.Any.Namespaces,
-                  As_Restriction => As_Restriction,
-                  Target_NS      => Target_NS)));
-         List := Last (NFA.Attributes);
-
-      else
-         if Debug then
-            Debug_Output
-              ("Adding attribute " & To_QName (Attribute.Name)
-               & " Use_Type=" & Attribute.Use_Type'Img);
-         end if;
-
-         while L /= Empty_Attribute_List loop
-            if not NFA.Attributes.Table (L).Is_Any
-              and then NFA.Attributes.Table (L).Name = Attribute.Name
-            then
-               --  Override use_type, form,... from the <restriction>
-               Tmp := NFA.Attributes.Table (L).Next;
-               NFA.Attributes.Table (L) := Attribute;
-               NFA.Attributes.Table (L).Next := Tmp;
-               return;
-            end if;
-            L := NFA.Attributes.Table (L).Next;
-         end loop;
-
-         Append (NFA.Attributes, Attribute);
-         NFA.Attributes.Table (Last (NFA.Attributes)).Next := List;
-         List := Last (NFA.Attributes);
+      if Debug then
+         Debug_Output
+           ("Adding attribute " & To_QName (Attribute.Name)
+            & " Use_Type=" & Attribute.Use_Type'Img);
       end if;
+
+      while L /= Empty_Named_Attribute_List loop
+         if NFA.Attributes.Table (L).Name = Attribute.Name then
+            --  Override use_type, form,... from the <restriction>
+            Tmp := NFA.Attributes.Table (L).Next;
+            NFA.Attributes.Table (L) := Attribute;
+            NFA.Attributes.Table (L).Next := Tmp;
+            return;
+         end if;
+         L := NFA.Attributes.Table (L).Next;
+      end loop;
+
+      Append (NFA.Attributes, Attribute);
+      NFA.Attributes.Table (Last (NFA.Attributes)).Next := List.Named;
+      List.Named := Last (NFA.Attributes);
    end Add_Attribute;
 
    --------------------
@@ -257,18 +232,25 @@ package body Schema.Validators is
 
    procedure Add_Attributes
      (Grammar        : XML_Grammar;
-      List           : in out Attribute_Validator_List;
-      Attributes     : Attribute_Validator_List;
+      List           : in out Attributes_List;
+      Attributes     : Attributes_List;
       As_Restriction : Boolean)
    is
       NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
-      L   : Attribute_Validator_List := Attributes;
+      L   : Named_Attribute_List := Attributes.Named;
    begin
-      while L /= Empty_Attribute_List loop
-         Add_Attribute (Grammar, List, NFA.Attributes.Table (L),
-                        As_Restriction, Target_NS => No_Symbol);
+      while L /= Empty_Named_Attribute_List loop
+         Add_Attribute (Grammar, List, NFA.Attributes.Table (L));
          L := NFA.Attributes.Table (L).Next;
       end loop;
+
+      Add_Any_Attribute
+        (Grammar, List,
+         Internal_Any_Descr'
+           (Target_NS        => Empty_String,
+            Process_Contents => Attributes.Any.Process_Contents,
+            Namespaces       => Attributes.Any.Namespaces),
+         As_Restriction);
    end Add_Attributes;
 
    ------------------------
@@ -277,12 +259,12 @@ package body Schema.Validators is
 
    function To_Attribute_Array
      (NFA        : access Schema_NFA'Class;
-      Attributes : Attribute_Validator_List) return Attribute_Validator_Array
+      Attributes : Attributes_List) return Attribute_Validator_Array
    is
       Count : Attribute_Validator_Index := 0;
-      L     : Attribute_Validator_List := Attributes;
+      L     : Named_Attribute_List := Attributes.Named;
    begin
-      while L /= Empty_Attribute_List loop
+      while L /= Empty_Named_Attribute_List loop
          Count := Count + 1;
          L := NFA.Attributes.Table (L).Next;
       end loop;
@@ -291,8 +273,8 @@ package body Schema.Validators is
          Result : Attribute_Validator_Array (1 .. Count);
       begin
          Count := Result'First;
-         L := Attributes;
-         while L /= Empty_Attribute_List loop
+         L := Attributes.Named;
+         while L /= Empty_Named_Attribute_List loop
             Result (Count) := (Validator => L,
                                Visited   => False);
             Count := Count + 1;
@@ -452,7 +434,9 @@ package body Schema.Validators is
 
    begin
       if Base_Any = No_Any_Descr then
-         All_Items (Get (Local).all);
+         if Local /= No_Symbol then
+            All_Items (Get (Local).all);
+         end if;
          return Any_Descr'
            (Process_Contents => Local_Process,
             No_Namespaces    => To_Symbol (No_Namespaces),
@@ -462,7 +446,8 @@ package body Schema.Validators is
       Local_Is_Any := Local /= No_Symbol and then Get (Local).all = "##any";
 
       if As_Restriction then
-         --  The list of "Namespaces" is the intersection of the two.
+         --  The list of "Namespaces" is the intersection of the two (and
+         --  empty if local is empty)
          --  From this, remove the list of the base's "No_Namespaces".
          --  We preserve those "No_Namespaces" into the new type, though.
 
@@ -628,10 +613,9 @@ package body Schema.Validators is
       Nillable   : Boolean;
       Is_Nil     : out Boolean)
    is
-      Attributes   : constant Attribute_Validator_List := Typ.Attributes;
       Length       : constant Natural := Get_Length (Atts);
       Valid_Attrs  : Attribute_Validator_Array :=
-        To_Attribute_Array (NFA, Attributes);
+        To_Attribute_Array (NFA, Typ.Attributes);
 
       type Attr_Status is record
          Prohibited : Boolean := False;
@@ -789,10 +773,6 @@ package body Schema.Validators is
          return -1;
       end Find_Attribute;
 
-      Any_Attribute : Attribute_Validator_Index :=
-        Attribute_Validator_Index'Last;
-      --  Index of the single <anyAttribute> in the list, if any
-
    begin
       --  All the xsi:* attributes should be valid, whatever the schema
 
@@ -819,81 +799,70 @@ package body Schema.Validators is
       end loop;
 
       for L in Valid_Attrs'Range loop
-         if NFA.Attributes.Table (Valid_Attrs (L).Validator).Is_Any then
-            Any_Attribute := L;
-         else
-            Check_Named_Attribute (L);
-         end if;
+         Check_Named_Attribute (L);
       end loop;
 
-      if Any_Attribute /= Attribute_Validator_Index'Last then
-         declare
-            Attr   : Attribute_Descr renames
-              NFA.Attributes.Table (Valid_Attrs (Any_Attribute).Validator);
-            TRef   : Global_Reference;
-         begin
-            for S in Seen'Range loop
-               if not Seen (S).Seen then
-                  Seen (S).Seen := Match_Any (Attr.Any, Get_Name (Atts, S));
+      declare
+         TRef   : Global_Reference;
+      begin
+         for S in Seen'Range loop
+            if not Seen (S).Seen then
+               Seen (S).Seen := Match_Any
+                 (Typ.Attributes.Any, Get_Name (Atts, S));
 
-                  if not Seen (S).Seen then
+               if not Seen (S).Seen then
+                  if Seen (S).Prohibited then
+                     Validation_Error
+                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                        & """ is prohibited in this context "
+                        & To_QName (Typ.Name));
+                  elsif Typ.Attributes.Any = No_Any_Descr then
+                     Validation_Error
+                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                        & """ invalid for type " & To_QName (Typ.Name));
+                  else
                      Validation_Error
                        (Reader, "Attribute """ & Get_Qname (Atts, S)
                         & """ does not match attribute wildcard");
                   end if;
-
-                  --  If the processing content forces it, we must check that
-                  --  there is indeed a valid definition for this attribute.
-
-                  case Attr.Any.Process_Contents is
-                     when Process_Skip =>
-                        null;  --  Always OK
-                        TRef := No_Global_Reference;
-
-                     when Process_Lax =>
-                        TRef := Reference_HTables.Get
-                          (NFA.References.all,
-                           (Get_Name (Atts, S), Ref_Attribute));
-
-                     when Process_Strict =>
-                        TRef := Reference_HTables.Get
-                          (NFA.References.all,
-                           (Get_Name (Atts, S), Ref_Attribute));
-                        if TRef = No_Global_Reference then
-                           Validation_Error
-                             (Reader, "No definition found for """
-                              & Get_Qname (Atts, S) & """");
-                        end if;
-                  end case;
-
-                  if TRef /= No_Global_Reference then
-                     Validate_Attribute
-                       (NFA.Attributes.Table (TRef.Attributes),
-                        Reader, Atts, S);
-                  end if;
-
-                  Seen (S).Prohibited := False;
                end if;
-            end loop;
-         end;
-      end if;
+
+               --  If the processing content forces it, we must check that
+               --  there is indeed a valid definition for this attribute.
+
+               case Typ.Attributes.Any.Process_Contents is
+                  when Process_Skip =>
+                     null;  --  Always OK
+                     TRef := No_Global_Reference;
+
+                  when Process_Lax =>
+                     TRef := Reference_HTables.Get
+                       (NFA.References.all,
+                        (Get_Name (Atts, S), Ref_Attribute));
+
+                  when Process_Strict =>
+                     TRef := Reference_HTables.Get
+                       (NFA.References.all,
+                        (Get_Name (Atts, S), Ref_Attribute));
+                     if TRef = No_Global_Reference then
+                        Validation_Error
+                          (Reader, "No definition found for """
+                           & Get_Qname (Atts, S) & """");
+                     end if;
+               end case;
+
+               if TRef /= No_Global_Reference then
+                  Validate_Attribute
+                    (NFA.Attributes.Table (TRef.Attributes.Named),
+                     Reader, Atts, S);
+               end if;
+
+               Seen (S).Prohibited := False;
+            end if;
+         end loop;
+      end;
 
       Is_Nil := False;
-
-      for S in Seen'Range loop
-         if Seen (S).Prohibited then
-            Validation_Error
-              (Reader, "Attribute """ & Get_Qname (Atts, S)
-               & """ is prohibited in this context "
-               & To_QName (Typ.Name));
-
-         elsif not Seen (S).Seen then
-            Validation_Error
-              (Reader, "Attribute """ & Get_Qname (Atts, S)
-               & """ invalid for type " & To_QName (Typ.Name));
-         end if;
-      end loop;
-
       Check_Single_ID;
    end Validate_Attributes;
 
@@ -1101,15 +1070,13 @@ package body Schema.Validators is
 
    procedure Create_Global_Attribute
      (Grammar   : XML_Grammar;
-      Attr      : Attribute_Descr;
-      Target_NS : Sax.Symbols.Symbol)
+      Attr      : Attribute_Descr)
    is
       use Reference_HTables;
       NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
-      List : Attribute_Validator_List := Empty_Attribute_List;
+      List : Attributes_List := No_Attributes;
    begin
-      Add_Attribute
-        (Grammar, List, Attr, As_Restriction => False, Target_NS => Target_NS);
+      Add_Attribute (Grammar, List, Attr);
       Set
         (NFA.References.all,
          (Kind => Ref_Attribute, Name => Attr.Name, Attributes => List));
@@ -1210,7 +1177,7 @@ package body Schema.Validators is
               (Name            =>
                  (NS    => Reader.XML_Schema_URI,
                   Local => Find (G.Symbols, Local)),
-               Attributes      => Empty_Attribute_List,
+               Attributes      => No_Attributes,
                Block           => No_Block,
                Final           => (others => False),
                Restriction_Of  => Restriction_Of,
@@ -1225,19 +1192,14 @@ package body Schema.Validators is
          S1      : constant State := G.NFA.Add_State;
          Ur_Type : constant Nested_NFA := G.NFA.Create_Nested (S1);
          S2, S3  : State;
-         List    : Attribute_Validator_List := Empty_Attribute_List;
+         List    : Attributes_List := No_Attributes;
          Index   : Type_Index;
-         Attr    : constant Attribute_Descr := Attribute_Descr'
-           (Is_Any      => True,
-            Any         => Any_Descr'
-              (Process_Contents => Process_Lax,
-               No_Namespaces    => No_Symbol,
-               Namespaces       => Reader.Any_Namespace),
-            Next        => Empty_Attribute_List);
 
       begin
-         Add_Attribute (Reader.Grammar, List, Attr, As_Restriction => False,
-                        Target_NS => Reader.XML_Schema_URI);
+         List.Any := Any_Descr'
+           (Process_Contents => Process_Lax,
+            No_Namespaces    => No_Symbol,
+            Namespaces       => Reader.Any_Namespace);
          Index := Create_Type
            (G.NFA,
             Type_Descr'
@@ -1287,16 +1249,14 @@ package body Schema.Validators is
       then
          Do_Register (G.Symbols);
 
-         Attr := (Is_Any => False,
-                  Name => (NS => Reader.XML_URI, Local => Reader.Lang),
+         Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Lang),
                   others => <>);
-         Create_Global_Attribute (Reader.Grammar, Attr, Reader.XML_URI);
+         Create_Global_Attribute (Reader.Grammar, Attr);
 
-         Attr := (Is_Any => False,
-                  Name =>
+         Attr := (Name =>
                     (NS => Reader.XML_URI, Local => Find (G.Symbols, "space")),
                   others => <>);
-         Create_Global_Attribute (Reader.Grammar, Attr, Reader.XML_URI);
+         Create_Global_Attribute (Reader.Grammar, Attr);
 
          --  Added support for <ur-Type>
 
@@ -1407,7 +1367,7 @@ package body Schema.Validators is
             when Ref_Group =>
                R := Exists (NFA.Metaschema_NFA_Last, TRef.Gr_Start);
             when Ref_Attribute | Ref_AttrGroup =>
-               R := TRef.Attributes <= NFA.Metaschema_Attributes_Last;
+               R := TRef.Attributes.Named <= NFA.Metaschema_Attributes_Last;
          end case;
          return R;
       end Preserve;

@@ -135,14 +135,6 @@ package Schema.Validators is
    end record;
    No_Any_Descr : constant Any_Descr := (others => <>);
 
-   type Internal_Any_Descr is record
-      Target_NS        : Sax.Symbols.Symbol;
-      Process_Contents : Process_Contents_Type := Process_Strict;
-      Namespaces       : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-   end record;
-   --  We need to temporarily store the target_NS, in case we are parsing
-   --  multiple grammars before we generate the NFA
-
    function Combine
      (Grammar             : XML_Grammar;
       Base_Any            : Any_Descr;
@@ -181,8 +173,17 @@ package Schema.Validators is
          end case;
       end record;
 
-   type Attribute_Validator_List is new Natural;
-   Empty_Attribute_List : constant Attribute_Validator_List := 0;
+   type Named_Attribute_List is new Natural;
+   Empty_Named_Attribute_List : constant Named_Attribute_List := 0;
+
+   type Attributes_List is record
+      Any   : Any_Descr := No_Any_Descr;
+      Named : Named_Attribute_List := Empty_Named_Attribute_List;
+   end record;
+   No_Attributes : constant Attributes_List := (others => <>);
+   --  All types are assumed to have a <anyAttribute> even if it never
+   --  accepts anything. For an extension or restriction, it is merged with the
+   --  base's <anyAttribute>
 
    type Block_Type is (Block_Restriction,
                        Block_Extension,
@@ -211,29 +212,20 @@ package Schema.Validators is
 
    type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
 
-   type Attribute_Descr (Is_Any : Boolean := True) is record
-      Next      : Attribute_Validator_List := Empty_Attribute_List;
-
-      case Is_Any is
-         when True =>
-            Any          : Any_Descr := No_Any_Descr;
-            --  There is a single such attribute in a list, always first
-
-         when False =>
-            Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-            Name         : Qualified_Name     := No_Qualified_Name;
-            Simple_Type  : Schema.Simple_Types.Simple_Type_Index :=
-              Schema.Simple_Types.No_Simple_Type_Index;
-            Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-            Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-            Use_Type     : Attribute_Use_Type := Optional;
-            Form         : Form_Type          := Qualified;
-            Is_Local     : Boolean            := True;
-      end case;
+   type Attribute_Descr is record
+      Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Name         : Qualified_Name     := No_Qualified_Name;
+      Simple_Type  : Schema.Simple_Types.Simple_Type_Index :=
+        Schema.Simple_Types.No_Simple_Type_Index;
+      Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Use_Type     : Attribute_Use_Type := Optional;
+      Form         : Form_Type          := Qualified;
+      Is_Local     : Boolean            := True;
+      Next         : Named_Attribute_List := Empty_Named_Attribute_List;
    end record;
    pragma Pack (Attribute_Descr);
-   No_Attribute_Descr : constant Attribute_Descr :=
-     (Is_Any => False, others => <>);
+   No_Attribute_Descr : constant Attribute_Descr := (others => <>);
 
    function Image (Trans : Transition_Descr) return String;
    --  Needed for the instantiation of Sax.State_Machines
@@ -261,7 +253,7 @@ package Schema.Validators is
 
    type Type_Descr is record
       Name           : Qualified_Name := No_Qualified_Name;
-      Attributes     : Attribute_Validator_List := Empty_Attribute_List;
+      Attributes     : Attributes_List := No_Attributes;
       Block          : Block_Status := No_Block;
       Final          : Final_Status := (others => False);
 
@@ -319,8 +311,7 @@ package Schema.Validators is
          when Ref_Element   => Element    : State;
          when Ref_Type      => Typ        : Type_Index;
          when Ref_Group     => Gr_Start, Gr_End : State;
-         when Ref_Attribute | Ref_AttrGroup =>
-            Attributes : Attribute_Validator_List;
+         when Ref_Attribute | Ref_AttrGroup => Attributes : Attributes_List;
       end case;
    end record;
    No_Global_Reference : constant Global_Reference :=
@@ -637,16 +628,28 @@ package Schema.Validators is
    --  Sets the type of the attributes (through Sax.Attributes.Set_Type) to Id
    --  if the corresponding attribute is an id.
 
+   type Internal_Any_Descr is record
+      Target_NS        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Process_Contents : Process_Contents_Type := Process_Strict;
+      Namespaces       : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+   end record;
+   No_Internal_Any_Descr : constant Internal_Any_Descr := (others => <>);
+   --  We need to temporarily store the target_NS, in case we are parsing
+   --  multiple grammars before we generate the NFA
+
+   procedure Add_Any_Attribute
+     (Grammar        : XML_Grammar;
+      List           : in out Attributes_List;
+      Any            : Internal_Any_Descr;
+      As_Restriction : Boolean);
    procedure Add_Attribute
      (Grammar        : XML_Grammar;
-      List           : in out Attribute_Validator_List;
-      Attribute      : Attribute_Descr;
-      As_Restriction : Boolean;
-      Target_NS      : Sax.Symbols.Symbol);
+      List           : in out Attributes_List;
+      Attribute      : Attribute_Descr);
    procedure Add_Attributes
      (Grammar        : XML_Grammar;
-      List           : in out Attribute_Validator_List;
-      Attributes     : Attribute_Validator_List;
+      List           : in out Attributes_List;
+      Attributes     : Attributes_List;
       As_Restriction : Boolean);
    --  Add a valid attribute to Validator.
    --  Is_Local should be true if the attribute is local, or False if this is
@@ -678,8 +681,7 @@ package Schema.Validators is
 
    procedure Create_Global_Attribute
      (Grammar   : XML_Grammar;
-      Attr      : Attribute_Descr;
-      Target_NS : Sax.Symbols.Symbol);
+      Attr      : Attribute_Descr);
    function Create_Simple_Type
      (NFA   : access Schema_NFA'Class;
       Descr : Schema.Simple_Types.Simple_Type_Descr)
@@ -726,8 +728,8 @@ private
 
    package Attributes_Tables is new GNAT.Dynamic_Tables
      (Table_Component_Type => Attribute_Descr,
-      Table_Index_Type     => Attribute_Validator_List,
-      Table_Low_Bound      => Empty_Attribute_List + 1,
+      Table_Index_Type     => Named_Attribute_List,
+      Table_Low_Bound      => Empty_Named_Attribute_List + 1,
       Table_Initial        => 200,
       Table_Increment      => 200);
 
@@ -768,7 +770,7 @@ private
 
       Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
       Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;
-      Metaschema_Attributes_Last   : Attribute_Validator_List;
+      Metaschema_Attributes_Last   : Named_Attribute_List;
       Metaschema_Enumerations_Last : Schema.Simple_Types.Enumeration_Index;
       Metaschema_Types_Last        : Type_Index;
       --  Last state for the metaschema XSD (for Reset)
