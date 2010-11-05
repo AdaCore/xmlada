@@ -873,22 +873,15 @@ package body Schema.Simple_Types is
    function Validate_NMTOKENS
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol
-   is
-      Error : Symbol;
+      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
    begin
       if not Is_Valid_Nmtokens (Ch) then
          return Find (Symbols, "Invalid NMTOKENS: """ & Ch & """");
       end if;
 
-      Error := Validate_String (Descr, Symbols, Ch);
-      if Error = No_Symbol then
-         Error := Validate_List_Facets
-           (Descr, Symbols, Ch, Descr.String_Length,
-            Descr.String_Min_Length, Descr.String_Max_Length);
-      end if;
-
-      return Error;
+      return Validate_List_Facets
+        (Descr, Symbols, Ch, Descr.String_Length,
+         Descr.String_Min_Length, Descr.String_Max_Length);
    end Validate_NMTOKENS;
 
    -------------------
@@ -928,23 +921,15 @@ package body Schema.Simple_Types is
    function Validate_NCNames
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol
-   is
-      Error : Symbol;
+      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
    begin
       if not Is_Valid_NCnames (Ch) then
          return Find (Symbols, "Invalid NCName: """ & Ch & """");
       end if;
 
-      Error := Validate_String (Descr, Symbols, Ch);
-
-      if Error = No_Symbol then
-         Error := Validate_List_Facets
-           (Descr, Symbols, Ch, Descr.String_Length,
-            Descr.String_Min_Length, Descr.String_Max_Length);
-      end if;
-
-      return Error;
+      return Validate_List_Facets
+        (Descr, Symbols, Ch, Descr.String_Length,
+         Descr.String_Min_Length, Descr.String_Max_Length);
    end Validate_NCNames;
 
    -----------------------
