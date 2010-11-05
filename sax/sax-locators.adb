@@ -26,39 +26,18 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Sax.Symbols;  use Sax.Symbols;
 
 package body Sax.Locators is
-   use Locators;
-
-   procedure Allocate_If_Null (Loc : in out Locator);
-   --  Allocate new memory for Loc if it is unset
-
-   ----------------------
-   -- Allocate_If_Null --
-   ----------------------
-
-   procedure Allocate_If_Null (Loc : in out Locator) is
-      Tmp : Locators.Encapsulated_Access;
-   begin
-      if Get (Loc) = null then
-         Tmp := new Locator_Record;
-         Loc := Allocate (Tmp);
-      end if;
-   end Allocate_If_Null;
-
    ---------------------
    -- Get_Line_Number --
    ---------------------
 
    function Get_Line_Number (Loc : Locator) return Natural is
    begin
-      if Get (Loc) = null then
-         return 0;
-      else
-         return Get (Loc).Loc.Line;
-      end if;
+      return Loc.Line;
    end Get_Line_Number;
 
    -----------------------
@@ -67,11 +46,7 @@ package body Sax.Locators is
 
    function Get_Column_Number (Loc : Locator) return Natural is
    begin
-      if Get (Loc) = null then
-         return 0;
-      else
-         return Get (Loc).Loc.Column;
-      end if;
+      return Loc.Column;
    end Get_Column_Number;
 
    -------------------
@@ -80,11 +55,7 @@ package body Sax.Locators is
 
    function Get_System_Id (Loc : Locator) return Symbol is
    begin
-      if Get (Loc) = null then
-         return Empty_String;
-      else
-         return Get (Loc).Loc.System_Id;
-      end if;
+      return Loc.System_Id;
    end Get_System_Id;
 
    -------------------
@@ -93,11 +64,7 @@ package body Sax.Locators is
 
    function Get_Public_Id (Loc : Locator) return Symbol is
    begin
-      if Get (Loc) = null then
-         return Empty_String;
-      else
-         return Get (Loc).Loc.Public_Id;
-      end if;
+      return Loc.Public_Id;
    end Get_Public_Id;
 
    -----------------------
@@ -106,8 +73,7 @@ package body Sax.Locators is
 
    procedure Set_Column_Number (Loc : in out Locator; Column : Natural := 0) is
    begin
-      Allocate_If_Null (Loc);
-      Get (Loc).Loc.Column := Column;
+      Loc.Column := Column;
    end Set_Column_Number;
 
    ----------------------------
@@ -117,7 +83,7 @@ package body Sax.Locators is
    procedure Increase_Column_Number
      (Loc : in out Locator; Inc : Natural := 1) is
    begin
-      Get (Loc).Loc.Column := Get (Loc).Loc.Column + Inc;
+      Loc.Column := Loc.Column + Inc;
    end Increase_Column_Number;
 
    --------------------------
@@ -126,7 +92,7 @@ package body Sax.Locators is
 
    procedure Increase_Line_Number (Loc : in out Locator; Inc : Natural := 1) is
    begin
-      Get (Loc).Loc.Line := Get (Loc).Loc.Line + Inc;
+      Loc.Line := Loc.Line + Inc;
    end Increase_Line_Number;
 
    ---------------------
@@ -135,8 +101,7 @@ package body Sax.Locators is
 
    procedure Set_Line_Number (Loc : in out Locator; Line : Natural := 0) is
    begin
-      Allocate_If_Null (Loc);
-      Get (Loc).Loc.Line := Line;
+      Loc.Line := Line;
    end Set_Line_Number;
 
    ------------------
@@ -144,12 +109,11 @@ package body Sax.Locators is
    ------------------
 
    function Get_Location (Loc : Locator) return Location is
-      L : constant Encapsulated_Access := Get (Loc);
    begin
-      if L = null then
+      if Loc = null then
          return No_Location;
       else
-         return L.Loc;
+         return Loc.all;
       end if;
    end Get_Location;
 
@@ -159,8 +123,7 @@ package body Sax.Locators is
 
    procedure Set_Location (Loc : in out Locator; To : Location) is
    begin
-      Allocate_If_Null (Loc);
-      Get (Loc).Loc := To;
+      Loc.all := To;
    end Set_Location;
 
    -------------------
@@ -169,8 +132,7 @@ package body Sax.Locators is
 
    procedure Set_Public_Id (Loc : in out Locator; Id : Symbol) is
    begin
-      Allocate_If_Null (Loc);
-      Get (Loc).Loc.Public_Id := Id;
+      Loc.Public_Id := Id;
    end Set_Public_Id;
 
    -------------------
@@ -179,8 +141,7 @@ package body Sax.Locators is
 
    procedure Set_System_Id (Loc : in out Locator; Id : Symbol) is
    begin
-      Allocate_If_Null (Loc);
-      Get (Loc).Loc.System_Id := Id;
+      Loc.System_Id := Id;
    end Set_System_Id;
 
    ---------------
@@ -191,10 +152,10 @@ package body Sax.Locators is
      (Loc : Locator; Use_Basename : Boolean := False) return String
    is
    begin
-      if Get (Loc) = null then
+      if Loc = null then
          return "";
       else
-         return To_String (Get_Location (Loc), Use_Basename);
+         return To_String (Loc.all, Use_Basename);
       end if;
    end To_String;
 
@@ -233,5 +194,25 @@ package body Sax.Locators is
          end if;
       end if;
    end To_String;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Loc : in out Locator) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Location, Locator);
+   begin
+      Unchecked_Free (Loc);
+   end Free;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create return Locator is
+   begin
+      return new Location;
+   end Create;
 
 end Sax.Locators;

@@ -58,13 +58,16 @@ package body Sax.HTable is
       end loop;
    end Reset;
 
-   ---------
-   -- Set --
-   ---------
+   -------------------
+   -- Set_With_Hash --
+   -------------------
 
-   procedure Set (Hash_Table : in out HTable; E : Element) is
-      Index : constant Unsigned_32 :=
-        Hash (Get_Key (E)) mod Hash_Table.Size + 1;
+   procedure Set_With_Hash
+     (Hash_Table : in out HTable;
+      E          : Element;
+      Hashed     : Interfaces.Unsigned_32)
+   is
+      Index : constant Unsigned_32 := Hashed mod Hash_Table.Size + 1;
    begin
       if Hash_Table.Table (Index).Set then
          Hash_Table.Table (Index).Next := new Htable_Item'
@@ -76,6 +79,15 @@ package body Sax.HTable is
             Next => null,
             Set  => True);
       end if;
+   end Set_With_Hash;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (Hash_Table : in out HTable; E : Element) is
+   begin
+      Set_With_Hash (Hash_Table, E, Hash (Get_Key (E)));
    end Set;
 
    ---------
@@ -97,7 +109,20 @@ package body Sax.HTable is
    -------------
 
    function Get_Ptr (Hash_Table : HTable; K : Key) return Element_Ptr is
-      H : constant Unsigned_32 := Hash (K) mod Hash_Table.Size + 1;
+   begin
+      return Get_Ptr_With_Hash (Hash_Table, K, Hash (K));
+   end Get_Ptr;
+
+   -----------------------
+   -- Get_Ptr_With_Hash --
+   -----------------------
+
+   function Get_Ptr_With_Hash
+     (Hash_Table : HTable;
+      K          : Key;
+      Hashed     : Interfaces.Unsigned_32) return Element_Ptr
+   is
+      H : constant Unsigned_32 := Hashed mod Hash_Table.Size + 1;
       Elmt : Item_Ptr;
    begin
       if Hash_Table.Table (H).Set then
@@ -116,7 +141,7 @@ package body Sax.HTable is
          end if;
       end if;
       return null;
-   end Get_Ptr;
+   end Get_Ptr_With_Hash;
 
    ------------
    -- Remove --

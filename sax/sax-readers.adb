@@ -5654,6 +5654,8 @@ package body Sax.Readers is
       Reset (Parser.Entities);
       Reset (Parser.Default_Atts);
       Reset (Parser.Notations);
+
+      Free (Parser.Locator);
    end Free;
 
    ---------------
@@ -5740,7 +5742,7 @@ package body Sax.Readers is
    begin
       Initialize_Symbols (Parser);
 
-      Parser.Locator := No_Locator;
+      Parser.Locator := Sax.Locators.Create;
       Parser.Public_Id := Find_Symbol (Parser, Get_Public_Id (Input));
       Set_Public_Id (Parser.Locator, Parser.Public_Id);
       Parser.System_Id := Find_Symbol (Parser, Get_System_Id (Input));

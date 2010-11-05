@@ -94,10 +94,10 @@ private
       Hash          => Hash,
       Equal         => Key_Equal);
 
-   Hash_Num : constant := 2**12;
-   --  Number of headers in the hash table. Current hash algorithm is closely
-   --  tailored to this choice, so it can only be changed if a corresponding
-   --  change is made to the hash algorithm.
+   Hash_Num : constant := 2**16;
+   --  Number of headers in the hash table.
+
+   type Hash_Type is range 0 .. Hash_Num - 1;
 
    type Symbol_Table_Record is new Sax.Pointers.Root_Encapsulated with record
       Hash    : String_Htable.HTable (Hash_Num);

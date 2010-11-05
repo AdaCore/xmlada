@@ -33,13 +33,15 @@
 --  attributes will be changed as the XML stream is parsed. You must use Copy
 --  to preserve the value of these attributes over time.
 
-with Sax.Pointers;
 with Sax.Symbols;
 
 package Sax.Locators is
 
    type Locator is private;
    No_Locator : constant Locator;
+
+   function Create return Locator;
+   --  Create a new locator
 
    type Location is record
       Line      : Natural := 1;
@@ -73,10 +75,12 @@ package Sax.Locators is
 
    procedure Set_System_Id (Loc : in out Locator; Id : Sax.Symbols.Symbol);
    function Get_System_Id (Loc : Locator) return Sax.Symbols.Symbol;
+   pragma Inline (Set_System_Id, Get_System_Id);
    --  Return the system id for the current document (see input_sources.ads)
 
    procedure Set_Public_Id (Loc : in out Locator; Id : Sax.Symbols.Symbol);
    function Get_Public_Id (Loc : Locator) return Sax.Symbols.Symbol;
+   pragma Inline (Set_Public_Id, Get_Public_Id);
    --  Return the public id for the current document (see input_sources.ads)
 
    function To_String
@@ -92,14 +96,13 @@ package Sax.Locators is
 
    procedure Set_Location (Loc : in out Locator; To : Location);
    function Get_Location (Loc : Locator) return Location;
+   pragma Inline (Set_Location, Get_Location);
    --  Get the current location information.
 
-private
-   type Locator_Record is new Sax.Pointers.Root_Encapsulated with record
-      Loc       : Location;
-   end record;
+   procedure Free (Loc : in out Locator);
+   --  Free the memory occupied by Loc
 
-   package Locators is new Sax.Pointers.Smart_Pointers (Locator_Record);
-   type Locator is new Locators.Pointer;
-   No_Locator : constant Locator := Locator (Locators.Null_Pointer);
+private
+   type Locator is access Location;
+   No_Locator : constant Locator := null;
 end Sax.Locators;

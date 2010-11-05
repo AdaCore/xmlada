@@ -53,10 +53,21 @@ package Sax.HTable is
    --  Resets the hash table by freeing all the elements.
 
    procedure Set (Hash_Table : in out HTable; E : Element);
-   --  Insert the element pointer in the HTable
+   procedure Set_With_Hash
+     (Hash_Table : in out HTable;
+      E          : Element;
+      Hashed     : Interfaces.Unsigned_32);
+   --  Insert the element pointer in the HTable.
+   --  The second version is useful if you want to add an element only if it
+   --  doesn't exist yet in the table (so a [Get] followed by a [Set], since
+   --  you can then compute the hash only once).
 
    function Get (Hash_Table : HTable; K : Key) return Element;
    function Get_Ptr (Hash_Table : HTable; K : Key) return Element_Ptr;
+   function Get_Ptr_With_Hash
+     (Hash_Table : HTable;
+      K          : Key;
+      Hashed     : Interfaces.Unsigned_32) return Element_Ptr;
    --  Returns the latest inserted element pointer with the given Key
    --  or Empty_Element if none.
 

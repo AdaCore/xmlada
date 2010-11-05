@@ -430,7 +430,7 @@ private
       Table_Index_Type     => Transition_Id,
       Table_Low_Bound      => No_Transition + 1,
       Table_Initial        => Default_Transition_Count,
-      Table_Increment      => Default_Transition_Count);
+      Table_Increment      => 200);
    subtype Transition_Table is Transition_Tables.Instance;
 
    package State_Tables is new GNAT.Dynamic_Tables
@@ -438,7 +438,7 @@ private
       Table_Index_Type     => State,
       Table_Low_Bound      => Start_State,
       Table_Initial        => Default_State_Count,
-      Table_Increment      => Default_State_Count);
+      Table_Increment      => 200);
    subtype State_Table is State_Tables.Instance;
 
    type NFA is tagged record

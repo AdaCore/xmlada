@@ -53,151 +53,25 @@ package body Sax.Symbols is
    ----------
 
    function Hash (Str : Cst_Byte_Sequence_Access) return Unsigned_32 is
+      --  This hash function looks at every character, in order to make it
+      --  likely that similar strings get different hash values. The rotate by
+      --  7 bits has been determined empirically to be good, and it doesn't
+      --  lose bits like a shift would. The final conversion can't overflow,
+      --  because the table is 2**16 in size. This function probably needs to
+      --  be changed if the hash table size is changed.
+
+      --  Note that we could get some speed improvement by aligning the string
+      --  to 32 or 64 bits, and doing word-wise xor's. We could also implement
+      --  a growable table. It doesn't seem worth the trouble to do those
+      --  things, for now.
+
+      Result : Unsigned_32 := 0;
    begin
-      --  For the cases of 1-12 characters, all characters participate in the
-      --  hash. The positioning is randomized, with the bias that characters
-      --  later on participate fully (i.e. are added towards the right side).
+      for J in Str'Range loop
+         Result := Rotate_Left (Result, 7) xor Character'Pos (Str (J));
+      end loop;
 
-      case Str'Length is
-
-         when 0 =>
-            return 0;
-
-         when 1 =>
-            return Character'Pos (Str (Str'First));
-
-         when 2 =>
-            return ((
-              Character'Pos (Str (Str'First))) * 64 +
-              Character'Pos (Str (Str'First + 1))) mod Hash_Num;
-
-         when 3 =>
-            return (((
-              Character'Pos (Str (Str'First))) * 16 +
-              Character'Pos (Str (Str'First + 2))) * 16 +
-              Character'Pos (Str (Str'First + 1))) mod Hash_Num;
-
-         when 4 =>
-            return ((((
-              Character'Pos (Str (Str'First))) * 8 +
-              Character'Pos (Str (Str'First + 1))) * 8 +
-              Character'Pos (Str (Str'First + 2))) * 8 +
-              Character'Pos (Str (Str'First + 3))) mod Hash_Num;
-
-         when 5 =>
-            return (((((
-              Character'Pos (Str (Str'First + 3))) * 8 +
-              Character'Pos (Str (Str'First))) * 4 +
-              Character'Pos (Str (Str'First + 2))) * 4 +
-              Character'Pos (Str (Str'First + 4))) * 8 +
-              Character'Pos (Str (Str'First + 1))) mod Hash_Num;
-
-         when 6 =>
-            return ((((((
-              Character'Pos (Str (Str'First + 4))) * 4 +
-              Character'Pos (Str (Str'First))) * 4 +
-              Character'Pos (Str (Str'First + 3))) * 4 +
-              Character'Pos (Str (Str'First + 1))) * 4 +
-              Character'Pos (Str (Str'First + 5))) * 4 +
-              Character'Pos (Str (Str'First + 2))) mod Hash_Num;
-
-         when 7 =>
-            return (((((((
-              Character'Pos (Str (Str'First + 3))) * 4 +
-              Character'Pos (Str (Str'First + 2))) * 4 +
-              Character'Pos (Str (Str'First))) * 4 +
-              Character'Pos (Str (Str'First + 1))) * 2 +
-              Character'Pos (Str (Str'First + 4))) * 2 +
-              Character'Pos (Str (Str'First + 6))) * 2 +
-              Character'Pos (Str (Str'First + 5))) mod Hash_Num;
-
-         when 8 =>
-            return ((((((((
-              Character'Pos (Str (Str'First + 1))) * 4 +
-              Character'Pos (Str (Str'First))) * 4 +
-              Character'Pos (Str (Str'First + 2))) * 2 +
-              Character'Pos (Str (Str'First + 4))) * 2 +
-              Character'Pos (Str (Str'First + 6))) * 2 +
-              Character'Pos (Str (Str'First + 5))) * 2 +
-              Character'Pos (Str (Str'First + 3))) * 2 +
-              Character'Pos (Str (Str'First + 7))) mod Hash_Num;
-
-         when 9 =>
-            return (((((((((
-              Character'Pos (Str (Str'First + 1))) * 4 +
-              Character'Pos (Str (Str'First))) * 4 +
-              Character'Pos (Str (Str'First + 2))) * 4 +
-              Character'Pos (Str (Str'First + 3))) * 2 +
-              Character'Pos (Str (Str'First + 7))) * 2 +
-              Character'Pos (Str (Str'First + 6))) * 2 +
-              Character'Pos (Str (Str'First + 4))) * 2 +
-              Character'Pos (Str (Str'First + 5))) * 2 +
-              Character'Pos (Str (Str'First + 8))) mod Hash_Num;
-
-         when 10 =>
-            return ((((((((((
-              Character'Pos (Str (Str'First))) * 2 +
-              Character'Pos (Str (Str'First + 1))) * 2 +
-              Character'Pos (Str (Str'First + 7))) * 2 +
-              Character'Pos (Str (Str'First + 2))) * 2 +
-              Character'Pos (Str (Str'First + 3))) * 2 +
-              Character'Pos (Str (Str'First + 8))) * 2 +
-              Character'Pos (Str (Str'First + 5))) * 2 +
-              Character'Pos (Str (Str'First + 4))) * 2 +
-              Character'Pos (Str (Str'First + 6))) * 2 +
-              Character'Pos (Str (Str'First + 9))) mod Hash_Num;
-
-         when 11 =>
-            return (((((((((((
-              Character'Pos (Str (Str'First + 4))) * 2 +
-              Character'Pos (Str (Str'First))) * 2 +
-              Character'Pos (Str (Str'First + 5))) * 2 +
-              Character'Pos (Str (Str'First + 8))) * 2 +
-              Character'Pos (Str (Str'First + 6))) * 2 +
-              Character'Pos (Str (Str'First + 2))) * 2 +
-              Character'Pos (Str (Str'First + 7))) * 2 +
-              Character'Pos (Str (Str'First + 1))) * 2 +
-              Character'Pos (Str (Str'First + 9))) * 2 +
-              Character'Pos (Str (Str'First + 3))) * 2 +
-              Character'Pos (Str (Str'First + 10))) mod Hash_Num;
-
-         when 12 =>
-            return ((((((((((((
-              Character'Pos (Str (Str'First + 2))) * 2 +
-              Character'Pos (Str (Str'First + 1))) * 2 +
-              Character'Pos (Str (Str'First + 4))) * 2 +
-              Character'Pos (Str (Str'First))) * 2 +
-              Character'Pos (Str (Str'First + 5))) * 2 +
-              Character'Pos (Str (Str'First + 3))) * 2 +
-              Character'Pos (Str (Str'First + 7))) * 2 +
-              Character'Pos (Str (Str'First + 10))) * 2 +
-              Character'Pos (Str (Str'First + 6))) * 2 +
-              Character'Pos (Str (Str'First + 8))) * 2 +
-              Character'Pos (Str (Str'First + 9))) * 2 +
-              Character'Pos (Str (Str'First + 11))) mod Hash_Num;
-
-         --  Names longer than 12 characters are handled by taking the first
-         --  6 odd numbered characters and the last 6 even numbered characters.
-
-         when others => declare
-               Even_Name_Len : constant Integer :=
-                 Str'First - 1 + (Str'Length) / 2 * 2;
-         begin
-            return ((((((((((((
-              Character'Pos (Str (Str'First))) * 2 +
-              Character'Pos (Str (Even_Name_Len - 10))) * 2 +
-              Character'Pos (Str (Str'First + 2))) * 2 +
-              Character'Pos (Str (Even_Name_Len - 08))) * 2 +
-              Character'Pos (Str (Str'First + 4))) * 2 +
-              Character'Pos (Str (Even_Name_Len - 06))) * 2 +
-              Character'Pos (Str (Str'First + 6))) * 2 +
-              Character'Pos (Str (Even_Name_Len - 04))) * 2 +
-              Character'Pos (Str (Str'First + 8))) * 2 +
-              Character'Pos (Str (Even_Name_Len - 02))) * 2 +
-              Character'Pos (Str (Str'First + 10))) * 2 +
-              Character'Pos (Str (Even_Name_Len))) mod Hash_Num;
-         end;
-      end case;
+      return Result;
    end Hash;
 
    -------------
@@ -241,18 +115,24 @@ package body Sax.Symbols is
      (Table : access Symbol_Table_Record;
       Str   : Unicode.CES.Byte_Sequence) return Symbol
    is
-      Result : Symbol;
+      use String_Htable;
+      Result : String_Htable.Element_Ptr;
+      Hashed : Interfaces.Unsigned_32;
+      Str_A  : Symbol;
    begin
       if Str'Length = 0 then
          return Empty_String;
       else
-         Result := String_Htable.Get (Table.Hash, Str'Unrestricted_Access);
+         Hashed := Hash (Cst_Byte_Sequence_Access'(Str'Unrestricted_Access));
+         Result := String_Htable.Get_Ptr_With_Hash
+           (Table.Hash, Str'Unrestricted_Access, Hashed);
 
-         if Result = No_Symbol then
-            Result := new Byte_Sequence'(Str);
-            String_Htable.Set (Table.Hash, Result);
+         if Result = null then
+            Str_A := new Byte_Sequence'(Str);
+            String_Htable.Set_With_Hash (Table.Hash, Str_A, Hashed);
+            return Str_A;
          end if;
-         return Result;
+         return Result.all;
       end if;
    end Find;
 
