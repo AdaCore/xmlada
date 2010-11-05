@@ -2130,6 +2130,7 @@ package body Schema.Schema_Readers is
       Att.Attr.Descr := (Is_Any => True, others => <>);
       Att.Loc := Handler.Current_Location;
       Att.Attr.Descr.Any.Namespace := Handler.Any_Namespace;
+      Att.Attr.Descr.Any.Target_NS := Handler.Target_NS;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then

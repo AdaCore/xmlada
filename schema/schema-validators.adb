@@ -258,7 +258,7 @@ package body Schema.Validators is
          return Name.NS /= Any.Target_NS;
       else
          declare
-            Matches : Boolean := True;
+            Matches : Boolean := False;
 
             procedure Callback (Str : Byte_Sequence);
             procedure Callback (Str : Byte_Sequence) is
@@ -470,6 +470,11 @@ package body Schema.Validators is
             Attr   : Attribute_Descr
                renames NFA.Attributes.Table (Valid_Attrs (L).Validator);
          begin
+            --  ??? If we have an <extension> we should match attributes from
+            --  either the base or the extension.
+            --  ??? If we have a <restriction>, as implemented here, we should
+            --  match all <anyAttribute>
+
             if Attr.Is_Any then
                for S in Seen'Range loop
                   if not Seen (S).Seen then
