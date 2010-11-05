@@ -16,4 +16,9 @@ new:
 	-@./schematest --xsd10 > schematest.tmp.out
 	-@tr -d '\r' < schematest.tmp.out > schematest.tmp
 	-@diff -u schematest.out schematest.tmp
+
+# Explain how the NOT IMPLEMENTED features are split
+not_implemented:
+	@grep "NOT IMPLEMENTED" schematest.out | perl -pi -e  's/ *NOT IMPLEMENTED //; s/\S+:\d+:\d+://g; s/^\s+//' | sort | uniq -c | sort -n
+
 force:
