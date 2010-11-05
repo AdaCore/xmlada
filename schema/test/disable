@@ -18,3 +18,10 @@ MS-Particles2006-07-15 / particlesZ001
   --  is incorrect (so an error on the schema), but the test is supposed to
   --  have a correct schema, but an incorrect XML file, so that seems like a
   --  bug in Qt. Xerces also reports an incorrect schema.
+
+MS-Additional2006-07-15 / addB064
+  --  This test parses the metaschema definition. Since this is already
+  --  known to XML/Ada, the latter complains that we are redefining the
+  --  location for a namespace that we have already used. Since we know we
+  --  can parse the metaschema anyway, the test has been disabled
+

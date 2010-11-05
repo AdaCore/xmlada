@@ -88,7 +88,7 @@ begin
    --  is slightly more complex than a single grammar, since some checks can
    --  only be done at the end, and we need to let XML/Ada know about that.
 
-   Set_XSD_Version (Grammar, XSD_1_1);
+   Set_XSD_Version (Grammar, XSD_1_0);
    Set_Grammar (Schema, Grammar);
    Initialize_Option_Scan;
 
