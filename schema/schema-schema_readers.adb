@@ -474,7 +474,7 @@ package body Schema.Schema_Readers is
                Debug_Output ("Global elem: " & To_QName (Real.Name));
             end if;
             Set (Ref.all, (Real.Name, Ref_Element),
-                 (Kind => Ref_Element, Element => S1)); --  Tr => Trans));
+                 (Kind => Ref_Element, Element => S1));
          end if;
 
          return S2;
@@ -1120,7 +1120,7 @@ package body Schema.Schema_Readers is
            ("NFA: " & Dump
               (NFA,
                Mode                => Dump_Dot_Compact,
-               Show_Details        => False,
+               Show_Details        => True,
                Show_Isolated_Nodes => False));
       end if;
 

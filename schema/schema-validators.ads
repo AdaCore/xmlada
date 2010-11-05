@@ -284,7 +284,7 @@ package Schema.Validators is
      is abstract new Sax.Readers.Sax_Reader
    with record
       Error_Location : Sax.Locators.Location;
-      Error_Msg      : Unicode.CES.Byte_Sequence_Access;
+      Error_Msg      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
 
       Id_Table  : Id_Htable_Access;
       --  Mapping of IDs to elements
@@ -478,9 +478,6 @@ package Schema.Validators is
    function Get_Error_Message
      (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence;
    --  Return the current error message
-
-   procedure Free (Reader : in out Abstract_Validation_Reader);
-   --  Free the contents of Reader
 
    -------------------------
    -- Attribute_Validator --

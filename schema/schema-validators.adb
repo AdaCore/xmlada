@@ -78,8 +78,7 @@ package body Schema.Validators is
          Debug_Output ("Validation_Error: " & Message);
       end if;
 
-      Free (Reader.Error_Msg);
-      Reader.Error_Msg := new Byte_Sequence'(Message);
+      Reader.Error_Msg := Find_Symbol (Reader.all, Message);
 
       if Loc /= No_Location then
          Reader.Error_Location := Loc;
@@ -101,7 +100,7 @@ package body Schema.Validators is
       Loc : Location;
       First : Natural;
    begin
-      if Reader.Error_Msg = null then
+      if Reader.Error_Msg = No_Symbol then
          return "";
 
       else
@@ -113,17 +112,22 @@ package body Schema.Validators is
 
          --  Backward compatibility: '#' used to indicate we want the location
          --  displayed, but that should no longer be necessary now.
-         First := Reader.Error_Msg'First;
-         if Reader.Error_Msg (First) = '#' then
-            First := First + 1;
-         end if;
+         declare
+            Error : constant Cst_Byte_Sequence_Access :=
+              Get (Reader.Error_Msg);
+         begin
+            First := Error'First;
+            if Error (First) = '#' then
+               First := First + 1;
+            end if;
 
-         if Loc /= No_Location then
-            return To_String (Loc, Use_Basename_In_Error_Messages (Reader))
-              & ": " & Reader.Error_Msg (First .. Reader.Error_Msg'Last);
-         else
-            return Reader.Error_Msg (First .. Reader.Error_Msg'Last);
-         end if;
+            if Loc /= No_Location then
+               return To_String (Loc, Use_Basename_In_Error_Messages (Reader))
+                 & ": " & Error (First .. Error'Last);
+            else
+               return Error (First .. Error'Last);
+            end if;
+         end;
       end if;
    end Get_Error_Message;
 
@@ -476,32 +480,7 @@ package body Schema.Validators is
                      --                       Normalize_Whitespace
                      --           (Get_Type (Named.all), Reader, Atts, Found);
 
-                     begin
-                        Validate_Attribute (Attr, Reader, Atts, Found);
-                     exception
-                        when XML_Validation_Error =>
-                           --  Avoid duplicate locations in error messages
-                           --  ??? This is just a hack for now
-
-                           declare
-                              Str : constant Byte_Sequence :=
-                                Reader.Error_Msg.all;
-                           begin
-                              if Str (Str'First) = '#' then
-                                 Free (Reader.Error_Msg);
-                                 Reader.Error_Msg := new Byte_Sequence'
-                                   ("#Attribute """ & Get_Qname (Atts, Found)
-                                    & """: "
-                                    & Str (Str'First + 1 .. Str'Last));
-                              else
-                                 Free (Reader.Error_Msg);
-                                 Reader.Error_Msg := new Byte_Sequence'
-                                   ("#Attribute """ & Get_Qname (Atts, Found)
-                                    & """: " & Str);
-                              end if;
-                              raise;
-                           end;
-                     end;
+                     Validate_Attribute (Attr, Reader, Atts, Found);
                end case;
             end if;
          end if;
@@ -961,7 +940,7 @@ package body Schema.Validators is
      (Reader : in out Abstract_Validation_Reader'Class)
    is
       use Reference_HTables, Simple_Type_Tables;
-      G : constant XML_Grammars.Encapsulated_Access := Get (Reader.Grammar);
+      G : XML_Grammars.Encapsulated_Access;
 
       procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr);
 
@@ -981,6 +960,7 @@ package body Schema.Validators is
       Attr : Attribute_Descr;
    begin
       Create_Grammar_If_Needed (Reader.Grammar);
+      G := Get (Reader.Grammar);
       G.Symbols := Get_Symbol_Table (Reader);
 
       if Get (G.References,
@@ -1507,15 +1487,6 @@ package body Schema.Validators is
 --           Id_Htable.Set (Reader.Id_Table.all, Id_Ref'(Key => Val));
 --        end if;
 --     end Check_Id;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Reader : in out Abstract_Validation_Reader) is
-   begin
-      Free (Reader.Error_Msg);
-   end Free;
 
    ------------------------
    -- Initialize_Symbols --

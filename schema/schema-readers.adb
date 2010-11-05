@@ -958,11 +958,9 @@ package body Schema.Readers is
 
    procedure Free (Reader : in out Validating_Reader_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Validating_Reader'Class,
-         Validating_Reader_Access);
+        (Validating_Reader'Class, Validating_Reader_Access);
    begin
       if Reader /= null then
-         Free (Reader.all);
          Unchecked_Free (Reader);
       end if;
    end Free;
