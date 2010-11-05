@@ -85,8 +85,11 @@ package body Schema.Schema_Readers is
 
    function Resolve_QName
      (Handler : access Schema_Reader'Class;
-      QName   : Sax.Symbols.Symbol) return Qualified_Name;
-   --  Resolve namespaces for QName
+      QName   : Sax.Symbols.Symbol;
+      NS_If_Empty : Sax.Symbols.Symbol := Empty_String) return Qualified_Name;
+   --  Resolve namespaces for QName.
+   --  [NS_If_Empty] is used if no namespace was found for the element. This
+   --  will often be the target namespace of the schema.
 
    procedure Internal_Parse
      (Parser            : in out Schema_Reader;
@@ -1701,12 +1704,14 @@ package body Schema.Schema_Readers is
 
    function Resolve_QName
      (Handler : access Schema_Reader'Class;
-      QName   : Sax.Symbols.Symbol) return Qualified_Name
+      QName   : Sax.Symbols.Symbol;
+      NS_If_Empty : Sax.Symbols.Symbol := Empty_String) return Qualified_Name
    is
       Val       : Cst_Byte_Sequence_Access;
       Separator : Integer;
       NS        : XML_NS;
       Prefix    : Symbol;
+      Result    : Qualified_Name;
    begin
       if QName = No_Symbol then
          return No_Qualified_Name;
@@ -1720,10 +1725,16 @@ package body Schema.Schema_Readers is
            (Handler  => Handler.all,
             Prefix   => Prefix,
             NS       => NS);
-         return
+         Result :=
            (NS    => Get_URI (NS),
             Local =>
               Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last)));
+
+         if Result.NS = Empty_String then
+            Result.NS := NS_If_Empty;
+         end if;
+
+         return Result;
       end if;
    end Resolve_QName;
 
@@ -2198,7 +2209,9 @@ package body Schema.Schema_Readers is
          Name := Get_Name (Atts, J);
          if Name.NS = Empty_String then
             if Name.Local = Handler.Typ then
-               Info.Typ := Resolve_QName (Handler, Get_Value (Atts, J));
+               Info.Typ := Resolve_QName
+                 (Handler, Get_Value (Atts, J),
+                  NS_If_Empty => Handler.Target_NS);
             elsif Name.Local = Handler.Name then
                Info.Name := (NS    => Handler.Target_NS,
                              Local => Get_Value (Atts, J));
@@ -2665,14 +2678,11 @@ package body Schema.Schema_Readers is
 
       procedure Add_Union (Str : Byte_Sequence) is
          Sym  : constant Symbol := Find_Symbol (Handler.all, Str);
-         Name : Qualified_Name := Resolve_QName (Handler, Sym);
+         Name : constant Qualified_Name :=
+           Resolve_QName (Handler, Sym, Handler.Target_NS);
          Ctx : constant Context_Access :=
            Handler.Contexts (Handler.Contexts_Last)'Access;
       begin
-         if Name.NS = Empty_String then
-            Name.NS := Handler.Target_NS;
-         end if;
-
          Add_Type_Member
            (Handler,
             Ctx.Union.Union_Items,
