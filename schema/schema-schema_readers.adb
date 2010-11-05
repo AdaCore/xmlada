@@ -1693,51 +1693,6 @@ package body Schema.Schema_Readers is
 --
 --           Handler.Contexts.Attr_Group := Lookup_Attribute_Group
 --             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
---
---        elsif Name_Index /= -1 then
---           Handler.Contexts.Attr_Group := Create_Global_Attribute_Group
---             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
---
---        elsif Ref_Index /= -1 then
---           Lookup_With_NS
---             (Handler, Get_Value (Atts, Ref_Index),
---              Handler.Contexts.Attr_Group);
---        end if;
---
---        if not In_Redefine then
---           case Handler.Contexts.Next.Typ is
---              when Context_Schema | Context_Redefine =>
---                 null;
---
---              when Context_Type_Def =>
---                 Ensure_Type (Handler, Handler.Contexts.Next);
---                 Add_Attribute_Group
---                   (Handler.Contexts.Next.Type_Validator,
---                    Handler, Handler.Contexts.Attr_Group);
---
---              when Context_Extension =>
---                 if Handler.Contexts.Next.Extension = null then
---                    Handler.Contexts.Next.Extension := Extension_Of
---                      (Handler.Target_NS,
---                       Handler.Contexts.Next.Extension_Base, null);
---                    Handler.Contexts.Next.Extension_Base := No_Type;
---                 end if;
---
---                 Add_Attribute_Group
---                   (Handler.Contexts.Next.Extension, Handler,
---                    Handler.Contexts.Attr_Group);
---
---              when Context_Attribute_Group =>
---                 Add_Attribute_Group
---                   (Handler.Contexts.Next.Attr_Group, Handler,
---                    Handler.Contexts.Attr_Group);
---
---              when others =>
---                 Raise_Exception
---                   (XML_Not_Implemented'Identity,
---                    "Unsupported: ""attributeGroup"" in this context");
---           end case;
---        end if;
    end Create_Attribute_Group;
 
    ----------------------------
@@ -1845,9 +1800,10 @@ package body Schema.Schema_Readers is
       --  infinite loops. We should really merge the models when the grammar is
       --  parsed.
 
-      Raise_Exception
-        (XML_Not_Implemented'Identity,
-         "<redefine> not supported");
+      Validation_Error
+        (Handler,
+         "<redefine> not supported",
+         Except => XML_Not_Implemented'Identity);
       Parse_Grammar
         (Handler,
          URI      => Handler.Target_NS,
@@ -2015,18 +1971,6 @@ package body Schema.Schema_Readers is
       end loop;
 
       if Info.Name /= No_Qualified_Name then
---           if Info.Typ /= No_Qualified_Name then
---              Lookup_With_NS (Handler, Info.Typ, Result => Typ);
---
---              if To_QName (Typ) = "IDREF"
---                or else To_QName (Typ) = "IDREFS"
---              then
---                 Raise_Exception
---                   (XML_Not_Implemented'Identity,
---                    "Unsupported type IDREF and IDREFS");
---              end if;
---           end if;
-
          if Info.Ref /= No_Qualified_Name
            and then Info.Ref.NS = No_Symbol
            and then Info.Name = Info.Ref
@@ -2206,9 +2150,10 @@ package body Schema.Schema_Readers is
          when Context_Simple_Restriction =>
             null;
          when others          =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""simpleType"" in this context");
+            Validation_Error
+              (Handler,
+               "Unsupported: ""simpleType"" in this context",
+               Except => XML_Not_Implemented'Identity);
       end case;
    end Finish_Simple_Type;
 
@@ -2437,12 +2382,14 @@ package body Schema.Schema_Readers is
       end if;
 
       if Handler.Shared.Types.Table (In_Type).Is_Simple then
-         if To_QName (Restr.Base) = "IDREF"
-           or else To_QName (Restr.Base) = "IDREFS"
+         if Restr.Base = (NS => Handler.XML_Schema_URI, Local => Handler.IDREF)
+           or else Restr.Base =
+             (NS => Handler.XML_Schema_URI, Local => Handler.IDREFS)
          then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported type IDREF and IDREFS");
+            Validation_Error
+              (Handler,
+               "Unsupported type IDREF and IDREFS",
+               Except => XML_Not_Implemented'Identity);
          end if;
 
          --  Check_Content_Type (Base, Handler, Should_Be_Simple => True);
@@ -2546,9 +2493,10 @@ package body Schema.Schema_Readers is
          when Context_Type_Def =>
             Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Union;
          when others =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""union"" in this context");
+            Validation_Error
+              (Handler,
+               "Unsupported: ""union"" in this context",
+               Except => XML_Not_Implemented'Identity);
       end case;
    end Finish_Union;
 
@@ -2663,9 +2611,10 @@ package body Schema.Schema_Readers is
                Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.List;
             end if;
          when others =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""list"" in this context");
+            Validation_Error
+              (Handler,
+               "Unsupported: ""list"" in this context",
+               Except => XML_Not_Implemented'Identity);
       end case;
    end Finish_List;
 
@@ -2736,10 +2685,11 @@ package body Schema.Schema_Readers is
             | Context_Union
             | Context_List | Context_Redefine | Context_Attribute_Group =>
 
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
+            Validation_Error
+              (Handler,
                "Unsupported: """ & Element.Kind'Img & """ in context "
-               & Ctx.Typ'Img);
+               & Ctx.Typ'Img,
+               Except => XML_Not_Implemented'Identity);
       end case;
    end Insert_In_Type;
 
@@ -2819,6 +2769,19 @@ package body Schema.Schema_Readers is
                                   Local => Get_Value (Atts, J));
             elsif Local = Handler.Typ then
                Att.Typ  := Resolve_QName (Handler, Get_Value (Atts, J));
+
+               if Att.Typ =
+                 (NS => Handler.XML_Schema_URI, Local => Handler.IDREF)
+                 or else Att.Typ =
+                   (NS => Handler.XML_Schema_URI, Local => Handler.IDREFS)
+               then
+                  Validation_Error
+                    (Handler,
+                     "Unsupported type IDREF and IDREFS",
+                     Get_Location (Atts, J),
+                     Except => XML_Not_Implemented'Identity);
+               end if;
+
             elsif Local = Handler.S_Use then
                if Get_Value (Atts, J) = Handler.Required then
                   Att.Descr.Use_Type := Required;
@@ -2864,9 +2827,10 @@ package body Schema.Schema_Readers is
                "#Cannot specify ""form"" when targetNamespace is given");
          end if;
 
-         Raise_Exception
-           (XML_Not_Implemented'Identity,
-            "targetNamespace not supported in attribute declaration");
+         Validation_Error
+           (Handler,
+            "targetNamespace not supported in attribute declaration",
+            Except => XML_Not_Implemented'Identity);
       end if;
 
       if Has_Form and then Att.Ref /= No_Qualified_Name then
@@ -2880,14 +2844,6 @@ package body Schema.Schema_Readers is
             Validation_Error
               (Handler,
                "#Attributes ""type"" and ""ref"" cannot be both specified");
-         end if;
-
-         if To_QName (Att.Typ) = "IDREF"
-           or else To_QName (Att.Typ) = "IDREFS"
-         then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported type IDREF and IDREFS");
          end if;
       end if;
 
@@ -2984,9 +2940,10 @@ package body Schema.Schema_Readers is
          when Context_Element | Context_Sequence | Context_Choice
             | Context_Attribute | Context_All
             | Context_Union | Context_List | Context_Group =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""attribute"" in this context");
+            Validation_Error
+              (Handler,
+               "Unsupported: ""attribute"" in this context",
+               Except => XML_Not_Implemented'Identity);
       end case;
    end Insert_Attribute;
 
@@ -3292,9 +3249,10 @@ package body Schema.Schema_Readers is
          null;   --  ignore all tags
 
       else
-         Raise_Exception
-           (XML_Not_Implemented'Identity,
-            "Unsupported element in the schema: " & Get (Local_Name).all);
+         Validation_Error
+           (Handler'Access,
+            "Unsupported element in the schema: " & Get (Local_Name).all,
+            Except => XML_Not_Implemented'Identity);
       end if;
    end Start_Element;
 

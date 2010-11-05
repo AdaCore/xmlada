@@ -1576,6 +1576,8 @@ package body Schema.Validators is
       Parser.Group_Def_Particle := Find_Symbol (Parser, "groupDefParticle");
       Parser.Group_Ref              := Find_Symbol (Parser, "groupRef");
       Parser.Id                     := Find_Symbol (Parser, "id");
+      Parser.IDREF                  := Find_Symbol (Parser, "IDREF");
+      Parser.IDREFS                 := Find_Symbol (Parser, "IDREFS");
       Parser.Identity_Constraint := Find_Symbol (Parser, "identityConstraint");
       Parser.Import                 := Find_Symbol (Parser, "import");
       Parser.Include                := Find_Symbol (Parser, "include");

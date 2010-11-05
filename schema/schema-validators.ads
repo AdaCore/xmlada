@@ -336,6 +336,8 @@ package Schema.Validators is
       Group_Def_Particle     : Sax.Symbols.Symbol; --  "groupDefParticle"
       Group_Ref              : Sax.Symbols.Symbol; --  "groupRef"
       Id                     : Sax.Symbols.Symbol; --  "id"
+      IDREF                  : Sax.Symbols.Symbol; --  "IDREF"
+      IDREFS                 : Sax.Symbols.Symbol; --  "IDREFS"
       Identity_Constraint    : Sax.Symbols.Symbol; --  "identityConstraint"
       Import                 : Sax.Symbols.Symbol; --  "import"
       Include                : Sax.Symbols.Symbol; --  "include"
