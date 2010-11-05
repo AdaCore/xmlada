@@ -35,7 +35,7 @@ with Unicode.CES;
 with Sax.HTable;
 with Sax.Locators;
 with Sax.Pointers;
-with Sax.Readers;
+with Sax.Readers;            use Sax.Readers;
 with Sax.State_Machines;
 with Sax.Symbols;
 with Sax.Utils;
@@ -109,13 +109,6 @@ package Schema.Validators is
    -- State machines --
    --------------------
    --  The validators are implemented as state machines
-
-   type Qualified_Name is record
-      NS    : Sax.Symbols.Symbol;
-      Local : Sax.Symbols.Symbol;
-   end record;
-   No_Qualified_Name : constant Qualified_Name :=
-     (Sax.Symbols.No_Symbol, Sax.Symbols.No_Symbol);
 
    type Header_Num is new Interfaces.Integer_32 range 0 .. 1023;
    function Hash (Name : Qualified_Name) return Header_Num;

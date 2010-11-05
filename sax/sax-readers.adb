@@ -6289,25 +6289,16 @@ package body Sax.Readers is
       return Get_Prefix (List.List (Index).NS);
    end Get_Prefix;
 
-   -------------
-   -- Get_URI --
-   -------------
+   --------------
+   -- Get_Name --
+   --------------
 
-   function Get_URI
-     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol is
+   function Get_Name
+     (List : Sax_Attribute_List; Index : Integer) return Qualified_Name is
    begin
-      return Get_URI (List.List (Index).NS);
-   end Get_URI;
-
-   --------------------
-   -- Get_Local_Name --
-   --------------------
-
-   function Get_Local_Name
-     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol is
-   begin
-      return List.List (Index).Local_Name;
-   end Get_Local_Name;
+      return (NS    => Get_URI (List.List (Index).NS),
+              Local => List.List (Index).Local_Name);
+   end Get_Name;
 
    ---------------
    -- Get_Qname --
@@ -6315,7 +6306,8 @@ package body Sax.Readers is
 
    function Get_Qname
      (List : Sax_Attribute_List; Index : Integer)
-      return Unicode.CES.Byte_Sequence is
+      return Unicode.CES.Byte_Sequence
+   is
    begin
       return Qname_From_Name (Get_Prefix (List.List (Index).NS),
                               List.List (Index).Local_Name);

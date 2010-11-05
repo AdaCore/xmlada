@@ -66,6 +66,7 @@ package body DOM.Readers is
       Att, Att2 : Attr;
       pragma Warnings (Off, Local_Name);
       pragma Warnings (Off, Att2);
+      Name : Qualified_Name;
    begin
       Handler.Current_Node := Append_Child
         (Handler.Current_Node,
@@ -78,12 +79,13 @@ package body DOM.Readers is
 
       --  Insert the attributes in the right order.
       for J in 1 .. Get_Length (Atts) loop
+         Name := Get_Name (Atts, J);
          Att := Create_Attribute_NS
            (Handler.Tree,
             Symbols       => Get_Symbol_Table (Handler),
-            Namespace_URI => Get_URI (Atts, J),
+            Namespace_URI => Name.NS,
             Prefix        => Get_Prefix (Atts, J),
-            Local_Name    => Get_Local_Name (Atts, J));
+            Local_Name    => Name.Local);
          Set_Value (Att, Get_Value (Atts, J));
          Att2 := Set_Attribute_Node (Handler.Current_Node, Att);
          if Get_Type (Atts, J) = Sax.Attributes.Id then

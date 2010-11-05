@@ -33,7 +33,7 @@ pragma Ada_05;
 
 with Input_Sources;
 with Sax.Locators;
-with Sax.Readers;
+with Sax.Readers;           use Sax.Readers;
 with Sax.Symbols;
 with Sax.Utils;
 with Schema.Readers;

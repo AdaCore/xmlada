@@ -270,16 +270,21 @@ package Sax.Readers is
    pragma Inline (Get_Length);
    --  Return the number of attributes in the list
 
+   type Qualified_Name is record
+      NS    : Sax.Symbols.Symbol;
+      Local : Sax.Symbols.Symbol;
+   end record;
+   No_Qualified_Name : constant Qualified_Name :=
+     (Sax.Symbols.No_Symbol, Sax.Symbols.No_Symbol);
+
    function Get_Prefix
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
-   function Get_URI
-     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
-   function Get_Local_Name
-     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   function Get_Name
+     (List : Sax_Attribute_List; Index : Integer) return Qualified_Name;
    function Get_Qname
      (List : Sax_Attribute_List; Index : Integer)
-      return Unicode.CES.Byte_Sequence;
-   pragma Inline (Get_Prefix, Get_URI, Get_Local_Name, Get_Qname);
+      return Unicode.CES.Byte_Sequence;  --  Using the prefix
+   pragma Inline (Get_Prefix, Get_Name, Get_QName);
    --  Return the various name components of the attribute
 
    ----------------------

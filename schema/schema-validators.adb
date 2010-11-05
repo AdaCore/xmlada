@@ -35,7 +35,6 @@ with Ada.Unchecked_Deallocation;
 with Interfaces;                     use Interfaces;
 with Sax.Attributes;                 use Sax.Attributes;
 with Sax.Locators;                   use Sax.Locators;
-with Sax.Readers;                    use Sax.Readers;
 with Sax.Symbols;                    use Sax.Symbols;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Simple_Types;            use Schema.Simple_Types;
@@ -776,10 +775,9 @@ package body Schema.Validators is
       begin
          for A in 1 .. Length loop
             if not Seen (A).Seen
-              and then Get_Local_Name (Atts, A) = Attr.Name.Local
-              and then ((Is_Local
-                         and Get_Prefix (Atts, A) = Empty_String)
-                        or else Get_URI (Atts, A) = Attr.Name.NS)
+              and then Get_Name (Atts, A).Local = Attr.Name.Local
+              and then ((Is_Local and Get_Prefix (Atts, A) = Empty_String)
+                        or else Get_Name (Atts, A).NS = Attr.Name.NS)
             then
                if Debug then
                   Debug_Output ("Found attribute: " & To_QName (Attr.Name)
@@ -799,8 +797,8 @@ package body Schema.Validators is
       --  All the xsi:* attributes should be valid, whatever the schema
 
       for S in Seen'Range loop
-         if Get_URI (Atts, S) = Reader.XML_Instance_URI then
-            if Get_Local_Name (Atts, S) = Reader.Nil then
+         if Get_Name (Atts, S).NS = Reader.XML_Instance_URI then
+            if Get_Name (Atts, S).Local = Reader.Nil then
                if not Nillable then
                   Validation_Error (Reader, "Element cannot be nil");
                end if;
@@ -810,9 +808,9 @@ package body Schema.Validators is
 
                --  Following attributes are always valid
                --  See "Element Locally Valid (Complex Type)" 3.4.4.2
-            elsif Get_Local_Name (Atts, S) = Reader.Typ
-              or else Get_Local_Name (Atts, S) = Reader.Schema_Location
-              or else Get_Local_Name (Atts, S) =
+            elsif Get_Name (Atts, S).Local = Reader.Typ
+              or else Get_Name (Atts, S).Local = Reader.Schema_Location
+              or else Get_Name (Atts, S).Local =
               Reader.No_Namespace_Schema_Location
             then
                Seen (S).Seen := True;
@@ -832,18 +830,46 @@ package body Schema.Validators is
          declare
             Attr   : Attribute_Descr renames
               NFA.Attributes.Table (Valid_Attrs (Any_Attribute).Validator);
+            TRef   : Global_Reference;
          begin
             for S in Seen'Range loop
                if not Seen (S).Seen then
-                  Seen (S).Seen := Match_Any
-                    (Attr.Any,
-                     (NS    => Get_URI (Atts, S),
-                      Local => Get_Local_Name (Atts, S)));
+                  Seen (S).Seen := Match_Any (Attr.Any, Get_Name (Atts, S));
 
                   if not Seen (S).Seen then
                      Validation_Error
                        (Reader, "Attribute """ & Get_Qname (Atts, S)
                         & """ does not match attribute wildcard");
+                  end if;
+
+                  --  If the processing content forces it, we must check that
+                  --  there is indeed a valid definition for this attribute.
+
+                  case Attr.Any.Process_Contents is
+                     when Process_Skip =>
+                        null;  --  Always OK
+                        TRef := No_Global_Reference;
+
+                     when Process_Lax =>
+                        TRef := Reference_HTables.Get
+                          (NFA.References.all,
+                           (Get_Name (Atts, S), Ref_Attribute));
+
+                     when Process_Strict =>
+                        TRef := Reference_HTables.Get
+                          (NFA.References.all,
+                           (Get_Name (Atts, S), Ref_Attribute));
+                        if TRef = No_Global_Reference then
+                           Validation_Error
+                             (Reader, "No definition found for """
+                              & Get_Qname (Atts, S) & """");
+                        end if;
+                  end case;
+
+                  if TRef /= No_Global_Reference then
+                     Validate_Attribute
+                       (NFA.Attributes.Table (TRef.Attributes),
+                        Reader, Atts, S);
                   end if;
 
                   Seen (S).Prohibited := False;

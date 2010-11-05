@@ -34,7 +34,6 @@ with Unicode.CES;       use Unicode.CES;
 with Sax.Encodings;     use Sax.Encodings;
 with Sax.Exceptions;    use Sax.Exceptions;
 with Sax.Locators;      use Sax.Locators;
-with Sax.Readers;       use Sax.Readers;
 with Sax.Symbols;       use Sax.Symbols;
 with Sax.Utils;         use Sax.Utils;
 with Schema.Simple_Types;     use Schema.Simple_Types;
@@ -1809,18 +1808,18 @@ package body Schema.Schema_Readers is
    is
       Min_Occurs, Max_Occurs : Integer := 1;
       Group   : Group_Descr;
-      Local   : Symbol;
+      Name    : Qualified_Name;
       Details : Type_Details_Access;
    begin
       Group.Loc := Handler.Current_Location;
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Name then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Name then
                Group.Name := (NS    => Handler.Target_NS,
                               Local => Get_Value (Atts, J));
-            elsif Local = Handler.Ref then
+            elsif Name.Local = Handler.Ref then
                Group.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
             end if;
          end if;
@@ -1933,17 +1932,16 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
---        In_Redefine : constant Boolean := In_Redefine_Context (Handler.all);
       Group : AttrGroup_Descr;
-      Local : Symbol;
+      Name  : Qualified_Name;
    begin
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Name then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Name then
                Group.Name := (NS    => Handler.Target_NS,
                               Local => Get_Value (Atts, J));
-            elsif Local = Handler.Ref then
+            elsif Name.Local = Handler.Ref then
                Group.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
             end if;
          end if;
@@ -1952,21 +1950,6 @@ package body Schema.Schema_Readers is
       Push_Context
         (Handler, (Typ        => Context_Attribute_Group,
                    Attr_Group => Group));
-
---        if In_Redefine then
---           --  <redefine><attributeGroup>
---           --     <attributeGroup ref="foo" />
---           --     <attribute name="bar" />
---           --  </attributeGroup></redefine>    <!--  xsd003b.xsd test -->
---
---           if Handler.Contexts.Next.Typ = Context_Attribute_Group then
---          --  Ignore, this is just to indicate which group we are redefining,
---           --  but this was already taken into account for the enclosing tag
---              return;
---           end if;
---
---           Handler.Contexts.Attr_Group := Lookup_Attribute_Group
---             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
    end Create_Attribute_Group;
 
    ----------------------------
@@ -2152,7 +2135,7 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
-      Local : Symbol;
+      Name  : Qualified_Name;
       Att   : Attr_Descr (Kind => Kind_Attribute);
    begin
       Att.Attr.Descr := (Is_Any => True, others => <>);
@@ -2161,11 +2144,11 @@ package body Schema.Schema_Readers is
       Att.Attr.Target_NS := Handler.Target_NS;
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Namespace then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Namespace then
                Att.Attr.Descr.Any.Namespaces := Get_Value (Atts, J);
-            elsif Local = Handler.Process_Contents then
+            elsif Name.Local = Handler.Process_Contents then
                Att.Attr.Descr.Any.Process_Contents :=
                  Process_Contents_From_Atts (Handler, Atts, J);
             end if;
@@ -2185,7 +2168,7 @@ package body Schema.Schema_Readers is
    is
       Min_Occurs, Max_Occurs : Integer := 1;
       Info    : Element_Descr;
-      Local   : Symbol;
+      Name    : Qualified_Name;
       Details : Type_Details_Access;
 
    begin
@@ -2194,31 +2177,31 @@ package body Schema.Schema_Readers is
       Info.Block := Handler.Target_Block_Default;
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Typ then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Typ then
                Info.Typ := Resolve_QName (Handler, Get_Value (Atts, J));
-            elsif Local = Handler.Name then
+            elsif Name.Local = Handler.Name then
                Info.Name := (NS    => Handler.Target_NS,
                              Local => Get_Value (Atts, J));
-            elsif Local = Handler.Ref then
+            elsif Name.Local = Handler.Ref then
                Info.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
-            elsif Local = Handler.Substitution_Group then
+            elsif Name.Local = Handler.Substitution_Group then
                Info.Substitution_Group :=
                  Resolve_QName (Handler, Get_Value (Atts, J));
-            elsif Local = Handler.Default then
+            elsif Name.Local = Handler.Default then
                Info.Default := Get_Value (Atts, J);
-            elsif Local = Handler.Fixed then
+            elsif Name.Local = Handler.Fixed then
                Info.Fixed := Get_Value (Atts, J);
-            elsif Local = Handler.S_Abstract then
+            elsif Name.Local = Handler.S_Abstract then
                Info.Is_Abstract := Get_Value_As_Boolean (Atts, J, False);
-            elsif Local = Handler.Nillable then
+            elsif Name.Local = Handler.Nillable then
                Info.Nillable := Get_Value_As_Boolean (Atts, J, False);
-            elsif Local = Handler.Form then
+            elsif Name.Local = Handler.Form then
                Info.Form := Compute_Form (Atts, Handler, J);
-            elsif Local = Handler.Final then
+            elsif Name.Local = Handler.Final then
                Info.Final := Compute_Final (Atts, Handler, J);
-            elsif Local = Handler.Block then
+            elsif Name.Local = Handler.Block then
                Compute_Blocks (Atts, Handler, Info.Block, Info.Has_Block, J);
             end if;
          end if;
@@ -2539,7 +2522,7 @@ package body Schema.Schema_Readers is
    is
       Info   : Internal_Type_Descr (Is_Simple => Is_Simple);
       Is_Set : Boolean;
-      Local  : Symbol;
+      Name   : Qualified_Name;
       Props  : Type_Descr;
 --        Redefined : XML_Type := No_Type;
 
@@ -2548,19 +2531,19 @@ package body Schema.Schema_Readers is
       Props.Block := Handler.Target_Block_Default;
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Mixed then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Mixed then
                Props.Mixed := Get_Value_As_Boolean (Atts, J, False);
-            elsif Local = Handler.Name then
+            elsif Name.Local = Handler.Name then
                Props.Name :=
                  (NS    => Handler.Target_NS,
                   Local => Get_Value (Atts, J));
-            elsif Local = Handler.Block then
+            elsif Name.Local = Handler.Block then
                Compute_Blocks (Atts, Handler, Props.Block, Is_Set, J);
-            elsif Local = Handler.Final then
+            elsif Name.Local = Handler.Final then
                Props.Final := Compute_Final (Atts, Handler, J);
-            elsif Local = Handler.S_Abstract then
+            elsif Name.Local = Handler.S_Abstract then
                Props.Is_Abstract := Get_Value_As_Boolean (Atts, J, False);
             end if;
          end if;
@@ -2624,7 +2607,7 @@ package body Schema.Schema_Readers is
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Restr      : Restriction_Descr;
       Details    : Type_Details_Access;
-      Local      : Symbol;
+      Name       : Qualified_Name;
       In_Type    : constant Internal_Type_Index := Ctx.Type_Info;
    begin
       Restr.Loc := Handler.Current_Location;
@@ -2632,9 +2615,9 @@ package body Schema.Schema_Readers is
                      Local => Handler.Any_Simple_Type);
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Base then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Base then
                Restr.Base := Resolve_QName (Handler, Get_Value (Atts, J));
             end if;
          end if;
@@ -2711,7 +2694,7 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Local      : Symbol;
+      Name : Qualified_Name;
 
       procedure Add_Union (Str : Byte_Sequence);
       --  Add a unioned type to [Simple]
@@ -2741,9 +2724,9 @@ package body Schema.Schema_Readers is
                     Union_Items      => (others => No_Type_Member))));
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Member_Types then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Member_Types then
                For_Each_Union (Get (Get_Value (Atts, J)).all);
             end if;
          end if;
@@ -2782,16 +2765,16 @@ package body Schema.Schema_Readers is
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Ext   : Extension_Descr;
-      Local : Symbol;
+      Name  : Qualified_Name;
       Details : Type_Details_Access;
       In_Type : constant Internal_Type_Index := Ctx.Type_Info;
    begin
       Ext.Loc := Handler.Current_Location;
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Base then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Base then
                Ext.Base := Resolve_QName (Handler, Get_Value (Atts, J));
             end if;
          end if;
@@ -2864,7 +2847,6 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
-      Local : Symbol;
       Name  : Qualified_Name;
    begin
       Push_Context
@@ -2876,9 +2858,9 @@ package body Schema.Schema_Readers is
                     List_Items => (others => No_Type_Member))));
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Item_Type then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Item_Type then
                Name := Resolve_QName (Handler, Get_Value (Atts, J));
                Add_Type_Member
                  (Handler,
@@ -3091,7 +3073,7 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Local : Symbol;
+      Name  : Qualified_Name;
       Att   : Attr_Descr (Kind => Kind_Attribute);
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
@@ -3103,12 +3085,12 @@ package body Schema.Schema_Readers is
       Att.Loc := Handler.Current_Location;
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Name then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Name then
                Att.Attr.Descr.Name := (NS    => Handler.Target_NS,
                                        Local => Get_Value (Atts, J));
-            elsif Local = Handler.Typ then
+            elsif Name.Local = Handler.Typ then
                Att.Attr.Typ  := Resolve_QName (Handler, Get_Value (Atts, J));
 
                if Att.Attr.Typ =
@@ -3123,7 +3105,7 @@ package body Schema.Schema_Readers is
                      Except => XML_Not_Implemented'Identity);
                end if;
 
-            elsif Local = Handler.S_Use then
+            elsif Name.Local = Handler.S_Use then
                if Get_Value (Atts, J) = Handler.Required then
                   Att.Attr.Descr.Use_Type := Required;
                elsif Get_Value (Atts, J) = Handler.Prohibited then
@@ -3132,17 +3114,17 @@ package body Schema.Schema_Readers is
                   Att.Attr.Descr.Use_Type := Optional;
                end if;
 
-            elsif Local = Handler.Fixed then
+            elsif Name.Local = Handler.Fixed then
                Att.Attr.Descr.Fixed := Get_Value (Atts, J);
-            elsif Local = Handler.Ref then
+            elsif Name.Local = Handler.Ref then
                Att.Attr.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
-            elsif Local = Handler.Form then
+            elsif Name.Local = Handler.Form then
                Att.Attr.Descr.Form :=
                  Form_Type'Value (Get (Get_Value (Atts, J)).all);
                Has_Form := True;
-            elsif Local = Handler.Default then
+            elsif Name.Local = Handler.Default then
                Att.Attr.Descr.Default := Get_Value (Atts, J);
-            elsif Local = Handler.Namespace_Target then
+            elsif Name.Local = Handler.Namespace_Target then
                Att.Attr.Descr.Target_NS := Get_Value (Atts, J);
             end if;
          end if;
@@ -3306,26 +3288,26 @@ package body Schema.Schema_Readers is
    is
       Info   : Schema_Descr;
       Is_Set : Boolean := False;
-      Local  : Symbol;
+      Name   : Qualified_Name;
    begin
       Info.Element_Form_Default   := Unqualified;
       Info.Attribute_Form_Default := Unqualified;
 
       for J in 1 .. Get_Length (Atts) loop
-         Local := Get_Local_Name (Atts, J);
-         if Get_URI (Atts, J) = Empty_String then
-            if Local = Handler.S_Element_Form_Default then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.S_Element_Form_Default then
                Info.Element_Form_Default := Compute_Form (Atts, Handler, J);
-            elsif Local = Handler.S_Attribute_Form_Default then
+            elsif Name.Local = Handler.S_Attribute_Form_Default then
                Info.Attribute_Form_Default := Compute_Form (Atts, Handler, J);
-            elsif Local = Handler.Block_Default then
+            elsif Name.Local = Handler.Block_Default then
                Compute_Blocks (Atts, Handler, Info.Block, Is_Set, J);
-            elsif Local = Handler.Namespace_Target then
+            elsif Name.Local = Handler.Namespace_Target then
                Info.Target_NS := Get_Value (Atts, J);
             end if;
 
-         elsif Get_URI (Atts, J) = Handler.XML_Instance_URI then
-            if Local = Handler.No_Namespace_Schema_Location then
+         elsif Name.NS = Handler.XML_Instance_URI then
+            if Name.Local = Handler.No_Namespace_Schema_Location then
                --  Already handled through Hook_Start_Element when validating
                --  the grammar itself, but needed if we do not validate the
                --  grammar
@@ -3335,7 +3317,7 @@ package body Schema.Schema_Readers is
                   Xsd_File      => Get_Value (Atts, J),
                   Do_Create_NFA => False);
 
-            elsif Local = Handler.Schema_Location then
+            elsif Name.Local = Handler.Schema_Location then
                --  Already handled through Hook_Start_Element when validating
                --  the grammar itself
                Parse_Grammars
@@ -3391,7 +3373,7 @@ package body Schema.Schema_Readers is
    is
       Details : Type_Details_Access;
       Any     : Internal_Any_Descr;
-      Local   : Symbol;
+      Name    : Qualified_Name;
       Min_Occurs, Max_Occurs : Integer := 1;
 
    begin
@@ -3399,11 +3381,11 @@ package body Schema.Schema_Readers is
       Any.Namespaces := Handler.Any_Namespace;
 
       for J in 1 .. Get_Length (Atts) loop
-         if Get_URI (Atts, J) = Empty_String then
-            Local := Get_Local_Name (Atts, J);
-            if Local = Handler.Namespace then
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Namespace then
                Any.Namespaces := Get_Value (Atts, J);
-            elsif Local = Handler.Process_Contents then
+            elsif Name.Local = Handler.Process_Contents then
                Any.Process_Contents :=
                  Process_Contents_From_Atts (Handler, Atts, J);
             end if;
