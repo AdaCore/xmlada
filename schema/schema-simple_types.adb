@@ -1876,7 +1876,17 @@ package body Schema.Simple_Types is
    begin
       if Get (Facet_Name).all = "pattern" then
          --  Do not normalize the value
-         Facets (Facet_Pattern) := (Value, No_Enumeration_Index, Loc);
+         if Facets (Facet_Pattern).Value /= No_Symbol then
+            Facets (Facet_Pattern) :=
+              (Find
+                 (Symbols,
+                  '(' & Get (Facets (Facet_Pattern).Value).all
+                  & ")|(" & Get (Value).all & ')'),
+               No_Enumeration_Index, Loc);
+         else
+            Facets (Facet_Pattern) := (Value, No_Enumeration_Index, Loc);
+         end if;
+
          return;
       end if;
 
@@ -2129,7 +2139,7 @@ package body Schema.Simple_Types is
                   Simple.Pattern (P).Str := Find
                     (Symbols,
                      '(' & Get (Simple.Pattern (P).Str).all
-                     & ")(" & Get (Val).all & ')');
+                     & ")|(" & Get (Val).all & ')');
                   Unchecked_Free (Simple.Pattern (P).Pattern);
                   Simple.Pattern (P).Pattern :=
                     Compile_Regexp (Simple.Pattern (P).Str);
