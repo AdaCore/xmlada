@@ -579,6 +579,15 @@ package Schema.Validators is
    --  Register a global attribute or type.
    --  [Name] can be No_Qualified_Name
 
+   procedure Add_Facet
+     (Grammar      : XML_Grammar;
+      Facets       : in out Schema.Simple_Types.All_Facets;
+      Facet_Name   : Sax.Symbols.Symbol;
+      Value        : Sax.Symbols.Symbol;
+      Loc          : Sax.Locators.Location);
+   pragma Inline (Add_Facet);
+   --  See doc in schema-simple_types, this is a proxy
+
    function URI_Was_Parsed
      (Grammar : XML_Grammar;
       URI     : Sax.Symbols.Symbol) return Boolean;
@@ -671,6 +680,7 @@ private
       Simple_Types : Schema.Simple_Types.Simple_Type_Table;
       References   : aliased Reference_HTables.Instance;
       Attributes   : Attributes_Tables.Instance;
+      Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
       NFA          : Schema_State_Machines.NFA_Access;
       --  The state machine representing the grammar
       --  This includes the states for all namespaces

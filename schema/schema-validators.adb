@@ -44,7 +44,7 @@ with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
 package body Schema.Validators is
-   use XML_Grammars, Attributes_Tables;
+   use XML_Grammars, Attributes_Tables, Enumeration_Tables;
 
    function To_Graphic_String (Str : Byte_Sequence) return String;
    --  Convert non-graphic characters in Str to make them visible in a display
@@ -851,6 +851,7 @@ package body Schema.Validators is
          G.NFA := new Schema_State_Machines.NFA;
          G.NFA.Initialize (States_Are_Statefull => True);
          Init (G.Attributes);
+         Init (G.Enumerations);
          Simple_Type_Tables.Init (G.Simple_Types);
          Grammar  := Allocate (G);
       end if;
@@ -1025,6 +1026,7 @@ package body Schema.Validators is
       end if;
 
       Simple_Type_Tables.Free (Grammar.Simple_Types);
+      Enumeration_Tables.Free (Grammar.Enumerations);
       Free (Grammar.Attributes);
       Reference_HTables.Reset (Grammar.References);
       Free (Grammar.NFA);
@@ -1848,6 +1850,7 @@ package body Schema.Validators is
    begin
       Error := Validate_Simple_Type
         (Simple_Types  => Get (Reader.Grammar).Simple_Types,
+         Enumerations  => Get (Reader.Grammar).Enumerations,
          Symbols       => Get (Reader.Grammar).Symbols,
          Simple_Type   => Simple_Type,
          Ch            => Ch,
@@ -1872,5 +1875,25 @@ package body Schema.Validators is
         (Get (Reader.Grammar).Simple_Types,
          Get (Reader.Grammar).Symbols, Simple_Type, Ch1, Ch2);
    end Equal;
+
+   ---------------
+   -- Add_Facet --
+   ---------------
+
+   procedure Add_Facet
+     (Grammar      : XML_Grammar;
+      Facets       : in out Schema.Simple_Types.All_Facets;
+      Facet_Name   : Sax.Symbols.Symbol;
+      Value        : Sax.Symbols.Symbol;
+      Loc          : Sax.Locators.Location) is
+   begin
+      Add_Facet
+        (Facets,
+         Symbols      => Get (Grammar).Symbols,
+         Enumerations => Get (Grammar).Enumerations,
+         Facet_Name   => Facet_Name,
+         Value        => Value,
+         Loc          => Loc);
+   end Add_Facet;
 
 end Schema.Validators;

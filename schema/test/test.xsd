@@ -42,9 +42,8 @@
  <xsd:attribute name="attr4" use="optional">
     <xsd:simpleType>
        <xsd:restriction base="xsd:NMTOKEN">
-          <!--<xsd:enumeration value="value1"/>
+          <xsd:enumeration value="value1"/>
           <xsd:enumeration value="value2"/>
-          -->
        </xsd:restriction>
     </xsd:simpleType>
  </xsd:attribute>

@@ -3144,8 +3144,8 @@ package body Schema.Schema_Readers is
          pragma Assert (Ctx.Typ = Context_Simple_Restriction);
          pragma Assert (Ctx.Simple.Kind = Simple_Type_Restriction);
          Add_Facet
-           (Ctx.Simple.Facets,
-            Symbols    => Get_Symbol_Table (Handler),
+           (Grammar    => Handler.Grammar,
+            Facets     => Ctx.Simple.Facets,
             Facet_Name => Local_Name,
             Value      => Get_Value
               (Atts, Get_Index (Atts, Empty_String, Handler.Value)),
