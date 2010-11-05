@@ -689,6 +689,20 @@ package body Schema.Readers is
            (H, Get_Value (Atts, Location_Index), Do_Create_NFA => True);
       end if;
 
+      --  If we have an inline schema, we must check that the target NS
+      --  is not used yet
+
+      if Element_QName = (NS => H.XML_Schema_URI, Local => H.S_Schema)
+        and then Had_Matcher
+      then
+         --  ??? Would need to include the contents into the NFA
+         --  ??? And check that no element from the same namespace was seen
+         Validation_Error
+           (H,
+            "Inline schema not supported",
+            Except => XML_Not_Implemented'Identity);
+      end if;
+
       if H.Grammar = No_Grammar then
          return;  --  Always valid, since we have no grammar anyway
       end if;
