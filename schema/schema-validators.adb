@@ -2083,24 +2083,22 @@ package body Schema.Validators is
 
    function Dump_Dot_NFA
      (Grammar            : XML_Grammar;
-      Include_Metaschema : Boolean := False) return String
+      Nested             : Nested_NFA := No_Nested) return String
    is
       NFA : constant Schema_NFA_Access := Get (Grammar).NFA;
    begin
-      if Include_Metaschema then
-         return Schema_State_Machines_PP.Dump
-           (NFA,
-            Mode                => Dump_Dot_Compact,
-            Show_Details        => True,
-            Show_Isolated_Nodes => False);
-
-      else
+      if Nested = No_Nested then
          return Schema_State_Machines_PP.Dump
            (NFA,
             Mode                => Dump_Dot_Compact,
             Show_Details        => True,
             Show_Isolated_Nodes => False,
             Since               => NFA.Metaschema_NFA_Last);
+      else
+         return Schema_State_Machines_PP.Dump
+           (NFA,
+            Nested              => Nested,
+            Mode                => Dump_Dot_Compact);
       end if;
    end Dump_Dot_NFA;
 

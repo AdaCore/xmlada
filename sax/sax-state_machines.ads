@@ -344,13 +344,15 @@ package Sax.State_Machines is
    --  matcher, or from the NFA. See [Override_Data].
 
    procedure Replace_State
-     (Self : NFA_Matcher;
+     (Self : in out NFA_Matcher;
       Iter : Active_State_Iterator;
       S    : State);
    --  Replace the state pointed to by [Iter].
    --  This is only rarely useful, but for instance is used when
    --  validating a XML schema to handle the xsi:type that can be used
    --  to override the current state.
+   --  This also activates the state accessible from [S] through an empty
+   --  transition.
 
    procedure Override_Data
      (Self : NFA_Matcher;

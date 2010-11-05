@@ -50,6 +50,14 @@ package body Sax.State_Machines is
    --  through an empty transition. THe nested state machine for the new state
    --  is set to [First_Nested].
 
+   procedure Mark_Active_No_Check
+     (Self         : in out NFA_Matcher;
+      List_Start   : in out Matcher_State_Index;
+      From         : State;
+      First_Nested : Matcher_State_Index := No_Matcher_State);
+   --  Same as [Mark_Active], but do not check whether [From] is already
+   --  active.
+
    function Start_Match
      (Self : access NFA'Class; S : State) return NFA_Matcher;
    --  Returns a new matcher, initially in state [S] (and all empty transitions
@@ -665,11 +673,11 @@ package body Sax.State_Machines is
       return False;
    end Is_Active;
 
-   -----------------
-   -- Mark_Active --
-   -----------------
+   --------------------------
+   -- Mark_Active_No_Check --
+   --------------------------
 
-   procedure Mark_Active
+   procedure Mark_Active_No_Check
      (Self         : in out NFA_Matcher;
       List_Start   : in out Matcher_State_Index;
       From         : State;
@@ -683,13 +691,6 @@ package body Sax.State_Machines is
          Put_Line ("Mark_Active " & From'Img);
       end if;
 
-      --  ??? Not very efficient, but the lists are expected to be short. We
-      --  could try to use a state->boolean array, but then we need one such
-      --  array for all nested NFA, which requires a lot of storage.
-
-      if Is_Active (Self, List_Start, From) then
-         return;
-      end if;
       --  Always leave the Final_State first in the list
 
       if List_Start /= No_Matcher_State
@@ -756,6 +757,27 @@ package body Sax.State_Machines is
             Self.Active.Table (From_Index).Nested := Tmp;
          end if;
       end if;
+   end Mark_Active_No_Check;
+
+   -----------------
+   -- Mark_Active --
+   -----------------
+
+   procedure Mark_Active
+     (Self         : in out NFA_Matcher;
+      List_Start   : in out Matcher_State_Index;
+      From         : State;
+      First_Nested : Matcher_State_Index := No_Matcher_State) is
+   begin
+      --  ??? Not very efficient, but the lists are expected to be short. We
+      --  could try to use a state->boolean array, but then we need one such
+      --  array for all nested NFA, which requires a lot of storage.
+
+      if Is_Active (Self, List_Start, From) then
+         return;
+      end if;
+
+      Mark_Active_No_Check (Self, List_Start, From, First_Nested);
    end Mark_Active;
 
    -----------------
@@ -973,12 +995,25 @@ package body Sax.State_Machines is
    -------------------
 
    procedure Replace_State
-     (Self : NFA_Matcher;
+     (Self : in out NFA_Matcher;
       Iter : Active_State_Iterator;
       S    : State) is
    begin
       if Iter.Current_Level /= No_Matcher_State then
          Self.Active.Table (Iter.States (Iter.Current_Level)).S := S;
+
+         if Iter.Current_Level = 1 then
+            Mark_Active_No_Check
+              (Self,
+               List_Start => Self.First_Active,
+               From       => S);
+         else
+            Mark_Active_No_Check
+              (Self,
+               List_Start => Self.Active.Table
+                 (Iter.States (Iter.Current_Level - 1)).Nested,
+               From       => S);
+         end if;
       end if;
    end Replace_State;
 

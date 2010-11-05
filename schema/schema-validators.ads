@@ -352,9 +352,9 @@ package Schema.Validators is
 
    function Dump_Dot_NFA
      (Grammar            : XML_Grammar;
-      Include_Metaschema : Boolean := False) return String;
-   --  Return a "dot" graph for the NFA, including, or not, the metaschema for
-   --  XSD grammars themselves.
+      Nested             : Nested_NFA := No_Nested) return String;
+   --  Return a "dot" graph for the NFA, possibly restricted to a specific
+   --  nested NFA.
 
    function Get_Simple_Type
      (NFA    : access Schema_NFA'Class;

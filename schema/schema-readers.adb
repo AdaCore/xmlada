@@ -559,6 +559,10 @@ package body Schema.Readers is
                      Block    => Data.Block));
 
                Internal_New_Nested := NFA.Simple_Nested;
+               if Debug then
+                  Debug_Output
+                    ("Will replace nested complexType, to accept <close>");
+               end if;
             end if;
 
             if Internal_New_Nested /= No_State then
@@ -572,9 +576,7 @@ package body Schema.Readers is
                     (NFA.Get_Nested (Current (H.Matcher, Parent (Iter)))) = S
                   then
                      if Debug then
-                        Debug_Output
-                          ("Replace nested complexType, now just"
-                           & " accepting <close>");
+                        Debug_Output ("Replacing nested NFA");
                      end if;
                      Replace_State (H.Matcher, Iter, Internal_New_Nested);
                   end if;
@@ -832,11 +834,6 @@ package body Schema.Readers is
       else
          Through_Process := Process_Strict;
       end if;
-
---        if Element /= No_Element and then Is_Abstract (Element) then
---           Validation_Error
---             (H, "Element """ & To_QName (Elem) & """ is abstract");
---        end if;
 
       --  Validate the attributes
 

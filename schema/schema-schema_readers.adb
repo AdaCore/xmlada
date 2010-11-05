@@ -1413,7 +1413,7 @@ package body Schema.Schema_Readers is
                Debug_Output
                  ("Created state for complexContent "
                   & To_QName (Shared.Types.Table (J).Properties.Name)
-                  & S'Img);
+                  & " type=" & J'Img & " state=" & S'Img);
             end if;
          end if;
 
@@ -1480,6 +1480,8 @@ package body Schema.Schema_Readers is
 
       if Debug then
          Output_Action ("NFA: " & Dump_Dot_NFA (Get_Grammar (Parser.all)));
+         Output_Action ("NFA: " & Dump_Dot_NFA
+           (Get_Grammar (Parser.all), Create_Nested (NFA, 22)));
       end if;
 
       Reset (Types);
