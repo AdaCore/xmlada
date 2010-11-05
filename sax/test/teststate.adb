@@ -48,18 +48,39 @@ procedure TestState is
       end case;
    end record;
 
-   function Match (Trans : Transition_Descr; Input : Character) return Boolean;
+   type State_User_Data is new Integer;
+   Default_State_Data : constant State_User_Data := 0;
+
    function Image (Trans : Transition_Descr) return String;
+
+   package Character_Machines is new Sax.State_Machines
+     (Symbol            => Character,
+      Transition_Symbol => Transition_Descr,
+      Image             => Image,
+      State_User_Data   => State_User_Data,
+      Default_Data      => Default_State_Data,
+      Default_State_Count => 10,
+      Default_Transition_Count => 15);
+   use Character_Machines;
+
+   function Match
+     (Self : access NFA'Class; From_State : State;
+      Trans : Transition_Descr; Input : Character) return Boolean;
    --  To instantiation Sax.State_Machines
 
    function Match
-     (Trans : Transition_Descr; Input : Character) return Boolean is
+     (Self : access NFA'Class; From_State : State;
+      Trans : Transition_Descr; Input : Character) return Boolean
+   is
+      pragma Unreferenced (Self, From_State);
    begin
       case Trans.Kind is
          when Any_Char => return True;
          when Char     => return Trans.C = Input;
       end case;
    end Match;
+
+   procedure Process is new Character_Machines.Process (Match);
 
    function Image (Trans : Transition_Descr) return String is
    begin
@@ -68,20 +89,6 @@ procedure TestState is
          when Char     => return "" & Trans.C;
       end case;
    end Image;
-
-   type State_User_Data is new Integer;
-   Default_State_Data : constant State_User_Data := 0;
-
-   package Character_Machines is new Sax.State_Machines
-     (Symbol            => Character,
-      Transition_Symbol => Transition_Descr,
-      Image             => Image,
-      Match             => Match,
-      State_User_Data   => State_User_Data,
-      Default_Data      => Default_State_Data,
-      Default_State_Count => 10,
-      Default_Transition_Count => 15);
-   use Character_Machines;
 
    function State_Image (S : State; Data : State_User_Data) return String;
    package PP is new Character_Machines.Pretty_Printers (State_Image);

@@ -128,15 +128,24 @@ package Schema.Validators is
       Target_NS        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
    end record;
 
+   type Transition_Event is record
+      Name    : Qualified_Name;
+      Closing : Boolean := False;
+   end record;
+   --  The event to do a transition in the state machine.
+   --  [Closing] is set to true if we are seeing the end tag for [Name]
+
    type Transition_Kind is (Transition_Symbol,
                             Transition_Any,
                             Transition_Close);
-   type Transition_Event (Kind : Transition_Kind := Transition_Symbol) is
+   type Transition_Descr (Kind : Transition_Kind := Transition_Symbol) is
       record
          case Kind is
-            when Transition_Symbol       => Name : Qualified_Name;
-            when Transition_Close => null;
-            when Transition_Any          => Any : Any_Descr;
+            when Transition_Symbol =>
+               Name : Qualified_Name;
+               Form : Form_Type := Qualified;
+            when Transition_Close  => null;
+            when Transition_Any    => Any : Any_Descr;
          end case;
       end record;
 
@@ -197,14 +206,12 @@ package Schema.Validators is
    --  All types (complexType or simpleType) are associated with a state in the
    --  NFA, which is used to hold the properties of that type.
 
-   function Match (Trans, Sym : Transition_Event) return Boolean;
-   function Image (Trans : Transition_Event) return String;
+   function Image (Trans : Transition_Descr) return String;
    --  Needed for the instantiation of Sax.State_Machines
 
    package Schema_State_Machines is new Sax.State_Machines
       (Symbol              => Transition_Event,
-       Transition_Symbol   => Transition_Event,
-       Match               => Match,
+       Transition_Symbol   => Transition_Descr,
        Image               => Image,
        State_User_Data     => State_User_Data,
        Default_Data        => Default_User_Data,
@@ -218,6 +225,11 @@ package Schema.Validators is
 
    package Schema_State_Machines_PP
      is new Schema_State_Machines.Pretty_Printers (Image);
+
+   type Schema_NFA is new Schema_State_Machines.NFA with record
+      null;
+   end record;
+   type Schema_NFA_Access is access all Schema_NFA'Class;
 
    type Reference_Kind is (Ref_Element,
                            Ref_Type,
@@ -259,8 +271,7 @@ package Schema.Validators is
    Reference_HTable_Size : constant := 1023;
    --  Size created for the references table
 
-   function Get_NFA
-     (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access;
+   function Get_NFA (Grammar : XML_Grammar) return Schema_NFA_Access;
    function Get_References (Grammar : XML_Grammar) return Reference_HTable;
    --  Returns the state machine and global references used to validate
    --  [Grammar]
@@ -675,7 +686,7 @@ private
       References   : Reference_HTable;
       Attributes   : Attributes_Tables.Instance;
       Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
-      NFA          : Schema_State_Machines.NFA_Access;
+      NFA          : Schema_NFA_Access;
       --  The state machine representing the grammar
       --  This includes the states for all namespaces
 

@@ -41,14 +41,6 @@ generic
    --  One such symbol might be associated with each transition (although this
    --  is optional) to speed up the processing of the state machine
 
-   with function Match
-     (Trans : Transition_Symbol; Input : Symbol) return Boolean;
-   --  Whether the two symbols match. In particular this means that the
-   --  corresponding transition is valid.
-   --  Using the "=" operator might be enough in a lot of cases, but will not
-   --  handle the case where the transitions are more general (for instance,
-   --  allowing a transition on integers where the symbol is between 1 and 10).
-
    with function Image (Sym : Transition_Symbol) return String;
    --  Display Sym.
 
@@ -330,6 +322,18 @@ package Sax.State_Machines is
    --  processed so far matches the state machine. It is possible to keep
    --  submitting input
 
+   generic
+      with function Match
+        (The_NFA    : access NFA'Class;
+         From_State : State;
+         Trans      : Transition_Symbol;
+         Input      : Symbol) return Boolean;
+      --  Whether the two symbols match. In particular this means that the
+      --  corresponding transition is valid.
+      --  Using the "=" operator might be enough in a lot of cases, but will
+      --  not handle the case where the transitions are more general (for
+      --  instance, allowing a transition on integers where the symbol is
+      --  between 1 and 10).
    procedure Process
      (Self    : in out NFA_Matcher;
       Input   : Symbol;
@@ -339,6 +343,8 @@ package Sax.State_Machines is
    --  could be found for it. In such a case, [Self] is left unmodified.
    --  If [Success] is set to True, a new set of active states was computed,
    --  and at least one state is active.
+   --  This function is generic so that the way the symbols are matched can be
+   --  altered depending on the context.
 
    function Expected (Self : NFA_Matcher) return String;
    --  Return a textual description of the valid input symbols from the current

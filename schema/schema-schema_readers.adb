@@ -138,8 +138,7 @@ package body Schema.Schema_Readers is
    function Compute_Form
      (Atts      : Sax_Attribute_List;
       Handler   : access Schema_Reader'Class;
-      Index     : Integer;
-      Default   : Form_Type) return Form_Type;
+      Index     : Integer) return Form_Type;
    --  Parse the given attribute
 
    procedure Append (List : in out Attr_Array_Access; Attr : Attr_Descr);
@@ -314,8 +313,7 @@ package body Schema.Schema_Readers is
    ----------------
 
    procedure Create_NFA (Parser : access Schema_Reader) is
-      NFA : constant Schema.Validators.Schema_State_Machines.NFA_Access :=
-        Get_NFA (Get_Grammar (Parser.all));
+      NFA : constant Schema_NFA_Access := Get_NFA (Get_Grammar (Parser.all));
       Ref : constant Reference_HTable :=
         Get_References (Get_Grammar (Parser.all));
 
@@ -406,7 +404,7 @@ package body Schema.Schema_Readers is
          pragma Unreferenced (Start);
          Typ       : Type_Index;
          Real      : Element_Descr;
-         Trans     : Transition_Event;
+         Trans     : Transition_Descr;
          TRef      : Global_Reference := No_Global_Reference;
          S         : State := No_State;
 
@@ -439,14 +437,14 @@ package body Schema.Schema_Readers is
                   S := TRef.Element;
                   NFA.Get_Data (S1).Descr := NFA.Get_Data (S).Descr;
                   NFA.Set_Nested (S1, NFA.Get_Nested (S));
-                  Trans := (Transition_Symbol, Info.Ref);
+                  Trans := (Transition_Symbol, Info.Ref, Info.Form);
                end if;
             else
-               Trans := (Transition_Symbol, Real.Name);
+               Trans := (Transition_Symbol, Real.Name, Info.Form);
             end if;
          else
             Real := Info;
-            Trans := (Transition_Symbol, Real.Name);
+            Trans := (Transition_Symbol, Real.Name, Info.Form);
          end if;
 
          --  Create nested NFA for the type, if needed
@@ -2044,6 +2042,7 @@ package body Schema.Schema_Readers is
 
    begin
       Info.Loc := Handler.Current_Location;
+      Info.Form := Handler.Element_Form_Default;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
@@ -2067,8 +2066,7 @@ package body Schema.Schema_Readers is
             elsif Local = Handler.Nillable then
                Info.Nillable := Get_Value_As_Boolean (Atts, J, False);
             elsif Local = Handler.Form then
-               Info.Form := Compute_Form
-                 (Atts, Handler, J, Handler.Element_Form_Default);
+               Info.Form := Compute_Form (Atts, Handler, J);
             elsif Local = Handler.Final then
                Info.Final := Compute_Final (Atts, Handler, J);
             elsif Local = Handler.Block then
@@ -2107,6 +2105,10 @@ package body Schema.Schema_Readers is
       if Info.Default /= No_Symbol and then Info.Fixed /= No_Symbol then
          Validation_Error
            (Handler, "#Default and Fixed cannot be both specified");
+      end if;
+
+      if Info.Ref /= No_Qualified_Name then
+         Info.Form := Qualified;
       end if;
 
       if Handler.Contexts (Handler.Contexts_Last).Typ /= Context_Schema then
@@ -2316,12 +2318,9 @@ package body Schema.Schema_Readers is
    function Compute_Form
      (Atts      : Sax_Attribute_List;
       Handler   : access Schema_Reader'Class;
-      Index     : Integer;
-      Default   : Form_Type) return Form_Type is
+      Index     : Integer) return Form_Type is
    begin
-      if Index = -1 then
-         return Default;
-      elsif Get_Value (Atts, Index) = Handler.Qualified then
+      if Get_Value (Atts, Index) = Handler.Qualified then
          return Qualified;
       else
          return Unqualified;
@@ -3107,15 +3106,16 @@ package body Schema.Schema_Readers is
       Is_Set : Boolean := False;
       Local  : Symbol;
    begin
+      Info.Element_Form_Default   := Unqualified;
+      Info.Attribute_Form_Default := Unqualified;
+
       for J in 1 .. Get_Length (Atts) loop
          Local := Get_Local_Name (Atts, J);
          if Get_URI (Atts, J) = Empty_String then
             if Local = Handler.S_Element_Form_Default then
-               Info.Element_Form_Default :=
-                 Compute_Form (Atts, Handler, J, Unqualified);
+               Info.Element_Form_Default := Compute_Form (Atts, Handler, J);
             elsif Local = Handler.S_Attribute_Form_Default then
-               Info.Attribute_Form_Default :=
-                 Compute_Form (Atts, Handler, J, Unqualified);
+               Info.Attribute_Form_Default := Compute_Form (Atts, Handler, J);
             elsif Local = Handler.Block_Default then
                Compute_Blocks (Atts, Handler, Info.Block, Is_Set, J);
             elsif Local = Handler.Namespace_Target then

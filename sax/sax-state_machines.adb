@@ -816,7 +816,7 @@ package body Sax.State_Machines is
       type Transition_Filter is array (Transition_Kind) of Boolean;
 
       procedure Process_Transitions
-        (First        : Transition_Id;
+        (From_State   : State;
          New_First    : in out Matcher_State_Index;
          Filter       : Transition_Filter);
       --  Check all transitions from [First]
@@ -826,11 +826,11 @@ package body Sax.State_Machines is
       -------------------------
 
       procedure Process_Transitions
-        (First        : Transition_Id;
+        (From_State   : State;
          New_First    : in out Matcher_State_Index;
          Filter       : Transition_Filter)
       is
-         T : Transition_Id := First;
+         T : Transition_Id := NFA.States.Table (From_State).First_Transition;
       begin
          while T /= No_Transition loop
             declare
@@ -842,7 +842,7 @@ package body Sax.State_Machines is
                         Mark_Active (Self, New_First, Tr.To_State);
                      when others =>
                         if not Is_Active (Self, New_First, Tr.To_State)
-                          and then Match (Tr.Sym, Input)
+                          and then Match (Self.NFA, From_State, Tr.Sym, Input)
                         then
                            Mark_Active (Self, New_First, Tr.To_State);
                         end if;
@@ -925,7 +925,7 @@ package body Sax.State_Machines is
 
                   if Nested_Final then
                      Process_Transitions
-                       (NFA.States.Table (S.S).First_Transition, New_First,
+                       (S.S, New_First,
                         Filter => (Transition_On_Exit_Empty => True,
                                    Transition_On_Exit_Symbol => True,
                                    others => False));
@@ -947,7 +947,7 @@ package body Sax.State_Machines is
               and then not Event_Processed_In_Nested
             then
                Process_Transitions
-                 (NFA.States.Table (S.S).First_Transition, New_First,
+                 (S.S, New_First,
                   Filter => (Transition_On_Empty => False,
                              Transition_On_Symbol => True,
                              others => False));

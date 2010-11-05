@@ -39,7 +39,6 @@ with Sax.Symbols;                    use Sax.Symbols;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
 with Schema.Simple_Types;            use Schema.Simple_Types;
-with Schema.Validators.Lists;        use Schema.Validators.Lists;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
@@ -710,7 +709,7 @@ package body Schema.Validators is
    begin
       if Grammar = No_Grammar then
          G     := new XML_Grammar_Record;
-         G.NFA := new Schema_State_Machines.NFA;
+         G.NFA := new Schema_NFA;
          G.NFA.Initialize (States_Are_Statefull => True);
          Init (G.Attributes);
          Init (G.Enumerations);
@@ -909,7 +908,7 @@ package body Schema.Validators is
       Free (Grammar.Attributes);
       Reference_HTables.Reset (Grammar.References.all);
       Unchecked_Free (Grammar.References);
-      Free (Grammar.NFA);
+      Free (NFA_Access (Grammar.NFA));
       Free (Grammar.Parsed_Locations);
    end Free;
 
@@ -1053,8 +1052,7 @@ package body Schema.Validators is
    -- Get_NFA --
    -------------
 
-   function Get_NFA
-     (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access is
+   function Get_NFA (Grammar : XML_Grammar) return Schema_NFA_Access is
    begin
       return Get (Grammar).NFA;
    end Get_NFA;
@@ -1666,54 +1664,10 @@ package body Schema.Validators is
    end Initialize_Symbols;
 
    -----------
-   -- Match --
-   -----------
-
-   function Match (Trans, Sym : Transition_Event) return Boolean is
-   begin
-      case Trans.Kind is
-         when Transition_Symbol | Transition_Close =>
-            return Trans = Sym;
-
-         when Transition_Any =>
-            if Sym.Kind = Transition_Close then
-               return False;
-            elsif Get (Trans.Any.Namespace).all = "##any" then
-               return True;
-            elsif Get (Trans.Any.Namespace).all = "##other" then
-               return Sym.Name.NS /= Trans.Any.Target_NS;
-            else
-               declare
-                  Matches : Boolean := True;
-
-                  procedure Callback (Str : Byte_Sequence);
-                  procedure Callback (Str : Byte_Sequence) is
-                  begin
-                     if Matches then
-                        null;
-                     elsif Str = "##targetNamespace" then
-                        Matches := Sym.Name.NS = Trans.Any.Target_NS;
-                     elsif Str = "##local" then
-                        Matches := Sym.Name.NS = Empty_String;
-                     else
-                        Matches := Get (Sym.Name.NS).all = Str;
-                     end if;
-                  end Callback;
-
-                  procedure All_Items is new For_Each_Item (Callback);
-               begin
-                  All_Items (Get (Trans.Any.Namespace).all);
-                  return Matches;
-               end;
-            end if;
-      end case;
-   end Match;
-
-   -----------
    -- Image --
    -----------
 
-   function Image (Trans : Transition_Event) return String is
+   function Image (Trans : Transition_Descr) return String is
    begin
       case Trans.Kind is
          when Transition_Symbol       =>
@@ -1723,7 +1677,7 @@ package body Schema.Validators is
                return To_QName (Trans.Name);
                --  return Get (Trans.Name.Local).all;
             end if;
-         when Transition_Close => return "close element";
+         when Transition_Close => return "close parent";
          when Transition_Any   => return "<any>";
       end case;
    end Image;

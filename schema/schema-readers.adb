@@ -40,7 +40,6 @@ with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 with Schema.Validators.Lists; use Schema.Validators.Lists;
-
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Schema.Readers is
@@ -61,6 +60,15 @@ package body Schema.Readers is
    procedure Reset (Parser : in out Validating_Reader);
    --  Reset the state of the parser so that we can parse other documents.
    --  This doesn't reset the grammar
+
+   function Match
+     (Self       : access NFA'Class;
+      From_State : State;
+      Trans      : Transition_Descr;
+      Sym        : Transition_Event) return Boolean;
+   --  Whether [Sym] matches [Trans]
+
+   procedure Process is new Schema_State_Machines.Process (Match);
 
    procedure Hook_Start_Element
      (Handler : access Sax_Reader'Class;
@@ -628,9 +636,9 @@ package body Schema.Readers is
 
       Process
         (H.Matcher,
-         Input   => (Kind => Transition_Symbol,
-                     Name => (NS    => Get_URI (Get_NS (Elem)),
-                              Local => Get_Local_Name (Elem))),
+         Input   => (Closing => False,
+                     Name    => (NS    => Get_URI (Get_NS (Elem)),
+                                 Local => Get_Local_Name (Elem))),
          Success => Success);
 
       if Debug then
@@ -770,7 +778,13 @@ package body Schema.Readers is
 
       Validate_Current_Characters (H, Loc => Start_Tag_End_Location (Elem));
 
-      Process (H.Matcher, (Kind => Transition_Close), Success);
+      Process
+        (H.Matcher,
+         (Closing => True,
+          Name    => (NS    => Get_URI (Get_NS (Elem)),
+                      Local => Get_Local_Name (Elem))),
+         Success);
+
       if Debug then
          Debug_Print (H.Matcher, Dump_Compact, "After end element:");
       end if;
@@ -957,5 +971,66 @@ package body Schema.Readers is
          Unchecked_Free (Reader);
       end if;
    end Free;
+
+   -----------
+   -- Match --
+   -----------
+
+   function Match
+     (Self       : access NFA'Class;
+      From_State : State;
+      Trans      : Transition_Descr;
+      Sym        : Transition_Event) return Boolean
+   is
+      pragma Unreferenced (Self, From_State);
+   begin
+      case Trans.Kind is
+         when Transition_Close =>
+            return Sym.Closing;
+
+         when Transition_Symbol =>
+            if Sym.Closing then
+               return False;
+            else
+               return Trans.Name = Sym.Name
+                 or else
+                   (Trans.Form = Unqualified  --  Namespace is not mandatory?
+                    and then (NS => Empty_String, Local => Trans.Name.Local) =
+                      Sym.Name);
+            end if;
+
+         when Transition_Any =>
+            if Sym.Closing then
+               return False;
+            elsif Get (Trans.Any.Namespace).all = "##any" then
+               return True;
+            elsif Get (Trans.Any.Namespace).all = "##other" then
+               return Sym.Name.NS /= Trans.Any.Target_NS;
+            else
+               declare
+                  Matches : Boolean := True;
+
+                  procedure Callback (Str : Byte_Sequence);
+                  procedure Callback (Str : Byte_Sequence) is
+                  begin
+                     if Matches then
+                        null;
+                     elsif Str = "##targetNamespace" then
+                        Matches := Sym.Name.NS = Trans.Any.Target_NS;
+                     elsif Str = "##local" then
+                        Matches := Sym.Name.NS = Empty_String;
+                     else
+                        Matches := Get (Sym.Name.NS).all = Str;
+                     end if;
+                  end Callback;
+
+                  procedure All_Items is new For_Each_Item (Callback);
+               begin
+                  All_Items (Get (Trans.Any.Namespace).all);
+                  return Matches;
+               end;
+            end if;
+      end case;
+   end Match;
 
 end Schema.Readers;
