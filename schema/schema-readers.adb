@@ -953,9 +953,6 @@ package body Schema.Readers is
       procedure Callback (Self : access NFA'Class; S : State) is
       begin
          if Self.Get_Data (S).Simple_Type /= null then
-            Debug_Output
-              ("Storing ignorable whitespace because of state "
-               & Image (S, Self.Get_Data (S).all));
             Store := True;
          end if;
       end Callback;

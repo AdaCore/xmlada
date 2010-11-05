@@ -52,6 +52,18 @@
   </strs2>
   -->
 
+  <person>
+     <first_name>Emmanuel</first_name>
+     <last_name>Briot</last_name>
+  </person>
+  <person>
+     <last_name>Briot</last_name>
+     <first_name>Emmanuel</first_name>
+  </person>
+  <person>
+     <first_name>Emmanuel</first_name>
+  </person>
+
   <xsi:manu/>
 
 </root>

@@ -420,6 +420,9 @@ package body Sax.State_Machines is
       if Max_Occurs = Natural'Last then
          Add_Empty_Transition (Self, From => To, To => From);
 
+      elsif Max_Occurs = 1 then
+         null;
+
       else
          declare
             Local_Ends : array (Min_Occurs + 1 .. Max_Occurs) of State;

@@ -191,7 +191,6 @@ package body Schema.Schema_Readers is
    procedure Finish_Complex_Type (Handler : access Schema_Reader'Class);
    procedure Finish_Simple_Type  (Handler : access Schema_Reader'Class);
    procedure Finish_Restriction  (Handler : access Schema_Reader'Class);
-   procedure Finish_All          (Handler : access Schema_Reader'Class);
    procedure Finish_Attribute    (Handler : access Schema_Reader'Class);
    procedure Finish_Union        (Handler : access Schema_Reader'Class);
    procedure Finish_List         (Handler : access Schema_Reader'Class);
@@ -487,10 +486,58 @@ package body Schema.Schema_Readers is
          Start      : State;
          Nested_End : out State)
       is
+         type Details_Array is array (Natural range <>) of Type_Details_Access;
+         type Natural_Array is array (Natural range <>) of Natural;
+
+         procedure All_Permutations
+           (Details : Details_Array;
+            Permut  : in out Natural_Array;
+            Index   : Natural);
+         --  Generate a choice for all possible permutations of Details
+
+         procedure All_Permutations
+           (Details : Details_Array;
+            Permut  : in out Natural_Array;
+            Index   : Natural)
+         is
+            Exists : Boolean;
+            S1, S2 : State;
+            D : Type_Details_Access;
+         begin
+            for Choice in Details'Range loop
+               Exists := False;
+
+               for Prev in 1 .. Index - 1 loop
+                  if Permut (Prev) = Choice then
+                     Exists := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Exists then
+                  Permut (Index) := Choice;
+
+                  if Index = Permut'Last then
+                     S1 := Start;
+                     for J in Permut'Range loop
+                        D := Details (Permut (J));
+                        Process_Details (D, S1, S2);
+                        NFA.Repeat (S1, S2, D.Min_Occurs, D.Max_Occurs);
+                        S1 := S2;
+                     end loop;
+                     NFA.Add_Empty_Transition (S2, Nested_End);
+                  else
+                     All_Permutations (Details, Permut, Index + 1);
+                  end if;
+               end if;
+            end loop;
+         end All_Permutations;
+
          S  : State;
          T  : Type_Details_Access;
          Gr : Group_Descr;
          Ty : Type_Index;
+         Count : Natural := 0;
       begin
          if Details = null then
             Nested_End := Start;
@@ -520,6 +567,33 @@ package body Schema.Schema_Readers is
                   NFA.Add_Empty_Transition (S, Nested_End);
                   T := T.Next;
                end loop;
+
+            when Type_All =>
+               if Details.First_In_All = null then
+                  Nested_End := Start;
+               else
+                  T := Details.First_In_All;
+                  while T /= null loop
+                     Count := Count + 1;
+                     T := T.Next;
+                  end loop;
+
+                  declare
+                     A      : Details_Array (1 .. Count);
+                     Permut : Natural_Array (1 .. Count);
+                  begin
+                     Count := A'First;
+                     T := Details.First_In_All;
+                     while T /= null loop
+                        A (Count) := T;
+                        Count := Count + 1;
+                        T := T.Next;
+                     end loop;
+
+                     Nested_End := NFA.Add_State (Default_User_Data);
+                     All_Permutations (A, Permut, Permut'First);
+                  end;
+               end if;
 
             when Type_Element =>
                Nested_End := Create_Element_State (Details.Element, Start);
@@ -2166,6 +2240,9 @@ package body Schema.Schema_Readers is
          when Context_Choice =>
             Append (Ctx.Choice.First_In_Choice, Element);
 
+         when Context_All =>
+            Append (Ctx.All_Detail.First_In_All, Element);
+
          when Context_Group =>
             pragma Assert (Ctx.Group.Details = null);
             Ctx.Group.Details := Element;
@@ -2179,7 +2256,7 @@ package body Schema.Schema_Readers is
             Ctx.Restriction.Restriction.Details := Element;
 
          when Context_Schema | Context_Attribute | Context_Element
-            | Context_All | Context_Union
+            | Context_Union
             | Context_List | Context_Redefine | Context_Attribute_Group =>
             null;  --  Should have raised exception when validating grammar
       end case;
@@ -2665,54 +2742,21 @@ package body Schema.Schema_Readers is
       Atts     : Sax_Attribute_List)
    is
       Min_Occurs, Max_Occurs : Integer := 1;
+      Details : Type_Details_Access;
    begin
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
---        Handler.Contexts := new Context'
---          (Typ           => Context_All,
---           All_Validator => null,
---           Create_All (Handler.Target_NS, Min_Occurs, Max_Occurs),
---           Next          => Handler.Contexts);
-      if Debug then
-         Output_Action (Ada_Name (Handler.Contexts) & " := Create_All ("
-                 & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
-      end if;
+      Details := new Type_Details'
+        (Kind         => Type_All,
+         Min_Occurs   => Min_Occurs,
+         Max_Occurs   => Max_Occurs,
+         Next         => null,
+         First_In_All => null);
+      Insert_In_Type (Handler, Details);
+      Handler.Contexts := new Context'
+        (Typ        => Context_All,
+         All_Detail => Details,
+         Next       => Handler.Contexts);
    end Create_All;
-
-   ----------------
-   -- Finish_All --
-   ----------------
-
-   procedure Finish_All (Handler : access Schema_Reader'Class) is
-   begin
-      case Handler.Contexts.Next.Typ is
-         when Context_Type_Def =>
---              Handler.Contexts.Next.Type_Validator :=
---                XML_Validator (Handler.Contexts.All_Validator);
-            if Debug then
-               Output_Action ("Validator := XML_Validator ("
-                       & Ada_Name (Handler.Contexts) & ");");
-            end if;
-
-         when Context_Group =>
-            null;
---              Add_Particle
---                (Handler.Contexts.Next.Group, Handler,
---                 Handler.Contexts.All_Validator);
---              if Debug then
---                 Output_Action
---                   ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
---                    & ", " & Ada_Name (Handler.Contexts) & ");");
---              end if;
-
-         when others =>
-            if Debug then
-               Output_Action ("Can't handled nested all");
-            end if;
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""all"" in this context");
-      end case;
-   end Finish_All;
 
    --------------
    -- Ada_Name --
@@ -2959,7 +3003,7 @@ package body Schema.Schema_Readers is
          Finish_Simple_Type (H);
 
       elsif Local_Name = Handler.S_All then
-         Finish_All (H);
+         null;
 
       elsif Local_Name = Handler.Sequence then
          null;
@@ -3114,9 +3158,14 @@ package body Schema.Schema_Readers is
             when Type_Empty | Type_Element | Type_Any => null;
             when Type_Sequence    => Free (Self.First_In_Seq);
             when Type_Choice      => Free (Self.First_In_Choice);
+            when Type_All         => Free (Self.First_In_All);
             when Type_Group       => Free (Self.Group.Details);
-            when Type_Extension   => Free (Self.Extension.Details);
-            when Type_Restriction => Free (Self.Restriction.Details);
+            when Type_Extension   =>
+               Unchecked_Free (Self.Extension.Attributes);
+               Free (Self.Extension.Details);
+            when Type_Restriction =>
+               Unchecked_Free (Self.Restriction.Attributes);
+               Free (Self.Restriction.Details);
          end case;
 
          Unchecked_Free (Self);

@@ -13,6 +13,7 @@
     <xsd:sequence>
       <xsd:element ref="strs" maxOccurs="2"/>
     </xsd:sequence>
+    <xsd:element ref="person" minOccurs="0" maxOccurs="unbounded"/>
 
     <!--  The following would be non-determinist
     <xsd:any namespace="##local" processContents="lax"
@@ -120,6 +121,15 @@
  </xsd:sequence>
 </xsd:complexType>
 <xsd:element name="strs" type="Tstrs" />
+
+<xsd:element name="person">
+  <xsd:complexType>
+    <xsd:all minOccurs="0">
+      <xsd:element name="first_name" type="xsd:string"/>
+      <xsd:element name="last_name" type="xsd:string" minOccurs="0"/>
+    </xsd:all>
+  </xsd:complexType>
+</xsd:element>
 
 <!-- Ambiguous2:
   Error at file /home/briot/Ada/xml/xmlada/schema/test/test.xml, line 4, char 49

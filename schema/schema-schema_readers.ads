@@ -68,7 +68,8 @@ private
    No_Type_Index : constant Type_Index := -1;
 
    type Type_Kind is (Type_Empty, Type_Sequence, Type_Choice, Type_Element,
-                      Type_Any, Type_Group, Type_Extension, Type_Restriction);
+                      Type_Any, Type_Group, Type_Extension, Type_Restriction,
+                      Type_All);
 
    type Type_Details;
    type Type_Details_Access is access all Type_Details;
@@ -141,6 +142,7 @@ private
          when Type_Group       => Group           : Group_Descr;
          when Type_Extension   => Extension       : Extension_Descr;
          when Type_Restriction => Restriction     : Restriction_Descr;
+         when Type_All         => First_In_All    : Type_Details_Access;
       end case;
    end record;
 
@@ -191,21 +193,19 @@ private
          when Context_Element         => Element     : Element_Descr;
          when Context_Sequence        => Seq         : Type_Details_Access;
          when Context_Choice          => Choice      : Type_Details_Access;
+         when Context_All             => All_Detail  : Type_Details_Access;
          when Context_Attribute_Group => Attr_Group  : AttrGroup_Descr;
          when Context_Schema          => null;
          when Context_Redefine        => null;
          when Context_Group           => Group       : Group_Descr;
          when Context_Extension       => Extension   : Type_Details_Access;
-         when Context_Restriction     =>
-            Restriction           : Type_Details_Access;
+         when Context_Restriction     => Restriction : Type_Details_Access;
 
             --  Following is for simple types
             Restriction_Validator : Schema.Validators.XML_Validator;
             Restricted            : Schema.Validators.XML_Validator; --  result
             Restriction_Base      : Schema.Validators.XML_Type;
 
-         when Context_All =>
-            null; --  All_Validator : Schema.Validators.XML_All;
          when Context_Union =>
             Union : Schema.Validators.XML_Validator;
          when Context_List =>
