@@ -26,8 +26,9 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Finalization;          use Ada.Finalization;
 with Sax.Encodings;             use Sax.Encodings;
+with Sax.Readers;               use Sax.Readers;
+with Sax.Symbols;               use Sax.Symbols;
 with Unicode.CES;               use Unicode, Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
@@ -48,8 +49,8 @@ package body Schema.Decimal is
    --  Move Pos to the next digit in Num
 
    function Internal_Value
-     (Ch : Unicode.CES.Byte_Sequence;
-      Reader : access Abstract_Validation_Reader'Class;
+     (Ch             : Unicode.CES.Byte_Sequence;
+      Reader         : access Abstract_Validation_Reader'Class;
       Allow_Exponent : Boolean) return Arbitrary_Precision_Number;
    --  Internal implementation of Value
 
@@ -60,8 +61,8 @@ package body Schema.Decimal is
    function Image
      (Number : Arbitrary_Precision_Number) return Unicode.CES.Byte_Sequence is
    begin
-      if Number.Value /= null then
-         return Number.Value.all;
+      if Number.Value /= No_Symbol then
+         return Get (Number.Value).all;
       else
          return "0";
       end if;
@@ -83,8 +84,8 @@ package body Schema.Decimal is
    --------------------
 
    function Internal_Value
-     (Ch : Unicode.CES.Byte_Sequence;
-      Reader : access Abstract_Validation_Reader'Class;
+     (Ch             : Unicode.CES.Byte_Sequence;
+      Reader         : access Abstract_Validation_Reader'Class;
       Allow_Exponent : Boolean) return Arbitrary_Precision_Number
    is
       Pos          : Integer := Ch'First;
@@ -176,10 +177,9 @@ package body Schema.Decimal is
       end loop;
 
       if Ch (First .. Last) = "-0" then
-         return (Controlled with Value => new Byte_Sequence'("0"));
+         return (Value => Find_Symbol (Reader.all, "0"));
       else
-         return
-           (Controlled with Value => new Byte_Sequence'(Ch (First .. Last)));
+         return (Value => Find_Symbol (Reader.all, Ch (First .. Last)));
       end if;
    end Internal_Value;
 
@@ -193,26 +193,6 @@ package body Schema.Decimal is
    begin
       return Internal_Value (Ch, Reader, Allow_Exponent => False);
    end Value_No_Exponent;
-
-   --------------
-   -- Finalize --
-   --------------
-
-   procedure Finalize (Object : in out Arbitrary_Precision_Number) is
-   begin
-      Free (Object.Value);
-   end Finalize;
-
-   ------------
-   -- Adjust --
-   ------------
-
-   procedure Adjust (Object : in out Arbitrary_Precision_Number) is
-   begin
-      if Object.Value /= null then
-         Object.Value := new Byte_Sequence'(Object.Value.all);
-      end if;
-   end Adjust;
 
    -------------
    -- Get_Exp --
@@ -394,7 +374,7 @@ package body Schema.Decimal is
 
    function "<" (Num1, Num2 : Arbitrary_Precision_Number) return Boolean is
    begin
-      return Compare (Num1.Value.all, Num2.Value.all) = Less_Than;
+      return Compare (Get (Num1.Value).all, Get (Num2.Value).all) = Less_Than;
    end "<";
 
    ----------
@@ -403,7 +383,8 @@ package body Schema.Decimal is
 
    function "<=" (Num1, Num2 : Arbitrary_Precision_Number) return Boolean is
    begin
-      return Compare (Num1.Value.all, Num2.Value.all) /= Greater_Than;
+      return Compare (Get (Num1.Value).all, Get (Num2.Value).all) /=
+        Greater_Than;
    end "<=";
 
    ---------
@@ -412,7 +393,7 @@ package body Schema.Decimal is
 
    function "=" (Num1, Num2 : Arbitrary_Precision_Number) return Boolean is
    begin
-      return Compare (Num1.Value.all, Num2.Value.all) = Equal;
+      return Compare (Get (Num1.Value).all, Get (Num2.Value).all) = Equal;
    end "=";
 
    ----------
@@ -421,7 +402,7 @@ package body Schema.Decimal is
 
    function ">=" (Num1, Num2 : Arbitrary_Precision_Number) return Boolean is
    begin
-      return Compare (Num1.Value.all, Num2.Value.all) /= Less_Than;
+      return Compare (Get (Num1.Value).all, Get (Num2.Value).all) /= Less_Than;
    end ">=";
 
    ---------
@@ -430,7 +411,8 @@ package body Schema.Decimal is
 
    function ">" (Num1, Num2 : Arbitrary_Precision_Number) return Boolean is
    begin
-      return Compare (Num1.Value.all, Num2.Value.all) = Greater_Than;
+      return Compare (Get (Num1.Value).all, Get (Num2.Value).all) =
+        Greater_Than;
    end ">";
 
    ------------------
@@ -442,29 +424,30 @@ package body Schema.Decimal is
       Num                           : Arbitrary_Precision_Number;
       Fraction_Digits, Total_Digits : Integer := -1)
    is
-      Exp : constant Long_Long_Integer := Get_Exp (Num.Value.all);
+      Value : constant Cst_Byte_Sequence_Access := Get (Num.Value);
+      Exp : constant Long_Long_Integer := Get_Exp (Value.all);
       Fore_First, Fore_Last : Integer;
       Pos : Integer;
       Digits_Count : Natural := 0;
       Frac_Digits  : Natural := 0;
    begin
-      Get_Fore (Num.Value.all, Fore_First, Fore_Last);
+      Get_Fore (Value.all, Fore_First, Fore_Last);
 
       --  Now count the significant digits (including fractional part)
-      Pos := Num.Value'First;
-      if Num.Value (Pos) = '-' or Num.Value (Pos) = '+' then
+      Pos := Value'First;
+      if Value (Pos) = '-' or Value (Pos) = '+' then
          Pos := Pos + 1;
       end if;
-      if Num.Value (Pos) = '.' then
+      if Value (Pos) = '.' then
          Pos := Pos + 1;
       end if;
 
-      while Pos <= Num.Value'Last loop
+      while Pos <= Value'Last loop
          Digits_Count := Digits_Count + 1;
          if Pos > Fore_Last then
             Frac_Digits := Frac_Digits + 1;
          end if;
-         To_Next_Digit (Num.Value.all, Pos);
+         To_Next_Digit (Value.all, Pos);
       end loop;
 
       if Total_Digits > 0 then
@@ -473,14 +456,14 @@ package body Schema.Decimal is
            Long_Long_Integer (Total_Digits)
          then
             Validation_Error
-              (Reader, "Number " & Num.Value.all
+              (Reader, "Number " & Value.all
                & " has too many digits (totalDigits is"
                & Integer'Image (Total_Digits) & ')');
          end if;
 
          if Digits_Count > Total_Digits then
             Validation_Error
-              (Reader, "Number " & Num.Value.all
+              (Reader, "Number " & Value.all
                & " has too many digits (totalDigits is"
                & Integer'Image (Total_Digits) & ")");
          end if;
@@ -491,7 +474,7 @@ package body Schema.Decimal is
            Long_Long_Integer (Fraction_Digits)
          then
             Validation_Error
-              (Reader, "Number " & Num.Value.all
+              (Reader, "Number " & Value.all
                & " has too many fractional digits (fractionDigits is"
                & Integer'Image (Fraction_Digits) & ')');
          end if;

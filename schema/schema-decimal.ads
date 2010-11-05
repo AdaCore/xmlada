@@ -31,14 +31,14 @@
 --  This is *not* an arbitrary-precision library, which is not needed in the
 --  context of XML
 
-with Ada.Finalization;
+with Sax.Symbols;
 with Schema.Validators;  use Schema.Validators;
 with Unicode.CES;
 
 package Schema.Decimal is
 
-   type Arbitrary_Precision_Number is new Ada.Finalization.Controlled
-      with private;
+   type Arbitrary_Precision_Number is private;
+   Undefined_Number : constant Arbitrary_Precision_Number;
 
    function Image
      (Number : Arbitrary_Precision_Number) return Unicode.CES.Byte_Sequence;
@@ -70,13 +70,10 @@ package Schema.Decimal is
    --  If any of the two values is negative, no check is done for it.
 
 private
-   type Arbitrary_Precision_Number is new Ada.Finalization.Controlled with
-      record
-         Value : Unicode.CES.Byte_Sequence_Access;
-      end record;
-
-   procedure Finalize (Object : in out Arbitrary_Precision_Number);
-   procedure Adjust   (Object : in out Arbitrary_Precision_Number);
-   --  See inherited documentation
+   type Arbitrary_Precision_Number is record
+      Value : Sax.Symbols.Symbol;
+   end record;
+   Undefined_Number : constant Arbitrary_Precision_Number :=
+     (Value => Sax.Symbols.No_Symbol);
 
 end Schema.Decimal;
