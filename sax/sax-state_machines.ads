@@ -54,6 +54,10 @@ generic
    Default_Data : State_User_Data;
    --  User data associated with each state
 
+   Default_State_Count      : Positive := 100;
+   Default_Transition_Count : Positive := 100;
+   --  Default size of the state machine initially
+
 package Sax.State_Machines is
 
    type State is new Natural range 0 .. 2 ** 16 - 1;
@@ -69,8 +73,32 @@ package Sax.State_Machines is
    type NFA_Access is access all NFA'Class;
    --  A non-deterministic automaton
 
-   procedure Initialize (Self : in out NFA);
+   procedure Initialize
+     (Self                 : in out NFA;
+      Nested_Must_Be_Final : Boolean := False;
+      States_Are_Statefull : Boolean := False);
    --  Initializes a new automaton
+   --  If [Nested_Must_Be_Final] is true, then the transitions from a
+   --  superstate are only considered if the nested NFA is in its final state.
+   --  If false, all transitions are considered and you must use the
+   --  [On_Nested_Exit] transitions to achieve a similar effect.
+   --
+   --  If [States_Are_Statefull], the active states's user data will be used to
+   --  perform various things. Otherwise, the exact list of states are
+   --  irrelevant, and we are only interested in the transitions between them.
+   --  This setting affects the way the machine is created in the call to
+   --  [Repeat]. When the setting is True, more empty transitions will have to
+   --  be created. For instance:
+   --     if the transition "a" is to be repeated 0 or 1 time, the state
+   --     machine will be:
+   --           [1]---a---->[2]  if not States_Are_Statefull
+   --              \-------/
+   --    Or
+   --           [1]---a---->[2]---->[3]   if States_Are_Statefull
+   --              \----------------/
+   --
+   --  So when processing the events, the state [2] might be active initially
+   --  in one of the cases.
 
    procedure Free (Self : in out NFA);
    procedure Free (Automaton : in out NFA_Access);
@@ -232,12 +260,6 @@ package Sax.State_Machines is
    function Get_Start_State (Self : Nested_NFA) return State;
    --  Return the start state that was defined for the nested NFA
 
-   procedure Set_Nested_Must_Be_Final
-     (Self : access NFA; Must_Be_Final : Boolean);
-   --  Activates the [Nested_Must_Be_Final] mode.
-   --  In this mode, the transitions from a superstate are only considered if
-   --  the nested NFA is in a final state.
-
    procedure On_Nested_Exit
      (Self      : access NFA;
       From      : State;
@@ -346,11 +368,14 @@ package Sax.State_Machines is
          Mode   : Dump_Mode := Dump_Compact) return String;
       --  Dump the NFA into a string.
 
-   end Pretty_Printers;
+      procedure Debug_Print
+        (Self   : NFA_Matcher;
+         Mode   : Dump_Mode := Dump_Multiline;
+         Prefix : String := "");
+      --  Print on stdout some debug information for [Self].
+      --  [Prefix] is printed at the beginning of the first line
 
-   procedure Debug_Print
-     (Self : NFA_Matcher; Mode : Dump_Mode := Dump_Multiline);
-   --  Print on stdout some debug information for [Self]
+   end Pretty_Printers;
 
 private
    type Transition_Id is new Natural range 0 .. 2 ** 16 - 1;
@@ -383,22 +408,23 @@ private
      (Table_Component_Type => Transition,
       Table_Index_Type     => Transition_Id,
       Table_Low_Bound      => No_Transition + 1,
-      Table_Initial        => 100,
-      Table_Increment      => 50);
+      Table_Initial        => Default_Transition_Count,
+      Table_Increment      => Default_Transition_Count);
    subtype Transition_Table is Transition_Tables.Instance;
 
    package State_Tables is new GNAT.Dynamic_Tables
      (Table_Component_Type => State_Data,
       Table_Index_Type     => State,
       Table_Low_Bound      => Start_State,
-      Table_Initial        => 100,
-      Table_Increment      => 50);
+      Table_Initial        => Default_State_Count,
+      Table_Increment      => Default_State_Count);
    subtype State_Table is State_Tables.Instance;
 
    type NFA is tagged record
       States       : State_Table;
       Transitions  : Transition_Table;
       Nested_Must_Be_Final : Boolean := False;
+      States_Are_Statefull : Boolean := True;
    end record;
 
    type Nested_NFA is record

@@ -582,7 +582,6 @@ package body Schema.Readers is
 
 --        Get_NS (H.Grammar, Get_URI (Get_NS (Elem)), Result => G);
 
-      Debug_Print (H.Matcher, Dump_Compact);
       Process
         (H.Matcher,
          Input   => (Kind => Transition_Symbol,
@@ -591,7 +590,7 @@ package body Schema.Readers is
          Success => Success);
 
       if Debug then
-         Debug_Print (H.Matcher, Dump_Compact);
+         Debug_Print (H.Matcher, Dump_Compact, "After: ");
       end if;
 
       if not Success then

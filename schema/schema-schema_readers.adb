@@ -842,7 +842,7 @@ package body Schema.Schema_Readers is
            ("NFA: " & Dump
               (NFA,
                Mode                => Dump_Dot_Compact,
-               Show_Details        => False,
+               Show_Details        => True,
                Show_Isolated_Nodes => False));
       end if;
 

@@ -1065,8 +1065,8 @@ package body Schema.Validators is
       if Grammar = No_Grammar then
          G := new XML_Grammar_Record;
          G.NFA := new Schema_State_Machines.NFA;
-         G.NFA.Initialize;
-         G.NFA.Set_Nested_Must_Be_Final (True);
+         G.NFA.Initialize (Nested_Must_Be_Final => True,
+                           States_Are_Statefull => True);
          Grammar  := Allocate (G);
       end if;
 
@@ -1136,8 +1136,8 @@ package body Schema.Validators is
          end if;
          Actual_G         := new XML_Grammar_Record;
          Actual_G.NFA := new Schema_State_Machines.NFA;
-         Actual_G.NFA.Initialize;
-         Actual_G.NFA.Set_Nested_Must_Be_Final (True);
+         Actual_G.NFA.Initialize (Nested_Must_Be_Final => True,
+                                  States_Are_Statefull => True);
          Reader.Grammar   := Allocate (Actual_G);
          Actual_G.Symbols := Get_Symbol_Table (Reader.all);
       end if;
@@ -2271,7 +2271,13 @@ package body Schema.Validators is
    function Image (Trans : Transition_Event) return String is
    begin
       case Trans.Kind is
-         when Transition_Symbol       => return To_QName (Trans.Name);
+         when Transition_Symbol       =>
+            --  return To_QName (Trans.Name);
+            if Trans.Name.Local = No_Symbol then
+               return "";
+            else
+               return Get (Trans.Name.Local).all;
+            end if;
          when Transition_Close_Nested => return "end of parent element";
          when Transition_Any          => return "<any>";
       end case;

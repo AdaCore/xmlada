@@ -67,8 +67,8 @@ procedure TestState is
       end case;
    end Image;
 
-   type State_User_Data is null record;
-   Default_State_Data : constant State_User_Data := (null record);
+   type State_User_Data is new Integer;
+   Default_State_Data : constant State_User_Data := 0;
 
    package Character_Machines is new Sax.State_Machines
      (Symbol            => Character,
@@ -79,7 +79,8 @@ procedure TestState is
       Default_Data      => Default_State_Data);
    use Character_Machines;
 
-   package PP is new Character_Machines.Pretty_Printers;
+   function State_Image (S : State; Data : State_User_Data) return String;
+   package PP is new Character_Machines.Pretty_Printers (State_Image);
    use PP;
 
    procedure Display_Result (Msg, Str : String; S : Positive);
@@ -104,7 +105,26 @@ procedure TestState is
    procedure Test3;
    procedure Test4;
    procedure Test5;
+   procedure Test6;
    --  Various tests
+
+   -----------------
+   -- State_Image --
+   -----------------
+
+   function State_Image (S : State; Data : State_User_Data) return String is
+      pragma Unreferenced (S);
+   begin
+      if Data = 0 then
+         return "";
+      else
+         declare
+            Str : constant String := Data'Img;
+         begin
+            return Str (Str'First + 1 .. Str'Last);
+         end;
+      end if;
+   end State_Image;
 
    ------------
    -- Assert --
@@ -435,7 +455,7 @@ procedure TestState is
       --  Override the superstate's transition (which will not happen)
 
       Assert
-        (" Start(,S3) S3(,Sf)(1,S2) S2(0,S3){nested:S4}"
+        (" Start(,S3) S3(,Sf)(1,S2) S2:S4(0,S3)"
          & " S4(t,Sf)(f,S6)(p,S5) S6(0,S6) S5(r,S4)",
          Dump (N, Dump_Compact),
          Name);
@@ -453,10 +473,78 @@ procedure TestState is
       Free (N);
    end Test5;
 
+   -----------
+   -- Test6 --
+   -----------
+
+   procedure Test6 is
+      Name : constant String := "Test6";
+
+      procedure Internal
+         (Statefull : Boolean; Min, Max : Integer; Expected : String);
+      procedure Internal
+         (Statefull : Boolean; Min, Max : Integer; Expected : String)
+      is
+         N : NFA_Access := new NFA;
+         S2, S3, S4 : State;
+      begin
+         N.Initialize (States_Are_Statefull => Statefull);
+         S2 := N.Add_State (2);
+         S3 := N.Add_State (3);
+         S4 := N.Add_State (4);
+         N.Add_Empty_Transition (Start_State, S2);
+         N.Add_Transition (S2, S3, (Char, 'a'));
+         N.Repeat (S2, S3, Min, Max);
+         N.Add_Transition (S3, S4, (Char, 'b'));
+
+         Assert
+           (Expected,
+            Dump (N, Dump_Compact),
+            Name & " " & Statefull'Img & Min'Img & Max'Img);
+         Free (N);
+      end Internal;
+
+   begin
+      if Debug then
+         Put_Line ("=== Test6");
+      end if;
+
+      Internal (False, 0, 1, " Start(,S2) S2_2(,S3)(a,S3) S3_3(b,S4) S4_4");
+      Internal (True, 0, 1, " Start(,S2) S2_2(,S3)(a,S5) S3(b,S4) S4_4"
+                & " S5_3(,S3)");
+
+      Internal (False, 1, Natural'Last,
+                " Start(,S2) S2_2(a,S3) S3_3(b,S4)(,S2) S4_4");
+      Internal (True, 1, Natural'Last,
+                " Start(,S2) S2_2(a,S3) S3_3(b,S4)(,S2) S4_4");
+
+      Internal (False, 0, Natural'Last,
+                " Start(,S2) S2_2(,S3)(a,S3) S3_3(b,S4)(,S2) S4_4");
+      Internal (True, 0, Natural'Last,
+                " Start(,S2) S2_2(,S3)(a,S5) S3(b,S4)(,S2) S4_4"
+                & " S5_3(,S3)");
+
+      Internal (False, 0, 3,
+                " Start(,S2) S2_2(,S3)(a,S5) S3_3(b,S4) S4_4 S5_3(,S3)(a,S6)"
+                & " S6_3(,S3)(a,S3)");
+      Internal (True, 0, 3,
+                " Start(,S2) S2_2(,S3)(a,S5) S3(b,S4) S4_4 S5_3(,S3)(a,S6)"
+                & " S6_3(,S3)(a,S7) S7_3(,S3)");
+
+      Internal (False, 2, Natural'Last,
+                " Start(,S2) S2_2(a,S5) S5_3(a,S3) S3_3(b,S4)(,S5) S4_4");
+      Internal (True, 2, Natural'Last,
+                " Start(,S2) S2_2(a,S5) S5_3(a,S3) S3_3(b,S4)(,S5) S4_4");
+
+      --  Internal (False, 1, 3, "");
+      --  Internal (True, 1, 3, "");
+   end Test6;
+
 begin
    Test1;
    Test2;
    Test3;
    Test4;
    Test5;
+   Test6;
 end TestState;

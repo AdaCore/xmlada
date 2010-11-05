@@ -71,8 +71,15 @@ package body Sax.State_Machines is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Self : in out NFA) is
+   procedure Initialize
+     (Self                 : in out NFA;
+      Nested_Must_Be_Final : Boolean := False;
+      States_Are_Statefull : Boolean := False)
+   is
    begin
+      Self.Nested_Must_Be_Final := Nested_Must_Be_Final;
+      Self.States_Are_Statefull := States_Are_Statefull;
+
       Init (Self.States);
       Init (Self.Transitions);
 
@@ -212,21 +219,25 @@ package body Sax.State_Machines is
       Min_Occurs : Natural := 1;
       Max_Occurs : Positive := 1)
    is
-      function Clone_And_Append (From : State) return State;
-      --  Duplicate the automaton From..To, and create a new automaton starting
-      --  at Append_To.
-      --
-      --     -|From|--E--|To|--         ---|Append_To|
-      --
+      function Clone_And_Append (Newfrom : State) return State;
+      --  Duplicate the automaton NewFrom..To
+      --     -|Newfrom|--E--|To|--
       --  becomes
-      --
-      --     ---|Append_To|--E--|New_End|--
-      --
-      --  The contents of Append_To is overwritten.
+      --     -|Newfrom|--E--|Newto|--E--|To|
+      --  and Newto is returned.
 
       procedure Rename_State (Old_State, New_State : State);
       --  Replace all references to [Old_State] with references to [New_State]
       --  This doesn't change transitions.
+
+      function Add_Stateless return State;
+      --  Add a new stateless (ie with no user data) state at the end of the
+      --  subautomaton.
+      --     -|From|--E--|To|--
+      --  becomes
+      --     -|From|--E--|N|--|To|
+      --  where N is returned, has the user data of To, and To does not have
+      --  any user data.
 
       ------------------
       -- Rename_State --
@@ -245,12 +256,12 @@ package body Sax.State_Machines is
       -- Clone_And_Append --
       ----------------------
 
-      function Clone_And_Append (From : State) return State is
+      function Clone_And_Append (Newfrom : State) return State is
          New_To : constant State := Add_State (Self);
 
          Cloned : array (State_Tables.First .. Last (Self.States)) of State :=
            (others => No_State);
-         --  Id of the clones corresponding to the states in From..To
+         --  Id of the clones corresponding to the states in Newfrom..To
 
          procedure Clone_Internal_Nodes (S : State);
          --  Clone all nodes internal to the subautomation.
@@ -270,12 +281,12 @@ package body Sax.State_Machines is
          procedure Clone_Internal_Nodes (S : State) is
             T   : Transition_Id;
          begin
-            if S = From then
-               Cloned (From) := New_To;
+            if S = Newfrom then
+               Cloned (Newfrom) := New_To;
             elsif S = New_To then
                return;  --  Do not follow transitions from [To]
             else
-               Cloned (S) := Add_State (Self);
+               Cloned (S) := Add_State (Self, Self.States.Table (S).Data);
             end if;
 
             T := Self.States.Table (S).First_Transition;
@@ -379,61 +390,89 @@ package body Sax.State_Machines is
 
       begin
          --  Replace [To] with a new node, so that [To] is still
-         --  the end state
+         --  the end state.
 
          Rename_State (To, New_To);
 
-         --  Need to duplicate the sub-automaton
+         --  Need to duplicate Newfrom..Newto into Newto..To
 
          Cloned (New_To) := To;
-         Clone_Internal_Nodes (From);
+         Clone_Internal_Nodes (Newfrom);
          Clone_Transitions;
 
          return New_To;
       end Clone_And_Append;
 
-      N : State := From;
+      -------------------
+      -- Add_Stateless --
+      -------------------
+
+      function Add_Stateless return State is
+         N : State := To;
+      begin
+         if Self.States_Are_Statefull then
+            --  Add extra stateless node
+            N := Add_State (Self, Self.States.Table (To).Data);
+            Self.States.Table (To).Data := Default_Data;
+
+            Self.States.Table (N).Nested  := Self.States.Table (To).Nested;
+            Self.States.Table (To).Nested := No_State;
+
+            Rename_State (To, N);
+            Add_Empty_Transition (Self, N, To);
+         end if;
+         return N;
+      end Add_Stateless;
+
+      N : State;
 
    begin
+      --  First the simple and usual cases (that cover the usual "*", "+" and
+      --  "?" operators in regular expressions. It is faster to first handle
+      --  those, since we don't need any additional new state for those.
+
       if Min_Occurs = 1 and then Max_Occurs = 1 then
          return;  --  Nothing to do
-      end if;
-
-      if Min_Occurs > Max_Occurs then
+      elsif Min_Occurs > Max_Occurs then
          return;  --  As documented, nothing is done
-      end if;
-
-      if Min_Occurs = 0 then
+      elsif Min_Occurs = 0 and then Max_Occurs = 1 then
+         N := Add_Stateless;
          Add_Empty_Transition (Self, From, To);
-
-      elsif Min_Occurs > 1 then
-         for Occur in 2 .. Min_Occurs loop
-            N := Clone_And_Append (From => N);
-         end loop;
+         return;
+      elsif Min_Occurs = 1 and then Max_Occurs = Natural'Last then
+         Add_Empty_Transition (Self, From => To, To => From);
+         return;
+      elsif Min_Occurs = 0 and then Max_Occurs = Natural'Last then
+         N := Add_Stateless;
+         Add_Empty_Transition (Self, From, To);
+         Add_Empty_Transition (Self, From => To, To => From);
+         return;
       end if;
+
+      --  We now deal with the more complex cases (always Max_Occurs > 1)
+
+      N := From;
 
       if Max_Occurs = Natural'Last then
-         Add_Empty_Transition (Self, From => To, To => From);
-
-      elsif Max_Occurs = 1 then
-         null;
+         for M in 1 .. Min_Occurs - 1 loop
+            N := Clone_And_Append (N);  --  N_Prev..To becomes N_Prev..N..To
+         end loop;
+         Add_Empty_Transition (Self, To, N);  --  unlimited
 
       else
          declare
-            Local_Ends : array (Min_Occurs + 1 .. Max_Occurs) of State;
+            Local_Ends : array (0 .. Max_Occurs - 1) of State;
          begin
-            for Occur in Min_Occurs + 1 .. Max_Occurs loop
+            Local_Ends (0) := From;
+
+            for M in 1 .. Max_Occurs - 1 loop
                N := Clone_And_Append (N);
-               Local_Ends (Occur) := N;
+               Local_Ends (M) := N;
             end loop;
 
-            --  Make those occurrences optional. For efficiency, the start of
-            --  each points to the end of the regexp, rather than to the start
-            --  of the next optional (both result in the same behavior, but
-            --  the latter require more iteration when processing the NFA to
-            --  traverse empty transitions).
+            N := Add_Stateless;
 
-            for L in Local_Ends'Range loop
+            for L in Min_Occurs .. Local_Ends'Last loop
                Add_Empty_Transition (Self, Local_Ends (L), To);
             end loop;
          end;
@@ -515,22 +554,22 @@ package body Sax.State_Machines is
       --  as active too.
 
       if From /= Final_State then
-         T := Self.NFA.States.Table (From).First_Transition;
-         while T /= No_Transition loop
-            declare
-               Tr : Transition renames Self.NFA.Transitions.Table (T);
-            begin
-               if Tr.Is_Empty
-                 and then
-                   (not Self.NFA.Nested_Must_Be_Final
-                    or else Nested_In_Final (Self, From_Index))
-               then
-                  Mark_Active (Self, List_Start, Tr.To_State);
-               end if;
-
-               T := Tr.Next_For_State;
-            end;
-         end loop;
+         if not Self.NFA.Nested_Must_Be_Final
+           or else Self.NFA.States.Table (From).Nested = No_State
+           or else Nested_In_Final (Self, From_Index)
+         then
+            T := Self.NFA.States.Table (From).First_Transition;
+            while T /= No_Transition loop
+               declare
+                  Tr : Transition renames Self.NFA.Transitions.Table (T);
+               begin
+                  if Tr.Is_Empty then
+                     Mark_Active (Self, List_Start, Tr.To_State);
+                  end if;
+                  T := Tr.Next_For_State;
+               end;
+            end loop;
+         end if;
 
          --  If we are entering any state with a nested NFA, we should activate
          --  that NFA next turn (unless the nested NFA is already active)
@@ -769,8 +808,8 @@ package body Sax.State_Machines is
      (Self : NFA_Matcher;
       S    : Matcher_State_Index) return Boolean is
    begin
-      return S /= No_Matcher_State
-        and then Self.Active.Table (S).S = Final_State;
+      return S = No_Matcher_State
+        or else Self.Active.Table (S).S = Final_State;
    end Nested_In_Final;
 
    --------------
@@ -950,15 +989,23 @@ package body Sax.State_Machines is
          if S = Start_State then
             return "Start";
          elsif S = Final_State then
-            return "End";
+            return "Final";
          else
             if Self.States.Table (S).Nested /= No_State then
                return Node_Name (S)
                  & ":" & Node_Label (Self, Self.States.Table (S).Nested);
 
             else
-               return Node_Name (S)
-                 & " " & State_Image (S, Self.States.Table (S).Data);
+               declare
+                  Img : constant String :=
+                    State_Image (S, Self.States.Table (S).Data);
+               begin
+                  if Img /= "" then
+                     return Node_Name (S) & "_" & Img;
+                  else
+                     return Node_Name (S);
+                  end if;
+               end;
             end if;
          end if;
       end Node_Label;
@@ -981,9 +1028,15 @@ package body Sax.State_Machines is
               or else S = Final_State
               or else S = Nested_In
             then
-               Append (R, "[label=""" & Label & """ shape=doublecircle];");
-            else
+               if Label /= "" then
+                  Append (R, "[label=""" & Label & """ shape=doublecircle];");
+               else
+                  Append (R, "[shape=doublecircle];");
+               end if;
+            elsif Label /= "" then
                Append (R, "[label=""" & Label & """];");
+            else
+               Append (R, ";");
             end if;
          else
             if S = Start_State or else S = Nested_In then
@@ -1017,7 +1070,7 @@ package body Sax.State_Machines is
             end if;
 
             Dumped (S) := True;
-            Append (Result, " " & Node_Name (S));
+            Append (Result, " " & Node_Label (Self, S));
 
             T := Self.States.Table (S).First_Transition;
             while T /= No_Transition loop
@@ -1037,10 +1090,7 @@ package body Sax.State_Machines is
             end loop;
 
             if Self.States.Table (S).Nested /= No_State then
-               Append
-                 (Result,
-                  "{nested:"
-                  & Node_Name (Self.States.Table (S).Nested) & "}");
+               --  The start of nested NFA is already displayed in Node_Label
                if not Dumped (Self.States.Table (S).Nested) then
                   Append
                     (Result,
@@ -1133,21 +1183,25 @@ package body Sax.State_Machines is
                   Append (Result,
                           Prefix & Node_Name (S, Nested_In)
                           & "->" & Node_Name (Tr.To_State, Nested_In)
-                          & " [label=""");
+                          & "[");
 
                   if not Tr.Is_Empty then
-                     Append (Result, Label_Prefix & Image (Tr.Sym) & """");
+                     Append
+                       (Result,
+                        "label=""" & Label_Prefix & Image (Tr.Sym) & """");
 
                      if Label_Prefix = "on_exit:" then
-                        Append (Result, "style=dotted");
+                        Append (Result, " style=dotted");
                      end if;
                   else
-                     Append (Result, Label_Prefix & """");
+                     if Label_Prefix /= "" then
+                        Append (Result, "label=""" & Label_Prefix & """ ");
+                     end if;
 
                      if Label_Prefix = "on_exit:" then
                         Append (Result, "style=dotted");
                      else
-                        Append (Result, " style=dashed");
+                        Append (Result, "style=dashed");
                      end if;
                   end if;
 
@@ -1206,6 +1260,8 @@ package body Sax.State_Machines is
 
       begin
          Append (Result, "Total states:" & Last (Self.States)'Img
+                 & ASCII.LF);
+         Append (Result, "Total transitions:" & Last (Self.Transitions)'Img
                  & ASCII.LF);
 
          if not Show_Details then
@@ -1273,53 +1329,59 @@ package body Sax.State_Machines is
 
          return To_String (Result);
       end Dump;
-   end Pretty_Printers;
 
-   -----------------
-   -- Debug_Print --
-   -----------------
+      -----------------
+      -- Debug_Print --
+      -----------------
 
-   procedure Debug_Print
-     (Self : NFA_Matcher; Mode : Dump_Mode := Dump_Multiline)
-   is
-      procedure Internal (From : Matcher_State_Index; Prefix : String);
+      procedure Debug_Print
+        (Self   : NFA_Matcher;
+         Mode   : Dump_Mode := Dump_Multiline;
+         Prefix : String := "")
+      is
+         NFA : constant NFA_Access := Self.NFA;
 
-      procedure Internal (From : Matcher_State_Index; Prefix : String) is
-         F : Matcher_State_Index := From;
+         procedure Internal (From : Matcher_State_Index; Prefix : String);
+
+         procedure Internal (From : Matcher_State_Index; Prefix : String) is
+            F : Matcher_State_Index := From;
+         begin
+            while F /= No_Matcher_State loop
+               Put (Node_Label (NFA, Self.Active.Table (F).S));
+
+               if Self.Active.Table (F).Nested /= No_Matcher_State then
+                  if Mode = Dump_Multiline then
+                     New_Line;
+                  end if;
+                  Put (Prefix & " [");
+
+                  if Mode = Dump_Multiline then
+                     Internal (Self.Active.Table (F).Nested, Prefix & "  ");
+                  else
+                     Internal (Self.Active.Table (F).Nested, Prefix);
+                  end if;
+
+                  Put ("]");
+               end if;
+
+               F := Self.Active.Table (F).Next;
+
+               if F /= No_Matcher_State then
+                  Put (" ");
+               end if;
+            end loop;
+         end Internal;
+
       begin
-         while F /= No_Matcher_State loop
-            Put (Self.Active.Table (F).S'Img);
-            F := Self.Active.Table (F).Next;
-         end loop;
-
-         F := From;
-         while F /= No_Matcher_State loop
-            if Self.Active.Table (F).Nested /= No_Matcher_State then
-               if Mode = Dump_Multiline then
-                  New_Line;
-               end if;
-               Put (Prefix & " [" & Self.Active.Table (From).S'Img & ":");
-
-               if Mode = Dump_Multiline then
-                  Internal (Self.Active.Table (F).Nested, Prefix & "  ");
-               else
-                  Internal (Self.Active.Table (F).Nested, Prefix);
-               end if;
-
-               Put ("]");
-            end if;
-            F := Self.Active.Table (F).Next;
-         end loop;
-      end Internal;
-
-   begin
-      if Self.First_Active = No_Matcher_State then
-         Put_Line ("[no active state]");
-      else
-         Internal (Self.First_Active, "");
-         New_Line;
-      end if;
-   end Debug_Print;
+         if Self.First_Active = No_Matcher_State then
+            Put_Line (Prefix & "[no active state]");
+         else
+            Put (Prefix);
+            Internal (Self.First_Active, "");
+            New_Line;
+         end if;
+      end Debug_Print;
+   end Pretty_Printers;
 
    ---------------------
    -- Get_Start_State --
@@ -1329,15 +1391,5 @@ package body Sax.State_Machines is
    begin
       return Self.Default_Start;
    end Get_Start_State;
-
-   ------------------------------
-   -- Set_Nested_Must_Be_Final --
-   ------------------------------
-
-   procedure Set_Nested_Must_Be_Final
-     (Self : access NFA; Must_Be_Final : Boolean) is
-   begin
-      Self.Nested_Must_Be_Final := Must_Be_Final;
-   end Set_Nested_Must_Be_Final;
 
 end Sax.State_Machines;

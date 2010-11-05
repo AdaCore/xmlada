@@ -213,12 +213,14 @@ package Schema.Validators is
    --  Needed for the instantiation of Sax.State_Machines
 
    package Schema_State_Machines is new Sax.State_Machines
-      (Symbol            => Transition_Event,
-       Transition_Symbol => Transition_Event,
-       Match             => Match,
-       Image             => Image,
-       State_User_Data   => State_User_Data,
-       Default_Data      => Default_User_Data);
+      (Symbol              => Transition_Event,
+       Transition_Symbol   => Transition_Event,
+       Match               => Match,
+       Image               => Image,
+       State_User_Data     => State_User_Data,
+       Default_Data        => Default_User_Data,
+       Default_State_Count => 700,       --  XSD metaschema takes 630 states
+       Default_Transition_Count => 900); --  XSD metaschema takes 822
    use Schema_State_Machines;
 
    function Image
