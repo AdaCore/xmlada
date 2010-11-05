@@ -258,6 +258,10 @@ package Schema.Validators is
    type Schema_NFA is new Schema_State_Machines.NFA with private;
    type Schema_NFA_Access is access all Schema_NFA'Class;
 
+   function Ur_Type
+     (NFA : access Schema_NFA'Class) return Schema_State_Machines.Nested_NFA;
+   --  Return the nested NFA for <ur-Type>
+
    type Reference_Kind is (Ref_Element,
                            Ref_Type,
                            Ref_Attribute,
@@ -302,6 +306,12 @@ package Schema.Validators is
    function Get_References (Grammar : XML_Grammar) return Reference_HTable;
    --  Returns the state machine and global references used to validate
    --  [Grammar]
+
+   function Dump_Dot_NFA
+     (Grammar            : XML_Grammar;
+      Include_Metaschema : Boolean := False) return String;
+   --  Return a "dot" graph for the NFA, including, or not, the metaschema for
+   --  XSD grammars themselves.
 
    function Get_Simple_Type
      (NFA    : access Schema_NFA'Class;
@@ -729,6 +739,8 @@ private
       Attributes   : Attributes_Tables.Instance;
       Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
       Types        : Types_Tables.Instance;
+
+      Ur_Type      : Schema_State_Machines.Nested_NFA;
 
       Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
       Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;

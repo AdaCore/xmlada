@@ -660,7 +660,7 @@ package body Schema.Readers is
 
       if not Success then
          Validation_Error
-           (H, "#Unexpected element """
+           (H, "Unexpected element """
             & To_QName (Elem) & """: expecting """
             & Expected (H.Matcher) & '"');
       end if;

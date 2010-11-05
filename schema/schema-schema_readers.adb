@@ -485,6 +485,8 @@ package body Schema.Schema_Readers is
                     (S1,
                      NFA.Create_Nested
                        (Get_Type_Descr (NFA, NFA_Type).Complex_Content));
+               else
+                  NFA.Set_Nested (S1, NFA.Ur_Type);
                end if;
 
                NFA.Get_Data (S1).Fixed := Info.Fixed;
@@ -1251,7 +1253,6 @@ package body Schema.Schema_Readers is
 
       Element_Info : Element_Descr;
       Attr : Internal_Attribute_Descr;
-      Previous_Snapshot : constant NFA_Snapshot := Get_Snapshot (NFA);
       S : State;
 
       Ignored : Simple_Type_Index;
@@ -1341,13 +1342,7 @@ package body Schema.Schema_Readers is
       end loop;
 
       if Debug then
-         Output_Action
-           ("NFA: " & Dump
-              (NFA,
-               Mode                => Dump_Dot_Compact,
-               Show_Details        => True,
-               Show_Isolated_Nodes => False,
-               Since               => Previous_Snapshot));
+         Output_Action ("NFA: " & Dump_Dot_NFA (Get_Grammar (Parser.all)));
       end if;
 
       Reset (Types);

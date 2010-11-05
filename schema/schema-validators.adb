@@ -816,6 +816,11 @@ package body Schema.Validators is
 
       procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr);
 
+      function Create_UR_Type return Nested_NFA;
+      --  Return the start state for a nested NFA for ur-type
+      --  All children (at any depth level) are allowed.
+      --  Any character contents is allowed.
+
       procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr) is
          Simple : Simple_Type_Index;
          Index  : Type_Index;
@@ -836,6 +841,52 @@ package body Schema.Validators is
                Is_Abstract     => False,
                Complex_Content => No_State));
       end Register;
+
+      function Create_UR_Type return Nested_NFA is
+         S1      : constant State := G.NFA.Add_State;
+         Ur_Type : constant Nested_NFA := G.NFA.Create_Nested (S1);
+         S2, S3  : State;
+         List    : Attribute_Validator_List := Empty_Attribute_List;
+         Index   : Type_Index;
+         Attr    : constant Attribute_Descr := Attribute_Descr'
+           (Is_Any      => True,
+            Any         => Any_Descr'
+              (Process_Contents => Process_Lax,
+               Namespace        => Reader.Any_Namespace,
+               Target_NS        => No_Symbol),
+            Next        => Empty_Attribute_List);
+
+      begin
+         G.NFA.Add_Attribute (List, Attr);
+         Index := Create_Type
+           (G.NFA,
+            Type_Descr'
+              (Name            => (NS    => Reader.XML_Schema_URI,
+                                   Local => Reader.Ur_Type),
+               Attributes      => List,
+               Mixed           => True,
+               Complex_Content => S1,
+               others          => <>));
+
+         G.NFA.Set_Data (S1, (Simple => Index, Fixed => No_Symbol));
+         S2 := G.NFA.Add_State ((Simple => Index, Fixed => No_Symbol));
+
+         G.NFA.Set_Nested (S2, Ur_Type);
+
+         G.NFA.Add_Transition
+           (S1, S2,
+            (Kind => Transition_Any,
+             Any  => (Process_Contents => Process_Lax,
+                      Namespace        => Reader.Any_Namespace,
+                      Target_NS        => No_Symbol)));
+
+         S3 := G.NFA.Add_State;
+         G.NFA.On_Empty_Nested_Exit (S2, S3);
+         G.NFA.Add_Empty_Transition (S3, S1); --  maxOccurs="unbounded"
+         G.NFA.Add_Empty_Transition (S1, S3); --  minOccurs="0"
+         G.NFA.Add_Transition (S3, Final_State, (Kind => Transition_Close));
+         return Ur_Type;
+      end Create_UR_Type;
 
       procedure Do_Register is new Register_Predefined_Types (Register);
 
@@ -865,6 +916,13 @@ package body Schema.Validators is
 
          Add_Schema_For_Schema (Reader);
 
+         --  Added support for <ur-Type>
+
+         G.NFA.Ur_Type := Create_UR_Type;
+
+         --  Save the current state, so that we can restore the grammar to just
+         --  this metaschema.
+
          G.NFA.Metaschema_NFA_Last := Get_Snapshot (G.NFA);
          G.NFA.Metaschema_Simple_Types_Last :=
            Simple_Type_Tables.Last (G.NFA.Simple_Types);
@@ -875,6 +933,16 @@ package body Schema.Validators is
          G.NFA.Metaschema_Types_Last := Types_Tables.Last (G.NFA.Types);
       end if;
    end Initialize_Grammar;
+
+   -------------
+   -- Ur_Type --
+   -------------
+
+   function Ur_Type
+     (NFA : access Schema_NFA'Class) return Schema_State_Machines.Nested_NFA is
+   begin
+      return NFA.Ur_Type;
+   end Ur_Type;
 
    ----------------
    -- Debug_Dump --
@@ -1872,5 +1940,32 @@ package body Schema.Validators is
 --                    end if;
 --                 end if;
    end Check_Substitution_Group_OK;
+
+   ------------------
+   -- Dump_Dot_NFA --
+   ------------------
+
+   function Dump_Dot_NFA
+     (Grammar            : XML_Grammar;
+      Include_Metaschema : Boolean := False) return String
+   is
+      NFA : constant Schema_NFA_Access := Get (Grammar).NFA;
+   begin
+      if Include_Metaschema then
+         return Schema_State_Machines_PP.Dump
+           (NFA,
+            Mode                => Dump_Dot_Compact,
+            Show_Details        => True,
+            Show_Isolated_Nodes => False);
+
+      else
+         return Schema_State_Machines_PP.Dump
+           (NFA,
+            Mode                => Dump_Dot_Compact,
+            Show_Details        => True,
+            Show_Isolated_Nodes => False,
+            Since               => NFA.Metaschema_NFA_Last);
+      end if;
+   end Dump_Dot_NFA;
 
 end Schema.Validators;
