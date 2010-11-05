@@ -93,15 +93,6 @@ package body Schema.Validators is
       Extension : XML_Validator := null) return XML_Validator
      renames Schema.Validators.Extensions.Create_Extension_Of;
 
-   function Extension_Of
-     (G          : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Base       : XML_Type;
-      Group      : XML_Group;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return XML_Validator
-      renames Schema.Validators.Extensions.Create_Extension_Of;
-
    function Restriction_Of
      (G           : XML_Grammar_NS;
       Reader      : access Abstract_Validation_Reader'Class;
@@ -1278,31 +1269,6 @@ package body Schema.Validators is
       return (Elem => Result, Is_Ref => True);
    end Lookup_Element;
 
-   ------------------
-   -- Lookup_Group --
-   ------------------
-
-   function Lookup_Group
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol) return XML_Group
-   is
-      Result : XML_Group := Groups_Htable.Get
-        (Grammar.Groups.all, Local_Name);
-   begin
-      if Result = No_XML_Group then
-         if Grammar.Checked then
-            Validation_Error
-              (Reader, "#Declaration not found for "
-               & To_QName (Grammar, Local_Name));
-         end if;
-
-         Result := Create_Global_Group (Grammar, Reader, Local_Name);
-         Result.Is_Forward_Decl := True;
-      end if;
-      return Result;
-   end Lookup_Group;
-
    ----------------------
    -- Lookup_Attribute --
    ----------------------
@@ -1633,7 +1599,6 @@ package body Schema.Validators is
          System_ID          => No_Symbol,
          Types              => new Types_Htable.HTable (101),
          Elements           => new Elements_Htable.HTable (101),
-         Groups             => new Groups_Htable.HTable (101),
          Attributes         => new Attributes_Htable.HTable (101),
          Checked            => False,
          NFA                => Get (Grammar).NFA,
@@ -1849,23 +1814,6 @@ package body Schema.Validators is
       return No_Type;
    end Redefine_Type;
 
-   --------------------
-   -- Redefine_Group --
-   --------------------
-
-   function Redefine_Group
-     (Grammar : XML_Grammar_NS; Local_Name : Symbol) return XML_Group
-   is
-      Old : constant XML_Group := Groups_Htable.Get
-        (Grammar.Groups.all, Local_Name);
-   begin
-      if Old /= No_XML_Group then
-         Old.Is_Forward_Decl := True;
-         return Old;
-      end if;
-      return No_XML_Group;
-   end Redefine_Group;
-
    ----------------
    -- Debug_Name --
    ----------------
@@ -2078,35 +2026,6 @@ package body Schema.Validators is
       return Attribute_Validator (Old);
    end Create_Global_Attribute;
 
-   -------------------------
-   -- Create_Global_Group --
-   -------------------------
-
-   function Create_Global_Group
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol) return XML_Group
-   is
-      Group : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
-   begin
-      if Group /= No_XML_Group then
-         if not Group.Is_Forward_Decl then
-            Validation_Error
-              (Reader, "#Group has already been declared: "
-               & Get (Local_Name).all);
-         end if;
-
-         Group.Is_Forward_Decl := False;
-      else
-         Group := new XML_Group_Record'
-           (Local_Name      => Local_Name,
-            --  Particles       => Empty_Particle_List,
-            Is_Forward_Decl => False);
-         Groups_Htable.Set (Grammar.Groups.all, Group);
-      end if;
-      return Group;
-   end Create_Global_Group;
-
    ----------
    -- Free --
    ----------
@@ -2235,8 +2154,6 @@ package body Schema.Validators is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Elements_Htable.HTable, Elements_Htable_Access);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Groups_Htable.HTable, Groups_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (XML_Grammar_NS_Record, XML_Grammar_NS);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Attributes_Htable.HTable, Attributes_Htable_Access);
@@ -2291,8 +2208,6 @@ package body Schema.Validators is
          Unchecked_Free (Grammar.Elements);
          Types_Htable.Reset (Grammar.Types.all);
          Unchecked_Free (Grammar.Types);
-         Groups_Htable.Reset (Grammar.Groups.all);
-         Unchecked_Free (Grammar.Groups);
          Attributes_Htable.Reset (Grammar.Attributes.all);
          Unchecked_Free (Grammar.Attributes);
 
@@ -2490,18 +2405,6 @@ package body Schema.Validators is
       return Element.Elem.Fixed;
    end Get_Fixed;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Group : in out XML_Group) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Group_Record, XML_Group);
-   begin
---        Free (Group.Particles);
-      Unchecked_Free (Group);
-   end Free;
-
    -------------
    -- Get_Key --
    -------------
@@ -2518,15 +2421,6 @@ package body Schema.Validators is
    function Get_Key (Typ : XML_Type) return Symbol is
    begin
       return Typ.Local_Name;
-   end Get_Key;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Group : XML_Group) return Symbol is
-   begin
-      return Group.Local_Name;
    end Get_Key;
 
    -------------
@@ -2608,15 +2502,6 @@ package body Schema.Validators is
       return Element.Elem.Substitution_Group;
    end Get_Substitution_Group;
 
-   --------------------
-   -- Get_Local_Name --
-   --------------------
-
-   function Get_Local_Name (Group : XML_Group) return Symbol is
-   begin
-      return Group.Local_Name;
-   end Get_Local_Name;
-
    -----------------------
    -- Create_Local_Type --
    -----------------------
@@ -2660,17 +2545,15 @@ package body Schema.Validators is
      (Reader  : access Abstract_Validation_Reader'Class;
       Grammar : XML_Grammar_NS)
    is
-      use Elements_Htable, Types_Htable, Attributes_Htable, Groups_Htable;
+      use Elements_Htable, Types_Htable, Attributes_Htable;
       Elem_Iter : Elements_Htable.Iterator := First (Grammar.Elements.all);
       Type_Iter : Types_Htable.Iterator := First (Grammar.Types.all);
       Attr_Iter : Attributes_Htable.Iterator :=
         First (Grammar.Attributes.all);
-      Group_Iter : Groups_Htable.Iterator := First (Grammar.Groups.all);
 
       Elem : XML_Element_Access;
       Typ  : XML_Type;
       Attr : Named_Attribute_Validator;
-      Group : XML_Group;
    begin
       if Grammar.Checked then
          return;
@@ -2712,18 +2595,6 @@ package body Schema.Validators is
          end if;
 
          Next (Grammar.Attributes.all, Attr_Iter);
-      end loop;
-
-      while Group_Iter /= Groups_Htable.No_Iterator loop
-         Group := Current (Group_Iter);
-         if Group.Is_Forward_Decl then
-            Validation_Error
-              (Reader, "Group """
-               & To_QName (Grammar.Namespace_URI, Group.Local_Name)
-               & """ is referenced, but not defined");
-         end if;
-
-         Next (Grammar.Groups.all, Group_Iter);
       end loop;
    end Global_Check;
 

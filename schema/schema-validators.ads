@@ -874,28 +874,6 @@ package Schema.Validators is
    function Get_QName (Element : XML_Element) return Qualified_Name;
    --  Return the qualified name for Element
 
-   ------------
-   -- Groups --
-   ------------
-
-   type XML_Group is private;
-   No_XML_Group : constant XML_Group;
-   --  A group of elements, Create through a call to Create_Global_Group
-
-   function Extension_Of
-     (G          : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Base       : XML_Type;
-      Group      : XML_Group;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return XML_Validator;
-   --  Create an extension of Base.
-   --  Base doesn't need to be a Clone of some other type, since it isn't
-   --  altered
-
-   function Get_Local_Name (Group : XML_Group) return Sax.Symbols.Symbol;
-   --  Return the local name of the group
-
    --------------
    -- Grammars --
    --------------
@@ -923,10 +901,6 @@ package Schema.Validators is
       Reader        : access Abstract_Validation_Reader'Class;
       Local_Name    : Sax.Symbols.Symbol;
       Create_If_Needed : Boolean := True) return XML_Type;
-   function Lookup_Group
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Sax.Symbols.Symbol) return XML_Group;
    function Lookup_Attribute
      (Grammar       : XML_Grammar_NS;
       Reader        : access Abstract_Validation_Reader'Class;
@@ -951,10 +925,6 @@ package Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Sax.Symbols.Symbol;
       Form       : Form_Type) return XML_Element;
-   function Create_Global_Group
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Sax.Symbols.Symbol) return XML_Group;
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Reader         : access Abstract_Validation_Reader'Class;
@@ -982,9 +952,6 @@ package Schema.Validators is
    function Redefine_Type
      (Grammar    : XML_Grammar_NS;
       Local_Name : Sax.Symbols.Symbol) return XML_Type;
-   function Redefine_Group
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Sax.Symbols.Symbol) return XML_Group;
    --  Indicate that a given type or element is being redefined inside a
    --  <redefine> tag. The old definition is returned, and all types that
    --  were referencing it will now refer to a new, invalid type. You need to
@@ -1355,26 +1322,6 @@ private
    --  is destroyed, the validator is properly deallocated.
    --  This does nothing if Validator was already registered.
 
-   ---------------
-   -- XML_Group --
-   ---------------
-
-   type XML_Group_Record;
-   type XML_Group is access all XML_Group_Record;
-   No_XML_Group : constant XML_Group := null;
-
-   ----------------------
-   -- XML_Group_Record --
-   ----------------------
-
-   type XML_Group_Record is record
-      Local_Name : Sax.Symbols.Symbol;
---        Particles  : Particle_List;
-      Is_Forward_Decl : Boolean;
-      --  Set to true if the group was defined as a call to Lookup, but never
-      --  through Create_Global_Group
-   end record;
-
    -------------
    -- Grammar --
    -------------
@@ -1411,18 +1358,6 @@ private
       Equal         => Sax.Symbols."=");
    type Elements_Htable_Access is access Elements_Htable.HTable;
 
-   procedure Free (Group : in out XML_Group);
-   function Get_Key (Group : XML_Group) return Sax.Symbols.Symbol;
-   package Groups_Htable is new Sax.HTable
-     (Element       => XML_Group,
-      Empty_Element => No_XML_Group,
-      Free          => Free,
-      Key           => Sax.Symbols.Symbol,
-      Get_Key       => Get_Key,
-      Hash          => Sax.Symbols.Hash,
-      Equal         => Sax.Symbols."=");
-   type Groups_Htable_Access is access Groups_Htable.HTable;
-
    function Get_Key
      (Att : Named_Attribute_Validator) return Sax.Symbols.Symbol;
    procedure Do_Nothing (Att : in out Named_Attribute_Validator);
@@ -1442,7 +1377,6 @@ private
       System_ID         : Sax.Symbols.Symbol;
       Types             : Types_Htable_Access;
       Elements          : Elements_Htable_Access;
-      Groups            : Groups_Htable_Access;
       Attributes        : Attributes_Htable_Access;
 
       Validators_For_Mem : XML_Validator;

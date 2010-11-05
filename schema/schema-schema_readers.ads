@@ -179,9 +179,7 @@ private
          when Context_Choice   => Choice         : Type_Details_Access;
          when Context_Attribute_Group => Attr_Group : AttrGroup_Descr;
          when Context_Schema | Context_Redefine => null;
-         when Context_Group =>
-            Group           : Group_Descr;
-            Redefined_Group : Schema.Validators.XML_Group;  --  <redefine>
+         when Context_Group    => Group          : Group_Descr;
 
          when Context_All =>
             null;

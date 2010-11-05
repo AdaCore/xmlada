@@ -44,7 +44,7 @@ package body Schema.Validators.XSD_Grammar is
 --        Choice1       : Choice;
       All_Validator : XML_Type;
       Elem          : XML_Element;
-      Gr            : XML_Group;
+--        Gr            : XML_Group;
       Union, Union2 : XML_Validator;
 
       Annotation, Any          : XML_Element;
@@ -68,12 +68,12 @@ package body Schema.Validators.XSD_Grammar is
       Facet_Type               : XML_Type;
       Redefinable, SchemaTop   : XML_Element;
       maxBound, minBound       : XML_Element;
-      attrDecls                : XML_Group;
-      typeDefParticle          : XML_Group;
+--        attrDecls                : XML_Group;
+--        typeDefParticle          : XML_Group;
 --        defRef, Occurs           : XML_Attribute_Group;
-      complexTypeModel         : XML_Group;
-      groupDefParticle         : XML_Group;
-      simpleRestrictionModel   : XML_Group;
+--        complexTypeModel         : XML_Group;
+--        groupDefParticle         : XML_Group;
+--        simpleRestrictionModel   : XML_Group;
 
    begin
       Get_NS (R.Grammar, R.XML_Schema_URI,   Result => G);

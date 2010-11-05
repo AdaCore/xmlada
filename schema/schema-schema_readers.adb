@@ -922,7 +922,6 @@ package body Schema.Schema_Readers is
       Handler.Contexts := new Context'
         (Typ             => Context_Group,
          Group           => Group,
-         Redefined_Group => No_XML_Group,
          Next            => Handler.Contexts);
 
       --  Do not use In_Redefine_Context, since this only applies for types

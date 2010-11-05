@@ -271,11 +271,10 @@ package body Schema.Validators.Extensions is
      (G          : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Base       : XML_Type;
-      Group      : XML_Group;
       Min_Occurs : Natural := 1;
       Max_Occurs : Integer := 1) return XML_Validator
    is
-      pragma Unreferenced (Group, Min_Occurs, Max_Occurs);
+      pragma Unreferenced (Min_Occurs, Max_Occurs);
       Result : constant Extension_Type := new Extension_XML_Validator;
    begin
       if Get_Final (Base)(Final_Extension) then
