@@ -27,7 +27,7 @@
 -----------------------------------------------------------------------
 
 pragma Ada_05;
-with Sax.Readers;    use Sax.Readers;
+--  with Sax.Readers;    use Sax.Readers;
 
 package body Schema.Validators.UR_Type is
 
@@ -167,15 +167,15 @@ package body Schema.Validators.UR_Type is
       Schema_NS : Schema.Validators.XML_Grammar_NS;
       Grammar   : XML_Grammar)
    is
-      pragma Unreferenced (Grammar);
+      pragma Unreferenced (Grammar, Reader, Schema_NS);
       Validator : UR_Type_Access;
-      Typ       : XML_Type;
+--        Typ       : XML_Type;
    begin
       for P in Process_Contents_Type loop
          Validator := new UR_Type_Validator;
          Validator.Process_Contents := P;
-         Typ := Create_Local_Type (Schema_NS, Validator);
-         Typ.Local_Name := Find_Symbol (Reader.all, "ur-Type" & P'Img);
+--           Typ := Create_Local_Type (Schema_NS, Validator);
+--           Typ.Local_Name := Find_Symbol (Reader.all, "ur-Type" & P'Img);
 --           Get (Grammar).UR_Type_Elements (P) := Create_Local_Element
 --             (Empty_String, Schema_NS, Typ, Qualified);
       end loop;

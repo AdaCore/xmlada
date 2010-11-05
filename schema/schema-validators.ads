@@ -77,9 +77,6 @@ package Schema.Validators is
    --  A grammar is a smart pointer, and will take care of freeing memory
    --  automatically when no longer needed.
 
-   type Attribute_Validator_Record is abstract tagged private;
-   type Attribute_Validator is access all Attribute_Validator_Record'Class;
-
    procedure Set_System_Id
      (Grammar   : XML_Grammar_NS;
       System_Id : Sax.Symbols.Symbol);
@@ -194,6 +191,19 @@ package Schema.Validators is
    end record;
    No_Type_Descr : constant Type_Descr := (others => <>);
 
+   type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
+
+   type Attribute_Descr is record
+      Name         : Qualified_Name     := No_Qualified_Name;
+      Simple_Type  : XML_Validator;
+      Use_Type     : Attribute_Use_Type := Optional;
+      Is_Local     : Boolean            := True;
+      Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Form         : Form_Type          := Qualified;
+      Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+   end record;
+
    type State_User_Data is record
       Descr       : Type_Descr;
    end record;
@@ -232,13 +242,13 @@ package Schema.Validators is
             Element : State;
             --  Tr : Transition_Event;
          when Ref_Type      => Typ : State;  --  Start of nested NFA
-         when Ref_Attribute => Attr_Validator : Attribute_Validator;
+         when Ref_Attribute => null; --  Attr_Validator : Attribute_Descr;
          when Ref_Group     => Gr_Start, Gr_End : State;
          when Ref_AttrGroup => Attributes : Attribute_Validator_List_Access;
       end case;
    end record;
    No_Global_Reference : constant Global_Reference :=
-     (Ref_Attribute, Attr_Validator => null);
+     (Ref_Type, Typ => No_State);
    --  The global elements in a grammar that can be referenced from another
    --  grammar (or from an XML file).
 
@@ -533,18 +543,11 @@ package Schema.Validators is
    --  A type, which can either be named (ie it has been explicitely declared
    --  with a name and stored in the grammar), or anonymous.
 
-   function Create_Local_Type
-     (Grammar    : XML_Grammar_NS;
-      Validator  : access XML_Validator_Record'Class) return XML_Type;
-   --  Create a new local type.
-   --  This type cannot be looked up in the grammar later on. See the function
-   --  Create_Global_Type below if you need this capability
-
    function Get_Validator (Typ : XML_Type) return XML_Validator;
    --  Return the validator used for that type
 
-   function List_Of
-     (Grammar : XML_Grammar_NS; Typ : XML_Type) return XML_Type;
+--     function List_Of
+--       (Grammar : XML_Grammar_NS; Typ : XML_Type) return XML_Type;
    --  Return a new type validator that checks for a list of values valid for
    --  Validator.
 
@@ -622,27 +625,6 @@ package Schema.Validators is
    -- Attribute_Validator --
    -------------------------
 
-   type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
-
-   function Create_Local_Attribute
-     (Local_Name     : Sax.Symbols.Symbol;
-      NS             : XML_Grammar_NS;
-      Attribute_Type : XML_Type           := No_Type;
-      Attribute_Form : Form_Type          := Unqualified;
-      Attribute_Use  : Attribute_Use_Type := Optional;
-      Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Default        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
-      return Attribute_Validator;
-   function Create_Local_Attribute
-     (Based_On       : Attribute_Validator;
-      Attribute_Form : Form_Type                 := Unqualified;
-      Attribute_Use  : Attribute_Use_Type        := Optional;
-      Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Default        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
-      return Attribute_Validator;
-   --  Create a new local attribute validator. See also Create_Global_Attribute
-   --  Default is only relevant when Attribute_Use is set to Default
-
    type Namespace_Kind is (Namespace_Other, Namespace_Any, Namespace_List);
    --  "Any":   any non-conflicting namespace
    --  "Other": any non-conflicting namespace other than targetNamespace
@@ -656,41 +638,10 @@ package Schema.Validators is
      (In_NS  : XML_Grammar_NS;
       Process_Contents : Process_Contents_Type := Process_Strict;
       Kind   : Namespace_Kind;
-      List   : NS_List := Empty_NS_List) return Attribute_Validator;
+      List   : NS_List := Empty_NS_List) return Attribute_Descr;
    --  Equivalent of <anyAttribute> in an XML schema.
    --  List is irrelevant if Kind /= Namespace_List. It is adopted by the
    --  attribute, and should not be freed by the caller
-
-   procedure Validate_Attribute
-     (Validator : Attribute_Validator_Record;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Readers.Sax_Attribute_List;
-      Index     : Natural) is abstract;
-   --  Return True if Value is valid for this attribute.
-   --  Sets the type of the attribute (per sax-attributes) to ID if we have an
-   --  ID attribute.
-   --  Raise XML_Validation_Error in case of error
-
-   procedure Free (Validator : in out Attribute_Validator_Record) is null;
-   --  Free the memory occupied by the validator
-
-   function Equal
-     (Validator      : Attribute_Validator_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is abstract;
-   --  Compare the two values, depending on the type of Validator
-
-   function Is_Equal
-     (Attribute : Attribute_Validator_Record;
-      Attr2     : Attribute_Validator_Record'Class)
-     return Boolean is abstract;
-   --  Whether the two are the same
-
-   procedure Set_Type
-     (Attr : access Attribute_Validator_Record; Attr_Type : XML_Type);
-   function Get_Type
-     (Attr : Attribute_Validator_Record) return XML_Type;
-   --  Set the type of the attribute
 
    ---------------------
    -- Type validators --
@@ -761,8 +712,7 @@ package Schema.Validators is
 
    procedure Add_Attribute
      (List      : in out Attribute_Validator_List_Access;
-      Attribute : access Attribute_Validator_Record'Class;
-      Is_Local  : Boolean);
+      Attribute : Attribute_Descr);
    procedure Add_Attributes
      (List       : in out Attribute_Validator_List_Access;
       Attributes : Attribute_Validator_List_Access);
@@ -770,12 +720,6 @@ package Schema.Validators is
    --  Is_Local should be true if the attribute is local, or False if this is
    --  a reference to a global attribute.
    --  The second version copies elements from [Attributes] into [List].
-
-   function Has_Attribute
-     (Validator  : access XML_Validator_Record;
-      NS         : XML_Grammar_NS;
-      Local_Name : Sax.Symbols.Symbol) return Boolean;
-   --  Whether the given attribute was already added to Validator
 
    function Is_Wildcard
      (Validator : access XML_Validator_Record) return Boolean;
@@ -939,55 +883,12 @@ package Schema.Validators is
    --  Set the target namespace for the grammar. This is the "targetNamespace"
    --  attribute of the <schema> node.
 
-   function Lookup
-     (Grammar       : XML_Grammar_NS;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Sax.Symbols.Symbol;
-      Create_If_Needed : Boolean := True) return XML_Type;
-   function Lookup_Attribute
-     (Grammar       : XML_Grammar_NS;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Sax.Symbols.Symbol;
-      Create_If_Needed : Boolean := True) return Attribute_Validator;
-   --  Return the type validator to use for elements with name Local_Name.
-   --  "null" is returned if there is no validator defined for these elements.
-   --  The returned value must be freed by the user.
-   --  If you are going to modify the returned value in any way (adding new
-   --  restrictions,...), you must clone it, or you will modify the actual
-   --  type stored in the grammar.
-   --  If the element doesn't exist yet, a forward declaration is created for
-   --  it, that must be overriden later on.
-
-   function Create_Global_Attribute
-     (NS             : XML_Grammar_NS;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Sax.Symbols.Symbol;
-      Attribute_Type : XML_Type;
-      Attribute_Form : Form_Type                 := Qualified;
-      Attribute_Use  : Attribute_Use_Type        := Optional;
-      Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
-      return Attribute_Validator;
-   --  Register a new type or element in the grammar.
-
    procedure Create_Global_Type
      (Grammar    : XML_Grammar;
       Name       : Qualified_Name;
       Validator  : access XML_Validator_Record'Class);
-   procedure Create_Global_Attribute
-     (NS             : XML_Grammar_NS;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Sax.Symbols.Symbol;
-      Attribute_Type : XML_Type);
    --  Same as above, but doesn't return the newly created type. Use Lookup if
    --  you need access to it later on
-
-   function Redefine_Type
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Sax.Symbols.Symbol) return XML_Type;
-   --  Indicate that a given type or element is being redefined inside a
-   --  <redefine> tag. The old definition is returned, and all types that
-   --  were referencing it will now refer to a new, invalid type. You need to
-   --  register the new type or element before using the grammar.
 
    procedure Set_Block_Default
      (Grammar : XML_Grammar_NS; Blocks  : Block_Status);
@@ -1088,13 +989,6 @@ private
    type XML_Type is access all XML_Type_Record;
    No_Type : constant XML_Type := null;
 
-   procedure Register
-     (NS  : XML_Grammar_NS;
-      Typ : access XML_Type_Record);
-   --  Registers a newly allocated type into NS, so that when the latter
-   --  is destroyed, the type is properly deallocated.
-   --  This does nothing if Typ was already registered.
-
    ------------------
    -- Element_List --
    ------------------
@@ -1159,13 +1053,6 @@ private
    end record;
    No_Element : constant XML_Element := (null, False);
 
-   procedure Register
-     (NS      : XML_Grammar_NS;
-      Element : access XML_Element_Record);
-   --  Registers a newly allocated element into NS, so that when the latter
-   --  is destroyed, the element is properly deallocated.
-   --  This does nothing if Element was already registered.
-
    --------------
    -- Grammars --
    --------------
@@ -1223,103 +1110,40 @@ private
    -- Attribute_Validator --
    -------------------------
 
-   type Attribute_Validator_Record is abstract tagged record
-      NS   : XML_Grammar_NS;
-
-      Next : Attribute_Validator;
-      --  Points to the next attribute validator in NS, for memory management
-      --  purposes
-   end record;
-
-   function Is_ID (Attr : Attribute_Validator_Record) return Boolean;
+   function Is_ID (Attr : Attribute_Descr) return Boolean;
    --  Whether the attribute is an ID
 
-   type Attribute_Descr is record
-      Validator : Attribute_Validator;
-      Is_Local  : Boolean;
-   end record;
    type Attribute_Validator_List
      is array (Natural range <>) of Attribute_Descr;
 
-   type Named_Attribute_Validator_Record;
-   type Named_Attribute_Validator is access all
-     Named_Attribute_Validator_Record'Class;
-
-   type Named_Attribute_Validator_Record is new Attribute_Validator_Record with
-      record
-         Local_Name     : Sax.Symbols.Symbol;
-         Ref_Attr       : Named_Attribute_Validator;
-         Attribute_Type : XML_Type;   --  or read from Ref_Attr the first time
-         Attribute_Form : Form_Type;
-         Attribute_Use  : Attribute_Use_Type;
-         Fixed          : Sax.Symbols.Symbol; -- or from Ref_Attr
-         Default        : Sax.Symbols.Symbol;
-      end record;
-   function Equal
-     (Validator      : Named_Attribute_Validator_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    procedure Validate_Attribute
-     (Validator : Named_Attribute_Validator_Record;
+     (Attr      : Attribute_Descr;
       Reader    : access Abstract_Validation_Reader'Class;
       Atts      : in out Sax.Readers.Sax_Attribute_List;
       Index     : Natural);
-   function Is_Equal
-     (Attribute : Named_Attribute_Validator_Record;
-      Attr2     : Attribute_Validator_Record'Class)
-     return Boolean;
-   procedure Set_Type
-     (Attr      : access Named_Attribute_Validator_Record;
-      Attr_Type : XML_Type);
-   function Get_Type
-     (Attr : Named_Attribute_Validator_Record) return XML_Type;
-   function Is_ID (Attr : Named_Attribute_Validator_Record) return Boolean;
 
    Empty_NS_List : constant NS_List := (1 .. 0 => Sax.Symbols.No_Symbol);
 
-   type Any_Attribute_Validator (NS_Count : Natural) is
-     new Attribute_Validator_Record
-   with record
-      Process_Contents : Process_Contents_Type;
-      Kind             : Namespace_Kind;
-      List             : NS_List (1 .. NS_Count);
-   end record;
-   function Equal
-     (Validator      : Any_Attribute_Validator;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
-   procedure Validate_Attribute
-     (Validator : Any_Attribute_Validator;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Readers.Sax_Attribute_List;
-      Index     : Natural);
-   function Is_Equal
-     (Attribute : Any_Attribute_Validator;
-      Attr2     : Attribute_Validator_Record'Class)
-     return Boolean;
-
-   procedure Get_Attribute_Lists
-     (Validator   : access XML_Validator_Record;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator;
-      Must_Match_All_Any_In_Dep2 : out Boolean);
-   --  Return the list of attributes that need to be checked for this
-   --  validator, and a set of other validators whose list of attributes also
-   --  need to be checked (they in turn will be called through this subprogram
-   --  to get their own lists of attributes).
-   --  There is generally a single list, although restrictions and
-   --  extensions will have two or more.
-   --  The lists are checked in turn, and any attribute already encountered
-   --  will not be checked again.
-
-   procedure Register
-     (NS   : XML_Grammar_NS;
-      Attr : access Attribute_Validator_Record'Class);
-   --  Registers a newly allocated type into NS, so that when the latter
-   --  is destroyed, the type is properly deallocated.
-   --  This does nothing if Typ was already registered.
+--     type Any_Attribute_Validator (NS_Count : Natural) is
+--       new Attribute_Validator_Record
+--     with record
+--        Process_Contents : Process_Contents_Type;
+--        Kind             : Namespace_Kind;
+--        List             : NS_List (1 .. NS_Count);
+--     end record;
+--     function Equal
+--       (Validator      : Any_Attribute_Validator;
+--        Reader         : access Abstract_Validation_Reader'Class;
+--        Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
+--     procedure Validate_Attribute
+--       (Validator : Any_Attribute_Validator;
+--        Reader    : access Abstract_Validation_Reader'Class;
+--        Atts      : in out Sax.Readers.Sax_Attribute_List;
+--        Index     : Natural);
+--     function Is_Equal
+--       (Attribute : Any_Attribute_Validator;
+--        Attr2     : Attribute_Validator_Record'Class)
+--       return Boolean;
 
    -------------------
    -- XML_Validator --
@@ -1341,92 +1165,18 @@ private
       --  grammars, and should not be registered again
    end record;
 
-   procedure Register
-     (NS        : XML_Grammar_NS;
-      Validator : access XML_Validator_Record'Class);
-   --  Registers a newly allocated validator into NS, so that when the latter
-   --  is destroyed, the validator is properly deallocated.
-   --  This does nothing if Validator was already registered.
-
    -------------
    -- Grammar --
    -------------
 
-   function Get_Key (Typ : XML_Type) return Sax.Symbols.Symbol;
-   procedure Do_Nothing (Typ : in out XML_Type);
-
-   package Types_Htable is new Sax.HTable
-     (Element       => XML_Type,
-      Empty_Element => No_Type,
-      Free          => Do_Nothing,
-      Key           => Sax.Symbols.Symbol,
-      Get_Key       => Get_Key,
-      Hash          => Sax.Symbols.Hash,
-      Equal         => Sax.Symbols."=");
-   type Types_Htable_Access is access Types_Htable.HTable;
-   --  We store a pointer to an XML_Type_Record, since the validator might not
-   --  be known when we first reference the type (it is valid in an XML schema
-   --  to ref to a type described later on).
-   --  Memory management is taken care of through a list of XML_Type stored in
-   --  the grammar_ns itself, so the hash table should never free a pointer
-   --  from this table
-
-   function Get_Key
-     (Att : Named_Attribute_Validator) return Sax.Symbols.Symbol;
-   procedure Do_Nothing (Att : in out Named_Attribute_Validator);
-
-   package Attributes_Htable is new Sax.HTable
-     (Element       => Named_Attribute_Validator,
-      Empty_Element => null,
-      Free          => Do_Nothing,
-      Key           => Sax.Symbols.Symbol,
-      Get_Key       => Get_Key,
-      Hash          => Sax.Symbols.Hash,
-      Equal         => Sax.Symbols."=");
-   type Attributes_Htable_Access is access Attributes_Htable.HTable;
-
    type XML_Grammar_NS_Record is record
-      Namespace_URI     : Sax.Symbols.Symbol;
-      System_ID         : Sax.Symbols.Symbol;
-      Types             : Types_Htable_Access;
-      Attributes        : Attributes_Htable_Access;
-
-      Validators_For_Mem : XML_Validator;
-      --  List of validators allocated in the context of this grammar, and
-      --  that should be freed when the grammar is destroyed. Warning: if an
-      --  XML_Grammar_NS_Record is freed before others that depend on it, the
-      --  latter might reference already freed memory
-
-      Types_For_Mem  : XML_Type;
-      --  List of types allocated in the context of this grammar. This is only
-      --  used for memory management.
-
-      Atts_For_Mem   : Attribute_Validator;
-      --  List of attribute validators in the context of this grammar, for
-      --  memory management purposes.
-
-      Elems_For_Mem  : XML_Element_Access;
-      --  List of elements defined in this grammar, for memory management
-      --  purposes
-
-      Blocks : Block_Status := No_Block;
-
-      Checked : Boolean := False;
-      --  Whether Global_Checks has been called, ie whether we have checked for
-      --  missing declarations
-
-      NFA : Schema_State_Machines.NFA_Access;
-      --  A pointer to the actual NFA within the Grammar.
+      Namespace_URI : Sax.Symbols.Symbol;
+      System_ID     : Sax.Symbols.Symbol;
+      Blocks        : Block_Status := No_Block;
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_NS);
    --  Free the memory occupied by Grammar
-
-   --------------------
-   -- XML_All_Record --
-   --------------------
-
-   type Natural_Array is array (Natural range <>) of Natural;
 
    function Get_Name
      (Validator : access XML_Validator_Record'Class) return String;

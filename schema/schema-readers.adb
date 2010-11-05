@@ -533,7 +533,7 @@ package body Schema.Readers is
 --        Element       : XML_Element := No_Element;
       --  Data          : Validator_Data;
 --        Typ           : XML_Type;
-      Xsi_Type      : XML_Type;
+      Xsi_Type      : Type_Descr;
       pragma Unreferenced (Xsi_Type);
 --      Parent_Type   : XML_Type;
 --        Is_Nil        : Boolean;
@@ -543,7 +543,7 @@ package body Schema.Readers is
       --  Validate the attributes for state [S]. If they are not valid, [S]
       --  is marked as invalid.
 
-      function Compute_Type_From_Attribute return XML_Type;
+      function Compute_Type_From_Attribute return Type_Descr;
       --  Compute the type to use, depending on whether the xsi:type attribute
       --  was specified
 
@@ -551,11 +551,11 @@ package body Schema.Readers is
       -- Compute_Type --
       ------------------
 
-      function Compute_Type_From_Attribute return XML_Type is
+      function Compute_Type_From_Attribute return Type_Descr is
          G : XML_Grammar_NS;
 --           Had_Restriction, Had_Extension : Boolean := False;
 --           Valid : Boolean;
-         Typ : XML_Type := No_Type;
+--           Typ : XML_Type := No_Type;
       begin
          if Type_Index /= -1 then
             declare
@@ -566,7 +566,7 @@ package body Schema.Readers is
                  Ada.Strings.Fixed.Trim
                    (Get (Get_Value (Atts, Type_Index)).all,
                     Ada.Strings.Both);
-               Local_Name : Symbol;
+--                 Local_Name : Symbol;
                Separator : constant Integer := Split_Qname (Qname);
                NS        : XML_NS;
             begin
@@ -583,17 +583,17 @@ package body Schema.Readers is
                   NS);
                Get_NS
                  (Validating_Reader (Handler.all).Grammar, Get_URI (NS), G);
-               Local_Name := Find_Symbol
-                 (Handler.all, Qname (Separator + 1 .. Qname'Last));
+--                 Local_Name := Find_Symbol
+--                   (Handler.all, Qname (Separator + 1 .. Qname'Last));
 
-               Typ := Lookup (G, H, Local_Name, Create_If_Needed => False);
-
-               if Typ = No_Type then
-                  Validation_Error
-                    (H,
-                     "#Unknown type """
-                     & Get (Get_Value (Atts, Type_Index)).all & '"');
-               end if;
+--                 Typ := Lookup (G, H, Local_Name, Create_If_Needed => False);
+--
+--                 if Typ = No_Type then
+--                    Validation_Error
+--                      (H,
+--                       "#Unknown type """
+--                       & Get (Get_Value (Atts, Type_Index)).all & '"');
+--                 end if;
 
 --                 if Element /= No_Element
 --                   and then Get_Validator (Typ) /=
@@ -629,7 +629,7 @@ package body Schema.Readers is
 --                 end if;
             end;
          end if;
-         return Typ;
+         return No_Type_Descr;
       end Compute_Type_From_Attribute;
 
       procedure Validate_Attributes_Cb

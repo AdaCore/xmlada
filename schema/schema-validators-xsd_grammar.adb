@@ -1141,7 +1141,7 @@ package body Schema.Validators.XSD_Grammar is
 
       --  The namespace schema
 
-      Create_Global_Attribute (XML_G, R, R.Base, Str);
+--        Create_Global_Attribute (XML_G, R, R.Base, Str);
 
 --        Global_Check (R, G);
    end Add_Schema_For_Schema;

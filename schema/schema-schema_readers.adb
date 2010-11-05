@@ -49,7 +49,7 @@ package body Schema.Schema_Readers is
    --  Default number of nested levels in a schema.
    --  If the actual schema uses more, we will simply reallocate some memory.
 
-   Max_Namespaces_In_Any_Attribute : constant := 50;
+--     Max_Namespaces_In_Any_Attribute : constant := 50;
    --  Maximum number of namespaces for a <anyAttribute>
    --  This only impacts the parsing of the grammar, so can easily be raised if
    --  need be.
@@ -65,13 +65,6 @@ package body Schema.Schema_Readers is
 
    procedure Free (Self : in out Type_Details_Access);
    --  Free [Self], [Self.Next] and so on
-
-   procedure Get_Grammar_For_Namespace
-     (Handler : access Schema_Reader'Class;
-      NS      : Sax.Symbols.Symbol;
-      Grammar : out XML_Grammar_NS;
-      Create_If_Needed : Boolean := True);
-   --  Return the grammar matching a given prefix
 
    procedure Create_NFA (Parser : access Schema_Reader);
    --  Create the state machine from the registered elements and types
@@ -121,10 +114,8 @@ package body Schema.Schema_Readers is
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
       In_Context     : in out Context;
-      Attribute      : Attribute_Validator;
-      Is_Local       : Boolean);
+      Attribute      : Internal_Attribute_Descr);
    --  Insert attribute at the right location in In_Context.
-   --  Attribute_Name is only for debugging purposes
 
    function Process_Contents_From_Atts
      (Handler : access Schema_Reader'Class;
@@ -193,25 +184,6 @@ package body Schema.Schema_Readers is
       Atts    : Sax_Attribute_List;
       Min_Occurs, Max_Occurs : out Integer);
    --  Get the "minOccurs" and "maxOccurs" attributes
-
---     function Get_Last_State
---       (Handler   : access Schema_Reader'Class;
---        Ctxt      : Context_Access) return State;
---     --  Return the state we should link from, given the context
---
---     procedure Link_To_Previous
---       (Handler   : access Schema_Reader'Class;
---        Ctxt      : Context_Access;
---        S         : State;
---        On_Symbol : Transition_Event;
---        Min_Occurs : Natural := 1;
---        Max_Occurs : Integer := 1);
---     --  Add link in the state machine for S
---
---     procedure Propagate_Last
---       (Handler : access Schema_Reader'Class);
-   --  The current context is terminated, we need to update the parent
-   --  context's last_state
 
    function Max_Occurs_From_Value
      (Reader : access Abstract_Validation_Reader'Class;
@@ -437,12 +409,6 @@ package body Schema.Schema_Readers is
 
          --  Save this transition for later reuse in other namespaces
 
-         if Debug then
-            Debug_Output
-              ("Element=" & To_QName (Real.Name) & " (global? "
-               & Global'Img & ")");
-         end if;
-
          if Global then
             Set (Ref.all, (Real.Name, Ref_Element),
                  (Kind => Ref_Element, Element => S1)); --  Tr => Trans));
@@ -628,7 +594,9 @@ package body Schema.Schema_Readers is
         (List  : in out Attribute_Validator_List_Access;
          Attrs : Attr_Array_Access)
       is
-         Gr : AttrGroup_Descr;
+         Gr   : AttrGroup_Descr;
+         TRef : Global_Reference;
+         S    : State;
       begin
          if Attrs /= null then
             for A in Attrs'Range loop
@@ -647,7 +615,23 @@ package body Schema.Schema_Readers is
                      end if;
 
                   when Kind_Attribute =>
-                     Add_Attribute (List, Attrs (A).Attr, Attrs (A).Is_Local);
+                     if Attrs (A).Attr.Local_Type /= No_Type_Index then
+                        S := Parser.Types.Table (Attrs (A).Attr.Local_Type).S;
+                     else
+                        TRef := Get (Ref.all, (Attrs (A).Attr.Typ, Ref_Type));
+                        if TRef = No_Global_Reference then
+                           Validation_Error
+                             (Parser,
+                              "Unknown type for attribute: "
+                              & To_QName (Attrs (A).Attr.Typ));
+                        end if;
+
+                        S := TRef.Typ;
+                     end if;
+
+                     Attrs (A).Attr.Descr.Simple_Type :=
+                       NFA.Get_Data (S).Descr.Simple_Type;
+                     Add_Attribute (List, Attrs (A).Attr.Descr);
                end case;
             end loop;
          end if;
@@ -660,8 +644,6 @@ package body Schema.Schema_Readers is
       procedure Create_Nested_For_Type (J : Type_Index) is
          Info : Internal_Type_Descr renames Parser.Types.Table (J);
       begin
-         Debug_Output
-           ("Create_Nested for type : " & To_QName (Info.Descr.Name));
          Info.S := NFA.Add_State ((Descr => Info.Descr));
 
          --  Do we have a global element ?
@@ -719,7 +701,14 @@ package body Schema.Schema_Readers is
                      & To_QName (Info.Details.Restriction.Base) & """");
                end if;
 
-               Add_Attributes (List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
+               Index := Get (Types, Info.Details.Restriction.Base);
+               if Index /= No_Type_Index then
+                  Recursive_Add_Attributes (Parser.Types.Table (Index));
+               else
+                  Add_Attributes
+                    (List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
+               end if;
+
                Add_Attributes (List, Info.Details.Restriction.Attributes);
 
             else
@@ -1348,49 +1337,50 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
-      Namespace_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Namespace);
-      Process_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Process_Contents);
-      Process_Contents : constant Process_Contents_Type :=
-        Process_Contents_From_Atts (Handler, Atts, Process_Index);
-      Kind  : Namespace_Kind;
+--        Namespace_Index : constant Integer :=
+--          Get_Index (Atts, Empty_String, Handler.Namespace);
+--        Process_Index : constant Integer :=
+--          Get_Index (Atts, Empty_String, Handler.Process_Contents);
+--        Process_Contents : constant Process_Contents_Type :=
+--          Process_Contents_From_Atts (Handler, Atts, Process_Index);
+--        Kind  : Namespace_Kind;
 
-      List  : NS_List (1 .. Max_Namespaces_In_Any_Attribute);
-      Last  : Integer := List'First;
-
-      procedure Cb_Item (Str : Byte_Sequence);
-      procedure Cb_Item (Str : Byte_Sequence) is
-      begin
-         List (Last) := Find_Symbol (Handler.all, Str);
-         Last := Last + 1;
-      end Cb_Item;
-
-      procedure For_Each is new For_Each_Item (Cb_Item);
+--        List  : NS_List (1 .. Max_Namespaces_In_Any_Attribute);
+--        Last  : Integer := List'First;
+--
+--        procedure Cb_Item (Str : Byte_Sequence);
+--        procedure Cb_Item (Str : Byte_Sequence) is
+--        begin
+--           List (Last) := Find_Symbol (Handler.all, Str);
+--           Last := Last + 1;
+--        end Cb_Item;
+--
+--        procedure For_Each is new For_Each_Item (Cb_Item);
    begin
-      if Namespace_Index = -1 then
-         Kind := Namespace_Any;
-      else
-         declare
-            Val : constant Symbol := Get_Value (Atts, Namespace_Index);
-         begin
-            if Val = Handler.Other_Namespace then
-               Kind := Namespace_Other;
-            elsif Val = Handler.Any_Namespace then
-               Kind := Namespace_Any;
-            else
-               Kind := Namespace_List;
-               For_Each (Get (Val).all);
-            end if;
-         end;
-      end if;
+      null;
+--        if Namespace_Index = -1 then
+--           Kind := Namespace_Any;
+--        else
+--           declare
+--              Val : constant Symbol := Get_Value (Atts, Namespace_Index);
+--           begin
+--              if Val = Handler.Other_Namespace then
+--                 Kind := Namespace_Other;
+--              elsif Val = Handler.Any_Namespace then
+--                 Kind := Namespace_Any;
+--              else
+--                 Kind := Namespace_List;
+--                 For_Each (Get (Val).all);
+--              end if;
+--           end;
+--        end if;
 
-      Insert_Attribute
-        (Handler,
-         Handler.Contexts (Handler.Contexts_Last),
-         Create_Any_Attribute
-           (Handler.Target_NS, Process_Contents, Kind, List (1 .. Last - 1)),
-         Is_Local => False);
+--        Insert_Attribute
+--          (Handler,
+--           Handler.Contexts (Handler.Contexts_Last),
+--           Create_Any_Attribute
+--           (Handler.Target_NS, Process_Contents, Kind, List (1 .. Last - 1))
+--           Is_Local => False);
    end Create_Any_Attribute;
 
    --------------------
@@ -1588,7 +1578,6 @@ package body Schema.Schema_Readers is
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Next : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last - 1)'Access;
-      Typ  : XML_Type;
       Info : Internal_Type_Descr renames Handler.Types.Table (Ctx.Type_Info);
    begin
 --        if Next.Typ = Context_Restriction
@@ -1617,13 +1606,11 @@ package body Schema.Schema_Readers is
 
       case Next.Typ is
          when Context_Schema | Context_Redefine => null;
-         when Context_Element   => Next.Element.Local_Type := Ctx.Type_Info;
-         when Context_Attribute => Set_Type (Next.Attribute, Typ);
-         when Context_List      =>
-            Next.List.List_Local_Type := Ctx.Type_Info;
-         when Context_Union     =>
-            Next.Union.Union_Local_Type := Ctx.Type_Info;
-         when others            =>
+         when Context_Element   => Next.Element.Local_Type   := Ctx.Type_Info;
+         when Context_Attribute => Next.Attribute.Local_Type := Ctx.Type_Info;
+         when Context_List    => Next.List.List_Local_Type   := Ctx.Type_Info;
+         when Context_Union   => Next.Union.Union_Local_Type := Ctx.Type_Info;
+         when others          =>
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Unsupported: ""simpleType"" in this context");
@@ -2208,62 +2195,63 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Name_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Name);
-      Type_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Typ);
-      Use_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.S_Use);
-      Fixed_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Fixed);
-      Ref_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Ref);
-      Form_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Form);
-      Default_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Default);
-      Target_NS_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Namespace_Target);
-
+      Local : Symbol;
+      Att   : Internal_Attribute_Descr;
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
+      Has_Form : Boolean := False;
 
-      Att : Attribute_Validator;
-      Typ : constant XML_Type := No_Type;
-      Use_Type : Attribute_Use_Type := Optional;
-      Form : Form_Type;
---        Type_Name : Qualified_Name;
+   begin
+      Att.Descr.Form := Handler.Attribute_Form_Default;
 
-      function Get_Fixed return Symbol;
-      --  Return the "fixed" value for the attribute
-
-      function Get_Fixed return Symbol is
-      begin
-         if Fixed_Index /= -1 then
---              if Typ /= No_Type then
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Name then
+               Att.Descr.Name := (NS => Get_Namespace_URI (Handler.Target_NS),
+                                  Local => Get_Value (Atts, J));
+            elsif Local = Handler.Typ then
+               Att.Typ  := Resolve_QName (Handler, Get_Value (Atts, J));
+            elsif Local = Handler.S_Use then
+               if Get_Value (Atts, J) = Handler.Required then
+                  Att.Descr.Use_Type := Required;
+               elsif Get_Value (Atts, J) = Handler.Prohibited then
+                  Att.Descr.Use_Type := Prohibited;
+               else
+                  Att.Descr.Use_Type := Optional;
+               end if;
+            elsif Local = Handler.Fixed then
 --            Normalize_Whitespace  --  Depending on the type of the attribute
 --                   (Typ    => Typ,
 --                    Reader => Handler,
 --                    Atts   => Atts,
 --                    Index  => Fixed_Index);
 --              end if;
-            return Get_Value (Atts, Fixed_Index);
-         else
-            return No_Symbol;
+               Att.Descr.Fixed := Get_Value (Atts, J);
+            elsif Local = Handler.Ref then
+               Att.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
+            elsif Local = Handler.Form then
+               Att.Descr.Form :=
+                 Form_Type'Value (Get (Get_Value (Atts, J)).all);
+               Has_Form := True;
+            elsif Local = Handler.Default then
+               Att.Descr.Default := Get_Value (Atts, J);
+            elsif Local = Handler.Namespace_Target then
+               Att.Descr.Target_NS := Get_Value (Atts, J);
+            end if;
          end if;
-      end Get_Fixed;
+      end loop;
 
-   begin
       --  See section 3.2.3 for valid attributes combination
 
-      if Target_NS_Index /= -1 then
-         if Name_Index = -1 then
+      if Att.Descr.Target_NS /= No_Symbol then
+         if Att.Descr.Name /= No_Qualified_Name then
             Validation_Error
               (Handler,
                "#name must be specified when targetNamespace is specified");
          end if;
 
-         if Form_Index /= -1 then
+         if Has_Form then
             Validation_Error
               (Handler,
                "#Cannot specify ""form"" when targetNamespace is given");
@@ -2274,31 +2262,21 @@ package body Schema.Schema_Readers is
             "targetNamespace not supported in attribute declaration");
       end if;
 
-      if Form_Index /= -1 then
-         Form := Form_Type'Value (Get (Get_Value (Atts, Form_Index)).all);
-
-         if Ref_Index /= -1 then
-            Validation_Error
-              (Handler,
-               "#Attributes ""form"" and ""ref"" cannot be both specified");
-         end if;
-
-      else
-         Form := Handler.Attribute_Form_Default;
+      if Has_Form and then Att.Ref /= No_Qualified_Name then
+         Validation_Error
+           (Handler,
+            "#Attributes ""form"" and ""ref"" cannot be both specified");
       end if;
 
-      if Type_Index /= -1 then
-         if Ref_Index /= -1 then
+      if Att.Typ /= No_Qualified_Name then
+         if Att.Ref /= No_Qualified_Name then
             Validation_Error
               (Handler,
                "#Attributes ""type"" and ""ref"" cannot be both specified");
          end if;
 
---         Type_Name := Resolve_QName (Handler, Get_Value (Atts, Type_Index));
---           Lookup_With_NS (Handler, Type_Name, Result => Typ);
-
-         if To_QName (Typ) = "IDREF"
-           or else To_QName (Typ) = "IDREFS"
+         if To_QName (Att.Typ) = "IDREF"
+           or else To_QName (Att.Typ) = "IDREFS"
          then
             Raise_Exception
               (XML_Not_Implemented'Identity,
@@ -2306,46 +2284,32 @@ package body Schema.Schema_Readers is
          end if;
       end if;
 
-      if Fixed_Index /= -1 and then Default_Index /= -1 then
+      if Att.Descr.Fixed /= No_Symbol
+        and then Att.Descr.Default /= No_Symbol
+      then
          Validation_Error
            (Handler,
             "#Attributes ""fixed"" and ""default"" cannot be both specified");
       end if;
 
-      if Use_Index = -1 then
-         Use_Type := Optional;
-      else
-         declare
-            Val : constant Symbol := Get_Value (Atts, Use_Index);
-         begin
-            if Val = Handler.Required then
-               Use_Type := Required;
-            elsif Val = Handler.Prohibited then
-               Use_Type := Prohibited;
-            else
-               Use_Type := Optional;
-            end if;
-         end;
-
-         if Default_Index /= -1
-           and then Use_Type /= Optional
-         then
-            Validation_Error
-              (Handler,
-               "#Use must be ""optional"" when a default value is specified");
-         end if;
-
-         if Fixed_Index /= -1
-           and then Use_Type = Prohibited
-         then
-            Validation_Error
-              (Handler,
-               "#""prohibited"" is forbidden when"
-               & " a fixed value is specified");
-         end if;
+      if Att.Descr.Default /= No_Symbol
+        and then Att.Descr.Use_Type /= Optional
+      then
+         Validation_Error
+           (Handler,
+            "#Use must be ""optional"" when a default value is specified");
       end if;
 
-      if Name_Index /= -1 then
+      if Att.Descr.Fixed /= No_Symbol
+        and then Att.Descr.Use_Type = Prohibited
+      then
+         Validation_Error
+           (Handler,
+            "#""prohibited"" is forbidden when"
+            & " a fixed value is specified");
+      end if;
+
+      if Att.Descr.Name /= No_Qualified_Name then
          case Ctx.Typ is
             when Context_Attribute_Group | Context_Type_Def =>
                null;
@@ -2360,50 +2324,12 @@ package body Schema.Schema_Readers is
                      & Get (Get_Namespace_URI (Handler.Target_NS)).all & """");
                end if;
          end case;
-
-         case Ctx.Typ is
-            when Context_Schema | Context_Redefine =>
-               Att := Create_Global_Attribute
-                 (Local_Name     => Get_Value (Atts, Name_Index),
-                  Reader         => Handler,
-                  NS             => Handler.Target_NS,
-                  Attribute_Type => Typ,
-                  Attribute_Use  => Use_Type,
-                  Attribute_Form => Form,
-                  Fixed          => Get_Fixed);
-
-            when others =>
-               Att := Create_Local_Attribute
-                 (Local_Name     => Get_Value (Atts, Name_Index),
-                  NS             => Handler.Target_NS,
-                  Attribute_Type => Typ,
-                  Attribute_Use  => Use_Type,
-                  Attribute_Form => Form,
-                  Fixed          => Get_Fixed);
-         end case;
-      else
-         declare
-            Name : constant Qualified_Name :=
-              Resolve_QName (Handler, Get_Value (Atts, Ref_Index));
-            G    : XML_Grammar_NS;
-         begin
-            Get_Grammar_For_Namespace (Handler, Name.NS, G);
-            Att := Lookup_Attribute (G, Handler, Name.Local);
-
-            --  ??? We haven't normalized the value for fixed here
-            Att := Create_Local_Attribute
-              (Based_On       => Att,
-               Attribute_Use  => Use_Type,
-               Attribute_Form => Form,
-               Fixed          => Get_Fixed);
-         end;
       end if;
 
       Push_Context
         (Handler,
-         (Typ              => Context_Attribute,
-          Attribute        => Att,
-          Attribute_Is_Ref => Ref_Index /= -1));
+         (Typ       => Context_Attribute,
+          Attribute => Att));
    end Create_Attribute;
 
    ----------------------
@@ -2413,16 +2339,14 @@ package body Schema.Schema_Readers is
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
       In_Context     : in out Context;
-      Attribute      : Attribute_Validator;
-      Is_Local       : Boolean) is
+      Attribute      : Internal_Attribute_Descr) is
    begin
       case In_Context.Typ is
          when Context_Type_Def =>
             Append
               (Handler.Types.Table (In_Context.Type_Info).Attributes,
                (Kind     => Kind_Attribute,
-                Attr     => Attribute,
-                Is_Local => Is_Local));
+                Attr     => Attribute));
 
          when Context_Schema | Context_Redefine =>
             null;
@@ -2431,8 +2355,7 @@ package body Schema.Schema_Readers is
             Append
               (In_Context.Extension.Extension.Attributes,
                (Kind     => Kind_Attribute,
-                Attr     => Attribute,
-                Is_Local => Is_Local));
+                Attr     => Attribute));
 
          when Context_Restriction =>
             null;
@@ -2446,8 +2369,7 @@ package body Schema.Schema_Readers is
          when Context_Attribute_Group =>
             Append (In_Context.Attr_Group.Attributes,
                     (Kind => Kind_Attribute,
-                     Attr => Attribute,
-                     Is_Local => Is_Local));
+                     Attr => Attribute));
 
          when Context_Element | Context_Sequence | Context_Choice
             | Context_Attribute | Context_All
@@ -2468,16 +2390,7 @@ package body Schema.Schema_Readers is
       Next : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
-      if not Ctx.Attribute_Is_Ref
-        and then Get_Type (Ctx.Attribute.all) = No_Type
-      then
-         Set_Type (Ctx.Attribute,
-                   Lookup (Handler.Schema_NS, Handler, Handler.Ur_Type));
-      end if;
-
-      Insert_Attribute
-        (Handler, Next.all,
-         Ctx.Attribute, Is_Local => not Ctx.Attribute_Is_Ref);
+      Insert_Attribute (Handler, Next.all, Ctx.Attribute);
    end Finish_Attribute;
 
    -------------------
@@ -2512,7 +2425,6 @@ package body Schema.Schema_Readers is
                --  Already handled through Hook_Start_Element when validating
                --  the grammar itself, but needed if we do not validate the
                --  grammar
-               Debug_Output ("Got noNamespaceLocation");
                Parse_Grammar
                  (Handler,
                   URI             => Empty_String,
@@ -2522,7 +2434,6 @@ package body Schema.Schema_Readers is
             elsif Local = Handler.Schema_Location then
                --  Already handled through Hook_Start_Element when validating
                --  the grammar itself
-               Debug_Output ("Got schemaLocation");
                Parse_Grammars
                  (Handler, Get_Value (Atts, J), Do_Global_Check => False);
             end if;
@@ -2902,40 +2813,6 @@ package body Schema.Schema_Readers is
    begin
       Characters (Validating_Reader (Handler), Ch);
    end Characters;
-
-   -------------------------------
-   -- Get_Grammar_For_Namespace --
-   -------------------------------
-
-   procedure Get_Grammar_For_Namespace
-     (Handler : access Schema_Reader'Class;
-      NS      : Sax.Symbols.Symbol;
-      Grammar : out XML_Grammar_NS;
-      Create_If_Needed : Boolean := True) is
-   begin
-      if NS = No_Symbol then
-         if Debug then
-            Output_Action ("G := Handler.Target_NS;");
-         end if;
-         Grammar := Handler.Target_NS;
-
-      else
-         if Debug then
-            Output_Action
-              ("Get_NS (Handler.Created_Grammar, """
-               & Get (NS).all & """, G);");
-         end if;
-
-         Get_NS (Get_Grammar (Handler.all),
-                 NS, Grammar,
-                 Create_If_Needed or else NS = Handler.XML_Schema_URI);
-         if Grammar = null then
-            Validation_Error
-              (Handler,
-               "#No location declared for namespace " & Get (NS).all);
-         end if;
-      end if;
-   end Get_Grammar_For_Namespace;
 
    ----------
    -- Free --

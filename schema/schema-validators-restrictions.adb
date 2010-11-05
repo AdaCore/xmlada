@@ -46,13 +46,6 @@ package body Schema.Validators.Restrictions is
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Mask          : in out Facets_Mask);
-   overriding procedure Get_Attribute_Lists
-     (Validator   : access Restriction_XML_Validator;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator;
-      Must_Match_All_Any_In_Dep2 : out Boolean);
    overriding procedure Add_Facet
      (Validator   : access Restriction_XML_Validator;
       Reader      : access Abstract_Validation_Reader'Class;
@@ -144,30 +137,6 @@ package body Schema.Validators.Restrictions is
 
       return Validator.Facets;
    end Get_Facets;
-
-   -------------------------
-   -- Get_Attribute_Lists --
-   -------------------------
-
-   procedure Get_Attribute_Lists
-     (Validator   : access Restriction_XML_Validator;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator;
-      Must_Match_All_Any_In_Dep2 : out Boolean) is
-   begin
-      --  A restriction has the same list of attributes as the base type
-      --  (as per Primer 4.4) plus possibly some new ones, but it doesn't
-      --  inherit the wildcards
-
-      List := Validator.Attributes;
-      Dependency1 := Validator.Base.Validator;
-      Ignore_Wildcard_In_Dep1 := True;
-
-      Dependency2 := Validator.Restriction;
-      Must_Match_All_Any_In_Dep2 := True;
-   end Get_Attribute_Lists;
 
    -----------
    -- Equal --
@@ -311,6 +280,7 @@ package body Schema.Validators.Restrictions is
       Base        : XML_Type;
       Restriction : XML_Validator := null) return XML_Validator
    is
+      pragma Unreferenced (G);
       Result : constant Restriction_Type := new Restriction_XML_Validator;
    begin
       if Get_Final (Base)(Final_Restriction) then
@@ -318,13 +288,8 @@ package body Schema.Validators.Restrictions is
            (Reader, "#Type """ & To_QName (Base) & """ forbids restrictions");
       end if;
 
-      Register (G, Base);
       Result.Base        := Base;
-      if Restriction /= null then
-         Register (G, Restriction);
-      end if;
       Result.Restriction := Restriction;
-      Register (G, Result);
       return XML_Validator (Result);
    end Create_Restriction_Of;
 

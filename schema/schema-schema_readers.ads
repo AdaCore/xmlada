@@ -97,14 +97,19 @@ private
    end record;
    No_Group_Descr : constant Group_Descr := (others => <>);
 
+   type Internal_Attribute_Descr is record
+      Descr        : Attribute_Descr;
+      Typ          : Qualified_Name     := No_Qualified_Name;
+      Local_Type   : Type_Index         := No_Type_Index;
+      Ref          : Qualified_Name     := No_Qualified_Name;
+   end record;
+
    type Attr_Descr_Kind is (Kind_Group, Kind_Attribute, Kind_Unset);
    type Attr_Descr (Kind : Attr_Descr_Kind := Kind_Unset) is record
       case Kind is
          when Kind_Unset     => null;
          when Kind_Group     => Group_Ref : Qualified_Name;
-         when Kind_Attribute =>
-            Attr      : Attribute_Validator;
-            Is_Local  : Boolean;
+         when Kind_Attribute => Attr      : Internal_Attribute_Descr;
       end case;
    end record;
    type Attr_Array is array (Natural range <>) of Attr_Descr;
@@ -217,9 +222,7 @@ private
          when Context_List            => List        : List_Type_Descr;
          when Context_Restriction     => Restriction : Type_Details_Access;
          when Context_Union           => Union       : Union_Type_Descr;
-         when Context_Attribute =>
-            Attribute : Schema.Validators.Attribute_Validator;
-            Attribute_Is_Ref : Boolean;
+         when Context_Attribute      => Attribute   : Internal_Attribute_Descr;
       end case;
    end record;
    type Context_Access is access all Context;
@@ -230,7 +233,7 @@ private
      (Table_Component_Type => Internal_Type_Descr,
       Table_Index_Type     => Type_Index,
       Table_Low_Bound      => 1,
-      Table_Initial        => 100,
+      Table_Initial        => 200,
       Table_Increment      => 100);
    package Element_HTables is new GNAT.Dynamic_HTables.Simple_HTable
      (Header_Num => Header_Num,

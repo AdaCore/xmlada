@@ -43,13 +43,6 @@ package body Schema.Validators.Extensions is
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Mask          : in out Facets_Mask);
-   overriding procedure Get_Attribute_Lists
-     (Validator   : access Extension_XML_Validator;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator;
-      Must_Match_All_Any_In_Dep2 : out Boolean);
    overriding procedure Check_Replacement
      (Validator       : access Extension_XML_Validator;
       Element         : XML_Element;
@@ -75,25 +68,6 @@ package body Schema.Validators.Extensions is
       Reader : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
    --  See doc from inherited subprograms
-
-   -------------------------
-   -- Get_Attribute_Lists --
-   -------------------------
-
-   procedure Get_Attribute_Lists
-     (Validator   : access Extension_XML_Validator;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator;
-      Must_Match_All_Any_In_Dep2 : out Boolean) is
-   begin
-      List := Validator.Attributes;
-      Dependency1 := Validator.Extension;
-      Ignore_Wildcard_In_Dep1 := False;
-      Dependency2 := Validator.Base.Validator;
-      Must_Match_All_Any_In_Dep2 := False;
-   end Get_Attribute_Lists;
 
    ----------------
    -- Get_Facets --
@@ -251,15 +225,11 @@ package body Schema.Validators.Extensions is
       Base      : XML_Type;
       Extension : XML_Validator := null) return XML_Validator
    is
+      pragma Unreferenced (G);
       Result : constant Extension_Type := new Extension_XML_Validator;
    begin
-      Register (G, Base);
-      if Extension /= null then
-         Register (G, Extension);
-      end if;
       Result.Base      := Base;
       Result.Extension := Extension;
-      Register (G, Result);
       return XML_Validator (Result);
    end Create_Extension_Of;
 

@@ -64,34 +64,16 @@ package body Schema.Validators is
    function Debug_Name (Grammar : XML_Grammar_NS) return String;
    --  Debug output of Grammar
 
---     function To_QName
---       (Particle : XML_Particle) return Byte_Sequence;
    function To_QName
      (Element : XML_Element_Access) return Byte_Sequence;
    pragma Inline (To_QName);
    --  Return the QName for the element described by particle
 
-   type Qname_Symbol is record
-      URI, Local_Name : Symbol;
-   end record;
-   function Get_Key (Self : Named_Attribute_Validator) return Qname_Symbol;
-   function Hash (Qname : Qname_Symbol) return Interfaces.Unsigned_32;
-
-   package QName_Attributes_Htable is new Sax.HTable
-     (Element       => Named_Attribute_Validator,
-      Empty_Element => null,
-      Free          => Do_Nothing,
-      Key           => Qname_Symbol,
-      Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => "=");
-   --  Same as Attributes_Htable, but with QName as key
-
    function Extension_Of
      (G         : XML_Grammar_NS;
       Base      : XML_Type;
       Extension : XML_Validator := null) return XML_Validator
-     renames Schema.Validators.Extensions.Create_Extension_Of;
+      renames Schema.Validators.Extensions.Create_Extension_Of;
 
    function Restriction_Of
      (G           : XML_Grammar_NS;
@@ -112,27 +94,6 @@ package body Schema.Validators is
 
    procedure Free (List : in out Attribute_Validator_List_Access);
    --  Free the contents of List, including contained
-
-   -------------------------
-   -- Get_Attribute_Lists --
-   -------------------------
-
-   procedure Get_Attribute_Lists
-     (Validator   : access XML_Validator_Record;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Ignore_Wildcard_In_Dep1 : out Boolean;
-      Dependency2 : out XML_Validator;
-      Must_Match_All_Any_In_Dep2 : out Boolean) is
-   begin
-      List := Validator.Attributes;
-      Dependency1 := null;
-      Ignore_Wildcard_In_Dep1 := False;
-      Dependency2 := null;
-
-      --  All <anyAttribute> in a <complexType> must match. See 3.6.2.2
-      Must_Match_All_Any_In_Dep2 := True;
-   end Get_Attribute_Lists;
 
    ----------------------
    -- Validation_Error --
@@ -304,44 +265,40 @@ package body Schema.Validators is
          Do_Normalize_Whitespaces (Typ, Reader, Get_Value (Atts, Index)));
    end Normalize_Whitespace;
 
-   --------------
-   -- Is_Equal --
-   --------------
-
-   function Is_Equal
-     (Attribute : Named_Attribute_Validator_Record;
-      Attr2     : Attribute_Validator_Record'Class)
-     return Boolean is
-   begin
-      return Attr2 in Named_Attribute_Validator_Record'Class
-        and then Attribute.NS = Attr2.NS
-        and then Attribute.Local_Name =
-          Named_Attribute_Validator_Record (Attr2).Local_Name;
-   end Is_Equal;
-
-   function Is_Equal
-     (Attribute : Any_Attribute_Validator;
-      Attr2     : Attribute_Validator_Record'Class)
-     return Boolean is
-   begin
-      return Attr2 in Any_Attribute_Validator'Class
-        and then Attribute.NS = Attr2.NS
-        and then Attribute.Kind = Any_Attribute_Validator (Attr2).Kind;
-   end Is_Equal;
+   --     --------------
+   --     -- Is_Equal --
+   --     --------------
+   --
+   --     function Is_Equal
+   --       (Attribute : Named_Attribute_Validator_Record;
+   --        Attr2     : Attribute_Validator_Record'Class)
+   --       return Boolean is
+   --     begin
+   --        return Attr2 in Named_Attribute_Validator_Record'Class
+   --          and then Attribute.NS = Attr2.NS
+   --          and then Attribute.Local_Name =
+   --            Named_Attribute_Validator_Record (Attr2).Local_Name;
+   --     end Is_Equal;
+   --
+   --     function Is_Equal
+   --       (Attribute : Any_Attribute_Validator;
+   --        Attr2     : Attribute_Validator_Record'Class)
+   --       return Boolean is
+   --     begin
+   --        return Attr2 in Any_Attribute_Validator'Class
+   --          and then Attribute.NS = Attr2.NS
+   --          and then Attribute.Kind = Any_Attribute_Validator (Attr2).Kind;
+   --     end Is_Equal;
 
    -----------
    -- Is_ID --
    -----------
 
-   function Is_ID (Attr : Attribute_Validator_Record) return Boolean is
+   function Is_ID (Attr : Attribute_Descr) return Boolean is
       pragma Unreferenced (Attr);
    begin
       return False;
-   end Is_ID;
-
-   function Is_ID (Attr : Named_Attribute_Validator_Record) return Boolean is
-   begin
-      return Is_ID (Get_Type (Attr));
+      --  return Is_ID (Attr.Simple_Type);
    end Is_ID;
 
    ------------
@@ -366,62 +323,29 @@ package body Schema.Validators is
    end Append;
 
    -------------------
-   -- Has_Attribute --
-   -------------------
-
-   function Has_Attribute
-     (Validator  : access XML_Validator_Record;
-      NS         : XML_Grammar_NS;
-      Local_Name : Symbol) return Boolean
-   is
-   begin
-      if Validator.Attributes = null then
-         return False;
-      end if;
-
-      for A in Validator.Attributes'Range loop
-         if Validator.Attributes (A).Validator.NS = NS
-           and then Validator.Attributes (A).Validator.all in
-              Named_Attribute_Validator_Record'Class
-         then
-            if Named_Attribute_Validator_Record
-              (Validator.Attributes (A).Validator.all).Local_Name = Local_Name
-            then
-               return True;
-            end if;
-         end if;
-      end loop;
-      return False;
-   end Has_Attribute;
-
-   -------------------
    -- Add_Attribute --
    -------------------
 
    procedure Add_Attribute
      (List      : in out Attribute_Validator_List_Access;
-      Attribute : access Attribute_Validator_Record'Class;
-      Is_Local  : Boolean)
+      Attribute : Attribute_Descr)
    is
       L : Attribute_Validator_List_Access;
    begin
       if List /= null then
          for A in List'Range loop
-            if List (A).Validator = Attribute_Validator (Attribute) then
+            if List (A) = Attribute then
                return;
             end if;
          end loop;
 
          L := new Attribute_Validator_List (List'First .. List'Last + 1);
          L (List'Range) := List.all;
-         L (L'Last) := (Validator => Attribute_Validator (Attribute),
-                        Is_Local  => Is_Local);
+         L (L'Last) := Attribute;
          Unchecked_Free (List);
          List := L;
       else
-         List := new Attribute_Validator_List'
-           (1 => (Validator => Attribute_Validator (Attribute),
-                  Is_Local  => Is_Local));
+         List := new Attribute_Validator_List'(1 => Attribute);
       end if;
    end Add_Attribute;
 
@@ -436,8 +360,7 @@ package body Schema.Validators is
    begin
       if Attributes /= null then
          for A in Attributes'Range loop
-            Add_Attribute
-              (List, Attributes (A).Validator, Attributes (A).Is_Local);
+            Add_Attribute (List, Attributes (A));
          end loop;
       end if;
    end Add_Attributes;
@@ -473,37 +396,28 @@ package body Schema.Validators is
       return Validator.Mixed_Content;
    end Get_Mixed_Content;
 
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Self : Named_Attribute_Validator) return Qname_Symbol is
-   begin
-      return (URI        => Self.NS.Namespace_URI,
-              Local_Name => Self.Local_Name);
-   end Get_Key;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (Qname : Qname_Symbol) return Interfaces.Unsigned_32 is
-   begin
-      return Sax.Symbols.Hash (Qname.Local_Name);
-   end Hash;
-
    -------------------------
    -- Validate_Attributes --
    -------------------------
 
    procedure Validate_Attributes
      (Attributes : Attribute_Validator_List_Access;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Readers.Sax_Attribute_List;
-      Nillable  : Boolean;
-      Is_Nil    : out Boolean)
+      Reader     : access Abstract_Validation_Reader'Class;
+      Atts       : in out Sax.Readers.Sax_Attribute_List;
+      Nillable   : Boolean;
+      Is_Nil     : out Boolean)
    is
       Length   : constant Natural := Get_Length (Atts);
+
+      function Attr_Length return Natural;
+      function Attr_Length return Natural is
+      begin
+         if Attributes = null then
+            return 0;
+         else
+            return Attributes'Length;
+         end if;
+      end Attr_Length;
 
       type Attr_Status is record
          Prohibited : Boolean := False;
@@ -514,32 +428,23 @@ package body Schema.Validators is
       end record;
       Seen : array (1 .. Length) of Attr_Status := (others => (False, False));
 
+      Visited : array (1 .. Attr_Length) of Boolean := (others => False);
+
       type Any_Status is (Any_None, Any_All, Any_Not_All);
       type Any_Status_Array is array (1 .. Length) of Any_Status;
-      Seen_Any : Any_Status_Array := (others => Any_None);
+      Seen_Any : constant Any_Status_Array := (others => Any_None);
+      pragma Unreferenced (Any_Not_All);
 
-      use QName_Attributes_Htable;
-      Visited : QName_Attributes_Htable.HTable (101);
-
-      function Find_Attribute
-        (Named : Named_Attribute_Validator;
-         Is_Local_In_XSD : Boolean) return Integer;
+      function Find_Attribute (Index : Integer) return Integer;
       --  Chech whether Named appears in Atts
 
-      procedure Recursive_Check
-        (List            : Attribute_Validator_List_Access;
-         Ignore_Wildcard : Boolean;
-         Must_Match_All_Any : Boolean);
-      procedure Recursive_Check_Named (List : Attribute_Descr);
-      procedure Check_Any
-        (List : Attribute_Descr; Must_Match_All_Any : Boolean);
+      --        procedure Check_Any
+      --          (List : Attribute_Descr; Must_Match_All_Any : Boolean);
       --  Check recursively the attributes provided by Validator.
 
-      procedure Check_Named_Attribute
-        (Named : Named_Attribute_Validator;
-         Is_Local_In_XSD : Boolean);
-      procedure Check_Any_Attribute
-        (Any : Any_Attribute_Validator; Index : Integer);
+      procedure Check_Named_Attribute (Index : Integer);
+      --        procedure Check_Any_Attribute
+      --          (Any : Any_Attribute_Validator; Index : Integer);
       --  Check a named attribute or a wildcard attribute
 
       procedure Check_Single_ID;
@@ -572,22 +477,19 @@ package body Schema.Validators is
       -- Check_Named_Attribute --
       ---------------------------
 
-      procedure Check_Named_Attribute
-        (Named : Named_Attribute_Validator;
-         Is_Local_In_XSD : Boolean)
-      is
+      procedure Check_Named_Attribute (Index : Integer) is
          Found  : Integer;
       begin
-         if Get (Visited, Get_Key (Named)) = null then
-            Set (Visited, Named);
-            Found := Find_Attribute (Named, Is_Local_In_XSD);
+         if not Visited (Index) then
+            Visited (Index) := True;
+            Found := Find_Attribute (Index);
 
             if Found = -1 then
-               case Named.Attribute_Use is
+               case Attributes (Index).Use_Type is
                   when Required =>
                      Validation_Error
                        (Reader, "#Attribute """
-                        & Get (Named.Local_Name).all
+                        & To_QName (Attributes (Index).Name)
                         & """ is required in this context");
                   when Prohibited | Optional | Default =>
                      null;
@@ -596,9 +498,9 @@ package body Schema.Validators is
             else
                Seen (Found).Seen := True;
 
-               case Named.Attribute_Form is
+               case Attributes (Index).Form is
                   when Qualified =>
-                     if Is_Local_In_XSD
+                     if Attributes (Index).Is_Local
                        and then Get_Prefix (Atts, Found) = Empty_String
                      then
                         Validation_Error
@@ -607,7 +509,7 @@ package body Schema.Validators is
                      end if;
 
                   when Unqualified =>
-                     if Is_Local_In_XSD
+                     if Attributes (Index).Is_Local
                        and then Get_Prefix (Atts, Found) /= Empty_String
                        and then Get_URI (Atts, Found) =
                        Get_Namespace_URI
@@ -619,7 +521,7 @@ package body Schema.Validators is
                      end if;
                end case;
 
-               case Named.Attribute_Use is
+               case Attributes (Index).Use_Type is
                   when Prohibited =>
                      Seen (Found) := (Seen       => False,
                                       Prohibited => True);
@@ -632,11 +534,12 @@ package body Schema.Validators is
                      --       (Id_Table, Get_Type (Named.all).Validator,
                      --        Get_Value (Atts, Found));
 
-                     Normalize_Whitespace
-                       (Get_Type (Named.all), Reader, Atts, Found);
+                     --                       Normalize_Whitespace
+                     --           (Get_Type (Named.all), Reader, Atts, Found);
 
                      begin
-                        Validate_Attribute (Named.all, Reader, Atts, Found);
+                        Validate_Attribute
+                          (Attributes (Index), Reader, Atts, Found);
                      exception
                         when XML_Validation_Error =>
                            --  Avoid duplicate locations in error messages
@@ -670,67 +573,65 @@ package body Schema.Validators is
       -- Check_Any_Attribute --
       -------------------------
 
-      procedure Check_Any_Attribute
-        (Any   : Any_Attribute_Validator;
-         Index : Integer) is
-      begin
-         if Debug then
-            Debug_Push_Prefix
-              ("Checking any attribute index="
-               & Index'Img & " name="
-               & To_QName (Get_URI (Atts, Index),
-                           Get_Local_Name (Atts, Index)));
-         end if;
-
-         Validate_Attribute (Any, Reader, Atts, Index);
-
-         Debug_Pop_Prefix;
-
-      exception
-         when XML_Validation_Error =>
-            Debug_Pop_Prefix;
-
-            --  Avoid duplicate locations in error messages
-            --  ??? This is just a hack for now
-
-            declare
-               Str : constant Byte_Sequence := Reader.Error_Msg.all;
-            begin
-               if Str (Str'First) = '#' then
-                  Free (Reader.Error_Msg);
-                  Reader.Error_Msg := new Byte_Sequence'
-                    ("#Attribute """ & Get_Qname (Atts, Index)
-                     & """: " & Str (Str'First + 1 .. Str'Last));
-               else
-                  Free (Reader.Error_Msg);
-                  Reader.Error_Msg := new Byte_Sequence'
-                    ("#Attribute """ & Get_Qname (Atts, Index)
-                     & """: " & Str);
-               end if;
-
-               raise;
-            end;
-      end Check_Any_Attribute;
+      --        procedure Check_Any_Attribute
+      --          (Any   : Any_Attribute_Validator;
+      --           Index : Integer) is
+      --        begin
+      --           if Debug then
+      --              Debug_Push_Prefix
+      --                ("Checking any attribute index="
+      --                 & Index'Img & " name="
+      --                 & To_QName (Get_URI (Atts, Index),
+      --                             Get_Local_Name (Atts, Index)));
+      --           end if;
+      --
+      --           Validate_Attribute (Any, Reader, Atts, Index);
+      --
+      --           Debug_Pop_Prefix;
+      --
+      --        exception
+      --           when XML_Validation_Error =>
+      --              Debug_Pop_Prefix;
+      --
+      --              --  Avoid duplicate locations in error messages
+      --              --  ??? This is just a hack for now
+      --
+      --              declare
+      --                 Str : constant Byte_Sequence := Reader.Error_Msg.all;
+      --              begin
+      --                 if Str (Str'First) = '#' then
+      --                    Free (Reader.Error_Msg);
+      --                    Reader.Error_Msg := new Byte_Sequence'
+      --                      ("#Attribute """ & Get_Qname (Atts, Index)
+      --                       & """: " & Str (Str'First + 1 .. Str'Last));
+      --                 else
+      --                    Free (Reader.Error_Msg);
+      --                    Reader.Error_Msg := new Byte_Sequence'
+      --                      ("#Attribute """ & Get_Qname (Atts, Index)
+      --                       & """: " & Str);
+      --                 end if;
+      --
+      --                 raise;
+      --              end;
+      --        end Check_Any_Attribute;
 
       --------------------
       -- Find_Attribute --
       --------------------
 
-      function Find_Attribute
-        (Named : Named_Attribute_Validator;
-         Is_Local_In_XSD : Boolean) return Integer is
+      function Find_Attribute (Index : Integer) return Integer is
+         Is_Local : constant Boolean := Attributes (Index).Is_Local;
       begin
          for A in 1 .. Length loop
             if not Seen (A).Seen
-              and then Get_Local_Name (Atts, A) = Named.Local_Name
-              and then ((Is_Local_In_XSD
+              and then Get_Local_Name (Atts, A) = Attributes (Index).Name.Local
+              and then ((Is_Local
                          and Get_Prefix (Atts, A) = Empty_String)
-                        or else Get_URI (Atts, A) = Named.NS.Namespace_URI)
+                        or else Get_URI (Atts, A) = Attributes (Index).Name.NS)
             then
                if Debug then
                   Debug_Output
-                    ("Found attribute: "
-                     & To_QName (Named.NS.Namespace_URI, Named.Local_Name));
+                    ("Found attribute: " & To_QName (Attributes (Index).Name));
                end if;
                return A;
             end if;
@@ -738,148 +639,87 @@ package body Schema.Validators is
          return -1;
       end Find_Attribute;
 
-      ---------------------------
-      -- Recursive_Check_Named --
-      ---------------------------
-
-      procedure Recursive_Check_Named (List : Attribute_Descr) is
-      begin
-         if List.Validator.all in Named_Attribute_Validator_Record'Class then
-            Check_Named_Attribute
-              (Named_Attribute_Validator (List.Validator),
-               Is_Local_In_XSD => List.Is_Local);
-         end if;
-      end Recursive_Check_Named;
-
       ---------------
       -- Check_Any --
       ---------------
 
-      procedure Check_Any
-        (List : Attribute_Descr; Must_Match_All_Any : Boolean) is
-      begin
-         if List.Validator.all in Any_Attribute_Validator'Class then
-            --  From 3.4.2 (intersection of anyAttribute), an attribute must
-            --  match *all* the anyAttribute, so we do not modify Seen yet, so
-            --  that the attribute is tested multiple times
-
-            for A in 1 .. Length loop
-               if not Seen (A).Seen
-                 and then (Must_Match_All_Any
-                           or else Seen_Any (A) /= Any_All)
-               then
-                  begin
-                     Check_Any_Attribute
-                       (Any_Attribute_Validator (List.Validator.all), A);
-
-                     --  If there was an exception, don't mark the attribute as
-                     --  seen, it is invalid. Maybe another <anyAttribute> will
-                     --  match
-
-                     case Seen_Any (A) is
-                        when Any_None | Any_All => Seen_Any (A) := Any_All;
-                        when Any_Not_All        => null;
-                     end case;
-
-                  exception
-                     when XML_Validation_Error =>
-                        if Must_Match_All_Any then
-                           Seen_Any (A) := Any_Not_All;
-                        end if;
-                  end;
-               end if;
-            end loop;
-         end if;
-      end Check_Any;
-
-      ---------------------
-      -- Recursive_Check --
-      ---------------------
-
-      procedure Recursive_Check
-        (List            : Attribute_Validator_List_Access;
-         Ignore_Wildcard : Boolean;
-         Must_Match_All_Any : Boolean)
-      is
---           List   : Attribute_Validator_List_Access;
---           Dep1, Dep2 : XML_Validator;
---           Ignore_Dep1_Wildcard : Boolean;
-         Must_Match_All_Any2 : constant Boolean := False;
-      begin
---           Get_Attribute_Lists
---             (Validator, List,
---              Dep1, Ignore_Dep1_Wildcard, Dep2, Must_Match_All_Any2);
-
---           if Debug then
---              Debug_Push_Prefix
---                ("Check attr ign_wild=" & Ignore_Wildcard'Img
---                 & " all_any=" & Must_Match_All_Any2'Img);
---           end if;
-
-         if List /= null then
-            for L in List'Range loop
-               Recursive_Check_Named (List (L));
-            end loop;
-         end if;
-
---           if Dep1 /= null then
---              Recursive_Check (Dep1, Ignore_Wildcard or Ignore_Dep1_Wildcard,
---                               Must_Match_All_Any2);
---           end if;
---
---           if Dep2 /= null then
---              Recursive_Check (Dep2, Ignore_Wildcard, Must_Match_All_Any2);
---           end if;
-
-         if List /= null and then not Ignore_Wildcard then
-            --  If the policy for <anyAttribute> has changed, we restart from
-            --  scratch: we need to ensure that within the current validator
-            --  (and its dependencies), all <anyAttribute> matches for a given
-            --  attribute (or not). This computation should not be influence by
-            --  validators seen previously.
-
-            if Must_Match_All_Any2 /= Must_Match_All_Any then
-               declare
-                  Saved_Seen_Any : constant Any_Status_Array := Seen_Any;
-               begin
-                  for S in Seen_Any'Range loop
-                     if Seen_Any (S) = Any_Not_All then
-                        Seen_Any (S) := Any_None;
-                     end if;
-                  end loop;
-
-                  for L in List'Range loop
-                     Check_Any (List (L), Must_Match_All_Any2);
-                  end loop;
-
-                  for S in Seen_Any'Range loop
-                     if Seen_Any (S) /= Any_All then
-                        Seen_Any (S) := Saved_Seen_Any (S);
-                     end if;
-                  end loop;
-               end;
-            else
-               for L in List'Range loop
-                  Check_Any (List (L), Must_Match_All_Any2);
-               end loop;
-            end if;
-         end if;
-
---           Debug_Pop_Prefix;
-
---        exception
---           when others =>
---              Debug_Pop_Prefix;
---              raise;
-      end Recursive_Check;
+      --        procedure Check_Any
+      --          (List : Attribute_Descr; Must_Match_All_Any : Boolean) is
+      --        begin
+      --           if List.Validator.all in Any_Attribute_Validator'Class then
+      --      --  From 3.4.2 (intersection of anyAttribute), an attribute must
+      --    --  match *all* the anyAttribute, so we do not modify Seen yet, so
+      --              --  that the attribute is tested multiple times
+      --
+      --              for A in 1 .. Length loop
+      --                 if not Seen (A).Seen
+      --                   and then (Must_Match_All_Any
+      --                             or else Seen_Any (A) /= Any_All)
+      --                 then
+      --                    begin
+      --                       Check_Any_Attribute
+      --                   (Any_Attribute_Validator (List.Validator.all), A);
+      --
+      --            --  If there was an exception, don't mark the attribute as
+      --            --  seen, it is invalid. Maybe another <anyAttribute> will
+      --                       --  match
+      --
+      --                       case Seen_Any (A) is
+      --                   when Any_None | Any_All => Seen_Any (A) := Any_All;
+      --                          when Any_Not_All        => null;
+      --                       end case;
+      --
+      --                    exception
+      --                       when XML_Validation_Error =>
+      --                          if Must_Match_All_Any then
+      --                             Seen_Any (A) := Any_Not_All;
+      --                          end if;
+      --                    end;
+      --                 end if;
+      --              end loop;
+      --           end if;
+      --        end Check_Any;
 
    begin
-      if Debug then
-         Debug_Push_Prefix ("Validate_Attributes");
+      if Attributes /= null then
+         for L in Attributes'Range loop
+            Check_Named_Attribute (L);
+         end loop;
       end if;
 
-      Recursive_Check (Attributes, Ignore_Wildcard => False,
-                       Must_Match_All_Any => False);
+      --        if Attributes /= null and then not Ignore_Wildcard then
+      --     --  If the policy for <anyAttribute> has changed, we restart from
+      --      --  scratch: we need to ensure that within the current validator
+      --    --  (and its dependencies), all <anyAttribute> matches for a given
+      --   --  attribute (or not). This computation should not be influence by
+      --           --  validators seen previously.
+      --
+      --           if Must_Match_All_Any2 /= Must_Match_All_Any then
+      --              declare
+      --               Saved_Seen_Any : constant Any_Status_Array := Seen_Any;
+      --              begin
+      --                 for S in Seen_Any'Range loop
+      --                    if Seen_Any (S) = Any_Not_All then
+      --                       Seen_Any (S) := Any_None;
+      --                    end if;
+      --                 end loop;
+      --
+      --                 for L in List'Range loop
+      --                    Check_Any (List (L), Must_Match_All_Any2);
+      --                 end loop;
+      --
+      --                 for S in Seen_Any'Range loop
+      --                    if Seen_Any (S) /= Any_All then
+      --                       Seen_Any (S) := Saved_Seen_Any (S);
+      --                    end if;
+      --                 end loop;
+      --              end;
+      --           else
+      --              for L in List'Range loop
+      --                 Check_Any (List (L), Must_Match_All_Any2);
+      --              end loop;
+      --           end if;
+      --        end if;
 
       Is_Nil := False;
 
@@ -898,7 +738,7 @@ package body Schema.Validators is
                elsif Get_Local_Name (Atts, S) = Reader.Typ
                  or else Get_Local_Name (Atts, S) = Reader.Schema_Location
                  or else Get_Local_Name (Atts, S) =
-                    Reader.No_Namespace_Schema_Location
+                 Reader.No_Namespace_Schema_Location
                then
                   null;
 
@@ -922,16 +762,6 @@ package body Schema.Validators is
       end loop;
 
       Check_Single_ID;
-
-      Reset (Visited);
-
-      Debug_Pop_Prefix;
-
-   exception
-      when others =>
-         Debug_Pop_Prefix;
-         Reset (Visited);
-         raise;
    end Validate_Attributes;
 
    -----------
@@ -989,11 +819,11 @@ package body Schema.Validators is
    -- List_Of --
    -------------
 
-   function List_Of
-     (Grammar : XML_Grammar_NS; Typ : XML_Type) return XML_Type is
-   begin
-      return Create_Local_Type (Grammar, List_Of (Typ));
-   end List_Of;
+   --     function List_Of
+   --       (Grammar : XML_Grammar_NS; Typ : XML_Type) return XML_Type is
+   --     begin
+   --        return Create_Local_Type (Grammar, List_Of (Typ));
+   --     end List_Of;
 
    ---------------
    -- Add_Facet --
@@ -1019,69 +849,6 @@ package body Schema.Validators is
       end if;
    end Add_Facet;
 
-   ----------------------------
-   -- Create_Local_Attribute --
-   ----------------------------
-
-   function Create_Local_Attribute
-     (Local_Name     : Sax.Symbols.Symbol;
-      NS             : XML_Grammar_NS;
-      Attribute_Type : XML_Type                  := No_Type;
-      Attribute_Form : Form_Type                 := Unqualified;
-      Attribute_Use  : Attribute_Use_Type        := Optional;
-      Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Default        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
-      return Attribute_Validator
-   is
-      Result : constant Attribute_Validator :=
-        new Named_Attribute_Validator_Record'
-          (Local_Name     => Local_Name,
-           NS             => NS,
-           Ref_Attr       => null,
-           Attribute_Type => Attribute_Type,
-           Attribute_Form => Attribute_Form,
-           Attribute_Use  => Attribute_Use,
-           Fixed          => Fixed,
-           Default        => Default,
-           Next           => null);
-
-   begin
-      Register (NS, Result);
-      return Result;
-   end Create_Local_Attribute;
-
-   ----------------------------
-   -- Create_Local_Attribute --
-   ----------------------------
-
-   function Create_Local_Attribute
-     (Based_On       : Attribute_Validator;
-      Attribute_Form : Form_Type                 := Unqualified;
-      Attribute_Use  : Attribute_Use_Type        := Optional;
-      Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Default        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
-      return Attribute_Validator
-   is
-      --  We cannot extract the type from Based_On yet, because it might not
-      --  have been defined yet in the grammar.
-
-      Result : constant Attribute_Validator :=
-        new Named_Attribute_Validator_Record'
-          (Local_Name     => Named_Attribute_Validator (Based_On).Local_Name,
-           NS             => Based_On.NS,
-           Ref_Attr       => Named_Attribute_Validator (Based_On),
-           Attribute_Type => No_Type,
-           Attribute_Form => Attribute_Form,
-           Attribute_Use  => Attribute_Use,
-           Fixed          => Fixed,
-           Default        => Default,
-           Next           => null);
-
-   begin
-      Register (Based_On.NS, Result);
-      return Result;
-   end Create_Local_Attribute;
-
    -----------------------
    -- To_Graphic_String --
    -----------------------
@@ -1089,7 +856,7 @@ package body Schema.Validators is
    function To_Graphic_String (Str : Byte_Sequence) return String is
       To_Hex : constant array (0 .. 15) of Character :=
         ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C',
-         'D', 'E', 'F');
+        'D', 'E', 'F');
       Result : String (1 .. 4 * Str'Length);
       Index : Integer := Result'First;
    begin
@@ -1111,71 +878,40 @@ package body Schema.Validators is
       return Result (1 .. Index - 1);
    end To_Graphic_String;
 
-   -----------
-   -- Equal --
-   -----------
-
-   function Equal
-     (Validator      : Named_Attribute_Validator_Record;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean is
-   begin
-      if Validator.Attribute_Type = No_Type then
-         return Value1 = Value2;
-      else
-         return Equal
-           (Get_Validator (Validator.Attribute_Type), Reader, Value1, Value2);
-      end if;
-   end Equal;
-
-   function Equal
-     (Validator      : Any_Attribute_Validator;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
-   is
-      pragma Unreferenced (Validator, Reader);
-   begin
-      return Value1 = Value2;
-   end Equal;
-
    ------------------------
    -- Validate_Attribute --
    ------------------------
 
    procedure Validate_Attribute
-     (Validator : Named_Attribute_Validator_Record;
+     (Attr      : Attribute_Descr;
       Reader    : access Abstract_Validation_Reader'Class;
       Atts      : in out Sax_Attribute_List;
       Index     : Natural)
    is
       Val   : constant Cst_Byte_Sequence_Access :=
         Get (Get_Value (Atts, Index));
-      Fixed : Symbol;
       Mask  : Facets_Mask := (others => True);
    begin
       if Debug then
-         Debug_Output ("Checking attribute " & Get (Validator.Local_Name).all
+         Debug_Output ("Checking attribute " & To_QName (Attr.Name)
                        & "=" & Val.all & "--");
       end if;
 
-      if Get_Type (Validator) /= No_Type then
-         Validate_Characters
-           (Get_Validator (Get_Type (Validator)), Reader, Val.all,
-            Empty_Element => False, Mask => Mask);
-
-         if Is_ID (Get_Type (Validator)) then
-            Set_Type (Atts, Index, Sax.Attributes.Id);
-         end if;
+      if Attr.Simple_Type = null then
+         return;
       end if;
 
-      Fixed := Validator.Fixed;
-      if Fixed = No_Symbol and then Validator.Ref_Attr /= null then
-         Fixed := Validator.Ref_Attr.Fixed;
+      Validate_Characters
+        (Attr.Simple_Type, Reader, Val.all,
+         Empty_Element => False, Mask => Mask);
+
+      if Is_ID (Attr) then
+         Set_Type (Atts, Index, Sax.Attributes.Id);
       end if;
 
-      if Debug and then Fixed /= No_Symbol then
+      if Debug and then Attr.Fixed /= No_Symbol then
          Debug_Output ("Attribute value must be equal to """
-                       & Get (Fixed).all & """");
+                       & Get (Attr.Fixed).all & """");
       end if;
 
       --  3.2.4 [Attribute Declaration Value] indicates we should check Fixed
@@ -1183,12 +919,13 @@ package body Schema.Validators is
       --  However, we need to match depending on the type of the attribute: if
       --  it is an integer, the whitespaces are irrelevant; likewise for a list
 
-      if Fixed /= No_Symbol
-        and then not Equal (Validator, Reader, Get (Fixed).all, Val.all)
+      if Attr.Fixed /= No_Symbol
+        and then
+          not Equal (Attr.Simple_Type, Reader, Get (Attr.Fixed).all, Val.all)
       then
          Validation_Error
            (Reader, "#value must be """
-            & To_Graphic_String (Get (Fixed).all)
+            & To_Graphic_String (Get (Attr.Fixed).all)
             & """ (found """ & To_Graphic_String (Val.all) & """)");
       end if;
    end Validate_Attribute;
@@ -1201,81 +938,6 @@ package body Schema.Validators is
    begin
       Free (Validator.Attributes);
    end Free;
-
-   ------------
-   -- Lookup --
-   ------------
-
-   function Lookup
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol;
-      Create_If_Needed : Boolean := True) return XML_Type
-   is
-      Typ : XML_Type := Types_Htable.Get
-        (Grammar.Types.all, Local_Name);
-   begin
-      if Typ = No_Type and then Create_If_Needed then
-         if Local_Name = Reader.Precision_Decimal
-           and then Get_Namespace_URI (Grammar) = Reader.XML_Schema_URI
-         then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported type: precisionDecimal");
-         end if;
-
-         if Grammar.Checked then
-            Validation_Error
-              (Reader, "#Declaration not found for "
-               & To_QName (Grammar, Local_Name));
-         end if;
-
-         Typ := new XML_Type_Record'
-           (Local_Name        => Local_Name,
-            Validator         => null,
-            Simple_Type       => Unknown_Content,
-            Blocks            => Get_Block_Default (Grammar),
-            Final             => (others => False),
-            Next              => null);
-         Types_Htable.Set (Grammar.Types.all, Typ);
-         Register (Grammar, Typ);
-         if Debug then
-            Debug_Output
-              ("Forward type decl: " & To_QName (Grammar, Local_Name));
-         end if;
-      elsif Typ = No_Type then
-         if Debug then
-            Debug_Output ("Type not found: " & To_QName (Grammar, Local_Name));
-         end if;
-      end if;
-
-      return Typ;
-   end Lookup;
-
-   ----------------------
-   -- Lookup_Attribute --
-   ----------------------
-
-   function Lookup_Attribute
-     (Grammar       : XML_Grammar_NS;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Symbol;
-      Create_If_Needed : Boolean := True) return Attribute_Validator
-   is
-      Result : constant Named_Attribute_Validator := Attributes_Htable.Get
-        (Grammar.Attributes.all, Local_Name);
-   begin
-      if Result = null and then Create_If_Needed then
-         if Grammar.Checked then
-            Validation_Error
-              (Reader, "#Declaration not found for "
-               & To_QName (Grammar, Local_Name));
-         end if;
-
-         return Create_Global_Attribute (Grammar, Reader, Local_Name, No_Type);
-      end if;
-      return Attribute_Validator (Result);
-   end Lookup_Attribute;
 
    ---------------
    -- Get_QName --
@@ -1303,7 +965,7 @@ package body Schema.Validators is
 
    function To_QName
      (NS     : XML_Grammar_NS; Local : Sax.Symbols.Symbol)
-     return Byte_Sequence is
+      return Byte_Sequence is
    begin
       return Sax.Readers.To_QName (NS.Namespace_URI, Local);
    end To_QName;
@@ -1341,58 +1003,6 @@ package body Schema.Validators is
       else
          return Element.Elem.Of_Type;
       end if;
-   end Get_Type;
-
-   --------------
-   -- Set_Type --
-   --------------
-
-   procedure Set_Type
-     (Attr      : access Attribute_Validator_Record;
-      Attr_Type : XML_Type)
-   is
-      pragma Unreferenced (Attr, Attr_Type);
-   begin
-      null;
-   end Set_Type;
-
-   --------------
-   -- Get_Type --
-   --------------
-
-   function Get_Type
-     (Attr : Attribute_Validator_Record) return XML_Type
-   is
-      pragma Unreferenced (Attr);
-   begin
-      return No_Type;
-   end Get_Type;
-
-   --------------
-   -- Set_Type --
-   --------------
-
-   procedure Set_Type
-     (Attr      : access Named_Attribute_Validator_Record;
-      Attr_Type : XML_Type) is
-   begin
-      Attr.Attribute_Type := Attr_Type;
-   end Set_Type;
-
-   --------------
-   -- Get_Type --
-   --------------
-
-   function Get_Type
-     (Attr : Named_Attribute_Validator_Record) return XML_Type is
-   begin
-      if Attr.Attribute_Type = null
-        and then Attr.Ref_Attr /= null
-      then
-         return Attr.Ref_Attr.Attribute_Type;
-      end if;
-
-      return Attr.Attribute_Type;
    end Get_Type;
 
    --------------
@@ -1580,77 +1190,10 @@ package body Schema.Validators is
       G.Grammars (G.Grammars'Last) := new XML_Grammar_NS_Record'
         (Namespace_URI      => Namespace_URI,
          System_ID          => No_Symbol,
-         Types              => new Types_Htable.HTable (101),
-         Attributes         => new Attributes_Htable.HTable (101),
-         Checked            => False,
-         NFA                => Get (Grammar).NFA,
-         Validators_For_Mem => null,
-         Types_For_Mem      => null,
-         Atts_For_Mem       => null,
-         Elems_For_Mem      => null,
          Blocks             => No_Block);
 
       return G.Grammars (G.Grammars'Last);
    end Create_NS_Grammar;
-
-   --------------
-   -- Register --
-   --------------
-
-   procedure Register
-     (NS        : XML_Grammar_NS;
-      Validator : access XML_Validator_Record'Class) is
-   begin
-      --  We make the last element of the list point to itself, so that
-      --  we can cheaply detect whether an element is already chained.
-
-      if Validator.Next = null then
-         Validator.Next         := NS.Validators_For_Mem;
-         NS.Validators_For_Mem  := XML_Validator (Validator);
-         if Validator.Next = null then
-            Validator.Next := XML_Validator (Validator);
-         end if;
-      end if;
-   end Register;
-
-   procedure Register
-     (NS  : XML_Grammar_NS;
-      Typ : access XML_Type_Record) is
-   begin
-      if Typ.Next = null then
-         Typ.Next         := NS.Types_For_Mem;
-         NS.Types_For_Mem := XML_Type (Typ);
-         if Typ.Next = null then
-            Typ.Next := XML_Type (Typ);
-         end if;
-      end if;
-   end Register;
-
-   procedure Register
-     (NS   : XML_Grammar_NS;
-      Attr : access Attribute_Validator_Record'Class) is
-   begin
-      if Attr.Next = null then
-         Attr.Next := NS.Atts_For_Mem;
-         NS.Atts_For_Mem := Attribute_Validator (Attr);
-         if Attr.Next = null then
-            Attr.Next := Attribute_Validator (Attr);
-         end if;
-      end if;
-   end Register;
-
-   procedure Register
-     (NS      : XML_Grammar_NS;
-      Element : access XML_Element_Record) is
-   begin
-      if Element.Next = null then
-         Element.Next := NS.Elems_For_Mem;
-         NS.Elems_For_Mem := XML_Element_Access (Element);
-         if Element.Next = null then
-            Element.Next := XML_Element_Access (Element);
-         end if;
-      end if;
-   end Register;
 
    ------------------------
    -- Initialize_Grammar --
@@ -1723,25 +1266,6 @@ package body Schema.Validators is
       return null;
    end Get_Facets;
 
-   -------------------
-   -- Redefine_Type --
-   -------------------
-
-   function Redefine_Type
-     (Grammar : XML_Grammar_NS; Local_Name : Symbol) return XML_Type
-   is
-      Old : constant XML_Type := Types_Htable.Get
-        (Grammar.Types.all, Local_Name);
-      Result : XML_Type;
-   begin
-      if Old /= No_Type then
-         Result := Create_Local_Type (Grammar, Get_Validator (Old));
-         Old.Validator := null;
-         return Result;
-      end if;
-      return No_Type;
-   end Redefine_Type;
-
    ----------------
    -- Debug_Name --
    ----------------
@@ -1789,69 +1313,6 @@ package body Schema.Validators is
       Set (Ref.all, (Name, Ref_Type), (Ref_Type, S));
    end Create_Global_Type;
 
-   -----------------------------
-   -- Create_Global_Attribute --
-   -----------------------------
-
-   procedure Create_Global_Attribute
-     (NS             : XML_Grammar_NS;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Symbol;
-      Attribute_Type : XML_Type)
-   is
-      Att : constant Attribute_Validator :=
-              Create_Global_Attribute (NS, Reader, Local_Name, Attribute_Type);
-      pragma Unreferenced (Att);
-   begin
-      null;
-   end Create_Global_Attribute;
-
-   -----------------------------
-   -- Create_Global_Attribute --
-   -----------------------------
-
-   function Create_Global_Attribute
-     (NS             : XML_Grammar_NS;
-      Reader         : access Abstract_Validation_Reader'Class;
-      Local_Name     : Symbol;
-      Attribute_Type : XML_Type;
-      Attribute_Form : Form_Type                 := Qualified;
-      Attribute_Use  : Attribute_Use_Type        := Optional;
-      Fixed          : Symbol := No_Symbol) return Attribute_Validator
-   is
-      Old : Named_Attribute_Validator := Attributes_Htable.Get
-        (NS.Attributes.all, Local_Name);
-   begin
-      if Old /= null then
-         if Get_Type (Old.all) /= No_Type then
-            Validation_Error
-              (Reader, "#Attribute has already been declared: "
-               & Get (Local_Name).all);
-         end if;
-
-         Old.Attribute_Type := Attribute_Type;
-         Old.Fixed          := Fixed;
-      else
-         Old := new Named_Attribute_Validator_Record'
-           (NS             => NS,
-            Local_Name     => Local_Name,
-            Ref_Attr       => null,
-            Attribute_Type => Attribute_Type,
-            Attribute_Form => Attribute_Form,
-            Attribute_Use  => Attribute_Use,
-            Fixed          => Fixed,
-            Default        => No_Symbol,
-            Next           => null);
-
-         Register (NS, Old);
-         Attributes_Htable.Set (NS.Attributes.all, Old);
-      end if;
-
-      Old.Attribute_Form := Attribute_Form;
-      Old.Attribute_Use  := Attribute_Use;
-      return Attribute_Validator (Old);
-   end Create_Global_Attribute;
-
    ----------
    -- Free --
    ----------
@@ -1868,6 +1329,7 @@ package body Schema.Validators is
          Unchecked_Free (Grammar.Grammars);
       end if;
 
+      Reference_HTables.Reset (Grammar.References);
       Free (Grammar.NFA);
       Free (Grammar.Parsed_Locations);
    end Free;
@@ -1976,107 +1438,9 @@ package body Schema.Validators is
 
    procedure Free (Grammar : in out XML_Grammar_NS) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Types_Htable.HTable, Types_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (XML_Grammar_NS_Record, XML_Grammar_NS);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attributes_Htable.HTable, Attributes_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Type_Record, XML_Type);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Validator_Record'Class, Attribute_Validator);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Element_Record, XML_Element_Access);
-
-      procedure Free (Typ : in out XML_Type);
-      procedure Free (Validator : in out XML_Validator);
-      procedure Free (Validator : in out Attribute_Validator);
-      procedure Free (Element : in out XML_Element_Access);
-      --  Free the memory used by the parameter
-
-      ----------
-      -- Free --
-      ----------
-
-      procedure Free (Validator : in out XML_Validator) is
-         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-           (XML_Validator_Record'Class, XML_Validator);
-      begin
-         Free (Validator.all);
-         Unchecked_Free (Validator);
-      end Free;
-
-      procedure Free (Typ : in out XML_Type) is
-      begin
-         Unchecked_Free (Typ);
-      end Free;
-
-      procedure Free (Validator : in out Attribute_Validator) is
-      begin
-         Free (Validator.all);
-         Unchecked_Free (Validator);
-      end Free;
-
-      procedure Free (Element : in out XML_Element_Access) is
-      begin
-         Unchecked_Free (Element);
-      end Free;
-
-      Val      : XML_Validator;
-      Typ      : XML_Type;
-      Atts     : Attribute_Validator;
-      Elem     : XML_Element_Access;
    begin
       if Grammar /= null then
-         Types_Htable.Reset (Grammar.Types.all);
-         Unchecked_Free (Grammar.Types);
-         Attributes_Htable.Reset (Grammar.Attributes.all);
-         Unchecked_Free (Grammar.Attributes);
-
-         --  Free types
-
-         while Grammar.Types_For_Mem /= null loop
-            Typ := Grammar.Types_For_Mem.Next;
-            if Typ = Grammar.Types_For_Mem then
-               Typ := null;
-            end if;
-            Free (Grammar.Types_For_Mem);
-            Grammar.Types_For_Mem := Typ;
-         end loop;
-
-         --  Free elements
-
-         while Grammar.Elems_For_Mem /= null loop
-            Elem := Grammar.Elems_For_Mem.Next;
-            if Elem = Grammar.Elems_For_Mem then
-               Elem := null;
-            end if;
-            Free (Grammar.Elems_For_Mem);
-            Grammar.Elems_For_Mem := Elem;
-         end loop;
-
-         --  Free attribute validators
-
-         while Grammar.Atts_For_Mem /= null loop
-            Atts := Grammar.Atts_For_Mem.Next;
-            if Atts = Grammar.Atts_For_Mem then
-               Atts := null;
-            end if;
-            Free (Grammar.Atts_For_Mem);
-            Grammar.Atts_For_Mem := Atts;
-         end loop;
-
-         --  Free validators
-
-         while Grammar.Validators_For_Mem /= null loop
-            Val := Grammar.Validators_For_Mem.Next;
-            if Val = Grammar.Validators_For_Mem then
-               Val := null;
-            end if;
-            Free (Grammar.Validators_For_Mem);
-            Grammar.Validators_For_Mem := Val;
-         end loop;
-
          Unchecked_Free (Grammar);
       end if;
    end Free;
@@ -2100,22 +1464,6 @@ package body Schema.Validators is
    begin
       return Get (Grammar).References'Access;
    end Get_References;
-
-   ----------------
-   -- Do_Nothing --
-   ----------------
-
-   procedure Do_Nothing (Att : in out Named_Attribute_Validator) is
-      pragma Unreferenced (Att);
-   begin
-      null;
-   end Do_Nothing;
-
-   procedure Do_Nothing (Typ : in out XML_Type) is
-      pragma Unreferenced (Typ);
-   begin
-      null;
-   end Do_Nothing;
 
    -----------------
    -- Set_Default --
@@ -2231,24 +1579,6 @@ package body Schema.Validators is
       return Element.Elem.Fixed;
    end Get_Fixed;
 
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Typ : XML_Type) return Symbol is
-   begin
-      return Typ.Local_Name;
-   end Get_Key;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Att : Named_Attribute_Validator) return Symbol is
-   begin
-      return Att.Local_Name;
-   end Get_Key;
-
    ----------------------------
    -- Set_Substitution_Group --
    ----------------------------
@@ -2268,7 +1598,7 @@ package body Schema.Validators is
       if Get_Validator (Get_Type (Element)) /= null
         and then Get_Validator (Get_Type (Head)) /= null
         and then Get_Validator (Get_Type (Element)) /=
-           Get_Validator (Get_Type (Head))
+        Get_Validator (Get_Type (Head))
       then
          Check_Replacement
            (Get_Validator (Get_Type (Element)),
@@ -2318,28 +1648,6 @@ package body Schema.Validators is
    begin
       return Element.Elem.Substitution_Group;
    end Get_Substitution_Group;
-
-   -----------------------
-   -- Create_Local_Type --
-   -----------------------
-
-   function Create_Local_Type
-     (Grammar    : XML_Grammar_NS;
-      Validator  : access XML_Validator_Record'Class) return XML_Type
-   is
-      Result : XML_Type;
-   begin
-      Register (Grammar, Validator);
-      Result := new XML_Type_Record'
-        (Local_Name        => No_Symbol,
-         Validator         => XML_Validator (Validator),
-         Simple_Type       => Unknown_Content,
-         Blocks            => No_Block,
-         Final             => (others => False),
-         Next              => null);
-      Register (Grammar, Result);
-      return Result;
-   end Create_Local_Type;
 
    -------------------
    -- Get_Validator --
@@ -2395,111 +1703,104 @@ package body Schema.Validators is
      (In_NS  : XML_Grammar_NS;
       Process_Contents : Process_Contents_Type := Process_Strict;
       Kind   : Namespace_Kind;
-      List   : NS_List := Empty_NS_List) return Attribute_Validator
+      List   : NS_List := Empty_NS_List) return Attribute_Descr
    is
-      Result : constant Attribute_Validator :=
-        new Any_Attribute_Validator'
-          (NS_Count         => List'Length,
-           Process_Contents => Process_Contents,
-           Kind             => Kind,
-           Next             => null,
-           NS               => In_NS,
-           List             => List);
+      pragma Unreferenced (In_NS, Process_Contents, Kind, List);
    begin
-      Register (In_NS, Result);
-      return Result;
+      --  ??? Incorrect
+      return Attribute_Descr'(others => <>);
    end Create_Any_Attribute;
 
    ------------------------
    -- Validate_Attribute --
    ------------------------
 
-   procedure Validate_Attribute
-     (Validator : Any_Attribute_Validator;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax_Attribute_List;
-      Index     : Natural)
-   is
-      URI  : constant Symbol := Get_URI (Atts, Index);
-      Attr : Attribute_Validator;
-      G    : XML_Grammar_NS;
-      NS_Matches : Boolean := False;
-   begin
-      if Debug then
-         Debug_Output ("Validate_Attribute, anyAttribute: "
-                       & Validator.Kind'Img & " "
-                       & Validator.Process_Contents'Img & " "
-                       & Get (Get_Local_Name (Atts, Index)).all);
-      end if;
-
-      --  See 3.10.1 for interpretation of processContent.
-      --  See also 3.4.2 for the intersection of <anyAttribute> elements
-
-      case Validator.Kind is
-         when Namespace_Other =>
-            NS_Matches := URI /= Empty_String
-              and then URI /= Validator.NS.Namespace_URI;
-         when Namespace_Any =>
-            NS_Matches := True;
-         when Namespace_List =>
-            for N in Validator.List'Range loop
-               if Validator.List (N) = Reader.Local then
-                  NS_Matches := NS_Matches or else URI = Empty_String;
-               elsif Validator.List (N) = Reader.Target_Namespace then
-                  NS_Matches := NS_Matches
-                    or else URI = Validator.NS.Namespace_URI;
-               else
-                  NS_Matches := NS_Matches or else URI = Validator.List (N);
-               end if;
-            end loop;
-      end case;
-
-      if not NS_Matches then
-         Validation_Error (Reader, "#Invalid namespace for "
-                           & To_QName
-                             (Get_URI (Atts, Index),
-                              Get_Local_Name (Atts, Index)));
-      end if;
-
-      case Validator.Process_Contents is
-         when Process_Strict =>
-            Get_NS (Reader.Grammar, URI, G);
-            Attr := Lookup_Attribute
-              (G, Reader,
-               Get_Local_Name (Atts, Index), Create_If_Needed => False);
-            if Attr = null then
-               Validation_Error (Reader, "#No definition provided");
-            else
-               Validate_Attribute (Attr.all, Reader, Atts, Index);
-
-               if Is_ID (Attr.all) then
-                  Set_Type (Atts, Index, Sax.Attributes.Id);
-               end if;
-            end if;
-
-         when Process_Lax =>
-            Get_NS (Reader.Grammar, URI, G);
-            Attr := Lookup_Attribute
-              (G, Reader,
-               Get_Local_Name (Atts, Index), Create_If_Needed => False);
-            if Attr = null then
-               if Debug then
-                  Debug_Output
-                    ("Definition not found for attribute "
-                     & To_QName (Get_URI (Atts, Index),
-                                 Get_Local_Name (Atts, Index)));
-               end if;
-            else
-               Validate_Attribute (Attr.all, Reader, Atts, Index);
-               if Is_ID (Attr.all) then
-                  Set_Type (Atts, Index, Sax.Attributes.Id);
-               end if;
-            end if;
-
-         when Process_Skip =>
-            null;
-      end case;
-   end Validate_Attribute;
+   --     procedure Validate_Attribute
+   --       (Validator : Any_Attribute_Validator;
+   --        Reader    : access Abstract_Validation_Reader'Class;
+   --        Atts      : in out Sax_Attribute_List;
+   --        Index     : Natural)
+   --     is
+   --        URI  : constant Symbol := Get_URI (Atts, Index);
+   --        Attr : Attribute_Validator;
+   --        G    : XML_Grammar_NS;
+   --        NS_Matches : Boolean := False;
+   --     begin
+   --        if Debug then
+   --           Debug_Output ("Validate_Attribute, anyAttribute: "
+   --                         & Validator.Kind'Img & " "
+   --                         & Validator.Process_Contents'Img & " "
+   --                         & Get (Get_Local_Name (Atts, Index)).all);
+   --        end if;
+   --
+   --        --  See 3.10.1 for interpretation of processContent.
+   --        --  See also 3.4.2 for the intersection of <anyAttribute> elements
+   --
+   --        case Validator.Kind is
+   --           when Namespace_Other =>
+   --              NS_Matches := URI /= Empty_String
+   --                and then URI /= Validator.NS.Namespace_URI;
+   --           when Namespace_Any =>
+   --              NS_Matches := True;
+   --           when Namespace_List =>
+   --              for N in Validator.List'Range loop
+   --                 if Validator.List (N) = Reader.Local then
+   --                    NS_Matches := NS_Matches or else URI = Empty_String;
+   --                 elsif Validator.List (N) = Reader.Target_Namespace then
+   --                    NS_Matches := NS_Matches
+   --                      or else URI = Validator.NS.Namespace_URI;
+   --                 else
+   --               NS_Matches := NS_Matches or else URI = Validator.List (N);
+   --                 end if;
+   --              end loop;
+   --        end case;
+   --
+   --        if not NS_Matches then
+   --           Validation_Error (Reader, "#Invalid namespace for "
+   --                             & To_QName
+   --                               (Get_URI (Atts, Index),
+   --                                Get_Local_Name (Atts, Index)));
+   --        end if;
+   --
+   --        case Validator.Process_Contents is
+   --           when Process_Strict =>
+   --              Get_NS (Reader.Grammar, URI, G);
+   --              Attr := Lookup_Attribute
+   --                (G, Reader,
+   --                 Get_Local_Name (Atts, Index), Create_If_Needed => False);
+   --              if Attr = null then
+   --                 Validation_Error (Reader, "#No definition provided");
+   --              else
+   --                 Validate_Attribute (Attr.all, Reader, Atts, Index);
+   --
+   --                 if Is_ID (Attr.all) then
+   --                    Set_Type (Atts, Index, Sax.Attributes.Id);
+   --                 end if;
+   --              end if;
+   --
+   --           when Process_Lax =>
+   --              Get_NS (Reader.Grammar, URI, G);
+   --              Attr := Lookup_Attribute
+   --                (G, Reader,
+   --                 Get_Local_Name (Atts, Index), Create_If_Needed => False);
+   --              if Attr = null then
+   --                 if Debug then
+   --                    Debug_Output
+   --                      ("Definition not found for attribute "
+   --                       & To_QName (Get_URI (Atts, Index),
+   --                                   Get_Local_Name (Atts, Index)));
+   --                 end if;
+   --              else
+   --                 Validate_Attribute (Attr.all, Reader, Atts, Index);
+   --                 if Is_ID (Attr.all) then
+   --                    Set_Type (Atts, Index, Sax.Attributes.Id);
+   --                 end if;
+   --              end if;
+   --
+   --           when Process_Skip =>
+   --              null;
+   --        end case;
+   --     end Validate_Attribute;
 
    ------------------
    -- Set_Abstract --
@@ -2818,9 +2119,9 @@ package body Schema.Validators is
    ------------------
 
    function Create_Union (G : XML_Grammar_NS) return XML_Validator is
+      pragma Unreferenced (G);
       Result : constant XML_Validator := new XML_Union_Record;
    begin
-      Register (G, Result);
       return Result;
    end Create_Union;
 
@@ -3274,7 +2575,7 @@ package body Schema.Validators is
    function Hash (Name : Reference_Name) return Header_Num is
    begin
       return (Hash (Name.Name) + Reference_Kind'Pos (Name.Kind))
-        mod Header_Num'Last;
+      mod Header_Num'Last;
    end Hash;
 
    ----------
