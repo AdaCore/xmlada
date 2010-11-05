@@ -303,20 +303,46 @@ package Sax.State_Machines is
    --  The matcher holds a reference to [Self], so is only valid while [Self]
    --  is in the scope.
 
-   generic
-      with procedure Callback
-        (Self : access NFA'Class;
-         S    : State) is <>;
-   procedure For_Each_Active_State
+   type Active_State_Iterator is private;
+
+   function For_Each_Active_State
      (Self              : NFA_Matcher;
       Ignore_If_Nested  : Boolean := False;
-      Ignore_If_Default : Boolean := False);
+      Ignore_If_Default : Boolean := False) return Active_State_Iterator;
+   procedure Next
+     (Self : NFA_Matcher; Iter : in out Active_State_Iterator);
+   function Current
+     (Self : NFA_Matcher; Iter : Active_State_Iterator) return State;
    --  Iterates over all currently active states.
    --  If [Ignore_If_Nested] is true, the states with a nested NFA are not
    --  returned unless their nested NFA is in a final state (that's because we
    --  would be ignoring events on them otherwise).
-   --  If {Ignore_If_Default] is true, the states for which no user data was
+   --  If [Ignore_If_Default] is true, the states for which no user data was
    --  set are never returned.
+   --  [Current] returns [No_State] when there are no remaining active
+   --  states.
+
+   function Current_Data
+     (Self : NFA_Matcher; Iter : Active_State_Iterator) return State_User_Data;
+   --  Returns the user data either from the locally overridden data in the
+   --  matcher, or from the NFA. See [Override_Data].
+
+   procedure Replace_State
+     (Self : NFA_Matcher;
+      Iter : Active_State_Iterator;
+      S    : State);
+   --  Replace the state pointed to by [Iter].
+   --  This is only rarely useful, but for instance is used when
+   --  validating a XML schema to handle the xsi:type that can be used
+   --  to override the current state.
+
+   procedure Override_Data
+     (Self : NFA_Matcher;
+      Iter : Active_State_Iterator;
+      Data : State_User_Data);
+   --  Overridde the user data associated with the current state. This only
+   --  impacts the matcher, so this data is lost as soon as the current state
+   --  is no longer active. Same as [Replace_State], this is rarely useful.
 
    function In_Final (Self : NFA_Matcher) return Boolean;
    --  Whether [Self] is in the final step: if True, it means that all input
@@ -477,6 +503,10 @@ private
 
    type Matcher_State is record
       S      : State;
+
+      Data_Is_Overridden : Boolean         := False;
+      Overridden_Data    : State_User_Data := Default_Data;
+
       Next   : Matcher_State_Index;
       Nested : Matcher_State_Index;
    end record;
@@ -495,6 +525,12 @@ private
       Table_Initial        => 15,
       Table_Increment      => 10);
    subtype Matcher_State_Array is Matcher_State_Arrays.Instance;
+
+   type Active_State_Iterator is record
+      Ignore_If_Nested  : Boolean;
+      Ignore_If_Default : Boolean;
+      Current           : Matcher_State_Index := No_Matcher_State;
+   end record;
 
    type NFA_Matcher is record
       NFA          : NFA_Access;

@@ -804,17 +804,6 @@ package body Schema.Validators is
       return NFA.Types.Table (Index)'Unrestricted_Access;
    end Get_Type_Descr;
 
-   --------------------
-   -- Get_Type_Descr --
-   --------------------
-
-   function Get_Type_Descr
-     (Self  : access NFA'Class;
-      S     : State) return access Type_Descr is
-   begin
-      return Get_Type_Descr (Schema_NFA_Access (Self), Self.Get_Data (S).all);
-   end Get_Type_Descr;
-
    ------------------------
    -- Initialize_Grammar --
    ------------------------
@@ -1815,5 +1804,72 @@ package body Schema.Validators is
          Value        => Value,
          Loc          => Loc);
    end Add_Facet;
+
+   ---------------------------------
+   -- Check_Substitution_Group_OK --
+   ---------------------------------
+
+   procedure Check_Substitution_Group_OK
+     (Handler : access Abstract_Validation_Reader'Class;
+      New_Type : Type_Index; Old_Type : Type_Index)
+   is
+      pragma Unreferenced (Handler, New_Type, Old_Type);
+   begin
+      null;
+--        case Details.Kind is
+--           when Type_Extension =>
+--              Get_Type_Descr
+--                (Name          => Details.Extension.Base,
+--                 Loc           => Details.Extension.Loc,
+--                 NFA_Type      => NFA_Type,
+--                 Internal_Type => Internal_Type);
+--
+--              Descr := Get_Type_Descr (NFA, NFA_Type);
+--
+--              if Descr.Block (Block_Substitution) then
+--                 Validation_Error
+--                   (Parser,
+--                    To_QName (Details.Extension.Base)
+--                    & " blocks substitutions",
+--                    Details.Extension.Loc);
+--              end if;
+--
+--           when others =>
+--              null;  --  Should not have been called
+--        end case;
+
+--                 if Element /= No_Element
+--                   and then Get_Validator (Typ) /=
+--                   Get_Validator (Get_Type (Element))
+--                 then
+--                    Check_Replacement_For_Type
+--                      (Get_Validator (Typ), Element,
+--                       Valid           => Valid,
+--                       Had_Restriction => Had_Restriction,
+--                       Had_Extension   => Had_Extension);
+--
+--                    if not Valid then
+--                       Validation_Error
+--                         (H, '#' & Qname & " is not a valid replacement for "
+--                          & To_QName (Get_Type (Element)));
+--                    end if;
+--
+--                    if Had_Restriction
+--                      and then Get_Block (Element) (Block_Restriction)
+--                    then
+--                       Validation_Error
+--                         (H, "#Element """ & To_QName (Element)
+--                          & """ blocks the use of restrictions of the type");
+--                    end if;
+--
+--                    if Had_Extension
+--                      and then Get_Block (Element) (Block_Extension)
+--                    then
+--                       Validation_Error
+--                         (H, "#Element """ & To_QName (Element)
+--                          & """ blocks the use of extensions of the type");
+--                    end if;
+--                 end if;
+   end Check_Substitution_Group_OK;
 
 end Schema.Validators;

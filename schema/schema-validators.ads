@@ -306,9 +306,6 @@ package Schema.Validators is
    function Get_Type_Descr
      (NFA   : access Schema_NFA'Class;
       Index : Type_Index) return access Type_Descr;
-   function Get_Type_Descr
-     (Self  : access NFA'Class;
-      S     : State) return access Type_Descr;
    pragma Inline (Get_Type_Descr);
    --  Return the type description at that index
 
@@ -521,6 +518,13 @@ package Schema.Validators is
    function Get_Error_Message
      (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence;
    --  Return the current error message
+
+   procedure Check_Substitution_Group_OK
+     (Handler : access Abstract_Validation_Reader'Class;
+      New_Type : Type_Index; Old_Type : Type_Index);
+   --  Verifies that [New_Type] is a valid substitution for [Old_Type],
+   --  according to 3.3.6.3.
+   --  If not, raises a [Validation_Error]
 
    -------------------------
    -- Attribute_Validator --

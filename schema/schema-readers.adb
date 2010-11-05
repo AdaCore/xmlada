@@ -224,16 +224,52 @@ package body Schema.Readers is
    is
       Is_Empty   : Boolean;
       Whitespace : Whitespace_Restriction := Preserve;
+      NFA  : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
+      Iter : Active_State_Iterator;
+      S    : State;
+      Descr : access Type_Descr;
 
-      procedure Callback (Self : access NFA'Class; S : State);
-      procedure Find_Whitespace (Self : access NFA'Class; S : State);
+   begin
+      if Debug then
+         Debug_Print
+           (Handler.Matcher, Dump_Compact, "Validate_Current_Char: ");
+      end if;
 
-      procedure Callback (Self : access NFA'Class; S : State) is
---        Typ, Typ_For_Mixed : XML_Type;
---        Val2               : Cst_Byte_Sequence_Access;
---        S1, S2             : Symbol;
-         Descr : constant access Type_Descr := Get_Type_Descr (Self, S);
-      begin
+      if Handler.Characters_Count /= 0 then
+         Iter := For_Each_Active_State (Handler.Matcher,
+                                        Ignore_If_Nested  => True,
+                                        Ignore_If_Default => True);
+         loop
+            S := Current (Handler.Matcher, Iter);
+            exit when S = No_State;
+
+            Descr := Get_Type_Descr
+              (NFA, Current_Data (Handler.Matcher, Iter));
+            if Descr.Simple_Content /= No_Simple_Type_Index then
+               Whitespace := Get_Simple_Type
+                 (Get_NFA (Handler.Grammar), Descr.Simple_Content)
+                 .Whitespace;
+            end if;
+
+            Next (Handler.Matcher, Iter);
+         end loop;
+
+         if Debug then
+            Debug_Output ("Normalize whitespace: " & Whitespace'Img);
+         end if;
+         Normalize_Whitespace
+           (Whitespace, Handler.Characters.all, Handler.Characters_Count);
+      end if;
+
+      Is_Empty := Handler.Characters_Count = 0;
+      Iter := For_Each_Active_State (Handler.Matcher,
+                                     Ignore_If_Nested => True,
+                                     Ignore_If_Default => True);
+      loop
+         S := Current (Handler.Matcher, Iter);
+         exit when S = No_State;
+
+         Descr := Get_Type_Descr (NFA, Current_Data (Handler.Matcher, Iter));
          if Descr.Simple_Content /= No_Simple_Type_Index then
             if Debug and not Is_Empty then
                Debug_Output
@@ -410,39 +446,9 @@ package body Schema.Readers is
 --                 end if;
 --              end if;
 --           end if;
-      end Callback;
 
-      procedure Find_Whitespace (Self : access NFA'Class; S : State) is
-         Descr : constant access Type_Descr := Get_Type_Descr (Self, S);
-      begin
-         if Descr.Simple_Content /= No_Simple_Type_Index then
-            Whitespace := Get_Simple_Type
-              (Get_NFA (Handler.Grammar), Descr.Simple_Content).Whitespace;
-         end if;
-      end Find_Whitespace;
-
-      procedure Find_Whitespace_Type
-         is new For_Each_Active_State (Find_Whitespace);
-      procedure For_Each_Active is new For_Each_Active_State (Callback);
-
-   begin
-      if Debug then
-         Debug_Print
-           (Handler.Matcher, Dump_Compact, "Validate_Current_Char: ");
-      end if;
-
-      if Handler.Characters_Count /= 0 then
-         Find_Whitespace_Type (Handler.Matcher,
-                               Ignore_If_Nested => True,
-                               Ignore_If_Default => True);
-         Normalize_Whitespace
-           (Whitespace, Handler.Characters.all, Handler.Characters_Count);
-      end if;
-
-      Is_Empty := Handler.Characters_Count = 0;
-      For_Each_Active (Handler.Matcher,
-                       Ignore_If_Nested => True,
-                       Ignore_If_Default => True);
+         Next (Handler.Matcher, Iter);
+      end loop;
 
       Handler.Characters_Count := 0;
    end Validate_Current_Characters;
@@ -464,33 +470,21 @@ package body Schema.Readers is
         (Atts, H.XML_Instance_URI, H.No_Namespace_Schema_Location);
       Location_Index : constant Integer := Get_Index
         (Atts, H.XML_Instance_URI, H.Schema_Location);
+      NFA            : constant Schema_NFA_Access := Get_NFA (H.Grammar);
 
---        Element       : XML_Element := No_Element;
-      --  Data          : Validator_Data;
---        Typ           : XML_Type;
-      Xsi_Type      : Type_Descr;
-      pragma Unreferenced (Xsi_Type);
---      Parent_Type   : XML_Type;
---        Is_Nil        : Boolean;
+      procedure Compute_Type_From_Attribute;
+      --  If xsi:type was specified, verify that the given type is a valid
+      --  substitution for the original type in the NFA, and replace the
+      --  current nested automaton with the one for the type. The replacement
+      --  does not affect the NFA itself, but the NFA_Matcher, so is only
+      --  temporary and does not affect over running matchers.
 
-      procedure Validate_Attributes_Cb
-        (Self : access NFA'Class; S : State);
-      --  Validate the attributes for state [S]. If they are not valid, [S]
-      --  is marked as invalid.
+      ---------------------------------
+      -- Compute_Type_From_Attribute --
+      ---------------------------------
 
-      function Compute_Type_From_Attribute return Type_Descr;
-      --  Compute the type to use, depending on whether the xsi:type attribute
-      --  was specified
-
-      ------------------
-      -- Compute_Type --
-      ------------------
-
-      function Compute_Type_From_Attribute return Type_Descr is
---           G : XML_Grammar_NS;
---           Had_Restriction, Had_Extension : Boolean := False;
---           Valid : Boolean;
---           Typ : XML_Type := No_Type;
+      procedure Compute_Type_From_Attribute is
+         TRef : Global_Reference;
       begin
          if Type_Index /= -1 then
             declare
@@ -502,7 +496,9 @@ package body Schema.Readers is
                Prefix    : Symbol;
                NS        : XML_NS;
                Typ       : Qualified_Name;
-               TRef      : Global_Reference;
+               Iter      : Active_State_Iterator;
+               S         : State;
+               Nested_Start : State;
             begin
                Prefix := Find_Symbol
                  (H.all, Qname (Qname'First .. Separator - 1));
@@ -525,73 +521,42 @@ package body Schema.Readers is
                   Validation_Error (H, "Unknown type " & To_QName (Typ));
                end if;
 
---                 if Element /= No_Element
---                   and then Get_Validator (Typ) /=
---                   Get_Validator (Get_Type (Element))
---                 then
---                    Check_Replacement_For_Type
---                      (Get_Validator (Typ), Element,
---                       Valid           => Valid,
---                       Had_Restriction => Had_Restriction,
---                       Had_Extension   => Had_Extension);
---
---                    if not Valid then
---                       Validation_Error
---                         (H, '#' & Qname & " is not a valid replacement for "
---                          & To_QName (Get_Type (Element)));
---                    end if;
---
---                    if Had_Restriction
---                      and then Get_Block (Element) (Block_Restriction)
---                    then
---                       Validation_Error
---                         (H, "#Element """ & To_QName (Element)
---                          & """ blocks the use of restrictions of the type");
---                    end if;
---
---                    if Had_Extension
---                      and then Get_Block (Element) (Block_Extension)
---                    then
---                       Validation_Error
---                         (H, "#Element """ & To_QName (Element)
---                          & """ blocks the use of extensions of the type");
---                    end if;
---                 end if;
+               Nested_Start := Get_Type_Descr (NFA, TRef.Typ).Complex_Content;
+
+               Iter := For_Each_Active_State
+                 (H.Matcher,
+                  Ignore_If_Default => True, Ignore_If_Nested => True);
+               loop
+                  S := Current (H.Matcher, Iter);
+                  exit when S = No_State;
+
+                  Check_Substitution_Group_OK
+                    (H, TRef.Typ, NFA.Get_Data (S).all);
+
+                  if Nested_Start /= No_State then
+                     Replace_State (H.Matcher, Iter, Nested_Start);
+                     --  Override (temporarily) the current state
+                  else
+                     if Debug then
+                        Debug_Output ("Override state data" & S'Img);
+                     end if;
+                     Override_Data (H.Matcher, Iter, TRef.Typ);
+                  end if;
+
+                  Next (H.Matcher, Iter);
+               end loop;
+
+               if Debug then
+                  Debug_Print (H.Matcher, Dump_Compact, "After substitution:");
+               end if;
             end;
          end if;
-         return No_Type_Descr;
       end Compute_Type_From_Attribute;
 
-      procedure Validate_Attributes_Cb
-        (Self : access NFA'Class; S : State)
-      is
-         Is_Nil : Boolean;
-         Data2 : State_Data_Access;
-      begin
-         --  The list of valid attributes is attached to the type, that is to
-         --  the nested NFA.
-
-         Data2 := Self.Get_Data (S);
-         if Data2.all = No_Type_Index then
-            return;  --  This is a dummy node, ignore
-         end if;
-
-         if Debug then
-            Debug_Output ("Checking attributes for state" & S'Img);
-         end if;
-
-         Validate_Attributes
-           (Get_NFA (H.Grammar),
-            Get_Type_Descr (Schema_NFA_Access (Self), Data2.all), H, Atts,
-            Nillable  => False,  --  Is_Nillable (Element),
-            Is_Nil    => Is_Nil);
-      end Validate_Attributes_Cb;
-
-      procedure Validate_All_Attributes is new For_Each_Active_State
-        (Validate_Attributes_Cb);
-
---        G : XML_Grammar_NS;
       Success : Boolean;
+      Iter    : Active_State_Iterator;
+      Is_Nil  : Boolean;
+      S       : State;
    begin
       if Debug then
          Output_Seen ("Start_Element: " & To_QName (Elem)
@@ -690,24 +655,32 @@ package body Schema.Readers is
 --             (H, "#Element """ & To_QName (Elem) & """ is abstract");
 --        end if;
 
-      Xsi_Type := Compute_Type_From_Attribute;
+      Compute_Type_From_Attribute;
 
---        if Xsi_Type = No_Type then
---           if Element = No_Element then
---              Validation_Error
---                (H, "#Type """
---                 & Get (Get_Value (Atts, Type_Index)).all
---                 & """: No matching declaration available");
---           else
---              Typ := Get_Type (Element);
---           end if;
---        else
---           Typ := Xsi_Type;
---        end if;
---
---        Data := Create_Validator_Data (Get_Validator (Typ));
+      --  Validate the attributes
 
-      Validate_All_Attributes (H.Matcher, Ignore_If_Nested => True);
+      Iter := For_Each_Active_State
+        (H.Matcher, Ignore_If_Nested => True, Ignore_If_Default => True);
+      loop
+         S := Current (H.Matcher, Iter);
+         exit when S = No_State;
+
+         --  The list of valid attributes is attached to the type, that is to
+         --  the nested NFA.
+
+         if Debug then
+            Debug_Output ("Checking attributes for state" & S'Img);
+         end if;
+
+         Validate_Attributes
+           (Get_NFA (H.Grammar),
+            Get_Type_Descr (NFA, NFA.Get_Data (S).all),
+            H, Atts,
+            Nillable  => False,  --  Is_Nillable (Element),
+            Is_Nil    => Is_Nil);
+
+         Next (H.Matcher, Iter);
+      end loop;
 
 --        if H.Validators /= null then
 --           if H.Validators.Is_Nil then
@@ -748,9 +721,6 @@ package body Schema.Readers is
 --             (H, "#Element cannot be nilled because"
 --              & " a fixed value is defined for it");
 --        end if;
---
---        Push (H.Validators, Element,
---              Xsi_Type, G, Data, Is_Nil);
    end Hook_Start_Element;
 
    ----------------------
@@ -845,32 +815,29 @@ package body Schema.Readers is
      (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence)
    is
-      H : constant Validating_Reader_Access :=
+      H     : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
-
-      Store : Boolean := False;
-
-      procedure Callback (Self : access NFA'Class; S : State);
-      procedure Callback (Self : access NFA'Class; S : State) is
-         Descr : constant access Type_Descr := Get_Type_Descr (Self, S);
-      begin
-         if Descr.Simple_Content /= No_Simple_Type_Index then
-            Store := True;
-         elsif Descr.Mixed then
-            Store := True;
-         end if;
-      end Callback;
-
-      procedure For_Each_Active is new For_Each_Active_State (Callback);
+      NFA   : constant Schema_NFA_Access := Get_NFA (H.Grammar);
+      S     : State;
+      Descr : access Type_Descr;
+      Iter  : Active_State_Iterator := For_Each_Active_State
+        (H.Matcher, Ignore_If_Nested => True, Ignore_If_Default => True);
 
    begin
-      For_Each_Active (H.Matcher,
-                       Ignore_If_Nested => True,
-                       Ignore_If_Default => True);
+      loop
+         S := Current (H.Matcher, Iter);
+         exit when S = No_State;
 
-      if Store then
-         Internal_Characters (H, Ch);
-      end if;
+         Descr := Get_Type_Descr (NFA, Current_Data (H.Matcher, Iter));
+         if Descr.Simple_Content /= No_Simple_Type_Index
+           or else Descr.Mixed
+         then
+            Internal_Characters (H, Ch);
+            return;
+         end if;
+
+         Next (H.Matcher, Iter);
+      end loop;
    end Hook_Ignorable_Whitespace;
 
    -----------

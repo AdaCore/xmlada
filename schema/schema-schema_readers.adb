@@ -592,42 +592,6 @@ package body Schema.Schema_Readers is
          return Simple;
       end Lookup_Simple_Type;
 
-      ---------------------------------
-      -- Check_Substitution_Group_OK --
-      ---------------------------------
-
-      procedure Check_Substitution_Group_OK (Details : Type_Details_Access);
-      --  Verifies that [Details] is a valid substitution for its parent,
-      --  according to 3.3.6.3
-
-      procedure Check_Substitution_Group_OK (Details : Type_Details_Access) is
-         NFA_Type      : Type_Index;  --  Attributes of the base type
-         Internal_Type : Internal_Type_Index;
-         Descr         : access Type_Descr;
-      begin
-         case Details.Kind is
-            when Type_Extension =>
-               Get_Type_Descr
-                 (Name          => Details.Extension.Base,
-                  Loc           => Details.Extension.Loc,
-                  NFA_Type      => NFA_Type,
-                  Internal_Type => Internal_Type);
-
-               Descr := Get_Type_Descr (NFA, NFA_Type);
-
-               if Descr.Block (Block_Substitution) then
-                  Validation_Error
-                    (Parser,
-                     To_QName (Details.Extension.Base)
-                     & " blocks substitutions",
-                     Details.Extension.Loc);
-               end if;
-
-            when others =>
-               null;  --  Should not have been called
-         end case;
-      end Check_Substitution_Group_OK;
-
       ---------------------
       -- Process_Details --
       ---------------------
@@ -782,10 +746,6 @@ package body Schema.Schema_Readers is
                      Loc           => Details.Extension.Loc,
                      NFA_Type      => NFA_Type,
                      Internal_Type => Internal_Type);
-
-                  if False then
-                     Check_Substitution_Group_OK (Details);
-                  end if;
 
                   if Get_Type_Descr (NFA, NFA_Type).Simple_Content =
                     No_Simple_Type_Index

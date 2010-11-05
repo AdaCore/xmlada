@@ -2193,7 +2193,7 @@ package body Schema.Simple_Types is
                   Last := Last - First + 1;
                end if;
 
-               Idx := First;
+               Idx := Val'First;
                Idx_Output := Val'First;
 
                --  Iterate and replace all whitespaces. Mark the spot of the

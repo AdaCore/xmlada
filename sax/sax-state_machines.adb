@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with GNAT.IO;                use GNAT.IO;
@@ -66,6 +68,12 @@ package body Sax.State_Machines is
       S          : State) return Boolean;
    pragma Inline (Is_Active);
    --  Whether [S] is marked as active in the given list
+
+   procedure Internal_Next
+     (Self     : NFA_Matcher;
+      Iter     : in out Active_State_Iterator;
+      Start_At : Matcher_State_Index);
+   --  Internal implementation of the matcher iterator
 
    ----------------
    -- Initialize --
@@ -693,16 +701,20 @@ package body Sax.State_Machines is
          Append
            (Self.Active,
             Matcher_State'
-              (S      => Final_State,
-               Next   => List_Start,
-               Nested => No_Matcher_State));
+              (S                  => Final_State,
+               Data_Is_Overridden => False,
+               Overridden_Data    => <>,
+               Next               => List_Start,
+               Nested             => No_Matcher_State));
       else
          Append
            (Self.Active,
             Matcher_State'
-              (S      => From,
-               Next   => List_Start,
-               Nested => First_Nested));
+              (S                  => From,
+               Data_Is_Overridden => False,
+               Overridden_Data    => <>,
+               Next               => List_Start,
+               Nested             => First_Nested));
          From_Index := Last (Self.Active);
       end if;
 
@@ -772,18 +784,36 @@ package body Sax.State_Machines is
       return R;
    end Start_Match;
 
-   ---------------------------
-   -- For_Each_Active_State --
-   ---------------------------
+   ------------------
+   -- Current_Data --
+   ------------------
 
-   procedure For_Each_Active_State
-     (Self             : NFA_Matcher;
-      Ignore_If_Nested : Boolean := False;
-      Ignore_If_Default : Boolean := False)
+   function Current_Data
+     (Self : NFA_Matcher; Iter : Active_State_Iterator)
+      return State_User_Data is
+   begin
+      if Iter.Current = No_Matcher_State then
+         return Default_Data;
+      elsif Self.Active.Table (Iter.Current).Data_Is_Overridden then
+         return Self.Active.Table (Iter.Current).Overridden_Data;
+      else
+         return Self.NFA.States.Table
+           (Self.Active.Table (Iter.Current).S).Data;
+      end if;
+   end Current_Data;
+
+   -------------------
+   -- Internal_Next --
+   -------------------
+
+   procedure Internal_Next
+     (Self     : NFA_Matcher;
+      Iter     : in out Active_State_Iterator;
+      Start_At : Matcher_State_Index)
    is
       S2 : State;
    begin
-      for S in 1 .. Last (Self.Active) loop
+      for S in Start_At .. Last (Self.Active) loop
          S2 := Self.Active.Table (S).S;
 
          if S2 /= Final_State then
@@ -791,20 +821,100 @@ package body Sax.State_Machines is
             --  Or we always want to return the states anyway
             --  Or the nested state has completed
 
-            if not Ignore_If_Nested
+            if not Iter.Ignore_If_Nested
               or else Self.Active.Table (S).Nested = No_Matcher_State
               or else Self.Active.Table (Self.Active.Table (S).Nested).S =
                 Final_State
             then
-               if not Ignore_If_Default
-                 or else Self.NFA.States.Table (S2).Data /= Default_Data
+               if not Iter.Ignore_If_Default
+                 or else
+                   (Self.Active.Table (S).Data_Is_Overridden
+                    and then Self.Active.Table (S).Overridden_Data /=
+                      Default_Data)
+                 or else
+                   (not Self.Active.Table (S).Data_Is_Overridden
+                    and then Self.NFA.States.Table (S2).Data /= Default_Data)
                then
-                  Callback (Self.NFA, S2);
+                  Iter.Current := S;
+                  return;
                end if;
             end if;
          end if;
       end loop;
+
+      Iter.Current := No_Matcher_State;
+   end Internal_Next;
+
+   ---------------------------
+   -- For_Each_Active_State --
+   ---------------------------
+
+   function For_Each_Active_State
+     (Self              : NFA_Matcher;
+      Ignore_If_Nested  : Boolean := False;
+      Ignore_If_Default : Boolean := False) return Active_State_Iterator
+   is
+      Iter : Active_State_Iterator;
+   begin
+      Iter.Ignore_If_Nested  := Ignore_If_Nested;
+      Iter.Ignore_If_Default := Ignore_If_Default;
+      Internal_Next (Self, Iter, Start_At => 1);
+      return Iter;
    end For_Each_Active_State;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Self : NFA_Matcher; Iter : in out Active_State_Iterator)
+   is
+   begin
+      Internal_Next (Self, Iter, Start_At => Iter.Current + 1);
+   end Next;
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current
+     (Self : NFA_Matcher; Iter : Active_State_Iterator) return State is
+   begin
+      if Iter.Current = No_Matcher_State then
+         return No_State;
+      else
+         return Self.Active.Table (Iter.Current).S;
+      end if;
+   end Current;
+
+   -------------------
+   -- Replace_State --
+   -------------------
+
+   procedure Replace_State
+     (Self : NFA_Matcher;
+      Iter : Active_State_Iterator;
+      S    : State) is
+   begin
+      if Iter.Current /= No_Matcher_State then
+         Self.Active.Table (Iter.Current).S := S;
+      end if;
+   end Replace_State;
+
+   -------------------
+   -- Override_Data --
+   -------------------
+
+   procedure Override_Data
+     (Self : NFA_Matcher;
+      Iter : Active_State_Iterator;
+      Data : State_User_Data) is
+   begin
+      if Iter.Current /= No_Matcher_State then
+         Self.Active.Table (Iter.Current).Data_Is_Overridden := True;
+         Self.Active.Table (Iter.Current).Overridden_Data := Data;
+      end if;
+   end Override_Data;
 
    -------------
    -- Process --
@@ -1006,15 +1116,19 @@ package body Sax.State_Machines is
    --------------
 
    function Expected (Self : NFA_Matcher) return String is
-      Msg : Unbounded_String;
+      Msg  : Unbounded_String;
+      Iter : Active_State_Iterator := For_Each_Active_State (Self);
+      T    : Transition_Id;
+      S    : State;
+   begin
+      loop
+         S := Current (Self, Iter);
+         exit when S = No_State;
 
-      procedure Callback (The_NFA : access NFA'Class; S : State);
-      procedure Callback (The_NFA : access NFA'Class; S : State) is
-         T : Transition_Id := The_NFA.States.Table (S).First_Transition;
-      begin
+         T := Self.NFA.States.Table (S).First_Transition;
          while T /= No_Transition loop
             declare
-               Tr : Transition renames The_NFA.Transitions.Table (T);
+               Tr : Transition renames Self.NFA.Transitions.Table (T);
             begin
                case Tr.Kind is
                   when Transition_On_Empty
@@ -1033,12 +1147,10 @@ package body Sax.State_Machines is
                T := Tr.Next_For_State;
             end;
          end loop;
-      end Callback;
 
-      procedure For_All_Active is new For_Each_Active_State (Callback);
+         Next (Self, Iter);
+      end loop;
 
-   begin
-      For_All_Active (Self);
       return To_String (Msg);
    end Expected;
 
