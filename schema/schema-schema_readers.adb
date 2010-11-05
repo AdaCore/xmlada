@@ -486,7 +486,10 @@ package body Schema.Schema_Readers is
                if Info.Substitution_Group /= No_Qualified_Name then
                   --  ??? Handling of substitutionGroup: the type of the
                   --  element is the same as the head unless overridden.
-                  null;
+                  Validation_Error
+                    (Parser,
+                     "substitutionGroup not supported",
+                     Except => XML_Not_Implemented'Identity);
                end if;
 
                if NFA_Type /= No_Type_Index then
