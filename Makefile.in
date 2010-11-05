@@ -18,7 +18,9 @@ xmllib=${libdir}/xmlada/${LIBRARY_TYPE}/
 docdir=@docdir@
 includedir=@includedir@
 
-GNATMAKE=@gnatmake@
+# Set a default value (ignored if set in the environment)
+PROCESSORS?=1
+GNATMAKE=@gnatmake@ -j${PROCESSORS}
 
 # Compiler mode: one of "distrib", "debug", "optimize", "profile"
 MODE=distrib
