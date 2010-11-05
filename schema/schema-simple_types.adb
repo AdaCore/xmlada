@@ -32,6 +32,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Sax.Encodings;             use Sax.Encodings;
+with Schema.Validators.Lists;   use Schema.Validators.Lists;
 with Unicode;                   use Unicode;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 
@@ -540,6 +541,10 @@ package body Schema.Simple_Types is
                end if;
             end loop;
             return False;
+
+         when Facets_List =>
+            return Get (Ch1).all = Ch2;
+
       end case;
    end Equal;
 
@@ -559,7 +564,21 @@ package body Schema.Simple_Types is
       Index : Integer;
       Char  : Unicode_Char;
       Matched : Match_Array (0 .. 0);
-      Error   : Symbol;
+      Error   : Symbol := No_Symbol;
+
+      procedure Validate_List_Item (Str : Byte_Sequence);
+      procedure Validate_List_Item (Str : Byte_Sequence) is
+      begin
+         if Error = No_Symbol then
+            Error := Validate_Simple_Type
+              (Simple_Types, Enumerations, Symbols,
+               Simple_Type   => Descr.List_Item,
+               Ch            => Str,
+               Empty_Element => Empty_Element);
+         end if;
+      end Validate_List_Item;
+
+      procedure Validate_List_Items is new For_Each_Item (Validate_List_Item);
 
    begin
       if Descr.Kind = Facets_Union then
@@ -583,6 +602,10 @@ package body Schema.Simple_Types is
             end if;
          end loop;
          return Find (Symbols, "No matching type in the union");
+
+      elsif Descr.Kind = Facets_List then
+         Validate_List_Items (Ch);
+         return Error;
       end if;
 
       --  Check common facets
@@ -711,6 +734,7 @@ package body Schema.Simple_Types is
          when Facets_Date     => return Validate_Date (Descr, Symbols, Ch);
          when Facets_Duration => return Validate_Duration (Descr, Symbols, Ch);
          when Facets_Union    => return No_Symbol;  --  Already handled above
+         when Facets_List     => return No_Symbol;  --  Already handled above
       end case;
    end Validate_Simple_Type;
 
@@ -1652,9 +1676,6 @@ package body Schema.Simple_Types is
    is
       Val : Symbol;
    begin
-      pragma Assert (Simple.Kind /= Facets_Union,
-                     "can't merge facets for a <union>");
-
       if Facets (Facet_Whitespace) /= No_Facet_Value then
          Val := Facets (Facet_Whitespace).Value;
          if Get (Val).all = "preserve" then
@@ -1711,7 +1732,7 @@ package body Schema.Simple_Types is
       Error := No_Symbol;
 
       case Simple.Kind is
-         when Facets_Union =>
+         when Facets_Union | Facets_List =>
             null;
 
          when Facets_String .. Facets_HexBinary =>

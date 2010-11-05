@@ -72,7 +72,7 @@ package Schema.Simple_Types is
       Facets_GMonth, Facets_GYearMonth, Facets_GYear, Facets_Date,
       Facets_Duration,
 
-      Facets_Union
+      Facets_Union, Facets_List
      );
 
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
@@ -84,83 +84,80 @@ package Schema.Simple_Types is
    type Simple_Type_Descr
      (Kind : Primitive_Simple_Type_Kind := Facets_Boolean)
    is record
+      Pattern_String : Sax.Symbols.Symbol     := Sax.Symbols.No_Symbol;
+      Pattern        : Pattern_Matcher_Access := null;
+      Whitespace     : Whitespace_Restriction := Collapse;
+      Enumeration    : Enumeration_Index      := No_Enumeration_Index;
+
       case Kind is
          when Facets_Union =>
             Union : Simple_Type_Array (1 .. Max_Types_In_Union) :=
               (others => No_Simple_Type_Index);
 
-         when others =>
-            Pattern_String : Sax.Symbols.Symbol     := Sax.Symbols.No_Symbol;
-            Pattern        : Pattern_Matcher_Access := null;
-            Whitespace     : Whitespace_Restriction := Collapse;
-            Enumeration    : Enumeration_Index      := No_Enumeration_Index;
+         when Facets_List =>
+            List_Item : Simple_Type_Index;
 
-            case Kind is
-            when Facets_Union =>
-               null;
+         when Facets_String .. Facets_HexBinary =>
+            String_Length      : Natural := Natural'Last;
+            String_Min_Length  : Natural := 0;
+            String_Max_Length  : Natural := Natural'Last;
 
-            when Facets_String .. Facets_HexBinary =>
-               String_Length      : Natural := Natural'Last;
-               String_Min_Length  : Natural := 0;
-               String_Max_Length  : Natural := Natural'Last;
+         when Facets_Boolean =>
+            null;
 
-            when Facets_Boolean =>
-               null;
+         when Facets_Float | Facets_Double  =>  --  float, double
+            Float_Min_Inclusive : XML_Float := Unknown_Float;
+            Float_Max_Inclusive : XML_Float := Unknown_Float;
+            Float_Min_Exclusive : XML_Float := Unknown_Float;
+            Float_Max_Exclusive : XML_Float := Unknown_Float;
 
-            when Facets_Float | Facets_Double  =>  --  float, double
-               Float_Min_Inclusive : XML_Float := Unknown_Float;
-               Float_Max_Inclusive : XML_Float := Unknown_Float;
-               Float_Min_Exclusive : XML_Float := Unknown_Float;
-               Float_Max_Exclusive : XML_Float := Unknown_Float;
+         when Facets_Decimal =>  --  decimal
+            Total_Digits          : Positive := Positive'Last;
+            Fraction_Digits       : Natural  := Natural'Last;
+            Decimal_Min_Inclusive, Decimal_Max_Inclusive,
+            Decimal_Min_Exclusive, Decimal_Max_Exclusive :
+            Arbitrary_Precision_Number := Undefined_Number;
 
-            when Facets_Decimal =>  --  decimal
-               Total_Digits          : Positive := Positive'Last;
-               Fraction_Digits       : Natural  := Natural'Last;
-               Decimal_Min_Inclusive, Decimal_Max_Inclusive,
-               Decimal_Min_Exclusive, Decimal_Max_Exclusive :
-               Arbitrary_Precision_Number := Undefined_Number;
+         when Facets_Time =>
+            Time_Min_Inclusive, Time_Min_Exclusive,
+            Time_Max_Inclusive, Time_Max_Exclusive  : Time_T := No_Time_T;
 
-            when Facets_Time =>
-               Time_Min_Inclusive, Time_Min_Exclusive,
-               Time_Max_Inclusive, Time_Max_Exclusive  : Time_T := No_Time_T;
+         when Facets_DateTime =>
+            DateTime_Min_Inclusive, DateTime_Min_Exclusive,
+            DateTime_Max_Inclusive, DateTime_Max_Exclusive  : Date_Time_T :=
+              No_Date_Time;
 
-            when Facets_DateTime =>
-               DateTime_Min_Inclusive, DateTime_Min_Exclusive,
-               DateTime_Max_Inclusive, DateTime_Max_Exclusive  : Date_Time_T :=
-                 No_Date_Time;
+         when Facets_GDay =>
+            GDay_Min_Inclusive, GDay_Min_Exclusive,
+            GDay_Max_Inclusive, GDay_Max_Exclusive  : GDay_T := No_GDay;
 
-            when Facets_GDay =>
-               GDay_Min_Inclusive, GDay_Min_Exclusive,
-               GDay_Max_Inclusive, GDay_Max_Exclusive  : GDay_T := No_GDay;
+         when Facets_GMonthDay =>
+            GMonthDay_Min_Inclusive, GMonthDay_Min_Exclusive,
+            GMonthDay_Max_Inclusive, GMonthDay_Max_Exclusive : GMonth_Day_T
+              := No_Month_Day;
 
-            when Facets_GMonthDay =>
-               GMonthDay_Min_Inclusive, GMonthDay_Min_Exclusive,
-               GMonthDay_Max_Inclusive, GMonthDay_Max_Exclusive : GMonth_Day_T
-                 := No_Month_Day;
+         when Facets_GMonth =>
+            GMonth_Min_Inclusive, GMonth_Min_Exclusive,
+            GMonth_Max_Inclusive, GMonth_Max_Exclusive  : GMonth_T :=
+              No_Month;
 
-            when Facets_GMonth =>
-               GMonth_Min_Inclusive, GMonth_Min_Exclusive,
-               GMonth_Max_Inclusive, GMonth_Max_Exclusive  : GMonth_T :=
-                 No_Month;
+         when Facets_GYearMonth =>
+            GYearMonth_Min_Inclusive, GYearMonth_Min_Exclusive,
+            GYearMonth_Max_Inclusive, GYearMonth_Max_Exclusive :
+              GYear_Month_T := No_Year_Month;
 
-            when Facets_GYearMonth =>
-               GYearMonth_Min_Inclusive, GYearMonth_Min_Exclusive,
-               GYearMonth_Max_Inclusive, GYearMonth_Max_Exclusive :
-                 GYear_Month_T := No_Year_Month;
+         when Facets_GYear =>
+            GYear_Min_Inclusive, GYear_Min_Exclusive,
+            GYear_Max_Inclusive, GYear_Max_Exclusive  : GYear_T := No_Year;
 
-            when Facets_GYear =>
-               GYear_Min_Inclusive, GYear_Min_Exclusive,
-               GYear_Max_Inclusive, GYear_Max_Exclusive  : GYear_T := No_Year;
+         when Facets_Date =>
+            Date_Min_Inclusive, Date_Min_Exclusive,
+            Date_Max_Inclusive, Date_Max_Exclusive  : Date_T := No_Date_T;
 
-            when Facets_Date =>
-               Date_Min_Inclusive, Date_Min_Exclusive,
-               Date_Max_Inclusive, Date_Max_Exclusive  : Date_T := No_Date_T;
-
-            when Facets_Duration =>
-               Duration_Min_Inclusive, Duration_Min_Exclusive,
-               Duration_Max_Inclusive, Duration_Max_Exclusive  : Duration_T :=
-                 No_Duration;
-            end case;
+         when Facets_Duration =>
+            Duration_Min_Inclusive, Duration_Min_Exclusive,
+            Duration_Max_Inclusive, Duration_Max_Exclusive  : Duration_T :=
+              No_Duration;
       end case;
    end record;
 

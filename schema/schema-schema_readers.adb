@@ -839,7 +839,8 @@ package body Schema.Schema_Readers is
                null;
             when Simple_Type_Union =>
                Simple := (Kind => Facets_Union,
-                          Union => (others => No_Simple_Type_Index));
+                          Union => (others => No_Simple_Type_Index),
+                          others => <>);
                Index_In_Simple := Simple.Union'First;
 
                for U in Info.Simple.Union_Items'Range loop
@@ -867,11 +868,29 @@ package body Schema.Schema_Readers is
                    (Parser.Grammar, Info.Descr.Name, Simple);
 
             when Simple_Type_List =>
-               Validation_Error
-                 (Parser,
-                  "Unsupported ""list"" for simpleType",
-                  Info.Simple.Loc,
-                  Except => XML_Not_Implemented'Identity);
+               Simple := (Kind      => Facets_List,
+                          List_Item => No_Simple_Type_Index,
+                          others    => <>);
+
+               for U in Info.Simple.List_Items'Range loop
+                  exit when Info.Simple.List_Items (U) = No_Type_Member;
+
+                  if Info.Simple.List_Items (U).Name /= No_Qualified_Name then
+                     Simple.List_Item :=
+                       Lookup_Simple_Type
+                         (Info.Simple.List_Items (U).Name,
+                          Info.Simple.Loc);
+                  else
+                     --  ??? Should handle local type
+                     null;
+                     --  Simple.Union (Index_In_Simple) :=
+                     --     Info.Simple.Union_Items (U).Local;
+                  end if;
+               end loop;
+
+               Data.Descr.Simple_Content :=
+                 Create_Global_Simple_Type
+                   (Parser.Grammar, Info.Descr.Name, Simple);
 
             when Simple_Type_Restriction =>
                declare
