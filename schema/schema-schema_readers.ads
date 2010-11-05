@@ -171,7 +171,8 @@ private
 
    type Type_Member_Array is array (Natural range <>) of Type_Member;
 
-   type Simple_Type_Kind is (Simple_Type,
+   type Simple_Type_Kind is (Simple_Type_None,
+                             Simple_Type,
                              Simple_Type_Restriction,
                              Simple_Type_Union,
                              Simple_Type_List);
@@ -183,6 +184,7 @@ private
 
       Loc : Sax.Locators.Location := Sax.Locators.No_Location;
       case Kind is
+         when Simple_Type_None        => null;
          when Simple_Type             => null;
          when Simple_Type_Union       =>
             Union_Items      : Type_Member_Array
@@ -197,6 +199,8 @@ private
               Schema.Simple_Types.No_Facets;
       end case;
    end record;
+   No_Internal_Simple_Type_Descr : constant Internal_Simple_Type_Descr :=
+     (Kind => Simple_Type_None, others => <>);
    subtype Union_Type_Descr is Internal_Simple_Type_Descr (Simple_Type_Union);
    subtype List_Type_Descr  is Internal_Simple_Type_Descr (Simple_Type_List);
 
@@ -207,8 +211,10 @@ private
 
       case Is_Simple is
          when False =>
-            Attributes : Attr_Array_Access;
-            Details    : Type_Details_Access;
+            Attributes     : Attr_Array_Access;
+            Details        : Type_Details_Access;
+            Simple_Content : Internal_Simple_Type_Descr :=
+              No_Internal_Simple_Type_Descr;
          when True =>
             Simple     : Internal_Simple_Type_Descr;
       end case;

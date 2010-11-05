@@ -937,10 +937,21 @@ package body Schema.Schema_Readers is
          Simple : Simple_Type_Descr;
          Index_In_Simple : Natural;
          Data : constant State_Data_Access := NFA.Get_Data (Info.S);
-      begin
-         pragma Assert (Info.Is_Simple);
+         Internal : Internal_Simple_Type_Descr;
 
-         if Info.Simple.In_Process then
+      begin
+         if Info.Is_Simple then
+            Internal := Info.Simple;
+         else
+            Internal := Info.Simple_Content;
+
+            if Internal.Kind = Simple_Type_None then
+               --  Not a simple type, nothing to do
+               return;
+            end if;
+         end if;
+
+         if Internal.In_Process then
             Validation_Error
               (Parser,
                "Circular inheritance of type " & To_QName (Info.Descr.Name),
@@ -956,15 +967,19 @@ package body Schema.Schema_Readers is
          end if;
 
          if Debug then
-            Debug_Output ("Create_Simple_Type ? "
+            Debug_Output ("Create_Simple_Type? "
                           & To_QName (Info.Descr.Name)
-                          & " " & Info.Simple.Kind'Img);
+                          & " " & Internal.Kind'Img);
          end if;
 
-         Info.Simple.In_Process := True;
+         if Info.Is_Simple then
+            Info.Simple.In_Process := True;
+         else
+            Info.Simple_Content.In_Process := True;
+         end if;
 
-         case Info.Simple.Kind is
-            when Simple_Type =>
+         case Internal.Kind is
+            when Simple_Type | Simple_Type_None =>
                null;
             when Simple_Type_Union =>
                Simple := (Kind => Facets_Union,
@@ -972,22 +987,19 @@ package body Schema.Schema_Readers is
                           others => <>);
                Index_In_Simple := Simple.Union'First;
 
-               for U in Info.Simple.Union_Items'Range loop
-                  exit when Info.Simple.Union_Items (U) = No_Type_Member;
+               for U in Internal.Union_Items'Range loop
+                  exit when Internal.Union_Items (U) = No_Type_Member;
 
-                  if Info.Simple.Union_Items (U).Name /=
-                    No_Qualified_Name
-                  then
+                  if Internal.Union_Items (U).Name /= No_Qualified_Name then
                      Simple.Union (Index_In_Simple) :=
                        Lookup_Simple_Type
-                         (Info.Simple.Union_Items (U).Name,
-                          Info.Simple.Loc);
+                         (Internal.Union_Items (U).Name, Internal.Loc);
                   else
-                     Create_Simple_Type (Info.Simple.Union_Items (U).Local);
+                     Create_Simple_Type (Internal.Union_Items (U).Local);
                      Simple.Union (Index_In_Simple) :=
                        NFA.Get_Data
                          (Shared.Types.Table
-                              (Info.Simple.Union_Items (U).Local).S)
+                              (Internal.Union_Items (U).Local).S)
                        .Descr.Simple_Content;
                   end if;
 
@@ -1003,20 +1015,18 @@ package body Schema.Schema_Readers is
                           List_Item => No_Simple_Type_Index,
                           others    => <>);
 
-               for U in Info.Simple.List_Items'Range loop
-                  exit when Info.Simple.List_Items (U) = No_Type_Member;
+               for U in Internal.List_Items'Range loop
+                  exit when Internal.List_Items (U) = No_Type_Member;
 
-                  if Info.Simple.List_Items (U).Name /= No_Qualified_Name then
+                  if Internal.List_Items (U).Name /= No_Qualified_Name then
                      Simple.List_Item :=
                        Lookup_Simple_Type
-                         (Info.Simple.List_Items (U).Name,
-                          Info.Simple.Loc);
+                         (Internal.List_Items (U).Name, Internal.Loc);
                   else
-                     Create_Simple_Type (Info.Simple.List_Items (U).Local);
+                     Create_Simple_Type (Internal.List_Items (U).Local);
                      Simple.List_Item :=
                        NFA.Get_Data
-                         (Shared.Types.Table
-                              (Info.Simple.List_Items (U).Local).S)
+                         (Shared.Types.Table (Internal.List_Items (U).Local).S)
                        .Descr.Simple_Content;
                   end if;
                end loop;
@@ -1034,11 +1044,10 @@ package body Schema.Schema_Readers is
                   Base := Copy (Get_Simple_Type
                     (Parser.Grammar,
                      Lookup_Simple_Type
-                       (Info.Simple.Restriction_Base,
-                        Info.Simple.Loc)));
+                       (Internal.Restriction_Base, Internal.Loc)));
 
                   Override (Simple  => Base,
-                            Facets  => Info.Simple.Facets,
+                            Facets  => Internal.Facets,
                             Symbols => Get_Symbol_Table (Parser.all),
                             Error   => Error,
                             Error_Loc => Loc);
@@ -1052,7 +1061,11 @@ package body Schema.Schema_Readers is
                end;
          end case;
 
-         Info.Simple.In_Process := False;
+         if Info.Is_Simple then
+            Info.Simple.In_Process := False;
+         else
+            Info.Simple_Content.In_Process := False;
+         end if;
       end Create_Simple_Type;
 
       ----------------------------
@@ -1234,9 +1247,7 @@ package body Schema.Schema_Readers is
       --  restriction or a union needs to know about its base type)
 
       for J in Type_Tables.First .. Last (Shared.Types) loop
-         if Shared.Types.Table (J).Is_Simple then
-            Create_Simple_Type (J);
-         end if;
+         Create_Simple_Type (J);
       end loop;
 
       --  Prepare the entries for the global attributes
@@ -2495,7 +2506,10 @@ package body Schema.Schema_Readers is
          end if;
       end if;
 
-      if Handler.Shared.Types.Table (In_Type).Is_Simple then
+      if Handler.Shared.Types.Table (In_Type).Is_Simple
+        or else Handler.Shared.Types.Table (In_Type).Simple_Content.Kind /=
+           Simple_Type_None  --  <complexType><simpleContent> case
+      then
          if Restr.Base = (NS => Handler.XML_Schema_URI, Local => Handler.IDREF)
            or else Restr.Base =
              (NS => Handler.XML_Schema_URI, Local => Handler.IDREFS)
@@ -2545,7 +2559,13 @@ package body Schema.Schema_Readers is
    begin
       if Ctx.Typ = Context_Simple_Restriction then
          pragma Assert (Next.Typ = Context_Type_Def);  --  a simple type
-         Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
+
+         if Handler.Shared.Types.Table (Next.Type_Info).Is_Simple then
+            Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
+         else
+            Handler.Shared.Types.Table (Next.Type_Info).Simple_Content :=
+              Ctx.Simple;
+         end if;
       end if;
    end Finish_Restriction;
 
@@ -3352,6 +3372,10 @@ package body Schema.Schema_Readers is
       elsif Local_Name = Handler.Simple_Content then
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
          pragma Assert (Ctx.Typ = Context_Type_Def);
+         Handler.Shared.Types.Table (Ctx.Type_Info).Simple_Content :=
+           (Kind       => Simple_Type,
+            In_Process => False,
+            Loc        => Handler.Current_Location);
          Handler.Shared.Types.Table (Ctx.Type_Info).Descr.Mixed := True;
 
       elsif Local_Name = Handler.Complex_Content then
