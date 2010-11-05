@@ -1720,7 +1720,6 @@ package body Schema.Schema_Readers is
       Separator : Integer;
       NS        : XML_NS;
       Prefix    : Symbol;
-      Result    : Qualified_Name;
    begin
       if QName = No_Symbol then
          return No_Qualified_Name;
@@ -1735,25 +1734,27 @@ package body Schema.Schema_Readers is
             Prefix   => Prefix,
             NS       => NS);
 
-         if NS = No_XML_NS and then Prefix /= Empty_String then
-            Validation_Error
-              (Handler,
-               "Cannot resolve namespace prefix "
-               & Val (Val'First .. Separator - 1),
-               Loc);
+         if NS = No_XML_NS then
+            if Prefix /= Empty_String then
+               Validation_Error
+                 (Handler,
+                  "Cannot resolve namespace prefix "
+                  & Val (Val'First .. Separator - 1),
+                  Loc);
+               return No_Qualified_Name;
+            else
+               return
+                 (NS    => NS_If_Empty,
+                  Local =>
+                   Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last)));
+            end if;
 
          else
-            Result :=
+            return
               (NS    => Get_URI (NS),
                Local =>
                  Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last)));
          end if;
-
-         if Result.NS = Empty_String then
-            Result.NS := NS_If_Empty;
-         end if;
-
-         return Result;
       end if;
    end Resolve_QName;
 
@@ -3143,7 +3144,7 @@ package body Schema.Schema_Readers is
                Att.Attr.Descr.Fixed := Get_Value (Atts, J);
             elsif Name.Local = Handler.Ref then
                Att.Attr.Ref := Resolve_QName
-                 (Handler, Get_Value (Atts, J),
+                 (Handler, Get_Value (Atts, J), Handler.Target_NS,
                   Loc => Get_Location (Atts, J));
             elsif Name.Local = Handler.Form then
                Att.Attr.Descr.Form :=
