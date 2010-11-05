@@ -64,7 +64,7 @@ package body Schema.Validators.Lists is
             exit when Index > Ch'Last or else Is_White_Space (C);
          end loop;
 
-         if Index > Ch'Last then
+         if Index > Ch'Last and then not Is_White_Space (C) then
             Callback (Ch (Start .. Index - 1));
             exit;
          else
