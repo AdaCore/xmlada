@@ -1342,6 +1342,8 @@ package body Sax.State_Machines is
 
    package body Pretty_Printers is
 
+      type State_Array is array (State range <>) of Boolean;
+
       function Node_Label
         (Self : access NFA'Class;
          S    : State) return String;
@@ -1352,6 +1354,188 @@ package body Sax.State_Machines is
         (Self : access NFA'Class;
          S : State; R : in out Unbounded_String;
          Nested_In : State := No_State);
+
+      procedure Newline
+        (Result : in out Unbounded_String; Mode : Dump_Mode);
+      --  Append a newline to [Result] if needed
+
+      procedure Dump_Nested
+        (Self   : access NFA'Class;
+         Result : in out Unbounded_String;
+         S      : State;
+         Mode   : Dump_Mode;
+         Since  : NFA_Snapshot := No_NFA_Snapshot);
+      --  Dump a cluster that represents a nested NFA.
+      --  Such nested NFAs are represented only once, even though they can
+      --  in fact be nested within several nodes. That would make huge
+      --  graphs otherwise.
+
+      procedure Dump_Dot
+        (Self   : access NFA'Class;
+         Result : in out Unbounded_String;
+         Dumped : in out State_Array;
+         Start_At  : State;
+         Nested_In : State;
+         Prefix : String;
+         Mode   : Dump_Mode;
+         Since  : NFA_Snapshot := No_NFA_Snapshot);
+      procedure Dump_Dot_Transitions
+        (Self   : access NFA'Class;
+         Result : in out Unbounded_String;
+         Dumped : in out State_Array;
+         S      : State;
+         First  : Transition_Id;
+         Prefix : String;
+         Nested_In : State := No_State;
+         Mode   : Dump_Mode;
+         Since  : NFA_Snapshot := No_NFA_Snapshot);
+
+      --------------------------
+      -- Dump_Dot_Transitions --
+      --------------------------
+
+      procedure Dump_Dot_Transitions
+        (Self   : access NFA'Class;
+         Result : in out Unbounded_String;
+         Dumped : in out State_Array;
+         S      : State;
+         First  : Transition_Id;
+         Prefix : String;
+         Nested_In : State := No_State;
+         Mode   : Dump_Mode;
+         Since  : NFA_Snapshot := No_NFA_Snapshot)
+      is
+         T : Transition_Id := First;
+      begin
+         while T /= No_Transition loop
+            declare
+               Tr : Transition renames Self.Transitions.Table (T);
+            begin
+               if Tr.To_State > Since.States then
+                  Append (Result,
+                          Prefix & Node_Name (Self, S, Nested_In)
+                          & "->" & Node_Name (Self, Tr.To_State, Nested_In)
+                          & "[");
+
+                  case Tr.Kind is
+                     when Transition_On_Symbol =>
+                        Append (Result, "label=""" & Image (Tr.Sym) & """");
+                     when Transition_On_Exit_Symbol =>
+                        Append
+                          (Result, "label=""on_exit:" & Image (Tr.Sym)
+                           & """ style=dotted");
+                     when Transition_On_Empty =>
+                        Append (Result, "style=dashed");
+                        null;
+                     when Transition_On_Exit_Empty =>
+                        Append (Result, "label=on_exit style=dotted");
+                  end case;
+
+                  Append (Result, "];");
+                  Newline (Result, Mode);
+
+                  if Tr.To_State /= Final_State then
+                     Dump_Dot
+                       (Self,
+                        Result    => Result,
+                        Dumped    => Dumped,
+                        Start_At  => Tr.To_State,
+                        Nested_In => Nested_In,
+                        Prefix    => Prefix,
+                        Mode      => Mode,
+                        Since     => Since);
+                  end if;
+               end if;
+
+               T := Tr.Next_For_State;
+            end;
+         end loop;
+      end Dump_Dot_Transitions;
+
+      --------------
+      -- Dump_Dot --
+      --------------
+
+      procedure Dump_Dot
+        (Self   : access NFA'Class;
+         Result : in out Unbounded_String;
+         Dumped : in out State_Array;
+         Start_At  : State;
+         Nested_In : State;
+         Prefix : String;
+         Mode   : Dump_Mode;
+         Since  : NFA_Snapshot := No_NFA_Snapshot)
+      is
+      begin
+         if Start_At = Final_State
+           or else Dumped (Start_At)
+         then
+            return;
+         end if;
+
+         Dumped (Start_At) := True;
+         Dump_Dot_Transitions
+           (Self, Result,
+            S         => Start_At,
+            Dumped    => Dumped,
+            First     => Self.States.Table (Start_At).First_Transition,
+            Prefix    => Prefix,
+            Nested_In => Nested_In,
+            Mode      => Mode,
+            Since     => Since);
+      end Dump_Dot;
+
+      -----------------
+      -- Dump_Nested --
+      -----------------
+
+      procedure Dump_Nested
+        (Self   : access NFA'Class;
+         Result : in out Unbounded_String;
+         S      : State;
+         Mode   : Dump_Mode;
+         Since  : NFA_Snapshot := No_NFA_Snapshot)
+      is
+         Dumped : State_Array (State_Tables.First .. Last (Self.States)) :=
+           (others => False);
+
+         Name  : constant String := Node_Name (Self, S);
+         Label : constant String := Node_Label (Self, S);
+      begin
+         if S > Since.States then
+            Append (Result, "subgraph cluster" & Name & "{");
+            Newline (Result, Mode);
+            Append (Result, " label=""" & Label & """;");
+            Newline (Result, Mode);
+            Append_Node (Self, S, Result, S);
+            Append_Node (Self, Final_State, Result, S);
+
+            Dump_Dot
+              (Self, Result,
+               Dumped    => Dumped,
+               Start_At  => S,
+               Nested_In => S,
+               Prefix    => " ",
+               Mode      => Mode,
+               Since     => Since);
+
+            Append (Result, "};");
+            Newline (Result, Mode);
+         end if;
+      end Dump_Nested;
+
+      -------------
+      -- Newline --
+      -------------
+
+      procedure Newline
+        (Result : in out Unbounded_String; Mode : Dump_Mode) is
+      begin
+         case Mode is
+            when Dump_Compact | Dump_Dot_Compact => null;
+            when others => Append (Result, ASCII.LF);
+         end case;
+      end Newline;
 
       ---------------
       -- Node_Name --
@@ -1456,8 +1640,8 @@ package body Sax.State_Machines is
          Nested : Nested_NFA;
          Mode   : Dump_Mode := Dump_Compact) return String
       is
-         Dumped : array (State_Tables.First .. Last (Self.States)) of Boolean
-           := (others => False);
+         Dumped : State_Array (State_Tables.First .. Last (Self.States)) :=
+           (others => False);
          Result : Unbounded_String;
 
          procedure Internal (S : State);
@@ -1518,7 +1702,21 @@ package body Sax.State_Machines is
          end Internal;
 
       begin
-         Internal (Nested.Default_Start);
+         case Mode is
+            when Dump_Compact | Dump_Multiline =>
+               Internal (Nested.Default_Start);
+            when Dump_Dot | Dump_Dot_Compact =>
+               Append (Result, "Use   dot -O -Tpdf file.dot" & ASCII.LF);
+               Append (Result, "digraph finite_state_machine{");
+               Newline (Result, Mode);
+               Append (Result, "compound=true;");
+               Newline (Result, Mode);
+               Append (Result, "rankdir=LR;");
+               Newline (Result, Mode);
+
+               Dump_Nested (Self, Result, Nested.Default_Start, Mode);
+               Append (Result, "}" & ASCII.LF);
+         end case;
          return To_String (Result);
       end Dump;
 
@@ -1533,125 +1731,9 @@ package body Sax.State_Machines is
          Show_Isolated_Nodes : Boolean := True;
          Since               : NFA_Snapshot := No_NFA_Snapshot) return String
       is
-         Dumped : array (State_Tables.First .. Last (Self.States)) of Boolean
-           := (others => False);
-
+         Dumped : State_Array (State_Tables.First .. Last (Self.States)) :=
+           (others => False);
          Result : Unbounded_String;
-
-         procedure Newline;
-         --  Append a newline to [Result] if needed
-
-         procedure Dump_Dot (Start_At, Nested_In : State; Prefix : String);
-         procedure Dump_Dot_Transitions
-           (S : State; First : Transition_Id; Prefix : String;
-            Nested_In : State := No_State);
-
-         procedure Dump_Nested (S : State);
-         --  Dump a cluster that represents a nested NFA.
-         --  Such nested NFAs are represented only once, even though they can
-         --  in fact be nested within several nodes. That would make huge
-         --  graphs otherwise.
-
-         -------------
-         -- Newline --
-         -------------
-
-         procedure Newline is
-         begin
-            case Mode is
-            when Dump_Compact | Dump_Dot_Compact => null;
-            when others => Append (Result, ASCII.LF);
-            end case;
-         end Newline;
-
-         --------------------------
-         -- Dump_Dot_Transitions --
-         --------------------------
-
-         procedure Dump_Dot_Transitions
-           (S : State; First : Transition_Id; Prefix : String;
-            Nested_In : State := No_State)
-         is
-            T : Transition_Id := First;
-         begin
-            while T /= No_Transition loop
-               declare
-                  Tr : Transition renames Self.Transitions.Table (T);
-               begin
-                  if Tr.To_State > Since.States then
-                     Append (Result,
-                             Prefix & Node_Name (Self, S, Nested_In)
-                             & "->" & Node_Name (Self, Tr.To_State, Nested_In)
-                             & "[");
-
-                     case Tr.Kind is
-                     when Transition_On_Symbol =>
-                        Append (Result, "label=""" & Image (Tr.Sym) & """");
-                     when Transition_On_Exit_Symbol =>
-                        Append
-                          (Result, "label=""on_exit:" & Image (Tr.Sym)
-                           & """ style=dotted");
-                     when Transition_On_Empty =>
-                        Append (Result, "style=dashed");
-                        null;
-                     when Transition_On_Exit_Empty =>
-                        Append (Result, "label=on_exit style=dotted");
-                     end case;
-
-                     Append (Result, "];");
-                     Newline;
-
-                     if Tr.To_State /= Final_State then
-                        Dump_Dot (Tr.To_State, Nested_In, Prefix);
-                     end if;
-                  end if;
-
-                  T := Tr.Next_For_State;
-               end;
-            end loop;
-         end Dump_Dot_Transitions;
-
-         -----------------
-         -- Dump_Nested --
-         -----------------
-
-         procedure Dump_Nested (S : State) is
-            Name  : constant String := Node_Name (Self, S);
-            Label : constant String := Node_Label (Self, S);
-         begin
-            if S > Since.States then
-               Append (Result, "subgraph cluster" & Name & "{");
-               Newline;
-               Append (Result, " label=""" & Label & """;");
-               Newline;
-               Append_Node (Self, S, Result, S);
-               Append_Node (Self, Final_State, Result, S);
-
-               Dump_Dot (S, Prefix => " ", Nested_In => S);
-
-               Append (Result, "};");
-               Newline;
-            end if;
-         end Dump_Nested;
-
-         --------------
-         -- Dump_Dot --
-         --------------
-
-         procedure Dump_Dot (Start_At, Nested_In : State; Prefix : String) is
-         begin
-            if Start_At = Final_State
-              or else Dumped (Start_At)
-            then
-               return;
-            end if;
-
-            Dumped (Start_At) := True;
-            Dump_Dot_Transitions
-              (Start_At,
-               Self.States.Table (Start_At).First_Transition, Prefix,
-               Nested_In);
-         end Dump_Dot;
 
       begin
          Append (Result, "Total states:" & Last (Self.States)'Img
@@ -1676,11 +1758,11 @@ package body Sax.State_Machines is
          when Dump_Dot | Dump_Dot_Compact =>
             Append (Result, "Use   dot -O -Tpdf file.dot" & ASCII.LF);
             Append (Result, "digraph finite_state_machine{");
-            Newline;
+            Newline (Result, Mode);
             Append (Result, "compound=true;");
-            Newline;
+            Newline (Result, Mode);
             Append (Result, "rankdir=LR;");
-            Newline;
+            Newline (Result, Mode);
             Append_Node (Self, Start_State, Result);
             Append_Node (Self, Final_State, Result);
 
@@ -1690,7 +1772,8 @@ package body Sax.State_Machines is
 
             for S in Since.States + 1 .. Last (Self.States) loop
                if Self.States.Table (S).Nested /= No_State then
-                  Dump_Nested (Self.States.Table (S).Nested);
+                  Dump_Nested (Self, Result, Self.States.Table (S).Nested,
+                               Mode, Since);
                end if;
             end loop;
 
@@ -1711,7 +1794,15 @@ package body Sax.State_Machines is
             --  Now dump the toplevel states (that is the ones that haven't
             --  been dumped yet)
 
-            Dump_Dot (Start_State, No_State, "");  --  Always
+            Dump_Dot
+              (Self      => Self,
+               Result    => Result,
+               Dumped    => Dumped,
+               Start_At  => Start_State,
+               Nested_In => No_State,
+               Prefix    => "",
+               Mode      => Mode,
+               Since     => Since);
 
             for S in Since.States + 1 .. Last (Self.States) loop
                if S /= Start_State and then
@@ -1720,7 +1811,15 @@ package body Sax.State_Machines is
                   or else Self.States.Table (S).First_Transition /=
                     No_Transition)
                then
-                  Dump_Dot (S, No_State, "");
+                  Dump_Dot
+                    (Self      => Self,
+                     Result    => Result,
+                     Dumped    => Dumped,
+                     Start_At  => S,
+                     Nested_In => No_State,
+                     Prefix    => "",
+                     Mode      => Mode,
+                     Since     => Since);
                end if;
             end loop;
 
