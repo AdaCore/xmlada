@@ -133,6 +133,11 @@ private
       --  Whether the current element is "xsi:nil".
       --  We do not need a stack here, since a nil element cannot have
       --  children anyway.
+
+      Skip_Depth : Integer := -1;
+      --  When an element is <any processContents="skip">, we should not
+      --  analyze any of its contents. In particular, the xsi:nil attribute
+      --  should be ignored.
    end record;
 
 end Schema.Readers;

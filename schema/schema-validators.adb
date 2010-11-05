@@ -1164,7 +1164,9 @@ package body Schema.Validators is
          Descr          : Simple_Type_Descr;
          Restriction_Of : Type_Index) return Type_Index;
 
-      function Create_UR_Type return State;
+      function Create_UR_Type
+        (Process_Contents : Process_Contents_Type)
+         return State;
       --  Return the start state for a nested NFA for ur-type
       --  All children (at any depth level) are allowed.
       --  Any character contents is allowed.
@@ -1194,7 +1196,10 @@ package body Schema.Validators is
                Complex_Content => No_State));
       end Register;
 
-      function Create_UR_Type return State is
+      function Create_UR_Type
+        (Process_Contents : Process_Contents_Type)
+         return State
+      is
          S1      : constant State := G.NFA.Add_State;
          Ur_Type : constant Nested_NFA := G.NFA.Create_Nested (S1);
          S2, S3  : State;
@@ -1233,7 +1238,7 @@ package body Schema.Validators is
          G.NFA.Add_Transition
            (S1, S2,
             (Kind => Transition_Any,
-             Any  => (Process_Contents => Process_Lax,
+             Any  => (Process_Contents => Process_Contents,
                       Namespaces       => Reader.Any_Namespace,
                       No_Namespaces    => No_Symbol)));
 
@@ -1274,7 +1279,8 @@ package body Schema.Validators is
 
          --  Added support for <ur-Type>
 
-         G.NFA.Ur_Type := Create_UR_Type;
+         G.NFA.Ur_Type := Create_UR_Type (Process_Lax);
+         G.NFA.Ur_Type_Skip := Create_UR_Type (Process_Skip);
 
          Add_Schema_For_Schema (Reader);
 
@@ -1304,9 +1310,17 @@ package body Schema.Validators is
    -------------
 
    function Ur_Type
-     (NFA : access Schema_NFA'Class) return Schema_State_Machines.Nested_NFA is
+     (NFA              : access Schema_NFA'Class;
+      Process_Contents : Process_Contents_Type)
+      return Schema_State_Machines.Nested_NFA
+   is
    begin
-      return NFA.Create_Nested (NFA.Ur_Type);
+      case Process_Contents is
+         when Process_Skip =>
+            return NFA.Create_Nested (NFA.Ur_Type_Skip);
+         when others =>
+            return NFA.Create_Nested (NFA.Ur_Type);
+      end case;
    end Ur_Type;
 
    ----------------

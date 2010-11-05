@@ -495,7 +495,7 @@ package body Schema.Schema_Readers is
                      NFA.Create_Nested
                        (Get_Type_Descr (NFA, NFA_Type).Complex_Content));
                else
-                  NFA.Set_Nested (S1, NFA.Ur_Type);
+                  NFA.Set_Nested (S1, NFA.Ur_Type (Process_Lax));
                   Data.Fixed    := Info.Fixed;
                   Data.Default  := Info.Default;
                   Data.Block    := Info.Block;
@@ -902,7 +902,7 @@ package body Schema.Schema_Readers is
 
             when Type_Any =>
                S := NFA.Add_State; --   ((Simple => 1, others => <>));
-               NFA.Set_Nested (S, Ur_Type (NFA));
+               NFA.Set_Nested (S, Ur_Type (NFA, Details.Any.Process_Contents));
 
                NFA.Add_Transition
                  (From, S, (Transition_Any,

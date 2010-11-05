@@ -747,8 +747,21 @@ package body Schema.Readers is
       if Through_Any then
          case Through_Process is
             when Process_Skip =>
-               null;  --  Already handled in the NFA, state is setup as urType
-               TRef := No_Global_Reference;
+               --  Need to lookup the element to see whether it is nillable.
+               --  Apparently, this aspect must be checked.
+               --  Apart from that, this case is already handled in the NFA,
+               --  and the state is setup as ur-Type
+               TRef := Reference_HTables.Get
+                 (Get_References (H.Grammar).all,
+                  (Element_QName, Ref_Element));
+
+               if TRef /= No_Global_Reference then
+                  Nillable := NFA.Get_Data (TRef.Element).Nillable;
+                  if Debug then
+                     Debug_Output ("Getting nillable status from schema"
+                                   & " even though we are in a <any skip>");
+                  end if;
+               end if;
 
             when Process_Lax =>
                TRef := Reference_HTables.Get
@@ -768,7 +781,9 @@ package body Schema.Readers is
                end if;
          end case;
 
-         if TRef /= No_Global_Reference then
+         if Through_Process /= Process_Skip
+           and then TRef /= No_Global_Reference
+         then
             --  Replace the current most nested state in the machine with the
             --  new type
 
@@ -782,6 +797,9 @@ package body Schema.Readers is
                Nested_Start => Get_Start_State (NFA.Get_Nested (TRef.Element)),
                Simple       => NFA.Get_Data (TRef.Element).Simple);
          end if;
+
+      else
+         Through_Process := Process_Strict;
       end if;
 
 --        if Element /= No_Element and then Is_Abstract (Element) then
@@ -864,31 +882,39 @@ package body Schema.Readers is
             Next (H.Matcher, Iter);
          end loop;
 
-         if Nil_Index /= -1 then
-            if not Nillable then
-               Validation_Error (H, "Element cannot be nil");
-            end if;
-
-            H.Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
-         else
+         if Through_Process = Process_Skip then
+            --  In this case, we do not want to check the contents. Even if
+            --  xsi:nil="true" was specified, we still need to accept when
+            --  contents was provided.
             H.Is_Nil := False;
-         end if;
 
-         if H.Is_Nil then
-            if Fixed /= No_Symbol then
-               Validation_Error
-                 (H, "Element cannot be nilled because"
-                  & " a fixed value is defined for it");
+         else
+            if Nil_Index /= -1 then
+               if not Nillable then
+                  Validation_Error (H, "Element cannot be nil");
+               end if;
+               H.Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
+            else
+               H.Is_Nil := False;
             end if;
 
-            if Debug then
-               Debug_Output ("Element is nil, should we replace nested NFA");
-            end if;
+            if H.Is_Nil then
+               if Fixed /= No_Symbol then
+                  Validation_Error
+                    (H, "Element cannot be nilled because"
+                     & " a fixed value is defined for it");
+               end if;
 
-            Replace_State
-              (Check_Substitution => False,
-               Nested_Start       => NFA.Simple_Nested,
-               Simple             => Data.Simple);
+               if Debug then
+                  Debug_Output
+                    ("Element is nil, should we replace nested NFA");
+               end if;
+
+               Replace_State
+                 (Check_Substitution => False,
+                  Nested_Start       => NFA.Simple_Nested,
+                  Simple             => Data.Simple);
+            end if;
          end if;
       end;
    end Hook_Start_Element;

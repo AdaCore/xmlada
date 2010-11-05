@@ -301,7 +301,9 @@ package Schema.Validators is
    --  through a <any>
 
    function Ur_Type
-     (NFA : access Schema_NFA'Class) return Schema_State_Machines.Nested_NFA;
+     (NFA              : access Schema_NFA'Class;
+      Process_Contents : Process_Contents_Type)
+      return Schema_State_Machines.Nested_NFA;
    --  Return the nested NFA for <ur-Type>
 
    type Reference_Kind is (Ref_Element,
@@ -771,6 +773,7 @@ private
       Types        : Types_Tables.Instance;
 
       Ur_Type      : Schema_State_Machines.State;
+      Ur_Type_Skip : Schema_State_Machines.State;
 
       Simple_Nested : Schema_State_Machines.State;
       --  A dummy nested NFA: this is used when xsi:type replaces a complex
