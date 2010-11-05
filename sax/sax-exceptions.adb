@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -92,7 +92,7 @@ package body Sax.Exceptions is
    ------------
 
    function Create (Message : Unicode.CES.Byte_Sequence;
-                    Loc     : Sax.Locators.Locator)
+                    Loc     : Sax.Locators.Location)
       return Sax_Parse_Exception'Class
    is
       Pe : Sax_Parse_Exception (Message'Length);
@@ -110,7 +110,7 @@ package body Sax.Exceptions is
    function Create
      (Message       : Unicode.CES.Byte_Sequence;
       Ada_Exception : Ada.Exceptions.Exception_Id;
-      Loc           : Sax.Locators.Locator)
+      Loc           : Sax.Locators.Location)
       return Sax_Exception'Class
    is
       Pe : Sax_Parse_Exception (Message'Length);
@@ -121,14 +121,14 @@ package body Sax.Exceptions is
       return Pe;
    end Create;
 
-   -----------------
-   -- Get_Locator --
-   -----------------
+   ------------------
+   -- Get_Location --
+   ------------------
 
-   function Get_Locator (Except : Sax_Parse_Exception)
-      return Sax.Locators.Locator is
+   function Get_Location (Except : Sax_Parse_Exception)
+      return Sax.Locators.Location is
    begin
       return Except.Loc;
-   end Get_Locator;
+   end Get_Location;
 
 end Sax.Exceptions;

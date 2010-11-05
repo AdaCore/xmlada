@@ -96,8 +96,15 @@ begin
       case Getopt (Switches) is
          when 'x' =>
             Open (Parameter, Read);
-            Parse (Schema, Read);
-            Close (Read);
+            begin
+               Parse (Schema, Read);
+               Close (Read);
+            exception
+               when others =>
+                  Close (Read);
+                  raise;
+            end;
+
             Explicit_XSD := True;
 
          when 'b' =>

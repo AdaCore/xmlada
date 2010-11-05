@@ -916,11 +916,9 @@ package body Sax.Readers is
       Loc     : Sax.Locators.Location := No_Location)
    is
       Id2  : Sax.Locators.Location := Loc;
-      Loca : constant Locator := Parser.Locator;
    begin
-      if Loc = No_Location then
-         Id2.Line   := Get_Line_Number (Loca);
-         Id2.Column := Get_Column_Number (Loca);
+      if Id2 = No_Location then
+         Id2 := Parser.Current_Location;
       end if;
       Parser.Buffer_Length := 0;
 
@@ -930,7 +928,7 @@ package body Sax.Readers is
       begin
          --  Must be called before End_Document, as per the SAX standard
          Fatal_Error
-           (Parser, Create (Location (Parser, Id2) & ": " & Msg, Loca));
+           (Parser, Create (Location (Parser, Id2) & ": " & Msg, Id2));
          End_Document (Parser);
       exception
          when E : others =>
@@ -970,13 +968,11 @@ package body Sax.Readers is
       Loc    : Sax.Locators.Location)
    is
       Id2  : Sax.Locators.Location := Loc;
-      Loca : constant Locator := Parser.Locator;
    begin
-      if Loc = No_Location then
-         Id2.Line   := Get_Line_Number   (Loca);
-         Id2.Column := Get_Column_Number (Loca);
+      if Id2 = No_Location then
+         Id2 := Parser.Current_Location;
       end if;
-      Error (Parser, Create (Location (Parser, Id2) & ": " & Msg, Loca));
+      Error (Parser, Create (Location (Parser, Id2) & ": " & Msg, Id2));
    end Error;
 
    procedure Error
@@ -1006,17 +1002,12 @@ package body Sax.Readers is
       Id     : Token := Null_Token)
    is
       Id2 : Sax.Locators.Location := Id.Location;
-      Loc : Locator;
    begin
-      if Loc = No_Locator then
-         Loc := Parser.Locator;
+      if Id2 = No_Location then
+         Id2 := Parser.Current_Location;
       end if;
 
-      if Id = Null_Token then
-         Id2.Line := Get_Line_Number (Loc);
-         Id2.Column := Get_Column_Number (Loc);
-      end if;
-      Warning (Parser, Create (Location (Parser, Id2) & ": " & Msg, Loc));
+      Warning (Parser, Create (Location (Parser, Id2) & ": " & Msg, Id2));
    end Warning;
 
    ---------------
@@ -6329,5 +6320,15 @@ package body Sax.Readers is
       return Qname_From_Name (Get_Prefix (List.List (Index).NS),
                               List.List (Index).Local_Name);
    end Get_Qname;
+
+   ----------------------
+   -- Current_Location --
+   ----------------------
+
+   function Current_Location
+     (Handler : Sax_Reader) return Sax.Locators.Location is
+   begin
+      return Get_Location (Handler.Locator);
+   end Current_Location;
 
 end Sax.Readers;

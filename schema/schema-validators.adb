@@ -90,8 +90,7 @@ package body Schema.Validators is
       if Loc /= No_Location then
          Reader.Error_Location := Loc;
       else
-         Reader.Error_Location := Get_Location
-           (Get_Locator (Abstract_Validation_Reader'Class (Reader.all)));
+         Reader.Error_Location := Reader.Current_Location;
       end if;
 
       Raise_Exception (Except);
@@ -113,8 +112,7 @@ package body Schema.Validators is
       else
          Loc := Reader.Error_Location;
          if Loc = No_Location then
-            Loc := Get_Location
-              (Get_Locator (Abstract_Validation_Reader'Class (Reader)));
+            Loc := Reader.Current_Location;
          end if;
 
          --  Backward compatibility: '#' used to indicate we want the location

@@ -172,6 +172,11 @@ package body Sax.State_Machines is
             "Can't add transitions from final_state");
       end if;
 
+      pragma Assert (From /= No_State);
+      pragma Assert (From <= Last (Self.States));
+      pragma Assert (To /= No_State);
+      pragma Assert (To = Final_State or else To <= Last (Self.States));
+
       Append
         (Self.Transitions,
          Transition'

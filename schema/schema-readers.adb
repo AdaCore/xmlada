@@ -30,7 +30,6 @@ pragma Ada_05;
 
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
-with Sax.Exceptions;    use Sax.Exceptions;
 with Sax.Locators;      use Sax.Locators;
 with Sax.Utils;         use Sax.Utils;
 with Sax.Readers;       use Sax.Readers;
@@ -76,9 +75,6 @@ package body Schema.Readers is
    procedure Hook_Ignorable_Whitespace
      (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence);
-   procedure Hook_Set_Document_Locator
-     (Handler : in out Sax_Reader'Class;
-      Loc     : in out Sax.Locators.Locator);
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
 
@@ -171,7 +167,8 @@ package body Schema.Readers is
       then
          return Find_Symbol
            (Handler,
-            Dir_Name (Get (Get_System_Id (Handler.Locator)).all) & U.all);
+            Dir_Name
+              (Get (Handler.Current_Location.System_Id).all) & U.all);
       else
          return URI;
       end if;
@@ -590,7 +587,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Output_Seen ("Start_Element: " & To_QName (Elem)
-                      & " " & To_String (H.Locator));
+                      & " " & To_String (H.Current_Location));
       end if;
 
       --  We should get the location of the enclosing element
@@ -767,7 +764,8 @@ package body Schema.Readers is
    begin
       if Debug then
          Output_Seen
-           ("End_Element: " & To_QName (Elem) & " " & To_String (H.Locator));
+           ("End_Element: "
+            & To_QName (Elem) & " " & To_String (H.Current_Location));
       end if;
 
       Validate_Current_Characters (H, Loc => Start_Tag_End_Location (Elem));
@@ -899,8 +897,7 @@ package body Schema.Readers is
                     Start_Element => Hook_Start_Element'Access,
                     End_Element   => Hook_End_Element'Access,
                     Characters    => Hook_Characters'Access,
-                    Whitespace    => Hook_Ignorable_Whitespace'Access,
-                    Doc_Locator   => Hook_Set_Document_Locator'Access);
+                    Whitespace    => Hook_Ignorable_Whitespace'Access);
 
          Parser.Matcher := No_NFA_Matcher;
       else
@@ -929,40 +926,6 @@ package body Schema.Readers is
          Reset (Parser);
          raise;
    end Parse;
-
-   ----------------------
-   -- Validation_Error --
-   ----------------------
-
-   procedure Validation_Error
-     (Reader : in out Validating_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class)
-   is
-      pragma Unreferenced (Reader, Except);
-   begin
-      null;
-   end Validation_Error;
-
-   -----------------
-   -- Get_Locator --
-   -----------------
-
-   function Get_Locator
-     (Reader : Validating_Reader) return Sax.Locators.Locator is
-   begin
-      return Reader.Locator;
-   end Get_Locator;
-
-   -------------------------------
-   -- Hook_Set_Document_Locator --
-   -------------------------------
-
-   procedure Hook_Set_Document_Locator
-     (Handler : in out Sax_Reader'Class;
-      Loc     : in out Sax.Locators.Locator) is
-   begin
-      Set_Locator (Validating_Reader (Handler), Loc);
-   end Hook_Set_Document_Locator;
 
    -------------------------------
    -- Get_Namespace_From_Prefix --
@@ -994,24 +957,5 @@ package body Schema.Readers is
          Unchecked_Free (Reader);
       end if;
    end Free;
-
-   -------------
-   -- Locator --
-   -------------
-
-   function Locator (Parser : Validating_Reader) return Sax.Locators.Locator is
-   begin
-      return Parser.Locator;
-   end Locator;
-
-   -----------------
-   -- Set_Locator --
-   -----------------
-
-   procedure Set_Locator
-     (Parser : in out Validating_Reader; Loc : Sax.Locators.Locator) is
-   begin
-      Parser.Locator := Loc;
-   end Set_Locator;
 
 end Schema.Readers;

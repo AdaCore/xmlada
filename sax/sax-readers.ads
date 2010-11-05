@@ -295,6 +295,16 @@ package Sax.Readers is
    --  Receive an object for locating the origin of SAX document events.
    --  SAX parsers are strongly encouraged but not required to give this
    --  information. This callback will always be called before any other.
+   --  Note that [Loc] is only valid within the call to [Parse], and will be
+   --  free on exit, so should no longer be referenced.
+   --  In practice, this callback (mandated by the standard), is not so very
+   --  useful and direct calls to [Locator] below should be preferred.
+
+   function Current_Location
+     (Handler : Sax_Reader) return Sax.Locators.Location;
+   pragma Inline (Current_Location);
+   --  Return the current location in the stream (or [No_Location] if parsing
+   --  has finished or not started).
 
    procedure Start_Document (Handler : in out Sax_Reader) is null;
    --  Receive notification of the beginning of a document.

@@ -30,7 +30,6 @@ with Schema.Date_Time;         use Schema.Date_Time;
 with Schema.Validators;        use Schema.Validators;
 with Schema.Simple_Types;      use Schema.Simple_Types;
 with GNAT.IO;                  use GNAT.IO;
-with Sax.Locators;             use Sax.Locators;
 with Sax.Readers;              use Sax.Readers;
 with Sax.Utils;                use Sax.Utils;
 with Sax.Symbols;              use Sax.Symbols;
@@ -39,8 +38,6 @@ with Unicode.CES;              use Unicode.CES;
 procedure Test_Date_Time is
 
    type Local_Reader is new Abstract_Validation_Reader with null record;
-   overriding function Get_Locator
-     (Reader : Local_Reader) return Sax.Locators.Locator;
 
    Reader : aliased Local_Reader;
    R      : constant Abstract_Validating_Reader_Access :=
@@ -92,18 +89,6 @@ procedure Test_Date_Time is
    function Value is new Generic_Value (Date_Time_T);
    function Value is new Generic_Value (Duration_T);
    function Value is new Generic_Value (GMonth_T);
-
-   -----------------
-   -- Get_Locator --
-   -----------------
-
-   overriding function Get_Locator
-     (Reader : Local_Reader) return Sax.Locators.Locator
-   is
-      pragma Unreferenced (Reader);
-   begin
-      return No_Locator;
-   end Get_Locator;
 
    ------------------
    -- Assert_Equal --

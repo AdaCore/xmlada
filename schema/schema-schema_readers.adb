@@ -102,8 +102,10 @@ package body Schema.Schema_Readers is
 
    procedure Insert_In_Type
      (Handler : access Schema_Reader'Class;
-      Element : Type_Details_Access);
-   --  Insert Element in the type definition in [Handler.Contexts]
+      Element : in out Type_Details_Access);
+   --  Insert Element in the type definition in [Handler.Contexts].
+   --  If there is an error inserting the element, an exception is raised and
+   --  [Element] is freed.
 
    procedure Prepare_Type
      (Handler   : access Schema_Reader'Class;
@@ -413,6 +415,11 @@ package body Schema.Schema_Readers is
             --  ??? Should use the substitutionGroup elements, instead
             S1 := No_State;
             S2 := No_State;
+
+            Validation_Error
+              (Parser,
+               "Abstract elements not handled yet",
+               Except => XML_Not_Implemented'Identity);
             return;
          end if;
 
@@ -627,6 +634,7 @@ package body Schema.Schema_Readers is
 
                   if Index = Permut'Last then
                      S1 := From;
+                     S2 := S1;
                      for J in Permut'Range loop
                         D := Details (Permut (J));
                         Process_Details (D, Start, S1, S2);
@@ -644,9 +652,11 @@ package body Schema.Schema_Readers is
          T  : Type_Details_Access;
          Gr : Group_Descr;
          Count : Natural := 0;
+
       begin
+         Nested_End := From;
+
          if Details = null then
-            Nested_End := From;
             return;
          end if;
 
@@ -675,9 +685,7 @@ package body Schema.Schema_Readers is
                end loop;
 
             when Type_All =>
-               if Details.First_In_All = null then
-                  Nested_End := From;
-               else
+               if Details.First_In_All /= null then
                   T := Details.First_In_All;
                   while T /= null loop
                      Count := Count + 1;
@@ -1177,6 +1185,8 @@ package body Schema.Schema_Readers is
                              & To_QName (Info.Descr.Name));
             end if;
 
+            pragma Assert (Info.S /= No_State);
+
             Process_Details
               (Details    => Info.Details,
                Start      => Info.S,
@@ -1199,6 +1209,11 @@ package body Schema.Schema_Readers is
             NFA.Add_Transition
               (S1, Final_State, (Kind => Transition_Close));
          end if;
+
+      exception
+         when others =>
+            Reset (Processed_Groups);
+            raise;
       end Process_Type;
 
       Element_Info : Element_Descr;
@@ -1313,24 +1328,11 @@ package body Schema.Schema_Readers is
          end loop;
          Free (Shared.Types);
 
+         Reset (Shared.Global_Attributes);
+
          Unchecked_Free (Shared);
       end if;
    end Free;
-
-   --------------------------
-   -- Set_Document_Locator --
-   --------------------------
-
-   overriding procedure Set_Document_Locator
-     (Handler : in out Schema_Reader; Loc : in out Sax.Locators.Locator) is
-   begin
-      if Debug then
-         Debug_Output ("Schema.Schema_Readers.Set_Document_Locator "
-                       & To_String (Get_Location (Loc)));
-      end if;
-
-      Set_Locator (Handler, Loc);
-   end Set_Document_Locator;
 
    -------------------
    -- Parse_Grammar --
@@ -1445,7 +1447,7 @@ package body Schema.Schema_Readers is
          Warning
            (Handler.all,
             Create (Message => "Could not open file " & Get (S_File_Full).all,
-                    Loc     => Get_Locator (Handler.all)));
+                    Loc     => Handler.Current_Location));
 
       when XML_Not_Implemented | XML_Validation_Error =>
          --  Copy the error message and location from Schema to Handler
@@ -1641,7 +1643,7 @@ package body Schema.Schema_Readers is
       Local   : Symbol;
       Details : Type_Details_Access;
    begin
-      Group.Loc := Get_Location (Handler.Locator);
+      Group.Loc := Handler.Current_Location;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
@@ -1817,19 +1819,19 @@ package body Schema.Schema_Readers is
             Append
               (Handler.Shared.Types.Table (Next.Type_Info).Attributes,
                (Kind      => Kind_Group,
-                Loc       => Get_Location (Handler.Locator),
+                Loc       => Handler.Current_Location,
                 Group_Ref => Ctx.Attr_Group.Ref));
          when Context_Extension =>
             Append
               (Next.Extension.Extension.Attributes,
                (Kind      => Kind_Group,
-                Loc       => Get_Location (Handler.Locator),
+                Loc       => Handler.Current_Location,
                 Group_Ref => Ctx.Attr_Group.Ref));
          when Context_Attribute_Group =>
             Append
               (Next.Attr_Group.Attributes,
                (Kind      => Kind_Group,
-                Loc       => Get_Location (Handler.Locator),
+                Loc       => Handler.Current_Location,
                 Group_Ref => Ctx.Attr_Group.Ref));
 
          when others =>
@@ -1848,23 +1850,27 @@ package body Schema.Schema_Readers is
       Tmp : Attr_Array_Access;
    begin
       if List = null then
-         List := new Attr_Array'(1 .. 10 => (Kind => Kind_Unset,
+         List := new Attr_Array'(1 => Attr,
+                                 2 .. 10 => (Kind => Kind_Unset,
                                              Loc  => No_Location));
-      elsif List (List'Last).Kind = Kind_Unset then
+
+      elsif List (List'Last).Kind /= Kind_Unset then
          Tmp := new Attr_Array (1 .. List'Last + 10);
          Tmp (List'Range) := List.all;
-         Tmp (List'Last + 1 .. Tmp'Last) :=
+         Tmp (List'Last + 1) := Attr;
+         Tmp (List'Last + 2 .. Tmp'Last) :=
            (others => Attr_Descr'(Kind => Kind_Unset, Loc => No_Location));
          Unchecked_Free (List);
          List := Tmp;
-      end if;
 
-      for L in List'Range loop
-         if List (L).Kind = Kind_Unset then
-            List (L) := Attr;
-            return;
-         end if;
-      end loop;
+      else
+         for L in List'Range loop
+            if List (L).Kind = Kind_Unset then
+               List (L) := Attr;
+               return;
+            end if;
+         end loop;
+      end if;
    end Append;
 
    --------------------
@@ -2037,7 +2043,7 @@ package body Schema.Schema_Readers is
       Details : Type_Details_Access;
 
    begin
-      Info.Loc := Get_Location (Get_Locator (Handler.all));
+      Info.Loc := Handler.Current_Location;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
@@ -2383,7 +2389,7 @@ package body Schema.Schema_Readers is
 --        Redefined : XML_Type := No_Type;
 
    begin
-      Info.Loc := Get_Location (Handler.Locator);
+      Info.Loc := Handler.Current_Location;
       Info.Descr.Block := Handler.Target_Block_Default;
 
       for J in 1 .. Get_Length (Atts) loop
@@ -2461,7 +2467,7 @@ package body Schema.Schema_Readers is
       Local      : Symbol;
       In_Type    : constant Type_Index := Ctx.Type_Info;
    begin
-      Restr.Loc := Get_Location (Handler.Locator);
+      Restr.Loc := Handler.Current_Location;
       Restr.Base := (NS    => Handler.XML_Schema_URI,
                      Local => Handler.Any_Simple_Type);
 
@@ -2505,7 +2511,7 @@ package body Schema.Schema_Readers is
                              In_Process       => False,
                              Restriction_Base => Restr.Base,
                              Facets      => No_Facets,
-                             Loc         => Get_Location (Handler.Locator))));
+                             Loc         => Handler.Current_Location)));
 
       else
          Details := new Type_Details'
@@ -2573,7 +2579,7 @@ package body Schema.Schema_Readers is
          (Typ   => Context_Union,
           Union => (Kind             => Simple_Type_Union,
                     In_Process       => False,
-                    Loc              => Get_Location (Handler.Locator),
+                    Loc              => Handler.Current_Location,
                     Union_Items      => (others => No_Type_Member))));
 
       for J in 1 .. Get_Length (Atts) loop
@@ -2623,7 +2629,7 @@ package body Schema.Schema_Readers is
       Local : Symbol;
       Details : Type_Details_Access;
    begin
-      Ext.Loc := Get_Location (Handler.Locator);
+      Ext.Loc := Handler.Current_Location;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
@@ -2678,7 +2684,7 @@ package body Schema.Schema_Readers is
          (Typ   => Context_List,
           List  => (Kind       => Simple_Type_List,
                     In_Process => False,
-                    Loc        => Get_Location (Handler.Locator),
+                    Loc        => Handler.Current_Location,
                     List_Items => (others => No_Type_Member))));
 
       for J in 1 .. Get_Length (Atts) loop
@@ -2690,7 +2696,7 @@ package body Schema.Schema_Readers is
                  (Handler,
                   Handler.Contexts (Handler.Contexts_Last).List.List_Items,
                   (Name => Name, Local => No_Type_Index),
-                  Get_Location (Handler.Locator));
+                  Handler.Current_Location);
             end if;
          end if;
       end loop;
@@ -2733,7 +2739,7 @@ package body Schema.Schema_Readers is
 
    procedure Insert_In_Type
      (Handler : access Schema_Reader'Class;
-      Element : Type_Details_Access)
+      Element : in out Type_Details_Access)
    is
       procedure Append (List : in out Type_Details_Access;
                         Elem : Type_Details_Access);
@@ -2760,11 +2766,15 @@ package body Schema.Schema_Readers is
    begin
       case Ctx.Typ is
          when Context_Type_Def =>
-            pragma Assert
-              (not Handler.Shared.Types.Table (Ctx.Type_Info).Is_Simple);
+            if Handler.Shared.Types.Table (Ctx.Type_Info).Is_Simple then
+               Free (Element);
+               Validation_Error
+                 (Handler, "Invalid element in simple type");
+            end if;
 
             --  ??? This test is not needed if we are validating the XSD
             if Handler.Shared.Types.Table (Ctx.Type_Info).Details /= null then
+               Free (Element);
                Validation_Error (Handler, "Invalid element");
             end if;
 
@@ -2780,15 +2790,29 @@ package body Schema.Schema_Readers is
             Append (Ctx.All_Detail.First_In_All, Element);
 
          when Context_Group =>
-            pragma Assert (Ctx.Group.Details = null);
+            if Ctx.Group.Details /= null then
+               Free (Element);
+               Validation_Error
+                 (Handler, "Invalid element in non group");
+            end if;
+
             Ctx.Group.Details := Element;
 
          when Context_Extension =>
-            pragma Assert (Ctx.Extension.Extension.Details = null);
+            if Ctx.Extension.Extension.Details /= null then
+               Free (Element);
+               Validation_Error
+                 (Handler, "Invalid element in non-empty extension");
+            end if;
+
             Ctx.Extension.Extension.Details := Element;
 
          when Context_Restriction =>
-            pragma Assert (Ctx.Restriction.Restriction.Details = null);
+            if Ctx.Restriction.Restriction.Details /= null then
+               Free (Element);
+               Validation_Error
+                 (Handler, "Invalid element in non-empty restriction");
+            end if;
             Ctx.Restriction.Restriction.Details := Element;
 
          when Context_Simple_Restriction =>
@@ -2798,6 +2822,7 @@ package body Schema.Schema_Readers is
             | Context_Union
             | Context_List | Context_Redefine | Context_Attribute_Group =>
 
+            Free (Element);
             Validation_Error
               (Handler,
                "Unsupported: """ & Element.Kind'Img & """ in context "
@@ -2874,7 +2899,7 @@ package body Schema.Schema_Readers is
 
    begin
       Att.Attr.Descr.Form := Handler.Attribute_Form_Default;
-      Att.Loc := Get_Location (Handler.Locator);
+      Att.Loc := Handler.Current_Location;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
@@ -3236,8 +3261,7 @@ package body Schema.Schema_Readers is
    begin
       if Debug then
          Output_Seen ("Start " & Get (Local_Name).all
-                      & " at "
-                      & Sax.Locators.To_String (Handler.Locator));
+                      & " at " & To_String (Handler.Current_Location));
       end if;
 
       --  Check the grammar
@@ -3309,7 +3333,7 @@ package body Schema.Schema_Readers is
             Facet_Name => Local_Name,
             Value      => Get_Value
               (Atts, Get_Index (Atts, Empty_String, Handler.Value)),
-            Loc        => Get_Location (Handler.Locator));
+            Loc        => Handler.Current_Location);
 
       elsif Local_Name = Handler.S_All then
          Create_All (H, Atts);
@@ -3513,15 +3537,5 @@ package body Schema.Schema_Readers is
          Self := Next;
       end loop;
    end Free;
-
-   -----------------
-   -- Get_Locator --
-   -----------------
-
-   overriding function Get_Locator
-     (Reader : Schema_Reader) return Sax.Locators.Locator is
-   begin
-      return Reader.Locator;
-   end Get_Locator;
 
 end Schema.Schema_Readers;

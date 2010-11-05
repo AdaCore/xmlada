@@ -28,8 +28,6 @@
 
 pragma Ada_05;
 
-with Sax.Exceptions;
-with Sax.Locators;
 with Input_Sources;
 with Sax.Symbols;
 with Sax.Utils;
@@ -90,16 +88,6 @@ package Schema.Readers is
    --  Override the symbol table. If a grammar was already set for this parser,
    --  the symbol table must be the same as in the grammar.
 
-   overriding function Get_Locator
-     (Reader : Validating_Reader) return Sax.Locators.Locator;
-   --  Return the current location
-
-   procedure Validation_Error
-     (Reader : in out Validating_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class);
-   --  Called when a validation error occurs.
-   --  By default, this raises XML_Validation_Error
-
    function To_Absolute_URI
      (Handler : Validating_Reader;
       URI     : Sax.Symbols.Symbol) return Sax.Symbols.Symbol;
@@ -129,17 +117,10 @@ package Schema.Readers is
       Input  : in out Input_Sources.Input_Source'Class);
    --  Override inherited method.
 
-   function Locator (Parser : Validating_Reader) return Sax.Locators.Locator;
-   procedure Set_Locator
-     (Parser : in out Validating_Reader; Loc : Sax.Locators.Locator);
-   --  The locator used to get information on the current location of the
-   --  parser.
-
 private
 
    type Validating_Reader is new Schema.Validators.Abstract_Validation_Reader
    with record
-      Locator          : Sax.Locators.Locator;
       Matcher          : Schema.Validators.Schema_State_Machines.NFA_Matcher;
 
       Characters       : Unicode.CES.Byte_Sequence_Access;

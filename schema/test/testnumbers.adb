@@ -28,10 +28,8 @@
 
 with Schema.Decimal;    use Schema.Decimal;
 with GNAT.IO;           use GNAT.IO;
-with Sax.Locators;      use Sax.Locators;
 with Sax.Symbols;       use Sax.Symbols;
 with Sax.Utils;         use Sax.Utils;
-with Schema.Validators; use Schema.Validators;
 
 procedure TestNumbers is
    procedure Assert_Nan (Num : String);
@@ -43,23 +41,7 @@ procedure TestNumbers is
    procedure Assert_Digits
       (Num : String; Fraction, Total : Integer; Error : Boolean := False);
 
-   type Local_Reader is new Abstract_Validation_Reader with null record;
-   overriding function Get_Locator
-     (Reader : Local_Reader) return Sax.Locators.Locator;
-
    Symbols : constant Symbol_Table := Allocate;
-
-   -----------------
-   -- Get_Locator --
-   -----------------
-
-   overriding function Get_Locator
-     (Reader : Local_Reader) return Sax.Locators.Locator
-   is
-      pragma Unreferenced (Reader);
-   begin
-      return No_Locator;
-   end Get_Locator;
 
    -------------------
    -- Assert_Digits --

@@ -477,11 +477,6 @@ package Schema.Validators is
    --    '#': if first character, it will be replaced by the current location
    --         of the Reader
 
-   function Get_Locator
-     (Reader : Abstract_Validation_Reader) return Sax.Locators.Locator
-     is abstract;
-   --  Return the current location in the file
-
    function Get_Error_Message
      (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence;
    --  Return the current error message
@@ -699,14 +694,6 @@ private
    type XML_Grammar is new XML_Grammars.Pointer;
    No_Grammar : constant XML_Grammar :=
      XML_Grammar (XML_Grammars.Null_Pointer);
-
-   -------------
-   -- Grammar --
-   -------------
-
-   type XML_Grammar_NS_Record is record
-      Namespace_URI : Sax.Symbols.Symbol;
-   end record;
 
 --     procedure Check_Id
 --       (Reader    : access Abstract_Validation_Reader'Class;

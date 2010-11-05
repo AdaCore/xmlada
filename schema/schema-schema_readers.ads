@@ -349,10 +349,6 @@ private
    overriding procedure Parse
      (Parser : in out Schema_Reader;
       Input  : in out Input_Sources.Input_Source'Class);
-   overriding procedure Set_Document_Locator
-     (Handler : in out Schema_Reader; Loc : in out Sax.Locators.Locator);
-   overriding function Get_Locator
-     (Reader : Schema_Reader) return Sax.Locators.Locator;
    --  See inherited documentation
 
 end Schema.Schema_Readers;

@@ -444,6 +444,11 @@ package body Schema.Date_Time is
    begin
       Parse_Year (Symbols, Ch, Date.Year, Pos, Error);
 
+      if Error /= No_Symbol then
+         Eos := Ch'First;
+         return;
+      end if;
+
       if Ch (Pos) /= '-'
         or else Ch (Pos + 3) /= '-'
         or else (Pos + 6 <= Ch'Last

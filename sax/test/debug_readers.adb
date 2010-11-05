@@ -129,7 +129,7 @@ package body Debug_Readers is
    begin
       Put_Line ("Sax.Warning ("
                 & Get_Message (Except) & ", at "
-                & To_String (Get_Locator (Except)) & ')');
+                & To_String (Get_Location (Except)) & ')');
    end Warning;
 
    -----------
@@ -144,7 +144,7 @@ package body Debug_Readers is
    begin
       Put_Line ("Sax.Error ("
                 & Get_Message (Except) & ", at "
-                & To_String (Get_Locator (Except)) & ')');
+                & To_String (Get_Location (Except)) & ')');
    end Error;
 
    -----------------
