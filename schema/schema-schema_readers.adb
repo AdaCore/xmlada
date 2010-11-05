@@ -112,7 +112,7 @@ package body Schema.Schema_Readers is
    procedure Insert_In_Type
      (Handler : access Schema_Reader'Class;
       Element : Type_Details_Access);
-   --  Insert Element in the type definition one level up
+   --  Insert Element in the type definition in [Handler.Contexts]
 
    procedure Compute_Blocks
      (Atts    : Sax_Attribute_List;
@@ -147,7 +147,8 @@ package body Schema.Schema_Readers is
 
    function Process_Contents_From_Atts
      (Handler : access Schema_Reader'Class;
-      Atts    : Sax_Attribute_List) return Process_Contents_Type;
+      Atts    : Sax_Attribute_List;
+      Index   : Integer) return Process_Contents_Type;
    --  Get the value of processContents from the attributes
 
    procedure Create_Element
@@ -525,6 +526,13 @@ package body Schema.Schema_Readers is
 
             when Type_Element =>
                Nested_End := Create_Element_State (Details.Element, Start);
+
+            when Type_Any =>
+               Nested_End := NFA.Add_State (Default_User_Data);
+               NFA.Add_Transition
+                 (Start, Nested_End, (Transition_Any, Details.Any));
+               NFA.Repeat
+                 (Start, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
          end case;
       end Process_Details;
 
@@ -1234,8 +1242,10 @@ package body Schema.Schema_Readers is
    is
       Namespace_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Namespace);
+      Process_Index : constant Integer :=
+        Get_Index (Atts, Empty_String, Handler.Process_Contents);
       Process_Contents : constant Process_Contents_Type :=
-        Process_Contents_From_Atts (Handler, Atts);
+        Process_Contents_From_Atts (Handler, Atts, Process_Index);
       Kind  : Namespace_Kind;
 
       List  : NS_List (1 .. Max_Namespaces_In_Any_Attribute);
@@ -1399,12 +1409,8 @@ package body Schema.Schema_Readers is
       end if;
 
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
-      Handler.Contexts := new Context'
-        (Typ            => Context_Element,
-         Element        => Info,
-         Next           => Handler.Contexts);
 
-      if Handler.Contexts.Next.Typ /= Context_Schema then
+      if Handler.Contexts.Typ /= Context_Schema then
          Details := new Type_Details'
            (Kind         => Type_Element,
             Min_Occurs   => Min_Occurs,
@@ -1413,6 +1419,11 @@ package body Schema.Schema_Readers is
             Element      => Info);
          Insert_In_Type (Handler, Details);
       end if;
+
+      Handler.Contexts := new Context'
+        (Typ            => Context_Element,
+         Element        => Info,
+         Next           => Handler.Contexts);
    end Create_Element;
 
    --------------------
@@ -2150,17 +2161,16 @@ package body Schema.Schema_Readers is
       end Append;
 
       Ctx  : constant Context_Access := Handler.Contexts;
-      Next : constant Context_Access := Ctx.Next;
    begin
-      case Next.Typ is
+      case Ctx.Typ is
          when Context_Type_Def =>
-            Handler.Types.Table (Next.Type_Info).Details := Element;
+            Handler.Types.Table (Ctx.Type_Info).Details := Element;
 
          when Context_Sequence =>
-            Append (Next.Seq.First_In_Seq, Element);
+            Append (Ctx.Seq.First_In_Seq, Element);
 
          when Context_Choice =>
-            Append (Next.Choice.First_In_Choice, Element);
+            Append (Ctx.Choice.First_In_Choice, Element);
 
          when Context_Extension | Context_Restriction | Context_Group =>
             Raise_Exception
@@ -2196,11 +2206,11 @@ package body Schema.Schema_Readers is
          Max_Occurs      => Max_Occurs,
          Next            => null,
          First_In_Choice => null);
+      Insert_In_Type (Handler, Choice);
       Handler.Contexts := new Context'
         (Typ         => Context_Choice,
          Choice      => Choice,
          Next        => Handler.Contexts);
-      Insert_In_Type (Handler, Choice);
    end Create_Choice;
 
    ---------------------
@@ -2221,11 +2231,11 @@ package body Schema.Schema_Readers is
          Max_Occurs   => Max_Occurs,
          Next         => null,
          First_In_Seq => null);
+      Insert_In_Type (Handler, Seq);
       Handler.Contexts := new Context'
         (Typ  => Context_Sequence,
          Seq  => Seq,
          Next => Handler.Contexts);
-      Insert_In_Type (Handler, Seq);
    end Create_Sequence;
 
    ----------------------
@@ -2614,16 +2624,12 @@ package body Schema.Schema_Readers is
 
    function Process_Contents_From_Atts
      (Handler : access Schema_Reader'Class;
-      Atts : Sax_Attribute_List) return Process_Contents_Type
-   is
-      Process_Contents_Index : constant Integer := Get_Index
-        (Atts, Empty_String, Handler.Process_Contents);
+      Atts    : Sax_Attribute_List;
+      Index   : Integer) return Process_Contents_Type is
    begin
-      if Process_Contents_Index = -1 then
-         return Process_Strict;
-      elsif Get_Value (Atts, Process_Contents_Index) = Handler.Lax then
+      if Get_Value (Atts, Index) = Handler.Lax then
          return Process_Lax;
-      elsif Get_Value (Atts, Process_Contents_Index) = Handler.Strict then
+      elsif Get_Value (Atts, Index) = Handler.Strict then
          return Process_Strict;
       else
          return Process_Skip;
@@ -2638,67 +2644,35 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
---        Namespace_Index        : constant Integer := Get_Index
---          (Atts, Empty_String, Handler.Namespace);
+      Details : Type_Details_Access;
+      Any     : Any_Descr;
+      Local   : Symbol;
       Min_Occurs, Max_Occurs : Integer := 1;
---        Process_Contents       : Process_Contents_Type;
---        Any                    : XML_Any;
+
    begin
+      Any.Target_NS := Get_Namespace_URI (Handler.Target_NS);
+      Any.Namespace := Handler.Any_Namespace;
+
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Namespace then
+               Any.Namespace := Get_Value (Atts, J);
+            elsif Local = Handler.Process_Contents then
+               Any.Process_Contents :=
+                 Process_Contents_From_Atts (Handler, Atts, J);
+            end if;
+         end if;
+      end loop;
+
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
---        Process_Contents := Process_Contents_From_Atts (Handler, Atts);
-
---        if Namespace_Index /= -1 then
---           Any := Create_Any
---             (Process_Contents => Process_Contents,
---              Namespace        => Get_Value (Atts, Namespace_Index),
---              Target_NS        => Handler.Target_NS);
---           if Debug then
---              Output_Action
---                ("Validator := Create_Any (" & Process_Contents'Img & ", "
---                 & Get (Get_Value (Atts, Namespace_Index)).all
---                 & ", Handler.Target_NS);");
---           end if;
---        else
---           Any := Create_Any
---             (Process_Contents => Process_Contents,
---              Namespace        => Handler.Any_Namespace,
---              Target_NS        => Handler.Target_NS);
---           if Debug then
---              Output_Action
---                ("Validator := Create_Any (" & Process_Contents'Img
---                 & ", ""##any"", Handler.Target_NS);");
---           end if;
---        end if;
-
---        case Handler.Contexts.Typ is
---           when Context_Sequence =>
---              Add_Particle
---                (Handler.Contexts.Seq, Handler, Any, Min_Occurs, Max_Occurs);
---              if Debug then
---                 Output_Action ("Add_Particle ("
---                         & Ada_Name (Handler.Contexts)
---                         & ", Validator," & Min_Occurs'Img & ","
---                         & Max_Occurs'Img & ");");
---              end if;
---
---           when Context_Choice =>
---              Add_Particle
---                (Handler.Contexts.C, Handler, Any, Min_Occurs, Max_Occurs);
---              if Debug then
---                 Output_Action ("Add_Particle ("
---                         & Ada_Name (Handler.Contexts)
---                         & ", Validator," & Min_Occurs'Img & ","
---                         & Max_Occurs'Img & ");");
---              end if;
---
---           when others =>
---              if Debug then
---                 Output_Action ("Can't handled nested <any>");
---              end if;
---              Raise_Exception
---                (XML_Not_Implemented'Identity,
---                 "Unsupported: ""any"" in this context");
---        end case;
+      Details := new Type_Details'
+        (Kind       => Type_Any,
+         Min_Occurs => Min_Occurs,
+         Max_Occurs => Max_Occurs,
+         Next       => null,
+         Any        => Any);
+      Insert_In_Type (Handler, Details);
    end Create_Any;
 
    ----------------
@@ -3155,12 +3129,10 @@ package body Schema.Schema_Readers is
          Next := Self.Next;
 
          case Self.Kind is
-            when Type_Empty | Type_Element =>
+            when Type_Empty | Type_Element | Type_Any =>
                null;
-            when Type_Sequence =>
-               Free (Self.First_In_Seq);
-            when Type_Choice =>
-               Free (Self.First_In_Choice);
+            when Type_Sequence             => Free (Self.First_In_Seq);
+            when Type_Choice               => Free (Self.First_In_Choice);
          end case;
 
          Unchecked_Free (Self);

@@ -4550,7 +4550,42 @@ package body Schema.Validators is
 
    function Match (Trans, Sym : Transition_Event) return Boolean is
    begin
-      return Trans = Sym;
+      case Trans.Kind is
+         when Transition_Symbol | Transition_Close_Nested =>
+            return Trans = Sym;
+
+         when Transition_Any =>
+            if Sym.Kind = Transition_Close_Nested then
+               return False;
+            elsif Get (Trans.Any.Namespace).all = "##any" then
+               return True;
+            elsif Get (Trans.Any.Namespace).all = "##other" then
+               return Sym.Name.NS /= Trans.Any.Target_NS;
+            else
+               declare
+                  Matches : Boolean := True;
+
+                  procedure Callback (Str : Byte_Sequence);
+                  procedure Callback (Str : Byte_Sequence) is
+                  begin
+                     if Matches then
+                        null;
+                     elsif Str = "##targetNamespace" then
+                        Matches := Sym.Name.NS = Trans.Any.Target_NS;
+                     elsif Str = "##local" then
+                        Matches := Sym.Name.NS = Empty_String;
+                     else
+                        Matches := Get (Sym.Name.NS).all = Str;
+                     end if;
+                  end Callback;
+
+                  procedure All_Items is new For_Each_Item (Callback);
+               begin
+                  All_Items (Get (Trans.Any.Namespace).all);
+                  return Matches;
+               end;
+            end if;
+      end case;
    end Match;
 
    -----------
@@ -4561,7 +4596,8 @@ package body Schema.Validators is
    begin
       case Trans.Kind is
          when Transition_Symbol       => return To_QName (Trans.Name);
-         when Transition_Close_Nested => return "<close>";
+         when Transition_Close_Nested => return "end of parent element";
+         when Transition_Any          => return "<any>";
       end case;
    end Image;
 

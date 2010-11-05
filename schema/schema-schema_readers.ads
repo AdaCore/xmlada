@@ -67,7 +67,8 @@ private
    type Type_Index is new Integer;
    No_Type_Index : constant Type_Index := -1;
 
-   type Type_Kind is (Type_Empty, Type_Sequence, Type_Choice, Type_Element);
+   type Type_Kind is (Type_Empty, Type_Sequence, Type_Choice, Type_Element,
+                      Type_Any);
 
    type Type_Details;
    type Type_Details_Access is access all Type_Details;
@@ -90,17 +91,14 @@ private
    No_Element_Descr : constant Element_Descr := (others => <>);
 
    type Type_Details (Kind : Type_Kind := Type_Empty) is record
-      Min_Occurs, Max_Occurs : Natural;
+      Min_Occurs, Max_Occurs : Integer;
       Next : Type_Details_Access;
       case Kind is
-         when Type_Empty =>
-            null;
-         when Type_Sequence =>
-            First_In_Seq    : Type_Details_Access;
-         when Type_Choice =>
-            First_In_Choice : Type_Details_Access;
-         when Type_Element =>
-            Element         : Element_Descr;
+         when Type_Empty    => null;
+         when Type_Sequence => First_In_Seq    : Type_Details_Access;
+         when Type_Choice   => First_In_Choice : Type_Details_Access;
+         when Type_Element  => Element         : Element_Descr;
+         when Type_Any      => Any             : Any_Descr;
       end case;
    end record;
 

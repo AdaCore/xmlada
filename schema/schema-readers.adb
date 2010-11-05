@@ -366,10 +366,12 @@ package body Schema.Readers is
          Mask : Facets_Mask := (others => True);
       begin
          if Data.Simple_Type /= null then
-            Debug_Output
-              ("Validate characters ("
-               & Get (Data.Type_Name).all & "): "
-               & Handler.Characters (1 .. Handler.Characters_Count) & "--");
+            if Debug then
+               Debug_Output
+                 ("Validate characters ("
+                  & Get (Data.Type_Name).all & "): "
+                  & Handler.Characters (1 .. Handler.Characters_Count) & "--");
+            end if;
 
             Validate_Characters
               (Data.Simple_Type, Handler,
@@ -734,7 +736,9 @@ package body Schema.Readers is
 
       if not Success then
          Validation_Error
-           (H, "MANU State_Machine reported an error");
+           (H, "#Unexpected element """
+            & To_QName (Elem) & """: expecting "
+            & Expected (H.Matcher));
       end if;
 
       Validate_All_Attributes (H.Matcher);

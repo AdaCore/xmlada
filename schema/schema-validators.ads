@@ -106,7 +106,7 @@ package Schema.Validators is
    No_Element : constant XML_Element;
    --  An element of an XML stream (associated with a start-tag)
 
-   Unbounded : constant Integer := -1;
+   Unbounded : constant Integer := Integer'Last;
    --  To indicate that a Max_Occurs is set to unbounded
 
    type Form_Type is (Qualified, Unqualified);
@@ -140,13 +140,21 @@ package Schema.Validators is
    No_Qualified_Name : constant Qualified_Name :=
      (Sax.Symbols.No_Symbol, Sax.Symbols.No_Symbol);
 
+   type Any_Descr is record
+      Process_Contents : Process_Contents_Type := Process_Strict;
+      Namespace        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Target_NS        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+   end record;
+
    type Transition_Kind is (Transition_Symbol,
+                            Transition_Any,
                             Transition_Close_Nested);
    type Transition_Event (Kind : Transition_Kind := Transition_Symbol) is
       record
          case Kind is
             when Transition_Symbol       => Name : Qualified_Name;
             when Transition_Close_Nested => null;
+            when Transition_Any          => Any : Any_Descr;
          end case;
       end record;
 
