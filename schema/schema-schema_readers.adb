@@ -626,6 +626,8 @@ package body Schema.Schema_Readers is
       end Process_Type;
 
       Element_Info : Element_Descr;
+      Attr         : AttrGroup_Descr;
+      Gr           : Group_Descr;
 
    begin
       if Debug then
@@ -664,6 +666,31 @@ package body Schema.Schema_Readers is
       if Debug then
          Output_Action ("NFA: " & Dump (NFA, Dump_Dot_Compact));
       end if;
+
+      --  Free all data structures, no longer needed
+
+      Reset (Parser.Global_Elements);
+      Reset (Parser.Global_Types);
+
+      Gr := Get_First (Parser.Global_Groups);
+      while Gr /= No_Group_Descr loop
+         Free (Gr.Details);
+         Gr := Get_Next (Parser.Global_Groups);
+      end loop;
+      Reset (Parser.Global_Groups);
+
+      Attr := Get_First (Parser.Global_AttrGroups);
+      while Attr /= No_AttrGroup_Descr loop
+         Unchecked_Free (Attr.Attributes);
+         Attr := Get_Next (Parser.Global_AttrGroups);
+      end loop;
+      Reset (Parser.Global_AttrGroups);
+
+      for T in Type_Tables.First .. Last (Parser.Types) loop
+         Unchecked_Free (Parser.Types.Table (T).Attributes);
+         Free (Parser.Types.Table (T).Details);
+      end loop;
+      Free (Parser.Types);
    end Create_NFA;
 
    -----------
@@ -722,18 +749,6 @@ package body Schema.Schema_Readers is
 --           if Do_Global_Check then
 --              Global_Check (Parser'Unchecked_Access, Parser.Target_NS);
 --           end if;
-
-         --  ??? Should not free those, they are needed for other namespaces
-         --  as well.
-         Reset (Parser.Global_Elements);
-         Reset (Parser.Global_Types);
-         Reset (Parser.Global_Groups);
-         Reset (Parser.Global_AttrGroups);
-
-         for T in Type_Tables.First .. Last (Parser.Types) loop
-            Free (Parser.Types.Table (T).Details);
-         end loop;
-         Free (Parser.Types);
       end if;
 
    exception
