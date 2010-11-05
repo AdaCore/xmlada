@@ -47,7 +47,7 @@ with Input_Sources.File;    use Input_Sources.File;
 package body Schema.Schema_Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
    use Type_Tables, Element_HTables, Group_HTables;
-   use AttrGroup_HTables, Reference_HTables;
+   use AttrGroup_HTables, Reference_HTables, Attribute_HTables;
 
    Default_Contexts : constant := 30;
    --  Default number of nested levels in a schema.
@@ -346,51 +346,13 @@ package body Schema.Schema_Readers is
       --  Create List from the list of attributes or attribute groups in
       --  [Attrs].
 
---        procedure Add_Transition
---          (Start, S1, S2 : State; Trans : Transition_Event);
---        procedure Add_Empty_Transition (Start, S1, S2 : State);
---        --  Add a transition on close between the two states
+      procedure Create_Global_Attributes (Attr : Internal_Attribute_Descr);
+      --  Register a global attribute.
 
-      --------------------
-      -- Add_Transition --
-      --------------------
-
---        procedure Add_Transition
---          (Start, S1, S2 : State; Trans : Transition_Event)
---        is
---           S3, S4 : State;
---        begin
---           if S1 = Start then
---              NFA.Add_Transition (S1, S2, Trans);
---           elsif NFA.Get_Nested (S1) /= No_Nested then
---              S3 := NFA.Add_State;
---              NFA.On_Empty_Nested_Exit (S1, S3);
---
---              S4 := NFA.Add_State;
---              NFA.Add_Transition (S3, S4, (Kind => Transition_Close_Nested));
---
---              NFA.Add_Transition (S4, S2, Trans);
---           else
---              S3 := NFA.Add_State;
---              NFA.Add_Transition (S1, S3, (Kind => Transition_Close_Nested));
---              NFA.Add_Transition (S3, S2, Trans);
---           end if;
---        end Add_Transition;
-
-      --------------------------
-      -- Add_Empty_Transition --
-      --------------------------
-
---        procedure Add_Empty_Transition (Start, S1, S2 : State) is
---        begin
---           if S1 = Start then
---              NFA.Add_Empty_Transition (S1, S2);
---           elsif NFA.Get_Nested (S1) /= No_Nested then
---              NFA.On_Nested_Exit (S1, S2, (Kind => Transition_Close_Nested));
---           else
---              NFA.Add_Transition (S1, S2, (Kind => Transition_Close_Nested));
---           end if;
---        end Add_Empty_Transition;
+      procedure Resolve_Attribute_Type
+        (Attr : in out Internal_Attribute_Descr);
+      --  Set [Attr.Descr.Simple_Type] to the appropriate value, after looking
+      --  up the type
 
       --------------------------
       -- Create_Element_State --
@@ -711,6 +673,33 @@ package body Schema.Schema_Readers is
          end case;
       end Process_Details;
 
+      ----------------------------
+      -- Resolve_Attribute_Type --
+      ----------------------------
+
+      procedure Resolve_Attribute_Type
+        (Attr : in out Internal_Attribute_Descr)
+      is
+         TRef : Global_Reference;
+         S    : State;
+      begin
+         if Attr.Local_Type /= No_Type_Index then
+            S := Shared.Types.Table (Attr.Local_Type).S;
+         else
+            TRef := Get (Ref.all, (Attr.Typ, Ref_Type));
+            if TRef = No_Global_Reference then
+               --  ??? Type should be ur-type (3.2.2)
+               S := No_State;
+            else
+               S := TRef.Typ;
+            end if;
+         end if;
+
+         if S /= No_State then
+            Attr.Descr.Simple_Type := NFA.Get_Data (S).Descr.Simple_Content;
+         end if;
+      end Resolve_Attribute_Type;
+
       --------------------
       -- Add_Attributes --
       --------------------
@@ -721,7 +710,6 @@ package body Schema.Schema_Readers is
       is
          Gr   : AttrGroup_Descr;
          TRef : Global_Reference;
-         S    : State;
       begin
          if Attrs /= null then
             for A in Attrs'Range loop
@@ -744,13 +732,7 @@ package body Schema.Schema_Readers is
                         TRef := Get
                           (Ref.all, (Attrs (A).Attr.Ref, Ref_Attribute));
 
-                        if Attrs (A).Attr.Ref =
-                          (Parser.XML_URI, Parser.Lang)
-                        then
-                           --  ??? hard-coded for now
-                           S := No_State;
-
-                        elsif TRef = No_Global_Reference then
+                        if TRef = No_Global_Reference then
                            Validation_Error
                              (Parser,
                               "Unknown referenced attribute: "
@@ -758,28 +740,10 @@ package body Schema.Schema_Readers is
                               Attrs (A).Attr.Loc);
                         end if;
 
-                     elsif Attrs (A).Attr.Local_Type /= No_Type_Index then
-                        S := Shared.Types.Table (Attrs (A).Attr.Local_Type).S;
-                     else
-                        TRef := Get (Ref.all, (Attrs (A).Attr.Typ, Ref_Type));
-                        if TRef = No_Global_Reference then
-                           --  ??? Type should be ur-type (3.2.2)
-                           S := No_State;
---                             Validation_Error
---                               (Parser,
---                                "Unknown type for attribute """
---                                & To_QName (Attrs (A).Attr.Descr.Name)
---                                & To_QName (Attrs (A).Attr.Ref)
---                                & """: " & To_QName (Attrs (A).Attr.Typ),
---                                Attrs (A).Attr.Loc);
-                        else
-                           S := TRef.Typ;
-                        end if;
-                     end if;
+                        Add_Attributes (Parser.Grammar, List, TRef.Attributes);
 
-                     if S /= No_State then
-                        Attrs (A).Attr.Descr.Simple_Type :=
-                          NFA.Get_Data (S).Descr.Simple_Content;
+                     else
+                        Resolve_Attribute_Type (Attrs (A).Attr);
                         Add_Attribute
                           (Parser.Grammar, List, Attrs (A).Attr.Descr);
                      end if;
@@ -806,6 +770,28 @@ package body Schema.Schema_Readers is
             Set (Types, Info.Descr.Name, J);
          end if;
       end Create_Nested_For_Type;
+
+      ------------------------------
+      -- Create_Global_Attributes --
+      ------------------------------
+
+      procedure Create_Global_Attributes (Attr : Internal_Attribute_Descr) is
+         Attr2 : Internal_Attribute_Descr;
+      begin
+         pragma Assert (Attr.Ref = No_Qualified_Name,
+                        "A global attribute cannot define ref");
+         pragma Assert (Attr.Descr.Name /= No_Qualified_Name,
+                        "A global attribute must have a name");
+         pragma Assert (Attr.Descr.Next = Empty_Attribute_List,
+                        "Global attributes cannot be in a list");
+         pragma Assert (Attr.Descr.Simple_Type = No_Simple_Type_Index,
+                        "Type of global attributes should be undefined here");
+
+         Attr2 := Attr;
+         Resolve_Attribute_Type (Attr2);
+
+         Create_Global_Attribute (Parser.Grammar, Attr2.Descr);
+      end Create_Global_Attributes;
 
       ------------------
       -- Process_Type --
@@ -895,6 +881,7 @@ package body Schema.Schema_Readers is
       end Process_Type;
 
       Element_Info : Element_Descr;
+      Attr : Internal_Attribute_Descr;
 
    begin
       if Debug then
@@ -907,6 +894,14 @@ package body Schema.Schema_Readers is
 
       for J in Type_Tables.First .. Last (Shared.Types) loop
          Create_Nested_For_Type (J);
+      end loop;
+
+      --  Prepare the entries for the global attributes
+
+      Attr := Get_First (Shared.Global_Attributes);
+      while Attr /= No_Internal_Attribute loop
+         Create_Global_Attributes (Attr);
+         Attr := Get_Next (Shared.Global_Attributes);
       end loop;
 
       --  Prepare schema for global elements
@@ -2676,7 +2671,9 @@ package body Schema.Schema_Readers is
                 Attr     => Attribute));
 
          when Context_Schema | Context_Redefine =>
-            null;
+            Set
+              (Handler.Shared.Global_Attributes,
+               Attribute.Descr.Name, Attribute);
 
          when Context_Extension =>
             Append

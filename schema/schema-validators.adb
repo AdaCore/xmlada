@@ -880,6 +880,25 @@ package body Schema.Validators is
       end if;
    end Get_XSD_Version;
 
+   -----------------------------
+   -- Create_Global_Attribute --
+   -----------------------------
+
+   procedure Create_Global_Attribute
+     (Grammar : in out XML_Grammar;
+      Attr    : Attribute_Descr)
+   is
+      use Reference_HTables;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      List : Attribute_Validator_List := Empty_Attribute_List;
+   begin
+      Add_Attribute (Grammar, List, Attr);
+      Set
+        (G.References,
+         (Kind => Ref_Attribute, Name => Attr.Name),
+         (Kind => Ref_Attribute, Attributes => List));
+   end Create_Global_Attribute;
+
    ------------------------
    -- Initialize_Grammar --
    ------------------------
@@ -913,7 +932,7 @@ package body Schema.Validators is
 
       procedure Do_Register is new Register_Predefined_Types (Register);
 
---        Attr : Attribute_Descr;
+      Attr : Attribute_Descr;
    begin
       Create_Grammar_If_Needed (Reader.Grammar);
       G.Symbols := Get_Symbol_Table (Reader);
@@ -924,19 +943,10 @@ package body Schema.Validators is
                Kind => Ref_Type)) = No_Global_Reference
       then
          Do_Register (G.Symbols);
---
---           Attr := (
---                    Name         : Qualified_Name     := No_Qualified_Name;
---                    Simple_Type  : Schema.Simple_Types.Simple_Type_Index;
---               Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
---               Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
---               Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
---               Next         : Attribute_Validator_List; --  Next in the list
---                    Use_Type     : Attribute_Use_Type := Optional;
---                    Form         : Form_Type          := Qualified;
---                    Is_Local     : Boolean            := True;
---                   );
---       Set (G.References, (Attr.Name, Ref_Attribute), (Ref_Attribute, Attr));
+
+         Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Lang),
+                  others => <>);
+         Create_Global_Attribute (Reader.Grammar, Attr);
 
          Add_Schema_For_Schema (Reader);
       end if;

@@ -98,12 +98,13 @@ private
    No_Group_Descr : constant Group_Descr := (others => <>);
 
    type Internal_Attribute_Descr is record
-      Descr        : Attribute_Descr;
+      Descr        : Attribute_Descr    := No_Attribute_Descr;
       Typ          : Qualified_Name     := No_Qualified_Name;
       Local_Type   : Type_Index         := No_Type_Index;
       Ref          : Qualified_Name     := No_Qualified_Name;
       Loc          : Sax.Locators.Location := Sax.Locators.No_Location;
    end record;
+   No_Internal_Attribute : constant Internal_Attribute_Descr := (others => <>);
 
    type Attr_Descr_Kind is (Kind_Group, Kind_Attribute, Kind_Unset);
    type Attr_Descr (Kind : Attr_Descr_Kind := Kind_Unset) is record
@@ -262,12 +263,20 @@ private
       Key        => Qualified_Name,
       Hash       => Hash,
       Equal      => "=");
+   package Attribute_HTables is new GNAT.Dynamic_HTables.Simple_HTable
+     (Header_Num => Header_Num,
+      Element    => Internal_Attribute_Descr,
+      No_Element => No_Internal_Attribute,
+      Key        => Qualified_Name,
+      Hash       => Hash,
+      Equal      => "=");
 
    type XSD_Data is record
       Types             : Type_Tables.Instance;
       Global_Elements   : Element_HTables.Instance;
       Global_Groups     : Group_HTables.Instance;
       Global_AttrGroups : AttrGroup_HTables.Instance;
+      Global_Attributes : Attribute_HTables.Instance;
    end record;
    type XSD_Data_Access is access all XSD_Data;
    --  Data modified while loading XSD, and needed while loading nested (input

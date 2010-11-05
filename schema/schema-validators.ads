@@ -178,16 +178,18 @@ package Schema.Validators is
 
    type Attribute_Descr is record
       Name         : Qualified_Name     := No_Qualified_Name;
-      Simple_Type  : Schema.Simple_Types.Simple_Type_Index;
+      Simple_Type  : Schema.Simple_Types.Simple_Type_Index :=
+        Schema.Simple_Types.No_Simple_Type_Index;
       Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Next         : Attribute_Validator_List; --  Next in the list
+      Next         : Attribute_Validator_List := Empty_Attribute_List;
       Use_Type     : Attribute_Use_Type := Optional;
       Form         : Form_Type          := Qualified;
       Is_Local     : Boolean            := True;
    end record;
    pragma Pack (Attribute_Descr);
+   No_Attribute_Descr : constant Attribute_Descr := (others => <>);
 
    type State_User_Data is record
       Descr       : Type_Descr;
@@ -225,11 +227,11 @@ package Schema.Validators is
                            Ref_AttrGroup);
    type Global_Reference (Kind : Reference_Kind := Ref_Element) is record
       case Kind is
-         when Ref_Element   => Element : State;
-         when Ref_Type      => Typ : State;  --  Start of nested NFA
-         when Ref_Attribute => Attr : State;
+         when Ref_Element   => Element    : State;
+         when Ref_Type      => Typ        : State;  --  Start of nested NFA
          when Ref_Group     => Gr_Start, Gr_End : State;
-         when Ref_AttrGroup => Attributes : Attribute_Validator_List;
+         when Ref_Attribute | Ref_AttrGroup =>
+            Attributes : Attribute_Validator_List;
       end case;
    end record;
    No_Global_Reference : constant Global_Reference :=
@@ -559,6 +561,11 @@ package Schema.Validators is
    --  discard the namespaces you no longer use).
    --  Keeping the grammar for the XSD files provides a minor optimization,
    --  avoiding the need to recreate it the next time you parse a XSD file.
+
+   procedure Create_Global_Attribute
+     (Grammar : in out XML_Grammar;
+      Attr    : Attribute_Descr);
+   --  Register a global attribute
 
    function URI_Was_Parsed
      (Grammar : XML_Grammar;
