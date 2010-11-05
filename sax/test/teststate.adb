@@ -33,6 +33,8 @@ with Sax.State_Machines;
 
 procedure TestState is
 
+   Debug : constant Boolean := False;
+
    type Transition_Kind is
      (Any_Char,
       Char);
@@ -138,7 +140,16 @@ procedure TestState is
       Success : Boolean;
       M : NFA_Matcher := N.Start_Match;
    begin
+      if Debug then
+         Put_Line ("Assert " & Str);
+      end if;
       for S in Str'Range loop
+         if Debug then
+            New_Line;
+            Debug_Print (M, Dump_Compact);
+            Put_Line ("Sending " & Str (S));
+         end if;
+
          Process (M, Str (S), Success);
 
          if not Success then
@@ -167,7 +178,17 @@ procedure TestState is
       Success : Boolean;
       M : NFA_Matcher := N.Start_Match;
    begin
+      if Debug then
+         Put_Line ("MANU Assert_Error " & Str);
+      end if;
+
       for S in Str'Range loop
+         if Debug then
+            New_Line;
+            Debug_Print (M, Dump_Compact);
+            Put_Line ("MANU Sending " & Str (S));
+         end if;
+
          Process (M, Str (S), Success);
 
          if not Success then
@@ -200,6 +221,10 @@ procedure TestState is
       N : NFA_Access := new NFA;
       S2, S3, S4, S5 : State;
    begin
+      if Debug then
+         Put_Line ("=== Test1");
+      end if;
+
       N.Initialize;
 
       S2 := N.Add_State;  --  Start of choice
@@ -230,6 +255,10 @@ procedure TestState is
       Free (N);
    end Test1;
 
+   -----------
+   -- Test2 --
+   -----------
+
    procedure Test2 is
       --  Test where start state directly has empty transitions
       --    <empty>cd
@@ -239,12 +268,16 @@ procedure TestState is
       S2, S3 : State;
       N : NFA_Access := new NFA;
    begin
+      if Debug then
+         Put_Line ("=== Test2");
+      end if;
+
       N.Initialize;
 
-      S2 := N.Add_State;
+      S2 := N.Add_State;   --  state 2
       N.Add_Empty_Transition (Start_State, S2);
 
-      S3 := N.Add_State;
+      S3 := N.Add_State;   --  state 3
       N.Add_Transition (S2, S3, (Char, 'c'));
 
       N.Add_Transition (S3, Final_State, (Char, 'd'));
@@ -264,6 +297,10 @@ procedure TestState is
       S2     : State;
       N      : NFA_Access := new NFA;
    begin
+      if Debug then
+         Put_Line ("=== Test3");
+      end if;
+
       N.Initialize;
 
       S2 := N.Add_State;
@@ -297,6 +334,10 @@ procedure TestState is
       N : NFA_Access := new NFA;
       A, B, Choice1, Choice2, C, D, E, Dot : State;
    begin
+      if Debug then
+         Put_Line ("=== Test4");
+      end if;
+
       N.Initialize;
 
       A := N.Add_State;
@@ -362,6 +403,10 @@ procedure TestState is
       Nested_On : Nested_NFA;
 
    begin
+      if Debug then
+         Put_Line ("=== Test5");
+      end if;
+
       N.Initialize;
 
       On := N.Add_State;   --  state 2
@@ -401,7 +446,7 @@ procedure TestState is
       Assert (Name, N, "1t");   --  timed out => switched off
       Assert (Name, N, "1f0", Final => False);  --  in stays on mode
 
-      Assert_Error (Name, N, "1q", 2,  "t|f|p|0");
+      Assert_Error (Name, N, "1q", 2,  "0|t|f|p");
       Assert_Error (Name, N, "1pq", 3, "r|0");
 
       --  Put_Line (Dump (N, Dump_Dot));

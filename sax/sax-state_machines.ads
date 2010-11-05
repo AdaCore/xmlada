@@ -29,14 +29,6 @@
 --  This package implements state machines (non-deterministic, aka NFA, and
 --  deterministic, aka DFA).
 
---  ??? Would be nice to have:
---  - Quick save-to-string and restore features
---    This could limit the number of memory allocations and speed up the
---    creation of a state machine, but is difficult to do because of callbacks
---  - Merge: merging two state machines
---    For instance, in XML we can have multiple grammars each with its own
---    schema
-
 with GNAT.Dynamic_Tables;
 
 generic
@@ -64,7 +56,7 @@ generic
 
 package Sax.State_Machines is
 
-   type State is new Natural;
+   type State is new Natural range 0 .. 2 ** 16 - 1;
    --  A state of a state machine
 
    type State_Data_Access is access all State_User_Data;
@@ -266,7 +258,11 @@ package Sax.State_Machines is
    type NFA_Matcher is private;
    --  When processing an input, the state machine is left untouched. Instead,
    --  the required information is stored in a separate object, so that
-   --  multiple objects can test the same machine in parallel.
+   --  multiple objects can test the same machine in parallel..
+   --  It is valid to modify the state machine during the lifetime of a
+   --  matcher. However, this will only affect the matcher the next time
+   --  [Process] is called (so for instance adding an empty transition will
+   --  never impact existing matchers.
 
    procedure Free (Self : in out NFA_Matcher);
    --  Free the memory allocated for [Self]
@@ -410,30 +406,35 @@ private
    end record;
    No_Nested : constant Nested_NFA := (Default_Start => No_State);
 
-   type Active is mod 4;
-   for Active'Size use 2;
-   State_Inactive      : constant Active := 2#00#;
-   State_Active        : constant Active := 2#01#;
-   State_Future_Active : constant Active := 2#10#;
+   type Matcher_State_Index is new Natural range 0 .. 2 ** 8;
+   No_Matcher_State : constant Matcher_State_Index := 0;
 
-   type Boolean_State_Array is array (State range <>) of Active;
-   type Boolean_State_Array_Access is access all Boolean_State_Array;
-   pragma Pack (Boolean_State_Array);
+   type Matcher_State is record
+      S      : State;
+      Next   : Matcher_State_Index;
+      Nested : Matcher_State_Index;
+   end record;
+   --  All currently active states in a NFA.
+   --  For each state, we store a pointer to the next state at the same level
+   --  of the hierarchy (and within the same parent).
+   --  It also stores a pointer to the list of nested states, if there is a
+   --  nested state machine.
+   --  If the state machine is in the final state at any level, [Final_State]
+   --  will be the first element of the corresponding list.
 
-   type NFA_Matcher_Record;
-   type NFA_Matcher_List is access all NFA_Matcher_Record;
+   package Matcher_State_Arrays is new GNAT.Dynamic_Tables
+     (Table_Component_Type => Matcher_State,
+      Table_Index_Type     => Matcher_State_Index,
+      Table_Low_Bound      => No_Matcher_State + 1,
+      Table_Initial        => 15,
+      Table_Increment      => 10);
+   subtype Matcher_State_Array is Matcher_State_Arrays.Instance;
 
    type NFA_Matcher is record
-      NFA        : NFA_Access;
-      In_Final   : Boolean;
-      Current    : Boolean_State_Array_Access;
-      Nested     : NFA_Matcher_List;
+      NFA          : NFA_Access;
+      Active       : Matcher_State_Array;
+      First_Active : Matcher_State_Index := No_Matcher_State;
    end record;
-
-   type NFA_Matcher_Record is record
-      Super_State : State;
-      Matcher     : NFA_Matcher;
-      Next        : NFA_Matcher_List;
-   end record;
+   --  [First_Active] is the first active state at the toplevel.
 
 end Sax.State_Machines;

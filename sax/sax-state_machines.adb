@@ -32,7 +32,7 @@ with GNAT.IO;                use GNAT.IO;
 with Ada.Unchecked_Deallocation;
 
 package body Sax.State_Machines is
-   use Transition_Tables, State_Tables;
+   use Transition_Tables, State_Tables, Matcher_State_Arrays;
 
    Debug : constant Boolean := False;
    --  Whether to print on stdout the actions performed on the machine.
@@ -40,26 +40,32 @@ package body Sax.State_Machines is
    --  machine.
 
    procedure Mark_Active
-     (Self     : in out NFA_Matcher;
-      From     : State;
-      Flag     : Active);
+     (Self         : in out NFA_Matcher;
+      List_Start   : in out Matcher_State_Index;
+      From         : State;
+      First_Nested : Matcher_State_Index := No_Matcher_State);
    --  Mark [From] as active next time, as well as all states reachable
-   --  through an empty transition.
-
-   procedure Remove_From_List
-     (Self : in out NFA_Matcher;
-      Node : NFA_Matcher_List);
-   --  Remove [Node] from the list of nested matchers.
-   --  This frees [Node]
+   --  through an empty transition. THe nested state machine for the new state
+   --  is set to [First_Nested].
 
    function Start_Match
-     (Self : access NFA'Class; S : State; Flag : Active) return NFA_Matcher;
+     (Self : access NFA'Class; S : State) return NFA_Matcher;
    --  Returns a new matcher, initially in state [S] (and all empty transitions
    --  form it).
 
-   function Nested_In_Final (Self : NFA_Matcher; S : State) return Boolean;
+   function Nested_In_Final
+     (Self : NFA_Matcher;
+      S    : Matcher_State_Index) return Boolean;
    --  Return true if the nested NFA for [S] is in a final state, or if [S]
-   --  has no nested automaton
+   --  has no nested automaton.
+   --  [List_Start] is the first state in the level that contains [S]
+
+   function Is_Active
+     (Self       : NFA_Matcher;
+      List_Start : Matcher_State_Index;
+      S          : State) return Boolean;
+   pragma Inline (Is_Active);
+   --  Whether [S] is marked as active in the given list
 
    ----------------
    -- Initialize --
@@ -109,19 +115,8 @@ package body Sax.State_Machines is
    ----------
 
    procedure Free (Self : in out NFA_Matcher) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Boolean_State_Array, Boolean_State_Array_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (NFA_Matcher_Record, NFA_Matcher_List);
-      L : NFA_Matcher_List;
    begin
-      Unchecked_Free (Self.Current);
-      while Self.Nested /= null loop
-         L := Self.Nested.Next;
-         Free (Self.Nested.Matcher);
-         Unchecked_Free (Self.Nested);
-         Self.Nested := L;
-      end loop;
+      Free (Self.Active);
    end Free;
 
    ---------------
@@ -445,43 +440,110 @@ package body Sax.State_Machines is
       end if;
    end Repeat;
 
+   ---------------
+   -- Is_Active --
+   ---------------
+
+   function Is_Active
+     (Self       : NFA_Matcher;
+      List_Start : Matcher_State_Index;
+      S          : State) return Boolean
+   is
+      T : Matcher_State_Index := List_Start;
+   begin
+      while T /= No_Matcher_State loop
+         if Self.Active.Table (T).S = S then
+            return True;
+         end if;
+         T := Self.Active.Table (T).Next;
+      end loop;
+      return False;
+   end Is_Active;
+
    -----------------
    -- Mark_Active --
    -----------------
 
    procedure Mark_Active
-     (Self     : in out NFA_Matcher;
-      From     : State;
-      Flag     : Active)
+     (Self         : in out NFA_Matcher;
+      List_Start   : in out Matcher_State_Index;
+      From         : State;
+      First_Nested : Matcher_State_Index := No_Matcher_State)
    is
-      T : Transition_Id := Self.NFA.States.Table (From).First_Transition;
+      T          : Transition_Id;
+      From_Index : Matcher_State_Index;  --  Where we added [From]
    begin
-      Self.Current (From) := Self.Current (From) or Flag;
+      if Debug then
+         Put_Line ("Mark_Active " & From'Img);
+      end if;
+
+      --  ??? Not very efficient, but the lists are expected to be short. We
+      --  could try to use a state->boolean array, but then we need one such
+      --  array for all nested NFA, which requires a lot of storage.
+
+      if Is_Active (Self, List_Start, From) then
+         return;
+      end if;
+
+      --  Always leave the Final_State first in the list
+
+      if List_Start /= No_Matcher_State
+        and then Self.Active.Table (List_Start).S = Final_State
+      then
+         Self.Active.Table (List_Start).S      := From;
+         Self.Active.Table (List_Start).Nested := First_Nested;
+         From_Index := List_Start;
+         Append
+           (Self.Active,
+            Matcher_State'
+              (S      => Final_State,
+               Next   => List_Start,
+               Nested => No_Matcher_State));
+      else
+         Append
+           (Self.Active,
+            Matcher_State'
+              (S      => From,
+               Next   => List_Start,
+               Nested => First_Nested));
+         From_Index := Last (Self.Active);
+      end if;
+
+      List_Start := Last (Self.Active);
 
       --  Mark (recursively) all states reachable from an empty transition
       --  as active too.
 
-      while T /= No_Transition loop
-         declare
-            Tr : Transition renames Self.NFA.Transitions.Table (T);
-         begin
-            if Tr.Is_Empty
-              and then
-                (not Self.NFA.Nested_Must_Be_Final
-                 or else Nested_In_Final (Self, From))
-            then
-               if Tr.To_State = Final_State then
-                  Self.In_Final := True;
-
-               --  Nothing to do if already marked active
-               elsif (Self.Current (Tr.To_State) and Flag) = 0 then
-                  Mark_Active (Self, Tr.To_State, Flag);
+      if From /= Final_State then
+         T := Self.NFA.States.Table (From).First_Transition;
+         while T /= No_Transition loop
+            declare
+               Tr : Transition renames Self.NFA.Transitions.Table (T);
+            begin
+               if Tr.Is_Empty
+                 and then
+                   (not Self.NFA.Nested_Must_Be_Final
+                    or else Nested_In_Final (Self, From_Index))
+               then
+                  Mark_Active (Self, List_Start, Tr.To_State);
                end if;
-            end if;
 
-            T := Tr.Next_For_State;
-         end;
-      end loop;
+               T := Tr.Next_For_State;
+            end;
+         end loop;
+
+         --  If we are entering any state with a nested NFA, we should activate
+         --  that NFA next turn (unless the nested NFA is already active)
+
+         if Self.NFA.States.Table (From).Nested /= No_State
+           and then Self.Active.Table (From_Index).Nested = No_Matcher_State
+         then
+            Mark_Active
+              (Self,
+               List_Start => Self.Active.Table (From_Index).Nested,
+               From       => Self.NFA.States.Table (From).Nested);
+         end if;
+      end if;
    end Mark_Active;
 
    -----------------
@@ -490,7 +552,7 @@ package body Sax.State_Machines is
 
    function Start_Match (Self : access NFA) return NFA_Matcher is
    begin
-      return Start_Match (Self, S => Start_State, Flag => State_Active);
+      return Start_Match (Self, S => Start_State);
    end Start_Match;
 
    -----------------
@@ -498,66 +560,32 @@ package body Sax.State_Machines is
    -----------------
 
    function Start_Match
-     (Self : access NFA'Class; S : State; Flag : Active) return NFA_Matcher
+     (Self : access NFA'Class; S : State) return NFA_Matcher
    is
       R : NFA_Matcher;
    begin
-      R.NFA      := NFA_Access (Self);
-      R.Current  := new Boolean_State_Array'
-        (1 .. Last (Self.States) => State_Inactive);
-      R.In_Final := False;
-      Mark_Active (R, S, Flag => Flag);
+      R.NFA          := NFA_Access (Self);
+      R.First_Active := No_Matcher_State;
+      Init (R.Active);
+      Mark_Active (R, R.First_Active, S);
       return R;
    end Start_Match;
-
-   ----------------------
-   -- Remove_From_List --
-   ----------------------
-
-   procedure Remove_From_List
-     (Self : in out NFA_Matcher;
-      Node : NFA_Matcher_List)
-   is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (NFA_Matcher_Record, NFA_Matcher_List);
-      Prev : NFA_Matcher_List;
-      N    : NFA_Matcher_List := Self.Nested;
-   begin
-      while N /= Node loop
-         Prev := N;
-         N := N.Next;
-      end loop;
-
-      if N /= null then
-         if Prev = null then
-            Self.Nested := N.Next;
-         else
-            Prev.Next := N.Next;
-         end if;
-
-         Free (N.Matcher);
-         Unchecked_Free (N);
-      end if;
-   end Remove_From_List;
 
    ---------------------------
    -- For_Each_Active_State --
    ---------------------------
 
    procedure For_Each_Active_State (Self : NFA_Matcher) is
-      N    : NFA_Matcher_List := Self.Nested;
    begin
-      while N /= null loop
-         For_Each_Active_State (N.Matcher);
-         N := N.Next;
-      end loop;
-
-      for S in Self.Current'Range loop
-         if (Self.Current (S) and State_Active) /= 0
-           and then (not Self.NFA.Nested_Must_Be_Final
-                       or else Nested_In_Final (Self, S))
+      for S in 1 .. Last (Self.Active) loop
+         if Self.Active.Table (S).S /= Final_State
+           and then
+             (Self.Active.Table (S).Nested = No_Matcher_State
+              or else not Self.NFA.Nested_Must_Be_Final
+              or else Self.Active.Table (Self.Active.Table (S).Nested).S =
+                Final_State)
          then
-            Callback (Self.NFA, S);
+            Callback (Self.NFA, Self.Active.Table (S).S);
          end if;
       end loop;
    end For_Each_Active_State;
@@ -571,41 +599,69 @@ package body Sax.State_Machines is
       Input   : Symbol;
       Success : out Boolean)
    is
-      All_Inactive : constant Boolean_State_Array := Boolean_State_Array'
-        (Self.Current'Range => State_Inactive);
+      NFA   : constant NFA_Access := Self.NFA;
+      Saved : constant Matcher_State_Arrays.Table_Type :=
+        Self.Active.Table (1 .. Last (Self.Active));
+      Saved_First_Active : constant Matcher_State_Index := Self.First_Active;
+
+      procedure Process_Level
+        (First     : Matcher_State_Index;
+         New_First : in out Matcher_State_Index;
+         Success   : out Boolean);
+      --  Process all the nodes with a common parent (either all toplevel
+      --  states, or all nested states within a specific state).
 
       procedure Process_Transitions
-        (Self     : in out NFA_Matcher;
-         List     : Transition_Id;
-         Has_Next : in out Boolean);
-      pragma Inline (Process_Transitions);
-      --  Process all the transitions in [List]
-      --  [Has_Next] is set to True if at least one active state was marked for
-      --  the future.
+        (First     : Transition_Id;
+         New_First : in out Matcher_State_Index);
+      --  Check all transitions from [First]
 
-      procedure Process_Matcher
-        (Self : in out NFA_Matcher; Success : out Boolean);
-      --  Process a (potentially nested) matcher
+      -------------------------
+      -- Process_Transitions --
+      -------------------------
 
-      procedure Change_States
-        (Self       : in out NFA_Matcher;
-         Has_Active : out Boolean;
-         Preserve   : Boolean);
-      --  Mark the current active status of states based on the future status.
-      --  If [Preserve] is True, the current status is simply kept.
-      --  Returns True if Self has no active state left
-
-      ---------------------
-      -- Process_Matcher --
-      ---------------------
-
-      procedure Process_Matcher
-        (Self : in out NFA_Matcher; Success : out Boolean)
+      procedure Process_Transitions
+        (First     : Transition_Id;
+         New_First : in out Matcher_State_Index)
       is
-         Has_Next  : Boolean := False;
-         N         : NFA_Matcher_List;
+         T : Transition_Id := First;
+      begin
+         while T /= No_Transition loop
+            declare
+               Tr : Transition renames NFA.Transitions.Table (T);
+            begin
+               --  Empty transitions were already considered in the
+               --  previous call to Process, so are ignored now. We also
+               --  ignore this transition if [To_State] is already active
+               --  next time, no need to retest it.
+
+               if not Tr.Is_Empty
+                 and then not Is_Active (Self, New_First, Tr.To_State)
+                 and then Match (Tr.Sym, Input)
+               then
+                  Mark_Active (Self, New_First, Tr.To_State);
+               end if;
+
+               T := Tr.Next_For_State;
+            end;
+         end loop;
+      end Process_Transitions;
+
+      -------------------
+      -- Process_Level --
+      -------------------
+
+      procedure Process_Level
+        (First     : Matcher_State_Index;
+         New_First : in out Matcher_State_Index;
+         Success   : out Boolean)
+      is
+         N                : Matcher_State_Index := First;
          Event_Processed_In_Nested : Boolean;
-         Nested_In_Final : Boolean;
+         Nested_Final     : Boolean;
+         S                : Matcher_State;
+         Nested_First     : Matcher_State_Index;
+         At_Current_Level : Matcher_State_Index;
 
       begin
          --  For each currently live state:
@@ -617,206 +673,104 @@ package body Sax.State_Machines is
          --  This corresponds to standard semantics of event bubbling in
          --  hierarchical NFA.
 
-         for S in Self.Current'Range loop
-            if (Self.Current (S) and State_Active) /= 0 then  --  if active
-               Event_Processed_In_Nested := False;
-               Nested_In_Final := True;
+         while N /= No_Matcher_State loop
+            S := Saved (N);
+            Event_Processed_In_Nested := False;
+            Nested_Final := True;
 
-               --  Find the nested NFA, if any
-               N := Self.Nested;
-               while N /= null and then N.Super_State /= S loop
-                  N := N.Next;
-               end loop;
-
-               if N /= null then
-                  Process_Matcher (N.Matcher, Success);
-
-                  if Success then
-                     Nested_In_Final := N.Matcher.In_Final;
-                     Event_Processed_In_Nested := True;
-
-                     if N.Matcher.In_Final then
-                        --  Exits the nested NFA, and thus transitions from its
-                        --  super state. The super state, however, remains
-                        --  active until we do transition from it.
-
-                        Has_Next := True;
-                        Mark_Active (Self, N.Super_State, State_Future_Active);
-                        Process_Transitions
-                          (Self,
-                           Self.NFA.States.Table
-                             (N.Super_State).On_Nested_Exit,
-                           Has_Next);
-
-                     else
-                        --  We are still within the nested NFA, the super state
-                        --  remains active
-                        Has_Next := True;
-                        Mark_Active (Self, N.Super_State, State_Future_Active);
+            if S.Nested /= No_Matcher_State then
+               declare
+                  Tmp : Matcher_State_Index := New_First;
+               begin
+                  At_Current_Level := No_Matcher_State;
+                  while Tmp /= No_Matcher_State loop
+                     if Self.Active.Table (Tmp).S = S.S then
+                        At_Current_Level := Tmp;
+                        exit;
                      end if;
 
-                  else
-                     Nested_In_Final := False;
-                     --  Error: nothing matches anymore in the nested NFA. We
-                     --  terminate it, but keep processing this event in its
-                     --  superstate (for instance, a camera in state "on" has a
-                     --  nested NFA "record"<->"play"). If the nested receives
-                     --  the event "turn off", it won't match the nested, but
-                     --  that's not an error because the event is handled by
-                     --  the super state "on".
+                     Tmp := Self.Active.Table (Tmp).Next;
+                  end loop;
+               end;
 
-                     null;  --  Do not put back [N] on [Next_Nested]
-                  end if;
-               end if;
+               if At_Current_Level /= No_Matcher_State then
+                  Process_Level
+                    (First     => S.Nested,
+                     New_First => Self.Active.Table (At_Current_Level).Nested,
+                     Success   => Success);
+                  Nested_First := Self.Active.Table (At_Current_Level).Nested;
 
-               if not Event_Processed_In_Nested
-                 and then (Nested_In_Final
-                           or else not Self.NFA.Nested_Must_Be_Final)
-               then
-                  Process_Transitions
-                    (Self,
-                     Self.NFA.States.Table (S).First_Transition,
-                     Has_Next);
-               end if;
-            end if;
-         end loop;
-
-         if not Has_Next then
-            --  Do not change Self
-            --  ??? In fact, Self.Next_Nested has already been altered...
-            Success := False;
-         else
-            Success          := True;
-         end if;
-      end Process_Matcher;
-
-      -------------------------
-      -- Process_Transitions --
-      -------------------------
-
-      procedure Process_Transitions
-        (Self     : in out NFA_Matcher;
-         List     : Transition_Id;
-         Has_Next : in out Boolean)
-      is
-         T : Transition_Id := List;
-      begin
-         while T /= No_Transition loop
-            declare
-               Tr : Transition renames Self.NFA.Transitions.Table (T);
-            begin
-               --  Empty transitions were already considered in the previous
-               --  call to Process, so are ignored now.
-               --  We also ignore this transition if [To_State] is already
-               --  active next time, no need to retest it.
-
-               if not Tr.Is_Empty then
-                  if Tr.To_State = Final_State then
-                     if not Self.In_Final and then Match (Tr.Sym, Input) then
-                        Self.In_Final := True;
-                        Has_Next := True;
-                     end if;
-
-                  elsif
-                    (Self.Current (Tr.To_State) and State_Future_Active) = 0
-                    and then Match (Tr.Sym, Input)
-                  then
-                     Has_Next := True;
-                     Mark_Active (Self, Tr.To_State, State_Future_Active);
-
-                     --  ??? If we are entering any state with a nested NFA,
-                     --  we should activate that NFA next turn.
-                     --  ??? Should check states with empty transitions
-
-                     if Self.NFA.States.Table (Tr.To_State).Nested /=
-                       No_State
-                     then
-                        Self.Nested := new NFA_Matcher_Record'
-                          (Next        => Self.Nested,
-                           Matcher     => Start_Match
-                             (Self.NFA,
-                              Self.NFA.States.Table (Tr.To_State).Nested,
-                              State_Future_Active),
-                           Super_State => Tr.To_State);
-                     end if;
-                  end if;
-               end if;
-
-               T := Tr.Next_For_State;
-            end;
-         end loop;
-      end Process_Transitions;
-
-      -------------------
-      -- Change_States --
-      -------------------
-
-      procedure Change_States
-        (Self       : in out NFA_Matcher;
-         Has_Active : out Boolean;
-         Preserve   : Boolean)
-      is
-         N : NFA_Matcher_List := Self.Nested;
-         N_Next : NFA_Matcher_List;
-      begin
-         if Preserve then
-            for C in Self.Current'Range loop
-               Self.Current (C) :=
-                 Self.Current (C) and not State_Future_Active;
-            end loop;
-         else
-            for C in Self.Current'Range loop
-               if (Self.Current (C) and State_Future_Active) /= 0 then
-                  Self.Current (C) := State_Active;
                else
-                  Self.Current (C) := State_Inactive;
+                  Nested_First := No_Matcher_State;
+                  Process_Level (First     => S.Nested,
+                                 New_First => Nested_First,
+                                 Success   => Success);
                end if;
-            end loop;
 
-            if Self.Current.all = All_Inactive then
-               Has_Active := False;
-               return;
+               if Success then
+                  --  Exits the nested NFA, and thus transitions from its super
+                  --  state. The super state, however, remains active until we
+                  --  do transition from it.
+
+                  Mark_Active (Self, New_First, S.S, Nested_First);
+                  Nested_Final := Nested_In_Final (Self, Nested_First);
+                  Event_Processed_In_Nested := True;
+
+                  if Nested_Final then
+                     Process_Transitions
+                       (NFA.States.Table (S.S).On_Nested_Exit, New_First);
+                  end if;
+
+               else
+                  Nested_Final := False;
+                  --  Error: nothing matches anymore in the nested NFA. We
+                  --  terminate it, but keep processing this event in its
+                  --  superstate (for instance, a camera in state "on" has a
+                  --  nested NFA "record"<->"play"). If the nested receives
+                  --  the event "turn off", it won't match the nested, but
+                  --  that's not an error because the event is handled by
+                  --  the super state "on".
+               end if;
             end if;
-         end if;
 
-         --  Investigate nested NFA
-         while N /= null loop
-            N_Next := N.Next;
-            Change_States (N.Matcher, Has_Active, Preserve);
-
-            if not Has_Active then
-               --  Remove the state from the list, it is no longer used
-               Remove_From_List (Self, N);
+            if S.S /= Final_State
+              and then not Event_Processed_In_Nested
+              and then (Nested_Final or else not NFA.Nested_Must_Be_Final)
+            then
+               Process_Transitions
+                 (NFA.States.Table (S.S).First_Transition, New_First);
             end if;
 
-            N := N_Next;
+            N := S.Next;
          end loop;
 
-         Has_Active := True;
-         return;
-      end Change_States;
+         Success := New_First /= No_Matcher_State;
+      end Process_Level;
 
-      Has_Active : Boolean;
    begin
-      Self.In_Final := False;
-      Process_Matcher (Self, Success);
-      Change_States (Self, Has_Active => Has_Active, Preserve => not Success);
+      --  Reset the matcher
+
+      Set_Last (Self.Active, No_Matcher_State);
+      Self.First_Active := No_Matcher_State;
+      Process_Level (Saved_First_Active, Self.First_Active, Success);
+
+      if not Success then
+         Set_Last (Self.Active, Saved'Last);
+         Self.Active.Table (1 .. Saved'Last) := Saved;
+         Self.First_Active := Saved_First_Active;
+      end if;
    end Process;
 
    ---------------------
    -- Nested_In_Final --
    ---------------------
 
-   function Nested_In_Final (Self : NFA_Matcher; S : State) return Boolean is
-      N    : NFA_Matcher_List := Self.Nested;
+   function Nested_In_Final
+     (Self : NFA_Matcher;
+      S    : Matcher_State_Index) return Boolean is
    begin
-      while N /= null loop
-         if N.Super_State = S then
-            return N.Matcher.In_Final;
-         end if;
-         N := N.Next;
-      end loop;
-      return True;
+      return S /= No_Matcher_State
+        and then Self.Active.Table (S).S = Final_State;
    end Nested_In_Final;
 
    --------------
@@ -860,7 +814,7 @@ package body Sax.State_Machines is
 
    function In_Final (Self : NFA_Matcher) return Boolean is
    begin
-      return Self.In_Final;
+      return Nested_In_Final (Self, Self.First_Active);
    end In_Final;
 
    -------------------
@@ -1117,7 +1071,6 @@ package body Sax.State_Machines is
          end Internal;
 
       begin
-         Put_Line ("Dump nested");
          Internal (Nested.Default_Start);
          return To_String (Result);
       end Dump;
@@ -1329,36 +1282,43 @@ package body Sax.State_Machines is
    procedure Debug_Print
      (Self : NFA_Matcher; Mode : Dump_Mode := Dump_Multiline)
    is
-      procedure Internal (M : NFA_Matcher; Prefix : String);
-      procedure Internal (M : NFA_Matcher; Prefix : String) is
-         N : NFA_Matcher_List := M.Nested;
+      procedure Internal (From : Matcher_State_Index; Prefix : String);
+
+      procedure Internal (From : Matcher_State_Index; Prefix : String) is
+         F : Matcher_State_Index := From;
       begin
-         for C in M.Current'Range loop
-            if (M.Current (C) and State_Active) /= 0 then
-               Put (C'Img);
-            end if;
+         while F /= No_Matcher_State loop
+            Put (Self.Active.Table (F).S'Img);
+            F := Self.Active.Table (F).Next;
          end loop;
 
-         while N /= null loop
-            if Mode = Dump_Multiline then
-               New_Line;
+         F := From;
+         while F /= No_Matcher_State loop
+            if Self.Active.Table (F).Nested /= No_Matcher_State then
+               if Mode = Dump_Multiline then
+                  New_Line;
+               end if;
+               Put (Prefix & " [" & Self.Active.Table (From).S'Img & ":");
+
+               if Mode = Dump_Multiline then
+                  Internal (Self.Active.Table (F).Nested, Prefix & "  ");
+               else
+                  Internal (Self.Active.Table (F).Nested, Prefix);
+               end if;
+
+               Put ("]");
             end if;
-            Put (Prefix & " [" & N.Super_State'Img & ":");
-
-            if Mode = Dump_Multiline then
-               Internal (N.Matcher, Prefix => Prefix & "   ");
-            else
-               Internal (N.Matcher, Prefix => Prefix);
-            end if;
-
-            Put ("]");
-
-            N := N.Next;
+            F := Self.Active.Table (F).Next;
          end loop;
       end Internal;
+
    begin
-      Internal (Self, Prefix => "");
-      New_Line;
+      if Self.First_Active = No_Matcher_State then
+         Put_Line ("[no active state]");
+      else
+         Internal (Self.First_Active, "");
+         New_Line;
+      end if;
    end Debug_Print;
 
    ---------------------
