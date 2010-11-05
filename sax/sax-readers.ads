@@ -1078,7 +1078,7 @@ private
       Feature_External_Parameter_Entities : Boolean := True;
       Feature_Validation                  : Boolean := False;
       Feature_Test_Valid_Chars            : Boolean := False;
-      Feature_Schema_Validation           : Boolean := False;
+      Feature_Schema_Validation           : Boolean := True;
    end record;
 
    type Reader is new Sax_Reader with null record;

@@ -15,5 +15,5 @@ new:
 	-@diff -c testsuite.out testsuite.tmp
 	-@./schematest --xsd10 > schematest.tmp.out
 	-@tr -d '\r' < schematest.tmp.out > schematest.tmp
-	-@diff -c schematest.out schematest.tmp
+	-@diff -u schematest.out schematest.tmp
 force:

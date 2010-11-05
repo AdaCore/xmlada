@@ -1372,6 +1372,8 @@ package body Schema.Schema_Readers is
             if NS /= No_XML_NS
               and then Element_Count (NS) > 0
               and then S_File_Full /= Get_System_Id (NS)
+              and then Get_Feature
+                (Handler.all, Sax.Readers.Schema_Validation_Feature)
             then
                Validation_Error
                  (Handler,
@@ -1399,26 +1401,21 @@ package body Schema.Schema_Readers is
       Use_Basename_In_Error_Messages
         (Schema, Use_Basename_In_Error_Messages (Handler.all));
 
---        begin
-         if Handler.all in Schema_Reader'Class then
-            Schema.Shared := Schema_Reader (Handler.all).Shared;
-            Need_To_Initialize := False;
-         end if;
+      Set_Feature
+        (Schema,
+         Sax.Readers.Schema_Validation_Feature,
+         Get_Feature (Handler.all, Sax.Readers.Schema_Validation_Feature));
 
-         Internal_Parse
-           (Schema, File,
-            Default_Namespace    => URI,
-            Do_Initialize_Shared => Need_To_Initialize,
-            Do_Create_NFA        => Need_To_Initialize and Do_Create_NFA);
---        exception
---           when XML_Validation_Error =>
---              --  Have to resolve locations and context now through
---              --  Get_Error_Message, since the error was in another parser
---              Free (Handler.Error_Msg);
---              Handler.Error_Msg :=
---                new Byte_Sequence'(Get_Error_Message (Schema));
---              raise;
---        end;
+      if Handler.all in Schema_Reader'Class then
+         Schema.Shared := Schema_Reader (Handler.all).Shared;
+         Need_To_Initialize := False;
+      end if;
+
+      Internal_Parse
+        (Schema, File,
+         Default_Namespace    => URI,
+         Do_Initialize_Shared => Need_To_Initialize,
+         Do_Create_NFA        => Need_To_Initialize and Do_Create_NFA);
 
       Close (File);
 
@@ -1470,7 +1467,6 @@ package body Schema.Schema_Readers is
    is
       Grammar : constant XML_Grammar := Get_Grammar (Parser);
       URI     : Symbol;
---        NS      : XML_NS;
    begin
       if Debug then
          Output_Action
@@ -1493,7 +1489,7 @@ package body Schema.Schema_Readers is
          Parser.Target_NS := Default_Namespace;
 
          Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
-         Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, False);
+--         Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
          Set_Parsed_URI (Parser, URI);
 
          Schema.Readers.Parse (Validating_Reader (Parser), Input);
