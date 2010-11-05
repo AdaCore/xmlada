@@ -235,6 +235,10 @@ package Sax.Readers is
       Local_Name : Sax.Symbols.Symbol) return Integer;
    --  Return the index of the attribute within the list, or -1 if not found
 
+   procedure Set_Value
+     (List  : Sax_Attribute_List;
+      Index : Integer;
+      Val   : Sax.Symbols.Symbol);
    function Get_Value
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
    --  Returns No_Symbol if Index is negative

@@ -609,15 +609,19 @@ package Schema.Validators is
      (Reader        : access Abstract_Validation_Reader'Class;
       Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Loc           : Sax.Locators.Location);
+      Loc           : Sax.Locators.Location;
+      Insert_Id     : Boolean := True);
    --  Validate [Ch] as a simpleType
+   --  If [Insert_Id] is True, and the type is ID, it is inserted in a global
+   --  htables. Thus calling this procedure twice with this parameter set to
+   --  true will result in a "duplicate id" error.
 
-   procedure Normalize_Fixed
+   procedure Normalize_And_Validate
      (Parser  : access Abstract_Validation_Reader'Class;
       Simple  : Schema.Simple_Types.Simple_Type_Index;
       Fixed   : in out Sax.Symbols.Symbol;
       Loc     : Sax.Locators.Location);
-   --  Normalize whitespaces in [Fixed] according to the simple type
+   --  Normalize whitespaces in [Fixed] according to the simple type.
 
    function Equal
      (Reader        : access Abstract_Validation_Reader'Class;

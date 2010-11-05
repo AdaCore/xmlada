@@ -455,7 +455,7 @@ package body Schema.Schema_Readers is
                if Info.Fixed /= No_Symbol
                  and then NFA.Get_Data (S1).Simple /= No_Type_Index
                then
-                  Normalize_Fixed
+                  Normalize_And_Validate
                     (Parser => Parser,
                      Simple => Get_Type_Descr
                        (NFA, NFA.Get_Data (S1).Simple).Simple_Content,

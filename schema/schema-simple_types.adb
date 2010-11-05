@@ -487,8 +487,10 @@ package body Schema.Simple_Types is
                      Any_Simple_Type);
       T := Register ("NMTOKEN",  (Kind => Primitive_NMTOKEN, others => <>),
                      Token);
-      T := Register ("NMTOKENS", (Kind => Primitive_NMTOKENS, others => <>),
-                     Any_Simple_Type);
+      T := Register ("NMTOKENS", (Kind => Primitive_NMTOKENS,
+                                  Mask => Whitespace_Mask,
+                                  others => <>),
+        Any_Simple_Type);
       Name := Register ("Name",     (Kind       => Primitive_Name,
                                      Mask       => Whitespace_Mask,
                                      Whitespace => Preserve,
@@ -2435,8 +2437,9 @@ package body Schema.Simple_Types is
                end loop;
 
                if First /= Val'First then
-                  Val (1 .. Last - First + 1) := Val (First .. Last);
-                  Last := Last - First + 1;
+                  Val (Val'First .. Last - First + Val'First) :=
+                    Val (First .. Last);
+                  Last := Last - First + Val'First;
                end if;
 
                Idx := Val'First;

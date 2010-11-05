@@ -187,11 +187,11 @@ package body Schema.Validators is
          Target_NS      => Any.Target_NS);
    end Add_Any_Attribute;
 
-   ---------------------
-   -- Normalize_Fixed --
-   ---------------------
+   ----------------------------
+   -- Normalize_And_Validate --
+   ----------------------------
 
-   procedure Normalize_Fixed
+   procedure Normalize_And_Validate
      (Parser  : access Abstract_Validation_Reader'Class;
       Simple  : Simple_Type_Index;
       Fixed   : in out Sax.Symbols.Symbol;
@@ -207,12 +207,6 @@ package body Schema.Validators is
             Norm  : Byte_Sequence := Get (Fixed).all;
             Last  : Integer := Norm'Last;
          begin
-            Validate_Simple_Type
-              (Reader        => Parser,
-               Simple_Type   => Simple,
-               Ch            => Norm,
-               Loc           => Loc);
-
             --  Normalize whitespaces, for faster comparison later
             --  on.
 
@@ -221,9 +215,16 @@ package body Schema.Validators is
                  (Simple_Descr.Whitespace, Norm, Last);
                Fixed := Find_Symbol (Parser.all, Norm (Norm'First .. Last));
             end if;
+
+            Validate_Simple_Type
+              (Reader        => Parser,
+               Simple_Type   => Simple,
+               Ch            => Norm (Norm'First .. Last),
+               Loc           => Loc,
+               Insert_Id     => True);
          end;
       end if;
-   end Normalize_Fixed;
+   end Normalize_And_Validate;
 
    -------------------
    -- Add_Attribute --
@@ -254,7 +255,7 @@ package body Schema.Validators is
             Tmp := NFA.Attributes.Table (L).Next;
 
             Attr := Attribute;
-            Normalize_Fixed (Parser, Attr.Simple_Type, Attr.Fixed, Loc);
+            Normalize_And_Validate (Parser, Attr.Simple_Type, Attr.Fixed, Loc);
 
             NFA.Attributes.Table (L) := Attr;
             NFA.Attributes.Table (L).Next := Tmp;
@@ -274,7 +275,7 @@ package body Schema.Validators is
          end if;
       end if;
 
-      Normalize_Fixed (Parser, Attr.Simple_Type, Attr.Fixed, Loc);
+      Normalize_And_Validate (Parser, Attr.Simple_Type, Attr.Fixed, Loc);
 
       Append (NFA.Attributes, Attr);
       NFA.Attributes.Table (Last (NFA.Attributes)).Next := List.Named;
@@ -946,13 +947,13 @@ package body Schema.Validators is
       Atts      : in out Sax_Attribute_List;
       Index     : Natural)
    is
-      Val   : constant Cst_Byte_Sequence_Access :=
-        Get (Get_Value (Atts, Index));
+      Value    : Symbol := Get_Value (Atts, Index);
+      Val      : Cst_Byte_Sequence_Access;
       Is_Equal : Boolean;
+      Descr    : Simple_Type_Descr;
    begin
       if Debug then
-         Debug_Output ("Validate attribute " & To_QName (Attr.Name)
-                       & "=" & Val.all & "--");
+         Debug_Output ("Validate attribute " & To_QName (Attr.Name));
       end if;
 
       if Attr.Simple_Type = No_Simple_Type_Index then
@@ -960,18 +961,20 @@ package body Schema.Validators is
             Debug_Output ("No simple type defined");
          end if;
       else
-         Validate_Simple_Type
-           (Reader        => Reader,
-            Simple_Type   => Attr.Simple_Type,
-            Ch            => Val.all,
-            Loc           => Get_Location (Atts, Index));
+         Descr := Get_Simple_Type (Get (Reader.Grammar).NFA, Attr.Simple_Type);
+         Normalize_And_Validate
+           (Parser => Reader,
+            Simple => Attr.Simple_Type,
+            Fixed  => Value,
+            Loc    => Get_Location (Atts, Index));
+         Set_Value (Atts, Index, Value);
 
-         if Get_Simple_Type
-           (Get (Reader.Grammar).NFA, Attr.Simple_Type).Kind = Primitive_ID
-         then
+         if Descr.Kind = Primitive_ID then
             Set_Type (Atts, Index, Sax.Attributes.Id);
          end if;
       end if;
+
+      Val := Get (Value);
 
       --  3.2.4 [Attribute Declaration Value] indicates we should check Fixed
       --  with the "actual value" of the attribute, not the "normalized value".
@@ -994,7 +997,8 @@ package body Schema.Validators is
             Validation_Error
               (Reader, "value must be """
                & To_Graphic_String (Get (Attr.Fixed).all)
-               & """ (found """ & To_Graphic_String (Val.all) & """)");
+               & """ (found """ & To_Graphic_String (Val.all) & """)",
+               Get_Location (Atts, Index));
          end if;
       end if;
    end Validate_Attribute;
@@ -1855,7 +1859,8 @@ package body Schema.Validators is
      (Reader        : access Abstract_Validation_Reader'Class;
       Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Loc           : Sax.Locators.Location)
+      Loc           : Sax.Locators.Location;
+      Insert_Id     : Boolean := True)
    is
       Error : Symbol;
       G : constant XML_Grammars.Encapsulated_Access := Get (Reader.Grammar);
@@ -1866,6 +1871,7 @@ package body Schema.Validators is
          Notations     => G.NFA.Notations,
          Symbols       => G.Symbols,
          Id_Table      => Reader.Id_Table,
+         Insert_Id     => Insert_Id,
          Simple_Type   => Simple_Type,
          Ch            => Ch,
          Error         => Error);

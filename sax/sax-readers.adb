@@ -6266,6 +6266,18 @@ package body Sax.Readers is
       end if;
    end Get_Value;
 
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value
+     (List  : Sax_Attribute_List;
+      Index : Integer;
+      Val   : Sax.Symbols.Symbol) is
+   begin
+      List.List (Index).Value := Val;
+   end Set_Value;
+
    ------------------
    -- Get_Location --
    ------------------
