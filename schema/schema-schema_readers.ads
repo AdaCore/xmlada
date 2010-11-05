@@ -189,7 +189,8 @@ private
       --  Used to prevent infinite recursion when for instance a union's member
       --  is derived from this union.
 
-      Loc : Sax.Locators.Location := Sax.Locators.No_Location;
+      Loc    : Sax.Locators.Location := Sax.Locators.No_Location;
+
       case Kind is
          when Simple_Type_None        => null;
          when Simple_Type             => null;
@@ -201,8 +202,8 @@ private
             List_Items      : Type_Member_Array
               (1 .. 1) := (others => No_Type_Member);
          when Simple_Type_Restriction | Simple_Type_Extension =>
-            Restriction_Base : Qualified_Name;
-            Facets           : Schema.Simple_Types.All_Facets :=
+            Base   : Type_Member;
+            Facets : Schema.Simple_Types.All_Facets :=
               Schema.Simple_Types.No_Facets;
       end case;
    end record;
@@ -216,6 +217,12 @@ private
       In_NFA     : Type_Index;   --  As created in the NFA
       Loc        : Sax.Locators.Location := Sax.Locators.No_Location;
 
+      Simple  : Internal_Simple_Type_Descr :=
+        No_Internal_Simple_Type_Descr;
+      --  Either the type itself if we are defining a simpleType, or its
+      --  simpleContent if we are definiting a complexType (in which case its
+      --  kind might be [Simple_Type_None] to indicate it is a complex content
+
       case Is_Simple is
          when False =>
             Attributes     : Attr_Array_Access;
@@ -223,10 +230,8 @@ private
             --  <extension>
 
             Details        : Type_Details_Access;
-            Simple_Content : Internal_Simple_Type_Descr :=
-              No_Internal_Simple_Type_Descr;
          when True =>
-            Simple     : Internal_Simple_Type_Descr;
+            null;
       end case;
    end record;
    --  Temporary structure while parsing a XSD file. Only [Descr] will be

@@ -755,18 +755,35 @@ package body Schema.Validators is
 
       function Find_Attribute (Attr : Attribute_Descr) return Integer is
          Is_Local : constant Boolean := Attr.Is_Local;
+         Matches  : Boolean;
       begin
          for A in 1 .. Length loop
             if not Seen (A).Seen
               and then Get_Name (Atts, A).Local = Attr.Name.Local
-              and then ((Is_Local and Get_Prefix (Atts, A) = Empty_String)
-                        or else Get_Name (Atts, A).NS = Attr.Name.NS)
             then
-               if Debug then
-                  Debug_Output ("Found attribute: " & To_QName (Attr.Name)
-                                & " at index" & A'Img);
+--                 case Attr.Form is
+--                    when Unqualified =>
+--                       Matches := Get_Name (Atts, A).NS = Empty_String;
+--                    when Qualified =>
+--                       if Is_Local then
+--                          Matches := Get_Prefix (Atts, A) = Empty_String;
+--                       else
+--                          Matches := Get_Name (Atts, A) = Attr.Name;
+--                       end if;
+--                 end case;
+
+               Matches := (Is_Local and Get_Prefix (Atts, A) = Empty_String)
+                 or else Get_Name (Atts, A).NS = Attr.Name.NS;
+
+               if Matches then
+                  if Debug then
+                     Debug_Output ("Found attribute: " & To_QName (Attr.Name)
+                                   & " at index" & A'Img
+                                   & " Is_Local=" & Is_Local'Img
+                                & " Form=" & Attr.Form'Img);
+                  end if;
+                  return A;
                end if;
-               return A;
             end if;
          end loop;
          return -1;

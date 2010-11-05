@@ -1045,15 +1045,11 @@ package body Schema.Schema_Readers is
             return;
          end if;
 
-         if Info.Is_Simple then
-            Internal := Info.Simple;
-         else
-            Internal := Info.Simple_Content;
-            if Internal.Kind = Simple_Type_None then
-               --  Not a simple type, nothing to do
-               Descr := null;
-               return;
-            end if;
+         Internal := Info.Simple;
+         if Internal.Kind = Simple_Type_None then
+            --  Not a simple type, nothing to do
+            Descr := null;
+            return;
          end if;
 
          if Internal.In_Process then
@@ -1070,11 +1066,7 @@ package body Schema.Schema_Readers is
                & " " & Internal.Kind'Img);
          end if;
 
-         if Info.Is_Simple then
-            Info.Simple.In_Process := True;
-         else
-            Info.Simple_Content.In_Process := True;
-         end if;
+         Info.Simple.In_Process := True;
 
          case Internal.Kind is
             when Simple_Type_None =>
@@ -1164,9 +1156,14 @@ package body Schema.Schema_Readers is
                   NFA_Simple : Type_Descr_Access;
                   NFA_Type   : Type_Index;
                begin
-                  Lookup_Simple_Type
-                    (Internal.Restriction_Base, Internal.Loc,
-                     NFA_Simple, NFA_Type);
+                  if Internal.Base.Name /= No_Qualified_Name then
+                     Lookup_Simple_Type
+                       (Internal.Base.Name, Internal.Loc,
+                        NFA_Simple, NFA_Type);
+                  else
+                     Create_Simple_Type
+                       (Internal.Base.Local, NFA_Simple, NFA_Type);
+                  end if;
 
                   if NFA_Simple = null
                     or else NFA_Simple.Simple_Content = No_Simple_Type_Index
@@ -1203,11 +1200,7 @@ package body Schema.Schema_Readers is
                end;
          end case;
 
-         if Info.Is_Simple then
-            Info.Simple.In_Process := False;
-         else
-            Info.Simple_Content.In_Process := False;
-         end if;
+         Info.Simple.In_Process := False;
       end Create_Simple_Type;
 
       ------------------------------
@@ -2337,21 +2330,13 @@ package body Schema.Schema_Readers is
    is
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
-      Ctx2 : Context_Access;
    begin
+      Prepare_Type (Handler, Atts, Is_Simple => True);
+
       if Ctx.Typ = Context_Simple_Restriction then
-         --  We are in a <simpleType><restriction><simpleType> context
-
-         Ctx2 := Handler.Contexts (Handler.Contexts_Last - 1)'Access;
-         pragma Assert (Ctx2.Typ = Context_Type_Def);
-         pragma Assert (Ctx2.Type_Info /= No_Internal_Type_Index);
-
-         Push_Context
-           (Handler,
-            (Typ       => Context_Type_Def,
-             Type_Info => Ctx2.Type_Info));
-      else
-         Prepare_Type (Handler, Atts, Is_Simple => True);
+         Ctx.Simple.Base :=
+           (Name  => No_Qualified_Name,
+            Local => Handler.Contexts (Handler.Contexts_Last).Type_Info);
       end if;
    end Create_Simple_Type;
 
@@ -2408,6 +2393,9 @@ package body Schema.Schema_Readers is
             Next.Restriction.Restriction.Details :=
               Handler.Shared.Types.Table (Ctx.Type_Info).Details;
          when Context_Simple_Restriction =>
+            --  The simpleType is in fact the base type of the restriction. The
+            --  following was already done in Create_Simple_Type:
+            --     Next.Simple.Base.Local := Ctx.Type_Info;
             null;
          when others          =>
             Validation_Error
@@ -2635,8 +2623,8 @@ package body Schema.Schema_Readers is
       end loop;
 
       if Handler.Shared.Types.Table (In_Type).Is_Simple
-        or else Handler.Shared.Types.Table (In_Type).Simple_Content.Kind /=
-           Simple_Type_None  --  <complexType><simpleContent> case
+        or else Handler.Shared.Types.Table (In_Type).Simple.Kind /=
+        Simple_Type_None
       then
          if Restr.Base = (NS => Handler.XML_Schema_URI, Local => Handler.IDREF)
            or else Restr.Base =
@@ -2648,15 +2636,15 @@ package body Schema.Schema_Readers is
                Except => XML_Not_Implemented'Identity);
          end if;
 
-         --  Check_Content_Type (Base, Handler, Should_Be_Simple => True);
-
          Push_Context
            (Handler,
             (Typ         => Context_Simple_Restriction,
              Simple      => (Kind             => Simple_Type_Restriction,
                              In_Process       => False,
-                             Restriction_Base => Restr.Base,
-                             Facets      => No_Facets,
+                             Facets           => No_Facets,
+                             Base =>
+                               (Name  => Restr.Base,
+                                Local => No_Internal_Type_Index),
                              Loc         => Handler.Current_Location)));
 
       else
@@ -2686,14 +2674,8 @@ package body Schema.Schema_Readers is
         Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
       if Ctx.Typ = Context_Simple_Restriction then
-         pragma Assert (Next.Typ = Context_Type_Def);  --  a simple type
-
-         if Handler.Shared.Types.Table (Next.Type_Info).Is_Simple then
-            Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
-         else
-            Handler.Shared.Types.Table (Next.Type_Info).Simple_Content :=
-              Ctx.Simple;
-         end if;
+         pragma Assert (Next.Typ = Context_Type_Def);
+         Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
       end if;
    end Finish_Restriction;
 
@@ -2797,8 +2779,8 @@ package body Schema.Schema_Readers is
       end if;
 
       if Handler.Shared.Types.Table (In_Type).Is_Simple
-        or else Handler.Shared.Types.Table (In_Type).Simple_Content.Kind /=
-           Simple_Type_None  --  <complexType><simpleContent> case
+        or else Handler.Shared.Types.Table (In_Type).Simple.Kind /=
+           Simple_Type_None
       then
          if Debug then
             Debug_Output ("Create extension: in simpleContent or simpleType");
@@ -2809,7 +2791,8 @@ package body Schema.Schema_Readers is
             (Typ    => Context_Simple_Extension,
              Simple => (Kind             => Simple_Type_Extension,
                         In_Process       => False,
-                        Restriction_Base => Ext.Base,
+                        Base             => (Name  => Ext.Base,
+                                             Local => No_Internal_Type_Index),
                         Facets           => No_Facets,
                         Loc              => Handler.Current_Location)));
       else
@@ -2841,12 +2824,7 @@ package body Schema.Schema_Readers is
       if Ctx.Typ = Context_Simple_Extension then
          pragma Assert (Next.Typ = Context_Type_Def);  --  a simple type
 
-         if Handler.Shared.Types.Table (Next.Type_Info).Is_Simple then
-            Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
-         else
-            Handler.Shared.Types.Table (Next.Type_Info).Simple_Content :=
-              Ctx.Simple;
-         end if;
+         Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
       end if;
    end Finish_Extension;
 
@@ -2906,13 +2884,7 @@ package body Schema.Schema_Readers is
                --  within a <simpleType><list>
                pragma Assert (Next.Type_Info /= No_Internal_Type_Index);
 
-               if Handler.Shared.Types.Table (Next.Type_Info).Is_Simple then
-                  Handler.Shared.Types.Table (Next.Type_Info).Simple :=
-                    Ctx.List;
-               else
-                  Handler.Shared.Types.Table (Next.Type_Info).Simple_Content :=
-                    Ctx.List;
-               end if;
+               Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.List;
             end if;
          when others =>
             Validation_Error
@@ -3542,7 +3514,7 @@ package body Schema.Schema_Readers is
       elsif Local_Name = Handler.Simple_Content then
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
          pragma Assert (Ctx.Typ = Context_Type_Def);
-         Handler.Shared.Types.Table (Ctx.Type_Info).Simple_Content :=
+         Handler.Shared.Types.Table (Ctx.Type_Info).Simple :=
            (Kind       => Simple_Type,
             In_Process => False,
             Loc        => Handler.Current_Location);
@@ -3560,6 +3532,10 @@ package body Schema.Schema_Readers is
          Create_Any (H, Atts);
 
       elsif Local_Name = Handler.Redefine then
+         Validation_Error
+           (Handler'Access,
+            "Unsupported <redefined>",
+            Except => XML_Not_Implemented'Identity);
          Create_Redefine (H, Atts);
 
       elsif Local_Name = Handler.Include then
