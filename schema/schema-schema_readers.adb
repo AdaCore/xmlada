@@ -583,6 +583,17 @@ package body Schema.Schema_Readers is
          else
             NFA_Type := Shared.Types.Table (Internal_Type).In_NFA;
          end if;
+
+         if Name = (NS => Parser.XML_Schema_URI, Local => Parser.IDREF)
+           or else
+             Name = (NS => Parser.XML_Schema_URI, Local => Parser.IDREFS)
+         then
+            Validation_Error
+              (Parser,
+               "Unsupported type IDREF and IDREFS",
+               Loc => Loc,
+               Except => XML_Not_Implemented'Identity);
+         end if;
       end Get_Type_Descr;
 
       ------------------------
