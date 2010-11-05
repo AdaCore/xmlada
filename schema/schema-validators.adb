@@ -623,8 +623,7 @@ package body Schema.Validators is
       Typ        : access Type_Descr;
       Reader     : access Abstract_Validation_Reader'Class;
       Atts       : in out Sax.Readers.Sax_Attribute_List;
-      Nillable   : Boolean;
-      Is_Nil     : out Boolean)
+      Is_Nil     : in out Integer)
    is
       Length       : constant Natural := Get_Length (Atts);
       Valid_Attrs  : Attribute_Validator_Array :=
@@ -758,17 +757,6 @@ package body Schema.Validators is
             if not Seen (A).Seen
               and then Get_Name (Atts, A).Local = Attr.Name.Local
             then
---                 case Attr.Form is
---                    when Unqualified =>
---                       Matches := Get_Name (Atts, A).NS = Empty_String;
---                    when Qualified =>
---                       if Is_Local then
---                          Matches := Get_Prefix (Atts, A) = Empty_String;
---                       else
---                          Matches := Get_Name (Atts, A) = Attr.Name;
---                       end if;
---                 end case;
-
                Matches := (Is_Local and Get_Prefix (Atts, A) = Empty_String)
                  or else Get_Name (Atts, A).NS = Attr.Name.NS;
 
@@ -795,11 +783,7 @@ package body Schema.Validators is
       for S in Seen'Range loop
          if Get_Name (Atts, S).NS = Reader.XML_Instance_URI then
             if Get_Name (Atts, S).Local = Reader.Nil then
-               if not Nillable then
-                  Validation_Error (Reader, "Element cannot be nil");
-               end if;
-
-               Is_Nil := Get_Value_As_Boolean (Atts, S);
+               Is_Nil := S;
                Seen (S).Seen := True;
 
                --  Following attributes are always valid
@@ -878,7 +862,6 @@ package body Schema.Validators is
          end loop;
       end;
 
-      Is_Nil := False;
       Check_Single_ID;
    end Validate_Attributes;
 
@@ -1236,10 +1219,14 @@ package body Schema.Validators is
                Complex_Content => S1,
                others          => <>));
 
-         G.NFA.Set_Data (S1, (Simple => Index, Fixed => No_Symbol,
-                              Block => No_Block));
-         S2 := G.NFA.Add_State ((Simple => Index, Fixed => No_Symbol,
-                                 Block => No_Block));
+         G.NFA.Set_Data (S1, (Simple   => Index,
+                              Fixed    => No_Symbol,
+                              Nillable => True,
+                              Block    => No_Block));
+         S2 := G.NFA.Add_State ((Simple   => Index,
+                                 Fixed    => No_Symbol,
+                                 Nillable => True,
+                                 Block    => No_Block));
 
          G.NFA.Set_Nested (S2, Ur_Type);
 

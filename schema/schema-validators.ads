@@ -231,12 +231,13 @@ package Schema.Validators is
    --  Needed for the instantiation of Sax.State_Machines
 
    type State_Data is record
-      Simple : Type_Index;
-      Fixed  : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Block  : Block_Status := No_Block;
+      Simple   : Type_Index;
+      Fixed    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Block    : Block_Status := No_Block;
+      Nillable : Boolean := False;
    end record;
    No_State_Data : constant State_Data :=
-     (No_Type_Index, Sax.Symbols.No_Symbol, No_Block);
+     (No_Type_Index, Sax.Symbols.No_Symbol, No_Block, False);
    --  User data associated with each state. This mostly point to the
    --  corresponding type in the schema, but also includes overridding data
    --  from the corresponding element itself.
@@ -611,8 +612,7 @@ package Schema.Validators is
       Typ       : access Type_Descr;
       Reader    : access Abstract_Validation_Reader'Class;
       Atts      : in out Sax.Readers.Sax_Attribute_List;
-      Nillable  : Boolean;
-      Is_Nil    : out Boolean);
+      Is_Nil    : in out Integer);
    --  Check whether this list of attributes is valid for elements associated
    --  with this validator. By default, this simply check whether the list of
    --  attributes registered through Add_Attribute matches Atts.
@@ -621,9 +621,8 @@ package Schema.Validators is
    --  is passed as an access type, so that in case of exception it is still
    --  properly set on exit.
    --
-   --  Nillable indicates whether the xsi:nil attribute should be supported,
-   --  even if not explicitely inserted in the list. Is_Nil is set to the value
-   --  of this attribute.
+   --  [Is_Nil] is set to the index in [Atts] for the xsi:nil attribute, or
+   --  -1 if not found.
    --
    --  Sets the type of the attributes (through Sax.Attributes.Set_Type) to Id
    --  if the corresponding attribute is an id.

@@ -128,6 +128,11 @@ private
       --  The current stream of characters we have seen. We need to collapse
       --  adjacent characters, so that we can validate the full contents of a
       --  tag at once, and not by parts.
+
+      Is_Nil           : Boolean := False;
+      --  Whether the current element is "xsi:nil".
+      --  We do not need a stack here, since a nil element cannot have
+      --  children anyway.
    end record;
 
 end Schema.Readers;

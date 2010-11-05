@@ -229,6 +229,19 @@ package body Schema.Readers is
            (Handler.Matcher, Dump_Compact, "Validate_Current_Char: ");
       end if;
 
+      --  Handling of nil elements
+
+      if Handler.Is_Nil then
+         if Handler.Characters_Count /= 0 then
+            Validation_Error
+              (Handler,
+               "No character content allowed because the element is 'nilled'",
+               Loc);
+         end if;
+
+         return;  --  Content is always considered valid
+      end if;
+
       --  Check all active states to find our whitespace normalization rules,
       --  and whether elements have fixed values. Note that the fixed value
       --  is attached to an state with a nested state (ie the state
@@ -422,6 +435,31 @@ package body Schema.Readers is
       --  the type. This might mean replacing a nested NFA or a state data,
       --  depending on whether we have a simpleType or complexType
 
+      function Simple_Type_Data
+        (Iter : Active_State_Iterator) return State_Data;
+      --  return the simpleType data for the current state. This is either
+      --  queries from the current state itself, or from its superstate if
+      --  we are currently on the first state of the nested NFA.
+
+      ----------------------
+      -- Simple_Type_Data --
+      ----------------------
+
+      function Simple_Type_Data
+        (Iter : Active_State_Iterator) return State_Data
+      is
+         S : constant State := Current (H.Matcher, Iter);
+      begin
+         if Has_Parent (Iter)
+           and then Get_Start_State
+             (NFA.Get_Nested (Current (H.Matcher, Parent (Iter)))) = S
+         then
+            return Current_Data (H.Matcher, Parent (Iter));
+         else
+            return Current_Data (H.Matcher, Iter);
+         end if;
+      end Simple_Type_Data;
+
       -------------------
       -- Replace_State --
       -------------------
@@ -433,10 +471,10 @@ package body Schema.Readers is
       is
          S         : State := No_State;
          Data      : State_Data;
-         Parent_Data : State_Data;
          Iter      : Active_State_Iterator :=
            For_Each_Active_State
              (H.Matcher, Ignore_If_Default => True, Ignore_If_Nested => True);
+         Internal_New_Nested : State := Nested_Start;
       begin
          loop
             S := Current (H.Matcher, Iter);
@@ -445,35 +483,14 @@ package body Schema.Readers is
             Data := Current_Data (H.Matcher, Iter);
 
             if Check_Substitution then
-               --  On the first nested state of the parent ? We should get the
-               --  attributes from the parent
-               if Has_Parent (Iter)
-                 and then Get_Start_State
-                   (NFA.Get_Nested (Current (H.Matcher, Parent (Iter)))) = S
-               then
-                  Parent_Data := Current_Data (H.Matcher, Parent (Iter));
-                  Check_Substitution_Group_OK
-                    (H, Simple, Data.Simple,
-                     Loc           => H.Current_Location,
-                     Element_Block => Parent_Data.Block);
-
-               else
-                  Check_Substitution_Group_OK
-                    (H, Simple, Data.Simple,
-                     Loc           => H.Current_Location,
-                     Element_Block => Data.Block);
-               end if;
+               Check_Substitution_Group_OK
+                 (H, Simple,
+                  Data.Simple,
+                  Loc           => H.Current_Location,
+                  Element_Block => Simple_Type_Data (Iter).Block);
             end if;
 
-            if Nested_Start /= No_State then
-               if Debug then
-                  Debug_Output
-                    ("Because of xsi:type, replace state" & S'Img
-                     & " with" & Nested_Start'Img);
-               end if;
-               Replace_State (H.Matcher, Iter, Nested_Start);
-               --  Override (temporarily) the current state
-            else
+            if Nested_Start = No_State then
                --  Need to modify the nested NFA too: if we replaced a
                --  complexType ("anyType" for instance) with a simple type,
                --  we should no longer accept any element.
@@ -490,16 +507,21 @@ package body Schema.Readers is
                Override_Data
                  (H.Matcher, Iter,
                   State_Data'
-                    (Simple => Simple,
-                     Fixed  => Current_Data (H.Matcher, Iter).Fixed,
-                     Block  => Current_Data (H.Matcher, Iter).Block));
+                    (Simple   => Simple,
+                     Nillable => Data.Nillable,
+                     Fixed    => Data.Fixed,
+                     Block    => Data.Block));
+
+               Internal_New_Nested := NFA.Simple_Nested;
+            end if;
+
+            if Internal_New_Nested /= No_State then
+               --  If we are on the first state of the parent, that means
+               --  we just entered the parent (which is the element having
+               --  the xsi:type). So we substitute the nested NFA *for the
+               --  parent*.
 
                if Has_Parent (Iter) then
-                  --  If we are on the first state of the parent, that means
-                  --  we just entered the parent (which is the element having
-                  --  the xsi:type). So we substitute the nested NFA *for the
-                  --  parent*.
-
                   if Get_Start_State
                     (NFA.Get_Nested (Current (H.Matcher, Parent (Iter)))) = S
                   then
@@ -508,7 +530,7 @@ package body Schema.Readers is
                           ("Replace nested complexType, now just"
                            & " accepting <close>");
                      end if;
-                     Replace_State (H.Matcher, Iter, NFA.Simple_Nested);
+                     Replace_State (H.Matcher, Iter, Internal_New_Nested);
                   end if;
                end if;
             end if;
@@ -572,9 +594,9 @@ package body Schema.Readers is
       end Compute_Type_From_Attribute;
 
       Success : Boolean;
-      Is_Nil  : Boolean;
+      Nil_Index : Integer := -1;
+      Nillable : Boolean := False;
       S       : State;
-      Ty      : Type_Index;
       Through_Any : Boolean;
       Through_Process : Process_Contents_Type;
       TRef    : Global_Reference;
@@ -695,9 +717,11 @@ package body Schema.Readers is
       --  Validate the attributes
 
       declare
-         Iter    : Active_State_Iterator :=
+         Iter : Active_State_Iterator :=
            For_Each_Active_State
              (H.Matcher, Ignore_If_Nested => True, Ignore_If_Default => True);
+         Data : State_Data;
+         Fixed : Symbol := No_Symbol;
       begin
          loop
             S := Current (H.Matcher, Iter);
@@ -706,20 +730,27 @@ package body Schema.Readers is
             --  The list of valid attributes is attached to the type, that is
             --  to the nested NFA.
 
-            Ty := Current_Data (H.Matcher, Iter).Simple;
+            Data := Simple_Type_Data (Iter);
+
+            if Fixed = No_Symbol then
+               Fixed := Data.Fixed;
+            end if;
 
             if Debug then
                Debug_Output ("Checking attributes for state" & S'Img
-                             & " type_index=" & Ty'Img);
+                             & " type_index=" & Data.Simple'Img);
             end if;
 
-            if Ty /= No_Type_Index then --  otherwise with have a <any> type
+            Nillable := Nillable or Data.Nillable;
+
+            --  otherwise with have a <any> type
+            if Data.Simple /= No_Type_Index then
 
                --  Check whether the actual type is abstract. This cannot be
                --  checked when the grammar is created because of
                --  substitutionGroup and xsi:type
 
-               Descr := NFA.Get_Type_Descr (Ty);
+               Descr := NFA.Get_Type_Descr (Data.Simple);
                if Descr.Is_Abstract then
                   if Descr.Name /= No_Qualified_Name then
                      Validation_Error
@@ -733,57 +764,46 @@ package body Schema.Readers is
                  (Get_NFA (H.Grammar),
                   Descr,
                   H, Atts,
-                  Nillable  => False,  --  Is_Nillable (Element),
-                  Is_Nil    => Is_Nil);
+                  Is_Nil    => Nil_Index);
             else
                if Debug then
                   Debug_Output ("A <anyType>, all attributes are valid");
                end if;
+
+               Nil_Index :=
+                 Get_Index (Atts, H.XML_Instance_URI, H.Nil);
             end if;
 
             Next (H.Matcher, Iter);
          end loop;
-      end;
 
---        if H.Validators /= null then
---           if H.Validators.Is_Nil then
---              Validation_Error
---                (H,
---                 "#Element is set as nil,"
---                 & " and doesn't accept any child element");
---           end if;
---        else
---        --  For root element, we need to check nillable here, otherwise this
---           --  has been done in Validate_Attributes
---
---           declare
---              Nil_Index : constant Integer :=
---                Get_Index (Atts,
---                           URI        => H.XML_Instance_URI,
---                           Local_Name => H.Nil);
---           begin
---              if Nil_Index /= -1 then
---                 if not Is_Nillable (Element) then
---                    Validation_Error
---                      (H, "#Element """
---                       & To_QName (Elem) & """ cannot be nil");
---                 end if;
---
---                 Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
---              else
---                 Is_Nil := False;
---              end if;
---           end;
---        end if;
---
---        if Is_Nil
---          and then Element /= No_Element
---          and then Has_Fixed (Element)
---        then
---           Validation_Error
---             (H, "#Element cannot be nilled because"
---              & " a fixed value is defined for it");
---        end if;
+         if Nil_Index /= -1 then
+            if not Nillable then
+               Validation_Error (H, "Element cannot be nil");
+            end if;
+
+            H.Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
+         else
+            H.Is_Nil := False;
+         end if;
+
+         if H.Is_Nil then
+            if Fixed /= No_Symbol then
+               Validation_Error
+                 (H, "Element cannot be nilled because"
+                  & " a fixed value is defined for it");
+            end if;
+
+            if Debug then
+               Debug_Output ("Element is nil, should we replace nested NFA");
+            end if;
+
+            Replace_State
+              (Check_Substitution => False,
+               Nested_Start       => NFA.Simple_Nested,
+               Simple             => Data.Simple);
+         end if;
+      end;
    end Hook_Start_Element;
 
    ----------------------
@@ -828,6 +848,9 @@ package body Schema.Readers is
             "Unexpected end of sequence, expecting """
             & Expected (H.Matcher) & '"');
       end if;
+
+      --  We know the parent wasn't nil, since the child was accepted
+      H.Is_Nil := False;
    end Hook_End_Element;
 
    -------------------------

@@ -455,6 +455,7 @@ package body Schema.Schema_Readers is
             declare
                NFA_Type      : Type_Index;
                Internal_Type : Internal_Type_Index;
+               Data          : access State_Data;
             begin
                Real := Info;
                Trans := (Transition_Symbol, Real.Name, Info.Form);
@@ -481,21 +482,23 @@ package body Schema.Schema_Readers is
                      Except => XML_Not_Implemented'Identity);
                end if;
 
+               Data := NFA.Get_Data (S1);
+
                if NFA_Type /= No_Type_Index then
-                  NFA.Get_Data (S1).all :=
-                    State_Data'(Simple => NFA_Type,
-                                Fixed  => No_Symbol,
-                                Block  => No_Block);
+                  Data.all := State_Data'(Simple   => NFA_Type,
+                                          Fixed    => Info.Fixed,
+                                          Nillable => Info.Nillable,
+                                          Block    => Info.Block);
                   NFA.Set_Nested
                     (S1,
                      NFA.Create_Nested
                        (Get_Type_Descr (NFA, NFA_Type).Complex_Content));
                else
                   NFA.Set_Nested (S1, NFA.Ur_Type);
+                  Data.Fixed := Info.Fixed;
+                  Data.Block := Info.Block;
+                  Data.Nillable := Info.Nillable;
                end if;
-
-               NFA.Get_Data (S1).Fixed := Info.Fixed;
-               NFA.Get_Data (S1).Block := Info.Block;
             end;
          end if;
 
@@ -1419,9 +1422,10 @@ package body Schema.Schema_Readers is
             NFA.Set_Data
               (S,
                State_Data'
-                 (Simple => Shared.Types.Table (J).In_NFA,
-                  Block  => No_Block,
-                  Fixed  => No_Symbol));
+                 (Simple   => Shared.Types.Table (J).In_NFA,
+                  Block    => No_Block,
+                  Nillable => False,
+                  Fixed    => No_Symbol));
          end if;
 
          if Shared.Types.Table (J).Properties.Name /= No_Qualified_Name then
