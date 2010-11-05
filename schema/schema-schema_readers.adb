@@ -32,12 +32,16 @@ with Ada.Exceptions;    use Ada.Exceptions;
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Encodings;     use Sax.Encodings;
+with Sax.Exceptions;    use Sax.Exceptions;
+with Sax.Locators;      use Sax.Locators;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Symbols;       use Sax.Symbols;
 with Sax.Utils;         use Sax.Utils;
 with Schema.Validators.Lists; use Schema.Validators.Lists;
 with Schema.Readers;    use Schema.Readers;
 with Ada.Unchecked_Deallocation;
+with Ada.IO_Exceptions;
+with Input_Sources.File;    use Input_Sources.File;
 
 package body Schema.Schema_Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
@@ -79,6 +83,15 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       QName   : Sax.Symbols.Symbol) return Qualified_Name;
    --  Resolve namespaces for QName
+
+   procedure Internal_Parse
+     (Parser            : in out Schema_Reader;
+      Input             : in out Input_Sources.Input_Source'Class;
+      Default_Namespace : Symbol;
+      Do_Create_NFA     : Boolean;
+      Do_Initialize_Shared : Boolean);
+   --  Internal version of [Parse], which allows reuse of the shared data.
+   --  This is useful while parsing a <include> XSD
 
    procedure Insert_In_Type
      (Handler : access Schema_Reader'Class;
@@ -283,6 +296,9 @@ package body Schema.Schema_Readers is
         Get_NFA (Get_Grammar (Parser.all));
       Ref : constant access Reference_HTables.Instance :=
         Get_References (Get_Grammar (Parser.all));
+
+      Shared : XSD_Data renames Parser.Shared;
+
       End_Schema_Choice : State;
 
       package Type_HTables is new GNAT.Dynamic_HTables.Simple_HTable
@@ -322,7 +338,7 @@ package body Schema.Schema_Readers is
       function Create_Element_State
         (Info : Element_Descr; Start : State; Global : Boolean) return State
       is
-         S1        : constant State := NFA.Add_State (Default_User_Data);
+         S1        : State;
          Typ       : Type_Index;
          Real      : Element_Descr;
          Trans     : Transition_Event;
@@ -330,10 +346,17 @@ package body Schema.Schema_Readers is
          S         : State := No_State;
 
       begin
+         if Info.Is_Abstract then
+            --  ??? Should use the substitutionGroup elements, instead
+            return No_State;
+         end if;
+
+         S1 := NFA.Add_State (Default_User_Data);
+
          --  Resolve element references
 
          if Info.Name = No_Qualified_Name then
-            Real := Get (Parser.Global_Elements, Info.Ref);
+            Real := Get (Shared.Global_Elements, Info.Ref);
             if Real = No_Element_Descr then
                TRef := Get (Ref.all, (Info.Ref, Ref_Element));
                if TRef = No_Global_Reference then
@@ -358,11 +381,6 @@ package body Schema.Schema_Readers is
          if S = No_State then
             if Real.Typ = No_Qualified_Name then
                Typ := Real.Local_Type;
-               if Typ = No_Type_Index then
-                  Validation_Error
-                    (Parser, "Unknown type for element "
-                     & To_QName (Real.Name) & To_QName (Info.Ref));
-               end if;
 
             else
                --  Is the type declared globally in the current XSD ?
@@ -385,6 +403,20 @@ package body Schema.Schema_Readers is
                end if;
             end if;
 
+            if TRef = No_Global_Reference
+              and then Typ = No_Type_Index
+            then
+               if Info.Substitution_Group /= No_Qualified_Name then
+                  --  ??? Handling of substitutionGroup: the type of the
+                  --  element is the same as the head unless overridden.
+                  null;
+               else
+                  Validation_Error
+                    (Parser, "Unknown type for element "
+                     & To_QName (Real.Name) & To_QName (Info.Ref));
+               end if;
+            end if;
+
             if TRef /= No_Global_Reference then
                if NFA.Get_Data (TRef.Typ).Descr.Simple_Content then
                   NFA.Get_Data (S1).Descr := NFA.Get_Data (TRef.Typ).Descr;
@@ -393,11 +425,11 @@ package body Schema.Schema_Readers is
                end if;
 
             elsif Typ /= No_Type_Index then
-               if Parser.Types.Table (Typ).Descr.Simple_Content then
-                  NFA.Get_Data (S1).Descr := Parser.Types.Table (Typ).Descr;
+               if Shared.Types.Table (Typ).Descr.Simple_Content then
+                  NFA.Get_Data (S1).Descr := Shared.Types.Table (Typ).Descr;
                else
                   NFA.Set_Nested
-                    (S1, NFA.Create_Nested (Parser.Types.Table (Typ).S));
+                    (S1, NFA.Create_Nested (Shared.Types.Table (Typ).S));
                end if;
             end if;
          end if;
@@ -424,7 +456,9 @@ package body Schema.Schema_Readers is
          S1  : constant State :=
            Create_Element_State (Info, Start_State, True);
       begin
-         NFA.Add_Empty_Transition (S1, End_Schema_Choice);
+         if S1 /= No_State then
+            NFA.Add_Empty_Transition (S1, End_Schema_Choice);
+         end if;
       end Process_Global_Element;
 
       ---------------------
@@ -550,7 +584,7 @@ package body Schema.Schema_Readers is
                  Create_Element_State (Details.Element, Start, False);
 
             when Type_Group =>
-               Gr := Get (Parser.Global_Groups, Details.Group.Ref);
+               Gr := Get (Parser.Shared.Global_Groups, Details.Group.Ref);
                if Gr = No_Group_Descr then
                   Validation_Error
                     (Parser, "No group """ & To_QName (Details.Group.Ref)
@@ -565,7 +599,7 @@ package body Schema.Schema_Readers is
                pragma Assert (Ty /= No_Type_Index);
                --  Checked in [Create_Nested_For_Type]
 
-               Process_Details (Parser.Types.Table (Ty).Details, Start, S);
+               Process_Details (Shared.Types.Table (Ty).Details, Start, S);
                Process_Details (Details.Extension.Details, S, Nested_End);
 
             when Type_Restriction =>
@@ -603,7 +637,7 @@ package body Schema.Schema_Readers is
                   when Kind_Unset =>
                      null;
                   when Kind_Group =>
-                     Gr := Get (Parser.Global_AttrGroups, Attrs (A).Group_Ref);
+                     Gr := Get (Shared.Global_AttrGroups, Attrs (A).Group_Ref);
                      if Gr = No_AttrGroup_Descr then
                         Validation_Error
                           (Parser,
@@ -615,14 +649,16 @@ package body Schema.Schema_Readers is
 
                   when Kind_Attribute =>
                      if Attrs (A).Attr.Local_Type /= No_Type_Index then
-                        S := Parser.Types.Table (Attrs (A).Attr.Local_Type).S;
+                        S := Shared.Types.Table (Attrs (A).Attr.Local_Type).S;
                      else
                         TRef := Get (Ref.all, (Attrs (A).Attr.Typ, Ref_Type));
                         if TRef = No_Global_Reference then
                            Validation_Error
                              (Parser,
-                              "Unknown type for attribute: "
-                              & To_QName (Attrs (A).Attr.Typ));
+                              "Unknown type for attribute """
+                              & To_QName (Attrs (A).Attr.Descr.Name)
+                              & """: " & To_QName (Attrs (A).Attr.Typ),
+                              Attrs (A).Attr.Loc);
                         end if;
 
                         S := TRef.Typ;
@@ -641,7 +677,7 @@ package body Schema.Schema_Readers is
       ----------------------------
 
       procedure Create_Nested_For_Type (J : Type_Index) is
-         Info : Internal_Type_Descr renames Parser.Types.Table (J);
+         Info : Internal_Type_Descr renames Shared.Types.Table (J);
       begin
          Info.S := NFA.Add_State ((Descr => Info.Descr));
 
@@ -683,7 +719,7 @@ package body Schema.Schema_Readers is
 
                Index := Get (Types, Info.Details.Extension.Base);
                if Index /= No_Type_Index then
-                  Recursive_Add_Attributes (Parser.Types.Table (Index));
+                  Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
                     (List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
@@ -702,7 +738,7 @@ package body Schema.Schema_Readers is
 
                Index := Get (Types, Info.Details.Restriction.Base);
                if Index /= No_Type_Index then
-                  Recursive_Add_Attributes (Parser.Types.Table (Index));
+                  Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
                     (List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
@@ -743,7 +779,7 @@ package body Schema.Schema_Readers is
       --  but we need to know the global elements and groups to be able to
       --  complete them.
 
-      for J in Type_Tables.First .. Last (Parser.Types) loop
+      for J in Type_Tables.First .. Last (Shared.Types) loop
          Create_Nested_For_Type (J);
       end loop;
 
@@ -753,16 +789,16 @@ package body Schema.Schema_Readers is
       NFA.Add_Transition
         (End_Schema_Choice, Final_State, (Kind => Transition_Close_Nested));
 
-      Element_Info := Get_First (Parser.Global_Elements);
+      Element_Info := Get_First (Shared.Global_Elements);
       while Element_Info /= No_Element_Descr loop
          Process_Global_Element (Element_Info);
-         Element_Info := Get_Next (Parser.Global_Elements);
+         Element_Info := Get_Next (Shared.Global_Elements);
       end loop;
 
       --  Finally, complete the definition of complexTypes
 
-      for J in Type_Tables.First .. Last (Parser.Types) loop
-         Process_Type (Parser.Types.Table (J));
+      for J in Type_Tables.First .. Last (Shared.Types) loop
+         Process_Type (Shared.Types.Table (J));
       end loop;
 
       if Debug then
@@ -771,27 +807,27 @@ package body Schema.Schema_Readers is
 
       --  Free all data structures, no longer needed
 
-      Reset (Parser.Global_Elements);
+      Reset (Shared.Global_Elements);
 
-      Gr := Get_First (Parser.Global_Groups);
+      Gr := Get_First (Shared.Global_Groups);
       while Gr /= No_Group_Descr loop
          Free (Gr.Details);
-         Gr := Get_Next (Parser.Global_Groups);
+         Gr := Get_Next (Shared.Global_Groups);
       end loop;
-      Reset (Parser.Global_Groups);
+      Reset (Shared.Global_Groups);
 
-      Attr := Get_First (Parser.Global_AttrGroups);
+      Attr := Get_First (Shared.Global_AttrGroups);
       while Attr /= No_AttrGroup_Descr loop
          Unchecked_Free (Attr.Attributes);
-         Attr := Get_Next (Parser.Global_AttrGroups);
+         Attr := Get_Next (Shared.Global_AttrGroups);
       end loop;
-      Reset (Parser.Global_AttrGroups);
+      Reset (Shared.Global_AttrGroups);
 
-      for T in Type_Tables.First .. Last (Parser.Types) loop
-         Unchecked_Free (Parser.Types.Table (T).Attributes);
-         Free (Parser.Types.Table (T).Details);
+      for T in Type_Tables.First .. Last (Shared.Types) loop
+         Unchecked_Free (Shared.Types.Table (T).Attributes);
+         Free (Shared.Types.Table (T).Details);
       end loop;
-      Free (Parser.Types);
+      Free (Shared.Types);
 
       Reset (Types);
    end Create_NFA;
@@ -806,17 +842,133 @@ package body Schema.Schema_Readers is
       Handler.Locator := Loc;
    end Set_Document_Locator;
 
-   -----------
-   -- Parse --
-   -----------
+   -------------------
+   -- Parse_Grammar --
+   -------------------
 
-   procedure Parse
+   procedure Parse_Grammar
+     (Handler  : access Validating_Reader'Class;
+      URI      : Symbol;
+      Xsd_File : Symbol;
+      Do_Create_NFA : Boolean)
+   is
+      File     : File_Input;
+      Schema   : Schema_Reader;
+      S_File_Full : constant Symbol := To_Absolute_URI (Handler.all, Xsd_File);
+   begin
+      if Debug then
+         Debug_Output ("Parse_Grammar NS={" & Get (URI).all
+                       & "} XSD={" & Get (Xsd_File).all & "}");
+      end if;
+
+      if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
+         --  Must check that no element of the same namespace was seen
+         --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
+         --  changed in XSD 1.1).
+
+         declare
+            NS : XML_NS;
+            Local_Grammar : XML_Grammar_NS;
+         begin
+            Get_NS
+              (Handler.Grammar,
+               Namespace_URI    => URI,
+               Result           => Local_Grammar,
+               Create_If_Needed => False);
+
+            if Local_Grammar /= null then
+               Find_NS_From_URI
+                 (Handler.all,
+                  URI     => URI,
+                  NS      => NS);
+
+               if NS /= No_XML_NS
+                 and then Element_Count (NS) > 0
+                 and then S_File_Full /= Get_System_Id (Local_Grammar)
+               then
+                  Validation_Error
+                    (Handler,
+                     "#schemaLocation for """
+                     & Get (URI).all
+                     & """ cannot occur after the first"
+                     & " element of that namespace in XSD 1.0");
+               end if;
+            end if;
+         end;
+      end if;
+
+      if Debug then
+         Output_Seen ("Parsing grammar: " & Get (S_File_Full).all);
+      end if;
+
+      Open (Get (S_File_Full).all, File);
+      Set_Public_Id (File, Get (S_File_Full).all);
+      Set_System_Id (File, Get (S_File_Full).all);
+
+      --  Add_To will likely already contain the grammar for the
+      --  schema-for-schema, and we won't have to recreate it in most cases.
+
+      Set_Symbol_Table (Schema, Get_Symbol_Table (Handler.all));
+      Set_Grammar (Schema, Handler.Grammar);
+      Use_Basename_In_Error_Messages
+        (Schema, Use_Basename_In_Error_Messages (Handler.all));
+
+      begin
+         Internal_Parse
+           (Schema, File,
+            Default_Namespace => URI,
+            Do_Initialize_Shared => True,
+            Do_Create_NFA     => Do_Create_NFA);
+      exception
+         when XML_Validation_Error =>
+            --  Have to resolve locations and context now through
+            --  Get_Error_Message, since the error was in another parser
+            Free (Handler.Error_Msg);
+            Handler.Error_Msg :=
+              new Byte_Sequence'(Get_Error_Message (Schema));
+            raise;
+      end;
+
+      Close (File);
+
+      if Debug then
+         Output_Seen ("Done parsing new grammar: " & Get (Xsd_File).all);
+      end if;
+
+   exception
+      when Ada.IO_Exceptions.Name_Error =>
+         Close (File);
+
+         if Debug then
+            Debug_Output
+              (ASCII.LF
+               & "!!!! Could not open file " & Get (S_File_Full).all
+               & ASCII.LF);
+         end if;
+
+         --  According to XML Schema Primer 0, section 5.6, this is not an
+         --  error when we do not find the schema, since this attribute is only
+         --  a hint.
+         Warning
+           (Handler.all,
+            Create (Message => "Could not open file " & Get (S_File_Full).all,
+                    Loc     => Get_Locator (Handler.all)));
+      when others =>
+         Close (File);
+         raise;
+   end Parse_Grammar;
+
+   --------------------
+   -- Internal_Parse --
+   --------------------
+
+   procedure Internal_Parse
      (Parser            : in out Schema_Reader;
       Input             : in out Input_Sources.Input_Source'Class;
       Default_Namespace : Symbol;
-      Do_Global_Check   : Boolean)
+      Do_Create_NFA     : Boolean;
+      Do_Initialize_Shared : Boolean)
    is
-      Validate_XSD : constant Boolean := False;
       Grammar      : XML_Grammar := Get_Grammar (Parser);
       URI          : Symbol;
    begin
@@ -830,38 +982,27 @@ package body Schema.Schema_Readers is
       URI := Find_Symbol (Parser, Input_Sources.Get_System_Id (Input));
 
       if not URI_Was_Parsed (Grammar, URI) then
-         Initialize_Grammar (Parser'Access);
-         Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
 
-         if Debug then
-            Output_Action ("Get_NS (Grammar, """
-                           & Get (Default_Namespace).all
-                           & """, Handler.Target_NS)");
+         if Do_Initialize_Shared then
+            Init (Parser.Shared.Types);
          end if;
+
+         Initialize_Grammar (Parser'Access);
 
          Get_NS (Grammar, Default_Namespace,     Parser.Target_NS);
          Get_NS (Grammar, Parser.XML_Schema_URI, Parser.Schema_NS);
 
-         Init (Parser.Types);
-
-         if Debug then
-            Output_Action
-              ("Get_NS (Handler.Created_Grammar, {"
-               & Get (Default_Namespace).all & "}, Handler.Target_NS)");
-         end if;
-
-         Set_Feature
-           (Parser, Sax.Readers.Schema_Validation_Feature, Validate_XSD);
+         Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
+         Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, False);
          Set_Parsed_URI (Parser'Access, Grammar, URI);
          Set_System_Id (Parser.Target_NS, URI);
 
          Schema.Readers.Parse (Validating_Reader (Parser), Input);
 
---           if Do_Global_Check then
---              Create_NFA (Parser'Access);
---           end if;
+         if Do_Create_NFA then
+            Create_NFA (Parser'Access);
+         end if;
 
-         Create_NFA (Parser'Access);
          Unchecked_Free (Parser.Contexts);
       end if;
 
@@ -869,7 +1010,7 @@ package body Schema.Schema_Readers is
       when others =>
          Unchecked_Free (Parser.Contexts);
          raise;
-   end Parse;
+   end Internal_Parse;
 
    -----------
    -- Parse --
@@ -879,8 +1020,12 @@ package body Schema.Schema_Readers is
      (Parser : in out Schema_Reader;
       Input  : in out Input_Sources.Input_Source'Class) is
    begin
-      Parse (Parser, Input,
-             Default_Namespace => Empty_String, Do_Global_Check => True);
+      Internal_Parse
+        (Parser,
+         Input,
+         Default_Namespace => Empty_String,
+         Do_Create_NFA     => True,
+         Do_Initialize_Shared => True);
    end Parse;
 
    -------------------
@@ -995,7 +1140,7 @@ package body Schema.Schema_Readers is
          when Context_Schema | Context_Redefine =>
             null;
 
-         when Context_Sequence | Context_Choice =>
+         when Context_Sequence | Context_Choice | Context_Extension =>
             Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
             Details := new Type_Details'
               (Kind       => Type_Group,
@@ -1081,7 +1226,7 @@ package body Schema.Schema_Readers is
    begin
       case Next.Typ is
          when Context_Schema | Context_Redefine =>
-            Set (Handler.Global_Groups, Ctx.Group.Name, Ctx.Group);
+            Set (Handler.Shared.Global_Groups, Ctx.Group.Name, Ctx.Group);
          when others =>
             null;
       end case;
@@ -1189,10 +1334,11 @@ package body Schema.Schema_Readers is
       case Next.Typ is
          when Context_Schema | Context_Redefine =>
             Set
-              (Handler.Global_AttrGroups, Ctx.Attr_Group.Name, Ctx.Attr_Group);
+              (Handler.Shared.Global_AttrGroups,
+               Ctx.Attr_Group.Name, Ctx.Attr_Group);
          when Context_Type_Def =>
             Append
-              (Handler.Types.Table (Next.Type_Info).Attributes,
+              (Handler.Shared.Types.Table (Next.Type_Info).Attributes,
                (Kind      => Kind_Group,
                 Group_Ref => Ctx.Attr_Group.Ref));
          when Context_Extension =>
@@ -1246,7 +1392,7 @@ package body Schema.Schema_Readers is
         (Handler,
          URI      => Get_Namespace_URI (Handler.Target_NS),
          Xsd_File => Get_Value (Atts, Schema_Location_Index),
-         Do_Global_Check => False);  --  Will be performed later
+         Do_Create_NFA => False);  --  Will be performed later
    end Create_Include;
 
    ---------------------
@@ -1277,7 +1423,7 @@ package body Schema.Schema_Readers is
       Parse_Grammar
         (Handler,
          URI      => Get_Namespace_URI (Handler.Target_NS),
-         Do_Global_Check => True,
+         Do_Create_NFA => True,
          Xsd_File => Get_Value (Atts, Location_Index));
 
       Push_Context (Handler, (Typ => Context_Redefine));
@@ -1329,7 +1475,7 @@ package body Schema.Schema_Readers is
                Parse_Grammar
                  (Handler,
                   URI      => Empty_String,
-                  Do_Global_Check => True,
+                  Do_Create_NFA => True,
                   Xsd_File => Location);
             elsif Debug then
                Debug_Output ("Already imported");
@@ -1417,7 +1563,8 @@ package body Schema.Schema_Readers is
             elsif Local = Handler.Ref then
                Info.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
             elsif Local = Handler.Substitution_Group then
-               Info.Substitution_Group := Get_Value (Atts, J);
+               Info.Substitution_Group :=
+                 Resolve_QName (Handler, Get_Value (Atts, J));
             elsif Local = Handler.Default then
                Info.Default := Get_Value (Atts, J);
             elsif Local = Handler.Fixed then
@@ -1511,7 +1658,7 @@ package body Schema.Schema_Readers is
    begin
       case Next.Typ is
          when Context_Schema | Context_Redefine =>
-            Set (Handler.Global_Elements, Info.Name, Info);
+            Set (Handler.Shared.Global_Elements, Info.Name, Info);
          when others =>
             null;
             --  Need to insert the element in the type definition
@@ -1562,20 +1709,18 @@ package body Schema.Schema_Readers is
    is
       Ctx : Context_Access := Handler.Contexts (Handler.Contexts_Last)'Access;
    begin
---        if Ctx.Typ = Context_Restriction
---          and then Ctx.Restriction_Base = No_Type
---        then
---           --  Info.Simple_Content := True;
---           Push_Context
---             (Handler,
---              (Typ       => Context_Type_Def,
---               Type_Info => No_Type_Index));
---
---        else
+      if Ctx.Typ = Context_Simple_Restriction then
+         --  We are in a <simpleType><restriction><simpleType> context
+         Push_Context
+           (Handler,
+            (Typ       => Context_Type_Def,
+             Type_Info => No_Type_Index));
+      else
          Create_Complex_Type (Handler, Atts);
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
-         Handler.Types.Table (Ctx.Type_Info).Descr.Simple_Content := True;
---        end if;
+         Handler.Shared.Types.Table (Ctx.Type_Info).Descr.Simple_Content :=
+           True;
+      end if;
    end Create_Simple_Type;
 
    ------------------------
@@ -1587,44 +1732,23 @@ package body Schema.Schema_Readers is
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Next : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last - 1)'Access;
-      Info : Internal_Type_Descr renames Handler.Types.Table (Ctx.Type_Info);
    begin
---        if Next.Typ = Context_Restriction
---          and then Next.Restriction_Base = No_Type
---        then
---           Ensure_Type (Handler, Ctx);
---           Typ := Create_Local_Type (Handler.Target_NS, Ctx.Type_Validator);
---           Set_Final (Typ, Handler.Types.Table (Ctx.Type_Info).Descr.Final);
---           Next.Restriction_Base := Typ;
---        else
-         Info.Descr.Mixed := True;
-
---           if Info.Descr.Name = No_Qualified_Name then
---           Typ := Create_Local_Type (Handler.Target_NS, Ctx.Type_Validator);
---           else
---              Typ := Create_Global_Type
---                (Handler.Target_NS, Handler, Info.Descr.Name.Local,
---                 Ctx.Type_Validator);
---           end if;
-
---           Set_Block (Typ, Info.Descr.Block);
---           Set_Final (Typ, Info.Descr.Final);
---           Set_Mixed_Content
---             (Get_Validator (Typ),
---              Info.Descr.Mixed or Info.Descr.Simple_Content);
-
       case Next.Typ is
          when Context_Schema | Context_Redefine => null;
          when Context_Element   => Next.Element.Local_Type   := Ctx.Type_Info;
          when Context_Attribute => Next.Attribute.Local_Type := Ctx.Type_Info;
          when Context_List    => Next.List.List_Local_Type   := Ctx.Type_Info;
          when Context_Union   => Next.Union.Union_Local_Type := Ctx.Type_Info;
+         when Context_Restriction =>
+            Next.Restriction.Restriction.Details :=
+              Handler.Shared.Types.Table (Ctx.Type_Info).Details;
+         when Context_Simple_Restriction =>
+            null;
          when others          =>
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Unsupported: ""simpleType"" in this context");
       end case;
---        end if;
    end Finish_Simple_Type;
 
    --------------------
@@ -1767,17 +1891,14 @@ package body Schema.Schema_Readers is
             elsif Local = Handler.Final then
                Info.Descr.Final := Compute_Final (Atts, Handler, J);
             elsif Local = Handler.S_Abstract then
-               --  Not supported yet anyway
-               Raise_Exception
-                 (XML_Not_Implemented'Identity,
-                  "Unsupported ""abstract"" attribute for complexType");
+               Info.Descr.Is_Abstract := Get_Value_As_Boolean (Atts, J, False);
             end if;
          end if;
       end loop;
 
       Info.Descr.Simple_Content := False;
 
-      Append (Handler.Types, Info);
+      Append (Handler.Shared.Types, Info);
 
       --  Do not use In_Redefine_Context, since this only applies for types
       --  that are redefined
@@ -1788,7 +1909,7 @@ package body Schema.Schema_Readers is
       Push_Context
         (Handler,
          (Typ       => Context_Type_Def,
-          Type_Info => Last (Handler.Types)));
+          Type_Info => Last (Handler.Shared.Types)));
    end Create_Complex_Type;
 
    -------------------------
@@ -1833,7 +1954,7 @@ package body Schema.Schema_Readers is
       end loop;
 
       if In_Type /= No_Type_Index then
-         if Handler.Types.Table (In_Type).Descr.Name = Restr.Base then
+         if Handler.Shared.Types.Table (In_Type).Descr.Name = Restr.Base then
             --  if In_Redefine_Context (Handler.all) then
             --    Base := Handler.Contexts.Redefined_Type;
             --  else
@@ -1843,8 +1964,8 @@ package body Schema.Schema_Readers is
          end if;
       end if;
 
-      if Handler.Types.Table (In_Type).Descr.Simple_Content then
-         Handler.Types.Table (In_Type).Simple :=
+      if Handler.Shared.Types.Table (In_Type).Descr.Simple_Content then
+         Handler.Shared.Types.Table (In_Type).Simple :=
            (Kind             => Simple_Type_Restriction,
             Restriction_Base => Restr.Base);
 
@@ -1858,6 +1979,11 @@ package body Schema.Schema_Readers is
 
          --  Check_Content_Type (Base, Handler, Should_Be_Simple => True);
 
+         Push_Context
+           (Handler,
+            (Typ         => Context_Simple_Restriction,
+             Simple      => (Kind => Simple_Type)));
+
       else
          Details := new Type_Details'
            (Kind        => Type_Restriction,
@@ -1866,12 +1992,11 @@ package body Schema.Schema_Readers is
             Next        => null,
             Restriction => Restr);
          Insert_In_Type (Handler, Details);
+         Push_Context
+           (Handler,
+            (Typ         => Context_Restriction,
+             Restriction => Details));
       end if;
-
-      Push_Context
-        (Handler,
-         (Typ         => Context_Restriction,
-          Restriction => Details));
    end Create_Restriction;
 
    -----------------------
@@ -1908,14 +2033,17 @@ package body Schema.Schema_Readers is
    ------------------------
 
    procedure Finish_Restriction (Handler : access Schema_Reader'Class) is
---        Ctx : constant Context_Access :=
---          Handler.Contexts (Handler.Contexts_Last)'Access;
---        Next : constant Context_Access :=
---          Handler.Contexts (Handler.Contexts_Last - 1)'Access;
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
 --        In_Type    : constant Type_Index := Next.Type_Info;
-      pragma Unreferenced (Handler);
    begin
-      null;
+      if Ctx.Typ = Context_Simple_Restriction then
+         pragma Assert (Next.Typ = Context_Type_Def);  --  a simple type
+         Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
+      end if;
+
 --        if Handler.Types.Table (In_Type).Descr.Simple_Content then
 --           case Next.Typ is
 --              when Context_Type_Def =>
@@ -1978,7 +2106,7 @@ package body Schema.Schema_Readers is
    begin
       case Next.Typ is
          when Context_Type_Def =>
-            Handler.Types.Table (Next.Type_Info).Simple := Ctx.Union;
+            Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Union;
          when others =>
             --  ??? Should be checked in [Create_Union]
             Raise_Exception
@@ -1997,7 +2125,8 @@ package body Schema.Schema_Readers is
    is
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
-      Info : Internal_Type_Descr renames Handler.Types.Table (Ctx.Type_Info);
+      Info : Internal_Type_Descr
+        renames Handler.Shared.Types.Table (Ctx.Type_Info);
       Ext   : Extension_Descr;
       Local : Symbol;
       Details : Type_Details_Access;
@@ -2071,10 +2200,20 @@ package body Schema.Schema_Readers is
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Next : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last - 1)'Access;
+      Next_Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 2)'Access;
    begin
       case Next.Typ is
          when Context_Type_Def =>
-            Handler.Types.Table (Next.Type_Info).Simple :=  Ctx.List;
+            if Next.Type_Info = No_Type_Index then
+               --  within a <simpleType><restriction><simpleType><list>
+               pragma Assert (Next_Next.Typ = Context_Simple_Restriction);
+               Next_Next.Simple := Ctx.List;
+
+            else
+               --  within a <simpleType><list>
+               Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.List;
+            end if;
          when others =>
             Raise_Exception
               (XML_Not_Implemented'Identity,
@@ -2115,8 +2254,9 @@ package body Schema.Schema_Readers is
    begin
       case Ctx.Typ is
          when Context_Type_Def =>
-            pragma Assert (Handler.Types.Table (Ctx.Type_Info).Details = null);
-            Handler.Types.Table (Ctx.Type_Info).Details := Element;
+            pragma Assert
+              (Handler.Shared.Types.Table (Ctx.Type_Info).Details = null);
+            Handler.Shared.Types.Table (Ctx.Type_Info).Details := Element;
 
          when Context_Sequence =>
             Append (Ctx.Seq.First_In_Seq, Element);
@@ -2138,6 +2278,9 @@ package body Schema.Schema_Readers is
          when Context_Restriction =>
             pragma Assert (Ctx.Restriction.Restriction.Details = null);
             Ctx.Restriction.Restriction.Details := Element;
+
+         when Context_Simple_Restriction =>
+            null;
 
          when Context_Schema | Context_Attribute | Context_Element
             | Context_Union
@@ -2212,6 +2355,7 @@ package body Schema.Schema_Readers is
 
    begin
       Att.Descr.Form := Handler.Attribute_Form_Default;
+      Att.Loc := Get_Location (Handler.Locator);
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
@@ -2353,7 +2497,7 @@ package body Schema.Schema_Readers is
       case In_Context.Typ is
          when Context_Type_Def =>
             Append
-              (Handler.Types.Table (In_Context.Type_Info).Attributes,
+              (Handler.Shared.Types.Table (In_Context.Type_Info).Attributes,
                (Kind     => Kind_Attribute,
                 Attr     => Attribute));
 
@@ -2374,6 +2518,9 @@ package body Schema.Schema_Readers is
 --             Output_Action ("Add_Attribute (" & Ada_Name (In_Context) & ", "
 --                         & Attribute_Name & ");");
 --              end if;
+
+         when Context_Simple_Restriction =>
+            null;
 
          when Context_Attribute_Group =>
             Append (In_Context.Attr_Group.Attributes,
@@ -2436,15 +2583,15 @@ package body Schema.Schema_Readers is
                --  grammar
                Parse_Grammar
                  (Handler,
-                  URI             => Empty_String,
-                  Xsd_File        => Get_Value (Atts, J),
-                  Do_Global_Check => False);
+                  URI           => Empty_String,
+                  Xsd_File      => Get_Value (Atts, J),
+                  Do_Create_NFA => False);
 
             elsif Local = Handler.Schema_Location then
                --  Already handled through Hook_Start_Element when validating
                --  the grammar itself
                Parse_Grammars
-                 (Handler, Get_Value (Atts, J), Do_Global_Check => False);
+                 (Handler, Get_Value (Atts, J), Do_Create_NFA => False);
             end if;
          end if;
       end loop;
@@ -2566,7 +2713,7 @@ package body Schema.Schema_Readers is
 --        Val : Integer;
    begin
       if Debug then
-         Output_Seen ("Seen " & Get (Local_Name).all
+         Output_Seen ("Start " & Get (Local_Name).all
                       & " at "
                       & Sax.Locators.To_String (Handler.Locator));
       end if;
@@ -2583,7 +2730,9 @@ package body Schema.Schema_Readers is
 
          Create_Schema (H, Atts);
 
-      elsif Local_Name = Handler.Annotation then
+      elsif Local_Name = Handler.Annotation
+        or else Local_Name = Handler.Notation
+      then
          Handler.In_Annotation := True;
 
       elsif Local_Name = Handler.Element then
@@ -2677,11 +2826,13 @@ package body Schema.Schema_Readers is
 
       elsif Local_Name = Handler.Simple_Content then
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
-         Handler.Types.Table (Ctx.Type_Info).Descr.Simple_Content := True;
+         Handler.Shared.Types.Table (Ctx.Type_Info).Descr.Simple_Content :=
+           True;
 
       elsif Local_Name = Handler.Complex_Content then
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
-         Handler.Types.Table (Ctx.Type_Info).Descr.Simple_Content := False;
+         Handler.Shared.Types.Table (Ctx.Type_Info).Descr.Simple_Content :=
+           False;
 
       elsif Local_Name = Handler.Attribute_Group then
          Create_Attribute_Group (H, Atts);
@@ -2853,5 +3004,15 @@ package body Schema.Schema_Readers is
          Self := Next;
       end loop;
    end Free;
+
+   -----------------
+   -- Get_Locator --
+   -----------------
+
+   overriding function Get_Locator
+     (Reader : Schema_Reader) return Sax.Locators.Locator is
+   begin
+      return Reader.Locator;
+   end Get_Locator;
 
 end Schema.Schema_Readers;

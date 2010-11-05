@@ -36,10 +36,8 @@ with Sax.Utils;         use Sax.Utils;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Symbols;       use Sax.Symbols;
 with Schema.Validators; use Schema.Validators;
-with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with Input_Sources.File;    use Input_Sources.File;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 with Schema.Validators.Lists; use Schema.Validators.Lists;
 
@@ -175,119 +173,6 @@ package body Schema.Readers is
       end if;
    end To_Absolute_URI;
 
-   -------------------
-   -- Parse_Grammar --
-   -------------------
-
-   procedure Parse_Grammar
-     (Handler  : access Validating_Reader;
-      URI      : Symbol;
-      Xsd_File : Symbol;
-      Do_Global_Check : Boolean)
-   is
-      File     : File_Input;
-      Schema   : Schema_Reader;
-      S_File_Full : constant Symbol := To_Absolute_URI (Handler.all, Xsd_File);
-   begin
-      if Debug then
-         Debug_Output ("Parse_Grammar NS={" & Get (URI).all
-                       & "} XSD={" & Get (Xsd_File).all & "}");
-      end if;
-
-      if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
-         --  Must check that no element of the same namespace was seen
-         --  already (as per 4.3.2 (4) in the XSD 1.0 norm, which was
-         --  changed in XSD 1.1).
-
-         declare
-            NS : XML_NS;
-            Local_Grammar : XML_Grammar_NS;
-         begin
-            Get_NS
-              (Handler.Grammar,
-               Namespace_URI    => URI,
-               Result           => Local_Grammar,
-               Create_If_Needed => False);
-
-            if Local_Grammar /= null then
-               Find_NS_From_URI
-                 (Handler.all,
-                  URI     => URI,
-                  NS      => NS);
-
-               if NS /= No_XML_NS
-                 and then Element_Count (NS) > 0
-                 and then S_File_Full /= Get_System_Id (Local_Grammar)
-               then
-                  Validation_Error
-                    (Handler,
-                     "#schemaLocation for """
-                     & Get (URI).all
-                     & """ cannot occur after the first"
-                     & " element of that namespace in XSD 1.0");
-               end if;
-            end if;
-         end;
-      end if;
-
-      if Debug then
-         Output_Seen ("Parsing grammar: " & Get (S_File_Full).all);
-      end if;
-
-      Open (Get (S_File_Full).all, File);
-      Set_Public_Id (File, Get (S_File_Full).all);
-      Set_System_Id (File, Get (S_File_Full).all);
-
-      --  Add_To will likely already contain the grammar for the
-      --  schema-for-schema, and we won't have to recreate it in most cases.
-
-      Set_Symbol_Table (Schema, Get_Symbol_Table (Handler.all));
-      Set_Grammar (Schema, Handler.Grammar);
-      Use_Basename_In_Error_Messages
-        (Schema, Use_Basename_In_Error_Messages (Handler.all));
-
-      begin
-         Parse (Schema, File,
-                Default_Namespace => URI, Do_Global_Check => Do_Global_Check);
-      exception
-         when XML_Validation_Error =>
-            --  Have to resolve locations and context now through
-            --  Get_Error_Message, since the error was in another parser
-            Free (Handler.Error_Msg);
-            Handler.Error_Msg :=
-              new Byte_Sequence'(Get_Error_Message (Schema));
-            raise;
-      end;
-
-      Close (File);
-
-      if Debug then
-         Output_Seen ("Done parsing new grammar: " & Get (Xsd_File).all);
-      end if;
-
-   exception
-      when Ada.IO_Exceptions.Name_Error =>
-         Close (File);
-
-         if Debug then
-            Debug_Output
-              (ASCII.LF
-               & "!!!! Could not open file " & Get (S_File_Full).all
-               & ASCII.LF);
-         end if;
-
-         --  According to XML Schema Primer 0, section 5.6, this is not an
-         --  error when we do not find the schema, since this attribute is only
-         --  a hint.
-         Warning
-           (Handler.all,
-            Create (Message => "Could not open file " & Get (S_File_Full).all,
-                    Loc     => Handler.Locator));
-      when others =>
-         Close (File);
-         raise;
-   end Parse_Grammar;
-
    --------------------
    -- Parse_Grammars --
    --------------------
@@ -295,7 +180,7 @@ package body Schema.Readers is
    procedure Parse_Grammars
      (Handler         : access Validating_Reader'Class;
       Schema_Location : Symbol;
-      Do_Global_Check : Boolean)
+      Do_Create_NFA : Boolean)
    is
       URI : Symbol := No_Symbol;
 
@@ -307,9 +192,9 @@ package body Schema.Readers is
          else
             Parse_Grammar
               (Handler,
-               URI             => URI,
-               Xsd_File        => Find_Symbol (Handler.all, Ch),
-               Do_Global_Check => Do_Global_Check);
+               URI           => URI,
+               Xsd_File      => Find_Symbol (Handler.all, Ch),
+               Do_Create_NFA => Do_Create_NFA);
             URI := No_Symbol;
          end if;
       end Callback;
@@ -683,12 +568,12 @@ package body Schema.Readers is
            (H,
             URI      => Empty_String,
             Xsd_File => Get_Value (Atts, No_Index),
-            Do_Global_Check => True);
+            Do_Create_NFA => True);
       end if;
 
       if Location_Index /= -1 then
          Parse_Grammars
-           (H, Get_Value (Atts, Location_Index), Do_Global_Check => True);
+           (H, Get_Value (Atts, Location_Index), Do_Create_NFA => True);
       end if;
 
       if H.Grammar = No_Grammar then
@@ -1072,35 +957,6 @@ package body Schema.Readers is
          NS := No_XML_NS;
       end if;
    end Get_Namespace_From_Prefix;
-
-   -----------------------
-   -- Get_Error_Message --
-   -----------------------
-
-   function Get_Error_Message
-     (Reader : Validating_Reader) return Unicode.CES.Byte_Sequence
-   is
-      Loc : constant Locator :=
-        Get_Locator (Abstract_Validation_Reader'Class (Reader));
-   begin
-      if Reader.Error_Msg = null then
-         return "";
-
-      elsif Reader.Error_Msg (Reader.Error_Msg'First) = '#' then
-         if Loc /= No_Locator then
-            return To_String (Loc, Use_Basename_In_Error_Messages (Reader))
-              & ": "
-              & Reader.Error_Msg (Reader.Error_Msg'First + 1
-                                  .. Reader.Error_Msg'Last);
-         else
-            return Reader.Error_Msg (Reader.Error_Msg'First + 1
-                                     .. Reader.Error_Msg'Last);
-         end if;
-
-      else
-         return Reader.Error_Msg.all;
-      end if;
-   end Get_Error_Message;
 
    ----------
    -- Free --

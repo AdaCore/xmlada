@@ -49,17 +49,15 @@ package Schema.Schema_Readers is
    --  An XML reader that parses an XML schema, and store the information in
    --  a grammar
 
-   procedure Parse
-     (Parser            : in out Schema_Reader;
-      Input             : in out Input_Sources.Input_Source'Class;
-      Default_Namespace : Sax.Symbols.Symbol;
-      Do_Global_Check   : Boolean);
-   --  Same as inherited parse, but you can indicate the default value for
-   --  targetNamespace. In practice, this is useful when processing <include>
-   --  or <redefine> elements from another schema, but should not be used in
-   --  other contexts.
-   --  Do_Global_Check should be True if the parser needs to check for missing
-   --  declarations when the parsing is done.
+   procedure Parse_Grammar
+     (Handler  : access Schema.Readers.Validating_Reader'Class;
+      URI      : Sax.Symbols.Symbol;
+      Xsd_File : Sax.Symbols.Symbol;
+      Do_Create_NFA : Boolean);
+   --  Parse (if not done already) the specified [Xsd_File], and associate it
+   --  with the given namespace [URI].
+   --  [Handler] is used to convert [Xsd_File] to an absolute URI, and find
+   --  the grammar.
 
 private
    use Schema.Validators;
@@ -82,7 +80,7 @@ private
       Form               : Form_Type          := Unqualified;
       Default            : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Fixed              : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Substitution_Group : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Substitution_Group : Qualified_Name     := No_Qualified_Name;
       Final              : Final_Status       := (others => False);
       Block              : Block_Status       := (others => False);
       Is_Abstract        : Boolean            := False;
@@ -103,6 +101,7 @@ private
       Typ          : Qualified_Name     := No_Qualified_Name;
       Local_Type   : Type_Index         := No_Type_Index;
       Ref          : Qualified_Name     := No_Qualified_Name;
+      Loc          : Sax.Locators.Location := Sax.Locators.No_Location;
    end record;
 
    type Attr_Descr_Kind is (Kind_Group, Kind_Attribute, Kind_Unset);
@@ -199,6 +198,7 @@ private
                          Context_Choice,
                          Context_Schema,
                          Context_Restriction,
+                         Context_Simple_Restriction, --  simpleType
                          Context_Extension,
                          Context_All,
                          Context_List,
@@ -222,6 +222,7 @@ private
          when Context_Extension       => Extension   : Type_Details_Access;
          when Context_List            => List        : List_Type_Descr;
          when Context_Restriction     => Restriction : Type_Details_Access;
+         when Context_Simple_Restriction => Simple   : Simple_Type_Descr;
          when Context_Union           => Union       : Union_Type_Descr;
          when Context_Attribute      => Attribute   : Internal_Attribute_Descr;
       end case;
@@ -258,6 +259,15 @@ private
       Hash       => Hash,
       Equal      => "=");
 
+   type XSD_Data is record
+      Types             : Type_Tables.Instance;
+      Global_Elements   : Element_HTables.Instance;
+      Global_Groups     : Group_HTables.Instance;
+      Global_AttrGroups : AttrGroup_HTables.Instance;
+   end record;
+   --  Data modified while loading XSD, and needed while loading nested (input
+   --  or redefine) XSD, until we can create the NFA
+
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
       Locator          : Sax.Locators.Locator;
 
@@ -280,15 +290,7 @@ private
       Contexts        : Context_Array_Access;
       Contexts_Last   : Natural := 0;
 
-      --  The following data should be shared among all readers that parse a
-      --  given XSD and all its namespaces. In fact, it might be better to have
-      --  a single reader for this, and pass around the above fields for each
-      --  of the namespaces.
-
-      Types             : Type_Tables.Instance;
-      Global_Elements   : Element_HTables.Instance;
-      Global_Groups     : Group_HTables.Instance;
-      Global_AttrGroups : AttrGroup_HTables.Instance;
+      Shared : XSD_Data;
    end record;
 
    overriding procedure Start_Element
@@ -307,6 +309,8 @@ private
       Input  : in out Input_Sources.Input_Source'Class);
    overriding procedure Set_Document_Locator
      (Handler : in out Schema_Reader; Loc : in out Sax.Locators.Locator);
+   overriding function Get_Locator
+     (Reader : Schema_Reader) return Sax.Locators.Locator;
    --  See inherited documentation
 
 end Schema.Schema_Readers;

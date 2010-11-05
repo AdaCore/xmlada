@@ -94,7 +94,8 @@ package body Schema.Validators is
 
    procedure Validation_Error
      (Reader  : access Abstract_Validation_Reader;
-      Message : Byte_Sequence) is
+      Message : Byte_Sequence;
+      Loc     : Sax.Locators.Location := Sax.Locators.No_Location) is
    begin
       if Debug then
          Debug_Output ("Validation_Error: " & Message);
@@ -103,8 +104,51 @@ package body Schema.Validators is
       Free (Reader.Error_Msg);
       Reader.Error_Msg := new Byte_Sequence'(Message);
 
+      if Loc /= No_Location then
+         Reader.Error_Location := Loc;
+      else
+         Reader.Error_Location := Get_Location
+           (Get_Locator (Abstract_Validation_Reader'Class (Reader.all)));
+      end if;
+
       Raise_Exception (XML_Validation_Error'Identity);
    end Validation_Error;
+
+   -----------------------
+   -- Get_Error_Message --
+   -----------------------
+
+   function Get_Error_Message
+     (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence
+   is
+      Loc : Location;
+      First : Natural;
+   begin
+      if Reader.Error_Msg = null then
+         return "";
+
+      else
+         Loc := Reader.Error_Location;
+         if Loc = No_Location then
+            Loc := Get_Location
+              (Get_Locator (Abstract_Validation_Reader'Class (Reader)));
+         end if;
+
+         --  Backward compatibility: '#' used to indicate we want the location
+         --  displayed, but that should no longer be necessary now.
+         First := Reader.Error_Msg'First;
+         if Reader.Error_Msg (First) = '#' then
+            First := First + 1;
+         end if;
+
+         if Loc /= No_Location then
+            return To_String (Loc, Use_Basename_In_Error_Messages (Reader))
+              & ": " & Reader.Error_Msg (First .. Reader.Error_Msg'Last);
+         else
+            return Reader.Error_Msg (First .. Reader.Error_Msg'Last);
+         end if;
+      end if;
+   end Get_Error_Message;
 
    ----------
    -- Free --

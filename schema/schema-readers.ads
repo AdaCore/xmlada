@@ -90,10 +90,6 @@ package Schema.Readers is
    --  Override the symbol table. If a grammar was already set for this parser,
    --  the symbol table must be the same as in the grammar.
 
-   function Get_Error_Message
-     (Reader : Validating_Reader) return Unicode.CES.Byte_Sequence;
-   --  Return the current error message
-
    overriding function Get_Locator
      (Reader : Validating_Reader) return Sax.Locators.Locator;
    --  Return the current location
@@ -110,18 +106,10 @@ package Schema.Readers is
    --  Convert a URI read in the input stream of Handler to an absolute URI.
    --  This is used for instance to find the location of a schema file,...
 
-   procedure Parse_Grammar
-     (Handler  : access Validating_Reader;
-      URI      : Sax.Symbols.Symbol;
-      Xsd_File : Sax.Symbols.Symbol;
-      Do_Global_Check : Boolean);
-   --  Parse the grammar to use from an XSD file, and add it to the current
-   --  grammar (as returned by Get_Grammar).
-
    procedure Parse_Grammars
      (Handler         : access Validating_Reader'Class;
       Schema_Location : Sax.Symbols.Symbol;
-      Do_Global_Check : Boolean);
+      Do_Create_NFA : Boolean);
    --  Parse multiple grammars, as defined by the "schemaLocation" attribute
 
    procedure Get_Namespace_From_Prefix

@@ -50,6 +50,7 @@
 
  <include schemaLocation="datatypes.xsd"/>
 
+ <!--
  <import namespace="http://www.w3.org/XML/1998/namespace"
          schemaLocation="http://www.w3.org/2000/10/xml.xsd">
    <annotation>
@@ -59,6 +60,7 @@
      </documentation>
    </annotation>
  </import>
+ -->
 
  <complexType name="openAttrs">
    <annotation>
@@ -151,6 +153,7 @@
    </complexContent>
   </complexType>
 
+  <!--
   <key name="element">
    <selector xpath="element"/>
    <field xpath="@name"/>
@@ -185,6 +188,7 @@
    <selector xpath=".//key|.//unique|.//keyref"/>
    <field xpath="@name"/>
   </key>
+  -->
 
  </element>
 
@@ -1079,7 +1083,7 @@
    </complexType>
  </element>
 
- <element name="documentation" xmlns:x="http://www.w3.org/XML/1998/namespace" id="documentation">
+ <element name="documentation" xmlns:xml="http://www.w3.org/XML/1998/namespace" id="documentation">
    <annotation>
      <documentation xml:lang="en" source="http://www.w3.org/TR/xmlschema-1/#element-documentation"/>
    </annotation>
@@ -1088,7 +1092,7 @@
        <any processContents="lax"/>
      </sequence>
      <attribute name="source" type="uriReference"/>
-   <attribute ref="x:lang"/>
+   <attribute ref="xml:lang"/>
    </complexType>
  </element>
 

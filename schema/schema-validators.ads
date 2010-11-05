@@ -286,7 +286,8 @@ package Schema.Validators is
    type Abstract_Validation_Reader
      is abstract new Sax.Readers.Sax_Reader
    with record
-      Error_Msg : Unicode.CES.Byte_Sequence_Access;
+      Error_Location : Sax.Locators.Location;
+      Error_Msg      : Unicode.CES.Byte_Sequence_Access;
 
       Id_Table  : Id_Htable_Access;
       --  Mapping of IDs to elements
@@ -464,7 +465,8 @@ package Schema.Validators is
 
    procedure Validation_Error
      (Reader  : access Abstract_Validation_Reader;
-      Message : Unicode.CES.Byte_Sequence);
+      Message : Unicode.CES.Byte_Sequence;
+      Loc     : Sax.Locators.Location := Sax.Locators.No_Location);
    --  Sets an error message, and raise XML_Validation_Error.
    --  The message can contain special characters like:
    --    '#': if first character, it will be replaced by the current location
@@ -474,6 +476,10 @@ package Schema.Validators is
      (Reader : Abstract_Validation_Reader) return Sax.Locators.Locator
      is abstract;
    --  Return the current location in the file
+
+   function Get_Error_Message
+     (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence;
+   --  Return the current error message
 
    procedure Free (Reader : in out Abstract_Validation_Reader);
    --  Free the contents of Reader

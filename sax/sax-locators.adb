@@ -144,8 +144,13 @@ package body Sax.Locators is
    ------------------
 
    function Get_Location (Loc : Locator) return Location is
+      L : constant Encapsulated_Access := Get (Loc);
    begin
-      return Get (Loc).Loc;
+      if L = null then
+         return No_Location;
+      else
+         return L.Loc;
+      end if;
    end Get_Location;
 
    ------------------
