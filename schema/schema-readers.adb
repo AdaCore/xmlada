@@ -228,6 +228,9 @@ package body Schema.Readers is
       Iter : Active_State_Iterator;
       S    : State;
       Descr : access Type_Descr;
+      Fixed : Symbol := No_Symbol;
+      Data  : State_Data;
+      Ty    : Type_Index;
 
    begin
       if Debug then
@@ -235,33 +238,60 @@ package body Schema.Readers is
            (Handler.Matcher, Dump_Compact, "Validate_Current_Char: ");
       end if;
 
-      if Handler.Characters_Count /= 0 then
-         Iter := For_Each_Active_State (Handler.Matcher,
-                                        Ignore_If_Nested  => True,
-                                        Ignore_If_Default => True);
-         loop
-            S := Current (Handler.Matcher, Iter);
-            exit when S = No_State;
+      --  Check all active states to find our whitespace normalization rules,
+      --  and whether elements have fixed values.
 
-            Descr := Get_Type_Descr
-              (NFA, Current_Data (Handler.Matcher, Iter));
+      Iter := For_Each_Active_State (Handler.Matcher,
+                                     Ignore_If_Nested  => True,
+                                     Ignore_If_Default => True);
+      loop
+         S := Current (Handler.Matcher, Iter);
+         exit when S = No_State;
+
+         Data := Current_Data (Handler.Matcher, Iter);
+
+         if Fixed = No_Symbol then
+            Fixed := Data.Fixed;
+         end if;
+
+         --  Unless we have a <any> type
+         if Data.Simple /= No_Type_Index then
+            Descr := Get_Type_Descr (NFA, Data.Simple);
             if Descr.Simple_Content /= No_Simple_Type_Index then
                Whitespace := Get_Simple_Type
                  (Get_NFA (Handler.Grammar), Descr.Simple_Content)
                  .Whitespace;
             end if;
+         end if;
 
-            Next (Handler.Matcher, Iter);
-         end loop;
+         Next (Handler.Matcher, Iter);
+      end loop;
 
+      Is_Empty := Handler.Characters_Count = 0;
+
+      --  in 3.3.1: if the element is empty, the "fixed" value
+      --  should be used for it, just as for "default"
+      --     Characters (Handler.all, Get (Get_Fixed (Handler)).all);
+
+      if Is_Empty and then Fixed /= No_Symbol then
+         Internal_Characters (Handler, Get (Fixed).all);
+         Is_Empty := Handler.Characters_Count = 0;
+         if Debug then
+            Debug_Output
+              ("Substitute fixed value for empty characters:"
+               & Get (Fixed).all);
+         end if;
+      end if;
+
+      if not Is_Empty then
          if Debug then
             Debug_Output ("Normalize whitespace: " & Whitespace'Img);
          end if;
+
          Normalize_Whitespace
            (Whitespace, Handler.Characters.all, Handler.Characters_Count);
       end if;
 
-      Is_Empty := Handler.Characters_Count = 0;
       Iter := For_Each_Active_State (Handler.Matcher,
                                      Ignore_If_Nested => True,
                                      Ignore_If_Default => True);
@@ -269,48 +299,55 @@ package body Schema.Readers is
          S := Current (Handler.Matcher, Iter);
          exit when S = No_State;
 
-         Descr := Get_Type_Descr (NFA, Current_Data (Handler.Matcher, Iter));
-         if Descr.Simple_Content /= No_Simple_Type_Index then
-            if Debug and not Is_Empty then
-               Debug_Output
-                 ("Validate characters ("
-                  & To_QName (Descr.Name) & "): "
-                  & Handler.Characters (1 .. Handler.Characters_Count) & "--");
-            end if;
+         Ty := Current_Data (Handler.Matcher, Iter).Simple;
 
-            if Handler.Characters_Count = 0 then
-               Validate_Simple_Type
-                 (Handler, Descr.Simple_Content,
-                  "",
-                  Empty_Element => Is_Empty,
-                  Loc           => Loc);
-            else
-               Validate_Simple_Type
-                 (Handler, Descr.Simple_Content,
-                  Handler.Characters (1 .. Handler.Characters_Count),
-                  Empty_Element => Is_Empty,
-                  Loc           => Loc);
-            end if;
+         if Ty /= No_Type_Index then
+            Descr := Get_Type_Descr (NFA, Ty);
 
-         elsif not Descr.Mixed
-           and then not Is_Empty
-         then
-            if Debug then
-               Debug_Output ("No character data for "
-                             & To_QName (Descr.Name) & S'Img);
-               Debug_Output
-                 ("Got "
-                  & Handler.Characters
-                    (1 .. Integer'Min (20, Handler.Characters_Count)) & "--");
+            if Descr.Simple_Content /= No_Simple_Type_Index then
+               if Debug and not Is_Empty then
+                  Debug_Output
+                    ("Validate characters ("
+                     & To_QName (Descr.Name) & "): "
+                     & Handler.Characters (1 .. Handler.Characters_Count)
+                     & "--");
+               end if;
+
+               if Handler.Characters_Count = 0 then
+                  Validate_Simple_Type
+                    (Handler, Descr.Simple_Content,
+                     "",
+                     Empty_Element => Is_Empty,
+                     Loc           => Loc);
+               else
+                  Validate_Simple_Type
+                    (Handler, Descr.Simple_Content,
+                     Handler.Characters (1 .. Handler.Characters_Count),
+                     Empty_Element => Is_Empty,
+                     Loc           => Loc);
+               end if;
+
+            elsif not Descr.Mixed
+              and then not Is_Empty
+            then
+               if Debug then
+                  Debug_Output ("No character data for "
+                                & To_QName (Descr.Name) & S'Img);
+                  Debug_Output
+                    ("Got "
+                     & Handler.Characters
+                       (1 .. Integer'Min (20, Handler.Characters_Count))
+                     & "--");
+               end if;
+               Validation_Error
+                 (Handler,
+                  "No character data allowed by content model",
+                  Loc);
             end if;
-            Validation_Error
-              (Handler,
-               "No character data allowed by content model",
-               Loc);
          end if;
 
-         --  If no explicit character data: we might need to simulate some, so
-         --  that we can check facets like "minLength".
+            --  If no explicit character data: we might need to simulate some,
+            --  so that we can check facets like "minLength".
 
 --           if Is_Empty and then not Handler.Validators.Is_Nil then
 --              if Handler.Validators.Element /= No_Element
@@ -464,8 +501,6 @@ package body Schema.Readers is
    is
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
-      Type_Index     : constant Integer := Get_Index
-        (Atts, H.XML_Instance_URI, H.Typ);
       No_Index       : constant Integer := Get_Index
         (Atts, H.XML_Instance_URI, H.No_Namespace_Schema_Location);
       Location_Index : constant Integer := Get_Index
@@ -484,13 +519,15 @@ package body Schema.Readers is
       ---------------------------------
 
       procedure Compute_Type_From_Attribute is
+         Xsi_Type_Index     : constant Integer := Get_Index
+           (Atts, H.XML_Instance_URI, H.Typ);
          TRef : Global_Reference;
       begin
-         if Type_Index /= -1 then
+         if Xsi_Type_Index /= -1 then
             declare
                Qname : constant Byte_Sequence :=
                  Ada.Strings.Fixed.Trim
-                   (Get (Get_Value (Atts, Type_Index)).all,
+                   (Get (Get_Value (Atts, Xsi_Type_Index)).all,
                     Ada.Strings.Both);
                Separator : constant Integer := Split_Qname (Qname);
                Prefix    : Symbol;
@@ -531,16 +568,26 @@ package body Schema.Readers is
                   exit when S = No_State;
 
                   Check_Substitution_Group_OK
-                    (H, TRef.Typ, NFA.Get_Data (S).all);
+                    (H, TRef.Typ, NFA.Get_Data (S).Simple);
 
                   if Nested_Start /= No_State then
+                     if Debug then
+                        Debug_Output
+                          ("Because of xsi:type, replace state" & S'Img
+                           & " with" & Nested_Start'Img);
+                     end if;
                      Replace_State (H.Matcher, Iter, Nested_Start);
                      --  Override (temporarily) the current state
                   else
                      if Debug then
-                        Debug_Output ("Override state data" & S'Img);
+                        Debug_Output ("Override state data" & S'Img
+                                      & " to type" & TRef.Typ'Img);
                      end if;
-                     Override_Data (H.Matcher, Iter, TRef.Typ);
+                     Override_Data
+                       (H.Matcher, Iter,
+                        State_Data'
+                          (Simple => TRef.Typ,
+                           Fixed  => Current_Data (H.Matcher, Iter).Fixed));
                   end if;
 
                   Next (H.Matcher, Iter);
@@ -557,6 +604,7 @@ package body Schema.Readers is
       Iter    : Active_State_Iterator;
       Is_Nil  : Boolean;
       S       : State;
+      Ty      : Type_Index;
    begin
       if Debug then
          Output_Seen ("Start_Element: " & To_QName (Elem)
@@ -672,12 +720,15 @@ package body Schema.Readers is
             Debug_Output ("Checking attributes for state" & S'Img);
          end if;
 
-         Validate_Attributes
-           (Get_NFA (H.Grammar),
-            Get_Type_Descr (NFA, NFA.Get_Data (S).all),
-            H, Atts,
-            Nillable  => False,  --  Is_Nillable (Element),
-            Is_Nil    => Is_Nil);
+         Ty := NFA.Get_Data (S).Simple;
+         if Ty /= No_Type_Index then --  otherwise with have a <any> type
+            Validate_Attributes
+              (Get_NFA (H.Grammar),
+               Get_Type_Descr (NFA, Ty),
+               H, Atts,
+               Nillable  => False,  --  Is_Nillable (Element),
+               Is_Nil    => Is_Nil);
+         end if;
 
          Next (H.Matcher, Iter);
       end loop;
@@ -778,8 +829,9 @@ package body Schema.Readers is
       --  when needed.
 
       if Handler.Characters = null then
-         Handler.Characters := new String'(Ch);
          Handler.Characters_Count := Ch'Length;
+         Handler.Characters := new String (1 .. Ch'Length);
+         Handler.Characters.all := Ch;
 
       elsif Max <= Handler.Characters'Last then
          Handler.Characters (Handler.Characters_Count + 1 .. Max) := Ch;
@@ -828,7 +880,7 @@ package body Schema.Readers is
          S := Current (H.Matcher, Iter);
          exit when S = No_State;
 
-         Descr := Get_Type_Descr (NFA, Current_Data (H.Matcher, Iter));
+         Descr := Get_Type_Descr (NFA, Current_Data (H.Matcher, Iter).Simple);
          if Descr.Simple_Content /= No_Simple_Type_Index
            or else Descr.Mixed
          then

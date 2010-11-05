@@ -414,14 +414,13 @@ package body Schema.Schema_Readers is
          end if;
 
          S1 := NFA.Add_State;
+         Info.S := S1;
 
          if Debug then
             Debug_Output ("Create_Element_State S1 for element "
                           & To_QName (Info.Name) & To_QName (Info.Ref)
                           & S1'Img);
          end if;
-
-         Info.S := S1;
 
          --  Resolve element references
 
@@ -480,14 +479,39 @@ package body Schema.Schema_Readers is
                end if;
 
                if NFA_Type /= No_Type_Index then
-                  NFA.Get_Data (S1).all := NFA_Type;
+                  NFA.Get_Data (S1).all :=
+                    State_Data'(Simple => NFA_Type, Fixed  => No_Symbol);
                   NFA.Set_Nested
                     (S1,
                      NFA.Create_Nested
                        (Get_Type_Descr (NFA, NFA_Type).Complex_Content));
                end if;
+
+               NFA.Get_Data (S1).Fixed := Info.Fixed;
             end;
          end if;
+
+         --  Check that the fixed value is valid
+
+         declare
+            Simple : Simple_Type_Index;
+         begin
+            if Info.Fixed /= No_Symbol
+              and then NFA.Get_Data (S1).Simple /= No_Type_Index
+            then
+               Simple :=
+                 Get_Type_Descr (NFA, NFA.Get_Data (S1).Simple).Simple_Content;
+
+               if Simple /= No_Simple_Type_Index then
+                  Validate_Simple_Type
+                    (Reader        => Parser,
+                     Simple_Type   => Simple,
+                     Ch            => Get (Info.Fixed).all,
+                     Empty_Element => False,
+                     Loc           => Info.Loc);
+               end if;
+            end if;
+         end;
 
          --  Link with previous element
 
@@ -1263,7 +1287,11 @@ package body Schema.Schema_Readers is
 
          if S /= No_State then
             --  At least .Complex_Content has changed, so we need to reset data
-            NFA.Set_Data (S, Shared.Types.Table (J).In_NFA);
+            NFA.Set_Data
+              (S,
+               State_Data'
+                 (Simple => Shared.Types.Table (J).In_NFA,
+                  Fixed  => No_Symbol));
          end if;
 
          if Shared.Types.Table (J).Properties.Name /= No_Qualified_Name then

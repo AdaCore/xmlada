@@ -1693,15 +1693,16 @@ package body Schema.Validators is
    function Image
      (Self : access NFA'Class;
       S    : Schema_State_Machines.State;
-      Data : Type_Index) return String
+      Data : State_Data) return String
    is
       pragma Unreferenced (S);
       Local : Symbol;
    begin
-      if Data = No_Type_Index then
+      if Data.Simple = No_Type_Index then
          return "";
       else
-         Local := Schema_NFA_Access (Self).Types.Table (Data).Name.Local;
+         Local :=
+           Schema_NFA_Access (Self).Types.Table (Data.Simple).Name.Local;
          if Local = No_Symbol then
             return "";
          else

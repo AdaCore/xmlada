@@ -209,12 +209,19 @@ package Schema.Validators is
    function Image (Trans : Transition_Descr) return String;
    --  Needed for the instantiation of Sax.State_Machines
 
+   type State_Data is record
+      Simple : Type_Index;
+      Fixed  : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+   end record;
+   No_State_Data : constant State_Data :=
+     (No_Type_Index, Sax.Symbols.No_Symbol);
+
    package Schema_State_Machines is new Sax.State_Machines
       (Symbol              => Transition_Event,
        Transition_Symbol   => Transition_Descr,
        Image               => Image,
-       State_User_Data     => Type_Index,
-       Default_Data        => No_Type_Index,
+       State_User_Data     => State_Data,
+       Default_Data        => No_State_Data,
        Default_State_Count => 200,       --  XSD metaschema takes 904 states
        Default_Transition_Count => 200); --  XSD metaschema takes 1096
    use Schema_State_Machines;
@@ -242,7 +249,7 @@ package Schema.Validators is
    function Image
      (Self : access NFA'Class;
       S    : Schema_State_Machines.State;
-      Data : Type_Index) return String;
+      Data : State_Data) return String;
    --  Needed for the instantiation of Pretty_Printers
 
    package Schema_State_Machines_PP
