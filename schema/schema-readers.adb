@@ -527,11 +527,15 @@ package body Schema.Readers is
          --  The list of valid attributes is attached to the type, that is to
          --  the nested NFA.
 
+         Data2 := Self.Get_Data (S);
+         if Data2.all = Default_User_Data then
+            return;  --  This is a dummy node, ignore
+         end if;
+
          if Debug then
             Debug_Output ("Checking attributes for state" & S'Img);
          end if;
 
-         Data2 := Self.Get_Data (S);
          Validate_Attributes
            (Data2.Descr.Attributes, H, Atts,
             Nillable => False,  --  Is_Nillable (Element),
