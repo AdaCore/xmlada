@@ -582,6 +582,7 @@ package body Schema.Readers is
 
 --        Get_NS (H.Grammar, Get_URI (Get_NS (Elem)), Result => G);
 
+      Debug_Print (H.Matcher, Dump_Compact);
       Process
         (H.Matcher,
          Input   => (Kind => Transition_Symbol,
@@ -887,6 +888,7 @@ package body Schema.Readers is
                     Whitespace    => Hook_Ignorable_Whitespace'Access,
                     Doc_Locator   => Hook_Set_Document_Locator'Access);
 
+         Debug_Output ("MANU Start_Match");
          Parser.Matcher := Get_NFA (Parser.Grammar).Start_Match;
       else
          Set_Hooks (Parser,

@@ -1127,8 +1127,10 @@ package body Sax.State_Machines is
       ----------
 
       function Dump
-        (Self    : access NFA'Class;
-         Mode    : Dump_Mode := Dump_Compact) return String
+        (Self                : access NFA'Class;
+         Mode                : Dump_Mode := Dump_Compact;
+         Show_Details        : Boolean := True;
+         Show_Isolated_Nodes : Boolean := True) return String
       is
          Dumped : array (State_Tables.First .. Last (Self.States)) of Boolean
            := (others => False);
@@ -1250,6 +1252,13 @@ package body Sax.State_Machines is
          end Dump_Dot;
 
       begin
+         Append (Result, "Total states:" & Last (Self.States)'Img
+                 & ASCII.LF);
+
+         if not Show_Details then
+            return To_String (Result);
+         end if;
+
          case Mode is
          when Dump_Multiline | Dump_Compact =>
             return Dump (Self   => Self,
@@ -1257,8 +1266,6 @@ package body Sax.State_Machines is
                          Mode   => Mode);
 
          when Dump_Dot | Dump_Dot_Compact =>
-            Append (Result, "Total states:" & Last (Self.States)'Img
-                    & ASCII.LF);
             Append (Result, "Use   dot -O -Tpdf file.dot" & ASCII.LF);
             Append (Result, "Nested must be final: "
                     & Self.Nested_Must_Be_Final'Img & ASCII.LF);
@@ -1286,14 +1293,26 @@ package body Sax.State_Machines is
             --  there
 
             for S in State_Tables.First .. Last (Self.States) loop
-               Append_Node (Self, S, Result);
+               if Show_Isolated_Nodes
+                 or else Self.States.Table (S).Nested /= No_State
+                 or else Self.States.Table (S).First_Transition /=
+                   No_Transition
+               then
+                  Append_Node (Self, S, Result);
+               end if;
             end loop;
 
             --  Now dump the toplevel states (that is the ones that haven't
             --  been dumped yet)
 
             for S in State_Tables.First .. Last (Self.States) loop
-               Dump_Dot (S, No_State, "");
+               if Show_Isolated_Nodes
+                 or else Self.States.Table (S).Nested /= No_State
+                 or else Self.States.Table (S).First_Transition /=
+                   No_Transition
+               then
+                  Dump_Dot (S, No_State, "");
+               end if;
             end loop;
 
             Append (Result, "}" & ASCII.LF);

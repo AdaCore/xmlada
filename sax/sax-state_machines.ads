@@ -331,12 +331,18 @@ package Sax.State_Machines is
 
    package Pretty_Printers is
       function Dump
-        (Self    : access NFA'Class;
-         Mode    : Dump_Mode := Dump_Compact) return String;
+        (Self                : access NFA'Class;
+         Mode                : Dump_Mode := Dump_Compact;
+         Show_Details        : Boolean := True;
+         Show_Isolated_Nodes : Boolean := True) return String;
       --  Dump the NFA into a string.
       --  This is mostly for debug reasons, and the output might change from
       --  one version to the next.
       --  If [Compact] is True then the output does not include newlines.
+      --  If [Show_Details] is False, then only the count of nodes will be
+      --  displayed, not the actual list of nodes and transitions.
+      --  If [Show_Isolated_Nodes] is false, then nodes that are not linked
+      --  to any other and have no nested node will not be displayed.
 
       function Dump
         (Self   : access NFA'Class;

@@ -402,7 +402,8 @@ package body Schema.Schema_Readers is
 
                   else
                      Validation_Error
-                       (Parser, "Unknown type " & To_QName (Real.Typ));
+                       (Parser, "Unknown type " & To_QName (Real.Typ),
+                        Info.Loc);
                   end if;
                end if;
             end if;
@@ -417,7 +418,7 @@ package body Schema.Schema_Readers is
                else
                   Validation_Error
                     (Parser, "Unknown type for element "
-                     & To_QName (Real.Name) & To_QName (Info.Ref));
+                     & To_QName (Real.Name) & To_QName (Info.Ref), Info.Loc);
                end if;
             end if;
 
@@ -671,20 +672,26 @@ package body Schema.Schema_Readers is
                      else
                         TRef := Get (Ref.all, (Attrs (A).Attr.Typ, Ref_Type));
                         if TRef = No_Global_Reference then
-                           Validation_Error
-                             (Parser,
-                              "Unknown type for attribute """
-                              & To_QName (Attrs (A).Attr.Descr.Name)
-                              & To_QName (Attrs (A).Attr.Ref)
-                              & """: " & To_QName (Attrs (A).Attr.Typ),
-                              Attrs (A).Attr.Loc);
+                           --  ??? Type should be ur-type (3.2.2)
+                           null;
+                           S := No_State;
+--                             Validation_Error
+--                               (Parser,
+--                                "Unknown type for attribute """
+--                                & To_QName (Attrs (A).Attr.Descr.Name)
+--                                & To_QName (Attrs (A).Attr.Ref)
+--                                & """: " & To_QName (Attrs (A).Attr.Typ),
+--                                Attrs (A).Attr.Loc);
+                        else
+                           S := TRef.Typ;
                         end if;
-
-                        S := TRef.Typ;
                      end if;
 
-                     Attrs (A).Attr.Descr.Simple_Type :=
-                       NFA.Get_Data (S).Descr.Simple_Type;
+                     if S /= No_State then
+                        Attrs (A).Attr.Descr.Simple_Type :=
+                          NFA.Get_Data (S).Descr.Simple_Type;
+                     end if;
+
                      Add_Attribute (List, Attrs (A).Attr.Descr);
                end case;
             end loop;
@@ -774,6 +781,10 @@ package body Schema.Schema_Readers is
          if Info.Details /= null
            and then not Info.Descr.Simple_Content
          then
+            if Debug then
+               Debug_Output ("Process type " & To_QName (Info.Descr.Name));
+            end if;
+
             Recursive_Add_Attributes (Info);
             NFA.Get_Data (Info.S).Descr.Attributes := List;
             Process_Details
@@ -827,7 +838,12 @@ package body Schema.Schema_Readers is
       end loop;
 
       if Debug then
-         Output_Action ("NFA: " & Dump (NFA, Dump_Dot_Compact));
+         Output_Action
+           ("NFA: " & Dump
+              (NFA,
+               Mode                => Dump_Dot_Compact,
+               Show_Details        => False,
+               Show_Isolated_Nodes => False));
       end if;
 
       Reset (Types);
@@ -1702,8 +1718,9 @@ package body Schema.Schema_Readers is
 
       Push_Context
         (Handler,
-         (Typ     => Context_Element,
-          Element => Info));
+         (Typ          => Context_Element,
+          Elem_Details => Details,
+          Element      => Info));
    end Create_Element;
 
    --------------------
@@ -1721,8 +1738,8 @@ package body Schema.Schema_Readers is
          when Context_Schema | Context_Redefine =>
             Set (Handler.Shared.Global_Elements, Info.Name, Info);
          when others =>
-            null;
-            --  Need to insert the element in the type definition
+            --  We might have added the type definition
+            Ctx.Elem_Details.Element := Ctx.Element;
       end case;
 
 --        if Info.Ref = No_Qualified_Name

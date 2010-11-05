@@ -212,7 +212,9 @@ private
    type Context (Typ : Context_Type := Context_Schema) is record
       case Typ is
          when Context_Type_Def        => Type_Info   : Type_Index;
-         when Context_Element         => Element     : Element_Descr;
+         when Context_Element         =>
+            Element      : Element_Descr;
+            Elem_Details : Type_Details_Access;
          when Context_Sequence        => Seq         : Type_Details_Access;
          when Context_Choice          => Choice      : Type_Details_Access;
          when Context_All             => All_Detail  : Type_Details_Access;
