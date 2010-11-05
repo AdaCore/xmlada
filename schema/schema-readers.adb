@@ -653,6 +653,8 @@ package body Schema.Readers is
       Through_Any : Boolean;
       Through_Process : Process_Contents_Type;
       TRef    : Global_Reference;
+      Xsi_Descr   : Type_Descr_Access;
+      Xsi_Index   : Type_Index;
 
       Had_Matcher : constant Boolean := H.Matcher /= No_NFA_Matcher;
 
@@ -764,7 +766,15 @@ package body Schema.Readers is
             & Expected (H.Matcher) & '"');
       end if;
 
-      if Through_Any then
+      --  If we have a xsi:type attribute, modify the NFA to use that type
+
+      Compute_Type_From_Attribute (Xsi_Index, Xsi_Descr);
+
+      --  If the element matched a <any>, we might have to look it up to get
+      --  its type. However, if a type was given through xsi:type, this is
+      --  not needed since we already have a type.
+
+      if Through_Any and then Xsi_Descr = null then
          case Through_Process is
             when Process_Skip =>
                --  Need to lookup the element to see whether it is nillable.
@@ -794,6 +804,7 @@ package body Schema.Readers is
                TRef := Reference_HTables.Get
                  (Get_References (H.Grammar).all,
                   (Element_QName, Ref_Element));
+
                if TRef = No_Global_Reference then
                   Validation_Error
                     (H, "No definition found for "
@@ -826,13 +837,6 @@ package body Schema.Readers is
 --           Validation_Error
 --             (H, "Element """ & To_QName (Elem) & """ is abstract");
 --        end if;
-
-      declare
-         Descr   : Type_Descr_Access;
-         Index   : Type_Index;
-      begin
-         Compute_Type_From_Attribute (Index, Descr);
-      end;
 
       --  Validate the attributes
 
