@@ -26,8 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Unicode;      use Unicode;
-with Unicode.CES;  use Unicode.CES;
+with Unicode;            use Unicode;
+with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
 with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
@@ -39,7 +39,7 @@ package body Input_Sources.Strings is
    ----------
 
    procedure Open
-     (Str      : Unicode.CES.Byte_Sequence_Access;
+     (Str      : Unicode.CES.Cst_Byte_Sequence_Access;
       Encoding : Unicode.CES.Encoding_Scheme;
       Input    : out String_Input)
    is
@@ -47,8 +47,8 @@ package body Input_Sources.Strings is
    begin
       Input.Encoding := Encoding;
       Input.Buffer := Str;
+      Input.Buffer2 := null;
       Input.Index := Input.Buffer'First;
-      Input.Free_Buffer := False;
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
@@ -79,9 +79,9 @@ package body Input_Sources.Strings is
       BOM : Bom_Type;
    begin
       Input.Encoding := Encoding;
-      Input.Buffer := new Byte_Sequence'(Str);
+      Input.Buffer2 := new Byte_Sequence'(Str);
+      Input.Buffer := Cst_Byte_Sequence_Access (Input.Buffer2);
       Input.Index := Input.Buffer'First;
-      Input.Free_Buffer := True;
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
@@ -106,8 +106,8 @@ package body Input_Sources.Strings is
 
    procedure Close (Input : in out String_Input) is
    begin
-      if Input.Free_Buffer then
-         Free (Input.Buffer);
+      if Input.Buffer2 /= null then
+         Free (Input.Buffer2);
       end if;
       Input_Sources.Close (Input_Source (Input));
    end Close;

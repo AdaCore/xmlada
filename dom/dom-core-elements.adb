@@ -243,8 +243,9 @@ package body DOM.Core.Elements is
          if N.Node_Type = Element_Node
            and then (Namespace_URI = "*"
                      or else DOM.Core.Nodes.Namespace_URI (N) = Namespace_URI)
-           and then (Local_Name = "*"
-                     or else DOM.Core.Nodes.Local_Name (N) = Local_Name)
+           and then
+             (Local_Name = "*"
+              or else Symbol'(DOM.Core.Nodes.Local_Name (N)) = Local_Name)
          then
             Append (List, N);
          end if;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -38,7 +37,7 @@ package Input_Sources.Strings is
    --  byte sequence.
 
    procedure Open
-     (Str      : Unicode.CES.Byte_Sequence_Access;
+     (Str      : Unicode.CES.Cst_Byte_Sequence_Access;
       Encoding : Unicode.CES.Encoding_Scheme;
       Input    : out String_Input);
    --  Creates a new reader that reads from a byte-sequence, encoded with a
@@ -66,8 +65,11 @@ private
    type String_Input is new Input_Source with
       record
          Index    : Natural;
-         Buffer   : Unicode.CES.Byte_Sequence_Access;
+         Buffer   : Unicode.CES.Cst_Byte_Sequence_Access;
+
+         Buffer2  : Unicode.CES.Byte_Sequence_Access;
+         --  Only set if allocated in this package (second form of [Open])
+
          Encoding : Unicode.CES.Encoding_Scheme;
-         Free_Buffer : Boolean := False;
       end record;
 end Input_Sources.Strings;

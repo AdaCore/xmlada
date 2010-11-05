@@ -29,7 +29,6 @@
 with Interfaces;                 use Interfaces;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Unicode.CES;                use Unicode.CES;
 with System.Address_Image;
 
 package body Sax.Symbols is
@@ -162,5 +161,18 @@ package body Sax.Symbols is
    begin
       return Hash (Cst_Byte_Sequence_Access (S));
    end Hash;
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (S : Symbol; Str : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      if S = No_Symbol then
+         return False;
+      else
+         return Get (S).all = Str;
+      end if;
+   end "=";
 
 end Sax.Symbols;

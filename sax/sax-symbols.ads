@@ -33,7 +33,7 @@
 with Interfaces;
 with Sax.HTable;
 with Sax.Pointers;
-with Unicode.CES;
+with Unicode.CES;   use Unicode.CES;
 
 package Sax.Symbols is
 
@@ -54,8 +54,6 @@ package Sax.Symbols is
    --  Comparing Symbol is the same as comparing the string itself, but much
    --  faster.
 
-   type Cst_Byte_Sequence_Access is access constant Unicode.CES.Byte_Sequence;
-
    function Get (Sym : Symbol) return Cst_Byte_Sequence_Access;
    pragma Inline_Always (Get);
    --  The string associated with the symbol.
@@ -66,6 +64,9 @@ package Sax.Symbols is
 
    function Hash (S : Symbol) return Interfaces.Unsigned_32;
    --  Returns a hash for the symbol
+
+   function "=" (S : Symbol; Str : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Compare [S] and [Str]
 
    function Debug_Print (S : Symbol) return String;
    --  Return a displaying version of symbol (debugging purposes only)

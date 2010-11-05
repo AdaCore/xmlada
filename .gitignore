@@ -18,6 +18,7 @@ schema/test/testschema
 schema/test/testnumbers
 schema/test/testdomschema
 schema/test/schematest
+schema/test/cleanup_schema
 schema/test/tests
 schema/test/xmltests
 schema/test/xmlschema2006-11-06

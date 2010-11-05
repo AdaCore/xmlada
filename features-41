@@ -15,3 +15,12 @@ of the feature.
 New features in version 4.1
 ---------------------------
 
+NF-41-J302-043 Rewrite schema validation module (2010-11-05)
+
+   The schema validation module was almost fully rewritten. It is now
+   based on a finite-state machine (which changes dynamically if you use
+   features such as xsi:type to override types in your XML documents).
+   This results in slightly better performances, better results in the
+   W3C testsuite (where, given a valid XSD file, we have 100% correct
+   results when checking the validity of XML files), and much more
+   readable code.

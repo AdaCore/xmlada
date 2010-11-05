@@ -45,6 +45,7 @@ package Unicode.CES is
 
    subtype Byte_Sequence is String;
    type Byte_Sequence_Access is access all Byte_Sequence;
+   type Cst_Byte_Sequence_Access is access constant Byte_Sequence;
    --  A sequence of bytes. The encoding is unknown.
 
    procedure Free is new Unchecked_Deallocation

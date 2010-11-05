@@ -927,8 +927,10 @@ package body DOM.Core.Nodes is
       Local_Name    : DOM_String) return Node is
    begin
       for J in 0 .. Map.Last loop
-         if DOM.Core.Nodes.Namespace_URI (Map.Items (J)) = Namespace_URI
-           and then DOM.Core.Nodes.Local_Name (Map.Items (J)) = Local_Name
+         if Symbol'(DOM.Core.Nodes.Namespace_URI (Map.Items (J))) =
+           Namespace_URI
+           and then
+             Symbol'(DOM.Core.Nodes.Local_Name (Map.Items (J))) = Local_Name
          then
             return Map.Items (J);
          end if;
@@ -990,8 +992,10 @@ package body DOM.Core.Nodes is
       Removed       : out Node) is
    begin
       for J in 0 .. Map.Last loop
-         if DOM.Core.Nodes.Namespace_URI (Map.Items (J)) = Namespace_URI
-           and then DOM.Core.Nodes.Local_Name (Map.Items (J)) = Local_Name
+         if Symbol'(DOM.Core.Nodes.Namespace_URI (Map.Items (J))) =
+           Namespace_URI
+           and then
+             Symbol'(DOM.Core.Nodes.Local_Name (Map.Items (J))) = Local_Name
          then
             Removed := Map.Items (J);
             Map.Items (J .. Map.Last - 1) := Map.Items (J + 1 .. Map.Last);
@@ -1243,9 +1247,6 @@ package body DOM.Core.Nodes is
         Unicode.Encodings.Get_By_Name ("utf-8");
       Collapse_Empty_Nodes  : Boolean := True)
    is
-      Namespaces : Nodes_Htable.HTable (127);
-      --  Namespaces defined so far
-
       procedure Recursive_Print (N : Node);
       --  Print N recursively
 
@@ -1484,8 +1485,6 @@ package body DOM.Core.Nodes is
 
    begin
       Recursive_Print (N);
-
-      Nodes_Htable.Reset (Namespaces);
    end Write;
 
    -----------

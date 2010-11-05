@@ -1,5 +1,8 @@
 .PHONY: tests new force
 
+# Set this to "acroread" if you have it installed on your machine
+PDFVIEWER=okular
+
 tests: all new
 
 all:
@@ -20,5 +23,24 @@ new:
 # Explain how the various errors are split:
 errors:
 	@egrep "^  -" schematest.out | perl -pi -e  's/\S+:\d+:\d+://g; s/^\s+//' | sort | uniq -c | sort -n
+
+# Display the NFA used for validation. This requires the external tool
+# "graphviz" to be installed on your machine.
+# To use:
+#     ./testschema -xsd <xsdfile> -debug > foo
+#     make dot_schema
+# Note that this does not include the XSD metaschema (which is a big NFA, that
+# pdf viewers have trouble to display). Substitute "tail" for "head" if you
+# still want to see it
+
+LOGFILE=foo
+
+dot_schema:
+	grep digraph ${LOGFILE} | tail -1 > ${LOGFILE}.dot
+	dot -O -Tpdf ${LOGFILE}.dot
+	${PDFVIEWER} ${LOGFILE}.dot.pdf
+
+clean_dot:
+	${RM} ${LOGFILE} ${LOGFILE}.dot ${LOGFILE}.dot.pdf
 
 force:
