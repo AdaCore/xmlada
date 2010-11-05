@@ -29,7 +29,6 @@
 pragma Ada_05;
 
 with Ada.Exceptions;
-with GNAT.Dynamic_HTables;
 with GNAT.Dynamic_Tables;
 with Interfaces;
 with Unicode.CES;
@@ -226,6 +225,7 @@ package Schema.Validators is
                            Ref_Group,
                            Ref_AttrGroup);
    type Global_Reference (Kind : Reference_Kind := Ref_Element) is record
+      Name : Qualified_Name;
       case Kind is
          when Ref_Element   => Element    : State;
          when Ref_Type      => Typ        : State;  --  Start of nested NFA
@@ -235,7 +235,7 @@ package Schema.Validators is
       end case;
    end record;
    No_Global_Reference : constant Global_Reference :=
-     (Ref_Type, Typ => No_State);
+     (Ref_Type, Name => No_Qualified_Name, Typ => No_State);
    --  The global elements in a grammar that can be referenced from another
    --  grammar (or from an XML file).
 
@@ -243,20 +243,25 @@ package Schema.Validators is
       Name : Qualified_Name;
       Kind : Reference_Kind;
    end record;
-   function Hash (Name : Reference_Name) return Header_Num;
+   function Hash (Name : Reference_Name) return Interfaces.Unsigned_32;
 
-   package Reference_HTables is new GNAT.Dynamic_HTables.Simple_HTable
-     (Header_Num => Header_Num,
-      Element    => Global_Reference,
-      No_Element => No_Global_Reference,
-      Key        => Reference_Name,
-      Hash       => Hash,
-      Equal      => "=");
+   function Get_Key (Ref : Global_Reference) return Reference_Name;
+
+   package Reference_HTables is new Sax.HTable
+     (Element       => Global_Reference,
+      Empty_Element => No_Global_Reference,
+      Key           => Reference_Name,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => "=");
+   type Reference_HTable is access Reference_HTables.HTable;
+
+   Reference_HTable_Size : constant := 1023;
+   --  Size created for the references table
 
    function Get_NFA
      (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access;
-   function Get_References
-     (Grammar : XML_Grammar) return access Reference_HTables.Instance;
+   function Get_References (Grammar : XML_Grammar) return Reference_HTable;
    --  Returns the state machine and global references used to validate
    --  [Grammar]
 
@@ -672,12 +677,18 @@ private
       XSD_Version : XSD_Versions := XSD_1_0;
 
       Simple_Types : Schema.Simple_Types.Simple_Type_Table;
-      References   : aliased Reference_HTables.Instance;
+      References   : Reference_HTable;
       Attributes   : Attributes_Tables.Instance;
       Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
       NFA          : Schema_State_Machines.NFA_Access;
       --  The state machine representing the grammar
       --  This includes the states for all namespaces
+
+      Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
+      Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;
+      Metaschema_Attributes_Last   : Attribute_Validator_List;
+      Metaschema_Enumerations_Last : Schema.Simple_Types.Enumeration_Index;
+      --  Last state for the metaschema XSD (for Reset)
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_Record);

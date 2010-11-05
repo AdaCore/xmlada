@@ -75,6 +75,9 @@ package body Schema.Schema_Readers is
 
    procedure Create_NFA (Parser : access Schema_Reader);
    --  Create the state machine from the registered elements and types
+   --  Return the start state for the current grammar (we do not use the
+   --  NFA's default start state, since each grammar has its own list of valid
+   --  toplevel elements.
 
    function To_String (Blocks : Block_Status) return String;
    function To_String (Final  : Final_Status) return String;
@@ -311,7 +314,7 @@ package body Schema.Schema_Readers is
    procedure Create_NFA (Parser : access Schema_Reader) is
       NFA : constant Schema.Validators.Schema_State_Machines.NFA_Access :=
         Get_NFA (Get_Grammar (Parser.all));
-      Ref : constant access Reference_HTables.Instance :=
+      Ref : constant Reference_HTable :=
         Get_References (Get_Grammar (Parser.all));
 
       Shared : XSD_Data_Access renames Parser.Shared;
@@ -326,7 +329,8 @@ package body Schema.Schema_Readers is
       use Type_HTables;
       Types : Type_HTables.Instance;
 
-      procedure Process_Global_Element (Info : Element_Descr);
+      procedure Process_Global_Element
+        (Info : Element_Descr; Start_At : State);
       procedure Process_Type (Info : in out Internal_Type_Descr);
       procedure Process_Details
         (Details    : Type_Details_Access;
@@ -499,8 +503,8 @@ package body Schema.Schema_Readers is
             if Debug then
                Debug_Output ("Global elem: " & To_QName (Real.Name));
             end if;
-            Set (Ref.all, (Real.Name, Ref_Element),
-                 (Kind => Ref_Element, Element => S1));
+            Set (Ref.all,
+                 (Kind => Ref_Element, Name => Real.Name, Element => S1));
          end if;
       end Create_Element_State;
 
@@ -508,10 +512,12 @@ package body Schema.Schema_Readers is
       -- Process_Global_Element --
       ----------------------------
 
-      procedure Process_Global_Element (Info : Element_Descr) is
+      procedure Process_Global_Element
+        (Info : Element_Descr; Start_At : State)
+      is
          S1, S2 : State;
       begin
-         Create_Element_State (Info, Start_State, Start_State, True, S1, S2);
+         Create_Element_State (Info, Start_At, Start_At, True, S1, S2);
 
          if S2 /= No_State then
             NFA.Add_Empty_Transition (S2, Final_State);
@@ -1056,8 +1062,7 @@ package body Schema.Schema_Readers is
          if Info.Descr.Name /= No_Qualified_Name then
             Set
               (Ref.all,
-               (Kind => Ref_Type, Name => Info.Descr.Name),
-               (Kind => Ref_Type, Typ  => Info.S));
+               (Kind => Ref_Type, Name => Info.Descr.Name, Typ  => Info.S));
             Set (Types, Info.Descr.Name, J);
          end if;
       end Create_Nested_For_Type;
@@ -1237,7 +1242,7 @@ package body Schema.Schema_Readers is
 
       Element_Info := Get_First (Shared.Global_Elements);
       while Element_Info /= No_Element_Descr loop
-         Process_Global_Element (Element_Info);
+         Process_Global_Element (Element_Info, Start_State);
          Element_Info := Get_Next (Shared.Global_Elements);
       end loop;
 
@@ -1489,7 +1494,6 @@ package body Schema.Schema_Readers is
          Parser.Target_NS := Default_Namespace;
 
          Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
---         Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, True);
          Set_Parsed_URI (Parser, URI);
 
          Schema.Readers.Parse (Validating_Reader (Parser), Input);

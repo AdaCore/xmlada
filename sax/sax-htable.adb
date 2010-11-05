@@ -166,6 +166,54 @@ package body Sax.HTable is
       end if;
    end Remove;
 
+   ----------------
+   -- Remove_All --
+   ----------------
+
+   procedure Remove_All (Hash_Table : in out HTable) is
+      Item, Item2 : Item_Ptr;
+      Prev : Item_Ptr;
+   begin
+      for T in Hash_Table.Table'Range loop
+         if Hash_Table.Table (T).Set then
+            --  First examine the remaining of the list in that bucket
+            Prev := null;
+            Item := Hash_Table.Table (T).Next;
+            while Item /= null loop
+               if not Preserve (Item.Elem) then
+                  if Prev = null then
+                     Hash_Table.Table (T).Next := Item.Next;
+                  else
+                     Prev.Next := Item.Next;
+                  end if;
+
+                  Item2 := Item;
+                  Item  := Item.Next;  --  Prev not changed
+                  Free (Item2.Elem);
+                  Unchecked_Free (Item2);
+               else
+                  Prev := Item;
+                  Item := Item.Next;
+               end if;
+            end loop;
+
+            --  Then examine the bucket itself
+            if not Preserve (Hash_Table.Table (T).Elem) then
+               Free (Hash_Table.Table (T).Elem);
+
+               if Hash_Table.Table (T).Next = null then
+                  Hash_Table.Table (T).Set := False;
+               else
+                  Item := Hash_Table.Table (T).Next;
+                  Hash_Table.Table (T).Elem := Item.Elem;
+                  Hash_Table.Table (T).Next := Item.Next;
+                  Unchecked_Free (Item);
+               end if;
+            end if;
+         end if;
+      end loop;
+   end Remove_All;
+
    -----------
    -- First --
    -----------

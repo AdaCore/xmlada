@@ -709,6 +709,8 @@ package body Schema.Validators is
          G.NFA.Initialize (States_Are_Statefull => True);
          Init (G.Attributes);
          Init (G.Enumerations);
+         G.References :=
+           new Reference_HTables.HTable (Size => Reference_HTable_Size);
          Simple_Type_Tables.Init (G.Simple_Types);
          Grammar  := Allocate (G);
       end if;
@@ -755,9 +757,8 @@ package body Schema.Validators is
    begin
       Add_Attribute (Grammar, List, Attr);
       Set
-        (G.References,
-         (Kind => Ref_Attribute, Name => Attr.Name),
-         (Kind => Ref_Attribute, Attributes => List));
+        (G.References.all,
+         (Kind => Ref_Attribute, Name => Attr.Name, Attributes => List));
    end Create_Global_Attribute;
 
    -------------------------------
@@ -790,7 +791,7 @@ package body Schema.Validators is
             Mixed          => False,
             Is_Abstract    => False);
          S := G.NFA.Add_State ((Descr => Info));
-         Set (G.References, (Info.Name, Ref_Type), (Ref_Type, S));
+         Set (G.References.all, (Ref_Type, Info.Name, S));
       end if;
 
       return Last (G.Simple_Types);
@@ -841,7 +842,7 @@ package body Schema.Validators is
       G := Get (Reader.Grammar);
       G.Symbols := Get_Symbol_Table (Reader);
 
-      if Get (G.References,
+      if Get (G.References.all,
               (Name => (NS => Reader.XML_Schema_URI,
                         Local => Reader.S_Boolean),
                Kind => Ref_Type)) = No_Global_Reference
@@ -858,6 +859,14 @@ package body Schema.Validators is
          Create_Global_Attribute (Reader.Grammar, Attr);
 
          Add_Schema_For_Schema (Reader);
+
+         G.Metaschema_NFA_Last := Get_Snapshot (G.NFA);
+         G.Metaschema_Simple_Types_Last :=
+           Simple_Type_Tables.Last (G.Simple_Types);
+         G.Metaschema_Attributes_Last :=
+           Attributes_Tables.Last (G.Attributes);
+         G.Metaschema_Enumerations_Last :=
+           Enumeration_Tables.Last (G.Enumerations);
       end if;
    end Initialize_Grammar;
 
@@ -883,6 +892,8 @@ package body Schema.Validators is
    ----------
 
    procedure Free (Grammar : in out XML_Grammar_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Reference_HTables.HTable, Reference_HTable);
    begin
       if Debug then
          Debug_Output ("Freeing grammar");
@@ -891,7 +902,8 @@ package body Schema.Validators is
       Simple_Type_Tables.Free (Grammar.Simple_Types);
       Enumeration_Tables.Free (Grammar.Enumerations);
       Free (Grammar.Attributes);
-      Reference_HTables.Reset (Grammar.References);
+      Reference_HTables.Reset (Grammar.References.all);
+      Unchecked_Free (Grammar.References);
       Free (Grammar.NFA);
       Free (Grammar.Parsed_Locations);
    end Free;
@@ -901,7 +913,28 @@ package body Schema.Validators is
    -----------
 
    procedure Reset (Grammar : in out XML_Grammar) is
+      use Reference_HTables;
       G     : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+
+      function Preserve (TRef : Global_Reference) return Boolean;
+      function Preserve (TRef : Global_Reference) return Boolean is
+         R : Boolean;
+      begin
+         case TRef.Kind is
+            when Ref_Element =>
+               R := Exists (G.Metaschema_NFA_Last, TRef.Element);
+            when Ref_Type =>
+               R := Exists (G.Metaschema_NFA_Last, TRef.Typ);
+            when Ref_Group =>
+               R := Exists (G.Metaschema_NFA_Last, TRef.Gr_Start);
+            when Ref_Attribute | Ref_AttrGroup =>
+               R := TRef.Attributes <= G.Metaschema_Attributes_Last;
+         end case;
+         return R;
+      end Preserve;
+
+      procedure Remove_All is new Reference_HTables.Remove_All (Preserve);
+
    begin
       if Debug then
          Debug_Output ("Partial reset of the grammar");
@@ -912,7 +945,35 @@ package body Schema.Validators is
       end if;
 
       Free (G.Parsed_Locations);
+
+      if G.Metaschema_NFA_Last /= No_NFA_Snapshot then
+         if Debug then
+            Debug_Output ("Preserve metaschema information");
+         end if;
+         Enumeration_Tables.Set_Last
+           (G.Enumerations, G.Metaschema_Enumerations_Last);
+         Attributes_Tables.Set_Last
+           (G.Attributes, G.Metaschema_Attributes_Last);
+         Simple_Type_Tables.Set_Last
+           (G.Simple_Types, G.Metaschema_Simple_Types_Last);
+         Remove_All (G.References.all);
+
+         --  From the toplevel choice (ie the list of valid global elements),
+         --  we need to keep only those belonging to our metaschema, not those
+         --  from grammars loaded afterward
+
+         Reset_To_Snapshot (G.NFA, G.Metaschema_NFA_Last);
+      end if;
    end Reset;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Ref : Global_Reference) return Reference_Name is
+   begin
+      return (Kind => Ref.Kind, Name => Ref.Name);
+   end Get_Key;
 
    --------------------
    -- URI_Was_Parsed --
@@ -975,10 +1036,9 @@ package body Schema.Validators is
    -- Get_References --
    --------------------
 
-   function Get_References
-     (Grammar : XML_Grammar) return access Reference_HTables.Instance is
+   function Get_References (Grammar : XML_Grammar) return Reference_HTable is
    begin
-      return Get (Grammar).References'Access;
+      return Get (Grammar).References;
    end Get_References;
 
    -----------------
@@ -1383,14 +1443,12 @@ package body Schema.Validators is
       Initialize_Symbols (Sax_Reader (Parser));
 
       if Parser.Grammar /= No_Grammar then
-         if Debug then
-            Debug_Output ("Initialize_Symbols, grammar is not null,"
-                          & " setting its symbol table if needed");
-         end if;
-
          if Get (Parser.Grammar).Symbols =
            Symbol_Table_Pointers.Null_Pointer
          then
+            if Debug then
+               Debug_Output ("Initialze_Symbols, set grammar's symbol table");
+            end if;
             Get (Parser.Grammar).Symbols := Get_Symbol_Table (Parser);
          end if;
       end if;
@@ -1662,10 +1720,10 @@ package body Schema.Validators is
    -- Hash --
    ----------
 
-   function Hash (Name : Reference_Name) return Header_Num is
+   function Hash (Name : Reference_Name) return Interfaces.Unsigned_32 is
    begin
-      return (Hash (Name.Name) + Reference_Kind'Pos (Name.Kind))
-      mod Header_Num'Last;
+      return Interfaces.Unsigned_32
+        (Hash (Name.Name) + Reference_Kind'Pos (Name.Kind));
    end Hash;
 
    ----------

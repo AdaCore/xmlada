@@ -39,6 +39,10 @@ package body Schema.Validators.XSD_Grammar is
       Schema : Schema_Reader;
       Input  : File_Input;
    begin
+      if Debug then
+         Debug_Output ("Add metaschema to the grammar");
+      end if;
+
       Set_Grammar (Schema, R.Grammar);
       Set_Feature (Schema, Schema_Validation_Feature, False);
       Open ("/home/briot/svn/trunk/xmlada/schema/test/schema.xsd", Input);

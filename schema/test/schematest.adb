@@ -152,11 +152,12 @@ procedure Schematest is
    Filter : array (Result_Kind) of Boolean := (others => True);
 
    procedure Run_Testsuite  (Filename : String);
-   procedure Run_Testset (Filename : String);
+   procedure Run_Testset (Filename : String; Grammar : in out XML_Grammar);
    procedure Run_Test_Group
      (Testset  : String;
       Group    : Node;
-      Base_Dir : String);
+      Base_Dir : String;
+      Grammar  : in out XML_Grammar);
    procedure Parse_Schema_Test
      (Group          : in out Group_Result;
       Schema         : Node;
@@ -632,7 +633,8 @@ procedure Schematest is
    procedure Run_Test_Group
      (Testset    : String;
       Group      : Node;
-      Base_Dir   : String)
+      Base_Dir   : String;
+      Grammar    : in out XML_Grammar)
    is
       Name           : constant String := Get_Attribute (Group, S_Name);
       N              : Node := First_Child (Group);
@@ -642,12 +644,12 @@ procedure Schematest is
       Cursor         : Test_Result_Lists.Cursor;
       Kind           : Result_Kind;
       Failed_Grammar : Boolean := False;
-      Schema         : XML_Grammar;
    begin
+      Reset (Grammar);  --  Optional optimization, keep the metaschema
       Result.Name := To_Unbounded_String (Testset & " / " & Name);
       Result.Counts := (others => 0);
 
-      Set_XSD_Version (Schema, XSD_Version);
+      Set_XSD_Version (Grammar, XSD_Version);
 
       if Find (Groups, To_String (Result.Name)) /= Group_Hash.No_Element then
          Result := Group_Hash.Element (Groups, To_String (Result.Name));
@@ -669,7 +671,7 @@ procedure Schematest is
             Parse_Schema_Test
               (Result, N, Base_Dir,
                Failed_Grammar => Failed_Grammar,
-               Grammar        => Schema,
+               Grammar        => Grammar,
                Schema_Files   => Schema_Files);
 
             --  If we failed to parse the grammar, that might be accepted, so
@@ -683,7 +685,7 @@ procedure Schematest is
             exit when Failed_Grammar;
 
          elsif Local_Name (N) = S_Instance_Test then
-            Parse_Instance_Test (Result, Schema_Files, N, Base_Dir, Schema,
+            Parse_Instance_Test (Result, Schema_Files, N, Base_Dir, Grammar,
                                  Failed_Grammar);
          end if;
 
@@ -717,7 +719,7 @@ procedure Schematest is
    -- Run_Testset --
    -----------------
 
-   procedure Run_Testset (Filename : String) is
+   procedure Run_Testset (Filename : String; Grammar : in out XML_Grammar) is
       Input  : File_Input;
       Reader : Tree_Reader;
       N      : Node;
@@ -742,7 +744,8 @@ procedure Schematest is
             Run_Test_Group
               (Testset    => To_String (Name),
                Group      => N,
-               Base_Dir   => Dir_Name (Filename));
+               Base_Dir   => Dir_Name (Filename),
+               Grammar    => Grammar);
          end if;
 
          N := Next_Sibling (N);
@@ -759,6 +762,7 @@ procedure Schematest is
       Input  : File_Input;
       Reader : Tree_Reader;
       N      : Node;
+      Grammar : XML_Grammar := No_Grammar;
    begin
       Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
 
@@ -777,7 +781,8 @@ procedure Schematest is
               (Normalize_Pathname
                  (Get_Attribute_NS (N, S_Xlink, S_Href),
                   Dir_Name (Filename),
-                  Resolve_Links => False));
+                  Resolve_Links => False),
+               Grammar => Grammar);
          end if;
 
          N := Next_Sibling (N);

@@ -37,6 +37,12 @@ package Schema is
    XML_Not_Implemented : exception;
    --  Raised when a schema uses features that are not supported by XML/Ada yet
 
+   Dump_Internal_XSD : Boolean := False;
+   --  If set to True, dump on stdout the structure that was created when
+   --  parsing the .xsd files. In particular, this is used to create
+   --  the metaschema grammar internally, rather than part it from file
+   --  every time.
+
 private
 
    -----------

@@ -29,6 +29,8 @@
 --  This package implements state machines (non-deterministic, aka NFA, and
 --  deterministic, aka DFA).
 
+pragma Ada_05;
+
 with GNAT.Dynamic_Tables;
 
 generic
@@ -163,6 +165,24 @@ package Sax.State_Machines is
    --  No error is reported if Min_Occurs > Max_Occurs. But nothing is done
    --  either.
 
+   ---------------
+   -- Snapshots --
+   ---------------
+   --  A snapshot saves the states and transitions of the machine, and can be
+   --  used to reset the NFA so that all states and transitions added after
+   --  that point are removed.
+
+   type NFA_Snapshot is private;
+   No_NFA_Snapshot : constant NFA_Snapshot;
+
+   function Get_Snapshot (Self : access NFA) return NFA_Snapshot;
+   procedure Reset_To_Snapshot (Self : access NFA; Snapshot : NFA_Snapshot);
+   --  Saves the list of states and transitions, so that we can later delete
+   --  all states and transitions added after that point.
+
+   function Exists (Snapshot : NFA_Snapshot; S : State) return Boolean;
+   --  Whether [S] existed in [Snapshot]
+
    ----------------------------------------
    -- Hierarchical finite state machines --
    ----------------------------------------
@@ -272,6 +292,7 @@ package Sax.State_Machines is
    -------------------------------------------
 
    type NFA_Matcher is private;
+   No_NFA_Matcher : constant NFA_Matcher;
    --  When processing an input, the state machine is left untouched. Instead,
    --  the required information is stored in a separate object, so that
    --  multiple objects can test the same machine in parallel..
@@ -283,7 +304,8 @@ package Sax.State_Machines is
    procedure Free (Self : in out NFA_Matcher);
    --  Free the memory allocated for [Self]
 
-   function Start_Match (Self : access NFA) return NFA_Matcher;
+   function Start_Match
+     (Self : access NFA; Start_At : State := Start_State) return NFA_Matcher;
    --  Return a matcher which is in [Self]'s initial states.
    --  The matcher holds a reference to [Self], so is only valid while [Self]
    --  is in the scope.
@@ -459,6 +481,20 @@ private
       Active       : Matcher_State_Array;
       First_Active : Matcher_State_Index := No_Matcher_State;
    end record;
+   No_NFA_Matcher : constant NFA_Matcher := (null, others => <>);
    --  [First_Active] is the first active state at the toplevel.
+
+   type NFA_Snapshot is record
+      States      : State;
+      Transitions : Transition_Id;
+
+      Start_State_Transition : Transition_Id;
+      --  Specific to the schema reader (?): since parsing other grammars will
+      --  modify the start state transitions (and only this one) to add valid
+      --  toplevel elements, we need to reset the list of transitions for the
+      --  start state.
+   end record;
+   No_NFA_Snapshot : constant NFA_Snapshot :=
+     (No_State, No_Transition, No_Transition);
 
 end Sax.State_Machines;

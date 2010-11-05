@@ -93,14 +93,13 @@ package body Schema.Readers is
       use Symbol_Table_Pointers;
    begin
       if Debug then
-         Debug_Output
-           ("Set_Grammar, should we set the parser's symbol table ?");
+         Debug_Output ("Set_Grammar");
       end if;
 
       if Grammar /= No_Grammar then
          if Get (Get_Symbol_Table (Reader)) = null then
             if Debug then
-               Debug_Output ("Set parser's symbol table");
+               Debug_Output ("Set reader's symbol table from grammar");
             end if;
 
             Set_Symbol_Table (Reader, Get_Symbol_Table (Grammar));
@@ -108,6 +107,9 @@ package body Schema.Readers is
          elsif Get_Symbol_Table (Grammar) =
            Symbol_Table_Pointers.Null_Pointer
          then
+            if Debug then
+               Debug_Output ("Set grammar's symbol table from reader");
+            end if;
             Set_Symbol_Table (Grammar, Get_Symbol_Table (Reader));
 
          elsif Get_Symbol_Table (Reader) /= Get_Symbol_Table (Grammar) then
@@ -614,6 +616,19 @@ package body Schema.Readers is
          return;  --  Always valid, since we have no grammar anyway
       end if;
 
+      --  Create the NFA matcher now if not done yet. This has to be done after
+      --  we have seen the toplevel element, which might result in parsing
+      --  additional grammars, and finding the target NS
+
+      if H.Matcher = No_NFA_Matcher then
+         if Debug then
+            Debug_Output ("Creating NFA matcher");
+         end if;
+
+         H.Matcher := Get_NFA (H.Grammar).Start_Match
+           (Start_At => Start_State);
+      end if;
+
       Process
         (H.Matcher,
          Input   => (Kind => Transition_Symbol,
@@ -887,7 +902,7 @@ package body Schema.Readers is
                     Whitespace    => Hook_Ignorable_Whitespace'Access,
                     Doc_Locator   => Hook_Set_Document_Locator'Access);
 
-         Parser.Matcher := Get_NFA (Parser.Grammar).Start_Match;
+         Parser.Matcher := No_NFA_Matcher;
       else
          Set_Hooks (Parser,
                     Start_Element => null,

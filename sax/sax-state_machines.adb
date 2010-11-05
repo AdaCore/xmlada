@@ -748,9 +748,10 @@ package body Sax.State_Machines is
    -- Start_Match --
    -----------------
 
-   function Start_Match (Self : access NFA) return NFA_Matcher is
+   function Start_Match
+     (Self : access NFA; Start_At : State := Start_State) return NFA_Matcher is
    begin
-      return Start_Match (Self, S => Start_State);
+      return Start_Match (Self, S => Start_At);
    end Start_Match;
 
    -----------------
@@ -1584,5 +1585,40 @@ package body Sax.State_Machines is
    begin
       return Self.Default_Start;
    end Get_Start_State;
+
+   ------------------
+   -- Get_Snapshot --
+   ------------------
+
+   function Get_Snapshot (Self : access NFA) return NFA_Snapshot is
+   begin
+      return (States      => Last (Self.States),
+              Transitions => Last (Self.Transitions),
+              Start_State_Transition =>
+                Self.States.Table (Start_State).First_Transition);
+   end Get_Snapshot;
+
+   -----------------------
+   -- Reset_To_Snapshot --
+   -----------------------
+
+   procedure Reset_To_Snapshot (Self : access NFA; Snapshot : NFA_Snapshot) is
+   begin
+      if Snapshot /= No_NFA_Snapshot then
+         Set_Last (Self.States, Snapshot.States);
+         Set_Last (Self.Transitions, Snapshot.Transitions);
+         Self.States.Table (Start_State).First_Transition :=
+           Snapshot.Start_State_Transition;
+      end if;
+   end Reset_To_Snapshot;
+
+   ------------
+   -- Exists --
+   ------------
+
+   function Exists (Snapshot : NFA_Snapshot; S : State) return Boolean is
+   begin
+      return S <= Snapshot.States;
+   end Exists;
 
 end Sax.State_Machines;

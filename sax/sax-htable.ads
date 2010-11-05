@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Ada_05;
+
 with Interfaces;
 
 generic
@@ -34,7 +36,7 @@ generic
 
    Empty_Element : Element;
 
-   with procedure Free (Elmt : in out Element);
+   with procedure Free (Elmt : in out Element) is null;
    --  Free the memory used by Elmt
 
    type Key (<>) is limited private;
@@ -61,6 +63,11 @@ package Sax.HTable is
    procedure Remove (Hash_Table : in out HTable; K : Key);
    --  Removes the latest inserted element pointer associated with the
    --  given key if any, does nothing if none.
+
+   generic
+      with function Preserve (Elem : Element) return Boolean;
+   procedure Remove_All (Hash_Table : in out HTable);
+   --  Remove all elements for which [Preserve] returns False
 
    type Iterator is private;
    No_Iterator : constant Iterator;
