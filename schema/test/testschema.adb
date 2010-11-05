@@ -182,7 +182,7 @@ exception
       Close (Read);
       Free (My_Reader);
 
-   when XML_Not_Implemented =>
+   when Standard.Schema.XML_Not_Implemented =>
       if My_Reader = null then
          Put_Line ("NOT IMPLEMENTED: " & Get_Error_Message (Schema));
       else

@@ -33,17 +33,18 @@ with Ada.Exceptions;                 use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Interfaces;                     use Interfaces;
 with Sax.Attributes;                 use Sax.Attributes;
-with Sax.Encodings;                  use Sax.Encodings;
+--  with Sax.Encodings;                  use Sax.Encodings;
 with Sax.Locators;                   use Sax.Locators;
 with Sax.Readers;                    use Sax.Readers;
 with Sax.Symbols;                    use Sax.Symbols;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
+with Schema.Simple_Types;            use Schema.Simple_Types;
 --  with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
-with Schema.Validators.Facets;       use Schema.Validators.Facets;
+--  with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Lists;        use Schema.Validators.Lists;
 --  with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
-with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
+--  with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
@@ -140,122 +141,125 @@ package body Schema.Validators is
       Reader  : access Abstract_Validation_Reader'Class;
       Val     : Sax.Symbols.Symbol) return Sax.Symbols.Symbol
    is
-      Whitespace : Whitespace_Restriction := Preserve;
-      Facets     : constant Facets_Description :=
-        Get_Facets (Typ.Validator, Reader);
-      C          : Unicode_Char;
-      Changed    : Boolean := False;
+      pragma Unreferenced (Typ, Reader);
+--        Whitespace : Whitespace_Restriction := Preserve;
+--        Facets     : constant Facets_Description :=
+--          Get_Facets (Typ.Validator, Reader);
+--        C          : Unicode_Char;
+--        Changed    : Boolean := False;
    begin
-      if Facets /= null
-        and then Facets.all in Common_Facets_Description'Class
-      then
-         Whitespace := Common_Facets_Description (Facets.all).Whitespace;
-      end if;
+      return Val;
 
-      --  Normalize attribute value if necessary
-      --  replace: All occurrences of #x9 (tab), #xA (line feed) and #xD
-      --     (carriage return) are replaced with #x20 (space).
-      --  collapse: Subsequent to the replacements specified above under
-      --     replace, contiguous sequences of #x20s are collapsed to a single
-      --     #x20, and initial and/or final #x20s are deleted.
-
-      case Whitespace is
-         when Preserve =>
-            return Val;
-
-         when Replace =>
-            declare
-               Val2  : Byte_Sequence := Get (Val).all;
-               Idx   : Natural := Val2'First;
-               First : Natural := Val2'Last + 1;
-            begin
-               while Idx <= Val2'Last loop
-                  First := Idx;
-                  Encoding.Read (Val2, Idx, C);
-
-                  if Is_White_Space (C) then
-                     --  Assumes all characters we replace are encoded as
-                     --  single byte
-                     Changed := Changed or C /= 32;
-                     Val2 (First) := ' ';
-                  end if;
-               end loop;
-
-               if Changed then
-                  return Find_Symbol (Reader.all, Val2);
-               else
-                  return Val;
-               end if;
-            end;
-
-         when Collapse =>
-            if Val = Empty_String then
-               return Val;  --  nothing to do
-            end if;
-
-            declare
-               V       : Byte_Sequence := Get (Val).all;
-               C       : Unicode_Char;
-               Last    : Natural := V'Last + 1;
-               Idx, Idx_Output : Natural := V'First;
-               First   : Natural := V'Last + 1;
-               Tmp     : Natural;
-               Prev_Is_Whitespace : Boolean := False;
-            begin
-               --  Remove leading spaces.
-               --  At the end of this loop, First points to the first non
-               --  blank character
-
-               loop
-                  First := Idx;
-                  Encoding.Read (V, Idx, C);
-                  exit when not Is_White_Space (C);
-
-                  if Idx > V'Last then
-                     return Empty_String;
-                  end if;
-               end loop;
-
-               Idx_Output := Idx;
-
-               --  Iterate and replace all whitespaces. Mark the spot of the
-               --  last whitespace so that we can ignore trailing spaces.
-               --  At the same time, we can copy to Idx_Output, since the
-               --  output string will always be at least as short as Val.
-
-               while Idx <= V'Last loop
-                  Tmp := Idx;
-                  Encoding.Read (V, Idx, C);
-
-                  if Is_White_Space (C) then
-                     if not Prev_Is_Whitespace then
-                        Changed := Changed or C /= 32;
-                        Last := Idx_Output;
-                        V (Idx_Output) := ' ';
-                        Idx_Output := Idx_Output + 1;
-                        Prev_Is_Whitespace := True;
-                     else
-                        Changed := True;
-                     end if;
-                  else
-                     V (Idx_Output .. Idx_Output + Idx - Tmp - 1) :=
-                       V (Tmp .. Idx - 1);
-                     Idx_Output := Idx_Output + Idx - Tmp;
-                     Last := Idx_Output;  --  after this char
-                     Prev_Is_Whitespace := False;
-                  end if;
-               end loop;
-
-               if Changed
-                 or else First /= V'First
-                 or else Last - 1 /= V'Last
-               then
-                  return Find_Symbol (Reader.all, V (First .. Last - 1));
-               else
-                  return Val;
-               end if;
-            end;
-      end case;
+--        if Facets /= null
+--          and then Facets.all in Common_Facets_Description'Class
+--        then
+--           Whitespace := Common_Facets_Description (Facets.all).Whitespace;
+--        end if;
+--
+--        --  Normalize attribute value if necessary
+--        --  replace: All occurrences of #x9 (tab), #xA (line feed) and #xD
+--        --     (carriage return) are replaced with #x20 (space).
+--        --  collapse: Subsequent to the replacements specified above under
+--     --     replace, contiguous sequences of #x20s are collapsed to a single
+--        --     #x20, and initial and/or final #x20s are deleted.
+--
+--        case Whitespace is
+--           when Preserve =>
+--              return Val;
+--
+--           when Replace =>
+--              declare
+--                 Val2  : Byte_Sequence := Get (Val).all;
+--                 Idx   : Natural := Val2'First;
+--                 First : Natural := Val2'Last + 1;
+--              begin
+--                 while Idx <= Val2'Last loop
+--                    First := Idx;
+--                    Encoding.Read (Val2, Idx, C);
+--
+--                    if Is_White_Space (C) then
+--                       --  Assumes all characters we replace are encoded as
+--                       --  single byte
+--                       Changed := Changed or C /= 32;
+--                       Val2 (First) := ' ';
+--                    end if;
+--                 end loop;
+--
+--                 if Changed then
+--                    return Find_Symbol (Reader.all, Val2);
+--                 else
+--                    return Val;
+--                 end if;
+--              end;
+--
+--           when Collapse =>
+--              if Val = Empty_String then
+--                 return Val;  --  nothing to do
+--              end if;
+--
+--              declare
+--                 V       : Byte_Sequence := Get (Val).all;
+--                 C       : Unicode_Char;
+--                 Last    : Natural := V'Last + 1;
+--                 Idx, Idx_Output : Natural := V'First;
+--                 First   : Natural := V'Last + 1;
+--                 Tmp     : Natural;
+--                 Prev_Is_Whitespace : Boolean := False;
+--              begin
+--                 --  Remove leading spaces.
+--                 --  At the end of this loop, First points to the first non
+--                 --  blank character
+--
+--                 loop
+--                    First := Idx;
+--                    Encoding.Read (V, Idx, C);
+--                    exit when not Is_White_Space (C);
+--
+--                    if Idx > V'Last then
+--                       return Empty_String;
+--                    end if;
+--                 end loop;
+--
+--                 Idx_Output := Idx;
+--
+--               --  Iterate and replace all whitespaces. Mark the spot of the
+--                 --  last whitespace so that we can ignore trailing spaces.
+--                 --  At the same time, we can copy to Idx_Output, since the
+--                 --  output string will always be at least as short as Val.
+--
+--                 while Idx <= V'Last loop
+--                    Tmp := Idx;
+--                    Encoding.Read (V, Idx, C);
+--
+--                    if Is_White_Space (C) then
+--                       if not Prev_Is_Whitespace then
+--                          Changed := Changed or C /= 32;
+--                          Last := Idx_Output;
+--                          V (Idx_Output) := ' ';
+--                          Idx_Output := Idx_Output + 1;
+--                          Prev_Is_Whitespace := True;
+--                       else
+--                          Changed := True;
+--                       end if;
+--                    else
+--                       V (Idx_Output .. Idx_Output + Idx - Tmp - 1) :=
+--                         V (Tmp .. Idx - 1);
+--                       Idx_Output := Idx_Output + Idx - Tmp;
+--                       Last := Idx_Output;  --  after this char
+--                       Prev_Is_Whitespace := False;
+--                    end if;
+--                 end loop;
+--
+--                 if Changed
+--                   or else First /= V'First
+--                   or else Last - 1 /= V'Last
+--                 then
+--                    return Find_Symbol (Reader.all, V (First .. Last - 1));
+--                 else
+--                    return Val;
+--                 end if;
+--              end;
+--        end case;
    end Do_Normalize_Whitespaces;
 
    --------------------------
@@ -897,20 +901,21 @@ package body Schema.Validators is
    is
       Val   : constant Cst_Byte_Sequence_Access :=
         Get (Get_Value (Atts, Index));
-      Mask  : Facets_Mask := (others => True);
    begin
       if Debug then
          Debug_Output ("Checking attribute " & To_QName (Attr.Name)
                        & "=" & Val.all & "--");
       end if;
 
-      if Attr.Simple_Type = null then
+      if Attr.Simple_Type = No_Simple_Type_Index then
          return;
       end if;
 
-      Validate_Characters
-        (Attr.Simple_Type, Reader, Val.all,
-         Empty_Element => False, Mask => Mask);
+      Validate_Simple_Type
+        (Reader        => Reader,
+         Simple_Type   => Attr.Simple_Type,
+         Ch            => Val.all,
+         Empty_Element => False);
 
       if Is_ID (Attr) then
          Set_Type (Atts, Index, Sax.Attributes.Id);
@@ -927,8 +932,7 @@ package body Schema.Validators is
       --  it is an integer, the whitespaces are irrelevant; likewise for a list
 
       if Attr.Fixed /= No_Symbol
-        and then
-          not Equal (Attr.Simple_Type, Reader, Get (Attr.Fixed).all, Val.all)
+        and then not Equal (Reader, Attr.Simple_Type, Attr.Fixed, Val.all)
       then
          Validation_Error
            (Reader, "#value must be """
@@ -1005,6 +1009,7 @@ package body Schema.Validators is
          G.NFA := new Schema_State_Machines.NFA;
          G.NFA.Initialize (States_Are_Statefull => True);
          Init (G.Attributes);
+         Simple_Type_Tables.Init (G.Simple_Types);
          Grammar  := Allocate (G);
       end if;
    end Create_Grammar_If_Needed;
@@ -1043,16 +1048,42 @@ package body Schema.Validators is
    procedure Initialize_Grammar
      (Reader : in out Abstract_Validation_Reader'Class)
    is
-      use Reference_HTables;
+      use Reference_HTables, Simple_Type_Tables;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Reader.Grammar);
+
+      procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr);
+
+      procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr) is
+         S    : State;
+         Info : Type_Descr;
+      begin
+         Append (G.Simple_Types, Descr);
+         Info := Type_Descr'
+           (Name           => (NS    => Reader.XML_Schema_URI,
+                               Local => Find (G.Symbols, Local)),
+            Attributes     => Empty_Attribute_List,
+            Block          => No_Block,
+            Final          => (others => False),
+            Simple_Content => Last (G.Simple_Types),
+            Mixed          => False,
+            Is_Abstract    => False);
+
+         S := G.NFA.Add_State ((Descr => Info));
+         Set (G.References, (Info.Name, Ref_Type), (Ref_Type, S));
+      end Register;
+
+      procedure Do_Register is new Register_Predefined_Types (Register);
+
    begin
       Create_Grammar_If_Needed (Reader.Grammar);
-      Get (Reader.Grammar).Symbols := Get_Symbol_Table (Reader);
+      G.Symbols := Get_Symbol_Table (Reader);
 
-      if Get (Get (Reader.Grammar).References,
-                   (Name => (NS => Reader.XML_Schema_URI,
-                             Local => Reader.S_Boolean),
-                    Kind => Ref_Type)) = No_Global_Reference
+      if Get (G.References,
+              (Name => (NS => Reader.XML_Schema_URI,
+                        Local => Reader.S_Boolean),
+               Kind => Ref_Type)) = No_Global_Reference
       then
+         Do_Register (G.Symbols);
          Add_Schema_For_Schema (Reader);
       end if;
    end Initialize_Grammar;
@@ -1102,31 +1133,6 @@ package body Schema.Validators is
       return null;
    end Get_Facets;
 
-   ------------------------
-   -- Create_Global_Type --
-   ------------------------
-
-   procedure Create_Global_Type
-     (Grammar    : XML_Grammar;
-      Name       : Qualified_Name;
-      Validator  : access XML_Validator_Record'Class)
-   is
-      use Reference_HTables;
-      NFA  : constant Schema.Validators.Schema_State_Machines.NFA_Access :=
-        Get_NFA (Grammar);
-      Ref  : constant access Reference_HTables.Instance :=
-        Get_References (Grammar);
-      S    : State;
-      Info : Type_Descr;
-   begin
-      Info := (Name           => Name,
-               Simple_Content => True,
-               Simple_Type    => XML_Validator (Validator),
-               others         => <>);
-      S := NFA.Add_State ((Descr => Info));
-      Set (Ref.all, (Name, Ref_Type), (Ref_Type, S));
-   end Create_Global_Type;
-
    ----------
    -- Free --
    ----------
@@ -1137,6 +1143,7 @@ package body Schema.Validators is
          Debug_Output ("Freeing grammar");
       end if;
 
+      Simple_Type_Tables.Free (Grammar.Simple_Types);
       Free (Grammar.Attributes);
       Reference_HTables.Reset (Grammar.References);
       Free (Grammar.NFA);
@@ -1640,10 +1647,13 @@ package body Schema.Validators is
    procedure Add_Union
      (Validator : access XML_Validator_Record'Class;
       Reader    : access Abstract_Validation_Reader'Class;
-      Part      : Type_Descr) is
+      Part      : Type_Descr)
+   is
+      pragma Unreferenced (Validator, Reader, Part);
    begin
-      Schema.Validators.Simple_Types.Add_Union
-        (XML_Union (Validator), Reader, Part);
+      null;
+--        Schema.Validators.Simple_Types.Add_Union
+--          (XML_Union (Validator), Reader, Part);
    end Add_Union;
 
    --------------
@@ -2062,5 +2072,44 @@ package body Schema.Validators is
             mod Interfaces.Unsigned_32 (Header_Num'Last));
       end if;
    end Hash;
+
+   --------------------------
+   -- Validate_Simple_Type --
+   --------------------------
+
+   procedure Validate_Simple_Type
+     (Reader        : access Abstract_Validation_Reader'Class;
+      Simple_Type   : Simple_Type_Index;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean)
+   is
+      Error : Symbol;
+   begin
+      Error := Validate_Simple_Type
+        (Simple_Types  => Get (Reader.Grammar).Simple_Types,
+         Symbols       => Get (Reader.Grammar).Symbols,
+         Simple_Type   => Simple_Type,
+         Ch            => Ch,
+         Empty_Element => Empty_Element);
+
+      if Error /= No_Symbol then
+         Validation_Error (Reader, Get (Error).all);
+      end if;
+   end Validate_Simple_Type;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Reader        : access Abstract_Validation_Reader'Class;
+      Simple_Type   : Simple_Type_Index;
+      Ch1           : Sax.Symbols.Symbol;
+      Ch2           : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      return Equal
+        (Get (Reader.Grammar).Simple_Types,
+         Get (Reader.Grammar).Symbols, Simple_Type, Ch1, Ch2);
+   end Equal;
 
 end Schema.Validators;

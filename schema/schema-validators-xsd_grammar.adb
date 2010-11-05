@@ -27,7 +27,7 @@
 -----------------------------------------------------------------------
 
 with Schema.Validators;              use Schema.Validators;
-with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
+--  with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 --  with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
 
 pragma Warnings (Off);  --  ??? Temporary
@@ -76,6 +76,7 @@ package body Schema.Validators.XSD_Grammar is
 --        simpleRestrictionModel   : XML_Group;
 
    begin
+      null;
 --        Get_NS (R.Grammar, R.XML_Schema_URI,   Result => G);
 --        Get_NS (R.Grammar, R.XML_URI,          Result => XML_G);
 --
@@ -93,12 +94,12 @@ package body Schema.Validators.XSD_Grammar is
 --           Get_Validator
 --             (Get_Type (Get_UR_Type_Element (R.Grammar, Process_Lax))));
 
-      Tmp2 := new Any_Simple_XML_Validator_Record;
-      Create_Global_Type
-        (R.Grammar, (R.XML_Schema_URI, R.Any_Simple_Type), Tmp2);
+--        Tmp2 := new Any_Simple_XML_Validator_Record;
+--        Create_Global_Type
+--          (R.Grammar, (R.XML_Schema_URI, R.Any_Simple_Type), Tmp2);
 
-      Schema.Validators.Simple_Types.Register_Predefined_Types
-        (R.Grammar, R'Access);
+--        Schema.Validators.Simple_Types.Register_Predefined_Types
+--          (R.Grammar, R'Access);
 
 --        NMTOKEN            := Lookup (G, R, R.NMTOKEN);
 --        NCNAME             := Lookup (G, R, R.NCName);

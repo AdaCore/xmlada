@@ -28,8 +28,8 @@
 
 pragma Ada_05;
 
-with Schema.Validators.Facets;  use Schema.Validators.Facets;
-with Sax.Symbols;               use Sax.Symbols;
+--  with Schema.Validators.Facets;  use Schema.Validators.Facets;
+--  with Sax.Symbols;               use Sax.Symbols;
 
 package body Schema.Validators.Restrictions is
 
@@ -46,15 +46,15 @@ package body Schema.Validators.Restrictions is
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Mask          : in out Facets_Mask);
-   overriding procedure Add_Facet
-     (Validator   : access Restriction_XML_Validator;
-      Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Symbol;
-      Facet_Value : Unicode.CES.Byte_Sequence);
-   overriding function Get_Facets
-     (Validator : access Restriction_XML_Validator;
-      Reader    : access Abstract_Validation_Reader'Class)
-      return Facets_Description;
+--     overriding procedure Add_Facet
+--       (Validator   : access Restriction_XML_Validator;
+--        Reader      : access Abstract_Validation_Reader'Class;
+--        Facet_Name  : Symbol;
+--        Facet_Value : Unicode.CES.Byte_Sequence);
+--     overriding function Get_Facets
+--       (Validator : access Restriction_XML_Validator;
+--        Reader    : access Abstract_Validation_Reader'Class)
+--        return Facets_Description;
    overriding procedure Free (Validator : in out Restriction_XML_Validator);
    overriding function Is_ID
      (Validator : Restriction_XML_Validator) return Boolean;
@@ -90,42 +90,42 @@ package body Schema.Validators.Restrictions is
    -- Get_Facets --
    ----------------
 
-   function Get_Facets
-     (Validator : access Restriction_XML_Validator;
-      Reader    : access Abstract_Validation_Reader'Class)
-      return Facets_Description
-   is
-      Base_Facets : Facets_Description;
-   begin
-      if Validator.Facets = null then
-         if Validator.Base.Validator /= null then
-            Base_Facets := Get_Facets (Validator.Base.Validator, Reader);
-            if Base_Facets /= null then
-               --  ??? Doesn't work if we do not know the full facets for the
-               --  parent or if we modify any of them later on.
-               Validator.Facets := new Facets_Description_Record'Class'
-                 (Base_Facets.all);
-
-               Copy (From => Base_Facets.all, To => Validator.Facets.all);
-
-               --  "pattern" are overridden in the context of restriction.
-               --  ??? If not defined in the restriction, we should still use
-               --  the parent's pattern
-               Common_Facets_Description (Validator.Facets.all)
-                 .Pattern_String := No_Symbol;
-               Common_Facets_Description (Validator.Facets.all)
-                 .Mask (Facet_Pattern) := False;
-            end if;
---           else
---              Validation_Error
---                (Reader, "#The type """ & To_QName (Validator.Base)
---                 & """ isn't known at this point. Please check the name and"
---                 & " namespace");
-         end if;
-      end if;
-
-      return Validator.Facets;
-   end Get_Facets;
+--     function Get_Facets
+--       (Validator : access Restriction_XML_Validator;
+--        Reader    : access Abstract_Validation_Reader'Class)
+--        return Facets_Description
+--     is
+--        Base_Facets : Facets_Description;
+--     begin
+--        if Validator.Facets = null then
+--           if Validator.Base.Validator /= null then
+--              Base_Facets := Get_Facets (Validator.Base.Validator, Reader);
+--              if Base_Facets /= null then
+--              --  ??? Doesn't work if we do not know the full facets for the
+--                 --  parent or if we modify any of them later on.
+--                 Validator.Facets := new Facets_Description_Record'Class'
+--                   (Base_Facets.all);
+--
+--                 Copy (From => Base_Facets.all, To => Validator.Facets.all);
+--
+--                 --  "pattern" are overridden in the context of restriction.
+--              --  ??? If not defined in the restriction, we should still use
+--                 --  the parent's pattern
+--                 Common_Facets_Description (Validator.Facets.all)
+--                   .Pattern_String := No_Symbol;
+--                 Common_Facets_Description (Validator.Facets.all)
+--                   .Mask (Facet_Pattern) := False;
+--              end if;
+--  --           else
+--  --              Validation_Error
+--  --                (Reader, "#The type """ & To_QName (Validator.Base)
+--  --             & """ isn't known at this point. Please check the name and"
+--  --                 & " namespace");
+--           end if;
+--        end if;
+--
+--        return Validator.Facets;
+--     end Get_Facets;
 
    -----------
    -- Equal --
@@ -143,24 +143,24 @@ package body Schema.Validators.Restrictions is
    -- Add_Facet --
    ---------------
 
-   overriding procedure Add_Facet
-     (Validator   : access Restriction_XML_Validator;
-      Reader      : access Abstract_Validation_Reader'Class;
-      Facet_Name  : Symbol;
-      Facet_Value : Unicode.CES.Byte_Sequence)
-   is
-      Applies : Boolean;
-      Facets  : constant Facets_Description := Get_Facets (Validator, Reader);
-   begin
-      if Facets = null then
-         Validation_Error (Reader, "#No facet overridable for this type");
-      end if;
-
-      Add_Facet (Facets.all, Reader, Facet_Name, Facet_Value, Applies);
-      if not Applies then
-         Validation_Error (Reader, "#Invalid facet: " & Get (Facet_Name).all);
-      end if;
-   end Add_Facet;
+--     overriding procedure Add_Facet
+--       (Validator   : access Restriction_XML_Validator;
+--        Reader      : access Abstract_Validation_Reader'Class;
+--        Facet_Name  : Symbol;
+--        Facet_Value : Unicode.CES.Byte_Sequence)
+--     is
+--        Applies : Boolean;
+--     Facets  : constant Facets_Description := Get_Facets (Validator, Reader);
+--     begin
+--        if Facets = null then
+--           Validation_Error (Reader, "#No facet overridable for this type");
+--        end if;
+--
+--        Add_Facet (Facets.all, Reader, Facet_Name, Facet_Value, Applies);
+--        if not Applies then
+--        Validation_Error (Reader, "#Invalid facet: " & Get (Facet_Name).all);
+--        end if;
+--     end Add_Facet;
 
    -------------------------
    -- Validate_Characters --

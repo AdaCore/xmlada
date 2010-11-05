@@ -40,6 +40,7 @@ with Sax.Readers;
 with Sax.State_Machines;
 with Sax.Symbols;
 with Sax.Utils;
+with Schema.Simple_Types;
 
 package Schema.Validators is
 
@@ -53,9 +54,6 @@ package Schema.Validators is
    XML_Validation_Error : exception;
    --  Raised in case of error in the validation process. The exception message
    --  contains the error, but not its location
-
-   XML_Not_Implemented : exception;
-   --  Raised when a schema uses features that are not supported by XML/Ada yet
 
    type XSD_Versions is (XSD_1_0, XSD_1_1);
    --  The version of XSD the parser should support.
@@ -169,30 +167,34 @@ package Schema.Validators is
 
    type Type_Descr is record
       Name           : Qualified_Name := No_Qualified_Name;
+      Attributes     : Attribute_Validator_List := Empty_Attribute_List;
       Block          : Block_Status := No_Block;
       Final          : Final_Status := (others => False);
+
+      Simple_Content : Schema.Simple_Types.Simple_Type_Index :=
+        Schema.Simple_Types.No_Simple_Type_Index;
+      --  set if we have a simple type
+
       Mixed          : Boolean := False;
       Is_Abstract    : Boolean := False;
-      Simple_Content : Boolean := False;
-      Attributes     : Attribute_Validator_List := Empty_Attribute_List;
-      Simple_Type    : XML_Validator;  --  Validator for simpleType
    end record;
+   pragma Pack (Type_Descr);
    No_Type_Descr : constant Type_Descr := (others => <>);
 
    type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
 
    type Attribute_Descr is record
       Name         : Qualified_Name     := No_Qualified_Name;
-      Simple_Type  : XML_Validator;
-      Use_Type     : Attribute_Use_Type := Optional;
-      Is_Local     : Boolean            := True;
+      Simple_Type  : Schema.Simple_Types.Simple_Type_Index;
       Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-      Form         : Form_Type          := Qualified;
       Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-
       Next         : Attribute_Validator_List; --  Next in the list
+      Use_Type     : Attribute_Use_Type := Optional;
+      Form         : Form_Type          := Qualified;
+      Is_Local     : Boolean            := True;
    end record;
+   pragma Pack (Attribute_Descr);
 
    type State_User_Data is record
       Descr       : Type_Descr;
@@ -632,6 +634,21 @@ package Schema.Validators is
    procedure Free (Validator : in out XML_Validator_Record) is null;
    --  Free the memory occupied by Validator
 
+   procedure Validate_Simple_Type
+     (Reader        : access Abstract_Validation_Reader'Class;
+      Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Empty_Element : Boolean);
+   --  Validate [Ch] as a simpleType
+
+   function Equal
+     (Reader        : access Abstract_Validation_Reader'Class;
+      Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
+      Ch1           : Sax.Symbols.Symbol;
+      Ch2           : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Checks whether [Ch1]=[Ch2] according to the type (possibly involving
+   --  whitespace normalization)
+
    procedure Validate_Attributes
      (Grammar   : XML_Grammar;
       Attributes : Attribute_Validator_List;
@@ -798,13 +815,6 @@ package Schema.Validators is
    -- Grammars --
    --------------
 
-   procedure Create_Global_Type
-     (Grammar    : XML_Grammar;
-      Name       : Qualified_Name;
-      Validator  : access XML_Validator_Record'Class);
-   --  Same as above, but doesn't return the newly created type. Use Lookup if
-   --  you need access to it later on
-
    procedure Initialize_Grammar
      (Reader : in out Abstract_Validation_Reader'Class);
    --  Initialize the internal structure of the grammar.
@@ -959,9 +969,10 @@ private
 
       XSD_Version : XSD_Versions := XSD_1_0;
 
-      References : aliased Reference_HTables.Instance;
-      Attributes : Attributes_Tables.Instance;
-      NFA        : Schema_State_Machines.NFA_Access;
+      Simple_Types : Schema.Simple_Types.Simple_Type_Table;
+      References   : aliased Reference_HTables.Instance;
+      Attributes   : Attributes_Tables.Instance;
+      NFA          : Schema_State_Machines.NFA_Access;
       --  The state machine representing the grammar
       --  This includes the states for all namespaces
    end record;

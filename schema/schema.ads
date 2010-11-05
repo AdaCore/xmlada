@@ -34,6 +34,9 @@ package Schema is
    procedure Set_Debug_Output (Output : Boolean);
    --  Whether we should output debug traces
 
+   XML_Not_Implemented : exception;
+   --  Raised when a schema uses features that are not supported by XML/Ada yet
+
 private
 
    -----------

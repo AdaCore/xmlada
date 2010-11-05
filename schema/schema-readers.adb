@@ -35,7 +35,8 @@ with Sax.Locators;      use Sax.Locators;
 with Sax.Utils;         use Sax.Utils;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Symbols;       use Sax.Symbols;
-with Schema.Validators; use Schema.Validators;
+with Schema.Simple_Types; use Schema.Simple_Types;
+with Schema.Validators;   use Schema.Validators;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
@@ -220,9 +221,8 @@ package body Schema.Readers is
 --        Val2               : Cst_Byte_Sequence_Access;
 --        S1, S2             : Symbol;
          Data : constant State_Data_Access := Get_Data (Self, S);
-         Mask : Facets_Mask := (others => True);
       begin
-         if Data.Descr.Simple_Type /= null then
+         if Data.Descr.Simple_Content /= No_Simple_Type_Index then
             if Debug then
                Debug_Output
                  ("Validate characters ("
@@ -230,11 +230,10 @@ package body Schema.Readers is
                   & Handler.Characters (1 .. Handler.Characters_Count) & "--");
             end if;
 
-            Validate_Characters
-              (Data.Descr.Simple_Type, Handler,
+            Validate_Simple_Type
+              (Handler, Data.Descr.Simple_Content,
                Handler.Characters (1 .. Handler.Characters_Count),
-               Empty_Element => Is_Empty,
-               Mask          => Mask);
+               Empty_Element => Is_Empty);
 
          else
             --  ??? Should have access to Type_Descr to check for other
@@ -807,7 +806,7 @@ package body Schema.Readers is
       procedure Callback (Self : access NFA'Class; S : State);
       procedure Callback (Self : access NFA'Class; S : State) is
       begin
-         if Self.Get_Data (S).Descr.Simple_Type /= null
+         if Self.Get_Data (S).Descr.Simple_Content /= No_Simple_Type_Index
            or else Self.Get_Data (S).Descr.Mixed
          then
             Store := True;

@@ -28,7 +28,7 @@
 
 with Schema.Date_Time;         use Schema.Date_Time;
 with Schema.Validators;        use Schema.Validators;
-with Schema.Validators.Facets; use Schema.Validators.Facets;
+with Schema.Simple_Types;      use Schema.Simple_Types;
 with GNAT.IO;                  use GNAT.IO;
 with Sax.Locators;             use Sax.Locators;
 

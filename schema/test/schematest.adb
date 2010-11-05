@@ -426,7 +426,7 @@ procedure Schematest is
             end if;
 
          exception
-            when E : XML_Not_Implemented =>
+            when E : Standard.Schema.XML_Not_Implemented =>
                Close (Input);
                Result.Kind := Not_Implemented;
                Result.Msg  := To_Unbounded_String (Exception_Message (E));
@@ -549,7 +549,7 @@ procedure Schematest is
                end if;
 
             exception
-               when E : XML_Not_Implemented =>
+               when E : Standard.Schema.XML_Not_Implemented =>
                   Close (Input);
                   Result.Kind := Not_Implemented;
                   Result.Msg  := To_Unbounded_String (Exception_Message (E));
