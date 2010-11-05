@@ -77,8 +77,11 @@ private
    type Context (Typ : Context_Type);
    type Context_Access is access all Context;
    type Context (Typ : Context_Type) is record
-      Next  : Context_Access;
-      Level : Integer;
+      Next        : Context_Access;
+      Level       : Integer;
+      Start_State : Schema.Validators.Schema_State_Machines.State;
+      Last_State  : Schema.Validators.Schema_State_Machines.State;
+
       case Typ is
          when Context_Type_Def =>
             Type_Name      : Sax.Symbols.Symbol;
@@ -89,12 +92,14 @@ private
             Simple_Content : Boolean;
             Blocks         : Schema.Validators.Block_Status;
             Final          : Schema.Validators.Final_Status;
+            NFA           : Schema.Validators.Schema_State_Machines.Nested_NFA;
 
          when Context_Element =>
             Element : Schema.Validators.XML_Element;
             Is_Ref  : Boolean;
+            Element_Min, Element_Max : Integer;
          when Context_Sequence =>
-            Seq       : Schema.Validators.Sequence;
+            Seq        : Schema.Validators.Sequence;
          when Context_Choice =>
             C       : Schema.Validators.Choice;
          when Context_Schema | Context_Redefine =>
@@ -142,6 +147,10 @@ private
       In_Annotation   : Boolean := False;
       --  Whether we are processing an <annotation> node, in which case we
       --  need to ignore all children
+
+      NFA : Schema.Validators.Schema_State_Machines.NFA_Access;
+      --  Pointer to the state machine of [Target_NS]. This pointer is really
+      --  still owned by [Target_NS], and should not be freed explicitly.
 
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;

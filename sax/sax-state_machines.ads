@@ -236,7 +236,11 @@ package Sax.State_Machines is
    --  still valid to add transitions to the ouside.
 
    procedure Set_Nested (Self : access NFA; S : State; Nested : Nested_NFA);
+   function Get_Nested (Self : access NFA; S : State) return Nested_NFA;
    --  Setup state [S] so that it includes a nested NFA defined by [Nested]
+
+   function Get_Start_State (Self : Nested_NFA) return State;
+   --  Return the start state that was defined for the nested NFA
 
    procedure On_Nested_Exit
      (Self      : access NFA;

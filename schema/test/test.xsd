@@ -9,15 +9,31 @@
 <xsd:element name="root">
  <xsd:complexType>
   <xsd:sequence>
-   <xsd:element ref="my_string" />
-   <xsd:element ref="zip" maxOccurs="3" />
-   <xsd:element ref="strs"/>
-   <xsd:element ref="strs3" maxOccurs="2"/>
-   <xsd:element ref="strs2" maxOccurs="2"/>
+    <xsd:sequence>
+      <xsd:element ref="my_string" />
+      <xsd:element ref="zip" maxOccurs="2" />
+      <xsd:element ref="strs"/>
+    </xsd:sequence>
+    <xsd:sequence>
+      <xsd:element ref="strs" maxOccurs="2"/>
+      <!--    <xsd:element ref="strs2" maxOccurs="2"/> -->
+    </xsd:sequence>
   </xsd:sequence>
  </xsd:complexType>
 </xsd:element>
 
+<xsd:complexType name="zip">
+ <xsd:sequence>
+  <xsd:choice>
+   <xsd:element name="zipcode" type="xsd:string" maxOccurs="2"/>
+   <xsd:element name="code_postal" type="xsd:string"/>
+  </xsd:choice>
+  <xsd:element name="foo" type="xsd:string"/>
+ </xsd:sequence>
+</xsd:complexType>
+<xsd:element name="zip" type="zip" />
+
+<xsd:element name="my_string" type="AdaString" />
 <xsd:complexType name="AdaString">
  <xsd:sequence>
   <xsd:element name="size"     type="xsd:nonNegativeInteger"/>
@@ -25,16 +41,7 @@
  </xsd:sequence>
 </xsd:complexType>
 
-<xsd:element name="my_string" type="AdaString" />
-
-<xsd:complexType name="zip">
- <xsd:choice>
-  <xsd:element name="zipcode" type="xsd:string"/>
-  <xsd:element name="code_postal" type="xsd:string"/>
- </xsd:choice>
-</xsd:complexType>
-
-<xsd:element name="zip" type="zip" />
+<xsd:element name="stdstring" type="xsd:string" />
 
 <!-- Ambigous:
   Error at file /home/briot/Ada/xml/xmlada/schema/test/test.xml, line 4, char 49
@@ -54,7 +61,7 @@
 
 <!-- Valid, since sequence doesn't mix with "str" -->
 
-<xsd:complexType name="valid">
+<xsd:complexType name="strs">
  <xsd:sequence>
   <xsd:sequence>
    <xsd:element name="str" type="xsd:string"/>
@@ -63,6 +70,7 @@
   <xsd:element name="str" type="xsd:string"/>
  </xsd:sequence>
 </xsd:complexType>
+<xsd:element name="strs" type="strs" />
 
 <!-- Ambiguous2:
   Error at file /home/briot/Ada/xml/xmlada/schema/test/test.xml, line 4, char 49
@@ -79,16 +87,5 @@
  </xsd:choice>
 </xsd:complexType>
 -->
-
-<xsd:complexType name="strs">
-  <xsd:sequence>
-   <xsd:sequence>
-     <xsd:element name="str" type="xsd:string"/>
-     <xsd:element name="str2" type="xsd:string"/>
-   </xsd:sequence>
-   <xsd:element name="str" type="xsd:string"/>
-  </xsd:sequence>
-</xsd:complexType>
-<xsd:element name="strs" type="strs" />
 
 </xsd:schema>

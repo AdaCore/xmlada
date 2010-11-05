@@ -169,6 +169,8 @@ begin
       end;
    end loop;
 
+   Free (My_Reader);
+
 exception
    when XML_Validation_Error =>
       if My_Reader = null then
@@ -178,8 +180,10 @@ exception
       end if;
 
       Close (Read);
+      Free (My_Reader);
 
    when E : XML_Fatal_Error | XML_Not_Implemented =>
       Put_Line (Exception_Message (E));
       Close (Read);
+      Free (My_Reader);
 end TestSchema;

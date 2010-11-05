@@ -33,6 +33,7 @@ with Sax.HTable;
 with Sax.Locators;
 with Sax.Pointers;
 with Sax.Readers;
+with Sax.State_Machines;
 with Sax.Symbols;
 with Sax.Utils;
 
@@ -121,8 +122,48 @@ package Schema.Validators is
    --             global element)
    --     Lax:    if the children have a definition, it is used, otherwise they
    --             are just accepted as is.
-   --     Skip:   even if the children have a defition, it is ignored, and the
-   --             child is processed as a ur-type.
+   --     Skip:   even if the children have a definition, it is ignored, and
+   --             the child is processed as a ur-type.
+
+   --------------------
+   -- State machines --
+   --------------------
+   --  The validators are implemented as state machines
+
+   type Qualified_Name is record
+      NS    : Sax.Symbols.Symbol;
+      Local : Sax.Symbols.Symbol;
+   end record;
+   No_Qualified_Name : constant Qualified_Name :=
+     (Sax.Symbols.No_Symbol, Sax.Symbols.No_Symbol);
+
+   type Transition_Kind is (Transition_Symbol,
+                            Transition_Close_Nested);
+   type Transition_Event (Kind : Transition_Kind := Transition_Symbol) is
+      record
+         case Kind is
+            when Transition_Symbol       => Name : Qualified_Name;
+            when Transition_Close_Nested => null;
+         end case;
+      end record;
+
+   function Match (Trans, Sym : Transition_Event) return Boolean;
+   function Image (Trans : Transition_Event) return String;
+
+   type State_User_Data is null record;
+   Default_User_Data : constant State_User_Data := (null record);
+
+   package Schema_State_Machines is new Sax.State_Machines
+      (Symbol            => Transition_Event,
+       Transition_Symbol => Transition_Event,
+       Match             => Match,
+       Image             => Image,
+       State_User_Data   => State_User_Data,
+       Default_Data      => Default_User_Data);
+
+   function Get_NFA
+     (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access;
+   --  Returns the state machine used to validate [Grammar]
 
    ---------------
    -- ID_Htable --
@@ -330,7 +371,7 @@ package Schema.Validators is
      is abstract;
    --  Return the current location in the file
 
-   procedure Free (Reader : access Abstract_Validation_Reader);
+   procedure Free (Reader : in out Abstract_Validation_Reader);
    --  Free the contents of Reader
 
    --------------------
@@ -413,10 +454,17 @@ package Schema.Validators is
 
    function Create_Local_Type
      (Grammar    : XML_Grammar_NS;
-      Validator  : access XML_Validator_Record'Class) return XML_Type;
+      Validator  : access XML_Validator_Record'Class;
+      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
+        Schema.Validators.Schema_State_Machines.No_Nested)
+      return XML_Type;
    --  Create a new local type.
    --  This type cannot be looked up in the grammar later on. See the function
    --  Create_Global_Type below if you need this capability
+
+   function Get_NFA
+     (Typ : XML_Type) return Schema_State_Machines.Nested_NFA;
+   --  Returns the state machine used to validate [Typ]
 
    function Get_Validator (Typ : XML_Type) return XML_Validator;
    --  Return the validator used for that type
@@ -885,6 +933,9 @@ package Schema.Validators is
    --         <sequence>
    --           <element name="local" />
 
+   function Get_QName (Element : XML_Element) return Qualified_Name;
+   --  Return the qualified name for Element
+
    -------------
    -- XML_Any --
    -------------
@@ -1081,7 +1132,10 @@ package Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Sax.Symbols.Symbol;
-      Validator  : access XML_Validator_Record'Class) return XML_Type;
+      Validator  : access XML_Validator_Record'Class;
+      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
+        Schema.Validators.Schema_State_Machines.No_Nested)
+      return XML_Type;
    function Create_Global_Element
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
@@ -1110,7 +1164,9 @@ package Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Sax.Symbols.Symbol;
-      Validator  : access XML_Validator_Record'Class);
+      Validator  : access XML_Validator_Record'Class;
+      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
+        Schema.Validators.Schema_State_Machines.No_Nested);
    procedure Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Reader         : access Abstract_Validation_Reader'Class;
@@ -1136,7 +1192,7 @@ package Schema.Validators is
    --  Set the default value for the "block" attribute
 
    procedure Initialize_Grammar
-     (Reader  : access Abstract_Validation_Reader'Class);
+     (Reader : access Abstract_Validation_Reader'Class);
    --  Initialize the internal structure of the grammar.
    --  This adds the definition for all predefined types
 
@@ -1178,6 +1234,7 @@ package Schema.Validators is
    procedure Debug_Dump (Grammar : XML_Grammar);
    --  Dump the grammar to stdout. This is for debug only
 
+   function To_QName (Name : Qualified_Name) return Unicode.CES.Byte_Sequence;
    function To_QName (Element : XML_Element) return Unicode.CES.Byte_Sequence;
    function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
    function To_QName (NS : XML_Grammar_NS; Local : Sax.Symbols.Symbol)
@@ -1232,6 +1289,9 @@ private
       Final : Final_Status;
       --  Whether this element is final for "restriction" or "extension" or
       --  both
+
+      NFA   : Schema.Validators.Schema_State_Machines.Nested_NFA;
+      --  The nested state-machine for that type
 
       Next : XML_Type;
       --  Next type in the list of allocated types for this grammar.
@@ -1349,6 +1409,10 @@ private
       UR_Type_Elements  : Process_Contents_Array := (others => No_Element);
 
       XSD_Version : XSD_Versions := XSD_1_0;
+
+      NFA : Schema_State_Machines.NFA_Access;
+      --  The state machine representing the grammar
+      --  This includes the states for all namespaces
 
       Target_NS : XML_Grammar_NS;
    end record;
@@ -1701,6 +1765,9 @@ private
       Checked : Boolean := False;
       --  Whether Global_Checks has been called, ie whether we have checked for
       --  missing declarations
+
+      NFA : Schema_State_Machines.NFA_Access;
+      --  A pointer to the actual NFA within the Grammar.
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_NS);

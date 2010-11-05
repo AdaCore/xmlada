@@ -42,6 +42,7 @@ with Schema.Readers;    use Schema.Readers;
 with Ada.Unchecked_Deallocation;
 
 package body Schema.Schema_Readers is
+   use Schema_State_Machines;
 
    Max_Namespaces_In_Any_Attribute : constant := 50;
    --  Maximum number of namespaces for a <anyAttribute>
@@ -190,6 +191,31 @@ package body Schema.Schema_Readers is
    --  Finish the handling of various tags:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
    --  <extension>, <union>, <list>, <choice>, <group>
+
+   procedure Get_Occurs
+     (Handler : access Schema_Reader'Class;
+      Atts    : Sax_Attribute_List;
+      Min_Occurs, Max_Occurs : out Integer);
+   --  Get the "minOccurs" and "maxOccurs" attributes
+
+   function Get_Last_State
+     (Handler   : access Schema_Reader'Class;
+      Ctxt      : Context_Access) return State;
+   --  Return the state we should link from, given the context
+
+   procedure Link_To_Previous
+     (Handler   : access Schema_Reader'Class;
+      Ctxt      : Context_Access;
+      S         : State;
+      On_Symbol : Transition_Event;
+      Min_Occurs : Natural := 1;
+      Max_Occurs : Integer := 1);
+   --  Add link in the state machine for S
+
+   procedure Propagate_Last
+     (Handler : access Schema_Reader'Class);
+   --  The current context is terminated, we need to update the parent
+   --  context's last_state
 
    function Max_Occurs_From_Value
      (Reader : access Abstract_Validation_Reader'Class;
@@ -358,8 +384,9 @@ package body Schema.Schema_Readers is
       Default_Namespace : Symbol;
       Do_Global_Check   : Boolean)
    is
-      Grammar : XML_Grammar := Get_Grammar (Parser);
-      URI : Symbol;
+      Validate_XSD : constant Boolean := False;
+      Grammar      : XML_Grammar := Get_Grammar (Parser);
+      URI          : Symbol;
    begin
       if Debug then
          Output_Action
@@ -383,13 +410,16 @@ package body Schema.Schema_Readers is
          Get_NS (Grammar, Default_Namespace,     Parser.Target_NS);
          Get_NS (Grammar, Parser.XML_Schema_URI, Parser.Schema_NS);
 
+         Parser.NFA := Get_NFA (Grammar);
+
          if Debug then
             Output_Action
               ("Get_NS (Handler.Created_Grammar, {"
                & Get (Default_Namespace).all & "}, Handler.Target_NS)");
          end if;
 
-         Set_Feature    (Parser, Sax.Readers.Schema_Validation_Feature, True);
+         Set_Feature
+           (Parser, Sax.Readers.Schema_Validation_Feature, Validate_XSD);
          Set_Parsed_URI (Parser'Access, Grammar, URI);
 
          Parse (Validating_Reader (Parser), Input);
@@ -527,6 +557,36 @@ package body Schema.Schema_Readers is
       end if;
    end Lookup_With_NS;
 
+   ----------------
+   -- Get_Occurs --
+   ----------------
+
+   procedure Get_Occurs
+     (Handler : access Schema_Reader'Class;
+      Atts    : Sax_Attribute_List;
+      Min_Occurs, Max_Occurs : out Integer)
+   is
+      Min_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => Empty_String, Local_Name => Handler.MinOccurs);
+      Max_Occurs_Index : constant Integer :=
+        Get_Index (Atts, URI => Empty_String, Local_Name => Handler.MaxOccurs);
+   begin
+      Min_Occurs := 1;
+      Max_Occurs := 1;
+
+      if Min_Occurs_Index /= -1 then
+         Min_Occurs := Max_Occurs_From_Value (Handler, Atts, Min_Occurs_Index);
+         if Min_Occurs = Unbounded then
+            Validation_Error
+              (Handler, "#minOccurs cannot be ""unbounded""");
+         end if;
+      end if;
+
+      if Max_Occurs_Index /= -1 then
+         Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
+      end if;
+   end Get_Occurs;
+
    ------------------
    -- Create_Group --
    ------------------
@@ -539,28 +599,16 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => Empty_String, Local_Name => Handler.Name);
       Ref_Index : constant Integer :=
         Get_Index (Atts, URI => Empty_String, Local_Name => Handler.Ref);
-      Min_Occurs_Index : constant Integer :=
-        Get_Index (Atts, URI => Empty_String, Local_Name => Handler.MinOccurs);
-      Max_Occurs_Index : constant Integer :=
-        Get_Index (Atts, URI => Empty_String, Local_Name => Handler.MaxOccurs);
       Tmp  : Context_Access;
       Min_Occurs, Max_Occurs : Integer := 1;
       Seq : Sequence;
    begin
-      if Min_Occurs_Index /= -1 then
-         Min_Occurs := Max_Occurs_From_Value (Handler, Atts, Min_Occurs_Index);
-         if Min_Occurs = Unbounded then
-            Validation_Error
-              (Handler, "#minOccurs cannot be ""unbounded""");
-         end if;
-      end if;
-
-      if Max_Occurs_Index /= -1 then
-         Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
-      end if;
+      Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
 
       Handler.Contexts := new Context'
         (Typ             => Context_Group,
+         Start_State     => No_State,
+         Last_State      => No_State,
          Group           => No_XML_Group,
          Redefined_Group => No_XML_Group,
          Group_Min       => Min_Occurs,
@@ -732,6 +780,8 @@ package body Schema.Schema_Readers is
    begin
       Handler.Contexts := new Context'
         (Typ            => Context_Attribute_Group,
+         Start_State    => No_State,
+         Last_State     => No_State,
          Attr_Group     => Empty_Attribute_Group,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
@@ -892,6 +942,8 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ            => Context_Redefine,
+         Start_State    => No_State,
+         Last_State     => No_State,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
    end Create_Redefine;
@@ -1005,6 +1057,140 @@ package body Schema.Schema_Readers is
    end Create_Any_Attribute;
 
    --------------------
+   -- Get_Last_State --
+   --------------------
+
+   function Get_Last_State
+     (Handler   : access Schema_Reader'Class;
+      Ctxt      : Context_Access) return State
+   is
+   begin
+      case Ctxt.Typ is
+         when Context_Sequence | Context_Type_Def =>
+            if Ctxt.Last_State = No_State then
+               return Get_Last_State (Handler, Ctxt.Next);
+            else
+               return Ctxt.Last_State;
+            end if;
+
+         when Context_Choice =>
+            if Ctxt.Last_State = No_State then
+               Ctxt.Last_State := Handler.NFA.Add_State;
+            end if;
+            return Ctxt.Last_State;
+
+         when others =>
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Can't create automaton for " & Ctxt.Typ'Img);
+      end case;
+   end Get_Last_State;
+
+   ----------------------
+   -- Link_To_Previous --
+   ----------------------
+
+   procedure Link_To_Previous
+     (Handler    : access Schema_Reader'Class;
+      Ctxt       : Context_Access;
+      S          : State;
+      On_Symbol  : Transition_Event;
+      Min_Occurs : Natural := 1;
+      Max_Occurs : Integer := 1)
+   is
+      Last : State;
+      Max  : Integer := Max_Occurs;
+   begin
+      if Max = Unbounded then
+         Max := Natural'Last;
+      end if;
+
+      case Ctxt.Typ is
+         when Context_Sequence | Context_Type_Def =>
+            Last := Get_Last_State (Handler, Ctxt);
+            Handler.NFA.Add_Transition (Last, S, On_Symbol);
+            Handler.NFA.Repeat (Last, S, Min_Occurs, Max);
+            Ctxt.Last_State := S;
+
+         when Context_Choice =>
+            --  Always link with the parent's last.
+
+            Handler.NFA.Add_Transition (Ctxt.Start_State, S, On_Symbol);
+            Handler.NFA.Repeat (Ctxt.Start_State, S, Min_Occurs, Max);
+
+            if Handler.NFA.Get_Nested (S) /= No_Nested then
+               Handler.NFA.On_Empty_Nested_Exit (S, Ctxt.Last_State);
+            else
+               Handler.NFA.Add_Empty_Transition (S, Ctxt.Last_State);
+            end if;
+
+            if Debug then
+               Output_Action
+                 ("NFA: linking" & S'Img
+                    & " to" & Ctxt.Last_State'Img & " on empty");
+            end if;
+
+         when Context_Schema =>
+            --  A schema adds like a "or" for all its <element> nodes
+            Handler.NFA.Add_Transition (Ctxt.Start_State, S, On_Symbol);
+            Handler.NFA.Repeat (Ctxt.Start_State, S, Min_Occurs, Max);
+
+            if Handler.NFA.Get_Nested (S) /= No_Nested then
+               Handler.NFA.On_Empty_Nested_Exit (S, Final_State);
+            else
+               Handler.NFA.Add_Empty_Transition (S, Final_State);
+            end if;
+
+         when others =>
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Can't create automaton for " & Ctxt.Typ'Img);
+      end case;
+   end Link_To_Previous;
+
+   --------------------
+   -- Propagate_Last --
+   --------------------
+
+   procedure Propagate_Last
+     (Handler : access Schema_Reader'Class)
+   is
+   begin
+      case Handler.Contexts.Next.Typ is
+         when Context_Sequence | Context_Choice =>
+            Handler.Contexts.Next.Last_State :=
+              Handler.Contexts.Last_State;
+
+         when Context_Type_Def =>
+            --  If the parent is an element, we have an inline type, so we
+            --  need to point to the nested automaton.
+
+            if Handler.Contexts.Next.Next.Typ = Context_Element then
+               Handler.NFA.Set_Nested
+                 (Handler.Contexts.Next.Next.Start_State,
+                  Handler.Contexts.Next.NFA);
+            end if;
+
+            --  Terminates the nested NFA for the type
+            Link_To_Previous
+              (Handler, Handler.Contexts, Final_State,
+               (Kind => Transition_Close_Nested));
+
+         when Context_Element =>
+            null;
+
+         when Context_Schema =>
+            null;
+
+         when others =>
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Can't propagate last " & Handler.Contexts.Next.Typ'Img
+               & " current=" & Handler.Contexts.Typ'Img);
+      end case;
+   end Propagate_Last;
+
+   --------------------
    -- Create_Element --
    --------------------
 
@@ -1026,10 +1212,6 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.Default);
       Fixed_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Fixed);
-      Min_Occurs_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.MinOccurs);
-      Max_Occurs_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.MaxOccurs);
       Abstract_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.S_Abstract);
       Nillable_Index : constant Integer :=
@@ -1046,6 +1228,7 @@ package body Schema.Schema_Readers is
       Form    : Form_Type;
       Is_Ref  : Boolean;
       Is_Set  : Boolean;
+      S       : State := No_State;
 
    begin
       if Form_Index /= -1 then
@@ -1196,17 +1379,7 @@ package body Schema.Schema_Readers is
          Set_Block (Element, Blocks);
       end if;
 
-      if Min_Occurs_Index /= -1 then
-         Min_Occurs := Max_Occurs_From_Value (Handler, Atts, Min_Occurs_Index);
-         if Min_Occurs = Unbounded then
-            Validation_Error
-              (Handler, "#minOccurs can not be set to ""unbounded""");
-         end if;
-      end if;
-
-      if Max_Occurs_Index /= -1 then
-         Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
-      end if;
+      Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
 
       case Handler.Contexts.Typ is
          when Context_Schema | Context_Redefine =>
@@ -1222,6 +1395,7 @@ package body Schema.Schema_Readers is
                        & Boolean'Image (Ref_Index /= -1) & ','
                        & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
             end if;
+
          when Context_Choice =>
             Add_Particle
               (Handler.Contexts.C, Handler, Element, Min_Occurs, Max_Occurs);
@@ -1230,6 +1404,7 @@ package body Schema.Schema_Readers is
                        & ", " & Ada_Name (Element) & ','
                        & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
             end if;
+
          when Context_All =>
             Add_Particle
               (Handler.Contexts.All_Validator, Handler, Element,
@@ -1248,10 +1423,25 @@ package body Schema.Schema_Readers is
                "Unsupported: ""element"" in this context");
       end case;
 
+      --  It seems we could optimize the case with a single element in a choice
+      --  and save on the intermediate state by pointing directly to the end
+      --  state of the choice. But that does not work, since we need to
+      --  attach data to the intermediate state, like the callbacks for the
+      --  element's type (or the nested NFA).
+
+      S := Handler.NFA.Add_State;
+      if Typ /= No_Type then
+         Handler.NFA.Set_Nested (S, Get_NFA (Typ));
+      end if;
+
       Handler.Contexts := new Context'
         (Typ            => Context_Element,
+         Start_State    => S,
+         Last_State     => S,
          Element        => Element,
          Is_Ref         => Is_Ref,
+         Element_Min    => Min_Occurs,
+         Element_Max    => Max_Occurs,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
    end Create_Element;
@@ -1261,24 +1451,27 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Finish_Element (Handler : access Schema_Reader'Class) is
+      Ctx : constant Context_Access := Handler.Contexts;
    begin
-      if not Handler.Contexts.Is_Ref
-        and then Get_Type (Handler.Contexts.Element) = No_Type
+      Link_To_Previous
+        (Handler, Ctx.Next, Ctx.Start_State,
+         (Kind => Transition_Symbol,
+          Name => Get_QName (Ctx.Element)),
+         Ctx.Element_Min, Ctx.Element_Max);
+
+      if not Ctx.Is_Ref
+        and then Get_Type (Ctx.Element) = No_Type
       then
          --  From 3.3.2.1, the type should be that of the substitutionGroup
          --  attribute if there is any
 
-         if Get_Substitution_Group (Handler.Contexts.Element) /=
-           No_Element
-         then
+         if Get_Substitution_Group (Ctx.Element) /= No_Element then
             if Debug then
                Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
                        & " from substitution group");
             end if;
 
-            if Get_Type (Get_Substitution_Group (Handler.Contexts.Element)) =
-               No_Type
-            then
+            if Get_Type (Get_Substitution_Group (Ctx.Element)) = No_Type then
                Raise_Exception
                  (XML_Not_Implemented'Identity,
                   "Not supported: type computed from substitutionGroup when"
@@ -1286,8 +1479,8 @@ package body Schema.Schema_Readers is
             end if;
 
             Set_Type
-              (Handler.Contexts.Element, Handler,
-               Get_Type (Get_Substitution_Group (Handler.Contexts.Element)));
+              (Ctx.Element, Handler,
+               Get_Type (Get_Substitution_Group (Ctx.Element)));
 
          else
             --  Otherwise the type is anyType
@@ -1295,7 +1488,7 @@ package body Schema.Schema_Readers is
                Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
                        & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
             end if;
-            Set_Type (Handler.Contexts.Element, Handler,
+            Set_Type (Ctx.Element, Handler,
                       Lookup (Handler.Schema_NS, Handler, Handler.Ur_Type));
          end if;
       end if;
@@ -1315,12 +1508,15 @@ package body Schema.Schema_Readers is
       then
          Handler.Contexts := new Context'
            (Typ               => Context_Type_Def,
+            Start_State       => No_State,
+            Last_State        => No_State,
             Type_Name         => No_Symbol,
             Type_Validator    => null,
             Redefined_Type    => No_Type,
             Mixed_Content     => False,
             Simple_Content    => True,
             Blocks            => No_Block,
+            NFA               => No_Nested,
             Final             => (others => False),
             Level             => Handler.Contexts.Level + 1,
             Next              => Handler.Contexts);
@@ -1467,7 +1663,12 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.Mixed);
       Abstract_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.S_Abstract);
+      Name : constant Symbol := Get_Value
+        (Atts, Get_Index (Atts, Empty_String, Handler.Name));
       Is_Set : Boolean;
+      S : State;
+      Typ : XML_Type := No_Type;
+      N : Nested_NFA;
 
    begin
       if Abstract_Index /= -1 then
@@ -1477,16 +1678,28 @@ package body Schema.Schema_Readers is
             "Unsupported ""abstract"" attribute for complexType");
       end if;
 
+      if Name /= No_Symbol then
+         Typ := Lookup
+           (Handler.Target_NS, Handler, Name, Create_If_Needed => True);
+         N := Get_NFA (Typ);
+         S := Get_Start_State (N);
+      else
+         S := Handler.NFA.Add_State;
+         N := Handler.NFA.Create_Nested (S);
+      end if;
+
       Handler.Contexts := new Context'
         (Typ               => Context_Type_Def,
-         Type_Name         => Get_Value
-           (Atts, Get_Index (Atts, Empty_String, Handler.Name)),
+         Start_State       => S,
+         Last_State        => S,
+         Type_Name         => Name,
          Type_Validator    => null,
          Redefined_Type    => No_Type,
          Mixed_Content     => Mixed_Index /= -1
            and then Get_Value_As_Boolean (Atts, Mixed_Index),
          Simple_Content    => False,
          Blocks            => No_Block,
+         NFA               => N,
          Final             => (others => False),
          Level             => Handler.Contexts.Level + 1,
          Next              => Handler.Contexts);
@@ -1544,6 +1757,13 @@ package body Schema.Schema_Readers is
          C.Type_Validator := Restriction_Of
            (Handler.Schema_NS, Handler, Base);
       end if;
+
+      Propagate_Last (Handler);
+
+      if Debug then
+         Output_Action
+           ("NFA: created machine " & Dump (Handler.NFA, C.NFA));
+      end if;
    end Ensure_Type;
 
    -------------------------
@@ -1556,14 +1776,15 @@ package body Schema.Schema_Readers is
    begin
       Ensure_Type (Handler, C);
       if C.Type_Name = No_Symbol then
-         Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
+         Typ := Create_Local_Type
+           (Handler.Target_NS, C.Type_Validator, NFA => C.NFA);
          if Debug then
             Output_Action
               (Ada_Name (C) & " := Create_Local_Type (Validator);");
          end if;
       else
          Typ := Create_Global_Type
-           (Handler.Target_NS, Handler, C.Type_Name, C.Type_Validator);
+           (Handler.Target_NS, Handler, C.Type_Name, C.Type_Validator, C.NFA);
          if Debug then
             Output_Action (Ada_Name (C)
                     & " := Create_Global_Type (Target_NS, """
@@ -1664,6 +1885,8 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ              => Context_Restriction,
+         Start_State      => No_State,
+         Last_State       => No_State,
          Restriction_Base => Base,
          Restricted       => null,
          Restriction      => null,
@@ -1738,10 +1961,12 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.Member_Types);
    begin
       Handler.Contexts := new Context'
-        (Typ   => Context_Union,
-         Union => Create_Union (Handler.Target_NS),
-         Level => Handler.Contexts.Level + 1,
-         Next  => Handler.Contexts);
+        (Typ        => Context_Union,
+         Start_State => No_State,
+         Last_State => No_State,
+         Union      => Create_Union (Handler.Target_NS),
+         Level      => Handler.Contexts.Level + 1,
+         Next       => Handler.Contexts);
       if Debug then
          Output_Action (Ada_Name (Handler.Contexts) & " := Create_Union;");
       end if;
@@ -1825,6 +2050,8 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ            => Context_Extension,
+         Start_State    => No_State,
+         Last_State     => No_State,
          Extension_Base => Base,
          Extension      => null,
          Level          => Handler.Contexts.Level + 1,
@@ -1888,6 +2115,8 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ            => Context_List,
+         Start_State    => No_State,
+         Last_State     => No_State,
          List_Items     => Items,
          Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
@@ -1959,26 +2188,17 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts : Sax_Attribute_List)
    is
-      Min_Occurs_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.MinOccurs);
-      Max_Occurs_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.MaxOccurs);
       Min_Occurs, Max_Occurs : Integer := 1;
    begin
-      if Min_Occurs_Index /= -1 then
-         Min_Occurs := Integer'Value
-           (Get (Get_Value (Atts, Min_Occurs_Index)).all);
-      end if;
-
-      if Max_Occurs_Index /= -1 then
-         Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
-      end if;
+      Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
 
       Handler.Contexts := new Context'
-        (Typ      => Context_Choice,
-         C        => Create_Choice (Handler.Target_NS),
-         Level    => Handler.Contexts.Level + 1,
-         Next     => Handler.Contexts);
+        (Typ         => Context_Choice,
+         Start_State => Get_Last_State (Handler, Handler.Contexts),
+         Last_State  => Handler.NFA.Add_State,
+         C           => Create_Choice (Handler.Target_NS),
+         Level       => Handler.Contexts.Level + 1,
+         Next        => Handler.Contexts);
       if Debug then
          Output_Action (Ada_Name (Handler.Contexts) & " := Create_Choice;");
       end if;
@@ -2041,9 +2261,8 @@ package body Schema.Schema_Readers is
    -------------------
 
    procedure Finish_Choice (Handler : access Schema_Reader'Class) is
-      pragma Unreferenced (Handler);
    begin
-      null;
+      Propagate_Last (Handler);
    end Finish_Choice;
 
    ---------------------
@@ -2054,26 +2273,16 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Min_Occurs_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.MinOccurs);
-      Max_Occurs_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.MaxOccurs);
       Min_Occurs, Max_Occurs : Integer := 1;
    begin
-      if Min_Occurs_Index /= -1 then
-         Min_Occurs := Integer'Value
-           (Get (Get_Value (Atts, Min_Occurs_Index)).all);
-      end if;
-
-      if Max_Occurs_Index /= -1 then
-         Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
-      end if;
-
+      Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
       Handler.Contexts := new Context'
-        (Typ      => Context_Sequence,
-         Seq      => Create_Sequence (Handler.Target_NS),
-         Level    => Handler.Contexts.Level + 1,
-         Next     => Handler.Contexts);
+        (Typ        => Context_Sequence,
+         Seq        => Create_Sequence (Handler.Target_NS),
+         Start_State => No_State,
+         Last_State => No_State,
+         Level      => Handler.Contexts.Level + 1,
+         Next       => Handler.Contexts);
       if Debug then
          Output_Action (Ada_Name (Handler.Contexts) & " := Create_Sequence;");
       end if;
@@ -2143,9 +2352,8 @@ package body Schema.Schema_Readers is
    ---------------------
 
    procedure Finish_Sequence (Handler : access Schema_Reader'Class) is
-      pragma Unreferenced (Handler);
    begin
-      null;
+      Propagate_Last (Handler);
    end Finish_Sequence;
 
    ----------------------
@@ -2291,6 +2499,8 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ              => Context_Attribute,
+         Start_State      => No_State,
+         Last_State       => No_State,
          Attribute        => null,
          Attribute_Is_Ref => Ref_Index /= -1,
          Level            => Handler.Contexts.Level + 1,
@@ -2558,6 +2768,8 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ         => Context_Schema,
+         Start_State => Start_State,
+         Last_State  => No_State,
          Level       => 0,
          Next        => null);
    end Create_Schema;
@@ -2594,23 +2806,11 @@ package body Schema.Schema_Readers is
    is
       Namespace_Index        : constant Integer := Get_Index
         (Atts, Empty_String, Handler.Namespace);
-      Min_Occurs_Index       : constant Integer := Get_Index
-        (Atts, Empty_String, Handler.MinOccurs);
-      Max_Occurs_Index       : constant Integer := Get_Index
-        (Atts, Empty_String, Handler.MaxOccurs);
       Min_Occurs, Max_Occurs : Integer := 1;
       Process_Contents       : Process_Contents_Type;
       Any                    : XML_Any;
    begin
-      if Min_Occurs_Index /= -1 then
-         Min_Occurs := Integer'Value
-           (Get (Get_Value (Atts, Min_Occurs_Index)).all);
-      end if;
-
-      if Max_Occurs_Index /= -1 then
-         Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
-      end if;
-
+      Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
       Process_Contents := Process_Contents_From_Atts (Handler, Atts);
 
       if Namespace_Index /= -1 then
@@ -2675,23 +2875,13 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Min_Occurs_Index       : constant Integer := Get_Index
-        (Atts, Empty_String, Handler.MinOccurs);
-      Max_Occurs_Index       : constant Integer := Get_Index
-        (Atts, Empty_String, Handler.MaxOccurs);
       Min_Occurs, Max_Occurs : Integer := 1;
    begin
-      if Min_Occurs_Index /= -1 then
-         Min_Occurs := Integer'Value
-           (Get (Get_Value (Atts, Min_Occurs_Index)).all);
-      end if;
-
-      if Max_Occurs_Index /= -1 then
-         Max_Occurs := Max_Occurs_From_Value (Handler, Atts, Max_Occurs_Index);
-      end if;
-
+      Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
       Handler.Contexts := new Context'
-        (Typ          => Context_All,
+        (Typ           => Context_All,
+         Start_State   => No_State,
+         Last_State    => No_State,
          All_Validator =>
            Create_All (Handler.Target_NS, Min_Occurs, Max_Occurs),
          Level         => Handler.Contexts.Level + 1,
@@ -2793,6 +2983,10 @@ package body Schema.Schema_Readers is
    begin
       if False and Debug then
          Debug_Dump_Contexts (Handler, "Start");
+      end if;
+
+      if Debug then
+         Output_Seen ("Seen " & Get (Local_Name).all);
       end if;
 
       --  Check the grammar
@@ -2964,7 +3158,10 @@ package body Schema.Schema_Readers is
 
       elsif Local_Name = Handler.S_Schema then
          --  ??? Check there remains no undefined forward declaration
-         null;
+         if Debug then
+            Output_Action ("NFA: for <schema>: "
+                           & Dump (Handler.NFA, Dump_Dot_Compact));
+         end if;
 
       elsif Local_Name = Handler.Complex_Type then
          Finish_Complex_Type (H);

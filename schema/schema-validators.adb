@@ -51,7 +51,7 @@ with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
 package body Schema.Validators is
-   use XML_Grammars;
+   use XML_Grammars, Schema_State_Machines;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Element_List, Element_List_Access);
@@ -1484,6 +1484,7 @@ package body Schema.Validators is
    is
       Typ : XML_Type := Types_Htable.Get
         (Grammar.Types.all, Local_Name);
+      S : State;
    begin
       if Typ = No_Type and then Create_If_Needed then
          if Local_Name = Reader.Precision_Decimal
@@ -1500,12 +1501,17 @@ package body Schema.Validators is
                & To_QName (Grammar, Local_Name));
          end if;
 
+         Output_Seen ("MANU Lookup, creating "
+                      & To_QName (Grammar, Local_Name));
+
+         S := Grammar.NFA.Add_State;
          Typ := new XML_Type_Record'
            (Local_Name        => Local_Name,
             Validator         => null,
             Simple_Type       => Unknown_Content,
             Blocks            => Get_Block_Default (Grammar),
             Final             => (others => False),
+            NFA               => Grammar.NFA.Create_Nested (S),
             Next              => null);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Register (Grammar, Typ);
@@ -1634,9 +1640,29 @@ package body Schema.Validators is
       return Attribute_Validator (Result);
    end Lookup_Attribute;
 
+   ---------------
+   -- Get_QName --
+   ---------------
+
+   function Get_QName (Element : XML_Element) return Qualified_Name is
+   begin
+      return (NS    => Get_Namespace_URI (Element.Elem.NS),
+              Local => Element.Elem.Local_Name);
+   end Get_QName;
+
    --------------
    -- To_QName --
    --------------
+
+   function To_QName
+     (Name : Qualified_Name) return Unicode.CES.Byte_Sequence is
+   begin
+      if Name = No_Qualified_Name then
+         return "";
+      else
+         return Sax.Readers.To_QName (Name.NS, Name.Local);
+      end if;
+   end To_QName;
 
    function To_QName
      (NS     : XML_Grammar_NS; Local : Sax.Symbols.Symbol)
@@ -1879,6 +1905,8 @@ package body Schema.Validators is
    begin
       if Grammar = No_Grammar then
          G := new XML_Grammar_Record;
+         G.NFA := new Schema_State_Machines.NFA;
+         G.NFA.Initialize;
          Grammar  := Allocate (G);
       end if;
 
@@ -1934,6 +1962,7 @@ package body Schema.Validators is
          Attributes         => new Attributes_Htable.HTable (101),
          Attribute_Groups   => new Attribute_Groups_Htable.HTable (101),
          Checked            => False,
+         NFA                => Get (Grammar).NFA,
          Validators_For_Mem => null,
          Types_For_Mem      => null,
          Atts_For_Mem       => null,
@@ -2007,7 +2036,7 @@ package body Schema.Validators is
    ------------------------
 
    procedure Initialize_Grammar
-     (Reader  : access Abstract_Validation_Reader'Class)
+     (Reader : access Abstract_Validation_Reader'Class)
    is
       Actual_G : XML_Grammars.Encapsulated_Access;
    begin
@@ -2016,6 +2045,8 @@ package body Schema.Validators is
             Debug_Output ("Initialize_Grammar, settings its symbol table");
          end if;
          Actual_G         := new XML_Grammar_Record;
+         Actual_G.NFA := new Schema_State_Machines.NFA;
+         Actual_G.NFA.Initialize;
          Reader.Grammar   := Allocate (Actual_G);
          Actual_G.Symbols := Get_Symbol_Table (Reader.all);
       end if;
@@ -2241,7 +2272,9 @@ package body Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Symbol;
-      Validator  : access XML_Validator_Record'Class) return XML_Type
+      Validator  : access XML_Validator_Record'Class;
+      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
+        Schema.Validators.Schema_State_Machines.No_Nested) return XML_Type
    is
       Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
    begin
@@ -2258,6 +2291,7 @@ package body Schema.Validators is
          end if;
          Register (Grammar, Validator);
          Typ.Validator := XML_Validator (Validator);
+         Typ.NFA       := NFA;
 
          if Typ.Simple_Type /= Unknown_Content then
             Check_Content_Type
@@ -2272,6 +2306,7 @@ package body Schema.Validators is
             Simple_Type       => Unknown_Content,
             Blocks            => Get_Block_Default (Grammar),
             Final             => (others => False),
+            NFA               => NFA,
             Next              => null);
          Types_Htable.Set (Grammar.Types.all, Typ);
          if Debug then
@@ -2292,10 +2327,12 @@ package body Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Symbol;
-      Validator  : access XML_Validator_Record'Class)
+      Validator  : access XML_Validator_Record'Class;
+      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA  :=
+        Schema.Validators.Schema_State_Machines.No_Nested)
    is
       Typ : constant XML_Type :=
-              Create_Global_Type (Grammar, Reader, Local_Name, Validator);
+              Create_Global_Type (Grammar, Reader, Local_Name, Validator, NFA);
       pragma Unreferenced (Typ);
    begin
       null;
@@ -2441,6 +2478,7 @@ package body Schema.Validators is
          Unchecked_Free (Grammar.Grammars);
       end if;
 
+      Free (Grammar.NFA);
       Free (Grammar.Parsed_Locations);
    end Free;
 
@@ -2664,6 +2702,25 @@ package body Schema.Validators is
          Unchecked_Free (Grammar);
       end if;
    end Free;
+
+   -------------
+   -- Get_NFA --
+   -------------
+
+   function Get_NFA
+     (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access is
+   begin
+      return Get (Grammar).NFA;
+   end Get_NFA;
+
+   -------------
+   -- Get_NFA --
+   -------------
+
+   function Get_NFA (Typ : XML_Type) return Nested_NFA is
+   begin
+      return Typ.NFA;
+   end Get_NFA;
 
    ----------------
    -- Do_Nothing --
@@ -4193,7 +4250,9 @@ package body Schema.Validators is
 
    function Create_Local_Type
      (Grammar    : XML_Grammar_NS;
-      Validator  : access XML_Validator_Record'Class) return XML_Type
+      Validator  : access XML_Validator_Record'Class;
+      NFA        : Schema.Validators.Schema_State_Machines.Nested_NFA :=
+        Schema.Validators.Schema_State_Machines.No_Nested) return XML_Type
    is
       Result : XML_Type;
    begin
@@ -4203,6 +4262,7 @@ package body Schema.Validators is
          Validator         => XML_Validator (Validator),
          Simple_Type       => Unknown_Content,
          Blocks            => No_Block,
+         NFA               => NFA,
          Final             => (others => False),
          Next              => null);
       Register (Grammar, Result);
@@ -5748,7 +5808,7 @@ package body Schema.Validators is
    -- Free --
    ----------
 
-   procedure Free (Reader : access Abstract_Validation_Reader) is
+   procedure Free (Reader : in out Abstract_Validation_Reader) is
    begin
       Free (Reader.Error_Msg);
    end Free;
@@ -5959,5 +6019,26 @@ package body Schema.Validators is
       Parser.XPath_Spec             := Find_Symbol (Parser, "XPathSpec");
       Parser.Xmlns := Find_Symbol (Parser, "xmlns");
    end Initialize_Symbols;
+
+   -----------
+   -- Match --
+   -----------
+
+   function Match (Trans, Sym : Transition_Event) return Boolean is
+   begin
+      return Trans = Sym;
+   end Match;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Trans : Transition_Event) return String is
+   begin
+      case Trans.Kind is
+         when Transition_Symbol       => return To_QName (Trans.Name);
+         when Transition_Close_Nested => return "<close>";
+      end case;
+   end Image;
 
 end Schema.Validators;

@@ -127,6 +127,9 @@ package Schema.Readers is
    --  The caller must not modify the return value.
    --  Returns No_XML_NS if the prefix is not defined
 
+   procedure Free (Reader : in out Validating_Reader_Access);
+   --  Free the memory used by Reader
+
 private
    type Validator_List_Record;
    type Validator_List is access Validator_List_Record;

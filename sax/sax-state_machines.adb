@@ -133,6 +133,7 @@ package body Sax.State_Machines is
             Data             => Data,
             On_Nested_Exit   => No_Transition,
             First_Transition => No_Transition));
+      Put_Line ("NFA: Add_State" & Last (Self.States)'Img);
       return Last (Self.States);
    end Add_State;
 
@@ -825,6 +826,7 @@ package body Sax.State_Machines is
    is
       pragma Unreferenced (Self);
    begin
+      Put_Line ("NFA: Create_Nested" & From'Img);
       return (Default_Start => From);
    end Create_Nested;
 
@@ -884,8 +886,18 @@ package body Sax.State_Machines is
 
    procedure Set_Nested (Self : access NFA; S : State; Nested : Nested_NFA) is
    begin
+      Put_Line ("NFA: Set_Nested (" & S'Img & ")=" & Nested.Default_Start'Img);
       Self.States.Table (S).Nested := Nested.Default_Start;
    end Set_Nested;
+
+   ----------------
+   -- Get_Nested --
+   ----------------
+
+   function Get_Nested (Self : access NFA; S : State) return Nested_NFA is
+   begin
+      return Nested_NFA'(Default_Start => Self.States.Table (S).Nested);
+   end Get_Nested;
 
    -----------
    -- Image --
@@ -1130,7 +1142,9 @@ package body Sax.State_Machines is
                          Mode   => Mode);
 
          when Dump_Dot | Dump_Dot_Compact =>
-            Append (Result, "/* Use   dot -O -Tpdf file.dot */" & ASCII.LF);
+            Append (Result, "Total states:" & Last (Self.States)'Img
+                   & ASCII.LF);
+            Append (Result, "Use   dot -O -Tpdf file.dot" & ASCII.LF);
             Append (Result, "digraph finite_state_machine{");
             Newline;
             Append (Result, "compound=true;");
@@ -1162,6 +1176,10 @@ package body Sax.State_Machines is
             --  been dumped yet)
 
             for S in State_Tables.First .. Last (Self.States) loop
+               if not Dumped (S) then
+                  Append (Result, Image (S) & ";");
+                  Newline;
+               end if;
                Dump_Dot (S, No_State, "");
             end loop;
 
@@ -1197,5 +1215,14 @@ package body Sax.State_Machines is
       Internal (Self, Prefix => "");
       New_Line;
    end Debug_Print;
+
+   ---------------------
+   -- Get_Start_State --
+   ---------------------
+
+   function Get_Start_State (Self : Nested_NFA) return State is
+   begin
+      return Self.Default_Start;
+   end Get_Start_State;
 
 end Sax.State_Machines;
