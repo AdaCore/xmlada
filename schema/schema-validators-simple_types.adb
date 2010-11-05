@@ -668,10 +668,6 @@ package body Schema.Validators.Simple_Types is
       is
          pragma Unreferenced (Empty_Element);
       begin
-         if Debug then
-            Debug_Output ("Validate_Characters " & Get_Name (Validator));
-         end if;
-
          Check_Id (Reader, Validator, Ch);
          Check_Facet (Get_Facets (Validator, Reader).all, Reader, Ch, Mask);
       end Validate_Characters;

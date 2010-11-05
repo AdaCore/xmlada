@@ -543,6 +543,14 @@ package body Schema.Schema_Readers is
                Process_Details (Parser.Types.Table (Ty).Details, Start, S);
                Process_Details (Details.Extension.Details, S, Nested_End);
 
+            when Type_Restriction =>
+               Ty := Get (Parser.Global_Types, Details.Restriction.Base);
+               pragma Assert (Ty /= No_Type_Index);
+               --  Checked in [Create_Nested_For_Type]
+
+               Process_Details
+                 (Details.Restriction.Details, Start, Nested_End);
+
             when Type_Any =>
                Nested_End := NFA.Add_State (Default_User_Data);
                NFA.Add_Transition
@@ -608,6 +616,21 @@ package body Schema.Schema_Readers is
 
                Add_Attributes (List, Parser.Types.Table (Ty).Attributes);
                Add_Attributes (List, Info.Details.Extension.Attributes);
+
+            elsif Info.Details /= null
+              and then Info.Details.Kind = Type_Restriction
+            then
+               --  ??? Should check Final and Block, too
+               Ty := Get (Parser.Global_Types, Info.Details.Restriction.Base);
+               if Ty = No_Type_Index then
+                  Validation_Error
+                    (Parser, "No type """
+                     & To_QName (Info.Details.Restriction.Base) & """");
+               end if;
+
+               Add_Attributes (List, Parser.Types.Table (Ty).Attributes);
+               Add_Attributes (List, Info.Details.Restriction.Attributes);
+
             else
                Add_Attributes (List, Info.Attributes);
             end if;
@@ -1482,9 +1505,7 @@ package body Schema.Schema_Readers is
 
    procedure Create_Simple_Type
      (Handler  : access Schema_Reader'Class;
-      Atts     : Sax_Attribute_List)
-   is
---      Info : Type_Descr;
+      Atts     : Sax_Attribute_List) is
    begin
       if Handler.Contexts.Typ = Context_Restriction
         and then Handler.Contexts.Restriction_Base = No_Type
@@ -1499,6 +1520,8 @@ package body Schema.Schema_Readers is
 
       else
          Create_Complex_Type (Handler, Atts);
+         Handler.Types.Table (Handler.Contexts.Type_Info).Simple_Content :=
+           True;
       end if;
    end Create_Simple_Type;
 
@@ -1507,32 +1530,18 @@ package body Schema.Schema_Readers is
    ------------------------
 
    procedure Finish_Simple_Type (Handler : access Schema_Reader'Class) is
-      C   : constant Context_Access := Handler.Contexts;
-      Info : Type_Descr renames Handler.Types.Table (C.Type_Info);
-      Typ : XML_Type;
+      C    : constant Context_Access := Handler.Contexts;
+      Typ  : XML_Type;
    begin
       if C.Next.Typ = Context_Restriction
         and then C.Next.Restriction_Base = No_Type
       then
          Ensure_Type (Handler, C);
-
          Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
-         if Debug then
-            Output_Action
-              (Ada_Name (C) & " := Create_Local_Type (Validator);");
-         end if;
-
-         Set_Final (Typ, Info.Final);
-         if Debug then
-            Output_Action ("Set_Final ("
-                           & Ada_Name (Typ) & ", "
-                           & To_String (Info.Final) & ");");
-            Output_Action ("Setting base type for restriction");
-         end if;
-
+         Set_Final (Typ, Handler.Types.Table (C.Type_Info).Final);
          C.Next.Restriction_Base := Typ;
       else
-         Info.Mixed := True;
+         Handler.Types.Table (C.Type_Info).Mixed := True;
          Finish_Complex_Type (Handler);
       end if;
    end Finish_Simple_Type;
@@ -1835,50 +1844,67 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Base_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Base);
-      Base_Name  : Qualified_Name;
-      Base : XML_Type;
-      Info : Type_Descr
-         renames Handler.Types.Table (Handler.Contexts.Type_Info);
+      Restr      : Restriction_Descr;
+      Base       : XML_Type;
+      Details    : Type_Details_Access;
+      Local      : Symbol;
+      In_Type    : constant Type_Index := Handler.Contexts.Type_Info;
    begin
-      if Info.Name /= No_Qualified_Name
-        and then Base_Index /= -1
-        and then Get_Value (Atts, Base_Index) = Info.Name.Local
-      then
-         if In_Redefine_Context (Handler.all) then
-            Base := Handler.Contexts.Redefined_Type;
-         else
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Base then
+               Restr.Base := Resolve_QName (Handler, Get_Value (Atts, J));
+            end if;
+         end if;
+      end loop;
+
+      if In_Type /= No_Type_Index then
+         if Handler.Types.Table (In_Type).Name = Restr.Base then
+            --  if In_Redefine_Context (Handler.all) then
+            --    Base := Handler.Contexts.Redefined_Type;
+            --  else
             Validation_Error
               (Handler, "#Self-referencing restriction not allowed");
+            --  end if;
          end if;
-
-      elsif Base_Index /= -1 then
-         Base_Name := Resolve_QName (Handler, Get_Value (Atts, Base_Index));
-         Lookup_With_NS (Handler, Base_Name, Result => Base);
-
-         if To_QName (Base) = "IDREF"
-           or else To_QName (Base) = "IDREFS"
-         then
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported type IDREF and IDREFS");
-         end if;
-
-      else
-         Base := No_Type;
       end if;
 
-      if Info.Simple_Content then
+      if In_Type = No_Type_Index
+        or else Handler.Types.Table (In_Type).Simple_Content
+      then
+         if Restr.Base /= No_Qualified_Name then
+            Lookup_With_NS (Handler, Restr.Base, Result => Base);
+            if To_QName (Base) = "IDREF"
+              or else To_QName (Base) = "IDREFS"
+            then
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  "Unsupported type IDREF and IDREFS");
+            end if;
+         else
+            Base := No_Type;
+         end if;
+
          Check_Content_Type (Base, Handler, Should_Be_Simple => True);
+
+      else
+         Details := new Type_Details'
+           (Kind        => Type_Restriction,
+            Min_Occurs  => 1,
+            Max_Occurs  => 1,
+            Next        => null,
+            Restriction => Restr);
+         Insert_In_Type (Handler, Details);
       end if;
 
       Handler.Contexts := new Context'
-        (Typ              => Context_Restriction,
-         Restriction_Base => Base,
-         Restricted       => null,
-         Restriction      => null,
-         Next             => Handler.Contexts);
+        (Typ                   => Context_Restriction,
+         Restriction           => Details,
+         Restriction_Base      => Base,
+         Restricted            => null,
+         Restriction_Validator => null,
+         Next                  => Handler.Contexts);
    end Create_Restriction;
 
    -----------------------
@@ -1900,7 +1926,7 @@ package body Schema.Schema_Readers is
 
          Ctx.Restricted := Restriction_Of
            (Handler.Target_NS, Handler,
-            Ctx.Restriction_Base, Ctx.Restriction);
+            Ctx.Restriction_Base, Ctx.Restriction_Validator);
          if Debug then
             Output_Action (Ada_Name (Ctx)
                     & " := Restriction_Of ("
@@ -1915,25 +1941,23 @@ package body Schema.Schema_Readers is
    ------------------------
 
    procedure Finish_Restriction (Handler : access Schema_Reader'Class) is
+      In_Type    : constant Type_Index := Handler.Contexts.Next.Type_Info;
    begin
-      Create_Restricted (Handler, Handler.Contexts);
+      if In_Type = No_Type_Index
+        or else Handler.Types.Table (In_Type).Simple_Content
+      then
+         Create_Restricted (Handler, Handler.Contexts);
 
-      case Handler.Contexts.Next.Typ is
-         when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator :=
-              Handler.Contexts.Restricted;
-            if Debug then
-               Output_Action
-                 ("Validator := " & Ada_Name (Handler.Contexts) & ";");
-            end if;
-         when others =>
-            if Debug then
-               Output_Action ("Can't handler nested restrictions");
-            end if;
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""restriction"" in this context");
-      end case;
+         case Handler.Contexts.Next.Typ is
+            when Context_Type_Def =>
+               Handler.Contexts.Next.Type_Validator :=
+                 Handler.Contexts.Restricted;
+            when others =>
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  "Unsupported: ""restriction"" in this context");
+         end case;
+      end if;
    end Finish_Restriction;
 
    ------------------
@@ -2151,19 +2175,13 @@ package body Schema.Schema_Readers is
             Ctx.Extension.Extension.Details := Element;
 
          when Context_Restriction =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Support for """ & Element.Kind'Img
-               & """ in context " & Ctx.Typ'Img
-               & " will be implemented soon");
+            pragma Assert (Ctx.Restriction.Restriction.Details = null);
+            Ctx.Restriction.Restriction.Details := Element;
 
          when Context_Schema | Context_Attribute | Context_Element
             | Context_All | Context_Union
             | Context_List | Context_Redefine | Context_Attribute_Group =>
-            null;  --  Should raise exception when validating grammar
---              Raise_Exception
---                (XML_Not_Implemented'Identity,
---                 "Unsupported: ""sequence"" in this context");
+            null;  --  Should have raised exception when validating grammar
       end case;
    end Insert_In_Type;
 
@@ -3093,12 +3111,12 @@ package body Schema.Schema_Readers is
          Next := Self.Next;
 
          case Self.Kind is
-            when Type_Empty | Type_Element | Type_Any =>
-               null;
-            when Type_Sequence  => Free (Self.First_In_Seq);
-            when Type_Choice    => Free (Self.First_In_Choice);
-            when Type_Group     => Free (Self.Group.Details);
-            when Type_Extension => Free (Self.Extension.Details);
+            when Type_Empty | Type_Element | Type_Any => null;
+            when Type_Sequence    => Free (Self.First_In_Seq);
+            when Type_Choice      => Free (Self.First_In_Choice);
+            when Type_Group       => Free (Self.Group.Details);
+            when Type_Extension   => Free (Self.Extension.Details);
+            when Type_Restriction => Free (Self.Restriction.Details);
          end case;
 
          Unchecked_Free (Self);

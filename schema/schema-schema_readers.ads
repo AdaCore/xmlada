@@ -68,7 +68,7 @@ private
    No_Type_Index : constant Type_Index := -1;
 
    type Type_Kind is (Type_Empty, Type_Sequence, Type_Choice, Type_Element,
-                      Type_Any, Type_Group, Type_Extension);
+                      Type_Any, Type_Group, Type_Extension, Type_Restriction);
 
    type Type_Details;
    type Type_Details_Access is access all Type_Details;
@@ -123,17 +123,24 @@ private
       Attributes     : Attr_Array_Access;
    end record;
 
+   type Restriction_Descr is record
+      Base           : Qualified_Name := No_Qualified_Name;
+      Details        : Type_Details_Access;
+      Attributes     : Attr_Array_Access;
+   end record;
+
    type Type_Details (Kind : Type_Kind := Type_Empty) is record
       Min_Occurs, Max_Occurs : Integer;
       Next : Type_Details_Access;
       case Kind is
-         when Type_Empty     => null;
-         when Type_Sequence  => First_In_Seq    : Type_Details_Access;
-         when Type_Choice    => First_In_Choice : Type_Details_Access;
-         when Type_Element   => Element         : Element_Descr;
-         when Type_Any       => Any             : Any_Descr;
-         when Type_Group     => Group           : Group_Descr;
-         when Type_Extension => Extension       : Extension_Descr;
+         when Type_Empty       => null;
+         when Type_Sequence    => First_In_Seq    : Type_Details_Access;
+         when Type_Choice      => First_In_Choice : Type_Details_Access;
+         when Type_Element     => Element         : Element_Descr;
+         when Type_Any         => Any             : Any_Descr;
+         when Type_Group       => Group           : Group_Descr;
+         when Type_Extension   => Extension       : Extension_Descr;
+         when Type_Restriction => Restriction     : Restriction_Descr;
       end case;
    end record;
 
@@ -181,22 +188,24 @@ private
             Type_Info      : Type_Index;
             Type_Validator : Schema.Validators.XML_Validator;
             Redefined_Type : Schema.Validators.XML_Type; --  <redefine>
-         when Context_Element         => Element    : Element_Descr;
-         when Context_Sequence        => Seq        : Type_Details_Access;
-         when Context_Choice          => Choice     : Type_Details_Access;
-         when Context_Attribute_Group => Attr_Group : AttrGroup_Descr;
+         when Context_Element         => Element     : Element_Descr;
+         when Context_Sequence        => Seq         : Type_Details_Access;
+         when Context_Choice          => Choice      : Type_Details_Access;
+         when Context_Attribute_Group => Attr_Group  : AttrGroup_Descr;
          when Context_Schema          => null;
          when Context_Redefine        => null;
-         when Context_Group           => Group      : Group_Descr;
-         when Context_Extension       => Extension  : Type_Details_Access;
+         when Context_Group           => Group       : Group_Descr;
+         when Context_Extension       => Extension   : Type_Details_Access;
+         when Context_Restriction     =>
+            Restriction           : Type_Details_Access;
+
+            --  Following is for simple types
+            Restriction_Validator : Schema.Validators.XML_Validator;
+            Restricted            : Schema.Validators.XML_Validator; --  result
+            Restriction_Base      : Schema.Validators.XML_Type;
 
          when Context_All =>
-            null;
-            --  All_Validator : Schema.Validators.XML_All;
-         when Context_Restriction =>
-            Restriction : Schema.Validators.XML_Validator;
-            Restricted  : Schema.Validators.XML_Validator; --  result
-            Restriction_Base : Schema.Validators.XML_Type;
+            null; --  All_Validator : Schema.Validators.XML_All;
          when Context_Union =>
             Union : Schema.Validators.XML_Validator;
          when Context_List =>

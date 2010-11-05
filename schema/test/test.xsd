@@ -29,6 +29,7 @@
   <xsd:element ref="my_string" />
   <xsd:element ref="zip"  maxOccurs="3" />
   <xsd:element ref="zipb" maxOccurs="3" />
+  <xsd:element ref="zipr" maxOccurs="3" />
   <xsd:element ref="strs"/>
  </xsd:sequence>
 </xsd:group>
@@ -58,6 +59,17 @@
  </xsd:complexContent>
 </xsd:complexType>
 <xsd:element name="zip" type="Tzip" />
+
+<xsd:complexType name="Tzip_restr">
+ <xsd:complexContent>
+    <xsd:restriction base="Tzip_base">
+       <xsd:choice>
+          <xsd:element name="zipcode" type="xsd:string"/>
+       </xsd:choice>
+    </xsd:restriction>
+ </xsd:complexContent>
+</xsd:complexType>
+<xsd:element name="zipr" type="Tzip_restr"/>
 
 <xsd:complexType name="Tzip_base">
  <xsd:sequence>
