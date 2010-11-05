@@ -1586,6 +1586,7 @@ package body Schema.Schema_Readers is
             raise;
       end;
 
+      Free (Schema);
       Close (File);
 
       if Debug then
@@ -1594,6 +1595,7 @@ package body Schema.Schema_Readers is
 
    exception
       when Ada.IO_Exceptions.Name_Error =>
+         Free (Schema);
          Close (File);
 
          if Debug then
@@ -1704,6 +1706,7 @@ package body Schema.Schema_Readers is
       Val       : Cst_Byte_Sequence_Access;
       Separator : Integer;
       NS        : XML_NS;
+      Prefix    : Symbol;
    begin
       if QName = No_Symbol then
          return No_Qualified_Name;
@@ -1711,12 +1714,12 @@ package body Schema.Schema_Readers is
          Val       := Get (QName);
          Separator := Split_Qname (Val.all);
 
+         Prefix :=
+           Find_Symbol (Handler.all, Val (Val'First .. Separator - 1));
          Get_Namespace_From_Prefix
            (Handler  => Handler.all,
-            Prefix   =>
-              Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)),
+            Prefix   => Prefix,
             NS       => NS);
-
          return
            (NS    => Get_URI (NS),
             Local =>
@@ -1941,12 +1944,14 @@ package body Schema.Schema_Readers is
               (Handler.Shared.Global_AttrGroups,
                Ctx.Attr_Group.Name, Ctx.Attr_Group);
          when Context_Type_Def =>
+            pragma Assert (Ctx.Attr_Group.Attributes = null);
             Append
               (Handler.Shared.Types.Table (Next.Type_Info).Attributes,
                (Kind      => Kind_Group,
                 Loc       => Handler.Current_Location,
                 Group_Ref => Ctx.Attr_Group.Ref));
          when Context_Extension =>
+            pragma Assert (Ctx.Attr_Group.Attributes = null);
             Index := Handler.Contexts_Last - 1;
             while Index >= Handler.Contexts'First loop
                Ctx2 := Handler.Contexts (Index)'Access;
@@ -1962,6 +1967,7 @@ package body Schema.Schema_Readers is
                Index := Index - 1;
             end loop;
          when Context_Attribute_Group =>
+            pragma Assert (Ctx.Attr_Group.Attributes = null);
             Append
               (Next.Attr_Group.Attributes,
                (Kind      => Kind_Group,
@@ -1969,6 +1975,7 @@ package body Schema.Schema_Readers is
                 Group_Ref => Ctx.Attr_Group.Ref));
 
          when others =>
+            Unchecked_Free (Ctx.Attr_Group.Attributes);
             Validation_Error
               (Handler,
                "Invalid context for attributeGroup: " & Next.Typ'Img,
@@ -2658,10 +2665,14 @@ package body Schema.Schema_Readers is
 
       procedure Add_Union (Str : Byte_Sequence) is
          Sym  : constant Symbol := Find_Symbol (Handler.all, Str);
-         Name : constant Qualified_Name := Resolve_QName (Handler, Sym);
+         Name : Qualified_Name := Resolve_QName (Handler, Sym);
          Ctx : constant Context_Access :=
            Handler.Contexts (Handler.Contexts_Last)'Access;
       begin
+         if Name.NS = Empty_String then
+            Name.NS := Handler.Target_NS;
+         end if;
+
          Add_Type_Member
            (Handler,
             Ctx.Union.Union_Items,
