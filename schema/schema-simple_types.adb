@@ -1960,4 +1960,17 @@ package body Schema.Simple_Types is
       end case;
    end Normalize_Whitespace;
 
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy (Descr : Simple_Type_Descr) return Simple_Type_Descr is
+      Result : Simple_Type_Descr := Descr;
+   begin
+      if Descr.Pattern /= null then
+         Result.Pattern := new Pattern_Matcher'(Descr.Pattern.all);
+      end if;
+      return Result;
+   end Copy;
+
 end Schema.Simple_Types;

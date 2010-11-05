@@ -1033,11 +1033,11 @@ package body Schema.Schema_Readers is
                   Error : Symbol;
                   Loc   : Location;
                begin
-                  Base := Get_Simple_Type
+                  Base := Copy (Get_Simple_Type
                     (Parser.Grammar,
                      Lookup_Simple_Type
                        (Info.Simple.Restriction_Base,
-                        Info.Simple.Loc));
+                        Info.Simple.Loc)));
 
                   Override (Simple  => Base,
                             Facets  => Info.Simple.Facets,
@@ -3299,19 +3299,6 @@ package body Schema.Schema_Readers is
       elsif Local_Name = Handler.Any_Attribute then
          Create_Any_Attribute (H, Atts);
 
-      elsif Local_Name = Handler.Pattern then
-         null;
-
---           Val := Get_Index (Atts, Empty_String, Handler.Value);
---           declare
---              Val2 : constant Cst_Byte_Sequence_Access :=
---                Get (Get_Non_Normalized_Value (Atts, Val));
---           begin
---              Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
---              Create_Restricted (H, Ctx);
---              Add_Facet (Ctx.Restricted, H, Local_Name, Val2.all);
---           end;
-
       elsif Local_Name = Handler.Maxlength
         or else Local_Name = Handler.Minlength
         or else Local_Name = Handler.Length
@@ -3323,6 +3310,7 @@ package body Schema.Schema_Readers is
         or else Local_Name = Handler.MaxExclusive
         or else Local_Name = Handler.MinInclusive
         or else Local_Name = Handler.MinExclusive
+        or else Local_Name = Handler.Pattern
       then
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
          pragma Assert (Ctx.Typ = Context_Simple_Restriction);

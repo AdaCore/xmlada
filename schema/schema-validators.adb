@@ -71,6 +71,13 @@ package body Schema.Validators is
       Index     : Natural);
    --  Validate the value of a single attribute
 
+   procedure Reset_Simple_Types
+     (G  : in out XML_Grammar_Record'Class;
+      To : Simple_Type_Index := No_Simple_Type_Index);
+   --  Resets the contents of G.Simple_Types by resizing the table and freeing
+   --  needed data
+   --  If [To] is [No_Simple_Type_Index], the table is freed
+
    ----------------------
    -- Validation_Error --
    ----------------------
@@ -897,7 +904,7 @@ package body Schema.Validators is
          Debug_Output ("Freeing grammar");
       end if;
 
-      Simple_Type_Tables.Free (Grammar.Simple_Types);
+      Reset_Simple_Types (Grammar, No_Simple_Type_Index);
       Enumeration_Tables.Free (Grammar.Enumerations);
       Free (Grammar.Attributes);
       Reference_HTables.Reset (Grammar.References.all);
@@ -905,6 +912,28 @@ package body Schema.Validators is
       Free (Grammar.NFA);
       Free (Grammar.Parsed_Locations);
    end Free;
+
+   ------------------------
+   -- Reset_Simple_Types --
+   ------------------------
+
+   procedure Reset_Simple_Types
+     (G  : in out XML_Grammar_Record'Class;
+      To : Simple_Type_Index := No_Simple_Type_Index)
+   is
+   begin
+      for S in To + 1 .. Simple_Type_Tables.Last (G.Simple_Types) loop
+         if G.Simple_Types.Table (S).Pattern /= null then
+            Unchecked_Free (G.Simple_Types.Table (S).Pattern);
+         end if;
+      end loop;
+
+      if To = No_Simple_Type_Index then
+         Simple_Type_Tables.Free (G.Simple_Types);
+      else
+         Simple_Type_Tables.Set_Last (G.Simple_Types, To);
+      end if;
+   end Reset_Simple_Types;
 
    -----------
    -- Reset --
@@ -952,8 +981,8 @@ package body Schema.Validators is
            (G.Enumerations, G.Metaschema_Enumerations_Last);
          Attributes_Tables.Set_Last
            (G.Attributes, G.Metaschema_Attributes_Last);
-         Simple_Type_Tables.Set_Last
-           (G.Simple_Types, G.Metaschema_Simple_Types_Last);
+
+         Reset_Simple_Types (G.all, G.Metaschema_Simple_Types_Last);
          Remove_All (G.References.all);
 
          --  From the toplevel choice (ie the list of valid global elements),

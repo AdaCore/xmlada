@@ -161,6 +161,9 @@ package Schema.Simple_Types is
       end case;
    end record;
 
+   function Copy (Descr : Simple_Type_Descr) return Simple_Type_Descr;
+   --  return a deep copy of [Copy] (duplicates the pattern)
+
    package Simple_Type_Tables is new GNAT.Dynamic_Tables
      (Table_Component_Type => Simple_Type_Descr,
       Table_Index_Type     => Simple_Type_Index,
