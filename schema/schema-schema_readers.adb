@@ -561,8 +561,9 @@ package body Schema.Schema_Readers is
       function Lookup_Simple_Type
         (Name : Qualified_Name; Loc : Location) return Simple_Type_Index
       is
-         TRef   : Global_Reference;
-         Simple : Simple_Type_Index;
+         TRef     : Global_Reference;
+         Simple   : Simple_Type_Index;
+         Internal : Internal_Type_Index;
       begin
          TRef := Get (Ref.all, (Name, Ref_Type));
          if TRef = No_Global_Reference then
@@ -577,7 +578,15 @@ package body Schema.Schema_Readers is
                Debug_Output ("Lookup_Simple_Type: generate "
                              & To_QName (Name) & " early");
             end if;
-            Simple := Create_Simple_Type (Get (Types, Name));
+
+            Internal := Get (Types, Name);
+            if Internal = No_Internal_Type_Index then
+               Validation_Error
+                 (Parser,
+                  "Type is not a simple type: " & To_QName (Name), Loc);
+            end if;
+
+            Simple := Create_Simple_Type (Internal);
          end if;
 
          return Simple;
