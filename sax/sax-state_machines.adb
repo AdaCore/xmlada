@@ -86,7 +86,6 @@ package body Sax.State_Machines is
         (Self.States,
          State_Data'
            (Nested           => No_State,
-            On_Nested_Exit   => No_Transition,
             First_Transition => No_Transition,
             Data             => Default_Data));
    end Initialize;
@@ -137,7 +136,6 @@ package body Sax.State_Machines is
          State_Data'
            (Nested           => No_State,
             Data             => Data,
-            On_Nested_Exit   => No_Transition,
             First_Transition => No_Transition));
 
       if Debug then
@@ -180,7 +178,7 @@ package body Sax.State_Machines is
       Append
         (Self.Transitions,
          Transition'
-           (Is_Empty       => False,
+           (Kind           => Transition_On_Symbol,
             To_State       => To,
             Next_For_State => Self.States.Table (From).First_Transition,
             Sym            => On_Symbol));
@@ -206,7 +204,7 @@ package body Sax.State_Machines is
       Append
         (Self.Transitions,
          Transition'
-           (Is_Empty       => True,
+           (Kind           => Transition_On_Empty,
             To_State       => To,
             Next_For_State => Self.States.Table (From).First_Transition));
       Self.States.Table (From).First_Transition := Last (Self.Transitions);
@@ -321,7 +319,6 @@ package body Sax.State_Machines is
             end if;
 
             Do_Transitions (Self.States.Table (S).First_Transition);
-            Do_Transitions (Self.States.Table (S).On_Nested_Exit);
          end Internal;
       begin
          Cloned_Count := 0;
@@ -364,7 +361,6 @@ package body Sax.State_Machines is
                        State_Data'
                          (Nested           => Self.States.Table (C).Nested,
                           Data             => Self.States.Table (C).Data,
-                          On_Nested_Exit   => No_Transition,
                           First_Transition => No_Transition);
                      if Debug then
                         Put_Line
@@ -405,12 +401,9 @@ package body Sax.State_Machines is
          New_To : State;
          Max    : Natural)
       is
-         procedure Do_Transitions
-           (S : State; First : Transition_Id; On_Exit : Boolean);
+         procedure Do_Transitions (S : State; First : Transition_Id);
 
-         procedure Do_Transitions
-           (S : State; First : Transition_Id; On_Exit : Boolean)
-         is
+         procedure Do_Transitions (S : State; First : Transition_Id) is
             T   : Transition_Id;
             Tmp : State;
             Offs1, Offs2 : State;
@@ -455,29 +448,26 @@ package body Sax.State_Machines is
 
                         Offs2 := Tmp + State (R * Cloned_Count);
 
-                        if Tr.Is_Empty then
-                           if On_Exit then
+                        case Tr.Kind is
+                           when Transition_On_Exit_Empty =>
                               On_Empty_Nested_Exit (Self, Offs1, Offs2);
-                           else
+                           when Transition_On_Empty =>
                               if Debug then
                                  Put_Line
                                    ("Empty: from" & Offs1'Img
                                     & " to" & Offs2'Img & " R=" & R'Img);
                               end if;
                               Add_Empty_Transition (Self, Offs1, Offs2);
-                           end if;
-                        else
-                           if On_Exit then
+                           when Transition_On_Exit_Symbol =>
                               On_Nested_Exit (Self, Offs1, Offs2, Tr.Sym);
-                           else
+                           when Transition_On_Symbol =>
                               if Debug then
                                  Put_Line ("Trans: from" & Offs1'Img
                                            & " to" & Offs2'Img & " on "
                                            & Image (Tr.Sym));
                               end if;
                               Add_Transition (Self, Offs1, Offs2, Tr.Sym);
-                           end if;
-                        end if;
+                        end case;
                      end loop;
                   end if;
 
@@ -491,10 +481,7 @@ package body Sax.State_Machines is
       begin
          for S in reverse Cloned'Range loop
             if Cloned (S) /= No_State then
-               Do_Transitions
-                 (S, Self.States.Table (S).First_Transition, False);
-               Do_Transitions
-                 (S, Self.States.Table (S).On_Nested_Exit, True);
+               Do_Transitions (S, Self.States.Table (S).First_Transition);
             end if;
          end loop;
 
@@ -720,7 +707,7 @@ package body Sax.State_Machines is
             declare
                Tr : Transition renames Self.NFA.Transitions.Table (T);
             begin
-               if Tr.Is_Empty then
+               if Tr.Kind = Transition_On_Empty then
                   Mark_Active (Self, List_Start, Tr.To_State);
                end if;
                T := Tr.Next_For_State;
@@ -826,10 +813,12 @@ package body Sax.State_Machines is
       --  Process all the nodes with a common parent (either all toplevel
       --  states, or all nested states within a specific state).
 
+      type Transition_Filter is array (Transition_Kind) of Boolean;
+
       procedure Process_Transitions
         (First        : Transition_Id;
          New_First    : in out Matcher_State_Index;
-         Ignore_Empty : Boolean);
+         Filter       : Transition_Filter);
       --  Check all transitions from [First]
 
       -------------------------
@@ -839,7 +828,7 @@ package body Sax.State_Machines is
       procedure Process_Transitions
         (First        : Transition_Id;
          New_First    : in out Matcher_State_Index;
-         Ignore_Empty : Boolean)
+         Filter       : Transition_Filter)
       is
          T : Transition_Id := First;
       begin
@@ -847,13 +836,17 @@ package body Sax.State_Machines is
             declare
                Tr : Transition renames NFA.Transitions.Table (T);
             begin
-               if (Tr.Is_Empty and then not Ignore_Empty)
-                 or else
-                   (not Tr.Is_Empty
-                    and then (not Is_Active (Self, New_First, Tr.To_State)
-                              and then Match (Tr.Sym, Input)))
-               then
-                  Mark_Active (Self, New_First, Tr.To_State);
+               if Filter (Tr.Kind) then
+                  case Tr.Kind is
+                     when Transition_On_Empty | Transition_On_Exit_Empty =>
+                        Mark_Active (Self, New_First, Tr.To_State);
+                     when others =>
+                        if not Is_Active (Self, New_First, Tr.To_State)
+                          and then Match (Tr.Sym, Input)
+                        then
+                           Mark_Active (Self, New_First, Tr.To_State);
+                        end if;
+                  end case;
                end if;
 
                T := Tr.Next_For_State;
@@ -932,8 +925,10 @@ package body Sax.State_Machines is
 
                   if Nested_Final then
                      Process_Transitions
-                       (NFA.States.Table (S.S).On_Nested_Exit, New_First,
-                        Ignore_Empty => False);
+                       (NFA.States.Table (S.S).First_Transition, New_First,
+                        Filter => (Transition_On_Exit_Empty => True,
+                                   Transition_On_Exit_Symbol => True,
+                                   others => False));
                   end if;
 
                else
@@ -953,7 +948,9 @@ package body Sax.State_Machines is
             then
                Process_Transitions
                  (NFA.States.Table (S.S).First_Transition, New_First,
-                  Ignore_Empty => True);
+                  Filter => (Transition_On_Empty => False,
+                             Transition_On_Symbol => True,
+                             others => False));
             end if;
 
             N := S.Next;
@@ -1003,13 +1000,19 @@ package body Sax.State_Machines is
             declare
                Tr : Transition renames The_NFA.Transitions.Table (T);
             begin
-               if not Tr.Is_Empty then
-                  if Msg /= Null_Unbounded_String then
-                     Append (Msg, "|");
-                  end if;
+               case Tr.Kind is
+                  when Transition_On_Empty
+                     | Transition_On_Exit_Empty
+                     | Transition_On_Exit_Symbol =>
+                     null;
 
-                  Append (Msg, Image (Tr.Sym));
-               end if;
+                  when Transition_On_Symbol =>
+                     if Msg /= Null_Unbounded_String then
+                        Append (Msg, "|");
+                     end if;
+
+                     Append (Msg, Image (Tr.Sym));
+               end case;
 
                T := Tr.Next_For_State;
             end;
@@ -1060,11 +1063,11 @@ package body Sax.State_Machines is
       Append
         (Self.Transitions,
          Transition'
-           (Is_Empty       => False,
+           (Kind           => Transition_On_Exit_Symbol,
             To_State       => To,
-            Next_For_State => Self.States.Table (From).On_Nested_Exit,
+            Next_For_State => Self.States.Table (From).First_Transition,
             Sym            => On_Symbol));
-      Self.States.Table (From).On_Nested_Exit := Last (Self.Transitions);
+      Self.States.Table (From).First_Transition := Last (Self.Transitions);
    end On_Nested_Exit;
 
    --------------------------
@@ -1079,10 +1082,10 @@ package body Sax.State_Machines is
       Append
         (Self.Transitions,
          Transition'
-           (Is_Empty       => True,
+           (Kind           => Transition_On_Exit_Empty,
             To_State       => To,
-            Next_For_State => Self.States.Table (From).On_Nested_Exit));
-      Self.States.Table (From).On_Nested_Exit := Last (Self.Transitions);
+            Next_For_State => Self.States.Table (From).First_Transition));
+      Self.States.Table (From).First_Transition := Last (Self.Transitions);
    end On_Empty_Nested_Exit;
 
    ----------------
@@ -1257,28 +1260,16 @@ package body Sax.State_Machines is
                declare
                   Tr : Transition renames Self.Transitions.Table (T);
                begin
-                  if Tr.Is_Empty then
-                     Append (Result, "(");
-                  else
-                     Append (Result, "(" & Image (Tr.Sym));
-                  end if;
-
-                  Append (Result, "," & Node_Name (Tr.To_State) & ")");
-
-                  T := Tr.Next_For_State;
-               end;
-            end loop;
-
-            T := Self.States.Table (S).On_Nested_Exit;
-            while T /= No_Transition loop
-               declare
-                  Tr : Transition renames Self.Transitions.Table (T);
-               begin
-                  if Tr.Is_Empty then
-                     Append (Result, "(Exit");
-                  else
-                     Append (Result, "(Exit_" & Image (Tr.Sym));
-                  end if;
+                  case Tr.Kind is
+                     when Transition_On_Empty =>
+                        Append (Result, "(");
+                     when Transition_On_Exit_Empty =>
+                        Append (Result, "(Exit");
+                     when Transition_On_Symbol =>
+                        Append (Result, "(" & Image (Tr.Sym));
+                     when Transition_On_Exit_Symbol =>
+                        Append (Result, "(Exit_" & Image (Tr.Sym));
+                  end case;
 
                   Append (Result, "," & Node_Name (Tr.To_State) & ")");
 
@@ -1287,18 +1278,6 @@ package body Sax.State_Machines is
             end loop;
 
             T := Self.States.Table (S).First_Transition;
-            while T /= No_Transition loop
-               declare
-                  Tr : Transition renames Self.Transitions.Table (T);
-               begin
-                  if Tr.To_State /= Final_State then
-                     Internal (Tr.To_State);
-                  end if;
-                  T := Tr.Next_For_State;
-               end;
-            end loop;
-
-            T := Self.States.Table (S).On_Nested_Exit;
             while T /= No_Transition loop
                declare
                   Tr : Transition renames Self.Transitions.Table (T);
@@ -1347,7 +1326,7 @@ package body Sax.State_Machines is
          procedure Dump_Dot (Start_At, Nested_In : State; Prefix : String);
          procedure Dump_Dot_Transitions
            (S : State; First : Transition_Id; Prefix : String;
-            Label_Prefix : String; Nested_In : State := No_State);
+            Nested_In : State := No_State);
 
          procedure Dump_Nested (S : State);
          --  Dump a cluster that represents a nested NFA.
@@ -1373,7 +1352,7 @@ package body Sax.State_Machines is
 
          procedure Dump_Dot_Transitions
            (S : State; First : Transition_Id; Prefix : String;
-            Label_Prefix : String; Nested_In : State := No_State)
+            Nested_In : State := No_State)
          is
             T : Transition_Id := First;
          begin
@@ -1386,25 +1365,19 @@ package body Sax.State_Machines is
                           & "->" & Node_Name (Tr.To_State, Nested_In)
                           & "[");
 
-                  if not Tr.Is_Empty then
-                     Append
-                       (Result,
-                        "label=""" & Label_Prefix & Image (Tr.Sym) & """");
-
-                     if Label_Prefix = "on_exit:" then
-                        Append (Result, " style=dotted");
-                     end if;
-                  else
-                     if Label_Prefix /= "" then
-                        Append (Result, "label=""" & Label_Prefix & """ ");
-                     end if;
-
-                     if Label_Prefix = "on_exit:" then
-                        Append (Result, "style=dotted");
-                     else
+                  case Tr.Kind is
+                     when Transition_On_Symbol =>
+                        Append (Result, "label=""" & Image (Tr.Sym) & """");
+                     when Transition_On_Exit_Symbol =>
+                        Append
+                          (Result, "label=""on_exit:" & Image (Tr.Sym)
+                           & """ style=dotted");
+                     when Transition_On_Empty =>
                         Append (Result, "style=dashed");
-                     end if;
-                  end if;
+                        null;
+                     when Transition_On_Exit_Empty =>
+                        Append (Result, "label=on_exit style=dotted");
+                  end case;
 
                   Append (Result, "];");
                   Newline;
@@ -1451,11 +1424,7 @@ package body Sax.State_Machines is
             Dumped (Start_At) := True;
             Dump_Dot_Transitions
               (Start_At,
-               Self.States.Table (Start_At).First_Transition, Prefix, "",
-               Nested_In);
-            Dump_Dot_Transitions
-              (Start_At,
-               Self.States.Table (Start_At).On_Nested_Exit, Prefix, "on_exit:",
+               Self.States.Table (Start_At).First_Transition, Prefix,
                Nested_In);
          end Dump_Dot;
 

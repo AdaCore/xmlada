@@ -400,13 +400,19 @@ package Sax.State_Machines is
 
 private
    type Transition_Id is new State;
-   type Transition (Is_Empty : Boolean := True) is record
+
+   type Transition_Kind is (Transition_On_Empty,
+                            Transition_On_Symbol,
+                            Transition_On_Exit_Empty,
+                            Transition_On_Exit_Symbol);
+
+   type Transition (Kind : Transition_Kind := Transition_On_Empty) is record
       To_State       : State;
       Next_For_State : Transition_Id;
 
-      case Is_Empty  is
-         when True  => null;
-         when False => Sym : Transition_Symbol;
+      case Kind is
+         when Transition_On_Empty | Transition_On_Exit_Empty => null;
+         when others => Sym : Transition_Symbol;
       end case;
    end record;
    No_Transition : constant Transition_Id := 0;
@@ -417,7 +423,6 @@ private
 
    type State_Data is record
       First_Transition : Transition_Id;
-      On_Nested_Exit   : Transition_Id;
       Nested           : State := No_State;
       Data             : aliased State_User_Data;
    end record;

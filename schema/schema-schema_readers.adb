@@ -2816,7 +2816,7 @@ package body Schema.Schema_Readers is
             Ctx.Restriction.Restriction.Details := Element;
 
          when Context_Simple_Restriction =>
-            null;
+            Free (Element);
 
          when Context_Schema | Context_Attribute | Context_Element
             | Context_Union
