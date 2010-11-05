@@ -180,10 +180,10 @@ begin
 
 exception
    when XML_Validation_Error =>
-      if My_Reader = null then
-         Put_Line (Get_Error_Message (Schema));
-      else
+      if My_Reader /= null then
          Put_Line (Get_Error_Message (My_Reader.all));
+      else
+         Put_Line (Get_Error_Message (Schema));
       end if;
 
       Close (Read);

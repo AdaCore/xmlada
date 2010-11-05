@@ -206,7 +206,7 @@ package Sax.Utils is
 
    procedure Add_NS_To_List
      (List               : in out XML_NS;
-      Default_Namespaces : XML_NS;
+      Same_As            : XML_NS := No_XML_NS;
       Prefix, URI        : Sax.Symbols.Symbol);
    --  Add a new namespace to the list (which might be empty to start with)
 

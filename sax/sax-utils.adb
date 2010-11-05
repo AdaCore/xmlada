@@ -848,11 +848,16 @@ package body Sax.Utils is
    -------------------
 
    function Element_Count (NS : XML_NS) return Natural is
+      Tmp : XML_NS := NS;
    begin
       if NS = null then
          return 0;
       else
-         return NS.Use_Count;
+         while Tmp.Same_As /= null loop
+            Tmp := Tmp.Same_As;
+         end loop;
+
+         return Tmp.Use_Count;
       end if;
    end Element_Count;
 
@@ -928,43 +933,17 @@ package body Sax.Utils is
 
    procedure Add_NS_To_List
      (List : in out XML_NS;
-      Default_Namespaces : XML_NS;
+      Same_As     : XML_NS := No_XML_NS;
       Prefix, URI : Symbol)
    is
-      NS, Tmp : XML_NS;
    begin
-      NS := new XML_NS_Record'
+      List := new XML_NS_Record'
         (Prefix    => Prefix,
          URI       => URI,
          System_Id => No_Symbol,
-         Same_As   => null,
+         Same_As   => Same_As,
          Use_Count => 0,
          Next      => List);
-
-      if List /= null then
-         --  Same_As should point to the first namespace with that URI
-         Tmp := List;
-         while Tmp /= null loop
-            if Tmp.URI = NS.URI then
-               NS.Same_As := Tmp;
-               exit;
-            end if;
-            Tmp := Tmp.Next;
-         end loop;
-      end if;
-
-      if NS.Same_As = null then
-         Tmp := Default_Namespaces;
-         while Tmp /= null loop
-            if Tmp.URI = NS.URI then
-               NS.Same_As := Tmp;
-               exit;
-            end if;
-            Tmp := Tmp.Next;
-         end loop;
-      end if;
-
-      List := NS;
    end Add_NS_To_List;
 
    --------------

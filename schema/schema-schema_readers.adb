@@ -1578,7 +1578,7 @@ package body Schema.Schema_Readers is
             then
                Validation_Error
                  (Handler,
-                  "#schemaLocation for """
+                  "schemaLocation for """
                   & Get (URI).all
                   & """ cannot occur after the first"
                   & " element of that namespace in XSD 1.0");
@@ -1612,11 +1612,20 @@ package body Schema.Schema_Readers is
          Need_To_Initialize := False;
       end if;
 
-      Internal_Parse
-        (Schema, File,
-         Default_Namespace    => URI,
-         Do_Initialize_Shared => Need_To_Initialize,
-         Do_Create_NFA        => Need_To_Initialize and Do_Create_NFA);
+      begin
+         Internal_Parse
+           (Schema, File,
+            Default_Namespace    => URI,
+            Do_Initialize_Shared => Need_To_Initialize,
+            Do_Create_NFA        => Need_To_Initialize and Do_Create_NFA);
+      exception
+         when XML_Not_Implemented | XML_Validation_Error =>
+            --  Copy the error message and location from Schema to Handler
+            Close (File);
+            Handler.Error_Msg := Schema.Error_Msg;
+            Handler.Error_Location := Schema.Error_Location;
+            raise;
+      end;
 
       Close (File);
 
@@ -1642,13 +1651,6 @@ package body Schema.Schema_Readers is
            (Handler.all,
             Create (Message => "Could not open file " & Get (S_File_Full).all,
                     Loc     => Handler.Current_Location));
-
-      when XML_Not_Implemented | XML_Validation_Error =>
-         --  Copy the error message and location from Schema to Handler
-         Close (File);
-         Handler.Error_Msg := Schema.Error_Msg;
-         Handler.Error_Location := Schema.Error_Location;
-         raise;
 
       when others =>
          Close (File);

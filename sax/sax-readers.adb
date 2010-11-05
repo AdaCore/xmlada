@@ -1433,13 +1433,17 @@ package body Sax.Readers is
       Node         : Element_Access;
       Prefix       : Symbol;
       URI          : Symbol;
-      Report_Event : Boolean := True) is
+      Report_Event : Boolean := True)
+   is
+      Same_As : XML_NS := No_XML_NS;
    begin
+      --  Was there a previous definition of this namespace ?
+      Find_NS_From_URI (Parser, URI, Same_As);
+
       if Node = null then
-         Add_NS_To_List (Parser.Default_Namespaces, No_XML_NS, Prefix, URI);
+         Add_NS_To_List (Parser.Default_Namespaces, Same_As, Prefix, URI);
       else
-         Add_NS_To_List
-           (Node.Namespaces, Parser.Default_Namespaces, Prefix, URI);
+         Add_NS_To_List (Node.Namespaces, Same_As, Prefix, URI);
       end if;
 
       if Report_Event then
