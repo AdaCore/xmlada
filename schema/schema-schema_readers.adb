@@ -146,7 +146,7 @@ package body Schema.Schema_Readers is
 
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
-      In_Context     : in out Context;
+      In_Context     : Natural;
       Attribute      : Attr_Descr);
    --  Insert attribute at the right location in In_Context.
 
@@ -203,6 +203,7 @@ package body Schema.Schema_Readers is
    procedure Finish_Complex_Type (Handler : access Schema_Reader'Class);
    procedure Finish_Simple_Type  (Handler : access Schema_Reader'Class);
    procedure Finish_Restriction  (Handler : access Schema_Reader'Class);
+   procedure Finish_Extension    (Handler : access Schema_Reader'Class);
    procedure Finish_Attribute    (Handler : access Schema_Reader'Class);
    procedure Finish_Union        (Handler : access Schema_Reader'Class);
    procedure Finish_List         (Handler : access Schema_Reader'Class);
@@ -330,7 +331,7 @@ package body Schema.Schema_Readers is
       Types : Type_HTables.Instance;
 
       procedure Process_Global_Element
-        (Info : Element_Descr; Start_At : State);
+        (Info : in out Element_Descr; Start_At : State);
       procedure Process_Type (Info : in out Internal_Type_Descr);
       procedure Process_Details
         (Details    : Type_Details_Access;
@@ -339,7 +340,7 @@ package body Schema.Schema_Readers is
       --  [Start] is the start of the current nested
 
       procedure Create_Element_State
-        (Info : Element_Descr;
+        (Info : in out Element_Descr;
          Start, From : State;
          Global : Boolean;
          S1, S2 : out State);
@@ -396,7 +397,7 @@ package body Schema.Schema_Readers is
       --------------------------
 
       procedure Create_Element_State
-        (Info : Element_Descr;
+        (Info : in out Element_Descr;
          Start, From : State;
          Global : Boolean;
          S1, S2 : out State)
@@ -421,7 +422,12 @@ package body Schema.Schema_Readers is
             return;
          end if;
 
+         if Debug then
+            Debug_Output ("Create_Element_State S1 for element "
+                          & To_QName (Info.Name) & To_QName (Info.Ref));
+         end if;
          S1 := NFA.Add_State (Default_User_Data);
+         Info.S := S1;
 
          --  Resolve element references
 
@@ -435,24 +441,28 @@ package body Schema.Schema_Readers is
                      Info.Loc);
                else
                   S := TRef.Element;
-                  NFA.Get_Data (S1).Descr := NFA.Get_Data (S).Descr;
-                  NFA.Set_Nested (S1, NFA.Get_Nested (S));
                   Trans := (Transition_Symbol, Info.Ref, Info.Form);
                end if;
             else
                Trans := (Transition_Symbol, Real.Name, Info.Form);
+               S := Real.S;
             end if;
+
+            if Debug then
+               Debug_Output ("opying data from" & S'Img & " to" & S1'Img);
+            end if;
+            NFA.Get_Data (S1).Descr := NFA.Get_Data (S).Descr;
+            NFA.Set_Nested (S1, NFA.Get_Nested (S));
+
          else
-            Real := Info;
-            Trans := (Transition_Symbol, Real.Name, Info.Form);
-         end if;
+            declare
+               Descr     : Type_Descr;
+            begin
+               Real := Info;
+               Trans := (Transition_Symbol, Real.Name, Info.Form);
 
-         --  Create nested NFA for the type, if needed
+               --  Create nested NFA for the type, if needed
 
-         declare
-            Descr     : Type_Descr;
-         begin
-            if S = No_State then
                if Real.Typ /= No_Qualified_Name then
                   Get_Type_Descr (Real.Typ, Info.Loc, Typ, Descr, S);
 
@@ -471,7 +481,6 @@ package body Schema.Schema_Readers is
                else
                   --  "<anyType>" (3.3.2.1 {type definition})
                   S := No_State;
-
                end if;
 
                if Info.Substitution_Group /= No_Qualified_Name then
@@ -481,14 +490,14 @@ package body Schema.Schema_Readers is
                end if;
 
                if S /= No_State then
-                  if Descr.Simple_Content /= No_Simple_Type_Index then
-                     NFA.Get_Data (S1).Descr := Descr;
-                  else
+                  NFA.Get_Data (S1).Descr := Descr;
+
+                  if Descr.Simple_Content = No_Simple_Type_Index then
                      NFA.Set_Nested (S1, NFA.Create_Nested (S));
                   end if;
                end if;
-            end if;
-         end;
+            end;
+         end if;
 
          --  Link with previous element
 
@@ -518,7 +527,7 @@ package body Schema.Schema_Readers is
       ----------------------------
 
       procedure Process_Global_Element
-        (Info : Element_Descr; Start_At : State)
+        (Info : in out Element_Descr; Start_At : State)
       is
          S1, S2 : State;
       begin
@@ -967,8 +976,7 @@ package body Schema.Schema_Readers is
          end if;
 
          if Debug then
-            Debug_Output ("Create_Simple_Type? "
-                          & To_QName (Info.Descr.Name)
+            Debug_Output ("Create_Simple_Type " & To_QName (Info.Descr.Name)
                           & " " & Internal.Kind'Img);
          end if;
 
@@ -1035,7 +1043,7 @@ package body Schema.Schema_Readers is
                  Create_Global_Simple_Type
                    (Parser.Grammar, Info.Descr.Name, Simple);
 
-            when Simple_Type_Restriction =>
+            when Simple_Type_Restriction | Simple_Type_Extension =>
                declare
                   Base  : Simple_Type_Descr;
                   Error : Symbol;
@@ -1210,7 +1218,8 @@ package body Schema.Schema_Readers is
 
             if Debug then
                Debug_Output ("Process attributes for complexType "
-                             & To_QName (Info.Descr.Name));
+                             & To_QName (Info.Descr.Name) & " State="
+                             & Info.S'Img);
             end if;
 
             Recursive_Add_Attributes (Info);
@@ -1229,6 +1238,7 @@ package body Schema.Schema_Readers is
 
       Element_Info : Element_Descr;
       Attr : Internal_Attribute_Descr;
+      Previous_Snapshot : constant NFA_Snapshot := Get_Snapshot (NFA);
 
    begin
       if Debug then
@@ -1267,6 +1277,10 @@ package body Schema.Schema_Readers is
       Element_Info := Get_First (Shared.Global_Elements);
       while Element_Info /= No_Element_Descr loop
          Process_Global_Element (Element_Info, Start_State);
+
+         --  Save the state
+         Set (Shared.Global_Elements, Element_Info.Name, Element_Info);
+
          Element_Info := Get_Next (Shared.Global_Elements);
       end loop;
 
@@ -1285,8 +1299,9 @@ package body Schema.Schema_Readers is
            ("NFA: " & Dump
               (NFA,
                Mode                => Dump_Dot_Compact,
-               Show_Details        => False,
-               Show_Isolated_Nodes => False));
+               Show_Details        => True,
+               Show_Isolated_Nodes => False,
+               Since               => Previous_Snapshot));
       end if;
 
       Reset (Types);
@@ -2652,6 +2667,7 @@ package body Schema.Schema_Readers is
       Ext   : Extension_Descr;
       Local : Symbol;
       Details : Type_Details_Access;
+      In_Type : constant Type_Index := Ctx.Type_Info;
    begin
       Ext.Loc := Handler.Current_Location;
 
@@ -2678,19 +2694,59 @@ package body Schema.Schema_Readers is
 --           end if;
       end if;
 
-      Details := new Type_Details'
-        (Kind       => Type_Extension,
-         Min_Occurs => 1,
-         Max_Occurs => 1,
-         In_Process => False,
-         Next       => null,
-         Extension  => Ext);
-      Insert_In_Type (Handler, Details);
-      Push_Context
-        (Handler,
-         (Typ       => Context_Extension,
-          Extension => Details));
+      if Handler.Shared.Types.Table (In_Type).Is_Simple
+        or else Handler.Shared.Types.Table (In_Type).Simple_Content.Kind /=
+           Simple_Type_None  --  <complexType><simpleContent> case
+      then
+         if Debug then
+            Debug_Output ("Create extension: in simpleContent or simpleType");
+         end if;
+
+         Push_Context
+           (Handler,
+            (Typ    => Context_Simple_Extension,
+             Simple => (Kind             => Simple_Type_Extension,
+                        In_Process       => False,
+                        Restriction_Base => Ext.Base,
+                        Facets           => No_Facets,
+                        Loc              => Handler.Current_Location)));
+      else
+         Details := new Type_Details'
+           (Kind       => Type_Extension,
+            Min_Occurs => 1,
+            Max_Occurs => 1,
+            In_Process => False,
+            Next       => null,
+            Extension  => Ext);
+         Insert_In_Type (Handler, Details);
+         Push_Context
+           (Handler,
+            (Typ       => Context_Extension,
+             Extension => Details));
+      end if;
    end Create_Extension;
+
+   ----------------------
+   -- Finish_Extension --
+   ----------------------
+
+   procedure Finish_Extension (Handler : access Schema_Reader'Class) is
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
+   begin
+      if Ctx.Typ = Context_Simple_Extension then
+         pragma Assert (Next.Typ = Context_Type_Def);  --  a simple type
+
+         if Handler.Shared.Types.Table (Next.Type_Info).Is_Simple then
+            Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.Simple;
+         else
+            Handler.Shared.Types.Table (Next.Type_Info).Simple_Content :=
+              Ctx.Simple;
+         end if;
+      end if;
+   end Finish_Extension;
 
    -----------------
    -- Create_List --
@@ -2839,7 +2895,7 @@ package body Schema.Schema_Readers is
             end if;
             Ctx.Restriction.Restriction.Details := Element;
 
-         when Context_Simple_Restriction =>
+         when Context_Simple_Restriction | Context_Simple_Extension =>
             Free (Element);
 
          when Context_Schema | Context_Attribute | Context_Element
@@ -3063,13 +3119,15 @@ package body Schema.Schema_Readers is
 
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
-      In_Context     : in out Context;
-      Attribute      : Attr_Descr) is
+      In_Context     : Natural;
+      Attribute      : Attr_Descr)
+   is
+      Ctx : Context renames Handler.Contexts (In_Context);
    begin
-      case In_Context.Typ is
+      case Ctx.Typ is
          when Context_Type_Def =>
             Append
-              (Handler.Shared.Types.Table (In_Context.Type_Info).Attributes,
+              (Handler.Shared.Types.Table (Ctx.Type_Info).Attributes,
                Attribute);
 
          when Context_Schema | Context_Redefine =>
@@ -3079,7 +3137,19 @@ package body Schema.Schema_Readers is
 
          when Context_Extension =>
             Append
-              (In_Context.Extension.Extension.Attributes, Attribute);
+              (Ctx.Extension.Extension.Attributes, Attribute);
+
+         when Context_Simple_Extension =>
+            pragma Assert
+              (Handler.Contexts (In_Context - 1).Typ = Context_Type_Def);
+            pragma Assert  --  a <simpleType><extension> cannot have attributes
+              (not Handler.Shared.Types.Table
+                 (Handler.Contexts (In_Context - 1).Type_Info).Is_Simple);
+
+            Append
+              (Handler.Shared.Types.Table
+                 (Handler.Contexts (In_Context - 1).Type_Info).Attributes,
+               Attribute);
 
          when Context_Restriction =>
             null;
@@ -3094,7 +3164,7 @@ package body Schema.Schema_Readers is
             null;
 
          when Context_Attribute_Group =>
-            Append (In_Context.Attr_Group.Attributes, Attribute);
+            Append (Ctx.Attr_Group.Attributes, Attribute);
 
          when Context_Element | Context_Sequence | Context_Choice
             | Context_Attribute | Context_All
@@ -3113,10 +3183,8 @@ package body Schema.Schema_Readers is
    procedure Finish_Attribute (Handler : access Schema_Reader'Class) is
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
-      Next : constant Context_Access :=
-        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
-      Insert_Attribute (Handler, Next.all, Ctx.Attribute);
+      Insert_Attribute (Handler, Handler.Contexts_Last - 1, Ctx.Attribute);
    end Finish_Attribute;
 
    -------------------
@@ -3453,7 +3521,7 @@ package body Schema.Schema_Readers is
          Finish_Restriction (H);
 
       elsif Local_Name = Handler.Extension then
-         null;
+         Finish_Extension (H);
 
       elsif Local_Name = Handler.Attribute then
          Finish_Attribute (H);

@@ -526,7 +526,7 @@ package Schema.Validators is
 
    procedure Validate_Attributes
      (Grammar   : XML_Grammar;
-      Attributes : Attribute_Validator_List;
+      Typ       : Type_Descr;
       Reader    : access Abstract_Validation_Reader'Class;
       Atts      : in out Sax.Readers.Sax_Attribute_List;
       Nillable  : Boolean;

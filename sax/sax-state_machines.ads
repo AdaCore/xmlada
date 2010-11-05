@@ -379,7 +379,8 @@ package Sax.State_Machines is
         (Self                : access NFA'Class;
          Mode                : Dump_Mode := Dump_Compact;
          Show_Details        : Boolean := True;
-         Show_Isolated_Nodes : Boolean := True) return String;
+         Show_Isolated_Nodes : Boolean := True;
+         Since               : NFA_Snapshot := No_NFA_Snapshot) return String;
       --  Dump the NFA into a string.
       --  This is mostly for debug reasons, and the output might change from
       --  one version to the next.
@@ -388,6 +389,9 @@ package Sax.State_Machines is
       --  displayed, not the actual list of nodes and transitions.
       --  If [Show_Isolated_Nodes] is false, then nodes that are not linked
       --  to any other and have no nested node will not be displayed.
+      --  Only states greater than [Since] are displayed: for instance,
+      --  if you already have a NFA to start with and you are adding to it, you
+      --  can view just your addition using this parameter.
 
       function Dump
         (Self   : access NFA'Class;

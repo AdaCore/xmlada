@@ -541,7 +541,8 @@ package body Sax.State_Machines is
 
    begin
       if Debug then
-         Put_Line ("Repeat" & Min_Occurs'Img & Max_Occurs'Img);
+         Put_Line ("Repeat" & From'Img & " to" & To'Img
+                   & " Min,Max=" & Min_Occurs'Img & Max_Occurs'Img);
       end if;
 
       --  First the simple and usual cases (that cover the usual "*", "+" and
@@ -776,17 +777,21 @@ package body Sax.State_Machines is
       for S in 1 .. Last (Self.Active) loop
          S2 := Self.Active.Table (S).S;
 
-         if S2 /= Final_State
-           and then
-             (Self.Active.Table (S).Nested = No_Matcher_State
+         if S2 /= Final_State then
+            --  Either we have no nested automaton
+            --  Or we always want to return the states anyway
+            --  Or the nested state has completed
+
+            if Self.Active.Table (S).Nested = No_Matcher_State
               or else not Ignore_If_Nested
               or else Self.Active.Table (Self.Active.Table (S).Nested).S =
-                Final_State)
-         then
-            if not Ignore_If_Default
-              or else Self.NFA.States.Table (S2).Data /= Default_Data
+                Final_State
             then
-               Callback (Self.NFA, S2);
+               if not Ignore_If_Default
+                 or else Self.NFA.States.Table (S2).Data /= Default_Data
+               then
+                  Callback (Self.NFA, S2);
+               end if;
             end if;
          end if;
       end loop;
@@ -916,10 +921,10 @@ package body Sax.State_Machines is
 
                if Success then
                   --  Exits the nested NFA, and thus transitions from its super
-                  --  state. The super state, however, remains active until we
-                  --  do transition from it.
+                  --  state. The super state itself is terminated.
+                  --  ??? Should the superstate remain active, in case it has
+                  --  standard transitions ?
 
-                  Mark_Active (Self, New_First, S.S, Nested_First);
                   Nested_Final := Nested_In_Final (Self, Nested_First);
                   Event_Processed_In_Nested := True;
 
@@ -929,6 +934,8 @@ package body Sax.State_Machines is
                         Filter => (Transition_On_Exit_Empty => True,
                                    Transition_On_Exit_Symbol => True,
                                    others => False));
+                  else
+                     Mark_Active (Self, New_First, S.S, Nested_First);
                   end if;
 
                else
@@ -1313,7 +1320,8 @@ package body Sax.State_Machines is
         (Self                : access NFA'Class;
          Mode                : Dump_Mode := Dump_Compact;
          Show_Details        : Boolean := True;
-         Show_Isolated_Nodes : Boolean := True) return String
+         Show_Isolated_Nodes : Boolean := True;
+         Since               : NFA_Snapshot := No_NFA_Snapshot) return String
       is
          Dumped : array (State_Tables.First .. Last (Self.States)) of Boolean
            := (others => False);
@@ -1360,12 +1368,13 @@ package body Sax.State_Machines is
                declare
                   Tr : Transition renames Self.Transitions.Table (T);
                begin
-                  Append (Result,
-                          Prefix & Node_Name (S, Nested_In)
-                          & "->" & Node_Name (Tr.To_State, Nested_In)
-                          & "[");
+                  if Tr.To_State > Since.States then
+                     Append (Result,
+                             Prefix & Node_Name (S, Nested_In)
+                             & "->" & Node_Name (Tr.To_State, Nested_In)
+                             & "[");
 
-                  case Tr.Kind is
+                     case Tr.Kind is
                      when Transition_On_Symbol =>
                         Append (Result, "label=""" & Image (Tr.Sym) & """");
                      when Transition_On_Exit_Symbol =>
@@ -1377,13 +1386,14 @@ package body Sax.State_Machines is
                         null;
                      when Transition_On_Exit_Empty =>
                         Append (Result, "label=on_exit style=dotted");
-                  end case;
+                     end case;
 
-                  Append (Result, "];");
-                  Newline;
+                     Append (Result, "];");
+                     Newline;
 
-                  if Tr.To_State /= Final_State then
-                     Dump_Dot (Tr.To_State, Nested_In, Prefix);
+                     if Tr.To_State /= Final_State then
+                        Dump_Dot (Tr.To_State, Nested_In, Prefix);
+                     end if;
                   end if;
 
                   T := Tr.Next_For_State;
@@ -1399,17 +1409,19 @@ package body Sax.State_Machines is
             Name  : constant String := Node_Name (S);
             Label : constant String := Node_Label (Self, S);
          begin
-            Append (Result, "subgraph cluster" & Name & "{");
-            Newline;
-            Append (Result, " label=""" & Label & """;");
-            Newline;
-            Append_Node (Self, S, Result, S);
-            Append_Node (Self, Final_State, Result, S);
+            if S > Since.States then
+               Append (Result, "subgraph cluster" & Name & "{");
+               Newline;
+               Append (Result, " label=""" & Label & """;");
+               Newline;
+               Append_Node (Self, S, Result, S);
+               Append_Node (Self, Final_State, Result, S);
 
-            Dump_Dot (S, Prefix => " ", Nested_In => S);
+               Dump_Dot (S, Prefix => " ", Nested_In => S);
 
-            Append (Result, "};");
-            Newline;
+               Append (Result, "};");
+               Newline;
+            end if;
          end Dump_Nested;
 
          --------------
@@ -1418,9 +1430,12 @@ package body Sax.State_Machines is
 
          procedure Dump_Dot (Start_At, Nested_In : State; Prefix : String) is
          begin
-            if Start_At = Final_State or else Dumped (Start_At) then
+            if Start_At = Final_State
+              or else Dumped (Start_At)
+            then
                return;
             end if;
+
             Dumped (Start_At) := True;
             Dump_Dot_Transitions
               (Start_At,
@@ -1433,6 +1448,10 @@ package body Sax.State_Machines is
                  & ASCII.LF);
          Append (Result, "Total transitions:" & Last (Self.Transitions)'Img
                  & ASCII.LF);
+
+         if Since /= No_NFA_Snapshot then
+            Append (Result, "Dump since " & Since.States'Img & ASCII.LF);
+         end if;
 
          if not Show_Details then
             return To_String (Result);
@@ -1459,7 +1478,7 @@ package body Sax.State_Machines is
             --  remove their states from the global lists, so that we can then
             --  only dump the toplevel states
 
-            for S in State_Tables.First .. Last (Self.States) loop
+            for S in Since.States + 1 .. Last (Self.States) loop
                if Self.States.Table (S).Nested /= No_State then
                   Dump_Nested (Self.States.Table (S).Nested);
                end if;
@@ -1469,11 +1488,11 @@ package body Sax.State_Machines is
             --  into the clusters, as long as the nodes where first encountered
             --  there
 
-            for S in State_Tables.First .. Last (Self.States) loop
+            for S in Since.States + 1 .. Last (Self.States) loop
                if Show_Isolated_Nodes
-                 or else Self.States.Table (S).Nested /= No_State
-                 or else Self.States.Table (S).First_Transition /=
-                   No_Transition
+                  or else Self.States.Table (S).Nested /= No_State
+                  or else Self.States.Table (S).First_Transition /=
+                    No_Transition
                then
                   Append_Node (Self, S, Result);
                end if;
@@ -1482,11 +1501,14 @@ package body Sax.State_Machines is
             --  Now dump the toplevel states (that is the ones that haven't
             --  been dumped yet)
 
-            for S in State_Tables.First .. Last (Self.States) loop
-               if Show_Isolated_Nodes
-                 or else Self.States.Table (S).Nested /= No_State
-                 or else Self.States.Table (S).First_Transition /=
-                   No_Transition
+            Dump_Dot (Start_State, No_State, "");  --  Always
+
+            for S in Since.States + 1 .. Last (Self.States) loop
+               if S /= Start_State and then
+                 (Show_Isolated_Nodes
+                  or else Self.States.Table (S).Nested /= No_State
+                  or else Self.States.Table (S).First_Transition /=
+                    No_Transition)
                then
                   Dump_Dot (S, No_State, "");
                end if;

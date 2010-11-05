@@ -88,6 +88,8 @@ private
       Nillable           : Boolean            := False;
       Has_Block          : Boolean            := False;
       Loc                : Sax.Locators.Location := Sax.Locators.No_Location;
+      S                  : Schema_State_Machines.State :=
+        Schema_State_Machines.No_State;
    end record;
    No_Element_Descr : constant Element_Descr := (others => <>);
 
@@ -174,6 +176,7 @@ private
    type Simple_Type_Kind is (Simple_Type_None,
                              Simple_Type,
                              Simple_Type_Restriction,
+                             Simple_Type_Extension,
                              Simple_Type_Union,
                              Simple_Type_List);
    type Internal_Simple_Type_Descr (Kind : Simple_Type_Kind := Simple_Type)
@@ -193,7 +196,7 @@ private
          when Simple_Type_List        =>
             List_Items      : Type_Member_Array
               (1 .. 1) := (others => No_Type_Member);
-         when Simple_Type_Restriction =>
+         when Simple_Type_Restriction | Simple_Type_Extension =>
             Restriction_Base : Qualified_Name;
             Facets           : Schema.Simple_Types.All_Facets :=
               Schema.Simple_Types.No_Facets;
@@ -212,6 +215,9 @@ private
       case Is_Simple is
          when False =>
             Attributes     : Attr_Array_Access;
+            --  Stores attributes from <complexType> or the internal
+            --  <extension>
+
             Details        : Type_Details_Access;
             Simple_Content : Internal_Simple_Type_Descr :=
               No_Internal_Simple_Type_Descr;
@@ -237,6 +243,7 @@ private
                          Context_Schema,
                          Context_Restriction,
                          Context_Simple_Restriction, --  simpleType
+                         Context_Simple_Extension,   --  simpleType
                          Context_Extension,
                          Context_All,
                          Context_List,
@@ -259,10 +266,10 @@ private
          when Context_Schema          => null;
          when Context_Redefine        => null;
          when Context_Group           => Group       : Group_Descr;
-         when Context_Extension       => Extension   : Type_Details_Access;
+         when Context_Extension       => Extension  : Type_Details_Access;
          when Context_List            => List        : List_Type_Descr;
          when Context_Restriction     => Restriction : Type_Details_Access;
-         when Context_Simple_Restriction =>
+         when Context_Simple_Restriction | Context_Simple_Extension =>
             Simple   : Internal_Simple_Type_Descr;
          when Context_Union           => Union       : Union_Type_Descr;
          when Context_Attribute      => Attribute   : Attr_Descr;

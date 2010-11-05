@@ -234,12 +234,14 @@ package body Schema.Validators is
 
    procedure Validate_Attributes
      (Grammar    : XML_Grammar;
-      Attributes : Attribute_Validator_List;
+      Typ        : Type_Descr;
       Reader     : access Abstract_Validation_Reader'Class;
       Atts       : in out Sax.Readers.Sax_Attribute_List;
       Nillable   : Boolean;
       Is_Nil     : out Boolean)
    is
+      Attributes : constant Attribute_Validator_List := Typ.Attributes;
+
       Length : constant Natural := Get_Length (Atts);
       G      : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
       Attrs  : Attribute_Validator_Array :=
@@ -314,7 +316,7 @@ package body Schema.Validators is
                case Attr.Use_Type is
                   when Required =>
                      Validation_Error
-                       (Reader, "#Attribute """
+                       (Reader, "Attribute """
                         & To_QName (Attr.Name)
                         & """ is required in this context");
                   when Prohibited | Optional | Default =>
@@ -330,7 +332,7 @@ package body Schema.Validators is
                        and then Get_Prefix (Atts, Found) = Empty_String
                      then
                         Validation_Error
-                          (Reader, "#Attribute " & Get_Qname (Atts, Found)
+                          (Reader, "Attribute " & Get_Qname (Atts, Found)
                            & " must have a namespace");
                      end if;
 
@@ -340,7 +342,7 @@ package body Schema.Validators is
                      --  and then Get_URI (Atts, Found) = Target_NS
                      then
                         Validation_Error
-                          (Reader, "#Attribute " & Get_Qname (Atts, Found)
+                          (Reader, "Attribute " & Get_Qname (Atts, Found)
                            & " must not have a namespace");
                      end if;
                end case;
@@ -523,7 +525,7 @@ package body Schema.Validators is
             if Get_URI (Atts, S) = Reader.XML_Instance_URI then
                if Get_Local_Name (Atts, S) = Reader.Nil then
                   if not Nillable then
-                     Validation_Error (Reader, "#Element cannot be nil");
+                     Validation_Error (Reader, "Element cannot be nil");
                   end if;
 
                   Is_Nil := Get_Value_As_Boolean (Atts, S);
@@ -539,19 +541,31 @@ package body Schema.Validators is
 
                else
                   Validation_Error
-                    (Reader, "#Attribute """ & Get_Qname (Atts, S)
-                     & """ invalid for this element");
+                    (Reader, "Attribute """ & Get_Qname (Atts, S)
+                     & """ invalid for type "
+                     & To_QName (Typ.Name));
                end if;
 
             elsif Seen (S).Prohibited then
                Validation_Error
-                 (Reader, "#Attribute """ & Get_Qname (Atts, S)
-                  & """ is prohibited in this context");
+                 (Reader, "Attribute """ & Get_Qname (Atts, S)
+                  & """ is prohibited in this context "
+                  & To_QName (Typ.Name));
 
             else
+               if Debug then
+                  for A in Attrs'Range loop
+                     Debug_Output
+                       ("Valid: "
+                        & To_QName
+                          (G.Attributes.Table (Attrs (A).Validator).Name));
+                  end loop;
+               end if;
+
                Validation_Error
-                 (Reader, "#Attribute """ & Get_Qname (Atts, S)
-                  & """ invalid for this element");
+                 (Reader, "Attribute """ & Get_Qname (Atts, S)
+                  & """ invalid for type "
+                  & To_QName (Typ.Name));
             end if;
          end if;
       end loop;
