@@ -43,7 +43,7 @@ with Ada.Unchecked_Deallocation;
 
 package body Schema.Schema_Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
-   use Type_Tables, Type_HTables, Element_HTables;
+   use Type_Tables, Type_HTables, Element_HTables, Group_HTables;
 
    Max_Namespaces_In_Any_Attribute : constant := 50;
    --  Maximum number of namespaces for a <anyAttribute>
@@ -77,10 +77,6 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Name    : Qualified_Name;
       Result  : out XML_Element);
-   procedure Lookup_With_NS
-     (Handler : access Schema_Reader'Class;
-      QName   : Symbol;
-      Result  : out XML_Group);
    procedure Lookup_With_NS
      (Handler    : access Schema_Reader'Class;
       QName      : Symbol;
@@ -499,6 +495,7 @@ package body Schema.Schema_Readers is
       is
          S : State;
          T : Type_Details_Access;
+         Gr : Group_Descr;
       begin
          case Details.Kind is
             when Type_Empty =>
@@ -526,6 +523,15 @@ package body Schema.Schema_Readers is
 
             when Type_Element =>
                Nested_End := Create_Element_State (Details.Element, Start);
+
+            when Type_Group =>
+               Gr := Get (Parser.Global_Groups, Details.Group.Ref);
+               if Gr = No_Group_Descr then
+                  Validation_Error
+                    (Parser, "No group """ & To_QName (Details.Group.Ref)
+                     & """");
+               end if;
+               Process_Details (Gr.Details, Start, Nested_End);
 
             when Type_Any =>
                Nested_End := NFA.Add_State (Default_User_Data);
@@ -795,22 +801,6 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Lookup_With_NS
-     (Handler : access Schema_Reader'Class;
-      QName   : Symbol;
-      Result  : out XML_Group)
-   is
-      Name : constant Qualified_Name := Resolve_QName (Handler, QName);
-      G    : XML_Grammar_NS;
-   begin
-      Get_Grammar_For_Namespace (Handler, Name.NS, G);
-      Result := Lookup_Group (G, Handler, Name.Local);
-   end Lookup_With_NS;
-
-   --------------------
-   -- Lookup_With_NS --
-   --------------------
-
-   procedure Lookup_With_NS
      (Handler    : access Schema_Reader'Class;
       QName      : Symbol;
       Result     : out XML_Attribute_Group)
@@ -860,114 +850,103 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
-      Name_Index : constant Integer :=
-        Get_Index (Atts, URI => Empty_String, Local_Name => Handler.Name);
-      Ref_Index : constant Integer :=
-        Get_Index (Atts, URI => Empty_String, Local_Name => Handler.Ref);
-      Tmp  : Context_Access;
       Min_Occurs, Max_Occurs : Integer := 1;
+      Group   : Group_Descr;
+      Local   : Symbol;
+      Details : Type_Details_Access;
    begin
-      Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
-
-      Handler.Contexts := new Context'
-        (Typ             => Context_Group,
-         Group           => No_XML_Group,
-         Redefined_Group => No_XML_Group,
-         Group_Min       => Min_Occurs,
-         Group_Max       => Max_Occurs,
-         Next            => Handler.Contexts);
-
-      --  Do not use In_Redefine_Context, since this only applies for types
-      --  that are redefined
-      if Handler.Contexts.Next.Typ = Context_Redefine then
-         Handler.Contexts.Redefined_Group := Redefine_Group
-           (Handler.Target_NS, Get_Value (Atts, Name_Index));
-         if Debug then
-            Output_Action (Ada_Name (Handler.Contexts)
-                           & " := Redefine_Group (Handler.Target_NS, """
-                           & Get (Get_Value (Atts, Name_Index)).all & """);");
-         end if;
-      end if;
-
-      if Name_Index /= -1 then
-         Handler.Contexts.Group := Create_Global_Group
-           (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
-         if Debug then
-            Output_Action
-              (Ada_Name (Handler.Contexts)
-               & " := Create_Global_Group (Handler.Target_NS, """
-               & Get (Get_Value (Atts, Name_Index)).all & """);");
-         end if;
-
-      elsif Ref_Index /= -1 then
-         if In_Redefine_Context (Handler.all) then
-            Tmp := Handler.Contexts;
-            while Tmp /= null loop
-               if Tmp.Typ = Context_Group
-                 and then Tmp.Next.Typ = Context_Redefine
-                 and then Get_Local_Name (Tmp.Group) =
-                 Get_Value (Atts, Ref_Index)
-               then
-                  Handler.Contexts.Group := Tmp.Redefined_Group;
-                  Output_Action
-                    (Ada_Name (Handler.Contexts)
-                     & " := <old definition of group>;");
-                  exit;
-               end if;
-               Tmp := Tmp.Next;
-            end loop;
-         end if;
-
-         if Handler.Contexts.Group = No_XML_Group then
-            Lookup_With_NS
-              (Handler, Get_Value (Atts, Ref_Index),
-               Handler.Contexts.Group);
-            if Debug then
-               Output_Action
-                 (Ada_Name (Handler.Contexts) & " := Group;");
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Name then
+               Group.Name := (NS    => Get_Namespace_URI (Handler.Target_NS),
+                              Local => Get_Value (Atts, J));
+            elsif Local = Handler.Ref then
+               Group.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
             end if;
          end if;
-      end if;
+      end loop;
 
-      case Handler.Contexts.Next.Typ is
+      case Handler.Contexts.Typ is
          when Context_Schema | Context_Redefine =>
             null;
 
-         when Context_Type_Def =>
-            null;  --  See Finish_Group
-
-         when Context_Sequence =>
-            null;
-
-         when Context_Choice =>
-            null;
-
-         when Context_Extension =>
-            --  Seq := Create_Sequence (Handler.Target_NS);
-            null;
---              if Debug then
---                 Output_Action ("Validator := Create_Sequence;");
---              end if;
---              Add_Particle (Seq, Handler, Handler.Contexts.Group,
---                            Min_Occurs, Max_Occurs);
-
-            --  Handler.Contexts.Next.Extension := XML_Validator (Seq);
-
-         when Context_Restriction =>
-            null;
---            Seq := Create_Sequence (Handler.Target_NS);
---              Add_Particle (Seq, Handler, Handler.Contexts.Group,
---                            Min_Occurs, Max_Occurs);
---            Handler.Contexts.Next.Restriction := XML_Validator (Seq);
+         when Context_Sequence | Context_Choice =>
+            Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
+            Details := new Type_Details'
+              (Kind       => Type_Group,
+               Min_Occurs => Min_Occurs,
+               Max_Occurs => Max_Occurs,
+               Next       => null,
+               Group      => Group);
+            Insert_In_Type (Handler, Details);
 
          when others =>
-            if Debug then
-               Output_Action ("Can't handle nested group decl");
-            end if;
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Unsupported: ""group"" in this context");
       end case;
+
+      --  ??? Only needed for toplevel groups, but then End_Element will
+      --  remove the wrong context...
+      Handler.Contexts := new Context'
+        (Typ             => Context_Group,
+         Group           => Group,
+         Redefined_Group => No_XML_Group,
+         Next            => Handler.Contexts);
+
+      --  Do not use In_Redefine_Context, since this only applies for types
+      --  that are redefined
+
+--        if Handler.Contexts.Next.Typ = Context_Redefine then
+--           Handler.Contexts.Redefined_Group := Redefine_Group
+--             (Handler.Target_NS, Get_Value (Atts, Name_Index));
+--           if Debug then
+--              Output_Action (Ada_Name (Handler.Contexts)
+--                             & " := Redefine_Group (Handler.Target_NS, """
+--                          & Get (Get_Value (Atts, Name_Index)).all & """);");
+--           end if;
+--        end if;
+
+--        if Name_Index /= -1 then
+--           Handler.Contexts.Group := Create_Global_Group
+--             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
+--           if Debug then
+--              Output_Action
+--                (Ada_Name (Handler.Contexts)
+--                 & " := Create_Global_Group (Handler.Target_NS, """
+--                 & Get (Get_Value (Atts, Name_Index)).all & """);");
+--           end if;
+--
+--        elsif Ref_Index /= -1 then
+--           if In_Redefine_Context (Handler.all) then
+--              Tmp := Handler.Contexts;
+--              while Tmp /= null loop
+--                 if Tmp.Typ = Context_Group
+--                   and then Tmp.Next.Typ = Context_Redefine
+--                   and then Get_Local_Name (Tmp.Group) =
+--                   Get_Value (Atts, Ref_Index)
+--                 then
+--                    Handler.Contexts.Group := Tmp.Redefined_Group;
+--                    Output_Action
+--                      (Ada_Name (Handler.Contexts)
+--                       & " := <old definition of group>;");
+--                    exit;
+--                 end if;
+--                 Tmp := Tmp.Next;
+--              end loop;
+--           end if;
+--
+--           if Handler.Contexts.Group = No_XML_Group then
+--              Lookup_With_NS
+--                (Handler, Get_Value (Atts, Ref_Index),
+--                 Handler.Contexts.Group);
+--              if Debug then
+--                 Output_Action
+--                   (Ada_Name (Handler.Contexts) & " := Group;");
+--              end if;
+--           end if;
+--        end if;
    end Create_Group;
 
    ------------------
@@ -975,25 +954,12 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Finish_Group (Handler : access Schema_Reader'Class) is
---      Seq : Sequence;
    begin
       case Handler.Contexts.Next.Typ is
-         when Context_Type_Def =>
---            Seq := Create_Sequence (Handler.Target_NS);
---              Add_Particle (Seq, Handler, Handler.Contexts.Group,
---                            Handler.Contexts.Group_Min,
---                            Handler.Contexts.Group_Max);
-
---              Handler.Contexts.Next.Type_Validator := Restriction_Of
---                (Handler.Target_NS, Handler,
---                 Lookup (Handler.Schema_NS, Handler, Handler.Anytype),
---                 XML_Validator (Seq));
-            if Debug then
-               Output_Action
-                 ("Validator := Restriction_Of (Lookup (Handler.Schema.NS,"
-                  & """anytype""), " & Ada_Name (Handler.Contexts));
-            end if;
-
+         when Context_Schema | Context_Redefine =>
+            Set (Handler.Global_Groups,
+                 Handler.Contexts.Group.Name,
+                 Handler.Contexts.Group);
          when others =>
             null;
       end case;
@@ -1408,9 +1374,8 @@ package body Schema.Schema_Readers is
            (Handler, "#Default and Fixed cannot be both specified");
       end if;
 
-      Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
-
       if Handler.Contexts.Typ /= Context_Schema then
+         Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
          Details := new Type_Details'
            (Kind         => Type_Element,
             Min_Occurs   => Min_Occurs,
@@ -2172,11 +2137,16 @@ package body Schema.Schema_Readers is
          when Context_Choice =>
             Append (Ctx.Choice.First_In_Choice, Element);
 
-         when Context_Extension | Context_Restriction | Context_Group =>
+         when Context_Group =>
+            pragma Assert (Ctx.Group.Details = null);
+            Ctx.Group.Details := Element;
+
+         when Context_Extension | Context_Restriction =>
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Support for """ & Element.Kind'Img
-               & """ here will be implemented soon");
+               & """ in context " & Ctx.Typ'Img
+               & " will be implemented soon");
 
          when Context_Schema | Context_Attribute | Context_Element
             | Context_All | Context_Union
@@ -3131,8 +3101,9 @@ package body Schema.Schema_Readers is
          case Self.Kind is
             when Type_Empty | Type_Element | Type_Any =>
                null;
-            when Type_Sequence             => Free (Self.First_In_Seq);
-            when Type_Choice               => Free (Self.First_In_Choice);
+            when Type_Sequence => Free (Self.First_In_Seq);
+            when Type_Choice   => Free (Self.First_In_Choice);
+            when Type_Group    => Free (Self.Group.Details);
          end case;
 
          Unchecked_Free (Self);

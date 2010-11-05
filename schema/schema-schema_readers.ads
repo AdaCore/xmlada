@@ -68,7 +68,7 @@ private
    No_Type_Index : constant Type_Index := -1;
 
    type Type_Kind is (Type_Empty, Type_Sequence, Type_Choice, Type_Element,
-                      Type_Any);
+                      Type_Any, Type_Group);
 
    type Type_Details;
    type Type_Details_Access is access all Type_Details;
@@ -90,6 +90,13 @@ private
    end record;
    No_Element_Descr : constant Element_Descr := (others => <>);
 
+   type Group_Descr is record
+      Name           : Qualified_Name := No_Qualified_Name;
+      Ref            : Qualified_Name := No_Qualified_Name;
+      Details        : Type_Details_Access;
+   end record;
+   No_Group_Descr : constant Group_Descr := (others => <>);
+
    type Type_Details (Kind : Type_Kind := Type_Empty) is record
       Min_Occurs, Max_Occurs : Integer;
       Next : Type_Details_Access;
@@ -99,6 +106,7 @@ private
          when Type_Choice   => First_In_Choice : Type_Details_Access;
          when Type_Element  => Element         : Element_Descr;
          when Type_Any      => Any             : Any_Descr;
+         when Type_Group    => Group           : Group_Descr;
       end case;
    end record;
 
@@ -112,11 +120,6 @@ private
       Details        : Type_Details_Access;
       NFA            : Schema.Validators.Schema_State_Machines.Nested_NFA;
       Attributes     : Attribute_Validator_List_Access;
-   end record;
-
-   type Group_Descr is record
-      Name           : Qualified_Name := No_Qualified_Name;
-
    end record;
 
    type Schema_Descr is record
@@ -151,7 +154,6 @@ private
             Type_Info      : Type_Index;
             Type_Validator : Schema.Validators.XML_Validator;
             Redefined_Type : Schema.Validators.XML_Type; --  <redefine>
-
          when Context_Element =>
             Element        : Element_Descr;
          when Context_Sequence =>
@@ -180,10 +182,8 @@ private
             Attribute : Schema.Validators.Attribute_Validator;
             Attribute_Is_Ref : Boolean;
          when Context_Group =>
-            Group     : Schema.Validators.XML_Group;
-            Redefined_Group : Schema.Validators.XML_Group;
-            Group_Min, Group_Max : Integer;
-            --  Handling of <redefine>
+            Group           : Group_Descr;
+            Redefined_Group : Schema.Validators.XML_Group;  --  <redefine>
          when Context_Attribute_Group =>
             Attr_Group : Schema.Validators.XML_Attribute_Group;
       end case;
@@ -210,6 +210,13 @@ private
      (Header_Num => Header_Num,
       Element    => Element_Descr,
       No_Element => No_Element_Descr,
+      Key        => Qualified_Name,
+      Hash       => Hash,
+      Equal      => "=");
+   package Group_HTables is new GNAT.Dynamic_HTables.Simple_HTable
+     (Header_Num => Header_Num,
+      Element    => Group_Descr,
+      No_Element => No_Group_Descr,
       Key        => Qualified_Name,
       Hash       => Hash,
       Equal      => "=");
@@ -241,6 +248,7 @@ private
       Types           : Type_Tables.Instance;
       Global_Elements : Element_HTables.Instance;
       Global_Types    : Type_HTables.Instance;
+      Global_Groups   : Group_HTables.Instance;
    end record;
 
    overriding procedure Start_Element
