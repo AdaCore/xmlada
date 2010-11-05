@@ -89,18 +89,23 @@ package body Sax.Pointers is
       --------------
 
       procedure Finalize (P : in out Pointer) is
+         Data : Root_Encapsulated_Access := P.Data;
       begin
+         --  Make Finalize idempotent, since it could be called several
+         --  times for the same instance (RM 7.6.1(24)
+
+         P.Data := null;
+
          --  Test if refcount is > 0, in case we are already freeing this
          --  element. That shouldn't happen, though, since we are not in a
          --  multi-tasking environment.
 
-         if P.Data /= null and then P.Data.Refcount > 0 then
-            P.Data.Refcount := P.Data.Refcount - 1;
-            if P.Data.Refcount = 0 then
-               Free (P.Data.all);
-               Unchecked_Free (P.Data);
+         if Data /= null and then Data.Refcount > 0 then
+            Data.Refcount := Data.Refcount - 1;
+            if Data.Refcount = 0 then
+               Free (Data.all);
+               Unchecked_Free (Data);
             end if;
-            P.Data := null;
          end if;
       end Finalize;
 
