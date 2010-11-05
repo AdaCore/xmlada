@@ -982,6 +982,11 @@ package body Schema.Validators is
                   others => <>);
          Create_Global_Attribute (Reader.Grammar, Attr);
 
+         Attr := (Name =>
+                    (NS => Reader.XML_URI, Local => Find (G.Symbols, "space")),
+                  others => <>);
+         Create_Global_Attribute (Reader.Grammar, Attr);
+
          Add_Schema_For_Schema (Reader);
       end if;
    end Initialize_Grammar;

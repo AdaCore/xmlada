@@ -316,8 +316,6 @@ package body Schema.Schema_Readers is
 
       Shared : XSD_Data_Access renames Parser.Shared;
 
-      End_Schema_Choice : State;
-
       package Type_HTables is new GNAT.Dynamic_HTables.Simple_HTable
         (Header_Num => Header_Num,
          Element    => Type_Index,
@@ -1156,10 +1154,6 @@ package body Schema.Schema_Readers is
          Debug_Output ("Create_NFA: adding global elements");
       end if;
 
-      End_Schema_Choice := NFA.Add_State (Default_User_Data);
-      NFA.Add_Transition (End_Schema_Choice, Final_State,
-                          (Kind => Transition_Close));
-
       Element_Info := Get_First (Shared.Global_Elements);
       while Element_Info /= No_Element_Descr loop
          Process_Global_Element (Element_Info);
@@ -1181,7 +1175,7 @@ package body Schema.Schema_Readers is
            ("NFA: " & Dump
               (NFA,
                Mode                => Dump_Dot_Compact,
-               Show_Details        => True,
+               Show_Details        => False,
                Show_Isolated_Nodes => False));
       end if;
 
