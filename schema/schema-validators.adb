@@ -37,9 +37,9 @@ with Sax.Locators;                   use Sax.Locators;
 with Sax.Readers;                    use Sax.Readers;
 with Sax.Symbols;                    use Sax.Symbols;
 with Sax.Utils;                      use Sax.Utils;
+with Schema.Simple_Types;            use Schema.Simple_Types;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
 with Schema.Validators.Lists;        use Schema.Validators.Lists;
-with Schema.Simple_Types;            use Schema.Simple_Types;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
@@ -814,20 +814,25 @@ package body Schema.Validators is
       use Reference_HTables, Simple_Type_Tables;
       G : XML_Grammars.Encapsulated_Access;
 
-      procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr);
+      function Register
+        (Local          : Byte_Sequence;
+         Descr          : Simple_Type_Descr;
+         Restriction_Of : Type_Index) return Type_Index;
 
-      function Create_UR_Type return Nested_NFA;
+      function Create_UR_Type return State;
       --  Return the start state for a nested NFA for ur-type
       --  All children (at any depth level) are allowed.
       --  Any character contents is allowed.
 
-      procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr) is
+      function Register
+        (Local          : Byte_Sequence;
+         Descr          : Simple_Type_Descr;
+         Restriction_Of : Type_Index) return Type_Index
+      is
          Simple : Simple_Type_Index;
-         Index  : Type_Index;
-         pragma Unreferenced (Index);
       begin
          Simple := Create_Simple_Type (G.NFA, Descr);
-         Index := Create_Type
+         return Create_Type
            (G.NFA,
             Type_Descr'
               (Name            =>
@@ -836,7 +841,7 @@ package body Schema.Validators is
                Attributes      => Empty_Attribute_List,
                Block           => No_Block,
                Final           => (others => False),
-               Restriction_Of  => No_Type_Index,
+               Restriction_Of  => Restriction_Of,
                Extension_Of    => No_Type_Index,
                Simple_Content  => Simple,
                Mixed           => False,
@@ -844,7 +849,7 @@ package body Schema.Validators is
                Complex_Content => No_State));
       end Register;
 
-      function Create_UR_Type return Nested_NFA is
+      function Create_UR_Type return State is
          S1      : constant State := G.NFA.Add_State;
          Ur_Type : constant Nested_NFA := G.NFA.Create_Nested (S1);
          S2, S3  : State;
@@ -887,10 +892,11 @@ package body Schema.Validators is
          G.NFA.Add_Empty_Transition (S3, S1); --  maxOccurs="unbounded"
          G.NFA.Add_Empty_Transition (S1, S3); --  minOccurs="0"
          G.NFA.Add_Transition (S3, Final_State, (Kind => Transition_Close));
-         return Ur_Type;
+         return S1;
       end Create_UR_Type;
 
-      procedure Do_Register is new Register_Predefined_Types (Register);
+      procedure Do_Register is new Register_Predefined_Types
+        (Type_Index, No_Type_Index, Register);
 
       Attr : Attribute_Descr;
    begin
@@ -943,7 +949,7 @@ package body Schema.Validators is
    function Ur_Type
      (NFA : access Schema_NFA'Class) return Schema_State_Machines.Nested_NFA is
    begin
-      return NFA.Ur_Type;
+      return NFA.Create_Nested (NFA.Ur_Type);
    end Ur_Type;
 
    ----------------
@@ -1888,9 +1894,55 @@ package body Schema.Validators is
       NFA : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
       Old_Descr : constant access Type_Descr := NFA.Get_Type_Descr (Old_Type);
       New_Descr : constant access Type_Descr := NFA.Get_Type_Descr (New_Type);
-      pragma Unreferenced (New_Descr, Old_Descr, Loc);
+      Has_Restriction, Has_Extension : Boolean := False;
+
+      Simple_Old_Type : Simple_Type_Index := No_Simple_Type_Index;
+      --  Current target for [Old_Type], when considered a simple type
+
+      function From_Descr_To_Old
+        (Index : Type_Index; Descr : access Type_Descr) return Boolean;
+      --  Try moving from [Descr] to [Old_Descr] through a series of extensions
+      --  or restrictions. [False] is returned if we could not reach the old
+      --  description.
+
+      -----------------------
+      -- From_Descr_To_Old --
+      -----------------------
+
+      function From_Descr_To_Old
+        (Index : Type_Index; Descr : access Type_Descr) return Boolean
+      is
+         Result : Boolean := False;
+         R      : access Type_Descr;
+      begin
+         if Index = Old_Type
+           or else (Simple_Old_Type /= No_Simple_Type_Index
+                    and then Descr.Simple_Content = Simple_Old_Type)
+         then
+            return True;
+         end if;
+
+         if Descr.Restriction_Of /= No_Type_Index then
+            R := NFA.Get_Type_Descr (Descr.Restriction_Of);
+            Has_Restriction := True;
+            Result := From_Descr_To_Old (Descr.Restriction_Of, R);
+         end if;
+
+         if not Result and then Descr.Extension_Of /= No_Type_Index then
+            R := NFA.Get_Type_Descr (Descr.Extension_Of);
+            Has_Extension := True;
+            Result := From_Descr_To_Old (Descr.Extension_Of, R);
+         end if;
+
+         return Result;
+      end From_Descr_To_Old;
+
    begin
-      if New_Type = Old_Type then
+      if New_Type = Old_Type
+        or else Old_Type = NFA.Get_Data (NFA.Ur_Type).Simple
+        or else Old_Descr.Name = (NS    => Handler.XML_Schema_URI,
+                                  Local => Handler.Anytype)
+      then
          return;
       end if;
 
@@ -1901,15 +1953,59 @@ package body Schema.Validators is
 --        (Handler, To_QName (Old_Descr.Name) & " blocks substitutions", Loc);
 --        end if;
 
---  Validation_Error
---    (H, '#' & Qname & " is not a valid replacement for "
---     & To_QName (Get_Type (Element)));
---  Validation_Error
---    (H, "#Element """ & To_QName (Element)
---     & """ blocks the use of restrictions of the type");
---  Validation_Error
---    (H, "#Element """ & To_QName (Element)
---     & """ blocks the use of extensions of the type");
+      if Old_Descr.Simple_Content /= No_Simple_Type_Index then
+         declare
+            Simple : constant Simple_Type_Descr :=
+              NFA.Get_Simple_Type (Old_Descr.Simple_Content);
+         begin
+            case Simple.Kind is
+            when Primitive_Union =>
+               for U in Simple.Union'Range loop
+                  if Simple.Union (U) /= No_Simple_Type_Index then
+                     Simple_Old_Type := Simple.Union (U);
+                     if From_Descr_To_Old (New_Type, New_Descr) then
+                        return;
+                     end if;
+                  end if;
+               end loop;
+
+               Validation_Error
+                 (Handler,
+                  To_QName (New_Descr.Name)
+                  & " is not a derivation of union "
+                  & To_QName (Old_Descr.Name),
+                  Loc);
+
+            when Primitive_List =>
+               Validation_Error
+                 (Handler,
+                  To_QName (New_Descr.Name)
+                  & " is not a derivation of list "
+                  & To_QName (Old_Descr.Name),
+                  Loc);
+
+            when others =>
+               null;   --  Will be dealt with below
+            end case;
+         end;
+      end if;
+
+      if not From_Descr_To_Old (New_Type, New_Descr) then
+         Validation_Error
+           (Handler,
+            To_QName (New_Descr.Name)
+            & " is not a derivation of " & To_QName (Old_Descr.Name), Loc);
+      end if;
+
+      if Has_Restriction and then Old_Descr.Block (Block_Restriction) then
+         Validation_Error
+           (Handler, To_QName (Old_Descr.Name) & " blocks restrictions", Loc);
+      end if;
+
+      if Has_Extension and then Old_Descr.Block (Block_Extension) then
+         Validation_Error
+           (Handler, To_QName (Old_Descr.Name) & " blocks extensions", Loc);
+      end if;
    end Check_Substitution_Group_OK;
 
    ------------------

@@ -744,7 +744,7 @@ private
       Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
       Types        : Types_Tables.Instance;
 
-      Ur_Type      : Schema_State_Machines.Nested_NFA;
+      Ur_Type      : Schema_State_Machines.State;
 
       Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
       Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;

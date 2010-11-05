@@ -207,9 +207,12 @@ package Schema.Simple_Types is
       Table_Increment      => 20);
 
    generic
-      with procedure Register
-        (Local : Unicode.CES.Byte_Sequence;
-         Descr : Simple_Type_Descr);
+      type Type_Index is private;
+      No_Type_Index : Type_Index;
+      with function Register
+        (Local          : Byte_Sequence;
+         Descr          : Simple_Type_Descr;
+         Restriction_Of : Type_Index) return Type_Index;
    procedure Register_Predefined_Types (Symbols : Sax.Utils.Symbol_Table);
    --  Register all the predefined types
 

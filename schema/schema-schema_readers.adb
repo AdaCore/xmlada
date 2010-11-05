@@ -318,6 +318,11 @@ package body Schema.Schema_Readers is
       Ref : constant Reference_HTable :=
         Get_References (Get_Grammar (Parser.all));
 
+      Any_Simple_Type_Index : constant Type_Index :=
+        Get (Ref.all,
+          ((Local => Parser.Any_Simple_Type,
+            NS    => Parser.XML_Schema_URI), Ref_Type)).Typ;
+
       Shared : XSD_Data_Access renames Parser.Shared;
 
       package Type_HTables is new GNAT.Dynamic_HTables.Simple_HTable
@@ -334,7 +339,8 @@ package body Schema.Schema_Readers is
         (Info : in out Element_Descr; Start_At : State);
       procedure Process_Type (Info : in out Internal_Type_Descr);
       procedure Process_Details
-        (Details    : Type_Details_Access;
+        (In_Type    : access Type_Descr;
+         Details    : Type_Details_Access;
          Start, From : State;
          Nested_End : out State);
       --  [Start] is the start of the current nested
@@ -349,8 +355,10 @@ package body Schema.Schema_Readers is
       --  [Start] is the first element of the current nested machine.
 
       type Type_Descr_Access is access all Type_Descr;
-      function Create_Simple_Type
-        (J : Internal_Type_Index) return Type_Descr_Access;
+      procedure Create_Simple_Type
+        (J     : Internal_Type_Index;
+         Descr : out Type_Descr_Access;
+         Index : out Type_Index);
       --  Create the new simple type info at index [J]
 
       procedure Get_Type_Descr
@@ -365,8 +373,11 @@ package body Schema.Schema_Readers is
       --    - Or in a previously loaded XSD. In that case, it is set to
       --      [No_Internal_Type_Index]
 
-      function Lookup_Simple_Type
-        (Name : Qualified_Name; Loc : Location) return Type_Descr_Access;
+      procedure Lookup_Simple_Type
+        (Name  : Qualified_Name;
+         Loc   : Location;
+         Descr : out Type_Descr_Access;
+         Index : out Type_Index);
       --  Search for the simpleType [Name]
 
       procedure Add_Attributes
@@ -584,12 +595,14 @@ package body Schema.Schema_Readers is
       -- Lookup_Simple_Type --
       ------------------------
 
-      function Lookup_Simple_Type
-        (Name : Qualified_Name; Loc : Location) return Type_Descr_Access
+      procedure Lookup_Simple_Type
+        (Name  : Qualified_Name;
+         Loc   : Location;
+         Descr : out Type_Descr_Access;
+         Index : out Type_Index)
       is
          TRef     : Global_Reference;
          Internal : Internal_Type_Index;
-         Descr    : Type_Descr_Access;
       begin
          TRef := Get (Ref.all, (Name, Ref_Type));
          if TRef = No_Global_Reference then
@@ -597,7 +610,8 @@ package body Schema.Schema_Readers is
               (Parser, "Unknown type " & To_QName (Name), Loc);
          end if;
 
-         Descr := Type_Descr_Access (Get_Type_Descr (NFA, TRef.Typ));
+         Index := TRef.Typ;
+         Descr := Type_Descr_Access (Get_Type_Descr (NFA, Index));
 
          if Descr.Simple_Content = No_Simple_Type_Index then
             if Debug then
@@ -612,9 +626,7 @@ package body Schema.Schema_Readers is
                   "Type is not a simple type: " & To_QName (Name), Loc);
             end if;
 
-            return Create_Simple_Type (Internal);
-         else
-            return Descr;
+            Create_Simple_Type (Internal, Descr, Index);
          end if;
       end Lookup_Simple_Type;
 
@@ -623,9 +635,10 @@ package body Schema.Schema_Readers is
       ---------------------
 
       procedure Process_Details
-        (Details    : Type_Details_Access;
+        (In_Type     : access Type_Descr;
+         Details     : Type_Details_Access;
          Start, From : State;
-         Nested_End : out State)
+         Nested_End  : out State)
       is
          type Details_Array is array (Natural range <>) of Type_Details_Access;
          type Natural_Array is array (Natural range <>) of Natural;
@@ -663,7 +676,7 @@ package body Schema.Schema_Readers is
                      S2 := S1;
                      for J in Permut'Range loop
                         D := Details (Permut (J));
-                        Process_Details (D, Start, S1, S2);
+                        Process_Details (In_Type, D, Start, S1, S2);
                         S1 := S2;
                      end loop;
                      NFA.Add_Empty_Transition (S2, Nested_End);
@@ -696,7 +709,7 @@ package body Schema.Schema_Readers is
                S := From;
                T := Details.First_In_Seq;
                while T /= null loop
-                  Process_Details (T, Start, S, Nested_End);
+                  Process_Details (In_Type, T, Start, S, Nested_End);
                   S := Nested_End;
                   T := T.Next;
                end loop;
@@ -705,7 +718,7 @@ package body Schema.Schema_Readers is
                T := Details.First_In_Choice;
                Nested_End := NFA.Add_State;
                while T /= null loop
-                  Process_Details (T, Start, From, S);
+                  Process_Details (In_Type, T, Start, From, S);
                   NFA.Add_Empty_Transition (S, Nested_End);
                   T := T.Next;
                end loop;
@@ -760,7 +773,7 @@ package body Schema.Schema_Readers is
                      Details.Group.Loc);
                end if;
 
-               Process_Details (Gr.Details, Start, From, Nested_End);
+               Process_Details (In_Type, Gr.Details, Start, From, Nested_End);
 
             when Type_Extension =>
                declare
@@ -803,7 +816,8 @@ package body Schema.Schema_Readers is
                         end if;
 
                         Process_Details
-                          (Shared.Types.Table (Internal_Type).Details,
+                          (In_Type,
+                           Shared.Types.Table (Internal_Type).Details,
                            Start, From, S);
 
                      else
@@ -817,11 +831,15 @@ package body Schema.Schema_Readers is
                      end if;
 
                      Process_Details
-                       (Details.Extension.Details, Start, S, Nested_End);
+                       (In_Type,
+                        Details.Extension.Details, Start, S, Nested_End);
                   else
                      --  ??? Should handle simple types
                      Nested_End := Start;
                   end if;
+
+                  In_Type.Extension_Of   := NFA_Type;
+                  In_Type.Restriction_Of := No_Type_Index;
                end;
 
             when Type_Restriction =>
@@ -860,11 +878,15 @@ package body Schema.Schema_Readers is
                      end if;
 
                      Process_Details
-                       (Details.Restriction.Details, Start, From, Nested_End);
+                       (In_Type,
+                        Details.Restriction.Details, Start, From, Nested_End);
                   else
                      --  ??? Should handle simple types
                      Nested_End := Start;
                   end if;
+
+                  In_Type.Restriction_Of := NFA_Type;
+                  In_Type.Extension_Of   := No_Type_Index;
                end;
 
             when Type_Any =>
@@ -977,26 +999,27 @@ package body Schema.Schema_Readers is
       -- Create_Simple_Type --
       ------------------------
 
-      function Create_Simple_Type
-        (J : Internal_Type_Index) return Type_Descr_Access
+      procedure Create_Simple_Type
+        (J     : Internal_Type_Index;
+         Descr : out Type_Descr_Access;
+         Index : out Type_Index)
       is
          Info : Internal_Type_Descr renames Shared.Types.Table (J);
          Simple : Simple_Type_Descr;
          Index_In_Simple : Natural;
          Internal : Internal_Simple_Type_Descr;
          Result : Simple_Type_Index;
-
-         Descr : constant Type_Descr_Access :=
-           Type_Descr_Access (NFA.Get_Type_Descr (Info.In_NFA));
-
       begin
+         Index := Info.In_NFA;
+         Descr := Type_Descr_Access (NFA.Get_Type_Descr (Index));
+
          Result := Descr.Simple_Content;
          if Result /= No_Simple_Type_Index then
             if Debug then
                Debug_Output ("Create_Simple_Type: already done "
                              & To_QName (Info.Properties.Name));
             end if;
-            return Descr;
+            return;
          end if;
 
          if Info.Is_Simple then
@@ -1005,7 +1028,8 @@ package body Schema.Schema_Readers is
             Internal := Info.Simple_Content;
             if Internal.Kind = Simple_Type_None then
                --  Not a simple type, nothing to do
-               return null;
+               Descr := null;
+               return;
             end if;
          end if;
 
@@ -1031,11 +1055,13 @@ package body Schema.Schema_Readers is
 
          case Internal.Kind is
             when Simple_Type_None =>
-               return null;
+               Descr := null;
+               return;
 
             when Simple_Type =>
                --  ??? Shouldn't we set Simple_Content as well ?
-               null;
+
+               Descr.Restriction_Of := Any_Simple_Type_Index;
 
             when Simple_Type_Union =>
                Simple := (Kind => Primitive_Union,
@@ -1046,12 +1072,14 @@ package body Schema.Schema_Readers is
                for U in Internal.Union_Items'Range loop
                   declare
                      Member : constant Type_Member := Internal.Union_Items (U);
-                     Item : Type_Descr_Access;
+                     Item   : Type_Descr_Access;
+                     Index  : Type_Index;
                   begin
                      exit when Member = No_Type_Member;
 
                      if Member.Name /= No_Qualified_Name then
-                        Item := Lookup_Simple_Type (Member.Name, Internal.Loc);
+                        Lookup_Simple_Type
+                          (Member.Name, Internal.Loc, Item, Index);
                         if Item.Final (Final_Union) then
                            Validation_Error
                              (Parser,
@@ -1060,7 +1088,7 @@ package body Schema.Schema_Readers is
                         end if;
 
                      else
-                        Item := Create_Simple_Type (Member.Local);
+                        Create_Simple_Type (Member.Local, Item, Index);
                      end if;
 
                      Simple.Union (Index_In_Simple) := Item.Simple_Content;
@@ -1069,7 +1097,8 @@ package body Schema.Schema_Readers is
                end loop;
 
                Result := Create_Simple_Type (NFA, Simple);
-               Get_Type_Descr (NFA, Info.In_NFA).Simple_Content := Result;
+               Descr.Simple_Content := Result;
+               Descr.Restriction_Of := Any_Simple_Type_Index;
 
             when Simple_Type_List =>
                Simple := (Kind      => Primitive_List,
@@ -1080,10 +1109,12 @@ package body Schema.Schema_Readers is
                   declare
                      Member : constant Type_Member := Internal.List_Items (U);
                      Item   : Type_Descr_Access;
+                     Index  : Type_Index;
                   begin
                      exit when Member = No_Type_Member;
                      if Member.Name /= No_Qualified_Name then
-                        Item := Lookup_Simple_Type (Member.Name, Internal.Loc);
+                        Lookup_Simple_Type
+                          (Member.Name, Internal.Loc, Item, Index);
                         if Item.Final (Final_List) then
                            Validation_Error
                              (Parser,
@@ -1091,7 +1122,7 @@ package body Schema.Schema_Readers is
                               Internal.Loc);
                         end if;
                      else
-                        Item := Create_Simple_Type (Member.Local);
+                        Create_Simple_Type (Member.Local, Item, Index);
                      end if;
 
                      Simple.List_Item := Item.Simple_Content;
@@ -1099,7 +1130,8 @@ package body Schema.Schema_Readers is
                end loop;
 
                Result := Create_Simple_Type (NFA, Simple);
-               Get_Type_Descr (NFA, Info.In_NFA).Simple_Content := Result;
+               Descr.Simple_Content := Result;
+               Descr.Restriction_Of := Any_Simple_Type_Index;
 
             when Simple_Type_Restriction | Simple_Type_Extension =>
                declare
@@ -1107,14 +1139,17 @@ package body Schema.Schema_Readers is
                   Error : Symbol;
                   Loc   : Location;
                   NFA_Simple : Type_Descr_Access;
+                  NFA_Type   : Type_Index;
                begin
-                  NFA_Simple := Lookup_Simple_Type
-                    (Internal.Restriction_Base, Internal.Loc);
+                  Lookup_Simple_Type
+                    (Internal.Restriction_Base, Internal.Loc,
+                     NFA_Simple, NFA_Type);
 
                   if NFA_Simple = null
                     or else NFA_Simple.Simple_Content = No_Simple_Type_Index
                   then
-                     Base := Any_Simple_Type;
+                     Base     := Any_Simple_Type;
+                     NFA_Type := Any_Simple_Type_Index;
 
                   else
                      Base := Copy
@@ -1129,8 +1164,17 @@ package body Schema.Schema_Readers is
                      end if;
                   end if;
 
+                  case Internal.Kind is
+                     when Simple_Type_Restriction =>
+                        Descr.Restriction_Of := NFA_Type;
+                     when Simple_Type_Extension =>
+                        Descr.Extension_Of := NFA_Type;
+                     when others =>
+                        null;
+                  end case;
+
                   Result := Create_Simple_Type (NFA, Base);
-                  Get_Type_Descr (NFA, Info.In_NFA).Simple_Content := Result;
+                  Descr.Simple_Content := Result;
                end;
          end case;
 
@@ -1139,8 +1183,6 @@ package body Schema.Schema_Readers is
          else
             Info.Simple_Content.In_Process := False;
          end if;
-
-         return Descr;
       end Create_Simple_Type;
 
       ------------------------------
@@ -1258,7 +1300,8 @@ package body Schema.Schema_Readers is
                pragma Assert (Descr.Complex_Content /= No_State);
 
                Process_Details
-                 (Details    => Info.Details,
+                 (In_Type    => Descr,
+                  Details    => Info.Details,
                   Start      => Descr.Complex_Content,
                   From       => Descr.Complex_Content,
                   Nested_End => S1);
@@ -1292,8 +1335,9 @@ package body Schema.Schema_Readers is
       Attr : Internal_Attribute_Descr;
       S : State;
 
-      Ignored : Type_Descr_Access;
-      pragma Unreferenced (Ignored);
+      Ignored       : Type_Descr_Access;
+      Ignored_Index : Type_Index;
+      pragma Unreferenced (Ignored, Ignored_Index);
 
    begin
       if Debug then
@@ -1341,7 +1385,7 @@ package body Schema.Schema_Readers is
       --  restriction or a union needs to know about its base type)
 
       for J in Type_Tables.First .. Last (Shared.Types) loop
-         Ignored := Create_Simple_Type (J);
+         Create_Simple_Type (J, Ignored, Ignored_Index);
       end loop;
 
       --  Prepare the entries for the global attributes

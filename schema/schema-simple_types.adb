@@ -410,152 +410,203 @@ package body Schema.Simple_Types is
          Facet_Max_Inclusive   => True,
          others                => False);
 
+      Any_Simple_Type, Decimal, Integer, Long, Int, Short : Type_Index;
+      Non_Positive_Int, Non_Negative_Int : Type_Index;
+      Unsigned_Long, Unsigned_Int, Unsigned_Short : Type_Index;
+      Str, Normalized_Str, Token : Type_Index;
+      Name, NCName : Type_Index;
+      T : Type_Index;
+      pragma Unreferenced (T);
    begin
-      Register ("anySimpleType", (Kind       => Primitive_String,
+      Any_Simple_Type := Register
+        ("anySimpleType",
+         (Kind       => Primitive_String,
+          Mask       => (Facet_Whitespace => True,
+                         others           => False),
+          Whitespace => Preserve,
+          others     => <>), No_Type_Index);
+
+      Str := Register ("string", (Kind       => Primitive_String,
                                   Mask       => Whitespace_Mask,
                                   Whitespace => Preserve,
-                                  others     => <>));
-      Register ("string", (Kind       => Primitive_String,
-                           Mask       => Whitespace_Mask,
-                           Whitespace => Preserve,
-                           others     => <>));
-      Register ("normalizedString", (Kind       => Primitive_String,
+                                  others     => <>), Any_Simple_Type);
+      Normalized_Str :=
+        Register ("normalizedString", (Kind       => Primitive_String,
+                                       Mask       => Whitespace_Mask,
+                                       Whitespace => Replace,
+                                       others => <>), Str);
+      Token := Register ("token", (Kind       => Primitive_String,
+                                   Mask       => Whitespace_Mask,
+                                   Whitespace => Collapse,
+                                   others => <>), Normalized_Str);
+      T := Register ("language", (Kind       => Primitive_Language,
+                             Mask       => Whitespace_Mask,
+                             Whitespace => Preserve,
+                             others => <>), Token);
+      T := Register ("boolean",  (Kind => Primitive_Boolean, others => <>),
+                     Any_Simple_Type);
+      T := Register ("QName",    (Kind => Primitive_QName, others => <>),
+                     Any_Simple_Type);
+      T := Register ("NOTATION", (Kind => Primitive_QName, others => <>),
+                     Any_Simple_Type);
+      T := Register ("float",    (Kind => Primitive_Float, others => <>),
+                     Any_Simple_Type);
+      T := Register ("NMTOKEN",  (Kind => Primitive_NMTOKEN, others => <>),
+                     Token);
+      T := Register ("NMTOKENS", (Kind => Primitive_NMTOKENS, others => <>),
+                     Any_Simple_Type);
+      Name := Register ("Name",     (Kind       => Primitive_Name,
                                      Mask       => Whitespace_Mask,
-                                     Whitespace => Replace,
-                                     others => <>));
-      Register ("token", (Kind       => Primitive_String,
-                          Mask       => Whitespace_Mask,
-                          Whitespace => Collapse,
-                          others => <>));
-      Register ("language", (Kind       => Primitive_Language,
-                             Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
-                             others => <>));
-      Register ("boolean",  (Kind => Primitive_Boolean, others => <>));
-      Register ("QName",    (Kind => Primitive_QName, others => <>));
-      Register ("NOTATION", (Kind => Primitive_QName, others => <>));
-      Register ("float",    (Kind => Primitive_Float, others => <>));
-      Register ("NMTOKEN",  (Kind => Primitive_NMTOKEN, others => <>));
-      Register ("NMTOKENS", (Kind => Primitive_NMTOKENS, others => <>));
-      Register ("Name",     (Kind       => Primitive_Name,
-                             Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
-                             others => <>));
-      Register ("NCName",   (Kind       => Primitive_NCName,
-                             Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
-                             others => <>));
-      Register ("ID",       (Kind       => Primitive_NCName,
-                             Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
-                             others => <>));
-      Register ("IDREF",    (Kind       => Primitive_NCName,
-                             Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
-                             others => <>));
-      Register ("IDREFS",   (Kind       => Primitive_NCNames,
-                             Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
-                             others => <>));
-      Register ("ENTITY",   (Kind       => Primitive_NCName,
-                             Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
-                             others => <>));
-      Register ("ENTITIES", (Kind       => Primitive_NCNames,
-                             Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
-                             others => <>));
-      Register ("anyURI",   (Kind => Primitive_Any_URI,
-                             others => <>));
-      Register ("hexBinary", (Kind => Primitive_HexBinary,
-                              others => <>));
-      Register ("base64Binary", (Kind => Primitive_Base64Binary,
-                                 others => <>));
-      Register ("decimal", (Kind => Primitive_Decimal, others => <>));
-      Register ("unsignedLong", (Kind                 => Primitive_Decimal,
-                                 Mask                 => Fraction_Min_Max_Mask,
-                                 Fraction_Digits       => 0,
-                                 Decimal_Min_Inclusive => Zero,
-                                 Decimal_Max_Inclusive => Max_Unsigned_Long,
-                                 others                => <>));
-      Register ("integer",      (Kind                  => Primitive_Decimal,
-                                 Fraction_Digits       => 0,
-                                 Mask => (Facet_Fraction_Digits => True,
-                                          others                => False),
-                                 others                => <>));
-      Register ("nonNegativeInteger", (Kind               => Primitive_Decimal,
-                                       Fraction_Digits       => 0,
-                                       Decimal_Min_Inclusive => Zero,
-                                       Mask               => Fraction_Min_Mask,
-                                       others                => <>));
-      Register ("positiveInteger",    (Kind               => Primitive_Decimal,
-                                       Fraction_Digits       => 0,
-                                       Decimal_Min_Inclusive => One,
-                                       Mask               => Fraction_Min_Mask,
-                                       others                => <>));
-      Register ("nonPositiveInteger", (Kind               => Primitive_Decimal,
-                                       Fraction_Digits       => 0,
-                                       Decimal_Max_Inclusive => Zero,
-                                       Mask               => Fraction_Max_Mask,
-                                       others                => <>));
-      Register ("negativeInteger",    (Kind               => Primitive_Decimal,
-                                       Fraction_Digits       => 0,
-                                       Decimal_Max_Inclusive => Minus_One,
-                                       Mask               => Fraction_Max_Mask,
-                                       others                => <>));
-      Register ("long",               (Kind               => Primitive_Decimal,
-                                       Mask           => Fraction_Min_Max_Mask,
-                                       Fraction_Digits       => 0,
-                                       Decimal_Max_Inclusive => Max_Long,
-                                       Decimal_Min_Inclusive => Min_Long,
-                                       others                => <>));
-      Register ("int",                (Kind               => Primitive_Decimal,
-                                       Mask           => Fraction_Min_Max_Mask,
-                                       Fraction_Digits       => 0,
-                                       Decimal_Max_Inclusive => Max_Int,
-                                       Decimal_Min_Inclusive => Min_Int,
-                                       others                => <>));
-      Register ("short",              (Kind               => Primitive_Decimal,
-                                       Mask           => Fraction_Min_Max_Mask,
-                                       Fraction_Digits       => 0,
-                                       Decimal_Max_Inclusive => Max_Short,
-                                       Decimal_Min_Inclusive => Min_Short,
-                                       others                => <>));
-      Register ("byte",               (Kind               => Primitive_Decimal,
-                                       Mask           => Fraction_Min_Max_Mask,
-                                       Fraction_Digits       => 0,
-                                       Decimal_Max_Inclusive => Max_Byte,
-                                       Decimal_Min_Inclusive => Min_Byte,
-                                       others                => <>));
-      Register ("unsignedInt",      (Kind                 => Primitive_Decimal,
-                                     Mask             => Fraction_Min_Max_Mask,
-                                     Fraction_Digits       => 0,
-                                     Decimal_Max_Inclusive => Max_Unsigned_Int,
-                                     Decimal_Min_Inclusive => Zero,
-                                     others                => <>));
-      Register ("unsignedShort",  (Kind                  => Primitive_Decimal,
-                                   Mask               => Fraction_Min_Max_Mask,
-                                   Fraction_Digits       => 0,
-                                   Decimal_Max_Inclusive => Max_Unsigned_Short,
-                                   Decimal_Min_Inclusive => Zero,
-                                   others                => <>));
-      Register ("unsignedByte",   (Kind                  => Primitive_Decimal,
-                                   Mask               => Fraction_Min_Max_Mask,
-                                   Fraction_Digits       => 0,
-                                   Decimal_Max_Inclusive => Max_Unsigned_Byte,
-                                   Decimal_Min_Inclusive => Zero,
-                                   others                => <>));
-      Register ("float",      (Kind => Primitive_Float, others => <>));
-      Register ("double",     (Kind => Primitive_Double, others => <>));
-      Register ("time",       (Kind => Primitive_Time, others => <>));
-      Register ("dateTime",   (Kind => Primitive_DateTime, others => <>));
-      Register ("gDay",       (Kind => Primitive_GDay, others => <>));
-      Register ("gMonthDay",  (Kind => Primitive_GMonthDay, others => <>));
-      Register ("gMonth",     (Kind => Primitive_GMonth, others => <>));
-      Register ("gYearMonth", (Kind => Primitive_GYearMonth, others => <>));
-      Register ("gYear",      (Kind => Primitive_GYear, others => <>));
-      Register ("date",       (Kind => Primitive_Date, others => <>));
-      Register ("duration",   (Kind => Primitive_Duration, others => <>));
+                                     Whitespace => Preserve,
+                                     others => <>), Token);
+      NCName := Register ("NCName",   (Kind       => Primitive_NCName,
+                                       Mask       => Whitespace_Mask,
+                                       Whitespace => Preserve,
+                                       others => <>), Name);
+      T := Register ("ID",       (Kind       => Primitive_NCName,
+                                  Mask       => Whitespace_Mask,
+                                  Whitespace => Preserve,
+                                  others => <>), NCName);
+      T := Register ("IDREF",    (Kind       => Primitive_NCName,
+                                  Mask       => Whitespace_Mask,
+                                  Whitespace => Preserve,
+                                  others => <>), NCName);
+      T := Register ("IDREFS",   (Kind       => Primitive_NCNames,
+                                  Mask       => Whitespace_Mask,
+                                  Whitespace => Preserve,
+                                  others => <>), Any_Simple_Type);
+      T := Register ("ENTITY",   (Kind       => Primitive_NCName,
+                                  Mask       => Whitespace_Mask,
+                                  Whitespace => Preserve,
+                                  others => <>), NCName);
+      T := Register ("ENTITIES", (Kind       => Primitive_NCNames,
+                                  Mask       => Whitespace_Mask,
+                                  Whitespace => Preserve,
+                                  others => <>), Any_Simple_Type);
+      T := Register ("anyURI",   (Kind => Primitive_Any_URI,
+                                  others => <>), Any_Simple_Type);
+      T := Register ("hexBinary", (Kind => Primitive_HexBinary,
+                                   others => <>), Any_Simple_Type);
+      T := Register ("base64Binary", (Kind => Primitive_Base64Binary,
+                                      others => <>), Any_Simple_Type);
+      Decimal := Register ("decimal",
+                           (Kind => Primitive_Decimal, others => <>),
+                           Any_Simple_Type);
+      Integer := Register ("integer",
+                           (Kind                  => Primitive_Decimal,
+                            Fraction_Digits       => 0,
+                            Mask => (Facet_Fraction_Digits => True,
+                                     others                => False),
+                            others => <>), Decimal);
+      Non_Negative_Int :=
+        Register ("nonNegativeInteger",
+                  (Kind                  => Primitive_Decimal,
+                   Fraction_Digits       => 0,
+                   Decimal_Min_Inclusive => Zero,
+                   Mask                  => Fraction_Min_Mask,
+                   others                => <>), Integer);
+      Unsigned_Long :=
+        Register ("unsignedLong",
+                  (Kind                 => Primitive_Decimal,
+                   Mask                 => Fraction_Min_Max_Mask,
+                   Fraction_Digits       => 0,
+                   Decimal_Min_Inclusive => Zero,
+                   Decimal_Max_Inclusive => Max_Unsigned_Long,
+                   others                => <>), Non_Negative_Int);
+      T := Register ("positiveInteger",
+                     (Kind                  => Primitive_Decimal,
+                      Fraction_Digits       => 0,
+                      Decimal_Min_Inclusive => One,
+                      Mask                  => Fraction_Min_Mask,
+                      others                => <>), Non_Negative_Int);
+      Non_Positive_Int :=
+        Register ("nonPositiveInteger",
+                  (Kind                  => Primitive_Decimal,
+                   Fraction_Digits       => 0,
+                   Decimal_Max_Inclusive => Zero,
+                   Mask                  => Fraction_Max_Mask,
+                   others                => <>), Integer);
+      T := Register ("negativeInteger",
+                     (Kind                  => Primitive_Decimal,
+                      Fraction_Digits       => 0,
+                      Decimal_Max_Inclusive => Minus_One,
+                      Mask                  => Fraction_Max_Mask,
+                      others                => <>), Non_Positive_Int);
+      Long := Register ("long",
+                        (Kind               => Primitive_Decimal,
+                         Mask               => Fraction_Min_Max_Mask,
+                         Fraction_Digits       => 0,
+                         Decimal_Max_Inclusive => Max_Long,
+                         Decimal_Min_Inclusive => Min_Long,
+                         others                => <>), Integer);
+      Int := Register ("int",
+                       (Kind                  => Primitive_Decimal,
+                        Mask                  => Fraction_Min_Max_Mask,
+                        Fraction_Digits       => 0,
+                        Decimal_Max_Inclusive => Max_Int,
+                        Decimal_Min_Inclusive => Min_Int,
+                        others                => <>), Long);
+      Short := Register ("short",
+                         (Kind                  => Primitive_Decimal,
+                          Mask                  => Fraction_Min_Max_Mask,
+                          Fraction_Digits       => 0,
+                          Decimal_Max_Inclusive => Max_Short,
+                          Decimal_Min_Inclusive => Min_Short,
+                          others                => <>), Int);
+      T := Register ("byte",
+                     (Kind                  => Primitive_Decimal,
+                      Mask                  => Fraction_Min_Max_Mask,
+                      Fraction_Digits       => 0,
+                      Decimal_Max_Inclusive => Max_Byte,
+                      Decimal_Min_Inclusive => Min_Byte,
+                      others                => <>), Short);
+      Unsigned_Int :=
+        Register ("unsignedInt",
+                  (Kind                  => Primitive_Decimal,
+                   Mask                  => Fraction_Min_Max_Mask,
+                   Fraction_Digits       => 0,
+                   Decimal_Max_Inclusive => Max_Unsigned_Int,
+                   Decimal_Min_Inclusive => Zero,
+                   others                => <>), Unsigned_Long);
+      Unsigned_Short :=
+        Register ("unsignedShort",
+                  (Kind                  => Primitive_Decimal,
+                   Mask                  => Fraction_Min_Max_Mask,
+                   Fraction_Digits       => 0,
+                   Decimal_Max_Inclusive => Max_Unsigned_Short,
+                   Decimal_Min_Inclusive => Zero,
+                   others                => <>), Unsigned_Int);
+      T :=
+        Register ("unsignedByte",
+                  (Kind                  => Primitive_Decimal,
+                   Mask                  => Fraction_Min_Max_Mask,
+                   Fraction_Digits       => 0,
+                   Decimal_Max_Inclusive => Max_Unsigned_Byte,
+                   Decimal_Min_Inclusive => Zero,
+                   others                => <>), Unsigned_Short);
+      T := Register ("float", (Kind => Primitive_Float, others => <>),
+                     Any_Simple_Type);
+      T := Register ("double", (Kind => Primitive_Double, others => <>),
+                     Any_Simple_Type);
+      T := Register ("time", (Kind => Primitive_Time, others => <>),
+                     Any_Simple_Type);
+      T := Register ("dateTime", (Kind => Primitive_DateTime, others => <>),
+                     Any_Simple_Type);
+      T := Register ("gDay",       (Kind => Primitive_GDay, others => <>),
+                     Any_Simple_Type);
+      T := Register ("gMonthDay",  (Kind => Primitive_GMonthDay, others => <>),
+                     Any_Simple_Type);
+      T := Register ("gMonth",     (Kind => Primitive_GMonth, others => <>),
+                     Any_Simple_Type);
+      T := Register ("gYearMonth",
+                     (Kind => Primitive_GYearMonth, others => <>),
+                     Any_Simple_Type);
+      T := Register ("gYear", (Kind => Primitive_GYear, others => <>),
+                     Any_Simple_Type);
+      T := Register ("date",       (Kind => Primitive_Date, others => <>),
+                     Any_Simple_Type);
+      T := Register ("duration",   (Kind => Primitive_Duration, others => <>),
+                     Any_Simple_Type);
 
       --  Missing attribute "xml:lang" of type "language"
    end Register_Predefined_Types;
