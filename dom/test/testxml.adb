@@ -622,8 +622,7 @@ procedure Testxml is
          if Reference = null
            or else First_Child (Reference) = null
          then
-            Tmp := new String'("No expected error message defined"
-                               & ASCII.LF & Msg.all);
+            Tmp := new String'(Msg.all);
             Free (Msg);
             Msg := Tmp;
             Result := Single_Failure;

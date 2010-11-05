@@ -563,6 +563,13 @@ package body Sax.Readers is
    --  then the first token read must be a space, or an error is raised
    --  Id.Typ is set to End_Of_Input if there are no more token to be read.
 
+   procedure Next_NS_Token_Skip_Spaces
+     (Input   : in out Input_Sources.Input_Source'Class;
+      Parser  : in out Sax_Reader'Class;
+      NS_Id   : out Token;
+      Name_Id : out Token);
+   --  Skip spaces, if any, then read a "ns:name" or "name" token.
+
    function Find_Symbol (Parser : Sax_Reader'Class; T : Token) return Symbol;
    function Find_Symbol
      (Parser : Sax_Reader'Class; First, Last : Token) return Symbol;
@@ -690,10 +697,14 @@ package body Sax.Readers is
       Loc    : Sax.Locators.Location) return Byte_Sequence;
    --  Return the location of the start of Id as a string.
 
-   function Resolve_URI (Parser : Sax_Reader'Class; URI : Symbol)
-      return Symbol;
+   function Resolve_URI
+     (Parser    : Sax_Reader'Class;
+      System_Id : Symbol;
+      URI       : Symbol) return Symbol;
    --  Return a fully resolved URI, based on the system identifier set for
    --  Machine, and URI.
+   --  [System_Id] should be the result of [System_Id (Parser)] at the time the
+   --  URI was found.
 
    function System_Id (Parser : Sax_Reader'Class) return Symbol;
    function Public_Id (Parser : Sax_Reader'Class) return Symbol;
@@ -770,7 +781,7 @@ package body Sax.Readers is
    function System_Id (Parser : Sax_Reader'Class) return Symbol is
    begin
       if Parser.Inputs = null then
-         return Get_System_Id (Parser.Locator);
+         return Parser.System_Id;
       else
          return Parser.Inputs.System_Id;
       end if;
@@ -840,7 +851,9 @@ package body Sax.Readers is
    -----------------
 
    function Resolve_URI
-     (Parser : Sax_Reader'Class; URI : Symbol) return Symbol
+     (Parser    : Sax_Reader'Class;
+      System_Id : Symbol;
+      URI       : Symbol) return Symbol
    is
       C : Unicode_Char;
       URI_Str : constant Cst_Byte_Sequence_Access := Get (URI);
@@ -848,13 +861,16 @@ package body Sax.Readers is
    begin
       pragma Assert (URI /= No_Symbol);
 
+      if URI = Empty_String then
+         return System_Id;
+      end if;
+
       --  ??? Only resolve paths for now
       Encoding.Read (URI_Str.all, URI_Index, C);
       if C = Slash then
          return URI;
       else
          declare
-            System_Id : constant Symbol := Get_System_Id (Parser.Locator);
             System_Str : constant Cst_Byte_Sequence_Access := Get (System_Id);
             Index : Natural := System_Str'First;
             Basename_Start : Natural := System_Str'First;
@@ -1084,7 +1100,7 @@ package body Sax.Readers is
          end if;
 
       elsif Parser.Inputs /= null then
-         Parser.Inputs.Save_Loc := Get_Location (Parser.Locator);
+         Set_Location (Parser.Locator, Parser.Inputs.Save_Loc);
 
          if Parser.Inputs.External then
             Parser.In_External_Entity := False;
@@ -1921,6 +1937,7 @@ package body Sax.Readers is
 
       type Entity_Ref is (None, Entity, Param_Entity);
       Is_Entity_Ref : Entity_Ref := None;
+      Old_System_Id : Symbol;
    begin
       if not Parser.Last_Read_Is_Valid then
          Next_Char (Input, Parser);
@@ -2549,8 +2566,12 @@ package body Sax.Readers is
                Parser.Element_Id := Parser.Element_Id + 1;
 
                if Debug_Internal then
-                  Put_Line ("Expanding entity " & Get (N).all);
+                  Put_Line ("Expanding entity " & Get (N).all & " External="
+                            & V.External'Img
+                            & " Value=" & Get (V.Value).all);
                end if;
+
+               Old_System_Id := Get_System_Id (Parser.Locator);
 
                Parser.Inputs := new Entity_Input_Source'
                  (External       => V.External,
@@ -2572,7 +2593,8 @@ package body Sax.Readers is
                   end if;
 
                   declare
-                     URI : constant Symbol := Resolve_URI (Parser, V.Value);
+                     URI : constant Symbol :=
+                       Resolve_URI (Parser, Old_System_Id, V.Value);
                   begin
                      Parser.Inputs.Input := Resolve_Entity
                        (Parser,
@@ -2670,6 +2692,43 @@ package body Sax.Readers is
          Next_Token (Input, Parser, Id);
       end loop;
    end Next_Token_Skip_Spaces;
+
+   -------------------------------
+   -- Next_NS_Token_Skip_Spaces --
+   -------------------------------
+
+   procedure Next_NS_Token_Skip_Spaces
+     (Input   : in out Input_Sources.Input_Source'Class;
+      Parser  : in out Sax_Reader'Class;
+      NS_Id   : out Token;
+      Name_Id : out Token)
+   is
+      Id : Token;
+      Saved_In_Tag : constant Boolean := Parser.State.In_Tag;
+   begin
+      NS_Id := Null_Token;
+      Next_Token (Input, Parser, Id);
+      while Id.Typ = Space loop
+         Reset_Buffer (Parser, Id);
+         Next_Token (Input, Parser, Id);
+      end loop;
+      Name_Id := Id;
+
+      if Name_Id.Typ = Name then
+         if Parser.Last_Read_Is_Valid
+           and then Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
+           and then Parser.Feature_Namespace
+         then
+            Parser.State.In_Tag := True;  --  Get COLON on its own
+            Next_Token (Input, Parser, Id);
+            Parser.State.In_Tag := Saved_In_Tag;
+
+            NS_Id := Name_Id;
+            Reset_Buffer (Parser, Id);
+            Next_Token (Input, Parser, Name_Id);
+         end if;
+      end if;
+   end Next_NS_Token_Skip_Spaces;
 
    ------------------
    -- Reset_Buffer --
@@ -3931,22 +3990,18 @@ package body Sax.Readers is
          Name_Id : Token;
          M : Element_Model_Ptr;
          M2 : Content_Model;
-         Tmp_Id, NS_Id : Token;
+         NS_Id : Token;
       begin
          Set_State (Parser, Element_Def_State);
 
-         Next_Token_Skip_Spaces (Input, Parser, Name_Id);
-         if Parser.Feature_Namespace then
-            Tmp_Id := Name_Id;
-            Get_Name_NS (Tmp_Id, NS_Id, Name_Id);
-            Name_Id.First := NS_Id.First;
-         end if;
+         Next_NS_Token_Skip_Spaces (Input, Parser, NS_Id, Name_Id);
 
          if Name_Id.Typ /= Name then
             Fatal_Error (Parser, Error_Is_Name);
          end if;
 
-         Next_Token_Skip_Spaces (Input, Parser, Id, True);
+         Next_Token_Skip_Spaces (Input, Parser, Id, Must_Have => True);
+
          case Id.Typ is
             when Empty  => M := new Element_Model (Empty);
             when Any    => M := new Element_Model (Anything);
@@ -3969,7 +4024,12 @@ package body Sax.Readers is
            (Parser, Parser.Buffer (Name_Id.First .. Name_Id.Last), M2);
          Unref (M2);
 
-         Reset_Buffer (Parser, Name_Id);
+         if NS_Id /= Null_Token then
+            Reset_Buffer (Parser, NS_Id);
+         else
+            Reset_Buffer (Parser, Name_Id);
+         end if;
+
          Set_State (Parser, DTD_State);
       end Parse_Element_Def;
 
@@ -4051,24 +4111,17 @@ package body Sax.Readers is
          M : Element_Model_Ptr;
          M2 : Content_Model;
          Default_Start, Default_End : Token;
-         Ename_Id, Name_Id, NS_Id, Type_Id : Token;
+         Ename_Id, Ename_NS_Id, Name_Id, NS_Id, Type_Id : Token;
          Default_Id : Token;
          Attr : Attributes_Table.Element_Ptr;
          Last : Natural;
          Default_Decl : Default_Declaration;
          Att_Type : Attribute_Type;
          Ename, SName : Symbol;
-         Tmp_Id : Token;
-
       begin
          Set_State (Parser, Element_Def_State);
 
-         Next_Token_Skip_Spaces (Input, Parser, Ename_Id);
-         if Parser.Feature_Namespace then
-            Tmp_Id := Ename_Id;
-            Get_Name_NS (Tmp_Id, NS_Id, Ename_Id);
-            Ename_Id.First := NS_Id.First;
-         end if;
+         Next_NS_Token_Skip_Spaces (Input, Parser, Ename_NS_Id, Ename_Id);
 
          if Ename_Id.Typ /= Name then
             Fatal_Error (Parser, Error_Is_Name, Ename_Id);
@@ -4094,10 +4147,15 @@ package body Sax.Readers is
             Last := Attr.Attributes'Last;
          end if;
 
+         if Id.Typ = Space then
+            Next_Token_Skip_Spaces (Input, Parser, Id);
+         end if;
+
          loop
             --  Temporarily disable In_Attlist, so that the names like "NAME"
             --  are parsed as names and not as NMTOKEN.
             Set_State (Parser, Attribute_Def_Name_State);
+
             Next_Token_Skip_Spaces (Input, Parser, Id);
             exit when Id.Typ = End_Of_Tag or else Id.Typ = End_Of_Input;
 
@@ -4260,7 +4318,12 @@ package body Sax.Readers is
          end if;
 
          Set_State (Parser, DTD_State);
-         Reset_Buffer (Parser, Ename_Id);
+
+         if Ename_NS_Id /= Null_Token then
+            Reset_Buffer (Parser, Ename_NS_Id);
+         else
+            Reset_Buffer (Parser, Ename_Id);
+         end if;
 
       exception
          when others =>
@@ -4956,22 +5019,18 @@ package body Sax.Readers is
          Public_Start, Public_End : Token := Null_Token;
          System_Start, System_End : Token := Null_Token;
          Name_Id : Token;
-         Tmp_Id, NS_Id : Token;
+         NS_Id : Token;
       begin
          Set_State (Parser, DTD_State);
 
-         Next_Token_Skip_Spaces (Input, Parser, Name_Id);
-         if Parser.Feature_Namespace then
-            Tmp_Id := Name_Id;
-            Get_Name_NS (Tmp_Id, NS_Id, Name_Id);
-            Name_Id.First := NS_Id.First;
-         end if;
+         Next_NS_Token_Skip_Spaces (Input, Parser, NS_Id, Name_Id);
 
          if Name_Id.Typ /= Name then
             Fatal_Error (Parser, "Expecting name after <!DOCTYPE");
          end if;
 
          Next_Token_Skip_Spaces (Input, Parser, Id);
+
          Get_External (Id, System_Start, System_End, Public_Start, Public_End);
          if Id.Typ = Space then
             Next_Token (Input, Parser, Id);
@@ -5008,7 +5067,8 @@ package body Sax.Readers is
                  Find_Symbol
                    (Parser,
                     Parser.Buffer (System_Start.First .. System_End.Last));
-               URI : constant Symbol := Resolve_URI (Parser, System);
+               URI : constant Symbol :=
+                 Resolve_URI (Parser, System_Id (Parser), System);
                In_External : constant Boolean := Parser.In_External_Entity;
                Input_F : File_Input;
                Saved_Last_Read : constant Unicode_Char := Parser.Last_Read;
@@ -5024,7 +5084,12 @@ package body Sax.Readers is
                Set_Column_Number (Parser.Locator, Prolog_Size (Input_F));
                Set_System_Id (Parser.Locator, URI);
                Set_Public_Id (Parser.Locator, System);
-               Reset_Buffer (Parser, Name_Id);
+
+               if NS_Id /= Null_Token then
+                  Reset_Buffer (Parser, NS_Id);
+               else
+                  Reset_Buffer (Parser, Name_Id);
+               end if;
 
                Parser.In_External_Entity := True;
 
@@ -5043,13 +5108,24 @@ package body Sax.Readers is
                      "External subset not found: "
                      & Parser.Buffer (System_Start.First .. System_End.Last),
                      Id);
-                  Reset_Buffer (Parser, Name_Id);
+
+                  if NS_Id /= Null_Token then
+                     Reset_Buffer (Parser, NS_Id);
+                  else
+                     Reset_Buffer (Parser, Name_Id);
+                  end if;
+
                when others =>
                   Close (Input_F);
                   raise;
             end;
+
          else
-            Reset_Buffer (Parser, Name_Id);
+            if NS_Id /= Null_Token then
+               Reset_Buffer (Parser, NS_Id);
+            else
+               Reset_Buffer (Parser, Name_Id);
+            end if;
          end if;
 
          --  Check that all declarations are fully declared

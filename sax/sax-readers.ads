@@ -1004,8 +1004,10 @@ private
 
       Locator       : Sax.Locators.Locator;
       Current_Node  : Element_Access;
+
       Public_Id     : Sax.Symbols.Symbol;
       System_Id     : Sax.Symbols.Symbol;
+      --  The initial file we were parsing.
 
       Symbols        : Symbol_Table;
       Lt_Sequence    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
