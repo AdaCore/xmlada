@@ -925,12 +925,11 @@ package body Schema.Schema_Readers is
                               Attrs (A).Loc);
                         end if;
 
-                        Add_Attributes (Parser.Grammar, List, TRef.Attributes);
+                        Add_Attributes (NFA, List, TRef.Attributes);
 
                      else
                         Resolve_Attribute_Type (Attrs (A).Attr);
-                        Add_Attribute
-                          (Parser.Grammar, List, Attrs (A).Attr.Descr);
+                        Add_Attribute (NFA, List, Attrs (A).Attr.Descr);
                      end if;
                end case;
             end loop;
@@ -1015,8 +1014,7 @@ package body Schema.Schema_Readers is
                end loop;
 
                Data.Descr.Simple_Content :=
-                 Create_Global_Simple_Type
-                   (Parser.Grammar, Info.Descr.Name, Simple);
+                 Create_Global_Simple_Type (NFA, Info.Descr.Name, Simple);
 
             when Simple_Type_List =>
                Simple := (Kind      => Facets_List,
@@ -1040,8 +1038,7 @@ package body Schema.Schema_Readers is
                end loop;
 
                Data.Descr.Simple_Content :=
-                 Create_Global_Simple_Type
-                   (Parser.Grammar, Info.Descr.Name, Simple);
+                 Create_Global_Simple_Type (NFA, Info.Descr.Name, Simple);
 
             when Simple_Type_Restriction | Simple_Type_Extension =>
                declare
@@ -1050,7 +1047,7 @@ package body Schema.Schema_Readers is
                   Loc   : Location;
                begin
                   Base := Copy (Get_Simple_Type
-                    (Parser.Grammar,
+                    (NFA,
                      Lookup_Simple_Type
                        (Internal.Restriction_Base, Internal.Loc)));
 
@@ -1064,8 +1061,7 @@ package body Schema.Schema_Readers is
                   end if;
 
                   Data.Descr.Simple_Content :=
-                    Create_Global_Simple_Type
-                      (Parser.Grammar, Info.Descr.Name, Base);
+                    Create_Global_Simple_Type (NFA, Info.Descr.Name, Base);
                end;
          end case;
 
@@ -1113,7 +1109,7 @@ package body Schema.Schema_Readers is
          Attr2 := Attr;
          Resolve_Attribute_Type (Attr2);
 
-         Create_Global_Attribute (Parser.Grammar, Attr2.Descr);
+         Create_Global_Attribute (NFA, Attr2.Descr);
       end Create_Global_Attributes;
 
       ------------------
@@ -1161,8 +1157,7 @@ package body Schema.Schema_Readers is
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (Parser.Grammar,
-                     List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
+                    (NFA, List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
                end if;
 
                Add_Attributes (List, Info.Details.Extension.Attributes,
@@ -1183,8 +1178,7 @@ package body Schema.Schema_Readers is
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (Parser.Grammar,
-                     List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
+                    (NFA, List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
                end if;
 
                Add_Attributes (List, Info.Details.Restriction.Attributes,

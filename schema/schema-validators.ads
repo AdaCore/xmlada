@@ -226,9 +226,7 @@ package Schema.Validators is
    package Schema_State_Machines_PP
      is new Schema_State_Machines.Pretty_Printers (Image);
 
-   type Schema_NFA is new Schema_State_Machines.NFA with record
-      null;
-   end record;
+   type Schema_NFA is new Schema_State_Machines.NFA with private;
    type Schema_NFA_Access is access all Schema_NFA'Class;
 
    type Reference_Kind is (Ref_Element,
@@ -277,8 +275,8 @@ package Schema.Validators is
    --  [Grammar]
 
    function Get_Simple_Type
-     (Grammar : XML_Grammar;
-      Simple  : Schema.Simple_Types.Simple_Type_Index)
+     (NFA    : access Schema_NFA'Class;
+      Simple : Schema.Simple_Types.Simple_Type_Index)
       return Schema.Simple_Types.Simple_Type_Descr;
    --  Return the simple type corresponding to the index
 
@@ -525,7 +523,7 @@ package Schema.Validators is
    --  whitespace normalization)
 
    procedure Validate_Attributes
-     (Grammar   : XML_Grammar;
+     (NFA       : access Schema_NFA'Class;
       Typ       : Type_Descr;
       Reader    : access Abstract_Validation_Reader'Class;
       Atts      : in out Sax.Readers.Sax_Attribute_List;
@@ -547,11 +545,11 @@ package Schema.Validators is
    --  if the corresponding attribute is an id.
 
    procedure Add_Attribute
-     (Grammar   : XML_Grammar;
+     (NFA       : access Schema_NFA'Class;
       List      : in out Attribute_Validator_List;
       Attribute : Attribute_Descr);
    procedure Add_Attributes
-     (Grammar    : XML_Grammar;
+     (NFA        : access Schema_NFA'Class;
       List       : in out Attribute_Validator_List;
       Attributes : Attribute_Validator_List);
    --  Add a valid attribute to Validator.
@@ -580,12 +578,12 @@ package Schema.Validators is
    --  avoiding the need to recreate it the next time you parse a XSD file.
 
    procedure Create_Global_Attribute
-     (Grammar : in out XML_Grammar;
-      Attr    : Attribute_Descr);
+     (NFA  : access Schema_NFA'Class;
+      Attr : Attribute_Descr);
    function Create_Global_Simple_Type
-     (Grammar : XML_Grammar;
-      Name    : Qualified_Name;
-      Descr   : Schema.Simple_Types.Simple_Type_Descr)
+     (NFA   : access Schema_NFA'Class;
+      Name  : Qualified_Name;
+      Descr : Schema.Simple_Types.Simple_Type_Descr)
       return Schema.Simple_Types.Simple_Type_Index;
    --  Register a global attribute or type.
    --  [Name] can be No_Qualified_Name
@@ -672,6 +670,19 @@ private
    procedure Free (List : in out String_List);
    --  Free the list and its contents
 
+   type Schema_NFA is new Schema_State_Machines.NFA with record
+      Simple_Types : Schema.Simple_Types.Simple_Type_Table;
+      References   : Reference_HTable;
+      Attributes   : Attributes_Tables.Instance;
+      Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
+
+      Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
+      Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;
+      Metaschema_Attributes_Last   : Attribute_Validator_List;
+      Metaschema_Enumerations_Last : Schema.Simple_Types.Enumeration_Index;
+      --  Last state for the metaschema XSD (for Reset)
+   end record;
+
    type XML_Grammar_Record is new Sax.Pointers.Root_Encapsulated with record
       Symbols  : Sax.Utils.Symbol_Table;
 
@@ -682,19 +693,9 @@ private
 
       XSD_Version : XSD_Versions := XSD_1_0;
 
-      Simple_Types : Schema.Simple_Types.Simple_Type_Table;
-      References   : Reference_HTable;
-      Attributes   : Attributes_Tables.Instance;
-      Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
       NFA          : Schema_NFA_Access;
       --  The state machine representing the grammar
       --  This includes the states for all namespaces
-
-      Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
-      Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;
-      Metaschema_Attributes_Last   : Attribute_Validator_List;
-      Metaschema_Enumerations_Last : Schema.Simple_Types.Enumeration_Index;
-      --  Last state for the metaschema XSD (for Reset)
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_Record);

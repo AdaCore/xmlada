@@ -56,7 +56,7 @@ package body Schema.Validators is
    type Attribute_Validator_Array is array (Attribute_Validator_Index range <>)
      of Attribute_Validator_Data;
    function To_Attribute_Array
-     (Grammar    : XML_Grammar;
+     (NFA        : access Schema_NFA'Class;
       Attributes : Attribute_Validator_List) return Attribute_Validator_Array;
    --  The data required to validate attributes
 
@@ -71,8 +71,8 @@ package body Schema.Validators is
    --  Validate the value of a single attribute
 
    procedure Reset_Simple_Types
-     (G  : in out XML_Grammar_Record'Class;
-      To : Simple_Type_Index := No_Simple_Type_Index);
+     (NFA : access Schema_NFA'Class;
+      To  : Simple_Type_Index := No_Simple_Type_Index);
    --  Resets the contents of G.Simple_Types by resizing the table and freeing
    --  needed data
    --  If [To] is [No_Simple_Type_Index], the table is freed
@@ -158,23 +158,22 @@ package body Schema.Validators is
    -------------------
 
    procedure Add_Attribute
-     (Grammar   : XML_Grammar;
+     (NFA       : access Schema_NFA'Class;
       List      : in out Attribute_Validator_List;
       Attribute : Attribute_Descr)
    is
-      L : Attribute_Validator_List := List;
-      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      L   : Attribute_Validator_List := List;
    begin
       while L /= Empty_Attribute_List loop
-         if G.Attributes.Table (L).Name = Attribute.Name then
+         if NFA.Attributes.Table (L).Name = Attribute.Name then
             return;
          end if;
-         L := G.Attributes.Table (L).Next;
+         L := NFA.Attributes.Table (L).Next;
       end loop;
 
-      Append (G.Attributes, Attribute);
-      G.Attributes.Table (Last (G.Attributes)).Next := List;
-      List := Last (G.Attributes);
+      Append (NFA.Attributes, Attribute);
+      NFA.Attributes.Table (Last (NFA.Attributes)).Next := List;
+      List := Last (NFA.Attributes);
    end Add_Attribute;
 
    --------------------
@@ -182,16 +181,15 @@ package body Schema.Validators is
    --------------------
 
    procedure Add_Attributes
-     (Grammar    : XML_Grammar;
+     (NFA        : access Schema_NFA'Class;
       List       : in out Attribute_Validator_List;
       Attributes : Attribute_Validator_List)
    is
       L : Attribute_Validator_List := Attributes;
-      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
    begin
       while L /= Empty_Attribute_List loop
-         Add_Attribute (Grammar, List, G.Attributes.Table (L));
-         L := G.Attributes.Table (L).Next;
+         Add_Attribute (NFA, List, NFA.Attributes.Table (L));
+         L := NFA.Attributes.Table (L).Next;
       end loop;
    end Add_Attributes;
 
@@ -200,16 +198,15 @@ package body Schema.Validators is
    ------------------------
 
    function To_Attribute_Array
-     (Grammar    : XML_Grammar;
+     (NFA        : access Schema_NFA'Class;
       Attributes : Attribute_Validator_List) return Attribute_Validator_Array
    is
-      G     : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
       Count : Attribute_Validator_Index := 0;
       L     : Attribute_Validator_List := Attributes;
    begin
       while L /= Empty_Attribute_List loop
          Count := Count + 1;
-         L := G.Attributes.Table (L).Next;
+         L := NFA.Attributes.Table (L).Next;
       end loop;
 
       declare
@@ -221,7 +218,7 @@ package body Schema.Validators is
             Result (Count) := (Validator => L,
                                Visited   => False);
             Count := Count + 1;
-            L := G.Attributes.Table (L).Next;
+            L := NFA.Attributes.Table (L).Next;
          end loop;
 
          return Result;
@@ -233,7 +230,7 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Attributes
-     (Grammar    : XML_Grammar;
+     (NFA        : access Schema_NFA'Class;
       Typ        : Type_Descr;
       Reader     : access Abstract_Validation_Reader'Class;
       Atts       : in out Sax.Readers.Sax_Attribute_List;
@@ -241,11 +238,9 @@ package body Schema.Validators is
       Is_Nil     : out Boolean)
    is
       Attributes : constant Attribute_Validator_List := Typ.Attributes;
-
       Length : constant Natural := Get_Length (Atts);
-      G      : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
       Attrs  : Attribute_Validator_Array :=
-        To_Attribute_Array (Grammar, Attributes);
+        To_Attribute_Array (NFA, Attributes);
 
       type Attr_Status is record
          Prohibited : Boolean := False;
@@ -306,7 +301,7 @@ package body Schema.Validators is
       procedure Check_Named_Attribute (Index : Attribute_Validator_Index) is
          Found  : Integer;
          Attr   : Attribute_Descr
-           renames G.Attributes.Table (Attrs (Index).Validator);
+           renames NFA.Attributes.Table (Attrs (Index).Validator);
       begin
          if not Attrs (Index).Visited then
             Attrs (Index).Visited := True;
@@ -558,7 +553,7 @@ package body Schema.Validators is
                      Debug_Output
                        ("Valid: "
                         & To_QName
-                          (G.Attributes.Table (Attrs (A).Validator).Name));
+                          (NFA.Attributes.Table (Attrs (A).Validator).Name));
                   end loop;
                end if;
 
@@ -725,11 +720,11 @@ package body Schema.Validators is
          G     := new XML_Grammar_Record;
          G.NFA := new Schema_NFA;
          G.NFA.Initialize (States_Are_Statefull => True);
-         Init (G.Attributes);
-         Init (G.Enumerations);
-         G.References :=
+         Init (G.NFA.Attributes);
+         Init (G.NFA.Enumerations);
+         G.NFA.References :=
            new Reference_HTables.HTable (Size => Reference_HTable_Size);
-         Simple_Type_Tables.Init (G.Simple_Types);
+         Simple_Type_Tables.Init (G.NFA.Simple_Types);
          Grammar  := Allocate (G);
       end if;
    end Create_Grammar_If_Needed;
@@ -766,16 +761,15 @@ package body Schema.Validators is
    -----------------------------
 
    procedure Create_Global_Attribute
-     (Grammar : in out XML_Grammar;
-      Attr    : Attribute_Descr)
+     (NFA  : access Schema_NFA'Class;
+      Attr : Attribute_Descr)
    is
       use Reference_HTables;
-      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
       List : Attribute_Validator_List := Empty_Attribute_List;
    begin
-      Add_Attribute (Grammar, List, Attr);
+      Add_Attribute (NFA, List, Attr);
       Set
-        (G.References.all,
+        (NFA.References.all,
          (Kind => Ref_Attribute, Name => Attr.Name, Attributes => List));
    end Create_Global_Attribute;
 
@@ -784,35 +778,34 @@ package body Schema.Validators is
    -------------------------------
 
    function Create_Global_Simple_Type
-     (Grammar : XML_Grammar;
+     (NFA     : access Schema_NFA'Class;
       Name    : Qualified_Name;
       Descr   : Simple_Type_Descr) return Simple_Type_Index
    is
       use Reference_HTables, Simple_Type_Tables;
-      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
       S    : State;
       Info : Type_Descr;
    begin
-      Append (G.Simple_Types, Descr);
+      Append (NFA.Simple_Types, Descr);
 
       if Name /= No_Qualified_Name then
          if Debug then
             Debug_Output ("Create_global_simple_type: " & To_QName (Name)
-                          & " at index" & Last (G.Simple_Types)'Img);
+                          & " at index" & Last (NFA.Simple_Types)'Img);
          end if;
          Info := Type_Descr'
            (Name           => Name,
             Attributes     => Empty_Attribute_List,
             Block          => No_Block,
             Final          => (others => False),
-            Simple_Content => Last (G.Simple_Types),
+            Simple_Content => Last (NFA.Simple_Types),
             Mixed          => False,
             Is_Abstract    => False);
-         S := G.NFA.Add_State ((Descr => Info));
-         Set (G.References.all, (Ref_Type, Info.Name, S));
+         S := NFA.Add_State ((Descr => Info));
+         Set (NFA.References.all, (Ref_Type, Info.Name, S));
       end if;
 
-      return Last (G.Simple_Types);
+      return Last (NFA.Simple_Types);
    end Create_Global_Simple_Type;
 
    ---------------------
@@ -820,13 +813,11 @@ package body Schema.Validators is
    ---------------------
 
    function Get_Simple_Type
-     (Grammar : XML_Grammar;
+     (NFA    : access Schema_NFA'Class;
       Simple  : Schema.Simple_Types.Simple_Type_Index)
-      return Schema.Simple_Types.Simple_Type_Descr
-   is
-      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      return Schema.Simple_Types.Simple_Type_Descr is
    begin
-      return G.Simple_Types.Table (Simple);
+      return NFA.Simple_Types.Table (Simple);
    end Get_Simple_Type;
 
    ------------------------
@@ -846,7 +837,7 @@ package body Schema.Validators is
          pragma Unreferenced (Index);
       begin
          Index := Create_Global_Simple_Type
-           (Reader.Grammar,
+           (G.NFA,
             (NS    => Reader.XML_Schema_URI,
              Local => Find (G.Symbols, Local)),
             Descr);
@@ -860,7 +851,7 @@ package body Schema.Validators is
       G := Get (Reader.Grammar);
       G.Symbols := Get_Symbol_Table (Reader);
 
-      if Get (G.References.all,
+      if Get (G.NFA.References.all,
               (Name => (NS => Reader.XML_Schema_URI,
                         Local => Reader.S_Boolean),
                Kind => Ref_Type)) = No_Global_Reference
@@ -869,22 +860,22 @@ package body Schema.Validators is
 
          Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Lang),
                   others => <>);
-         Create_Global_Attribute (Reader.Grammar, Attr);
+         Create_Global_Attribute (G.NFA, Attr);
 
          Attr := (Name =>
                     (NS => Reader.XML_URI, Local => Find (G.Symbols, "space")),
                   others => <>);
-         Create_Global_Attribute (Reader.Grammar, Attr);
+         Create_Global_Attribute (G.NFA, Attr);
 
          Add_Schema_For_Schema (Reader);
 
-         G.Metaschema_NFA_Last := Get_Snapshot (G.NFA);
-         G.Metaschema_Simple_Types_Last :=
-           Simple_Type_Tables.Last (G.Simple_Types);
-         G.Metaschema_Attributes_Last :=
-           Attributes_Tables.Last (G.Attributes);
-         G.Metaschema_Enumerations_Last :=
-           Enumeration_Tables.Last (G.Enumerations);
+         G.NFA.Metaschema_NFA_Last := Get_Snapshot (G.NFA);
+         G.NFA.Metaschema_Simple_Types_Last :=
+           Simple_Type_Tables.Last (G.NFA.Simple_Types);
+         G.NFA.Metaschema_Attributes_Last :=
+           Attributes_Tables.Last (G.NFA.Attributes);
+         G.NFA.Metaschema_Enumerations_Last :=
+           Enumeration_Tables.Last (G.NFA.Enumerations);
       end if;
    end Initialize_Grammar;
 
@@ -917,11 +908,11 @@ package body Schema.Validators is
          Debug_Output ("Freeing grammar");
       end if;
 
-      Reset_Simple_Types (Grammar, No_Simple_Type_Index);
-      Enumeration_Tables.Free (Grammar.Enumerations);
-      Free (Grammar.Attributes);
-      Reference_HTables.Reset (Grammar.References.all);
-      Unchecked_Free (Grammar.References);
+      Reset_Simple_Types (Grammar.NFA, No_Simple_Type_Index);
+      Enumeration_Tables.Free (Grammar.NFA.Enumerations);
+      Free (Grammar.NFA.Attributes);
+      Reference_HTables.Reset (Grammar.NFA.References.all);
+      Unchecked_Free (Grammar.NFA.References);
       Free (NFA_Access (Grammar.NFA));
       Free (Grammar.Parsed_Locations);
    end Free;
@@ -931,20 +922,19 @@ package body Schema.Validators is
    ------------------------
 
    procedure Reset_Simple_Types
-     (G  : in out XML_Grammar_Record'Class;
-      To : Simple_Type_Index := No_Simple_Type_Index)
-   is
+     (NFA : access Schema_NFA'Class;
+      To  : Simple_Type_Index := No_Simple_Type_Index) is
    begin
-      for S in To + 1 .. Simple_Type_Tables.Last (G.Simple_Types) loop
-         if G.Simple_Types.Table (S).Pattern /= null then
-            Unchecked_Free (G.Simple_Types.Table (S).Pattern);
+      for S in To + 1 .. Simple_Type_Tables.Last (NFA.Simple_Types) loop
+         if NFA.Simple_Types.Table (S).Pattern /= null then
+            Unchecked_Free (NFA.Simple_Types.Table (S).Pattern);
          end if;
       end loop;
 
       if To = No_Simple_Type_Index then
-         Simple_Type_Tables.Free (G.Simple_Types);
+         Simple_Type_Tables.Free (NFA.Simple_Types);
       else
-         Simple_Type_Tables.Set_Last (G.Simple_Types, To);
+         Simple_Type_Tables.Set_Last (NFA.Simple_Types, To);
       end if;
    end Reset_Simple_Types;
 
@@ -954,7 +944,8 @@ package body Schema.Validators is
 
    procedure Reset (Grammar : in out XML_Grammar) is
       use Reference_HTables;
-      G     : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      G   : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      NFA : Schema_NFA_Access;
 
       function Preserve (TRef : Global_Reference) return Boolean;
       function Preserve (TRef : Global_Reference) return Boolean is
@@ -962,13 +953,13 @@ package body Schema.Validators is
       begin
          case TRef.Kind is
             when Ref_Element =>
-               R := Exists (G.Metaschema_NFA_Last, TRef.Element);
+               R := Exists (NFA.Metaschema_NFA_Last, TRef.Element);
             when Ref_Type =>
-               R := Exists (G.Metaschema_NFA_Last, TRef.Typ);
+               R := Exists (NFA.Metaschema_NFA_Last, TRef.Typ);
             when Ref_Group =>
-               R := Exists (G.Metaschema_NFA_Last, TRef.Gr_Start);
+               R := Exists (NFA.Metaschema_NFA_Last, TRef.Gr_Start);
             when Ref_Attribute | Ref_AttrGroup =>
-               R := TRef.Attributes <= G.Metaschema_Attributes_Last;
+               R := TRef.Attributes <= NFA.Metaschema_Attributes_Last;
          end case;
          return R;
       end Preserve;
@@ -984,25 +975,26 @@ package body Schema.Validators is
          return;
       end if;
 
+      NFA := G.NFA;
       Free (G.Parsed_Locations);
 
-      if G.Metaschema_NFA_Last /= No_NFA_Snapshot then
+      if NFA.Metaschema_NFA_Last /= No_NFA_Snapshot then
          if Debug then
             Debug_Output ("Preserve metaschema information");
          end if;
          Enumeration_Tables.Set_Last
-           (G.Enumerations, G.Metaschema_Enumerations_Last);
+           (NFA.Enumerations, NFA.Metaschema_Enumerations_Last);
          Attributes_Tables.Set_Last
-           (G.Attributes, G.Metaschema_Attributes_Last);
+           (NFA.Attributes, NFA.Metaschema_Attributes_Last);
 
-         Reset_Simple_Types (G.all, G.Metaschema_Simple_Types_Last);
-         Remove_All (G.References.all);
+         Reset_Simple_Types (NFA, NFA.Metaschema_Simple_Types_Last);
+         Remove_All (NFA.References.all);
 
          --  From the toplevel choice (ie the list of valid global elements),
          --  we need to keep only those belonging to our metaschema, not those
          --  from grammars loaded afterward
 
-         Reset_To_Snapshot (G.NFA, G.Metaschema_NFA_Last);
+         Reset_To_Snapshot (NFA, NFA.Metaschema_NFA_Last);
       end if;
    end Reset;
 
@@ -1077,7 +1069,7 @@ package body Schema.Validators is
 
    function Get_References (Grammar : XML_Grammar) return Reference_HTable is
    begin
-      return Get (Grammar).References;
+      return Get (Grammar).NFA.References;
    end Get_References;
 
    -----------------
@@ -1759,8 +1751,8 @@ package body Schema.Validators is
       Error : Symbol;
    begin
       Error := Validate_Simple_Type
-        (Simple_Types  => Get (Reader.Grammar).Simple_Types,
-         Enumerations  => Get (Reader.Grammar).Enumerations,
+        (Simple_Types  => Get (Reader.Grammar).NFA.Simple_Types,
+         Enumerations  => Get (Reader.Grammar).NFA.Enumerations,
          Symbols       => Get (Reader.Grammar).Symbols,
          Simple_Type   => Simple_Type,
          Ch            => Ch,
@@ -1782,7 +1774,7 @@ package body Schema.Validators is
       Ch2           : Unicode.CES.Byte_Sequence) return Boolean is
    begin
       return Equal
-        (Get (Reader.Grammar).Simple_Types,
+        (Get (Reader.Grammar).NFA.Simple_Types,
          Get (Reader.Grammar).Symbols, Simple_Type, Ch1, Ch2);
    end Equal;
 
@@ -1800,7 +1792,7 @@ package body Schema.Validators is
       Add_Facet
         (Facets,
          Symbols      => Get (Grammar).Symbols,
-         Enumerations => Get (Grammar).Enumerations,
+         Enumerations => Get (Grammar).NFA.Enumerations,
          Facet_Name   => Facet_Name,
          Value        => Value,
          Loc          => Loc);

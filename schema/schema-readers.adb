@@ -406,7 +406,7 @@ package body Schema.Readers is
       begin
          if Self.Get_Data (S).Descr.Simple_Content /= No_Simple_Type_Index then
             Whitespace := Get_Simple_Type
-              (Handler.Grammar,
+              (Get_NFA (Handler.Grammar),
                Self.Get_Data (S).Descr.Simple_Content).Whitespace;
          end if;
       end Find_Whitespace;
@@ -581,7 +581,7 @@ package body Schema.Readers is
          end if;
 
          Validate_Attributes
-           (H.Grammar, Data2.Descr, H, Atts,
+           (Get_NFA (H.Grammar), Data2.Descr, H, Atts,
             Nillable  => False,  --  Is_Nillable (Element),
             Is_Nil    => Is_Nil);
       end Validate_Attributes_Cb;
