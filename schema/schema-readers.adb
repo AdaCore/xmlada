@@ -438,7 +438,7 @@ package body Schema.Readers is
       ------------------
 
       function Compute_Type_From_Attribute return Type_Descr is
-         G : XML_Grammar_NS;
+--           G : XML_Grammar_NS;
 --           Had_Restriction, Had_Extension : Boolean := False;
 --           Valid : Boolean;
 --           Typ : XML_Type := No_Type;
@@ -467,8 +467,8 @@ package body Schema.Readers is
                   Find_Symbol
                     (Handler.all, Qname (Qname'First .. Separator - 1)),
                   NS);
-               Get_NS
-                 (Validating_Reader (Handler.all).Grammar, Get_URI (NS), G);
+--                 Get_NS
+--                 (Validating_Reader (Handler.all).Grammar, Get_URI (NS), G);
 --                 Local_Name := Find_Symbol
 --                   (Handler.all, Qname (Separator + 1 .. Qname'Last));
 
@@ -539,8 +539,8 @@ package body Schema.Readers is
          Validate_Attributes
            (H.Grammar,
             Data2.Descr.Attributes, H, Atts,
-            Nillable => False,  --  Is_Nillable (Element),
-            Is_Nil   => Is_Nil);
+            Nillable  => False,  --  Is_Nillable (Element),
+            Is_Nil    => Is_Nil);
       end Validate_Attributes_Cb;
 
       procedure Validate_All_Attributes is new For_Each_Active_State
@@ -872,7 +872,7 @@ package body Schema.Readers is
       end if;
 
       Initialize_Symbols (Parser);
-      Initialize_Grammar (Parser'Unchecked_Access);
+      Initialize_Grammar (Parser);
 
       if Get_Feature (Parser, Schema_Validation_Feature) then
          Set_Hooks (Parser,

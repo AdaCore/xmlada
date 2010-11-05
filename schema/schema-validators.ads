@@ -69,24 +69,14 @@ package Schema.Validators is
    --  The default implementation always validates.
 
    type XML_Grammar is private;
-   type XML_Grammar_NS_Record is private;
-   type XML_Grammar_NS is access all XML_Grammar_NS_Record;
-   --  The part of a grammar specialized for a given namespace.
    --  A grammar can contain the definition for multiple namespaces (generally
    --  the standard XML Schema namespace for predefined types, and the
-   --  namespace we are defining). Each of these is accessed by a separate
-   --  XML_Grammar_NS object
+   --  namespace we are defining).
    --  A grammar is a smart pointer, and will take care of freeing memory
    --  automatically when no longer needed.
 
-   procedure Set_System_Id
-     (Grammar   : XML_Grammar_NS;
-      System_Id : Sax.Symbols.Symbol);
-   function Get_System_Id (Grammar : XML_Grammar_NS) return Sax.Symbols.Symbol;
-   --  The URI from which we loaded the schema
-
    procedure Set_XSD_Version
-     (Grammar : in out XML_Grammar;
+     (Grammar     : in out XML_Grammar;
       XSD_Version : XSD_Versions);
    function Get_XSD_Version (Grammar : XML_Grammar) return XSD_Versions;
    --  Set the version of XSD accepted by this grammar
@@ -565,14 +555,6 @@ package Schema.Validators is
    function Is_ID (Validator : XML_Validator_Record) return Boolean;
    --  Whether the validator is associated with an ID type
 
-   function Extension_Of
-     (G         : XML_Grammar_NS;
-      Base      : XML_Type;
-      Extension : XML_Validator := null) return XML_Validator;
-   --  Create an extension of Base.
-   --  Base doesn't need to be a Clone of some other type, since it isn't
-   --  altered. See also Is_Extension_Of below
-
    function Is_Extension_Of
      (Validator : XML_Validator_Record;
       Base      : access XML_Validator_Record'Class) return Boolean;
@@ -580,15 +562,6 @@ package Schema.Validators is
      (Validator : XML_Validator_Record;
       Base      : access XML_Validator_Record'Class) return Boolean;
    --  Whether Validator is an extension/restriction of Base
-
-   function Restriction_Of
-     (G           : XML_Grammar_NS;
-      Reader      : access Abstract_Validation_Reader'Class;
-      Base        : XML_Type;
-      Restriction : XML_Validator := null) return XML_Validator;
-   --  Create a restriction of Base
-   --  Base doesn't need to be a Clone of some other type, since it isn't
-   --  altered. See also Is_Restriction_Of below
 
 --     procedure Check_Content_Type
 --       (Typ              : XML_Type;
@@ -641,11 +614,11 @@ package Schema.Validators is
    type NS_List is array (Natural range <>) of Sax.Symbols.Symbol;
    Empty_NS_List : constant NS_List;
 
-   function Create_Any_Attribute
-     (In_NS  : XML_Grammar_NS;
-      Process_Contents : Process_Contents_Type := Process_Strict;
-      Kind   : Namespace_Kind;
-      List   : NS_List := Empty_NS_List) return Attribute_Descr;
+--     function Create_Any_Attribute
+--       (In_NS  : XML_Grammar_NS;
+--        Process_Contents : Process_Contents_Type := Process_Strict;
+--        Kind   : Namespace_Kind;
+--        List   : NS_List := Empty_NS_List) return Attribute_Descr;
    --  Equivalent of <anyAttribute> in an XML schema.
    --  List is irrelevant if Kind /= Namespace_List. It is adopted by the
    --  attribute, and should not be freed by the caller
@@ -755,7 +728,7 @@ package Schema.Validators is
    -- Unions --
    ------------
 
-   function Create_Union (G : XML_Grammar_NS) return XML_Validator;
+--     function Create_Union (G : XML_Grammar_NS) return XML_Validator;
    --  Create a new empty union
 
    procedure Add_Union
@@ -825,19 +798,6 @@ package Schema.Validators is
    -- Grammars --
    --------------
 
-   procedure Get_NS
-     (Grammar       : XML_Grammar;
-      Namespace_URI : Sax.Symbols.Symbol;
-      Result        : out XML_Grammar_NS;
-      Create_If_Needed : Boolean := True);
-   --  Return the part of the grammar specialized for a given namespace.
-   --  If no such namespace exists yet in the grammar, it is created.
-
-   procedure Set_Target_NS (Grammar : XML_Grammar; NS : XML_Grammar_NS);
-   function Get_Target_NS (Grammar : XML_Grammar) return XML_Grammar_NS;
-   --  Set the target namespace for the grammar. This is the "targetNamespace"
-   --  attribute of the <schema> node.
-
    procedure Create_Global_Type
      (Grammar    : XML_Grammar;
       Name       : Qualified_Name;
@@ -845,13 +805,8 @@ package Schema.Validators is
    --  Same as above, but doesn't return the newly created type. Use Lookup if
    --  you need access to it later on
 
-   procedure Set_Block_Default
-     (Grammar : XML_Grammar_NS; Blocks  : Block_Status);
-   function Get_Block_Default (Grammar : XML_Grammar_NS) return Block_Status;
-   --  Set the default value for the "block" attribute
-
    procedure Initialize_Grammar
-     (Reader : access Abstract_Validation_Reader'Class);
+     (Reader : in out Abstract_Validation_Reader'Class);
    --  Initialize the internal structure of the grammar.
    --  This adds the definition for all predefined types
 
@@ -866,10 +821,6 @@ package Schema.Validators is
    --  Keeping the grammar for the XSD files provides a minor optimization,
    --  avoiding the need to recreate it the next time you parse a XSD file.
 
-   function Get_Namespace_URI
-     (Grammar : XML_Grammar_NS) return Sax.Symbols.Symbol;
-   --  Return the namespace URI associated with Grammar
-
    function URI_Was_Parsed
      (Grammar : XML_Grammar;
       URI     : Sax.Symbols.Symbol) return Boolean;
@@ -877,8 +828,7 @@ package Schema.Validators is
    --  Grammar. URI must be an absolute URI.
 
    procedure Set_Parsed_URI
-     (Reader  : access Abstract_Validation_Reader'Class;
-      Grammar : in out XML_Grammar;
+     (Reader  : in out Abstract_Validation_Reader'Class;
       URI     : Sax.Symbols.Symbol);
    --  Indicate that the schema found at URI was fully parsed and integrated
    --  into Grammar. It can then be tested through URI_Was_Parsed.
@@ -887,8 +837,6 @@ package Schema.Validators is
    --  Dump the grammar to stdout. This is for debug only
 
    function To_QName (Name : Qualified_Name) return Unicode.CES.Byte_Sequence;
-   function To_QName (NS : XML_Grammar_NS; Local : Sax.Symbols.Symbol)
-      return Unicode.CES.Byte_Sequence;
    --  Return the name as it should be displayed in error messages
 
 private
@@ -989,9 +937,6 @@ private
    -- Grammars --
    --------------
 
-   type Grammar_NS_Array is array (Natural range <>) of XML_Grammar_NS;
-   type Grammar_NS_Array_Access is access all Grammar_NS_Array;
-
    type String_List_Record;
    type String_List is access String_List_Record;
    type String_List_Record is record
@@ -1007,9 +952,6 @@ private
    type XML_Grammar_Record is new Sax.Pointers.Root_Encapsulated with record
       Symbols  : Sax.Utils.Symbol_Table;
 
-      Grammars : Grammar_NS_Array_Access;
-      --  All the namespaces known for that grammar
-
       Parsed_Locations : String_List;
       --  List of schema locations that have already been parsed. This is used
       --  in particular to handle cases where a schema imports two others
@@ -1019,11 +961,9 @@ private
 
       References : aliased Reference_HTables.Instance;
       Attributes : Attributes_Tables.Instance;
-      NFA : Schema_State_Machines.NFA_Access;
+      NFA        : Schema_State_Machines.NFA_Access;
       --  The state machine representing the grammar
       --  This includes the states for all namespaces
-
-      Target_NS : XML_Grammar_NS;
    end record;
 
    procedure Free (Grammar : in out XML_Grammar_Record);
@@ -1061,12 +1001,7 @@ private
 
    type XML_Grammar_NS_Record is record
       Namespace_URI : Sax.Symbols.Symbol;
-      System_ID     : Sax.Symbols.Symbol;
-      Blocks        : Block_Status := No_Block;
    end record;
-
-   procedure Free (Grammar : in out XML_Grammar_NS);
-   --  Free the memory occupied by Grammar
 
    function Get_Name
      (Validator : access XML_Validator_Record'Class) return String;

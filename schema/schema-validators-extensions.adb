@@ -198,7 +198,7 @@ package body Schema.Validators.Extensions is
    -------------------------
 
    function Create_Extension_Of
-     (G         : XML_Grammar_NS;
+     (G         : XML_Grammar;
       Base      : XML_Type;
       Extension : XML_Validator := null) return XML_Validator
    is

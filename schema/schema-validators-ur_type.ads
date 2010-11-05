@@ -32,7 +32,6 @@ private package Schema.Validators.UR_Type is
 
    procedure Create_UR_Type_Elements
      (Reader    : access Schema.Validators.Abstract_Validation_Reader'Class;
-      Schema_NS : Schema.Validators.XML_Grammar_NS;
       Grammar   : XML_Grammar);
    --  Create all the ur-Type elements
 

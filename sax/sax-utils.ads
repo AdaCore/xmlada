@@ -172,6 +172,11 @@ package Sax.Utils is
    pragma Inline (Get_Prefix, Get_URI);
    --  Return the URI for this namespace
 
+   procedure Set_System_Id (NS : XML_NS; System_Id : Sax.Symbols.Symbol);
+   function Get_System_Id  (NS : XML_NS) return Sax.Symbols.Symbol;
+   --  Return the location of the file or stream used associated with that
+   --  namespace
+
    procedure Increment_Count (NS : XML_NS);
    function Element_Count (NS : XML_NS) return Natural;
    --  Return the count of elements (or attributes) seen so far in this
@@ -210,6 +215,7 @@ private
    type XML_NS_Record is record
       Prefix    : Sax.Symbols.Symbol;
       URI       : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      System_Id : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Same_As   : XML_NS;  --  If set, URI is null
       Use_Count : Natural := 0;
       Next      : XML_NS;

@@ -812,6 +812,7 @@ package body Sax.Utils is
       NS := new XML_NS_Record'
         (Prefix    => Prefix,
          URI       => URI,
+         System_Id => No_Symbol,
          Same_As   => null,
          Use_Count => 0,
          Next      => List);
@@ -878,5 +879,23 @@ package body Sax.Utils is
          return Find (Table, Get (Sym).all);
       end if;
    end Convert;
+
+   -------------------
+   -- Set_System_Id --
+   -------------------
+
+   procedure Set_System_Id (NS : XML_NS; System_Id : Sax.Symbols.Symbol) is
+   begin
+      NS.System_Id := System_Id;
+   end Set_System_Id;
+
+   -------------------
+   -- Get_System_Id --
+   -------------------
+
+   function Get_System_Id (NS : XML_NS) return Sax.Symbols.Symbol is
+   begin
+      return NS.System_Id;
+   end Get_System_Id;
 
 end Sax.Utils;

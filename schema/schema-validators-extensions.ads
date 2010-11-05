@@ -31,7 +31,7 @@ pragma Ada_05;
 private package Schema.Validators.Extensions is
 
    function Create_Extension_Of
-     (G         : XML_Grammar_NS;
+     (G         : XML_Grammar;
       Base      : XML_Type;
       Extension : XML_Validator := null) return XML_Validator;
    --  Create new extensions of Base, either through a type or a group.

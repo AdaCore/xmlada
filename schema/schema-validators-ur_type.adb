@@ -164,10 +164,9 @@ package body Schema.Validators.UR_Type is
 
    procedure Create_UR_Type_Elements
      (Reader    : access Schema.Validators.Abstract_Validation_Reader'Class;
-      Schema_NS : Schema.Validators.XML_Grammar_NS;
       Grammar   : XML_Grammar)
    is
-      pragma Unreferenced (Grammar, Reader, Schema_NS);
+      pragma Unreferenced (Grammar, Reader);
       Validator : UR_Type_Access;
 --        Typ       : XML_Type;
    begin

@@ -28,16 +28,16 @@
 
 with Schema.Validators;              use Schema.Validators;
 with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
-with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
+--  with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
 
 pragma Warnings (Off);  --  ??? Temporary
 
 package body Schema.Validators.XSD_Grammar is
 
    procedure Add_Schema_For_Schema
-     (R : access Schema.Validators.Abstract_Validation_Reader'Class)
+     (R : in out Schema.Validators.Abstract_Validation_Reader'Class)
    is
-      G, XML_G      : XML_Grammar_NS;
+--        G, XML_G      : XML_Grammar_NS;
       Tmp2          : XML_Validator;
       Typ, Typ2     : XML_Validator;
 --        Seq1, Seq2    : Sequence;
@@ -76,10 +76,10 @@ package body Schema.Validators.XSD_Grammar is
 --        simpleRestrictionModel   : XML_Group;
 
    begin
-      Get_NS (R.Grammar, R.XML_Schema_URI,   Result => G);
-      Get_NS (R.Grammar, R.XML_URI,          Result => XML_G);
-
-      Create_UR_Type_Elements (R, G, R.Grammar);
+--        Get_NS (R.Grammar, R.XML_Schema_URI,   Result => G);
+--        Get_NS (R.Grammar, R.XML_URI,          Result => XML_G);
+--
+--        Create_UR_Type_Elements (R, G, R.Grammar);
 
       --  As per 3.4.7, ur-Type (ie anyType) uses a Lax processing for its
       --  children node (ie uses the grammar definition if one is found)
@@ -97,7 +97,8 @@ package body Schema.Validators.XSD_Grammar is
       Create_Global_Type
         (R.Grammar, (R.XML_Schema_URI, R.Any_Simple_Type), Tmp2);
 
-      Schema.Validators.Simple_Types.Register_Predefined_Types (R.Grammar, R);
+      Schema.Validators.Simple_Types.Register_Predefined_Types
+        (R.Grammar, R'Access);
 
 --        NMTOKEN            := Lookup (G, R, R.NMTOKEN);
 --        NCNAME             := Lookup (G, R, R.NCName);

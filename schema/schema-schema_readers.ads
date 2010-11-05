@@ -281,7 +281,8 @@ private
         Schema.Validators.Unqualified;
       --  The value of elementFormDefault for the current file
 
-      Target_NS       : Schema.Validators.XML_Grammar_NS;
+      Target_NS            : Sax.Symbols.Symbol;
+      Target_Block_Default : Block_Status := No_Block;
       --  The namespace for which we are currently parsing. This might be
       --  different from Get_Target_NS (Created_Grammar) when processing
       --  <import> for instance.
@@ -290,7 +291,6 @@ private
       --  Whether we are processing an <annotation> node, in which case we
       --  need to ignore all children
 
-      Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Array_Access;
       Contexts_Last   : Natural := 0;
 

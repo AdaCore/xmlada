@@ -992,31 +992,22 @@ package body Schema.Schema_Readers is
 
          declare
             NS : XML_NS;
-            Local_Grammar : XML_Grammar_NS;
          begin
-            Get_NS
-              (Handler.Grammar,
-               Namespace_URI    => URI,
-               Result           => Local_Grammar,
-               Create_If_Needed => False);
+            Find_NS_From_URI
+              (Handler.all,
+               URI     => URI,
+               NS      => NS);
 
-            if Local_Grammar /= null then
-               Find_NS_From_URI
-                 (Handler.all,
-                  URI     => URI,
-                  NS      => NS);
-
-               if NS /= No_XML_NS
-                 and then Element_Count (NS) > 0
-                 and then S_File_Full /= Get_System_Id (Local_Grammar)
-               then
-                  Validation_Error
-                    (Handler,
-                     "#schemaLocation for """
-                     & Get (URI).all
-                     & """ cannot occur after the first"
-                     & " element of that namespace in XSD 1.0");
-               end if;
+            if NS /= No_XML_NS
+              and then Element_Count (NS) > 0
+              and then S_File_Full /= Get_System_Id (NS)
+            then
+               Validation_Error
+                 (Handler,
+                  "#schemaLocation for """
+                  & Get (URI).all
+                  & """ cannot occur after the first"
+                  & " element of that namespace in XSD 1.0");
             end if;
          end;
       end if;
@@ -1098,8 +1089,9 @@ package body Schema.Schema_Readers is
       Do_Create_NFA     : Boolean;
       Do_Initialize_Shared : Boolean)
    is
-      Grammar      : XML_Grammar := Get_Grammar (Parser);
-      URI          : Symbol;
+      Grammar : constant XML_Grammar := Get_Grammar (Parser);
+      URI     : Symbol;
+--        NS      : XML_NS;
    begin
       if Debug then
          Output_Action
@@ -1117,15 +1109,17 @@ package body Schema.Schema_Readers is
             Init (Parser.Shared.Types);
          end if;
 
-         Initialize_Grammar (Parser'Access);
+         Initialize_Grammar (Parser);
 
-         Get_NS (Grammar, Default_Namespace,     Parser.Target_NS);
-         Get_NS (Grammar, Parser.XML_Schema_URI, Parser.Schema_NS);
+         Parser.Target_NS := Default_Namespace;
 
          Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
          Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, False);
-         Set_Parsed_URI (Parser'Access, Grammar, URI);
-         Set_System_Id (Parser.Target_NS, URI);
+         Set_Parsed_URI (Parser, URI);
+
+--           Find_NS_From_URI (Parser, URI => Parser.Target_NS, NS => NS);
+--           pragma Assert (NS /= No_XML_NS);  --  Always False in practice!
+--           Set_System_Id (NS, URI);
 
          Schema.Readers.Parse (Validating_Reader (Parser), Input);
 
@@ -1267,7 +1261,7 @@ package body Schema.Schema_Readers is
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
             if Local = Handler.Name then
-               Group.Name := (NS    => Get_Namespace_URI (Handler.Target_NS),
+               Group.Name := (NS    => Handler.Target_NS,
                               Local => Get_Value (Atts, J));
             elsif Local = Handler.Ref then
                Group.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
@@ -1389,7 +1383,7 @@ package body Schema.Schema_Readers is
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
             if Local = Handler.Name then
-               Group.Name := (NS    => Get_Namespace_URI (Handler.Target_NS),
+               Group.Name := (NS    => Handler.Target_NS,
                               Local => Get_Value (Atts, J));
             elsif Local = Handler.Ref then
                Group.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
@@ -1531,7 +1525,7 @@ package body Schema.Schema_Readers is
    begin
       Parse_Grammar
         (Handler,
-         URI      => Get_Namespace_URI (Handler.Target_NS),
+         URI      => Handler.Target_NS,
          Xsd_File => Get_Value (Atts, Schema_Location_Index),
          Do_Create_NFA => False);  --  Will be performed later
    end Create_Include;
@@ -1563,7 +1557,7 @@ package body Schema.Schema_Readers is
          "<redefine> not supported");
       Parse_Grammar
         (Handler,
-         URI      => Get_Namespace_URI (Handler.Target_NS),
+         URI      => Handler.Target_NS,
          Do_Create_NFA => True,
          Xsd_File => Get_Value (Atts, Location_Index));
 
@@ -1582,21 +1576,21 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.Schema_Location);
       Namespace_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Namespace);
-      NS : XML_Grammar_NS;
+--        NS : XML_Grammar_NS;
    begin
       if Location_Index = -1 then
          if Namespace_Index = -1 then
             Validation_Error (Handler, "#Missing ""namespace"" attribute");
          end if;
 
-         Get_NS
-           (Get_Grammar (Handler.all), Get_Value (Atts, Namespace_Index),
-            Result => NS, Create_If_Needed => False);
-         if NS = null then
-            Validation_Error
-              (Handler, "#Cannot resolve namespace "
-               & Get (Get_Value (Atts, Namespace_Index)).all);
-         end if;
+--           Get_NS
+--             (Get_Grammar (Handler.all), Get_Value (Atts, Namespace_Index),
+--              Result => NS, Create_If_Needed => False);
+--           if NS = null then
+--              Validation_Error
+--                (Handler, "#Cannot resolve namespace "
+--                 & Get (Get_Value (Atts, Namespace_Index)).all);
+--           end if;
       else
          declare
             Location : constant Symbol := Get_Value (Atts, Location_Index);
@@ -1701,7 +1695,7 @@ package body Schema.Schema_Readers is
             if Local = Handler.Typ then
                Info.Typ := Resolve_QName (Handler, Get_Value (Atts, J));
             elsif Local = Handler.Name then
-               Info.Name := (NS    => Get_Namespace_URI (Handler.Target_NS),
+               Info.Name := (NS    => Handler.Target_NS,
                              Local => Get_Value (Atts, J));
             elsif Local = Handler.Ref then
                Info.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
@@ -2019,7 +2013,7 @@ package body Schema.Schema_Readers is
 --        Redefined : XML_Type := No_Type;
 
    begin
-      Info.Descr.Block := Get_Block_Default (Handler.Target_NS);
+      Info.Descr.Block := Handler.Target_Block_Default;
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
@@ -2028,7 +2022,7 @@ package body Schema.Schema_Readers is
                Info.Descr.Mixed := Get_Value_As_Boolean (Atts, J, False);
             elsif Local = Handler.Name then
                Info.Descr.Name :=
-                 (NS    => Get_Namespace_URI (Handler.Target_NS),
+                 (NS    => Handler.Target_NS,
                   Local => Get_Value (Atts, J));
             elsif Local = Handler.Block then
                Compute_Blocks (Atts, Handler, Info.Descr.Block, Is_Set, J);
@@ -2505,7 +2499,7 @@ package body Schema.Schema_Readers is
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
             if Local = Handler.Name then
-               Att.Descr.Name := (NS => Get_Namespace_URI (Handler.Target_NS),
+               Att.Descr.Name := (NS    => Handler.Target_NS,
                                   Local => Get_Value (Atts, J));
             elsif Local = Handler.Typ then
                Att.Typ  := Resolve_QName (Handler, Get_Value (Atts, J));
@@ -2612,13 +2606,11 @@ package body Schema.Schema_Readers is
                null;
 
             when others =>
-               if Get_Namespace_URI (Handler.Target_NS) =
-                 Handler.XML_Instance_URI
-               then
+               if Handler.Target_NS = Handler.XML_Instance_URI then
                   Validation_Error
                     (Handler,
                      "Invalid target namespace for attribute declaration: """
-                     & Get (Get_Namespace_URI (Handler.Target_NS)).all & """");
+                     & Get (Handler.Target_NS).all & """");
                end if;
          end case;
       end if;
@@ -2746,15 +2738,14 @@ package body Schema.Schema_Readers is
                     & Get (Info.Target_NS).all & """, Handler.Target_NS)");
          end if;
 
-         Get_NS (Get_Grammar (Handler.all), Info.Target_NS, Handler.Target_NS);
-         Set_Target_NS (Get_Grammar (Handler.all), Handler.Target_NS);
+         Handler.Target_NS := Info.Target_NS;
       end if;
 
       Handler.Element_Form_Default   := Info.Element_Form_Default;
       Handler.Attribute_Form_Default := Info.Attribute_Form_Default;
 
       if Is_Set then
-         Set_Block_Default (Handler.Target_NS, Info.Block);
+         Handler.Target_Block_Default := Info.Block;
       end if;
 
       Push_Context (Handler, (Typ => Context_Schema));
@@ -2792,7 +2783,7 @@ package body Schema.Schema_Readers is
       Min_Occurs, Max_Occurs : Integer := 1;
 
    begin
-      Any.Target_NS := Get_Namespace_URI (Handler.Target_NS);
+      Any.Target_NS := Handler.Target_NS;
       Any.Namespace := Handler.Any_Namespace;
 
       for J in 1 .. Get_Length (Atts) loop

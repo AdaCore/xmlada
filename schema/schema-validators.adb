@@ -39,49 +39,19 @@ with Sax.Readers;                    use Sax.Readers;
 with Sax.Symbols;                    use Sax.Symbols;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
-with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
+--  with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
 with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Lists;        use Schema.Validators.Lists;
-with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
+--  with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
 with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
-with System.Address_Image;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
 package body Schema.Validators is
    use XML_Grammars, Attributes_Tables;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Grammar_NS_Array, Grammar_NS_Array_Access);
-
-   function Create_NS_Grammar
-     (Grammar       : XML_Grammar;
-      Namespace_URI : Sax.Symbols.Symbol) return XML_Grammar_NS;
-   --  Create a new namespace in the grammar
-
-   function Debug_Name (Grammar : XML_Grammar_NS) return String;
-   --  Debug output of Grammar
-
-   function Extension_Of
-     (G         : XML_Grammar_NS;
-      Base      : XML_Type;
-      Extension : XML_Validator := null) return XML_Validator
-      renames Schema.Validators.Extensions.Create_Extension_Of;
-
-   function Restriction_Of
-     (G           : XML_Grammar_NS;
-      Reader      : access Abstract_Validation_Reader'Class;
-      Base        : XML_Type;
-      Restriction : XML_Validator := null) return XML_Validator
-      renames Schema.Validators.Restrictions.Create_Restriction_Of;
-
    function To_Graphic_String (Str : Byte_Sequence) return String;
    --  Convert non-graphic characters in Str to make them visible in a display
-
-   procedure Create_Grammar_If_Needed
-     (Grammar : in out XML_Grammar;
-      Symbols : Symbol_Table := No_Symbol_Table);
-   --  Allocate a new grammar, if needed
 
    type Attribute_Validator_Data is record
       Validator : Attribute_Validator_List;  --  Index into the table
@@ -94,6 +64,9 @@ package body Schema.Validators is
      (Grammar    : XML_Grammar;
       Attributes : Attribute_Validator_List) return Attribute_Validator_Array;
    --  The data required to validate attributes
+
+   procedure Create_Grammar_If_Needed (Grammar : in out XML_Grammar);
+   --  Create the grammar if needed
 
    ----------------------
    -- Validation_Error --
@@ -551,9 +524,7 @@ package body Schema.Validators is
                   when Unqualified =>
                      if Attr.Is_Local
                        and then Get_Prefix (Atts, Found) /= Empty_String
-                       and then Get_URI (Atts, Found) =
-                       Get_Namespace_URI
-                         (Get (Reader.Grammar).Target_NS)
+                     --  and then Get_URI (Atts, Found) = Target_NS
                      then
                         Validation_Error
                           (Reader, "#Attribute " & Get_Qname (Atts, Found)
@@ -980,13 +951,6 @@ package body Schema.Validators is
       end if;
    end To_QName;
 
-   function To_QName
-     (NS     : XML_Grammar_NS; Local : Sax.Symbols.Symbol)
-      return Byte_Sequence is
-   begin
-      return Sax.Readers.To_QName (NS.Namespace_URI, Local);
-   end To_QName;
-
    ----------------------
    -- Get_Symbol_Table --
    ----------------------
@@ -1013,39 +977,6 @@ package body Schema.Validators is
       end if;
    end Set_Symbol_Table;
 
-   ------------
-   -- Get_NS --
-   ------------
-
-   procedure Get_NS
-     (Grammar       : XML_Grammar;
-      Namespace_URI : Symbol;
-      Result        : out XML_Grammar_NS;
-      Create_If_Needed : Boolean := True)
-   is
-   begin
-      if Grammar /= No_Grammar and then Get (Grammar).Grammars /= null then
-         for G in Get (Grammar).Grammars'Range loop
-            if Get (Grammar).Grammars (G).Namespace_URI = Namespace_URI then
-               Result := Get (Grammar).Grammars (G);
-               if Debug then
-                  Debug_Output ("  Get_NS -> " & Debug_Name (Result));
-               end if;
-               return;
-            end if;
-         end loop;
-      end if;
-
-      if Create_If_Needed then
-         Result := Create_NS_Grammar (Grammar, Namespace_URI);
-         if Debug then
-            Debug_Output ("  Get_NS new -> " & Debug_Name (Result));
-         end if;
-      else
-         Result := null;
-      end if;
-   end Get_NS;
-
    ----------
    -- Free --
    ----------
@@ -1066,17 +997,13 @@ package body Schema.Validators is
    -- Create_Grammar_If_Needed --
    ------------------------------
 
-   procedure Create_Grammar_If_Needed
-     (Grammar : in out XML_Grammar;
-      Symbols : Symbol_Table := No_Symbol_Table)
-   is
+   procedure Create_Grammar_If_Needed (Grammar : in out XML_Grammar) is
       G : XML_Grammars.Encapsulated_Access;
    begin
       if Grammar = No_Grammar then
          G     := new XML_Grammar_Record;
          G.NFA := new Schema_State_Machines.NFA;
          G.NFA.Initialize (States_Are_Statefull => True);
-         G.Symbols := Symbols;
          Init (G.Attributes);
          Grammar  := Allocate (G);
       end if;
@@ -1109,50 +1036,23 @@ package body Schema.Validators is
       end if;
    end Get_XSD_Version;
 
-   -----------------------
-   -- Create_NS_Grammar --
-   -----------------------
-
-   function Create_NS_Grammar
-     (Grammar       : XML_Grammar;
-      Namespace_URI : Sax.Symbols.Symbol) return XML_Grammar_NS
-   is
-      G   : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
-      Tmp : Grammar_NS_Array_Access;
-   begin
-      if G.Grammars = null then
-         G.Grammars := new Grammar_NS_Array (1 .. 1);
-      else
-         Tmp := G.Grammars;
-         G.Grammars := new Grammar_NS_Array (1 .. Tmp'Length + 1);
-         G.Grammars (Tmp'Range) := Tmp.all;
-         Unchecked_Free (Tmp);
-      end if;
-
-      if Debug then
-         Debug_Output ("Create_NS_Grammar: " & Debug_Print (Namespace_URI));
-      end if;
-
-      G.Grammars (G.Grammars'Last) := new XML_Grammar_NS_Record'
-        (Namespace_URI      => Namespace_URI,
-         System_ID          => No_Symbol,
-         Blocks             => No_Block);
-
-      return G.Grammars (G.Grammars'Last);
-   end Create_NS_Grammar;
-
    ------------------------
    -- Initialize_Grammar --
    ------------------------
 
    procedure Initialize_Grammar
-     (Reader : access Abstract_Validation_Reader'Class) is
+     (Reader : in out Abstract_Validation_Reader'Class)
+   is
+      use Reference_HTables;
    begin
-      Create_Grammar_If_Needed
-        (Reader.Grammar,
-         Symbols => Get_Symbol_Table (Reader.all));
+      Create_Grammar_If_Needed (Reader.Grammar);
+      Get (Reader.Grammar).Symbols := Get_Symbol_Table (Reader);
 
-      if Get (Reader.Grammar).Grammars = null then
+      if Get (Get (Reader.Grammar).References,
+                   (Name => (NS => Reader.XML_Schema_URI,
+                             Local => Reader.S_Boolean),
+                    Kind => Ref_Type)) = No_Global_Reference
+      then
          Add_Schema_For_Schema (Reader);
       end if;
    end Initialize_Grammar;
@@ -1202,28 +1102,6 @@ package body Schema.Validators is
       return null;
    end Get_Facets;
 
-   ----------------
-   -- Debug_Name --
-   ----------------
-
-   function Debug_Name (Grammar : XML_Grammar_NS) return String is
-      S : Symbol;
-   begin
-      if Grammar = null then
-         return "<Grammar: null>";
-      else
-         S := Grammar.Namespace_URI;
-         if S = No_Symbol then
-            return "<Grammar: "
-              & System.Address_Image (Grammar.all'Address) & " no ns>";
-         else
-            return "<Grammar: "
-              & System.Address_Image (Grammar.all'Address)
-              & " {" & Get (S).all & "}>";
-         end if;
-      end if;
-   end Debug_Name;
-
    ------------------------
    -- Create_Global_Type --
    ------------------------
@@ -1258,12 +1136,6 @@ package body Schema.Validators is
       if Debug then
          Debug_Output ("Freeing grammar");
       end if;
-      if Grammar.Grammars /= null then
-         for NS in Grammar.Grammars'Range loop
-            Free (Grammar.Grammars (NS));
-         end loop;
-         Unchecked_Free (Grammar.Grammars);
-      end if;
 
       Free (Grammar.Attributes);
       Reference_HTables.Reset (Grammar.References);
@@ -1277,8 +1149,6 @@ package body Schema.Validators is
 
    procedure Reset (Grammar : in out XML_Grammar) is
       G     : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
-      Count : Natural := 0;
-      Tmp   : Grammar_NS_Array_Access;
    begin
       if Debug then
          Debug_Output ("Partial reset of the grammar");
@@ -1288,37 +1158,7 @@ package body Schema.Validators is
          return;
       end if;
 
-      Tmp := G.Grammars;
-
-      if Tmp /= null then
-         for NS in Tmp'Range loop
-            if Get (Tmp (NS).Namespace_URI).all /= XML_Schema_URI
-              and then Get (Tmp (NS).Namespace_URI).all /= XML_URI
-            then
-               Free (Tmp (NS));
-            else
-               Count := Count + 1;
-            end if;
-         end loop;
-
-         if Count /= 0 then
-            G.Grammars := new Grammar_NS_Array (1 .. Count);
-            Count := G.Grammars'First;
-            for NS in Tmp'Range loop
-               if Tmp (NS) /= null then
-                  G.Grammars (Count) := Tmp (NS);
-                  Count := Count + 1;
-               end if;
-            end loop;
-         else
-            Unchecked_Free (G.Grammars);
-         end if;
-
-         Unchecked_Free (Tmp);
-      end if;
-
       Free (G.Parsed_Locations);
-      G.Target_NS := null;
    end Reset;
 
    --------------------
@@ -1355,8 +1195,7 @@ package body Schema.Validators is
    --------------------
 
    procedure Set_Parsed_URI
-     (Reader  : access Abstract_Validation_Reader'Class;
-      Grammar : in out XML_Grammar;
+     (Reader  : in out Abstract_Validation_Reader'Class;
       URI     : Symbol) is
    begin
       Initialize_Grammar (Reader);
@@ -1364,23 +1203,10 @@ package body Schema.Validators is
       if Debug then
          Debug_Output ("Set_Parsed_UI: " & Get (URI).all);
       end if;
-      Get (Grammar).Parsed_Locations := new String_List_Record'
+      Get (Reader.Grammar).Parsed_Locations := new String_List_Record'
         (Str  => URI,
-         Next => Get (Grammar).Parsed_Locations);
+         Next => Get (Reader.Grammar).Parsed_Locations);
    end Set_Parsed_URI;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Grammar : in out XML_Grammar_NS) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Grammar_NS_Record, XML_Grammar_NS);
-   begin
-      if Grammar /= null then
-         Unchecked_Free (Grammar);
-      end if;
-   end Free;
 
    -------------
    -- Get_NFA --
@@ -1583,22 +1409,6 @@ package body Schema.Validators is
       end if;
    end Free;
 
-   --------------------------
-   -- Create_Any_Attribute --
-   --------------------------
-
-   function Create_Any_Attribute
-     (In_NS  : XML_Grammar_NS;
-      Process_Contents : Process_Contents_Type := Process_Strict;
-      Kind   : Namespace_Kind;
-      List   : NS_List := Empty_NS_List) return Attribute_Descr
-   is
-      pragma Unreferenced (In_NS, Process_Contents, Kind, List);
-   begin
-      --  ??? Incorrect
-      return Attribute_Descr'(others => <>);
-   end Create_Any_Attribute;
-
    ------------------------
    -- Validate_Attribute --
    ------------------------
@@ -1794,19 +1604,6 @@ package body Schema.Validators is
 --        return Typ.Simple_Type = Simple_Content;
 --     end Is_Simple_Type;
 
-   -----------------------
-   -- Get_Namespace_URI --
-   -----------------------
-
-   function Get_Namespace_URI (Grammar : XML_Grammar_NS) return Symbol is
-   begin
-      if Grammar = null then
-         return Empty_String;
-      else
-         return Grammar.Namespace_URI;
-      end if;
-   end Get_Namespace_URI;
-
    ---------------
    -- Set_Block --
    ---------------
@@ -1835,63 +1632,6 @@ package body Schema.Validators is
    begin
       return Typ.Final;
    end Get_Final;
-
-   -----------------------
-   -- Set_Block_Default --
-   -----------------------
-
-   procedure Set_Block_Default
-     (Grammar : XML_Grammar_NS;
-      Blocks  : Block_Status) is
-   begin
-      Grammar.Blocks := Blocks;
-   end Set_Block_Default;
-
-   -----------------------
-   -- Get_Block_Default --
-   -----------------------
-
-   function Get_Block_Default (Grammar : XML_Grammar_NS) return Block_Status is
-   begin
-      return Grammar.Blocks;
-   end Get_Block_Default;
-
-   -------------------
-   -- Set_Target_NS --
-   -------------------
-
-   procedure Set_Target_NS
-     (Grammar : XML_Grammar;
-      NS      : XML_Grammar_NS) is
-   begin
-      if Grammar /= No_Grammar then
-         Get (Grammar).Target_NS := NS;
-      end if;
-   end Set_Target_NS;
-
-   -------------------
-   -- Get_Target_NS --
-   -------------------
-
-   function Get_Target_NS (Grammar : XML_Grammar) return XML_Grammar_NS is
-   begin
-      if Grammar = No_Grammar then
-         return null;
-      else
-         return Get (Grammar).Target_NS;
-      end if;
-   end Get_Target_NS;
-
-   ------------------
-   -- Create_Union --
-   ------------------
-
-   function Create_Union (G : XML_Grammar_NS) return XML_Validator is
-      pragma Unreferenced (G);
-      Result : constant XML_Validator := new XML_Union_Record;
-   begin
-      return Result;
-   end Create_Union;
 
    ---------------
    -- Add_Union --
@@ -1932,26 +1672,6 @@ package body Schema.Validators is
          Id_Htable.Set (Reader.Id_Table.all, Id_Ref'(Key => Val));
       end if;
    end Check_Id;
-
-   -------------------
-   -- Set_System_Id --
-   -------------------
-
-   procedure Set_System_Id
-     (Grammar   : XML_Grammar_NS;
-      System_Id : Symbol) is
-   begin
-      Grammar.System_ID := System_Id;
-   end Set_System_Id;
-
-   -------------------
-   -- Get_System_Id --
-   -------------------
-
-   function Get_System_Id (Grammar : XML_Grammar_NS) return Symbol is
-   begin
-      return Grammar.System_ID;
-   end Get_System_Id;
 
    ---------------------
    -- Is_Extension_Of --

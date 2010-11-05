@@ -31,7 +31,7 @@ pragma Ada_05;
 private package Schema.Validators.Restrictions is
 
    function Create_Restriction_Of
-     (G           : XML_Grammar_NS;
+     (G           : XML_Grammar;
       Reader      : access Abstract_Validation_Reader'Class;
       Base        : XML_Type;
       Restriction : XML_Validator := null) return XML_Validator;
