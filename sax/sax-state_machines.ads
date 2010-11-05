@@ -472,7 +472,7 @@ private
    end record;
    No_Nested : constant Nested_NFA := (Default_Start => No_State);
 
-   type Matcher_State_Index is new Natural range 0 .. 2 ** 8;
+   type Matcher_State_Index is new Natural range 0 .. 2 ** 16;
    No_Matcher_State : constant Matcher_State_Index := 0;
 
    type Matcher_State is record

@@ -2245,6 +2245,7 @@ package body Schema.Schema_Readers is
 
          Ctx2 := Handler.Contexts (Handler.Contexts_Last - 1)'Access;
          pragma Assert (Ctx2.Typ = Context_Type_Def);
+         pragma Assert (Ctx2.Type_Info /= No_Internal_Type_Index);
 
          Push_Context
            (Handler,
@@ -2802,7 +2803,15 @@ package body Schema.Schema_Readers is
 
             else
                --  within a <simpleType><list>
-               Handler.Shared.Types.Table (Next.Type_Info).Simple := Ctx.List;
+               pragma Assert (Next.Type_Info /= No_Internal_Type_Index);
+
+               if Handler.Shared.Types.Table (Next.Type_Info).Is_Simple then
+                  Handler.Shared.Types.Table (Next.Type_Info).Simple :=
+                    Ctx.List;
+               else
+                  Handler.Shared.Types.Table (Next.Type_Info).Simple_Content :=
+                    Ctx.List;
+               end if;
             end if;
          when others =>
             Validation_Error

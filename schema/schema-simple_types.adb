@@ -1723,6 +1723,7 @@ package body Schema.Simple_Types is
                   "Invalid regular expression "
                   & Get (Simple.Pattern_String).all
                   & " (converted to " & Convert & ")");
+               return;
          end;
       end if;
 
@@ -1738,18 +1739,39 @@ package body Schema.Simple_Types is
 
          when Facets_String .. Facets_HexBinary =>
             if Facets (Facet_Length) /= No_Facet_Value then
-               Simple.String_Length := Natural'Value
-                 (Get (Facets (Facet_Length).Value).all);
+               begin
+                  Simple.String_Length := Natural'Value
+                    (Get (Facets (Facet_Length).Value).all);
+               exception
+                  when Constraint_Error =>
+                     Error := Find
+                       (Symbols, "Expecting integer for length facet");
+                     Error_Loc := Facets (Facet_Length).Loc;
+               end;
             end if;
 
             if Facets (Facet_Min_Length) /= No_Facet_Value then
-               Simple.String_Min_Length := Natural'Value
-                 (Get (Facets (Facet_Min_Length).Value).all);
+               begin
+                  Simple.String_Min_Length := Natural'Value
+                    (Get (Facets (Facet_Min_Length).Value).all);
+               exception
+                  when Constraint_Error =>
+                     Error := Find
+                       (Symbols, "Expecting integer for minLength facet");
+                     Error_Loc := Facets (Facet_Min_Length).Loc;
+               end;
             end if;
 
             if Facets (Facet_Max_Length) /= No_Facet_Value then
-               Simple.String_Max_Length := Natural'Value
-                 (Get (Facets (Facet_Max_Length).Value).all);
+               begin
+                  Simple.String_Max_Length := Natural'Value
+                    (Get (Facets (Facet_Max_Length).Value).all);
+               exception
+                  when Constraint_Error =>
+                     Error := Find
+                       (Symbols, "Expecting integer for maxlength facet");
+                     Error_Loc := Facets (Facet_Max_Length).Loc;
+               end;
             end if;
 
          when Facets_Boolean =>
@@ -1771,13 +1793,28 @@ package body Schema.Simple_Types is
 
             if Error = No_Symbol then
                if Facets (Facet_Total_Digits) /= No_Facet_Value then
-                  Simple.Total_Digits := Positive'Value
-                    (Get (Facets (Facet_Total_Digits).Value).all);
+                  begin
+                     Simple.Total_Digits := Positive'Value
+                       (Get (Facets (Facet_Total_Digits).Value).all);
+                  exception
+                     when Constraint_Error =>
+                        Error := Find
+                          (Symbols, "Expecting integer for totalDigits facet");
+                        Error_Loc := Facets (Facet_Total_Digits).Loc;
+                  end;
                end if;
 
                if Facets (Facet_Fraction_Digits) /= No_Facet_Value then
-                  Simple.Fraction_Digits := Natural'Value
-                    (Get (Facets (Facet_Fraction_Digits).Value).all);
+                  begin
+                     Simple.Fraction_Digits := Natural'Value
+                       (Get (Facets (Facet_Fraction_Digits).Value).all);
+                  exception
+                     when Constraint_Error =>
+                        Error := Find
+                          (Symbols,
+                           "Expecting integer for fractionDigits facet");
+                        Error_Loc := Facets (Facet_Fraction_Digits).Loc;
+                  end;
                end if;
 
                if Simple.Fraction_Digits /= Natural'Last

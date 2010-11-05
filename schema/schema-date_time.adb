@@ -717,7 +717,15 @@ package body Schema.Date_Time is
                return;
             end if;
 
-            Val.Year := Integer'Value (Ch (Pos .. Tmp - 1));
+            begin
+               Val.Year := Integer'Value (Ch (Pos .. Tmp - 1));
+            exception
+               when Constraint_Error =>
+                  Error := Find
+                    (Symbols, "Expecting an integer for the year, found """
+                     & Ch (Pos .. Tmp - 1) & """");
+                  return;
+            end;
 
          elsif Ch (Tmp) = 'M' then
             if Processing_Time then
