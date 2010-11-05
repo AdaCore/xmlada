@@ -2117,8 +2117,16 @@ package body Schema.Schema_Readers is
    begin
       if Location_Index = -1 then
          if Namespace_Index = -1 then
-            Validation_Error (Handler, "Missing ""namespace"" attribute");
+            --  See 4.2.6.1: If that attribute is absent, then the import
+            --  allows unqualified reference to components with no target
+            --  namespace
+            null;
          end if;
+
+         Validation_Error
+           (Handler,
+            "Import with no schemaLocation is unsupported",
+            Except => XML_Not_Implemented'Identity);
 
       else
          declare
