@@ -645,7 +645,8 @@ package Schema.Validators is
    procedure Add_Attribute
      (Grammar        : XML_Grammar;
       List           : in out Attributes_List;
-      Attribute      : Attribute_Descr);
+      Attribute      : Attribute_Descr;
+      Ref            : Named_Attribute_List := Empty_Named_Attribute_List);
    procedure Add_Attributes
      (Grammar        : XML_Grammar;
       List           : in out Attributes_List;
@@ -657,7 +658,9 @@ package Schema.Validators is
    --  The second version copies elements from [Attributes] into [List].
    --  [As_Restriction] is used when including a <anyAttribute>. Since there
    --  can be only one in the list, this is merged with any existing
-   --  <anyAttribute>. [Target_NS] is also used in this context
+   --  <anyAttribute>. [Target_NS] is also used in this context.
+   --  [Ref], if specified, is the "refed" attribute. Its type is used, but
+   --  the use type of [Attribute] is used, instead.
 
    --------------
    -- Grammars --

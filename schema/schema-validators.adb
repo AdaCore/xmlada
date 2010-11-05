@@ -198,11 +198,13 @@ package body Schema.Validators is
    procedure Add_Attribute
      (Grammar        : XML_Grammar;
       List           : in out Attributes_List;
-      Attribute      : Attribute_Descr)
+      Attribute      : Attribute_Descr;
+      Ref            : Named_Attribute_List := Empty_Named_Attribute_List)
    is
       NFA : constant Schema_NFA_Access := Get_NFA (Grammar);
       L   : Named_Attribute_List := List.Named;
       Tmp : Named_Attribute_List;
+      Attr : Attribute_Descr := Attribute;
    begin
       if Debug then
          Debug_Output
@@ -221,7 +223,12 @@ package body Schema.Validators is
          L := NFA.Attributes.Table (L).Next;
       end loop;
 
-      Append (NFA.Attributes, Attribute);
+      if Ref /= Empty_Named_Attribute_List then
+         Attr          := NFA.Attributes.Table (Ref);
+         Attr.Use_Type := Attribute.Use_Type;
+      end if;
+
+      Append (NFA.Attributes, Attr);
       NFA.Attributes.Table (Last (NFA.Attributes)).Next := List.Named;
       List.Named := Last (NFA.Attributes);
    end Add_Attribute;
@@ -673,7 +680,8 @@ package body Schema.Validators is
                  ("Checking attribute: "
                   & To_QName
                     (NFA.Attributes.Table
-                       (Valid_Attrs (Index).Validator).Name));
+                       (Valid_Attrs (Index).Validator).Name)
+                    & " use=" & Attr.Use_Type'Img);
             end if;
             Valid_Attrs (Index).Visited := True;
             Found := Find_Attribute (Attr);
@@ -705,7 +713,6 @@ package body Schema.Validators is
                   when Unqualified =>
                      if Attr.Is_Local
                        and then Get_Prefix (Atts, Found) /= Empty_String
-                     --  and then Get_URI (Atts, Found) = Target_NS
                      then
                         Validation_Error
                           (Reader, "Attribute " & Get_Qname (Atts, Found)
@@ -1260,11 +1267,13 @@ package body Schema.Validators is
          Do_Register (G.Symbols);
 
          Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Lang),
+                  Form => Qualified,
                   others => <>);
          Create_Global_Attribute (Reader.Grammar, Attr);
 
          Attr := (Name =>
                     (NS => Reader.XML_URI, Local => Find (G.Symbols, "space")),
+                  Form => Qualified,
                   others => <>);
          Create_Global_Attribute (Reader.Grammar, Attr);
 

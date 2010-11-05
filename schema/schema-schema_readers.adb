@@ -467,7 +467,6 @@ package body Schema.Schema_Readers is
                elsif Real.Local_Type /= No_Internal_Type_Index then
                   Internal_Type := Real.Local_Type;
                   NFA_Type := Shared.Types.Table (Internal_Type).In_NFA;
-
                else
                   --  "<anyType>" (3.3.2.1 {type definition})
                   NFA_Type := No_Type_Index;
@@ -1004,9 +1003,10 @@ package body Schema.Schema_Readers is
                               Attrs (A).Loc);
                         end if;
 
-                        Add_Attributes
-                          (Parser.Grammar,
-                           List, TRef.Attributes, As_Restriction);
+                        Add_Attribute
+                          (Parser.Grammar, List,
+                           Attribute => Attrs (A).Attr.Descr,
+                           Ref       => TRef.Attributes.Named);
 
                      else
                         Resolve_Attribute_Type (Attrs (A).Attr);
