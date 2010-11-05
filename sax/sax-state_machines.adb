@@ -887,6 +887,20 @@ package body Sax.State_Machines is
       end if;
    end Current;
 
+   -----------------------
+   -- Has_Active_Nested --
+   -----------------------
+
+   function Has_Active_Nested
+     (Self : NFA_Matcher; Iter : Active_State_Iterator) return Boolean is
+   begin
+      if Iter.Current = No_Matcher_State then
+         return False;
+      else
+         return Self.Active.Table (Iter.Current).Nested /= No_Matcher_State;
+      end if;
+   end Has_Active_Nested;
+
    -------------------
    -- Replace_State --
    -------------------

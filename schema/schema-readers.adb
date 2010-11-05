@@ -522,6 +522,8 @@ package body Schema.Readers is
          Xsi_Type_Index     : constant Integer := Get_Index
            (Atts, H.XML_Instance_URI, H.Typ);
          TRef : Global_Reference;
+         Data : State_Data;
+         Prev_Data : State_Data := No_State_Data;
       begin
          if Xsi_Type_Index /= -1 then
             declare
@@ -534,7 +536,7 @@ package body Schema.Readers is
                NS        : XML_NS;
                Typ       : Qualified_Name;
                Iter      : Active_State_Iterator;
-               S         : State;
+               S, Prev_S : State := No_State;
                Nested_Start : State;
             begin
                Prefix := Find_Symbol
@@ -562,33 +564,56 @@ package body Schema.Readers is
 
                Iter := For_Each_Active_State
                  (H.Matcher,
-                  Ignore_If_Default => True, Ignore_If_Nested => True);
+                  Ignore_If_Default => True, Ignore_If_Nested => False);
                loop
                   S := Current (H.Matcher, Iter);
                   exit when S = No_State;
 
-                  Check_Substitution_Group_OK
-                    (H, TRef.Typ, NFA.Get_Data (S).Simple,
-                     Loc => H.Current_Location);
+                  if Has_Active_Nested (H.Matcher, Iter) then
+                     --  An state with a nested NFA indicates an element (the
+                     --  nested is its type). From the element, we might get a
+                     --  special list of blocked restrictions or extensions),
+                     --  but we do not want to check anything else
+                     Prev_Data := Current_Data (H.Matcher, Iter);
+                     Prev_S    := S;
 
-                  if Nested_Start /= No_State then
-                     if Debug then
-                        Debug_Output
-                          ("Because of xsi:type, replace state" & S'Img
-                           & " with" & Nested_Start'Img);
-                     end if;
-                     Replace_State (H.Matcher, Iter, Nested_Start);
-                     --  Override (temporarily) the current state
                   else
-                     if Debug then
-                        Debug_Output ("Override state data" & S'Img
-                                      & " to type" & TRef.Typ'Img);
+                     Data := Current_Data (H.Matcher, Iter);
+
+                     if Prev_S /= No_State
+                       and then Get_Start_State (NFA.Get_Nested (Prev_S)) = S
+                     then
+                        Check_Substitution_Group_OK
+                          (H, TRef.Typ, Data.Simple,
+                           Loc           => H.Current_Location,
+                           Element_Block => Prev_Data.Block);
+                     else
+                        Check_Substitution_Group_OK
+                          (H, TRef.Typ, Data.Simple,
+                           Loc           => H.Current_Location,
+                           Element_Block => Data.Block);
                      end if;
-                     Override_Data
-                       (H.Matcher, Iter,
-                        State_Data'
-                          (Simple => TRef.Typ,
-                           Fixed  => Current_Data (H.Matcher, Iter).Fixed));
+
+                     if Nested_Start /= No_State then
+                        if Debug then
+                           Debug_Output
+                             ("Because of xsi:type, replace state" & S'Img
+                              & " with" & Nested_Start'Img);
+                        end if;
+                        Replace_State (H.Matcher, Iter, Nested_Start);
+                        --  Override (temporarily) the current state
+                     else
+                        if Debug then
+                           Debug_Output ("Override state data" & S'Img
+                                         & " to type" & TRef.Typ'Img);
+                        end if;
+                        Override_Data
+                          (H.Matcher, Iter,
+                           State_Data'
+                             (Simple => TRef.Typ,
+                              Fixed  => Current_Data (H.Matcher, Iter).Fixed,
+                              Block  => Current_Data (H.Matcher, Iter).Block));
+                     end if;
                   end if;
 
                   Next (H.Matcher, Iter);

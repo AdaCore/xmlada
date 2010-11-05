@@ -322,6 +322,11 @@ package Sax.State_Machines is
    --  [Current] returns [No_State] when there are no remaining active
    --  states.
 
+   function Has_Active_Nested
+     (Self : NFA_Matcher; Iter : Active_State_Iterator) return Boolean;
+   --  Whether the active state for [Iter] has a nested NFA with its own
+   --  active state (that would be returned later by [Iter].
+
    function Current_Data
      (Self : NFA_Matcher; Iter : Active_State_Iterator) return State_User_Data;
    --  Returns the user data either from the locally overridden data in the

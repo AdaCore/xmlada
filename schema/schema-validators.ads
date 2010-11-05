@@ -166,6 +166,9 @@ package Schema.Validators is
    pragma Pack (Block_Status);
    No_Block : constant Block_Status := (others => False);
 
+   function To_String (Blocks : Block_Status) return String;
+   --  Return a displayable version of [Blocks], for debugging purposes.
+
    type Final_Type is (Final_Restriction,
                        Final_Extension,
                        Final_Union,
@@ -212,9 +215,13 @@ package Schema.Validators is
    type State_Data is record
       Simple : Type_Index;
       Fixed  : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Block  : Block_Status := No_Block;
    end record;
    No_State_Data : constant State_Data :=
-     (No_Type_Index, Sax.Symbols.No_Symbol);
+     (No_Type_Index, Sax.Symbols.No_Symbol, No_Block);
+   --  User data associated with each state. This mostly point to the
+   --  corresponding type in the schema, but also includes overridding data
+   --  from the corresponding element itself.
 
    package Schema_State_Machines is new Sax.State_Machines
       (Symbol              => Transition_Event,
@@ -542,7 +549,8 @@ package Schema.Validators is
    procedure Check_Substitution_Group_OK
      (Handler : access Abstract_Validation_Reader'Class;
       New_Type, Old_Type : Type_Index;
-      Loc : Sax.Locators.Location);
+      Loc     : Sax.Locators.Location;
+      Element_Block : Block_Status);
    --  Verifies that [New_Type] is a valid substitution for [Old_Type],
    --  according to 3.3.6.3.
    --  If not, raises a [Validation_Error]

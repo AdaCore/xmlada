@@ -79,7 +79,6 @@ package body Schema.Schema_Readers is
    --  NFA's default start state, since each grammar has its own list of valid
    --  toplevel elements.
 
-   function To_String (Blocks : Block_Status) return String;
    function To_String (Final  : Final_Status) return String;
 
    function In_Redefine_Context
@@ -231,17 +230,6 @@ package body Schema.Schema_Readers is
 --        Ctx     : Context_Access);
    --  Applies to a Context_Restriction, ensures that the restriction has been
    --  created appropriately.
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String (Blocks : Block_Status) return String is
-   begin
-      return "restr=" & Blocks (Block_Restriction)'Img
-        & " ext=" & Blocks (Block_Extension)'Img
-        & " sub=" & Blocks (Block_Substitution)'Img;
-   end To_String;
 
    ---------------
    -- To_String --
@@ -494,7 +482,9 @@ package body Schema.Schema_Readers is
 
                if NFA_Type /= No_Type_Index then
                   NFA.Get_Data (S1).all :=
-                    State_Data'(Simple => NFA_Type, Fixed  => No_Symbol);
+                    State_Data'(Simple => NFA_Type,
+                                Fixed  => No_Symbol,
+                                Block  => No_Block);
                   NFA.Set_Nested
                     (S1,
                      NFA.Create_Nested
@@ -504,6 +494,7 @@ package body Schema.Schema_Readers is
                end if;
 
                NFA.Get_Data (S1).Fixed := Info.Fixed;
+               NFA.Get_Data (S1).Block := Info.Block;
             end;
          end if;
 
@@ -1376,6 +1367,7 @@ package body Schema.Schema_Readers is
               (S,
                State_Data'
                  (Simple => Shared.Types.Table (J).In_NFA,
+                  Block  => No_Block,
                   Fixed  => No_Symbol));
          end if;
 

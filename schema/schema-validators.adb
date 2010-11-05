@@ -875,8 +875,10 @@ package body Schema.Validators is
                Complex_Content => S1,
                others          => <>));
 
-         G.NFA.Set_Data (S1, (Simple => Index, Fixed => No_Symbol));
-         S2 := G.NFA.Add_State ((Simple => Index, Fixed => No_Symbol));
+         G.NFA.Set_Data (S1, (Simple => Index, Fixed => No_Symbol,
+                              Block => No_Block));
+         S2 := G.NFA.Add_State ((Simple => Index, Fixed => No_Symbol,
+                                 Block => No_Block));
 
          G.NFA.Set_Nested (S2, Ur_Type);
 
@@ -986,6 +988,7 @@ package body Schema.Validators is
       Free (Grammar.NFA.Attributes);
       Reference_HTables.Reset (Grammar.NFA.References.all);
       Unchecked_Free (Grammar.NFA.References);
+      Types_Tables.Free (Grammar.NFA.Types);
       Free (NFA_Access (Grammar.NFA));
       Free (Grammar.Parsed_Locations);
    end Free;
@@ -1882,6 +1885,17 @@ package body Schema.Validators is
          Loc          => Loc);
    end Add_Facet;
 
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Blocks : Block_Status) return String is
+   begin
+      return "{restr=" & Blocks (Block_Restriction)'Img
+        & " ext=" & Blocks (Block_Extension)'Img
+        & " sub=" & Blocks (Block_Substitution)'Img & '}';
+   end To_String;
+
    ---------------------------------
    -- Check_Substitution_Group_OK --
    ---------------------------------
@@ -1889,7 +1903,8 @@ package body Schema.Validators is
    procedure Check_Substitution_Group_OK
      (Handler : access Abstract_Validation_Reader'Class;
       New_Type, Old_Type : Type_Index;
-      Loc     : Sax.Locators.Location)
+      Loc     : Sax.Locators.Location;
+      Element_Block : Block_Status)
    is
       NFA : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
       Old_Descr : constant access Type_Descr := NFA.Get_Type_Descr (Old_Type);
@@ -1946,12 +1961,9 @@ package body Schema.Validators is
          return;
       end if;
 
-      --  The following test should apply on the substituted element, not its
-      --  type.
---        if Old_Descr.Block (Block_Substitution) then
---           Validation_Error
---        (Handler, To_QName (Old_Descr.Name) & " blocks substitutions", Loc);
---        end if;
+      if Element_Block (Block_Substitution) then
+         Validation_Error (Handler, "Element blocks substitutions", Loc);
+      end if;
 
       if Old_Descr.Simple_Content /= No_Simple_Type_Index then
          declare
@@ -2002,9 +2014,17 @@ package body Schema.Validators is
            (Handler, To_QName (Old_Descr.Name) & " blocks restrictions", Loc);
       end if;
 
+      if Has_Restriction and then Element_Block (Block_Restriction) then
+         Validation_Error (Handler, "Element blocks restrictions", Loc);
+      end if;
+
       if Has_Extension and then Old_Descr.Block (Block_Extension) then
          Validation_Error
            (Handler, To_QName (Old_Descr.Name) & " blocks extensions", Loc);
+      end if;
+
+      if Has_Extension and then Element_Block (Block_Extension) then
+         Validation_Error (Handler, "Element blocks extensions", Loc);
       end if;
    end Check_Substitution_Group_OK;
 
