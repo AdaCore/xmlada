@@ -48,6 +48,12 @@ package body Schema.Validators.XSD_Grammar is
       Open ("/home/briot/svn/trunk/xmlada/schema/test/schema.xsd", Input);
       Parse (Schema, Input);
       Close (Input);
+
+   exception
+      when XML_Not_Implemented | XML_Validation_Error =>
+         R.Error_Msg := Schema.Error_Msg;
+         R.Error_Location := Schema.Error_Location;
+         raise;
    end Add_Schema_For_Schema;
 
 end Schema.Validators.XSD_Grammar;
