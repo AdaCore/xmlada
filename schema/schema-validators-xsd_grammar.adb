@@ -43,11 +43,11 @@ package body Schema.Validators.XSD_Grammar is
 --        Seq1, Seq2    : Sequence;
 --        Choice1       : Choice;
       All_Validator : XML_Type;
-      Elem          : XML_Element;
+--        Elem          : XML_Element;
 --        Gr            : XML_Group;
       Union, Union2 : XML_Validator;
 
-      Annotation, Any          : XML_Element;
+--        Annotation, Any          : XML_Element;
       Openattrs                : XML_Type;
       reducedDerivationControl : XML_Type;
       derivationControl        : XML_Type;
@@ -62,12 +62,12 @@ package body Schema.Validators.XSD_Grammar is
       localComplexType         : XML_Type;
       derivationSet            : XML_Type;
       formChoice               : XML_Type;
-      identityConstraint       : XML_Element;
-      Facet, SimpleDerivation  : XML_Element;
-      Sequence, Choice, All_E  : XML_Element;
+--        identityConstraint       : XML_Element;
+--        Facet, SimpleDerivation  : XML_Element;
+--        Sequence, Choice, All_E  : XML_Element;
       Facet_Type               : XML_Type;
-      Redefinable, SchemaTop   : XML_Element;
-      maxBound, minBound       : XML_Element;
+--        Redefinable, SchemaTop   : XML_Element;
+--        maxBound, minBound       : XML_Element;
 --        attrDecls                : XML_Group;
 --        typeDefParticle          : XML_Group;
 --        defRef, Occurs           : XML_Attribute_Group;

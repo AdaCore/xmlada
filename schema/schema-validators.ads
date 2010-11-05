@@ -101,10 +101,6 @@ package Schema.Validators is
    No_Grammar : constant XML_Grammar;
    --  No Grammar has been defined
 
-   type XML_Element is private;
-   No_Element : constant XML_Element;
-   --  An element of an XML stream (associated with a start-tag)
-
    Unbounded : constant Integer := Integer'Last;
    --  To indicate that a Max_Occurs is set to unbounded
 
@@ -583,19 +579,19 @@ package Schema.Validators is
    --  Base doesn't need to be a Clone of some other type, since it isn't
    --  altered. See also Is_Restriction_Of below
 
-   procedure Check_Content_Type
-     (Typ              : XML_Type;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean);
+--     procedure Check_Content_Type
+--       (Typ              : XML_Type;
+--        Reader           : access Abstract_Validation_Reader'Class;
+--        Should_Be_Simple : Boolean);
    --  Check whether Typ is a simpleType or a complexType. See the description
    --  of the homonym for validators.
    --  When in doubt, use this one instead of the one for validators, since
    --  this one properly handles No_Type and types whose definition has not yet
    --  been parsed in the Schema.
 
-   function Is_Simple_Type
-     (Reader : access Abstract_Validation_Reader'Class;
-      Typ    : XML_Type) return Boolean;
+--     function Is_Simple_Type
+--       (Reader : access Abstract_Validation_Reader'Class;
+--        Typ    : XML_Type) return Boolean;
    --  Whether Typ is a simple type
 
    procedure Set_Block (Typ    : XML_Type; Blocks : Block_Status);
@@ -603,7 +599,7 @@ package Schema.Validators is
    --  Set the "block" status of the type.
    --  This can also be done at the element's level
 
-   procedure Set_Final (Typ : XML_Type; Final : Final_Status);
+--     procedure Set_Final (Typ : XML_Type; Final : Final_Status);
    function Get_Final (Typ : XML_Type) return Final_Status;
    --  Set the final status of the element
 
@@ -733,33 +729,10 @@ package Schema.Validators is
    --  Whether character data is allowed within that element, in addition to
    --  children nodes
 
-   procedure Check_Replacement
-     (Validator         : access XML_Validator_Record;
-      Element           : XML_Element;
-      Typ               : XML_Type;
-      Valid             : out Boolean;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean);
-   --  Check whether Validator is a valid replacement for Element's type
-   --  (either an extension or a restriction, and not blocked by a "block"
-   --  attribute).
-   --  Typ is set to the type of the element. But if the element is a union, it
-   --  is set in turn to each member of the union.
-   --  Had_* Indicate whether a restriction or extension was encountered while
-   --  going up the inheritance tree so far.
-
-   procedure Check_Replacement_For_Type
-     (Validator         : access XML_Validator_Record'Class;
-      Element           : XML_Element;
-      Valid             : out Boolean;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean);
-   --  Non dispatching version which properly handles unions
-
-   procedure Check_Content_Type
-     (Validator        : access XML_Validator_Record;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean);
+--     procedure Check_Content_Type
+--       (Validator        : access XML_Validator_Record;
+--        Reader           : access Abstract_Validation_Reader'Class;
+--        Should_Be_Simple : Boolean);
    --  Check whether Validator describes a simple Type (or a complex Type with
    --  simpleContent), if Should_Be_Simple is true, or the opposite otherwise.
    --  Raises XML_Validator_Error in case of error.
@@ -781,80 +754,48 @@ package Schema.Validators is
    -- Elements --
    --------------
 
-   procedure Set_Substitution_Group
-     (Element : XML_Element;
-      Reader  : access Abstract_Validation_Reader'Class;
-      Head    : XML_Element);
-   function Get_Substitution_Group
-     (Element : XML_Element) return XML_Element;
+--     procedure Set_Substitution_Group
+--       (Element : XML_Element;
+--        Reader  : access Abstract_Validation_Reader'Class;
+--        Head    : XML_Element);
    --  Define a substitution group for Validator, as declared through the
    --  "substitutionGroup" attribute of the XML Schema.
    --  Anywhere Head is referenced, Validator can be used
    --  instead.
 
-   function Is_Extension_Of
-     (Element : XML_Element; Base : XML_Element) return Boolean;
-   function Is_Restriction_Of
-     (Element : XML_Element; Base : XML_Element) return Boolean;
+--     function Is_Extension_Of
+--       (Element : XML_Element; Base : XML_Element) return Boolean;
+--     function Is_Restriction_Of
+--       (Element : XML_Element; Base : XML_Element) return Boolean;
    --  Whether Element is an extension/restriction of Base
 
-   function Get_Type  (Element : XML_Element) return XML_Type;
-   procedure Set_Type
-     (Element      : XML_Element;
-      Reader       : access Abstract_Validation_Reader'Class;
-      Element_Type : XML_Type);
-   --  Return the type validator for this element
-
-   procedure Set_Default
-     (Element  : XML_Element;
-      Reader   : access Abstract_Validation_Reader'Class;
-      Default  : Sax.Symbols.Symbol);
-   function Has_Default (Element : XML_Element) return Boolean;
-   function Get_Default (Element : XML_Element) return Sax.Symbols.Symbol;
+--     procedure Set_Default
+--       (Element  : XML_Element;
+--        Reader   : access Abstract_Validation_Reader'Class;
+--        Default  : Sax.Symbols.Symbol);
    --  Manipulation of the "default" attribute.
    --  The value returned by Get_Default mustn't be altered or freed, and
    --  will be null if the attribute wasn't set. We return a pointer for
    --  efficiency only
 
-   procedure Set_Fixed
-     (Element  : XML_Element;
-      Reader   : access Abstract_Validation_Reader'Class;
-      Fixed    : Sax.Symbols.Symbol);
-   function Has_Fixed (Element : XML_Element) return Boolean;
-   function Get_Fixed (Element : XML_Element) return Sax.Symbols.Symbol;
+--     procedure Set_Fixed
+--       (Element  : XML_Element;
+--        Reader   : access Abstract_Validation_Reader'Class;
+--        Fixed    : Sax.Symbols.Symbol);
    --  Manipulation of the "fixed" attribute
    --  The value returned by Get_Fixed mustn't be altered or freed, and
    --  will be null if the attribute wasn't set. We return a pointer for
    --  efficiency only
 
-   procedure Set_Abstract (Element : XML_Element; Is_Abstract : Boolean);
-   function  Is_Abstract  (Element : XML_Element) return Boolean;
-   --  Whether the element is abstract
-
-   procedure Set_Nillable (Element : XML_Element; Nillable : Boolean);
-   function  Is_Nillable  (Element : XML_Element) return Boolean;
-   --  Whether the element is nillable (this only adds support for the
-   --  attribute xsi:nil
-
-   procedure Set_Final (Element : XML_Element; Final : Final_Status);
-   --  Set the final status of the element
-
-   procedure Set_Block
-     (Element : XML_Element;
-      Blocks  : Block_Status);
-   function Get_Block (Element : XML_Element) return Block_Status;
-   function Has_Block (Element : XML_Element) return Boolean;
-   --  Set the "block" status of the element
-
-   procedure Check_Qualification
-     (Reader        : access Abstract_Validation_Reader'Class;
-      Element       : XML_Element;
-      NS            : XML_Grammar_NS);
+--     procedure Check_Qualification
+--       (Reader        : access Abstract_Validation_Reader'Class;
+--        Element       : XML_Element;
+--        NS            : XML_Grammar_NS);
    --  Check whether the element should have been qualified or not,
    --  depending on its "form" attribute.
    --  Namespace_URI is the namespace as read in the file.
 
-   function Is_Global (Element : XML_Element) return Boolean;
+--     function Is_Global (Element : XML_Element) return Boolean;
    --  Whether Element is a global element (ie declared at the top-level of
    --  the schema file), as opposed to a local element declared inside a
    --  global element:
@@ -863,7 +804,7 @@ package Schema.Validators is
    --         <sequence>
    --           <element name="local" />
 
-   function Get_QName (Element : XML_Element) return Qualified_Name;
+--     function Get_QName (Element : XML_Element) return Qualified_Name;
    --  Return the qualified name for Element
 
    --------------
@@ -932,8 +873,6 @@ package Schema.Validators is
    --  Dump the grammar to stdout. This is for debug only
 
    function To_QName (Name : Qualified_Name) return Unicode.CES.Byte_Sequence;
-   function To_QName (Element : XML_Element) return Unicode.CES.Byte_Sequence;
-   function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence;
    function To_QName (NS : XML_Grammar_NS; Local : Sax.Symbols.Symbol)
       return Unicode.CES.Byte_Sequence;
    --  Return the name as it should be displayed in error messages
@@ -989,70 +928,6 @@ private
    type XML_Type is access all XML_Type_Record;
    No_Type : constant XML_Type := null;
 
-   ------------------
-   -- Element_List --
-   ------------------
-
-   type XML_Element_Record;
-   type XML_Element_Access is access all XML_Element_Record;
-
-   type Element_List is array (Natural range <>) of XML_Element_Access;
-   type Element_List_Access is access Element_List;
-
-   procedure Append
-     (List    : in out Element_List_Access; Element : XML_Element);
-
-   -----------------
-   -- XML_Element --
-   -----------------
-
-   type XML_Element_Record is record
-      Local_Name : Sax.Symbols.Symbol;
-      NS         : XML_Grammar_NS;
-      Of_Type    : XML_Type;
-      Substitution_Group : XML_Element := No_Element;
-
-      Default    : Sax.Symbols.Symbol;
-      Fixed      : Sax.Symbols.Symbol;
-
-      Is_Abstract : Boolean;
-      --  Whether the corresponding type is abstract
-
-      Nillable    : Boolean;
-      --  Whether the element is nillable
-
-      Final       : Final_Status;
-      --  Whether this element is final for "restriction" or "extension" or
-      --  both
-
-      Blocks_Is_Set : Boolean := False;
-      Blocks        : Block_Status := No_Block;
-      --  The value for the "block" attribute of the element
-
-      Form : Form_Type;
-      --  The value of the "form" attribute of the element
-
-      Is_Global : Boolean;
-      --  Whether the element was declared at the toplevel of the <schema>
-
-      Next : XML_Element_Access;
-      --  Points to the next element defined in NS, for memory management
-      --  purposes
-
-      NFA_State : Schema_State_Machines.State :=
-        Schema_State_Machines.No_State;
-      --  The part of the state machine that represents element.
-      --  This is only set for global elements
-   end record;
-
-   type XML_Element is record
-      Elem   : XML_Element_Access;
-      Is_Ref : Boolean;
-      --  Whether this element was defined through a Lookup_Element, or a
-      --  Create_Element call.
-   end record;
-   No_Element : constant XML_Element := (null, False);
-
    --------------
    -- Grammars --
    --------------
@@ -1072,8 +947,6 @@ private
    procedure Free (List : in out String_List);
    --  Free the list and its contents
 
-   type Process_Contents_Array is array (Process_Contents_Type) of XML_Element;
-
    type XML_Grammar_Record is new Sax.Pointers.Root_Encapsulated with record
       Symbols  : Sax.Utils.Symbol_Table;
 
@@ -1084,8 +957,6 @@ private
       --  List of schema locations that have already been parsed. This is used
       --  in particular to handle cases where a schema imports two others
       --  schemas, that in turn import a common one.
-
-      UR_Type_Elements  : Process_Contents_Array := (others => No_Element);
 
       XSD_Version : XSD_Versions := XSD_1_0;
 

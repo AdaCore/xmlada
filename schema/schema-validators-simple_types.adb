@@ -949,26 +949,6 @@ package body Schema.Validators.Simple_Types is
    end Validate_Characters;
 
    -----------------------
-   -- Check_Replacement --
-   -----------------------
-
-   procedure Check_Replacement
-     (Validator       : access Any_Simple_XML_Validator_Record;
-      Element         : XML_Element;
-      Typ             : XML_Type;
-      Valid           : out Boolean;
-      Had_Restriction : in out Boolean;
-      Had_Extension   : in out Boolean)
-   is
-      pragma Unreferenced (Validator, Element, Had_Restriction, Had_Extension);
-   begin
-      Valid := Is_Wildcard (Get_Validator (Typ))
-        or else
-          Get_Validator (Typ).all in Any_Simple_XML_Validator_Record'Class;
-      Had_Restriction := True;
-   end Check_Replacement;
-
-   -----------------------
    -- Get_Mixed_Content --
    -----------------------
 
@@ -1895,23 +1875,6 @@ package body Schema.Validators.Simple_Types is
       Validation_Error (Reader, "#Invalid value """ & Ch & """");
    end Validate_Characters;
 
-   ------------------------
-   -- Check_Content_Type --
-   ------------------------
-
-   procedure Check_Content_Type
-     (Validator        : access Any_Simple_XML_Validator_Record;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean)
-   is
-      pragma Unreferenced (Validator);
-   begin
-      if not Should_Be_Simple then
-         Validation_Error
-           (Reader, "#Expecting simple type, got complex type");
-      end if;
-   end Check_Content_Type;
-
    -------------------------
    -- Validate_Characters --
    -------------------------
@@ -1983,45 +1946,6 @@ package body Schema.Validators.Simple_Types is
       Free (Validator.Facets);
       Free (XML_Validator_Record (Validator));
    end Free;
-
-   ---------------------------------
-   -- Check_Replacement_For_Union --
-   ---------------------------------
-
-   procedure Check_Replacement_For_Union
-     (Validator         : access XML_Validator_Record'Class;
-      Union             : XML_Union_Record;
-      Element           : XML_Element;
-      Valid             : out Boolean;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean)
-   is
-      pragma Unreferenced (Union, Validator, Element, Had_Restriction,
-                           Had_Extension);
---        Iter : Particle_Iterator;
---        V    : XML_Validator;
-   begin
-      Valid := False;
-
---        if Union.Unions /= null then
---           Iter := Start (Union.Unions);
---           while Get (Iter) /= null loop
---              V := Get_Validator (Get (Iter).Type_Descr);
---              if V /= null then
---                 Check_Replacement
---                   (Validator, Element, Get (Iter).Type_Descr,
---                    Valid, Had_Restriction, Had_Extension);
---                 if Valid then
---                    Free (Iter);
---                    return;
---                 end if;
---              end if;
---              Next (Iter);
---           end loop;
---
---           Free (Iter);
---        end if;
-   end Check_Replacement_For_Union;
 
    -----------
    -- Equal --

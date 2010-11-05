@@ -138,13 +138,13 @@ package body Schema.Validators.UR_Type is
    -- Get_UR_Type_Element --
    -------------------------
 
-   function Get_UR_Type_Element
-     (Grammar          : XML_Grammar;
-      Process_Contents : Process_Contents_Type) return XML_Element
-   is
-   begin
-      return Get (Grammar).UR_Type_Elements (Process_Contents);
-   end Get_UR_Type_Element;
+--     function Get_UR_Type_Element
+--       (Grammar          : XML_Grammar;
+--        Process_Contents : Process_Contents_Type) return XML_Element
+--     is
+--     begin
+--        return Get (Grammar).UR_Type_Elements (Process_Contents);
+--     end Get_UR_Type_Element;
 
    -----------------
    -- Is_Wildcard --

@@ -52,8 +52,6 @@ package body Schema.Validators is
    use XML_Grammars;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Element_List, Element_List_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Grammar_NS_Array, Grammar_NS_Array_Access);
 
    function Create_NS_Grammar
@@ -63,11 +61,6 @@ package body Schema.Validators is
 
    function Debug_Name (Grammar : XML_Grammar_NS) return String;
    --  Debug output of Grammar
-
-   function To_QName
-     (Element : XML_Element_Access) return Byte_Sequence;
-   pragma Inline (To_QName);
-   --  Return the QName for the element described by particle
 
    function Extension_Of
      (G         : XML_Grammar_NS;
@@ -300,27 +293,6 @@ package body Schema.Validators is
       return False;
       --  return Is_ID (Attr.Simple_Type);
    end Is_ID;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (List    : in out Element_List_Access;
-      Element : XML_Element)
-   is
-      L : Element_List_Access;
-   begin
-      if List /= null then
-         L := new Element_List (List'First .. List'Last + 1);
-         L (List'Range) := List.all;
-         L (L'Last) := Element.Elem;
-         Unchecked_Free (List);
-         List := L;
-      else
-         List := new Element_List'(1 => Element.Elem);
-      end if;
-   end Append;
 
    -------------------
    -- Add_Attribute --
@@ -939,16 +911,6 @@ package body Schema.Validators is
       Free (Validator.Attributes);
    end Free;
 
-   ---------------
-   -- Get_QName --
-   ---------------
-
-   function Get_QName (Element : XML_Element) return Qualified_Name is
-   begin
-      return (NS    => Get_Namespace_URI (Element.Elem.NS),
-              Local => Element.Elem.Local_Name);
-   end Get_QName;
-
    --------------
    -- To_QName --
    --------------
@@ -969,87 +931,6 @@ package body Schema.Validators is
    begin
       return Sax.Readers.To_QName (NS.Namespace_URI, Local);
    end To_QName;
-
-   function To_QName (Element : XML_Element_Access) return Byte_Sequence is
-   begin
-      return To_QName (Element.NS, Element.Local_Name);
-   end To_QName;
-
-   function To_QName
-     (Element : XML_Element) return Unicode.CES.Byte_Sequence is
-   begin
-      return To_QName (Element.Elem);
-   end To_QName;
-
-   function To_QName (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
-   begin
-      if Typ = No_Type then
-         return "???";
-      elsif Typ.Local_Name = No_Symbol then
-         return "anonymous";
-      else
-         return Get (Typ.Local_Name).all;
-      end if;
-   end To_QName;
-
-   --------------
-   -- Get_Type --
-   --------------
-
-   function Get_Type (Element : XML_Element) return XML_Type is
-   begin
-      if Element.Elem = null then
-         return null;
-      else
-         return Element.Elem.Of_Type;
-      end if;
-   end Get_Type;
-
-   --------------
-   -- Set_Type --
-   --------------
-
-   procedure Set_Type
-     (Element      : XML_Element;
-      Reader       : access Abstract_Validation_Reader'Class;
-      Element_Type : XML_Type)
-   is
-      Mask : Facets_Mask;
-   begin
-      if Element /= No_Element then
-         if Element.Is_Ref then
-            Validation_Error
-              (Reader,
-               "#Cannot mix complexType definition and ""ref"" attribute");
-         end if;
-
-         Element.Elem.Of_Type := Element_Type;
-
-         --  3.3 Element Declaration details:  Validation Rule 3.1
-         --  The "default" attribute of element must match the validation rule
-         --  for that element
-
-         if Element.Elem.Default /= No_Symbol then
-            Mask := (others => True);
-            Validate_Characters
-              (Get_Validator (Element_Type), Reader,
-               Get (Element.Elem.Default).all,
-               Empty_Element => False, Mask => Mask);
-         end if;
-
-         --  3.3 Element Declaration details:  Validation Rule 3.1
-         --  The "fixed" attribute of element must match the validation rule
-         --  for that element
-
-         if Element.Elem.Fixed /= No_Symbol then
-            Mask := (others => True);
-            Validate_Characters
-              (Get_Validator (Element_Type), Reader,
-               Get (Element.Elem.Fixed).all,
-               Empty_Element => False, Mask => Mask);
-         end if;
-      end if;
-   end Set_Type;
 
    ----------------------
    -- Get_Symbol_Table --
@@ -1469,185 +1350,136 @@ package body Schema.Validators is
    -- Set_Default --
    -----------------
 
-   procedure Set_Default
-     (Element  : XML_Element;
-      Reader   : access Abstract_Validation_Reader'Class;
-      Default  : Symbol)
-   is
-      Mask : Facets_Mask;
-   begin
-      --  3.3 Element Declaration details: Can't have both
-      --  "default" and "fixed"
-
-      if Element.Elem.Fixed /= No_Symbol then
-         Validation_Error
-           (Reader,
-            "#Attributes ""fixed"" and ""default"" conflict with each other");
-      end if;
-
-      --  3.3 Element Declaration details:  Validation Rule 3.1
-      --  The "default" attribute of element must match the validation rule
-      --  for that element.
-      --  Test whether we have a forward reference to the type, in which case
-      --  default will be checked when we know the actual type
-
-      if Element.Elem.Of_Type /= No_Type
-        and then Get_Validator (Element.Elem.Of_Type) /= null
-      then
-         Mask := (others => True);
-         Validate_Characters
-           (Get_Validator (Element.Elem.Of_Type), Reader,
-            Get (Default).all, Empty_Element => False, Mask => Mask);
-      end if;
-
-      Element.Elem.Default := Default;
-   end Set_Default;
-
-   -----------------
-   -- Has_Default --
-   -----------------
-
-   function Has_Default (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Default /= No_Symbol;
-   end Has_Default;
-
-   -----------------
-   -- Get_Default --
-   -----------------
-
-   function Get_Default
-     (Element : XML_Element) return Symbol is
-   begin
-      return Element.Elem.Default;
-   end Get_Default;
-
+--     procedure Set_Default
+--       (Element  : XML_Element;
+--        Reader   : access Abstract_Validation_Reader'Class;
+--        Default  : Symbol)
+--     is
+--        Mask : Facets_Mask;
+--     begin
+--        --  3.3 Element Declaration details: Can't have both
+--        --  "default" and "fixed"
+--
+--        if Element.Elem.Fixed /= No_Symbol then
+--           Validation_Error
+--             (Reader,
+--           "#Attributes ""fixed"" and ""default"" conflict with each other");
+--        end if;
+--
+--        --  3.3 Element Declaration details:  Validation Rule 3.1
+--        --  The "default" attribute of element must match the validation rule
+--        --  for that element.
+--     --  Test whether we have a forward reference to the type, in which case
+--        --  default will be checked when we know the actual type
+--
+--        if Element.Elem.Of_Type /= No_Type
+--          and then Get_Validator (Element.Elem.Of_Type) /= null
+--        then
+--           Mask := (others => True);
+--           Validate_Characters
+--             (Get_Validator (Element.Elem.Of_Type), Reader,
+--              Get (Default).all, Empty_Element => False, Mask => Mask);
+--        end if;
+--
+--        Element.Elem.Default := Default;
+--     end Set_Default;
    ---------------
    -- Set_Fixed --
    ---------------
 
-   procedure Set_Fixed
-     (Element  : XML_Element;
-      Reader   : access Abstract_Validation_Reader'Class;
-      Fixed    : Symbol)
-   is
-      Mask : Facets_Mask;
-   begin
-      --  3.3 Element Declaration details: Can't have both
-      --  "default" and "fixed"
-
-      if Element.Elem.Default /= No_Symbol then
-         Validation_Error
-           (Reader,
-            "#Attributes ""fixed"" and ""default"" conflict with each other");
-      end if;
-
-      --  3.3 Element Declaration details:  Validation Rule 3.1
-      --  The "fixed" attribute of element must match the validation rule
-      --  for that element
-      --  Test whether we have a forward reference to the type, in which case
-      --  default will be checked when we know the actual type
-
-      if Element.Elem.Of_Type /= No_Type
-        and then Get_Validator (Element.Elem.Of_Type) /= null
-      then
-         Mask := (others => True);
-         Validate_Characters
-           (Get_Validator (Element.Elem.Of_Type), Reader, Get (Fixed).all,
-            Empty_Element => False, Mask => Mask);
-      end if;
-
-      Element.Elem.Fixed := Fixed;
-   end Set_Fixed;
-
-   ---------------
-   -- Has_Fixed --
-   ---------------
-
-   function Has_Fixed (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Fixed /= No_Symbol;
-   end Has_Fixed;
-
-   ---------------
-   -- Get_Fixed --
-   ---------------
-
-   function Get_Fixed
-     (Element : XML_Element) return Symbol is
-   begin
-      return Element.Elem.Fixed;
-   end Get_Fixed;
+--     procedure Set_Fixed
+--       (Element  : XML_Element;
+--        Reader   : access Abstract_Validation_Reader'Class;
+--        Fixed    : Symbol)
+--     is
+--        Mask : Facets_Mask;
+--     begin
+--        --  3.3 Element Declaration details: Can't have both
+--        --  "default" and "fixed"
+--
+--        if Element.Elem.Default /= No_Symbol then
+--           Validation_Error
+--             (Reader,
+--          "#Attributes ""fixed"" and ""default"" conflict with each other");
+--        end if;
+--
+--        --  3.3 Element Declaration details:  Validation Rule 3.1
+--        --  The "fixed" attribute of element must match the validation rule
+--        --  for that element
+--     --  Test whether we have a forward reference to the type, in which case
+--        --  default will be checked when we know the actual type
+--
+--        if Element.Elem.Of_Type /= No_Type
+--          and then Get_Validator (Element.Elem.Of_Type) /= null
+--        then
+--           Mask := (others => True);
+--           Validate_Characters
+--             (Get_Validator (Element.Elem.Of_Type), Reader, Get (Fixed).all,
+--              Empty_Element => False, Mask => Mask);
+--        end if;
+--
+--        Element.Elem.Fixed := Fixed;
+--     end Set_Fixed;
 
    ----------------------------
    -- Set_Substitution_Group --
    ----------------------------
 
-   procedure Set_Substitution_Group
-     (Element : XML_Element;
-      Reader  : access Abstract_Validation_Reader'Class;
-      Head    : XML_Element)
-   is
-      Had_Restriction, Had_Extension : Boolean := False;
-      HeadPtr : constant XML_Element_Access := Head.Elem;
-      ElemPtr : constant XML_Element_Access := Element.Elem;
-      Valid_Replacement : Boolean;
-   begin
-      --  ??? Should Head be fully defined here, so that we can check we are a
-      --  possible replacement for it ?
-      if Get_Validator (Get_Type (Element)) /= null
-        and then Get_Validator (Get_Type (Head)) /= null
-        and then Get_Validator (Get_Type (Element)) /=
-        Get_Validator (Get_Type (Head))
-      then
-         Check_Replacement
-           (Get_Validator (Get_Type (Element)),
-            Element         => Head,
-            Typ             => Get_Type (Head),
-            Valid           => Valid_Replacement,
-            Had_Restriction => Had_Restriction,
-            Had_Extension   => Had_Extension);
-
-         if not Valid_Replacement then
-            Validation_Error
-              (Reader, '#' & To_QName (Get_Type (Element))
-               & " is not a valid replacement for "
-               & To_QName (Get_Type (Head)));
-         end if;
-
-         if HeadPtr.Final (Final_Restriction) and then Had_Restriction then
-            Validation_Error
-              (Reader, "#""" & Get (HeadPtr.Local_Name).all
-               & """ is final for restrictions, and cannot be substituted by"
-               & """" & Get (ElemPtr.Local_Name).all & """");
-         end if;
-
-         if HeadPtr.Final (Final_Extension) and then Had_Extension then
-            Validation_Error
-              (Reader, "#""" & Get (HeadPtr.Local_Name).all
-               & """ is final for extensions, and cannot be substituted by"
-               & """" & Get (ElemPtr.Local_Name).all & """");
-         end if;
-      end if;
-
-      if ElemPtr.Substitution_Group /= No_Element then
-         Validation_Error
-           (Reader, "#""" & Get (ElemPtr.Local_Name).all
-            & """ already belongs to another substitution group");
-      end if;
-
-      ElemPtr.Substitution_Group := Head;
-   end Set_Substitution_Group;
-
-   ----------------------------
-   -- Get_Substitution_Group --
-   ----------------------------
-
-   function Get_Substitution_Group
-     (Element : XML_Element) return XML_Element is
-   begin
-      return Element.Elem.Substitution_Group;
-   end Get_Substitution_Group;
+--     procedure Set_Substitution_Group
+--       (Element : XML_Element;
+--        Reader  : access Abstract_Validation_Reader'Class;
+--        Head    : XML_Element)
+--     is
+--        Had_Restriction, Had_Extension : Boolean := False;
+--        HeadPtr : constant XML_Element_Access := Head.Elem;
+--        ElemPtr : constant XML_Element_Access := Element.Elem;
+--        Valid_Replacement : Boolean;
+--     begin
+--    --  ??? Should Head be fully defined here, so that we can check we are a
+--        --  possible replacement for it ?
+--        if Get_Validator (Get_Type (Element)) /= null
+--          and then Get_Validator (Get_Type (Head)) /= null
+--          and then Get_Validator (Get_Type (Element)) /=
+--          Get_Validator (Get_Type (Head))
+--        then
+--           Check_Replacement
+--             (Get_Validator (Get_Type (Element)),
+--              Element         => Head,
+--              Typ             => Get_Type (Head),
+--              Valid           => Valid_Replacement,
+--              Had_Restriction => Had_Restriction,
+--              Had_Extension   => Had_Extension);
+--
+--           if not Valid_Replacement then
+--              Validation_Error
+--                (Reader, '#' & To_QName (Get_Type (Element))
+--                 & " is not a valid replacement for "
+--                 & To_QName (Get_Type (Head)));
+--           end if;
+--
+--           if HeadPtr.Final (Final_Restriction) and then Had_Restriction then
+--              Validation_Error
+--                (Reader, "#""" & Get (HeadPtr.Local_Name).all
+--              & """ is final for restrictions, and cannot be substituted by"
+--                 & """" & Get (ElemPtr.Local_Name).all & """");
+--           end if;
+--
+--           if HeadPtr.Final (Final_Extension) and then Had_Extension then
+--              Validation_Error
+--                (Reader, "#""" & Get (HeadPtr.Local_Name).all
+--                 & """ is final for extensions, and cannot be substituted by"
+--                 & """" & Get (ElemPtr.Local_Name).all & """");
+--           end if;
+--        end if;
+--
+--        if ElemPtr.Substitution_Group /= No_Element then
+--           Validation_Error
+--             (Reader, "#""" & Get (ElemPtr.Local_Name).all
+--              & """ already belongs to another substitution group");
+--        end if;
+--
+--        ElemPtr.Substitution_Group := Head;
+--     end Set_Substitution_Group;
 
    -------------------
    -- Get_Validator --
@@ -1802,229 +1634,109 @@ package body Schema.Validators is
    --        end case;
    --     end Validate_Attribute;
 
-   ------------------
-   -- Set_Abstract --
-   ------------------
-
-   procedure Set_Abstract
-     (Element     : XML_Element;
-      Is_Abstract : Boolean) is
-   begin
-      Element.Elem.Is_Abstract := Is_Abstract;
-   end Set_Abstract;
-
-   -----------------
-   -- Is_Abstract --
-   -----------------
-
-   function Is_Abstract (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Is_Abstract;
-   end Is_Abstract;
-
-   ------------------
-   -- Set_Nillable --
-   ------------------
-
-   procedure Set_Nillable
-     (Element  : XML_Element;
-      Nillable : Boolean) is
-   begin
-      Element.Elem.Nillable := Nillable;
-   end Set_Nillable;
-
-   -----------------
-   -- Is_Nillable --
-   -----------------
-
-   function Is_Nillable (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Nillable;
-   end Is_Nillable;
-
-   ---------------
-   -- Set_Final --
-   ---------------
-
-   procedure Set_Final (Element : XML_Element; Final : Final_Status) is
-   begin
-      Element.Elem.Final := Final;
-   end Set_Final;
-
-   ---------------
-   -- Set_Final --
-   ---------------
-
-   procedure Set_Final (Typ : XML_Type; Final : Final_Status) is
-   begin
-      Typ.Final := Final;
-   end Set_Final;
-
-   ---------------
-   -- Set_Block --
-   ---------------
-
-   procedure Set_Block
-     (Element : XML_Element;
-      Blocks  : Block_Status) is
-   begin
-      Element.Elem.Blocks_Is_Set := True;
-      Element.Elem.Blocks := Blocks;
-   end Set_Block;
-
-   ---------------
-   -- Has_Block --
-   ---------------
-
-   function Has_Block (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Blocks_Is_Set;
-   end Has_Block;
-
-   ---------------
-   -- Get_Block --
-   ---------------
-
-   function Get_Block (Element : XML_Element) return Block_Status is
-   begin
-      return Element.Elem.Blocks;
-   end Get_Block;
-
-   -----------------------
-   -- Check_Replacement --
-   -----------------------
-
-   procedure Check_Replacement
-     (Validator       : access XML_Validator_Record;
-      Element         : XML_Element;
-      Typ             : XML_Type;
-      Valid           : out Boolean;
-      Had_Restriction : in out Boolean;
-      Had_Extension   : in out Boolean)
-   is
-      pragma Unreferenced (Validator, Element, Had_Restriction, Had_Extension);
-   begin
-      Valid := Is_Wildcard (Get_Validator (Typ));
-   end Check_Replacement;
-
    ------------------------
    -- Check_Content_Type --
    ------------------------
 
-   procedure Check_Content_Type
-     (Validator        : access XML_Validator_Record;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean)
-   is
-      pragma Unreferenced (Validator);
-   begin
-      if Should_Be_Simple then
-         Validation_Error
-           (Reader,
-            "#Type specified in a simpleContent context must not have a "
-            & "complexContent");
-      end if;
-   end Check_Content_Type;
-
-   ---------------
-   -- Is_Global --
-   ---------------
-
-   function Is_Global (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Is_Global;
-   end Is_Global;
+--     procedure Check_Content_Type
+--       (Validator        : access XML_Validator_Record;
+--        Reader           : access Abstract_Validation_Reader'Class;
+--        Should_Be_Simple : Boolean)
+--     is
+--        pragma Unreferenced (Validator);
+--     begin
+--        if Should_Be_Simple then
+--           Validation_Error
+--             (Reader,
+--              "#Type specified in a simpleContent context must not have a "
+--              & "complexContent");
+--        end if;
+--     end Check_Content_Type;
 
    -------------------------
    -- Check_Qualification --
    -------------------------
 
-   procedure Check_Qualification
-     (Reader        : access Abstract_Validation_Reader'Class;
-      Element       : XML_Element;
-      NS            : XML_Grammar_NS) is
-   begin
-      if not Is_Global (Element)
-        and then Element.Elem.Form = Unqualified
-        and then NS.Namespace_URI /= Empty_String
-      then
-         Validation_Error
-           (Reader,
-            "#Namespace specification not authorized in this context");
-
-      elsif Element.Elem.Form = Qualified
-        and then NS.Namespace_URI = Empty_String
-        and then Get (Reader.Grammar).Target_NS /= null
-      then
-         Validation_Error
-           (Reader, "#Namespace specification is required in this context");
-      end if;
-   end Check_Qualification;
+--     procedure Check_Qualification
+--       (Reader        : access Abstract_Validation_Reader'Class;
+--        Element       : XML_Element;
+--        NS            : XML_Grammar_NS) is
+--     begin
+--        if not Is_Global (Element)
+--          and then Element.Elem.Form = Unqualified
+--          and then NS.Namespace_URI /= Empty_String
+--        then
+--           Validation_Error
+--             (Reader,
+--              "#Namespace specification not authorized in this context");
+--
+--        elsif Element.Elem.Form = Qualified
+--          and then NS.Namespace_URI = Empty_String
+--          and then Get (Reader.Grammar).Target_NS /= null
+--        then
+--           Validation_Error
+--           (Reader, "#Namespace specification is required in this context");
+--        end if;
+--     end Check_Qualification;
 
    ------------------------
    -- Check_Content_Type --
    ------------------------
 
-   procedure Check_Content_Type
-     (Typ              : XML_Type;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean) is
-   begin
-      if Debug then
-         Debug_Output ("Check_Content_Type: " & To_QName (Typ)
-                       & " " & Typ.Simple_Type'Img
-                       & " Expect_simple=" & Should_Be_Simple'Img);
-      end if;
-
-      if Typ.Simple_Type = Unknown_Content then
-         if Typ.Validator /= null then
-            Check_Content_Type (Typ.Validator, Reader, Should_Be_Simple);
-         end if;
-
-         --  If we matched, we now know the content type
-         if Should_Be_Simple then
-            Typ.Simple_Type := Simple_Content;
-         else
-            Typ.Simple_Type := Complex_Content;
-         end if;
-
-      elsif Should_Be_Simple and Typ.Simple_Type = Complex_Content then
-         if Typ.Local_Name /= No_Symbol then
-            Validation_Error
-              (Reader,
-               '#' & To_QName (Typ) & " specified in a simpleContent context"
-               & " must not have a complexContext");
-         else
-            Validation_Error
-              (Reader, "#Expecting simple type, got complex type");
-         end if;
-      elsif not Should_Be_Simple and Typ.Simple_Type = Simple_Content then
-         Validation_Error
-           (Reader, "#Expecting complex type, got simple type");
-      end if;
-   end Check_Content_Type;
+--     procedure Check_Content_Type
+--       (Typ              : XML_Type;
+--        Reader           : access Abstract_Validation_Reader'Class;
+--        Should_Be_Simple : Boolean) is
+--     begin
+--        if Typ.Simple_Type = Unknown_Content then
+--           if Typ.Validator /= null then
+--              Check_Content_Type (Typ.Validator, Reader, Should_Be_Simple);
+--           end if;
+--
+--           --  If we matched, we now know the content type
+--           if Should_Be_Simple then
+--              Typ.Simple_Type := Simple_Content;
+--           else
+--              Typ.Simple_Type := Complex_Content;
+--           end if;
+--
+--        elsif Should_Be_Simple and Typ.Simple_Type = Complex_Content then
+--           if Typ.Local_Name /= No_Symbol then
+--              Validation_Error
+--                (Reader,
+--              '#' & To_QName (Typ) & " specified in a simpleContent context"
+--                 & " must not have a complexContext");
+--           else
+--              Validation_Error
+--                (Reader, "#Expecting simple type, got complex type");
+--           end if;
+--        elsif not Should_Be_Simple and Typ.Simple_Type = Simple_Content then
+--           Validation_Error
+--             (Reader, "#Expecting complex type, got simple type");
+--        end if;
+--     end Check_Content_Type;
 
    --------------------
    -- Is_Simple_Type --
    --------------------
 
-   function Is_Simple_Type
-     (Reader : access Abstract_Validation_Reader'Class;
-      Typ    : XML_Type) return Boolean is
-   begin
-      if Typ.Simple_Type = Unknown_Content then
-         begin
-            Check_Content_Type
-              (Typ.Validator, Reader, Should_Be_Simple => True);
-            Typ.Simple_Type := Simple_Content;
-         exception
-            when XML_Validation_Error =>
-               Typ.Simple_Type := Complex_Content;
-         end;
-      end if;
-
-      return Typ.Simple_Type = Simple_Content;
-   end Is_Simple_Type;
+--     function Is_Simple_Type
+--       (Reader : access Abstract_Validation_Reader'Class;
+--        Typ    : XML_Type) return Boolean is
+--     begin
+--        if Typ.Simple_Type = Unknown_Content then
+--           begin
+--              Check_Content_Type
+--                (Typ.Validator, Reader, Should_Be_Simple => True);
+--              Typ.Simple_Type := Simple_Content;
+--           exception
+--              when XML_Validation_Error =>
+--                 Typ.Simple_Type := Complex_Content;
+--           end;
+--        end if;
+--
+--        return Typ.Simple_Type = Simple_Content;
+--     end Is_Simple_Type;
 
    -----------------------
    -- Get_Namespace_URI --
@@ -2202,13 +1914,13 @@ package body Schema.Validators is
    -- Is_Extension_Of --
    ---------------------
 
-   function Is_Extension_Of
-     (Element : XML_Element; Base : XML_Element) return Boolean is
-   begin
-      return Is_Extension_Of
-        (Element.Elem.Of_Type.Validator.all,
-         Base.Elem.Of_Type.Validator);
-   end Is_Extension_Of;
+--     function Is_Extension_Of
+--       (Element : XML_Element; Base : XML_Element) return Boolean is
+--     begin
+--        return Is_Extension_Of
+--          (Element.Elem.Of_Type.Validator.all,
+--           Base.Elem.Of_Type.Validator);
+--     end Is_Extension_Of;
 
    -----------------------
    -- Is_Restriction_Of --
@@ -2227,13 +1939,13 @@ package body Schema.Validators is
    -- Is_Restriction_Of --
    -----------------------
 
-   function Is_Restriction_Of
-     (Element : XML_Element; Base : XML_Element) return Boolean is
-   begin
-      return Is_Restriction_Of
-        (Element.Elem.Of_Type.Validator.all,
-         Base.Elem.Of_Type.Validator);
-   end Is_Restriction_Of;
+--     function Is_Restriction_Of
+--       (Element : XML_Element; Base : XML_Element) return Boolean is
+--     begin
+--        return Is_Restriction_Of
+--          (Element.Elem.Of_Type.Validator.all,
+--           Base.Elem.Of_Type.Validator);
+--     end Is_Restriction_Of;
 
    -----------------
    -- Is_Wildcard --
@@ -2246,39 +1958,6 @@ package body Schema.Validators is
    begin
       return False;
    end Is_Wildcard;
-
-   --------------------------------
-   -- Check_Replacement_For_Type --
-   --------------------------------
-
-   procedure Check_Replacement_For_Type
-     (Validator         : access XML_Validator_Record'Class;
-      Element           : XML_Element;
-      Valid             : out Boolean;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean)
-   is
-      Typ : constant XML_Type := Get_Type (Element);
-   begin
-      if Get_Validator (Typ).all in XML_Union_Record'Class then
-         Check_Replacement_For_Union
-           (Validator,
-            XML_Union_Record (Get_Validator (Typ).all),
-            Element         => Element,
-            Valid           => Valid,
-            Had_Restriction => Had_Restriction,
-            Had_Extension   => Had_Extension);
-
-      else
-         Check_Replacement
-           (Validator,
-            Element         => Element,
-            Typ             => Typ,
-            Valid           => Valid,
-            Had_Restriction => Had_Restriction,
-            Had_Extension   => Had_Extension);
-      end if;
-   end Check_Replacement_For_Type;
 
    ----------
    -- Free --

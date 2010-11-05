@@ -51,17 +51,6 @@ package body Schema.Validators.Restrictions is
       Reader      : access Abstract_Validation_Reader'Class;
       Facet_Name  : Symbol;
       Facet_Value : Unicode.CES.Byte_Sequence);
-   overriding procedure Check_Replacement
-     (Validator         : access Restriction_XML_Validator;
-      Element           : XML_Element;
-      Typ               : XML_Type;
-      Valid             : out Boolean;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean);
-   overriding procedure Check_Content_Type
-     (Validator        : access Restriction_XML_Validator;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean);
    overriding function Get_Facets
      (Validator : access Restriction_XML_Validator;
       Reader    : access Abstract_Validation_Reader'Class)
@@ -127,11 +116,11 @@ package body Schema.Validators.Restrictions is
                Common_Facets_Description (Validator.Facets.all)
                  .Mask (Facet_Pattern) := False;
             end if;
-         else
-            Validation_Error
-              (Reader, "#The type """ & To_QName (Validator.Base)
-               & """ isn't known at this point. Please check the name and"
-               & " namespace");
+--           else
+--              Validation_Error
+--                (Reader, "#The type """ & To_QName (Validator.Base)
+--                 & """ isn't known at this point. Please check the name and"
+--                 & " namespace");
          end if;
       end if;
 
@@ -218,57 +207,45 @@ package body Schema.Validators.Restrictions is
    -- Check_Replacement --
    -----------------------
 
-   overriding procedure Check_Replacement
-     (Validator       : access Restriction_XML_Validator;
-      Element         : XML_Element;
-      Typ             : XML_Type;
-      Valid           : out Boolean;
-      Had_Restriction : in out Boolean;
-      Had_Extension   : in out Boolean)
-   is
-      B : constant XML_Validator := Get_Validator (Typ);
-      Block : Block_Status;
-   begin
-      --  See rule in extensions implementation
-      --  As per 3.3.4.3, "block" comes from either the element declaration, or
-      --  if there is none, from the type.
-
-      if Has_Block (Element) then
-         Block := Get_Block (Element);
-      else
-         Block := Get_Block (Typ);
-      end if;
-
-      Valid := (XML_Validator (Validator) = B    --  1
-                or else not Block (Block_Restriction));
-
-      if Valid then
-         Valid := XML_Validator (Validator) = B        --  2.1
-           or else Get_Validator (Validator.Base) = B; --  2.2
-
-         if not Valid
-           and then not Is_Wildcard (Get_Validator (Validator.Base)) --  2.3.1
-         then
-            Check_Replacement                       --  2.3.2
-              (Get_Validator (Validator.Base), Element,
-               Typ, Valid, Had_Restriction, Had_Extension);
-         end if;
-      end if;
-
-      Had_Restriction := True;
-   end Check_Replacement;
-
-   --------------------
-   -- Is_Simple_Type --
-   --------------------
-
-   overriding procedure Check_Content_Type
-     (Validator        : access Restriction_XML_Validator;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean) is
-   begin
-      Check_Content_Type (Validator.Base, Reader, Should_Be_Simple);
-   end Check_Content_Type;
+--     overriding procedure Check_Replacement
+--       (Validator       : access Restriction_XML_Validator;
+--        Element         : XML_Element;
+--        Typ             : XML_Type;
+--        Valid           : out Boolean;
+--        Had_Restriction : in out Boolean;
+--        Had_Extension   : in out Boolean)
+--     is
+--        B : constant XML_Validator := Get_Validator (Typ);
+--        Block : Block_Status;
+--     begin
+--        --  See rule in extensions implementation
+--   --  As per 3.3.4.3, "block" comes from either the element declaration, or
+--        --  if there is none, from the type.
+--
+--        if Has_Block (Element) then
+--           Block := Get_Block (Element);
+--        else
+--           Block := Get_Block (Typ);
+--        end if;
+--
+--        Valid := (XML_Validator (Validator) = B    --  1
+--                  or else not Block (Block_Restriction));
+--
+--        if Valid then
+--           Valid := XML_Validator (Validator) = B        --  2.1
+--             or else Get_Validator (Validator.Base) = B; --  2.2
+--
+--           if not Valid
+--         and then not Is_Wildcard (Get_Validator (Validator.Base)) --  2.3.1
+--           then
+--              Check_Replacement                       --  2.3.2
+--                (Get_Validator (Validator.Base), Element,
+--                 Typ, Valid, Had_Restriction, Had_Extension);
+--           end if;
+--        end if;
+--
+--        Had_Restriction := True;
+--     end Check_Replacement;
 
    ---------------------------
    -- Create_Restriction_Of --
@@ -280,13 +257,13 @@ package body Schema.Validators.Restrictions is
       Base        : XML_Type;
       Restriction : XML_Validator := null) return XML_Validator
    is
-      pragma Unreferenced (G);
+      pragma Unreferenced (G, Reader);
       Result : constant Restriction_Type := new Restriction_XML_Validator;
    begin
-      if Get_Final (Base)(Final_Restriction) then
-         Validation_Error
-           (Reader, "#Type """ & To_QName (Base) & """ forbids restrictions");
-      end if;
+--        if Get_Final (Base)(Final_Restriction) then
+--           Validation_Error
+--          (Reader, "#Type """ & To_QName (Base) & """ forbids restrictions");
+--        end if;
 
       Result.Base        := Base;
       Result.Restriction := Restriction;

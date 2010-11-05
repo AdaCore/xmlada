@@ -43,17 +43,6 @@ package body Schema.Validators.Extensions is
       Ch            : Unicode.CES.Byte_Sequence;
       Empty_Element : Boolean;
       Mask          : in out Facets_Mask);
-   overriding procedure Check_Replacement
-     (Validator       : access Extension_XML_Validator;
-      Element         : XML_Element;
-      Typ             : XML_Type;
-      Valid           : out Boolean;
-      Had_Restriction : in out Boolean;
-      Had_Extension   : in out Boolean);
-   overriding procedure Check_Content_Type
-     (Validator        : access Extension_XML_Validator;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean);
    overriding function Is_Extension_Of
      (Validator : Extension_XML_Validator;
       Base      : access XML_Validator_Record'Class) return Boolean;
@@ -165,56 +154,44 @@ package body Schema.Validators.Extensions is
    -- Check_Replacement --
    -----------------------
 
-   overriding procedure Check_Replacement
-     (Validator       : access Extension_XML_Validator;
-      Element         : XML_Element;
-      Typ             : XML_Type;
-      Valid           : out Boolean;
-      Had_Restriction : in out Boolean;
-      Had_Extension   : in out Boolean)
-   is
-      B : constant XML_Validator := Get_Validator (Typ);
-   begin
-      --  From 3.4.6.5 "Type Derivation OK (Complex)".
-      --  D is "Validator", B is "Typ" (not necessarily the base type of D).
-      --  All of the following must be true.
-      --  1. If B /= D, then the {derivation method} of D is not in the subset
-      --  2 One or more of the following is true:
-      --  2.1 B = D
-      --  2.2 B = D.base
-      --  2.3 All of the following are true:
-      --  2.3.1 D.{base type definition} /= xs:anyType
-      --  2.3.2 D.Base is validly derived from B
-
-      Valid := (XML_Validator (Validator) = B    --  1
-                or else not Typ.Blocks (Block_Extension));
-      if Valid then
-         Valid := XML_Validator (Validator) = B        --  2.1
-           or else Get_Validator (Validator.Base) = B; --  2.2
-
-         if not Valid
-           and then not Is_Wildcard (Get_Validator (Validator.Base)) --  2.3.1
-         then
-            Check_Replacement                       --  2.3.2
-              (Get_Validator (Validator.Base), Element,
-               Typ, Valid, Had_Restriction, Had_Extension);
-         end if;
-      end if;
-
-      Had_Extension := True;
-   end Check_Replacement;
-
-   ------------------------
-   -- Check_Content_Type --
-   ------------------------
-
-   overriding procedure Check_Content_Type
-     (Validator        : access Extension_XML_Validator;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean) is
-   begin
-      Check_Content_Type (Validator.Base, Reader, Should_Be_Simple);
-   end Check_Content_Type;
+--     overriding procedure Check_Replacement
+--       (Validator       : access Extension_XML_Validator;
+--        Element         : XML_Element;
+--        Typ             : XML_Type;
+--        Valid           : out Boolean;
+--        Had_Restriction : in out Boolean;
+--        Had_Extension   : in out Boolean)
+--     is
+--        B : constant XML_Validator := Get_Validator (Typ);
+--     begin
+--        --  From 3.4.6.5 "Type Derivation OK (Complex)".
+--       --  D is "Validator", B is "Typ" (not necessarily the base type of D).
+--        --  All of the following must be true.
+--     --  1. If B /= D, then the {derivation method} of D is not in the subset
+--        --  2 One or more of the following is true:
+--        --  2.1 B = D
+--        --  2.2 B = D.base
+--        --  2.3 All of the following are true:
+--        --  2.3.1 D.{base type definition} /= xs:anyType
+--        --  2.3.2 D.Base is validly derived from B
+--
+--        Valid := (XML_Validator (Validator) = B    --  1
+--                  or else not Typ.Blocks (Block_Extension));
+--        if Valid then
+--           Valid := XML_Validator (Validator) = B        --  2.1
+--             or else Get_Validator (Validator.Base) = B; --  2.2
+--
+--           if not Valid
+--         and then not Is_Wildcard (Get_Validator (Validator.Base)) --  2.3.1
+--           then
+--              Check_Replacement                       --  2.3.2
+--                (Get_Validator (Validator.Base), Element,
+--                 Typ, Valid, Had_Restriction, Had_Extension);
+--           end if;
+--        end if;
+--
+--        Had_Extension := True;
+--     end Check_Replacement;
 
    -------------------------
    -- Create_Extension_Of --

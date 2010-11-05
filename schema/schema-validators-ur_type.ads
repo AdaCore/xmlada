@@ -36,9 +36,9 @@ private package Schema.Validators.UR_Type is
       Grammar   : XML_Grammar);
    --  Create all the ur-Type elements
 
-   function Get_UR_Type_Element
-     (Grammar          : XML_Grammar;
-      Process_Contents : Process_Contents_Type) return XML_Element;
+--     function Get_UR_Type_Element
+--       (Grammar          : XML_Grammar;
+--        Process_Contents : Process_Contents_Type) return XML_Element;
    --  Return an element of type ur-Type, which will match its contents with
    --  a given policy.
 

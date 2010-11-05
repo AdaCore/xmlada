@@ -53,10 +53,6 @@ private package Schema.Validators.Simple_Types is
       Ch             : Unicode.CES.Byte_Sequence;
       Empty_Element  : Boolean;
       Mask           : in out Facets_Mask);
-   overriding procedure Check_Content_Type
-     (Validator        : access Any_Simple_XML_Validator_Record;
-      Reader           : access Abstract_Validation_Reader'Class;
-      Should_Be_Simple : Boolean);
    overriding function Get_Facets
      (Validator : access Any_Simple_XML_Validator_Record;
       Reader    : access Abstract_Validation_Reader'Class)
@@ -74,13 +70,6 @@ private package Schema.Validators.Simple_Types is
      (Validator      : access Any_Simple_XML_Validator_Record;
       Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
-   overriding procedure Check_Replacement
-     (Validator       : access Any_Simple_XML_Validator_Record;
-      Element         : XML_Element;
-      Typ             : XML_Type;
-      Valid           : out Boolean;
-      Had_Restriction : in out Boolean;
-      Had_Extension   : in out Boolean);
    --  See doc from inherited subprograms
 
    ---------------
@@ -116,14 +105,5 @@ private package Schema.Validators.Simple_Types is
      (Validator      : access XML_Union_Record;
       Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
-
-   procedure Check_Replacement_For_Union
-     (Validator         : access XML_Validator_Record'Class;
-      Union             : XML_Union_Record;
-      Element           : XML_Element;
-      Valid             : out Boolean;
-      Had_Restriction   : in out Boolean;
-      Had_Extension     : in out Boolean);
-   --  Whether Validator can replace Union
 
 end Schema.Validators.Simple_Types;
