@@ -338,9 +338,10 @@ package body Schema.Validators is
 
          procedure Do_Merge (S : Symbol) is
          begin
-            if (Base_Any.Namespaces = No_Symbol
-                or else Get (Tmp, S) /= No_Symbol)
-              and then Get (No_Namespaces, S) = No_Symbol
+            if Base_Is_Any
+              or else ((Base_Any.Namespaces = No_Symbol
+                        or else Get (Tmp, S) /= No_Symbol)
+                       and then Get (No_Namespaces, S) = No_Symbol)
             then
                Set (Namespaces, S);
             end if;
@@ -454,6 +455,8 @@ package body Schema.Validators is
       end if;
 
       Local_Is_Any := Local /= No_Symbol and then Get (Local).all = "##any";
+      Base_Is_Any := Base_Any.Namespaces /= No_Symbol
+        and then Get (Base_Any.Namespaces).all = "##any";
 
       if As_Restriction then
          --  The list of "Namespaces" is the intersection of the two (and
@@ -469,7 +472,6 @@ package body Schema.Validators is
             elsif Local /= No_Symbol then
                Add_To_Table (Local, Namespaces);
             end if;
-
          else
             Add_To_Table (Base_Any.Namespaces, Tmp);
             Merge (Local);
@@ -478,9 +480,6 @@ package body Schema.Validators is
       else
          --  If the base type or the extension contains ##any, we will still
          --  accept any namespace
-
-         Base_Is_Any := Base_Any.Namespaces /= No_Symbol
-           and then Get (Base_Any.Namespaces).all = "##any";
 
          if Base_Is_Any then
             Add_To_Table (Base_Any.Namespaces, Namespaces); --  ##any
