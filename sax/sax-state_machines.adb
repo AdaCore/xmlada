@@ -73,11 +73,9 @@ package body Sax.State_Machines is
 
    procedure Initialize
      (Self                 : in out NFA;
-      Nested_Must_Be_Final : Boolean := False;
       States_Are_Statefull : Boolean := False)
    is
    begin
-      Self.Nested_Must_Be_Final := Nested_Must_Be_Final;
       Self.States_Are_Statefull := States_Are_Statefull;
 
       Init (Self.States);
@@ -327,7 +325,9 @@ package body Sax.State_Machines is
                T := First;
                while T /= No_Transition loop
                   declare
-                     Tr : Transition renames Self.Transitions.Table (T);
+                     --  Not a "renames", because Self.Transitions might be
+                     --  resized within this loop
+                     Tr : constant Transition := Self.Transitions.Table (T);
                   begin
                      if Tr.To_State = Final_State then
                         Tmp := Final_State;
@@ -578,22 +578,17 @@ package body Sax.State_Machines is
       --  as active too.
 
       if From /= Final_State then
-         if not Self.NFA.Nested_Must_Be_Final
-           or else Self.NFA.States.Table (From).Nested = No_State
-           or else Nested_In_Final (Self, From_Index)
-         then
-            T := Self.NFA.States.Table (From).First_Transition;
-            while T /= No_Transition loop
-               declare
-                  Tr : Transition renames Self.NFA.Transitions.Table (T);
-               begin
-                  if Tr.Is_Empty then
-                     Mark_Active (Self, List_Start, Tr.To_State);
-                  end if;
-                  T := Tr.Next_For_State;
-               end;
-            end loop;
-         end if;
+         T := Self.NFA.States.Table (From).First_Transition;
+         while T /= No_Transition loop
+            declare
+               Tr : Transition renames Self.NFA.Transitions.Table (T);
+            begin
+               if Tr.Is_Empty then
+                  Mark_Active (Self, List_Start, Tr.To_State);
+               end if;
+               T := Tr.Next_For_State;
+            end;
+         end loop;
 
          --  If we are entering any state with a nested NFA, we should activate
          --  that NFA next turn (unless the nested NFA is already active)
@@ -640,19 +635,13 @@ package body Sax.State_Machines is
 
    procedure For_Each_Active_State
      (Self             : NFA_Matcher;
-      Ignore_If_Nested : Boolean := False)
-   is
-      Ignore : Boolean := Ignore_If_Nested;
+      Ignore_If_Nested : Boolean := False) is
    begin
-      if Self.NFA.Nested_Must_Be_Final then
-         Ignore := True;
-      end if;
-
       for S in 1 .. Last (Self.Active) loop
          if Self.Active.Table (S).S /= Final_State
            and then
              (Self.Active.Table (S).Nested = No_Matcher_State
-              or else not Ignore
+              or else not Ignore_If_Nested
               or else Self.Active.Table (Self.Active.Table (S).Nested).S =
                 Final_State)
          then
@@ -806,7 +795,6 @@ package body Sax.State_Machines is
 
             if S.S /= Final_State
               and then not Event_Processed_In_Nested
-              and then (Nested_Final or else not NFA.Nested_Must_Be_Final)
             then
                Process_Transitions
                  (NFA.States.Table (S.S).First_Transition, New_First,
@@ -1334,8 +1322,6 @@ package body Sax.State_Machines is
 
          when Dump_Dot | Dump_Dot_Compact =>
             Append (Result, "Use   dot -O -Tpdf file.dot" & ASCII.LF);
-            Append (Result, "Nested must be final: "
-                    & Self.Nested_Must_Be_Final'Img & ASCII.LF);
             Append (Result, "digraph finite_state_machine{");
             Newline;
             Append (Result, "compound=true;");

@@ -78,7 +78,9 @@ procedure TestState is
       Image             => Image,
       Match             => Match,
       State_User_Data   => State_User_Data,
-      Default_Data      => Default_State_Data);
+      Default_Data      => Default_State_Data,
+      Default_State_Count => 10,
+      Default_Transition_Count => 15);
    use Character_Machines;
 
    function State_Image (S : State; Data : State_User_Data) return String;

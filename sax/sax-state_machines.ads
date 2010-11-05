@@ -75,14 +75,8 @@ package Sax.State_Machines is
 
    procedure Initialize
      (Self                 : in out NFA;
-      Nested_Must_Be_Final : Boolean := False;
       States_Are_Statefull : Boolean := False);
    --  Initializes a new automaton
-   --  If [Nested_Must_Be_Final] is true, then the transitions from a
-   --  superstate are only considered if the nested NFA is in its final state.
-   --  If false, all transitions are considered and you must use the
-   --  [On_Nested_Exit] transitions to achieve a similar effect.
-   --
    --  If [States_Are_Statefull], the active states's user data will be used to
    --  perform various things. Otherwise, the exact list of states are
    --  irrelevant, and we are only interested in the transitions between them.
@@ -186,10 +180,7 @@ package Sax.State_Machines is
    --
    --  But when 2 and 5 are active, it is also possible that 2 itself matches,
    --  and then we go to 3 whatever inner state we were in at the same time.
-   --  This is the usual behavior (as defined for instance in UML). However,
-   --  this package has a mode ([Nested_Must_Be_Final]) whereby the transitions
-   --  from the superstate are only considered if the nested NFA is in a
-   --  final state.
+   --  This is the usual behavior (as defined for instance in UML).
    --
    --  The above would be created as follows. Note that this example also does
    --  not assume that the nested NFA has been created before we create the
@@ -302,10 +293,9 @@ package Sax.State_Machines is
      (Self             : NFA_Matcher;
       Ignore_If_Nested : Boolean := False);
    --  Iterates over all currently active states.
-   --  If [Ignore_If_Nested] is true or [Nested_Must_Be_Final] mode is on, the
-   --  states with a nested NFA are not returned unless their nested NFA is in
-   --  a final state (that's because we would be ignoring events on them
-   --  otherwise).
+   --  If [Ignore_If_Nested] is true, the states with a nested NFA are not
+   --  returned unless their nested NFA is in a final state (that's because we
+   --  would be ignoring events on them otherwise).
 
    function In_Final (Self : NFA_Matcher) return Boolean;
    --  Whether [Self] is in the final step: if True, it means that all input
@@ -426,7 +416,6 @@ private
    type NFA is tagged record
       States       : State_Table;
       Transitions  : Transition_Table;
-      Nested_Must_Be_Final : Boolean := False;
       States_Are_Statefull : Boolean := True;
    end record;
 

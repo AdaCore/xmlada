@@ -1065,8 +1065,7 @@ package body Schema.Validators is
       if Grammar = No_Grammar then
          G := new XML_Grammar_Record;
          G.NFA := new Schema_State_Machines.NFA;
-         G.NFA.Initialize (Nested_Must_Be_Final => False,
-                           States_Are_Statefull => True);
+         G.NFA.Initialize (States_Are_Statefull => True);
          Grammar  := Allocate (G);
       end if;
 
@@ -1136,8 +1135,7 @@ package body Schema.Validators is
          end if;
          Actual_G         := new XML_Grammar_Record;
          Actual_G.NFA := new Schema_State_Machines.NFA;
-         Actual_G.NFA.Initialize (Nested_Must_Be_Final => False,
-                                  States_Are_Statefull => True);
+         Actual_G.NFA.Initialize (States_Are_Statefull => True);
          Reader.Grammar   := Allocate (Actual_G);
          Actual_G.Symbols := Get_Symbol_Table (Reader.all);
       end if;
