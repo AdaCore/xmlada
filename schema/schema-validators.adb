@@ -172,17 +172,6 @@ package body Schema.Validators is
       end if;
    end Get_Error_Message;
 
-   -----------
-   -- Is_ID --
-   -----------
-
-   function Is_ID (Attr : Attribute_Descr) return Boolean is
-      pragma Unreferenced (Attr);
-   begin
-      return False;
-      --  return Is_ID (Attr.Simple_Type);
-   end Is_ID;
-
    -------------------
    -- Add_Attribute --
    -------------------
@@ -326,11 +315,10 @@ package body Schema.Validators is
       As_Restriction      : Boolean;
       Target_NS           : Sax.Symbols.Symbol) return Any_Descr
    is
-      use Id_Htable;
-      Namespaces    : Id_Htable.HTable (127);
-      No_Namespaces : Id_Htable.HTable (127);
-      Tmp           : Id_Htable.HTable (127);
-      --  Use this htable just to store unique strings, could be anything
+      use Symbol_Htable;
+      Namespaces    : Symbol_Htable.HTable (127);
+      No_Namespaces : Symbol_Htable.HTable (127);
+      Tmp           : Symbol_Htable.HTable (127);
 
       Result : Any_Descr;
       Base_Is_Any, Local_Is_Any : Boolean;
@@ -338,13 +326,14 @@ package body Schema.Validators is
       Symbols : constant Symbol_Table := Get (Grammar).Symbols;
 
       procedure Callback (Str : Byte_Sequence);
-      procedure Add_To_Table (Sym : Symbol; Table : in out Id_Htable.HTable);
+      procedure Add_To_Table
+        (Sym : Symbol; Table : in out Symbol_Htable.HTable);
 
       procedure Merge (Sym : Symbol);
       --  Take all namespaces in [Sym], and copy, in [Namespaces], those that
       --  are also in [Tmp], but not in [No_Namespaces]
 
-      function To_Symbol (Table : Id_Htable.HTable) return Symbol;
+      function To_Symbol (Table : Symbol_Htable.HTable) return Symbol;
       --  Return the list of strings in Table
 
       -----------
@@ -358,10 +347,10 @@ package body Schema.Validators is
          procedure Do_Merge (S : Symbol) is
          begin
             if (Base_Any.Namespaces = No_Symbol
-                or else Id_Htable.Get (Tmp, S) /= No_Id)
-              and then Id_Htable.Get (No_Namespaces, S) = No_Id
+                or else Get (Tmp, S) /= No_Symbol)
+              and then Get (No_Namespaces, S) = No_Symbol
             then
-               Set (Namespaces, (Key => S));
+               Set (Namespaces, S);
             end if;
          end Do_Merge;
 
@@ -371,10 +360,10 @@ package body Schema.Validators is
                Do_Merge (Target_NS);
             elsif Str = "##other" then
                if Target_NS /= No_Symbol then
-                  Set (No_Namespaces, (Key => Target_NS));
+                  Set (No_Namespaces, Target_NS);
                end if;
 
-               Set (No_Namespaces, (Key => Find (Symbols, "##local")));
+               Set (No_Namespaces, Find (Symbols, "##local"));
             else
                Do_Merge (Find (Symbols, Str));  --  including ##any, ##local
             end if;
@@ -391,11 +380,13 @@ package body Schema.Validators is
       -- Add_To_Table --
       ------------------
 
-      procedure Add_To_Table (Sym : Symbol; Table : in out Id_Htable.HTable) is
+      procedure Add_To_Table
+        (Sym : Symbol; Table : in out Symbol_Htable.HTable)
+      is
          procedure Callback (Str : Byte_Sequence);
          procedure Callback (Str : Byte_Sequence) is
          begin
-            Set (Table, (Key => Find (Symbols, Str)));
+            Set (Table, Find (Symbols, Str));
          end Callback;
 
          procedure All_Add is new For_Each_Item (Callback);
@@ -409,10 +400,10 @@ package body Schema.Validators is
       -- To_Symbol --
       ---------------
 
-      function To_Symbol (Table : Id_Htable.HTable) return Symbol is
+      function To_Symbol (Table : Symbol_Htable.HTable) return Symbol is
          Str  : Unbounded_String;
-         S    : Id_Ref;
-         Iter : Iterator := Id_Htable.First (Table);
+         S    : Symbol;
+         Iter : Iterator := Symbol_Htable.First (Table);
       begin
          if Iter = No_Iterator then
             return No_Symbol;
@@ -422,12 +413,12 @@ package body Schema.Validators is
             S := Current (Iter);
 
             if Str = Null_Unbounded_String then
-               Append (Str, Get (S.Key).all);
+               Append (Str, Get (S).all);
             else
-               Append (Str, " " & Get (S.Key).all);
+               Append (Str, " " & Get (S).all);
             end if;
 
-            Id_Htable.Next (Table, Iter);
+            Symbol_Htable.Next (Table, Iter);
          end loop;
 
          return Find (Get (Grammar).Symbols, To_String (Str));
@@ -441,20 +432,19 @@ package body Schema.Validators is
       begin
          if Str = "##targetNamespace" then
             if Target_NS = Empty_String then
-               Set (Namespaces, (Key => Find (Symbols, "##local")));
+               Set (Namespaces, Find (Symbols, "##local"));
             else
-               Set (Namespaces, (Key => Target_NS));
+               Set (Namespaces, Target_NS);
             end if;
 
          elsif Str = "##other" then
             if Target_NS /= No_Symbol then
-               Set (No_Namespaces, (Key => Target_NS));
+               Set (No_Namespaces, Target_NS);
             end if;
 
-            Set (No_Namespaces, (Key => Find (Symbols, "##local")));
+            Set (No_Namespaces, Find (Symbols, "##local"));
          else
-            Set (Namespaces,
-                 (Key => Find (Symbols, Str))); --  including ##any, ##local
+            Set (Namespaces, Find (Symbols, Str)); --  including ##any, ##local
          end if;
       end Callback;
 
@@ -545,9 +535,9 @@ package body Schema.Validators is
          end if;
       end if;
 
-      Id_Htable.Reset (Namespaces);
-      Id_Htable.Reset (No_Namespaces);
-      Id_Htable.Reset (Tmp);
+      Reset (Namespaces);
+      Reset (No_Namespaces);
+      Reset (Tmp);
 
       return Result;
    end Combine;
@@ -753,13 +743,6 @@ package body Schema.Validators is
                      --  We do not need to check id here, since that is
                      --  automatically checked from Validate_Characters for the
                      --  attribute
-                     --     Check_Id
-                     --       (Id_Table, Get_Type (Named.all).Validator,
-                     --        Get_Value (Atts, Found));
-
-                     --                       Normalize_Whitespace
-                     --           (Get_Type (Named.all), Reader, Atts, Found);
-
                      Validate_Attribute (Attr, Reader, Atts, Found);
                end case;
             end if;
@@ -958,7 +941,9 @@ package body Schema.Validators is
          Empty_Element => False,
          Loc           => Get_Location (Atts, Index));
 
-      if Is_ID (Attr) then
+      if Get_Simple_Type
+        (Get (Reader.Grammar).NFA, Attr.Simple_Type).Kind = Primitive_ID
+      then
          Set_Type (Atts, Index, Sax.Attributes.Id);
       end if;
 
@@ -1648,261 +1633,6 @@ package body Schema.Validators is
 --        ElemPtr.Substitution_Group := Head;
 --     end Set_Substitution_Group;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Id : in out Id_Ref) is
-      pragma Unreferenced (Id);
-   begin
-      null;
-   end Free;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Id : Id_Ref) return Symbol is
-   begin
-      return Id.Key;
-   end Get_Key;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Id_Table : in out Id_Htable_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Id_Htable.HTable, Id_Htable_Access);
-   begin
-      if Id_Table /= null then
-         Id_Htable.Reset (Id_Table.all);
-         Unchecked_Free (Id_Table);
-      end if;
-   end Free;
-
-   ------------------------
-   -- Validate_Attribute --
-   ------------------------
-
-   --     procedure Validate_Attribute
-   --       (Validator : Any_Attribute_Validator;
-   --        Reader    : access Abstract_Validation_Reader'Class;
-   --        Atts      : in out Sax_Attribute_List;
-   --        Index     : Natural)
-   --     is
-   --        URI  : constant Symbol := Get_URI (Atts, Index);
-   --        Attr : Attribute_Validator;
-   --        G    : XML_Grammar_NS;
-   --        NS_Matches : Boolean := False;
-   --     begin
-   --        if Debug then
-   --           Debug_Output ("Validate_Attribute, anyAttribute: "
-   --                         & Validator.Kind'Img & " "
-   --                         & Validator.Process_Contents'Img & " "
-   --                         & Get (Get_Local_Name (Atts, Index)).all);
-   --        end if;
-   --
-   --        --  See 3.10.1 for interpretation of processContent.
-   --        --  See also 3.4.2 for the intersection of <anyAttribute> elements
-   --
-   --        case Validator.Kind is
-   --           when Namespace_Other =>
-   --              NS_Matches := URI /= Empty_String
-   --                and then URI /= Validator.NS.Namespace_URI;
-   --           when Namespace_Any =>
-   --              NS_Matches := True;
-   --           when Namespace_List =>
-   --              for N in Validator.List'Range loop
-   --                 if Validator.List (N) = Reader.Local then
-   --                    NS_Matches := NS_Matches or else URI = Empty_String;
-   --                 elsif Validator.List (N) = Reader.Target_Namespace then
-   --                    NS_Matches := NS_Matches
-   --                      or else URI = Validator.NS.Namespace_URI;
-   --                 else
-   --               NS_Matches := NS_Matches or else URI = Validator.List (N);
-   --                 end if;
-   --              end loop;
-   --        end case;
-   --
-   --        if not NS_Matches then
-   --           Validation_Error (Reader, "#Invalid namespace for "
-   --                             & To_QName
-   --                               (Get_URI (Atts, Index),
-   --                                Get_Local_Name (Atts, Index)));
-   --        end if;
-   --
-   --        case Validator.Process_Contents is
-   --           when Process_Strict =>
-   --              Get_NS (Reader.Grammar, URI, G);
-   --              Attr := Lookup_Attribute
-   --                (G, Reader,
-   --                 Get_Local_Name (Atts, Index), Create_If_Needed => False);
-   --              if Attr = null then
-   --                 Validation_Error (Reader, "#No definition provided");
-   --              else
-   --                 Validate_Attribute (Attr.all, Reader, Atts, Index);
-   --
-   --                 if Is_ID (Attr.all) then
-   --                    Set_Type (Atts, Index, Sax.Attributes.Id);
-   --                 end if;
-   --              end if;
-   --
-   --           when Process_Lax =>
-   --              Get_NS (Reader.Grammar, URI, G);
-   --              Attr := Lookup_Attribute
-   --                (G, Reader,
-   --                 Get_Local_Name (Atts, Index), Create_If_Needed => False);
-   --              if Attr = null then
-   --                 if Debug then
-   --                    Debug_Output
-   --                      ("Definition not found for attribute "
-   --                       & To_QName (Get_URI (Atts, Index),
-   --                                   Get_Local_Name (Atts, Index)));
-   --                 end if;
-   --              else
-   --                 Validate_Attribute (Attr.all, Reader, Atts, Index);
-   --                 if Is_ID (Attr.all) then
-   --                    Set_Type (Atts, Index, Sax.Attributes.Id);
-   --                 end if;
-   --              end if;
-   --
-   --           when Process_Skip =>
-   --              null;
-   --        end case;
-   --     end Validate_Attribute;
-
-   ------------------------
-   -- Check_Content_Type --
-   ------------------------
-
---     procedure Check_Content_Type
---       (Validator        : access XML_Validator_Record;
---        Reader           : access Abstract_Validation_Reader'Class;
---        Should_Be_Simple : Boolean)
---     is
---        pragma Unreferenced (Validator);
---     begin
---        if Should_Be_Simple then
---           Validation_Error
---             (Reader,
---              "#Type specified in a simpleContent context must not have a "
---              & "complexContent");
---        end if;
---     end Check_Content_Type;
-
-   -------------------------
-   -- Check_Qualification --
-   -------------------------
-
---     procedure Check_Qualification
---       (Reader        : access Abstract_Validation_Reader'Class;
---        Element       : XML_Element;
---        NS            : XML_Grammar_NS) is
---     begin
---        if not Is_Global (Element)
---          and then Element.Elem.Form = Unqualified
---          and then NS.Namespace_URI /= Empty_String
---        then
---           Validation_Error
---             (Reader,
---              "#Namespace specification not authorized in this context");
---
---        elsif Element.Elem.Form = Qualified
---          and then NS.Namespace_URI = Empty_String
---          and then Get (Reader.Grammar).Target_NS /= null
---        then
---           Validation_Error
---           (Reader, "#Namespace specification is required in this context");
---        end if;
---     end Check_Qualification;
-
-   ------------------------
-   -- Check_Content_Type --
-   ------------------------
-
---     procedure Check_Content_Type
---       (Typ              : XML_Type;
---        Reader           : access Abstract_Validation_Reader'Class;
---        Should_Be_Simple : Boolean) is
---     begin
---        if Typ.Simple_Type = Unknown_Content then
---           if Typ.Validator /= null then
---              Check_Content_Type (Typ.Validator, Reader, Should_Be_Simple);
---           end if;
---
---           --  If we matched, we now know the content type
---           if Should_Be_Simple then
---              Typ.Simple_Type := Simple_Content;
---           else
---              Typ.Simple_Type := Complex_Content;
---           end if;
---
---        elsif Should_Be_Simple and Typ.Simple_Type = Complex_Content then
---           if Typ.Local_Name /= No_Symbol then
---              Validation_Error
---                (Reader,
---              '#' & To_QName (Typ) & " specified in a simpleContent context"
---                 & " must not have a complexContext");
---           else
---              Validation_Error
---                (Reader, "#Expecting simple type, got complex type");
---           end if;
---        elsif not Should_Be_Simple and Typ.Simple_Type = Simple_Content then
---           Validation_Error
---             (Reader, "#Expecting complex type, got simple type");
---        end if;
---     end Check_Content_Type;
-
-   --------------------
-   -- Is_Simple_Type --
-   --------------------
-
---     function Is_Simple_Type
---       (Reader : access Abstract_Validation_Reader'Class;
---        Typ    : XML_Type) return Boolean is
---     begin
---        if Typ.Simple_Type = Unknown_Content then
---           begin
---              Check_Content_Type
---                (Typ.Validator, Reader, Should_Be_Simple => True);
---              Typ.Simple_Type := Simple_Content;
---           exception
---              when XML_Validation_Error =>
---                 Typ.Simple_Type := Complex_Content;
---           end;
---        end if;
---
---        return Typ.Simple_Type = Simple_Content;
---     end Is_Simple_Type;
-
-   --------------
-   -- Check_Id --
-   --------------
-
---     procedure Check_Id
---       (Reader    : access Abstract_Validation_Reader'Class;
---        Validator : access XML_Validator_Record'Class;
---        Value     : Unicode.CES.Byte_Sequence)
---     is
---        Val : Symbol;
---     begin
---        if Is_ID (Validator.all) then
---           Val := Find_Symbol (Reader.all, Value);
---
---           if Reader.Id_Table = null then
---              Reader.Id_Table := new Id_Htable.HTable (101);
---           else
---              if Id_Htable.Get (Reader.Id_Table.all, Val) /= No_Id then
---                 Validation_Error
---                   (Reader, "#ID """ & Value & """ already defined");
---              end if;
---           end if;
---
---           Id_Htable.Set (Reader.Id_Table.all, Id_Ref'(Key => Val));
---        end if;
---     end Check_Id;
-
    ------------------------
    -- Initialize_Symbols --
    ------------------------
@@ -2201,13 +1931,15 @@ package body Schema.Validators is
    is
       Error : Symbol;
    begin
-      Error := Validate_Simple_Type
+      Validate_Simple_Type
         (Simple_Types  => Get (Reader.Grammar).NFA.Simple_Types,
          Enumerations  => Get (Reader.Grammar).NFA.Enumerations,
          Symbols       => Get (Reader.Grammar).Symbols,
+         Id_Table      => Reader.Id_Table,
          Simple_Type   => Simple_Type,
          Ch            => Ch,
-         Empty_Element => Empty_Element);
+         Empty_Element => Empty_Element,
+         Error         => Error);
 
       if Error /= No_Symbol then
          Validation_Error (Reader, Get (Error).all, Loc);

@@ -30,6 +30,7 @@ pragma Ada_05;
 
 with GNAT.Dynamic_Tables;
 with GNAT.Regpat;         use GNAT.Regpat;
+with Sax.HTable;
 with Sax.Locators;        use Sax.Locators;
 with Sax.Symbols;         use Sax.Symbols;
 with Sax.Utils;           use Sax.Utils;
@@ -62,7 +63,7 @@ package Schema.Simple_Types is
      (Primitive_Boolean, Primitive_Double, Primitive_Decimal,
       Primitive_Float,
 
-      Primitive_String, Primitive_Any_URI, Primitive_QName,
+      Primitive_String, Primitive_Any_URI, Primitive_QName, Primitive_ID,
       Primitive_Notation, Primitive_NMTOKEN, Primitive_Language,
       Primitive_NMTOKENS, Primitive_Name, Primitive_NCName, Primitive_NCNames,
       Primitive_Base64Binary, Primitive_HexBinary,
@@ -226,13 +227,29 @@ package Schema.Simple_Types is
    procedure Register_Predefined_Types (Symbols : Sax.Utils.Symbol_Table);
    --  Register all the predefined types
 
-   function Validate_Simple_Type
+   function Get_Key (Id : Sax.Symbols.Symbol) return Sax.Symbols.Symbol;
+   package Symbol_Htable is new Sax.HTable
+     (Element       => Sax.Symbols.Symbol,
+      Empty_Element => Sax.Symbols.No_Symbol,
+      Key           => Sax.Symbols.Symbol,
+      Get_Key       => Get_Key,
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
+   type Symbol_Htable_Access is access Symbol_Htable.HTable;
+   --  This table is used to store the list of IDs that have been used in the
+   --  document so far, and prevent their duplication in the document.
+
+   procedure Free (Symbol_Table : in out Symbol_Htable_Access);
+
+   procedure Validate_Simple_Type
      (Simple_Types  : Simple_Type_Table;
       Enumerations  : Enumeration_Tables.Instance;
-      Symbols       : Sax.Utils.Symbol_Table;
+      Symbols       : Symbol_Table;
+      Id_Table      : in out Symbol_Htable_Access;
       Simple_Type   : Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean) return Sax.Symbols.Symbol;
+      Empty_Element : Boolean;
+      Error         : in out Symbol);
    --  Validate [Ch] for the simple type [Simple_Type].
    --  Returns an error message in case of error, or No_Symbol otherwise
 

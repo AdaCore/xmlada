@@ -142,6 +142,15 @@ package body Schema.Simple_Types is
       Length, Min_Length, Max_Length : Integer) return Symbol;
    --  Validate the facets for a list
 
+   procedure Check_Id
+     (Symbols   : Symbol_Table;
+      Id_Table  : in out Symbol_Htable_Access;
+      Value     : Unicode.CES.Byte_Sequence;
+      Error     : in out Symbol);
+   --  Check whether Value is a unique ID in the document.
+   --  If yes, store it in Id_Table to ensure its future uniqueness.
+   --  Return the error message or [No_Symbol]
+
    -------------------
    -- Generic_Equal --
    -------------------
@@ -474,7 +483,7 @@ package body Schema.Simple_Types is
                                        Mask       => Whitespace_Mask,
                                        Whitespace => Preserve,
                                        others => <>), Name);
-      T := Register ("ID",       (Kind       => Primitive_NCName,
+      T := Register ("ID",       (Kind       => Primitive_ID,
                                   Mask       => Whitespace_Mask,
                                   Whitespace => Preserve,
                                   others => <>), NCName);
@@ -688,35 +697,39 @@ package body Schema.Simple_Types is
    -- Validate_Simple_Type_Characters --
    -------------------------------------
 
-   function Validate_Simple_Type
+   procedure Validate_Simple_Type
      (Simple_Types  : Simple_Type_Table;
       Enumerations  : Enumeration_Tables.Instance;
       Symbols       : Symbol_Table;
+      Id_Table      : in out Symbol_Htable_Access;
       Simple_Type   : Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean) return Symbol
+      Empty_Element : Boolean;
+      Error         : in out Symbol)
    is
       Descr : Simple_Type_Descr renames Simple_Types.Table (Simple_Type);
       Index : Integer;
       Char  : Unicode_Char;
       Matched : Match_Array (0 .. 0);
-      Error   : Symbol := No_Symbol;
 
       procedure Validate_List_Item (Str : Byte_Sequence);
       procedure Validate_List_Item (Str : Byte_Sequence) is
       begin
          if Error = No_Symbol then
-            Error := Validate_Simple_Type
-              (Simple_Types, Enumerations, Symbols,
+            Validate_Simple_Type
+              (Simple_Types, Enumerations, Symbols, Id_Table,
                Simple_Type   => Descr.List_Item,
                Ch            => Str,
-               Empty_Element => Empty_Element);
+               Empty_Element => Empty_Element,
+               Error         => Error);
          end if;
       end Validate_List_Item;
 
       procedure Validate_List_Items is new For_Each_Item (Validate_List_Item);
 
    begin
+      Error := No_Symbol;
+
       --  Check common facets
 
       if Descr.Mask (Facet_Enumeration) then
@@ -734,8 +747,8 @@ package body Schema.Simple_Types is
             end loop;
 
             if not Found then
-               return Find
-                 (Symbols, "Value not in the enumeration set");
+               Error := Find (Symbols, "Value not in the enumeration set");
+               return;
             end if;
          end;
       end if;
@@ -748,8 +761,9 @@ package body Schema.Simple_Types is
          while Index <= Ch'Last loop
             Encoding.Read (Ch, Index, Char);
             if Char > 127 then
-               return Find
+               Error := Find
                  (Symbols, "Regexp matching with unicode not supported");
+               return;
             end if;
          end loop;
 
@@ -758,10 +772,11 @@ package body Schema.Simple_Types is
             if Matched (0).First /= Ch'First
               or else Matched (0).Last /= Ch'Last
             then
-               return Find
+               Error := Find
                  (Symbols,
                   "string pattern not matched: "
                   & Get (Descr.Pattern (P).Str).all);
+               return;
             end if;
          end loop;
       end if;
@@ -777,8 +792,9 @@ package body Schema.Simple_Types is
                  or else Ch (C) = ASCII.LF
                  or else Ch (C) = ASCII.CR
                then
-                  return Find
-                    (Symbols, "HT, LF and CR characters not allowed");
+                  Error :=
+                    Find (Symbols, "HT, LF and CR characters not allowed");
+                  return;
                end if;
             end loop;
 
@@ -788,26 +804,30 @@ package body Schema.Simple_Types is
                  or else Ch (C) = ASCII.LF
                  or else Ch (C) = ASCII.CR
                then
-                  return Find
-                    (Symbols, "HT, LF and CR characters not allowed");
+                  Error :=
+                    Find (Symbols, "HT, LF and CR characters not allowed");
+                  return;
 
                elsif Ch (C) = ' '
                  and then C < Ch'Last
                  and then Ch (C + 1) = ' '
                then
-                  return Find
+                  Error := Find
                     (Symbols, "Duplicate space characters not allowed");
+                  return;
                end if;
             end loop;
 
             --  Leading or trailing white spaces are also forbidden
             if Ch'Length /= 0 then
                if Ch (Ch'First) = ' ' then
-                  return Find
+                  Error := Find
                     (Symbols, "Leading whitespaces not allowed");
+                  return;
                elsif Ch (Ch'Last) = ' ' then
-                  return Find
+                  Error := Find
                     (Symbols, "Trailing whitespaces not allowed");
+                  return;
                end if;
             end if;
          end case;
@@ -817,57 +837,72 @@ package body Schema.Simple_Types is
 
       case Descr.Kind is
          when Primitive_String | Primitive_Notation =>
-            return Validate_String (Descr, Symbols, Ch);
+            Error :=  Validate_String (Descr, Symbols, Ch);
          when Primitive_HexBinary =>
-            return Validate_HexBinary (Descr, Symbols, Ch);
+            Error := Validate_HexBinary (Descr, Symbols, Ch);
          when Primitive_Base64Binary =>
-            return Validate_Base64Binary (Descr, Symbols, Ch);
+            Error := Validate_Base64Binary (Descr, Symbols, Ch);
          when Primitive_Language =>
-            return Validate_Language (Descr, Symbols, Ch);
-         when Primitive_QName    => return Validate_QName (Descr, Symbols, Ch);
+            Error := Validate_Language (Descr, Symbols, Ch);
+         when Primitive_QName    =>
+            Error := Validate_QName (Descr, Symbols, Ch);
          when Primitive_NCName   =>
-            return Validate_NCName (Descr, Symbols, Ch);
+            Error := Validate_NCName (Descr, Symbols, Ch);
+         when Primitive_ID       =>
+            Error := Validate_NCName (Descr, Symbols, Ch);
+            if Error = No_Symbol then
+               Check_Id (Symbols, Id_Table, Ch, Error);
+            end if;
+
          when Primitive_NCNames  =>
-            return Validate_NCNames (Descr, Symbols, Ch);
-         when Primitive_Name     => return Validate_Name (Descr, Symbols, Ch);
-         when Primitive_Any_URI  => return Validate_URI (Descr, Symbols, Ch);
+            Error := Validate_NCNames (Descr, Symbols, Ch);
+         when Primitive_Name     =>
+            Error :=  Validate_Name (Descr, Symbols, Ch);
+         when Primitive_Any_URI  =>
+            Error := Validate_URI (Descr, Symbols, Ch);
          when Primitive_NMTOKEN  =>
-            return Validate_NMTOKEN (Descr, Symbols, Ch);
+            Error := Validate_NMTOKEN (Descr, Symbols, Ch);
          when Primitive_NMTOKENS =>
-            return Validate_NMTOKENS (Descr, Symbols, Ch);
+            Error := Validate_NMTOKENS (Descr, Symbols, Ch);
          when Primitive_Boolean  =>
-            return Validate_Boolean (Descr, Symbols, Ch);
+            Error := Validate_Boolean (Descr, Symbols, Ch);
          when Primitive_Decimal  =>
-            return Validate_Decimal (Descr, Symbols, Ch);
+            Error := Validate_Decimal (Descr, Symbols, Ch);
          when Primitive_Float | Primitive_Double  =>
-            return Validate_Double (Descr, Symbols, Ch);
-         when Primitive_Time     => return Validate_Time (Descr, Symbols, Ch);
+            Error := Validate_Double (Descr, Symbols, Ch);
+         when Primitive_Time     =>
+            Error :=  Validate_Time (Descr, Symbols, Ch);
          when Primitive_DateTime =>
-            return Validate_Date_Time (Descr, Symbols, Ch);
-         when Primitive_GDay => return Validate_GDay (Descr, Symbols, Ch);
+            Error := Validate_Date_Time (Descr, Symbols, Ch);
+         when Primitive_GDay =>
+            Error := Validate_GDay (Descr, Symbols, Ch);
          when Primitive_GMonthDay =>
-            return Validate_GMonth_Day (Descr, Symbols, Ch);
+            Error := Validate_GMonth_Day (Descr, Symbols, Ch);
          when Primitive_GMonth   =>
-            return Validate_GMonth (Descr, Symbols, Ch);
+            Error := Validate_GMonth (Descr, Symbols, Ch);
          when Primitive_GYearMonth =>
-            return Validate_GYear_Month (Descr, Symbols, Ch);
-         when Primitive_GYear    => return Validate_GYear (Descr, Symbols, Ch);
-         when Primitive_Date     => return Validate_Date (Descr, Symbols, Ch);
+            Error := Validate_GYear_Month (Descr, Symbols, Ch);
+         when Primitive_GYear    =>
+            Error := Validate_GYear (Descr, Symbols, Ch);
+         when Primitive_Date     =>
+            Error := Validate_Date (Descr, Symbols, Ch);
          when Primitive_Duration =>
-            return Validate_Duration (Descr, Symbols, Ch);
+            Error := Validate_Duration (Descr, Symbols, Ch);
 
          when Primitive_Union    =>
             for S in Descr.Union'Range loop
                if Descr.Union (S) /= No_Simple_Type_Index then
-                  Error := Validate_Simple_Type
+                  Validate_Simple_Type
                     (Simple_Types  => Simple_Types,
                      Enumerations  => Enumerations,
                      Symbols       => Symbols,
+                     Id_Table      => Id_Table,
                      Simple_Type   => Descr.Union (S),
                      Ch            => Ch,
-                     Empty_Element => Empty_Element);
+                     Empty_Element => Empty_Element,
+                     Error         => Error);
                   if Error = No_Symbol then
-                     return No_Symbol;
+                     return;
                   else
                      if Debug then
                         Debug_Output ("Checking union at index" & S'Img
@@ -877,7 +912,7 @@ package body Schema.Simple_Types is
                end if;
             end loop;
 
-            return Find (Symbols, "No matching type in the union");
+            Error := Find (Symbols, "No matching type in the union");
 
          when Primitive_List     =>
             Validate_List_Items (Ch);
@@ -887,7 +922,6 @@ package body Schema.Simple_Types is
                   Descr.List_Length, Descr.List_Min_Length,
                   Descr.List_Max_Length);
             end if;
-            return Error;
       end case;
    end Validate_Simple_Type;
 
@@ -2356,5 +2390,53 @@ package body Schema.Simple_Types is
          Unchecked_Free (Arr);
       end if;
    end Free;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Id : Symbol) return Symbol is
+   begin
+      return Id;
+   end Get_Key;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Symbol_Table : in out Symbol_Htable_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Symbol_Htable.HTable, Symbol_Htable_Access);
+   begin
+      if Symbol_Table /= null then
+         Symbol_Htable.Reset (Symbol_Table.all);
+         Unchecked_Free (Symbol_Table);
+      end if;
+   end Free;
+
+   --------------
+   -- Check_Id --
+   --------------
+
+   procedure Check_Id
+     (Symbols   : Symbol_Table;
+      Id_Table  : in out Symbol_Htable_Access;
+      Value     : Unicode.CES.Byte_Sequence;
+      Error     : in out Symbol)
+   is
+      Val : constant Symbol := Find (Symbols, Value);
+   begin
+      if Id_Table = null then
+         Id_Table := new Symbol_Htable.HTable (101);
+      else
+         if Symbol_Htable.Get (Id_Table.all, Val) /= No_Symbol then
+            Error := Find (Symbols, "ID """ & Value & """ already defined");
+            return;
+         end if;
+      end if;
+
+      Symbol_Htable.Set (Id_Table.all, Val);
+      Error := No_Symbol;
+   end Check_Id;
 
 end Schema.Simple_Types;

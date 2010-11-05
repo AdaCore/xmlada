@@ -372,14 +372,6 @@ package Schema.Validators is
    pragma Inline (Get_Type_Descr);
    --  Return the type description at that index
 
-   ---------------
-   -- ID_Htable --
-   ---------------
-
-   type Id_Htable_Access is private;
-
-   procedure Free (Id_Table : in out Id_Htable_Access);
-
    ------------
    -- Parser --
    ------------
@@ -392,7 +384,7 @@ package Schema.Validators is
       Error_Location : Sax.Locators.Location;
       Error_Msg      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
 
-      Id_Table  : Id_Htable_Access;
+      Id_Table       : Schema.Simple_Types.Symbol_Htable_Access;
       --  Mapping of IDs to elements
 
       Grammar   : XML_Grammar := No_Grammar;
@@ -728,35 +720,9 @@ package Schema.Validators is
 
 private
 
-   ---------
-   -- Ids --
-   ---------
-
-   type Id_Ref is record
-      Key : Sax.Symbols.Symbol;
-   end record;
-   No_Id : constant Id_Ref := (Key => Sax.Symbols.No_Symbol);
-
-   procedure Free (Id : in out Id_Ref);
-   function Get_Key (Id : Id_Ref) return Sax.Symbols.Symbol;
-   package Id_Htable is new Sax.HTable
-     (Element       => Id_Ref,
-      Empty_Element => No_Id,
-      Free          => Free,
-      Key           => Sax.Symbols.Symbol,
-      Get_Key       => Get_Key,
-      Hash          => Sax.Symbols.Hash,
-      Equal         => Sax.Symbols."=");
-   type Id_Htable_Access is access Id_Htable.HTable;
-   --  This table is used to store the list of IDs that have been used in the
-   --  document so far, and prevent their duplication in the document.
-
    -------------------------
    -- Attribute_Validator --
    -------------------------
-
-   function Is_ID (Attr : Attribute_Descr) return Boolean;
-   --  Whether the attribute is an ID
 
    package Attributes_Tables is new GNAT.Dynamic_Tables
      (Table_Component_Type => Attribute_Descr,
@@ -831,13 +797,5 @@ private
    type XML_Grammar is new XML_Grammars.Pointer;
    No_Grammar : constant XML_Grammar :=
      XML_Grammar (XML_Grammars.Null_Pointer);
-
---     procedure Check_Id
---       (Reader    : access Abstract_Validation_Reader'Class;
---        Validator : access XML_Validator_Record'Class;
---        Value     : Unicode.CES.Byte_Sequence);
-   --  Check whether Value is a unique ID in the document.
-   --  If yes, store it in Id_Table to ensure its future uniqueness.
-   --  This does nothing if Validator is not associated with an ID type.
 
 end Schema.Validators;
