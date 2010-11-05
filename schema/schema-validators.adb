@@ -1218,10 +1218,12 @@ package body Schema.Validators is
 
          G.NFA.Set_Data (S1, (Simple   => Index,
                               Fixed    => No_Symbol,
+                              Default  => No_Symbol,
                               Nillable => True,
                               Block    => No_Block));
          S2 := G.NFA.Add_State ((Simple   => Index,
                                  Fixed    => No_Symbol,
+                                 Default  => No_Symbol,
                                  Nillable => True,
                                  Block    => No_Block));
 

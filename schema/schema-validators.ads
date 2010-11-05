@@ -233,11 +233,13 @@ package Schema.Validators is
    type State_Data is record
       Simple   : Type_Index;
       Fixed    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Default  : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Block    : Block_Status := No_Block;
       Nillable : Boolean := False;
    end record;
    No_State_Data : constant State_Data :=
-     (No_Type_Index, Sax.Symbols.No_Symbol, No_Block, False);
+     (No_Type_Index, Sax.Symbols.No_Symbol,
+      Sax.Symbols.No_Symbol, No_Block, False);
    --  User data associated with each state. This mostly point to the
    --  corresponding type in the schema, but also includes overridding data
    --  from the corresponding element itself.

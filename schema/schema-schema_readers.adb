@@ -487,6 +487,7 @@ package body Schema.Schema_Readers is
                if NFA_Type /= No_Type_Index then
                   Data.all := State_Data'(Simple   => NFA_Type,
                                           Fixed    => Info.Fixed,
+                                          Default  => Info.Default,
                                           Nillable => Info.Nillable,
                                           Block    => Info.Block);
                   NFA.Set_Nested
@@ -495,8 +496,9 @@ package body Schema.Schema_Readers is
                        (Get_Type_Descr (NFA, NFA_Type).Complex_Content));
                else
                   NFA.Set_Nested (S1, NFA.Ur_Type);
-                  Data.Fixed := Info.Fixed;
-                  Data.Block := Info.Block;
+                  Data.Fixed    := Info.Fixed;
+                  Data.Default  := Info.Default;
+                  Data.Block    := Info.Block;
                   Data.Nillable := Info.Nillable;
                end if;
             end;
@@ -1425,6 +1427,7 @@ package body Schema.Schema_Readers is
                  (Simple   => Shared.Types.Table (J).In_NFA,
                   Block    => No_Block,
                   Nillable => False,
+                  Default  => No_Symbol,
                   Fixed    => No_Symbol));
          end if;
 

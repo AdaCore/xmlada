@@ -218,7 +218,8 @@ package body Schema.Readers is
       NFA  : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
       S    : State;
       Descr : access Type_Descr;
-      Fixed : Symbol := No_Symbol;
+      Fixed   : Symbol := No_Symbol;
+      Default : Symbol := No_Symbol;
       Data  : State_Data;
       Ty    : Type_Index;
       Is_Equal : Boolean;
@@ -264,8 +265,16 @@ package body Schema.Readers is
 
                --  Get the "fixed" value from the element
                --   (if it has a complexType)
-               if Fixed = No_Symbol then
+               if Fixed = No_Symbol and then Has_Parent (Iter) then
                   Fixed := Current_Data (Handler.Matcher, Parent (Iter)).Fixed;
+               end if;
+            end if;
+
+            if Default = No_Symbol then
+               Default := Data.Default;
+               if Default = No_Symbol and then Has_Parent (Iter) then
+                  Default :=
+                    Current_Data (Handler.Matcher, Parent (Iter)).Default;
                end if;
             end if;
 
@@ -305,6 +314,18 @@ package body Schema.Readers is
             Debug_Output
               ("Substitute fixed value for empty characters:"
                & Get (Fixed).all);
+         end if;
+      end if;
+
+      --  If still empty, use the default value
+
+      if Is_Empty and then Default /= No_Symbol then
+         Internal_Characters (Handler, Get (Default).all);
+         Is_Empty := Handler.Characters_Count = 0;
+         if Debug then
+            Debug_Output
+              ("Substitute default value for empty characters:"
+               & Get (Default).all);
          end if;
       end if;
 
@@ -510,6 +531,7 @@ package body Schema.Readers is
                     (Simple   => Simple,
                      Nillable => Data.Nillable,
                      Fixed    => Data.Fixed,
+                     Default  => Data.Default,
                      Block    => Data.Block));
 
                Internal_New_Nested := NFA.Simple_Nested;
