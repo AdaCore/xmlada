@@ -336,12 +336,14 @@ package body Schema.Schema_Readers is
          Nested_End : out State);
       --  [Start] is the start of the current nested
 
-      function Create_Element_State
+      procedure Create_Element_State
         (Info : Element_Descr;
-         Start, From : State; Global : Boolean) return State;
-      --  Create (and decorate) the node corresponding to an <element>.
-      --  Links it from [From]. [Start] is the first element of the current
-      --  nested machine.
+         Start, From : State;
+         Global : Boolean;
+         S1, S2 : out State);
+      --  Create (and decorate) the nodes [S1]..[S2] corresponding to an
+      --  <element>. A link is created [From]->[S1].
+      --  [Start] is the first element of the current nested machine.
 
       procedure Create_Nested_For_Type (J : Type_Index);
       --  Create a a nested machine (with only the start state) for [Info]
@@ -379,23 +381,25 @@ package body Schema.Schema_Readers is
       -- Create_Element_State --
       --------------------------
 
-      function Create_Element_State
+      procedure Create_Element_State
         (Info : Element_Descr;
-         Start, From : State; Global : Boolean) return State
+         Start, From : State;
+         Global : Boolean;
+         S1, S2 : out State)
       is
          pragma Unreferenced (Start);
-         S1, S2    : State;
          Typ       : Type_Index;
          Real      : Element_Descr;
          Trans     : Transition_Event;
          TRef      : Global_Reference := No_Global_Reference;
          S         : State := No_State;
-         Descr     : Type_Descr;
 
       begin
          if Info.Is_Abstract then
             --  ??? Should use the substitutionGroup elements, instead
-            return No_State;
+            S1 := No_State;
+            S2 := No_State;
+            return;
          end if;
 
          S1 := NFA.Add_State (Default_User_Data);
@@ -426,34 +430,39 @@ package body Schema.Schema_Readers is
 
          --  Create nested NFA for the type, if needed
 
-         if S = No_State then
-            if Real.Typ = No_Qualified_Name then
-               Typ := Real.Local_Type;
-               Descr := Shared.Types.Table (Typ).Descr;
-               S := Shared.Types.Table (Typ).S;
+         declare
+            Descr     : Type_Descr;
+         begin
+            if S = No_State then
+               if Real.Typ = No_Qualified_Name then
+                  Typ := Real.Local_Type;
+                  Descr := Shared.Types.Table (Typ).Descr;
+                  S := Shared.Types.Table (Typ).S;
 
-               if S = No_State then
-                  Validation_Error
-                    (Parser, "Unknown type for element "
-                     & To_QName (Real.Name) & To_QName (Info.Ref), Info.Loc);
+                  if S = No_State then
+                     Validation_Error
+                       (Parser, "Unknown type for element "
+                        & To_QName (Real.Name) & To_QName (Info.Ref),
+                        Info.Loc);
+                  end if;
+
+               else
+                  Get_Type_Descr (Real.Typ, Info.Loc, Descr, S);
                end if;
 
-            else
-               Get_Type_Descr (Real.Typ, Info.Loc, Descr, S);
-            end if;
+               if Info.Substitution_Group /= No_Qualified_Name then
+                  --  ??? Handling of substitutionGroup: the type of the
+                  --  element is the same as the head unless overridden.
+                  null;
+               end if;
 
-            if Info.Substitution_Group /= No_Qualified_Name then
-               --  ??? Handling of substitutionGroup: the type of the
-               --  element is the same as the head unless overridden.
-               null;
+               if Descr.Simple_Content /= No_Simple_Type_Index then
+                  NFA.Get_Data (S1).Descr := Descr;
+               else
+                  NFA.Set_Nested (S1, NFA.Create_Nested (S));
+               end if;
             end if;
-
-            if Descr.Simple_Content /= No_Simple_Type_Index then
-               NFA.Get_Data (S1).Descr := Descr;
-            else
-               NFA.Set_Nested (S1, NFA.Create_Nested (S));
-            end if;
-         end if;
+         end;
 
          --  Link with previous element
 
@@ -476,8 +485,6 @@ package body Schema.Schema_Readers is
             Set (Ref.all, (Real.Name, Ref_Element),
                  (Kind => Ref_Element, Element => S1));
          end if;
-
-         return S2;
       end Create_Element_State;
 
       ----------------------------
@@ -485,11 +492,18 @@ package body Schema.Schema_Readers is
       ----------------------------
 
       procedure Process_Global_Element (Info : Element_Descr) is
-         S1  : constant State :=
-           Create_Element_State (Info, Start_State, Start_State, True);
+         S1, S2 : State;
       begin
-         if S1 /= No_State then
-            NFA.Add_Empty_Transition (S1, End_Schema_Choice);
+         Create_Element_State (Info, Start_State, Start_State, True, S1, S2);
+
+         if S2 /= No_State then
+            if NFA.Get_Nested (S1) /= No_Nested then
+               NFA.Add_Empty_Transition (S2, End_Schema_Choice);
+            else
+               --  If the root element is a simpleType, we have already seen
+               --  its <close>, so we can simply exit now.
+               NFA.Add_Empty_Transition (S2, Final_State);
+            end if;
          end if;
       end Process_Global_Element;
 
@@ -518,7 +532,7 @@ package body Schema.Schema_Readers is
             end if;
          else
             S     := Shared.Types.Table (Ty).S;
-            Descr := Shared.Types.Table (Ty).Descr;
+            Descr := NFA.Get_Data (S).Descr;
          end if;
       end Get_Type_Descr;
 
@@ -673,8 +687,13 @@ package body Schema.Schema_Readers is
                end if;
 
             when Type_Element =>
-               Nested_End :=
-                 Create_Element_State (Details.Element, Start, From, False);
+               declare
+                  S1 : State;
+                  pragma Unreferenced (S1);
+               begin
+                  Create_Element_State (Details.Element, Start, From, False,
+                                        S1, Nested_End);
+               end;
 
             when Type_Group =>
                Gr := Get (Parser.Shared.Global_Groups, Details.Group.Ref);
@@ -978,13 +997,12 @@ package body Schema.Schema_Readers is
             if Info.Is_Simple then
                --  A simpleType has no attribute
                return;
-            end if;
 
-            pragma Assert (Info.Details /= null,
-                           "No details defined for "
-                           & To_QName (Info.Descr.Name));
+            elsif Info.Details = null then
+               --  No character data is allowed, but we might have attributes
+               Add_Attributes (List, Info.Attributes);
 
-            if Info.Details.Kind = Type_Extension then
+            elsif Info.Details.Kind = Type_Extension then
                Ty := Get (Ref.all, (Info.Details.Extension.Base, Ref_Type));
                if Ty = No_Global_Reference then
                   Validation_Error

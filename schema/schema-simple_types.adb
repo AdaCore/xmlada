@@ -1088,7 +1088,7 @@ package body Schema.Simple_Types is
          if Max_Exclusive <= Val then
             Error := Find
               (Symbols,
-               Ch & " is smaller than maxExclusive ("
+               Ch & " is greater than maxExclusive ("
                & Image (Max_Exclusive) & ")");
             return;
          end if;

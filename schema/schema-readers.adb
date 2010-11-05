@@ -235,10 +235,10 @@ package body Schema.Readers is
                Handler.Characters (1 .. Handler.Characters_Count),
                Empty_Element => Is_Empty);
 
-         else
-            --  ??? Should have access to Type_Descr to check for other
-            --  attributes (Mixed for instance)
-            null;
+         elsif not Data.Descr.Mixed then
+            Validation_Error
+              (Handler,
+               "No character data allowed by content model");
          end if;
 
          --  If no explicit character data: we might need to simulate some, so
@@ -892,6 +892,14 @@ package body Schema.Readers is
       end if;
 
       Parse (Schema.Validators.Abstract_Validation_Reader (Parser), Input);
+
+      if not In_Final (Parser.Matcher) then
+         Validation_Error
+           (Parser'Access,
+            "Unexpected end of file: expecting "
+            & Expected (Parser.Matcher));
+      end if;
+
       Reset (Parser);
 
    exception
