@@ -537,7 +537,8 @@ package body Schema.Readers is
          end if;
 
          Validate_Attributes
-           (Data2.Descr.Attributes, H, Atts,
+           (H.Grammar,
+            Data2.Descr.Attributes, H, Atts,
             Nillable => False,  --  Is_Nillable (Element),
             Is_Nil   => Is_Nil);
       end Validate_Attributes_Cb;

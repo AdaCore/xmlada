@@ -333,7 +333,7 @@ package body Schema.Schema_Readers is
       --  Create a a nested machine (with only the start state) for [Info]
 
       procedure Add_Attributes
-        (List  : in out Attribute_Validator_List_Access;
+        (List  : in out Attribute_Validator_List;
          Attrs : Attr_Array_Access);
       --  Create List from the list of attributes or attribute groups in
       --  [Attrs].
@@ -694,7 +694,7 @@ package body Schema.Schema_Readers is
       --------------------
 
       procedure Add_Attributes
-        (List  : in out Attribute_Validator_List_Access;
+        (List  : in out Attribute_Validator_List;
          Attrs : Attr_Array_Access)
       is
          Gr   : AttrGroup_Descr;
@@ -754,7 +754,8 @@ package body Schema.Schema_Readers is
                           NFA.Get_Data (S).Descr.Simple_Type;
                      end if;
 
-                     Add_Attribute (List, Attrs (A).Attr.Descr);
+                     Add_Attribute
+                       (Parser.Grammar, List, Attrs (A).Attr.Descr);
                end case;
             end loop;
          end if;
@@ -785,7 +786,7 @@ package body Schema.Schema_Readers is
 
       procedure Process_Type (Info : in out Internal_Type_Descr) is
          S1    : State;
-         List  : Attribute_Validator_List_Access;
+         List  : Attribute_Validator_List := Empty_Attribute_List;
 
          procedure Recursive_Add_Attributes (Info : Internal_Type_Descr);
          procedure Recursive_Add_Attributes (Info : Internal_Type_Descr) is
@@ -810,7 +811,8 @@ package body Schema.Schema_Readers is
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
+                    (Parser.Grammar,
+                     List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
                end if;
 
                Add_Attributes (List, Info.Details.Extension.Attributes);
@@ -829,7 +831,8 @@ package body Schema.Schema_Readers is
                   Recursive_Add_Attributes (Shared.Types.Table (Index));
                else
                   Add_Attributes
-                    (List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
+                    (Parser.Grammar,
+                     List, NFA.Get_Data (Ty.Typ).Descr.Attributes);
                end if;
 
                Add_Attributes (List, Info.Details.Restriction.Attributes);

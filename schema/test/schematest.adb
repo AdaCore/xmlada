@@ -152,12 +152,11 @@ procedure Schematest is
    Filter : array (Result_Kind) of Boolean := (others => True);
 
    procedure Run_Testsuite  (Filename : String);
-   procedure Run_Testset (Filename : String; Schema : in out XML_Grammar);
+   procedure Run_Testset (Filename : String);
    procedure Run_Test_Group
      (Testset  : String;
       Group    : Node;
-      Base_Dir : String;
-      Schema   : in out XML_Grammar);
+      Base_Dir : String);
    procedure Parse_Schema_Test
      (Group          : in out Group_Result;
       Schema         : Node;
@@ -633,8 +632,7 @@ procedure Schematest is
    procedure Run_Test_Group
      (Testset    : String;
       Group      : Node;
-      Base_Dir   : String;
-      Schema     : in out XML_Grammar)
+      Base_Dir   : String)
    is
       Name           : constant String := Get_Attribute (Group, S_Name);
       N              : Node := First_Child (Group);
@@ -644,10 +642,8 @@ procedure Schematest is
       Cursor         : Test_Result_Lists.Cursor;
       Kind           : Result_Kind;
       Failed_Grammar : Boolean := False;
+      Schema         : XML_Grammar;
    begin
-      Reset (Schema);   --  Only keep schema-for-schema (optimization, we could
-                        --  also reset from No_Grammar).
-
       Result.Name := To_Unbounded_String (Testset & " / " & Name);
       Result.Counts := (others => 0);
 
@@ -721,7 +717,7 @@ procedure Schematest is
    -- Run_Testset --
    -----------------
 
-   procedure Run_Testset (Filename : String; Schema : in out XML_Grammar) is
+   procedure Run_Testset (Filename : String) is
       Input  : File_Input;
       Reader : Tree_Reader;
       N      : Node;
@@ -746,8 +742,7 @@ procedure Schematest is
             Run_Test_Group
               (Testset    => To_String (Name),
                Group      => N,
-               Base_Dir   => Dir_Name (Filename),
-               Schema     => Schema);
+               Base_Dir   => Dir_Name (Filename));
          end if;
 
          N := Next_Sibling (N);
@@ -764,7 +759,6 @@ procedure Schematest is
       Input  : File_Input;
       Reader : Tree_Reader;
       N      : Node;
-      Schema : XML_Grammar := No_Grammar;
    begin
       Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
 
@@ -783,8 +777,7 @@ procedure Schematest is
               (Normalize_Pathname
                  (Get_Attribute_NS (N, S_Xlink, S_Href),
                   Dir_Name (Filename),
-                  Resolve_Links => False),
-               Schema => Schema);
+                  Resolve_Links => False));
          end if;
 
          N := Next_Sibling (N);

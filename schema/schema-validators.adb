@@ -49,7 +49,7 @@ with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
 package body Schema.Validators is
-   use XML_Grammars;
+   use XML_Grammars, Attributes_Tables;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Grammar_NS_Array, Grammar_NS_Array_Access);
@@ -78,15 +78,22 @@ package body Schema.Validators is
    function To_Graphic_String (Str : Byte_Sequence) return String;
    --  Convert non-graphic characters in Str to make them visible in a display
 
-   ------------------------------
-   -- Attribute_Validator_List --
-   ------------------------------
+   procedure Create_Grammar_If_Needed
+     (Grammar : in out XML_Grammar;
+      Symbols : Symbol_Table := No_Symbol_Table);
+   --  Allocate a new grammar, if needed
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Attribute_Validator_List, Attribute_Validator_List_Access);
-
-   procedure Free (List : in out Attribute_Validator_List_Access);
-   --  Free the contents of List, including contained
+   type Attribute_Validator_Data is record
+      Validator : Attribute_Validator_List;  --  Index into the table
+      Visited   : Boolean;
+   end record;
+   type Attribute_Validator_Index is new Natural;
+   type Attribute_Validator_Array is array (Attribute_Validator_Index range <>)
+     of Attribute_Validator_Data;
+   function To_Attribute_Array
+     (Grammar    : XML_Grammar;
+      Attributes : Attribute_Validator_List) return Attribute_Validator_Array;
+   --  The data required to validate attributes
 
    ----------------------
    -- Validation_Error --
@@ -150,16 +157,6 @@ package body Schema.Validators is
          end if;
       end if;
    end Get_Error_Message;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Attribute_Validator_List_Access) is
-   begin
-      --  List (..).Attr is already freed through the htable in the grammar
-      Unchecked_Free (List);
-   end Free;
 
    ------------------------------
    -- Do_Normalize_Whitespaces --
@@ -344,26 +341,23 @@ package body Schema.Validators is
    -------------------
 
    procedure Add_Attribute
-     (List      : in out Attribute_Validator_List_Access;
+     (Grammar   : XML_Grammar;
+      List      : in out Attribute_Validator_List;
       Attribute : Attribute_Descr)
    is
-      L : Attribute_Validator_List_Access;
+      L : Attribute_Validator_List := List;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
    begin
-      if List /= null then
-         for A in List'Range loop
-            if List (A) = Attribute then
-               return;
-            end if;
-         end loop;
+      while L /= Empty_Attribute_List loop
+         if G.Attributes.Table (L).Name = Attribute.Name then
+            return;
+         end if;
+         L := G.Attributes.Table (L).Next;
+      end loop;
 
-         L := new Attribute_Validator_List (List'First .. List'Last + 1);
-         L (List'Range) := List.all;
-         L (L'Last) := Attribute;
-         Unchecked_Free (List);
-         List := L;
-      else
-         List := new Attribute_Validator_List'(1 => Attribute);
-      end if;
+      Append (G.Attributes, Attribute);
+      G.Attributes.Table (Last (G.Attributes)).Next := List;
+      List := Last (G.Attributes);
    end Add_Attribute;
 
    --------------------
@@ -371,15 +365,17 @@ package body Schema.Validators is
    --------------------
 
    procedure Add_Attributes
-     (List       : in out Attribute_Validator_List_Access;
-      Attributes : Attribute_Validator_List_Access)
+     (Grammar    : XML_Grammar;
+      List       : in out Attribute_Validator_List;
+      Attributes : Attribute_Validator_List)
    is
+      L : Attribute_Validator_List := Attributes;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
    begin
-      if Attributes /= null then
-         for A in Attributes'Range loop
-            Add_Attribute (List, Attributes (A));
-         end loop;
-      end if;
+      while L /= Empty_Attribute_List loop
+         Add_Attribute (Grammar, List, G.Attributes.Table (L));
+         L := G.Attributes.Table (L).Next;
+      end loop;
    end Add_Attributes;
 
    --------------
@@ -413,28 +409,55 @@ package body Schema.Validators is
       return Validator.Mixed_Content;
    end Get_Mixed_Content;
 
+   ------------------------
+   -- To_Attribute_Array --
+   ------------------------
+
+   function To_Attribute_Array
+     (Grammar    : XML_Grammar;
+      Attributes : Attribute_Validator_List) return Attribute_Validator_Array
+   is
+      G     : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      Count : Attribute_Validator_Index := 0;
+      L     : Attribute_Validator_List := Attributes;
+   begin
+      while L /= Empty_Attribute_List loop
+         Count := Count + 1;
+         L := G.Attributes.Table (L).Next;
+      end loop;
+
+      declare
+         Result : Attribute_Validator_Array (1 .. Count);
+      begin
+         Count := Result'First;
+         L := Attributes;
+         while L /= Empty_Attribute_List loop
+            Result (Count) := (Validator => L,
+                               Visited   => False);
+            Count := Count + 1;
+            L := G.Attributes.Table (L).Next;
+         end loop;
+
+         return Result;
+      end;
+   end To_Attribute_Array;
+
    -------------------------
    -- Validate_Attributes --
    -------------------------
 
    procedure Validate_Attributes
-     (Attributes : Attribute_Validator_List_Access;
+     (Grammar    : XML_Grammar;
+      Attributes : Attribute_Validator_List;
       Reader     : access Abstract_Validation_Reader'Class;
       Atts       : in out Sax.Readers.Sax_Attribute_List;
       Nillable   : Boolean;
       Is_Nil     : out Boolean)
    is
-      Length   : constant Natural := Get_Length (Atts);
-
-      function Attr_Length return Natural;
-      function Attr_Length return Natural is
-      begin
-         if Attributes = null then
-            return 0;
-         else
-            return Attributes'Length;
-         end if;
-      end Attr_Length;
+      Length : constant Natural := Get_Length (Atts);
+      G      : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      Attrs  : Attribute_Validator_Array :=
+        To_Attribute_Array (Grammar, Attributes);
 
       type Attr_Status is record
          Prohibited : Boolean := False;
@@ -445,21 +468,19 @@ package body Schema.Validators is
       end record;
       Seen : array (1 .. Length) of Attr_Status := (others => (False, False));
 
-      Visited : array (1 .. Attr_Length) of Boolean := (others => False);
-
       type Any_Status is (Any_None, Any_All, Any_Not_All);
       type Any_Status_Array is array (1 .. Length) of Any_Status;
       Seen_Any : constant Any_Status_Array := (others => Any_None);
       pragma Unreferenced (Any_Not_All);
 
-      function Find_Attribute (Index : Integer) return Integer;
+      function Find_Attribute (Attr : Attribute_Descr) return Integer;
       --  Chech whether Named appears in Atts
 
       --        procedure Check_Any
       --          (List : Attribute_Descr; Must_Match_All_Any : Boolean);
       --  Check recursively the attributes provided by Validator.
 
-      procedure Check_Named_Attribute (Index : Integer);
+      procedure Check_Named_Attribute (Index : Attribute_Validator_Index);
       --        procedure Check_Any_Attribute
       --          (Any : Any_Attribute_Validator; Index : Integer);
       --  Check a named attribute or a wildcard attribute
@@ -494,19 +515,21 @@ package body Schema.Validators is
       -- Check_Named_Attribute --
       ---------------------------
 
-      procedure Check_Named_Attribute (Index : Integer) is
+      procedure Check_Named_Attribute (Index : Attribute_Validator_Index) is
          Found  : Integer;
+         Attr   : Attribute_Descr
+           renames G.Attributes.Table (Attrs (Index).Validator);
       begin
-         if not Visited (Index) then
-            Visited (Index) := True;
-            Found := Find_Attribute (Index);
+         if not Attrs (Index).Visited then
+            Attrs (Index).Visited := True;
+            Found := Find_Attribute (Attr);
 
             if Found = -1 then
-               case Attributes (Index).Use_Type is
+               case Attr.Use_Type is
                   when Required =>
                      Validation_Error
                        (Reader, "#Attribute """
-                        & To_QName (Attributes (Index).Name)
+                        & To_QName (Attr.Name)
                         & """ is required in this context");
                   when Prohibited | Optional | Default =>
                      null;
@@ -515,9 +538,9 @@ package body Schema.Validators is
             else
                Seen (Found).Seen := True;
 
-               case Attributes (Index).Form is
+               case Attr.Form is
                   when Qualified =>
-                     if Attributes (Index).Is_Local
+                     if Attr.Is_Local
                        and then Get_Prefix (Atts, Found) = Empty_String
                      then
                         Validation_Error
@@ -526,7 +549,7 @@ package body Schema.Validators is
                      end if;
 
                   when Unqualified =>
-                     if Attributes (Index).Is_Local
+                     if Attr.Is_Local
                        and then Get_Prefix (Atts, Found) /= Empty_String
                        and then Get_URI (Atts, Found) =
                        Get_Namespace_URI
@@ -538,7 +561,7 @@ package body Schema.Validators is
                      end if;
                end case;
 
-               case Attributes (Index).Use_Type is
+               case Attr.Use_Type is
                   when Prohibited =>
                      Seen (Found) := (Seen       => False,
                                       Prohibited => True);
@@ -555,8 +578,7 @@ package body Schema.Validators is
                      --           (Get_Type (Named.all), Reader, Atts, Found);
 
                      begin
-                        Validate_Attribute
-                          (Attributes (Index), Reader, Atts, Found);
+                        Validate_Attribute (Attr, Reader, Atts, Found);
                      exception
                         when XML_Validation_Error =>
                            --  Avoid duplicate locations in error messages
@@ -636,19 +658,18 @@ package body Schema.Validators is
       -- Find_Attribute --
       --------------------
 
-      function Find_Attribute (Index : Integer) return Integer is
-         Is_Local : constant Boolean := Attributes (Index).Is_Local;
+      function Find_Attribute (Attr : Attribute_Descr) return Integer is
+         Is_Local : constant Boolean := Attr.Is_Local;
       begin
          for A in 1 .. Length loop
             if not Seen (A).Seen
-              and then Get_Local_Name (Atts, A) = Attributes (Index).Name.Local
+              and then Get_Local_Name (Atts, A) = Attr.Name.Local
               and then ((Is_Local
                          and Get_Prefix (Atts, A) = Empty_String)
-                        or else Get_URI (Atts, A) = Attributes (Index).Name.NS)
+                        or else Get_URI (Atts, A) = Attr.Name.NS)
             then
                if Debug then
-                  Debug_Output
-                    ("Found attribute: " & To_QName (Attributes (Index).Name));
+                  Debug_Output ("Found attribute: " & To_QName (Attr.Name));
                end if;
                return A;
             end if;
@@ -698,11 +719,9 @@ package body Schema.Validators is
       --        end Check_Any;
 
    begin
-      if Attributes /= null then
-         for L in Attributes'Range loop
-            Check_Named_Attribute (L);
-         end loop;
-      end if;
+      for L in Attrs'Range loop
+         Check_Named_Attribute (L);
+      end loop;
 
       --        if Attributes /= null and then not Ignore_Wildcard then
       --     --  If the policy for <anyAttribute> has changed, we restart from
@@ -947,15 +966,6 @@ package body Schema.Validators is
       end if;
    end Validate_Attribute;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out XML_Validator_Record) is
-   begin
-      Free (Validator.Attributes);
-   end Free;
-
    --------------
    -- To_QName --
    --------------
@@ -1052,25 +1062,36 @@ package body Schema.Validators is
       end loop;
    end Free;
 
+   ------------------------------
+   -- Create_Grammar_If_Needed --
+   ------------------------------
+
+   procedure Create_Grammar_If_Needed
+     (Grammar : in out XML_Grammar;
+      Symbols : Symbol_Table := No_Symbol_Table)
+   is
+      G : XML_Grammars.Encapsulated_Access;
+   begin
+      if Grammar = No_Grammar then
+         G     := new XML_Grammar_Record;
+         G.NFA := new Schema_State_Machines.NFA;
+         G.NFA.Initialize (States_Are_Statefull => True);
+         G.Symbols := Symbols;
+         Init (G.Attributes);
+         Grammar  := Allocate (G);
+      end if;
+   end Create_Grammar_If_Needed;
+
    ---------------------
    -- Set_XSD_Version --
    ---------------------
 
    procedure Set_XSD_Version
-     (Grammar : in out XML_Grammar;
-      XSD_Version : XSD_Versions)
-   is
-      G   : XML_Grammars.Encapsulated_Access;
+     (Grammar     : in out XML_Grammar;
+      XSD_Version : XSD_Versions) is
    begin
-      if Grammar = No_Grammar then
-         G := new XML_Grammar_Record;
-         G.NFA := new Schema_State_Machines.NFA;
-         G.NFA.Initialize (States_Are_Statefull => True);
-         Grammar  := Allocate (G);
-      end if;
-
-      G := Get (Grammar);
-      G.XSD_Version := XSD_Version;
+      Create_Grammar_If_Needed (Grammar);
+      Get (Grammar).XSD_Version := XSD_Version;
    end Set_XSD_Version;
 
    ---------------------
@@ -1125,20 +1146,11 @@ package body Schema.Validators is
    ------------------------
 
    procedure Initialize_Grammar
-     (Reader : access Abstract_Validation_Reader'Class)
-   is
-      Actual_G : XML_Grammars.Encapsulated_Access;
+     (Reader : access Abstract_Validation_Reader'Class) is
    begin
-      if Reader.Grammar = No_Grammar then
-         if Debug then
-            Debug_Output ("Initialize_Grammar, settings its symbol table");
-         end if;
-         Actual_G         := new XML_Grammar_Record;
-         Actual_G.NFA := new Schema_State_Machines.NFA;
-         Actual_G.NFA.Initialize (States_Are_Statefull => True);
-         Reader.Grammar   := Allocate (Actual_G);
-         Actual_G.Symbols := Get_Symbol_Table (Reader.all);
-      end if;
+      Create_Grammar_If_Needed
+        (Reader.Grammar,
+         Symbols => Get_Symbol_Table (Reader.all));
 
       if Get (Reader.Grammar).Grammars = null then
          Add_Schema_For_Schema (Reader);
@@ -1253,6 +1265,7 @@ package body Schema.Validators is
          Unchecked_Free (Grammar.Grammars);
       end if;
 
+      Free (Grammar.Attributes);
       Reference_HTables.Reset (Grammar.References);
       Free (Grammar.NFA);
       Free (Grammar.Parsed_Locations);

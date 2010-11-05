@@ -30,6 +30,7 @@ pragma Ada_05;
 
 with Ada.Exceptions;
 with GNAT.Dynamic_HTables;
+with GNAT.Dynamic_Tables;
 with Interfaces;
 with Unicode.CES;
 with Sax.HTable;
@@ -159,8 +160,8 @@ package Schema.Validators is
          end case;
       end record;
 
-   type Attribute_Validator_List (<>) is private;
-   type Attribute_Validator_List_Access is access Attribute_Validator_List;
+   type Attribute_Validator_List is new Natural;
+   Empty_Attribute_List : constant Attribute_Validator_List := 0;
 
    type Block_Type is (Block_Restriction,
                        Block_Extension,
@@ -183,7 +184,7 @@ package Schema.Validators is
       Mixed          : Boolean := False;
       Is_Abstract    : Boolean := False;
       Simple_Content : Boolean := False;
-      Attributes     : Attribute_Validator_List_Access;
+      Attributes     : Attribute_Validator_List := Empty_Attribute_List;
       Simple_Type    : XML_Validator;  --  Validator for simpleType
    end record;
    No_Type_Descr : constant Type_Descr := (others => <>);
@@ -199,6 +200,8 @@ package Schema.Validators is
       Form         : Form_Type          := Qualified;
       Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+
+      Next         : Attribute_Validator_List; --  Next in the list
    end record;
 
    type State_User_Data is record
@@ -241,7 +244,7 @@ package Schema.Validators is
          when Ref_Type      => Typ : State;  --  Start of nested NFA
          when Ref_Attribute => Attr : State;
          when Ref_Group     => Gr_Start, Gr_End : State;
-         when Ref_AttrGroup => Attributes : Attribute_Validator_List_Access;
+         when Ref_AttrGroup => Attributes : Attribute_Validator_List;
       end case;
    end record;
    No_Global_Reference : constant Global_Reference :=
@@ -653,11 +656,12 @@ package Schema.Validators is
    --  Such validators are build to validate specific parts of an XML
    --  document (a whole element).
 
-   procedure Free (Validator : in out XML_Validator_Record);
+   procedure Free (Validator : in out XML_Validator_Record) is null;
    --  Free the memory occupied by Validator
 
    procedure Validate_Attributes
-     (Attributes : Attribute_Validator_List_Access;
+     (Grammar   : XML_Grammar;
+      Attributes : Attribute_Validator_List;
       Reader    : access Abstract_Validation_Reader'Class;
       Atts      : in out Sax.Readers.Sax_Attribute_List;
       Nillable  : Boolean;
@@ -715,11 +719,13 @@ package Schema.Validators is
    --  By default, an error is reported through Invalid_Restriction
 
    procedure Add_Attribute
-     (List      : in out Attribute_Validator_List_Access;
+     (Grammar   : XML_Grammar;
+      List      : in out Attribute_Validator_List;
       Attribute : Attribute_Descr);
    procedure Add_Attributes
-     (List       : in out Attribute_Validator_List_Access;
-      Attributes : Attribute_Validator_List_Access);
+     (Grammar    : XML_Grammar;
+      List       : in out Attribute_Validator_List;
+      Attributes : Attribute_Validator_List);
    --  Add a valid attribute to Validator.
    --  Is_Local should be true if the attribute is local, or False if this is
    --  a reference to a global attribute.
@@ -936,6 +942,49 @@ private
    type XML_Type is access all XML_Type_Record;
    No_Type : constant XML_Type := null;
 
+   -------------------------
+   -- Attribute_Validator --
+   -------------------------
+
+   function Is_ID (Attr : Attribute_Descr) return Boolean;
+   --  Whether the attribute is an ID
+
+   package Attributes_Tables is new GNAT.Dynamic_Tables
+     (Table_Component_Type => Attribute_Descr,
+      Table_Index_Type     => Attribute_Validator_List,
+      Table_Low_Bound      => Empty_Attribute_List + 1,
+      Table_Initial        => 200,
+      Table_Increment      => 200);
+
+   procedure Validate_Attribute
+     (Attr      : Attribute_Descr;
+      Reader    : access Abstract_Validation_Reader'Class;
+      Atts      : in out Sax.Readers.Sax_Attribute_List;
+      Index     : Natural);
+
+   Empty_NS_List : constant NS_List := (1 .. 0 => Sax.Symbols.No_Symbol);
+
+--     type Any_Attribute_Validator (NS_Count : Natural) is
+--       new Attribute_Validator_Record
+--     with record
+--        Process_Contents : Process_Contents_Type;
+--        Kind             : Namespace_Kind;
+--        List             : NS_List (1 .. NS_Count);
+--     end record;
+--     function Equal
+--       (Validator      : Any_Attribute_Validator;
+--        Reader         : access Abstract_Validation_Reader'Class;
+--        Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
+--     procedure Validate_Attribute
+--       (Validator : Any_Attribute_Validator;
+--        Reader    : access Abstract_Validation_Reader'Class;
+--        Atts      : in out Sax.Readers.Sax_Attribute_List;
+--        Index     : Natural);
+--     function Is_Equal
+--       (Attribute : Any_Attribute_Validator;
+--        Attr2     : Attribute_Validator_Record'Class)
+--       return Boolean;
+
    --------------
    -- Grammars --
    --------------
@@ -969,6 +1018,7 @@ private
       XSD_Version : XSD_Versions := XSD_1_0;
 
       References : aliased Reference_HTables.Instance;
+      Attributes : Attributes_Tables.Instance;
       NFA : Schema_State_Machines.NFA_Access;
       --  The state machine representing the grammar
       --  This includes the states for all namespaces
@@ -985,51 +1035,12 @@ private
    No_Grammar : constant XML_Grammar :=
      XML_Grammar (XML_Grammars.Null_Pointer);
 
-   -------------------------
-   -- Attribute_Validator --
-   -------------------------
-
-   function Is_ID (Attr : Attribute_Descr) return Boolean;
-   --  Whether the attribute is an ID
-
-   type Attribute_Validator_List
-     is array (Natural range <>) of Attribute_Descr;
-
-   procedure Validate_Attribute
-     (Attr      : Attribute_Descr;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Readers.Sax_Attribute_List;
-      Index     : Natural);
-
-   Empty_NS_List : constant NS_List := (1 .. 0 => Sax.Symbols.No_Symbol);
-
---     type Any_Attribute_Validator (NS_Count : Natural) is
---       new Attribute_Validator_Record
---     with record
---        Process_Contents : Process_Contents_Type;
---        Kind             : Namespace_Kind;
---        List             : NS_List (1 .. NS_Count);
---     end record;
---     function Equal
---       (Validator      : Any_Attribute_Validator;
---        Reader         : access Abstract_Validation_Reader'Class;
---        Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean;
---     procedure Validate_Attribute
---       (Validator : Any_Attribute_Validator;
---        Reader    : access Abstract_Validation_Reader'Class;
---        Atts      : in out Sax.Readers.Sax_Attribute_List;
---        Index     : Natural);
---     function Is_Equal
---       (Attribute : Any_Attribute_Validator;
---        Attr2     : Attribute_Validator_Record'Class)
---       return Boolean;
-
    -------------------
    -- XML_Validator --
    -------------------
 
    type XML_Validator_Record is tagged record
-      Attributes : Attribute_Validator_List_Access;
+      Attributes : Attribute_Validator_List;
       --  The list of valid attributes registered for this validator.
       --  ??? Could be implemented more efficiently through a htable
 
