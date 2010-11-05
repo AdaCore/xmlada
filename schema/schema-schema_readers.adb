@@ -2566,7 +2566,7 @@ package body Schema.Schema_Readers is
       Atts     : Sax_Attribute_List)
    is
       Info   : Schema_Descr;
-      Is_Set : Boolean;
+      Is_Set : Boolean := False;
       Local  : Symbol;
    begin
       for J in 1 .. Get_Length (Atts) loop

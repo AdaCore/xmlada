@@ -17,6 +17,13 @@
     <xsd:sequence>
       <xsd:element ref="strs" maxOccurs="2"/>
     </xsd:sequence>
+
+    <!--  The following would be non-determinist
+    <xsd:any namespace="##local" processContents="lax"
+       minOccurs="0" maxOccurs="unbounded"/>
+    -->
+    <xsd:any namespace="##other" processContents="lax"
+       minOccurs="0" maxOccurs="unbounded"/>
   </xsd:sequence>
  </xsd:complexType>
 </xsd:element>
@@ -34,10 +41,10 @@
  <xsd:attribute name="attr3" type="xsd:string"/>
  <xsd:attribute name="attr4" use="optional">
     <xsd:simpleType>
-       <restriction base="xsd:NMTOKEN">
-          <enumeration value="value1"/>
-          <enumeration value="value2"/>
-       </restriction>
+       <xsd:restriction base="xsd:NMTOKEN">
+          <xsd:enumeration value="value1"/>
+          <xsd:enumeration value="value2"/>
+       </xsd:restriction>
     </xsd:simpleType>
  </xsd:attribute>
 </xsd:complexType>

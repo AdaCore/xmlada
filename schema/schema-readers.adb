@@ -48,19 +48,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 package body Schema.Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
 
---     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
---       (Validator_List_Record, Validator_List);
-
---     procedure Push  (List    : in out Validator_List;
---                      Element : XML_Element;
---                      Typ     : XML_Type;
---                      G       : XML_Grammar_NS;
---                      Data    : Validator_Data;
---                      Is_Nil  : Boolean);
---     procedure Pop   (List : in out Validator_List);
---     procedure Clear (List : in out Validator_List);
-   --  Push or remove validators from the list
-
    procedure Parse_Grammars
      (Handler         : access Validating_Reader'Class;
       Schema_Location : Symbol);
@@ -99,41 +86,6 @@ package body Schema.Readers is
       Loc     : in out Sax.Locators.Locator);
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
-
-   function Has_Fixed (Handler : access Sax_Reader'Class) return Boolean;
-   function Get_Fixed (Handler : access Sax_Reader'Class) return Symbol;
-   --  Whether the head validator has a fixed attribute (either defined for
-   --  the element, for the xsi:type, or its type, and return that fixed value
-
-   ---------------
-   -- Has_Fixed --
-   ---------------
-
-   function Has_Fixed (Handler : access Sax_Reader'Class) return Boolean is
-      H : constant Validating_Reader_Access :=
-        Validating_Reader_Access (Handler);
-   begin
-      if H.Validators.Element /= No_Element
-        and then Has_Fixed (H.Validators.Element)
-      then
-         return True;
-      end if;
-      return False;
-   end Has_Fixed;
-
-   ---------------
-   -- Get_Fixed --
-   ---------------
-
-   function Get_Fixed (Handler : access Sax_Reader'Class) return Symbol is
-      H : constant Validating_Reader_Access :=
-        Validating_Reader_Access (Handler);
-   begin
-      if H.Validators.Element /= No_Element then
-         return Get_Fixed (H.Validators.Element);
-      end if;
-      return No_Symbol;
-   end Get_Fixed;
 
    -----------------
    -- Set_Grammar --
@@ -204,59 +156,6 @@ package body Schema.Readers is
    begin
       return Reader.Grammar;
    end Get_Grammar;
-
-   ----------
-   -- Push --
-   ----------
-
---     procedure Push
---       (List    : in out Validator_List;
---        Element : XML_Element;
---        Typ     : XML_Type;
---        G       : XML_Grammar_NS;
---        Data    : Validator_Data;
---        Is_Nil  : Boolean) is
---     begin
---        List := new Validator_List_Record'
---          (Element => Element,
---           Typ     => Typ,
---           Grammar => G,
---           Data    => Data,
---           Is_Nil  => Is_Nil,
---           Start_Loc  => No_Locator,
---           Characters => null,
---           Next    => List);
---     end Push;
-
-   ---------
-   -- Pop --
-   ---------
-
---     procedure Pop (List : in out Validator_List) is
---        Tmp : Validator_List := List;
---     begin
---        if List /= null then
---           if List.Characters /= null then
---              Free (List.Characters);
---           end if;
---
---           Free (List.Data);
---           List := List.Next;
---
---           Unchecked_Free (Tmp);
---        end if;
---     end Pop;
-
-   -----------
-   -- Clear --
-   -----------
-
---     procedure Clear (List : in out Validator_List) is
---     begin
---        while List /= null loop
---           Pop (List);
---        end loop;
---     end Clear;
 
    ---------------------
    -- To_Absolute_URI --
@@ -456,158 +355,188 @@ package body Schema.Readers is
    procedure Validate_Current_Characters
      (Handler : access Validating_Reader'Class)
    is
-      Typ, Typ_For_Mixed : XML_Type;
-      Val2               : Cst_Byte_Sequence_Access;
-      S1, S2             : Symbol;
       Is_Empty           : Boolean;
-      Mask               : Facets_Mask;
-   begin
-      --  If we were in the middle of a series of Characters callback, we need
-      --  to process them now
 
-      if Handler.Validators /= null then
-         Is_Empty := Handler.Validators.Characters = null;
+      procedure Callback (Self : access NFA'Class; S : State);
+      procedure Callback (Self : access NFA'Class; S : State) is
+--        Typ, Typ_For_Mixed : XML_Type;
+--        Val2               : Cst_Byte_Sequence_Access;
+--        S1, S2             : Symbol;
+         Data : constant State_Data_Access := Get_Data (Self, S);
+         Mask : Facets_Mask := (others => True);
+      begin
+         if Data.Simple_Type /= null then
+            Debug_Output
+              ("Validate characters ("
+               & Get (Data.Type_Name).all & "): "
+               & Handler.Characters (1 .. Handler.Characters_Count) & "--");
+
+            Validate_Characters
+              (Data.Simple_Type, Handler,
+               Handler.Characters (1 .. Handler.Characters_Count),
+               Empty_Element => Is_Empty,
+               Mask          => Mask);
+
+         else
+            --  ??? Should have access to Type_Descr to check for other
+            --  attributes (Mixed for instance)
+            null;
+         end if;
 
          --  If no explicit character data: we might need to simulate some, so
          --  that we can check facets like "minLength".
 
-         if Is_Empty and then not Handler.Validators.Is_Nil then
-            if Handler.Validators.Element /= No_Element
-              and then Has_Default (Handler.Validators.Element)
-            then
-               Val2 := Get (Get_Default (Handler.Validators.Element));
-               Characters (Handler.all, Val2.all);
-            else
-               Val2 := Get (Empty_String);
-            end if;
-         else
-            Val2 := Cst_Byte_Sequence_Access (Handler.Validators.Characters);
-         end if;
+--           if Is_Empty and then not Handler.Validators.Is_Nil then
+--              if Handler.Validators.Element /= No_Element
+--                and then Has_Default (Handler.Validators.Element)
+--              then
+--                 Val2 := Get (Get_Default (Handler.Validators.Element));
+--                 Characters (Handler.all, Val2.all);
+--              else
+--                 Val2 := Get (Empty_String);
+--              end if;
+--           else
+--           Val2 := Cst_Byte_Sequence_Access (Handler.Validators.Characters);
+--           end if;
 
-         if Val2 /= null then
-            if Handler.Validators.Is_Nil then
-               if not Is_Empty then
-                  Free (Handler.Validators.Characters);
-                  Validation_Error
-                    (Handler,
-                     "#Element has character data, but is declared as nil");
-               end if;
+--           if Val2 /= null then
+--              if Handler.Validators.Is_Nil then
+--                 if not Is_Empty then
+--                    Free (Handler.Validators.Characters);
+--                    Validation_Error
+--                      (Handler,
+--                     "#Element has character data, but is declared as nil");
+--                 end if;
+--
+--              elsif Has_Fixed (Handler) then
+--                 if Is_Empty then
+--                 --  If a xsi:type was specified, the fixed value must match
+--                    --  it too
+--
+--                    if Handler.Validators.Typ /= No_Type then
+--                       if Debug then
+--                          Output_Seen
+--                            ("characters: " & Get (Get_Fixed (Handler)).all);
+--                       end if;
+--
+--                       Mask := (others => True);
+--                       Validate_Characters
+--                         (Get_Validator (Handler.Validators.Typ), Handler,
+--                          Get (Get_Fixed (Handler)).all,
+--                          Empty_Element => False,
+--                          Mask          => Mask);
+--                    end if;
+--
+--                    --  in 3.3.1: if the element is empty, the "fixed" value
+--                    --  should be used for it, just as for "default"
+--                    Characters (Handler.all, Get (Get_Fixed (Handler)).all);
+--
+--                 else
+--                    Typ := Handler.Validators.Typ;
+--                    if Typ = No_Type then
+--                       Typ := Get_Type (Handler.Validators.Element);
+--                    end if;
+--
+--                    if not Equal
+--                      (Get_Validator (Typ), Handler,
+--                       Val2.all, Get (Get_Fixed (Handler)).all)
+--                    then
+--                       Free (Handler.Validators.Characters);
+--                       Validation_Error
+--                         (Handler, "#Element's value must be """
+--                          & Get (Get_Fixed (Handler.Validators.Element)).all
+--                          & """");
+--                    end if;
+--                 end if;
+--
+--              else
+--                 Typ := Handler.Validators.Typ;
+--                 if Typ /= No_Type then
+--                    Typ_For_Mixed := Typ;
+--                 else
+--                    Typ_For_Mixed := Get_Type (Handler.Validators.Element);
+--                 end if;
+--
+--                 if not Is_Empty
+--               and then not Get_Mixed_Content (Get_Validator (Typ_For_Mixed))
+--                 then
+--                    Validation_Error
+--                      (Handler,
+--                       "#No character data allowed by content model");
+--                 end if;
+--
+--               --  If we had a <simpleType> we need to normalize whitespaces
+--
+--                 if Is_Simple_Type (Handler, Typ_For_Mixed) then
+--                    --  ??? Not efficient
+--                    S1 := Find_Symbol (Handler.all, Val2.all);
+--                S2 := Do_Normalize_Whitespaces (Typ_For_Mixed, Handler, S1);
+--
+--                    --  Nothing to do if replacement was done in place
+--                    if S1 /= S2 then
+--                       Free (Handler.Validators.Characters);
+--
+--                       Val2 := Get (S2);
+--                       Handler.Validators.Characters :=
+--                         new Byte_Sequence'(Val2.all);
+--                    end if;
+--                 end if;
+--
+--                 if Typ /= No_Type then
+--                    --  If the element specified a xsi:attribute, we need to
+--                 --  validate with this type (which might be more restrictive
+--                    --  than the parent type)
+--
+--                    if Debug then
+--                       Output_Seen ("characters: " & Val2.all);
+--                    end if;
+--
+--                    Mask := (others => True);
+--                    Validate_Characters
+--                      (Get_Validator (Typ), Handler,
+--                       Val2.all,
+--                       Empty_Element => Is_Empty,
+--                       Mask          => Mask);
+--                 end if;
+--
+--              --  We still need to check the "fixed" restriction of the base
+--              --  type, so ask the base type. So whether there was a xsi:type
+--              --  or not, we still need to validate the attributes with that
+--                 --  type from XSD
+--
+--                 if Handler.Validators.Element /= No_Element then
+--                    if Debug then
+--                       Output_Seen ("characters: " & Val2.all);
+--                    end if;
+--
+--                    Typ := Get_Type (Handler.Validators.Element);
+--
+--                    Mask := (others => True);
+--                    Validate_Characters
+--                      (Get_Validator (Typ), Handler,
+--                       Val2.all,
+--                       Empty_Element => Is_Empty,
+--                       Mask          => Mask);
+--                 end if;
+--              end if;
+--           end if;
+      end Callback;
 
-            elsif Has_Fixed (Handler) then
-               if Is_Empty then
-                  --  If a xsi:type was specified, the fixed value must match
-                  --  it too
+      procedure For_Each_Active is new For_Each_Active_State (Callback);
 
-                  if Handler.Validators.Typ /= No_Type then
-                     if Debug then
-                        Output_Seen
-                          ("characters: " & Get (Get_Fixed (Handler)).all);
-                     end if;
+   begin
+      --  If we were in the middle of a series of Characters callback, we need
+      --  to process them now
 
-                     Mask := (others => True);
-                     Validate_Characters
-                       (Get_Validator (Handler.Validators.Typ), Handler,
-                        Get (Get_Fixed (Handler)).all,
-                        Empty_Element => False,
-                        Mask          => Mask);
-                  end if;
-
-                  --  in 3.3.1: if the element is empty, the "fixed" value
-                  --  should be used for it, just as for "default"
-                  Characters (Handler.all, Get (Get_Fixed (Handler)).all);
-
-               else
-                  Typ := Handler.Validators.Typ;
-                  if Typ = No_Type then
-                     Typ := Get_Type (Handler.Validators.Element);
-                  end if;
-
-                  if not Equal
-                    (Get_Validator (Typ), Handler,
-                     Val2.all, Get (Get_Fixed (Handler)).all)
-                  then
-                     Free (Handler.Validators.Characters);
-                     Validation_Error
-                       (Handler, "#Element's value must be """
-                        & Get (Get_Fixed (Handler.Validators.Element)).all
-                        & """");
-                  end if;
-               end if;
-
-            else
-               Typ := Handler.Validators.Typ;
-               if Typ /= No_Type then
-                  Typ_For_Mixed := Typ;
-               else
-                  Typ_For_Mixed := Get_Type (Handler.Validators.Element);
-               end if;
-
-               if not Is_Empty
-                 and then not Get_Mixed_Content (Get_Validator (Typ_For_Mixed))
-               then
-                  Validation_Error
-                    (Handler,
-                     "#No character data allowed by content model");
-               end if;
-
-               --  If we had a <simpleType> we need to normalize whitespaces
-
-               if Is_Simple_Type (Handler, Typ_For_Mixed) then
-                  --  ??? Not efficient
-                  S1 := Find_Symbol (Handler.all, Val2.all);
-                  S2 := Do_Normalize_Whitespaces (Typ_For_Mixed, Handler, S1);
-
-                  --  Nothing to do if replacement was done in place
-                  if S1 /= S2 then
-                     Free (Handler.Validators.Characters);
-
-                     Val2 := Get (S2);
-                     Handler.Validators.Characters :=
-                       new Byte_Sequence'(Val2.all);
-                  end if;
-               end if;
-
-               if Typ /= No_Type then
-                  --  If the element specified a xsi:attribute, we need to
-                  --  validate with this type (which might be more restrictive
-                  --  than the parent type)
-
-                  if Debug then
-                     Output_Seen ("characters: " & Val2.all);
-                  end if;
-
-                  Mask := (others => True);
-                  Validate_Characters
-                    (Get_Validator (Typ), Handler,
-                     Val2.all,
-                     Empty_Element => Is_Empty,
-                     Mask          => Mask);
-               end if;
-
-               --  We still need to check the "fixed" restriction of the base
-               --  type, so ask the base type. So whether there was a xsi:type
-               --  or not, we still need to validate the attributes with that
-               --  type from XSD
-
-               if Handler.Validators.Element /= No_Element then
-                  if Debug then
-                     Output_Seen ("characters: " & Val2.all);
-                  end if;
-
-                  Typ := Get_Type (Handler.Validators.Element);
-
-                  Mask := (others => True);
-                  Validate_Characters
-                    (Get_Validator (Typ), Handler,
-                     Val2.all,
-                     Empty_Element => Is_Empty,
-                     Mask          => Mask);
-               end if;
-            end if;
-
-            Free (Handler.Validators.Characters);
-         end if;
+      if Handler.Characters_Count = 0 then
+         return;
       end if;
+
+      Is_Empty := Handler.Characters_Count = 0;
+      For_Each_Active (Handler.Matcher);
+
+      --  Reset the characters buffer
+      Handler.Characters_Count := 0;
    end Validate_Current_Characters;
 
    ------------------------
@@ -765,7 +694,9 @@ package body Schema.Readers is
 
       if Debug then
          Output_Seen ("Start_Element: " & To_QName (Elem)
-                      & " (level" & H.Nesting_Level'Img & ")");
+                      & " (level" & H.Nesting_Level'Img
+                      & " last_start=" & H.Last_Start_Level'Img
+                      & ")");
       end if;
 
       Validate_Current_Characters (H);
@@ -927,7 +858,6 @@ package body Schema.Readers is
    is
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
-      Typ : XML_Type;
       Success : Boolean;
    begin
       if Debug then
@@ -936,6 +866,8 @@ package body Schema.Readers is
                       & " last_start=" & H.Last_Start_Level'Img
                       & ")");
       end if;
+
+      Validate_Current_Characters (H);
 
       if H.Nesting_Level /= H.Last_Start_Level then
          Process
@@ -958,24 +890,6 @@ package body Schema.Readers is
       end if;
 
       H.Nesting_Level := H.Nesting_Level - 1;
-
-      if H.Validators /= null then
-         Validate_Current_Characters (H);
-
-         --  Do not check if the element is nil, since no child is expected
-         --  anyway, and some validators (sequence,...) will complain
-         if not H.Validators.Is_Nil then
-            Typ := H.Validators.Typ;
-            if Typ = No_Type then
-               Typ := Get_Type (H.Validators.Element);
-            end if;
-
---              Validate_End_Element
---                (Get_Validator (Typ), H, Get_Local_Name (Elem),
---                 H.Validators.Data);
-         end if;
-      end if;
---        Pop (H.Validators);
    end Hook_End_Element;
 
    -------------------------
@@ -987,16 +901,28 @@ package body Schema.Readers is
       Ch      : Unicode.CES.Byte_Sequence)
    is
       Tmp : Byte_Sequence_Access;
+      Max : constant Natural := Handler.Characters_Count + Ch'Length;
    begin
-      if Handler.Validators /= null then
-         if Handler.Validators.Characters = null then
-            Handler.Validators.Characters := new String'(Ch);
-            Copy (Handler.Validators.Start_Loc, Handler.Locator);
-         else
-            Tmp := new String'(Handler.Validators.Characters.all & Ch);
-            Free (Handler.Validators.Characters);
-            Handler.Validators.Characters := Tmp;
-         end if;
+      --  Preserve the characters, but avoid allocating every time. We
+      --  therefore reuse the buffer as much as possible, and only extend it
+      --  when needed.
+
+      if Handler.Characters = null then
+         Handler.Characters := new String'(Ch);
+         Handler.Characters_Count := Ch'Length;
+
+      elsif Max <= Handler.Characters'Last then
+         Handler.Characters (Handler.Characters_Count + 1 .. Max) := Ch;
+         Handler.Characters_Count := Max;
+
+      else
+         Tmp := new String (1 .. Max);
+         Tmp (1 .. Handler.Characters_Count) :=
+           Handler.Characters (1 .. Handler.Characters_Count);
+         Tmp (Handler.Characters_Count + 1 .. Max) := Ch;
+         Handler.Characters_Count := Max;
+         Free (Handler.Characters);
+         Handler.Characters := Tmp;
       end if;
    end Internal_Characters;
 
@@ -1021,20 +947,49 @@ package body Schema.Readers is
    is
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
-      Typ : XML_Type;
-   begin
-      if H.Validators /= null then
-         Typ := H.Validators.Typ;
-         if Typ = No_Type then
-            Typ := Get_Type (H.Validators.Element);
-         end if;
 
-         if Is_Simple_Type (H, Typ)
-           and then not H.Validators.Is_Nil
-         then
+      Store : Boolean := False;
+
+      procedure Callback (Self : access NFA'Class; S : State);
+      procedure Callback (Self : access NFA'Class; S : State) is
+      begin
+         if Self.Get_Data (S).Simple_Type /= null then
+            Debug_Output
+              ("Storing ignorable whitespace because of state "
+               & Image (S, Self.Get_Data (S).all));
+            Store := True;
+         end if;
+      end Callback;
+
+      procedure For_Each_Active is new For_Each_Active_State (Callback);
+
+--        Typ : XML_Type;
+   begin
+      --  ??? This criteria is likely incorrect. However, we should not rely
+      --  on the list of currently active states: when a tag is closed, but
+      --  before we move into the next tag, the old state is still active in
+      --  the NFA, but should not be used (perhaps we should ignore nested NFA
+      --  in this case ?)
+      if H.Nesting_Level >= H.Last_Start_Level then
+         For_Each_Active (H.Matcher);
+
+         if Store then
             Internal_Characters (H, Ch);
          end if;
       end if;
+
+--        if H.Validators /= null then
+--           Typ := H.Validators.Typ;
+--           if Typ = No_Type then
+--              Typ := Get_Type (H.Validators.Element);
+--           end if;
+--
+--           if Is_Simple_Type (H, Typ)
+--             and then not H.Validators.Is_Nil
+--           then
+--            Internal_Characters (H, Ch);
+--           end if;
+--        end if;
    end Hook_Ignorable_Whitespace;
 
    -----------
@@ -1047,7 +1002,8 @@ package body Schema.Readers is
       Parser.Locator := Get_Location (Parser);
       Free (Parser.Id_Table);
       Free (Parser.Matcher);
---        Clear (Parser.Validators);
+      Free (Parser.Characters);
+      Parser.Characters_Count := 0;
    end Reset;
 
    -----------
@@ -1113,13 +1069,7 @@ package body Schema.Readers is
    function Get_Location
      (Reader : Validating_Reader) return Sax.Locators.Locator is
    begin
-      if Reader.Validators /= null
-        and then Reader.Validators.Start_Loc /= No_Locator
-      then
-         return Reader.Validators.Start_Loc;
-      else
-         return Reader.Locator;
-      end if;
+      return Reader.Locator;
    end Get_Location;
 
    -------------------------------

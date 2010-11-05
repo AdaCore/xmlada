@@ -3,7 +3,7 @@
 <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation='test.xsd' >
   <my_string>
-    <size>-10</size>
+    <size>10</size>
     <contents>ManuManuMa</contents>
   </my_string>
 
@@ -45,5 +45,7 @@
      <str3>c</str3>
   </strs2>
   -->
+
+  <!--  <xsi:manu/> -->
 
 </root>
