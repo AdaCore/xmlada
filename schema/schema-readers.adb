@@ -560,7 +560,7 @@ package body Schema.Readers is
         (Atts, H.XML_Instance_URI, H.Schema_Location);
 
 --        Element       : XML_Element := No_Element;
-      Data          : Validator_Data;
+      --  Data          : Validator_Data;
 --        Typ           : XML_Type;
       Xsi_Type      : XML_Type;
       pragma Unreferenced (Xsi_Type);
@@ -845,11 +845,6 @@ package body Schema.Readers is
 --
 --        Push (H.Validators, Element,
 --              Xsi_Type, G, Data, Is_Nil);
-
-   exception
-      when others =>
-         Free (Data);
-         raise;
    end Hook_Start_Element;
 
    ----------------------

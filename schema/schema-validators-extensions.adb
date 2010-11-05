@@ -36,16 +36,7 @@ package body Schema.Validators.Extensions is
       Facets_Merged : Boolean := False;
    end record;
    type Extension_Type is access Extension_XML_Validator'Class;
-   type Extension_Data is new Validator_Data_Record with record
-      Validating_Base : Boolean := True;
-      Base_Data       : Validator_Data;
-      Extension_Data  : Validator_Data;
-   end record;
-   type Extension_Data_Access is access all Extension_Data'Class;
 
-   procedure Free (Data : in out Extension_Data);
-   function Create_Validator_Data
-     (Validator : access Extension_XML_Validator) return Validator_Data;
    overriding procedure Validate_Characters
      (Validator     : access Extension_XML_Validator;
       Reader        : access Abstract_Validation_Reader'Class;
@@ -119,33 +110,6 @@ package body Schema.Validators.Extensions is
 
       return null;
    end Get_Facets;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Extension_Data) is
-   begin
-      Free (Data.Base_Data);
-      Free (Data.Extension_Data);
-      Free (Validator_Data_Record (Data));
-   end Free;
-
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   function Create_Validator_Data
-     (Validator : access Extension_XML_Validator) return Validator_Data
-   is
-      D : constant Extension_Data_Access := new Extension_Data;
-   begin
-      if Validator.Extension /= null then
-         D.Extension_Data := Create_Validator_Data (Validator.Extension);
-      end if;
-      D.Base_Data   := Create_Validator_Data (Get_Validator (Validator.Base));
-      return Validator_Data (D);
-   end Create_Validator_Data;
 
    -----------------------
    -- Get_Mixed_Content --
@@ -313,7 +277,6 @@ package body Schema.Validators.Extensions is
    is
       pragma Unreferenced (Group, Min_Occurs, Max_Occurs);
       Result : constant Extension_Type := new Extension_XML_Validator;
-      C      : Sequence;
    begin
       if Get_Final (Base)(Final_Extension) then
          Validation_Error
@@ -323,9 +286,6 @@ package body Schema.Validators.Extensions is
       Register (G, Result);
       Register (G, Base);
       Result.Base      := Base;
-      C := Create_Sequence (G);
-      --  Add_Particle (C, Reader, Group, Min_Occurs, Max_Occurs);
-      Result.Extension := XML_Validator (C);
       return XML_Validator (Result);
    end Create_Extension_Of;
 

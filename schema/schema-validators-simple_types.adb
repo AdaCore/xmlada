@@ -1777,15 +1777,18 @@ package body Schema.Validators.Simple_Types is
    procedure Add_Union
      (Validator : access XML_Union_Record;
       Reader    : access Abstract_Validation_Reader'Class;
-      Part      : XML_Type) is
+      Part      : XML_Type)
+   is
+      pragma Unreferenced (Validator, Reader, Part);
    begin
-      Append
-        (Validator.Unions, Reader, XML_Particle'
-           (Typ        => Particle_XML_Type,
-            Type_Descr => Part,
-            Next       => null,
-            Min_Occurs => 1,
-            Max_Occurs => 1));
+--        Append
+--          (Validator.Unions, Reader, XML_Particle'
+--             (Typ        => Particle_XML_Type,
+--              Type_Descr => Part,
+--              Next       => null,
+--              Min_Occurs => 1,
+--              Max_Occurs => 1));
+      null;
    end Add_Union;
 
    ----------------
@@ -1814,31 +1817,33 @@ package body Schema.Validators.Simple_Types is
       Reader         : access Abstract_Validation_Reader'Class;
       Value1, Value2 : Unicode.CES.Byte_Sequence) return Boolean
    is
-      Iter : Particle_Iterator;
+      pragma Unreferenced (Validator, Reader, Value1, Value2);
+--        Iter : Particle_Iterator;
    begin
-      if Validator.Unions /= null then
-         Iter := Start (Validator.Unions);
-         while Get (Iter) /= null loop
-            begin
-               if Equal
-                 (Get_Validator (Get (Iter).Type_Descr),
-                  Reader, Value1, Value2)
-               then
-                  Free (Iter);
-                  return True;
-               end if;
-            exception
-               when others =>
-                  null;
-            end;
-
-            Next (Iter);
-         end loop;
-
-         Free (Iter);
-      end if;
-
       return False;
+--        if Validator.Unions /= null then
+--           Iter := Start (Validator.Unions);
+--           while Get (Iter) /= null loop
+--              begin
+--                 if Equal
+--                   (Get_Validator (Get (Iter).Type_Descr),
+--                    Reader, Value1, Value2)
+--                 then
+--                    Free (Iter);
+--                    return True;
+--                 end if;
+--              exception
+--                 when others =>
+--                    null;
+--              end;
+--
+--              Next (Iter);
+--           end loop;
+--
+--           Free (Iter);
+--        end if;
+--
+--        return False;
    end Equal;
 
    -------------------------
@@ -1852,44 +1857,45 @@ package body Schema.Validators.Simple_Types is
       Empty_Element : Boolean;
       Mask          : in out Facets_Mask)
    is
-      Iter : Particle_Iterator;
+--        Iter : Particle_Iterator;
       Valid : XML_Validator;
       Tmp : Facets_Mask;
+      pragma Unreferenced (Empty_Element, Mask, Valid, Tmp);
    begin
       if Debug then
          Debug_Output ("Validate_Characters (union) " & Get_Name (Union));
       end if;
 
-      if Union.Unions = null then
-         if Empty_Element then
-            return;
-         else
-            Validation_Error (Reader, "#No content allowed for this union");
-         end if;
-      end if;
-
-      Iter := Start (Union.Unions);
-      while Get (Iter) /= null loop
-         begin
-            Valid := Get_Validator (Get (Iter).Type_Descr);
-            if Valid /= null then
-               Tmp := Mask;
-               Validate_Characters (Valid, Reader, Ch, Empty_Element, Tmp);
-            end if;
-
-            --  No error ? => Everything is fine
-            Free (Iter);
-            return;
-
-         exception
-            when XML_Validation_Error =>
-               null;
-         end;
-
-         Next (Iter);
-      end loop;
-
-      Free (Iter);
+--        if Union.Unions = null then
+--           if Empty_Element then
+--              return;
+--           else
+--            Validation_Error (Reader, "#No content allowed for this union");
+--           end if;
+--        end if;
+--
+--        Iter := Start (Union.Unions);
+--        while Get (Iter) /= null loop
+--           begin
+--              Valid := Get_Validator (Get (Iter).Type_Descr);
+--              if Valid /= null then
+--                 Tmp := Mask;
+--                 Validate_Characters (Valid, Reader, Ch, Empty_Element, Tmp);
+--              end if;
+--
+--              --  No error ? => Everything is fine
+--              Free (Iter);
+--              return;
+--
+--           exception
+--              when XML_Validation_Error =>
+--                 null;
+--           end;
+--
+--           Next (Iter);
+--        end loop;
+--
+--        Free (Iter);
       Validation_Error (Reader, "#Invalid value """ & Ch & """");
    end Validate_Characters;
 
@@ -1935,7 +1941,7 @@ package body Schema.Validators.Simple_Types is
 
    procedure Free (Union : in out XML_Union_Record) is
    begin
-      Free (Union.Unions);
+      --  Free (Union.Unions);
       Free (Any_Simple_XML_Validator_Record (Union));
    end Free;
 
@@ -1994,29 +2000,31 @@ package body Schema.Validators.Simple_Types is
       Had_Restriction   : in out Boolean;
       Had_Extension     : in out Boolean)
    is
-      Iter : Particle_Iterator;
-      V    : XML_Validator;
+      pragma Unreferenced (Union, Validator, Element, Had_Restriction,
+                           Had_Extension);
+--        Iter : Particle_Iterator;
+--        V    : XML_Validator;
    begin
       Valid := False;
 
-      if Union.Unions /= null then
-         Iter := Start (Union.Unions);
-         while Get (Iter) /= null loop
-            V := Get_Validator (Get (Iter).Type_Descr);
-            if V /= null then
-               Check_Replacement
-                 (Validator, Element, Get (Iter).Type_Descr,
-                  Valid, Had_Restriction, Had_Extension);
-               if Valid then
-                  Free (Iter);
-                  return;
-               end if;
-            end if;
-            Next (Iter);
-         end loop;
-
-         Free (Iter);
-      end if;
+--        if Union.Unions /= null then
+--           Iter := Start (Union.Unions);
+--           while Get (Iter) /= null loop
+--              V := Get_Validator (Get (Iter).Type_Descr);
+--              if V /= null then
+--                 Check_Replacement
+--                   (Validator, Element, Get (Iter).Type_Descr,
+--                    Valid, Had_Restriction, Had_Extension);
+--                 if Valid then
+--                    Free (Iter);
+--                    return;
+--                 end if;
+--              end if;
+--              Next (Iter);
+--           end loop;
+--
+--           Free (Iter);
+--        end if;
    end Check_Replacement_For_Union;
 
    -----------

@@ -866,7 +866,6 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, URI => Empty_String, Local_Name => Handler.Ref);
       Tmp  : Context_Access;
       Min_Occurs, Max_Occurs : Integer := 1;
-      Seq : Sequence;
    begin
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
 
@@ -944,7 +943,7 @@ package body Schema.Schema_Readers is
             null;
 
          when Context_Extension =>
-            Seq := Create_Sequence (Handler.Target_NS);
+            --  Seq := Create_Sequence (Handler.Target_NS);
             null;
 --              if Debug then
 --                 Output_Action ("Validator := Create_Sequence;");
@@ -952,13 +951,14 @@ package body Schema.Schema_Readers is
 --              Add_Particle (Seq, Handler, Handler.Contexts.Group,
 --                            Min_Occurs, Max_Occurs);
 
-            Handler.Contexts.Next.Extension := XML_Validator (Seq);
+            --  Handler.Contexts.Next.Extension := XML_Validator (Seq);
 
          when Context_Restriction =>
-            Seq := Create_Sequence (Handler.Target_NS);
+            null;
+--            Seq := Create_Sequence (Handler.Target_NS);
 --              Add_Particle (Seq, Handler, Handler.Contexts.Group,
 --                            Min_Occurs, Max_Occurs);
-            Handler.Contexts.Next.Restriction := XML_Validator (Seq);
+--            Handler.Contexts.Next.Restriction := XML_Validator (Seq);
 
          when others =>
             if Debug then
@@ -975,19 +975,19 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Finish_Group (Handler : access Schema_Reader'Class) is
-      Seq : Sequence;
+--      Seq : Sequence;
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
-            Seq := Create_Sequence (Handler.Target_NS);
+--            Seq := Create_Sequence (Handler.Target_NS);
 --              Add_Particle (Seq, Handler, Handler.Contexts.Group,
 --                            Handler.Contexts.Group_Min,
 --                            Handler.Contexts.Group_Max);
 
-            Handler.Contexts.Next.Type_Validator := Restriction_Of
-              (Handler.Target_NS, Handler,
-               Lookup (Handler.Schema_NS, Handler, Handler.Anytype),
-               XML_Validator (Seq));
+--              Handler.Contexts.Next.Type_Validator := Restriction_Of
+--                (Handler.Target_NS, Handler,
+--                 Lookup (Handler.Schema_NS, Handler, Handler.Anytype),
+--                 XML_Validator (Seq));
             if Debug then
                Output_Action
                  ("Validator := Restriction_Of (Lookup (Handler.Schema.NS,"
@@ -2686,11 +2686,11 @@ package body Schema.Schema_Readers is
       Min_Occurs, Max_Occurs : Integer := 1;
    begin
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
-      Handler.Contexts := new Context'
-        (Typ           => Context_All,
-         All_Validator =>
-           Create_All (Handler.Target_NS, Min_Occurs, Max_Occurs),
-         Next          => Handler.Contexts);
+--        Handler.Contexts := new Context'
+--          (Typ           => Context_All,
+--           All_Validator => null,
+--           Create_All (Handler.Target_NS, Min_Occurs, Max_Occurs),
+--           Next          => Handler.Contexts);
       if Debug then
          Output_Action (Ada_Name (Handler.Contexts) & " := Create_All ("
                  & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
@@ -2705,8 +2705,8 @@ package body Schema.Schema_Readers is
    begin
       case Handler.Contexts.Next.Typ is
          when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator :=
-              XML_Validator (Handler.Contexts.All_Validator);
+--              Handler.Contexts.Next.Type_Validator :=
+--                XML_Validator (Handler.Contexts.All_Validator);
             if Debug then
                Output_Action ("Validator := XML_Validator ("
                        & Ada_Name (Handler.Contexts) & ");");

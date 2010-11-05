@@ -404,23 +404,6 @@ package Schema.Validators is
    procedure Free (Reader : in out Abstract_Validation_Reader);
    --  Free the contents of Reader
 
-   --------------------
-   -- Validator_Data --
-   --------------------
-   --  Most validators, when they are performing validation, need to keep some
-   --  data while their node is active. Such data might be used to store
-   --  counters, current items,...
-
-   type Validator_Data_Record is abstract tagged private;
-   type Validator_Data is access all Validator_Data_Record'Class;
-
-   procedure Free (Data : in out Validator_Data_Record);
-   --  Free the memory associated with the data.
-   --  By default, this does nothing
-
-   procedure Free (Data : in out Validator_Data);
-   --  Free Data and the pointed data
-
    ------------
    -- Facets --
    ------------
@@ -686,13 +669,6 @@ package Schema.Validators is
    procedure Free (Validator : in out XML_Validator_Record);
    --  Free the memory occupied by Validator
 
-   function Create_Validator_Data
-     (Validator : access XML_Validator_Record) return Validator_Data;
-   --  Create an instance of the data that the validator needs to check its
-   --  associated node. This data will be automatically freed when the node
-   --  ends. This function is called once when the element starts.
-   --  By default, this returns null, and no data is associated.
-
    procedure Validate_Attributes
      (Attributes : Attribute_Validator_List_Access;
       Reader    : access Abstract_Validation_Reader'Class;
@@ -929,25 +905,9 @@ package Schema.Validators is
    function Get_QName (Element : XML_Element) return Qualified_Name;
    --  Return the qualified name for Element
 
-   -------------
-   -- XML_Any --
-   -------------
-
-   type XML_Any_Record is new XML_Validator_Record with private;
-   type XML_Any is access all XML_Any_Record'Class;
-
-   function Create_Any
-     (Process_Contents : Process_Contents_Type := Process_Strict;
-      Namespace        : Sax.Symbols.Symbol;
-      Target_NS        : XML_Grammar_NS) return XML_Any;
-   --  Create a new validator for <any>
-
    ------------
    -- Groups --
    ------------
-
-   type Group_Model_Record is abstract new XML_Validator_Record with private;
-   type Group_Model is access all Group_Model_Record'Class;
 
    type XML_Group is private;
    No_XML_Group : constant XML_Group;
@@ -966,42 +926,6 @@ package Schema.Validators is
 
    function Get_Local_Name (Group : XML_Group) return Sax.Symbols.Symbol;
    --  Return the local name of the group
-
-   ---------------
-   -- Particles --
-   ---------------
-
-   type Sequence_Record is new Group_Model_Record with private;
-   type Sequence is access all Sequence_Record'Class;
-
-   type Choice_Record is new Group_Model_Record with private;
-   type Choice is access all Choice_Record'Class;
-
-   function Create_Sequence (G : XML_Grammar_NS) return Sequence;
-   --  Create a new empty sequence
-   --  (Min_Occurs, Max_Occurs) indicate the number of repetition allowed for
-   --  that sequence.
-   --  If Max_Occurs = Unbounded, the number of repeats is unbounded
-
-   function Create_Choice (G : XML_Grammar_NS) return Choice;
-   --  Create a new empty choice.
-   --  (Min_Occurs, Max_Occurs) indicate the number of repetition allowed for
-   --  that choice.
-   --  If Max_Occurs = Unbounded, the number of repeats is unbounded
-
-   -------------
-   -- XML_All --
-   -------------
-
-   type XML_All_Record is new Group_Model_Record with private;
-   type XML_All is access all XML_All_Record'Class;
-
-   function Create_All
-     (G          : XML_Grammar_NS;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return XML_All;
-   --  Return a new validator that checks that all its elements appear the
-   --  right number of time
 
    --------------
    -- Grammars --
@@ -1184,12 +1108,6 @@ private
    type Id_Htable_Access is access Id_Htable.HTable;
    --  This table is used to store the list of IDs that have been used in the
    --  document so far, and prevent their duplication in the document.
-
-   --------------------
-   -- Validator_Data --
-   --------------------
-
-   type Validator_Data_Record is abstract tagged null record;
 
    --------------
    -- XML_Type --
@@ -1501,77 +1419,13 @@ private
    type XML_Group is access all XML_Group_Record;
    No_XML_Group : constant XML_Group := null;
 
-   ---------------
-   -- Particles --
-   ---------------
-
-   type Particle_Type is (Particle_Element,
-                          Particle_Nested,
-                          Particle_Group,
-                          Particle_Any,
-                          Particle_XML_Type);
-   type XML_Particle;
-   type XML_Particle_Access is access XML_Particle;
-   type XML_Particle (Typ : Particle_Type) is record
-      Min_Occurs : Natural;
-      Max_Occurs : Integer;
-      Next       : XML_Particle_Access;
-      case Typ is
-         when Particle_Element  => Element    : XML_Element;
-         when Particle_Nested   => Validator  : Group_Model;
-         when Particle_Group    => Group      : XML_Group;
-         when Particle_XML_Type => Type_Descr : XML_Type;
-         when Particle_Any      => Any        : XML_Any;
-      end case;
-   end record;
-
-   type Particle_List_Record is record
-      First, Last : XML_Particle_Access;
-   end record;
-   type Particle_List is access Particle_List_Record;
-
-   function Empty_Particle_List return Particle_List;
-   --  Return an empty list
-
-   procedure Append
-     (List   : Particle_List;
-      Reader : access Abstract_Validation_Reader'Class;
-      Item   : XML_Particle);
-   --  Append a new element to the list
-
-   procedure Free (List : in out Particle_List);
-   --  Free the list
-
-   -----------------------
-   -- Particle_Iterator --
-   -----------------------
-   --  This iterator iterates over a list of particles, but consider a group
-   --  as a set of particles that are also iterated
-
-   type Particle_Iterator_Record;
-   type Particle_Iterator is access Particle_Iterator_Record;
-   type Particle_Iterator_Record is record
-      Current : XML_Particle_Access;
-      Parent  : Particle_Iterator;
-   end record;
-   No_Iter : constant Particle_Iterator := null;
-
-   function  Start (List : Particle_List) return Particle_Iterator;
-   procedure Next  (Iter : in out Particle_Iterator);
-   function  Get   (Iter : Particle_Iterator) return XML_Particle_Access;
-   function  Get_Min_Occurs (Iter : Particle_Iterator) return Natural;
-   function  Get_Max_Occurs (Iter : Particle_Iterator) return Integer;
-   procedure Free (Iter : in out Particle_Iterator);
-   --  Iterate over a list of particles. Get returns null at the end of the
-   --  iteration
-
    ----------------------
    -- XML_Group_Record --
    ----------------------
 
    type XML_Group_Record is record
       Local_Name : Sax.Symbols.Symbol;
-      Particles  : Particle_List;
+--        Particles  : Particle_List;
       Is_Forward_Decl : Boolean;
       --  Set to true if the group was defined as a call to Lookup, but never
       --  through Create_Global_Group
@@ -1693,136 +1547,11 @@ private
    procedure Free (Grammar : in out XML_Grammar_NS);
    --  Free the memory occupied by Grammar
 
-   ------------------------
-   -- Group_Model_Record --
-   ------------------------
-
-   type Group_Model_Record is abstract new XML_Validator_Record with record
-      Particles  : Particle_List := Empty_Particle_List;
-   end record;
-   type Group_Model_Data_Record is new Validator_Data_Record with record
-      Nested : Group_Model := null;
-      --  If a group_model is nested inside another (a sequence within a
-      --  a sequence for instance), then Nested will point to the nested
-      --  group_model while it is being processed.
-
-      Nested_Data : Validator_Data := null;
-      --  The data used to evaluate Nested
-   end record;
-   type Group_Model_Data is access all Group_Model_Data_Record'Class;
-
-   procedure Free (Data : in out Group_Model_Data_Record);
-   --  See inherited documentation
-
-   procedure Free_Nested_Group (Data : Group_Model_Data);
-   --  Free the nested group and its data, if any
-
-   function Can_Be_Empty
-     (Group : access Group_Model_Record) return Boolean;
-   --  Whether having no child is acceptable for Group
-
-   function Type_Model
-     (Validator  : access Group_Model_Record;
-      First_Only : Boolean) return Unicode.CES.Byte_Sequence;
-   --  Return the type model described by Validator.
-   --  If First_Only is true, then only the first element(s) expected should
-   --  be returned. This is mostly to deal with with sequences.
-
-   procedure Free (Data : in out Group_Model_Record);
-   --  See inherited documentation
-
-   --------------------
-   -- XML_Any_Record --
-   --------------------
-
-   type XML_Any_Record is new XML_Validator_Record with record
-      Process_Contents : Process_Contents_Type;
-      Namespace        : Sax.Symbols.Symbol;
-      Target_NS        : XML_Grammar_NS;
-   end record;
-
-   function Get_Namespace_From_Parent_For_Locals
-     (Validator : access XML_Any_Record) return Boolean;
-   procedure Free (Any : in out XML_Any_Record);
-   --  See inherited documentation
-
-   ---------------------
-   -- Sequence_Record --
-   ---------------------
-
-   type Sequence_Record is new Group_Model_Record with null record;
-   type Sequence_Data is new Group_Model_Data_Record with record
-      Previous     : XML_Particle_Access;
-      --  The previous particle we were matching
-
-      Current      : Particle_Iterator := No_Iter;
-      Num_Occurs_Of_Current : Integer := 0;
-      --  Number of repeats for the current particle of the sequence. This is
-      --  set to Unbounded to force transition to the next element in the
-      --  sequence.
-   end record;
-   type Sequence_Data_Access is access all Sequence_Data'Class;
-
-   procedure Free (Data : in out Sequence_Data);
-   --  See inherited documentation
-
-   overriding function Create_Validator_Data
-     (Validator : access Sequence_Record) return Validator_Data;
-   overriding function Can_Be_Empty
-     (Group : access Sequence_Record) return Boolean;
-   overriding function Type_Model
-     (Validator  : access Sequence_Record;
-      First_Only : Boolean) return Unicode.CES.Byte_Sequence;
-   --  See doc for inherited subprograms
-
-   -------------------
-   -- Choice_Record --
-   -------------------
-
-   type Choice_Record is new Group_Model_Record with null record;
-   type Choice_Data is new Group_Model_Data_Record with record
-      Current               : Particle_Iterator := No_Iter;
-      Num_Occurs_Of_Current : Natural;
-   end record;
-   type Choice_Data_Access is access all Choice_Data'Class;
-
-   procedure Free (Data : in out Choice_Data);
-   --  See inherited documentation
-
-   overriding function Create_Validator_Data
-     (Validator : access Choice_Record) return Validator_Data;
-   overriding function Can_Be_Empty
-     (Group : access Choice_Record) return Boolean;
-   overriding function Type_Model
-     (Validator  : access Choice_Record;
-      First_Only : Boolean) return Unicode.CES.Byte_Sequence;
-   --  See doc for inherited subprograms
-
    --------------------
    -- XML_All_Record --
    --------------------
 
    type Natural_Array is array (Natural range <>) of Natural;
-
-   type XML_All_Record is new Choice_Record with record
-      Min_Occurs : Natural;
-      Max_Occurs : Integer;
-   end record;
-   type All_Data (Num_Elements : Integer) is new Group_Model_Data_Record with
-      record
-         All_Elements : Natural_Array (1 .. Num_Elements);
-         Num_Occurs   : Natural;
-      end record;
-   type All_Data_Access is access all All_Data'Class;
-
-   overriding function Create_Validator_Data
-     (Validator : access XML_All_Record) return Validator_Data;
-   overriding function Type_Model
-     (Validator  : access XML_All_Record;
-      First_Only : Boolean) return Unicode.CES.Byte_Sequence;
-   overriding function Can_Be_Empty
-     (Group : access XML_All_Record) return Boolean;
-   --  See doc for inherited subprograms
 
    function Get_Name
      (Validator : access XML_Validator_Record'Class) return String;

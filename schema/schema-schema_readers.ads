@@ -114,6 +114,11 @@ private
       Attributes     : Attribute_Validator_List_Access;
    end record;
 
+   type Group_Descr is record
+      Name           : Qualified_Name := No_Qualified_Name;
+
+   end record;
+
    type Schema_Descr is record
       Target_NS              : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Block                  : Block_Status       := No_Block;
@@ -156,7 +161,8 @@ private
          when Context_Schema | Context_Redefine =>
             null;
          when Context_All =>
-            All_Validator : Schema.Validators.XML_All;
+            null;
+            --  All_Validator : Schema.Validators.XML_All;
          when Context_Restriction =>
             Restriction : Schema.Validators.XML_Validator;
             Restricted  : Schema.Validators.XML_Validator; --  result

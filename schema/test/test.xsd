@@ -9,11 +9,7 @@
 <xsd:element name="root">
  <xsd:complexType>
   <xsd:sequence>
-    <xsd:sequence>
-      <xsd:element ref="my_string" />
-      <xsd:element ref="zip" maxOccurs="3" />
-      <xsd:element ref="strs"/>
-    </xsd:sequence>
+    <xsd:group ref="toplevel"/>
     <xsd:sequence>
       <xsd:element ref="strs" maxOccurs="2"/>
     </xsd:sequence>
@@ -27,6 +23,14 @@
   </xsd:sequence>
  </xsd:complexType>
 </xsd:element>
+
+<xsd:group name="toplevel">
+ <xsd:sequence>
+  <xsd:element ref="my_string" />
+  <xsd:element ref="zip" maxOccurs="3" />
+  <xsd:element ref="strs"/>
+ </xsd:sequence>
+</xsd:group>
 
 <xsd:complexType name="Tzip">
  <xsd:sequence>

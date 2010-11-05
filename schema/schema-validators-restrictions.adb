@@ -39,14 +39,7 @@ package body Schema.Validators.Restrictions is
       Facets            : Facets_Description;
    end record;
    type Restriction_Type is access Restriction_XML_Validator'Class;
-   type Restriction_Data is new Validator_Data_Record with record
-      Restriction_Data : Validator_Data;
-   end record;
-   type Restriction_Data_Access is access all Restriction_Data'Class;
 
-   procedure Free (Data : in out Restriction_Data);
-   function Create_Validator_Data
-     (Validator : access Restriction_XML_Validator) return Validator_Data;
    overriding procedure Validate_Characters
      (Validator     : access Restriction_XML_Validator;
       Reader        : access Abstract_Validation_Reader'Class;
@@ -251,35 +244,6 @@ package body Schema.Validators.Restrictions is
          Debug_Pop_Prefix;
          raise;
    end Validate_Characters;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Restriction_Data) is
-   begin
-      Free (Data.Restriction_Data);
-      Free (Validator_Data_Record (Data));
-   end Free;
-
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   overriding function Create_Validator_Data
-     (Validator : access Restriction_XML_Validator) return Validator_Data
-   is
-      D : constant Restriction_Data_Access := new Restriction_Data;
-   begin
-      Free (D.Restriction_Data);
-      if Validator.Restriction /= null then
-         D.Restriction_Data := Create_Validator_Data (Validator.Restriction);
-      else
-         D.Restriction_Data := Create_Validator_Data
-           (Get_Validator (Validator.Base));
-      end if;
-      return Validator_Data (D);
-   end Create_Validator_Data;
 
    -----------------------
    -- Check_Replacement --

@@ -88,7 +88,8 @@ private package Schema.Validators.Simple_Types is
    ---------------
 
    type XML_Union_Record is new Any_Simple_XML_Validator_Record with record
-      Unions : Particle_List := Empty_Particle_List;
+      null;
+      --  Unions : Particle_List := Empty_Particle_List;
    end record;
    type XML_Union is access all XML_Union_Record'Class;
 
