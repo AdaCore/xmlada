@@ -43,9 +43,10 @@ package body Schema.Simple_Types is
    generic
       with function Get_Length (Ch : Byte_Sequence) return Natural;
    function Validate_Length_Facets
-     (Descr         : Simple_Type_Descr;
-      Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol;
+     (Symbols       : Sax.Utils.Symbol_Table;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Mask          : Facets_Mask;
+      Length, Min_Length, Max_Length : Integer) return Symbol;
    --  Validate length facets
 
    generic
@@ -101,6 +102,17 @@ package body Schema.Simple_Types is
       Error_Loc     : out Location);
    --  Override some range facets
 
+   procedure Override_Length_Facets
+     (Symbols       : Sax.Utils.Symbol_Table;
+      Facets        : All_Facets;
+      Mask          : in out Facets_Mask;
+      Length        : in out Integer;
+      Min_Length    : in out Integer;
+      Max_Length    : in out Integer;
+      Error         : out Symbol;
+      Error_Loc     : out Location);
+   --  Override some length facets
+
    generic
       type T is private;
       with procedure Value (Symbols : Symbol_Table;
@@ -116,6 +128,13 @@ package body Schema.Simple_Types is
    --  definition (whitespaces, remove left-most 0 when appropriate,...).
    --  This assumes [Val1] and [Val2] are valid values for the type (ie they
    --  have already been validated).
+
+   function Validate_List_Facets
+     (Descr   : Simple_Type_Descr;
+      Symbols : Sax.Utils.Symbol_Table;
+      Ch      : Unicode.CES.Byte_Sequence;
+      Length, Min_Length, Max_Length : Integer) return Symbol;
+   --  Validate the facets for a list
 
    -------------------
    -- Generic_Equal --
@@ -139,49 +158,49 @@ package body Schema.Simple_Types is
    ----------------------------
 
    function Validate_Length_Facets
-     (Descr         : Simple_Type_Descr;
-      Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol
+     (Symbols       : Sax.Utils.Symbol_Table;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Mask          : Facets_Mask;
+      Length, Min_Length, Max_Length : Integer) return Symbol
    is
-      Length : Integer := -1;
+      L : Integer := -1;
    begin
       --  Characters are always a string, nothing to check here but the facets
 
-      if Descr.Mask (Facet_Length) then
-         Length := Get_Length (Ch);
-         if Length /= Descr.String_Length then
+      if Mask (Facet_Length)
+        or else Mask (Facet_Min_Length)
+        or else Mask (Facet_Max_Length)
+      then
+         L := Get_Length (Ch);
+      else
+         return No_Symbol;
+      end if;
+
+      if Mask (Facet_Length) then
+         if L /= Length then
             return Find
               (Symbols,
                "Invalid length, must be"
-               & Integer'Image (Descr.String_Length) & " characters");
+               & Integer'Image (Length) & " characters");
          end if;
       end if;
 
-      if Descr.Mask (Facet_Min_Length) then
-         if Length = -1 then
-            Length := Get_Length (Ch);
-         end if;
-
-         if Length < Descr.String_Min_Length then
+      if Mask (Facet_Min_Length) then
+         if L < Min_Length then
             return Find
               (Symbols,
-               "String is too short (Length " & Integer'Image (Length)
-               & "), minimum length is"
-               & Integer'Image (Descr.String_Min_Length)
+               "String is too short, minimum length is"
+               & Integer'Image (Min_Length)
                & " characters");
          end if;
       end if;
 
-      if Descr.Mask (Facet_Max_Length) then
-         if Length = -1 then
-            Length := Get_Length (Ch);
-         end if;
-
-         if Length > Descr.String_Max_Length then
+      if Mask (Facet_Max_Length) then
+         if L > Max_Length then
             return Find
               (Symbols,
                "String is too long, maximum length is"
-               & Integer'Image (Descr.String_Max_Length)
+               & Integer'Image (Max_Length)
                & " characters");
          end if;
       end if;
@@ -205,8 +224,10 @@ package body Schema.Simple_Types is
                     Error   : out Symbol);
    --  Converts [Ch] into [Val]
 
-   function Validate_String is new
-     Validate_Length_Facets (Encoding.Length.all);
+   function Validate_String
+     (Descr   : Simple_Type_Descr;
+      Symbols : Sax.Utils.Symbol_Table;
+      Ch      : Unicode.CES.Byte_Sequence) return Symbol;
    function Validate_HexBinary_Facets is new
      Validate_Length_Facets (HexBinary_Get_Length);
    function Validate_Base64Binary_Facets is new
@@ -647,10 +668,6 @@ package body Schema.Simple_Types is
             end if;
          end loop;
          return Find (Symbols, "No matching type in the union");
-
-      elsif Descr.Kind = Primitive_List then
-         Validate_List_Items (Ch);
-         return Error;
       end if;
 
       --  Check common facets
@@ -792,7 +809,14 @@ package body Schema.Simple_Types is
          when Primitive_Union    =>
             return No_Symbol;  --  Already handled above
          when Primitive_List     =>
-            return No_Symbol;  --  Already handled above
+            Validate_List_Items (Ch);
+            if Error = No_Symbol then
+               Error := Validate_List_Facets
+                 (Descr, Symbols, Ch,
+                  Descr.List_Length, Descr.List_Min_Length,
+                  Descr.List_Max_Length);
+            end if;
+            return Error;
       end case;
    end Validate_Simple_Type;
 
@@ -851,12 +875,22 @@ package body Schema.Simple_Types is
    function Validate_NMTOKENS
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
+      Ch            : Unicode.CES.Byte_Sequence) return Symbol
+   is
+      Error : Symbol;
    begin
       if not Is_Valid_Nmtokens (Ch) then
          return Find (Symbols, "Invalid NMTOKENS: """ & Ch & """");
       end if;
-      return Validate_String (Descr, Symbols, Ch);
+
+      Error := Validate_String (Descr, Symbols, Ch);
+      if Error = No_Symbol then
+         Error := Validate_List_Facets
+           (Descr, Symbols, Ch, Descr.String_Length,
+            Descr.String_Min_Length, Descr.String_Max_Length);
+      end if;
+
+      return Error;
    end Validate_NMTOKENS;
 
    -------------------
@@ -896,12 +930,23 @@ package body Schema.Simple_Types is
    function Validate_NCNames
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
+      Ch            : Unicode.CES.Byte_Sequence) return Symbol
+   is
+      Error : Symbol;
    begin
       if not Is_Valid_NCnames (Ch) then
          return Find (Symbols, "Invalid NCName: """ & Ch & """");
       end if;
-      return Validate_String (Descr, Symbols, Ch);
+
+      Error := Validate_String (Descr, Symbols, Ch);
+
+      if Error = No_Symbol then
+         Error := Validate_List_Facets
+           (Descr, Symbols, Ch, Descr.String_Length,
+            Descr.String_Min_Length, Descr.String_Max_Length);
+      end if;
+
+      return Error;
    end Validate_NCNames;
 
    -----------------------
@@ -949,6 +994,23 @@ package body Schema.Simple_Types is
       return Validate_String (Descr, Symbols, Ch);
    end Validate_URI;
 
+   ---------------------
+   -- Validate_String --
+   ---------------------
+
+   function Validate_String
+     (Descr   : Simple_Type_Descr;
+      Symbols : Sax.Utils.Symbol_Table;
+      Ch      : Unicode.CES.Byte_Sequence) return Symbol
+   is
+      function Internal_Facets is new Validate_Length_Facets
+        (Encoding.Length.all);
+   begin
+      return Internal_Facets
+        (Symbols, Ch, Descr.Mask, Descr.String_Length,
+         Descr.String_Min_Length, Descr.String_Max_Length);
+   end Validate_String;
+
    ------------------------
    -- Validate_HexBinary --
    ------------------------
@@ -961,7 +1023,10 @@ package body Schema.Simple_Types is
       if not Is_Valid_HexBinary (Ch) then
          return Find (Symbols, "Invalid hexBinary: """ & Ch & """");
       end if;
-      return Validate_HexBinary_Facets (Descr, Symbols, Ch);
+
+      return Validate_HexBinary_Facets
+        (Symbols, Ch, Descr.Mask,
+        Descr.String_Length, Descr.String_Min_Length, Descr.String_Max_Length);
    end Validate_HexBinary;
 
    ---------------------------
@@ -976,8 +1041,86 @@ package body Schema.Simple_Types is
       if not Is_Valid_Base64Binary (Ch) then
          return Find (Symbols, "Invalid base64Binary: """ & Ch & """");
       end if;
-      return Validate_Base64Binary_Facets (Descr, Symbols, Ch);
+
+      return Validate_Base64Binary_Facets
+        (Symbols, Ch, Descr.Mask,
+        Descr.String_Length, Descr.String_Min_Length, Descr.String_Max_Length);
    end Validate_Base64Binary;
+
+   --------------------------
+   -- Validate_List_Facets --
+   --------------------------
+
+   function Validate_List_Facets
+     (Descr   : Simple_Type_Descr;
+      Symbols : Sax.Utils.Symbol_Table;
+      Ch      : Unicode.CES.Byte_Sequence;
+      Length, Min_Length, Max_Length : Integer) return Symbol
+   is
+      function List_Get_Length
+        (Value : Unicode.CES.Byte_Sequence) return Natural;
+      function List_Get_Length
+        (Value : Unicode.CES.Byte_Sequence) return Natural
+      is
+         Length : Natural := 0;
+         C      : Unicode_Char;
+         Index  : Natural := Value'First;
+      begin
+         if Value = "" then
+            return 0;
+         end if;
+
+         while Index <= Value'Last loop
+            Encoding.Read (Value, Index, C);
+            while C = Unicode.Names.Basic_Latin.Space loop
+               Length := Length + 1;
+               Encoding.Read (Value, Index, C);
+            end loop;
+         end loop;
+
+         return Length + 1;
+      end List_Get_Length;
+
+      L : Natural;
+   begin
+      if Descr.Mask (Facet_Length)
+        or else Descr.Mask (Facet_Min_Length)
+        or else Descr.Mask (Facet_Max_Length)
+      then
+         L := List_Get_Length (Ch);
+      else
+         return No_Symbol;
+      end if;
+
+      if Descr.Mask (Facet_Length) then
+         if L /= Length then
+            return Find
+              (Symbols,
+               "Invalid size, must have"
+               & Integer'Image (Length) & " items");
+         end if;
+      end if;
+
+      if Descr.Mask (Facet_Min_Length) then
+         if L < Min_Length then
+            return Find
+              (Symbols,
+               "Not enough items, minimum number is"
+               & Integer'Image (Min_Length));
+         end if;
+      end if;
+
+      if Descr.Mask (Facet_Max_Length) then
+         if L > Max_Length then
+            return Find
+              (Symbols,
+               "Too many items, maximum number is"
+               & Integer'Image (Max_Length));
+         end if;
+      end if;
+
+      return No_Symbol;
+   end Validate_List_Facets;
 
    -------------------
    -- Boolean_Value --
@@ -1717,6 +1860,61 @@ package body Schema.Simple_Types is
    procedure Override_GYear_Month_Facets
      is new Override_Range_Facets (GYear_Month_T);
 
+   ----------------------------
+   -- Override_Length_Facets --
+   ----------------------------
+
+   procedure Override_Length_Facets
+     (Symbols       : Sax.Utils.Symbol_Table;
+      Facets        : All_Facets;
+      Mask          : in out Facets_Mask;
+      Length        : in out Integer;
+      Min_Length    : in out Integer;
+      Max_Length    : in out Integer;
+      Error         : out Symbol;
+      Error_Loc     : out Location)
+   is
+   begin
+      if Facets (Facet_Length) /= No_Facet_Value then
+         begin
+            Length := Natural'Value
+              (Get (Facets (Facet_Length).Value).all);
+            Mask (Facet_Length) := True;
+         exception
+            when Constraint_Error =>
+               Error := Find
+                 (Symbols, "Expecting integer for length facet");
+               Error_Loc := Facets (Facet_Length).Loc;
+         end;
+      end if;
+
+      if Facets (Facet_Min_Length) /= No_Facet_Value then
+         begin
+            Min_Length := Natural'Value
+              (Get (Facets (Facet_Min_Length).Value).all);
+            Mask (Facet_Min_Length) := True;
+         exception
+            when Constraint_Error =>
+               Error := Find
+                 (Symbols, "Expecting integer for minLength facet");
+               Error_Loc := Facets (Facet_Min_Length).Loc;
+         end;
+      end if;
+
+      if Facets (Facet_Max_Length) /= No_Facet_Value then
+         begin
+            Max_Length := Natural'Value
+              (Get (Facets (Facet_Max_Length).Value).all);
+            Mask (Facet_Max_Length) := True;
+         exception
+            when Constraint_Error =>
+               Error := Find
+                 (Symbols, "Expecting integer for maxlength facet");
+               Error_Loc := Facets (Facet_Max_Length).Loc;
+         end;
+      end if;
+   end Override_Length_Facets;
+
    --------------
    -- Override --
    --------------
@@ -1792,48 +1990,20 @@ package body Schema.Simple_Types is
       Error := No_Symbol;
 
       case Simple.Kind is
-         when Primitive_Union | Primitive_List =>
+         when Primitive_Union =>
             null;
 
+         when Primitive_List =>
+            Override_Length_Facets
+              (Symbols, Facets, Simple.Mask,
+               Simple.List_Length, Simple.List_Min_Length,
+               Simple.List_Max_Length, Error, Error_Loc);
+
          when Primitive_String .. Primitive_HexBinary =>
-            if Facets (Facet_Length) /= No_Facet_Value then
-               begin
-                  Simple.String_Length := Natural'Value
-                    (Get (Facets (Facet_Length).Value).all);
-                  Simple.Mask (Facet_Length) := True;
-               exception
-                  when Constraint_Error =>
-                     Error := Find
-                       (Symbols, "Expecting integer for length facet");
-                     Error_Loc := Facets (Facet_Length).Loc;
-               end;
-            end if;
-
-            if Facets (Facet_Min_Length) /= No_Facet_Value then
-               begin
-                  Simple.String_Min_Length := Natural'Value
-                    (Get (Facets (Facet_Min_Length).Value).all);
-                  Simple.Mask (Facet_Min_Length) := True;
-               exception
-                  when Constraint_Error =>
-                     Error := Find
-                       (Symbols, "Expecting integer for minLength facet");
-                     Error_Loc := Facets (Facet_Min_Length).Loc;
-               end;
-            end if;
-
-            if Facets (Facet_Max_Length) /= No_Facet_Value then
-               begin
-                  Simple.String_Max_Length := Natural'Value
-                    (Get (Facets (Facet_Max_Length).Value).all);
-                  Simple.Mask (Facet_Max_Length) := True;
-               exception
-                  when Constraint_Error =>
-                     Error := Find
-                       (Symbols, "Expecting integer for maxlength facet");
-                     Error_Loc := Facets (Facet_Max_Length).Loc;
-               end;
-            end if;
+            Override_Length_Facets
+              (Symbols, Facets, Simple.Mask,
+               Simple.String_Length, Simple.String_Min_Length,
+               Simple.String_Max_Length, Error, Error_Loc);
 
          when Primitive_Boolean =>
             null;

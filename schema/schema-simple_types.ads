@@ -110,7 +110,10 @@ package Schema.Simple_Types is
               (others => No_Simple_Type_Index);
 
          when Primitive_List =>
-            List_Item : Simple_Type_Index;
+            List_Item       : Simple_Type_Index;
+            List_Length     : Natural := Natural'Last;
+            List_Min_Length : Natural := 0;
+            List_Max_Length : Natural := Natural'Last;
 
          when Primitive_String .. Primitive_HexBinary =>
             String_Length      : Natural := Natural'Last;
