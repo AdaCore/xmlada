@@ -1002,9 +1002,9 @@ procedure Schematest is
               & " |" & Image (Total (T, Not_Implemented), 5)
               & " |" & Image (Total (T, Internal_Error), 3)
               & " | (");
-         Put (100.0
-              * Float (Total (T, Passed)) / Float (In_Category - NI_Category),
-              Aft => 0, Exp => 0);
+         Put (100.0 * Float (Total (T, Passed))
+              / Float (In_Category - NI_Category),
+              Aft => 2, Exp => 0);
          Put_Line (" %)");
       end loop;
 
@@ -1016,10 +1016,9 @@ procedure Schematest is
                 & " |" & Image (Grand_Total (Not_Implemented), 5)
                 & " |" & Image (Grand_Total (Internal_Error), 3)
                 & " | (");
-      Put (100.0
-           * Float (Grand_Total (Passed)) /
-             Float (Total_Tests - Grand_Total (Not_Implemented)),
-           Aft => 0, Exp => 0);
+      Put (100.0 * Float (Grand_Total (Passed))
+           / Float (Total_Tests - Grand_Total (Not_Implemented)),
+           Aft => 2, Exp => 0);
       Put_Line (" %)");
       Put      ("|  Disabled |" & Image (Disable_Count, 7));
       Put_Line (" |        |        |      |    |");
