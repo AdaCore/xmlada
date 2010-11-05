@@ -209,7 +209,8 @@ package body Schema.Validators is
       if Debug then
          Debug_Output
            ("Adding attribute " & To_QName (Attribute.Name)
-            & " Use_Type=" & Attribute.Use_Type'Img);
+            & " Use_Type=" & Attribute.Use_Type'Img
+            & " local=" & Attribute.Is_Local'Img);
       end if;
 
       while L /= Empty_Named_Attribute_List loop
@@ -226,6 +227,11 @@ package body Schema.Validators is
       if Ref /= Empty_Named_Attribute_List then
          Attr          := NFA.Attributes.Table (Ref);
          Attr.Use_Type := Attribute.Use_Type;
+         Attr.Is_Local := Attribute.Is_Local;
+
+         if Attribute.Fixed /= No_Symbol then
+            Attr.Fixed    := Attribute.Fixed;
+         end if;
       end if;
 
       Append (NFA.Attributes, Attr);
@@ -681,7 +687,7 @@ package body Schema.Validators is
                   & To_QName
                     (NFA.Attributes.Table
                        (Valid_Attrs (Index).Validator).Name)
-                    & " use=" & Attr.Use_Type'Img);
+                  & " " & Attr.Use_Type'Img & " " & Attr.Form'Img);
             end if;
             Valid_Attrs (Index).Visited := True;
             Found := Find_Attribute (Attr);
@@ -768,7 +774,10 @@ package body Schema.Validators is
 
                if Matches then
                   if Debug then
-                     Debug_Output ("Found attribute: " & To_QName (Attr.Name)
+                     Debug_Output ("Found attribute: "
+                                   & To_QName (Get_Name (Atts, A))
+                                   & " prefix="
+                                   & Get (Get_Prefix (Atts, A)).all
                                    & " at index" & A'Img
                                    & " Is_Local=" & Is_Local'Img
                                 & " Form=" & Attr.Form'Img);
@@ -917,7 +926,7 @@ package body Schema.Validators is
       Is_Equal : Boolean;
    begin
       if Debug then
-         Debug_Output ("Checking attribute " & To_QName (Attr.Name)
+         Debug_Output ("Validate attribute " & To_QName (Attr.Name)
                        & "=" & Val.all & "--");
       end if;
 

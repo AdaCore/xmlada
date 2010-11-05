@@ -3211,6 +3211,8 @@ package body Schema.Schema_Readers is
          end case;
       end if;
 
+      Att.Attr.Descr.Is_Local := Att.Attr.Ref = No_Qualified_Name;
+
       Push_Context
         (Handler,
          (Typ       => Context_Attribute,
