@@ -51,8 +51,9 @@ package Sax.Locators is
    pragma Inline (Get_Column_Number, Set_Column_Number);
    --  Return the column number where the current document event ends
 
+   procedure Increase_Line_Number (Loc : in out Locator; Inc : Natural := 1);
    procedure Increase_Column_Number (Loc : in out Locator; Inc : Natural := 1);
-   pragma Inline (Increase_Column_Number);
+   pragma Inline (Increase_Column_Number, Increase_Line_Number);
    --  Increment the column number. This assume Loc has already been
    --  initialized
 
@@ -107,6 +108,10 @@ package Sax.Locators is
    procedure Increase_Column_Number
      (Loc : access Locator_Record; Inc : Natural := 1);
    --  Increase the column number
+
+   procedure Increase_Line_Number
+     (Loc : access Locator_Record; Inc : Natural := 1);
+   --  Increase the line number
 
    procedure Set_Line_Number
      (Loc : access Locator_Record; Line : Natural := 0);

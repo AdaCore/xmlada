@@ -1062,8 +1062,7 @@ package body Sax.Readers is
            and then not Parser.Previous_Char_Was_CR
          then
             Set_Column_Number (Parser.Locator, 0);
-            Set_Line_Number
-              (Parser.Locator, Get_Line_Number (Parser.Locator) + 1);
+            Increase_Line_Number (Parser.Locator);
          end if;
 
       elsif Parser.Inputs /= null then
@@ -1465,12 +1464,10 @@ package body Sax.Readers is
    -----------------
 
    procedure Debug_Print (Parser : Sax_Reader'Class; Id : Token) is
-      L : Locator := Parser.Locator;
    begin
-      Set_Line_Number (L, Id.Location.Line);
-      Set_Column_Number (L, Id.Location.Column);
       Put ("++Lex (" & Parser.State.Name & ") at "
-           & To_String (L) & " (" & Token_Type'Image (Id.Typ) & ")");
+           & To_String (Parser.Locator)
+           & " (" & Token_Type'Image (Id.Typ) & ")");
       if Parser.State.Ignore_Special then
          Put (" (in string)");
       end if;
@@ -3903,9 +3900,16 @@ package body Sax.Readers is
          Name_Id : Token;
          M : Element_Model_Ptr;
          M2 : Content_Model;
+         Tmp_Id, NS_Id : Token;
       begin
          Set_State (Parser, Element_Def_State);
+
          Next_Token_Skip_Spaces (Input, Parser, Name_Id);
+         if Parser.Feature_Namespace then
+            Tmp_Id := Name_Id;
+            Get_Name_NS (Tmp_Id, NS_Id, Name_Id);
+            Name_Id.First := NS_Id.First;
+         end if;
 
          if Name_Id.Typ /= Name then
             Fatal_Error (Parser, Error_Is_Name);
@@ -4013,10 +4017,17 @@ package body Sax.Readers is
          Default_Decl : Default_Declaration;
          Att_Type : Attribute_Type;
          Ename, SName : Symbol;
+         Tmp_Id : Token;
 
       begin
          Set_State (Parser, Element_Def_State);
+
          Next_Token_Skip_Spaces (Input, Parser, Ename_Id);
+         if Parser.Feature_Namespace then
+            Tmp_Id := Ename_Id;
+            Get_Name_NS (Tmp_Id, NS_Id, Ename_Id);
+            Ename_Id.First := NS_Id.First;
+         end if;
 
          if Ename_Id.Typ /= Name then
             Fatal_Error (Parser, Error_Is_Name, Ename_Id);
@@ -4899,10 +4910,17 @@ package body Sax.Readers is
          Public_Start, Public_End : Token := Null_Token;
          System_Start, System_End : Token := Null_Token;
          Name_Id : Token;
+         Tmp_Id, NS_Id : Token;
       begin
          Set_State (Parser, DTD_State);
 
          Next_Token_Skip_Spaces (Input, Parser, Name_Id);
+         if Parser.Feature_Namespace then
+            Tmp_Id := Name_Id;
+            Get_Name_NS (Tmp_Id, NS_Id, Name_Id);
+            Name_Id.First := NS_Id.First;
+         end if;
+
          if Name_Id.Typ /= Name then
             Fatal_Error (Parser, "Expecting name after <!DOCTYPE");
          end if;

@@ -176,6 +176,25 @@ package body Sax.Locators is
       Loc.Column := Loc.Column + Inc;
    end Increase_Column_Number;
 
+   --------------------------
+   -- Increase_Line_Number --
+   --------------------------
+
+   procedure Increase_Line_Number (Loc : in out Locator; Inc : Natural := 1) is
+   begin
+      Increase_Line_Number (Get (Loc), Inc);
+   end Increase_Line_Number;
+
+   --------------------------
+   -- Increase_Line_Number --
+   --------------------------
+
+   procedure Increase_Line_Number
+     (Loc : access Locator_Record; Inc : Natural := 1) is
+   begin
+      Loc.Line := Loc.Line + Inc;
+   end Increase_Line_Number;
+
    ---------------------
    -- Set_Line_Number --
    ---------------------
