@@ -1235,40 +1235,6 @@ package body Schema.Validators is
       return Typ;
    end Lookup;
 
-   --------------------
-   -- Lookup_Element --
-   --------------------
-
-   function Lookup_Element
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol;
-      Create_If_Needed : Boolean := True) return XML_Element
-   is
-      Result : constant XML_Element_Access := Elements_Htable.Get
-        (Grammar.Elements.all, Local_Name);
-   begin
-      if Result = null then
-         if Create_If_Needed then
-            if Grammar.Checked then
-               Validation_Error
-                 (Reader, "#Declaration not found for "
-                  & To_QName (Grammar, Local_Name));
-            end if;
-
-            if Debug then
-               Debug_Output ("Lookup_Element: creating forward "
-                             & To_QName (Grammar, Local_Name));
-            end if;
-            return Create_Global_Element
-              (Grammar, Reader, Local_Name, Form => Unqualified);
-         else
-            return No_Element;
-         end if;
-      end if;
-      return (Elem => Result, Is_Ref => True);
-   end Lookup_Element;
-
    ----------------------
    -- Lookup_Attribute --
    ----------------------
@@ -1598,7 +1564,6 @@ package body Schema.Validators is
         (Namespace_URI      => Namespace_URI,
          System_ID          => No_Symbol,
          Types              => new Types_Htable.HTable (101),
-         Elements           => new Elements_Htable.HTable (101),
          Attributes         => new Attributes_Htable.HTable (101),
          Checked            => False,
          NFA                => Get (Grammar).NFA,
@@ -1701,9 +1666,7 @@ package body Schema.Validators is
    ----------------
 
    procedure Debug_Dump (Grammar : XML_Grammar) is
-      use Elements_Htable;
       Str : String_List;
-      Elem : Elements_Htable.Iterator;
       G    : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
    begin
       if Debug then
@@ -1712,23 +1675,6 @@ package body Schema.Validators is
             Debug_Output ("   Parsed location: " & Get (Str.Str).all);
             Str := Str.Next;
          end loop;
-
-         if G.Grammars /= null then
-            for NS in G.Grammars'Range  loop
-               Debug_Output ("   NS="
-                         & Get (G.Grammars (NS).Namespace_URI).all);
-
-               Debug_Output ("      Elements:");
-               Elem := First (G.Grammars (NS).Elements.all);
-               while Elem /= Elements_Htable.No_Iterator loop
-                  Debug_Output
-                    (' '
-                     & Get (Elements_Htable.Current (Elem).Local_Name).all);
-                  Next (G.Grammars (NS).Elements.all, Elem);
-               end loop;
-            end loop;
-         end if;
-
       end if;
    end Debug_Dump;
 
@@ -1759,41 +1705,6 @@ package body Schema.Validators is
    begin
       return null;
    end Get_Facets;
-
-   --------------------------
-   -- Create_Local_Element --
-   --------------------------
-
-   function Create_Local_Element
-     (Local_Name : Symbol;
-      NS         : XML_Grammar_NS;
-      Of_Type    : XML_Type;
-      Form       : Form_Type) return XML_Element
-   is
-      Ptr : constant XML_Element_Access := new XML_Element_Record'
-        (Local_Name          => Local_Name,
-         NS                  => NS,
-         Substitution_Group  => No_Element,
-         Of_Type             => Of_Type,
-         Default             => No_Symbol,
-         Is_Abstract         => False,
-         Nillable            => True,
-         Final               => (others => False),
-         Blocks_Is_Set       => False,
-         Blocks              => No_Block,
-         Is_Global           => False,
-         NFA_State           => No_State,
-         Form                => Form,
-         Fixed               => No_Symbol,
-         Next                => null);
-   begin
-      --  ??? Should be stored in a list in the grammar, so that we can free
-      --  them all later on.
-      Register (NS, Ptr);
-      return
-        (Elem   => Ptr,
-         Is_Ref => False);
-   end Create_Local_Element;
 
    -------------------
    -- Redefine_Type --
@@ -1835,65 +1746,6 @@ package body Schema.Validators is
          end if;
       end if;
    end Debug_Name;
-
-   ---------------------------
-   -- Create_Global_Element --
-   ---------------------------
-
-   function Create_Global_Element
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol;
-      Form       : Form_Type) return XML_Element
-   is
-      Old : XML_Element_Access := Elements_Htable.Get
-        (Grammar.Elements.all, Local_Name);
-      S   : State;
-   begin
-      if Debug then
-         Output_Action
-           ("Create_Global_Element ("
-            & Debug_Name (Grammar) & ", "
-            & Debug_Print (Local_Name) & ", " & Form'Img & ")");
-      end if;
-
-      if Old /= null then
-         if Old.Of_Type /= No_Type then
-            Validation_Error
-              (Reader,
-               "#Element """ & Get (Local_Name).all
-               & """ has already been declared");
-         end if;
-
-         Old.Form := Form;
-      else
-         S := Grammar.NFA.Add_State
-           ((Type_Name   => Local_Name,
-             Attributes  => null,
-             Simple_Type => null));
-
-         Old := new XML_Element_Record'
-           (Local_Name          => Local_Name,
-            NS                  => Grammar,
-            Substitution_Group  => No_Element,
-            Of_Type             => No_Type,
-            Default             => No_Symbol,
-            Is_Abstract         => False,
-            Nillable            => True,
-            Final               => (others => False),
-            Blocks_Is_Set       => False,
-            Blocks              => No_Block,
-            Is_Global           => True,
-            NFA_State           => S,
-            Form                => Form,
-            Fixed               => No_Symbol,
-            Next                => null);
-         Register (Grammar, Old);
-         Elements_Htable.Set (Grammar.Elements.all, Old);
-      end if;
-
-      return (Elem => Old, Is_Ref => False);
-   end Create_Global_Element;
 
    ------------------------
    -- Create_Global_Type --
@@ -2152,8 +2004,6 @@ package body Schema.Validators is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Types_Htable.HTable, Types_Htable_Access);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Elements_Htable.HTable, Elements_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (XML_Grammar_NS_Record, XML_Grammar_NS);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Attributes_Htable.HTable, Attributes_Htable_Access);
@@ -2204,8 +2054,6 @@ package body Schema.Validators is
       Elem     : XML_Element_Access;
    begin
       if Grammar /= null then
-         Elements_Htable.Reset (Grammar.Elements.all);
-         Unchecked_Free (Grammar.Elements);
          Types_Htable.Reset (Grammar.Types.all);
          Unchecked_Free (Grammar.Types);
          Attributes_Htable.Reset (Grammar.Attributes.all);
@@ -2281,12 +2129,6 @@ package body Schema.Validators is
 
    procedure Do_Nothing (Typ : in out XML_Type) is
       pragma Unreferenced (Typ);
-   begin
-      null;
-   end Do_Nothing;
-
-   procedure Do_Nothing (Element : in out XML_Element_Access) is
-      pragma Unreferenced (Element);
    begin
       null;
    end Do_Nothing;
@@ -2404,15 +2246,6 @@ package body Schema.Validators is
    begin
       return Element.Elem.Fixed;
    end Get_Fixed;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Element : XML_Element_Access) return Symbol is
-   begin
-      return Element.Local_Name;
-   end Get_Key;
 
    -------------
    -- Get_Key --
@@ -2545,13 +2378,11 @@ package body Schema.Validators is
      (Reader  : access Abstract_Validation_Reader'Class;
       Grammar : XML_Grammar_NS)
    is
-      use Elements_Htable, Types_Htable, Attributes_Htable;
-      Elem_Iter : Elements_Htable.Iterator := First (Grammar.Elements.all);
+      use Types_Htable, Attributes_Htable;
       Type_Iter : Types_Htable.Iterator := First (Grammar.Types.all);
       Attr_Iter : Attributes_Htable.Iterator :=
         First (Grammar.Attributes.all);
 
-      Elem : XML_Element_Access;
       Typ  : XML_Type;
       Attr : Named_Attribute_Validator;
    begin
@@ -2570,19 +2401,6 @@ package body Schema.Validators is
                & """ was referenced but never declared");
          end if;
          Next (Grammar.Types.all, Type_Iter);
-      end loop;
-
-      while Elem_Iter /= Elements_Htable.No_Iterator loop
-         Elem := Current (Elem_Iter);
-
-         if Elem.Of_Type = No_Type then
-            Validation_Error
-              (Reader, "Element """
-               & To_QName (Grammar.Namespace_URI, Elem.Local_Name)
-               & """ was referenced but never declared");
-         end if;
-
-         Next (Grammar.Elements.all, Elem_Iter);
       end loop;
 
       while Attr_Iter /= Attributes_Htable.No_Iterator loop

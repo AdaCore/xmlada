@@ -83,15 +83,15 @@ package body Schema.Validators.XSD_Grammar is
 
       --  As per 3.4.7, ur-Type (ie anyType) uses a Lax processing for its
       --  children node (ie uses the grammar definition if one is found)
-      Create_Global_Type
-        (G, R, R.Ur_Type,
-         Get_Validator
-           (Get_Type (Get_UR_Type_Element (R.Grammar, Process_Lax))));
+--        Create_Global_Type
+--          (G, R, R.Ur_Type,
+--           Get_Validator
+--             (Get_Type (Get_UR_Type_Element (R.Grammar, Process_Lax))));
 
-      Create_Global_Type
-        (G, R, R.Anytype,
-         Get_Validator
-           (Get_Type (Get_UR_Type_Element (R.Grammar, Process_Lax))));
+--        Create_Global_Type
+--          (G, R, R.Anytype,
+--           Get_Validator
+--             (Get_Type (Get_UR_Type_Element (R.Grammar, Process_Lax))));
 
       Tmp2 := new Any_Simple_XML_Validator_Record;
       Create_Global_Type (G, R, R.Any_Simple_Type, Tmp2);

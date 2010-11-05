@@ -77,10 +77,6 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Name    : Qualified_Name;
       Result  : out XML_Type);
-   procedure Lookup_With_NS
-     (Handler : access Schema_Reader'Class;
-      Name    : Qualified_Name;
-      Result  : out XML_Element);
    --  Lookup a type or element  with a possible namespace specification
 
    procedure Ensure_Type
@@ -88,7 +84,6 @@ package body Schema.Schema_Readers is
    --  Make sure the context (of type Context_Type_Def) has a proper
    --  type validator defined
 
-   function Ada_Name (Element : XML_Element) return String;
    function Ada_Name (Typ : XML_Type)        return String;
    function Ada_Name (C : Context_Access)    return String;
    --  Return the name of an Ada variable suitable to represent Element
@@ -372,15 +367,6 @@ package body Schema.Schema_Readers is
       end loop;
       return Str2;
    end XML_To_Ada;
-
-   --------------
-   -- Ada_Name --
-   --------------
-
-   function Ada_Name (Element : XML_Element) return String is
-   begin
-      return "E_" & XML_To_Ada (To_QName (Element));
-   end Ada_Name;
 
    --------------
    -- Ada_Name --
@@ -874,21 +860,6 @@ package body Schema.Schema_Readers is
       Result := Lookup (G, Handler, Name.Local);
    end Lookup_With_NS;
 
-   --------------------
-   -- Lookup_With_NS --
-   --------------------
-
-   procedure Lookup_With_NS
-     (Handler : access Schema_Reader'Class;
-      Name    : Qualified_Name;
-      Result  : out XML_Element)
-   is
-      G    : XML_Grammar_NS;
-   begin
-      Get_Grammar_For_Namespace (Handler, Name.NS, G);
-      Result := Lookup_Element (G, Handler, Name.Local);
-   end Lookup_With_NS;
-
    ----------------
    -- Get_Occurs --
    ----------------
@@ -1356,7 +1327,6 @@ package body Schema.Schema_Readers is
       Atts    : Sax_Attribute_List)
    is
       Min_Occurs, Max_Occurs : Integer := 1;
-      Element : XML_Element;
       Typ     : XML_Type := No_Type;
       Info    : Element_Descr;
       Local   : Symbol;
@@ -1407,34 +1377,6 @@ package body Schema.Schema_Readers is
             end if;
          end if;
 
-         case Handler.Contexts.Typ is
-            when Context_Schema | Context_Redefine =>
-               Element := Create_Global_Element
-                 (Handler.Target_NS, Handler, Info.Name.Local,
-                  Form => Info.Form);
-               if Debug then
-                  Output_Action (" -> " & Ada_Name (Element));
-               end if;
-
-               if Typ /= No_Type then
-                  if Debug then
-                     Output_Action ("Set_Type (" & Ada_Name (Element) & ", "
-                             & Ada_Name (Typ) & ");");
-                  end if;
-                  Set_Type (Element, Handler, Typ);
-               end if;
-            when others =>
-               Element := Create_Local_Element
-                 (Info.Name.Local, Handler.Target_NS, Typ, Form => Info.Form);
-
-               if Debug then
-                  Output_Action
-                    (Ada_Name (Element) & " := Create_Local_Element ("""
-                     & To_QName (Info.Name) & """, Handler.Target_NS, "
-                     & Ada_Name (Typ) & ", " & Info.Form'Img & ");");
-               end if;
-         end case;
-
          if Info.Ref /= No_Qualified_Name
            and then Info.Ref.NS = No_Symbol
            and then Info.Name = Info.Ref
@@ -1453,8 +1395,6 @@ package body Schema.Schema_Readers is
            (Handler, "#Either ""name"" or ""ref"" attribute must be present");
 
       else
-         Lookup_With_NS (Handler, Info.Ref, Result => Element);
-
          --  Section 3.3.2, validity constraints 3.3.3
          if Info.Typ /= No_Qualified_Name then
             Validation_Error

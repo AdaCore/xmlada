@@ -779,16 +779,6 @@ package Schema.Validators is
    -- Elements --
    --------------
 
-   function Create_Local_Element
-     (Local_Name : Sax.Symbols.Symbol;
-      NS         : XML_Grammar_NS;
-      Of_Type    : XML_Type;
-      Form       : Form_Type) return XML_Element;
-   --  Create a new element, with a specific type.
-   --  This element is a local element, that cannot be registered in the
-   --  grammar and looked up later on.
-   --  See Register below if you want to create a global element
-
    procedure Set_Substitution_Group
      (Element : XML_Element;
       Reader  : access Abstract_Validation_Reader'Class;
@@ -891,11 +881,6 @@ package Schema.Validators is
    --  Set the target namespace for the grammar. This is the "targetNamespace"
    --  attribute of the <schema> node.
 
-   function Lookup_Element
-     (Grammar       : XML_Grammar_NS;
-      Reader        : access Abstract_Validation_Reader'Class;
-      Local_Name    : Sax.Symbols.Symbol;
-      Create_If_Needed : Boolean := True) return XML_Element;
    function Lookup
      (Grammar       : XML_Grammar_NS;
       Reader        : access Abstract_Validation_Reader'Class;
@@ -920,11 +905,6 @@ package Schema.Validators is
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Sax.Symbols.Symbol;
       Validator  : access XML_Validator_Record'Class) return XML_Type;
-   function Create_Global_Element
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Sax.Symbols.Symbol;
-      Form       : Form_Type) return XML_Element;
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Reader         : access Abstract_Validation_Reader'Class;
@@ -1345,19 +1325,6 @@ private
    --  the grammar_ns itself, so the hash table should never free a pointer
    --  from this table
 
-   function Get_Key (Element : XML_Element_Access) return Sax.Symbols.Symbol;
-   procedure Do_Nothing (Element : in out XML_Element_Access);
-
-   package Elements_Htable is new Sax.HTable
-     (Element       => XML_Element_Access,
-      Empty_Element => null,
-      Free          => Do_Nothing,
-      Key           => Sax.Symbols.Symbol,
-      Get_Key       => Get_Key,
-      Hash          => Sax.Symbols.Hash,
-      Equal         => Sax.Symbols."=");
-   type Elements_Htable_Access is access Elements_Htable.HTable;
-
    function Get_Key
      (Att : Named_Attribute_Validator) return Sax.Symbols.Symbol;
    procedure Do_Nothing (Att : in out Named_Attribute_Validator);
@@ -1376,7 +1343,6 @@ private
       Namespace_URI     : Sax.Symbols.Symbol;
       System_ID         : Sax.Symbols.Symbol;
       Types             : Types_Htable_Access;
-      Elements          : Elements_Htable_Access;
       Attributes        : Attributes_Htable_Access;
 
       Validators_For_Mem : XML_Validator;
