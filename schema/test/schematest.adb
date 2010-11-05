@@ -27,9 +27,7 @@
 -----------------------------------------------------------------------
 
 --  Run the automatic testsuite for XML Schema from www.w3c.org
---  You can download these from the web
---      http://www.w3.org/XML/Schema
---  in the "Test Collection" part for a link to the latest .tar.gz package.
+--  You can download these from the web (see the URL constant below)
 --  Also:
 --   http://www.w3.org/XML/2004/xml-schema-test-suite/index.html
 --
@@ -59,6 +57,10 @@ with Schema.Schema_Readers;     use Schema.Schema_Readers;
 with Schema.Validators;         use Schema.Validators;
 
 procedure Schematest is
+
+   URL : constant String :=
+      "http://www.w3.org/XML/2004/xml-schema-test-suite/xmlschema2006-11-06/"
+      & "xsts-2007-06-20.tar.gz";
 
    Testdir : constant String := "xmlschema2006-11-06";
 
@@ -104,13 +106,13 @@ procedure Schematest is
 
    type Result_Kind is (Passed,
                         Not_Accepted,
-                        Not_Implemented,
                         XSD_Should_Pass,
                         XSD_Should_Fail,
                         XML_Should_Pass,
                         XML_Should_Fail,
+                        Not_Implemented,
                         Internal_Error);
-   subtype Error_Kind is Result_Kind range Not_Implemented .. Internal_Error;
+   subtype Error_Kind is Result_Kind range XSD_Should_Pass .. Internal_Error;
    type Result_Count is array (Result_Kind) of Natural;
    --  The various categories of errors:
    --  Either the XSD was valid, but rejected by XML/Ada.
@@ -126,6 +128,8 @@ procedure Schematest is
       XML    : Ada.Strings.Unbounded.Unbounded_String;
       Kind   : Result_Kind;
    end record;
+
+   Disable_Count : Natural := 0;
 
    package Test_Result_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Test_Result);
@@ -143,6 +147,10 @@ procedure Schematest is
    end record;
 
    Filter : array (Result_Kind) of Boolean := (others => True);
+
+   function Image (Num : Integer; Width : Natural) return String;
+   --  Return the image of [Num], on [Width] characters.
+   --  This includes the leading whitespace
 
    procedure Run_Testsuite  (Filename : String);
    procedure Run_Testset (Filename : String; Grammar : in out XML_Grammar);
@@ -195,7 +203,7 @@ procedure Schematest is
    procedure Print_Group_Results (Group : Group_Result);
    --  Print the results for the specific group
 
-   procedure Print_Results;
+   procedure Print_Results (Version, Release : String);
    --  Print overview of results
 
    procedure Set_Description
@@ -252,6 +260,7 @@ procedure Schematest is
                  (Name     => To_Unbounded_String (Line (1 .. Last)),
                   Disabled => True,
                   others   => <>));
+            Disable_Count := Disable_Count + 1;
          end if;
       end loop;
 
@@ -761,7 +770,7 @@ procedure Schematest is
    procedure Run_Testsuite (Filename : String) is
       Input  : File_Input;
       Reader : Tree_Reader;
-      N      : Node;
+      N, Top  : Node;
       Grammar : XML_Grammar := No_Grammar;
    begin
       Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
@@ -770,11 +779,9 @@ procedure Schematest is
       Parse (Reader, Input);
       Close (Input);
 
-      N := Get_Element (Get_Tree (Reader));
-      Put_Line ("Version: " & Get_Attribute (N, S_Schema_Version));
-      Put_Line ("Release: " & Get_Attribute (N, S_Release_Date));
+      Top := Get_Element (Get_Tree (Reader));
 
-      N := First_Child (N);
+      N := First_Child (Top);
       while N /= null loop
          if Local_Name (N) = Test_Set_Ref then
             Run_Testset
@@ -788,6 +795,8 @@ procedure Schematest is
          N := Next_Sibling (N);
       end loop;
 
+      Print_Results (Version => Get_Attribute (Top, S_Schema_Version),
+                     Release => Get_Attribute (Top, S_Release_Date));
       Free (Reader);
    end Run_Testsuite;
 
@@ -900,11 +909,25 @@ procedure Schematest is
       end if;
    end Print_Group_Results;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Num : Integer; Width : Natural) return String is
+      Str : constant String := Integer'Image (Num);
+   begin
+      if Str'Length < Width then
+         return (1 .. Width - Str'Length => ' ') & Str;
+      else
+         return Str;
+      end if;
+   end Image;
+
    -------------------
    -- Print_Results --
    -------------------
 
-   procedure Print_Results is
+   procedure Print_Results (Version, Release : String) is
       Total_Error : Natural := 0;
       Total_Tests : Natural := 0;
       Total_XML   : Natural := 0;
@@ -936,49 +959,75 @@ procedure Schematest is
          Next (Group);
       end loop;
 
-      Put_Line ("Total number of tests:" & Total_Tests'Img
-                & " (omitting non-accepted tests)");
       Put_Line ("  " & Total_XSD'Img
-                & " XSD files (not including those parsed"
-                & " automatically)");
+                & " XSD files (not including those parsed from XML)");
       Put_Line ("  " & Total_XML'Img & " XML files");
 
+      New_Line;
+      Put_Line ("Version: " & Version);
+      Put ("Release: " & Release);
       if Check_Alternative_Dir then
-         Put_Line ("Comparing with latest CVS baselines from W3C");
+         Put (" (Comparing with latest CVS baselines from W3C");
+      end if;
+      New_Line;
+
+      Put_Line ("URL: " & URL);
+
+      if Accepted_Only then
+         Put_Line ("Tests marked by W3C as non-accepted were not run");
       end if;
 
+      Put_Line ("+------------------------------+--------+--------+--------+");
+      Put_Line ("|                              | Total  | Passed | Failed |");
+      Put_Line ("+------------------------------+--------+--------+--------+");
+
       for K in Error_Kind loop
+         if K = Not_Implemented then
+            Put_Line
+               ("+------------------------------+--------+--------+--------+");
+            Put ("|                        Total |"
+                 & Image (Total_Tests, 7)
+                 & " |" & Image (Total_Tests - Total_Error, 7)
+                 & " |" & Image (Total_Error, 7) & " | (");
+            Put (100.0 * Float (Total_Error) / Float (Total_Tests),
+                 Aft => 0, Exp => 0);
+            Put_Line (" %)");
+            Put
+               ("|                     Disabled |" & Image (Disable_Count, 7));
+            Put_Line (" |        |        |");
+            Put_Line
+               ("+------------------------------+--------+--------+--------+");
+         end if;
+
+         Put ("| ");
          case K is
             when XSD_Should_Pass =>
-               Put ("SP: XSD KO, should be OK:");
+               Put ("SP: acceptance of valid XSD ");
             when XSD_Should_Fail =>
-               Put ("SF: XSD OK, should be KO:");
+               Put ("SF: rejection of invalid XSD");
             when XML_Should_Pass =>
-               Put ("XP: XML KO, should be OK:");
+               Put ("XP: acceptance of valid XML ");
             when XML_Should_Fail =>
-               Put ("XF: XML OK, should be KO:");
+               Put ("XF: rejection of invalid XML");
             when Not_Implemented =>
-               Put ("NI: Features not implemented:");
+               Put ("NI: Features not implemented");
             when Internal_Error =>
-               Put ("IE: Internal error:");
+               Put ("IE: Internal error          ");
          end case;
 
-         if Errors (K) /= 0 then
-            case K is
-               when Not_Implemented | Internal_Error =>
-                  Put (Errors (K)'Img);
-               when others =>
-                  Put (" failed=" & Errors (K)'Img & " /" & Total (K)'Img);
-            end case;
-         end if;
+         case K is
+            when Not_Implemented | Internal_Error =>
+               Put (" |        |        |" & Image (Errors (K), 7) & " |");
+            when others =>
+               Put (" |" & Image (Total (K), 7)
+                    & " |" & Image (Total (K) - Errors (K), 7)
+                    & " |" & Image (Errors (K), 7) & " |");
+         end case;
 
          New_Line;
       end loop;
 
-      Put ("Total errors:" & Total_Error'Img & " (");
-      Put (100.0 * Float (Total_Error) / Float (Total_Tests),
-           Aft => 0, Exp => 0);
-      Put_Line (" %)");
+      Put_Line ("+------------------------------+--------+--------+--------+");
    end Print_Results;
 
    Setting  : Boolean;
@@ -1110,11 +1159,5 @@ begin
 
    Put_Line (Base_Name (Command_Name, ".exe"));
 
-   if Accepted_Only then
-      Put_Line ("Tests marked by W3C as non-accepted were not run");
-   end if;
-
    Run_Testsuite ("suite.xml");
-
-   Print_Results;
 end Schematest;
