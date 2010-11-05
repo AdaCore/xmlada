@@ -992,7 +992,7 @@ package body Schema.Schema_Readers is
                null;
 
             when Simple_Type_Union =>
-               Simple := (Kind => Facets_Union,
+               Simple := (Kind => Primitive_Union,
                           Union => (others => No_Simple_Type_Index),
                           others => <>);
                Index_In_Simple := Simple.Union'First;
@@ -1019,7 +1019,7 @@ package body Schema.Schema_Readers is
                Get_Type_Descr (NFA, Info.In_NFA).Simple_Content := Result;
 
             when Simple_Type_List =>
-               Simple := (Kind      => Facets_List,
+               Simple := (Kind      => Primitive_List,
                           List_Item => No_Simple_Type_Index,
                           others    => <>);
 

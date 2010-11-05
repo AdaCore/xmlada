@@ -50,18 +50,17 @@ package body Schema.Simple_Types is
 
    generic
       type T is private;
-      Unknown_T : T;
       with procedure Value (Symbols : Symbol_Table;
                             Ch      : Byte_Sequence;
                             Val     : out T;
                             Error   : out Symbol) is <>;
       with function Image (Val : T) return Byte_Sequence is <>;
-      with function "=" (T1, T2 : T) return Boolean is <>;
       with function "<" (T1, T2 : T) return Boolean is <>;
       with function "<=" (T1, T2 : T) return Boolean is <>;
    procedure Validate_Range
      (Symbols       : Sax.Utils.Symbol_Table;
       Ch            : Unicode.CES.Byte_Sequence;
+      Mask          : Facets_Mask;
       Min_Inclusive : T;
       Min_Exclusive : T;
       Max_Inclusive : T;
@@ -77,7 +76,9 @@ package body Schema.Simple_Types is
                             Error   : out Symbol) is <>;
    procedure Override_Single_Range_Facet
      (Symbols       : Sax.Utils.Symbol_Table;
-      Facet         : Facet_Value;
+      Facets        : All_Facets;
+      Facet         : Facet_Enum;
+      Mask          : in out Facets_Mask;
       Val           : in out T;
       Error         : in out Symbol;
       Error_Loc     : in out Location);
@@ -91,6 +92,7 @@ package body Schema.Simple_Types is
    procedure Override_Range_Facets
      (Symbols       : Sax.Utils.Symbol_Table;
       Facets        : All_Facets;
+      Mask          : in out Facets_Mask;
       Min_Inclusive : in out T;
       Min_Exclusive : in out T;
       Max_Inclusive : in out T;
@@ -145,7 +147,7 @@ package body Schema.Simple_Types is
    begin
       --  Characters are always a string, nothing to check here but the facets
 
-      if Descr.String_Length /= Natural'Last then
+      if Descr.Mask (Facet_Length) then
          Length := Get_Length (Ch);
          if Length /= Descr.String_Length then
             return Find
@@ -155,7 +157,7 @@ package body Schema.Simple_Types is
          end if;
       end if;
 
-      if Descr.String_Min_Length /= 0 then
+      if Descr.Mask (Facet_Min_Length) then
          if Length = -1 then
             Length := Get_Length (Ch);
          end if;
@@ -170,7 +172,7 @@ package body Schema.Simple_Types is
          end if;
       end if;
 
-      if Descr.String_Max_Length /= 0 then
+      if Descr.Mask (Facet_Max_Length) then
          if Length = -1 then
             Length := Get_Length (Ch);
          end if;
@@ -371,126 +373,168 @@ package body Schema.Simple_Types is
       Max_Unsigned_Byte : constant Arbitrary_Precision_Number :=
         Value (Find (Symbols, "+255"));
 
+      Whitespace_Mask : constant Facets_Mask := (Facet_Whitespace => True,
+                                                 others           => False);
+      Fraction_Min_Mask : constant Facets_Mask :=
+        (Facet_Fraction_Digits => True,
+         Facet_Min_Inclusive   => True,
+         others                => False);
+      Fraction_Max_Mask : constant Facets_Mask :=
+        (Facet_Fraction_Digits => True,
+         Facet_Max_Inclusive   => True,
+         others                => False);
+      Fraction_Min_Max_Mask : constant Facets_Mask :=
+        (Facet_Fraction_Digits => True,
+         Facet_Min_Inclusive   => True,
+         Facet_Max_Inclusive   => True,
+         others                => False);
+
    begin
-      Register ("anySimpleType", (Kind       => Facets_String,
+      Register ("anySimpleType", (Kind       => Primitive_String,
+                                  Mask       => Whitespace_Mask,
                                   Whitespace => Preserve,
                                   others     => <>));
-      Register ("string", (Kind       => Facets_String,
+      Register ("string", (Kind       => Primitive_String,
+                           Mask       => Whitespace_Mask,
                            Whitespace => Preserve,
                            others     => <>));
-      Register ("normalizedString", (Kind => Facets_String,
+      Register ("normalizedString", (Kind       => Primitive_String,
+                                     Mask       => Whitespace_Mask,
                                      Whitespace => Replace,
                                      others => <>));
-      Register ("token", (Kind => Facets_String,
+      Register ("token", (Kind       => Primitive_String,
+                          Mask       => Whitespace_Mask,
                           Whitespace => Collapse,
                           others => <>));
-      Register ("language", (Kind => Facets_Language,
+      Register ("language", (Kind       => Primitive_Language,
+                             Mask       => Whitespace_Mask,
                              Whitespace => Preserve,
                              others => <>));
-      Register ("boolean",  (Kind => Facets_Boolean, others => <>));
-      Register ("QName",    (Kind => Facets_QName, others => <>));
-      Register ("NOTATION", (Kind => Facets_QName, others => <>));
-      Register ("float",    (Kind => Facets_Float, others => <>));
-      Register ("NMTOKEN",  (Kind => Facets_NMTOKEN, others => <>));
-      Register ("NMTOKENS", (Kind => Facets_NMTOKENS, others => <>));
-      Register ("Name",     (Kind => Facets_Name,
+      Register ("boolean",  (Kind => Primitive_Boolean, others => <>));
+      Register ("QName",    (Kind => Primitive_QName, others => <>));
+      Register ("NOTATION", (Kind => Primitive_QName, others => <>));
+      Register ("float",    (Kind => Primitive_Float, others => <>));
+      Register ("NMTOKEN",  (Kind => Primitive_NMTOKEN, others => <>));
+      Register ("NMTOKENS", (Kind => Primitive_NMTOKENS, others => <>));
+      Register ("Name",     (Kind       => Primitive_Name,
+                             Mask       => Whitespace_Mask,
                              Whitespace => Preserve,
                              others => <>));
-      Register ("NCName",   (Kind => Facets_NCName,
+      Register ("NCName",   (Kind       => Primitive_NCName,
+                             Mask       => Whitespace_Mask,
                              Whitespace => Preserve,
                              others => <>));
-      Register ("ID",       (Kind => Facets_NCName,
+      Register ("ID",       (Kind       => Primitive_NCName,
+                             Mask       => Whitespace_Mask,
                              Whitespace => Preserve,
                              others => <>));
-      Register ("IDREF",    (Kind => Facets_NCName,
+      Register ("IDREF",    (Kind       => Primitive_NCName,
+                             Mask       => Whitespace_Mask,
                              Whitespace => Preserve,
                              others => <>));
-      Register ("IDREFS",   (Kind => Facets_NCNames,
+      Register ("IDREFS",   (Kind       => Primitive_NCNames,
+                             Mask       => Whitespace_Mask,
                              Whitespace => Preserve,
                              others => <>));
-      Register ("ENTITY",   (Kind => Facets_NCName,
+      Register ("ENTITY",   (Kind       => Primitive_NCName,
+                             Mask       => Whitespace_Mask,
                              Whitespace => Preserve,
                              others => <>));
-      Register ("ENTITIES", (Kind => Facets_NCNames,
+      Register ("ENTITIES", (Kind       => Primitive_NCNames,
+                             Mask       => Whitespace_Mask,
                              Whitespace => Preserve,
                              others => <>));
-      Register ("anyURI",   (Kind => Facets_Any_URI,
+      Register ("anyURI",   (Kind => Primitive_Any_URI,
                              others => <>));
-      Register ("hexBinary", (Kind => Facets_HexBinary,
+      Register ("hexBinary", (Kind => Primitive_HexBinary,
                               others => <>));
-      Register ("base64Binary", (Kind => Facets_Base64Binary,
+      Register ("base64Binary", (Kind => Primitive_Base64Binary,
                                  others => <>));
-      Register ("decimal", (Kind => Facets_Decimal, others => <>));
-      Register ("unsignedLong", (Kind                  => Facets_Decimal,
+      Register ("decimal", (Kind => Primitive_Decimal, others => <>));
+      Register ("unsignedLong", (Kind                 => Primitive_Decimal,
+                                 Mask                 => Fraction_Min_Max_Mask,
                                  Fraction_Digits       => 0,
                                  Decimal_Min_Inclusive => Zero,
                                  Decimal_Max_Inclusive => Max_Unsigned_Long,
                                  others                => <>));
-      Register ("integer",      (Kind                  => Facets_Decimal,
+      Register ("integer",      (Kind                  => Primitive_Decimal,
                                  Fraction_Digits       => 0,
+                                 Mask => (Facet_Fraction_Digits => True,
+                                          others                => False),
                                  others                => <>));
-      Register ("nonNegativeInteger", (Kind                  => Facets_Decimal,
+      Register ("nonNegativeInteger", (Kind               => Primitive_Decimal,
                                        Fraction_Digits       => 0,
                                        Decimal_Min_Inclusive => Zero,
+                                       Mask               => Fraction_Min_Mask,
                                        others                => <>));
-      Register ("positiveInteger",    (Kind                  => Facets_Decimal,
+      Register ("positiveInteger",    (Kind               => Primitive_Decimal,
                                        Fraction_Digits       => 0,
                                        Decimal_Min_Inclusive => One,
+                                       Mask               => Fraction_Min_Mask,
                                        others                => <>));
-      Register ("nonPositiveInteger", (Kind                  => Facets_Decimal,
+      Register ("nonPositiveInteger", (Kind               => Primitive_Decimal,
                                        Fraction_Digits       => 0,
                                        Decimal_Max_Inclusive => Zero,
+                                       Mask               => Fraction_Max_Mask,
                                        others                => <>));
-      Register ("negativeInteger",    (Kind                  => Facets_Decimal,
+      Register ("negativeInteger",    (Kind               => Primitive_Decimal,
                                        Fraction_Digits       => 0,
                                        Decimal_Max_Inclusive => Minus_One,
+                                       Mask               => Fraction_Max_Mask,
                                        others                => <>));
-      Register ("long",               (Kind                  => Facets_Decimal,
+      Register ("long",               (Kind               => Primitive_Decimal,
+                                       Mask           => Fraction_Min_Max_Mask,
                                        Fraction_Digits       => 0,
                                        Decimal_Max_Inclusive => Max_Long,
                                        Decimal_Min_Inclusive => Min_Long,
                                        others                => <>));
-      Register ("int",                (Kind                  => Facets_Decimal,
+      Register ("int",                (Kind               => Primitive_Decimal,
+                                       Mask           => Fraction_Min_Max_Mask,
                                        Fraction_Digits       => 0,
                                        Decimal_Max_Inclusive => Max_Int,
                                        Decimal_Min_Inclusive => Min_Int,
                                        others                => <>));
-      Register ("short",              (Kind                  => Facets_Decimal,
+      Register ("short",              (Kind               => Primitive_Decimal,
+                                       Mask           => Fraction_Min_Max_Mask,
                                        Fraction_Digits       => 0,
                                        Decimal_Max_Inclusive => Max_Short,
                                        Decimal_Min_Inclusive => Min_Short,
                                        others                => <>));
-      Register ("byte",               (Kind                  => Facets_Decimal,
+      Register ("byte",               (Kind               => Primitive_Decimal,
+                                       Mask           => Fraction_Min_Max_Mask,
                                        Fraction_Digits       => 0,
                                        Decimal_Max_Inclusive => Max_Byte,
                                        Decimal_Min_Inclusive => Min_Byte,
                                        others                => <>));
-      Register ("unsignedInt",      (Kind                  => Facets_Decimal,
+      Register ("unsignedInt",      (Kind                 => Primitive_Decimal,
+                                     Mask             => Fraction_Min_Max_Mask,
                                      Fraction_Digits       => 0,
                                      Decimal_Max_Inclusive => Max_Unsigned_Int,
                                      Decimal_Min_Inclusive => Zero,
                                      others                => <>));
-      Register ("unsignedShort",  (Kind                  => Facets_Decimal,
+      Register ("unsignedShort",  (Kind                  => Primitive_Decimal,
+                                   Mask               => Fraction_Min_Max_Mask,
                                    Fraction_Digits       => 0,
                                    Decimal_Max_Inclusive => Max_Unsigned_Short,
                                    Decimal_Min_Inclusive => Zero,
                                    others                => <>));
-      Register ("unsignedByte",   (Kind                  => Facets_Decimal,
+      Register ("unsignedByte",   (Kind                  => Primitive_Decimal,
+                                   Mask               => Fraction_Min_Max_Mask,
                                    Fraction_Digits       => 0,
                                    Decimal_Max_Inclusive => Max_Unsigned_Byte,
                                    Decimal_Min_Inclusive => Zero,
                                    others                => <>));
-      Register ("float",      (Kind => Facets_Float, others => <>));
-      Register ("double",     (Kind => Facets_Double, others => <>));
-      Register ("time",       (Kind => Facets_Time, others => <>));
-      Register ("dateTime",   (Kind => Facets_DateTime, others => <>));
-      Register ("gDay",       (Kind => Facets_GDay, others => <>));
-      Register ("gMonthDay",  (Kind => Facets_GMonthDay, others => <>));
-      Register ("gMonth",     (Kind => Facets_GMonth, others => <>));
-      Register ("gYearMonth", (Kind => Facets_GYearMonth, others => <>));
-      Register ("gYear",      (Kind => Facets_GYear, others => <>));
-      Register ("date",       (Kind => Facets_Date, others => <>));
-      Register ("duration",   (Kind => Facets_Duration, others => <>));
+      Register ("float",      (Kind => Primitive_Float, others => <>));
+      Register ("double",     (Kind => Primitive_Double, others => <>));
+      Register ("time",       (Kind => Primitive_Time, others => <>));
+      Register ("dateTime",   (Kind => Primitive_DateTime, others => <>));
+      Register ("gDay",       (Kind => Primitive_GDay, others => <>));
+      Register ("gMonthDay",  (Kind => Primitive_GMonthDay, others => <>));
+      Register ("gMonth",     (Kind => Primitive_GMonth, others => <>));
+      Register ("gYearMonth", (Kind => Primitive_GYearMonth, others => <>));
+      Register ("gYear",      (Kind => Primitive_GYear, others => <>));
+      Register ("date",       (Kind => Primitive_Date, others => <>));
+      Register ("duration",   (Kind => Primitive_Duration, others => <>));
 
       --  Missing attribute "xml:lang" of type "language"
    end Register_Predefined_Types;
@@ -509,25 +553,25 @@ package body Schema.Simple_Types is
       Descr : Simple_Type_Descr renames Simple_Types.Table (Simple_Type);
    begin
       case Descr.Kind is
-         when Facets_String .. Facets_HexBinary =>
+         when Primitive_String .. Primitive_HexBinary =>
             return Equal_String (Descr, Symbols, Ch1, Ch2);
-         when Facets_Boolean   => return Equal_Boolean (Symbols, Ch1, Ch2);
-         when Facets_Float | Facets_Double  =>
+         when Primitive_Boolean   => return Equal_Boolean (Symbols, Ch1, Ch2);
+         when Primitive_Float | Primitive_Double  =>
             return Equal_Float (Symbols, Ch1, Ch2);
-         when Facets_Decimal   => return Equal_Decimal (Symbols, Ch1, Ch2);
-         when Facets_Time      => return Equal_Time (Symbols, Ch1, Ch2);
-         when Facets_DateTime  => return Equal_Date_Time (Symbols, Ch1, Ch2);
-         when Facets_GDay      => return Equal_GDay (Symbols, Ch1, Ch2);
-         when Facets_GMonth    => return Equal_GMonth (Symbols, Ch1, Ch2);
-         when Facets_GYear     => return Equal_GYear (Symbols, Ch1, Ch2);
-         when Facets_Date      => return Equal_Date (Symbols, Ch1, Ch2);
-         when Facets_Duration  => return Equal_Duration (Symbols, Ch1, Ch2);
-         when Facets_GMonthDay =>
+         when Primitive_Decimal   => return Equal_Decimal (Symbols, Ch1, Ch2);
+         when Primitive_Time      => return Equal_Time (Symbols, Ch1, Ch2);
+         when Primitive_DateTime => return Equal_Date_Time (Symbols, Ch1, Ch2);
+         when Primitive_GDay      => return Equal_GDay (Symbols, Ch1, Ch2);
+         when Primitive_GMonth    => return Equal_GMonth (Symbols, Ch1, Ch2);
+         when Primitive_GYear     => return Equal_GYear (Symbols, Ch1, Ch2);
+         when Primitive_Date      => return Equal_Date (Symbols, Ch1, Ch2);
+         when Primitive_Duration  => return Equal_Duration (Symbols, Ch1, Ch2);
+         when Primitive_GMonthDay =>
             return Equal_GMonth_Day (Symbols, Ch1, Ch2);
-         when Facets_GYearMonth =>
+         when Primitive_GYearMonth =>
             return Equal_GYear_Month (Symbols, Ch1, Ch2);
 
-         when Facets_Union =>
+         when Primitive_Union =>
             for S in Descr.Union'Range loop
                if Descr.Union (S) /= No_Simple_Type_Index then
                   if Equal
@@ -543,7 +587,7 @@ package body Schema.Simple_Types is
             end loop;
             return False;
 
-         when Facets_List =>
+         when Primitive_List =>
             return Get (Ch1).all = Ch2;
 
       end case;
@@ -582,7 +626,7 @@ package body Schema.Simple_Types is
       procedure Validate_List_Items is new For_Each_Item (Validate_List_Item);
 
    begin
-      if Descr.Kind = Facets_Union then
+      if Descr.Kind = Primitive_Union then
          for S in Descr.Union'Range loop
             if Descr.Union (S) /= No_Simple_Type_Index then
                Error := Validate_Simple_Type
@@ -604,14 +648,14 @@ package body Schema.Simple_Types is
          end loop;
          return Find (Symbols, "No matching type in the union");
 
-      elsif Descr.Kind = Facets_List then
+      elsif Descr.Kind = Primitive_List then
          Validate_List_Items (Ch);
          return Error;
       end if;
 
       --  Check common facets
 
-      if Descr.Enumeration /= No_Enumeration_Index then
+      if Descr.Mask (Facet_Enumeration) then
          declare
             Enum  : Enumeration_Index := Descr.Enumeration;
             Found : Boolean := False;
@@ -632,7 +676,7 @@ package body Schema.Simple_Types is
          end;
       end if;
 
-      if Descr.Pattern_String /= No_Symbol then
+      if Descr.Mask (Facet_Pattern) then
 
          --  Check whether we have unicode char outside of ASCII
 
@@ -656,7 +700,8 @@ package body Schema.Simple_Types is
          end if;
       end if;
 
-      case Descr.Whitespace is
+      if Descr.Mask (Facet_Whitespace) then
+         case Descr.Whitespace is
          when Preserve =>
             null; --  Always valid
 
@@ -699,43 +744,55 @@ package body Schema.Simple_Types is
                     (Symbols, "Trailing whitespaces not allowed");
                end if;
             end if;
-      end case;
+         end case;
+      end if;
 
       --  Type-specific facets
 
       case Descr.Kind is
-         when Facets_String | Facets_Notation =>
+         when Primitive_String | Primitive_Notation =>
             return Validate_String (Descr, Symbols, Ch);
-         when Facets_HexBinary =>
+         when Primitive_HexBinary =>
             return Validate_HexBinary (Descr, Symbols, Ch);
-         when Facets_Base64Binary =>
+         when Primitive_Base64Binary =>
             return Validate_Base64Binary (Descr, Symbols, Ch);
-         when Facets_Language => return Validate_Language (Descr, Symbols, Ch);
-         when Facets_QName    => return Validate_QName (Descr, Symbols, Ch);
-         when Facets_NCName   => return Validate_NCName (Descr, Symbols, Ch);
-         when Facets_NCNames  => return Validate_NCNames (Descr, Symbols, Ch);
-         when Facets_Name     => return Validate_Name (Descr, Symbols, Ch);
-         when Facets_Any_URI  => return Validate_URI (Descr, Symbols, Ch);
-         when Facets_NMTOKEN  => return Validate_NMTOKEN (Descr, Symbols, Ch);
-         when Facets_NMTOKENS => return Validate_NMTOKENS (Descr, Symbols, Ch);
-         when Facets_Boolean  => return Validate_Boolean (Descr, Symbols, Ch);
-         when Facets_Decimal  => return Validate_Decimal (Descr, Symbols, Ch);
-         when Facets_Float | Facets_Double  =>
+         when Primitive_Language =>
+            return Validate_Language (Descr, Symbols, Ch);
+         when Primitive_QName    => return Validate_QName (Descr, Symbols, Ch);
+         when Primitive_NCName   =>
+            return Validate_NCName (Descr, Symbols, Ch);
+         when Primitive_NCNames  =>
+            return Validate_NCNames (Descr, Symbols, Ch);
+         when Primitive_Name     => return Validate_Name (Descr, Symbols, Ch);
+         when Primitive_Any_URI  => return Validate_URI (Descr, Symbols, Ch);
+         when Primitive_NMTOKEN  =>
+            return Validate_NMTOKEN (Descr, Symbols, Ch);
+         when Primitive_NMTOKENS =>
+            return Validate_NMTOKENS (Descr, Symbols, Ch);
+         when Primitive_Boolean  =>
+            return Validate_Boolean (Descr, Symbols, Ch);
+         when Primitive_Decimal  =>
+            return Validate_Decimal (Descr, Symbols, Ch);
+         when Primitive_Float | Primitive_Double  =>
             return Validate_Double (Descr, Symbols, Ch);
-         when Facets_Time     => return Validate_Time (Descr, Symbols, Ch);
-         when Facets_DateTime =>
+         when Primitive_Time     => return Validate_Time (Descr, Symbols, Ch);
+         when Primitive_DateTime =>
             return Validate_Date_Time (Descr, Symbols, Ch);
-         when Facets_GDay => return Validate_GDay (Descr, Symbols, Ch);
-         when Facets_GMonthDay =>
+         when Primitive_GDay => return Validate_GDay (Descr, Symbols, Ch);
+         when Primitive_GMonthDay =>
             return Validate_GMonth_Day (Descr, Symbols, Ch);
-         when Facets_GMonth   => return Validate_GMonth (Descr, Symbols, Ch);
-         when Facets_GYearMonth =>
+         when Primitive_GMonth   =>
+            return Validate_GMonth (Descr, Symbols, Ch);
+         when Primitive_GYearMonth =>
             return Validate_GYear_Month (Descr, Symbols, Ch);
-         when Facets_GYear    => return Validate_GYear (Descr, Symbols, Ch);
-         when Facets_Date     => return Validate_Date (Descr, Symbols, Ch);
-         when Facets_Duration => return Validate_Duration (Descr, Symbols, Ch);
-         when Facets_Union    => return No_Symbol;  --  Already handled above
-         when Facets_List     => return No_Symbol;  --  Already handled above
+         when Primitive_GYear    => return Validate_GYear (Descr, Symbols, Ch);
+         when Primitive_Date     => return Validate_Date (Descr, Symbols, Ch);
+         when Primitive_Duration =>
+            return Validate_Duration (Descr, Symbols, Ch);
+         when Primitive_Union    =>
+            return No_Symbol;  --  Already handled above
+         when Primitive_List     =>
+            return No_Symbol;  --  Already handled above
       end case;
    end Validate_Simple_Type;
 
@@ -1039,6 +1096,7 @@ package body Schema.Simple_Types is
    procedure Validate_Range
      (Symbols       : Sax.Utils.Symbol_Table;
       Ch            : Unicode.CES.Byte_Sequence;
+      Mask          : Facets_Mask;
       Min_Inclusive : T;
       Min_Exclusive : T;
       Max_Inclusive : T;
@@ -1055,7 +1113,7 @@ package body Schema.Simple_Types is
          return;
       end if;
 
-      if Min_Inclusive /= Unknown_T then
+      if Mask (Facet_Min_Inclusive) then
          if Val < Min_Inclusive then
             Error := Find
               (Symbols,
@@ -1065,7 +1123,7 @@ package body Schema.Simple_Types is
          end if;
       end if;
 
-      if Min_Exclusive /= Unknown_T then
+      if Mask (Facet_Min_Exclusive) then
          if Val <= Min_Exclusive then
             Error := Find
               (Symbols,
@@ -1075,7 +1133,7 @@ package body Schema.Simple_Types is
          end if;
       end if;
 
-      if Max_Inclusive /= Unknown_T then
+      if Mask (Facet_Max_Inclusive) then
          if Max_Inclusive < Val then
             Error := Find
               (Symbols,
@@ -1085,7 +1143,7 @@ package body Schema.Simple_Types is
          end if;
       end if;
 
-      if Max_Exclusive /= Unknown_T then
+      if Mask (Facet_Max_Exclusive) then
          if Max_Exclusive <= Val then
             Error := Find
               (Symbols,
@@ -1096,29 +1154,19 @@ package body Schema.Simple_Types is
       end if;
    end Validate_Range;
 
-   procedure Validate_Double_Facets is new Validate_Range
-     (XML_Float, Unknown_Float);
+   procedure Validate_Double_Facets is new Validate_Range (XML_Float);
    procedure Validate_Decimal_Facets is new Validate_Range
-     (Arbitrary_Precision_Number, Undefined_Number,
-      Value => Value_No_Exponent);
-   procedure Validate_Duration_Facets is new Validate_Range
-     (Duration_T, No_Duration);
-   procedure Validate_Date_Time_Facets is new Validate_Range
-     (Date_Time_T, No_Date_Time);
-   procedure Validate_Date_Facets is new Validate_Range
-     (Date_T, No_Date_T);
-   procedure Validate_Time_Facets is new Validate_Range
-     (Time_T, No_Time_T);
-   procedure Validate_GDay_Facets is new Validate_Range
-     (GDay_T, No_GDay);
-   procedure Validate_GMonth_Day_Facets is new Validate_Range
-     (GMonth_Day_T, No_Month_Day);
-   procedure Validate_GMonth_Facets is new Validate_Range
-     (GMonth_T, No_Month);
-   procedure Validate_GYear_Facets is new Validate_Range
-     (GYear_T, No_Year);
+     (Arbitrary_Precision_Number, Value => Value_No_Exponent);
+   procedure Validate_Duration_Facets is new Validate_Range (Duration_T);
+   procedure Validate_Date_Time_Facets is new Validate_Range (Date_Time_T);
+   procedure Validate_Date_Facets is new Validate_Range (Date_T);
+   procedure Validate_Time_Facets is new Validate_Range (Time_T);
+   procedure Validate_GDay_Facets is new Validate_Range (GDay_T);
+   procedure Validate_GMonth_Day_Facets is new Validate_Range (GMonth_Day_T);
+   procedure Validate_GMonth_Facets is new Validate_Range (GMonth_T);
+   procedure Validate_GYear_Facets is new Validate_Range (GYear_T);
    procedure Validate_GYear_Month_Facets is new Validate_Range
-     (GYear_Month_T, No_Year_Month);
+     (GYear_Month_T);
 
    ---------------------
    -- Validate_Double --
@@ -1133,7 +1181,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_Double_Facets
-        (Symbols, Ch, Descr.Float_Min_Inclusive,
+        (Symbols, Ch, Descr.Mask, Descr.Float_Min_Inclusive,
          Descr.Float_Min_Exclusive, Descr.Float_Max_Inclusive,
          Descr.Float_Max_Exclusive, Error, Val);
       return Error;
@@ -1152,7 +1200,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_Duration_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.Duration_Min_Inclusive, Descr.Duration_Min_Exclusive,
          Descr.Duration_Max_Inclusive, Descr.Duration_Max_Exclusive,
          Error, Val);
@@ -1172,7 +1220,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_Date_Time_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.DateTime_Min_Inclusive, Descr.DateTime_Min_Exclusive,
          Descr.DateTime_Max_Inclusive, Descr.DateTime_Max_Exclusive,
          Error, Val);
@@ -1192,7 +1240,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_Date_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.Date_Min_Inclusive, Descr.Date_Min_Exclusive,
          Descr.Date_Max_Inclusive, Descr.Date_Max_Exclusive,
          Error, Val);
@@ -1212,7 +1260,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_Time_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.Time_Min_Inclusive, Descr.Time_Min_Exclusive,
          Descr.Time_Max_Inclusive, Descr.Time_Max_Exclusive,
          Error, Val);
@@ -1232,7 +1280,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_GDay_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.GDay_Min_Inclusive, Descr.GDay_Min_Exclusive,
          Descr.GDay_Max_Inclusive, Descr.GDay_Max_Exclusive,
          Error, Val);
@@ -1252,7 +1300,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_GMonth_Day_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.GMonthDay_Min_Inclusive, Descr.GMonthDay_Min_Exclusive,
          Descr.GMonthDay_Max_Inclusive, Descr.GMonthDay_Max_Exclusive,
          Error, Val);
@@ -1272,7 +1320,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_GMonth_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.GMonth_Min_Inclusive, Descr.GMonth_Min_Exclusive,
          Descr.GMonth_Max_Inclusive, Descr.GMonth_Max_Exclusive,
          Error, Val);
@@ -1292,7 +1340,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_GYear_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.GYear_Min_Inclusive, Descr.GYear_Min_Exclusive,
          Descr.GYear_Max_Inclusive, Descr.GYear_Max_Exclusive,
          Error, Val);
@@ -1312,7 +1360,7 @@ package body Schema.Simple_Types is
       Error : Symbol;
    begin
       Validate_GYear_Month_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.GYearMonth_Min_Inclusive, Descr.GYearMonth_Min_Exclusive,
          Descr.GYearMonth_Max_Inclusive, Descr.GYearMonth_Max_Exclusive,
          Error, Val);
@@ -1332,7 +1380,7 @@ package body Schema.Simple_Types is
       Val   : Arbitrary_Precision_Number;
    begin
       Validate_Decimal_Facets
-        (Symbols, Ch,
+        (Symbols, Ch, Descr.Mask,
          Descr.Decimal_Min_Inclusive, Descr.Decimal_Min_Exclusive,
          Descr.Decimal_Max_Inclusive, Descr.Decimal_Max_Exclusive,
         Error, Val);
@@ -1604,19 +1652,23 @@ package body Schema.Simple_Types is
 
    procedure Override_Single_Range_Facet
      (Symbols       : Sax.Utils.Symbol_Table;
-      Facet         : Facet_Value;
+      Facets        : All_Facets;
+      Facet         : Facet_Enum;
+      Mask          : in out Facets_Mask;
       Val           : in out T;
       Error         : in out Symbol;
       Error_Loc     : in out Location) is
    begin
-      if Error = No_Symbol and then Facet /= No_Facet_Value then
+      if Error = No_Symbol and then Facets (Facet) /= No_Facet_Value then
          Value
            (Symbols,
-            Ch    => Get (Facet.Value).all,
+            Ch    => Get (Facets (Facet).Value).all,
             Val   => Val,
             Error => Error);
          if Error /= No_Symbol then
-            Error_Loc := Facet.Loc;
+            Error_Loc := Facets (Facet).Loc;
+         else
+            Mask (Facet) := True;
          end if;
       end if;
    end Override_Single_Range_Facet;
@@ -1628,6 +1680,7 @@ package body Schema.Simple_Types is
    procedure Override_Range_Facets
      (Symbols       : Sax.Utils.Symbol_Table;
       Facets        : All_Facets;
+      Mask          : in out Facets_Mask;
       Min_Inclusive : in out T;
       Min_Exclusive : in out T;
       Max_Inclusive : in out T;
@@ -1637,13 +1690,13 @@ package body Schema.Simple_Types is
    is
       procedure Do_Override is new Override_Single_Range_Facet (T, Value);
    begin
-      Do_Override (Symbols, Facets (Facet_Max_Inclusive),
+      Do_Override (Symbols, Facets, Facet_Max_Inclusive, Mask,
                    Max_Inclusive, Error, Error_Loc);
-      Do_Override (Symbols, Facets (Facet_Max_Exclusive),
+      Do_Override (Symbols, Facets, Facet_Max_Exclusive, Mask,
                    Max_Exclusive, Error, Error_Loc);
-      Do_Override (Symbols, Facets (Facet_Min_Inclusive),
+      Do_Override (Symbols, Facets, Facet_Min_Inclusive, Mask,
                    Min_Inclusive, Error, Error_Loc);
-      Do_Override (Symbols, Facets (Facet_Min_Exclusive),
+      Do_Override (Symbols, Facets, Facet_Min_Exclusive, Mask,
                    Min_Exclusive, Error, Error_Loc);
    end Override_Range_Facets;
 
@@ -1691,6 +1744,8 @@ package body Schema.Simple_Types is
                            & Get (Val).all);
             return;
          end if;
+
+         Simple.Mask (Facet_Whitespace) := True;
       end if;
 
       if Facets (Facet_Pattern) /= No_Facet_Value then
@@ -1725,23 +1780,27 @@ package body Schema.Simple_Types is
                   & " (converted to " & Convert & ")");
                return;
          end;
+
+         Simple.Mask (Facet_Pattern) := True;
       end if;
 
       if Facets (Facet_Enumeration) /= No_Facet_Value then
          Simple.Enumeration := Facets (Facet_Enumeration).Enum;
+         Simple.Mask (Facet_Enumeration) := True;
       end if;
 
       Error := No_Symbol;
 
       case Simple.Kind is
-         when Facets_Union | Facets_List =>
+         when Primitive_Union | Primitive_List =>
             null;
 
-         when Facets_String .. Facets_HexBinary =>
+         when Primitive_String .. Primitive_HexBinary =>
             if Facets (Facet_Length) /= No_Facet_Value then
                begin
                   Simple.String_Length := Natural'Value
                     (Get (Facets (Facet_Length).Value).all);
+                  Simple.Mask (Facet_Length) := True;
                exception
                   when Constraint_Error =>
                      Error := Find
@@ -1754,6 +1813,7 @@ package body Schema.Simple_Types is
                begin
                   Simple.String_Min_Length := Natural'Value
                     (Get (Facets (Facet_Min_Length).Value).all);
+                  Simple.Mask (Facet_Min_Length) := True;
                exception
                   when Constraint_Error =>
                      Error := Find
@@ -1766,6 +1826,7 @@ package body Schema.Simple_Types is
                begin
                   Simple.String_Max_Length := Natural'Value
                     (Get (Facets (Facet_Max_Length).Value).all);
+                  Simple.Mask (Facet_Max_Length) := True;
                exception
                   when Constraint_Error =>
                      Error := Find
@@ -1774,19 +1835,19 @@ package body Schema.Simple_Types is
                end;
             end if;
 
-         when Facets_Boolean =>
+         when Primitive_Boolean =>
             null;
 
-         when Facets_Float | Facets_Double  =>
+         when Primitive_Float | Primitive_Double  =>
             Override_Float_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.Float_Min_Inclusive, Simple.Float_Min_Exclusive,
                Simple.Float_Max_Inclusive, Simple.Float_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_Decimal =>
+         when Primitive_Decimal =>
             Override_Decimal_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.Decimal_Min_Inclusive, Simple.Decimal_Min_Exclusive,
                Simple.Decimal_Max_Inclusive, Simple.Decimal_Max_Exclusive,
                Error, Error_Loc);
@@ -1796,6 +1857,7 @@ package body Schema.Simple_Types is
                   begin
                      Simple.Total_Digits := Positive'Value
                        (Get (Facets (Facet_Total_Digits).Value).all);
+                     Simple.Mask (Facet_Total_Digits) := True;
                   exception
                      when Constraint_Error =>
                         Error := Find
@@ -1808,6 +1870,7 @@ package body Schema.Simple_Types is
                   begin
                      Simple.Fraction_Digits := Natural'Value
                        (Get (Facets (Facet_Fraction_Digits).Value).all);
+                     Simple.Mask (Facet_Fraction_Digits) := True;
                   exception
                      when Constraint_Error =>
                         Error := Find
@@ -1828,67 +1891,67 @@ package body Schema.Simple_Types is
                end if;
             end if;
 
-         when Facets_Time =>
+         when Primitive_Time =>
             Override_Time_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.Time_Min_Inclusive, Simple.Time_Min_Exclusive,
                Simple.Time_Max_Inclusive, Simple.Time_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_DateTime =>
+         when Primitive_DateTime =>
             Override_Date_Time_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.DateTime_Min_Inclusive, Simple.DateTime_Min_Exclusive,
                Simple.DateTime_Max_Inclusive, Simple.DateTime_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_GDay =>
+         when Primitive_GDay =>
             Override_GDay_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.GDay_Min_Inclusive, Simple.GDay_Min_Exclusive,
                Simple.GDay_Max_Inclusive, Simple.GDay_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_GMonthDay =>
+         when Primitive_GMonthDay =>
             Override_GMonth_Day_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.GMonthDay_Min_Inclusive, Simple.GMonthDay_Min_Exclusive,
                Simple.GMonthDay_Max_Inclusive, Simple.GMonthDay_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_GMonth =>
+         when Primitive_GMonth =>
             Override_GMonth_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.GMonth_Min_Inclusive, Simple.GMonth_Min_Exclusive,
                Simple.GMonth_Max_Inclusive, Simple.GMonth_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_GYearMonth =>
+         when Primitive_GYearMonth =>
             Override_GYear_Month_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.GYearMonth_Min_Inclusive,
                Simple.GYearMonth_Min_Exclusive,
                Simple.GYearMonth_Max_Inclusive,
                Simple.GYearMonth_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_GYear =>
+         when Primitive_GYear =>
             Override_GYear_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.GYear_Min_Inclusive, Simple.GYear_Min_Exclusive,
                Simple.GYear_Max_Inclusive, Simple.GYear_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_Date =>
+         when Primitive_Date =>
             Override_Date_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.Date_Min_Inclusive, Simple.Date_Min_Exclusive,
                Simple.Date_Max_Inclusive, Simple.Date_Max_Exclusive,
                Error, Error_Loc);
 
-         when Facets_Duration =>
+         when Primitive_Duration =>
             Override_Duration_Facets
-              (Symbols, Facets,
+              (Symbols, Facets, Simple.Mask,
                Simple.Duration_Min_Inclusive, Simple.Duration_Min_Exclusive,
                Simple.Duration_Max_Inclusive, Simple.Duration_Max_Exclusive,
                Error, Error_Loc);

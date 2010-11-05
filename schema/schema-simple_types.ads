@@ -49,7 +49,7 @@ package Schema.Simple_Types is
    Max_Types_In_Union : constant := 9;
    --  Maximum number of types in a union.
    --  This is hard-coded to avoid memory allocations as much as possible.
-   --  This value is chosen so that the case [Facets_Union] does not make
+   --  This value is chosen so that the case [Primitive_Union] does not make
    --  [Simple_Type_Descr] bigger than the other cases.
 
    type Whitespace_Restriction is (Preserve, Replace, Collapse);
@@ -60,19 +60,19 @@ package Schema.Simple_Types is
    --  regexp Regexp to a GNAT.Regpat compatible one
 
    type Primitive_Simple_Type_Kind is
-     (Facets_Boolean, Facets_Double, Facets_Decimal,
-      Facets_Float,
+     (Primitive_Boolean, Primitive_Double, Primitive_Decimal,
+      Primitive_Float,
 
-      Facets_String, Facets_Any_URI, Facets_QName,
-      Facets_Notation, Facets_NMTOKEN, Facets_Language,
-      Facets_NMTOKENS, Facets_Name, Facets_NCName, Facets_NCNames,
-      Facets_Base64Binary, Facets_HexBinary,
+      Primitive_String, Primitive_Any_URI, Primitive_QName,
+      Primitive_Notation, Primitive_NMTOKEN, Primitive_Language,
+      Primitive_NMTOKENS, Primitive_Name, Primitive_NCName, Primitive_NCNames,
+      Primitive_Base64Binary, Primitive_HexBinary,
 
-      Facets_Time, Facets_DateTime, Facets_GDay, Facets_GMonthDay,
-      Facets_GMonth, Facets_GYearMonth, Facets_GYear, Facets_Date,
-      Facets_Duration,
+      Primitive_Time, Primitive_DateTime, Primitive_GDay, Primitive_GMonthDay,
+      Primitive_GMonth, Primitive_GYearMonth, Primitive_GYear, Primitive_Date,
+      Primitive_Duration,
 
-      Facets_Union, Facets_List
+      Primitive_Union, Primitive_List
      );
 
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
@@ -81,80 +81,95 @@ package Schema.Simple_Types is
 
    type Simple_Type_Array is array (Natural range <>) of Simple_Type_Index;
 
+   type Facet_Enum is (Facet_Whitespace,
+                       Facet_Enumeration,
+                       Facet_Pattern,
+                       Facet_Min_Inclusive,
+                       Facet_Max_Inclusive,
+                       Facet_Min_Exclusive,
+                       Facet_Max_Exclusive,
+                       Facet_Length,
+                       Facet_Min_Length,
+                       Facet_Max_Length,
+                       Facet_Total_Digits,
+                       Facet_Fraction_Digits);
+   type Facets_Mask is array (Facet_Enum) of Boolean;
+
    type Simple_Type_Descr
-     (Kind : Primitive_Simple_Type_Kind := Facets_Boolean)
+     (Kind : Primitive_Simple_Type_Kind := Primitive_Boolean)
    is record
+      Mask           : Facets_Mask            := (others => False);
       Pattern_String : Sax.Symbols.Symbol     := Sax.Symbols.No_Symbol;
       Pattern        : Pattern_Matcher_Access := null;
       Whitespace     : Whitespace_Restriction := Collapse;
       Enumeration    : Enumeration_Index      := No_Enumeration_Index;
 
       case Kind is
-         when Facets_Union =>
+         when Primitive_Union =>
             Union : Simple_Type_Array (1 .. Max_Types_In_Union) :=
               (others => No_Simple_Type_Index);
 
-         when Facets_List =>
+         when Primitive_List =>
             List_Item : Simple_Type_Index;
 
-         when Facets_String .. Facets_HexBinary =>
+         when Primitive_String .. Primitive_HexBinary =>
             String_Length      : Natural := Natural'Last;
             String_Min_Length  : Natural := 0;
             String_Max_Length  : Natural := Natural'Last;
 
-         when Facets_Boolean =>
+         when Primitive_Boolean =>
             null;
 
-         when Facets_Float | Facets_Double  =>  --  float, double
+         when Primitive_Float | Primitive_Double  =>  --  float, double
             Float_Min_Inclusive : XML_Float := Unknown_Float;
             Float_Max_Inclusive : XML_Float := Unknown_Float;
             Float_Min_Exclusive : XML_Float := Unknown_Float;
             Float_Max_Exclusive : XML_Float := Unknown_Float;
 
-         when Facets_Decimal =>  --  decimal
+         when Primitive_Decimal =>  --  decimal
             Total_Digits          : Positive := Positive'Last;
             Fraction_Digits       : Natural  := Natural'Last;
             Decimal_Min_Inclusive, Decimal_Max_Inclusive,
             Decimal_Min_Exclusive, Decimal_Max_Exclusive :
             Arbitrary_Precision_Number := Undefined_Number;
 
-         when Facets_Time =>
+         when Primitive_Time =>
             Time_Min_Inclusive, Time_Min_Exclusive,
             Time_Max_Inclusive, Time_Max_Exclusive  : Time_T := No_Time_T;
 
-         when Facets_DateTime =>
+         when Primitive_DateTime =>
             DateTime_Min_Inclusive, DateTime_Min_Exclusive,
             DateTime_Max_Inclusive, DateTime_Max_Exclusive  : Date_Time_T :=
               No_Date_Time;
 
-         when Facets_GDay =>
+         when Primitive_GDay =>
             GDay_Min_Inclusive, GDay_Min_Exclusive,
             GDay_Max_Inclusive, GDay_Max_Exclusive  : GDay_T := No_GDay;
 
-         when Facets_GMonthDay =>
+         when Primitive_GMonthDay =>
             GMonthDay_Min_Inclusive, GMonthDay_Min_Exclusive,
             GMonthDay_Max_Inclusive, GMonthDay_Max_Exclusive : GMonth_Day_T
               := No_Month_Day;
 
-         when Facets_GMonth =>
+         when Primitive_GMonth =>
             GMonth_Min_Inclusive, GMonth_Min_Exclusive,
             GMonth_Max_Inclusive, GMonth_Max_Exclusive  : GMonth_T :=
               No_Month;
 
-         when Facets_GYearMonth =>
+         when Primitive_GYearMonth =>
             GYearMonth_Min_Inclusive, GYearMonth_Min_Exclusive,
             GYearMonth_Max_Inclusive, GYearMonth_Max_Exclusive :
               GYear_Month_T := No_Year_Month;
 
-         when Facets_GYear =>
+         when Primitive_GYear =>
             GYear_Min_Inclusive, GYear_Min_Exclusive,
             GYear_Max_Inclusive, GYear_Max_Exclusive  : GYear_T := No_Year;
 
-         when Facets_Date =>
+         when Primitive_Date =>
             Date_Min_Inclusive, Date_Min_Exclusive,
             Date_Max_Inclusive, Date_Max_Exclusive  : Date_T := No_Date_T;
 
-         when Facets_Duration =>
+         when Primitive_Duration =>
             Duration_Min_Inclusive, Duration_Min_Exclusive,
             Duration_Max_Inclusive, Duration_Max_Exclusive  : Duration_T :=
               No_Duration;
@@ -162,7 +177,7 @@ package Schema.Simple_Types is
    end record;
 
    Any_Simple_Type : constant Simple_Type_Descr :=
-     (Kind => Facets_String, Whitespace => Preserve, others => <>);
+     (Kind => Primitive_String, Whitespace => Preserve, others => <>);
 
    function Copy (Descr : Simple_Type_Descr) return Simple_Type_Descr;
    --  return a deep copy of [Copy] (duplicates the pattern)
@@ -214,18 +229,6 @@ package Schema.Simple_Types is
    --  Checks whether [Ch1]=[Ch2] according to the type.
    --  (This involves for instance normalizing whitespaces)
 
-   type Facet_Enum is (Facet_Whitespace,
-                       Facet_Enumeration,
-                       Facet_Pattern,
-                       Facet_Min_Inclusive,
-                       Facet_Max_Inclusive,
-                       Facet_Min_Exclusive,
-                       Facet_Max_Exclusive,
-                       Facet_Length,
-                       Facet_Min_Length,
-                       Facet_Max_Length,
-                       Facet_Total_Digits,
-                       Facet_Fraction_Digits);
    type Facet_Value is record
       Value : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       Enum  : Enumeration_Index := No_Enumeration_Index;
