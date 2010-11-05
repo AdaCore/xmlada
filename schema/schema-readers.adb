@@ -269,6 +269,15 @@ package body Schema.Readers is
 
       Is_Empty := Handler.Characters_Count = 0;
 
+      if not Is_Empty then
+         if Debug then
+            Debug_Output ("Normalize whitespace: " & Whitespace'Img);
+         end if;
+
+         Normalize_Whitespace
+           (Whitespace, Handler.Characters.all, Handler.Characters_Count);
+      end if;
+
       --  in 3.3.1: if the element is empty, the "fixed" value
       --  should be used for it, just as for "default"
       --     Characters (Handler.all, Get (Get_Fixed (Handler)).all);
@@ -281,25 +290,6 @@ package body Schema.Readers is
               ("Substitute fixed value for empty characters:"
                & Get (Fixed).all);
          end if;
-      end if;
-
-      if not Is_Empty then
-         if Debug then
-            Debug_Output ("Normalize whitespace: " & Whitespace'Img);
-         end if;
-
-         Normalize_Whitespace
-           (Whitespace, Handler.Characters.all, Handler.Characters_Count);
-      end if;
-
-      if Fixed /= No_Symbol
-        and then Get (Fixed).all /=
-        Handler.Characters (1 .. Handler.Characters_Count)
-      then
-         Validation_Error
-           (Handler,
-            "Invalid character content (fixed to """
-            & Get (Fixed).all & """)");
       end if;
 
       Iter := For_Each_Active_State (Handler.Matcher,
@@ -335,6 +325,24 @@ package body Schema.Readers is
                      Handler.Characters (1 .. Handler.Characters_Count),
                      Empty_Element => Is_Empty,
                      Loc           => Loc);
+               end if;
+
+               --  We now know we have a valid character content, and we need
+               --  to check it is equal to the fixed value. We also know that
+               --  fixed matches the type, since it was checked when the XSD
+               --  was parsed.
+
+               if Fixed /= No_Symbol
+                 and then not Equal
+                   (Reader      => Handler,
+                    Simple_Type => Descr.Simple_Content,
+                    Ch1 => Fixed,
+                    Ch2 => Handler.Characters (1 .. Handler.Characters_Count))
+               then
+                  Validation_Error
+                    (Handler,
+                     "Invalid character content (fixed to """
+                     & Get (Fixed).all & """)");
                end if;
 
             elsif not Descr.Mixed

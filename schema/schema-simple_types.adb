@@ -155,8 +155,13 @@ package body Schema.Simple_Types is
       Error  : Symbol;
    begin
       Value (Symbols, Get (Val1).all, V1, Error);
+      if Error /= No_Symbol then
+         return False;
+      end if;
+
       Value (Symbols, Val2, V2, Error);
-      return V1 = V2;
+
+      return Error = No_Symbol and then V1 = V2;
    end Generic_Equal;
 
    ----------------------------
@@ -652,6 +657,14 @@ package body Schema.Simple_Types is
          when Primitive_Union =>
             for S in Descr.Union'Range loop
                if Descr.Union (S) /= No_Simple_Type_Index then
+                  --  In the case of a union type, we need to check whether
+                  --  any of the member says we have a match. However, in this
+                  --  particular case, we should only check members for which
+                  --  [Ch1] is a valid value. For instance, if Fixed="1.0" and
+                  --  the union is "int float", only the comparison with float
+                  --  should be done.
+                  --  ??? The above is not implemented, is this needed (stE054)
+
                   if Equal
                     (Simple_Types => Simple_Types,
                      Symbols      => Symbols,
@@ -854,7 +867,7 @@ package body Schema.Simple_Types is
                      Ch            => Ch,
                      Empty_Element => Empty_Element);
                   if Error = No_Symbol then
-                     return Error;
+                     return No_Symbol;
                   else
                      if Debug then
                         Debug_Output ("Checking union at index" & S'Img
@@ -863,6 +876,7 @@ package body Schema.Simple_Types is
                   end if;
                end if;
             end loop;
+
             return Find (Symbols, "No matching type in the union");
 
          when Primitive_List     =>
