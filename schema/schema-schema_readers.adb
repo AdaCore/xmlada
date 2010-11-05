@@ -825,9 +825,11 @@ package body Schema.Schema_Readers is
             return;
          end if;
 
-         Debug_Output ("Create_Simple_Type ? "
-                       & To_QName (Info.Descr.Name)
-                       & " " & Info.Simple.Kind'Img);
+         if Debug then
+            Debug_Output ("Create_Simple_Type ? "
+                          & To_QName (Info.Descr.Name)
+                          & " " & Info.Simple.Kind'Img);
+         end if;
 
          case Info.Simple.Kind is
             when Simple_Type =>
@@ -849,10 +851,12 @@ package body Schema.Schema_Readers is
                          (Info.Simple.Union_Items (U).Name,
                           Info.Simple.Loc);
                   else
-                     --  ??? Should handle local type
-                     null;
-                     --  Simple.Union (Index_In_Simple) :=
-                     --     Info.Simple.Union_Items (U).Local;
+                     Create_Simple_Type (Info.Simple.Union_Items (U).Local);
+                     Simple.Union (Index_In_Simple) :=
+                       NFA.Get_Data
+                         (Shared.Types.Table
+                              (Info.Simple.Union_Items (U).Local).S)
+                       .Descr.Simple_Content;
                   end if;
 
                   Index_In_Simple := Index_In_Simple + 1;
@@ -876,10 +880,12 @@ package body Schema.Schema_Readers is
                          (Info.Simple.List_Items (U).Name,
                           Info.Simple.Loc);
                   else
-                     --  ??? Should handle local type
-                     null;
-                     --  Simple.Union (Index_In_Simple) :=
-                     --     Info.Simple.Union_Items (U).Local;
+                     Create_Simple_Type (Info.Simple.List_Items (U).Local);
+                     Simple.List_Item :=
+                       NFA.Get_Data
+                         (Shared.Types.Table
+                              (Info.Simple.List_Items (U).Local).S)
+                       .Descr.Simple_Content;
                   end if;
                end loop;
 
@@ -898,9 +904,6 @@ package body Schema.Schema_Readers is
                      Lookup_Simple_Type
                        (Info.Simple.Restriction_Base,
                         Info.Simple.Loc));
-                  Debug_Output
-                    ("MANU Base=" & To_QName (Info.Simple.Restriction_Base)
-                     & " kind=" & Base.Kind'Img);
 
                   Override (Simple  => Base,
                             Facets  => Info.Simple.Facets,
@@ -1117,7 +1120,7 @@ package body Schema.Schema_Readers is
            ("NFA: " & Dump
               (NFA,
                Mode                => Dump_Dot_Compact,
-               Show_Details        => True,
+               Show_Details        => False,
                Show_Isolated_Nodes => False));
       end if;
 
