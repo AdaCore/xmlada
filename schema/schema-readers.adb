@@ -168,7 +168,8 @@ package body Schema.Readers is
         and then U (U'First) /= '\'
       then
          return Find_Symbol
-           (Handler, Dir_Name (Get_System_Id (Handler.Locator)) & U.all);
+           (Handler,
+            Dir_Name (Get (Get_System_Id (Handler.Locator)).all) & U.all);
       else
          return URI;
       end if;
@@ -667,6 +668,7 @@ package body Schema.Readers is
 
       if Debug then
          Output_Seen ("Start_Element: " & To_QName (Elem)
+                      & " " & To_String (H.Locator)
                       & " (level" & H.Nesting_Level'Img
                       & " last_start=" & H.Last_Start_Level'Img
                       & ")");
@@ -833,6 +835,7 @@ package body Schema.Readers is
    begin
       if Debug then
          Output_Seen ("End_Element: " & To_QName (Elem)
+                      & " " & To_String (H.Locator)
                       & " (level" & H.Nesting_Level'Img
                       & " last_start=" & H.Last_Start_Level'Img
                       & ")");
@@ -853,7 +856,7 @@ package body Schema.Readers is
 
          if not Success then
             Validation_Error
-              (H, "MANU State_Machine reported an error on <close>, expected "
+              (H, "State_Machine reported an error on <close>, expected "
                & Expected (H.Matcher));
          end if;
 
@@ -969,7 +972,6 @@ package body Schema.Readers is
    procedure Reset (Parser : in out Validating_Reader) is
    begin
       --  Save current location, for retrieval by Get_Error_Message
-      Parser.Locator := Get_Location (Parser);
       Free (Parser.Id_Table);
       Free (Parser.Matcher);
       Free (Parser.Characters);
@@ -1032,15 +1034,15 @@ package body Schema.Readers is
       null;
    end Validation_Error;
 
-   ------------------
-   -- Get_Location --
-   ------------------
+   -----------------
+   -- Get_Locator --
+   -----------------
 
-   function Get_Location
+   function Get_Locator
      (Reader : Validating_Reader) return Sax.Locators.Locator is
    begin
       return Reader.Locator;
-   end Get_Location;
+   end Get_Locator;
 
    -------------------------------
    -- Hook_Set_Document_Locator --
@@ -1079,7 +1081,7 @@ package body Schema.Readers is
      (Reader : Validating_Reader) return Unicode.CES.Byte_Sequence
    is
       Loc : constant Locator :=
-        Get_Location (Abstract_Validation_Reader'Class (Reader));
+        Get_Locator (Abstract_Validation_Reader'Class (Reader));
    begin
       if Reader.Error_Msg = null then
          return "";

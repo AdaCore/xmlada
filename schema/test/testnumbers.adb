@@ -39,24 +39,24 @@ procedure TestNumbers is
    --  Compare two numbers
 
    type Local_Reader is new Abstract_Validation_Reader with null record;
-   function Get_Location
+   overriding function Get_Locator
      (Reader : Local_Reader) return Sax.Locators.Locator;
 
    Reader : aliased Local_Reader;
    R      : constant Abstract_Validating_Reader_Access :=
      Reader'Unchecked_Access;
 
-   ------------------
-   -- Get_Location --
-   ------------------
+   -----------------
+   -- Get_Locator --
+   -----------------
 
-   function Get_Location
+   overriding function Get_Locator
      (Reader : Local_Reader) return Sax.Locators.Locator
    is
       pragma Unreferenced (Reader);
    begin
       return No_Locator;
-   end Get_Location;
+   end Get_Locator;
 
    ----------------
    -- Assert_Nan --

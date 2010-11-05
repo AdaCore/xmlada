@@ -27,7 +27,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Unicode.CES;  use Unicode.CES;
+with Sax.Symbols;  use Sax.Symbols;
 
 package body Sax.Locators is
    use Locators;
@@ -48,16 +48,6 @@ package body Sax.Locators is
       end if;
    end Allocate_If_Null;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Loc : in out Locator_Record) is
-   begin
-      Free (Loc.Public_Id);
-      Free (Loc.System_Id);
-   end Free;
-
    ---------------------
    -- Get_Line_Number --
    ---------------------
@@ -67,13 +57,8 @@ package body Sax.Locators is
       if Get (Loc) = null then
          return 0;
       else
-         return Get_Line_Number (Get (Loc));
+         return Get (Loc).Loc.Line;
       end if;
-   end Get_Line_Number;
-
-   function Get_Line_Number (Loc : access Locator_Record) return Natural is
-   begin
-      return Loc.Line;
    end Get_Line_Number;
 
    -----------------------
@@ -85,35 +70,20 @@ package body Sax.Locators is
       if Get (Loc) = null then
          return 0;
       else
-         return Get_Column_Number (Get (Loc));
+         return Get (Loc).Loc.Column;
       end if;
-   end Get_Column_Number;
-
-   function Get_Column_Number (Loc : access Locator_Record) return Natural is
-   begin
-      return Loc.Column;
    end Get_Column_Number;
 
    -------------------
    -- Get_System_Id --
    -------------------
 
-   function Get_System_Id (Loc : Locator) return Unicode.CES.Byte_Sequence is
+   function Get_System_Id (Loc : Locator) return Symbol is
    begin
       if Get (Loc) = null then
-         return "";
+         return Empty_String;
       else
-         return Get_System_Id (Get (Loc));
-      end if;
-   end Get_System_Id;
-
-   function Get_System_Id (Loc : access Locator_Record)
-      return Unicode.CES.Byte_Sequence is
-   begin
-      if Loc.System_Id /= null then
-         return Loc.System_Id.all;
-      else
-         return "";
+         return Get (Loc).Loc.System_Id;
       end if;
    end Get_System_Id;
 
@@ -121,22 +91,12 @@ package body Sax.Locators is
    -- Get_Public_Id --
    -------------------
 
-   function Get_Public_Id (Loc : Locator) return Unicode.CES.Byte_Sequence is
+   function Get_Public_Id (Loc : Locator) return Symbol is
    begin
       if Get (Loc) = null then
-         return "";
+         return Empty_String;
       else
-         return Get_Public_Id (Get (Loc));
-      end if;
-   end Get_Public_Id;
-
-   function Get_Public_Id (Loc : access Locator_Record)
-      return Unicode.CES.Byte_Sequence is
-   begin
-      if Loc.Public_Id /= null then
-         return Loc.Public_Id.all;
-      else
-         return "";
+         return Get (Loc).Loc.Public_Id;
       end if;
    end Get_Public_Id;
 
@@ -147,13 +107,7 @@ package body Sax.Locators is
    procedure Set_Column_Number (Loc : in out Locator; Column : Natural := 0) is
    begin
       Allocate_If_Null (Loc);
-      Set_Column_Number (Get (Loc), Column);
-   end Set_Column_Number;
-
-   procedure Set_Column_Number
-     (Loc : access Locator_Record; Column : Natural := 0) is
-   begin
-      Loc.Column := Column;
+      Get (Loc).Loc.Column := Column;
    end Set_Column_Number;
 
    ----------------------------
@@ -163,17 +117,7 @@ package body Sax.Locators is
    procedure Increase_Column_Number
      (Loc : in out Locator; Inc : Natural := 1) is
    begin
-      Increase_Column_Number (Get (Loc), Inc);
-   end Increase_Column_Number;
-
-   ----------------------------
-   -- Increase_Column_Number --
-   ----------------------------
-
-   procedure Increase_Column_Number
-     (Loc : access Locator_Record; Inc : Natural := 1) is
-   begin
-      Loc.Column := Loc.Column + Inc;
+      Get (Loc).Loc.Column := Get (Loc).Loc.Column + Inc;
    end Increase_Column_Number;
 
    --------------------------
@@ -182,17 +126,7 @@ package body Sax.Locators is
 
    procedure Increase_Line_Number (Loc : in out Locator; Inc : Natural := 1) is
    begin
-      Increase_Line_Number (Get (Loc), Inc);
-   end Increase_Line_Number;
-
-   --------------------------
-   -- Increase_Line_Number --
-   --------------------------
-
-   procedure Increase_Line_Number
-     (Loc : access Locator_Record; Inc : Natural := 1) is
-   begin
-      Loc.Line := Loc.Line + Inc;
+      Get (Loc).Loc.Line := Get (Loc).Loc.Line + Inc;
    end Increase_Line_Number;
 
    ---------------------
@@ -202,70 +136,46 @@ package body Sax.Locators is
    procedure Set_Line_Number (Loc : in out Locator; Line : Natural := 0) is
    begin
       Allocate_If_Null (Loc);
-      Set_Line_Number (Get (Loc), Line);
+      Get (Loc).Loc.Line := Line;
    end Set_Line_Number;
 
-   procedure Set_Line_Number
-     (Loc : access Locator_Record; Line : Natural := 0) is
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location (Loc : Locator) return Location is
    begin
-      Loc.Line := Line;
-   end Set_Line_Number;
+      return Get (Loc).Loc;
+   end Get_Location;
 
-   ----------
-   -- Copy --
-   ----------
+   ------------------
+   -- Set_Location --
+   ------------------
 
-   procedure Copy (Loc : in out Locator; Source : Locator) is
+   procedure Set_Location (Loc : in out Locator; To : Location) is
    begin
       Allocate_If_Null (Loc);
-      Copy (Get (Loc), Source);
-   end Copy;
-
-   procedure Copy
-     (Loc : access Locator_Record; Source : Locator) is
-   begin
-      Set_Line_Number (Loc, Get_Line_Number (Source));
-      Set_Column_Number (Loc, Get_Column_Number (Source));
-      Set_Public_Id (Loc, Get_Public_Id (Source));
-      Set_System_Id (Loc, Get_System_Id (Source));
-   end Copy;
+      Get (Loc).Loc := To;
+   end Set_Location;
 
    -------------------
    -- Set_Public_Id --
    -------------------
 
-   procedure Set_Public_Id
-     (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence) is
+   procedure Set_Public_Id (Loc : in out Locator; Id : Symbol) is
    begin
       Allocate_If_Null (Loc);
-      Set_Public_Id (Get (Loc), Id);
-   end Set_Public_Id;
-
-   procedure Set_Public_Id
-     (Loc : access Locator_Record;
-      Id  : Unicode.CES.Byte_Sequence) is
-   begin
-      Free (Loc.Public_Id);
-      Loc.Public_Id := new Byte_Sequence'(Id);
+      Get (Loc).Loc.Public_Id := Id;
    end Set_Public_Id;
 
    -------------------
    -- Set_System_Id --
    -------------------
 
-   procedure Set_System_Id
-     (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence) is
+   procedure Set_System_Id (Loc : in out Locator; Id : Symbol) is
    begin
       Allocate_If_Null (Loc);
-      Set_System_Id (Get (Loc), Id);
-   end Set_System_Id;
-
-   procedure Set_System_Id
-     (Loc : access Locator_Record;
-      Id  : Unicode.CES.Byte_Sequence) is
-   begin
-      Free (Loc.System_Id);
-      Loc.System_Id := new Byte_Sequence'(Id);
+      Get (Loc).Loc.System_Id := Id;
    end Set_System_Id;
 
    ---------------
@@ -275,29 +185,46 @@ package body Sax.Locators is
    function To_String
      (Loc : Locator; Use_Basename : Boolean := False) return String
    is
-      C    : constant Natural := Get_Column_Number (Loc);
-      Line : constant String := Natural'Image (Get_Line_Number (Loc));
-      Col  : constant String := Natural'Image (C);
-      Public : constant Byte_Sequence := Get_Public_Id (Loc);
    begin
-      if Public = "" then
+      if Get (Loc) = null then
+         return "";
+      else
+         return To_String (Get_Location (Loc), Use_Basename);
+      end if;
+   end To_String;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String
+     (Loc : Location; Use_Basename : Boolean := False) return String
+   is
+      C    : constant Natural := Loc.Column;
+      Line : constant String := Natural'Image (Loc.Line);
+      Col  : constant String := Natural'Image (C);
+      Public : constant Symbol := Loc.Public_Id;
+   begin
+      if Public = No_Symbol then
          return "";
       elsif C /= 0 then
          if Use_Basename then
-            return (Base_Name (Public) & ':'
+            return (Base_Name (Get (Public).all) & ':'
                     & Line (Line'First + 1 .. Line'Last)
                     & ':' & Col (Col'First + 1 .. Col'Last));
          else
-            return (Public & ':'
+            return (Get (Public).all & ':'
                     & Line (Line'First + 1 .. Line'Last)
                     & ':' & Col (Col'First + 1 .. Col'Last));
          end if;
       else
          if Use_Basename then
             return
-              (Base_Name (Public) & ':' & Line (Line'First + 1 .. Line'Last));
+              (Base_Name (Get (Public).all)
+               & ':' & Line (Line'First + 1 .. Line'Last));
          else
-            return (Public & ':' & Line (Line'First + 1 .. Line'Last));
+            return (Get (Public).all
+                    & ':' & Line (Line'First + 1 .. Line'Last));
          end if;
       end if;
    end To_String;

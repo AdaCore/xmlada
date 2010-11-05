@@ -34,12 +34,26 @@
 --  to preserve the value of these attributes over time.
 
 with Sax.Pointers;
-with Unicode.CES;
+with Sax.Symbols;
 
 package Sax.Locators is
 
    type Locator is private;
    No_Locator : constant Locator;
+
+   type Location is record
+      Line      : Natural := 1;
+      Column    : Natural := 1;
+      Public_Id : Sax.Symbols.Symbol := Sax.Symbols.Empty_String;
+      System_Id : Sax.Symbols.Symbol := Sax.Symbols.Empty_String;
+   end record;
+   No_Location : constant Location :=
+     (1, 1, Sax.Symbols.Empty_String, Sax.Symbols.Empty_String);
+   --  A static location, ie a location that will not be changed automatically
+   --  by the parser (as opposed to a [Locator] which is basically a pointer to
+   --  such a location, modified dynamically by the parser).
+   --  For efficiency, a [Location] is made a public record, where you can
+   --  access the fields directly.
 
    procedure Set_Line_Number (Loc : in out Locator; Line : Natural := 0);
    function Get_Line_Number (Loc : Locator) return Natural;
@@ -57,16 +71,16 @@ package Sax.Locators is
    --  Increment the column number. This assume Loc has already been
    --  initialized
 
-   procedure Set_System_Id
-     (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence);
-   function Get_System_Id (Loc : Locator) return Unicode.CES.Byte_Sequence;
+   procedure Set_System_Id (Loc : in out Locator; Id : Sax.Symbols.Symbol);
+   function Get_System_Id (Loc : Locator) return Sax.Symbols.Symbol;
    --  Return the system id for the current document (see input_sources.ads)
 
-   procedure Set_Public_Id
-     (Loc : in out Locator; Id : Unicode.CES.Byte_Sequence);
-   function Get_Public_Id (Loc : Locator) return Unicode.CES.Byte_Sequence;
+   procedure Set_Public_Id (Loc : in out Locator; Id : Sax.Symbols.Symbol);
+   function Get_Public_Id (Loc : Locator) return Sax.Symbols.Symbol;
    --  Return the public id for the current document (see input_sources.ads)
 
+   function To_String
+     (Loc : Location; Use_Basename : Boolean := False) return String;
    function To_String
      (Loc : Locator; Use_Basename : Boolean := False) return String;
    --  Print the location found in the location, with a standard format:
@@ -76,71 +90,14 @@ package Sax.Locators is
    --  If Use_Basename is true, then the file name will not include any
    --  directory specification.
 
-   procedure Copy (Loc : in out Locator; Source : Locator);
-   --  Copy the location information from Source to Loc. Just using the
-   --  standard assignment ":=" will not preserve the line number, column
-   --  number,... when they are changed later on while parsing the rest of the
-   --  XML stream.
-   --  This calls the Set_* functions below, so that you don't need to
-   --  rewrite it for all your classes.
-
-   --------------------
-   -- Locator_Record --
-   --------------------
-   --  This is the internal implementation of locators. Such types are
-   --  encapsulated in the smart pointer Locator, for proper memory management.
-
-   type Locator_Record is new Sax.Pointers.Root_Encapsulated with private;
-
-   function Get_Line_Number (Loc : access Locator_Record) return Natural;
-   function Get_Column_Number (Loc : access Locator_Record) return Natural;
-   function Get_System_Id
-     (Loc : access Locator_Record) return Unicode.CES.Byte_Sequence;
-   function Get_Public_Id
-     (Loc : access Locator_Record) return Unicode.CES.Byte_Sequence;
-   --  See documentation for Locator
-
-   procedure Set_Column_Number
-     (Loc : access Locator_Record; Column : Natural := 0);
-   --  Set the column number for the locator.
-   --  Set this to zero if the column is unknown.
-
-   procedure Increase_Column_Number
-     (Loc : access Locator_Record; Inc : Natural := 1);
-   --  Increase the column number
-
-   procedure Increase_Line_Number
-     (Loc : access Locator_Record; Inc : Natural := 1);
-   --  Increase the line number
-
-   procedure Set_Line_Number
-     (Loc : access Locator_Record; Line : Natural := 0);
-   --  Set the line number for the locator
-
-   procedure Set_Public_Id
-     (Loc : access Locator_Record; Id  : Unicode.CES.Byte_Sequence);
-   --  Set the public Id for the allocator
-
-   procedure Set_System_Id
-     (Loc : access Locator_Record; Id  : Unicode.CES.Byte_Sequence);
-   --  Set the system Id for the allocator
-
-   procedure Copy (Loc : access Locator_Record; Source : Locator);
-   --  Copy the location information from Source to Loc
-   --  This calls the Set_* functions, so that you don't need to
-   --  rewrite it for all your classes.
+   procedure Set_Location (Loc : in out Locator; To : Location);
+   function Get_Location (Loc : Locator) return Location;
+   --  Get the current location information.
 
 private
    type Locator_Record is new Sax.Pointers.Root_Encapsulated with record
-      Line      : Natural := 1;
-      Column    : Natural := 1;
-      Public_Id : Unicode.CES.Byte_Sequence_Access;
-      System_Id : Unicode.CES.Byte_Sequence_Access;
-      Ref_Count : Natural := 1;
+      Loc       : Location;
    end record;
-
-   procedure Free (Loc : in out Locator_Record);
-   --  See inherited documentation
 
    package Locators is new Sax.Pointers.Smart_Pointers (Locator_Record);
    type Locator is new Locators.Pointer;

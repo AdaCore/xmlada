@@ -32,7 +32,6 @@ with Ada.Exceptions;    use Ada.Exceptions;
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Encodings;     use Sax.Encodings;
-with Sax.Locators;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Symbols;       use Sax.Symbols;
 with Sax.Utils;         use Sax.Utils;
@@ -797,6 +796,16 @@ package body Schema.Schema_Readers is
       Reset (Types);
    end Create_NFA;
 
+   --------------------------
+   -- Set_Document_Locator --
+   --------------------------
+
+   overriding procedure Set_Document_Locator
+     (Handler : in out Schema_Reader; Loc : in out Sax.Locators.Locator) is
+   begin
+      Handler.Locator := Loc;
+   end Set_Document_Locator;
+
    -----------
    -- Parse --
    -----------
@@ -846,7 +855,7 @@ package body Schema.Schema_Readers is
          Set_Parsed_URI (Parser'Access, Grammar, URI);
          Set_System_Id (Parser.Target_NS, URI);
 
-         Parse (Validating_Reader (Parser), Input);
+         Schema.Readers.Parse (Validating_Reader (Parser), Input);
 
 --           if Do_Global_Check then
 --              Create_NFA (Parser'Access);
@@ -2559,7 +2568,7 @@ package body Schema.Schema_Readers is
       if Debug then
          Output_Seen ("Seen " & Get (Local_Name).all
                       & " at "
-                      & Sax.Locators.To_String (Get_Location (Handler)));
+                      & Sax.Locators.To_String (Handler.Locator));
       end if;
 
       --  Check the grammar
@@ -2596,7 +2605,7 @@ package body Schema.Schema_Readers is
          Create_Any_Attribute (H, Atts);
 
       elsif Local_Name = Handler.Pattern then
-         raise XML_Not_Implemented with "<pattern> not implemented";
+         null;
 
 --           Val := Get_Index (Atts, Empty_String, Handler.Value);
 --           declare
@@ -2620,7 +2629,7 @@ package body Schema.Schema_Readers is
         or else Local_Name = Handler.MinInclusive
         or else Local_Name = Handler.MinExclusive
       then
-         raise XML_Not_Implemented with "facet not implemented";
+         null;
 --
 --           Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
 --           case Ctx.Typ is

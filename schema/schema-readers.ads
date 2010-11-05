@@ -94,7 +94,7 @@ package Schema.Readers is
      (Reader : Validating_Reader) return Unicode.CES.Byte_Sequence;
    --  Return the current error message
 
-   function Get_Location
+   overriding function Get_Locator
      (Reader : Validating_Reader) return Sax.Locators.Locator;
    --  Return the current location
 

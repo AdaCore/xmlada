@@ -470,7 +470,7 @@ package Schema.Validators is
    --    '#': if first character, it will be replaced by the current location
    --         of the Reader
 
-   function Get_Location
+   function Get_Locator
      (Reader : Abstract_Validation_Reader) return Sax.Locators.Locator
      is abstract;
    --  Return the current location in the file

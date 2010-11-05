@@ -825,7 +825,7 @@ private
       --  Uniq ID for each input source
 
       Input    : Input_Sources.Input_Source_Access;
-      Save_Loc : Sax.Locators.Locator;
+      Save_Loc : Sax.Locators.Location;
    end record;
 
    type Parser_State is record

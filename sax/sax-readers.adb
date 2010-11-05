@@ -688,8 +688,8 @@ package body Sax.Readers is
      (Parser : Sax_Reader'Class; Loc : Token_Location) return Byte_Sequence;
    --  Return the location of the start of Id as a string.
 
-   function Resolve_URI (Parser : Sax_Reader'Class; URI : Byte_Sequence)
-      return Byte_Sequence;
+   function Resolve_URI (Parser : Sax_Reader'Class; URI : Symbol)
+      return Symbol;
    --  Return a fully resolved URI, based on the system identifier set for
    --  Machine, and URI.
 
@@ -823,27 +823,38 @@ package body Sax.Readers is
    -- Resolve_URI --
    -----------------
 
-   function Resolve_URI (Parser : Sax_Reader'Class; URI : Byte_Sequence)
-      return Byte_Sequence
+   function Resolve_URI
+     (Parser : Sax_Reader'Class; URI : Symbol) return Symbol
    is
       C : Unicode_Char;
-      System_Id : constant Byte_Sequence := Get_System_Id (Parser.Locator);
-      Index : Natural := System_Id'First;
-      Basename_Start : Natural := System_Id'First;
-      URI_Index : Positive := URI'First;
+      URI_Str : constant Cst_Byte_Sequence_Access := Get (URI);
+      URI_Index : Positive := URI_Str'First;
    begin
-      pragma Assert (URI /= "");
+      pragma Assert (URI /= No_Symbol);
+
       --  ??? Only resolve paths for now
-      Encoding.Read (URI, URI_Index, C);
-      if C /= Slash then
-         while Index <= System_Id'Last loop
-            Encoding.Read (System_Id, Index, C);
-            if C = Slash or else C = Backslash then
-               Basename_Start := Index;
-            end if;
-         end loop;
+      Encoding.Read (URI_Str.all, URI_Index, C);
+      if C = Slash then
+         return URI;
+      else
+         declare
+            System_Id : constant Symbol := Get_System_Id (Parser.Locator);
+            System_Str : constant Cst_Byte_Sequence_Access := Get (System_Id);
+            Index : Natural := System_Str'First;
+            Basename_Start : Natural := System_Str'First;
+         begin
+            while Index <= System_Str'Last loop
+               Encoding.Read (System_Str.all, Index, C);
+               if C = Slash or else C = Backslash then
+                  Basename_Start := Index;
+               end if;
+            end loop;
+            return Find_Symbol
+              (Parser,
+               System_Str (System_Str'First .. Basename_Start - 1)
+               & URI_Str.all);
+         end;
       end if;
-      return System_Id (System_Id'First .. Basename_Start - 1) & URI;
    end Resolve_URI;
 
    --------------
@@ -858,11 +869,11 @@ package body Sax.Readers is
    begin
       if Parser.Close_Inputs = null then
          if Use_Basename_In_Error_Messages (Parser) then
-            return Base_Name (Get_Public_Id (Parser.Locator)) & ':'
+            return Base_Name (Get (Get_Public_Id (Parser.Locator)).all) & ':'
               & Line (Line'First + 1 .. Line'Last)
               & ':' & Col (Col'First + 1 .. Col'Last);
          else
-            return Get_Public_Id (Parser.Locator) & ':'
+            return Get (Get_Public_Id (Parser.Locator)).all & ':'
               & Line (Line'First + 1 .. Line'Last)
               & ':' & Col (Col'First + 1 .. Col'Last);
          end if;
@@ -1066,7 +1077,7 @@ package body Sax.Readers is
          end if;
 
       elsif Parser.Inputs /= null then
-         Copy (Parser.Locator, Parser.Inputs.Save_Loc);
+         Parser.Inputs.Save_Loc := Get_Location (Parser.Locator);
 
          if Parser.Inputs.External then
             Parser.In_External_Entity := False;
@@ -2419,7 +2430,6 @@ package body Sax.Readers is
          declare
             N : constant Symbol := Find_Symbol (Parser, Id);
             V : constant Entity_Entry_Access := Get (Parser.Entities, N);
-            Null_Loc : Locator;
          begin
             Reset_Buffer (Parser, Id);
             if N = Parser.Lt_Sequence then
@@ -2533,11 +2543,10 @@ package body Sax.Readers is
                  (External       => V.External,
                   Name           => N,
                   Input          => null,
-                  Save_Loc       => Null_Loc,
+                  Save_Loc       => Get_Location (Parser.Locator),
                   Id             => Parser.Element_Id,
                   Handle_Strings => not Parser.State.Ignore_Special,
                   Next           => Parser.Inputs);
-               Copy (Parser.Inputs.Save_Loc, Parser.Locator);
 
                if V.External then
                   if Parser.State.Name = Attlist_Str_Def_State.Name
@@ -2547,35 +2556,36 @@ package body Sax.Readers is
                   end if;
 
                   declare
-                     URI : constant Byte_Sequence := Resolve_URI
-                       (Parser, Get (V.Value).all);
+                     URI : constant Symbol := Resolve_URI (Parser, V.Value);
                   begin
                      Parser.Inputs.Input := Resolve_Entity
                        (Parser,
                         Public_Id => Get (V.Public).all,
-                        System_Id => URI);
+                        System_Id => Get (URI).all);
 
                      --  If either there is no entity resolver or if the
                      --  standard algorithm should be used
 
                      if Parser.Inputs.Input = null then
                         Parser.Inputs.Input := new File_Input;
-                        Open (URI, File_Input (Parser.Inputs.Input.all));
+                        Open (Get (URI).all,
+                              File_Input (Parser.Inputs.Input.all));
                         Set_Public_Id
                           (Parser.Inputs.Input.all, Get (V.Value).all);
-                        Set_System_Id (Parser.Inputs.Input.all, URI);
+                        Set_System_Id (Parser.Inputs.Input.all, Get (URI).all);
                      end if;
 
                      Parser.Inputs.Name := Find_Symbol
                        (Parser, Get_System_Id (Parser.Inputs.Input.all));
 
                      Set_System_Id (Parser.Locator, URI);
-                     Set_Public_Id (Parser.Locator, Get (V.Value).all);
+                     Set_Public_Id (Parser.Locator, V.Value);
 
                   exception
                      when Name_Error =>
                         Error
-                          (Parser, Error_External_Entity_Not_Found & URI, Id);
+                          (Parser, Error_External_Entity_Not_Found
+                           & Get (URI).all, Id);
                         Unchecked_Free (Parser.Inputs.Input);
                   end;
 
@@ -2596,10 +2606,12 @@ package body Sax.Readers is
                      Open (Get (V.Value).all, Encoding,
                            String_Input (Parser.Inputs.Input.all));
                   end if;
-                  Set_Public_Id (Parser.Locator, "entity " & Get (N).all);
+                  Set_Public_Id
+                    (Parser.Locator,
+                     Find_Symbol (Parser, "entity " & Get (N).all));
                   Set_Public_Id
                     (Parser.Inputs.Input.all,
-                     Get_Public_Id (Parser.Locator));
+                     Get (Get_Public_Id (Parser.Locator)).all);
                end if;
 
                if Parser.Inputs.Input = null then
@@ -2709,7 +2721,7 @@ package body Sax.Readers is
       -------------------------------------
 
       procedure Parse_Element_Model_From_Entity (Name : Symbol) is
-         Loc : Locator;
+         Loc : Sax.Locators.Location;
          Last : constant Unicode_Char := Parser.Last_Read;
          Input_S : String_Input;
          Val : constant Entity_Entry_Access := Get (Parser.Entities, Name);
@@ -2724,10 +2736,12 @@ package body Sax.Readers is
             return;
 
          else
-            Copy (Loc, Parser.Locator);
+            Loc := Get_Location (Parser.Locator);
             Set_Line_Number (Parser.Locator, 1);
             Set_Column_Number (Parser.Locator, 1);
-            Set_Public_Id (Parser.Locator, "entity " & Get (Name).all);
+            Set_Public_Id
+              (Parser.Locator,
+               Find_Symbol (Parser, "entity " & Get (Name).all));
 
             Open (Get (Val.Value).all, Encoding, Input_S);
             Next_Char (Input_S, Parser);
@@ -2735,7 +2749,7 @@ package body Sax.Readers is
             --  Parse_Element_Model (Input_S, Parser, M, Attlist, False);
             Close (Input_S);
 
-            Copy (Parser.Locator, Loc);
+            Set_Location (Parser.Locator, Loc);
             Parser.Last_Read := Last;
          end if;
       end Parse_Element_Model_From_Entity;
@@ -4956,16 +4970,18 @@ package body Sax.Readers is
          --  priority (XML specifications 2.8)
          if System_End.Last >= System_Start.First then
             declare
-               Loc : Locator;
-               URI : constant Byte_Sequence := Resolve_URI
-                 (Parser,
-                  Parser.Buffer (System_Start.First .. System_End.Last));
+               Loc : constant Sax.Locators.Location :=
+                 Get_Location (Parser.Locator);
+               System : constant Symbol :=
+                 Find_Symbol
+                   (Parser,
+                    Parser.Buffer (System_Start.First .. System_End.Last));
+               URI : constant Symbol := Resolve_URI (Parser, System);
                In_External : constant Boolean := Parser.In_External_Entity;
                Input_F : File_Input;
                Saved_Last_Read : constant Unicode_Char := Parser.Last_Read;
             begin
-               Open (URI, Input_F);
-               Copy (Loc, Parser.Locator);
+               Open (Get (URI).all, Input_F);
 
                --  Protect against the case where the last character read was
                --  a LineFeed.
@@ -4975,9 +4991,7 @@ package body Sax.Readers is
                Set_Line_Number (Parser.Locator, 1);
                Set_Column_Number (Parser.Locator, Prolog_Size (Input_F));
                Set_System_Id (Parser.Locator, URI);
-               Set_Public_Id
-                 (Parser.Locator,
-                  Parser.Buffer (System_Start.First .. System_End.Last));
+               Set_Public_Id (Parser.Locator, System);
                Reset_Buffer (Parser, Name_Id);
 
                Parser.In_External_Entity := True;
@@ -4985,7 +4999,8 @@ package body Sax.Readers is
                Syntactic_Parse (Parser, Input_F);
                Close (Input_F);
                Parser.In_External_Entity := In_External;
-               Copy (Parser.Locator, Loc);
+
+               Set_Location (Parser.Locator, Loc);
                Parser.Last_Read := Saved_Last_Read;
                Parser.Last_Read_Is_Valid := True;
             exception
@@ -5695,9 +5710,13 @@ package body Sax.Readers is
      (Parser : in out Sax_Reader;
       Input  : in out Input_Sources.Input_Source'Class) is
    begin
+      Initialize_Symbols (Parser);
+
       Parser.Locator := No_Locator;
-      Set_Public_Id (Parser.Locator, Get_Public_Id (Input));
-      Set_System_Id (Parser.Locator, Get_System_Id (Input));
+      Set_Public_Id (Parser.Locator,
+                     Find_Symbol (Parser, Get_Public_Id (Input)));
+      Set_System_Id (Parser.Locator,
+                     Find_Symbol (Parser, Get_System_Id (Input)));
       Set_Column_Number (Parser.Locator, Prolog_Size (Input));
       Set_Line_Number (Parser.Locator, 1);
       Parser.Current_Node := null;
@@ -5708,8 +5727,6 @@ package body Sax.Readers is
       Parser.Last_Read_Is_Valid := False;
       Parser.Buffer := new Byte_Sequence (1 .. Initial_Buffer_Length);
       Set_State (Parser, Default_State);
-
-      Initialize_Symbols (Parser);
 
       Add_Namespace_No_Event
         (Parser,

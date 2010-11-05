@@ -32,6 +32,7 @@
 pragma Ada_05;
 
 with Input_Sources;
+with Sax.Locators;
 with Sax.Readers;
 with Sax.Symbols;
 with Sax.Utils;
@@ -258,6 +259,8 @@ private
       Equal      => "=");
 
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
+      Locator          : Sax.Locators.Locator;
+
       Attribute_Form_Default : Schema.Validators.Form_Type :=
         Schema.Validators.Unqualified;
       Element_Form_Default : Schema.Validators.Form_Type :=
@@ -302,5 +305,8 @@ private
    overriding procedure Parse
      (Parser : in out Schema_Reader;
       Input  : in out Input_Sources.Input_Source'Class);
+   overriding procedure Set_Document_Locator
+     (Handler : in out Schema_Reader; Loc : in out Sax.Locators.Locator);
+   --  See inherited documentation
 
 end Schema.Schema_Readers;
