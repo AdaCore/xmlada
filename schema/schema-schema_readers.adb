@@ -1607,6 +1607,7 @@ package body Schema.Schema_Readers is
       Next : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last - 1)'Access;
       Typ  : XML_Type;
+      Info : Type_Descr renames Handler.Types.Table (Ctx.Type_Info);
    begin
       if Next.Typ = Context_Restriction
         and then Next.Restriction_Base = No_Type
@@ -1617,7 +1618,31 @@ package body Schema.Schema_Readers is
          Next.Restriction_Base := Typ;
       else
          Handler.Types.Table (Ctx.Type_Info).Mixed := True;
-         Finish_Complex_Type (Handler);
+
+         Ensure_Type (Handler, Ctx);
+         if Info.Name = No_Qualified_Name then
+            Typ := Create_Local_Type (Handler.Target_NS, Ctx.Type_Validator);
+         else
+            Typ := Create_Global_Type
+              (Handler.Target_NS, Handler, Info.Name.Local,
+               Ctx.Type_Validator);
+         end if;
+
+         Set_Block (Typ, Info.Block);
+         Set_Final (Typ, Info.Final);
+         Set_Mixed_Content
+           (Get_Validator (Typ), Info.Mixed or Info.Simple_Content);
+
+         case Next.Typ is
+            when Context_Schema | Context_Redefine => null;
+            when Context_Element   => null;
+            when Context_Attribute => Set_Type (Next.Attribute, Typ);
+            when Context_List      => Next.List_Items := Typ;
+            when others            =>
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  "Unsupported: ""simpleType"" in this context");
+         end case;
       end if;
    end Finish_Simple_Type;
 
@@ -1845,40 +1870,10 @@ package body Schema.Schema_Readers is
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Next : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last - 1)'Access;
-      Typ : XML_Type;
-      Info : Type_Descr renames Handler.Types.Table (Ctx.Type_Info);
    begin
-      Ensure_Type (Handler, Ctx);
-      if Info.Name = No_Qualified_Name then
-         Typ := Create_Local_Type (Handler.Target_NS, Ctx.Type_Validator);
-      else
-         Typ := Create_Global_Type
-           (Handler.Target_NS, Handler, Info.Name.Local, Ctx.Type_Validator);
-      end if;
-
-      Set_Block (Typ, Info.Block);
-      Set_Final (Typ, Info.Final);
-      Set_Mixed_Content
-        (Get_Validator (Typ), Info.Mixed or Info.Simple_Content);
-
       case Next.Typ is
-         when Context_Schema | Context_Redefine =>
-            null;
-         when Context_Element =>
-            null;
---              if Debug then
---                 Output_Action ("Set_Type (" & Ada_Name (C.Next)
---                         & ", " & Ada_Name (C) & ");");
---              end if;
-            --  Set_Type (C.Next.Element, Handler, Typ);
-         when Context_Attribute =>
-            Set_Type (Next.Attribute, Typ);
-         when Context_List =>
-            Next.List_Items := Typ;
-         when others =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""complexType"" in this context");
+         when Context_Element => Next.Element.Local_Type := Ctx.Type_Info;
+         when others          => null;
       end case;
    end Finish_Complex_Type;
 
