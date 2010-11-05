@@ -921,6 +921,7 @@ package body Schema.Validators is
    is
       Val   : constant Cst_Byte_Sequence_Access :=
         Get (Get_Value (Atts, Index));
+      Is_Equal : Boolean;
    begin
       if Debug then
          Debug_Output ("Checking attribute " & To_QName (Attr.Name)
@@ -931,25 +932,19 @@ package body Schema.Validators is
          if Debug then
             Debug_Output ("No simple type defined");
          end if;
-         return;
-      end if;
+      else
+         Validate_Simple_Type
+           (Reader        => Reader,
+            Simple_Type   => Attr.Simple_Type,
+            Ch            => Val.all,
+            Empty_Element => False,
+            Loc           => Get_Location (Atts, Index));
 
-      Validate_Simple_Type
-        (Reader        => Reader,
-         Simple_Type   => Attr.Simple_Type,
-         Ch            => Val.all,
-         Empty_Element => False,
-         Loc           => Get_Location (Atts, Index));
-
-      if Get_Simple_Type
-        (Get (Reader.Grammar).NFA, Attr.Simple_Type).Kind = Primitive_ID
-      then
-         Set_Type (Atts, Index, Sax.Attributes.Id);
-      end if;
-
-      if Debug and then Attr.Fixed /= No_Symbol then
-         Debug_Output ("Attribute value must be equal to """
-                       & Get (Attr.Fixed).all & """");
+         if Get_Simple_Type
+           (Get (Reader.Grammar).NFA, Attr.Simple_Type).Kind = Primitive_ID
+         then
+            Set_Type (Atts, Index, Sax.Attributes.Id);
+         end if;
       end if;
 
       --  3.2.4 [Attribute Declaration Value] indicates we should check Fixed
@@ -957,13 +952,24 @@ package body Schema.Validators is
       --  However, we need to match depending on the type of the attribute: if
       --  it is an integer, the whitespaces are irrelevant; likewise for a list
 
-      if Attr.Fixed /= No_Symbol
-        and then not Equal (Reader, Attr.Simple_Type, Attr.Fixed, Val.all)
-      then
-         Validation_Error
-           (Reader, "#value must be """
-            & To_Graphic_String (Get (Attr.Fixed).all)
-            & """ (found """ & To_Graphic_String (Val.all) & """)");
+      if Attr.Fixed /= No_Symbol then
+         if Debug then
+            Debug_Output ("Attribute value must be equal to """
+                          & Get (Attr.Fixed).all & """");
+         end if;
+
+         if Attr.Simple_Type = No_Simple_Type_Index then
+            Is_Equal := Get (Attr.Fixed).all = Val.all;
+         else
+            Is_Equal := Equal (Reader, Attr.Simple_Type, Attr.Fixed, Val.all);
+         end if;
+
+         if not Is_Equal then
+            Validation_Error
+              (Reader, "#value must be """
+               & To_Graphic_String (Get (Attr.Fixed).all)
+               & """ (found """ & To_Graphic_String (Val.all) & """)");
+         end if;
       end if;
    end Validate_Attribute;
 
