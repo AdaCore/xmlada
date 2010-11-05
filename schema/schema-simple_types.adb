@@ -126,6 +126,7 @@ package body Schema.Simple_Types is
                             Val     : out T;
                             Error   : out Symbol) is <>;
       with function "=" (T1, T2 : T) return Boolean is <>;
+      with function Image (T1 : T) return String is <>;
    function Generic_Equal
      (Symbols : Symbol_Table;
       Val1    : Symbol;
@@ -165,12 +166,27 @@ package body Schema.Simple_Types is
    begin
       Value (Symbols, Get (Val1).all, V1, Error);
       if Error /= No_Symbol then
+         if Debug then
+            Debug_Output ("Generic_Equal, could not convert Val1 "
+                          & Get (Val1).all & " => " & Get (Error).all);
+         end if;
          return False;
       end if;
 
       Value (Symbols, Val2, V2, Error);
+      if Error /= No_Symbol then
+         if Debug then
+            Debug_Output ("Generic_Equal, could not convert Val2 "
+                          & Val2 & " => " & Get (Error).all);
+         end if;
+         return False;
+      end if;
 
-      return Error = No_Symbol and then V1 = V2;
+      if Debug then
+         Debug_Output ("Comparing " & Image (V1) & " != " & Image (V2));
+      end if;
+
+      return V1 = V2;
    end Generic_Equal;
 
    ----------------------------
@@ -365,12 +381,13 @@ package body Schema.Simple_Types is
       Error   : out Symbol);
    --  Converts [Ch] to a boolean, and returns an error message if needed
 
-   function Equal_Boolean     is new Generic_Equal (Boolean, Boolean_Value);
+   function Equal_Boolean     is new Generic_Equal (Boolean, Boolean_Value,
+                                                    Image => Boolean'Image);
    function Equal_Float       is new Generic_Equal (XML_Float, Value);
    function Equal_Decimal    is new Generic_Equal (Arbitrary_Precision_Number);
    function Equal_Duration    is new Generic_Equal (Duration_T);
-   function Equal_Date_Time   is new Generic_Equal (Duration_T);
-   function Equal_Date        is new Generic_Equal (Duration_T);
+   function Equal_Date_Time   is new Generic_Equal (Date_Time_T);
+   function Equal_Date        is new Generic_Equal (Date_T);
    function Equal_Time        is new Generic_Equal (Time_T);
    function Equal_GDay        is new Generic_Equal (GDay_T);
    function Equal_GMonth_Day  is new Generic_Equal (GMonth_Day_T);
@@ -739,7 +756,11 @@ package body Schema.Simple_Types is
             Found : Boolean := False;
          begin
             while Enum /= No_Enumeration_Index loop
-               if Get (Enumerations.Table (Enum).Value).all = Ch then
+               if Equal
+                 (Simple_Types, Symbols, Simple_Type,
+                  Ch1 => Enumerations.Table (Enum).Value,
+                  Ch2 => Ch)
+               then
                   Found := True;
                   exit;
                end if;
