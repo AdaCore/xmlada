@@ -647,29 +647,6 @@ package body Schema.Simple_Types is
       procedure Validate_List_Items is new For_Each_Item (Validate_List_Item);
 
    begin
-      if Descr.Kind = Primitive_Union then
-         for S in Descr.Union'Range loop
-            if Descr.Union (S) /= No_Simple_Type_Index then
-               Error := Validate_Simple_Type
-                 (Simple_Types  => Simple_Types,
-                  Enumerations  => Enumerations,
-                  Symbols       => Symbols,
-                  Simple_Type   => Descr.Union (S),
-                  Ch            => Ch,
-                  Empty_Element => Empty_Element);
-               if Error = No_Symbol then
-                  return Error;
-               else
-                  if Debug then
-                     Debug_Output ("Checking union at index" & S'Img
-                                   & " => " & Get (Error).all);
-                  end if;
-               end if;
-            end if;
-         end loop;
-         return Find (Symbols, "No matching type in the union");
-      end if;
-
       --  Check common facets
 
       if Descr.Mask (Facet_Enumeration) then
@@ -806,8 +783,29 @@ package body Schema.Simple_Types is
          when Primitive_Date     => return Validate_Date (Descr, Symbols, Ch);
          when Primitive_Duration =>
             return Validate_Duration (Descr, Symbols, Ch);
+
          when Primitive_Union    =>
-            return No_Symbol;  --  Already handled above
+            for S in Descr.Union'Range loop
+               if Descr.Union (S) /= No_Simple_Type_Index then
+                  Error := Validate_Simple_Type
+                    (Simple_Types  => Simple_Types,
+                     Enumerations  => Enumerations,
+                     Symbols       => Symbols,
+                     Simple_Type   => Descr.Union (S),
+                     Ch            => Ch,
+                     Empty_Element => Empty_Element);
+                  if Error = No_Symbol then
+                     return Error;
+                  else
+                     if Debug then
+                        Debug_Output ("Checking union at index" & S'Img
+                                      & " => " & Get (Error).all);
+                     end if;
+                  end if;
+               end if;
+            end loop;
+            return Find (Symbols, "No matching type in the union");
+
          when Primitive_List     =>
             Validate_List_Items (Ch);
             if Error = No_Symbol then
