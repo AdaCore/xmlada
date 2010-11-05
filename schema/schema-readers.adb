@@ -48,17 +48,17 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 package body Schema.Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Validator_List_Record, Validator_List);
+--     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+--       (Validator_List_Record, Validator_List);
 
-   procedure Push  (List    : in out Validator_List;
-                    Element : XML_Element;
-                    Typ     : XML_Type;
-                    G       : XML_Grammar_NS;
-                    Data    : Validator_Data;
-                    Is_Nil  : Boolean);
-   procedure Pop   (List : in out Validator_List);
-   procedure Clear (List : in out Validator_List);
+--     procedure Push  (List    : in out Validator_List;
+--                      Element : XML_Element;
+--                      Typ     : XML_Type;
+--                      G       : XML_Grammar_NS;
+--                      Data    : Validator_Data;
+--                      Is_Nil  : Boolean);
+--     procedure Pop   (List : in out Validator_List);
+--     procedure Clear (List : in out Validator_List);
    --  Push or remove validators from the list
 
    procedure Parse_Grammars
@@ -209,54 +209,54 @@ package body Schema.Readers is
    -- Push --
    ----------
 
-   procedure Push
-     (List    : in out Validator_List;
-      Element : XML_Element;
-      Typ     : XML_Type;
-      G       : XML_Grammar_NS;
-      Data    : Validator_Data;
-      Is_Nil  : Boolean) is
-   begin
-      List := new Validator_List_Record'
-        (Element => Element,
-         Typ     => Typ,
-         Grammar => G,
-         Data    => Data,
-         Is_Nil  => Is_Nil,
-         Start_Loc  => No_Locator,
-         Characters => null,
-         Next    => List);
-   end Push;
+--     procedure Push
+--       (List    : in out Validator_List;
+--        Element : XML_Element;
+--        Typ     : XML_Type;
+--        G       : XML_Grammar_NS;
+--        Data    : Validator_Data;
+--        Is_Nil  : Boolean) is
+--     begin
+--        List := new Validator_List_Record'
+--          (Element => Element,
+--           Typ     => Typ,
+--           Grammar => G,
+--           Data    => Data,
+--           Is_Nil  => Is_Nil,
+--           Start_Loc  => No_Locator,
+--           Characters => null,
+--           Next    => List);
+--     end Push;
 
    ---------
    -- Pop --
    ---------
 
-   procedure Pop (List : in out Validator_List) is
-      Tmp : Validator_List := List;
-   begin
-      if List /= null then
-         if List.Characters /= null then
-            Free (List.Characters);
-         end if;
-
-         Free (List.Data);
-         List := List.Next;
-
-         Unchecked_Free (Tmp);
-      end if;
-   end Pop;
+--     procedure Pop (List : in out Validator_List) is
+--        Tmp : Validator_List := List;
+--     begin
+--        if List /= null then
+--           if List.Characters /= null then
+--              Free (List.Characters);
+--           end if;
+--
+--           Free (List.Data);
+--           List := List.Next;
+--
+--           Unchecked_Free (Tmp);
+--        end if;
+--     end Pop;
 
    -----------
    -- Clear --
    -----------
 
-   procedure Clear (List : in out Validator_List) is
-   begin
-      while List /= null loop
-         Pop (List);
-      end loop;
-   end Clear;
+--     procedure Clear (List : in out Validator_List) is
+--     begin
+--        while List /= null loop
+--           Pop (List);
+--        end loop;
+--     end Clear;
 
    ---------------------
    -- To_Absolute_URI --
@@ -628,11 +628,18 @@ package body Schema.Readers is
       Location_Index : constant Integer := Get_Index
         (Atts, H.XML_Instance_URI, H.Schema_Location);
 
-      Element       : XML_Element := No_Element;
+--        Element       : XML_Element := No_Element;
       Data          : Validator_Data;
-      Typ, Xsi_Type : XML_Type;
-      Parent_Type   : XML_Type;
-      Is_Nil        : Boolean;
+--        Typ           : XML_Type;
+      Xsi_Type      : XML_Type;
+      pragma Unreferenced (Xsi_Type);
+--      Parent_Type   : XML_Type;
+--        Is_Nil        : Boolean;
+
+      procedure Validate_Attributes_Cb
+        (Self : access NFA'Class; S : State);
+      --  Validate the attributes for state [S]. If they are not valid, [S]
+      --  is marked as invalid.
 
       function Compute_Type_From_Attribute return XML_Type;
       --  Compute the type to use, depending on whether the xsi:type attribute
@@ -644,8 +651,8 @@ package body Schema.Readers is
 
       function Compute_Type_From_Attribute return XML_Type is
          G : XML_Grammar_NS;
-         Had_Restriction, Had_Extension : Boolean := False;
-         Valid : Boolean;
+--           Had_Restriction, Had_Extension : Boolean := False;
+--           Valid : Boolean;
          Typ : XML_Type := No_Type;
       begin
          if Type_Index /= -1 then
@@ -686,44 +693,71 @@ package body Schema.Readers is
                      & Get (Get_Value (Atts, Type_Index)).all & '"');
                end if;
 
-               if Element /= No_Element
-                 and then Get_Validator (Typ) /=
-                 Get_Validator (Get_Type (Element))
-               then
-                  Check_Replacement_For_Type
-                    (Get_Validator (Typ), Element,
-                     Valid           => Valid,
-                     Had_Restriction => Had_Restriction,
-                     Had_Extension   => Had_Extension);
-
-                  if not Valid then
-                     Validation_Error
-                       (H, '#' & Qname & " is not a valid replacement for "
-                        & To_QName (Get_Type (Element)));
-                  end if;
-
-                  if Had_Restriction
-                    and then Get_Block (Element) (Block_Restriction)
-                  then
-                     Validation_Error
-                       (H, "#Element """ & To_QName (Element)
-                        & """ blocks the use of restrictions of the type");
-                  end if;
-
-                  if Had_Extension
-                    and then Get_Block (Element) (Block_Extension)
-                  then
-                     Validation_Error
-                       (H, "#Element """ & To_QName (Element)
-                        & """ blocks the use of extensions of the type");
-                  end if;
-               end if;
+--                 if Element /= No_Element
+--                   and then Get_Validator (Typ) /=
+--                   Get_Validator (Get_Type (Element))
+--                 then
+--                    Check_Replacement_For_Type
+--                      (Get_Validator (Typ), Element,
+--                       Valid           => Valid,
+--                       Had_Restriction => Had_Restriction,
+--                       Had_Extension   => Had_Extension);
+--
+--                    if not Valid then
+--                       Validation_Error
+--                         (H, '#' & Qname & " is not a valid replacement for "
+--                          & To_QName (Get_Type (Element)));
+--                    end if;
+--
+--                    if Had_Restriction
+--                      and then Get_Block (Element) (Block_Restriction)
+--                    then
+--                       Validation_Error
+--                         (H, "#Element """ & To_QName (Element)
+--                          & """ blocks the use of restrictions of the type");
+--                    end if;
+--
+--                    if Had_Extension
+--                      and then Get_Block (Element) (Block_Extension)
+--                    then
+--                       Validation_Error
+--                         (H, "#Element """ & To_QName (Element)
+--                          & """ blocks the use of extensions of the type");
+--                    end if;
+--                 end if;
             end;
          end if;
          return Typ;
       end Compute_Type_From_Attribute;
 
-      G : XML_Grammar_NS;
+      procedure Validate_Attributes_Cb
+        (Self : access NFA'Class; S : State)
+      is
+         Is_Nil : Boolean;
+         Nested : constant Nested_NFA := Self.Get_Nested (S);
+         Data2 : State_Data_Access;
+      begin
+         --  The list of valid attributes is attached to the type, that is to
+         --  the nested NFA.
+
+         if Nested /= No_Nested then
+            Data2 := Self.Get_Data (Get_Start_State (Nested));
+            if Debug then
+               Debug_Output ("Checking attributes for state" & S'Img
+                             & " (defined in" & Get_Start_State (Nested)'Img
+                             & ")");
+            end if;
+            Validate_Attributes
+              (Data2.Attributes, H, Atts,
+               Nillable => False,  --  Is_Nillable (Element),
+               Is_Nil   => Is_Nil);
+         end if;
+      end Validate_Attributes_Cb;
+
+      procedure Validate_All_Attributes is new For_Each_Active_State
+        (Validate_Attributes_Cb);
+
+--        G : XML_Grammar_NS;
       Success : Boolean;
    begin
       H.Nesting_Level := H.Nesting_Level + 1;
@@ -754,17 +788,17 @@ package body Schema.Readers is
          return;  --  Always valid, since we have no grammar anyway
       end if;
 
-      Get_NS (H.Grammar, Get_URI (Get_NS (Elem)), Result => G);
+--        Get_NS (H.Grammar, Get_URI (Get_NS (Elem)), Result => G);
 
       Process
         (H.Matcher,
          Input   => (Kind => Transition_Symbol,
-                     Name => (NS    => Get_Namespace_URI (G),
+                     Name => (NS    => Get_URI (Get_NS (Elem)),
                               Local => Get_Local_Name (Elem))),
          Success => Success);
 
       if Debug then
-         Debug_Print (H.Matcher);
+         Debug_Print (H.Matcher, Dump_Compact);
       end if;
 
       if not Success then
@@ -772,108 +806,110 @@ package body Schema.Readers is
            (H, "MANU State_Machine reported an error");
       end if;
 
+      Validate_All_Attributes (H.Matcher);
+
       --  Whether this element is valid in the current context
 
-      if H.Validators /= null then
-         Parent_Type := H.Validators.Typ;
-         if Parent_Type = No_Type then
-            Parent_Type := Get_Type (H.Validators.Element);
-         end if;
+--        if H.Validators /= null then
+--           Parent_Type := H.Validators.Typ;
+--           if Parent_Type = No_Type then
+--              Parent_Type := Get_Type (H.Validators.Element);
+--           end if;
+--
+--           if Has_Fixed (Handler) then
+--              Validation_Error
+--                (H, "#No child allowed because """
+--                 & To_QName (H.Validators.Element)
+--                 & """ has a fixed value");
+--           end if;
 
-         if Has_Fixed (Handler) then
-            Validation_Error
-              (H, "#No child allowed because """
-               & To_QName (H.Validators.Element)
-               & """ has a fixed value");
-         end if;
+--           Validate_Start_Element
+--             (Get_Validator (Parent_Type), H, Get_Local_Name (Elem),
+--              G, H.Validators.Data, Element);
+--        else
+--           Element := Lookup_Element (G, H, Get_Local_Name (Elem), False);
+--        end if;
 
-         Validate_Start_Element
-           (Get_Validator (Parent_Type), H, Get_Local_Name (Elem),
-            G, H.Validators.Data, Element);
-      else
-         Element := Lookup_Element (G, H, Get_Local_Name (Elem), False);
-      end if;
+--        if Element = No_Element and then Type_Index = -1 then
+--           if H.Validators /= null then
+--              Validation_Error
+--                (H, "#Unexpected element """ & To_QName (Elem) & """");
+--           else
+--              Validation_Error
+--                (H, "#Element """ & To_QName (Elem)
+--                 & """: No matching declaration available");
+--           end if;
+--        end if;
 
-      if Element = No_Element and then Type_Index = -1 then
-         if H.Validators /= null then
-            Validation_Error
-              (H, "#Unexpected element """ & To_QName (Elem) & """");
-         else
-            Validation_Error
-              (H, "#Element """ & To_QName (Elem)
-               & """: No matching declaration available");
-         end if;
-      end if;
-
-      if Element /= No_Element and then Is_Abstract (Element) then
-         Validation_Error
-           (H, "#Element """ & To_QName (Elem) & """ is abstract");
-      end if;
+--        if Element /= No_Element and then Is_Abstract (Element) then
+--           Validation_Error
+--             (H, "#Element """ & To_QName (Elem) & """ is abstract");
+--        end if;
 
       Xsi_Type := Compute_Type_From_Attribute;
 
-      if Xsi_Type = No_Type then
-         if Element = No_Element then
-            Validation_Error
-              (H, "#Type """
-               & Get (Get_Value (Atts, Type_Index)).all
-               & """: No matching declaration available");
-         else
-            Typ := Get_Type (Element);
-         end if;
-      else
-         Typ := Xsi_Type;
-      end if;
-
-      Data := Create_Validator_Data (Get_Validator (Typ));
-
-      Validate_Attributes
-        (Get_Validator (Typ), H, Atts,
-         Element /= No_Element and then Is_Nillable (Element),
-         Is_Nil);
-
-      if H.Validators /= null then
-         if H.Validators.Is_Nil then
-            Validation_Error
-              (H,
-               "#Element is set as nil,"
-               & " and doesn't accept any child element");
-         end if;
-      else
-         --  For root element, we need to check nillable here, otherwise this
-         --  has been done in Validate_Attributes
-
-         declare
-            Nil_Index : constant Integer :=
-              Get_Index (Atts,
-                         URI        => H.XML_Instance_URI,
-                         Local_Name => H.Nil);
-         begin
-            if Nil_Index /= -1 then
-               if not Is_Nillable (Element) then
-                  Validation_Error
-                    (H, "#Element """
-                     & To_QName (Elem) & """ cannot be nil");
-               end if;
-
-               Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
-            else
-               Is_Nil := False;
-            end if;
-         end;
-      end if;
-
-      if Is_Nil
-        and then Element /= No_Element
-        and then Has_Fixed (Element)
-      then
-         Validation_Error
-           (H, "#Element cannot be nilled because"
-            & " a fixed value is defined for it");
-      end if;
-
-      Push (H.Validators, Element,
-            Xsi_Type, G, Data, Is_Nil);
+--        if Xsi_Type = No_Type then
+--           if Element = No_Element then
+--              Validation_Error
+--                (H, "#Type """
+--                 & Get (Get_Value (Atts, Type_Index)).all
+--                 & """: No matching declaration available");
+--           else
+--              Typ := Get_Type (Element);
+--           end if;
+--        else
+--           Typ := Xsi_Type;
+--        end if;
+--
+--        Data := Create_Validator_Data (Get_Validator (Typ));
+--
+--        Validate_Attributes
+--          (Get_Validator (Typ), H, Atts,
+--           Element /= No_Element and then Is_Nillable (Element),
+--           Is_Nil);
+--
+--        if H.Validators /= null then
+--           if H.Validators.Is_Nil then
+--              Validation_Error
+--                (H,
+--                 "#Element is set as nil,"
+--                 & " and doesn't accept any child element");
+--           end if;
+--        else
+--        --  For root element, we need to check nillable here, otherwise this
+--           --  has been done in Validate_Attributes
+--
+--           declare
+--              Nil_Index : constant Integer :=
+--                Get_Index (Atts,
+--                           URI        => H.XML_Instance_URI,
+--                           Local_Name => H.Nil);
+--           begin
+--              if Nil_Index /= -1 then
+--                 if not Is_Nillable (Element) then
+--                    Validation_Error
+--                      (H, "#Element """
+--                       & To_QName (Elem) & """ cannot be nil");
+--                 end if;
+--
+--                 Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
+--              else
+--                 Is_Nil := False;
+--              end if;
+--           end;
+--        end if;
+--
+--        if Is_Nil
+--          and then Element /= No_Element
+--          and then Has_Fixed (Element)
+--        then
+--           Validation_Error
+--             (H, "#Element cannot be nilled because"
+--              & " a fixed value is defined for it");
+--        end if;
+--
+--        Push (H.Validators, Element,
+--              Xsi_Type, G, Data, Is_Nil);
 
    exception
       when others =>
@@ -908,7 +944,8 @@ package body Schema.Readers is
             Success => Success);
 
          if Debug then
-            Debug_Print (H.Matcher);
+            Debug_Output ("NFA: sent <close>");
+            Debug_Print (H.Matcher, Dump_Compact);
          end if;
 
          if not Success then
@@ -933,12 +970,12 @@ package body Schema.Readers is
                Typ := Get_Type (H.Validators.Element);
             end if;
 
-            Validate_End_Element
-              (Get_Validator (Typ), H, Get_Local_Name (Elem),
-               H.Validators.Data);
+--              Validate_End_Element
+--                (Get_Validator (Typ), H, Get_Local_Name (Elem),
+--                 H.Validators.Data);
          end if;
       end if;
-      Pop (H.Validators);
+--        Pop (H.Validators);
    end Hook_End_Element;
 
    -------------------------
@@ -1010,7 +1047,7 @@ package body Schema.Readers is
       Parser.Locator := Get_Location (Parser);
       Free (Parser.Id_Table);
       Free (Parser.Matcher);
-      Clear (Parser.Validators);
+--        Clear (Parser.Validators);
    end Reset;
 
    -----------

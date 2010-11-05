@@ -1133,12 +1133,13 @@ package body Schema.Schema_Readers is
             --  A schema adds like a "or" for all its <element> nodes
             Handler.NFA.Add_Transition (Ctxt.Start_State, S, On_Symbol);
             Handler.NFA.Repeat (Ctxt.Start_State, S, Min_Occurs, Max);
-            Handler.NFA.Add_Empty_Transition (S, Final_State);
+            Handler.NFA.Add_Empty_Transition (S, Ctxt.Last_State);
 
          when others =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Can't create automaton for " & Ctxt.Typ'Img);
+            raise Program_Error;
+--              Raise_Exception
+--                (XML_Not_Implemented'Identity,
+--                 "Can't create automaton for " & Ctxt.Typ'Img);
       end case;
    end Link_To_Previous;
 
@@ -1149,26 +1150,27 @@ package body Schema.Schema_Readers is
    procedure Propagate_Last
      (Handler : access Schema_Reader'Class)
    is
+      Ctxt : constant Context_Access := Handler.Contexts;
+      Next : constant Context_Access := Ctxt.Next;
    begin
-      case Handler.Contexts.Next.Typ is
+      case Next.Typ is
          when Context_Sequence | Context_Choice =>
-            Handler.Contexts.Next.Last_State :=
-              Handler.Contexts.Last_State;
+            Next.Last_State := Ctxt.Last_State;
 
          when Context_Type_Def =>
             --  If the parent is an element, we have an inline type, so we
             --  need to point to the nested automaton.
 
-            if Handler.Contexts.Next.Next.Typ = Context_Element then
-               Handler.NFA.Set_Nested
-                 (Handler.Contexts.Next.Next.Start_State,
-                  Handler.Contexts.Next.NFA);
+            if Next.Next.Typ = Context_Element then
+               Handler.NFA.Set_Nested (Next.Next.Start_State, Next.NFA);
             end if;
 
             --  Terminates the nested NFA for the type
             Link_To_Previous
-              (Handler, Handler.Contexts, Final_State,
-               (Kind => Transition_Close_Nested));
+              (Handler, Ctxt, Final_State, (Kind => Transition_Close_Nested));
+
+         when Context_Attribute =>
+            null;
 
          when Context_Element =>
             null;
@@ -1179,8 +1181,8 @@ package body Schema.Schema_Readers is
          when others =>
             Raise_Exception
               (XML_Not_Implemented'Identity,
-               "Can't propagate last " & Handler.Contexts.Next.Typ'Img
-               & " current=" & Handler.Contexts.Typ'Img);
+               "Can't propagate last " & Next.Typ'Img
+               & " current=" & Ctxt.Typ'Img);
       end case;
    end Propagate_Last;
 
@@ -1219,7 +1221,7 @@ package body Schema.Schema_Readers is
       Element : XML_Element;
       Typ     : XML_Type := No_Type;
       Group   : XML_Element;
-      Form    : Form_Type;
+      Form    : Form_Type := Handler.Element_Form_Default;
       Is_Ref  : Boolean;
       Is_Set  : Boolean;
       S1, S2  : State := No_State;
@@ -1231,8 +1233,6 @@ package body Schema.Schema_Readers is
          else
             Form := Unqualified;
          end if;
-      else
-         Form := Handler.Element_Form_Default;
       end if;
 
       if Name_Index /= -1 then
@@ -1375,47 +1375,47 @@ package body Schema.Schema_Readers is
 
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
 
-      case Handler.Contexts.Typ is
-         when Context_Schema | Context_Redefine =>
-            null;
-         when Context_Sequence =>
-            Add_Particle
-              (Handler.Contexts.Seq, Handler, Element,
-               Min_Occurs       => Min_Occurs,
-               Max_Occurs       => Max_Occurs);
-            if Debug then
-               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
-                       & ", " & Ada_Name (Element) & ", is_ref="
-                       & Boolean'Image (Ref_Index /= -1) & ','
-                       & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
-            end if;
-
-         when Context_Choice =>
-            Add_Particle
-              (Handler.Contexts.C, Handler, Element, Min_Occurs, Max_Occurs);
-            if Debug then
-               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
-                       & ", " & Ada_Name (Element) & ','
-                       & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
-            end if;
-
-         when Context_All =>
-            Add_Particle
-              (Handler.Contexts.All_Validator, Handler, Element,
-               Min_Occurs, Max_Occurs);
-            if Debug then
-               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
-                       & ", " & Ada_Name (Element) & ','
-                       & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
-            end if;
-         when others =>
-            if Debug then
-               Output_Action ("Can't handle nested element decl");
-            end if;
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Unsupported: ""element"" in this context");
-      end case;
+--        case Handler.Contexts.Typ is
+--           when Context_Schema | Context_Redefine =>
+--              null;
+--           when Context_Sequence =>
+--              Add_Particle
+--                (Handler.Contexts.Seq, Handler, Element,
+--                 Min_Occurs       => Min_Occurs,
+--                 Max_Occurs       => Max_Occurs);
+--              if Debug then
+--               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
+--                         & ", " & Ada_Name (Element) & ", is_ref="
+--                         & Boolean'Image (Ref_Index /= -1) & ','
+--                         & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
+--              end if;
+--
+--           when Context_Choice =>
+--              Add_Particle
+--              (Handler.Contexts.C, Handler, Element, Min_Occurs, Max_Occurs);
+--              if Debug then
+--               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
+--                         & ", " & Ada_Name (Element) & ','
+--                         & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
+--              end if;
+--
+--           when Context_All =>
+--              Add_Particle
+--                (Handler.Contexts.All_Validator, Handler, Element,
+--                 Min_Occurs, Max_Occurs);
+--              if Debug then
+--               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
+--                         & ", " & Ada_Name (Element) & ','
+--                         & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
+--              end if;
+--           when others =>
+--              if Debug then
+--                 Output_Action ("Can't handle nested element decl");
+--              end if;
+--              Raise_Exception
+--                (XML_Not_Implemented'Identity,
+--                 "Unsupported: ""element"" in this context");
+--        end case;
 
       --  It seems we could optimize the case with a single element in a choice
       --  and save on the intermediate state by pointing directly to the end
@@ -1430,7 +1430,15 @@ package body Schema.Schema_Readers is
          --  allocated yet
          if S1 = No_State then
             S1 := Handler.NFA.Add_State
-              ((Type_Name => Get_Value (Atts, Type_Index)));
+              ((Type_Name   => Get_Value (Atts, Type_Index),
+                Attributes  => null,
+                Simple_Type => null));
+         end if;
+
+         if Get_Validator (Typ) /= null
+           and then Is_Simple_Type (Handler, Typ)
+         then
+            Handler.NFA.Get_Data (S1).Simple_Type := Get_Validator (Typ);
          end if;
 
          if Get_NFA (Typ) /= No_Nested then
@@ -1443,7 +1451,10 @@ package body Schema.Schema_Readers is
          pragma Assert (S1 /= No_State);
 
          if Is_Ref then
-            S2 := Handler.NFA.Add_State ((Type_Name => No_Symbol));
+            S2 := Handler.NFA.Add_State
+              ((Type_Name   => No_Symbol,
+                Attributes  => null,
+                Simple_Type => null));
             Handler.NFA.Set_Alias (S2, S1);
             S1 := S2;
          end if;
@@ -1700,7 +1711,9 @@ package body Schema.Schema_Readers is
          S := Get_Start_State (N);
       else
          S := Handler.NFA.Add_State
-           ((Type_Name => No_Symbol));
+           ((Type_Name   => No_Symbol,
+             Attributes  => null,
+             Simple_Type => null));
          N := Handler.NFA.Create_Nested (S);
       end if;
 
@@ -2212,7 +2225,9 @@ package body Schema.Schema_Readers is
         (Typ         => Context_Choice,
          Start_State => Get_Last_State (Handler, Handler.Contexts),
          Last_State  => Handler.NFA.Add_State
-           ((Type_Name => No_Symbol)),
+           ((Type_Name   => No_Symbol,
+             Attributes  => null,
+             Simple_Type => null)),
          C           => Create_Choice (Handler.Target_NS),
          Level       => Handler.Contexts.Level + 1,
          Next        => Handler.Contexts);
@@ -2633,13 +2648,9 @@ package body Schema.Schema_Readers is
    begin
       case In_Context.Typ is
          when Context_Type_Def =>
-            Ensure_Type (Handler, In_Context);
-            Add_Attribute (In_Context.Type_Validator, Attribute,
-                           Is_Local => Is_Local);
-            if Debug then
-               Output_Action
-                 ("Add_Attribute (Validator, " & Attribute_Name & ");");
-            end if;
+            Add_Attribute
+              (Handler.NFA.Get_Data (In_Context.Start_State).Attributes,
+               Attribute);
 
          when Context_Schema | Context_Redefine =>
             null;
@@ -2685,9 +2696,6 @@ package body Schema.Schema_Readers is
          when Context_Element | Context_Sequence | Context_Choice
             | Context_Attribute | Context_All
             | Context_Union | Context_List | Context_Group =>
-            if Debug then
-               Output_Action ("Can't handle attribute decl in this context");
-            end if;
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Unsupported: ""attribute"" in this context");
@@ -2733,6 +2741,7 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.S_Attribute_Form_Default);
       Blocks : Block_Status;
       Is_Set : Boolean;
+      S : State;
    begin
       if Target_NS_Index /= -1 then
          if Debug then
@@ -2783,10 +2792,17 @@ package body Schema.Schema_Readers is
          Set_Block_Default (Handler.Target_NS, Blocks);
       end if;
 
+      S := Handler.NFA.Add_State
+        ((Type_Name   => No_Symbol,
+          Attributes  => null,
+          Simple_Type => null));
+      Handler.NFA.Add_Transition
+        (S, Final_State, (Kind => Transition_Close_Nested));
+
       Handler.Contexts := new Context'
         (Typ         => Context_Schema,
          Start_State => Start_State,
-         Last_State  => No_State,
+         Last_State  => S,
          Level       => 0,
          Next        => null);
    end Create_Schema;

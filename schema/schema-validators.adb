@@ -613,6 +613,18 @@ package body Schema.Validators is
    -------------------
 
    procedure Add_Attribute
+     (List      : in out Attribute_Validator_List_Access;
+      Attribute : access Attribute_Validator_Record'Class)
+   is
+   begin
+      Append (List, Attribute, Is_Local => True, Override => True);
+   end Add_Attribute;
+
+   -------------------
+   -- Add_Attribute --
+   -------------------
+
+   procedure Add_Attribute
      (Validator  : access XML_Validator_Record;
       Attribute  : access Attribute_Validator_Record'Class;
       Is_Local   : Boolean := True) is
@@ -737,9 +749,9 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Attributes
-     (Validator : access XML_Validator_Record;
+     (Attributes : Attribute_Validator_List_Access;
       Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax_Attribute_List;
+      Atts      : in out Sax.Readers.Sax_Attribute_List;
       Nillable  : Boolean;
       Is_Nil    : out Boolean)
    is
@@ -767,7 +779,7 @@ package body Schema.Validators is
       --  Chech whether Named appears in Atts
 
       procedure Recursive_Check
-        (Validator       : XML_Validator;
+        (List            : Attribute_Validator_List_Access;
          Ignore_Wildcard : Boolean;
          Must_Match_All_Any : Boolean);
       procedure Recursive_Check_Named (List : Attribute_Or_Group);
@@ -1051,25 +1063,24 @@ package body Schema.Validators is
       ---------------------
 
       procedure Recursive_Check
-        (Validator       : XML_Validator;
+        (List            : Attribute_Validator_List_Access;
          Ignore_Wildcard : Boolean;
          Must_Match_All_Any : Boolean)
       is
-         List   : Attribute_Validator_List_Access;
-         Dep1, Dep2 : XML_Validator;
-         Ignore_Dep1_Wildcard : Boolean;
-         Must_Match_All_Any2 : Boolean;
+--           List   : Attribute_Validator_List_Access;
+--           Dep1, Dep2 : XML_Validator;
+--           Ignore_Dep1_Wildcard : Boolean;
+         Must_Match_All_Any2 : constant Boolean := False;
       begin
-         Get_Attribute_Lists
-           (Validator, List,
-            Dep1, Ignore_Dep1_Wildcard, Dep2, Must_Match_All_Any2);
+--           Get_Attribute_Lists
+--             (Validator, List,
+--              Dep1, Ignore_Dep1_Wildcard, Dep2, Must_Match_All_Any2);
 
-         if Debug then
-            Debug_Push_Prefix
-              ("Check attr (" & Get_Name (Validator)
-               & ") ign_wild=" & Ignore_Wildcard'Img
-               & " all_any=" & Must_Match_All_Any2'Img);
-         end if;
+--           if Debug then
+--              Debug_Push_Prefix
+--                ("Check attr ign_wild=" & Ignore_Wildcard'Img
+--                 & " all_any=" & Must_Match_All_Any2'Img);
+--           end if;
 
          if List /= null then
             for L in List'Range loop
@@ -1077,14 +1088,14 @@ package body Schema.Validators is
             end loop;
          end if;
 
-         if Dep1 /= null then
-            Recursive_Check (Dep1, Ignore_Wildcard or Ignore_Dep1_Wildcard,
-                             Must_Match_All_Any2);
-         end if;
-
-         if Dep2 /= null then
-            Recursive_Check (Dep2, Ignore_Wildcard, Must_Match_All_Any2);
-         end if;
+--           if Dep1 /= null then
+--              Recursive_Check (Dep1, Ignore_Wildcard or Ignore_Dep1_Wildcard,
+--                               Must_Match_All_Any2);
+--           end if;
+--
+--           if Dep2 /= null then
+--              Recursive_Check (Dep2, Ignore_Wildcard, Must_Match_All_Any2);
+--           end if;
 
          if List /= null and then not Ignore_Wildcard then
             --  If the policy for <anyAttribute> has changed, we restart from
@@ -1120,20 +1131,20 @@ package body Schema.Validators is
             end if;
          end if;
 
-         Debug_Pop_Prefix;
+--           Debug_Pop_Prefix;
 
-      exception
-         when others =>
-            Debug_Pop_Prefix;
-            raise;
+--        exception
+--           when others =>
+--              Debug_Pop_Prefix;
+--              raise;
       end Recursive_Check;
 
    begin
       if Debug then
-         Debug_Push_Prefix ("Validate_Attributes " & Get_Name (Validator));
+         Debug_Push_Prefix ("Validate_Attributes");
       end if;
 
-      Recursive_Check (XML_Validator (Validator), Ignore_Wildcard => False,
+      Recursive_Check (Attributes, Ignore_Wildcard => False,
                        Must_Match_All_Any => False);
 
       Is_Nil := False;
@@ -1501,11 +1512,10 @@ package body Schema.Validators is
                & To_QName (Grammar, Local_Name));
          end if;
 
-         Output_Seen ("MANU Lookup, creating "
-                      & To_QName (Grammar, Local_Name));
-
          S := Grammar.NFA.Add_State
-           ((Type_Name => Local_Name));
+           ((Type_Name   => Local_Name,
+             Attributes  => null,
+             Simple_Type => null));
          Typ := new XML_Type_Record'
            (Local_Name        => Local_Name,
             Validator         => null,
@@ -2258,7 +2268,9 @@ package body Schema.Validators is
          Old.Form := Form;
       else
          S := Grammar.NFA.Add_State
-           ((Type_Name => Local_Name));
+           ((Type_Name   => Local_Name,
+             Attributes  => null,
+             Simple_Type => null));
 
          Old := new XML_Element_Record'
            (Local_Name          => Local_Name,
@@ -6062,11 +6074,22 @@ package body Schema.Validators is
    -----------
 
    function Image (S : State; Data : State_User_Data) return String is
+      function Add_Data (Base : String) return String;
+      function Add_Data (Base : String) return String is
+      begin
+         if Data.Simple_Type /= null then
+            return Base & " simpleType";
+         elsif Data.Attributes /= null then
+            return Base & " attr=" & Data.Attributes'Length'Img;
+         else
+            return Base;
+         end if;
+      end Add_Data;
    begin
       if Data.Type_Name /= No_Symbol then
-         return Get (Data.Type_Name).all;
+         return Add_Data (Get (Data.Type_Name).all);
       else
-         return Schema_State_Machines.Default_Image (S, Data);
+         return Add_Data (Schema_State_Machines.Default_Image (S, Data));
       end if;
    end Image;
 

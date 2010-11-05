@@ -75,6 +75,9 @@ package Schema.Validators is
    --  A grammar is a smart pointer, and will take care of freeing memory
    --  automatically when no longer needed.
 
+   type Attribute_Validator_Record is abstract tagged private;
+   type Attribute_Validator is access all Attribute_Validator_Record'Class;
+
    procedure Set_System_Id
      (Grammar   : XML_Grammar_NS;
       System_Id : Sax.Symbols.Symbol);
@@ -147,11 +150,18 @@ package Schema.Validators is
          end case;
       end record;
 
+   type Attribute_Validator_List (<>) is private;
+   type Attribute_Validator_List_Access is access Attribute_Validator_List;
+
    type State_User_Data is record
-      Type_Name : Sax.Symbols.Symbol;  --  Debug only
+      Type_Name   : Sax.Symbols.Symbol;  --  Debug only
+      Attributes  : Attribute_Validator_List_Access;
+      Simple_Type : XML_Validator;  --  Validator for simpleType
    end record;
    Default_User_Data : constant State_User_Data :=
-     (Type_Name => Sax.Symbols.No_Symbol);
+     (Type_Name   => Sax.Symbols.No_Symbol,
+      Attributes  => null,
+      Simple_Type => null);
 
    function Match (Trans, Sym : Transition_Event) return Boolean;
    function Image (Trans : Transition_Event) return String;
@@ -575,9 +585,6 @@ package Schema.Validators is
    -- Attribute_Validator --
    -------------------------
 
-   type Attribute_Validator_Record is abstract tagged private;
-   type Attribute_Validator is access all Attribute_Validator_Record'Class;
-
    type Attribute_Use_Type is (Prohibited, Optional, Required, Default);
 
    function Create_Local_Attribute
@@ -707,7 +714,7 @@ package Schema.Validators is
    --  Raise XML_Validation_Error in case of error
 
    procedure Validate_Attributes
-     (Validator : access XML_Validator_Record;
+     (Attributes : Attribute_Validator_List_Access;
       Reader    : access Abstract_Validation_Reader'Class;
       Atts      : in out Sax.Readers.Sax_Attribute_List;
       Nillable  : Boolean;
@@ -774,6 +781,9 @@ package Schema.Validators is
    --  of Validator.
    --  By default, an error is reported through Invalid_Restriction
 
+   procedure Add_Attribute
+     (List      : in out Attribute_Validator_List_Access;
+      Attribute : access Attribute_Validator_Record'Class);
    procedure Add_Attribute
      (Validator : access XML_Validator_Record;
       Attribute : access Attribute_Validator_Record'Class;
@@ -1467,7 +1477,6 @@ private
    end record;
    type Attribute_Validator_List
      is array (Natural range <>) of Attribute_Or_Group;
-   type Attribute_Validator_List_Access is access Attribute_Validator_List;
 
    type Named_Attribute_Validator_Record;
    type Named_Attribute_Validator is access all

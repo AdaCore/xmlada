@@ -11,7 +11,7 @@
     <zipcode>1723</zipcode>
   </zip>
 
-  <zip>
+  <zip attr1="val" attr3="value1" attr4="value1">
     <code_postal>1723</code_postal>
   </zip>
 

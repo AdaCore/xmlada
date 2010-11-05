@@ -67,6 +67,8 @@ package Sax.State_Machines is
    type State is new Natural;
    --  A state of a state machine
 
+   type State_Data_Access is access all State_User_Data;
+
    -----------------------------------------------
    -- Non-deterministic automatons construction --
    -----------------------------------------------
@@ -94,6 +96,13 @@ package Sax.State_Machines is
    --  connect them, through empty transitions, to any number of states within
    --  [Self], thus making them start states in effect.
    --  These two states always exist.
+
+   function Get_Data (Self : access NFA; S : State) return State_Data_Access;
+   --  Returns an access to the state's user data. This can be modified in
+   --  place, but the access type should not be stored since it still belongs
+   --  to the NFA.
+   --  This API is slightly faster and more convenient than having a
+   --  [Get_User_Data] and [Set_User_Data] set of subprograms.
 
    procedure Add_Transition
      (Self       : access NFA;
@@ -268,9 +277,14 @@ package Sax.State_Machines is
    --  is in the scope.
 
    generic
-      with procedure Callback (S : State; Data : State_User_Data) is <>;
+      with procedure Callback
+        (Self : access NFA'Class;
+         S    : State) is <>;
    procedure For_Each_Active_State (Self : NFA_Matcher);
-   --  Iterates over all currently active states
+   --  Iterates over all currently active states.
+   --  If [Nested_Must_Be_Final] mode is on, the states with a nested NFA are
+   --  not returned unless their nested NFA is in a final state (that's because
+   --  we would be ignoring events on them otherwise).
 
    function In_Final (Self : NFA_Matcher) return Boolean;
    --  Whether [Self] is in the final step: if True, it means that all input
@@ -391,7 +405,7 @@ private
       On_Nested_Exit   : Transition_Id;
       Nested           : State := No_State;
       Alias_Of         : State := No_State;
-      Data             : State_User_Data;
+      Data             : aliased State_User_Data;
    end record;
    --  [Nested], if defined, indicates that this state contains a nested
    --  state machine, for which the default is Nested. Any transition to this

@@ -16,7 +16,6 @@
     </xsd:sequence>
     <xsd:sequence>
       <xsd:element ref="strs" maxOccurs="2"/>
-      <!--    <xsd:element ref="strs2" maxOccurs="2"/> -->
     </xsd:sequence>
   </xsd:sequence>
  </xsd:complexType>
@@ -29,6 +28,18 @@
    <xsd:element name="code_postal" type="xsd:string"/>
   </xsd:choice>
  </xsd:sequence>
+ <xsd:attribute name="attr1" type="xsd:string" use="optional"/>
+ <!--<xsd:attribute name="attr2" type="xsd:boolean" use="default" value="true"/>
+   -->
+ <xsd:attribute name="attr3" type="xsd:string"/>
+ <xsd:attribute name="attr4" use="optional">
+    <xsd:simpleType>
+       <restriction base="xsd:NMTOKEN">
+          <enumeration value="value1"/>
+          <enumeration value="value2"/>
+       </restriction>
+    </xsd:simpleType>
+ </xsd:attribute>
 </xsd:complexType>
 <xsd:element name="zip" type="Tzip" />
 

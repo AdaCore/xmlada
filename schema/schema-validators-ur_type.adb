@@ -42,12 +42,12 @@ package body Schema.Validators.UR_Type is
       Reader         : access Abstract_Validation_Reader'Class;
       Local_Name     : Symbol;
       Data           : Validator_Data);
-   overriding procedure Validate_Attributes
-     (Validator         : access UR_Type_Validator;
-      Reader            : access Abstract_Validation_Reader'Class;
-      Atts              : in out Sax.Readers.Sax_Attribute_List;
-      Nillable          : Boolean;
-      Is_Nil            : out Boolean);
+--     overriding procedure Validate_Attributes
+--       (Validator         : access UR_Type_Validator;
+--        Reader            : access Abstract_Validation_Reader'Class;
+--        Atts              : in out Sax.Readers.Sax_Attribute_List;
+--        Nillable          : Boolean;
+--        Is_Nil            : out Boolean);
    overriding procedure Validate_Start_Element
      (Validator         : access UR_Type_Validator;
       Reader            : access Abstract_Validation_Reader'Class;
@@ -141,17 +141,17 @@ package body Schema.Validators.UR_Type is
    -- Validate_Attributes --
    -------------------------
 
-   overriding procedure Validate_Attributes
-     (Validator : access UR_Type_Validator;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Readers.Sax_Attribute_List;
-      Nillable  : Boolean;
-      Is_Nil    : out Boolean)
-   is
-      pragma Unreferenced (Validator, Nillable, Atts, Reader);
-   begin
-      Is_Nil := False;
-   end Validate_Attributes;
+--     overriding procedure Validate_Attributes
+--       (Validator : access UR_Type_Validator;
+--        Reader    : access Abstract_Validation_Reader'Class;
+--        Atts      : in out Sax.Readers.Sax_Attribute_List;
+--        Nillable  : Boolean;
+--        Is_Nil    : out Boolean)
+--     is
+--        pragma Unreferenced (Validator, Nillable, Atts, Reader);
+--     begin
+--        Is_Nil := False;
+--     end Validate_Attributes;
 
    --------------------------
    -- Validate_End_Element --
