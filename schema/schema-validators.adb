@@ -64,6 +64,13 @@ package body Schema.Validators is
    procedure Create_Grammar_If_Needed (Grammar : in out XML_Grammar);
    --  Create the grammar if needed
 
+   procedure Validate_Attribute
+     (Attr      : Attribute_Descr;
+      Reader    : access Abstract_Validation_Reader'Class;
+      Atts      : in out Sax_Attribute_List;
+      Index     : Natural);
+   --  Validate the value of a single attribute
+
    ----------------------
    -- Validation_Error --
    ----------------------
@@ -736,7 +743,8 @@ package body Schema.Validators is
         (Reader        => Reader,
          Simple_Type   => Attr.Simple_Type,
          Ch            => Val.all,
-         Empty_Element => False);
+         Empty_Element => False,
+         Loc           => Get_Location (Atts, Index));
 
       if Is_ID (Attr) then
          Set_Type (Atts, Index, Sax.Attributes.Id);
@@ -1813,9 +1821,10 @@ package body Schema.Validators is
 
    procedure Validate_Simple_Type
      (Reader        : access Abstract_Validation_Reader'Class;
-      Simple_Type   : Simple_Type_Index;
+      Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
+      Empty_Element : Boolean;
+      Loc           : Sax.Locators.Location)
    is
       Error : Symbol;
    begin
@@ -1828,7 +1837,7 @@ package body Schema.Validators is
          Empty_Element => Empty_Element);
 
       if Error /= No_Symbol then
-         Validation_Error (Reader, Get (Error).all);
+         Validation_Error (Reader, Get (Error).all, Loc);
       end if;
    end Validate_Simple_Type;
 

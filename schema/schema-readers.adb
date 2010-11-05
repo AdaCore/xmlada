@@ -55,7 +55,8 @@ package body Schema.Readers is
    --  single string, for validation purposes.
 
    procedure Validate_Current_Characters
-     (Handler : access Validating_Reader'Class);
+     (Handler : access Validating_Reader'Class;
+      Loc     : Location);
    --  Validate the current set of characters
 
    procedure Reset (Parser : in out Validating_Reader);
@@ -211,7 +212,8 @@ package body Schema.Readers is
    ---------------------------------
 
    procedure Validate_Current_Characters
-     (Handler : access Validating_Reader'Class)
+     (Handler : access Validating_Reader'Class;
+      Loc     : Location)
    is
       Is_Empty           : Boolean;
 
@@ -233,7 +235,8 @@ package body Schema.Readers is
             Validate_Simple_Type
               (Handler, Data.Descr.Simple_Content,
                Handler.Characters (1 .. Handler.Characters_Count),
-               Empty_Element => Is_Empty);
+               Empty_Element => Is_Empty,
+               Loc           => Loc);
 
          elsif not Data.Descr.Mixed then
             if Debug then
@@ -246,7 +249,8 @@ package body Schema.Readers is
             end if;
             Validation_Error
               (Handler,
-               "No character data allowed by content model");
+               "No character data allowed by content model",
+               Loc);
          end if;
 
          --  If no explicit character data: we might need to simulate some, so
@@ -568,7 +572,9 @@ package body Schema.Readers is
                       & " " & To_String (H.Locator));
       end if;
 
-      Validate_Current_Characters (H);
+      --  We should get the location of the enclosing element
+
+      Validate_Current_Characters (H, Loc => Start_Tag_Location (Elem));
 
       --  Get the name of the grammar to use from the element's attributes
 
@@ -730,7 +736,7 @@ package body Schema.Readers is
            ("End_Element: " & To_QName (Elem) & " " & To_String (H.Locator));
       end if;
 
-      Validate_Current_Characters (H);
+      Validate_Current_Characters (H, Loc => Start_Tag_End_Location (Elem));
 
       Process (H.Matcher, (Kind => Transition_Close), Success);
       if Debug then

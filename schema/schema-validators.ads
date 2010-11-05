@@ -499,7 +499,8 @@ package Schema.Validators is
      (Reader        : access Abstract_Validation_Reader'Class;
       Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean);
+      Empty_Element : Boolean;
+      Loc           : Sax.Locators.Location);
    --  Validate [Ch] as a simpleType
 
    function Equal
@@ -641,12 +642,6 @@ private
       Table_Low_Bound      => Empty_Attribute_List + 1,
       Table_Initial        => 200,
       Table_Increment      => 200);
-
-   procedure Validate_Attribute
-     (Attr      : Attribute_Descr;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Readers.Sax_Attribute_List;
-      Index     : Natural);
 
    --------------
    -- Grammars --

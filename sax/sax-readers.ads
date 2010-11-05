@@ -239,6 +239,10 @@ package Sax.Readers is
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
    --  Returns No_Symbol if Index is negative
 
+   function Get_Location
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Locators.Location;
+   --  Return the start location for this attribute
+
    function Get_Non_Normalized_Value
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
    function Get_Value_As_Boolean
@@ -603,6 +607,12 @@ package Sax.Readers is
      (Elem   : Element_Access) return Unicode.CES.Byte_Sequence;
    --  Return the qualified name "{namespace_uri}local_name"
 
+   function Start_Tag_Location
+     (Elem : Element_Access) return Sax.Locators.Location;
+   function Start_Tag_End_Location
+     (Elem : Element_Access) return Sax.Locators.Location;
+   --  The location for the start of the element (start tag and end tag).
+
    function Get_NS (Elem : Element_Access) return XML_NS;
    function Get_Local_Name (Elem : Element_Access) return Sax.Symbols.Symbol;
    pragma Inline (Get_NS, Get_Local_Name);
@@ -821,8 +831,9 @@ private
       --  This is used so that a string started in one stream isn't terminated
       --  in another entity or stream.
 
-      Id : Natural;
-      --  Uniq ID for each input source
+      System_Id : Sax.Symbols.Symbol;
+      Public_Id : Sax.Symbols.Symbol;
+      --  Uniq System_Id for each input source
 
       Input    : Input_Sources.Input_Source_Access;
       Save_Loc : Sax.Locators.Location;
@@ -888,18 +899,13 @@ private
       --  True if Opening_Parenthesis should be reported separately
    end record;
 
-   type Token_Location is record
-      Line, Column : Natural; --   Line and col within the current stream
-      Input_Id : Natural;     --   Id of the input source in which Token was
-                              --   read.
-   end record;
-   Null_Location : constant Token_Location := (0, 0, 0);
-
    type Element is record
       NS             : XML_NS;
       Name           : Sax.Symbols.Symbol;
       Parent         : Element_Access;
-      Start          : Token_Location;  --  Start tag location
+      Start          : Sax.Locators.Location;  --  Start tag location
+      Start_Tag_End  : Sax.Locators.Location := Sax.Locators.No_Location;
+      --  Character after start tag (ie first char of content)
       Namespaces     : XML_NS;
       --  Namespaces defined for that element and its children
    end record;
@@ -913,7 +919,7 @@ private
       Att_Type     : Sax.Attributes.Attribute_Type := Sax.Attributes.Cdata;
       Default_Decl : Sax.Attributes.Default_Declaration :=
         Sax.Attributes.Default;
-      Location     : Token_Location;  --  Where the declaration occurred
+      Location     : Sax.Locators.Location;  --  Where the declaration occurred
    end record;
    --  An attribute as read in the XML stream. This is used to temporarily
    --  store the list of attributes until we have parsed all the namespace
@@ -976,6 +982,8 @@ private
 
       Locator       : Sax.Locators.Locator;
       Current_Node  : Element_Access;
+      Public_Id     : Sax.Symbols.Symbol;
+      System_Id     : Sax.Symbols.Symbol;
 
       Symbols        : Symbol_Table;
       Lt_Sequence    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;

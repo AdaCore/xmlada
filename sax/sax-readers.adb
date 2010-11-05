@@ -268,12 +268,12 @@ package body Sax.Readers is
    type Token is record
       Typ         : Token_Type;
       First, Last : Natural;  --   Indexes in the buffer
-      Location    : Token_Location;
+      Location    : Sax.Locators.Location;
       From_Entity : Boolean;  --   Whether the characters come from the
                               --   expansion of an entity.
    end record;
 
-   Null_Token : constant Token := (End_Of_Input, 1, 0, Null_Location, False);
+   Null_Token : constant Token := (End_Of_Input, 1, 0, No_Location, False);
 
    Default_State : constant Parser_State :=
      (Name => "Def",
@@ -513,10 +513,11 @@ package body Sax.Readers is
    --  a new input is open for an entity).
 
    procedure Add
-     (Attr               : in out Sax_Attribute_Array_Access;
+     (Parser             : in out Sax_Reader'Class;
+      Attr               : in out Sax_Attribute_Array_Access;
       Count              : in out Natural;
       If_Unique          : Boolean;
-      Location           : Token_Location;
+      Location           : Sax.Locators.Location;
       Local_Name, Prefix : Symbol;
       Value              : Symbol;
       Att_Type           : Attribute_Type := Cdata;
@@ -657,7 +658,7 @@ package body Sax.Readers is
    procedure Fatal_Error
      (Parser : in out Sax_Reader'Class;
       Msg    : String;
-      Loc    : Token_Location := Null_Location);
+      Loc    : Sax.Locators.Location := No_Location);
    procedure Fatal_Error
      (Parser : in out Sax_Reader'Class;
       Msg    : String;
@@ -671,7 +672,7 @@ package body Sax.Readers is
    procedure Error
      (Parser : in out Sax_Reader'Class;
       Msg    : String;
-      Loc    : Token_Location);
+      Loc    : Sax.Locators.Location);
    procedure Error
      (Parser : in out Sax_Reader'Class;
       Msg    : String;
@@ -685,7 +686,8 @@ package body Sax.Readers is
    --  Same as Fatal_Error, but reports a warning instead
 
    function Location
-     (Parser : Sax_Reader'Class; Loc : Token_Location) return Byte_Sequence;
+     (Parser : Sax_Reader'Class;
+      Loc    : Sax.Locators.Location) return Byte_Sequence;
    --  Return the location of the start of Id as a string.
 
    function Resolve_URI (Parser : Sax_Reader'Class; URI : Symbol)
@@ -693,9 +695,10 @@ package body Sax.Readers is
    --  Return a fully resolved URI, based on the system identifier set for
    --  Machine, and URI.
 
-   function Input_Id (Parser : Sax_Reader'Class) return Natural;
-   pragma Inline (Input_Id);
-   --  Return the current input id.
+   function System_Id (Parser : Sax_Reader'Class) return Symbol;
+   function Public_Id (Parser : Sax_Reader'Class) return Symbol;
+   pragma Inline (System_Id, Public_Id);
+   --  Return the current system id that we are parsing
 
    procedure Close_Inputs
      (Parser : in out Sax_Reader'Class;
@@ -760,18 +763,31 @@ package body Sax.Readers is
       return Buffer (Buffer'First .. Index);
    end Debug_Encode;
 
-   --------------
-   -- Input_Id --
-   --------------
+   ---------------
+   -- System_Id --
+   ---------------
 
-   function Input_Id (Parser : Sax_Reader'Class) return Natural is
+   function System_Id (Parser : Sax_Reader'Class) return Symbol is
    begin
       if Parser.Inputs = null then
-         return 0;
+         return Get_System_Id (Parser.Locator);
       else
-         return Parser.Inputs.Id;
+         return Parser.Inputs.System_Id;
       end if;
-   end Input_Id;
+   end System_Id;
+
+   ---------------
+   -- Public_Id --
+   ---------------
+
+   function Public_Id (Parser : Sax_Reader'Class) return Symbol is
+   begin
+      if Parser.Inputs = null then
+         return Parser.Public_Id;
+      else
+         return Parser.Inputs.Public_Id;
+      end if;
+   end Public_Id;
 
    ----------
    -- Free --
@@ -861,7 +877,7 @@ package body Sax.Readers is
    -- Location --
    --------------
 
-   function Location (Parser : Sax_Reader'Class; Loc : Token_Location)
+   function Location (Parser : Sax_Reader'Class; Loc : Sax.Locators.Location)
       return Byte_Sequence
    is
       Line : constant Byte_Sequence := Natural'Image (Loc.Line);
@@ -897,12 +913,12 @@ package body Sax.Readers is
    procedure Fatal_Error
      (Parser  : in out Sax_Reader'Class;
       Msg     : String;
-      Loc     : Token_Location := Null_Location)
+      Loc     : Sax.Locators.Location := No_Location)
    is
-      Id2  : Token_Location := Loc;
+      Id2  : Sax.Locators.Location := Loc;
       Loca : constant Locator := Parser.Locator;
    begin
-      if Loc = Null_Location then
+      if Loc = No_Location then
          Id2.Line   := Get_Line_Number (Loca);
          Id2.Column := Get_Column_Number (Loca);
       end if;
@@ -951,12 +967,12 @@ package body Sax.Readers is
    procedure Error
      (Parser : in out Sax_Reader'Class;
       Msg    : String;
-      Loc    : Token_Location)
+      Loc    : Sax.Locators.Location)
    is
-      Id2  : Token_Location := Loc;
+      Id2  : Sax.Locators.Location := Loc;
       Loca : constant Locator := Parser.Locator;
    begin
-      if Loc = Null_Location then
+      if Loc = No_Location then
          Id2.Line   := Get_Line_Number   (Loca);
          Id2.Column := Get_Column_Number (Loca);
       end if;
@@ -977,7 +993,7 @@ package body Sax.Readers is
 
    procedure Error (Parser  : in out Sax_Reader'Class; Msg : String) is
    begin
-      Error (Parser, Msg, Null_Location);
+      Error (Parser, Msg, No_Location);
    end Error;
 
    -------------
@@ -989,7 +1005,7 @@ package body Sax.Readers is
       Msg    : String;
       Id     : Token := Null_Token)
    is
-      Id2 : Token_Location := Id.Location;
+      Id2 : Sax.Locators.Location := Id.Location;
       Loc : Locator;
    begin
       if Loc = No_Locator then
@@ -1265,7 +1281,7 @@ package body Sax.Readers is
    procedure Test_Valid_Char
      (Parser : in out Sax_Reader'Class; C : Unicode_Char; Loc : Token)
    is
-      Id : Token_Location;
+      Id : Sax.Locators.Location;
    begin
       if not (C = 16#9#
               or else C = 16#A#
@@ -1277,7 +1293,7 @@ package body Sax.Readers is
          if Loc /= Null_Token then
             Id := Loc.Location;
          else
-            Id := Null_Location;
+            Id := No_Location;
             Id.Line := Get_Line_Number (Parser.Locator);
             Id.Column := Get_Column_Number (Parser.Locator);
          end if;
@@ -1478,7 +1494,8 @@ package body Sax.Readers is
    begin
       Put ("++Lex (" & Parser.State.Name & ") at "
            & To_String (Parser.Locator)
-           & " (" & Token_Type'Image (Id.Typ) & ")");
+           & " (" & Token_Type'Image (Id.Typ) & ") at "
+           & To_String (Id.Location));
       if Parser.State.Ignore_Special then
          Put (" (in string)");
       end if;
@@ -1613,7 +1630,7 @@ package body Sax.Readers is
                end loop;
 
                if Parser.Feature_Validation
-                 and then Input_Id (Parser) /= Id.Location.Input_Id
+                 and then System_Id (Parser) /= Id.Location.System_Id
                then
                   Error (Parser, Error_Entity_Self_Contained, Id);
                end if;
@@ -1769,7 +1786,7 @@ package body Sax.Readers is
                         end if;
                      end loop;
 
-                     if Id.Location.Input_Id /= Input_Id (Parser) then
+                     if Id.Location.System_Id /= System_Id (Parser) then
                         Fatal_Error (Parser, Error_Entity_Self_Contained, Id);
                      end if;
 
@@ -1891,7 +1908,7 @@ package body Sax.Readers is
             end loop;
 
             if not Parser.Last_Read_Is_Valid
-              or else Input_Id (Parser) /= Id.Location.Input_Id
+              or else System_Id (Parser) /= Id.Location.System_Id
             then
                Fatal_Error (Parser, Error_Entity_Self_Contained, Id);
             end if;
@@ -1917,9 +1934,10 @@ package body Sax.Readers is
       Id.First := Parser.Buffer_Length + 1;
       Id.Last := Parser.Buffer_Length;
       Id.Typ := End_Of_Input;
-      Id.Location.Line := Get_Line_Number (Parser.Locator);
-      Id.Location.Column := Get_Column_Number (Parser.Locator);
-      Id.Location.Input_Id := Input_Id (Parser);
+      Id.Location.System_Id := System_Id (Parser);
+      Id.Location.Public_Id := Public_Id (Parser);
+      Id.Location.Line      := Get_Line_Number (Parser.Locator);
+      Id.Location.Column    := Get_Column_Number (Parser.Locator);
       Id.From_Entity := False;
 
       Close_Inputs (Parser, Parser.Close_Inputs);
@@ -2044,7 +2062,7 @@ package body Sax.Readers is
                            or Parser.State.Report_Character_Ref)
                then
                   Handle_Character_Ref;
-                  if Input_Id (Parser) /= Id.Location.Input_Id then
+                  if System_Id (Parser) /= Id.Location.System_Id then
                      Fatal_Error (Parser, Error_Entity_Self_Contained, Id);
                   end if;
 
@@ -2544,7 +2562,10 @@ package body Sax.Readers is
                   Name           => N,
                   Input          => null,
                   Save_Loc       => Get_Location (Parser.Locator),
-                  Id             => Parser.Element_Id,
+                  System_Id      => Find_Symbol
+                    (Parser, Get (System_Id (Parser)).all & '#' & Get (N).all),
+                  Public_Id      => Find_Symbol
+                    (Parser, Get (Public_Id (Parser)).all & '#' & Get (N).all),
                   Handle_Strings => not Parser.State.Ignore_Special,
                   Next           => Parser.Inputs);
 
@@ -2769,7 +2790,7 @@ package body Sax.Readers is
          Start_Sub : Natural := Parser.Buffer_Length + 1;
          M : Element_Model_Ptr;
          Found : Boolean;
-         Start_Id : constant Natural := Input_Id (Parser);
+         Start_Id : constant Symbol := System_Id (Parser);
          Start_Token : Token;
          Test_Multiplier : Boolean;
          Can_Be_Mixed : Boolean;
@@ -2814,7 +2835,7 @@ package body Sax.Readers is
 
             if Parser.Feature_Validation
               and then (not Parser.Last_Read_Is_Valid
-                        or else Input_Id (Parser) /= Start_Id)
+                        or else System_Id (Parser) /= Start_Id)
               and then not Already_Displayed_Self_Contained_Error
             then
                Already_Displayed_Self_Contained_Error := True;
@@ -3306,10 +3327,11 @@ package body Sax.Readers is
    ---------
 
    procedure Add
-     (Attr               : in out Sax_Attribute_Array_Access;
+     (Parser             : in out Sax_Reader'Class;
+      Attr               : in out Sax_Attribute_Array_Access;
       Count              : in out Natural;
       If_Unique          : Boolean;
-      Location           : Token_Location;
+      Location           : Sax.Locators.Location;
       Local_Name, Prefix : Symbol;
       Value              : Symbol;
       Att_Type           : Attribute_Type := Cdata;
@@ -3386,7 +3408,7 @@ package body Sax.Readers is
       --  the namespace
 
       procedure Check_And_Define_Namespace
-        (Prefix, URI : Symbol; Location : Token_Location);
+        (Prefix, URI : Symbol; Location : Sax.Locators.Location);
       --  An attribute defining a namespace was found. Check that the values
       --  are valid, and register the new namespace. If Prefix is Null_Token,
       --  the default namespace is defined
@@ -4203,7 +4225,8 @@ package body Sax.Readers is
                Unref (M2);
 
                Add
-                 (Attr         => Attr.Attributes,
+                 (Parser       => Parser,
+                  Attr         => Attr.Attributes,
                   Count        => Last,
                   If_Unique    => True,
                   Location     => Name_Id.Location,
@@ -4272,7 +4295,7 @@ package body Sax.Readers is
       --------------------------------
 
       procedure Check_And_Define_Namespace
-        (Prefix, URI : Symbol; Location : Token_Location) is
+        (Prefix, URI : Symbol; Location : Sax.Locators.Location) is
       begin
          if Prefix = Empty_String then
             if URI = Empty_String then
@@ -4360,10 +4383,11 @@ package body Sax.Readers is
                        or else not Is_Xmlns
                      then
                         Add
-                          (Attr         => Parser.Attributes.List,
+                          (Parser       => Parser,
+                           Attr         => Parser.Attributes.List,
                            Count        => Parser.Attributes.Count,
                            If_Unique    => True,
-                           Location     => Null_Location,
+                           Location     => No_Location,
                            Local_Name   => DTD_Attr (J).Local_Name,
                            Prefix       => DTD_Attr (J).Prefix,
                            Value        => DTD_Attr (J).Value,
@@ -4659,7 +4683,8 @@ package body Sax.Readers is
                end if;
 
                Add
-                 (Attr       => Parser.Attributes.List,
+                 (Parser     => Parser,
+                  Attr       => Parser.Attributes.List,
                   Count      => Parser.Attributes.Count,
                   If_Unique  => False,
                   Location   => Attr_Name_Id.Location,
@@ -4722,6 +4747,7 @@ package body Sax.Readers is
             Name           => No_Symbol,
             Namespaces     => No_XML_NS,
             Start          => Id.Location,
+            Start_Tag_End  => Id.Location,
             Parent         => Parser.Current_Node);
 
          Next_Token (Input, Parser, Id);
@@ -4809,6 +4835,7 @@ package body Sax.Readers is
          --  doable in fact.
          Increment_Count (NS);
 
+         Parser.Current_Node.Start_Tag_End := Get_Location (Parser.Locator);
          Start_Element
            (Parser,
             NS         => NS,
@@ -4835,7 +4862,7 @@ package body Sax.Readers is
       ----------------------------
 
       procedure Parse_Doctype_Contents is
-         Start_Id : Natural;
+         Start_Id : Symbol;
 
          Num_Include : Natural := 0;
          --  Number of <![INCLUDE[ sections at the top of the external
@@ -4847,7 +4874,7 @@ package body Sax.Readers is
       begin
          loop
             Next_Token_Skip_Spaces (Input, Parser, Id);
-            Start_Id := Id.Location.Input_Id;
+            Start_Id := Id.Location.System_Id;
 
             if Id.Typ = Ignore then
                Num_Ignore := Num_Ignore + 1;
@@ -4903,7 +4930,7 @@ package body Sax.Readers is
             --  XML 1.0 Errata 14 or XML 1.1 section 4.3.2: nesting of entities
             --  doesn't apply for well-formedness in the DTD
             if Parser.Feature_Validation then
-               if Start_Id /= Id.Location.Input_Id then
+               if Start_Id /= Id.Location.System_Id then
                   Error (Parser, Error_Entity_Self_Contained, Id);
                end if;
             end if;
@@ -5057,7 +5084,8 @@ package body Sax.Readers is
 
          --  Tag must end in the same entity
          if Parser.Feature_Validation
-           and then Id.Location.Input_Id /= Parser.Current_Node.Start.Input_Id
+           and then
+             Id.Location.System_Id /= Parser.Current_Node.Start.System_Id
          then
             Error (Parser, Error_Entity_Self_Contained, Id);
          end if;
@@ -5096,8 +5124,8 @@ package body Sax.Readers is
 
          --  Tag must end in the same entity
          if Parser.Feature_Validation
-           and then Id.Location.Input_Id /=
-             Parser.Current_Node.Start.Input_Id
+           and then Id.Location.System_Id /=
+             Parser.Current_Node.Start.System_Id
          then
             Error (Parser, Error_Entity_Self_Contained, Id);
          end if;
@@ -5713,10 +5741,10 @@ package body Sax.Readers is
       Initialize_Symbols (Parser);
 
       Parser.Locator := No_Locator;
-      Set_Public_Id (Parser.Locator,
-                     Find_Symbol (Parser, Get_Public_Id (Input)));
-      Set_System_Id (Parser.Locator,
-                     Find_Symbol (Parser, Get_System_Id (Input)));
+      Parser.Public_Id := Find_Symbol (Parser, Get_Public_Id (Input));
+      Set_Public_Id (Parser.Locator, Parser.Public_Id);
+      Parser.System_Id := Find_Symbol (Parser, Get_System_Id (Input));
+      Set_System_Id (Parser.Locator, Parser.System_Id);
       Set_Column_Number (Parser.Locator, Prolog_Size (Input));
       Set_Line_Number (Parser.Locator, 1);
       Parser.Current_Node := null;
@@ -6152,6 +6180,41 @@ package body Sax.Readers is
          return List.List (Index).Value;
       end if;
    end Get_Value;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Locators.Location
+   is
+   begin
+      if Index < 0 then
+         return No_Location;
+      else
+         return List.List (Index).Location;
+      end if;
+   end Get_Location;
+
+   ------------------------
+   -- Start_Tag_Location --
+   ------------------------
+
+   function Start_Tag_Location
+     (Elem : Element_Access) return Sax.Locators.Location is
+   begin
+      return Elem.Start;
+   end Start_Tag_Location;
+
+   ----------------------------
+   -- Start_Tag_End_Location --
+   ----------------------------
+
+   function Start_Tag_End_Location
+     (Elem : Element_Access) return Sax.Locators.Location is
+   begin
+      return Elem.Start_Tag_End;
+   end Start_Tag_End_Location;
 
    ------------------------------
    -- Get_Non_Normalized_Value --
