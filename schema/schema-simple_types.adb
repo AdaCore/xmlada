@@ -1795,7 +1795,7 @@ package body Schema.Simple_Types is
                      when 'w' =>
                         Append (Tmp, "a-zA-Z0-9`");
 
-                     when 'I' | 'C' =>
+                     when 'I' | 'C' | '?' =>
                         Raise_Exception
                           (XML_Not_Implemented'Identity,
                            "Unsupported regexp construct: \" & C);
