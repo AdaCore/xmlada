@@ -143,7 +143,7 @@ package body Schema.Schema_Readers is
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
       In_Context     : in out Context;
-      Attribute      : Internal_Attribute_Descr);
+      Attribute      : Attr_Descr);
    --  Insert attribute at the right location in In_Context.
 
    function Process_Contents_From_Atts
@@ -835,7 +835,8 @@ package body Schema.Schema_Readers is
                         Validation_Error
                           (Parser,
                            "Reference to undefined attributeGroup: "
-                           & To_QName (Attrs (A).Group_Ref));
+                           & To_QName (Attrs (A).Group_Ref),
+                           Attrs (A).Loc);
                      else
                         Add_Attributes (List, Gr.Attributes);
                      end if;
@@ -850,7 +851,7 @@ package body Schema.Schema_Readers is
                              (Parser,
                               "Unknown referenced attribute: "
                               & To_QName (Attrs (A).Attr.Ref),
-                              Attrs (A).Attr.Loc);
+                              Attrs (A).Loc);
                         end if;
 
                         Add_Attributes (Parser.Grammar, List, TRef.Attributes);
@@ -1714,16 +1715,19 @@ package body Schema.Schema_Readers is
             Append
               (Handler.Shared.Types.Table (Next.Type_Info).Attributes,
                (Kind      => Kind_Group,
+                Loc       => Get_Location (Handler.Locator),
                 Group_Ref => Ctx.Attr_Group.Ref));
          when Context_Extension =>
             Append
               (Next.Extension.Extension.Attributes,
                (Kind      => Kind_Group,
+                Loc       => Get_Location (Handler.Locator),
                 Group_Ref => Ctx.Attr_Group.Ref));
          when Context_Attribute_Group =>
             Append
               (Next.Attr_Group.Attributes,
                (Kind      => Kind_Group,
+                Loc       => Get_Location (Handler.Locator),
                 Group_Ref => Ctx.Attr_Group.Ref));
 
          when others =>
@@ -1742,12 +1746,13 @@ package body Schema.Schema_Readers is
       Tmp : Attr_Array_Access;
    begin
       if List = null then
-         List := new Attr_Array'(1 .. 10 => (Kind => Kind_Unset));
+         List := new Attr_Array'(1 .. 10 => (Kind => Kind_Unset,
+                                             Loc  => No_Location));
       elsif List (List'Last).Kind = Kind_Unset then
          Tmp := new Attr_Array (1 .. List'Last + 10);
          Tmp (List'Range) := List.all;
          Tmp (List'Last + 1 .. Tmp'Last) :=
-           (others => Attr_Descr'(Kind => Kind_Unset));
+           (others => Attr_Descr'(Kind => Kind_Unset, Loc => No_Location));
          Unchecked_Free (List);
          List := Tmp;
       end if;
@@ -2133,7 +2138,8 @@ package body Schema.Schema_Readers is
       case Next.Typ is
          when Context_Schema | Context_Redefine => null;
          when Context_Element   => Next.Element.Local_Type   := Ctx.Type_Info;
-         when Context_Attribute => Next.Attribute.Local_Type := Ctx.Type_Info;
+         when Context_Attribute =>
+            Next.Attribute.Attr.Local_Type := Ctx.Type_Info;
          when Context_List    =>
             Add_Type_Member (Handler, Next.List.List_Items,
               (Name => No_Qualified_Name,
@@ -2752,27 +2758,27 @@ package body Schema.Schema_Readers is
       Atts     : Sax_Attribute_List)
    is
       Local : Symbol;
-      Att   : Internal_Attribute_Descr;
+      Att   : Attr_Descr (Kind => Kind_Attribute);
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Has_Form : Boolean := False;
 
    begin
-      Att.Descr.Form := Handler.Attribute_Form_Default;
+      Att.Attr.Descr.Form := Handler.Attribute_Form_Default;
       Att.Loc := Get_Location (Handler.Locator);
 
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);
             if Local = Handler.Name then
-               Att.Descr.Name := (NS    => Handler.Target_NS,
-                                  Local => Get_Value (Atts, J));
+               Att.Attr.Descr.Name := (NS    => Handler.Target_NS,
+                                       Local => Get_Value (Atts, J));
             elsif Local = Handler.Typ then
-               Att.Typ  := Resolve_QName (Handler, Get_Value (Atts, J));
+               Att.Attr.Typ  := Resolve_QName (Handler, Get_Value (Atts, J));
 
-               if Att.Typ =
+               if Att.Attr.Typ =
                  (NS => Handler.XML_Schema_URI, Local => Handler.IDREF)
-                 or else Att.Typ =
+                 or else Att.Attr.Typ =
                    (NS => Handler.XML_Schema_URI, Local => Handler.IDREFS)
                then
                   Validation_Error
@@ -2784,11 +2790,11 @@ package body Schema.Schema_Readers is
 
             elsif Local = Handler.S_Use then
                if Get_Value (Atts, J) = Handler.Required then
-                  Att.Descr.Use_Type := Required;
+                  Att.Attr.Descr.Use_Type := Required;
                elsif Get_Value (Atts, J) = Handler.Prohibited then
-                  Att.Descr.Use_Type := Prohibited;
+                  Att.Attr.Descr.Use_Type := Prohibited;
                else
-                  Att.Descr.Use_Type := Optional;
+                  Att.Attr.Descr.Use_Type := Optional;
                end if;
             elsif Local = Handler.Fixed then
 --            Normalize_Whitespace  --  Depending on the type of the attribute
@@ -2797,25 +2803,25 @@ package body Schema.Schema_Readers is
 --                    Atts   => Atts,
 --                    Index  => Fixed_Index);
 --              end if;
-               Att.Descr.Fixed := Get_Value (Atts, J);
+               Att.Attr.Descr.Fixed := Get_Value (Atts, J);
             elsif Local = Handler.Ref then
-               Att.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
+               Att.Attr.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
             elsif Local = Handler.Form then
-               Att.Descr.Form :=
+               Att.Attr.Descr.Form :=
                  Form_Type'Value (Get (Get_Value (Atts, J)).all);
                Has_Form := True;
             elsif Local = Handler.Default then
-               Att.Descr.Default := Get_Value (Atts, J);
+               Att.Attr.Descr.Default := Get_Value (Atts, J);
             elsif Local = Handler.Namespace_Target then
-               Att.Descr.Target_NS := Get_Value (Atts, J);
+               Att.Attr.Descr.Target_NS := Get_Value (Atts, J);
             end if;
          end if;
       end loop;
 
       --  See section 3.2.3 for valid attributes combination
 
-      if Att.Descr.Target_NS /= No_Symbol then
-         if Att.Descr.Name /= No_Qualified_Name then
+      if Att.Attr.Descr.Target_NS /= No_Symbol then
+         if Att.Attr.Descr.Name /= No_Qualified_Name then
             Validation_Error
               (Handler,
                "#name must be specified when targetNamespace is specified");
@@ -2833,38 +2839,38 @@ package body Schema.Schema_Readers is
             Except => XML_Not_Implemented'Identity);
       end if;
 
-      if Has_Form and then Att.Ref /= No_Qualified_Name then
+      if Has_Form and then Att.Attr.Ref /= No_Qualified_Name then
          Validation_Error
            (Handler,
             "#Attributes ""form"" and ""ref"" cannot be both specified");
       end if;
 
-      if Att.Typ /= No_Qualified_Name then
-         if Att.Ref /= No_Qualified_Name then
+      if Att.Attr.Typ /= No_Qualified_Name then
+         if Att.Attr.Ref /= No_Qualified_Name then
             Validation_Error
               (Handler,
                "#Attributes ""type"" and ""ref"" cannot be both specified");
          end if;
       end if;
 
-      if Att.Descr.Fixed /= No_Symbol
-        and then Att.Descr.Default /= No_Symbol
+      if Att.Attr.Descr.Fixed /= No_Symbol
+        and then Att.Attr.Descr.Default /= No_Symbol
       then
          Validation_Error
            (Handler,
             "#Attributes ""fixed"" and ""default"" cannot be both specified");
       end if;
 
-      if Att.Descr.Default /= No_Symbol
-        and then Att.Descr.Use_Type /= Optional
+      if Att.Attr.Descr.Default /= No_Symbol
+        and then Att.Attr.Descr.Use_Type /= Optional
       then
          Validation_Error
            (Handler,
             "#Use must be ""optional"" when a default value is specified");
       end if;
 
-      if Att.Descr.Fixed /= No_Symbol
-        and then Att.Descr.Use_Type = Prohibited
+      if Att.Attr.Descr.Fixed /= No_Symbol
+        and then Att.Attr.Descr.Use_Type = Prohibited
       then
          Validation_Error
            (Handler,
@@ -2872,7 +2878,7 @@ package body Schema.Schema_Readers is
             & " a fixed value is specified");
       end if;
 
-      if Att.Descr.Name /= No_Qualified_Name then
+      if Att.Attr.Descr.Name /= No_Qualified_Name then
          case Ctx.Typ is
             when Context_Attribute_Group | Context_Type_Def =>
                null;
@@ -2900,25 +2906,22 @@ package body Schema.Schema_Readers is
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
       In_Context     : in out Context;
-      Attribute      : Internal_Attribute_Descr) is
+      Attribute      : Attr_Descr) is
    begin
       case In_Context.Typ is
          when Context_Type_Def =>
             Append
               (Handler.Shared.Types.Table (In_Context.Type_Info).Attributes,
-               (Kind     => Kind_Attribute,
-                Attr     => Attribute));
+               Attribute);
 
          when Context_Schema | Context_Redefine =>
             Set
               (Handler.Shared.Global_Attributes,
-               Attribute.Descr.Name, Attribute);
+               Attribute.Attr.Descr.Name, Attribute.Attr);
 
          when Context_Extension =>
             Append
-              (In_Context.Extension.Extension.Attributes,
-               (Kind     => Kind_Attribute,
-                Attr     => Attribute));
+              (In_Context.Extension.Extension.Attributes, Attribute);
 
          when Context_Restriction =>
             null;
@@ -2933,9 +2936,7 @@ package body Schema.Schema_Readers is
             null;
 
          when Context_Attribute_Group =>
-            Append (In_Context.Attr_Group.Attributes,
-                    (Kind => Kind_Attribute,
-                     Attr => Attribute));
+            Append (In_Context.Attr_Group.Attributes, Attribute);
 
          when Context_Element | Context_Sequence | Context_Choice
             | Context_Attribute | Context_All

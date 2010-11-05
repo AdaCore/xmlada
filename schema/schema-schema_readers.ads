@@ -103,12 +103,12 @@ private
       Typ          : Qualified_Name     := No_Qualified_Name;
       Local_Type   : Type_Index         := No_Type_Index;
       Ref          : Qualified_Name     := No_Qualified_Name;
-      Loc          : Sax.Locators.Location := Sax.Locators.No_Location;
    end record;
    No_Internal_Attribute : constant Internal_Attribute_Descr := (others => <>);
 
    type Attr_Descr_Kind is (Kind_Group, Kind_Attribute, Kind_Unset);
    type Attr_Descr (Kind : Attr_Descr_Kind := Kind_Unset) is record
+      Loc : Sax.Locators.Location := Sax.Locators.No_Location;
       case Kind is
          when Kind_Unset     => null;
          when Kind_Group     => Group_Ref : Qualified_Name;
@@ -248,7 +248,7 @@ private
          when Context_Simple_Restriction =>
             Simple   : Internal_Simple_Type_Descr;
          when Context_Union           => Union       : Union_Type_Descr;
-         when Context_Attribute      => Attribute   : Internal_Attribute_Descr;
+         when Context_Attribute      => Attribute   : Attr_Descr;
       end case;
    end record;
    type Context_Access is access all Context;
