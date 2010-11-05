@@ -1111,6 +1111,11 @@ package body Schema.Simple_Types is
       Symbols       : Sax.Utils.Symbol_Table;
       Ch            : Unicode.CES.Byte_Sequence) return Symbol is
    begin
+      if Encoding.Length (Ch) mod 2 /= 0 then
+         return Find
+           (Symbols, "#HexBinary length must be an even number of characters");
+      end if;
+
       if not Is_Valid_HexBinary (Ch) then
          return Find (Symbols, "Invalid hexBinary: """ & Ch & """");
       end if;
