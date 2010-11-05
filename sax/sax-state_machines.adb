@@ -66,6 +66,7 @@ package body Sax.State_Machines is
         (Self.States,
          State_Data'
            (Nested           => No_State,
+            Alias_Of         => No_State,
             On_Nested_Exit   => No_Transition,
             First_Transition => No_Transition,
             Data             => Default_Data));
@@ -127,6 +128,7 @@ package body Sax.State_Machines is
         (Self.States,
          State_Data'
            (Nested           => No_State,
+            Alias_Of         => No_State,
             Data             => Data,
             On_Nested_Exit   => No_Transition,
             First_Transition => No_Transition));
@@ -259,6 +261,8 @@ package body Sax.State_Machines is
                return;  --  Do not follow transitions from [To]
             else
                Cloned (S) := Add_State (Self);
+               Self.States.Table (Cloned (S)).Alias_Of :=
+                 Self.States.Table (S).Alias_Of;
             end if;
 
             T := Self.States.Table (S).First_Transition;
@@ -957,9 +961,7 @@ package body Sax.State_Machines is
             return "End";
          else
             if Self.States.Table (S).Nested /= No_State then
-               return State_Image (S, Self.States.Table (S).Data)
-                 & "(" & Node_Label (Self, Self.States.Table (S).Nested)
-                 & ")";
+               return ":" & Node_Label (Self, Self.States.Table (S).Nested);
 
             else
                return State_Image (S, Self.States.Table (S).Data);
@@ -1289,5 +1291,35 @@ package body Sax.State_Machines is
    begin
       return Self.Default_Start;
    end Get_Start_State;
+
+   ---------------
+   -- Set_Alias --
+   ---------------
+
+   procedure Set_Alias
+     (Self     : access NFA;
+      Alias    : State;
+      Original : State)
+   is
+   begin
+      Put_Line ("NFA:" & Alias'Img & " is an alias for" & Original'Img);
+      Self.States.Table (Alias).Alias_Of := Original;
+   end Set_Alias;
+
+   ---------------------
+   -- Resolve_Aliases --
+   ---------------------
+
+   procedure Resolve_Aliases (Self : access NFA) is
+      Alias : State;
+   begin
+      for A in State_Tables.First .. Last (Self.States) loop
+         Alias := Self.States.Table (A).Alias_Of;
+         if Alias /= No_State then
+            Self.States.Table (A).Data := Self.States.Table (Alias).Data;
+            Self.States.Table (A).Nested := Self.States.Table (Alias).Nested;
+         end if;
+      end loop;
+   end Resolve_Aliases;
 
 end Sax.State_Machines;

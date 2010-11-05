@@ -64,7 +64,7 @@ generic
 
 package Sax.State_Machines is
 
-   type State is new Positive;
+   type State is new Natural;
    --  A state of a state machine
 
    -----------------------------------------------
@@ -280,6 +280,39 @@ package Sax.State_Machines is
    --  Return a textual description of the valid input symbols from the current
    --  state. This should be used for error messages for instance.
 
+   -------------------
+   -- State aliases --
+   -------------------
+   --  In some cases, in particular when parsing an XML schema, we might have
+   --  to create a state for which we don't know all the properties yet. For
+   --  instance:
+   --     <complexType name="T">
+   --       <sequence>
+   --         <element ref="a"/>
+   --       </sequence>
+   --     </complexType>
+   --     <element name="a" type="..."/>
+   --  When we see the first reference to "a", we do not know yet what the
+   --  type will be for it.
+   --  One solution is to use the notion of state aliases: when you create the
+   --  state for the first reference (say state 2), you also create an empty
+   --  entry for the actual global element (which is thus state 3 for
+   --  instance). You then mark state 2 as being an alias for 3.
+   --  Once you are done creating the state machine, you resolve aliases, which
+   --  in effect copies the user data from 3 to 2, as well as the nested NFA,
+   --  but none of the transitions.
+
+   procedure Resolve_Aliases (Self : access NFA);
+   --  For all states that are aliases of another, copy the user data and
+   --  nested NFA.
+
+   procedure Set_Alias
+     (Self     : access NFA;
+      Alias    : State;
+      Original : State);
+   --  Mark [Alias] as an alias of [Original]. When you call [Resolve_Aliases],
+   --  the user data and nested NFA of [Original] will be copied into [Alias].
+
    -------------------------
    -- Dumping information --
    -------------------------
@@ -345,6 +378,7 @@ private
       First_Transition : Transition_Id;
       On_Nested_Exit   : Transition_Id;
       Nested           : State := No_State;
+      Alias_Of         : State := No_State;
       Data             : State_User_Data;
    end record;
    --  [Nested], if defined, indicates that this state contains a nested

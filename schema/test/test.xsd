@@ -22,7 +22,7 @@
  </xsd:complexType>
 </xsd:element>
 
-<xsd:complexType name="zip">
+<xsd:complexType name="Tzip">
  <xsd:sequence>
   <xsd:choice>
    <xsd:element name="zipcode" type="xsd:string" maxOccurs="2"/>
@@ -31,7 +31,7 @@
   <xsd:element name="foo" type="xsd:string"/>
  </xsd:sequence>
 </xsd:complexType>
-<xsd:element name="zip" type="zip" />
+<xsd:element name="zip" type="Tzip" />
 
 <xsd:element name="my_string" type="AdaString" />
 <xsd:complexType name="AdaString">
@@ -61,7 +61,7 @@
 
 <!-- Valid, since sequence doesn't mix with "str" -->
 
-<xsd:complexType name="strs">
+<xsd:complexType name="Tstrs">
  <xsd:sequence>
   <xsd:sequence>
    <xsd:element name="str" type="xsd:string"/>
@@ -70,7 +70,7 @@
   <xsd:element name="str" type="xsd:string"/>
  </xsd:sequence>
 </xsd:complexType>
-<xsd:element name="strs" type="strs" />
+<xsd:element name="strs" type="Tstrs" />
 
 <!-- Ambiguous2:
   Error at file /home/briot/Ada/xml/xmlada/schema/test/test.xml, line 4, char 49

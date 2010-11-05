@@ -177,6 +177,10 @@ package Schema.Validators is
      (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access;
    --  Returns the state machine used to validate [Grammar]
 
+   function Get_NFA_State
+     (Element : XML_Element) return Schema_State_Machines.State;
+   --  Return the state from the NFA that represents the global element.
+
    ---------------
    -- ID_Htable --
    ---------------
@@ -1363,6 +1367,11 @@ private
       Next : XML_Element_Access;
       --  Points to the next element defined in NS, for memory management
       --  purposes
+
+      NFA_State : Schema_State_Machines.State :=
+        Schema_State_Machines.No_State;
+      --  The part of the state machine that represents element.
+      --  This is only set for global elements
    end record;
 
    type XML_Element is record

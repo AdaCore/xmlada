@@ -2143,6 +2143,7 @@ package body Schema.Validators is
          Blocks_Is_Set       => False,
          Blocks              => No_Block,
          Is_Global           => False,
+         NFA_State           => No_State,
          Form                => Form,
          Fixed               => No_Symbol,
          Next                => null);
@@ -2154,6 +2155,16 @@ package body Schema.Validators is
         (Elem   => Ptr,
          Is_Ref => False);
    end Create_Local_Element;
+
+   -------------------
+   -- Get_NFA_State --
+   -------------------
+
+   function Get_NFA_State
+     (Element : XML_Element) return Schema_State_Machines.State is
+   begin
+      return Element.Elem.NFA_State;
+   end Get_NFA_State;
 
    -------------------
    -- Redefine_Type --
@@ -2225,6 +2236,7 @@ package body Schema.Validators is
    is
       Old : XML_Element_Access := Elements_Htable.Get
         (Grammar.Elements.all, Local_Name);
+      S   : State;
    begin
       if Debug then
          Output_Action
@@ -2243,6 +2255,9 @@ package body Schema.Validators is
 
          Old.Form := Form;
       else
+         S := Grammar.NFA.Add_State
+           ((Type_Name => Local_Name));
+
          Old := new XML_Element_Record'
            (Local_Name          => Local_Name,
             NS                  => Grammar,
@@ -2255,6 +2270,7 @@ package body Schema.Validators is
             Blocks_Is_Set       => False,
             Blocks              => No_Block,
             Is_Global           => True,
+            NFA_State           => S,
             Form                => Form,
             Fixed               => No_Symbol,
             Next                => null);

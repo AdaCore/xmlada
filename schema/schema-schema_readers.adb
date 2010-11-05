@@ -429,6 +429,13 @@ package body Schema.Schema_Readers is
          end if;
 
          Set_System_Id (Parser.Target_NS, URI);
+
+         Parser.NFA.Resolve_Aliases;
+
+         if Debug then
+            Output_Action ("NFA: "
+                           & Dump (Parser.NFA, Dump_Dot_Compact));
+         end if;
       end if;
 
    exception
@@ -1225,7 +1232,7 @@ package body Schema.Schema_Readers is
       Form    : Form_Type;
       Is_Ref  : Boolean;
       Is_Set  : Boolean;
-      S       : State := No_State;
+      S1, S2  : State := No_State;
 
    begin
       if Form_Index /= -1 then
@@ -1426,23 +1433,36 @@ package body Schema.Schema_Readers is
       --  attach data to the intermediate state, like the callbacks for the
       --  element's type (or the nested NFA).
 
+      S1 := Get_NFA_State (Element);
+
       if Typ /= No_Type then
-         if Get_NFA (Typ) /= No_Nested then
-            S := Handler.NFA.Add_State
-              ((Type_Name => No_Symbol));
-            Handler.NFA.Set_Nested (S, Get_NFA (Typ));
-         else
-            S := Handler.NFA.Add_State
+         --  We could have a local element, for which no state has been
+         --  allocated yet
+         if S1 = No_State then
+            S1 := Handler.NFA.Add_State
               ((Type_Name => Get_Value (Atts, Type_Index)));
          end if;
+
+         if Get_NFA (Typ) /= No_Nested then
+            Handler.NFA.Set_Nested (S1, Get_NFA (Typ));
+         end if;
       else
-         S := Handler.NFA.Add_State ((Type_Name => No_Symbol));
+         --  We do not know the type. Either we have a ref element, or the
+         --  type is inlined in the definition of the element
+
+         pragma Assert (S1 /= No_State);
+
+         if Is_Ref then
+            S2 := Handler.NFA.Add_State ((Type_Name => No_Symbol));
+            Handler.NFA.Set_Alias (S2, S1);
+            S1 := S2;
+         end if;
       end if;
 
       Handler.Contexts := new Context'
         (Typ            => Context_Element,
-         Start_State    => S,
-         Last_State     => S,
+         Start_State    => S1,
+         Last_State     => S1,
          Element        => Element,
          Is_Ref         => Is_Ref,
          Element_Min    => Min_Occurs,
@@ -3164,11 +3184,7 @@ package body Schema.Schema_Readers is
          Finish_Element (H);
 
       elsif Local_Name = Handler.S_Schema then
-         --  ??? Check there remains no undefined forward declaration
-         if Debug then
-            Output_Action ("NFA: for <schema>: "
-                           & Dump (Handler.NFA, Dump_Dot_Compact));
-         end if;
+         null;
 
       elsif Local_Name = Handler.Complex_Type then
          Finish_Complex_Type (H);
