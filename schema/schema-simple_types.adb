@@ -483,7 +483,7 @@ package body Schema.Simple_Types is
                                    others => <>), Normalized_Str);
       T := Register ("language", (Kind       => Primitive_Language,
                              Mask       => Whitespace_Mask,
-                             Whitespace => Preserve,
+                             Whitespace => Collapse,
                              others => <>), Token);
       T := Register ("boolean",  (Kind => Primitive_Boolean, others => <>),
                      Any_Simple_Type);
