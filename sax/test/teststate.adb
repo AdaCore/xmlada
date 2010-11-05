@@ -35,6 +35,8 @@ procedure TestState is
 
    Debug : constant Boolean := False;
 
+   Terminate_On_Error : exception;
+
    type Transition_Kind is
      (Any_Char,
       Char);
@@ -106,6 +108,7 @@ procedure TestState is
    procedure Test4;
    procedure Test5;
    procedure Test6;
+   procedure Test7;
    --  Various tests
 
    -----------------
@@ -136,6 +139,10 @@ procedure TestState is
          Put_Line ("ERROR: " & Msg);
          Put_Line ("- " & Str1);
          Put_Line ("+ " & Str2);
+
+         if Debug then
+            raise Terminate_On_Error;
+         end if;
       end if;
    end Assert;
 
@@ -161,7 +168,7 @@ procedure TestState is
       M : NFA_Matcher := N.Start_Match;
    begin
       if Debug then
-         Put_Line ("Assert " & Str);
+         Put_Line ("+++Assert " & Str);
       end if;
       for S in Str'Range loop
          if Debug then
@@ -175,6 +182,10 @@ procedure TestState is
          if not Success then
             Display_Result ("Unexpected error", Str, S);
             Free (M);
+
+            if Debug then
+               raise Terminate_On_Error;
+            end if;
             return;
          end if;
       end loop;
@@ -182,6 +193,9 @@ procedure TestState is
       if In_Final (M) /= Final then
          Put_Line (Msg & "(" & Str & ")"
                    & " => Unexpected final result: " & In_Final (M)'Img);
+         if Debug then
+            raise Terminate_On_Error;
+         end if;
       end if;
 
       Free (M);
@@ -199,14 +213,15 @@ procedure TestState is
       M : NFA_Matcher := N.Start_Match;
    begin
       if Debug then
-         Put_Line ("MANU Assert_Error " & Str);
+         Put_Line ("+++Assert_Error " & Str);
+         Put_Line (Dump (N, Dump_Compact));
       end if;
 
       for S in Str'Range loop
          if Debug then
             New_Line;
             Debug_Print (M, Dump_Compact);
-            Put_Line ("MANU Sending " & Str (S));
+            Put_Line ("Sending " & Str (S));
          end if;
 
          Process (M, Str (S), Success);
@@ -217,6 +232,9 @@ procedure TestState is
                  ("Error on unexpected char " & Msg
                   & " (expected" & At_Char'Img & ")",
                   Str, S);
+               if Debug then
+                  raise Terminate_On_Error;
+               end if;
 
             else
                Assert (Error, Expected (M),
@@ -228,8 +246,16 @@ procedure TestState is
          end if;
       end loop;
 
+      if Debug then
+         Debug_Print (M, Dump_Compact);
+      end if;
+
       Put_Line ("Expected an error on " & Msg & " (" & Str & ")");
       Free (M);
+
+      if Debug then
+         raise Terminate_On_Error;
+      end if;
    end Assert_Error;
 
    -----------
@@ -301,6 +327,11 @@ procedure TestState is
       N.Add_Transition (S2, S3, (Char, 'c'));
 
       N.Add_Transition (S3, Final_State, (Char, 'd'));
+
+      Assert
+        (" Start(,S2) S2(c,S3) S3(d,Sf)",
+         Dump (N, Dump_Compact),
+         Regexp);
 
       Assert (Regexp, N, "cd");
       Assert_Error (Regexp, N, "d", 1, "c");
@@ -455,7 +486,7 @@ procedure TestState is
       --  Override the superstate's transition (which will not happen)
 
       Assert
-        (" Start(,S3) S3(,Sf)(1,S2) S2:S4(0,S3)"
+        (" Start(,S3) S3(,Sf)(1,S2) S2:S4(0,S3)(Exit_t,S3)"
          & " S4(t,Sf)(f,S6)(p,S5) S6(0,S6) S5(r,S4)",
          Dump (N, Dump_Compact),
          Name);
@@ -535,10 +566,67 @@ procedure TestState is
                 " Start(,S2) S2_2(a,S5) S5_3(a,S3) S3_3(b,S4)(,S5) S4_4");
       Internal (True, 2, Natural'Last,
                 " Start(,S2) S2_2(a,S5) S5_3(a,S3) S3_3(b,S4)(,S5) S4_4");
-
-      --  Internal (False, 1, 3, "");
-      --  Internal (True, 1, 3, "");
    end Test6;
+
+   -----------
+   -- Test7 --
+   -----------
+
+   procedure Test7 is
+      Name : constant String := "Test7";
+
+      procedure Internal
+         (Statefull : Boolean; Min, Max : Integer; Expected : String);
+      procedure Internal
+         (Statefull : Boolean; Min, Max : Integer; Expected : String)
+      is
+         N : NFA_Access := new NFA;
+         S2, S3, S4 : State;
+      begin
+         N.Initialize (States_Are_Statefull => Statefull);
+         S2 := N.Add_State (2);
+         S3 := N.Add_State (3);
+         S4 := N.Add_State (4);
+
+         N.Add_Transition (Start_State, S2, (Char, 'b'));
+
+         N.Set_Nested (S2, N.Create_Nested (S3));
+         N.Add_Transition (S3, Final_State, (Char, 'a'));
+         N.On_Empty_Nested_Exit (S2, S4);
+         N.On_Nested_Exit (S2, S4, (Char, 'a'));
+
+         N.Repeat (Start_State, S4, Min, Max);
+
+         Assert
+           (Expected,
+            Dump (N, Dump_Compact),
+            Name & " " & Statefull'Img & Min'Img & Max'Img);
+         Free (N);
+      end Internal;
+
+   begin
+      if Debug then
+         Put_Line ("=== Test7");
+      end if;
+
+      Internal
+        (False, 0, 1,
+         " Start(,S4)(b,S2) S4_4 S2_2:S3_3(Exit_a,S4)(Exit,S4) S3_3(a,Sf)");
+      Internal
+        (True, 0, 1,
+         " Start(,S4)(b,S2) S4 S2_2:S3_3(Exit_a,S5)(Exit,S5)"
+         & " S5_4(,S4) S3_3(a,Sf)");
+
+      Internal
+        (False, 1, 2,
+         " Start(b,S2) S2_2:S3_3(Exit_a,S5)(Exit,S5)"
+         & " S5_4(,S4)(b,S6) S4_4 S6_2:S3_3(Exit,S4)(Exit_a,S4) S3_3(a,Sf)");
+      Internal
+        (True, 1, 2,
+         " Start(b,S2) S2_2:S3_3(Exit_a,S5)(Exit,S5)"
+         & " S5_4(,S4)(b,S6) S4 S6_2:S3_3(Exit,S7)(Exit_a,S7) S7_4(,S4)"
+         & " S3_3(a,Sf)");
+   end Test7;
 
 begin
    Test1;
@@ -547,4 +635,5 @@ begin
    Test4;
    Test5;
    Test6;
+   Test7;
 end TestState;
