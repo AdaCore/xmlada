@@ -181,6 +181,7 @@ private
       Details    : Type_Details_Access;  --  if not Details.Simple_Content
       Simple     : Simple_Type_Descr;    --  if Details.Simple_Content
       S          : Schema_State_Machines.State;
+      Loc        : Sax.Locators.Location := Sax.Locators.No_Location;
    end record;
    --  Temporary structure while parsing a XSD file. Only [Descr] will be
    --  stored in the NFA for reuse while validating (or while parsing other

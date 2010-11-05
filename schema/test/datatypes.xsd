@@ -88,6 +88,7 @@
 
     </xs:documentation>
   </xs:annotation>
+  <!--
   <xs:simpleType name="string" id="string">
     <xs:annotation>
       <xs:appinfo>
@@ -774,6 +775,7 @@
       <xs:minInclusive value="1" id="positiveInteger.minInclusive"/>
     </xs:restriction>
   </xs:simpleType>
+-->
   <xs:simpleType name="derivationControl">
     <xs:annotation>
       <xs:documentation>

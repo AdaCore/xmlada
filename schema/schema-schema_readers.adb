@@ -743,7 +743,14 @@ package body Schema.Schema_Readers is
                      if Attrs (A).Attr.Ref /= No_Qualified_Name then
                         TRef := Get
                           (Ref.all, (Attrs (A).Attr.Ref, Ref_Attribute));
-                        if TRef = No_Global_Reference then
+
+                        if Attrs (A).Attr.Ref =
+                          (Parser.XML_URI, Parser.Lang)
+                        then
+                           --  ??? hard-coded for now
+                           S := No_State;
+
+                        elsif TRef = No_Global_Reference then
                            Validation_Error
                              (Parser,
                               "Unknown referenced attribute: "
@@ -757,7 +764,6 @@ package body Schema.Schema_Readers is
                         TRef := Get (Ref.all, (Attrs (A).Attr.Typ, Ref_Type));
                         if TRef = No_Global_Reference then
                            --  ??? Type should be ur-type (3.2.2)
-                           null;
                            S := No_State;
 --                             Validation_Error
 --                               (Parser,
@@ -774,10 +780,9 @@ package body Schema.Schema_Readers is
                      if S /= No_State then
                         Attrs (A).Attr.Descr.Simple_Type :=
                           NFA.Get_Data (S).Descr.Simple_Content;
+                        Add_Attribute
+                          (Parser.Grammar, List, Attrs (A).Attr.Descr);
                      end if;
-
-                     Add_Attribute
-                       (Parser.Grammar, List, Attrs (A).Attr.Descr);
                end case;
             end loop;
          end if;
@@ -815,12 +820,16 @@ package body Schema.Schema_Readers is
             Ty    : Global_Reference;
             Index : Type_Index;
          begin
+            pragma Assert (Info.Details /= null,
+                           "No details defined for "
+                           & To_QName (Info.Descr.Name));
             if Info.Details.Kind = Type_Extension then
                Ty := Get (Ref.all, (Info.Details.Extension.Base, Ref_Type));
                if Ty = No_Global_Reference then
                   Validation_Error
                     (Parser, "No type """
-                     & To_QName (Info.Details.Extension.Base) & """");
+                     & To_QName (Info.Details.Extension.Base) & """",
+                     Info.Loc);
                end if;
 
                --  If the base type is in the current package, we might not
@@ -845,7 +854,8 @@ package body Schema.Schema_Readers is
                if Ty = No_Global_Reference then
                   Validation_Error
                     (Parser, "No type """
-                     & To_QName (Info.Details.Restriction.Base) & """");
+                     & To_QName (Info.Details.Restriction.Base) & """",
+                     Info.Loc);
                end if;
 
                Index := Get (Types, Info.Details.Restriction.Base);
@@ -2038,6 +2048,7 @@ package body Schema.Schema_Readers is
 --        Redefined : XML_Type := No_Type;
 
    begin
+      Info.Loc := Get_Location (Handler.Locator);
       Info.Descr.Block := Handler.Target_Block_Default;
 
       for J in 1 .. Get_Length (Atts) loop
@@ -2100,11 +2111,13 @@ package body Schema.Schema_Readers is
       Ctx : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Restr      : Restriction_Descr;
---        Base       : XML_Type;
       Details    : Type_Details_Access;
       Local      : Symbol;
       In_Type    : constant Type_Index := Ctx.Type_Info;
    begin
+      Restr.Base := (NS    => Handler.XML_Schema_URI,
+                     Local => Handler.Any_Simple_Type);
+
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
             Local := Get_Local_Name (Atts, J);

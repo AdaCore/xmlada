@@ -33,18 +33,13 @@ with Ada.Exceptions;                 use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Interfaces;                     use Interfaces;
 with Sax.Attributes;                 use Sax.Attributes;
---  with Sax.Encodings;                  use Sax.Encodings;
 with Sax.Locators;                   use Sax.Locators;
 with Sax.Readers;                    use Sax.Readers;
 with Sax.Symbols;                    use Sax.Symbols;
 with Sax.Utils;                      use Sax.Utils;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
 with Schema.Simple_Types;            use Schema.Simple_Types;
---  with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
---  with Schema.Validators.Facets;       use Schema.Validators.Facets;
 with Schema.Validators.Lists;        use Schema.Validators.Lists;
---  with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
---  with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
 
@@ -918,6 +913,7 @@ package body Schema.Validators is
 
       procedure Do_Register is new Register_Predefined_Types (Register);
 
+--        Attr : Attribute_Descr;
    begin
       Create_Grammar_If_Needed (Reader.Grammar);
       G.Symbols := Get_Symbol_Table (Reader);
@@ -928,6 +924,20 @@ package body Schema.Validators is
                Kind => Ref_Type)) = No_Global_Reference
       then
          Do_Register (G.Symbols);
+--
+--           Attr := (
+--                    Name         : Qualified_Name     := No_Qualified_Name;
+--                    Simple_Type  : Schema.Simple_Types.Simple_Type_Index;
+--               Fixed        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+--               Default      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+--               Target_NS    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+--               Next         : Attribute_Validator_List; --  Next in the list
+--                    Use_Type     : Attribute_Use_Type := Optional;
+--                    Form         : Form_Type          := Qualified;
+--                    Is_Local     : Boolean            := True;
+--                   );
+--       Set (G.References, (Attr.Name, Ref_Attribute), (Ref_Attribute, Attr));
+
          Add_Schema_For_Schema (Reader);
       end if;
    end Initialize_Grammar;

@@ -115,6 +115,10 @@ package Sax.Utils is
      (Str  : Unicode.CES.Byte_Sequence) return Boolean;
    --  Whether Str only contains valid hexadecimal digits
 
+   function Is_Valid_Base64Binary
+     (Value : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether Str only contains valid base64Binary digits
+
    function Hash
      (Key : Unicode.CES.Byte_Sequence) return Interfaces.Unsigned_32;
    function Hash

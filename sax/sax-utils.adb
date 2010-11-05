@@ -84,6 +84,39 @@ package body Sax.Utils is
    --  completed with rules from Uniformed Resource Identifier at
    --  http://www.gbiv.com/protocols/uri/rfc/rfc3986.html
 
+   B64 : constant array (Unicode_Char range 32 .. 128) of Boolean :=
+      (Character'Pos ('A') .. Character'Pos ('Z') => True,
+       Character'Pos ('a') .. Character'Pos ('z') => True,
+       Character'Pos ('0') .. Character'Pos ('9') => True,
+       Character'Pos ('+') => True,
+       Character'Pos ('/') => True,
+       others => False);
+   B04 : constant array (Unicode_Char range 32 .. 128) of Boolean :=
+      (Character'Pos ('A') => True,
+       Character'Pos ('Q') => True,
+       Character'Pos ('g') => True,
+       Character'Pos ('w') => True,
+       others => False);
+   B16 : constant array (Unicode_Char range 32 .. 128) of Boolean :=
+      (Character'Pos ('A') => True,
+       Character'Pos ('E') => True,
+       Character'Pos ('I') => True,
+       Character'Pos ('M') => True,
+       Character'Pos ('Q') => True,
+       Character'Pos ('U') => True,
+       Character'Pos ('Y') => True,
+       Character'Pos ('c') => True,
+       Character'Pos ('g') => True,
+       Character'Pos ('k') => True,
+       Character'Pos ('o') => True,
+       Character'Pos ('s') => True,
+       Character'Pos ('w') => True,
+       Character'Pos ('0') => True,
+       Character'Pos ('4') => True,
+       Character'Pos ('8') => True,
+       others => False);
+   --  Whether the character matches the Base64Binary definitions
+
    ----------------------------
    -- Is_Valid_Language_Name --
    ----------------------------
@@ -628,6 +661,97 @@ package body Sax.Utils is
       end loop;
       return True;
    end Is_Valid_HexBinary;
+
+   ---------------------------
+   -- Is_Valid_Base64Binary --
+   ---------------------------
+
+   function Is_Valid_Base64Binary
+     (Value : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Index         : Integer := Value'First;
+      C             : Unicode_Char;
+      Prev_Is_Space : Boolean := False;
+
+      Group         : Natural := 1;
+      --  Characters are always by groups of 4, this variable indicates the
+      --  index of the current char in the group
+
+      type Char_Categorie is (Char_04, Char_16, Char_64, Char_Equal);
+      Chars  : array (1 .. 4) of Char_Categorie;
+      --  The various categories that characters can belong two. In the Base64
+      --  encoding, we always have groups of 4 characters.
+
+   begin
+      while Index <= Value'Last loop
+         Sax.Encodings.Encoding.Read (Value, Index, C);
+
+         if C = 16#20# or C = 16#A# then
+            if Prev_Is_Space then
+               return False;  --  Can never have two spaces in a row
+            end if;
+            Prev_Is_Space := True;
+
+         elsif C in B04'Range and then B04 (C) then
+            Prev_Is_Space := False;
+            Chars (Group) := Char_04;
+            Group := Group + 1;
+
+         elsif C in B16'Range and then B16 (C) then
+            Prev_Is_Space := False;
+            Chars (Group) := Char_16;
+            Group := Group + 1;
+
+         elsif C in B64'Range and then B64 (C) then
+            Prev_Is_Space := False;
+            Chars (Group) := Char_64;
+            Group := Group + 1;
+
+         elsif C = Character'Pos ('=') then
+            Prev_Is_Space := False;
+            if Group = 3
+              and then Chars (1) <= Char_64
+              and then Chars (2) = Char_04
+            then
+               Chars (Group) := Char_Equal;
+               Group := Group + 1;
+
+            elsif Group = 4
+              and then Chars (1) <= Char_64
+              and then Chars (2) <= Char_64
+              and then Chars (3) <= Char_16
+            then
+               Group := 1;
+               exit;  --  Must end now
+
+            elsif Group = 4
+              and then Chars (1) <= Char_64
+              and then Chars (2) <= Char_04
+              and then Chars (3) <= Char_Equal
+            then
+               Group := 1;
+               exit;  --  Must end now
+
+            else
+               return False;
+            end if;
+
+         else
+            return False;
+         end if;
+
+         if Group > 4 then
+            Group := 1;
+         end if;
+      end loop;
+
+      --  Cannot finish with a space
+      if Prev_Is_Space or Group /= 1 or Index <= Value'Last then
+         return False;
+      end if;
+
+      return True;
+   end Is_Valid_Base64Binary;
 
    --------------------------
    -- Collapse_Whitespaces --

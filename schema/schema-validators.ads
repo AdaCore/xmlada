@@ -207,8 +207,8 @@ package Schema.Validators is
        Image               => Image,
        State_User_Data     => State_User_Data,
        Default_Data        => Default_User_Data,
-       Default_State_Count => 1000,       --  XSD metaschema takes 904 states
-       Default_Transition_Count => 1200); --  XSD metaschema takes 1096
+       Default_State_Count => 200,       --  XSD metaschema takes 904 states
+       Default_Transition_Count => 200); --  XSD metaschema takes 1096
    use Schema_State_Machines;
 
    function Image
