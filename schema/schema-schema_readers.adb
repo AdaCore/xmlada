@@ -1313,7 +1313,12 @@ package body Schema.Schema_Readers is
    overriding procedure Set_Document_Locator
      (Handler : in out Schema_Reader; Loc : in out Sax.Locators.Locator) is
    begin
-      Handler.Locator := Loc;
+      if Debug then
+         Debug_Output ("Schema.Schema_Readers.Set_Document_Locator "
+                       & To_String (Get_Location (Loc)));
+      end if;
+
+      Set_Locator (Handler, Loc);
    end Set_Document_Locator;
 
    -------------------
@@ -1331,9 +1336,18 @@ package body Schema.Schema_Readers is
       S_File_Full : constant Symbol := To_Absolute_URI (Handler.all, Xsd_File);
       Need_To_Initialize : Boolean := True;
    begin
+      if URI_Was_Parsed (Get_Grammar (Handler.all), S_File_Full) then
+         if Debug then
+            Debug_Output ("Parse_Grammar " & Get (S_File_Full).all
+                          & " already parsed");
+         end if;
+         return;
+      end if;
+
       if Debug then
          Debug_Output ("Parse_Grammar NS={" & Get (URI).all
-                       & "} XSD={" & Get (Xsd_File).all & "}");
+                       & "} XSD={" & Get (Xsd_File).all & "} "
+                       & Get (S_File_Full).all);
       end if;
 
       if Get_XSD_Version (Handler.Grammar) = XSD_1_0 then
@@ -1475,10 +1489,6 @@ package body Schema.Schema_Readers is
          Set_Grammar (Parser, Grammar); --  In case it was not initialized yet
          Set_Feature (Parser, Sax.Readers.Schema_Validation_Feature, False);
          Set_Parsed_URI (Parser, URI);
-
---           Find_NS_From_URI (Parser, URI => Parser.Target_NS, NS => NS);
---           pragma Assert (NS /= No_XML_NS);  --  Always False in practice!
---           Set_System_Id (NS, URI);
 
          Schema.Readers.Parse (Validating_Reader (Parser), Input);
 
@@ -1934,27 +1944,21 @@ package body Schema.Schema_Readers is
       else
          declare
             Location : constant Symbol := Get_Value (Atts, Location_Index);
-            Absolute : constant Symbol := To_Absolute_URI
-              (Handler.all, Location);
          begin
             if Debug then
-               Debug_Output ("Import: " & Get (Absolute).all);
+               Debug_Output ("Import: " & Get (Location).all);
                Debug_Output ("Adding new grammar to Handler.Created_Grammar");
             end if;
 
-            if not URI_Was_Parsed (Get_Grammar (Handler.all), Absolute) then
-               --  The namespace attribute indicates that the XSD may contain
-               --  qualified references to schema components in that namespace.
-               --  (4.2.6.1). It does not give the default targetNamespace
+            --  The namespace attribute indicates that the XSD may contain
+            --  qualified references to schema components in that namespace.
+            --  (4.2.6.1). It does not give the default targetNamespace
 
-               Parse_Grammar
-                 (Handler,
-                  URI      => Empty_String,
-                  Do_Create_NFA => True,
-                  Xsd_File => Location);
-            elsif Debug then
-               Debug_Output ("Already imported");
-            end if;
+            Parse_Grammar
+              (Handler,
+               URI      => Empty_String,
+               Do_Create_NFA => True,
+               Xsd_File => Location);
          end;
       end if;
    end Create_Import;

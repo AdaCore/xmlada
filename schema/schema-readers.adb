@@ -167,6 +167,9 @@ package body Schema.Readers is
       elsif U (U'First) /= '/'
         and then U (U'First) /= '\'
       then
+         Debug_Output ("MANU Normalizing "
+                       & Get (Get_System_Id (Handler.Locator)).all
+                       & "   " & U.all);
          return Find_Symbol
            (Handler,
             Dir_Name (Get (Get_System_Id (Handler.Locator)).all) & U.all);
@@ -897,6 +900,7 @@ package body Schema.Readers is
                     Doc_Locator   => null);
       end if;
 
+      --  Not a dispatching call
       Parse (Schema.Validators.Abstract_Validation_Reader (Parser), Input);
 
       if not In_Final (Parser.Matcher) then
@@ -945,7 +949,7 @@ package body Schema.Readers is
      (Handler : in out Sax_Reader'Class;
       Loc     : in out Sax.Locators.Locator) is
    begin
-      Validating_Reader (Handler).Locator := Loc;
+      Set_Locator (Validating_Reader (Handler), Loc);
    end Hook_Set_Document_Locator;
 
    -------------------------------
@@ -978,5 +982,24 @@ package body Schema.Readers is
          Unchecked_Free (Reader);
       end if;
    end Free;
+
+   -------------
+   -- Locator --
+   -------------
+
+   function Locator (Parser : Validating_Reader) return Sax.Locators.Locator is
+   begin
+      return Parser.Locator;
+   end Locator;
+
+   -----------------
+   -- Set_Locator --
+   -----------------
+
+   procedure Set_Locator
+     (Parser : in out Validating_Reader; Loc : Sax.Locators.Locator) is
+   begin
+      Parser.Locator := Loc;
+   end Set_Locator;
 
 end Schema.Readers;

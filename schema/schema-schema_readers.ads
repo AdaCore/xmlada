@@ -313,8 +313,6 @@ private
    --  or redefine) XSD, until we can create the NFA
 
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
-      Locator          : Sax.Locators.Locator;
-
       Attribute_Form_Default : Schema.Validators.Form_Type :=
         Schema.Validators.Unqualified;
       Element_Form_Default : Schema.Validators.Form_Type :=

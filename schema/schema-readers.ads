@@ -129,6 +129,12 @@ package Schema.Readers is
       Input  : in out Input_Sources.Input_Source'Class);
    --  Override inherited method.
 
+   function Locator (Parser : Validating_Reader) return Sax.Locators.Locator;
+   procedure Set_Locator
+     (Parser : in out Validating_Reader; Loc : Sax.Locators.Locator);
+   --  The locator used to get information on the current location of the
+   --  parser.
+
 private
 
    type Validating_Reader is new Schema.Validators.Abstract_Validation_Reader
