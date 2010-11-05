@@ -318,12 +318,16 @@ package body Schema.Schema_Readers is
       procedure Process_Type (Info : in out Internal_Type_Descr);
       procedure Process_Details
         (Details    : Type_Details_Access;
-         Start      : State;
+         Start, From : State;
          Nested_End : out State);
+      --  [Start] is the start of the current nested
 
       function Create_Element_State
-        (Info : Element_Descr; Start : State; Global : Boolean) return State;
-      --  Create (and decorate) the node corresponding to an <element>
+        (Info : Element_Descr;
+         Start, From : State; Global : Boolean) return State;
+      --  Create (and decorate) the node corresponding to an <element>.
+      --  Links it from [From]. [Start] is the first element of the current
+      --  nested machine.
 
       procedure Create_Nested_For_Type (J : Type_Index);
       --  Create a a nested machine (with only the start state) for [Info]
@@ -334,14 +338,62 @@ package body Schema.Schema_Readers is
       --  Create List from the list of attributes or attribute groups in
       --  [Attrs].
 
+--        procedure Add_Transition
+--          (Start, S1, S2 : State; Trans : Transition_Event);
+--        procedure Add_Empty_Transition (Start, S1, S2 : State);
+--        --  Add a transition on close between the two states
+
+      --------------------
+      -- Add_Transition --
+      --------------------
+
+--        procedure Add_Transition
+--          (Start, S1, S2 : State; Trans : Transition_Event)
+--        is
+--           S3, S4 : State;
+--        begin
+--           if S1 = Start then
+--              NFA.Add_Transition (S1, S2, Trans);
+--           elsif NFA.Get_Nested (S1) /= No_Nested then
+--              S3 := NFA.Add_State;
+--              NFA.On_Empty_Nested_Exit (S1, S3);
+--
+--              S4 := NFA.Add_State;
+--              NFA.Add_Transition (S3, S4, (Kind => Transition_Close_Nested));
+--
+--              NFA.Add_Transition (S4, S2, Trans);
+--           else
+--              S3 := NFA.Add_State;
+--              NFA.Add_Transition (S1, S3, (Kind => Transition_Close_Nested));
+--              NFA.Add_Transition (S3, S2, Trans);
+--           end if;
+--        end Add_Transition;
+
+      --------------------------
+      -- Add_Empty_Transition --
+      --------------------------
+
+--        procedure Add_Empty_Transition (Start, S1, S2 : State) is
+--        begin
+--           if S1 = Start then
+--              NFA.Add_Empty_Transition (S1, S2);
+--           elsif NFA.Get_Nested (S1) /= No_Nested then
+--              NFA.On_Nested_Exit (S1, S2, (Kind => Transition_Close_Nested));
+--           else
+--              NFA.Add_Transition (S1, S2, (Kind => Transition_Close_Nested));
+--           end if;
+--        end Add_Empty_Transition;
+
       --------------------------
       -- Create_Element_State --
       --------------------------
 
       function Create_Element_State
-        (Info : Element_Descr; Start : State; Global : Boolean) return State
+        (Info : Element_Descr;
+         Start, From : State; Global : Boolean) return State
       is
-         S1        : State;
+         pragma Unreferenced (Start);
+         S1, S2    : State;
          Typ       : Type_Index;
          Real      : Element_Descr;
          Trans     : Transition_Event;
@@ -441,9 +493,17 @@ package body Schema.Schema_Readers is
 
          --  Link with previous element
 
-         NFA.Add_Transition (Start, S1, Trans);
+         NFA.Add_Transition (From, S1, Trans);
 
-         --  Save this transition for later reuse in other namespaces
+         S2 := NFA.Add_State;
+
+         if NFA.Get_Nested (S1) /= No_Nested then
+            NFA.On_Empty_Nested_Exit (S1, S2);  --  a complexType
+         else
+            NFA.Add_Transition (S1, S2, (Kind => Transition_Close));
+         end if;
+
+         --  Save this element for later reuse in other namespaces
 
          if Global then
             if Debug then
@@ -453,7 +513,7 @@ package body Schema.Schema_Readers is
                  (Kind => Ref_Element, Element => S1)); --  Tr => Trans));
          end if;
 
-         return S1;
+         return S2;
       end Create_Element_State;
 
       ----------------------------
@@ -462,7 +522,7 @@ package body Schema.Schema_Readers is
 
       procedure Process_Global_Element (Info : Element_Descr) is
          S1  : constant State :=
-           Create_Element_State (Info, Start_State, True);
+           Create_Element_State (Info, Start_State, Start_State, True);
       begin
          if S1 /= No_State then
             NFA.Add_Empty_Transition (S1, End_Schema_Choice);
@@ -475,7 +535,7 @@ package body Schema.Schema_Readers is
 
       procedure Process_Details
         (Details    : Type_Details_Access;
-         Start      : State;
+         Start, From : State;
          Nested_End : out State)
       is
          type Details_Array is array (Natural range <>) of Type_Details_Access;
@@ -510,10 +570,10 @@ package body Schema.Schema_Readers is
                   Permut (Index) := Choice;
 
                   if Index = Permut'Last then
-                     S1 := Start;
+                     S1 := From;
                      for J in Permut'Range loop
                         D := Details (Permut (J));
-                        Process_Details (D, S1, S2);
+                        Process_Details (D, Start, S1, S2);
                         NFA.Repeat (S1, S2, D.Min_Occurs, D.Max_Occurs);
                         S1 := S2;
                      end loop;
@@ -532,7 +592,7 @@ package body Schema.Schema_Readers is
          Count : Natural := 0;
       begin
          if Details = null then
-            Nested_End := Start;
+            Nested_End := From;
             return;
          end if;
 
@@ -541,10 +601,10 @@ package body Schema.Schema_Readers is
                null;
 
             when Type_Sequence =>
-               S := Start;
+               S := From;
                T := Details.First_In_Seq;
                while T /= null loop
-                  Process_Details (T, S, Nested_End);
+                  Process_Details (T, Start, S, Nested_End);
                   NFA.Repeat (S, Nested_End, T.Min_Occurs, T.Max_Occurs);
                   S := Nested_End;
                   T := T.Next;
@@ -554,15 +614,15 @@ package body Schema.Schema_Readers is
                T := Details.First_In_Choice;
                Nested_End := NFA.Add_State (Default_User_Data);
                while T /= null loop
-                  Process_Details (T, Start, S);
-                  NFA.Repeat (Start, S, T.Min_Occurs, T.Max_Occurs);
+                  Process_Details (T, Start, From, S);
+                  NFA.Repeat (From, S, T.Min_Occurs, T.Max_Occurs);
                   NFA.Add_Empty_Transition (S, Nested_End);
                   T := T.Next;
                end loop;
 
             when Type_All =>
                if Details.First_In_All = null then
-                  Nested_End := Start;
+                  Nested_End := From;
                else
                   T := Details.First_In_All;
                   while T /= null loop
@@ -589,7 +649,7 @@ package body Schema.Schema_Readers is
 
             when Type_Element =>
                Nested_End :=
-                 Create_Element_State (Details.Element, Start, False);
+                 Create_Element_State (Details.Element, Start, From, False);
 
             when Type_Group =>
                Gr := Get (Parser.Shared.Global_Groups, Details.Group.Ref);
@@ -598,17 +658,19 @@ package body Schema.Schema_Readers is
                     (Parser, "No group """ & To_QName (Details.Group.Ref)
                      & """");
                end if;
-               Process_Details (Gr.Details, Start, Nested_End);
+               Process_Details (Gr.Details, Start, From, Nested_End);
                NFA.Repeat
-                 (Start, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
+                 (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
 
             when Type_Extension =>
                Ty := Get (Types, Details.Extension.Base);
                pragma Assert (Ty /= No_Type_Index);
                --  Checked in [Create_Nested_For_Type]
 
-               Process_Details (Shared.Types.Table (Ty).Details, Start, S);
-               Process_Details (Details.Extension.Details, S, Nested_End);
+               Process_Details
+                 (Shared.Types.Table (Ty).Details, Start, From, S);
+               Process_Details
+                 (Details.Extension.Details, Start, S, Nested_End);
 
             when Type_Restriction =>
                Ty := Get (Types, Details.Restriction.Base);
@@ -616,14 +678,14 @@ package body Schema.Schema_Readers is
                --  Checked in [Create_Nested_For_Type]
 
                Process_Details
-                 (Details.Restriction.Details, Start, Nested_End);
+                 (Details.Restriction.Details, Start, From, Nested_End);
 
             when Type_Any =>
                Nested_End := NFA.Add_State (Default_User_Data);
                NFA.Add_Transition
-                 (Start, Nested_End, (Transition_Any, Details.Any));
+                 (From, Nested_End, (Transition_Any, Details.Any));
                NFA.Repeat
-                 (Start, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
+                 (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
          end case;
       end Process_Details;
 
@@ -790,9 +852,10 @@ package body Schema.Schema_Readers is
             Process_Details
               (Details    => Info.Details,
                Start      => Info.S,
+               From       => Info.S,
                Nested_End => S1);
             NFA.Add_Transition
-              (S1, Final_State, (Kind => Transition_Close_Nested));
+              (S1, Final_State, (Kind => Transition_Close));
          end if;
       end Process_Type;
 
@@ -818,8 +881,8 @@ package body Schema.Schema_Readers is
       end if;
 
       End_Schema_Choice := NFA.Add_State (Default_User_Data);
-      NFA.Add_Transition
-        (End_Schema_Choice, Final_State, (Kind => Transition_Close_Nested));
+      NFA.Add_Transition (End_Schema_Choice, Final_State,
+                          (Kind => Transition_Close));
 
       Element_Info := Get_First (Shared.Global_Elements);
       while Element_Info /= No_Element_Descr loop

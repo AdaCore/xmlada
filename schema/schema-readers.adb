@@ -522,24 +522,20 @@ package body Schema.Readers is
         (Self : access NFA'Class; S : State)
       is
          Is_Nil : Boolean;
-         Nested : constant Nested_NFA := Self.Get_Nested (S);
          Data2 : State_Data_Access;
       begin
          --  The list of valid attributes is attached to the type, that is to
          --  the nested NFA.
 
-         if Nested /= No_Nested then
-            Data2 := Self.Get_Data (Get_Start_State (Nested));
-            if Debug then
-               Debug_Output ("Checking attributes for state" & S'Img
-                             & " (defined in" & Get_Start_State (Nested)'Img
-                             & ")");
-            end if;
-            Validate_Attributes
-              (Data2.Descr.Attributes, H, Atts,
-               Nillable => False,  --  Is_Nillable (Element),
-               Is_Nil   => Is_Nil);
+         if Debug then
+            Debug_Output ("Checking attributes for state" & S'Img);
          end if;
+
+         Data2 := Self.Get_Data (S);
+         Validate_Attributes
+           (Data2.Descr.Attributes, H, Atts,
+            Nillable => False,  --  Is_Nillable (Element),
+            Is_Nil   => Is_Nil);
       end Validate_Attributes_Cb;
 
       procedure Validate_All_Attributes is new For_Each_Active_State
@@ -580,8 +576,6 @@ package body Schema.Readers is
          return;  --  Always valid, since we have no grammar anyway
       end if;
 
---        Get_NS (H.Grammar, Get_URI (Get_NS (Elem)), Result => G);
-
       Process
         (H.Matcher,
          Input   => (Kind => Transition_Symbol,
@@ -600,7 +594,7 @@ package body Schema.Readers is
             & Expected (H.Matcher));
       end if;
 
-      Validate_All_Attributes (H.Matcher);
+      Validate_All_Attributes (H.Matcher, Ignore_If_Nested => True);
 
       --  Whether this element is valid in the current context
 
@@ -728,26 +722,22 @@ package body Schema.Readers is
 
       Validate_Current_Characters (H);
 
-      if H.Nesting_Level /= H.Last_Start_Level then
-         Process
-           (H.Matcher,
-            Input   => (Kind => Transition_Close_Nested),
-            Success => Success);
+      Process
+        (H.Matcher,
+         Input   => (Kind => Transition_Close),
+         Success => Success);
 
-         if Debug then
-            Debug_Output ("NFA: sent <close>");
-            Debug_Print (H.Matcher, Dump_Compact);
-         end if;
-
-         if not Success then
-            Validation_Error
-              (H, "State_Machine reported an error on <close>, expected "
-               & Expected (H.Matcher));
-         end if;
-
-         H.Last_Start_Level := H.Nesting_Level;
+      if Debug then
+         Debug_Print (H.Matcher, Dump_Compact);
       end if;
 
+      if not Success then
+         Validation_Error
+           (H, "State_Machine reported an error on <close>, expected "
+            & Expected (H.Matcher));
+      end if;
+
+      H.Last_Start_Level := H.Nesting_Level;
       H.Nesting_Level := H.Nesting_Level - 1;
    end Hook_End_Element;
 
@@ -887,7 +877,6 @@ package body Schema.Readers is
                     Whitespace    => Hook_Ignorable_Whitespace'Access,
                     Doc_Locator   => Hook_Set_Document_Locator'Access);
 
-         Debug_Output ("MANU Start_Match");
          Parser.Matcher := Get_NFA (Parser.Grammar).Start_Match;
       else
          Set_Hooks (Parser,

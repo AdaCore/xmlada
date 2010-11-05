@@ -149,12 +149,12 @@ package Schema.Validators is
 
    type Transition_Kind is (Transition_Symbol,
                             Transition_Any,
-                            Transition_Close_Nested);
+                            Transition_Close);
    type Transition_Event (Kind : Transition_Kind := Transition_Symbol) is
       record
          case Kind is
             when Transition_Symbol       => Name : Qualified_Name;
-            when Transition_Close_Nested => null;
+            when Transition_Close => null;
             when Transition_Any          => Any : Any_Descr;
          end case;
       end record;

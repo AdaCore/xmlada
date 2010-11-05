@@ -298,11 +298,14 @@ package Sax.State_Machines is
       with procedure Callback
         (Self : access NFA'Class;
          S    : State) is <>;
-   procedure For_Each_Active_State (Self : NFA_Matcher);
+   procedure For_Each_Active_State
+     (Self             : NFA_Matcher;
+      Ignore_If_Nested : Boolean := False);
    --  Iterates over all currently active states.
-   --  If [Nested_Must_Be_Final] mode is on, the states with a nested NFA are
-   --  not returned unless their nested NFA is in a final state (that's because
-   --  we would be ignoring events on them otherwise).
+   --  If [Ignore_If_Nested] is true or [Nested_Must_Be_Final] mode is on, the
+   --  states with a nested NFA are not returned unless their nested NFA is in
+   --  a final state (that's because we would be ignoring events on them
+   --  otherwise).
 
    function In_Final (Self : NFA_Matcher) return Boolean;
    --  Whether [Self] is in the final step: if True, it means that all input
