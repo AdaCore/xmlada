@@ -266,6 +266,7 @@ private
       Global_Groups     : Group_HTables.Instance;
       Global_AttrGroups : AttrGroup_HTables.Instance;
    end record;
+   type XSD_Data_Access is access all XSD_Data;
    --  Data modified while loading XSD, and needed while loading nested (input
    --  or redefine) XSD, until we can create the NFA
 
@@ -291,7 +292,7 @@ private
       Contexts        : Context_Array_Access;
       Contexts_Last   : Natural := 0;
 
-      Shared : XSD_Data;
+      Shared          : XSD_Data_Access;
    end record;
 
    overriding procedure Start_Element

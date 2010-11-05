@@ -66,6 +66,9 @@ package body Schema.Schema_Readers is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Context_Array, Context_Array_Access);
 
+   procedure Free (Shared : in out XSD_Data_Access);
+   --  Free [Shared] and its htables
+
    procedure Free (Self : in out Type_Details_Access);
    --  Free [Self], [Self.Next] and so on
 
@@ -297,7 +300,7 @@ package body Schema.Schema_Readers is
       Ref : constant access Reference_HTables.Instance :=
         Get_References (Get_Grammar (Parser.all));
 
-      Shared : XSD_Data renames Parser.Shared;
+      Shared : XSD_Data_Access renames Parser.Shared;
 
       End_Schema_Choice : State;
 
@@ -361,7 +364,7 @@ package body Schema.Schema_Readers is
                TRef := Get (Ref.all, (Info.Ref, Ref_Element));
                if TRef = No_Global_Reference then
                   Validation_Error
-                    (Parser, "Unknown refed type " & To_QName (Info.Ref),
+                    (Parser, "Unknown refed element " & To_QName (Info.Ref),
                      Info.Loc);
                else
                   S := TRef.Element;
@@ -442,6 +445,9 @@ package body Schema.Schema_Readers is
          --  Save this transition for later reuse in other namespaces
 
          if Global then
+            if Debug then
+               Debug_Output ("Global elem: " & To_QName (Real.Name));
+            end if;
             Set (Ref.all, (Real.Name, Ref_Element),
                  (Kind => Ref_Element, Element => S1)); --  Tr => Trans));
          end if;
@@ -780,8 +786,6 @@ package body Schema.Schema_Readers is
       end Process_Type;
 
       Element_Info : Element_Descr;
-      Attr         : AttrGroup_Descr;
-      Gr           : Group_Descr;
 
    begin
       if Debug then
@@ -798,6 +802,10 @@ package body Schema.Schema_Readers is
 
       --  Prepare schema for global elements
 
+      if Debug then
+         Debug_Output ("Create_NFA: adding global elements");
+      end if;
+
       End_Schema_Choice := NFA.Add_State (Default_User_Data);
       NFA.Add_Transition
         (End_Schema_Choice, Final_State, (Kind => Transition_Close_Nested));
@@ -807,6 +815,10 @@ package body Schema.Schema_Readers is
          Process_Global_Element (Element_Info);
          Element_Info := Get_Next (Shared.Global_Elements);
       end loop;
+
+      if Debug then
+         Debug_Output ("Create_NFA: complete type definition");
+      end if;
 
       --  Finally, complete the definition of complexTypes
 
@@ -818,32 +830,48 @@ package body Schema.Schema_Readers is
          Output_Action ("NFA: " & Dump (NFA, Dump_Dot_Compact));
       end if;
 
-      --  Free all data structures, no longer needed
-
-      Reset (Shared.Global_Elements);
-
-      Gr := Get_First (Shared.Global_Groups);
-      while Gr /= No_Group_Descr loop
-         Free (Gr.Details);
-         Gr := Get_Next (Shared.Global_Groups);
-      end loop;
-      Reset (Shared.Global_Groups);
-
-      Attr := Get_First (Shared.Global_AttrGroups);
-      while Attr /= No_AttrGroup_Descr loop
-         Unchecked_Free (Attr.Attributes);
-         Attr := Get_Next (Shared.Global_AttrGroups);
-      end loop;
-      Reset (Shared.Global_AttrGroups);
-
-      for T in Type_Tables.First .. Last (Shared.Types) loop
-         Unchecked_Free (Shared.Types.Table (T).Attributes);
-         Free (Shared.Types.Table (T).Details);
-      end loop;
-      Free (Shared.Types);
-
       Reset (Types);
    end Create_NFA;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Shared : in out XSD_Data_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (XSD_Data, XSD_Data_Access);
+      Attr         : AttrGroup_Descr;
+      Gr           : Group_Descr;
+   begin
+      if Shared /= null then
+
+         --  Free all data structures, no longer needed
+
+         Reset (Shared.Global_Elements);
+
+         Gr := Get_First (Shared.Global_Groups);
+         while Gr /= No_Group_Descr loop
+            Free (Gr.Details);
+            Gr := Get_Next (Shared.Global_Groups);
+         end loop;
+         Reset (Shared.Global_Groups);
+
+         Attr := Get_First (Shared.Global_AttrGroups);
+         while Attr /= No_AttrGroup_Descr loop
+            Unchecked_Free (Attr.Attributes);
+            Attr := Get_Next (Shared.Global_AttrGroups);
+         end loop;
+         Reset (Shared.Global_AttrGroups);
+
+         for T in Type_Tables.First .. Last (Shared.Types) loop
+            Unchecked_Free (Shared.Types.Table (T).Attributes);
+            Free (Shared.Types.Table (T).Details);
+         end loop;
+         Free (Shared.Types);
+
+         Unchecked_Free (Shared);
+      end if;
+   end Free;
 
    --------------------------
    -- Set_Document_Locator --
@@ -868,6 +896,7 @@ package body Schema.Schema_Readers is
       File     : File_Input;
       Schema   : Schema_Reader;
       S_File_Full : constant Symbol := To_Absolute_URI (Handler.all, Xsd_File);
+      Need_To_Initialize : Boolean := True;
    begin
       if Debug then
          Debug_Output ("Parse_Grammar NS={" & Get (URI).all
@@ -926,21 +955,26 @@ package body Schema.Schema_Readers is
       Use_Basename_In_Error_Messages
         (Schema, Use_Basename_In_Error_Messages (Handler.all));
 
-      begin
+--        begin
+         if Handler.all in Schema_Reader'Class then
+            Schema.Shared := Schema_Reader (Handler.all).Shared;
+            Need_To_Initialize := False;
+         end if;
+
          Internal_Parse
            (Schema, File,
-            Default_Namespace => URI,
-            Do_Initialize_Shared => True,
-            Do_Create_NFA     => Do_Create_NFA);
-      exception
-         when XML_Validation_Error =>
-            --  Have to resolve locations and context now through
-            --  Get_Error_Message, since the error was in another parser
-            Free (Handler.Error_Msg);
-            Handler.Error_Msg :=
-              new Byte_Sequence'(Get_Error_Message (Schema));
-            raise;
-      end;
+            Default_Namespace    => URI,
+            Do_Initialize_Shared => Need_To_Initialize,
+            Do_Create_NFA        => Need_To_Initialize and Do_Create_NFA);
+--        exception
+--           when XML_Validation_Error =>
+--              --  Have to resolve locations and context now through
+--              --  Get_Error_Message, since the error was in another parser
+--              Free (Handler.Error_Msg);
+--              Handler.Error_Msg :=
+--                new Byte_Sequence'(Get_Error_Message (Schema));
+--              raise;
+--        end;
 
       Close (File);
 
@@ -997,6 +1031,7 @@ package body Schema.Schema_Readers is
       if not URI_Was_Parsed (Grammar, URI) then
 
          if Do_Initialize_Shared then
+            Parser.Shared := new XSD_Data;
             Init (Parser.Shared.Types);
          end if;
 
@@ -1016,12 +1051,21 @@ package body Schema.Schema_Readers is
             Create_NFA (Parser'Access);
          end if;
 
+         if Do_Initialize_Shared then
+            Free (Parser.Shared);
+         end if;
+
          Unchecked_Free (Parser.Contexts);
       end if;
 
    exception
       when others =>
          Unchecked_Free (Parser.Contexts);
+
+         if Do_Initialize_Shared then
+            Free (Parser.Shared);
+         end if;
+
          raise;
    end Internal_Parse;
 
