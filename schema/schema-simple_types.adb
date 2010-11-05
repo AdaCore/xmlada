@@ -301,6 +301,11 @@ package body Schema.Simple_Types is
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
       Ch            : Unicode.CES.Byte_Sequence) return Symbol;
+   function Validate_Notation
+     (Notations     : Symbol_Htable.HTable;
+      Descr         : Simple_Type_Descr;
+      Symbols       : Sax.Utils.Symbol_Table;
+      Ch            : Unicode.CES.Byte_Sequence) return Symbol;
    function Validate_Base64Binary
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
@@ -484,7 +489,7 @@ package body Schema.Simple_Types is
                      Any_Simple_Type);
       T := Register ("QName",    (Kind => Primitive_QName, others => <>),
                      Any_Simple_Type);
-      T := Register ("NOTATION", (Kind => Primitive_QName, others => <>),
+      T := Register ("NOTATION", (Kind => Primitive_Notation, others => <>),
                      Any_Simple_Type);
       T := Register ("float",    (Kind => Primitive_Float, others => <>),
                      Any_Simple_Type);
@@ -652,62 +657,119 @@ package body Schema.Simple_Types is
    -- Equal --
    -----------
 
-   function Equal
+   procedure Equal
      (Simple_Types  : Simple_Type_Table;
+      Enumerations  : Enumeration_Tables.Instance;
+      Notations     : Symbol_Htable.HTable;
       Symbols       : Symbol_Table;
+      Id_Table      : in out Symbol_Htable_Access;
       Simple_Type   : Simple_Type_Index;
       Ch1           : Sax.Symbols.Symbol;
-      Ch2           : Unicode.CES.Byte_Sequence) return Boolean
+      Ch2           : Unicode.CES.Byte_Sequence;
+      Is_Equal      : out Boolean)
    is
       Descr : Simple_Type_Descr renames Simple_Types.Table (Simple_Type);
+      Error : Symbol;
    begin
       case Descr.Kind is
          when Primitive_String .. Primitive_HexBinary =>
-            return Equal_String (Descr, Symbols, Ch1, Ch2);
-         when Primitive_Boolean   => return Equal_Boolean (Symbols, Ch1, Ch2);
+            Is_Equal := Equal_String (Descr, Symbols, Ch1, Ch2);
+         when Primitive_Boolean   =>
+            Is_Equal := Equal_Boolean (Symbols, Ch1, Ch2);
          when Primitive_Float | Primitive_Double  =>
-            return Equal_Float (Symbols, Ch1, Ch2);
-         when Primitive_Decimal   => return Equal_Decimal (Symbols, Ch1, Ch2);
-         when Primitive_Time      => return Equal_Time (Symbols, Ch1, Ch2);
-         when Primitive_DateTime => return Equal_Date_Time (Symbols, Ch1, Ch2);
-         when Primitive_GDay      => return Equal_GDay (Symbols, Ch1, Ch2);
-         when Primitive_GMonth    => return Equal_GMonth (Symbols, Ch1, Ch2);
-         when Primitive_GYear     => return Equal_GYear (Symbols, Ch1, Ch2);
-         when Primitive_Date      => return Equal_Date (Symbols, Ch1, Ch2);
-         when Primitive_Duration  => return Equal_Duration (Symbols, Ch1, Ch2);
+            Is_Equal := Equal_Float (Symbols, Ch1, Ch2);
+         when Primitive_Decimal   =>
+            Is_Equal := Equal_Decimal (Symbols, Ch1, Ch2);
+         when Primitive_Time      =>
+            Is_Equal := Equal_Time (Symbols, Ch1, Ch2);
+         when Primitive_DateTime =>
+            Is_Equal := Equal_Date_Time (Symbols, Ch1, Ch2);
+         when Primitive_GDay      =>
+            Is_Equal := Equal_GDay (Symbols, Ch1, Ch2);
+         when Primitive_GMonth    =>
+            Is_Equal := Equal_GMonth (Symbols, Ch1, Ch2);
+         when Primitive_GYear     =>
+            Is_Equal := Equal_GYear (Symbols, Ch1, Ch2);
+         when Primitive_Date      =>
+            Is_Equal := Equal_Date (Symbols, Ch1, Ch2);
+         when Primitive_Duration  =>
+            Is_Equal := Equal_Duration (Symbols, Ch1, Ch2);
          when Primitive_GMonthDay =>
-            return Equal_GMonth_Day (Symbols, Ch1, Ch2);
+            Is_Equal := Equal_GMonth_Day (Symbols, Ch1, Ch2);
          when Primitive_GYearMonth =>
-            return Equal_GYear_Month (Symbols, Ch1, Ch2);
+            Is_Equal := Equal_GYear_Month (Symbols, Ch1, Ch2);
 
          when Primitive_Union =>
             for S in Descr.Union'Range loop
                if Descr.Union (S) /= No_Simple_Type_Index then
-                  --  In the case of a union type, we need to check whether
-                  --  any of the member says we have a match. However, in this
-                  --  particular case, we should only check members for which
-                  --  [Ch1] is a valid value. For instance, if Fixed="1.0" and
-                  --  the union is "int float", only the comparison with float
-                  --  should be done.
-                  --  See 4.2.1 in the datatypes standard.
-                  --  ??? The above is not implemented, is this needed (stE054)
+                  --  We need to do space normalization here: when there is
+                  --  a single type (ie not a union), the normalization has
+                  --  already been done for the "fixed" value, but this isn't
+                  --  doable in the case of union where the normalization
+                  --  depends on which member is selected.
+                  --  We actually also need to validate the value since we
+                  --  don't know precisely for which members it is valid.
 
-                  if Equal
-                    (Simple_Types => Simple_Types,
-                     Symbols      => Symbols,
-                     Simple_Type  => Descr.Union (S),
-                     Ch1          => Ch1,
-                     Ch2          => Ch2)
-                  then
-                     return True;
-                  end if;
+                  declare
+                     Norm : Byte_Sequence := Get (Ch1).all;
+                     Last : Integer := Norm'Last;
+                  begin
+                     Normalize_Whitespace
+                       (Whitespace =>
+                          Simple_Types.Table (Descr.Union (S)).Whitespace,
+                        Val        => Norm,
+                        Last       => Last);
+
+                     if Debug then
+                        Debug_Output
+                          ("Equal for union, checking simpleType:"
+                           & Descr.Union (S)'Img & " "
+                           & Simple_Types.Table
+                             (Descr.Union (S)).Whitespace'Img
+                           & " Ch1=["
+                           & Norm (Norm'First .. Last) & "]");
+                     end if;
+
+                     Validate_Simple_Type
+                       (Simple_Types  => Simple_Types,
+                        Enumerations  => Enumerations,
+                        Notations     => Notations,
+                        Symbols       => Symbols,
+                        Id_Table      => Id_Table,
+                        Insert_Id     => False,
+                        Simple_Type   => Descr.Union (S),
+                        Ch            => Norm (Norm'First .. Last),
+                        Error         => Error);
+
+                     if Debug and then Error /= No_Symbol then
+                        Debug_Output
+                          ("Equal: member doesn't apply: "
+                           & Get (Error).all);
+                     end if;
+
+                     if Error = No_Symbol then
+                        Equal
+                          (Simple_Types => Simple_Types,
+                           Enumerations => Enumerations,
+                           Notations    => Notations,
+                           Id_Table     => Id_Table,
+                           Symbols      => Symbols,
+                           Simple_Type  => Descr.Union (S),
+                           Ch1  => Find (Symbols, Norm (Norm'First .. Last)),
+                           Ch2  => Ch2,
+                           Is_Equal     => Is_Equal);
+                        if Is_Equal then
+                           return;
+                        end if;
+                     end if;
+                  end;
                end if;
             end loop;
-            return False;
+
+            Is_Equal := False;
 
          when Primitive_List =>
-            return Get (Ch1).all = Ch2;
-
+            Is_Equal := Get (Ch1).all = Ch2;
       end case;
    end Equal;
 
@@ -718,11 +780,12 @@ package body Schema.Simple_Types is
    procedure Validate_Simple_Type
      (Simple_Types  : Simple_Type_Table;
       Enumerations  : Enumeration_Tables.Instance;
+      Notations     : Symbol_Htable.HTable;
       Symbols       : Symbol_Table;
       Id_Table      : in out Symbol_Htable_Access;
+      Insert_Id     : Boolean := True;
       Simple_Type   : Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
       Error         : in out Symbol)
    is
       Descr : Simple_Type_Descr renames Simple_Types.Table (Simple_Type);
@@ -735,10 +798,9 @@ package body Schema.Simple_Types is
       begin
          if Error = No_Symbol then
             Validate_Simple_Type
-              (Simple_Types, Enumerations, Symbols, Id_Table,
+              (Simple_Types, Enumerations, Notations, Symbols, Id_Table,
                Simple_Type   => Descr.List_Item,
                Ch            => Str,
-               Empty_Element => Empty_Element,
                Error         => Error);
          end if;
       end Validate_List_Item;
@@ -756,14 +818,13 @@ package body Schema.Simple_Types is
             Found : Boolean := False;
          begin
             while Enum /= No_Enumeration_Index loop
-               if Equal
-                 (Simple_Types, Symbols, Simple_Type,
+               Equal
+                 (Simple_Types, Enumerations, Notations, Symbols, Id_Table,
+                  Simple_Type,
                   Ch1 => Enumerations.Table (Enum).Value,
-                  Ch2 => Ch)
-               then
-                  Found := True;
-                  exit;
-               end if;
+                  Ch2 => Ch,
+                  Is_Equal => Found);
+               exit when Found;
 
                Enum := Enumerations.Table (Enum).Next;
             end loop;
@@ -859,10 +920,12 @@ package body Schema.Simple_Types is
       --  Type-specific facets
 
       case Descr.Kind is
-         when Primitive_String | Primitive_Notation =>
+         when Primitive_String =>
             Error :=  Validate_String (Descr, Symbols, Ch);
          when Primitive_HexBinary =>
             Error := Validate_HexBinary (Descr, Symbols, Ch);
+         when Primitive_Notation =>
+            Error := Validate_Notation (Notations, Descr, Symbols, Ch);
          when Primitive_Base64Binary =>
             Error := Validate_Base64Binary (Descr, Symbols, Ch);
          when Primitive_Language =>
@@ -873,10 +936,9 @@ package body Schema.Simple_Types is
             Error := Validate_NCName (Descr, Symbols, Ch);
          when Primitive_ID       =>
             Error := Validate_NCName (Descr, Symbols, Ch);
-            if Error = No_Symbol then
+            if Error = No_Symbol and then Insert_Id then
                Check_Id (Symbols, Id_Table, Ch, Error);
             end if;
-
          when Primitive_NCNames  =>
             Error := Validate_NCNames (Descr, Symbols, Ch);
          when Primitive_Name     =>
@@ -919,10 +981,10 @@ package body Schema.Simple_Types is
                     (Simple_Types  => Simple_Types,
                      Enumerations  => Enumerations,
                      Symbols       => Symbols,
+                     Notations     => Notations,
                      Id_Table      => Id_Table,
                      Simple_Type   => Descr.Union (S),
                      Ch            => Ch,
-                     Empty_Element => Empty_Element,
                      Error         => Error);
                   if Error = No_Symbol then
                      return;
@@ -1123,6 +1185,31 @@ package body Schema.Simple_Types is
         (Symbols, Ch, Descr.Mask, Descr.String_Length,
          Descr.String_Min_Length, Descr.String_Max_Length);
    end Validate_String;
+
+   -----------------------
+   -- Validate_Notation --
+   -----------------------
+
+   function Validate_Notation
+     (Notations     : Symbol_Htable.HTable;
+      Descr         : Simple_Type_Descr;
+      Symbols       : Sax.Utils.Symbol_Table;
+      Ch            : Unicode.CES.Byte_Sequence) return Symbol
+   is
+      Error : Symbol;
+   begin
+      Error := Validate_String (Descr, Symbols, Ch);
+      if Error /= No_Symbol then
+         return Error;
+      end if;
+
+      if Symbol_Htable.Get (Notations, Find (Symbols, Ch)) = No_Symbol then
+         Error := Find
+           (Symbols, "NOTATION """ & Ch & """ undefined in this document");
+      end if;
+
+      return Error;
+   end Validate_Notation;
 
    ------------------------
    -- Validate_HexBinary --

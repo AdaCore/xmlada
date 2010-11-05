@@ -156,6 +156,8 @@ package body Schema.Schema_Readers is
 
    procedure Create_Element
      (Handler : access Schema_Reader'Class; Atts : Sax_Attribute_List);
+   procedure Create_Notation
+     (Handler : access Schema_Reader'Class; Atts : Sax_Attribute_List);
    procedure Create_Complex_Type
      (Handler : access Schema_Reader'Class; Atts : Sax_Attribute_List);
    procedure Create_Simple_Type
@@ -520,7 +522,6 @@ package body Schema.Schema_Readers is
                     (Reader        => Parser,
                      Simple_Type   => Simple,
                      Ch            => Get (Info.Fixed).all,
-                     Empty_Element => False,
                      Loc           => Info.Loc);
                end if;
             end if;
@@ -2193,6 +2194,44 @@ package body Schema.Schema_Readers is
       Insert_Attribute (Handler, Handler.Contexts_Last, Att);
    end Create_Any_Attribute;
 
+   ---------------------
+   -- Create_Notation --
+   ---------------------
+
+   procedure Create_Notation
+     (Handler : access Schema_Reader'Class; Atts : Sax_Attribute_List)
+   is
+      type Notation_Descr is record
+         Name      : Symbol;
+         System_Id : Symbol := Empty_String;
+         Public_Id : Symbol := Empty_String;
+      end record;
+
+      Name     : Qualified_Name;
+      Notation : Notation_Descr;
+
+   begin
+      for J in 1 .. Get_Length (Atts) loop
+         Name := Get_Name (Atts, J);
+         if Name.NS = Empty_String then
+            if Name.Local = Handler.Name then
+               Notation.Name := Get_Value (Atts, J);
+            elsif Name.Local = Handler.Public then
+               Notation.Public_Id := Get_Value (Atts, J);
+            elsif Name.Local = Handler.System then
+               Notation.System_Id := Get_Value (Atts, J);
+            end if;
+         end if;
+      end loop;
+
+      Add_Notation (Get_NFA (Handler.Grammar), Notation.Name);
+      Notation_Decl
+        (Sax_Reader'Class (Handler.all),
+         Name      => Get (Notation.Name).all,
+         System_Id => Get (Notation.System_Id).all,
+         Public_Id => Get (Notation.Public_Id).all);
+   end Create_Notation;
+
    --------------------
    -- Create_Element --
    --------------------
@@ -3474,10 +3513,11 @@ package body Schema.Schema_Readers is
 
          Create_Schema (H, Atts);
 
-      elsif Local_Name = Handler.Annotation
-        or else Local_Name = Handler.Notation
-      then
+      elsif Local_Name = Handler.Annotation then
          Handler.In_Annotation := True;
+
+      elsif Local_Name = Handler.Notation then
+         Create_Notation (H, Atts);
 
       elsif Local_Name = Handler.Element then
          Create_Element (H, Atts);

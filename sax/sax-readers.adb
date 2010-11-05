@@ -4014,6 +4014,16 @@ package body Sax.Readers is
             Error (Parser, Error_System_URI);
          end if;
 
+         if Parser.Hooks.Notation_Decl /= null then
+            Parser.Hooks.Notation_Decl
+              (Parser'Access,
+               Name => Parser.Buffer (Name_Id.First .. Name_Id.Last),
+               Public_Id =>
+                 Parser.Buffer (Public_Start.First .. Public_End.Last),
+               System_Id =>
+                 Parser.Buffer (System_Start.First .. System_End.Last));
+         end if;
+
          Notation_Decl
            (Parser,
             Name => Parser.Buffer (Name_Id.First .. Name_Id.Last),
@@ -5664,7 +5674,8 @@ package body Sax.Readers is
       End_Element    : End_Element_Hook   := null;
       Characters     : Characters_Hook    := null;
       Whitespace     : Whitespace_Hook    := null;
-      Doc_Locator    : Set_Doc_Locator_Hook := null) is
+      Doc_Locator    : Set_Doc_Locator_Hook := null;
+      Notation_Decl  : Notation_Decl_Hook := null) is
    begin
       if Handler.Hooks.Data /= null then
          Free (Handler.Hooks.Data.all);
@@ -5677,7 +5688,8 @@ package body Sax.Readers is
          End_Element    => End_Element,
          Characters     => Characters,
          Whitespace     => Whitespace,
-         Doc_Locator    => Doc_Locator);
+         Doc_Locator    => Doc_Locator,
+         Notation_Decl  => Notation_Decl);
    end Set_Hooks;
 
    ------------------------

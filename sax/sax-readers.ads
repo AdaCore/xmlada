@@ -685,6 +685,11 @@ package Sax.Readers is
    type Set_Doc_Locator_Hook is access procedure
      (Handler       : in out Sax_Reader'Class;
       Loc           : in out Sax.Locators.Locator);
+   type Notation_Decl_Hook is access procedure
+     (Handler       : access Sax_Reader'Class;
+      Name          : Unicode.CES.Byte_Sequence;
+      Public_Id     : Unicode.CES.Byte_Sequence;
+      System_Id     : Unicode.CES.Byte_Sequence);
 
    function Get_Hooks_Data (Handler : Sax_Reader) return Hook_Data_Access;
    --  Return the hook data that was set through Set_Hooks. This could be null
@@ -696,7 +701,8 @@ package Sax.Readers is
       End_Element    : End_Element_Hook     := null;
       Characters     : Characters_Hook      := null;
       Whitespace     : Whitespace_Hook      := null;
-      Doc_Locator    : Set_Doc_Locator_Hook := null);
+      Doc_Locator    : Set_Doc_Locator_Hook := null;
+      Notation_Decl  : Notation_Decl_Hook   := null);
    --  Set a list of hooks to be called before calling the usual primitive
    --  operations. These override hooks that were defined previously.
    --  Data will be passed to each of the hook. It is automatically
@@ -779,6 +785,7 @@ private
       Characters    : Characters_Hook      := null;
       Whitespace    : Whitespace_Hook      := null;
       Doc_Locator   : Set_Doc_Locator_Hook := null;
+      Notation_Decl : Notation_Decl_Hook   := null;
    end record;
 
    Entities_Table_Size : constant := 50;

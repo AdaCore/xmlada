@@ -919,7 +919,6 @@ package body Schema.Validators is
            (Reader        => Reader,
             Simple_Type   => Attr.Simple_Type,
             Ch            => Val.all,
-            Empty_Element => False,
             Loc           => Get_Location (Atts, Index));
 
          if Get_Simple_Type
@@ -1358,6 +1357,7 @@ package body Schema.Validators is
       Reference_HTables.Reset (Grammar.NFA.References.all);
       Unchecked_Free (Grammar.NFA.References);
       Types_Tables.Free (Grammar.NFA.Types);
+      Symbol_Htable.Reset (Grammar.NFA.Notations);
       Free (NFA_Access (Grammar.NFA));
       Free (Grammar.Parsed_Locations);
    end Free;
@@ -1869,19 +1869,19 @@ package body Schema.Validators is
      (Reader        : access Abstract_Validation_Reader'Class;
       Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
       Loc           : Sax.Locators.Location)
    is
       Error : Symbol;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Reader.Grammar);
    begin
       Validate_Simple_Type
-        (Simple_Types  => Get (Reader.Grammar).NFA.Simple_Types,
-         Enumerations  => Get (Reader.Grammar).NFA.Enumerations,
-         Symbols       => Get (Reader.Grammar).Symbols,
+        (Simple_Types  => G.NFA.Simple_Types,
+         Enumerations  => G.NFA.Enumerations,
+         Notations     => G.NFA.Notations,
+         Symbols       => G.Symbols,
          Id_Table      => Reader.Id_Table,
          Simple_Type   => Simple_Type,
          Ch            => Ch,
-         Empty_Element => Empty_Element,
          Error         => Error);
 
       if Error /= No_Symbol then
@@ -1897,11 +1897,22 @@ package body Schema.Validators is
      (Reader        : access Abstract_Validation_Reader'Class;
       Simple_Type   : Simple_Type_Index;
       Ch1           : Sax.Symbols.Symbol;
-      Ch2           : Unicode.CES.Byte_Sequence) return Boolean is
+      Ch2           : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Is_Equal : Boolean;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Reader.Grammar);
    begin
-      return Equal
-        (Get (Reader.Grammar).NFA.Simple_Types,
-         Get (Reader.Grammar).Symbols, Simple_Type, Ch1, Ch2);
+      Equal
+        (Simple_Types  => G.NFA.Simple_Types,
+         Enumerations  => G.NFA.Enumerations,
+         Notations     => G.NFA.Notations,
+         Symbols       => G.Symbols,
+         Id_Table      => Reader.Id_Table,
+         Simple_Type   => Simple_Type,
+         Ch1           => Ch1,
+         Ch2           => Ch2,
+         Is_Equal      => Is_Equal);
+      return Is_Equal;
    end Equal;
 
    ---------------
@@ -2165,5 +2176,15 @@ package body Schema.Validators is
          Through_Process := NFA.Matched_Process_Content;
       end if;
    end Do_Match;
+
+   ------------------
+   -- Add_Notation --
+   ------------------
+
+   procedure Add_Notation
+     (NFA : access Schema_NFA'Class; Name : Sax.Symbols.Symbol) is
+   begin
+      Symbol_Htable.Set (NFA.Notations, Name);
+   end Add_Notation;
 
 end Schema.Validators;

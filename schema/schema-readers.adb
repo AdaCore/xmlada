@@ -74,6 +74,11 @@ package body Schema.Readers is
    procedure Hook_Ignorable_Whitespace
      (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence);
+   procedure Hook_Notation_Decl
+     (Handler       : access Sax_Reader'Class;
+      Name          : Unicode.CES.Byte_Sequence;
+      Public_Id     : Unicode.CES.Byte_Sequence;
+      System_Id     : Unicode.CES.Byte_Sequence);
    --  See for the corresponding primitive operations. These provide the
    --  necessary validation hooks.
 
@@ -357,13 +362,11 @@ package body Schema.Readers is
                      Validate_Simple_Type
                        (Handler, Descr.Simple_Content,
                         "",
-                        Empty_Element => Is_Empty,
                         Loc           => Loc);
                   else
                      Validate_Simple_Type
                        (Handler, Descr.Simple_Content,
                         Handler.Characters (1 .. Handler.Characters_Count),
-                        Empty_Element => Is_Empty,
                         Loc           => Loc);
                   end if;
 
@@ -423,6 +426,23 @@ package body Schema.Readers is
 
       Handler.Characters_Count := 0;
    end Validate_Current_Characters;
+
+   ------------------------
+   -- Hook_Notation_Decl --
+   ------------------------
+
+   procedure Hook_Notation_Decl
+     (Handler       : access Sax_Reader'Class;
+      Name          : Unicode.CES.Byte_Sequence;
+      Public_Id     : Unicode.CES.Byte_Sequence;
+      System_Id     : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unreferenced (Public_Id, System_Id);
+      H : constant Validating_Reader_Access :=
+        Validating_Reader_Access (Handler);
+   begin
+      Add_Notation (Get_NFA (H.Grammar), Find_Symbol (H.all, Name));
+   end Hook_Notation_Decl;
 
    ------------------------
    -- Hook_Start_Element --
@@ -1079,7 +1099,8 @@ package body Schema.Readers is
                     Start_Element => Hook_Start_Element'Access,
                     End_Element   => Hook_End_Element'Access,
                     Characters    => Hook_Characters'Access,
-                    Whitespace    => Hook_Ignorable_Whitespace'Access);
+                    Whitespace    => Hook_Ignorable_Whitespace'Access,
+                    Notation_Decl => Hook_Notation_Decl'Access);
 
          Parser.Matcher := No_NFA_Matcher;
       else

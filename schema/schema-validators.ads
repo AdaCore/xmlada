@@ -599,7 +599,6 @@ package Schema.Validators is
      (Reader        : access Abstract_Validation_Reader'Class;
       Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
       Loc           : Sax.Locators.Location);
    --  Validate [Ch] as a simpleType
 
@@ -729,6 +728,10 @@ package Schema.Validators is
    function Simple_Nested
      (NFA : access Schema_NFA'Class) return Schema_State_Machines.State;
 
+   procedure Add_Notation
+     (NFA : access Schema_NFA'Class; Name : Sax.Symbols.Symbol);
+   --  Register a new NOTATION
+
 private
 
    -------------------------
@@ -771,6 +774,8 @@ private
       Attributes   : Attributes_Tables.Instance;
       Enumerations : Schema.Simple_Types.Enumeration_Tables.Instance;
       Types        : Types_Tables.Instance;
+      Notations    : Schema.Simple_Types.Symbol_Htable.HTable (101);
+      --  List of all notations defined in the current XSD
 
       Ur_Type      : Schema_State_Machines.State;
       Ur_Type_Skip : Schema_State_Machines.State;

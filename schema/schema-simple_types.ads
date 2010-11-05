@@ -244,21 +244,28 @@ package Schema.Simple_Types is
    procedure Validate_Simple_Type
      (Simple_Types  : Simple_Type_Table;
       Enumerations  : Enumeration_Tables.Instance;
+      Notations     : Symbol_Htable.HTable;
+      Symbols       : Symbol_Table;
+      Id_Table      : in out Symbol_Htable_Access;
+      Insert_Id     : Boolean := True;
+      Simple_Type   : Simple_Type_Index;
+      Ch            : Unicode.CES.Byte_Sequence;
+      Error         : in out Symbol);
+   --  Validate [Ch] for the simple type [Simple_Type].
+   --  Returns an error message in case of error, or No_Symbol otherwise.
+   --  If [Insert_Id] is True and you are validating an ID, it will be inserted
+   --  in Id_Table (and an error reported if it already exists)
+
+   procedure Equal
+     (Simple_Types  : Simple_Type_Table;
+      Enumerations  : Enumeration_Tables.Instance;
+      Notations     : Symbol_Htable.HTable;
       Symbols       : Symbol_Table;
       Id_Table      : in out Symbol_Htable_Access;
       Simple_Type   : Simple_Type_Index;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean;
-      Error         : in out Symbol);
-   --  Validate [Ch] for the simple type [Simple_Type].
-   --  Returns an error message in case of error, or No_Symbol otherwise
-
-   function Equal
-     (Simple_Types  : Simple_Type_Table;
-      Symbols       : Symbol_Table;
-      Simple_Type   : Simple_Type_Index;
       Ch1           : Sax.Symbols.Symbol;
-      Ch2           : Unicode.CES.Byte_Sequence) return Boolean;
+      Ch2           : Unicode.CES.Byte_Sequence;
+      Is_Equal      : out Boolean);
    --  Checks whether [Ch1]=[Ch2] according to the type.
    --  (This involves for instance normalizing whitespaces)
 
