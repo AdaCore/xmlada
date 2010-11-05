@@ -1294,7 +1294,7 @@ package body Schema.Schema_Readers is
                      As_Restriction => False);
                end if;
 
-               Add_Attributes (List, Info.Details.Extension.Attributes,
+               Add_Attributes (List, Info.Attributes,
                                Processed_Groups, As_Restriction => False,
                                Had_Any => Had_Any);
 
@@ -1318,7 +1318,7 @@ package body Schema.Schema_Readers is
                end if;
 
                Had_Any := False;
-               Add_Attributes (List, Info.Details.Restriction.Attributes,
+               Add_Attributes (List, Info.Attributes,
                                Processed_Groups, As_Restriction => True,
                                Had_Any => Had_Any);
 
@@ -1997,6 +1997,8 @@ package body Schema.Schema_Readers is
         Handler.Contexts (Handler.Contexts_Last)'Access;
       Next : constant Context_Access :=
         Handler.Contexts (Handler.Contexts_Last - 1)'Access;
+      Ctx2 : Context_Access;
+      Index : Natural;
    begin
       case Next.Typ is
          when Context_Schema | Context_Redefine =>
@@ -2010,11 +2012,20 @@ package body Schema.Schema_Readers is
                 Loc       => Handler.Current_Location,
                 Group_Ref => Ctx.Attr_Group.Ref));
          when Context_Extension =>
-            Append
-              (Next.Extension.Extension.Attributes,
-               (Kind      => Kind_Group,
-                Loc       => Handler.Current_Location,
-                Group_Ref => Ctx.Attr_Group.Ref));
+            Index := Handler.Contexts_Last - 1;
+            while Index >= Handler.Contexts'First loop
+               Ctx2 := Handler.Contexts (Index)'Access;
+               if Ctx2.Typ = Context_Type_Def then
+                  Append
+                    (Handler.Shared.Types.Table (Ctx2.Type_Info).Attributes,
+                     (Kind      => Kind_Group,
+                      Loc       => Handler.Current_Location,
+                      Group_Ref => Ctx.Attr_Group.Ref));
+                  exit;
+               end if;
+
+               Index := Index - 1;
+            end loop;
          when Context_Attribute_Group =>
             Append
               (Next.Attr_Group.Attributes,
@@ -3274,7 +3285,9 @@ package body Schema.Schema_Readers is
       In_Context     : Natural;
       Attribute      : Attr_Descr)
    is
-      Ctx : Context renames Handler.Contexts (In_Context);
+      Ctx   : Context renames Handler.Contexts (In_Context);
+      Index : Natural;
+      Ctx2  : Context_Access;
    begin
       case Ctx.Typ is
          when Context_Type_Def =>
@@ -3287,10 +3300,21 @@ package body Schema.Schema_Readers is
               (Handler.Shared.Global_Attributes,
                Attribute.Attr.Descr.Name, Attribute.Attr);
 
-         when Context_Extension =>
-            Append (Ctx.Extension.Extension.Attributes, Attribute);
+         when Context_Extension | Context_Restriction =>
+            Index := Handler.Contexts_Last;
+            while Index >= Handler.Contexts'First loop
+               Ctx2 := Handler.Contexts (Index)'Access;
+               if Ctx2.Typ = Context_Type_Def then
+                  Append
+                    (Handler.Shared.Types.Table (Ctx2.Type_Info).Attributes,
+                     Attribute);
+                  exit;
+               end if;
 
-         when Context_Simple_Extension =>
+               Index := Index - 1;
+            end loop;
+
+         when Context_Simple_Extension | Context_Simple_Restriction =>
             pragma Assert
               (Handler.Contexts (In_Context - 1).Typ = Context_Type_Def);
             pragma Assert  --  a <simpleType><extension> cannot have attributes
@@ -3301,12 +3325,6 @@ package body Schema.Schema_Readers is
               (Handler.Shared.Types.Table
                  (Handler.Contexts (In_Context - 1).Type_Info).Attributes,
                Attribute);
-
-         when Context_Restriction =>
-            Append (Ctx.Restriction.Restriction.Attributes, Attribute);
-
-         when Context_Simple_Restriction =>
-            null;
 
          when Context_Attribute_Group =>
             Append (Ctx.Attr_Group.Attributes, Attribute);
@@ -3772,10 +3790,8 @@ package body Schema.Schema_Readers is
             when Type_All         => Free (Self.First_In_All);
             when Type_Group       => Free (Self.Group.Details);
             when Type_Extension   =>
-               Unchecked_Free (Self.Extension.Attributes);
                Free (Self.Extension.Details);
             when Type_Restriction =>
-               Unchecked_Free (Self.Restriction.Attributes);
                Free (Self.Restriction.Details);
          end case;
 

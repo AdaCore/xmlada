@@ -134,16 +134,16 @@ private
    type Extension_Descr is record
       Base           : Qualified_Name := No_Qualified_Name;
       Details        : Type_Details_Access;
-      Attributes     : Attr_Array_Access;
       Loc            : Sax.Locators.Location;
    end record;
+   --  Attributes are set in the corresponding Internal_Type_Descr
 
    type Restriction_Descr is record
       Base           : Qualified_Name := No_Qualified_Name;
       Details        : Type_Details_Access;
-      Attributes     : Attr_Array_Access;
       Loc            : Sax.Locators.Location;
    end record;
+   --  Attributes are set in the corresponding Internal_Type_Descr
 
    type Type_Details (Kind : Type_Kind := Type_Empty) is record
       In_Process : Boolean := False;
