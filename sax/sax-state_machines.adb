@@ -816,7 +816,7 @@ package body Sax.State_Machines is
       for S in Start_At .. Last (Self.Active) loop
          S2 := Self.Active.Table (S).S;
 
-         if S2 /= Final_State then
+         if S2 /= Final_State and then S2 /= No_State then
             --  Either we have no nested automaton
             --  Or we always want to return the states anyway
             --  Or the nested state has completed
@@ -1084,6 +1084,7 @@ package body Sax.State_Machines is
             end if;
 
             if S.S /= Final_State
+              and then S.S /= No_State
               and then not Event_Processed_In_Nested
             then
                Process_Transitions
@@ -1676,21 +1677,27 @@ package body Sax.State_Machines is
             F : Matcher_State_Index := From;
          begin
             while F /= No_Matcher_State loop
-               Put (Node_Label (NFA, Self.Active.Table (F).S));
+               --  Unless explicitly disabled
 
-               if Self.Active.Table (F).Nested /= No_Matcher_State then
-                  if Mode = Dump_Multiline then
-                     New_Line;
+               if Self.Active.Table (F).S /= No_State then
+                  Put (Node_Label (NFA, Self.Active.Table (F).S));
+
+                  if Self.Active.Table (F).Nested /= No_Matcher_State then
+                     if Mode = Dump_Multiline then
+                        New_Line;
+                     end if;
+                     Put (Prefix & " [");
+
+                     if Mode = Dump_Multiline then
+                        Internal (Self.Active.Table (F).Nested, Prefix & "  ");
+                     else
+                        Internal (Self.Active.Table (F).Nested, Prefix);
+                     end if;
+
+                     Put ("]");
                   end if;
-                  Put (Prefix & " [");
-
-                  if Mode = Dump_Multiline then
-                     Internal (Self.Active.Table (F).Nested, Prefix & "  ");
-                  else
-                     Internal (Self.Active.Table (F).Nested, Prefix);
-                  end if;
-
-                  Put ("]");
+               else
+                  Put ("<disabled>");
                end if;
 
                F := Self.Active.Table (F).Next;

@@ -1143,6 +1143,16 @@ package body Schema.Validators is
       return NFA.Types.Table (Index)'Unrestricted_Access;
    end Get_Type_Descr;
 
+   -------------------
+   -- Simple_Nested --
+   -------------------
+
+   function Simple_Nested
+     (NFA : access Schema_NFA'Class) return Schema_State_Machines.State is
+   begin
+      return NFA.Simple_Nested;
+   end Simple_Nested;
+
    ------------------------
    -- Initialize_Grammar --
    ------------------------
@@ -1263,6 +1273,13 @@ package body Schema.Validators is
          G.NFA.Ur_Type := Create_UR_Type;
 
          Add_Schema_For_Schema (Reader);
+
+         --  The simple nested NFA
+
+         G.NFA.Simple_Nested := G.NFA.Add_State;
+         G.NFA.Add_Transition
+           (G.NFA.Simple_Nested, Final_State,
+            (Kind => Transition_Close));
 
          --  Save the current state, so that we can restore the grammar to just
          --  this metaschema.

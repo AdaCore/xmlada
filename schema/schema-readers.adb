@@ -583,12 +583,35 @@ package body Schema.Readers is
                      Debug_Output ("Override state data" & S'Img
                                    & " to type" & Simple'Img);
                   end if;
+
                   Override_Data
                     (H.Matcher, Iter,
                      State_Data'
                        (Simple => Simple,
                         Fixed  => Current_Data (H.Matcher, Iter).Fixed,
                         Block  => Current_Data (H.Matcher, Iter).Block));
+
+                  --  Need to modify the nested NFA too: if we replaced a
+                  --  complexType ("anyType" for instance) with a simple type,
+                  --  we should no longer accept any element.
+                  --  However, if we simply disable all states in the nested
+                  --  NFA, that doesn't work either, since we will not accept
+                  --  the "close element" for the simpleType. But we cannot
+                  --  modify the NFA either, which should remain static.
+                  --  And we somehow select the before-final state in the NFA
+                  --  to accept the <close>, Validate_Current_Characters will
+                  --  not check the right state for contents validity.
+
+                  if Prev_S /= No_State
+                    and then NFA.Get_Nested (Prev_S) /= No_Nested
+                  then
+                     if Debug then
+                        Debug_Output
+                          ("Also replace nested complexType, now just"
+                           & " accepting <close>");
+                     end if;
+                     Replace_State (H.Matcher, Iter, NFA.Simple_Nested);
+                  end if;
                end if;
             end if;
 
@@ -714,15 +737,15 @@ package body Schema.Readers is
          Through_Any     => Through_Any,
          Through_Process => Through_Process);
 
+      if Debug then
+         Debug_Print (H.Matcher, Dump_Compact, "After: ");
+      end if;
+
       if not Success then
          Validation_Error
            (H, "Unexpected element """
             & To_QName (Element_QName) & """: expecting """
             & Expected (H.Matcher) & '"');
-      end if;
-
-      if Debug then
-         Debug_Print (H.Matcher, Dump_Compact, "After: ");
       end if;
 
       if Through_Any then

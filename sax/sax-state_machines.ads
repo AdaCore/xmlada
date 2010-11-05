@@ -304,6 +304,7 @@ package Sax.State_Machines is
    --  is in the scope.
 
    type Active_State_Iterator is private;
+   No_Active_State_Iterator : constant Active_State_Iterator;
 
    function For_Each_Active_State
      (Self              : NFA_Matcher;
@@ -508,6 +509,7 @@ private
 
    type Matcher_State is record
       S      : State;
+      --  Set to [No_State] if this was explicitly de-activated
 
       Data_Is_Overridden : Boolean         := False;
       Overridden_Data    : State_User_Data := Default_Data;
@@ -536,6 +538,8 @@ private
       Ignore_If_Default : Boolean;
       Current           : Matcher_State_Index := No_Matcher_State;
    end record;
+   No_Active_State_Iterator : constant Active_State_Iterator :=
+     (False, False, No_Matcher_State);
 
    type NFA_Matcher is record
       NFA          : NFA_Access;

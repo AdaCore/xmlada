@@ -720,6 +720,9 @@ package Schema.Validators is
    function To_QName (Name : Qualified_Name) return Unicode.CES.Byte_Sequence;
    --  Return the name as it should be displayed in error messages
 
+   function Simple_Nested
+     (NFA : access Schema_NFA'Class) return Schema_State_Machines.State;
+
 private
 
    -------------------------
@@ -764,6 +767,12 @@ private
       Types        : Types_Tables.Instance;
 
       Ur_Type      : Schema_State_Machines.State;
+
+      Simple_Nested : Schema_State_Machines.State;
+      --  A dummy nested NFA: this is used when xsi:type replaces a complex
+      --  type with a simple type, so that we accept no children, but still
+      --  accept the <close> tag. We will temporarily override the state
+      --  data to match the simple type.
 
       Matched_Through_Any     : Boolean := False;
       Matched_Process_Content : Process_Contents_Type;
