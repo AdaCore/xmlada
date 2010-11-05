@@ -508,13 +508,7 @@ package body Schema.Schema_Readers is
          Create_Element_State (Info, Start_State, Start_State, True, S1, S2);
 
          if S2 /= No_State then
-            if NFA.Get_Nested (S1) /= No_Nested then
-               NFA.Add_Empty_Transition (S2, End_Schema_Choice);
-            else
-               --  If the root element is a simpleType, we have already seen
-               --  its <close>, so we can simply exit now.
-               NFA.Add_Empty_Transition (S2, Final_State);
-            end if;
+            NFA.Add_Empty_Transition (S2, Final_State);
          end if;
       end Process_Global_Element;
 
@@ -624,7 +618,6 @@ package body Schema.Schema_Readers is
                      for J in Permut'Range loop
                         D := Details (Permut (J));
                         Process_Details (D, Start, S1, S2);
-                        NFA.Repeat (S1, S2, D.Min_Occurs, D.Max_Occurs);
                         S1 := S2;
                      end loop;
                      NFA.Add_Empty_Transition (S2, Nested_End);
@@ -654,7 +647,6 @@ package body Schema.Schema_Readers is
                T := Details.First_In_Seq;
                while T /= null loop
                   Process_Details (T, Start, S, Nested_End);
-                  NFA.Repeat (S, Nested_End, T.Min_Occurs, T.Max_Occurs);
                   S := Nested_End;
                   T := T.Next;
                end loop;
@@ -664,7 +656,6 @@ package body Schema.Schema_Readers is
                Nested_End := NFA.Add_State (Default_User_Data);
                while T /= null loop
                   Process_Details (T, Start, From, S);
-                  NFA.Repeat (From, S, T.Min_Occurs, T.Max_Occurs);
                   NFA.Add_Empty_Transition (S, Nested_End);
                   T := T.Next;
                end loop;
@@ -713,8 +704,6 @@ package body Schema.Schema_Readers is
                      & """");
                end if;
                Process_Details (Gr.Details, Start, From, Nested_End);
-               NFA.Repeat
-                 (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
 
             when Type_Extension =>
                declare
@@ -789,12 +778,14 @@ package body Schema.Schema_Readers is
                end;
 
             when Type_Any =>
-               Nested_End := NFA.Add_State (Default_User_Data);
+               S := NFA.Add_State (Default_User_Data);
                NFA.Add_Transition
-                 (From, Nested_End, (Transition_Any, Details.Any));
-               NFA.Repeat
-                 (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
+                 (From, S, (Transition_Any, Details.Any));
+               Nested_End := NFA.Add_State;
+               NFA.Add_Transition (S, Nested_End, (Kind => Transition_Close));
          end case;
+
+         NFA.Repeat (From, Nested_End, Details.Min_Occurs, Details.Max_Occurs);
       end Process_Details;
 
       ----------------------------
