@@ -425,6 +425,23 @@ package body Schema.Validators is
       end if;
    end Add_Attribute;
 
+   --------------------
+   -- Add_Attributes --
+   --------------------
+
+   procedure Add_Attributes
+     (List       : in out Attribute_Validator_List_Access;
+      Attributes : Attribute_Validator_List_Access)
+   is
+   begin
+      if Attributes /= null then
+         for A in Attributes'Range loop
+            Add_Attribute
+              (List, Attributes (A).Validator, Attributes (A).Is_Local);
+         end loop;
+      end if;
+   end Add_Attributes;
+
    --------------
    -- Get_Name --
    --------------
@@ -1751,68 +1768,25 @@ package body Schema.Validators is
    -- Create_Global_Type --
    ------------------------
 
-   function Create_Global_Type
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol;
-      Validator  : access XML_Validator_Record'Class) return XML_Type
-   is
-      Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
-   begin
-      if Typ /= No_Type then
-         if Typ.Validator /= null then
-            Validation_Error
-              (Reader, "#Type has already been declared: "
-               & Get (Local_Name).all);
-         end if;
-
-         if Debug then
-            Debug_Output ("Overriding forward type "
-                          & Get (Local_Name).all);
-         end if;
-         Register (Grammar, Validator);
-         Typ.Validator := XML_Validator (Validator);
-
-         if Typ.Simple_Type /= Unknown_Content then
-            Check_Content_Type
-              (Validator, Reader, Typ.Simple_Type = Simple_Content);
-         end if;
-
-      else
-         Register (Grammar, Validator);
-         Typ := new XML_Type_Record'
-           (Local_Name        => Local_Name,
-            Validator         => XML_Validator (Validator),
-            Simple_Type       => Unknown_Content,
-            Blocks            => Get_Block_Default (Grammar),
-            Final             => (others => False),
-            Next              => null);
-         Types_Htable.Set (Grammar.Types.all, Typ);
-         if Debug then
-            Debug_Output ("Creating global type {"
-                          & To_QName (Grammar, Local_Name));
-         end if;
-         Register (Grammar, Typ);
-      end if;
-
-      return Typ;
-   end Create_Global_Type;
-
-   ------------------------
-   -- Create_Global_Type --
-   ------------------------
-
    procedure Create_Global_Type
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol;
+     (Grammar    : XML_Grammar;
+      Name       : Qualified_Name;
       Validator  : access XML_Validator_Record'Class)
    is
-      Typ : constant XML_Type :=
-              Create_Global_Type (Grammar, Reader, Local_Name, Validator);
-      pragma Unreferenced (Typ);
+      use Reference_HTables;
+      NFA  : constant Schema.Validators.Schema_State_Machines.NFA_Access :=
+        Get_NFA (Grammar);
+      Ref  : constant access Reference_HTables.Instance :=
+        Get_References (Grammar);
+      S    : State;
+      Info : Type_Descr;
    begin
-      null;
+      Info := (Name           => Name,
+               Simple_Content => True,
+               Simple_Type    => XML_Validator (Validator),
+               others         => <>);
+      S := NFA.Add_State ((Descr => Info));
+      Set (Ref.all, (Name, Ref_Type), (Ref_Type, S));
    end Create_Global_Type;
 
    -----------------------------
@@ -2117,6 +2091,16 @@ package body Schema.Validators is
       return Get (Grammar).NFA;
    end Get_NFA;
 
+   --------------------
+   -- Get_References --
+   --------------------
+
+   function Get_References
+     (Grammar : XML_Grammar) return access Reference_HTables.Instance is
+   begin
+      return Get (Grammar).References'Access;
+   end Get_References;
+
    ----------------
    -- Do_Nothing --
    ----------------
@@ -2369,52 +2353,6 @@ package body Schema.Validators is
          return Typ.Validator;
       end if;
    end Get_Validator;
-
-   ------------------
-   -- Global_Check --
-   ------------------
-
-   procedure Global_Check
-     (Reader  : access Abstract_Validation_Reader'Class;
-      Grammar : XML_Grammar_NS)
-   is
-      use Types_Htable, Attributes_Htable;
-      Type_Iter : Types_Htable.Iterator := First (Grammar.Types.all);
-      Attr_Iter : Attributes_Htable.Iterator :=
-        First (Grammar.Attributes.all);
-
-      Typ  : XML_Type;
-      Attr : Named_Attribute_Validator;
-   begin
-      if Grammar.Checked then
-         return;
-      end if;
-
-      Grammar.Checked := True;
-
-      while Type_Iter /= Types_Htable.No_Iterator loop
-         Typ := Current (Type_Iter);
-         if Get_Validator (Typ) = null then
-            Validation_Error
-              (Reader, "Type """
-               & To_QName (Grammar.Namespace_URI, Typ.Local_Name)
-               & """ was referenced but never declared");
-         end if;
-         Next (Grammar.Types.all, Type_Iter);
-      end loop;
-
-      while Attr_Iter /= Attributes_Htable.No_Iterator loop
-         Attr := Current (Attr_Iter);
-         if Get_Type (Attr.all) = No_Type then
-            Validation_Error
-              (Reader, "Attribute """
-               & To_QName (Grammar.Namespace_URI, Attr.Local_Name)
-               & """ is referenced, but not defined");
-         end if;
-
-         Next (Grammar.Attributes.all, Attr_Iter);
-      end loop;
-   end Global_Check;
 
    ----------
    -- Free --
@@ -2893,7 +2831,7 @@ package body Schema.Validators is
    procedure Add_Union
      (Validator : access XML_Validator_Record'Class;
       Reader    : access Abstract_Validation_Reader'Class;
-      Part      : XML_Type) is
+      Part      : Type_Descr) is
    begin
       Schema.Validators.Simple_Types.Add_Union
         (XML_Union (Validator), Reader, Part);
@@ -3319,23 +3257,48 @@ package body Schema.Validators is
    -----------
 
    function Image (S : State; Data : State_User_Data) return String is
-      function Add_Data (Base : String) return String;
-      function Add_Data (Base : String) return String is
-      begin
-         if Data.Simple_Type /= null then
-            return Base & " (a simpleType)";
-         elsif Data.Attributes /= null then
-            return Base & " attr=" & Data.Attributes'Length'Img;
-         else
-            return Base;
-         end if;
-      end Add_Data;
+      pragma Unreferenced (S);
    begin
-      if Data.Type_Name /= No_Symbol then
-         return Add_Data (Get (Data.Type_Name).all);
+      if Data.Descr.Name.Local = No_Symbol then
+         return "";
       else
-         return Add_Data (Schema_State_Machines.Default_Image (S, Data));
+         return Get (Data.Descr.Name.Local).all;
+         --  return To_QName (Data.Descr.Name);
       end if;
    end Image;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Name : Reference_Name) return Header_Num is
+   begin
+      return (Hash (Name.Name) + Reference_Kind'Pos (Name.Kind))
+        mod Header_Num'Last;
+   end Hash;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Name : Qualified_Name) return Header_Num is
+   begin
+      return (Hash (Name.NS) + Hash (Name.Local)) / 2;
+   end Hash;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Name : Sax.Symbols.Symbol) return Header_Num is
+   begin
+      if Name = No_Symbol then
+         return 0;
+      else
+         return Header_Num
+           (Sax.Symbols.Hash (Name)
+            mod Interfaces.Unsigned_32 (Header_Num'Last));
+      end if;
+   end Hash;
 
 end Schema.Validators;

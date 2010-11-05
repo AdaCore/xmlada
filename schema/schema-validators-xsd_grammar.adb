@@ -94,9 +94,10 @@ package body Schema.Validators.XSD_Grammar is
 --             (Get_Type (Get_UR_Type_Element (R.Grammar, Process_Lax))));
 
       Tmp2 := new Any_Simple_XML_Validator_Record;
-      Create_Global_Type (G, R, R.Any_Simple_Type, Tmp2);
+      Create_Global_Type
+        (R.Grammar, (R.XML_Schema_URI, R.Any_Simple_Type), Tmp2);
 
-      Schema.Validators.Simple_Types.Register_Predefined_Types (G, XML_G, R);
+      Schema.Validators.Simple_Types.Register_Predefined_Types (R.Grammar, R);
 
 --        NMTOKEN            := Lookup (G, R, R.NMTOKEN);
 --        NCNAME             := Lookup (G, R, R.NCName);

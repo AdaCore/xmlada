@@ -1,11 +1,10 @@
 <?xml version="1.0" ?>
 
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            >
-            <!-- targetNamespace="http://www.act-europe.fr/XMLAda/ManuSchema" -->
-
-<!--<xsd:element name="root" type="xsd:anyType"/>
--->
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:test2="http://test2"
+            xsi:schemaLocation="http://test2 test2.xsd"
+       >
 <xsd:element name="root">
  <xsd:complexType>
   <xsd:sequence>
@@ -19,6 +18,7 @@
     <xsd:any namespace="##local" processContents="lax"
        minOccurs="0" maxOccurs="unbounded"/>
     -->
+    <xsd:element ref="test2:manu"/>
     <xsd:any namespace="##other" processContents="lax"
        minOccurs="0" maxOccurs="unbounded"/>
   </xsd:sequence>
@@ -42,8 +42,9 @@
  <xsd:attribute name="attr4" use="optional">
     <xsd:simpleType>
        <xsd:restriction base="xsd:NMTOKEN">
-          <xsd:enumeration value="value1"/>
+          <!--<xsd:enumeration value="value1"/>
           <xsd:enumeration value="value2"/>
+          -->
        </xsd:restriction>
     </xsd:simpleType>
  </xsd:attribute>

@@ -32,7 +32,6 @@
 pragma Ada_05;
 
 with Input_Sources;
-with Interfaces;
 with Sax.Readers;
 with Sax.Symbols;
 with Sax.Utils;
@@ -146,17 +145,40 @@ private
       end case;
    end record;
 
-   type Type_Descr is record
-      Name           : Qualified_Name := No_Qualified_Name;
-      Block          : Block_Status := No_Block;
-      Final          : Final_Status := (others => False);
-      Mixed          : Boolean := False;
-      Is_Abstract    : Boolean := False;
-      Simple_Content : Boolean := False;
-      Details        : Type_Details_Access;
-      NFA            : Schema.Validators.Schema_State_Machines.Nested_NFA;
-      Attributes     : Attr_Array_Access;
+   type Simple_Type_Kind is (Simple_Type,
+                             Simple_Type_Restriction,
+                             Simple_Type_Extension,
+                             Simple_Type_Union,
+                             Simple_Type_List);
+   type Simple_Type_Descr (Kind : Simple_Type_Kind := Simple_Type) is record
+      case Kind is
+         when Simple_Type             => null;
+         when Simple_Type_Union       =>
+            Union_Items      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+            Union_Local_Type : Type_Index := No_Type_Index;
+         when Simple_Type_List        =>
+            List_Items      : Qualified_Name := No_Qualified_Name;
+            List_Local_Type : Type_Index := No_Type_Index;
+         when Simple_Type_Restriction =>
+            Restriction_Base : Qualified_Name;
+            --  ??? Facets
+         when Simple_Type_Extension   =>
+            Extension_Base   : Qualified_Name;
+      end case;
    end record;
+   subtype Union_Type_Descr is Simple_Type_Descr (Simple_Type_Union);
+   subtype List_Type_Descr  is Simple_Type_Descr (Simple_Type_List);
+
+   type Internal_Type_Descr is record
+      Descr      : Type_Descr;
+      Attributes : Attr_Array_Access;    --  if not Details.Simple_Content
+      Details    : Type_Details_Access;  --  if not Details.Simple_Content
+      Simple     : Simple_Type_Descr;    --  if Details.Simple_Content
+      S          : Schema_State_Machines.State;
+   end record;
+   --  Temporary structure while parsing a XSD file. Only [Descr] will be
+   --  stored in the NFA for reuse while validating (or while parsing other
+   --  XSD).
 
    type Schema_Descr is record
       Target_NS              : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
@@ -182,10 +204,7 @@ private
 
    type Context (Typ : Context_Type := Context_Schema) is record
       case Typ is
-         when Context_Type_Def        =>
-            Type_Info      : Type_Index;
-            Type_Validator : Schema.Validators.XML_Validator;
-            Redefined_Type : Schema.Validators.XML_Type; --  <redefine>
+         when Context_Type_Def        => Type_Info   : Type_Index;
          when Context_Element         => Element     : Element_Descr;
          when Context_Sequence        => Seq         : Type_Details_Access;
          when Context_Choice          => Choice      : Type_Details_Access;
@@ -195,17 +214,9 @@ private
          when Context_Redefine        => null;
          when Context_Group           => Group       : Group_Descr;
          when Context_Extension       => Extension   : Type_Details_Access;
+         when Context_List            => List        : List_Type_Descr;
          when Context_Restriction     => Restriction : Type_Details_Access;
-
-            --  Following is for simple types
-            Restriction_Validator : Schema.Validators.XML_Validator;
-            Restricted            : Schema.Validators.XML_Validator; --  result
-            Restriction_Base      : Schema.Validators.XML_Type;
-
-         when Context_Union =>
-            Union : Schema.Validators.XML_Validator;
-         when Context_List =>
-            List_Items : Schema.Validators.XML_Type;
+         when Context_Union           => Union       : Union_Type_Descr;
          when Context_Attribute =>
             Attribute : Schema.Validators.Attribute_Validator;
             Attribute_Is_Ref : Boolean;
@@ -215,23 +226,12 @@ private
    type Context_Array is array (Natural range <>) of aliased Context;
    type Context_Array_Access is access all Context_Array;
 
-   type Header_Num is new Interfaces.Integer_32 range 0 .. 1023;
-   function Hash (Name : Qualified_Name) return Header_Num;
-   function Hash (Name : Sax.Symbols.Symbol) return Header_Num;
-
    package Type_Tables is new GNAT.Dynamic_Tables
-     (Table_Component_Type => Type_Descr,
+     (Table_Component_Type => Internal_Type_Descr,
       Table_Index_Type     => Type_Index,
       Table_Low_Bound      => 1,
       Table_Initial        => 100,
       Table_Increment      => 100);
-   package Type_HTables is new GNAT.Dynamic_HTables.Simple_HTable
-     (Header_Num => Header_Num,
-      Element    => Type_Index,
-      No_Element => No_Type_Index,
-      Key        => Qualified_Name,
-      Hash       => Hash,
-      Equal      => "=");
    package Element_HTables is new GNAT.Dynamic_HTables.Simple_HTable
      (Header_Num => Header_Num,
       Element    => Element_Descr,
@@ -281,7 +281,6 @@ private
 
       Types             : Type_Tables.Instance;
       Global_Elements   : Element_HTables.Instance;
-      Global_Types      : Type_HTables.Instance;
       Global_Groups     : Group_HTables.Instance;
       Global_AttrGroups : AttrGroup_HTables.Instance;
    end record;

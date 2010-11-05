@@ -32,7 +32,6 @@ with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Exceptions;    use Sax.Exceptions;
 with Sax.Locators;      use Sax.Locators;
-with Sax.Encodings;     use Sax.Encodings;
 with Sax.Utils;         use Sax.Utils;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Symbols;       use Sax.Symbols;
@@ -42,16 +41,12 @@ with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Input_Sources.File;    use Input_Sources.File;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
+with Schema.Validators.Lists; use Schema.Validators.Lists;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Schema.Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
-
-   procedure Parse_Grammars
-     (Handler         : access Validating_Reader'Class;
-      Schema_Location : Symbol);
-   --  Parse multiple grammars, as defined by the "schemaLocation" attribute
 
    procedure Internal_Characters
      (Handler : access Validating_Reader'Class;
@@ -234,8 +229,6 @@ package body Schema.Readers is
          end;
       end if;
 
-      --  Do not reparse the grammar if we already know about it
-
       if Debug then
          Output_Seen ("Parsing grammar: " & Get (S_File_Full).all);
       end if;
@@ -300,52 +293,30 @@ package body Schema.Readers is
 
    procedure Parse_Grammars
      (Handler         : access Validating_Reader'Class;
-      Schema_Location : Symbol)
+      Schema_Location : Symbol;
+      Do_Global_Check : Boolean)
    is
-      Location : constant Cst_Byte_Sequence_Access := Get (Schema_Location);
-      Start_NS, Last_NS, Index : Integer;
-      Start_XSD, Last_XSD : Integer;
-      C : Unicode_Char;
-   begin
-      Index    := Location'First;
-      Start_NS := Location'First;
-      while Index <= Location'Last loop
-         while Index <= Location'Last loop
-            Last_NS := Index;
-            Encoding.Read (Location.all, Index, C);
-            exit when Is_White_Space (C);
-         end loop;
+      URI : Symbol := No_Symbol;
 
-         while Index <= Location'Last loop
-            Start_XSD := Index;
-            Encoding.Read (Location.all, Index, C);
-            exit when not Is_White_Space (C);
-         end loop;
-
-         while Index <= Location'Last loop
-            Last_XSD := Index;
-            Encoding.Read (Location.all, Index, C);
-            exit when Is_White_Space (C);
-         end loop;
-
-         if Index > Location'Last then
-            Last_XSD := Location'Last + 1;
+      procedure Callback (Ch : Byte_Sequence);
+      procedure Callback (Ch : Byte_Sequence) is
+      begin
+         if URI = No_Symbol then
+            URI := Find_Symbol (Handler.all, Ch);
+         else
+            Parse_Grammar
+              (Handler,
+               URI             => URI,
+               Xsd_File        => Find_Symbol (Handler.all, Ch),
+               Do_Global_Check => Do_Global_Check);
+            URI := No_Symbol;
          end if;
+      end Callback;
 
-         Parse_Grammar
-           (Handler,
-            URI      => Find_Symbol
-              (Handler.all, Location (Start_NS .. Last_NS - 1)),
-            Xsd_File => Find_Symbol
-              (Handler.all, Location (Start_XSD .. Last_XSD - 1)),
-            Do_Global_Check => True);
+      procedure For_Each is new For_Each_Item (Callback);
 
-         while Index <= Location'Last loop
-            Start_NS := Index;
-            Encoding.Read (Location.all, Index, C);
-            exit when not Is_White_Space (C);
-         end loop;
-      end loop;
+   begin
+      For_Each (Get (Schema_Location).all);
    end Parse_Grammars;
 
    ---------------------------------
@@ -365,16 +336,16 @@ package body Schema.Readers is
          Data : constant State_Data_Access := Get_Data (Self, S);
          Mask : Facets_Mask := (others => True);
       begin
-         if Data.Simple_Type /= null then
+         if Data.Descr.Simple_Type /= null then
             if Debug then
                Debug_Output
                  ("Validate characters ("
-                  & Get (Data.Type_Name).all & "): "
+                  & To_QName (Data.Descr.Name) & "): "
                   & Handler.Characters (1 .. Handler.Characters_Count) & "--");
             end if;
 
             Validate_Characters
-              (Data.Simple_Type, Handler,
+              (Data.Descr.Simple_Type, Handler,
                Handler.Characters (1 .. Handler.Characters_Count),
                Empty_Element => Is_Empty,
                Mask          => Mask);
@@ -679,7 +650,7 @@ package body Schema.Readers is
                              & ")");
             end if;
             Validate_Attributes
-              (Data2.Attributes, H, Atts,
+              (Data2.Descr.Attributes, H, Atts,
                Nillable => False,  --  Is_Nillable (Element),
                Is_Nil   => Is_Nil);
          end if;
@@ -714,7 +685,8 @@ package body Schema.Readers is
       end if;
 
       if Location_Index /= -1 then
-         Parse_Grammars (H, Get_Value (Atts, Location_Index));
+         Parse_Grammars
+           (H, Get_Value (Atts, Location_Index), Do_Global_Check => True);
       end if;
 
       if H.Grammar = No_Grammar then
@@ -952,7 +924,9 @@ package body Schema.Readers is
       procedure Callback (Self : access NFA'Class; S : State);
       procedure Callback (Self : access NFA'Class; S : State) is
       begin
-         if Self.Get_Data (S).Simple_Type /= null then
+         if Self.Get_Data (S).Descr.Simple_Type /= null
+           or else Self.Get_Data (S).Descr.Mixed
+         then
             Store := True;
          end if;
       end Callback;
@@ -1006,7 +980,7 @@ package body Schema.Readers is
    -- Parse --
    -----------
 
-   procedure Parse
+   overriding procedure Parse
      (Parser : in out Validating_Reader;
       Input  : in out Input_Sources.Input_Source'Class) is
    begin
@@ -1036,7 +1010,7 @@ package body Schema.Readers is
                     Doc_Locator   => null);
       end if;
 
-      Sax.Readers.Parse (Sax.Readers.Sax_Reader (Parser), Input);
+      Parse (Schema.Validators.Abstract_Validation_Reader (Parser), Input);
       Reset (Parser);
 
    exception

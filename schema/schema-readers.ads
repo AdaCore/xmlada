@@ -118,6 +118,12 @@ package Schema.Readers is
    --  Parse the grammar to use from an XSD file, and add it to the current
    --  grammar (as returned by Get_Grammar).
 
+   procedure Parse_Grammars
+     (Handler         : access Validating_Reader'Class;
+      Schema_Location : Sax.Symbols.Symbol;
+      Do_Global_Check : Boolean);
+   --  Parse multiple grammars, as defined by the "schemaLocation" attribute
+
    procedure Get_Namespace_From_Prefix
      (Handler  : in out Validating_Reader;
       Prefix   : Sax.Symbols.Symbol;
@@ -129,6 +135,11 @@ package Schema.Readers is
 
    procedure Free (Reader : in out Validating_Reader_Access);
    --  Free the memory used by Reader
+
+   overriding procedure Parse
+     (Parser : in out Validating_Reader;
+      Input  : in out Input_Sources.Input_Source'Class);
+   --  Override inherited method.
 
 private
 
@@ -145,10 +156,5 @@ private
       --  adjacent characters, so that we can validate the full contents of a
       --  tag at once, and not by parts.
    end record;
-
-   procedure Parse
-     (Parser : in out Validating_Reader;
-      Input  : in out Input_Sources.Input_Source'Class);
-   --  Override inherited method.
 
 end Schema.Readers;

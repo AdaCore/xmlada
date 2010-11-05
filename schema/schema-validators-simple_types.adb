@@ -1492,9 +1492,10 @@ package body Schema.Validators.Simple_Types is
    -------------------------------
 
    procedure Register_Predefined_Types
-     (G, XML_G : XML_Grammar_NS;
-      Reader   : access Abstract_Validation_Reader'Class)
+     (G      : XML_Grammar;
+      Reader : access Abstract_Validation_Reader'Class)
    is
+      X : constant Symbol := Reader.XML_Schema_URI;
       S_Notation    : constant Symbol := Find_Symbol (Reader.all, "NOTATION");
       S_Language    : constant Symbol := Find_Symbol (Reader.all, "language");
       S_Nmtokens    : constant Symbol := Find_Symbol (Reader.all, "NMTOKENS");
@@ -1551,219 +1552,218 @@ package body Schema.Validators.Simple_Types is
       Int     : Integer_Validators.Validator;
       Dec     : Decimal_Validators.Validator;
       QN      : QName_Validators.Validator;
-      Created : XML_Type;
    begin
       Tmp := new Boolean_Validator_Record;
-      Create_Global_Type (G, Reader, Reader.S_Boolean, Tmp);
+      Create_Global_Type (G, (X, Reader.S_Boolean), Tmp);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
-      Create_Global_Type (G, Reader, Reader.S_String, Str);
+      Create_Global_Type (G,  (X, Reader.S_String), Str);
 
       QN  := new QName_Validator;
-      Create_Global_Type (G, Reader, Reader.QName, QN);
+      Create_Global_Type (G, (X, Reader.QName), QN);
 
       QN  := new QName_Validator;
-      Create_Global_Type (G, Reader, S_Notation, QN);
+      Create_Global_Type (G, (X, S_Notation), QN);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "replace");
-      Create_Global_Type (G, Reader, S_Normalized_String, Str);
+      Create_Global_Type (G, (X, S_Normalized_String), Str);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "collapse");
-      Create_Global_Type (G, Reader, Reader.Token, Str);
+      Create_Global_Type (G, (X, Reader.Token), Str);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_Language_Name'Access);
-      Created := Create_Global_Type (G, Reader, S_Language, Str);
-      Create_Global_Attribute (XML_G, Reader, Reader.Lang, Created);
+      Create_Global_Type (G, (X, S_Language), Str);
+--        Create_Global_Attribute (XML_G, Reader, Reader.Lang, Created);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "collapse");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_Nmtoken'Access);
-      Create_Global_Type (G, Reader, Reader.NMTOKEN, Str);
+      Create_Global_Type (G, (X, Reader.NMTOKEN), Str);
 
       StrList := new String_List_Validators.Validator_Record;
       Add_Facet (StrList, Reader, Reader.Whitespace, "collapse");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (StrList, Reader).all),
          Is_Valid_Nmtokens'Access);
-      Create_Global_Type (G, Reader, S_Nmtokens, StrList);
+      Create_Global_Type (G, (X, S_Nmtokens), StrList);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_Name'Access);
-      Create_Global_Type (G, Reader, S_Name, Str);
+      Create_Global_Type (G, (X, S_Name), Str);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCname'Access);
-      Create_Global_Type (G, Reader, Reader.NCName, Str);
+      Create_Global_Type (G, (X, Reader.NCName), Str);
 
       Str := new ID_Validator;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCname'Access);
-      Create_Global_Type (G, Reader, Reader.UC_ID, Str);
+      Create_Global_Type (G, (X, Reader.UC_ID), Str);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCname'Access);
-      Create_Global_Type (G, Reader, S_IDREF, Str);
+      Create_Global_Type (G, (X, S_IDREF), Str);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCnames'Access);
-      Create_Global_Type (G, Reader, S_IDREFS, Str);
+      Create_Global_Type (G, (X, S_IDREFS), Str);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCname'Access);
-      Create_Global_Type (G, Reader, S_ENTITY, Str);
+      Create_Global_Type (G, (X, S_ENTITY), Str);
 
       Str := new String_Validators.Validator_Record;
       Add_Facet (Str, Reader, Reader.Whitespace, "preserve");
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_NCnames'Access);
-      Create_Global_Type (G, Reader, S_ENTITIES, Str);
+      Create_Global_Type (G, (X, S_ENTITIES), Str);
 
       Str := new String_Validators.Validator_Record;
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Str, Reader).all),
          Is_Valid_URI'Access);
-      Create_Global_Type (G, Reader, S_anyURI, Str);
+      Create_Global_Type (G, (X, S_anyURI), Str);
 
       Hex := new HexBinary_Validator;
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Hex, Reader).all),
          Is_Valid_HexBinary'Access);
-      Create_Global_Type (G, Reader, S_hexBinary, Hex);
+      Create_Global_Type (G, (X, S_hexBinary), Hex);
 
       Base64 := new Base64Binary_Validators.Validator_Record;
       Set_Implicit_Enumeration
         (Common_Facets_Description (Get_Facets (Base64, Reader).all),
          Is_Valid_Base64Binary'Access);
-      Create_Global_Type (G, Reader, S_base64Binary, Base64);
+      Create_Global_Type (G, (X, S_base64Binary), Base64);
 
       Dec := new Decimal_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_decimal, Dec);
+      Create_Global_Type (G, (X, S_decimal), Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
       Add_Facet (Dec, Reader, Reader.Fraction_Digits, "0");
       Add_Facet (Dec, Reader, Reader.MaxInclusive, "+18446744073709551615");
       Add_Facet (Dec, Reader, Reader.MinInclusive, "0");
-      Create_Global_Type (G, Reader, S_unsignedLong, Dec);
+      Create_Global_Type (G, (X, S_unsignedLong), Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
       Add_Facet (Dec, Reader, Reader.Fraction_Digits, "0");
-      Create_Global_Type (G, Reader, S_integer, Dec);
+      Create_Global_Type (G, (X, S_integer), Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
       Add_Facet (Dec, Reader, Reader.MinInclusive, "0");
-      Create_Global_Type (G, Reader, Reader.Non_Negative_Integer, Dec);
+      Create_Global_Type (G, (X, Reader.Non_Negative_Integer), Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
       Add_Facet (Dec, Reader, Reader.MinInclusive, "1");
-      Create_Global_Type (G, Reader, Reader.Positive_Integer, Dec);
+      Create_Global_Type (G, (X, Reader.Positive_Integer), Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
       Add_Facet (Dec, Reader, Reader.MaxInclusive, "0");
-      Create_Global_Type (G, Reader, S_nonPositiveInteger, Dec);
+      Create_Global_Type (G, (X, S_nonPositiveInteger), Dec);
 
       Dec := new Decimal_Validators.Validator_Record;
       Add_Facet (Dec, Reader, Reader.MaxInclusive, "-1");
-      Create_Global_Type (G, Reader, S_negativeInteger, Dec);
+      Create_Global_Type (G, (X, S_negativeInteger), Dec);
 
       Int := new Integer_Validators.Validator_Record;
       Add_Facet (Int, Reader, Reader.MaxInclusive, "+9223372036854775807");
       Add_Facet (Int, Reader, Reader.MinInclusive, "-9223372036854775808");
-      Create_Global_Type (G, Reader, S_long, Int);
+      Create_Global_Type (G, (X, S_long), Int);
 
       Int := new Integer_Validators.Validator_Record;
       Add_Facet (Int, Reader, Reader.MaxInclusive, "+2147483647");
       Add_Facet (Int, Reader, Reader.MinInclusive, "-2147483648");
-      Create_Global_Type (G, Reader, S_int, Int);
+      Create_Global_Type (G, (X, S_int), Int);
 
       Int := new Integer_Validators.Validator_Record;
       Add_Facet (Int, Reader, Reader.MaxInclusive, "+32767");
       Add_Facet (Int, Reader, Reader.MinInclusive, "-32768");
-      Create_Global_Type (G, Reader, S_short, Int);
+      Create_Global_Type (G, (X, S_short), Int);
 
       Int := new Integer_Validators.Validator_Record;
       Add_Facet (Int, Reader, Reader.MaxInclusive, "+127");
       Add_Facet (Int, Reader, Reader.MinInclusive, "-128");
-      Create_Global_Type (G, Reader, S_byte, Int);
+      Create_Global_Type (G, (X, S_byte), Int);
 
       Int := new Integer_Validators.Validator_Record;
       Add_Facet (Int, Reader, Reader.MaxInclusive, "+4294967295");
       Add_Facet (Int, Reader, Reader.MinInclusive, "0");
-      Create_Global_Type (G, Reader, S_unsignedInt, Int);
+      Create_Global_Type (G, (X, S_unsignedInt), Int);
 
       Int := new Integer_Validators.Validator_Record;
       Add_Facet (Int, Reader, Reader.MaxInclusive, "+65535");
       Add_Facet (Int, Reader, Reader.MinInclusive, "0");
-      Create_Global_Type (G, Reader, S_unsignedShort, Int);
+      Create_Global_Type (G, (X, S_unsignedShort), Int);
 
       Int := new Integer_Validators.Validator_Record;
       Add_Facet (Int, Reader, Reader.MaxInclusive, "+255");
       Add_Facet (Int, Reader, Reader.MinInclusive, "0");
-      Create_Global_Type (G, Reader, S_unsignedByte, Int);
+      Create_Global_Type (G, (X, S_unsignedByte), Int);
 
       Tmp := new Float_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_float, Tmp);
+      Create_Global_Type (G, (X, S_float), Tmp);
 
       Tmp := new Float_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_double, Tmp);
+      Create_Global_Type (G, (X, S_double), Tmp);
 
       Tmp := new Time_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_time, Tmp);
+      Create_Global_Type (G, (X, S_time), Tmp);
 
       Tmp := new Date_Time_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_dateTime, Tmp);
+      Create_Global_Type (G, (X, S_dateTime), Tmp);
 
       Tmp := new GDay_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_gDay, Tmp);
+      Create_Global_Type (G, (X, S_gDay), Tmp);
 
       Tmp := new GMonth_Day_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_gMonthDay, Tmp);
+      Create_Global_Type (G, (X, S_gMonthDay), Tmp);
 
       Tmp := new GMonth_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_gMonth, Tmp);
+      Create_Global_Type (G, (X, S_gMonth), Tmp);
 
       Tmp := new GYear_Month_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_gYearMonth, Tmp);
+      Create_Global_Type (G, (X, S_gYearMonth), Tmp);
 
       Tmp := new GYear_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_gYear, Tmp);
+      Create_Global_Type (G, (X, S_gYear), Tmp);
 
       Tmp := new Date_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_date, Tmp);
+      Create_Global_Type (G, (X, S_date), Tmp);
 
       Tmp := new Duration_Validators.Validator_Record;
-      Create_Global_Type (G, Reader, S_duration, Tmp);
+      Create_Global_Type (G, (X, S_duration), Tmp);
 
-      Tmp := Restriction_Of
-        (G, Reader, Lookup (G, Reader, Reader.Any_Simple_Type));
-      Add_Facet (Tmp, Reader, Reader.Whitespace, "collapse");
-      Create_Global_Type (G, Reader, Reader.URI_Reference, Tmp);
+--        Tmp := Restriction_Of
+--          (G, Reader, Lookup (G, Reader, Reader.Any_Simple_Type));
+--        Add_Facet (Tmp, Reader, Reader.Whitespace, "collapse");
+--        Create_Global_Type (G, (X, Reader.URI_Reference), Tmp);
    end Register_Predefined_Types;
 
    ---------------
@@ -1773,7 +1773,7 @@ package body Schema.Validators.Simple_Types is
    procedure Add_Union
      (Validator : access XML_Union_Record;
       Reader    : access Abstract_Validation_Reader'Class;
-      Part      : XML_Type)
+      Part      : Type_Descr)
    is
       pragma Unreferenced (Validator, Reader, Part);
    begin

@@ -31,8 +31,8 @@ pragma Ada_05;
 private package Schema.Validators.Simple_Types is
 
    procedure Register_Predefined_Types
-     (G, XML_G : XML_Grammar_NS;
-      Reader   : access Abstract_Validation_Reader'Class);
+     (G      : XML_Grammar;
+      Reader : access Abstract_Validation_Reader'Class);
    --  Register all the predefined types
 
    -------------------------------
@@ -99,7 +99,7 @@ private package Schema.Validators.Simple_Types is
    procedure Add_Union
      (Validator : access XML_Union_Record;
       Reader    : access Abstract_Validation_Reader'Class;
-      Part      : XML_Type);
+      Part      : Type_Descr);
    --  Add a new element to the union in Validator
 
    procedure Validate_Characters

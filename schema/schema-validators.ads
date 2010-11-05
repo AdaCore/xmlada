@@ -28,6 +28,8 @@
 
 pragma Ada_05;
 
+with GNAT.Dynamic_HTables;
+with Interfaces;
 with Unicode.CES;
 with Sax.HTable;
 with Sax.Locators;
@@ -140,6 +142,11 @@ package Schema.Validators is
    No_Qualified_Name : constant Qualified_Name :=
      (Sax.Symbols.No_Symbol, Sax.Symbols.No_Symbol);
 
+   type Header_Num is new Interfaces.Integer_32 range 0 .. 1023;
+   function Hash (Name : Qualified_Name) return Header_Num;
+   function Hash (Name : Sax.Symbols.Symbol) return Header_Num;
+   --  Suitable for instantiating hash tables
+
    type Any_Descr is record
       Process_Contents : Process_Contents_Type := Process_Strict;
       Namespace        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
@@ -161,15 +168,38 @@ package Schema.Validators is
    type Attribute_Validator_List (<>) is private;
    type Attribute_Validator_List_Access is access Attribute_Validator_List;
 
-   type State_User_Data is record
-      Type_Name   : Sax.Symbols.Symbol;  --  Debug only
-      Attributes  : Attribute_Validator_List_Access;
-      Simple_Type : XML_Validator;  --  Validator for simpleType
+   type Block_Type is (Block_Restriction,
+                       Block_Extension,
+                       Block_Substitution);
+   type Block_Status is array (Block_Type) of Boolean;
+   pragma Pack (Block_Status);
+   No_Block : constant Block_Status := (others => False);
+
+   type Final_Type is (Final_Restriction,
+                       Final_Extension,
+                       Final_Union,
+                       Final_List);
+   type Final_Status is array (Final_Type) of Boolean;
+   pragma Pack (Final_Status);
+
+   type Type_Descr is record
+      Name           : Qualified_Name := No_Qualified_Name;
+      Block          : Block_Status := No_Block;
+      Final          : Final_Status := (others => False);
+      Mixed          : Boolean := False;
+      Is_Abstract    : Boolean := False;
+      Simple_Content : Boolean := False;
+      Attributes     : Attribute_Validator_List_Access;
+      Simple_Type    : XML_Validator;  --  Validator for simpleType
    end record;
-   Default_User_Data : constant State_User_Data :=
-     (Type_Name   => Sax.Symbols.No_Symbol,
-      Attributes  => null,
-      Simple_Type => null);
+   No_Type_Descr : constant Type_Descr := (others => <>);
+
+   type State_User_Data is record
+      Descr       : Type_Descr;
+   end record;
+   Default_User_Data : constant State_User_Data := (Descr => No_Type_Descr);
+   --  All types (complexType or simpleType) are associated with a state in the
+   --  NFA, which is used to hold the properties of that type.
 
    function Match (Trans, Sym : Transition_Event) return Boolean;
    function Image (Trans : Transition_Event) return String;
@@ -191,9 +221,47 @@ package Schema.Validators is
    package Schema_State_Machines_PP
      is new Schema_State_Machines.Pretty_Printers (Image);
 
+   type Reference_Kind is (Ref_Element,
+                           Ref_Type,
+                           Ref_Attribute,
+                           Ref_Group,
+                           Ref_AttrGroup);
+   type Global_Reference (Kind : Reference_Kind := Ref_Element) is record
+      case Kind is
+         when Ref_Element   =>
+            Element : State;
+            --  Tr : Transition_Event;
+         when Ref_Type      => Typ : State;  --  Start of nested NFA
+         when Ref_Attribute => Attr_Validator : Attribute_Validator;
+         when Ref_Group     => Gr_Start, Gr_End : State;
+         when Ref_AttrGroup => Attributes : Attribute_Validator_List_Access;
+      end case;
+   end record;
+   No_Global_Reference : constant Global_Reference :=
+     (Ref_Attribute, Attr_Validator => null);
+   --  The global elements in a grammar that can be referenced from another
+   --  grammar (or from an XML file).
+
+   type Reference_Name is record
+      Name : Qualified_Name;
+      Kind : Reference_Kind;
+   end record;
+   function Hash (Name : Reference_Name) return Header_Num;
+
+   package Reference_HTables is new GNAT.Dynamic_HTables.Simple_HTable
+     (Header_Num => Header_Num,
+      Element    => Global_Reference,
+      No_Element => No_Global_Reference,
+      Key        => Reference_Name,
+      Hash       => Hash,
+      Equal      => "=");
+
    function Get_NFA
      (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access;
-   --  Returns the state machine used to validate [Grammar]
+   function Get_References
+     (Grammar : XML_Grammar) return access Reference_HTables.Instance;
+   --  Returns the state machine and global references used to validate
+   --  [Grammar]
 
    ---------------
    -- ID_Htable --
@@ -527,24 +595,10 @@ package Schema.Validators is
       Typ    : XML_Type) return Boolean;
    --  Whether Typ is a simple type
 
-   type Block_Type is (Block_Restriction,
-                       Block_Extension,
-                       Block_Substitution);
-   type Block_Status is array (Block_Type) of Boolean;
-   pragma Pack (Block_Status);
-   No_Block : constant Block_Status := (others => False);
-
    procedure Set_Block (Typ    : XML_Type; Blocks : Block_Status);
    function Get_Block (Typ : XML_Type) return Block_Status;
    --  Set the "block" status of the type.
    --  This can also be done at the element's level
-
-   type Final_Type is (Final_Restriction,
-                       Final_Extension,
-                       Final_Union,
-                       Final_List);
-   type Final_Status is array (Final_Type) of Boolean;
-   pragma Pack (Final_Status);
 
    procedure Set_Final (Typ : XML_Type; Final : Final_Status);
    function Get_Final (Typ : XML_Type) return Final_Status;
@@ -709,9 +763,13 @@ package Schema.Validators is
      (List      : in out Attribute_Validator_List_Access;
       Attribute : access Attribute_Validator_Record'Class;
       Is_Local  : Boolean);
+   procedure Add_Attributes
+     (List       : in out Attribute_Validator_List_Access;
+      Attributes : Attribute_Validator_List_Access);
    --  Add a valid attribute to Validator.
    --  Is_Local should be true if the attribute is local, or False if this is
-   --  a reference to a global attribute
+   --  a reference to a global attribute.
+   --  The second version copies elements from [Attributes] into [List].
 
    function Has_Attribute
      (Validator  : access XML_Validator_Record;
@@ -772,7 +830,7 @@ package Schema.Validators is
    procedure Add_Union
      (Validator : access XML_Validator_Record'Class;
       Reader    : access Abstract_Validation_Reader'Class;
-      Part      : XML_Type);
+      Part      : Type_Descr);
    --  Add a new element to the union in Validator
 
    --------------
@@ -900,11 +958,6 @@ package Schema.Validators is
    --  If the element doesn't exist yet, a forward declaration is created for
    --  it, that must be overriden later on.
 
-   function Create_Global_Type
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Sax.Symbols.Symbol;
-      Validator  : access XML_Validator_Record'Class) return XML_Type;
    function Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Reader         : access Abstract_Validation_Reader'Class;
@@ -917,9 +970,8 @@ package Schema.Validators is
    --  Register a new type or element in the grammar.
 
    procedure Create_Global_Type
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Sax.Symbols.Symbol;
+     (Grammar    : XML_Grammar;
+      Name       : Qualified_Name;
       Validator  : access XML_Validator_Record'Class);
    procedure Create_Global_Attribute
      (NS             : XML_Grammar_NS;
@@ -957,13 +1009,6 @@ package Schema.Validators is
    --  discard the namespaces you no longer use).
    --  Keeping the grammar for the XSD files provides a minor optimization,
    --  avoiding the need to recreate it the next time you parse a XSD file.
-
-   procedure Global_Check
-     (Reader  : access Abstract_Validation_Reader'Class;
-      Grammar : XML_Grammar_NS);
-   --  Perform checks on the grammar, once it has been fully declared.
-   --  This function is automatically called when a schema has been fully
-   --  parsed.
 
    function Get_Namespace_URI
      (Grammar : XML_Grammar_NS) return Sax.Symbols.Symbol;
@@ -1157,6 +1202,7 @@ private
 
       XSD_Version : XSD_Versions := XSD_1_0;
 
+      References : aliased Reference_HTables.Instance;
       NFA : Schema_State_Machines.NFA_Access;
       --  The state machine representing the grammar
       --  This includes the states for all namespaces
