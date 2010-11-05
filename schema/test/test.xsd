@@ -32,14 +32,7 @@
  </xsd:sequence>
 </xsd:group>
 
-<xsd:complexType name="Tzip">
- <xsd:sequence>
-  <xsd:choice>
-   <xsd:element name="zipcode" type="xsd:string" maxOccurs="2"/>
-   <xsd:element name="code_postal" type="xsd:string"/>
-  </xsd:choice>
- </xsd:sequence>
- <xsd:attribute name="attr1" type="xsd:string" use="optional"/>
+<xsd:attributeGroup name="Tzip_attrs">
  <!--<xsd:attribute name="attr2" type="xsd:boolean" use="default" value="true"/>
    -->
  <xsd:attribute name="attr3" type="xsd:string"/>
@@ -51,6 +44,17 @@
        </xsd:restriction>
     </xsd:simpleType>
  </xsd:attribute>
+</xsd:attributeGroup>
+
+<xsd:complexType name="Tzip">
+ <xsd:sequence>
+  <xsd:choice>
+   <xsd:element name="zipcode" type="xsd:string" maxOccurs="2"/>
+   <xsd:element name="code_postal" type="xsd:string"/>
+  </xsd:choice>
+ </xsd:sequence>
+ <xsd:attribute name="attr1" type="xsd:string" use="optional"/>
+ <xsd:attributeGroup ref="Tzip_attrs"/>
 </xsd:complexType>
 <xsd:element name="zip" type="Tzip" />
 

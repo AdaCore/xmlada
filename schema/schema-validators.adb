@@ -54,8 +54,6 @@ package body Schema.Validators is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Element_List, Element_List_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (XML_Attribute_Group_Record, XML_Attribute_Group);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Grammar_NS_Array, Grammar_NS_Array_Access);
 
    function Create_NS_Grammar
@@ -124,20 +122,6 @@ package body Schema.Validators is
    procedure Free (List : in out Attribute_Validator_List_Access);
    --  Free the contents of List, including contained
 
-   procedure Append
-     (List        : in out Attribute_Validator_List_Access;
-      Validator   : access Attribute_Validator_Record'Class;
-      Is_Local    : Boolean;
-      Override    : Boolean);
-   procedure Append
-     (Reader    : access Abstract_Validation_Reader'Class;
-      List      : in out Attribute_Validator_List_Access;
-      Group     : XML_Attribute_Group);
-   --  Append a new value to List.
-   --  If a similar attribute already exists in the list, Validator will either
-   --  be ignored (Override is False), or replace the existing definition
-   --  (Override is True).
-
    -------------------------
    -- Get_Attribute_Lists --
    -------------------------
@@ -183,16 +167,8 @@ package body Schema.Validators is
 
    procedure Free (List : in out Attribute_Validator_List_Access) is
    begin
-      if List /= null then
-         for L in List'Range loop
-            if not List (L).Is_Group then
-               --  ??? Already freed through the htable in the grammar
-               null;
---               Free (List (L).Attr);
-            end if;
-         end loop;
-         Unchecked_Free (List);
-      end if;
+      --  List (..).Attr is already freed through the htable in the grammar
+      Unchecked_Free (List);
    end Free;
 
    ------------------------------
@@ -382,86 +358,6 @@ package body Schema.Validators is
    ------------
 
    procedure Append
-     (List        : in out Attribute_Validator_List_Access;
-      Validator   : access Attribute_Validator_Record'Class;
-      Is_Local    : Boolean;
-      Override    : Boolean)
-   is
-      L : Attribute_Validator_List_Access;
-   begin
-      if List /= null then
-         for A in List'Range loop
-            if not List (A).Is_Group then
-               if Is_Equal (List (A).Attr.all, Validator.all) then
-                  if Override then
-                     --  ??? Should we free the previous value => We are
-                     --  sharing the attribute definition through
-                     --  Restriction_Of...
-                     List (A) :=
-                       (Is_Group => False,
-                        Is_Local => Is_Local,
-                        Attr     => Attribute_Validator (Validator));
-                  end if;
-                  return;
-               end if;
-            end if;
-         end loop;
-
-         L := new Attribute_Validator_List (List'First .. List'Last + 1);
-         L (List'Range) := List.all;
-         L (L'Last) := Attribute_Or_Group'
-           (Is_Group => False,
-            Is_Local => Is_Local,
-            Attr     => Attribute_Validator (Validator));
-         Unchecked_Free (List);
-         List := L;
-      else
-         List := new Attribute_Validator_List'
-           (1 => Attribute_Or_Group'
-              (Is_Group => False,
-               Is_Local => Is_Local,
-               Attr     => Attribute_Validator (Validator)));
-      end if;
-   end Append;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (Reader : access Abstract_Validation_Reader'Class;
-      List   : in out Attribute_Validator_List_Access;
-      Group  : XML_Attribute_Group)
-   is
-      L : Attribute_Validator_List_Access;
-   begin
-      if Group = null then
-         Validation_Error (Reader, "#Cannot add null attribute group");
-      end if;
-
-      if List /= null then
-         for A in List'Range loop
-            if List (A).Is_Group and then List (A).Group = Group then
-               return;
-            end if;
-         end loop;
-
-         L := new Attribute_Validator_List (List'First .. List'Last + 1);
-         L (List'Range) := List.all;
-         L (L'Last) := Attribute_Or_Group'(Is_Group => True, Group => Group);
-         Unchecked_Free (List);
-         List := L;
-      else
-         List := new Attribute_Validator_List'
-           (1 => Attribute_Or_Group'(Is_Group => True, Group => Group));
-      end if;
-   end Append;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
      (List    : in out Element_List_Access;
       Element : XML_Element)
    is
@@ -493,13 +389,12 @@ package body Schema.Validators is
       end if;
 
       for A in Validator.Attributes'Range loop
-         if not Validator.Attributes (A).Is_Group
-           and then Validator.Attributes (A).Attr.NS = NS
-           and then Validator.Attributes (A).Attr.all in
+         if Validator.Attributes (A).Validator.NS = NS
+           and then Validator.Attributes (A).Validator.all in
               Named_Attribute_Validator_Record'Class
          then
             if Named_Attribute_Validator_Record
-              (Validator.Attributes (A).Attr.all).Local_Name = Local_Name
+              (Validator.Attributes (A).Validator.all).Local_Name = Local_Name
             then
                return True;
             end if;
@@ -514,66 +409,30 @@ package body Schema.Validators is
 
    procedure Add_Attribute
      (List      : in out Attribute_Validator_List_Access;
-      Attribute : access Attribute_Validator_Record'Class)
+      Attribute : access Attribute_Validator_Record'Class;
+      Is_Local  : Boolean)
    is
+      L : Attribute_Validator_List_Access;
    begin
-      Append (List, Attribute, Is_Local => True, Override => True);
-   end Add_Attribute;
+      if List /= null then
+         for A in List'Range loop
+            if List (A).Validator = Attribute_Validator (Attribute) then
+               return;
+            end if;
+         end loop;
 
-   -------------------
-   -- Add_Attribute --
-   -------------------
-
-   procedure Add_Attribute
-     (Validator  : access XML_Validator_Record;
-      Attribute  : access Attribute_Validator_Record'Class;
-      Is_Local   : Boolean := True) is
-   begin
-      Append (Validator.Attributes, Attribute,
-              Is_Local => Is_Local, Override => True);
-   end Add_Attribute;
-
-   -------------------
-   -- Add_Attribute --
-   -------------------
-
-   procedure Add_Attribute
-     (Group    : in out XML_Attribute_Group;
-      Attr     : access Attribute_Validator_Record'Class;
-      Is_Local : Boolean := True) is
-   begin
-      Append (Group.Attributes, Attribute_Validator (Attr),
-              Is_Local => Is_Local, Override => True);
-   end Add_Attribute;
-
-   -------------------------
-   -- Add_Attribute_Group --
-   -------------------------
-
-   procedure Add_Attribute_Group
-     (Validator : access XML_Validator_Record;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Group     : XML_Attribute_Group) is
-   begin
-      Append (Reader, Validator.Attributes, Group);
-   end Add_Attribute_Group;
-
-   -------------------------
-   -- Add_Attribute_Group --
-   -------------------------
-
-   procedure Add_Attribute_Group
-     (Group  : in out XML_Attribute_Group;
-      Reader : access Abstract_Validation_Reader'Class;
-      Attr   : XML_Attribute_Group) is
-   begin
-      if Attr = null then
-         if Debug then
-            Debug_Output ("Add_Attribute_Group: adding empty attribute group");
-         end if;
+         L := new Attribute_Validator_List (List'First .. List'Last + 1);
+         L (List'Range) := List.all;
+         L (L'Last) := (Validator => Attribute_Validator (Attribute),
+                        Is_Local  => Is_Local);
+         Unchecked_Free (List);
+         List := L;
+      else
+         List := new Attribute_Validator_List'
+           (1 => (Validator => Attribute_Validator (Attribute),
+                  Is_Local  => Is_Local));
       end if;
-      Append (Reader, Group.Attributes, Attr);
-   end Add_Attribute_Group;
+   end Add_Attribute;
 
    --------------
    -- Get_Name --
@@ -663,9 +522,9 @@ package body Schema.Validators is
         (List            : Attribute_Validator_List_Access;
          Ignore_Wildcard : Boolean;
          Must_Match_All_Any : Boolean);
-      procedure Recursive_Check_Named (List : Attribute_Or_Group);
+      procedure Recursive_Check_Named (List : Attribute_Descr);
       procedure Check_Any
-        (List : Attribute_Or_Group; Must_Match_All_Any : Boolean);
+        (List : Attribute_Descr; Must_Match_All_Any : Boolean);
       --  Check recursively the attributes provided by Validator.
 
       procedure Check_Named_Attribute
@@ -875,18 +734,11 @@ package body Schema.Validators is
       -- Recursive_Check_Named --
       ---------------------------
 
-      procedure Recursive_Check_Named (List : Attribute_Or_Group) is
+      procedure Recursive_Check_Named (List : Attribute_Descr) is
       begin
-         if List.Is_Group then
-            if List.Group.Attributes /= null then
-               for L in List.Group.Attributes'Range loop
-                  Recursive_Check_Named (List.Group.Attributes (L));
-               end loop;
-            end if;
-
-         elsif List.Attr.all in Named_Attribute_Validator_Record'Class then
+         if List.Validator.all in Named_Attribute_Validator_Record'Class then
             Check_Named_Attribute
-              (Named_Attribute_Validator (List.Attr),
+              (Named_Attribute_Validator (List.Validator),
                Is_Local_In_XSD => List.Is_Local);
          end if;
       end Recursive_Check_Named;
@@ -896,16 +748,9 @@ package body Schema.Validators is
       ---------------
 
       procedure Check_Any
-        (List : Attribute_Or_Group; Must_Match_All_Any : Boolean) is
+        (List : Attribute_Descr; Must_Match_All_Any : Boolean) is
       begin
-         if List.Is_Group then
-            if List.Group.Attributes /= null then
-               for A in List.Group.Attributes'Range loop
-                  Check_Any (List.Group.Attributes (A), Must_Match_All_Any);
-               end loop;
-            end if;
-
-         elsif List.Attr.all in Any_Attribute_Validator'Class then
+         if List.Validator.all in Any_Attribute_Validator'Class then
             --  From 3.4.2 (intersection of anyAttribute), an attribute must
             --  match *all* the anyAttribute, so we do not modify Seen yet, so
             --  that the attribute is tested multiple times
@@ -917,7 +762,7 @@ package body Schema.Validators is
                then
                   begin
                      Check_Any_Attribute
-                       (Any_Attribute_Validator (List.Attr.all), A);
+                       (Any_Attribute_Validator (List.Validator.all), A);
 
                      --  If there was an exception, don't mark the attribute as
                      --  seen, it is invalid. Maybe another <anyAttribute> will
@@ -1458,34 +1303,6 @@ package body Schema.Validators is
       return Result;
    end Lookup_Group;
 
-   ----------------------------
-   -- Lookup_Attribute_Group --
-   ----------------------------
-
-   function Lookup_Attribute_Group
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol) return XML_Attribute_Group
-   is
-      Result : XML_Attribute_Group := Attribute_Groups_Htable.Get
-        (Grammar.Attribute_Groups.all, Local_Name);
-   begin
-      if Result = Empty_Attribute_Group then
-         if Grammar.Checked then
-            Validation_Error
-              (Reader, "#Declaration not found for "
-               & To_QName (Grammar, Local_Name));
-         end if;
-
-         if Debug then
-            Debug_Output ("Lookup_Attribute_Group: Create forward decl");
-         end if;
-         Result := Create_Global_Attribute_Group (Grammar, Reader, Local_Name);
-         Result.Is_Forward_Decl := True;
-      end if;
-      return Result;
-   end Lookup_Attribute_Group;
-
    ----------------------
    -- Lookup_Attribute --
    ----------------------
@@ -1818,7 +1635,6 @@ package body Schema.Validators is
          Elements           => new Elements_Htable.HTable (101),
          Groups             => new Groups_Htable.HTable (101),
          Attributes         => new Attributes_Htable.HTable (101),
-         Attribute_Groups   => new Attribute_Groups_Htable.HTable (101),
          Checked            => False,
          NFA                => Get (Grammar).NFA,
          Validators_For_Mem => null,
@@ -2291,38 +2107,6 @@ package body Schema.Validators is
       return Group;
    end Create_Global_Group;
 
-   -----------------------------------
-   -- Create_Global_Attribute_Group --
-   -----------------------------------
-
-   function Create_Global_Attribute_Group
-     (NS         : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Symbol) return XML_Attribute_Group
-   is
-      Group : XML_Attribute_Group := Attribute_Groups_Htable.Get
-        (NS.Attribute_Groups.all, Local_Name);
-   begin
-      if Group /= Empty_Attribute_Group then
-         if not Group.Is_Forward_Decl then
-            Validation_Error
-              (Reader,
-               "#Attribute group has already been declared: "
-               & Get (Local_Name).all);
-         end if;
-
-         Group.Is_Forward_Decl := False;
-      else
-         Group := new XML_Attribute_Group_Record'
-           (Local_Name => Local_Name,
-            Attributes => null,
-            Is_Forward_Decl => False);
-         Attribute_Groups_Htable.Set (NS.Attribute_Groups.all, Group);
-      end if;
-
-      return Group;
-   end Create_Global_Attribute_Group;
-
    ----------
    -- Free --
    ----------
@@ -2457,8 +2241,6 @@ package body Schema.Validators is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Attributes_Htable.HTable, Attributes_Htable_Access);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Groups_Htable.HTable, Attribute_Groups_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (XML_Type_Record, XML_Type);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Attribute_Validator_Record'Class, Attribute_Validator);
@@ -2511,8 +2293,6 @@ package body Schema.Validators is
          Unchecked_Free (Grammar.Types);
          Groups_Htable.Reset (Grammar.Groups.all);
          Unchecked_Free (Grammar.Groups);
-         Attribute_Groups_Htable.Reset (Grammar.Attribute_Groups.all);
-         Unchecked_Free (Grammar.Attribute_Groups);
          Attributes_Htable.Reset (Grammar.Attributes.all);
          Unchecked_Free (Grammar.Attributes);
 
@@ -2722,25 +2502,6 @@ package body Schema.Validators is
       Unchecked_Free (Group);
    end Free;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Att : in out XML_Attribute_Group) is
-   begin
-      Free (Att.Attributes);
-      Unchecked_Free (Att);
-   end Free;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Att : XML_Attribute_Group) return Symbol is
-   begin
-      return Att.Local_Name;
-   end Get_Key;
-
    -------------
    -- Get_Key --
    -------------
@@ -2900,20 +2661,16 @@ package body Schema.Validators is
       Grammar : XML_Grammar_NS)
    is
       use Elements_Htable, Types_Htable, Attributes_Htable, Groups_Htable;
-      use Attribute_Groups_Htable;
       Elem_Iter : Elements_Htable.Iterator := First (Grammar.Elements.all);
       Type_Iter : Types_Htable.Iterator := First (Grammar.Types.all);
       Attr_Iter : Attributes_Htable.Iterator :=
         First (Grammar.Attributes.all);
       Group_Iter : Groups_Htable.Iterator := First (Grammar.Groups.all);
-      Attr_Group_Iter : Attribute_Groups_Htable.Iterator :=
-        First (Grammar.Attribute_Groups.all);
 
       Elem : XML_Element_Access;
       Typ  : XML_Type;
       Attr : Named_Attribute_Validator;
       Group : XML_Group;
-      Attr_Group : XML_Attribute_Group;
    begin
       if Grammar.Checked then
          return;
@@ -2967,17 +2724,6 @@ package body Schema.Validators is
          end if;
 
          Next (Grammar.Groups.all, Group_Iter);
-      end loop;
-
-      while Attr_Group_Iter /= Attribute_Groups_Htable.No_Iterator loop
-         Attr_Group := Current (Attr_Group_Iter);
-         if Attr_Group.Is_Forward_Decl then
-            Validation_Error
-              (Reader, "attributeGroup """
-               & To_QName (Grammar.Namespace_URI, Attr_Group.Local_Name)
-               & """ is referenced, but not defined");
-         end if;
-         Next (Grammar.Attribute_Groups.all, Attr_Group_Iter);
       end loop;
    end Global_Check;
 

@@ -97,16 +97,36 @@ private
    end record;
    No_Group_Descr : constant Group_Descr := (others => <>);
 
+   type Attr_Descr_Kind is (Kind_Group, Kind_Attribute, Kind_Unset);
+   type Attr_Descr (Kind : Attr_Descr_Kind := Kind_Unset) is record
+      case Kind is
+         when Kind_Unset     => null;
+         when Kind_Group     => Group_Ref : Qualified_Name;
+         when Kind_Attribute =>
+            Attr      : Attribute_Validator;
+            Is_Local  : Boolean;
+      end case;
+   end record;
+   type Attr_Array is array (Natural range <>) of Attr_Descr;
+   type Attr_Array_Access is access all Attr_Array;
+
+   type AttrGroup_Descr is record
+      Name           : Qualified_Name := No_Qualified_Name;
+      Ref            : Qualified_Name := No_Qualified_Name;
+      Attributes     : Attr_Array_Access;
+   end record;
+   No_AttrGroup_Descr : constant AttrGroup_Descr := (others => <>);
+
    type Type_Details (Kind : Type_Kind := Type_Empty) is record
       Min_Occurs, Max_Occurs : Integer;
       Next : Type_Details_Access;
       case Kind is
-         when Type_Empty    => null;
-         when Type_Sequence => First_In_Seq    : Type_Details_Access;
-         when Type_Choice   => First_In_Choice : Type_Details_Access;
-         when Type_Element  => Element         : Element_Descr;
-         when Type_Any      => Any             : Any_Descr;
-         when Type_Group    => Group           : Group_Descr;
+         when Type_Empty     => null;
+         when Type_Sequence  => First_In_Seq    : Type_Details_Access;
+         when Type_Choice    => First_In_Choice : Type_Details_Access;
+         when Type_Element   => Element         : Element_Descr;
+         when Type_Any       => Any             : Any_Descr;
+         when Type_Group     => Group           : Group_Descr;
       end case;
    end record;
 
@@ -119,7 +139,7 @@ private
       Simple_Content : Boolean := False;
       Details        : Type_Details_Access;
       NFA            : Schema.Validators.Schema_State_Machines.Nested_NFA;
-      Attributes     : Attribute_Validator_List_Access;
+      Attributes     : Attr_Array_Access;
    end record;
 
    type Schema_Descr is record
@@ -154,14 +174,15 @@ private
             Type_Info      : Type_Index;
             Type_Validator : Schema.Validators.XML_Validator;
             Redefined_Type : Schema.Validators.XML_Type; --  <redefine>
-         when Context_Element =>
-            Element        : Element_Descr;
-         when Context_Sequence =>
-            Seq            : Type_Details_Access;
-         when Context_Choice =>
-            Choice         : Type_Details_Access;
-         when Context_Schema | Context_Redefine =>
-            null;
+         when Context_Element  => Element        : Element_Descr;
+         when Context_Sequence => Seq            : Type_Details_Access;
+         when Context_Choice   => Choice         : Type_Details_Access;
+         when Context_Attribute_Group => Attr_Group : AttrGroup_Descr;
+         when Context_Schema | Context_Redefine => null;
+         when Context_Group =>
+            Group           : Group_Descr;
+            Redefined_Group : Schema.Validators.XML_Group;  --  <redefine>
+
          when Context_All =>
             null;
             --  All_Validator : Schema.Validators.XML_All;
@@ -181,11 +202,6 @@ private
          when Context_Attribute =>
             Attribute : Schema.Validators.Attribute_Validator;
             Attribute_Is_Ref : Boolean;
-         when Context_Group =>
-            Group           : Group_Descr;
-            Redefined_Group : Schema.Validators.XML_Group;  --  <redefine>
-         when Context_Attribute_Group =>
-            Attr_Group : Schema.Validators.XML_Attribute_Group;
       end case;
    end record;
 
@@ -220,6 +236,13 @@ private
       Key        => Qualified_Name,
       Hash       => Hash,
       Equal      => "=");
+   package AttrGroup_HTables is new GNAT.Dynamic_HTables.Simple_HTable
+     (Header_Num => Header_Num,
+      Element    => AttrGroup_Descr,
+      No_Element => No_AttrGroup_Descr,
+      Key        => Qualified_Name,
+      Hash       => Hash,
+      Equal      => "=");
 
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
       Attribute_Form_Default : Schema.Validators.Form_Type :=
@@ -245,10 +268,11 @@ private
       --  a single reader for this, and pass around the above fields for each
       --  of the namespaces.
 
-      Types           : Type_Tables.Instance;
-      Global_Elements : Element_HTables.Instance;
-      Global_Types    : Type_HTables.Instance;
-      Global_Groups   : Group_HTables.Instance;
+      Types             : Type_Tables.Instance;
+      Global_Elements   : Element_HTables.Instance;
+      Global_Types      : Type_HTables.Instance;
+      Global_Groups     : Group_HTables.Instance;
+      Global_AttrGroups : AttrGroup_HTables.Instance;
    end record;
 
    overriding procedure Start_Element

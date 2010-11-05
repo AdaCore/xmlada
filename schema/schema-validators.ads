@@ -638,28 +638,6 @@ package Schema.Validators is
      (Attr : Attribute_Validator_Record) return XML_Type;
    --  Set the type of the attribute
 
-   ----------------------
-   -- Attribute groups --
-   ----------------------
-
-   type XML_Attribute_Group is private;
-   Empty_Attribute_Group : constant XML_Attribute_Group;
-   --  Created through calls to Create_Global_Attribute_Group below
-
-   procedure Add_Attribute
-     (Group    : in out XML_Attribute_Group;
-      Attr     : access Attribute_Validator_Record'Class;
-      Is_Local : Boolean := True);
-   --  Add a new attribute to the group
-   --  Is_Local should be true if the attribute is local, or False if this is
-   --  a reference to a global attribute
-
-   procedure Add_Attribute_Group
-     (Group  : in out XML_Attribute_Group;
-      Reader : access Abstract_Validation_Reader'Class;
-      Attr   : XML_Attribute_Group);
-   --  Add a new group of attributes
-
    ---------------------
    -- Type validators --
    ---------------------
@@ -729,11 +707,8 @@ package Schema.Validators is
 
    procedure Add_Attribute
      (List      : in out Attribute_Validator_List_Access;
-      Attribute : access Attribute_Validator_Record'Class);
-   procedure Add_Attribute
-     (Validator : access XML_Validator_Record;
       Attribute : access Attribute_Validator_Record'Class;
-      Is_Local  : Boolean := True);
+      Is_Local  : Boolean);
    --  Add a valid attribute to Validator.
    --  Is_Local should be true if the attribute is local, or False if this is
    --  a reference to a global attribute
@@ -743,12 +718,6 @@ package Schema.Validators is
       NS         : XML_Grammar_NS;
       Local_Name : Sax.Symbols.Symbol) return Boolean;
    --  Whether the given attribute was already added to Validator
-
-   procedure Add_Attribute_Group
-     (Validator : access XML_Validator_Record;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Group     : XML_Attribute_Group);
-   --  Add a new group of attributes
 
    function Is_Wildcard
      (Validator : access XML_Validator_Record) return Boolean;
@@ -963,10 +932,6 @@ package Schema.Validators is
       Reader        : access Abstract_Validation_Reader'Class;
       Local_Name    : Sax.Symbols.Symbol;
       Create_If_Needed : Boolean := True) return Attribute_Validator;
-   function Lookup_Attribute_Group
-     (Grammar    : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Sax.Symbols.Symbol) return XML_Attribute_Group;
    --  Return the type validator to use for elements with name Local_Name.
    --  "null" is returned if there is no validator defined for these elements.
    --  The returned value must be freed by the user.
@@ -999,10 +964,6 @@ package Schema.Validators is
       Attribute_Use  : Attribute_Use_Type        := Optional;
       Fixed          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol)
       return Attribute_Validator;
-   function Create_Global_Attribute_Group
-     (NS         : XML_Grammar_NS;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Local_Name : Sax.Symbols.Symbol) return XML_Attribute_Group;
    --  Register a new type or element in the grammar.
 
    procedure Create_Global_Type
@@ -1280,17 +1241,12 @@ private
    function Is_ID (Attr : Attribute_Validator_Record) return Boolean;
    --  Whether the attribute is an ID
 
-   type Attribute_Or_Group (Is_Group : Boolean := False) is record
-      case Is_Group is
-         when True  => Group : XML_Attribute_Group;
-         when False =>
-            Attr     : Attribute_Validator;
-            Is_Local : Boolean;
-            --  Whether the attribute is local or a ref to a global attribute
-      end case;
+   type Attribute_Descr is record
+      Validator : Attribute_Validator;
+      Is_Local  : Boolean;
    end record;
    type Attribute_Validator_List
-     is array (Natural range <>) of Attribute_Or_Group;
+     is array (Natural range <>) of Attribute_Descr;
 
    type Named_Attribute_Validator_Record;
    type Named_Attribute_Validator is access all
@@ -1371,18 +1327,6 @@ private
    --  Registers a newly allocated type into NS, so that when the latter
    --  is destroyed, the type is properly deallocated.
    --  This does nothing if Typ was already registered.
-
-   ---------------------
-   -- Attribute_Group --
-   ---------------------
-
-   type XML_Attribute_Group_Record is record
-      Local_Name : Sax.Symbols.Symbol;
-      Attributes : Attribute_Validator_List_Access;
-      Is_Forward_Decl : Boolean;
-   end record;
-   type XML_Attribute_Group is access XML_Attribute_Group_Record;
-   Empty_Attribute_Group : constant XML_Attribute_Group := null;
 
    -------------------
    -- XML_Validator --
@@ -1493,20 +1437,6 @@ private
       Equal         => Sax.Symbols."=");
    type Attributes_Htable_Access is access Attributes_Htable.HTable;
 
-   function Get_Key (Att : XML_Attribute_Group) return Sax.Symbols.Symbol;
-   procedure Free (Att : in out XML_Attribute_Group);
-
-   package Attribute_Groups_Htable is new Sax.HTable
-     (Element       => XML_Attribute_Group,
-      Empty_Element => Empty_Attribute_Group,
-      Free          => Free,
-      Key           => Sax.Symbols.Symbol,
-      Get_Key       => Get_Key,
-      Hash          => Sax.Symbols.Hash,
-      Equal         => Sax.Symbols."=");
-   type Attribute_Groups_Htable_Access
-     is access Attribute_Groups_Htable.HTable;
-
    type XML_Grammar_NS_Record is record
       Namespace_URI     : Sax.Symbols.Symbol;
       System_ID         : Sax.Symbols.Symbol;
@@ -1514,7 +1444,6 @@ private
       Elements          : Elements_Htable_Access;
       Groups            : Groups_Htable_Access;
       Attributes        : Attributes_Htable_Access;
-      Attribute_Groups  : Attribute_Groups_Htable_Access;
 
       Validators_For_Mem : XML_Validator;
       --  List of validators allocated in the context of this grammar, and

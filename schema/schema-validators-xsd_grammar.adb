@@ -70,7 +70,7 @@ package body Schema.Validators.XSD_Grammar is
       maxBound, minBound       : XML_Element;
       attrDecls                : XML_Group;
       typeDefParticle          : XML_Group;
-      defRef, Occurs           : XML_Attribute_Group;
+--        defRef, Occurs           : XML_Attribute_Group;
       complexTypeModel         : XML_Group;
       groupDefParticle         : XML_Group;
       simpleRestrictionModel   : XML_Group;
@@ -98,76 +98,76 @@ package body Schema.Validators.XSD_Grammar is
 
       Schema.Validators.Simple_Types.Register_Predefined_Types (G, XML_G, R);
 
-      NMTOKEN            := Lookup (G, R, R.NMTOKEN);
-      NCNAME             := Lookup (G, R, R.NCName);
-      QNAME              := Lookup (G, R, R.QName);
-      Str                := Lookup (G, R, R.S_String);
-      localSimpleType    := Lookup (G, R, R.Local_Simple_Type);
-      Bool               := Lookup (G, R, R.S_Boolean);
-      nonNegativeInteger := Lookup (G, R, R.Non_Negative_Integer);
-      Annotation  := Create_Global_Element (G, R, R.Annotation,  Qualified);
-      Facet       := Create_Global_Element (G, R, R.Facet,       Qualified);
-      Sequence    := Create_Global_Element (G, R, R.Sequence,    Qualified);
-      Choice      := Create_Global_Element (G, R, R.Choice,      Qualified);
-      All_E       := Create_Global_Element (G, R, R.S_All,       Qualified);
-      Redefinable := Create_Global_Element (G, R, R.Redefinable, Qualified);
-      SchemaTop   := Create_Global_Element (G, R, R.Schema_Top,  Qualified);
-      Any         := Create_Global_Element (G, R, R.Any,         Qualified);
-      maxBound    := Create_Global_Element (G, R, R.Max_Bound,   Qualified);
-      minBound    := Create_Global_Element (G, R, R.Min_Bound,   Qualified);
-      SimpleDerivation :=
-        Create_Global_Element (G, R, R.Simple_Derivation, Qualified);
-      attrDecls        := Create_Global_Group (G, R, R.Attr_Decls);
-      complexTypeModel := Create_Global_Group (G, R, R.Complex_Type_Model);
-      groupDefParticle := Create_Global_Group (G, R, R.Group_Def_Particle);
-      simpleRestrictionModel :=
-        Create_Global_Group (G, R, R.Simple_Restriction_Model);
-      defRef      := Create_Global_Attribute_Group (G, R, R.Def_Ref);
-      Occurs      := Create_Global_Attribute_Group (G, R, R.Occurs);
+--        NMTOKEN            := Lookup (G, R, R.NMTOKEN);
+--        NCNAME             := Lookup (G, R, R.NCName);
+--        QNAME              := Lookup (G, R, R.QName);
+--        Str                := Lookup (G, R, R.S_String);
+--        localSimpleType    := Lookup (G, R, R.Local_Simple_Type);
+--        Bool               := Lookup (G, R, R.S_Boolean);
+--        nonNegativeInteger := Lookup (G, R, R.Non_Negative_Integer);
+--       Annotation  := Create_Global_Element (G, R, R.Annotation,  Qualified);
+--       Facet       := Create_Global_Element (G, R, R.Facet,       Qualified);
+--       Sequence    := Create_Global_Element (G, R, R.Sequence,    Qualified);
+--       Choice      := Create_Global_Element (G, R, R.Choice,      Qualified);
+--       All_E       := Create_Global_Element (G, R, R.S_All,       Qualified);
+--       Redefinable := Create_Global_Element (G, R, R.Redefinable, Qualified);
+--       SchemaTop   := Create_Global_Element (G, R, R.Schema_Top,  Qualified);
+--       Any         := Create_Global_Element (G, R, R.Any,         Qualified);
+--       maxBound    := Create_Global_Element (G, R, R.Max_Bound,   Qualified);
+--       minBound    := Create_Global_Element (G, R, R.Min_Bound,   Qualified);
+--        SimpleDerivation :=
+--          Create_Global_Element (G, R, R.Simple_Derivation, Qualified);
+--        attrDecls        := Create_Global_Group (G, R, R.Attr_Decls);
+--        complexTypeModel := Create_Global_Group (G, R, R.Complex_Type_Model);
+--        groupDefParticle := Create_Global_Group (G, R, R.Group_Def_Particle);
+--        simpleRestrictionModel :=
+--          Create_Global_Group (G, R, R.Simple_Restriction_Model);
+--        defRef      := Create_Global_Attribute_Group (G, R, R.Def_Ref);
+--        Occurs      := Create_Global_Attribute_Group (G, R, R.Occurs);
 
-      --  The "formChoice" type of schema.xsd
-      Typ := Restriction_Of (G, R, NMTOKEN);
-      Add_Facet (Typ, R, R.Enumeration, "qualified");
-      Add_Facet (Typ, R, R.Enumeration, "unqualified");
-      formChoice := Create_Global_Type (G, R, R.Form_Choice, Typ);
-
-      --  The "derivationControl" type
-      Typ := Restriction_Of (G, R, NMTOKEN);
-      Add_Facet (Typ, R, R.Enumeration, "substitution");
-      Add_Facet (Typ, R, R.Enumeration, "extension");
-      Add_Facet (Typ, R, R.Enumeration, "restriction");
-      derivationControl :=
-        Create_Global_Type (G, R, R.Derivation_Control, Typ);
-
-      --  The "blockSet" type
-      Token := Lookup (G, R, R.Token);
-      Typ := Restriction_Of (G, R, Token);
-      Add_Facet (Typ, R, R.Enumeration, "#all");
-      All_Validator := Create_Local_Type (G, Typ);
-
-      Union := Create_Union (G);
-      Add_Union (Union, R, All_Validator);
-      Add_Union (Union, R, List_Of (G, derivationControl));
-      Create_Global_Type (G, R, R.Block_Set, Union);
-
-      --  The "reducedDerivationControl" type
-      Typ := Restriction_Of (G, R, derivationControl);
-      Add_Facet (Typ, R, R.Enumeration, "extension");
-      Add_Facet (Typ, R, R.Enumeration, "restriction");
-      reducedDerivationControl :=
-        Create_Global_Type (G, R, R.Reduced_Derivation_Control, Typ);
-
-      --  The "derivationSet" type
-      Union := Create_Union (G);
-      Add_Union (Union, R, All_Validator);
-      Add_Union (Union, R, List_Of (G, reducedDerivationControl));
-      derivationSet := Create_Global_Type (G, R, R.Derivation_Set, Union);
-
-      --  The "openAttrs" type
-      Typ := Restriction_Of (G, R, Lookup (G, R, R.Anytype));
-      Add_Attribute
-        (Typ, Create_Any_Attribute (G, Process_Lax, Kind => Namespace_Other));
-      Openattrs := Create_Global_Type (G, R, R.Open_Attrs, Typ);
+--        --  The "formChoice" type of schema.xsd
+--        Typ := Restriction_Of (G, R, NMTOKEN);
+--        Add_Facet (Typ, R, R.Enumeration, "qualified");
+--        Add_Facet (Typ, R, R.Enumeration, "unqualified");
+--        formChoice := Create_Global_Type (G, R, R.Form_Choice, Typ);
+--
+--        --  The "derivationControl" type
+--        Typ := Restriction_Of (G, R, NMTOKEN);
+--        Add_Facet (Typ, R, R.Enumeration, "substitution");
+--        Add_Facet (Typ, R, R.Enumeration, "extension");
+--        Add_Facet (Typ, R, R.Enumeration, "restriction");
+--        derivationControl :=
+--          Create_Global_Type (G, R, R.Derivation_Control, Typ);
+--
+--        --  The "blockSet" type
+--        Token := Lookup (G, R, R.Token);
+--        Typ := Restriction_Of (G, R, Token);
+--        Add_Facet (Typ, R, R.Enumeration, "#all");
+--        All_Validator := Create_Local_Type (G, Typ);
+--
+--        Union := Create_Union (G);
+--        Add_Union (Union, R, All_Validator);
+--        Add_Union (Union, R, List_Of (G, derivationControl));
+--        Create_Global_Type (G, R, R.Block_Set, Union);
+--
+--        --  The "reducedDerivationControl" type
+--        Typ := Restriction_Of (G, R, derivationControl);
+--        Add_Facet (Typ, R, R.Enumeration, "extension");
+--        Add_Facet (Typ, R, R.Enumeration, "restriction");
+--        reducedDerivationControl :=
+--          Create_Global_Type (G, R, R.Reduced_Derivation_Control, Typ);
+--
+--        --  The "derivationSet" type
+--        Union := Create_Union (G);
+--        Add_Union (Union, R, All_Validator);
+--        Add_Union (Union, R, List_Of (G, reducedDerivationControl));
+--        derivationSet := Create_Global_Type (G, R, R.Derivation_Set, Union);
+--
+--        --  The "openAttrs" type
+--        Typ := Restriction_Of (G, R, Lookup (G, R, R.Anytype));
+--        Add_Attribute
+--       (Typ, Create_Any_Attribute (G, Process_Lax, Kind => Namespace_Other));
+--        Openattrs := Create_Global_Type (G, R, R.Open_Attrs, Typ);
 
       --  The "annotated" type
 --        Seq1 := Create_Sequence (G);
@@ -175,28 +175,28 @@ package body Schema.Validators.XSD_Grammar is
 --        Typ := Extension_Of (G, Openattrs, XML_Validator (Seq1));
 --        Add_Attribute
 --          (Typ, Create_Local_Attribute (R.Id, G, Lookup (G, R, R.UC_ID)));
-      Annotated := Create_Global_Type (G, R, R.Annotated, Typ);
-
-      --  The "schemaTop" element  ??? Missing abstract
-      Set_Type (SchemaTop, R, Annotated);
-
-      --  The "include" element
-      uriReference := Lookup (G, R, R.URI_Reference);
-      Typ := Restriction_Of (G, R, Annotated);
-      Add_Attribute
-        (Typ, Create_Local_Attribute
-           (R.Schema_Location, G, uriReference, Attribute_Use => Required));
-      Set_Type (Create_Global_Element (G, R, R.Include, Qualified), R,
-                Create_Local_Type (G, Typ));
-
-      --  The "import" element
-      Typ := Restriction_Of (G, R, Annotated);
-      Add_Attribute
-        (Typ, Create_Local_Attribute (R.Namespace, G, uriReference));
-      Add_Attribute
-        (Typ, Create_Local_Attribute (R.Schema_Location, G, uriReference));
-      Set_Type (Create_Global_Element (G, R, R.Import, Qualified), R,
-                Create_Local_Type (G, Typ));
+--        Annotated := Create_Global_Type (G, R, R.Annotated, Typ);
+--
+--        --  The "schemaTop" element  ??? Missing abstract
+--        Set_Type (SchemaTop, R, Annotated);
+--
+--        --  The "include" element
+--        uriReference := Lookup (G, R, R.URI_Reference);
+--        Typ := Restriction_Of (G, R, Annotated);
+--        Add_Attribute
+--          (Typ, Create_Local_Attribute
+--           (R.Schema_Location, G, uriReference, Attribute_Use => Required));
+--        Set_Type (Create_Global_Element (G, R, R.Include, Qualified), R,
+--                  Create_Local_Type (G, Typ));
+--
+--        --  The "import" element
+--        Typ := Restriction_Of (G, R, Annotated);
+--        Add_Attribute
+--          (Typ, Create_Local_Attribute (R.Namespace, G, uriReference));
+--        Add_Attribute
+--          (Typ, Create_Local_Attribute (R.Schema_Location, G, uriReference));
+--        Set_Type (Create_Global_Element (G, R, R.Import, Qualified), R,
+--                  Create_Local_Type (G, Typ));
 
       --  The "schema" element
 --        Choice1 := Create_Choice (G);

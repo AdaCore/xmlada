@@ -44,11 +44,15 @@ with Ada.Unchecked_Deallocation;
 package body Schema.Schema_Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
    use Type_Tables, Type_HTables, Element_HTables, Group_HTables;
+   use AttrGroup_HTables;
 
    Max_Namespaces_In_Any_Attribute : constant := 50;
    --  Maximum number of namespaces for a <anyAttribute>
    --  This only impacts the parsing of the grammar, so can easily be raised if
    --  need be.
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Attr_Array, Attr_Array_Access);
 
    procedure Free (Self : in out Type_Details_Access);
    --  Free [Self], [Self.Next] and so on
@@ -77,10 +81,6 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Name    : Qualified_Name;
       Result  : out XML_Element);
-   procedure Lookup_With_NS
-     (Handler    : access Schema_Reader'Class;
-      QName      : Symbol;
-      Result     : out XML_Attribute_Group);
    --  Lookup a type or element  with a possible namespace specification
 
    procedure Ensure_Type
@@ -132,11 +132,13 @@ package body Schema.Schema_Readers is
       Default   : Form_Type) return Form_Type;
    --  Parse the given attribute
 
+   procedure Append (List : in out Attr_Array_Access; Attr : Attr_Descr);
+   --  Add an attribute to the list
+
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
       In_Context     : Context_Access;
       Attribute      : Attribute_Validator;
-      Attribute_Name : Byte_Sequence;
       Is_Local       : Boolean);
    --  Insert attribute at the right location in In_Context.
    --  Attribute_Name is only for debugging purposes
@@ -200,6 +202,7 @@ package body Schema.Schema_Readers is
    procedure Finish_Union        (Handler : access Schema_Reader'Class);
    procedure Finish_List         (Handler : access Schema_Reader'Class);
    procedure Finish_Group        (Handler : access Schema_Reader'Class);
+   procedure Finish_Attribute_Group (Handler : access Schema_Reader'Class);
    --  Finish the handling of various tags:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
    --  <extension>, <union>, <list>, <choice>, <group>
@@ -412,6 +415,12 @@ package body Schema.Schema_Readers is
       procedure Create_Nested_For_Type (Info : in out Type_Descr);
       --  Create a a nested machine (with only the start state) for [Info]
 
+      procedure Add_Attributes
+        (List  : in out Attribute_Validator_List_Access;
+         Attrs : Attr_Array_Access);
+      --  Create List from the list of attributes or attribute groups in
+      --  [Attrs].
+
       --------------------------
       -- Create_Element_State --
       --------------------------
@@ -542,17 +551,52 @@ package body Schema.Schema_Readers is
          end case;
       end Process_Details;
 
+      --------------------
+      -- Add_Attributes --
+      --------------------
+
+      procedure Add_Attributes
+        (List  : in out Attribute_Validator_List_Access;
+         Attrs : Attr_Array_Access)
+      is
+         Gr : AttrGroup_Descr;
+      begin
+         if Attrs /= null then
+            for A in Attrs'Range loop
+               case Attrs (A).Kind is
+                  when Kind_Unset =>
+                     null;
+                  when Kind_Group =>
+                     Gr := Get (Parser.Global_AttrGroups, Attrs (A).Group_Ref);
+                     if Gr = No_AttrGroup_Descr then
+                        Validation_Error
+                          (Parser,
+                           "Reference to undefined attributeGroup: "
+                           & To_QName (Attrs (A).Group_Ref));
+                     else
+                        Add_Attributes (List, Gr.Attributes);
+                     end if;
+
+                  when Kind_Attribute =>
+                     Add_Attribute (List, Attrs (A).Attr, Attrs (A).Is_Local);
+               end case;
+            end loop;
+         end if;
+      end Add_Attributes;
+
       ----------------------------
       -- Create_Nested_For_Type --
       ----------------------------
 
       procedure Create_Nested_For_Type (Info : in out Type_Descr) is
          S : State;
+         List : Attribute_Validator_List_Access;
       begin
          if not Info.Simple_Content then
+            Add_Attributes (List, Info.Attributes);
             S := NFA.Add_State
               ((Type_Name   => Info.Name,
-                Attributes  => Info.Attributes,
+                Attributes  => List,
                 Simple_Type => null));
             Info.NFA := NFA.Create_Nested (S);
          end if;
@@ -683,6 +727,8 @@ package body Schema.Schema_Readers is
          --  as well.
          Reset (Parser.Global_Elements);
          Reset (Parser.Global_Types);
+         Reset (Parser.Global_Groups);
+         Reset (Parser.Global_AttrGroups);
 
          for T in Type_Tables.First .. Last (Parser.Types) loop
             Free (Parser.Types.Table (T).Details);
@@ -794,22 +840,6 @@ package body Schema.Schema_Readers is
    begin
       Get_Grammar_For_Namespace (Handler, Name.NS, G);
       Result := Lookup_Element (G, Handler, Name.Local);
-   end Lookup_With_NS;
-
-   --------------------
-   -- Lookup_With_NS --
-   --------------------
-
-   procedure Lookup_With_NS
-     (Handler    : access Schema_Reader'Class;
-      QName      : Symbol;
-      Result     : out XML_Attribute_Group)
-   is
-      Name : constant Qualified_Name := Resolve_QName (Handler, QName);
-      G    : XML_Grammar_NS;
-   begin
-      Get_Grammar_For_Namespace (Handler, Name.NS, G);
-      Result := Lookup_Attribute_Group (G, Handler, Name.Local);
    end Lookup_With_NS;
 
    ----------------
@@ -973,121 +1003,179 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
-      Name_Index : constant Integer :=
-        Get_Index (Atts, URI => Empty_String, Local_Name => Handler.Name);
-      Ref_Index : constant Integer :=
-        Get_Index (Atts, URI => Empty_String, Local_Name => Handler.Ref);
-      In_Redefine : constant Boolean := In_Redefine_Context (Handler.all);
+--        In_Redefine : constant Boolean := In_Redefine_Context (Handler.all);
+      Group : AttrGroup_Descr;
+      Local : Symbol;
    begin
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Name then
+               Group.Name := (NS    => Get_Namespace_URI (Handler.Target_NS),
+                              Local => Get_Value (Atts, J));
+            elsif Local = Handler.Ref then
+               Group.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
+            end if;
+         end if;
+      end loop;
+
       Handler.Contexts := new Context'
         (Typ            => Context_Attribute_Group,
-         Attr_Group     => Empty_Attribute_Group,
+         Attr_Group     => Group,
          Next           => Handler.Contexts);
 
-      if In_Redefine then
-         --  <redefine><attributeGroup>
-         --     <attributeGroup ref="foo" />
-         --     <attribute name="bar" />
-         --  </attributeGroup></redefine>    <!--  xsd003b.xsd test -->
+--        if In_Redefine then
+--           --  <redefine><attributeGroup>
+--           --     <attributeGroup ref="foo" />
+--           --     <attribute name="bar" />
+--           --  </attributeGroup></redefine>    <!--  xsd003b.xsd test -->
+--
+--           if Handler.Contexts.Next.Typ = Context_Attribute_Group then
+--          --  Ignore, this is just to indicate which group we are redefining,
+--           --  but this was already taken into account for the enclosing tag
+--              return;
+--           end if;
+--
+--           Handler.Contexts.Attr_Group := Lookup_Attribute_Group
+--             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
+--           if Debug then
+--              Output_Action
+--                (Ada_Name (Handler.Contexts)
+--                 & " := Lookup_Attribute_Group (Handler.Target_NS, """
+--                 & Get (Get_Value (Atts, Name_Index)).all & """);");
+--           end if;
+--
+--        elsif Name_Index /= -1 then
+--           Handler.Contexts.Attr_Group := Create_Global_Attribute_Group
+--             (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
+--           if Debug then
+--              Output_Action
+--                (Ada_Name (Handler.Contexts)
+--                 & " := Create_Global_Attribute_Group (Handler.Target_NS, """
+--                 & Get (Get_Value (Atts, Name_Index)).all & """);");
+--           end if;
+--
+--        elsif Ref_Index /= -1 then
+--           Lookup_With_NS
+--             (Handler, Get_Value (Atts, Ref_Index),
+--              Handler.Contexts.Attr_Group);
+--           if Debug then
+--              Output_Action
+--                (Ada_Name (Handler.Contexts) & " := Attr_Group");
+--           end if;
+--        end if;
+--
+--        if not In_Redefine then
+--           case Handler.Contexts.Next.Typ is
+--              when Context_Schema | Context_Redefine =>
+--                 null;
+--
+--              when Context_Type_Def =>
+--                 Ensure_Type (Handler, Handler.Contexts.Next);
+--                 Add_Attribute_Group
+--                   (Handler.Contexts.Next.Type_Validator,
+--                    Handler, Handler.Contexts.Attr_Group);
+--                 if Debug then
+--                    Output_Action
+--                      ("Add_Attribute_Group ("
+--                       & Ada_Name (Handler.Contexts.Next)
+--                       & ", " & Ada_Name (Handler.Contexts) & ");");
+--                 end if;
+--
+--              when Context_Extension =>
+--                 if Handler.Contexts.Next.Extension = null then
+--                    Handler.Contexts.Next.Extension := Extension_Of
+--                      (Handler.Target_NS,
+--                       Handler.Contexts.Next.Extension_Base, null);
+--                    if Debug then
+--                       Output_Action
+--                         (Ada_Name (Handler.Contexts.Next)
+--                          & " := Extension_Of ("
+--                          & Ada_Name (Handler.Contexts.Next.Extension_Base)
+--                          & ", null);");
+--                    end if;
+--                    Handler.Contexts.Next.Extension_Base := No_Type;
+--                 end if;
+--
+--                 Add_Attribute_Group
+--                   (Handler.Contexts.Next.Extension, Handler,
+--                    Handler.Contexts.Attr_Group);
+--                 if Debug then
+--                    Output_Action
+--                      ("Add_Attribute_Group ("
+--                       & Ada_Name (Handler.Contexts.Next)
+--                       & ", " & Ada_Name (Handler.Contexts) & ");");
+--                 end if;
+--
+--              when Context_Attribute_Group =>
+--                 Add_Attribute_Group
+--                   (Handler.Contexts.Next.Attr_Group, Handler,
+--                    Handler.Contexts.Attr_Group);
+--                 if Debug then
+--                    Output_Action ("Add_Attribute_Group ("
+--                            & Ada_Name (Handler.Contexts.Next)
+--                            & ", " & Ada_Name (Handler.Contexts) & ");");
+--                 end if;
+--
+--              when others =>
+--                 if Debug then
+--                    Output_Action
+--                      ("Context is " & Handler.Contexts.Next.Typ'Img);
+--                 end if;
+--                 Raise_Exception
+--                   (XML_Not_Implemented'Identity,
+--                    "Unsupported: ""attributeGroup"" in this context");
+--           end case;
+--        end if;
+   end Create_Attribute_Group;
 
-         if Handler.Contexts.Next.Typ = Context_Attribute_Group then
-            --  Ignore, this is just to indicate which group we are redefining,
-            --  but this was already taken into account for the enclosing tag
+   ----------------------------
+   -- Finish_Attribute_Group --
+   ----------------------------
+
+   procedure Finish_Attribute_Group (Handler : access Schema_Reader'Class) is
+   begin
+      case Handler.Contexts.Next.Typ is
+         when Context_Schema | Context_Redefine =>
+            Set (Handler.Global_AttrGroups,
+                 Handler.Contexts.Attr_Group.Name,
+                 Handler.Contexts.Attr_Group);
+         when Context_Type_Def =>
+            Append
+              (Handler.Types.Table
+                 (Handler.Contexts.Next.Type_Info).Attributes,
+               (Kind      => Kind_Group,
+                Group_Ref => Handler.Contexts.Attr_Group.Ref));
+         when others =>
+            null;
+      end case;
+   end Finish_Attribute_Group;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append (List : in out Attr_Array_Access; Attr : Attr_Descr) is
+      Tmp : Attr_Array_Access;
+   begin
+      if List = null then
+         List := new Attr_Array'(1 .. 10 => (Kind => Kind_Unset));
+      elsif List (List'Last).Kind = Kind_Unset then
+         Tmp := new Attr_Array (1 .. List'Last + 10);
+         Tmp (List'Range) := List.all;
+         Tmp (List'Last + 1 .. Tmp'Last) :=
+           (others => Attr_Descr'(Kind => Kind_Unset));
+         Unchecked_Free (List);
+         List := Tmp;
+      end if;
+
+      for L in List'Range loop
+         if List (L).Kind = Kind_Unset then
+            List (L) := Attr;
             return;
          end if;
-
-         Handler.Contexts.Attr_Group := Lookup_Attribute_Group
-           (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
-         if Debug then
-            Output_Action
-              (Ada_Name (Handler.Contexts)
-               & " := Lookup_Attribute_Group (Handler.Target_NS, """
-               & Get (Get_Value (Atts, Name_Index)).all & """);");
-         end if;
-
-      elsif Name_Index /= -1 then
-         Handler.Contexts.Attr_Group := Create_Global_Attribute_Group
-           (Handler.Target_NS, Handler, Get_Value (Atts, Name_Index));
-         if Debug then
-            Output_Action
-              (Ada_Name (Handler.Contexts)
-               & " := Create_Global_Attribute_Group (Handler.Target_NS, """
-               & Get (Get_Value (Atts, Name_Index)).all & """);");
-         end if;
-
-      elsif Ref_Index /= -1 then
-         Lookup_With_NS
-           (Handler, Get_Value (Atts, Ref_Index),
-            Handler.Contexts.Attr_Group);
-         if Debug then
-            Output_Action
-              (Ada_Name (Handler.Contexts) & " := Attr_Group");
-         end if;
-      end if;
-
-      if not In_Redefine then
-         case Handler.Contexts.Next.Typ is
-            when Context_Schema | Context_Redefine =>
-               null;
-
-            when Context_Type_Def =>
-               Ensure_Type (Handler, Handler.Contexts.Next);
-               Add_Attribute_Group
-                 (Handler.Contexts.Next.Type_Validator,
-                  Handler, Handler.Contexts.Attr_Group);
-               if Debug then
-                  Output_Action
-                    ("Add_Attribute_Group ("
-                     & Ada_Name (Handler.Contexts.Next)
-                     & ", " & Ada_Name (Handler.Contexts) & ");");
-               end if;
-
-            when Context_Extension =>
-               if Handler.Contexts.Next.Extension = null then
-                  Handler.Contexts.Next.Extension := Extension_Of
-                    (Handler.Target_NS,
-                     Handler.Contexts.Next.Extension_Base, null);
-                  if Debug then
-                     Output_Action
-                       (Ada_Name (Handler.Contexts.Next)
-                        & " := Extension_Of ("
-                        & Ada_Name (Handler.Contexts.Next.Extension_Base)
-                        & ", null);");
-                  end if;
-                  Handler.Contexts.Next.Extension_Base := No_Type;
-               end if;
-
-               Add_Attribute_Group
-                 (Handler.Contexts.Next.Extension, Handler,
-                  Handler.Contexts.Attr_Group);
-               if Debug then
-                  Output_Action
-                    ("Add_Attribute_Group ("
-                     & Ada_Name (Handler.Contexts.Next)
-                     & ", " & Ada_Name (Handler.Contexts) & ");");
-               end if;
-
-            when Context_Attribute_Group =>
-               Add_Attribute_Group
-                 (Handler.Contexts.Next.Attr_Group, Handler,
-                  Handler.Contexts.Attr_Group);
-               if Debug then
-                  Output_Action ("Add_Attribute_Group ("
-                          & Ada_Name (Handler.Contexts.Next)
-                          & ", " & Ada_Name (Handler.Contexts) & ");");
-               end if;
-
-            when others =>
-               if Debug then
-                  Output_Action
-                    ("Context is " & Handler.Contexts.Next.Typ'Img);
-               end if;
-               Raise_Exception
-                 (XML_Not_Implemented'Identity,
-                  "Unsupported: ""attributeGroup"" in this context");
-         end case;
-      end if;
-   end Create_Attribute_Group;
+      end loop;
+   end Append;
 
    --------------------
    -- Create_Include --
@@ -1248,8 +1336,6 @@ package body Schema.Schema_Readers is
          Handler.Contexts,
          Create_Any_Attribute
            (Handler.Target_NS, Process_Contents, Kind, List (1 .. Last - 1)),
-         "Create_Any_Attribute (" & Process_Contents'Img
-         & ", " & Kind'Img & """);",
          Is_Local => False);
    end Create_Any_Attribute;
 
@@ -2455,14 +2541,15 @@ package body Schema.Schema_Readers is
      (Handler        : access Schema_Reader'Class;
       In_Context     : Context_Access;
       Attribute      : Attribute_Validator;
-      Attribute_Name : Byte_Sequence;
       Is_Local       : Boolean) is
    begin
       case In_Context.Typ is
          when Context_Type_Def =>
-            Add_Attribute
+            Append
               (Handler.Types.Table (In_Context.Type_Info).Attributes,
-               Attribute);
+               (Kind     => Kind_Attribute,
+                Attr     => Attribute,
+                Is_Local => Is_Local));
 
          when Context_Schema | Context_Redefine =>
             null;
@@ -2481,29 +2568,29 @@ package body Schema.Schema_Readers is
                In_Context.Extension_Base := No_Type;
             end if;
 
-            Add_Attribute (In_Context.Extension, Attribute,
-                           Is_Local => Is_Local);
-            if Debug then
-               Output_Action ("Add_Attribute (" & Ada_Name (In_Context) & ", "
-                       & Attribute_Name & ");");
-            end if;
+--              Append (In_Context.Extension,
+--                      (Kind     => Kind_Attribute,
+--                       Attr     => Attribute,
+--                       Is_Local => Is_Local));
+--              if Debug then
+--             Output_Action ("Add_Attribute (" & Ada_Name (In_Context) & ", "
+--                         & Attribute_Name & ");");
+--              end if;
 
          when Context_Restriction =>
-            Create_Restricted (Handler, In_Context);
-            Add_Attribute (In_Context.Restricted, Attribute,
-                           Is_Local => Is_Local);
-            if Debug then
-               Output_Action ("Add_Attribute (" & Ada_Name (In_Context) & ", "
-                       & Attribute_Name & ");");
-            end if;
+            null;
+--              Create_Restricted (Handler, In_Context);
+--            Append (In_Context.Restricted, Attribute, Is_Local => Is_Local);
+--              if Debug then
+--             Output_Action ("Add_Attribute (" & Ada_Name (In_Context) & ", "
+--                         & Attribute_Name & ");");
+--              end if;
 
          when Context_Attribute_Group =>
-            Add_Attribute (In_Context.Attr_Group, Attribute,
-                           Is_Local => Is_Local);
-            if Debug then
-               Output_Action ("Add_Attribute (" & Ada_Name (In_Context) & ", "
-                       & Attribute_Name & ");");
-            end if;
+            Append (In_Context.Attr_Group.Attributes,
+                    (Kind => Kind_Attribute,
+                     Attr => Attribute,
+                     Is_Local => Is_Local));
 
          when Context_Element | Context_Sequence | Context_Choice
             | Context_Attribute | Context_All
@@ -2533,7 +2620,6 @@ package body Schema.Schema_Readers is
 
       Insert_Attribute
         (Handler, Handler.Contexts.Next, Handler.Contexts.Attribute,
-         Ada_Name (Handler.Contexts),
          Is_Local => not Handler.Contexts.Attribute_Is_Ref);
    end Finish_Attribute;
 
@@ -2988,9 +3074,10 @@ package body Schema.Schema_Readers is
       then
          Handled := False;
 
-      elsif Local_Name = Handler.Redefine
-        or else Local_Name = Handler.Attribute_Group
-      then
+      elsif Local_Name = Handler.Attribute_Group then
+         Finish_Attribute_Group (H);
+
+      elsif Local_Name = Handler.Redefine then
          null;
 
       elsif Local_Name = Handler.Group then
@@ -3101,9 +3188,9 @@ package body Schema.Schema_Readers is
          case Self.Kind is
             when Type_Empty | Type_Element | Type_Any =>
                null;
-            when Type_Sequence => Free (Self.First_In_Seq);
-            when Type_Choice   => Free (Self.First_In_Choice);
-            when Type_Group    => Free (Self.Group.Details);
+            when Type_Sequence  => Free (Self.First_In_Seq);
+            when Type_Choice    => Free (Self.First_In_Choice);
+            when Type_Group     => Free (Self.Group.Details);
          end case;
 
          Unchecked_Free (Self);
