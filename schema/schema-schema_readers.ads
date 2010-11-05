@@ -180,11 +180,7 @@ private
                          Context_Attribute_Group,
                          Context_Attribute);
 
-   type Context (Typ : Context_Type);
-   type Context_Access is access all Context;
-   type Context (Typ : Context_Type) is record
-      Next        : Context_Access;
-
+   type Context (Typ : Context_Type := Context_Schema) is record
       case Typ is
          when Context_Type_Def        =>
             Type_Info      : Type_Index;
@@ -215,6 +211,9 @@ private
             Attribute_Is_Ref : Boolean;
       end case;
    end record;
+   type Context_Access is access all Context;
+   type Context_Array is array (Natural range <>) of aliased Context;
+   type Context_Array_Access is access all Context_Array;
 
    type Header_Num is new Interfaces.Integer_32 range 0 .. 1023;
    function Hash (Name : Qualified_Name) return Header_Num;
@@ -272,7 +271,8 @@ private
       --  need to ignore all children
 
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
-      Contexts        : Context_Access;
+      Contexts        : Context_Array_Access;
+      Contexts_Last   : Natural := 0;
 
       --  The following data should be shared among all readers that parse a
       --  given XSD and all its namespaces. In fact, it might be better to have

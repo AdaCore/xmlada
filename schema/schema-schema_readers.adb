@@ -46,19 +46,26 @@ package body Schema.Schema_Readers is
    use Type_Tables, Type_HTables, Element_HTables, Group_HTables;
    use AttrGroup_HTables;
 
+   Default_Contexts : constant := 30;
+   --  Default number of nested levels in a schema.
+   --  If the actual schema uses more, we will simply reallocate some memory.
+
    Max_Namespaces_In_Any_Attribute : constant := 50;
    --  Maximum number of namespaces for a <anyAttribute>
    --  This only impacts the parsing of the grammar, so can easily be raised if
    --  need be.
 
+   procedure Push_Context
+     (Handler : access Schema_Reader'Class; Ctx : Context);
+   --  Add a new context to the list
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Attr_Array, Attr_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Context_Array, Context_Array_Access);
 
    procedure Free (Self : in out Type_Details_Access);
    --  Free [Self], [Self.Next] and so on
-
-   procedure Free (C : in out Context_Access; Recurse : Boolean);
-   --  Free the memory occupied by C
 
    procedure Get_Grammar_For_Namespace
      (Handler : access Schema_Reader'Class;
@@ -132,7 +139,7 @@ package body Schema.Schema_Readers is
 
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
-      In_Context     : Context_Access;
+      In_Context     : in out Context;
       Attribute      : Attribute_Validator;
       Is_Local       : Boolean);
    --  Insert attribute at the right location in In_Context.
@@ -238,38 +245,6 @@ package body Schema.Schema_Readers is
    --  Applies to a Context_Restriction, ensures that the restriction has been
    --  created appropriately.
 
-   procedure Debug_Dump_Contexts
-     (Handler : Schema_Reader'Class; Prefix : String);
-   --  List the current contexts
-
-   -------------------------
-   -- Debug_Dump_Contexts --
-   -------------------------
-
-   procedure Debug_Dump_Contexts
-     (Handler : Schema_Reader'Class; Prefix : String)
-   is
-      C : Context_Access := Handler.Contexts;
-   begin
-      if Debug then
-         while C /= null loop
-            case C.Typ is
-               when Context_Type_Def =>
-                  Debug_Output
-                    (Prefix & "=" & C.Typ'Img
-                     & " mixed="
-                     & Handler.Types.Table (C.Type_Info).Mixed'Img
-                     & " simple="
-                     & Handler.Types.Table (C.Type_Info).Simple_Content'Img);
-
-               when others =>
-                  Debug_Output (Prefix & "=" & C.Typ'Img);
-            end case;
-            C := C.Next;
-         end loop;
-      end if;
-   end Debug_Dump_Contexts;
-
    ---------------
    -- To_String --
    ---------------
@@ -298,15 +273,12 @@ package body Schema.Schema_Readers is
    -------------------------
 
    function In_Redefine_Context
-     (Handler : Schema_Reader'Class) return Boolean
-   is
-      Tmp : Context_Access := Handler.Contexts;
+     (Handler : Schema_Reader'Class) return Boolean is
    begin
-      while Tmp /= null loop
-         if Tmp.Typ = Context_Redefine then
+      for J in 1 .. Handler.Contexts_Last loop
+         if Handler.Contexts (J).Typ = Context_Redefine then
             return True;
          end if;
-         Tmp := Tmp.Next;
       end loop;
       return False;
    end In_Redefine_Context;
@@ -864,11 +836,13 @@ package body Schema.Schema_Readers is
 --           if Do_Global_Check then
 --              Global_Check (Parser'Unchecked_Access, Parser.Target_NS);
 --           end if;
+
+         Unchecked_Free (Parser.Contexts);
       end if;
 
    exception
       when others =>
-         Free (Parser.Contexts, Recurse => True);
+         Unchecked_Free (Parser.Contexts);
          raise;
    end Parse;
 
@@ -988,6 +962,28 @@ package body Schema.Schema_Readers is
    end Get_Occurs;
 
    ------------------
+   -- Push_Context --
+   ------------------
+
+   procedure Push_Context
+     (Handler : access Schema_Reader'Class; Ctx : Context)
+   is
+      Tmp : Context_Array_Access;
+   begin
+      if Handler.Contexts_Last = 0 then
+         Handler.Contexts := new Context_Array (1 .. Default_Contexts);
+      elsif Handler.Contexts_Last = Handler.Contexts'Last then
+         Tmp := new Context_Array (1 .. Handler.Contexts'Last + 30);
+         Tmp (Handler.Contexts'Range) := Handler.Contexts.all;
+         Unchecked_Free (Handler.Contexts);
+         Handler.Contexts := Tmp;
+      end if;
+
+      Handler.Contexts_Last := Handler.Contexts_Last + 1;
+      Handler.Contexts (Handler.Contexts_Last) := Ctx;
+   end Push_Context;
+
+   ------------------
    -- Create_Group --
    ------------------
 
@@ -1012,7 +1008,7 @@ package body Schema.Schema_Readers is
          end if;
       end loop;
 
-      case Handler.Contexts.Typ is
+      case Handler.Contexts (Handler.Contexts_Last).Typ is
          when Context_Schema | Context_Redefine =>
             null;
 
@@ -1032,12 +1028,9 @@ package body Schema.Schema_Readers is
                "Unsupported: ""group"" in this context");
       end case;
 
-      --  ??? Only needed for toplevel groups, but then End_Element will
-      --  remove the wrong context...
-      Handler.Contexts := new Context'
-        (Typ             => Context_Group,
-         Group           => Group,
-         Next            => Handler.Contexts);
+      Push_Context (Handler,
+                    (Typ   => Context_Group,
+                     Group => Group));
 
       --  Do not use In_Redefine_Context, since this only applies for types
       --  that are redefined
@@ -1098,12 +1091,14 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Finish_Group (Handler : access Schema_Reader'Class) is
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
-      case Handler.Contexts.Next.Typ is
+      case Next.Typ is
          when Context_Schema | Context_Redefine =>
-            Set (Handler.Global_Groups,
-                 Handler.Contexts.Group.Name,
-                 Handler.Contexts.Group);
+            Set (Handler.Global_Groups, Ctx.Group.Name, Ctx.Group);
          when others =>
             null;
       end case;
@@ -1133,10 +1128,9 @@ package body Schema.Schema_Readers is
          end if;
       end loop;
 
-      Handler.Contexts := new Context'
-        (Typ            => Context_Attribute_Group,
-         Attr_Group     => Group,
-         Next           => Handler.Contexts);
+      Push_Context
+        (Handler, (Typ        => Context_Attribute_Group,
+                   Attr_Group => Group));
 
 --        if In_Redefine then
 --           --  <redefine><attributeGroup>
@@ -1204,24 +1198,25 @@ package body Schema.Schema_Readers is
    ----------------------------
 
    procedure Finish_Attribute_Group (Handler : access Schema_Reader'Class) is
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
-      case Handler.Contexts.Next.Typ is
+      case Next.Typ is
          when Context_Schema | Context_Redefine =>
-            Set (Handler.Global_AttrGroups,
-                 Handler.Contexts.Attr_Group.Name,
-                 Handler.Contexts.Attr_Group);
+            Set
+              (Handler.Global_AttrGroups, Ctx.Attr_Group.Name, Ctx.Attr_Group);
          when Context_Type_Def =>
             Append
-              (Handler.Types.Table
-                 (Handler.Contexts.Next.Type_Info).Attributes,
+              (Handler.Types.Table (Next.Type_Info).Attributes,
                (Kind      => Kind_Group,
-                Group_Ref => Handler.Contexts.Attr_Group.Ref));
+                Group_Ref => Ctx.Attr_Group.Ref));
          when Context_Extension =>
             Append
-              (Handler.Contexts.Next.Extension.Extension.Attributes,
+              (Next.Extension.Extension.Attributes,
                (Kind      => Kind_Group,
-                Group_Ref => Handler.Contexts.Attr_Group.Ref));
-
+                Group_Ref => Ctx.Attr_Group.Ref));
          when others =>
             null;
       end case;
@@ -1302,9 +1297,7 @@ package body Schema.Schema_Readers is
          Do_Global_Check => True,
          Xsd_File => Get_Value (Atts, Location_Index));
 
-      Handler.Contexts := new Context'
-        (Typ            => Context_Redefine,
-         Next           => Handler.Contexts);
+      Push_Context (Handler, (Typ => Context_Redefine));
    end Create_Redefine;
 
    -------------------
@@ -1409,7 +1402,7 @@ package body Schema.Schema_Readers is
 
       Insert_Attribute
         (Handler,
-         Handler.Contexts,
+         Handler.Contexts (Handler.Contexts_Last),
          Create_Any_Attribute
            (Handler.Target_NS, Process_Contents, Kind, List (1 .. Last - 1)),
          Is_Local => False);
@@ -1505,7 +1498,7 @@ package body Schema.Schema_Readers is
            (Handler, "#Default and Fixed cannot be both specified");
       end if;
 
-      if Handler.Contexts.Typ /= Context_Schema then
+      if Handler.Contexts (Handler.Contexts_Last).Typ /= Context_Schema then
          Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
          Details := new Type_Details'
            (Kind         => Type_Element,
@@ -1516,10 +1509,10 @@ package body Schema.Schema_Readers is
          Insert_In_Type (Handler, Details);
       end if;
 
-      Handler.Contexts := new Context'
-        (Typ            => Context_Element,
-         Element        => Info,
-         Next           => Handler.Contexts);
+      Push_Context
+        (Handler,
+         (Typ     => Context_Element,
+          Element => Info));
    end Create_Element;
 
    --------------------
@@ -1527,10 +1520,13 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Finish_Element (Handler : access Schema_Reader'Class) is
-      Ctx  : constant Context_Access := Handler.Contexts;
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
       Info : constant Element_Descr := Ctx.Element;
    begin
-      case Handler.Contexts.Next.Typ is
+      case Next.Typ is
          when Context_Schema | Context_Redefine =>
             Set (Handler.Global_Elements, Info.Name, Info);
          when others =>
@@ -1579,23 +1575,25 @@ package body Schema.Schema_Readers is
 
    procedure Create_Simple_Type
      (Handler  : access Schema_Reader'Class;
-      Atts     : Sax_Attribute_List) is
+      Atts     : Sax_Attribute_List)
+   is
+      Ctx : Context_Access := Handler.Contexts (Handler.Contexts_Last)'Access;
    begin
-      if Handler.Contexts.Typ = Context_Restriction
-        and then Handler.Contexts.Restriction_Base = No_Type
+      if Ctx.Typ = Context_Restriction
+        and then Ctx.Restriction_Base = No_Type
       then
          --  Info.Simple_Content := True;
-         Handler.Contexts := new Context'
-           (Typ               => Context_Type_Def,
-            Type_Info         => No_Type_Index,
-            Type_Validator    => null,
-            Redefined_Type    => No_Type,
-            Next              => Handler.Contexts);
+         Push_Context
+           (Handler,
+            (Typ               => Context_Type_Def,
+             Type_Info         => No_Type_Index,
+             Type_Validator    => null,
+             Redefined_Type    => No_Type));
 
       else
          Create_Complex_Type (Handler, Atts);
-         Handler.Types.Table (Handler.Contexts.Type_Info).Simple_Content :=
-           True;
+         Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
+         Handler.Types.Table (Ctx.Type_Info).Simple_Content := True;
       end if;
    end Create_Simple_Type;
 
@@ -1604,18 +1602,21 @@ package body Schema.Schema_Readers is
    ------------------------
 
    procedure Finish_Simple_Type (Handler : access Schema_Reader'Class) is
-      C    : constant Context_Access := Handler.Contexts;
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
       Typ  : XML_Type;
    begin
-      if C.Next.Typ = Context_Restriction
-        and then C.Next.Restriction_Base = No_Type
+      if Next.Typ = Context_Restriction
+        and then Next.Restriction_Base = No_Type
       then
-         Ensure_Type (Handler, C);
-         Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
-         Set_Final (Typ, Handler.Types.Table (C.Type_Info).Final);
-         C.Next.Restriction_Base := Typ;
+         Ensure_Type (Handler, Ctx);
+         Typ := Create_Local_Type (Handler.Target_NS, Ctx.Type_Validator);
+         Set_Final (Typ, Handler.Types.Table (Ctx.Type_Info).Final);
+         Next.Restriction_Base := Typ;
       else
-         Handler.Types.Table (C.Type_Info).Mixed := True;
+         Handler.Types.Table (Ctx.Type_Info).Mixed := True;
          Finish_Complex_Type (Handler);
       end if;
    end Finish_Simple_Type;
@@ -1739,6 +1740,9 @@ package body Schema.Schema_Readers is
       Is_Set : Boolean;
       Info   : Type_Descr;
       Local  : Symbol;
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Redefined : XML_Type := No_Type;
 
    begin
       Info.Block := Get_Block_Default (Handler.Target_NS);
@@ -1767,30 +1771,25 @@ package body Schema.Schema_Readers is
       Info.Simple_Content := False;
 
       Append (Handler.Types, Info);
-      case Handler.Contexts.Typ is
+      case Ctx.Typ is
          when Context_Schema | Context_Redefine =>
             Set (Handler.Global_Types, Info.Name, Last (Handler.Types));
          when others =>
             null;
       end case;
 
-      Handler.Contexts := new Context'
-        (Typ               => Context_Type_Def,
-         Type_Info         => Last (Handler.Types),
-         Type_Validator    => null,
-         Redefined_Type    => No_Type,
-         Next              => Handler.Contexts);
-
       --  Do not use In_Redefine_Context, since this only applies for types
       --  that are redefined
-      if Handler.Contexts.Next.Typ = Context_Redefine then
-         Handler.Contexts.Redefined_Type := Redefine_Type
-           (Handler.Target_NS, Info.Name.Local);
-         if Debug then
-            Output_Action ("Validator := Redefine_Type (Handler.Target_NS, """
-                    & To_QName (Info.Name) & """);");
-         end if;
+      if Ctx.Typ = Context_Redefine then
+         Redefined := Redefine_Type (Handler.Target_NS, Info.Name.Local);
       end if;
+
+      Push_Context
+        (Handler,
+         (Typ               => Context_Type_Def,
+          Type_Info         => Last (Handler.Types),
+          Type_Validator    => null,
+          Redefined_Type    => Redefined));
    end Create_Complex_Type;
 
    -----------------
@@ -1801,6 +1800,10 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class; C : Context_Access)
    is
       Base  : XML_Type;
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
       if C.Type_Validator = null then
          --  Create a restriction, instead of a simple ur-Type, so that we can
@@ -1827,13 +1830,9 @@ package body Schema.Schema_Readers is
            (Handler.Schema_NS, Handler, Base);
       end if;
 
-      case Handler.Contexts.Next.Typ is
-         when Context_Element =>
-            Handler.Contexts.Next.Element.Local_Type :=
-              Handler.Contexts.Type_Info;
-
-         when others =>
-            null;
+      case Next.Typ is
+         when Context_Element => Next.Element.Local_Type := Ctx.Type_Info;
+         when others          => null;
       end case;
    end Ensure_Type;
 
@@ -1842,44 +1841,27 @@ package body Schema.Schema_Readers is
    -------------------------
 
    procedure Finish_Complex_Type (Handler  : access Schema_Reader'Class) is
-      C   : constant Context_Access := Handler.Contexts;
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
       Typ : XML_Type;
-      Info : Type_Descr renames Handler.Types.Table (C.Type_Info);
+      Info : Type_Descr renames Handler.Types.Table (Ctx.Type_Info);
    begin
-      Ensure_Type (Handler, C);
+      Ensure_Type (Handler, Ctx);
       if Info.Name = No_Qualified_Name then
-         Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
-         if Debug then
-            Output_Action
-              (Ada_Name (C) & " := Create_Local_Type (Validator);");
-         end if;
+         Typ := Create_Local_Type (Handler.Target_NS, Ctx.Type_Validator);
       else
          Typ := Create_Global_Type
-           (Handler.Target_NS, Handler, Info.Name.Local, C.Type_Validator);
-         if Debug then
-            Output_Action (Ada_Name (C)
-                    & " := Create_Global_Type (Target_NS, """
-                    & To_QName (Info.Name) & """, Validator);");
-         end if;
+           (Handler.Target_NS, Handler, Info.Name.Local, Ctx.Type_Validator);
       end if;
 
       Set_Block (Typ, Info.Block);
-      if Debug then
-         Output_Action ("Set_Block (" & Ada_Name (Typ) & ", "
-                 & To_String (Info.Block) & ")");
-         Output_Action ("Set_Final ("
-                        & Ada_Name (Typ) & ", "
-                        & To_String (Info.Final) & ");");
-         Output_Action ("Set_Mixed_Content ("
-           & Ada_Name (C) & ", "
-           & Boolean'Image (Info.Mixed or Info.Simple_Content) & ");");
-      end if;
-
       Set_Final (Typ, Info.Final);
       Set_Mixed_Content
         (Get_Validator (Typ), Info.Mixed or Info.Simple_Content);
 
-      case C.Next.Typ is
+      case Next.Typ is
          when Context_Schema | Context_Redefine =>
             null;
          when Context_Element =>
@@ -1890,20 +1872,10 @@ package body Schema.Schema_Readers is
 --              end if;
             --  Set_Type (C.Next.Element, Handler, Typ);
          when Context_Attribute =>
-            Set_Type (C.Next.Attribute, Typ);
-            if Debug then
-               Output_Action ("Set_Type (" & Ada_Name (C.Next)
-                       & ", " & Ada_Name (Typ) & ");");
-            end if;
+            Set_Type (Next.Attribute, Typ);
          when Context_List =>
-            C.Next.List_Items := Typ;
-            if Debug then
-               Output_Action ("Validator := " & Ada_Name (C) & ";");
-            end if;
+            Next.List_Items := Typ;
          when others =>
-            if Debug then
-               Output_Action ("Can't handle nested type decl");
-            end if;
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Unsupported: ""complexType"" in this context");
@@ -1918,11 +1890,13 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
       Restr      : Restriction_Descr;
       Base       : XML_Type;
       Details    : Type_Details_Access;
       Local      : Symbol;
-      In_Type    : constant Type_Index := Handler.Contexts.Type_Info;
+      In_Type    : constant Type_Index := Ctx.Type_Info;
    begin
       for J in 1 .. Get_Length (Atts) loop
          if Get_URI (Atts, J) = Empty_String then
@@ -1972,13 +1946,13 @@ package body Schema.Schema_Readers is
          Insert_In_Type (Handler, Details);
       end if;
 
-      Handler.Contexts := new Context'
-        (Typ                   => Context_Restriction,
-         Restriction           => Details,
-         Restriction_Base      => Base,
-         Restricted            => null,
-         Restriction_Validator => null,
-         Next                  => Handler.Contexts);
+      Push_Context
+        (Handler,
+         (Typ                   => Context_Restriction,
+          Restriction           => Details,
+          Restriction_Base      => Base,
+          Restricted            => null,
+          Restriction_Validator => null));
    end Create_Restriction;
 
    -----------------------
@@ -2015,17 +1989,20 @@ package body Schema.Schema_Readers is
    ------------------------
 
    procedure Finish_Restriction (Handler : access Schema_Reader'Class) is
-      In_Type    : constant Type_Index := Handler.Contexts.Next.Type_Info;
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
+      In_Type    : constant Type_Index := Next.Type_Info;
    begin
       if In_Type = No_Type_Index
         or else Handler.Types.Table (In_Type).Simple_Content
       then
-         Create_Restricted (Handler, Handler.Contexts);
+         Create_Restricted (Handler, Ctx);
 
-         case Handler.Contexts.Next.Typ is
+         case Next.Typ is
             when Context_Type_Def =>
-               Handler.Contexts.Next.Type_Validator :=
-                 Handler.Contexts.Restricted;
+               Next.Type_Validator := Ctx.Restricted;
             when others =>
                Raise_Exception
                  (XML_Not_Implemented'Identity,
@@ -2044,14 +2021,12 @@ package body Schema.Schema_Readers is
    is
       Member_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Member_Types);
+      Union : constant XML_Validator := Create_Union (Handler.Target_NS);
    begin
-      Handler.Contexts := new Context'
-        (Typ        => Context_Union,
-         Union      => Create_Union (Handler.Target_NS),
-         Next       => Handler.Contexts);
-      if Debug then
-         Output_Action (Ada_Name (Handler.Contexts) & " := Create_Union;");
-      end if;
+      Push_Context
+        (Handler,
+         (Typ   => Context_Union,
+          Union => Union));
 
       if Member_Index /= -1 then
          declare
@@ -2063,12 +2038,7 @@ package body Schema.Schema_Readers is
                Typ : XML_Type;
             begin
                Lookup_With_NS (Handler, S, Typ);
-               Add_Union (Handler.Contexts.Union, Handler, Typ);
-               if Debug then
-                  Output_Action
-                    ("Add_Union ("
-                     & Ada_Name (Handler.Contexts) & ", """ & Str & """)");
-               end if;
+               Add_Union (Union, Handler, Typ);
             end Cb_Item;
 
             procedure For_Each is new For_Each_Item (Cb_Item);
@@ -2083,19 +2053,15 @@ package body Schema.Schema_Readers is
    ------------------
 
    procedure Finish_Union (Handler : access Schema_Reader'Class) is
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
-      case Handler.Contexts.Next.Typ is
+      case Next.Typ is
          when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator := Handler.Contexts.Union;
-            if Debug then
-               Output_Action
-                 ("Validator := " & Ada_Name (Handler.Contexts) & ";");
-            end if;
-
+            Next.Type_Validator := Ctx.Union;
          when others =>
-            if Debug then
-               Output_Action ("Can't handle nested unions");
-            end if;
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Unsupported: ""union"" in this context");
@@ -2110,8 +2076,9 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Info : Type_Descr
-         renames Handler.Types.Table (Handler.Contexts.Type_Info);
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Info : Type_Descr renames Handler.Types.Table (Ctx.Type_Info);
       Ext   : Extension_Descr;
       Local : Symbol;
       Details : Type_Details_Access;
@@ -2146,10 +2113,10 @@ package body Schema.Schema_Readers is
          Next       => null,
          Extension  => Ext);
       Insert_In_Type (Handler, Details);
-      Handler.Contexts := new Context'
-        (Typ       => Context_Extension,
-         Extension => Details,
-         Next      => Handler.Contexts);
+      Push_Context
+        (Handler,
+         (Typ       => Context_Extension,
+          Extension => Details));
    end Create_Extension;
 
    -----------------
@@ -2170,10 +2137,10 @@ package body Schema.Schema_Readers is
          Lookup_With_NS (Handler, Name, Result => Items);
       end if;
 
-      Handler.Contexts := new Context'
-        (Typ            => Context_List,
-         List_Items     => Items,
-         Next           => Handler.Contexts);
+      Push_Context
+        (Handler,
+         (Typ        => Context_List,
+          List_Items => Items));
    end Create_List;
 
    -----------------
@@ -2181,19 +2148,16 @@ package body Schema.Schema_Readers is
    -----------------
 
    procedure Finish_List (Handler : access Schema_Reader'Class) is
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
-      case Handler.Contexts.Next.Typ is
+      case Next.Typ is
          when Context_Type_Def =>
-            Handler.Contexts.Next.Type_Validator :=
-              Get_Validator
-                (List_Of (Handler.Target_NS, Handler.Contexts.List_Items));
-            if Debug then
-               Output_Action ("Validator := List_Of (Validator);");
-            end if;
+            Next.Type_Validator :=
+              Get_Validator (List_Of (Handler.Target_NS, Ctx.List_Items));
          when others =>
-            if Debug then
-               Output_Action ("Can't handle nested list");
-            end if;
             Raise_Exception
               (XML_Not_Implemented'Identity,
                "Unsupported: ""list"" in this context");
@@ -2227,7 +2191,9 @@ package body Schema.Schema_Readers is
          end if;
       end Append;
 
-      Ctx  : constant Context_Access := Handler.Contexts;
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+
    begin
       case Ctx.Typ is
          when Context_Type_Def =>
@@ -2281,10 +2247,10 @@ package body Schema.Schema_Readers is
          Next            => null,
          First_In_Choice => null);
       Insert_In_Type (Handler, Choice);
-      Handler.Contexts := new Context'
-        (Typ         => Context_Choice,
-         Choice      => Choice,
-         Next        => Handler.Contexts);
+      Push_Context
+        (Handler,
+         (Typ    => Context_Choice,
+          Choice => Choice));
    end Create_Choice;
 
    ---------------------
@@ -2306,10 +2272,10 @@ package body Schema.Schema_Readers is
          Next         => null,
          First_In_Seq => null);
       Insert_In_Type (Handler, Seq);
-      Handler.Contexts := new Context'
-        (Typ  => Context_Sequence,
-         Seq  => Seq,
-         Next => Handler.Contexts);
+      Push_Context
+        (Handler,
+         (Typ  => Context_Sequence,
+          Seq  => Seq));
    end Create_Sequence;
 
    ----------------------
@@ -2336,6 +2302,9 @@ package body Schema.Schema_Readers is
         Get_Index (Atts, Empty_String, Handler.Default);
       Target_NS_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Namespace_Target);
+
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
 
       Att : Attribute_Validator;
       Typ : XML_Type := No_Type;
@@ -2454,14 +2423,8 @@ package body Schema.Schema_Readers is
          end if;
       end if;
 
-      Handler.Contexts := new Context'
-        (Typ              => Context_Attribute,
-         Attribute        => null,
-         Attribute_Is_Ref => Ref_Index /= -1,
-         Next             => Handler.Contexts);
-
       if Name_Index /= -1 then
-         case Handler.Contexts.Next.Typ is
+         case Ctx.Typ is
             when Context_Attribute_Group | Context_Type_Def =>
                null;
 
@@ -2476,7 +2439,7 @@ package body Schema.Schema_Readers is
                end if;
          end case;
 
-         case Handler.Contexts.Next.Typ is
+         case Ctx.Typ is
             when Context_Schema | Context_Redefine =>
                Att := Create_Global_Attribute
                  (Local_Name     => Get_Value (Atts, Name_Index),
@@ -2487,17 +2450,6 @@ package body Schema.Schema_Readers is
                   Attribute_Form => Form,
                   Fixed          => Get_Fixed);
 
-               if Debug then
-                  Output_Action (Ada_Name (Handler.Contexts)
-                          & " := Create_Global_Attribute ("""
-                          & Get (Get_Value (Atts, Name_Index)).all
-                          & """, Handler.Target_NS, "
-                          & Ada_Name (Typ)
-                          & ", " & Use_Type'Img & ", Qualified, Has_Fixed="
-                          & Boolean'Image (Fixed_Index /= -1)
-                          & ", " & Form'Img);
-               end if;
-
             when others =>
                Att := Create_Local_Attribute
                  (Local_Name     => Get_Value (Atts, Name_Index),
@@ -2506,17 +2458,6 @@ package body Schema.Schema_Readers is
                   Attribute_Use  => Use_Type,
                   Attribute_Form => Form,
                   Fixed          => Get_Fixed);
-
-               if Debug then
-                  Output_Action (Ada_Name (Handler.Contexts)
-                          & " := Create_Local_Attribute ("""
-                          & Get (Get_Value (Atts, Name_Index)).all
-                          & """, Handler.Target_NS, "
-                          & Ada_Name (Typ)
-                          & ", " & Use_Type'Img & ", Qualified, Has_Fixed="
-                          & Boolean'Image (Fixed_Index /= -1)
-                          & ", " & Form'Img);
-               end if;
          end case;
       else
          declare
@@ -2533,22 +2474,14 @@ package body Schema.Schema_Readers is
                Attribute_Use  => Use_Type,
                Attribute_Form => Form,
                Fixed          => Get_Fixed);
-
-            if Debug then
-               Output_Action
-                 ("Attr := Lookup_Attribute_NS (G, """
-                  & Get (Name.Local).all & """);");
-               Output_Action
-                 (Ada_Name (Handler.Contexts)
-                  & " := Create_Local_Attribute (Attr, Handler.Target_NS, "
-                  & Use_Type'Img & ", Qualified, Has_Fixed="
-                  & Boolean'Image (Fixed_Index /= -1)
-                  & ", " & Form'Img);
-            end if;
          end;
       end if;
 
-      Handler.Contexts.Attribute := Att;
+      Push_Context
+        (Handler,
+         (Typ              => Context_Attribute,
+          Attribute        => Att,
+          Attribute_Is_Ref => Ref_Index /= -1));
    end Create_Attribute;
 
    ----------------------
@@ -2557,7 +2490,7 @@ package body Schema.Schema_Readers is
 
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
-      In_Context     : Context_Access;
+      In_Context     : in out Context;
       Attribute      : Attribute_Validator;
       Is_Local       : Boolean) is
    begin
@@ -2608,21 +2541,21 @@ package body Schema.Schema_Readers is
    ----------------------
 
    procedure Finish_Attribute (Handler : access Schema_Reader'Class) is
+      Ctx : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last)'Access;
+      Next : constant Context_Access :=
+        Handler.Contexts (Handler.Contexts_Last - 1)'Access;
    begin
-      if not Handler.Contexts.Attribute_Is_Ref
-        and then Get_Type (Handler.Contexts.Attribute.all) = No_Type
+      if not Ctx.Attribute_Is_Ref
+        and then Get_Type (Ctx.Attribute.all) = No_Type
       then
-         Set_Type (Handler.Contexts.Attribute,
+         Set_Type (Ctx.Attribute,
                    Lookup (Handler.Schema_NS, Handler, Handler.Ur_Type));
-         if Debug then
-            Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
-                    & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
-         end if;
       end if;
 
       Insert_Attribute
-        (Handler, Handler.Contexts.Next, Handler.Contexts.Attribute,
-         Is_Local => not Handler.Contexts.Attribute_Is_Ref);
+        (Handler, Next.all,
+         Ctx.Attribute, Is_Local => not Ctx.Attribute_Is_Ref);
    end Finish_Attribute;
 
    -------------------
@@ -2671,9 +2604,7 @@ package body Schema.Schema_Readers is
          Set_Block_Default (Handler.Target_NS, Info.Block);
       end if;
 
-      Handler.Contexts := new Context'
-        (Typ         => Context_Schema,
-         Next        => null);
+      Push_Context (Handler, (Typ => Context_Schema));
    end Create_Schema;
 
    --------------------------------
@@ -2752,10 +2683,10 @@ package body Schema.Schema_Readers is
          Next         => null,
          First_In_All => null);
       Insert_In_Type (Handler, Details);
-      Handler.Contexts := new Context'
-        (Typ        => Context_All,
-         All_Detail => Details,
-         Next       => Handler.Contexts);
+      Push_Context
+        (Handler,
+         (Typ        => Context_All,
+          All_Detail => Details));
    end Create_All;
 
    --------------
@@ -2811,13 +2742,10 @@ package body Schema.Schema_Readers is
       Local_Name    : Sax.Symbols.Symbol;
       Atts          : Sax.Readers.Sax_Attribute_List)
    is
-      H : constant Schema_Reader_Access := Handler'Unchecked_Access;
+      H   : constant Schema_Reader_Access := Handler'Unchecked_Access;
+      Ctx : Context_Access;
       Val : Integer;
    begin
-      if False and Debug then
-         Debug_Dump_Contexts (Handler, "Start");
-      end if;
-
       if Debug then
          Output_Seen ("Seen " & Get (Local_Name).all
                       & " at "
@@ -2864,14 +2792,9 @@ package body Schema.Schema_Readers is
             Val2 : constant Cst_Byte_Sequence_Access :=
               Get (Get_Non_Normalized_Value (Atts, Val));
          begin
-            Create_Restricted (H, Handler.Contexts);
-            Add_Facet (Handler.Contexts.Restricted, H, Local_Name, Val2.all);
-            if Debug then
-               Output_Action ("Add_Facet ("
-                       & Ada_Name (Handler.Contexts) & ", """
-                       & Get (Local_Name).all
-                       & """, unnormalized=""" & Val2.all & """);");
-            end if;
+            Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
+            Create_Restricted (H, Ctx);
+            Add_Facet (Ctx.Restricted, H, Local_Name, Val2.all);
          end;
 
       elsif Local_Name = Handler.Maxlength
@@ -2886,12 +2809,13 @@ package body Schema.Schema_Readers is
         or else Local_Name = Handler.MinInclusive
         or else Local_Name = Handler.MinExclusive
       then
-         case Handler.Contexts.Typ is
+         Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
+         case Ctx.Typ is
             when Context_Restriction =>
-               Create_Restricted (H, Handler.Contexts);
+               Create_Restricted (H, Ctx);
                Val := Get_Index (Atts, Empty_String, Handler.Value);
                Add_Facet
-                 (Handler.Contexts.Restricted,
+                 (Ctx.Restricted,
                   H, Local_Name,
                   Trim (Get (Get_Value (Atts, Val)).all, Ada.Strings.Both));
 
@@ -2907,13 +2831,6 @@ package body Schema.Schema_Readers is
                   '"' & Get (Local_Name).all
                   & """ not supported outside of restriction or extension");
          end case;
-
-         if Debug then
-            Output_Action
-              ("Add_Facet ("
-               & Ada_Name (Handler.Contexts) & ", """ & Get (Local_Name).all
-               & """);");
-         end if;
 
       elsif Local_Name = Handler.S_All then
          Create_All (H, Atts);
@@ -2937,12 +2854,12 @@ package body Schema.Schema_Readers is
          Create_Group (H, Atts);
 
       elsif Local_Name = Handler.Simple_Content then
-         Handler.Types.Table (Handler.Contexts.Type_Info).Simple_Content :=
-           True;
+         Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
+         Handler.Types.Table (Ctx.Type_Info).Simple_Content := True;
 
       elsif Local_Name = Handler.Complex_Content then
-         Handler.Types.Table (Handler.Contexts.Type_Info).Simple_Content :=
-           False;
+         Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
+         Handler.Types.Table (Ctx.Type_Info).Simple_Content := False;
 
       elsif Local_Name = Handler.Attribute_Group then
          Create_Attribute_Group (H, Atts);
@@ -2978,14 +2895,9 @@ package body Schema.Schema_Readers is
       NS            : Sax.Utils.XML_NS;
       Local_Name    : Sax.Symbols.Symbol)
    is
-      H : constant Schema_Reader_Access := Handler'Unchecked_Access;
-      C : Context_Access := Handler.Contexts;
+      H       : constant Schema_Reader_Access := Handler'Unchecked_Access;
       Handled : Boolean := True;
    begin
-      if False and Debug then
-         Debug_Dump_Contexts (Handler, "End");
-      end if;
-
       --  Check the grammar
       End_Element (Validating_Reader (Handler), NS, Local_Name);
 
@@ -3072,30 +2984,11 @@ package body Schema.Schema_Readers is
          Handled := False;
       end if;
 
-      --  Free the context
+      --  Release the context
       if Handled then
-         Handler.Contexts := Handler.Contexts.Next;
-         Free (C, Recurse => False);
+         Handler.Contexts_Last := Handler.Contexts_Last - 1;
       end if;
    end End_Element;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (C : in out Context_Access; Recurse : Boolean) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Context, Context_Access);
-      Tmp : Context_Access;
-   begin
-      while C /= null loop
-         Tmp := C.Next;
-         Unchecked_Free (C);
-
-         exit when not Recurse;
-         C := Tmp;
-      end loop;
-   end Free;
 
    ----------------
    -- Characters --
