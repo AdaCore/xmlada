@@ -1173,6 +1173,7 @@ package body Schema.Readers is
         (Validating_Reader'Class, Validating_Reader_Access);
    begin
       if Reader /= null then
+         Free (Reader.all);
          Unchecked_Free (Reader);
       end if;
    end Free;

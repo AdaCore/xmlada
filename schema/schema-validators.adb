@@ -2168,4 +2168,13 @@ package body Schema.Validators is
       Symbol_Htable.Set (NFA.Notations, Name);
    end Add_Notation;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Reader : in out Abstract_Validation_Reader) is
+   begin
+      Free (Reader.Id_Table);
+   end Free;
+
 end Schema.Validators;

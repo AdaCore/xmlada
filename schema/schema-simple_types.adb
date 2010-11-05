@@ -2215,6 +2215,7 @@ package body Schema.Simple_Types is
          exception
             when E : XML_Not_Implemented =>
                Error := Find (Symbols, '#' & Exception_Message (E));
+               Free (Simple.Pattern);
          end;
 
          if Error /= No_Symbol then

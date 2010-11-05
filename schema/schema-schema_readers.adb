@@ -1320,11 +1320,12 @@ package body Schema.Schema_Readers is
                Recursive_Add_Attributes (Info);
                Descr.Attributes := List;
 
-               Reset (Processed_Groups);
                NFA.Add_Transition
                  (S1, Final_State, (Kind => Transition_Close));
             end;
          end if;
+
+         Reset (Processed_Groups);
 
       exception
          when others =>
@@ -3126,7 +3127,8 @@ package body Schema.Schema_Readers is
             "Use must be ""optional"" when a default value is specified");
       end if;
 
-      if Att.Attr.Descr.Fixed /= No_Symbol
+      if Get_XSD_Version (Handler.Grammar) = XSD_1_1
+        and then Att.Attr.Descr.Fixed /= No_Symbol
         and then Att.Attr.Descr.Use_Type = Prohibited
       then
          Validation_Error

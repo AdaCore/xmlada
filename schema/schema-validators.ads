@@ -560,6 +560,9 @@ package Schema.Validators is
    type Abstract_Validating_Reader_Access
      is access all Abstract_Validation_Reader'Class;
 
+   procedure Free (Reader : in out Abstract_Validation_Reader);
+   --  Free the memory used by Reader
+
    overriding procedure Initialize_Symbols
      (Parser : in out Abstract_Validation_Reader);
    --  See inherited documentation
