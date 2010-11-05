@@ -667,6 +667,7 @@ package body Schema.Readers is
       Through_Any : Boolean;
       Through_Process : Process_Contents_Type;
       TRef    : Global_Reference;
+      Descr   : access Type_Descr;
 
       Element_QName : constant Qualified_Name :=
         (NS    => Get_URI (Get_NS (Elem)),
@@ -792,9 +793,24 @@ package body Schema.Readers is
 
          Ty := NFA.Get_Data (S).Simple;
          if Ty /= No_Type_Index then --  otherwise with have a <any> type
+
+            --  Check whether the actual type is abstract. This cannot be
+            --  checked when the grammar is created because of
+            --  substitutionGroup and xsi:type
+
+            Descr := NFA.Get_Type_Descr (Ty);
+            if Descr.Is_Abstract then
+               if Descr.Name /= No_Qualified_Name then
+                  Validation_Error
+                    (H, "Type " & To_QName (Descr.Name) & " is abstract");
+               else
+                  Validation_Error (H, "Type is abstract");
+               end if;
+            end if;
+
             Validate_Attributes
               (Get_NFA (H.Grammar),
-               Get_Type_Descr (NFA, Ty),
+               Descr,
                H, Atts,
                Nillable  => False,  --  Is_Nillable (Element),
                Is_Nil    => Is_Nil);
