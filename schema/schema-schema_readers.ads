@@ -32,12 +32,15 @@
 pragma Ada_05;
 
 with Input_Sources;
+with Interfaces;
 with Sax.Readers;
 with Sax.Symbols;
 with Sax.Utils;
 with Schema.Readers;
 with Schema.Validators;
 with Unicode.CES;
+with GNAT.Dynamic_Tables;
+with GNAT.Dynamic_HTables;
 
 package Schema.Schema_Readers is
 
@@ -59,6 +62,66 @@ package Schema.Schema_Readers is
    --  declarations when the parsing is done.
 
 private
+   use Schema.Validators;
+
+   type Type_Index is new Integer;
+   No_Type_Index : constant Type_Index := -1;
+
+   type Type_Kind is (Type_Empty, Type_Sequence, Type_Choice, Type_Element);
+
+   type Type_Details;
+   type Type_Details_Access is access all Type_Details;
+
+   type Element_Descr is record
+      Name               : Qualified_Name     := No_Qualified_Name;
+      Typ                : Qualified_Name     := No_Qualified_Name;
+      Local_Type         : Type_Index         := No_Type_Index;
+      Ref                : Qualified_Name     := No_Qualified_Name;
+      Form               : Form_Type          := Unqualified;
+      Default            : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Fixed              : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Substitution_Group : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Final              : Final_Status       := (others => False);
+      Block              : Block_Status       := (others => False);
+      Is_Abstract        : Boolean            := False;
+      Nillable           : Boolean            := False;
+      Has_Block          : Boolean            := False;
+   end record;
+   No_Element_Descr : constant Element_Descr := (others => <>);
+
+   type Type_Details (Kind : Type_Kind := Type_Empty) is record
+      Min_Occurs, Max_Occurs : Natural;
+      Next : Type_Details_Access;
+      case Kind is
+         when Type_Empty =>
+            null;
+         when Type_Sequence =>
+            First_In_Seq    : Type_Details_Access;
+         when Type_Choice =>
+            First_In_Choice : Type_Details_Access;
+         when Type_Element =>
+            Element         : Element_Descr;
+      end case;
+   end record;
+
+   type Type_Descr is record
+      Name           : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Block          : Block_Status := No_Block;
+      Final          : Final_Status := (others => False);
+      Mixed          : Boolean := False;
+      Is_Abstract    : Boolean := False;
+      Simple_Content : Boolean := False;
+      Details        : Type_Details_Access;
+      NFA            : Schema.Validators.Schema_State_Machines.Nested_NFA;
+   end record;
+
+   type Schema_Descr is record
+      Target_NS              : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Block                  : Block_Status       := No_Block;
+      Element_Form_Default   : Form_Type          := Unqualified;
+      Attribute_Form_Default : Form_Type          := Unqualified;
+   end record;
+
    type Context_Type is (Context_Type_Def,
                          Context_Element,
                          Context_Sequence,
@@ -78,30 +141,19 @@ private
    type Context_Access is access all Context;
    type Context (Typ : Context_Type) is record
       Next        : Context_Access;
-      Level       : Integer;
-      Start_State : Schema.Validators.Schema_State_Machines.State;
-      Last_State  : Schema.Validators.Schema_State_Machines.State;
 
       case Typ is
          when Context_Type_Def =>
-            Type_Name      : Sax.Symbols.Symbol;
+            Type_Info      : Type_Index;
             Type_Validator : Schema.Validators.XML_Validator;
-            Redefined_Type : Schema.Validators.XML_Type;
-            --  Handling of <redefine>
-            Mixed_Content  : Boolean;
-            Simple_Content : Boolean;
-            Blocks         : Schema.Validators.Block_Status;
-            Final          : Schema.Validators.Final_Status;
-            NFA           : Schema.Validators.Schema_State_Machines.Nested_NFA;
+            Redefined_Type : Schema.Validators.XML_Type; --  <redefine>
 
          when Context_Element =>
-            Element : Schema.Validators.XML_Element;
-            Is_Ref  : Boolean;
-            Element_Min, Element_Max : Integer;
+            Element        : Type_Details_Access;
          when Context_Sequence =>
-            Seq        : Schema.Validators.Sequence;
+            Seq            : Type_Details_Access;
          when Context_Choice =>
-            C       : Schema.Validators.Choice;
+            Choice         : Type_Details_Access;
          when Context_Schema | Context_Redefine =>
             null;
          when Context_All =>
@@ -132,6 +184,31 @@ private
       end case;
    end record;
 
+   type Header_Num is new Interfaces.Integer_32 range 0 .. 1023;
+   function Hash (Name : Qualified_Name) return Header_Num;
+   function Hash (Name : Sax.Symbols.Symbol) return Header_Num;
+
+   package Type_Tables is new GNAT.Dynamic_Tables
+     (Table_Component_Type => Type_Descr,
+      Table_Index_Type     => Type_Index,
+      Table_Low_Bound      => 1,
+      Table_Initial        => 100,
+      Table_Increment      => 100);
+   package Type_HTables is new GNAT.Dynamic_HTables.Simple_HTable
+     (Header_Num => Header_Num,
+      Element    => Type_Index,
+      No_Element => No_Type_Index,
+      Key        => Qualified_Name,
+      Hash       => Hash,
+      Equal      => "=");
+   package Element_HTables is new GNAT.Dynamic_HTables.Simple_HTable
+     (Header_Num => Header_Num,
+      Element    => Element_Descr,
+      No_Element => No_Element_Descr,
+      Key        => Qualified_Name,
+      Hash       => Hash,
+      Equal      => "=");
+
    type Schema_Reader is new Schema.Readers.Validating_Reader with record
       Attribute_Form_Default : Schema.Validators.Form_Type :=
         Schema.Validators.Unqualified;
@@ -148,12 +225,17 @@ private
       --  Whether we are processing an <annotation> node, in which case we
       --  need to ignore all children
 
-      NFA : Schema.Validators.Schema_State_Machines.NFA_Access;
-      --  Pointer to the state machine of [Target_NS]. This pointer is really
-      --  still owned by [Target_NS], and should not be freed explicitly.
-
       Schema_NS       : Schema.Validators.XML_Grammar_NS;
       Contexts        : Context_Access;
+
+      --  The following data should be shared among all readers that parse a
+      --  given XSD and all its namespaces. In fact, it might be better to have
+      --  a single reader for this, and pass around the above fields for each
+      --  of the namespaces.
+
+      Types           : Type_Tables.Instance;
+      Global_Elements : Element_HTables.Instance;
+      Global_Types    : Type_HTables.Instance;
    end record;
 
    overriding procedure Start_Element

@@ -6133,11 +6133,17 @@ package body Sax.Readers is
    --------------------------
 
    function Get_Value_As_Boolean
-     (List : Sax_Attribute_List; Index : Integer) return Boolean
+     (List : Sax_Attribute_List; Index : Integer; Default : Boolean := False)
+      return Boolean
    is
-      Val : constant Symbol := Get_Value (List, Index);
+      Val : Symbol;
    begin
-      return Get (Val).all = "true" or else Get (Val).all = "1";
+      if Index < 0 then
+         return Default;
+      else
+         Val := Get_Value (List, Index);
+         return Get (Val).all = "true" or else Get (Val).all = "1";
+      end if;
    end Get_Value_As_Boolean;
 
    --------------------------

@@ -242,9 +242,11 @@ package Sax.Readers is
    function Get_Non_Normalized_Value
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
    function Get_Value_As_Boolean
-     (List : Sax_Attribute_List; Index : Integer) return Boolean;
+     (List : Sax_Attribute_List; Index : Integer; Default : Boolean := False)
+      return Boolean;
    pragma Inline (Get_Value, Get_Non_Normalized_Value, Get_Value_As_Boolean);
-   --  Return the value of the corresponding attribute
+   --  Return the value of the corresponding attribute.
+   --  [Default] is returned if the attribute does not exist
 
    procedure Set_Normalized_Value
      (List : Sax_Attribute_List; Index : Integer; Value : Sax.Symbols.Symbol);

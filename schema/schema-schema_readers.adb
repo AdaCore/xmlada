@@ -33,42 +33,49 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Encodings;     use Sax.Encodings;
+with Sax.Locators;
 with Sax.Readers;       use Sax.Readers;
 with Sax.Symbols;       use Sax.Symbols;
 with Sax.Utils;         use Sax.Utils;
-with Schema.Validators; use Schema.Validators;
 with Schema.Validators.Lists; use Schema.Validators.Lists;
 with Schema.Readers;    use Schema.Readers;
 with Ada.Unchecked_Deallocation;
 
 package body Schema.Schema_Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
+   use Type_Tables, Type_HTables, Element_HTables;
 
    Max_Namespaces_In_Any_Attribute : constant := 50;
    --  Maximum number of namespaces for a <anyAttribute>
    --  This only impacts the parsing of the grammar, so can easily be raised if
    --  need be.
 
+   procedure Free (Self : in out Type_Details_Access);
+   --  Free [Self], [Self.Next] and so on
+
    procedure Free (C : in out Context_Access; Recurse : Boolean);
    --  Free the memory occupied by C
 
    procedure Get_Grammar_For_Namespace
      (Handler : access Schema_Reader'Class;
-      Prefix  : Symbol;
+      NS      : Sax.Symbols.Symbol;
       Grammar : out XML_Grammar_NS;
       Create_If_Needed : Boolean := True);
    --  Return the grammar matching a given prefix
+
+   procedure Create_NFA (Parser : access Schema_Reader);
+   --  Create the state machine from the registered elements and types
 
    function To_String (Blocks : Block_Status) return String;
    function To_String (Final  : Final_Status) return String;
 
    procedure Lookup_With_NS
      (Handler : access Schema_Reader'Class;
-      QName   : Symbol;
+      Name    : Qualified_Name;
       Result  : out XML_Type);
    procedure Lookup_With_NS
      (Handler : access Schema_Reader'Class;
-      QName   : Symbol;
+      Name    : Qualified_Name;
       Result  : out XML_Element);
    procedure Lookup_With_NS
      (Handler : access Schema_Reader'Class;
@@ -97,20 +104,37 @@ package body Schema.Schema_Readers is
      (Handler : Schema_Reader'Class) return Boolean;
    --  Whether we are currently processing a <redefine> tag
 
+   function Resolve_QName
+     (Handler : access Schema_Reader'Class;
+      QName   : Sax.Symbols.Symbol) return Qualified_Name;
+   --  Resolve namespaces for QName
+
+   procedure Insert_In_Type
+     (Handler : access Schema_Reader'Class;
+      Element : Type_Details_Access);
+   --  Insert Element in the type definition one level up
+
    procedure Compute_Blocks
      (Atts    : Sax_Attribute_List;
       Handler : access Schema_Reader'Class;
       Blocks  : out Block_Status;
       Is_Set  : out Boolean;
-      Attr_Name : Symbol);
+      Index   : Integer);
    --  Compute the list of blocked elements from the attribute "block".
 
-   procedure Compute_Final
+   function Compute_Final
      (Atts    : Sax_Attribute_List;
       Handler : access Schema_Reader'Class;
-      Final   : out Final_Status);
+      Index   : Integer) return Final_Status;
    --  Compute the list of final attributes from value. Value is a list similar
    --  to what is used for the "final" attribute of elements in a schema
+
+   function Compute_Form
+     (Atts      : Sax_Attribute_List;
+      Handler   : access Schema_Reader'Class;
+      Index     : Integer;
+      Default   : Form_Type) return Form_Type;
+   --  Parse the given attribute
 
    procedure Insert_Attribute
      (Handler        : access Schema_Reader'Class;
@@ -174,12 +198,10 @@ package body Schema.Schema_Readers is
    procedure Finish_Simple_Type  (Handler : access Schema_Reader'Class);
    procedure Finish_Restriction  (Handler : access Schema_Reader'Class);
    procedure Finish_All          (Handler : access Schema_Reader'Class);
-   procedure Finish_Sequence     (Handler : access Schema_Reader'Class);
    procedure Finish_Attribute    (Handler : access Schema_Reader'Class);
    procedure Finish_Extension    (Handler : access Schema_Reader'Class);
    procedure Finish_Union        (Handler : access Schema_Reader'Class);
    procedure Finish_List         (Handler : access Schema_Reader'Class);
-   procedure Finish_Choice       (Handler : access Schema_Reader'Class);
    procedure Finish_Group        (Handler : access Schema_Reader'Class);
    --  Finish the handling of various tags:
    --  resp. <element>, <complexType>, <restriction>, <all>, <sequence>,
@@ -191,22 +213,22 @@ package body Schema.Schema_Readers is
       Min_Occurs, Max_Occurs : out Integer);
    --  Get the "minOccurs" and "maxOccurs" attributes
 
-   function Get_Last_State
-     (Handler   : access Schema_Reader'Class;
-      Ctxt      : Context_Access) return State;
-   --  Return the state we should link from, given the context
-
-   procedure Link_To_Previous
-     (Handler   : access Schema_Reader'Class;
-      Ctxt      : Context_Access;
-      S         : State;
-      On_Symbol : Transition_Event;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1);
-   --  Add link in the state machine for S
-
-   procedure Propagate_Last
-     (Handler : access Schema_Reader'Class);
+--     function Get_Last_State
+--       (Handler   : access Schema_Reader'Class;
+--        Ctxt      : Context_Access) return State;
+--     --  Return the state we should link from, given the context
+--
+--     procedure Link_To_Previous
+--       (Handler   : access Schema_Reader'Class;
+--        Ctxt      : Context_Access;
+--        S         : State;
+--        On_Symbol : Transition_Event;
+--        Min_Occurs : Natural := 1;
+--        Max_Occurs : Integer := 1);
+--     --  Add link in the state machine for S
+--
+--     procedure Propagate_Last
+--       (Handler : access Schema_Reader'Class);
    --  The current context is terminated, we need to update the parent
    --  context's last_state
 
@@ -240,12 +262,15 @@ package body Schema.Schema_Readers is
          while C /= null loop
             case C.Typ is
                when Context_Type_Def =>
-                  Debug_Output (Prefix & "=" & C.Typ'Img & C.Level'Img
-                                & " mixed=" & C.Mixed_Content'Img
-                                & " simple=" & C.Simple_Content'Img);
+                  Debug_Output
+                    (Prefix & "=" & C.Typ'Img
+                     & " mixed="
+                     & Handler.Types.Table (C.Type_Info).Mixed'Img
+                     & " simple="
+                     & Handler.Types.Table (C.Type_Info).Simple_Content'Img);
 
                when others =>
-                  Debug_Output (Prefix & "=" & C.Typ'Img & C.Level'Img);
+                  Debug_Output (Prefix & "=" & C.Typ'Img);
             end case;
             C := C.Next;
          end loop;
@@ -367,6 +392,222 @@ package body Schema.Schema_Readers is
       return "T_" & XML_To_Ada (To_QName (Typ));
    end Ada_Name;
 
+   ----------------
+   -- Create_NFA --
+   ----------------
+
+   procedure Create_NFA (Parser : access Schema_Reader) is
+      NFA : constant Schema.Validators.Schema_State_Machines.NFA_Access :=
+        Get_NFA (Get_Grammar (Parser.all));
+      End_Schema_Choice : State;
+
+      procedure Process_Global_Element (Info : Element_Descr);
+      procedure Process_Type (Info : in out Type_Descr);
+      procedure Process_Details
+        (Details    : Type_Details_Access;
+         Start      : State;
+         Nested_End : out State);
+
+      function Create_Element_State
+        (Info : Element_Descr; Start : State) return State;
+      --  Create (and decorate) the node corresponding to an <element>
+
+      procedure Create_Nested_For_Type (Info : in out Type_Descr);
+      --  Create a a nested machine (with only the start state) for [Info]
+
+      --------------------------
+      -- Create_Element_State --
+      --------------------------
+
+      function Create_Element_State
+        (Info : Element_Descr; Start : State) return State
+      is
+         S1        : constant State := NFA.Add_State (Default_User_Data);
+         Typ       : Type_Index;
+         XML_Typ   : XML_Type;
+         Real      : Element_Descr;
+
+      begin
+         --  Resolve element references
+
+         if Info.Name = No_Qualified_Name then
+            Real := Get (Parser.Global_Elements, Info.Ref);
+         else
+            Real := Info;
+         end if;
+
+         --  Create nested NFA for the type, if needed
+
+         if Real.Typ = No_Qualified_Name then
+            Typ := Real.Local_Type;
+            if Typ = No_Type_Index then
+               Validation_Error
+                 (Parser, "Unknown type for element " & To_QName (Real.Name));
+            end if;
+
+         else
+            Typ := Get (Parser.Global_Types, Real.Typ);
+            if Typ /= No_Type_Index then
+               --  OK, we have a complexType
+               null;
+
+            else
+               --  We have a simpleType
+               Lookup_With_NS (Parser, Real.Typ, Result => XML_Typ);
+               if Get_Validator (XML_Typ) /= null then
+                  NFA.Get_Data (S1).Simple_Type := Get_Validator (XML_Typ);
+                  NFA.Get_Data (S1).Type_Name := Real.Typ.Local;
+               else
+                  Validation_Error
+                    (Parser, "Unknown type " & To_QName (Real.Typ));
+               end if;
+            end if;
+         end if;
+
+         if Typ /= No_Type_Index
+           and then not Parser.Types.Table (Typ).Simple_Content
+         then
+            NFA.Set_Nested (S1, Parser.Types.Table (Typ).NFA);
+         end if;
+
+         --  Link with previous element
+
+         NFA.Add_Transition (Start, S1, (Transition_Symbol, Real.Name));
+
+         return S1;
+      end Create_Element_State;
+
+      ----------------------------
+      -- Process_Global_Element --
+      ----------------------------
+
+      procedure Process_Global_Element (Info : Element_Descr) is
+         S1  : constant State := Create_Element_State (Info, Start_State);
+      begin
+         NFA.Add_Empty_Transition (S1, End_Schema_Choice);
+      end Process_Global_Element;
+
+      ---------------------
+      -- Process_Details --
+      ---------------------
+
+      procedure Process_Details
+        (Details    : Type_Details_Access;
+         Start      : State;
+         Nested_End : out State)
+      is
+         S : State;
+         T : Type_Details_Access;
+      begin
+         case Details.Kind is
+            when Type_Empty =>
+               null;
+
+            when Type_Sequence =>
+               S := Start;
+               T := Details.First_In_Seq;
+               while T /= null loop
+                  Process_Details (T, S, Nested_End);
+                  NFA.Repeat (S, Nested_End, T.Min_Occurs, T.Max_Occurs);
+                  S := Nested_End;
+                  T := T.Next;
+               end loop;
+
+            when Type_Choice =>
+               T := Details.First_In_Choice;
+               Nested_End := NFA.Add_State (Default_User_Data);
+               while T /= null loop
+                  Process_Details (T, Start, S);
+                  NFA.Repeat (Start, S, T.Min_Occurs, T.Max_Occurs);
+                  NFA.Add_Empty_Transition (S, Nested_End);
+                  T := T.Next;
+               end loop;
+
+            when Type_Element =>
+               Nested_End := Create_Element_State (Details.Element, Start);
+         end case;
+      end Process_Details;
+
+      ----------------------------
+      -- Create_Nested_For_Type --
+      ----------------------------
+
+      procedure Create_Nested_For_Type (Info : in out Type_Descr) is
+         S : State;
+      begin
+         if not Info.Simple_Content then
+            S := NFA.Add_State
+              ((Type_Name   => Info.Name,
+                Attributes  => null,
+                Simple_Type => null));
+            Info.NFA := NFA.Create_Nested (S);
+         end if;
+      end Create_Nested_For_Type;
+
+      ------------------
+      -- Process_Type --
+      ------------------
+
+      procedure Process_Type (Info : in out Type_Descr) is
+         S, S1 : State;
+      begin
+         if Info.Simple_Content then
+            return;
+         end if;
+
+         S := Get_Start_State (Info.NFA);
+
+         if Info.Details /= null then
+            Process_Details
+              (Details    => Info.Details,
+               Start      => S,
+               Nested_End => S1);
+            NFA.Add_Transition
+              (S1, Final_State, (Kind => Transition_Close_Nested));
+         end if;
+      end Process_Type;
+
+      Element_Info : Element_Descr;
+
+   begin
+      if Debug then
+         Debug_Output ("Create_NFA");
+      end if;
+
+      --  Prepare the nested machines for the global types
+
+      for J in Type_Tables.First .. Last (Parser.Types) loop
+         Create_Nested_For_Type (Parser.Types.Table (J));
+      end loop;
+
+      --  Prepare schema for global elements
+
+      End_Schema_Choice := NFA.Add_State
+        ((Type_Name   => No_Symbol,
+          Attributes  => null,
+          Simple_Type => null));
+      NFA.Add_Transition
+        (End_Schema_Choice, Final_State, (Kind => Transition_Close_Nested));
+
+      Element_Info := Get_First (Parser.Global_Elements);
+      while Element_Info /= No_Element_Descr loop
+         Process_Global_Element (Element_Info);
+         Element_Info := Get_Next (Parser.Global_Elements);
+      end loop;
+
+      --  Finally, complete the definition of complexTypes
+
+      for J in Type_Tables.First .. Last (Parser.Types) loop
+         Process_Type (Parser.Types.Table (J));
+      end loop;
+
+      --  NFA.Resolve_Aliases;
+
+      if Debug then
+         Output_Action ("NFA: " & Dump (NFA, Dump_Dot_Compact));
+      end if;
+   end Create_NFA;
+
    -----------
    -- Parse --
    -----------
@@ -403,7 +644,7 @@ package body Schema.Schema_Readers is
          Get_NS (Grammar, Default_Namespace,     Parser.Target_NS);
          Get_NS (Grammar, Parser.XML_Schema_URI, Parser.Schema_NS);
 
-         Parser.NFA := Get_NFA (Grammar);
+         Init (Parser.Types);
 
          if Debug then
             Output_Action
@@ -414,21 +655,25 @@ package body Schema.Schema_Readers is
          Set_Feature
            (Parser, Sax.Readers.Schema_Validation_Feature, Validate_XSD);
          Set_Parsed_URI (Parser'Access, Grammar, URI);
+         Set_System_Id (Parser.Target_NS, URI);
 
          Parse (Validating_Reader (Parser), Input);
 
-         if Do_Global_Check then
-            Global_Check (Parser'Unchecked_Access, Parser.Target_NS);
-         end if;
+         Create_NFA (Parser'Access);
 
-         Set_System_Id (Parser.Target_NS, URI);
+--           if Do_Global_Check then
+--              Global_Check (Parser'Unchecked_Access, Parser.Target_NS);
+--           end if;
 
-         Parser.NFA.Resolve_Aliases;
+         --  ??? Should not free those, they are needed for other namespaces
+         --  as well.
+         Reset (Parser.Global_Elements);
+         Reset (Parser.Global_Types);
 
-         if Debug then
-            Output_Action ("NFA: "
-                           & Dump (Parser.NFA, Dump_Dot_Compact));
-         end if;
+         for T in Type_Tables.First .. Last (Parser.Types) loop
+            Free (Parser.Types.Table (T).Details);
+         end loop;
+         Free (Parser.Types);
       end if;
 
    exception
@@ -436,6 +681,32 @@ package body Schema.Schema_Readers is
          Free (Parser.Contexts, Recurse => True);
          raise;
    end Parse;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Name : Qualified_Name) return Header_Num is
+      use type Interfaces.Unsigned_32;
+   begin
+      return (Hash (Name.NS) + Hash (Name.Local)) / 2;
+   end Hash;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Name : Sax.Symbols.Symbol) return Header_Num is
+      use type Interfaces.Unsigned_32;
+   begin
+      if Name = No_Symbol then
+         return 0;
+      else
+         return Header_Num
+           (Sax.Symbols.Hash (Name)
+            mod Interfaces.Unsigned_32 (Header_Num'Last));
+      end if;
+   end Hash;
 
    -----------
    -- Parse --
@@ -449,31 +720,51 @@ package body Schema.Schema_Readers is
              Default_Namespace => Empty_String, Do_Global_Check => True);
    end Parse;
 
+   -------------------
+   -- Resolve_QName --
+   -------------------
+
+   function Resolve_QName
+     (Handler : access Schema_Reader'Class;
+      QName   : Sax.Symbols.Symbol) return Qualified_Name
+   is
+      Val       : Cst_Byte_Sequence_Access;
+      Separator : Integer;
+      NS        : XML_NS;
+   begin
+      if QName = No_Symbol then
+         return No_Qualified_Name;
+      else
+         Val       := Get (QName);
+         Separator := Split_Qname (Val.all);
+
+         Get_Namespace_From_Prefix
+           (Handler  => Handler.all,
+            Prefix   =>
+              Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)),
+            NS       => NS);
+
+         return
+           (NS    => Get_URI (NS),
+            Local =>
+              Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last)));
+      end if;
+   end Resolve_QName;
+
    --------------------
    -- Lookup_With_NS --
    --------------------
 
    procedure Lookup_With_NS
      (Handler : access Schema_Reader'Class;
-      QName   : Symbol;
+      Name    : Qualified_Name;
       Result  : out XML_Type)
    is
-      Val       : constant Cst_Byte_Sequence_Access := Get (QName);
-      Separator : constant Integer := Split_Qname (Val.all);
-      G         : XML_Grammar_NS;
-      Local_Name : constant Symbol :=
-        Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last));
+      G    : XML_Grammar_NS;
    begin
       Get_Grammar_For_Namespace
-        (Handler,
-         Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)), G,
-         Create_If_Needed => False);
-      Result := Lookup (G, Handler, Local_Name);
-      if Debug then
-         Output_Action
-           (Ada_Name (Result) & " := Lookup (G, """
-            & Val (Separator + 1 .. Val'Last) & """);");
-      end if;
+        (Handler, Name.NS, G, Create_If_Needed => False);
+      Result := Lookup (G, Handler, Name.Local);
    end Lookup_With_NS;
 
    --------------------
@@ -482,26 +773,13 @@ package body Schema.Schema_Readers is
 
    procedure Lookup_With_NS
      (Handler : access Schema_Reader'Class;
-      QName   : Symbol;
+      Name    : Qualified_Name;
       Result  : out XML_Element)
    is
-      Val       : constant Cst_Byte_Sequence_Access := Get (QName);
-      Separator : constant Integer := Split_Qname (Val.all);
-      G         : XML_Grammar_NS;
-      Local_Name : constant Symbol :=
-        Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last));
+      G    : XML_Grammar_NS;
    begin
-      Get_Grammar_For_Namespace
-        (Handler,
-         Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)), G);
-
-      Result := Lookup_Element (G, Handler, Local_Name);
-      if Debug then
-         Output_Action
-           (Ada_Name (Result)
-            & " := Lookup_Element (G, """
-            & Val (Separator + 1 .. Val'Last) & """);");
-      end if;
+      Get_Grammar_For_Namespace (Handler, Name.NS, G);
+      Result := Lookup_Element (G, Handler, Name.Local);
    end Lookup_With_NS;
 
    --------------------
@@ -513,22 +791,11 @@ package body Schema.Schema_Readers is
       QName   : Symbol;
       Result  : out XML_Group)
    is
-      Val       : constant Cst_Byte_Sequence_Access := Get (QName);
-      Separator : constant Integer := Split_Qname (Val.all);
-      G         : XML_Grammar_NS;
-      Local_Name : constant Symbol :=
-        Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last));
+      Name : constant Qualified_Name := Resolve_QName (Handler, QName);
+      G    : XML_Grammar_NS;
    begin
-      Get_Grammar_For_Namespace
-        (Handler,
-         Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)), G);
-
-      Result := Lookup_Group (G, Handler, Local_Name);
-      if Debug then
-         Output_Action
-           ("Group := Lookup_Group (G, """
-            & Val (Separator + 1 .. Val'Last) & """);");
-      end if;
+      Get_Grammar_For_Namespace (Handler, Name.NS, G);
+      Result := Lookup_Group (G, Handler, Name.Local);
    end Lookup_With_NS;
 
    --------------------
@@ -540,21 +807,11 @@ package body Schema.Schema_Readers is
       QName      : Symbol;
       Result     : out XML_Attribute_Group)
    is
-      Val       : constant Cst_Byte_Sequence_Access := Get (QName);
-      Separator : constant Integer := Split_Qname (Val.all);
-      G         : XML_Grammar_NS;
-      Local_Name : constant Symbol :=
-        Find_Symbol (Handler.all, Val (Separator + 1 .. Val'Last));
+      Name : constant Qualified_Name := Resolve_QName (Handler, QName);
+      G    : XML_Grammar_NS;
    begin
-      Get_Grammar_For_Namespace
-        (Handler,
-         Find_Symbol (Handler.all, Val (Val'First .. Separator - 1)), G);
-      Result := Lookup_Attribute_Group (G, Handler, Local_Name);
-      if Debug then
-         Output_Action
-           ("Attr_Group := Lookup_Attribute_Group (G, """
-            & Val (Separator + 1 .. Val'Last) & """);");
-      end if;
+      Get_Grammar_For_Namespace (Handler, Name.NS, G);
+      Result := Lookup_Attribute_Group (G, Handler, Name.Local);
    end Lookup_With_NS;
 
    ----------------
@@ -607,13 +864,10 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ             => Context_Group,
-         Start_State     => No_State,
-         Last_State      => No_State,
          Group           => No_XML_Group,
          Redefined_Group => No_XML_Group,
          Group_Min       => Min_Occurs,
          Group_Max       => Max_Occurs,
-         Level           => Handler.Contexts.Level + 1,
          Next            => Handler.Contexts);
 
       --  Do not use In_Redefine_Context, since this only applies for types
@@ -753,10 +1007,7 @@ package body Schema.Schema_Readers is
    begin
       Handler.Contexts := new Context'
         (Typ            => Context_Attribute_Group,
-         Start_State    => No_State,
-         Last_State     => No_State,
          Attr_Group     => Empty_Attribute_Group,
-         Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
 
       if In_Redefine then
@@ -915,9 +1166,6 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ            => Context_Redefine,
-         Start_State    => No_State,
-         Last_State     => No_State,
-         Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
    end Create_Redefine;
 
@@ -1030,129 +1278,6 @@ package body Schema.Schema_Readers is
    end Create_Any_Attribute;
 
    --------------------
-   -- Get_Last_State --
-   --------------------
-
-   function Get_Last_State
-     (Handler   : access Schema_Reader'Class;
-      Ctxt      : Context_Access) return State
-   is
-   begin
-      case Ctxt.Typ is
-         when Context_Sequence | Context_Type_Def =>
-            if Ctxt.Last_State = No_State then
-               return Get_Last_State (Handler, Ctxt.Next);
-            else
-               return Ctxt.Last_State;
-            end if;
-
-         when Context_Choice =>
-            return Ctxt.Last_State;
-
-         when others =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Can't create automaton for " & Ctxt.Typ'Img);
-      end case;
-   end Get_Last_State;
-
-   ----------------------
-   -- Link_To_Previous --
-   ----------------------
-
-   procedure Link_To_Previous
-     (Handler    : access Schema_Reader'Class;
-      Ctxt       : Context_Access;
-      S          : State;
-      On_Symbol  : Transition_Event;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1)
-   is
-      Last : State;
-      Max  : Integer := Max_Occurs;
-   begin
-      if Max = Unbounded then
-         Max := Natural'Last;
-      end if;
-
-      case Ctxt.Typ is
-         when Context_Sequence | Context_Type_Def =>
-            Last := Get_Last_State (Handler, Ctxt);
-            Handler.NFA.Add_Transition (Last, S, On_Symbol);
-            Handler.NFA.Repeat (Last, S, Min_Occurs, Max);
-            Ctxt.Last_State := S;
-
-         when Context_Choice =>
-            --  Always link with the parent's last.
-
-            Handler.NFA.Add_Transition (Ctxt.Start_State, S, On_Symbol);
-            Handler.NFA.Repeat (Ctxt.Start_State, S, Min_Occurs, Max);
-            Handler.NFA.Add_Empty_Transition (S, Ctxt.Last_State);
-
-            if Debug then
-               Output_Action
-                 ("NFA: linking" & S'Img
-                    & " to" & Ctxt.Last_State'Img & " on empty");
-            end if;
-
-         when Context_Schema =>
-            --  A schema adds like a "or" for all its <element> nodes
-            Handler.NFA.Add_Transition (Ctxt.Start_State, S, On_Symbol);
-            Handler.NFA.Repeat (Ctxt.Start_State, S, Min_Occurs, Max);
-            Handler.NFA.Add_Empty_Transition (S, Ctxt.Last_State);
-
-         when others =>
-            raise Program_Error;
---              Raise_Exception
---                (XML_Not_Implemented'Identity,
---                 "Can't create automaton for " & Ctxt.Typ'Img);
-      end case;
-   end Link_To_Previous;
-
-   --------------------
-   -- Propagate_Last --
-   --------------------
-
-   procedure Propagate_Last
-     (Handler : access Schema_Reader'Class)
-   is
-      Ctxt : constant Context_Access := Handler.Contexts;
-      Next : constant Context_Access := Ctxt.Next;
-   begin
-      case Next.Typ is
-         when Context_Sequence | Context_Choice =>
-            Next.Last_State := Ctxt.Last_State;
-
-         when Context_Type_Def =>
-            --  If the parent is an element, we have an inline type, so we
-            --  need to point to the nested automaton.
-
-            if Next.Next.Typ = Context_Element then
-               Handler.NFA.Set_Nested (Next.Next.Start_State, Next.NFA);
-            end if;
-
-            --  Terminates the nested NFA for the type
-            Link_To_Previous
-              (Handler, Ctxt, Final_State, (Kind => Transition_Close_Nested));
-
-         when Context_Attribute =>
-            null;
-
-         when Context_Element =>
-            null;
-
-         when Context_Schema =>
-            null;
-
-         when others =>
-            Raise_Exception
-              (XML_Not_Implemented'Identity,
-               "Can't propagate last " & Next.Typ'Img
-               & " current=" & Ctxt.Typ'Img);
-      end case;
-   end Propagate_Last;
-
-   --------------------
    -- Create_Element --
    --------------------
 
@@ -1160,51 +1285,48 @@ package body Schema.Schema_Readers is
      (Handler : access Schema_Reader'Class;
       Atts    : Sax_Attribute_List)
    is
-      --  ??? Could be more efficient by traversing the list of attributes
-      --  only once
-      Type_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Typ);
-      Name_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Name);
-      Ref_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Ref);
-      Subst_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Substitution_Group);
-      Default_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Default);
-      Fixed_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Fixed);
-      Abstract_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.S_Abstract);
-      Nillable_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Nillable);
-      Form_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Form);
-
-      Blocks : Block_Status;
-      Final  : Final_Status;
       Min_Occurs, Max_Occurs : Integer := 1;
       Element : XML_Element;
       Typ     : XML_Type := No_Type;
-      Group   : XML_Element;
-      Form    : Form_Type := Handler.Element_Form_Default;
-      Is_Ref  : Boolean;
-      Is_Set  : Boolean;
-      S1, S2  : State := No_State;
+      Info    : Element_Descr;
+      Local   : Symbol;
+      Details : Type_Details_Access;
 
    begin
-      if Form_Index /= -1 then
-         if Get_Value (Atts, Form_Index) = Handler.Qualified then
-            Form := Qualified;
-         else
-            Form := Unqualified;
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Typ then
+               Info.Typ := Resolve_QName (Handler, Get_Value (Atts, J));
+            elsif Local = Handler.Name then
+               Info.Name := (NS    => Get_Namespace_URI (Handler.Target_NS),
+                             Local => Get_Value (Atts, J));
+            elsif Local = Handler.Ref then
+               Info.Ref := Resolve_QName (Handler, Get_Value (Atts, J));
+            elsif Local = Handler.Substitution_Group then
+               Info.Substitution_Group := Get_Value (Atts, J);
+            elsif Local = Handler.Default then
+               Info.Default := Get_Value (Atts, J);
+            elsif Local = Handler.Fixed then
+               Info.Fixed := Get_Value (Atts, J);
+            elsif Local = Handler.S_Abstract then
+               Info.Is_Abstract := Get_Value_As_Boolean (Atts, J, False);
+            elsif Local = Handler.Nillable then
+               Info.Nillable := Get_Value_As_Boolean (Atts, J, False);
+            elsif Local = Handler.Form then
+               Info.Form := Compute_Form
+                 (Atts, Handler, J, Handler.Element_Form_Default);
+            elsif Local = Handler.Final then
+               Info.Final := Compute_Final (Atts, Handler, J);
+            elsif Local = Handler.Block then
+               Compute_Blocks (Atts, Handler, Info.Block, Info.Has_Block, J);
+            end if;
          end if;
-      end if;
+      end loop;
 
-      if Name_Index /= -1 then
-         if Type_Index /= -1 then
-            Lookup_With_NS
-              (Handler, Get_Value (Atts, Type_Index), Result => Typ);
+      if Info.Name /= No_Qualified_Name then
+         if Info.Typ /= No_Qualified_Name then
+            Lookup_With_NS (Handler, Info.Typ, Result => Typ);
 
             if To_QName (Typ) = "IDREF"
               or else To_QName (Typ) = "IDREFS"
@@ -1218,10 +1340,8 @@ package body Schema.Schema_Readers is
          case Handler.Contexts.Typ is
             when Context_Schema | Context_Redefine =>
                Element := Create_Global_Element
-                 (Handler.Target_NS, Handler,
-                  Get_Value (Atts, Name_Index),
-                  Form => Form);
-               Is_Ref := False;
+                 (Handler.Target_NS, Handler, Info.Name.Local,
+                  Form => Info.Form);
                if Debug then
                   Output_Action (" -> " & Ada_Name (Element));
                end if;
@@ -1235,207 +1355,61 @@ package body Schema.Schema_Readers is
                end if;
             when others =>
                Element := Create_Local_Element
-                 (Get_Value (Atts, Name_Index),
-                  Handler.Target_NS, Typ, Form => Form);
-               Is_Ref := False;
+                 (Info.Name.Local, Handler.Target_NS, Typ, Form => Info.Form);
 
                if Debug then
                   Output_Action
                     (Ada_Name (Element) & " := Create_Local_Element ("""
-                     & Get (Get_Value (Atts, Name_Index)).all
-                     & """, Handler.Target_NS, "
-                     & Ada_Name (Typ) & ", " & Form'Img & ");");
+                     & To_QName (Info.Name) & """, Handler.Target_NS, "
+                     & Ada_Name (Typ) & ", " & Info.Form'Img & ");");
                end if;
          end case;
 
-         if Ref_Index /= -1
-           and then Get_Value (Atts, Name_Index) = Get_Value (Atts, Ref_Index)
+         if Info.Ref /= No_Qualified_Name
+           and then Info.Ref.NS = No_Symbol
+           and then Info.Name = Info.Ref
            and then not In_Redefine_Context (Handler.all)
          then
             Validation_Error
               (Handler, "#""ref"" attribute cannot be self-referencing");
 
-         elsif Ref_Index /= -1 then
+         elsif Info.Ref /= No_Qualified_Name then
             Validation_Error
               (Handler, "#Name and Ref cannot be both specified");
          end if;
 
-      elsif Ref_Index = -1 then
+      elsif Info.Ref = No_Qualified_Name then
          Validation_Error
            (Handler, "#Either ""name"" or ""ref"" attribute must be present");
 
       else
-         Lookup_With_NS
-           (Handler, Get_Value (Atts, Ref_Index), Result => Element);
-         Is_Ref := True;
+         Lookup_With_NS (Handler, Info.Ref, Result => Element);
 
          --  Section 3.3.2, validity constraints 3.3.3
-         if Type_Index /= -1 then
+         if Info.Typ /= No_Qualified_Name then
             Validation_Error
               (Handler,
                "#""type"" attribute cannot be specified along with ""ref""");
          end if;
       end if;
 
-      if Subst_Index /= -1 then
-         Lookup_With_NS
-           (Handler, Get_Value (Atts, Subst_Index), Result => Group);
-         Set_Substitution_Group (Element, Handler, Group);
-         if Debug then
-            Output_Action ("Set_Substitution_Group ("
-                    & Ada_Name (Element) & ", " & Ada_Name (Group) & ");");
-         end if;
-      end if;
-
-      if Default_Index /= -1 then
-         if Fixed_Index /= -1 then
-            Validation_Error
-              (Handler, "#Default and Fixed cannot be both specified");
-         end if;
-
-         Set_Default
-           (Element, Handler, Get_Value (Atts, Default_Index));
-         if Debug then
-            Output_Action ("Set_Default ("
-                    & Ada_Name (Element) & ", """
-                    & Get (Get_Value (Atts, Default_Index)).all & """);");
-         end if;
-      end if;
-
-      if Fixed_Index /= -1 then
-         Set_Fixed (Element, Handler, Get_Value (Atts, Fixed_Index));
-         if Debug then
-            Output_Action ("Set_Fixed ("
-                    & Ada_Name (Element) & ", """
-                    & Get (Get_Value (Atts, Fixed_Index)).all & """);");
-         end if;
-      end if;
-
-      if Abstract_Index /= -1 then
-         Set_Abstract (Element, Get_Value_As_Boolean (Atts, Abstract_Index));
-         if Debug then
-            Output_Action ("Set_Abstract ("
-                    & Ada_Name (Element) & ", "
-                    & Boolean'Image
-                      (Get_Value_As_Boolean (Atts, Abstract_Index)) & ");");
-         end if;
-      end if;
-
-      if Nillable_Index /= -1 then
-         Set_Nillable (Element, Get_Value_As_Boolean (Atts, Nillable_Index));
-         if Debug then
-            Output_Action ("Set_Nillable ("
-                    & Ada_Name (Element) & ", "
-                    & Boolean'Image
-                      (Get_Value_As_Boolean (Atts, Nillable_Index)) & ");");
-         end if;
-      end if;
-
-      Compute_Final (Atts, Handler, Final);
-      Set_Final (Element, Final);
-
-      Compute_Blocks (Atts, Handler, Blocks, Is_Set, Handler.Block);
-      if Is_Set then
-         Set_Block (Element, Blocks);
+      if Info.Default /= No_Symbol and then Info.Fixed /= No_Symbol then
+         Validation_Error
+           (Handler, "#Default and Fixed cannot be both specified");
       end if;
 
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
-
---        case Handler.Contexts.Typ is
---           when Context_Schema | Context_Redefine =>
---              null;
---           when Context_Sequence =>
---              Add_Particle
---                (Handler.Contexts.Seq, Handler, Element,
---                 Min_Occurs       => Min_Occurs,
---                 Max_Occurs       => Max_Occurs);
---              if Debug then
---               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
---                         & ", " & Ada_Name (Element) & ", is_ref="
---                         & Boolean'Image (Ref_Index /= -1) & ','
---                         & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
---              end if;
---
---           when Context_Choice =>
---              Add_Particle
---              (Handler.Contexts.C, Handler, Element, Min_Occurs, Max_Occurs);
---              if Debug then
---               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
---                         & ", " & Ada_Name (Element) & ','
---                         & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
---              end if;
---
---           when Context_All =>
---              Add_Particle
---                (Handler.Contexts.All_Validator, Handler, Element,
---                 Min_Occurs, Max_Occurs);
---              if Debug then
---               Output_Action ("Add_Particle (" & Ada_Name (Handler.Contexts)
---                         & ", " & Ada_Name (Element) & ','
---                         & Min_Occurs'Img & ',' & Max_Occurs'Img & ");");
---              end if;
---           when others =>
---              if Debug then
---                 Output_Action ("Can't handle nested element decl");
---              end if;
---              Raise_Exception
---                (XML_Not_Implemented'Identity,
---                 "Unsupported: ""element"" in this context");
---        end case;
-
-      --  It seems we could optimize the case with a single element in a choice
-      --  and save on the intermediate state by pointing directly to the end
-      --  state of the choice. But that does not work, since we need to
-      --  attach data to the intermediate state, like the callbacks for the
-      --  element's type (or the nested NFA).
-
-      S1 := Get_NFA_State (Element);
-
-      if Typ /= No_Type then
-         --  We could have a local element, for which no state has been
-         --  allocated yet
-         if S1 = No_State then
-            S1 := Handler.NFA.Add_State
-              ((Type_Name   => Get_Value (Atts, Type_Index),
-                Attributes  => null,
-                Simple_Type => null));
-         end if;
-
-         if Get_Validator (Typ) /= null
-           and then Is_Simple_Type (Handler, Typ)
-         then
-            Handler.NFA.Get_Data (S1).Simple_Type := Get_Validator (Typ);
-         end if;
-
-         if Get_NFA (Typ) /= No_Nested then
-            Handler.NFA.Set_Nested (S1, Get_NFA (Typ));
-         end if;
-      else
-         --  We do not know the type. Either we have a ref element, or the
-         --  type is inlined in the definition of the element
-
-         pragma Assert (S1 /= No_State);
-
-         if Is_Ref then
-            S2 := Handler.NFA.Add_State
-              ((Type_Name   => No_Symbol,
-                Attributes  => null,
-                Simple_Type => null));
-            Handler.NFA.Set_Alias (S2, S1);
-            S1 := S2;
-         end if;
-      end if;
-
+      Details := new Type_Details'
+        (Kind         => Type_Element,
+         Min_Occurs   => Min_Occurs,
+         Max_Occurs   => Max_Occurs,
+         Next         => null,
+         Element      => Info);
       Handler.Contexts := new Context'
         (Typ            => Context_Element,
-         Start_State    => S1,
-         Last_State     => S1,
-         Element        => Element,
-         Is_Ref         => Is_Ref,
-         Element_Min    => Min_Occurs,
-         Element_Max    => Max_Occurs,
-         Level          => Handler.Contexts.Level + 1,
+         Element        => Details,
          Next           => Handler.Contexts);
+      Insert_In_Type (Handler, Details);
    end Create_Element;
 
    --------------------
@@ -1443,47 +1417,50 @@ package body Schema.Schema_Readers is
    --------------------
 
    procedure Finish_Element (Handler : access Schema_Reader'Class) is
-      Ctx : constant Context_Access := Handler.Contexts;
+      Ctx  : constant Context_Access := Handler.Contexts;
+      Info : constant Element_Descr := Ctx.Element.Element;
    begin
-      Link_To_Previous
-        (Handler, Ctx.Next, Ctx.Start_State,
-         (Kind => Transition_Symbol,
-          Name => Get_QName (Ctx.Element)),
-         Ctx.Element_Min, Ctx.Element_Max);
+      case Handler.Contexts.Next.Typ is
+         when Context_Schema | Context_Redefine =>
+            Set (Handler.Global_Elements, Info.Name, Info);
+         when others =>
+            null;
+            --  Need to insert the element in the type definition
+      end case;
 
-      if not Ctx.Is_Ref
-        and then Get_Type (Ctx.Element) = No_Type
-      then
-         --  From 3.3.2.1, the type should be that of the substitutionGroup
-         --  attribute if there is any
-
-         if Get_Substitution_Group (Ctx.Element) /= No_Element then
-            if Debug then
-               Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
-                       & " from substitution group");
-            end if;
-
-            if Get_Type (Get_Substitution_Group (Ctx.Element)) = No_Type then
-               Raise_Exception
-                 (XML_Not_Implemented'Identity,
-                  "Not supported: type computed from substitutionGroup when"
-                  & " the group has not been fully defined yet");
-            end if;
-
-            Set_Type
-              (Ctx.Element, Handler,
-               Get_Type (Get_Substitution_Group (Ctx.Element)));
-
-         else
-            --  Otherwise the type is anyType
-            if Debug then
-               Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
-                       & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
-            end if;
-            Set_Type (Ctx.Element, Handler,
-                      Lookup (Handler.Schema_NS, Handler, Handler.Ur_Type));
-         end if;
-      end if;
+--        if Info.Ref = No_Qualified_Name
+--          and then Get_Type (Ctx.Element) = No_Type
+--        then
+--          --  From 3.3.2.1, the type should be that of the substitutionGroup
+--           --  attribute if there is any
+--
+--           if Get_Substitution_Group (Ctx.Element) /= No_Element then
+--              if Debug then
+--                 Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
+--                         & " from substitution group");
+--              end if;
+--
+--          if Get_Type (Get_Substitution_Group (Ctx.Element)) = No_Type then
+--                 Raise_Exception
+--                   (XML_Not_Implemented'Identity,
+--                  "Not supported: type computed from substitutionGroup when"
+--                    & " the group has not been fully defined yet");
+--              end if;
+--
+--              Set_Type
+--                (Ctx.Element, Handler,
+--                 Get_Type (Get_Substitution_Group (Ctx.Element)));
+--
+--           else
+--              --  Otherwise the type is anyType
+--              if Debug then
+--                 Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts)
+--                         & ", Lookup (Handler.Schema_NS, ""ur-Type"");");
+--              end if;
+--              Set_Type (Ctx.Element, Handler,
+--                      Lookup (Handler.Schema_NS, Handler, Handler.Ur_Type));
+--           end if;
+--        end if;
    end Finish_Element;
 
    ------------------------
@@ -1494,23 +1471,17 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
+--      Info : Type_Descr;
    begin
       if Handler.Contexts.Typ = Context_Restriction
         and then Handler.Contexts.Restriction_Base = No_Type
       then
+         --  Info.Simple_Content := True;
          Handler.Contexts := new Context'
            (Typ               => Context_Type_Def,
-            Start_State       => No_State,
-            Last_State        => No_State,
-            Type_Name         => No_Symbol,
+            Type_Info         => No_Type_Index,
             Type_Validator    => null,
             Redefined_Type    => No_Type,
-            Mixed_Content     => False,
-            Simple_Content    => True,
-            Blocks            => No_Block,
-            NFA               => No_Nested,
-            Final             => (others => False),
-            Level             => Handler.Contexts.Level + 1,
             Next              => Handler.Contexts);
 
       else
@@ -1524,6 +1495,7 @@ package body Schema.Schema_Readers is
 
    procedure Finish_Simple_Type (Handler : access Schema_Reader'Class) is
       C   : constant Context_Access := Handler.Contexts;
+      Info : Type_Descr renames Handler.Types.Table (C.Type_Info);
       Typ : XML_Type;
    begin
       if C.Next.Typ = Context_Restriction
@@ -1537,17 +1509,17 @@ package body Schema.Schema_Readers is
               (Ada_Name (C) & " := Create_Local_Type (Validator);");
          end if;
 
-         Set_Final (Typ, Handler.Contexts.Final);
+         Set_Final (Typ, Info.Final);
          if Debug then
             Output_Action ("Set_Final ("
                            & Ada_Name (Typ) & ", "
-                           & To_String (Handler.Contexts.Final) & ");");
+                           & To_String (Info.Final) & ");");
             Output_Action ("Setting base type for restriction");
          end if;
 
          C.Next.Restriction_Base := Typ;
       else
-         Handler.Contexts.Mixed_Content := True;
+         Info.Mixed := True;
          Finish_Complex_Type (Handler);
       end if;
    end Finish_Simple_Type;
@@ -1561,11 +1533,8 @@ package body Schema.Schema_Readers is
       Handler : access Schema_Reader'Class;
       Blocks  : out Block_Status;
       Is_Set  : out Boolean;
-      Attr_Name : Symbol)
+      Index   : Integer)
    is
-      Block_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Attr_Name);
-
       procedure On_Item (Str : Byte_Sequence);
       procedure On_Item (Str : Byte_Sequence) is
       begin
@@ -1586,11 +1555,11 @@ package body Schema.Schema_Readers is
       procedure For_Each
         is new Schema.Validators.Lists.For_Each_Item (On_Item);
    begin
-      Is_Set := Block_Index /= -1;
+      Is_Set := Index /= -1;
       Blocks := No_Block;
 
-      if Block_Index /= -1 then
-         For_Each (Get (Get_Value (Atts, Block_Index)).all);
+      if Index /= -1 then
+         For_Each (Get (Get_Value (Atts, Index)).all);
 
          if Debug then
             Output_Action ("Set_Block (" & To_String (Blocks) & ")");
@@ -1598,17 +1567,35 @@ package body Schema.Schema_Readers is
       end if;
    end Compute_Blocks;
 
+   ------------------
+   -- Compute_Form --
+   ------------------
+
+   function Compute_Form
+     (Atts      : Sax_Attribute_List;
+      Handler   : access Schema_Reader'Class;
+      Index     : Integer;
+      Default   : Form_Type) return Form_Type is
+   begin
+      if Index = -1 then
+         return Default;
+      elsif Get_Value (Atts, Index) = Handler.Qualified then
+         return Qualified;
+      else
+         return Unqualified;
+      end if;
+   end Compute_Form;
+
    -------------------
    -- Compute_Final --
    -------------------
 
-   procedure Compute_Final
+   function Compute_Final
      (Atts    : Sax_Attribute_List;
       Handler : access Schema_Reader'Class;
-      Final   : out Final_Status)
+      Index   : Integer) return Final_Status
    is
-      Final_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Final);
+      Final : Final_Status;
 
       procedure On_Item (Str : Byte_Sequence);
       procedure On_Item (Str : Byte_Sequence) is
@@ -1634,13 +1621,15 @@ package body Schema.Schema_Readers is
    begin
       Final := (others => False);
 
-      if Final_Index /= -1 then
-         For_Each (Get (Get_Value (Atts, Final_Index)).all);
+      if Index /= -1 then
+         For_Each (Get (Get_Value (Atts, Index)).all);
 
          if Debug then
             Output_Action ("Set_Final (" & To_String (Final) & ")");
          end if;
       end if;
+
+      return Final;
    end Compute_Final;
 
    -------------------------
@@ -1651,70 +1640,62 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Mixed_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Mixed);
-      Abstract_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.S_Abstract);
-      Name : constant Symbol := Get_Value
-        (Atts, Get_Index (Atts, Empty_String, Handler.Name));
       Is_Set : Boolean;
-      S : State;
-      Typ : XML_Type := No_Type;
-      N : Nested_NFA;
+      Info   : Type_Descr;
+      Local  : Symbol;
 
    begin
-      if Abstract_Index /= -1 then
-         --  Not supported yet anyway
-         Raise_Exception
-           (XML_Not_Implemented'Identity,
-            "Unsupported ""abstract"" attribute for complexType");
-      end if;
+      Info.Block := Get_Block_Default (Handler.Target_NS);
 
-      if Name /= No_Symbol then
-         Typ := Lookup
-           (Handler.Target_NS, Handler, Name, Create_If_Needed => True);
-         N := Get_NFA (Typ);
-         S := Get_Start_State (N);
-      else
-         S := Handler.NFA.Add_State
-           ((Type_Name   => No_Symbol,
-             Attributes  => null,
-             Simple_Type => null));
-         N := Handler.NFA.Create_Nested (S);
-      end if;
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.Mixed then
+               Info.Mixed := Get_Value_As_Boolean (Atts, J, False);
+            elsif Local = Handler.Name then
+               Info.Name := Get_Value (Atts, J);
+            elsif Local = Handler.Block then
+               Compute_Blocks (Atts, Handler, Info.Block, Is_Set, J);
+            elsif Local = Handler.Final then
+               Info.Final := Compute_Final (Atts, Handler, J);
+            elsif Local = Handler.S_Abstract then
+               --  Not supported yet anyway
+               Raise_Exception
+                 (XML_Not_Implemented'Identity,
+                  "Unsupported ""abstract"" attribute for complexType");
+            end if;
+         end if;
+      end loop;
+
+      Info.Simple_Content := False;
+
+      Append (Handler.Types, Info);
+      case Handler.Contexts.Typ is
+         when Context_Schema | Context_Redefine =>
+            Set
+              (Handler.Global_Types,
+               (NS    => Get_Namespace_URI (Handler.Target_NS),
+                Local => Info.Name),
+               Last (Handler.Types));
+         when others =>
+            null;
+      end case;
 
       Handler.Contexts := new Context'
         (Typ               => Context_Type_Def,
-         Start_State       => S,
-         Last_State        => S,
-         Type_Name         => Name,
+         Type_Info         => Last (Handler.Types),
          Type_Validator    => null,
          Redefined_Type    => No_Type,
-         Mixed_Content     => Mixed_Index /= -1
-           and then Get_Value_As_Boolean (Atts, Mixed_Index),
-         Simple_Content    => False,
-         Blocks            => No_Block,
-         NFA               => N,
-         Final             => (others => False),
-         Level             => Handler.Contexts.Level + 1,
          Next              => Handler.Contexts);
-
-      Compute_Blocks
-        (Atts, Handler, Handler.Contexts.Blocks, Is_Set, Handler.Block);
-      if not Is_Set then
-         Handler.Contexts.Blocks := Get_Block_Default (Handler.Target_NS);
-      end if;
-
-      Compute_Final  (Atts, Handler, Handler.Contexts.Final);
 
       --  Do not use In_Redefine_Context, since this only applies for types
       --  that are redefined
       if Handler.Contexts.Next.Typ = Context_Redefine then
          Handler.Contexts.Redefined_Type := Redefine_Type
-           (Handler.Target_NS, Handler.Contexts.Type_Name);
+           (Handler.Target_NS, Info.Name);
          if Debug then
             Output_Action ("Validator := Redefine_Type (Handler.Target_NS, """
-                    & Get (Handler.Contexts.Type_Name).all & """);");
+                    & Get (Info.Name).all & """);");
          end if;
       end if;
    end Create_Complex_Type;
@@ -1732,7 +1713,7 @@ package body Schema.Schema_Readers is
          --  Create a restriction, instead of a simple ur-Type, so that we can
          --  add attributes to it without impacting ur-Type itself
 
-         if C.Simple_Content then
+         if Handler.Types.Table (C.Type_Info).Simple_Content then
             if Debug then
                Output_Action
                  ("Validator := Restriction_Of (Lookup "
@@ -1753,12 +1734,14 @@ package body Schema.Schema_Readers is
            (Handler.Schema_NS, Handler, Base);
       end if;
 
-      Propagate_Last (Handler);
+      case Handler.Contexts.Next.Typ is
+         when Context_Element =>
+            Handler.Contexts.Next.Element.Element.Local_Type :=
+              Handler.Contexts.Type_Info;
 
-      if Debug then
-         Output_Action
-           ("NFA: created machine " & Dump (Handler.NFA, C.NFA));
-      end if;
+         when others =>
+            null;
+      end case;
    end Ensure_Type;
 
    -------------------------
@@ -1768,60 +1751,59 @@ package body Schema.Schema_Readers is
    procedure Finish_Complex_Type (Handler  : access Schema_Reader'Class) is
       C   : constant Context_Access := Handler.Contexts;
       Typ : XML_Type;
+      Info : Type_Descr renames Handler.Types.Table (C.Type_Info);
    begin
       Ensure_Type (Handler, C);
-      if C.Type_Name = No_Symbol then
-         Typ := Create_Local_Type
-           (Handler.Target_NS, C.Type_Validator, NFA => C.NFA);
+      if Info.Name = No_Symbol then
+         Typ := Create_Local_Type (Handler.Target_NS, C.Type_Validator);
          if Debug then
             Output_Action
               (Ada_Name (C) & " := Create_Local_Type (Validator);");
          end if;
       else
          Typ := Create_Global_Type
-           (Handler.Target_NS, Handler, C.Type_Name, C.Type_Validator, C.NFA);
+           (Handler.Target_NS, Handler, Info.Name, C.Type_Validator);
          if Debug then
             Output_Action (Ada_Name (C)
                     & " := Create_Global_Type (Target_NS, """
-                    & Get (C.Type_Name).all & """, Validator);");
+                    & Get (Info.Name).all & """, Validator);");
          end if;
       end if;
 
-      Set_Block (Typ, Handler.Contexts.Blocks);
+      Set_Block (Typ, Info.Block);
       if Debug then
          Output_Action ("Set_Block (" & Ada_Name (Typ) & ", "
-                 & To_String (Handler.Contexts.Blocks) & ")");
+                 & To_String (Info.Block) & ")");
          Output_Action ("Set_Final ("
                         & Ada_Name (Typ) & ", "
-                        & To_String (Handler.Contexts.Final) & ");");
+                        & To_String (Info.Final) & ");");
          Output_Action ("Set_Mixed_Content ("
            & Ada_Name (C) & ", "
-           & Boolean'Image (Handler.Contexts.Mixed_Content
-             or Handler.Contexts.Simple_Content) & ");");
+           & Boolean'Image (Info.Mixed or Info.Simple_Content) & ");");
       end if;
 
-      Set_Final (Typ, Handler.Contexts.Final);
+      Set_Final (Typ, Info.Final);
       Set_Mixed_Content
-        (Get_Validator (Typ), Handler.Contexts.Mixed_Content
-                              or Handler.Contexts.Simple_Content);
+        (Get_Validator (Typ), Info.Mixed or Info.Simple_Content);
 
-      case Handler.Contexts.Next.Typ is
+      case C.Next.Typ is
          when Context_Schema | Context_Redefine =>
             null;
          when Context_Element =>
-            if Debug then
-               Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
-                       & ", " & Ada_Name (C) & ");");
-            end if;
-            Set_Type (Handler.Contexts.Next.Element, Handler, Typ);
+            null;
+--              if Debug then
+--                 Output_Action ("Set_Type (" & Ada_Name (C.Next)
+--                         & ", " & Ada_Name (C) & ");");
+--              end if;
+            --  Set_Type (C.Next.Element, Handler, Typ);
          when Context_Attribute =>
-            Set_Type (Handler.Contexts.Next.Attribute, Typ);
+            Set_Type (C.Next.Attribute, Typ);
             if Debug then
-               Output_Action ("Set_Type (" & Ada_Name (Handler.Contexts.Next)
+               Output_Action ("Set_Type (" & Ada_Name (C.Next)
                        & ", " & Ada_Name (Typ) & ");");
             end if;
          when Context_List =>
-            Handler.Contexts.Next.List_Items := Typ;
+            C.Next.List_Items := Typ;
             if Debug then
                Output_Action ("Validator := " & Ada_Name (C) & ";");
             end if;
@@ -1845,11 +1827,14 @@ package body Schema.Schema_Readers is
    is
       Base_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Base);
+      Base_Name  : Qualified_Name;
       Base : XML_Type;
+      Info : Type_Descr
+         renames Handler.Types.Table (Handler.Contexts.Type_Info);
    begin
-      if Handler.Contexts.Type_Name /= No_Symbol
+      if Info.Name /= No_Symbol
         and then Base_Index /= -1
-        and then Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name
+        and then Get_Value (Atts, Base_Index) = Info.Name
       then
          if In_Redefine_Context (Handler.all) then
             Base := Handler.Contexts.Redefined_Type;
@@ -1859,8 +1844,8 @@ package body Schema.Schema_Readers is
          end if;
 
       elsif Base_Index /= -1 then
-         Lookup_With_NS
-           (Handler, Get_Value (Atts, Base_Index), Result => Base);
+         Base_Name := Resolve_QName (Handler, Get_Value (Atts, Base_Index));
+         Lookup_With_NS (Handler, Base_Name, Result => Base);
 
          if To_QName (Base) = "IDREF"
            or else To_QName (Base) = "IDREFS"
@@ -1874,18 +1859,15 @@ package body Schema.Schema_Readers is
          Base := No_Type;
       end if;
 
-      if Handler.Contexts.Simple_Content then
+      if Info.Simple_Content then
          Check_Content_Type (Base, Handler, Should_Be_Simple => True);
       end if;
 
       Handler.Contexts := new Context'
         (Typ              => Context_Restriction,
-         Start_State      => No_State,
-         Last_State       => No_State,
          Restriction_Base => Base,
          Restricted       => null,
          Restriction      => null,
-         Level            => Handler.Contexts.Level + 1,
          Next             => Handler.Contexts);
    end Create_Restriction;
 
@@ -1957,10 +1939,7 @@ package body Schema.Schema_Readers is
    begin
       Handler.Contexts := new Context'
         (Typ        => Context_Union,
-         Start_State => No_State,
-         Last_State => No_State,
          Union      => Create_Union (Handler.Target_NS),
-         Level      => Handler.Contexts.Level + 1,
          Next       => Handler.Contexts);
       if Debug then
          Output_Action (Ada_Name (Handler.Contexts) & " := Create_Union;");
@@ -1971,7 +1950,8 @@ package body Schema.Schema_Readers is
             procedure Cb_Item (Str : Byte_Sequence);
 
             procedure Cb_Item (Str : Byte_Sequence) is
-               S : constant Symbol := Find_Symbol (Handler.all, Str);
+               S : constant Qualified_Name := Resolve_QName
+                 (Handler, Find_Symbol (Handler.all, Str));
                Typ : XML_Type;
             begin
                Lookup_With_NS (Handler, S, Typ);
@@ -2024,14 +2004,17 @@ package body Schema.Schema_Readers is
    is
       Base_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Base);
+      Base_Name : Qualified_Name;
       Base : XML_Type;
+      Info : Type_Descr
+        renames Handler.Types.Table (Handler.Contexts.Type_Info);
    begin
       if Base_Index = -1 then
          Validation_Error
            (Handler, "#Attribute ""base"" required for <extensionType>");
       end if;
 
-      if Get_Value (Atts, Base_Index) = Handler.Contexts.Type_Name then
+      if Get_Value (Atts, Base_Index) = Info.Name then
          if In_Redefine_Context (Handler.all) then
             Base := Handler.Contexts.Redefined_Type;
          else
@@ -2039,17 +2022,14 @@ package body Schema.Schema_Readers is
               (Handler, "#Self-referencing extension not allowed");
          end if;
       else
-         Lookup_With_NS
-           (Handler, Get_Value (Atts, Base_Index), Result => Base);
+         Base_Name := Resolve_QName (Handler, Get_Value (Atts, Base_Index));
+         Lookup_With_NS (Handler, Base_Name, Result => Base);
       end if;
 
       Handler.Contexts := new Context'
         (Typ            => Context_Extension,
-         Start_State    => No_State,
-         Last_State     => No_State,
          Extension_Base => Base,
          Extension      => null,
-         Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
    end Create_Extension;
 
@@ -2101,19 +2081,17 @@ package body Schema.Schema_Readers is
    is
       Item_Type_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Item_Type);
+      Name : Qualified_Name;
       Items : XML_Type;
    begin
       if Item_Type_Index /= -1 then
-         Lookup_With_NS
-           (Handler, Get_Value (Atts, Item_Type_Index), Result => Items);
+         Name := Resolve_QName (Handler, Get_Value (Atts, Item_Type_Index));
+         Lookup_With_NS (Handler, Name, Result => Items);
       end if;
 
       Handler.Contexts := new Context'
         (Typ            => Context_List,
-         Start_State    => No_State,
-         Last_State     => No_State,
          List_Items     => Items,
-         Level          => Handler.Contexts.Level + 1,
          Next           => Handler.Contexts);
    end Create_List;
 
@@ -2141,6 +2119,62 @@ package body Schema.Schema_Readers is
       end case;
    end Finish_List;
 
+   --------------------
+   -- Insert_In_Type --
+   --------------------
+
+   procedure Insert_In_Type
+     (Handler : access Schema_Reader'Class;
+      Element : Type_Details_Access)
+   is
+      procedure Append (List : in out Type_Details_Access;
+                        Elem : Type_Details_Access);
+      procedure Append (List : in out Type_Details_Access;
+                        Elem : Type_Details_Access)
+      is
+         Tmp  : Type_Details_Access;
+      begin
+         if List = null then
+            List := Elem;
+         else
+            Tmp := List;
+            while Tmp.Next /= null loop
+               Tmp := Tmp.Next;
+            end loop;
+
+            Tmp.Next := Elem;
+         end if;
+      end Append;
+
+      Ctx  : constant Context_Access := Handler.Contexts;
+      Next : constant Context_Access := Ctx.Next;
+   begin
+      case Next.Typ is
+         when Context_Type_Def =>
+            Handler.Types.Table (Next.Type_Info).Details := Element;
+
+         when Context_Sequence =>
+            Append (Next.Seq.First_In_Seq, Element);
+
+         when Context_Choice =>
+            Append (Next.Choice.First_In_Choice, Element);
+
+         when Context_Extension | Context_Restriction | Context_Group =>
+            Raise_Exception
+              (XML_Not_Implemented'Identity,
+               "Support for """ & Element.Kind'Img
+               & """ here will be implemented soon");
+
+         when Context_Schema | Context_Attribute | Context_Element
+            | Context_All | Context_Union
+            | Context_List | Context_Redefine | Context_Attribute_Group =>
+            null;  --  Should raise exception when validating grammar
+--              Raise_Exception
+--                (XML_Not_Implemented'Identity,
+--                 "Unsupported: ""sequence"" in this context");
+      end case;
+   end Insert_In_Type;
+
    -------------------
    -- Create_Choice --
    -------------------
@@ -2150,84 +2184,21 @@ package body Schema.Schema_Readers is
       Atts : Sax_Attribute_List)
    is
       Min_Occurs, Max_Occurs : Integer := 1;
+      Choice  : Type_Details_Access;
    begin
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
-
+      Choice := new Type_Details'
+        (Kind            => Type_Choice,
+         Min_Occurs      => Min_Occurs,
+         Max_Occurs      => Max_Occurs,
+         Next            => null,
+         First_In_Choice => null);
       Handler.Contexts := new Context'
         (Typ         => Context_Choice,
-         Start_State => Get_Last_State (Handler, Handler.Contexts),
-         Last_State  => Handler.NFA.Add_State
-           ((Type_Name   => No_Symbol,
-             Attributes  => null,
-             Simple_Type => null)),
-         C           => Create_Choice (Handler.Target_NS),
-         Level       => Handler.Contexts.Level + 1,
+         Choice      => Choice,
          Next        => Handler.Contexts);
-      if Debug then
-         Output_Action (Ada_Name (Handler.Contexts) & " := Create_Choice;");
-      end if;
-
---        case Handler.Contexts.Next.Typ is
---           when Context_Type_Def =>
---              if Debug then
---                 Output_Action
---                   ("Validator := " & Ada_Name (Handler.Contexts) & ";");
---              end if;
---              Handler.Contexts.Next.Type_Validator := Create_Repeat
---                (Handler, Handler.Contexts.C, Min_Occurs, Max_Occurs);
---           when Context_Sequence =>
---              Add_Particle
---                (Handler.Contexts.Next.Seq, Handler, Handler.Contexts.C,
---                 Min_Occurs, Max_Occurs);
---              if Debug then
---                 Output_Action
---                   ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
---                    & ", " & Ada_Name (Handler.Contexts) & ");");
---              end if;
---           when Context_Choice =>
---              Add_Particle (Handler.Contexts.Next.C, Handler,
---                            Handler.Contexts.C, Min_Occurs, Max_Occurs);
---              if Debug then
---                 Output_Action
---                   ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
---                    & ", " & Ada_Name (Handler.Contexts) & ");");
---              end if;
---           when Context_Extension =>
---              if Debug then
---              Output_Action ("Validator := " & Ada_Name (Handler.Contexts));
---              end if;
---              Handler.Contexts.Next.Extension := Create_Repeat
---                (Handler, Handler.Contexts.C, Min_Occurs, Max_Occurs);
---
---           when Context_Group =>
---              Add_Particle (Handler.Contexts.Next.Group, Handler,
---                            Handler.Contexts.C, Min_Occurs, Max_Occurs);
---              if Debug then
---                 Output_Action ("Add_Particle ("
---                         & Ada_Name (Handler.Contexts.Next)
---                         & ", " & Ada_Name (Handler.Contexts) & ");");
---              end if;
---
---           when Context_Schema | Context_Attribute | Context_Element
---              | Context_Restriction | Context_All | Context_Union
---              | Context_List | Context_Redefine | Context_Attribute_Group =>
---              if Debug then
---                 Output_Action ("Can't handle nested sequence");
---              end if;
---              Raise_Exception
---                (XML_Not_Implemented'Identity,
---                 "Unsupported: ""choice"" in this context");
---        end case;
+      Insert_In_Type (Handler, Choice);
    end Create_Choice;
-
-   -------------------
-   -- Finish_Choice --
-   -------------------
-
-   procedure Finish_Choice (Handler : access Schema_Reader'Class) is
-   begin
-      Propagate_Last (Handler);
-   end Finish_Choice;
 
    ---------------------
    -- Create_Sequence --
@@ -2238,87 +2209,21 @@ package body Schema.Schema_Readers is
       Atts     : Sax_Attribute_List)
    is
       Min_Occurs, Max_Occurs : Integer := 1;
+      Seq  : Type_Details_Access;
    begin
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
+      Seq := new Type_Details'
+        (Kind         => Type_Sequence,
+         Min_Occurs   => Min_Occurs,
+         Max_Occurs   => Max_Occurs,
+         Next         => null,
+         First_In_Seq => null);
       Handler.Contexts := new Context'
-        (Typ        => Context_Sequence,
-         Seq        => Create_Sequence (Handler.Target_NS),
-         Start_State => No_State,
-         Last_State => No_State,
-         Level      => Handler.Contexts.Level + 1,
-         Next       => Handler.Contexts);
-      if Debug then
-         Output_Action (Ada_Name (Handler.Contexts) & " := Create_Sequence;");
-      end if;
-
---        case Handler.Contexts.Next.Typ is
---           when Context_Type_Def =>
---              if Debug then
---                 Output_Action
---                   ("Validator := " & Ada_Name (Handler.Contexts) & ";");
---              end if;
---              Handler.Contexts.Next.Type_Validator := Create_Repeat
---                (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
---           when Context_Sequence =>
---              Add_Particle (Handler.Contexts.Next.Seq, Handler,
---                            Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
---              if Debug then
---                 Output_Action
---                   ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
---                    & ", " & Ada_Name (Handler.Contexts)
---                    & "," & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
---              end if;
---           when Context_Choice =>
---              Add_Particle (Handler.Contexts.Next.C, Handler,
---                            Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
---              if Debug then
---                 Output_Action
---                   ("Add_Particle (" & Ada_Name (Handler.Contexts.Next)
---                    & ", " & Ada_Name (Handler.Contexts)
---                    & "," & Min_Occurs'Img & "," & Max_Occurs'Img & ");");
---              end if;
---           when Context_Extension =>
---              if Debug then
---                 Output_Action
---                   ("Validator := " & Ada_Name (Handler.Contexts) & ";");
---              end if;
---              Handler.Contexts.Next.Extension := Create_Repeat
---                (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
---           when Context_Restriction =>
---              if Debug then
---                 Output_Action
---                   ("Validator := " & Ada_Name (Handler.Contexts) & ";");
---              end if;
---              Handler.Contexts.Next.Restriction := Create_Repeat
---                (Handler, Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
---           when Context_Group =>
---              Add_Particle (Handler.Contexts.Next.Group, Handler,
---                            Handler.Contexts.Seq, Min_Occurs, Max_Occurs);
---              if Debug then
---                 Output_Action ("Add_Particle ("
---                         & Ada_Name (Handler.Contexts.Next)
---                         & ", " & Ada_Name (Handler.Contexts) & ");");
---              end if;
---           when Context_Schema | Context_Attribute | Context_Element
---              | Context_All | Context_Union
---              | Context_List | Context_Redefine | Context_Attribute_Group =>
---              if Debug then
---                 Output_Action ("Can't handle nested sequence");
---              end if;
---              Raise_Exception
---                (XML_Not_Implemented'Identity,
---                 "Unsupported: ""sequence"" in this context");
---        end case;
+        (Typ  => Context_Sequence,
+         Seq  => Seq,
+         Next => Handler.Contexts);
+      Insert_In_Type (Handler, Seq);
    end Create_Sequence;
-
-   ---------------------
-   -- Finish_Sequence --
-   ---------------------
-
-   procedure Finish_Sequence (Handler : access Schema_Reader'Class) is
-   begin
-      Propagate_Last (Handler);
-   end Finish_Sequence;
 
    ----------------------
    -- Create_Attribute --
@@ -2349,6 +2254,7 @@ package body Schema.Schema_Readers is
       Typ : XML_Type := No_Type;
       Use_Type : Attribute_Use_Type := Optional;
       Form : Form_Type;
+      Type_Name : Qualified_Name;
 
       function Get_Fixed return Symbol;
       --  Return the "fixed" value for the attribute
@@ -2410,8 +2316,8 @@ package body Schema.Schema_Readers is
                "#Attributes ""type"" and ""ref"" cannot be both specified");
          end if;
 
-         Lookup_With_NS
-           (Handler, Get_Value (Atts, Type_Index), Result => Typ);
+         Type_Name := Resolve_QName (Handler, Get_Value (Atts, Type_Index));
+         Lookup_With_NS (Handler, Type_Name, Result => Typ);
 
          if To_QName (Typ) = "IDREF"
            or else To_QName (Typ) = "IDREFS"
@@ -2463,11 +2369,8 @@ package body Schema.Schema_Readers is
 
       Handler.Contexts := new Context'
         (Typ              => Context_Attribute,
-         Start_State      => No_State,
-         Last_State       => No_State,
          Attribute        => null,
          Attribute_Is_Ref => Ref_Index /= -1,
-         Level            => Handler.Contexts.Level + 1,
          Next             => Handler.Contexts);
 
       if Name_Index /= -1 then
@@ -2530,18 +2433,12 @@ package body Schema.Schema_Readers is
          end case;
       else
          declare
-            QName     : constant Cst_Byte_Sequence_Access :=
-              Get (Get_Value (Atts, Ref_Index));
-            Separator : constant Integer := Split_Qname (QName.all);
-            Local_Name : constant Symbol := Find_Symbol
-              (Handler.all, QName (Separator + 1 .. QName'Last));
-            G         : XML_Grammar_NS;
+            Name : constant Qualified_Name :=
+              Resolve_QName (Handler, Get_Value (Atts, Ref_Index));
+            G    : XML_Grammar_NS;
          begin
-            Get_Grammar_For_Namespace
-              (Handler,
-               Find_Symbol (Handler.all, QName (QName'First .. Separator - 1)),
-               G);
-            Att := Lookup_Attribute (G, Handler, Local_Name);
+            Get_Grammar_For_Namespace (Handler, Name.NS, G);
+            Att := Lookup_Attribute (G, Handler, Name.Local);
 
             --  ??? We haven't normalized the value for fixed here
             Att := Create_Local_Attribute
@@ -2553,7 +2450,7 @@ package body Schema.Schema_Readers is
             if Debug then
                Output_Action
                  ("Attr := Lookup_Attribute_NS (G, """
-                  & QName (Separator + 1 .. QName'Last) & """);");
+                  & Get (Name.Local).all & """);");
                Output_Action
                  (Ada_Name (Handler.Contexts)
                   & " := Create_Local_Attribute (Attr, Handler.Target_NS, "
@@ -2580,9 +2477,10 @@ package body Schema.Schema_Readers is
    begin
       case In_Context.Typ is
          when Context_Type_Def =>
-            Add_Attribute
-              (Handler.NFA.Get_Data (In_Context.Start_State).Attributes,
-               Attribute);
+            null;
+--              Add_Attribute
+--                (Handler.NFA.Get_Data (In_Context.Start_State).Attributes,
+--                 Attribute);
 
          when Context_Schema | Context_Redefine =>
             null;
@@ -2665,77 +2563,46 @@ package body Schema.Schema_Readers is
      (Handler  : access Schema_Reader'Class;
       Atts     : Sax_Attribute_List)
    is
-      Target_NS_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Namespace_Target);
-      Form_Default_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.S_Element_Form_Default);
-      Attr_Form_Default_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.S_Attribute_Form_Default);
-      Blocks : Block_Status;
+      Info   : Schema_Descr;
       Is_Set : Boolean;
-      S : State;
+      Local  : Symbol;
    begin
-      if Target_NS_Index /= -1 then
+      for J in 1 .. Get_Length (Atts) loop
+         if Get_URI (Atts, J) = Empty_String then
+            Local := Get_Local_Name (Atts, J);
+            if Local = Handler.S_Element_Form_Default then
+               Info.Element_Form_Default :=
+                 Compute_Form (Atts, Handler, J, Unqualified);
+            elsif Local = Handler.S_Attribute_Form_Default then
+               Info.Attribute_Form_Default :=
+                 Compute_Form (Atts, Handler, J, Unqualified);
+            elsif Local = Handler.Block_Default then
+               Compute_Blocks (Atts, Handler, Info.Block, Is_Set, J);
+            elsif Local = Handler.Namespace_Target then
+               Info.Target_NS := Get_Value (Atts, J);
+            end if;
+         end if;
+      end loop;
+
+      if Info.Target_NS /= No_Symbol then
          if Debug then
             Output_Action ("Get_NS (Handler.Created_Grammar, """
-                    & Get (Get_Value (Atts, Target_NS_Index)).all
-                    & """, Handler.Target_NS)");
+                    & Get (Info.Target_NS).all & """, Handler.Target_NS)");
          end if;
-         Get_NS (Get_Grammar (Handler.all), Get_Value (Atts, Target_NS_Index),
-                 Handler.Target_NS);
+
+         Get_NS (Get_Grammar (Handler.all), Info.Target_NS, Handler.Target_NS);
          Set_Target_NS (Get_Grammar (Handler.all), Handler.Target_NS);
       end if;
 
-      if Form_Default_Index /= -1 then
-         if Get_Value (Atts, Form_Default_Index) = Handler.Qualified then
-            Handler.Element_Form_Default := Qualified;
-            if Debug then
-               Output_Action
-                 ("Set_Element_Form_Default (Handler.Target_NS, Qualified);");
-            end if;
-         else
-            Handler.Element_Form_Default := Unqualified;
-            if Debug then
-               Output_Action
-                 ("Set_Element_Form_Default (Handler.Target_NS, "
-                  & "Unqualified);");
-            end if;
-         end if;
-      end if;
+      Handler.Element_Form_Default   := Info.Element_Form_Default;
+      Handler.Attribute_Form_Default := Info.Attribute_Form_Default;
 
-      if Attr_Form_Default_Index /= -1
-        and then Get_Value (Atts, Attr_Form_Default_Index) = Handler.Qualified
-      then
-         Handler.Attribute_Form_Default := Qualified;
-         if Debug then
-            Output_Action
-              ("Set_Attribute_Form_Default (Handler.Target_NS, Qualified);");
-         end if;
-      else
-         Handler.Attribute_Form_Default := Unqualified;
-         if Debug then
-            Output_Action
-              ("Set_Attribute_Form_Default (Handler.Target_NS, Unqualified);");
-         end if;
-      end if;
-
-      Compute_Blocks (Atts, Handler, Blocks, Is_Set, Handler.Block_Default);
       if Is_Set then
-         Set_Block_Default (Handler.Target_NS, Blocks);
+         Set_Block_Default (Handler.Target_NS, Info.Block);
       end if;
-
-      S := Handler.NFA.Add_State
-        ((Type_Name   => No_Symbol,
-          Attributes  => null,
-          Simple_Type => null));
-      Handler.NFA.Add_Transition
-        (S, Final_State, (Kind => Transition_Close_Nested));
 
       Handler.Contexts := new Context'
         (Typ         => Context_Schema,
-         Start_State => Start_State,
-         Last_State  => S,
-         Level       => 0,
          Next        => null);
    end Create_Schema;
 
@@ -2845,11 +2712,8 @@ package body Schema.Schema_Readers is
       Get_Occurs (Handler, Atts, Min_Occurs, Max_Occurs);
       Handler.Contexts := new Context'
         (Typ           => Context_All,
-         Start_State   => No_State,
-         Last_State    => No_State,
          All_Validator =>
            Create_All (Handler.Target_NS, Min_Occurs, Max_Occurs),
-         Level         => Handler.Contexts.Level + 1,
          Next          => Handler.Contexts);
       if Debug then
          Output_Action (Ada_Name (Handler.Contexts) & " := Create_All ("
@@ -2898,7 +2762,7 @@ package body Schema.Schema_Readers is
    --------------
 
    function Ada_Name (C : Context_Access) return String is
-      L : constant String := Integer'Image (C.Level);
+      L : constant String := Integer'Image (1);
    begin
       case C.Typ is
          when Context_Schema | Context_Redefine =>
@@ -2910,13 +2774,15 @@ package body Schema.Schema_Readers is
          when Context_All =>
             return "All" & L (L'First + 1 .. L'Last);
          when Context_Element =>
-            return Ada_Name (C.Element);
+            return "foo";
+--              return Ada_Name (C.Element);
          when Context_Type_Def =>
-            if C.Type_Name = No_Symbol then
-               return "T_" & L (L'First + 1 .. L'Last);
-            else
-               return "T_" & XML_To_Ada (Get (C.Type_Name).all);
-            end if;
+            return "???Type???";
+--              if C.Type_Info.Name = No_Symbol then
+--                 return "T_" & L (L'First + 1 .. L'Last);
+--              else
+--                 return "T_" & XML_To_Ada (Get (C.Type_Info.Name).all);
+--              end if;
          when Context_Attribute =>
             return "A_" & L (L'First + 1 .. L'Last);
          when Context_Restriction =>
@@ -2952,7 +2818,9 @@ package body Schema.Schema_Readers is
       end if;
 
       if Debug then
-         Output_Seen ("Seen " & Get (Local_Name).all);
+         Output_Seen ("Seen " & Get (Local_Name).all
+                      & " at "
+                      & Sax.Locators.To_String (Get_Location (Handler)));
       end if;
 
       --  Check the grammar
@@ -3068,10 +2936,12 @@ package body Schema.Schema_Readers is
          Create_Group (H, Atts);
 
       elsif Local_Name = Handler.Simple_Content then
-         Handler.Contexts.Simple_Content := True;
+         Handler.Types.Table (Handler.Contexts.Type_Info).Simple_Content :=
+           True;
 
       elsif Local_Name = Handler.Complex_Content then
-         Handler.Contexts.Simple_Content := False;
+         Handler.Types.Table (Handler.Contexts.Type_Info).Simple_Content :=
+           False;
 
       elsif Local_Name = Handler.Attribute_Group then
          Create_Attribute_Group (H, Atts);
@@ -3135,13 +3005,13 @@ package body Schema.Schema_Readers is
          Finish_All (H);
 
       elsif Local_Name = Handler.Sequence then
-         Finish_Sequence (H);
+         null;
 
       elsif Local_Name = Handler.Any_Attribute then
          Handled := False;
 
       elsif Local_Name = Handler.Choice then
-         Finish_Choice (H);
+         null;
 
       elsif Local_Name = Handler.Restriction then
          Finish_Restriction (H);
@@ -3242,15 +3112,11 @@ package body Schema.Schema_Readers is
 
    procedure Get_Grammar_For_Namespace
      (Handler : access Schema_Reader'Class;
-      Prefix  : Symbol;
+      NS      : Sax.Symbols.Symbol;
       Grammar : out XML_Grammar_NS;
-      Create_If_Needed : Boolean := True)
-   is
-      NS : XML_NS;
+      Create_If_Needed : Boolean := True) is
    begin
-      Get_Namespace_From_Prefix (Handler.all, Prefix, NS);
-
-      if NS = No_XML_NS then
+      if NS = No_Symbol then
          if Debug then
             Output_Action ("G := Handler.Target_NS;");
          end if;
@@ -3260,20 +3126,44 @@ package body Schema.Schema_Readers is
          if Debug then
             Output_Action
               ("Get_NS (Handler.Created_Grammar, """
-               & Get (Get_URI (NS)).all & """, G);");
+               & Get (NS).all & """, G);");
          end if;
 
          Get_NS (Get_Grammar (Handler.all),
-                 Get_URI (NS), Grammar,
-                 Create_If_Needed
-                 or else Get_URI (NS) = Handler.XML_Schema_URI);
+                 NS, Grammar,
+                 Create_If_Needed or else NS = Handler.XML_Schema_URI);
          if Grammar = null then
             Validation_Error
               (Handler,
-               "#No location declared for namespace "
-               & Get (Get_URI (NS)).all);
+               "#No location declared for namespace " & Get (NS).all);
          end if;
       end if;
    end Get_Grammar_For_Namespace;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Type_Details_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Type_Details, Type_Details_Access);
+      Next : Type_Details_Access;
+   begin
+      while Self /= null loop
+         Next := Self.Next;
+
+         case Self.Kind is
+            when Type_Empty | Type_Element =>
+               null;
+            when Type_Sequence =>
+               Free (Self.First_In_Seq);
+            when Type_Choice =>
+               Free (Self.First_In_Choice);
+         end case;
+
+         Unchecked_Free (Self);
+         Self := Next;
+      end loop;
+   end Free;
 
 end Schema.Schema_Readers;

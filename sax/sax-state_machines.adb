@@ -75,7 +75,6 @@ package body Sax.State_Machines is
         (Self.States,
          State_Data'
            (Nested           => No_State,
-            Alias_Of         => No_State,
             On_Nested_Exit   => No_Transition,
             First_Transition => No_Transition,
             Data             => Default_Data));
@@ -137,7 +136,6 @@ package body Sax.State_Machines is
         (Self.States,
          State_Data'
            (Nested           => No_State,
-            Alias_Of         => No_State,
             Data             => Data,
             On_Nested_Exit   => No_Transition,
             First_Transition => No_Transition));
@@ -283,8 +281,6 @@ package body Sax.State_Machines is
                return;  --  Do not follow transitions from [To]
             else
                Cloned (S) := Add_State (Self);
-               Self.States.Table (Cloned (S)).Alias_Of :=
-                 Self.States.Table (S).Alias_Of;
             end if;
 
             T := Self.States.Table (S).First_Transition;
@@ -1351,42 +1347,6 @@ package body Sax.State_Machines is
    begin
       return Self.Default_Start;
    end Get_Start_State;
-
-   ---------------
-   -- Set_Alias --
-   ---------------
-
-   procedure Set_Alias
-     (Self     : access NFA;
-      Alias    : State;
-      Original : State)
-   is
-   begin
-      if Debug then
-         Put_Line ("NFA.Set_Alias (" & Alias'Img & "," & Original'Img & ")");
-      end if;
-      Self.States.Table (Alias).Alias_Of := Original;
-   end Set_Alias;
-
-   ---------------------
-   -- Resolve_Aliases --
-   ---------------------
-
-   procedure Resolve_Aliases (Self : access NFA) is
-      Alias : State;
-   begin
-      for A in State_Tables.First .. Last (Self.States) loop
-         declare
-            S : State_Data renames Self.States.Table (A);
-         begin
-            Alias := S.Alias_Of;
-            if Alias /= No_State then
-               S.Data := Self.States.Table (Alias).Data;
-               S.Nested := Self.States.Table (Alias).Nested;
-            end if;
-         end;
-      end loop;
-   end Resolve_Aliases;
 
    ------------------------------
    -- Set_Nested_Must_Be_Final --

@@ -187,10 +187,6 @@ package Schema.Validators is
      (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access;
    --  Returns the state machine used to validate [Grammar]
 
-   function Get_NFA_State
-     (Element : XML_Element) return Schema_State_Machines.State;
-   --  Return the state from the NFA that represents the global element.
-
    ---------------
    -- ID_Htable --
    ---------------
@@ -480,14 +476,10 @@ package Schema.Validators is
 
    function Create_Local_Type
      (Grammar    : XML_Grammar_NS;
-      Validator  : access XML_Validator_Record'Class;
-      NFA        : Nested_NFA := No_Nested) return XML_Type;
+      Validator  : access XML_Validator_Record'Class) return XML_Type;
    --  Create a new local type.
    --  This type cannot be looked up in the grammar later on. See the function
    --  Create_Global_Type below if you need this capability
-
-   function Get_NFA (Typ : XML_Type) return Nested_NFA;
-   --  Returns the state machine used to validate [Typ]
 
    function Get_Validator (Typ : XML_Type) return XML_Validator;
    --  Return the validator used for that type
@@ -1056,8 +1048,7 @@ package Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Sax.Symbols.Symbol;
-      Validator  : access XML_Validator_Record'Class;
-      NFA        : Nested_NFA := No_Nested) return XML_Type;
+      Validator  : access XML_Validator_Record'Class) return XML_Type;
    function Create_Global_Element
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
@@ -1086,8 +1077,7 @@ package Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Sax.Symbols.Symbol;
-      Validator  : access XML_Validator_Record'Class;
-      NFA        : Nested_NFA := No_Nested);
+      Validator  : access XML_Validator_Record'Class);
    procedure Create_Global_Attribute
      (NS             : XML_Grammar_NS;
       Reader         : access Abstract_Validation_Reader'Class;
@@ -1210,9 +1200,6 @@ private
       Final : Final_Status;
       --  Whether this element is final for "restriction" or "extension" or
       --  both
-
-      NFA   : Nested_NFA;
-      --  The nested state-machine for that type
 
       Next : XML_Type;
       --  Next type in the list of allocated types for this grammar.

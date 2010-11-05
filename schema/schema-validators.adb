@@ -1403,7 +1403,6 @@ package body Schema.Validators is
    is
       Typ : XML_Type := Types_Htable.Get
         (Grammar.Types.all, Local_Name);
-      S : State;
    begin
       if Typ = No_Type and then Create_If_Needed then
          if Local_Name = Reader.Precision_Decimal
@@ -1420,17 +1419,12 @@ package body Schema.Validators is
                & To_QName (Grammar, Local_Name));
          end if;
 
-         S := Grammar.NFA.Add_State
-           ((Type_Name   => Local_Name,
-             Attributes  => null,
-             Simple_Type => null));
          Typ := new XML_Type_Record'
            (Local_Name        => Local_Name,
             Validator         => null,
             Simple_Type       => Unknown_Content,
             Blocks            => Get_Block_Default (Grammar),
             Final             => (others => False),
-            NFA               => Grammar.NFA.Create_Nested (S),
             Next              => null);
          Types_Htable.Set (Grammar.Types.all, Typ);
          Register (Grammar, Typ);
@@ -2063,16 +2057,6 @@ package body Schema.Validators is
    end Create_Local_Element;
 
    -------------------
-   -- Get_NFA_State --
-   -------------------
-
-   function Get_NFA_State
-     (Element : XML_Element) return Schema_State_Machines.State is
-   begin
-      return Element.Elem.NFA_State;
-   end Get_NFA_State;
-
-   -------------------
    -- Redefine_Type --
    -------------------
 
@@ -2197,8 +2181,7 @@ package body Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Symbol;
-      Validator  : access XML_Validator_Record'Class;
-      NFA        : Nested_NFA := No_Nested) return XML_Type
+      Validator  : access XML_Validator_Record'Class) return XML_Type
    is
       Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
    begin
@@ -2215,7 +2198,6 @@ package body Schema.Validators is
          end if;
          Register (Grammar, Validator);
          Typ.Validator := XML_Validator (Validator);
-         Typ.NFA       := NFA;
 
          if Typ.Simple_Type /= Unknown_Content then
             Check_Content_Type
@@ -2230,7 +2212,6 @@ package body Schema.Validators is
             Simple_Type       => Unknown_Content,
             Blocks            => Get_Block_Default (Grammar),
             Final             => (others => False),
-            NFA               => NFA,
             Next              => null);
          Types_Htable.Set (Grammar.Types.all, Typ);
          if Debug then
@@ -2251,11 +2232,10 @@ package body Schema.Validators is
      (Grammar    : XML_Grammar_NS;
       Reader     : access Abstract_Validation_Reader'Class;
       Local_Name : Symbol;
-      Validator  : access XML_Validator_Record'Class;
-      NFA        : Nested_NFA  := No_Nested)
+      Validator  : access XML_Validator_Record'Class)
    is
       Typ : constant XML_Type :=
-              Create_Global_Type (Grammar, Reader, Local_Name, Validator, NFA);
+              Create_Global_Type (Grammar, Reader, Local_Name, Validator);
       pragma Unreferenced (Typ);
    begin
       null;
@@ -2634,15 +2614,6 @@ package body Schema.Validators is
      (Grammar : XML_Grammar) return Schema_State_Machines.NFA_Access is
    begin
       return Get (Grammar).NFA;
-   end Get_NFA;
-
-   -------------
-   -- Get_NFA --
-   -------------
-
-   function Get_NFA (Typ : XML_Type) return Nested_NFA is
-   begin
-      return Typ.NFA;
    end Get_NFA;
 
    ----------------
@@ -3087,8 +3058,7 @@ package body Schema.Validators is
 
    function Create_Local_Type
      (Grammar    : XML_Grammar_NS;
-      Validator  : access XML_Validator_Record'Class;
-      NFA        : Nested_NFA := No_Nested) return XML_Type
+      Validator  : access XML_Validator_Record'Class) return XML_Type
    is
       Result : XML_Type;
    begin
@@ -3098,7 +3068,6 @@ package body Schema.Validators is
          Validator         => XML_Validator (Validator),
          Simple_Type       => Unknown_Content,
          Blocks            => No_Block,
-         NFA               => NFA,
          Final             => (others => False),
          Next              => null);
       Register (Grammar, Result);
@@ -4605,7 +4574,7 @@ package body Schema.Validators is
       function Add_Data (Base : String) return String is
       begin
          if Data.Simple_Type /= null then
-            return Base & " simpleType";
+            return Base & " (a simpleType)";
          elsif Data.Attributes /= null then
             return Base & " attr=" & Data.Attributes'Length'Img;
          else
