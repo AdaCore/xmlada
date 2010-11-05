@@ -95,10 +95,6 @@ procedure Schematest is
    --  each parser otherwise, it is just more efficient in the number of calls
    --  to malloc this way)
 
-   Hide_Fully_Failed_Groups : Boolean := False;
-   --  If True, fully failed groups are not displayed, assuming this is an
-   --  unimplemented feature.
-
    Accepted_Only      : Boolean := True;
    --  If true, then only tests that are marked as "accepted" are run. Some
    --  tests might be under discussion, and have a status of "queried". Such
@@ -135,15 +131,12 @@ procedure Schematest is
      (Test_Result);
    use Test_Result_Lists;
 
-   type Group_Kind is (Fully_Passed, Partially_Passed, Fully_Failed);
-
    type Group_Result is record
       Name          : Ada.Strings.Unbounded.Unbounded_String;
       Descr         : Ada.Strings.Unbounded.Unbounded_String;
       Tests         : Test_Result_Lists.List;
-      Kind          : Group_Kind;
       Disabled      : Boolean := False;
-      Test_Count    : Natural := 0;
+      Test_Count    : Result_Count := (others => 0);
       Counts        : Result_Count := (others => 0);
       Parsed_XSD    : Natural := 0;
       Parsed_XML    : Natural := 0;
@@ -258,7 +251,6 @@ procedure Schematest is
                New_Item => Group_Result'
                  (Name     => To_Unbounded_String (Line (1 .. Last)),
                   Disabled => True,
-                  Kind     => Fully_Passed,
                   others   => <>));
          end if;
       end loop;
@@ -369,6 +361,7 @@ procedure Schematest is
       Input    : File_Input;
       N        : Node := First_Child (Schema);
       Outcome  : constant Outcome_Value := Get_Expected (Schema);
+      Kind     : Result_Kind;
    begin
       if Verbose then
          Put_Line ("Parse_Schema_Test: " & Name);
@@ -390,7 +383,13 @@ procedure Schematest is
             Set_Grammar (XSD_Reader, Grammar);
             Use_Basename_In_Error_Messages (XSD_Reader, True);
 
-            Group.Test_Count := Group.Test_Count + 1;
+            if Outcome = Invalid then
+               Kind := XSD_Should_Fail;
+            else
+               Kind := XSD_Should_Pass;
+            end if;
+
+            Group.Test_Count (Kind) := Group.Test_Count (Kind) + 1;
 
             while N /= null loop
                if Local_Name (N) = S_Schema_Document then
@@ -422,7 +421,7 @@ procedure Schematest is
             Grammar := Get_Grammar (XSD_Reader);
 
             if Outcome = Invalid then
-               Result.Kind  := XSD_Should_Fail;
+               Result.Kind  := Kind;
                Failed_Grammar := True;
             end if;
 
@@ -521,6 +520,14 @@ procedure Schematest is
             begin
                Group.Parsed_XML := Group.Parsed_XML + 1;
 
+               if Outcome = Valid then
+                  Group.Test_Count (XML_Should_Pass) :=
+                    Group.Test_Count (XML_Should_Pass) + 1;
+               else
+                  Group.Test_Count (XML_Should_Fail) :=
+                    Group.Test_Count (XML_Should_Fail) + 1;
+               end if;
+
                Result.Kind := Passed;
                Load (Normalize_Pathname
                      (Get_Attribute_NS (N, S_Xlink, S_Href),
@@ -581,7 +588,6 @@ procedure Schematest is
                      To_Unbounded_String (Exception_Information (E));
             end;
 
-            Group.Test_Count := Group.Test_Count + 1;
             Append (Group.Tests, Result);  --  A copy of Result
          end if;
          N := Next_Sibling (N);
@@ -703,14 +709,6 @@ procedure Schematest is
          Next (Cursor);
       end loop;
 
-      if Total_Errors = 0 then
-         Result.Kind := Fully_Passed;
-      elsif Total_Errors = Result.Test_Count then
-         Result.Kind := Fully_Failed;
-      else
-         Result.Kind := Partially_Passed;
-      end if;
-
       Print_Group_Results (Result);
       Group_Hash.Include (Groups, Name, Result);
    end Run_Test_Group;
@@ -800,11 +798,8 @@ procedure Schematest is
       Cursor : Test_Result_Lists.Cursor := First (Group.Tests);
       Test   : Test_Result;
       Show_Group : Boolean := False;
+      Count      : Integer;
    begin
-      if Group.Kind = Fully_Failed and then Hide_Fully_Failed_Groups then
-         return;
-      end if;
-
       while Has_Element (Cursor) loop
          if Filter (Test_Result_Lists.Element (Cursor).Kind) then
             Show_Group := True;
@@ -832,10 +827,30 @@ procedure Schematest is
 
       else
          Put ("  ");
-         Put (100.0 * Float (Group.Counts (Passed)) / Float (Group.Test_Count),
+
+         Count := 0;
+         for K in Group.Test_Count'Range loop
+            Count := Count + Group.Test_Count (K);
+         end loop;
+
+         Put (100.0 * Float (Group.Counts (Passed)) / Float (Count),
               Aft => 0, Exp => 0);
-         Put_Line ("% tests=" & Group.Test_Count'Img
-                   & " (xsd=" & Group.Parsed_XSD'Img
+         Put ("% tests=(");
+
+         if Group.Test_Count (XSD_Should_Fail) /= 0 then
+            Put (" sf=" & Group.Test_Count (XSD_Should_Fail)'Img);
+         end if;
+         if Group.Test_Count (XSD_Should_Pass) /= 0 then
+            Put (" sp=" & Group.Test_Count (XSD_Should_Pass)'Img);
+         end if;
+         if Group.Test_Count (XML_Should_Fail) /= 0 then
+            Put (" xf=" & Group.Test_Count (XML_Should_Fail)'Img);
+         end if;
+         if Group.Test_Count (XML_Should_Pass) /= 0 then
+            Put (" xp=" & Group.Test_Count (XML_Should_Pass)'Img);
+         end if;
+
+         Put_Line ("} (xsd=" & Group.Parsed_XSD'Img
                    & " xml="  & Group.Parsed_XML'Img
                    & ") OK=" & Group.Counts (Passed)'Img
                    & " FAILED=" & Integer'Image (Total));
@@ -892,15 +907,19 @@ procedure Schematest is
       Total_Tests : Natural := 0;
       Total_XML   : Natural := 0;
       Total_XSD   : Natural := 0;
-      Errors      : array (Group_Kind) of Result_Count :=
-        (others => (others => 0));
+      Total       : Result_Count := (others => 0);
+      Errors      : Result_Count := (others => 0);
       Group       : Group_Hash.Cursor := Group_Hash.First (Groups);
       Gr          : Group_Result;
    begin
       while Has_Element (Group) loop
          Gr := Group_Hash.Element (Group);
 
-         Total_Tests := Total_Tests + Gr.Test_Count;
+         for K in Gr.Test_Count'Range loop
+            Total (K) := Total (K) + Gr.Test_Count (K);
+            Total_Tests := Total_Tests + Gr.Test_Count (K);
+         end loop;
+
          Total_XML   := Total_XML   + Gr.Parsed_XML;
          Total_XSD   := Total_XSD   + Gr.Parsed_XSD;
 
@@ -909,7 +928,7 @@ procedure Schematest is
                Total_Error := Total_Error + Gr.Counts (K);
             end if;
 
-            Errors (Gr.Kind)(K) := Errors (Gr.Kind)(K) + Gr.Counts (K);
+            Errors (K) := Errors (K) + Gr.Counts (K);
          end loop;
 
          Next (Group);
@@ -942,19 +961,14 @@ procedure Schematest is
                Put ("IE: Internal error:");
          end case;
 
-         for Kind in Group_Kind'Range loop
-            if Errors (Kind)(K) /= 0 then
-               case Kind is
-                  when Fully_Passed =>
-                     Put (" in_full_pass=");
-                  when Fully_Failed =>
-                     Put (" in_full_fail=");
-                  when Partially_Passed =>
-                     Put (" in_partial=");
-               end case;
-               Put (Errors (Kind)(K)'Img);
-            end if;
-         end loop;
+         if Errors (K) /= 0 then
+            case K is
+               when Not_Implemented | Internal_Error =>
+                  Put (Errors (K)'Img);
+               when others =>
+                  Put (" failed=" & Errors (K)'Img & " /" & Total (K)'Img);
+            end case;
+         end if;
 
          New_Line;
       end loop;
@@ -1020,8 +1034,6 @@ begin
             Put_Line ("--descr Show group descriptions");
             Put_Line ("--cvs   Check the CVS checkout of W3C (see README file)"
                       & " for more up-to-date data");
-            Put_Line ("--group Hide fully failed groups");
-            Put_Line ("     These likely show unimplemented features");
             Put_Line ("--xsd10 Support for version XSD 1.0");
             return;
 
@@ -1030,10 +1042,7 @@ begin
          when 'f' => Show_Files := True;
 
          when '-' =>
-            if Full_Switch = "-group" then
-               Hide_Fully_Failed_Groups := True;
-
-            elsif Full_Switch = "-cvs" then
+            if Full_Switch = "-cvs" then
                Check_Alternative_Dir := True;
 
             elsif Full_Switch = "-xsd10" then
