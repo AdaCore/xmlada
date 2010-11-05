@@ -222,6 +222,9 @@ package body Schema.Readers is
       Fixed : Symbol := No_Symbol;
       Data  : State_Data;
       Ty    : Type_Index;
+      Is_Equal : Boolean;
+      Prev_S : State := No_State;
+      Prev_Fixed : Symbol;
 
    begin
       if Debug then
@@ -230,19 +233,35 @@ package body Schema.Readers is
       end if;
 
       --  Check all active states to find our whitespace normalization rules,
-      --  and whether elements have fixed values.
+      --  and whether elements have fixed values. Note that the fixed value
+      --  is attached to an state with a nested state (ie the state
+      --  representing the element itself).
 
       Iter := For_Each_Active_State (Handler.Matcher,
-                                     Ignore_If_Nested  => True,
+                                     Ignore_If_Nested  => False,
                                      Ignore_If_Default => True);
       loop
          S := Current (Handler.Matcher, Iter);
          exit when S = No_State;
 
+         if Has_Active_Nested (Handler.Matcher, Iter) then
+            Prev_Fixed := Current_Data (Handler.Matcher, Iter).Fixed;
+            Prev_S := Get_Start_State (NFA.Get_Nested (S));
+         end if;
+
          Data := Current_Data (Handler.Matcher, Iter);
 
          if Fixed = No_Symbol then
             Fixed := Data.Fixed;
+
+            --  Get the "fixed" value from the element
+            --   (if it has a complexType)
+            if Fixed = No_Symbol
+              and then Prev_S /= No_State
+              and then Prev_S = S
+            then
+               Fixed := Prev_Fixed;
+            end if;
          end if;
 
          --  Unless we have a <any> type
@@ -318,24 +337,6 @@ package body Schema.Readers is
                      Loc           => Loc);
                end if;
 
-               --  We now know we have a valid character content, and we need
-               --  to check it is equal to the fixed value. We also know that
-               --  fixed matches the type, since it was checked when the XSD
-               --  was parsed.
-
-               if Fixed /= No_Symbol
-                 and then not Equal
-                   (Reader      => Handler,
-                    Simple_Type => Descr.Simple_Content,
-                    Ch1 => Fixed,
-                    Ch2 => Handler.Characters (1 .. Handler.Characters_Count))
-               then
-                  Validation_Error
-                    (Handler,
-                     "Invalid character content (fixed to """
-                     & Get (Fixed).all & """)");
-               end if;
-
             elsif not Descr.Mixed
               and then not Is_Empty
             then
@@ -352,6 +353,37 @@ package body Schema.Readers is
                  (Handler,
                   "No character data allowed by content model",
                   Loc);
+            end if;
+
+            --  We now know we have a valid character content, and we need
+            --  to check it is equal to the fixed value. We also know that
+            --  fixed matches the type, since it was checked when the XSD
+            --  was parsed.
+
+            if Fixed /= No_Symbol then
+               if Debug then
+                  Debug_Output ("Element has fixed value: """
+                                & Get (Fixed).all & '"');
+               end if;
+
+               if Descr.Simple_Content /= No_Simple_Type_Index then
+                  Is_Equal := Equal
+                    (Reader      => Handler,
+                     Simple_Type => Descr.Simple_Content,
+                     Ch1 => Fixed,
+                     Ch2 =>
+                       Handler.Characters (1 .. Handler.Characters_Count));
+               else
+                  Is_Equal := Get (Fixed).all =
+                    Handler.Characters (1 .. Handler.Characters_Count);
+               end if;
+
+               if not Is_Equal then
+                  Validation_Error
+                    (Handler,
+                     "Invalid character content (fixed to """
+                     & Get (Fixed).all & """)");
+               end if;
             end if;
          end if;
 
@@ -378,47 +410,6 @@ package body Schema.Readers is
 --                    Validation_Error
 --                      (Handler,
 --                     "#Element has character data, but is declared as nil");
---                 end if;
---
---              elsif Has_Fixed (Handler) then
---                 if Is_Empty then
---                 --  If a xsi:type was specified, the fixed value must match
---                    --  it too
---
---                    if Handler.Validators.Typ /= No_Type then
---                       if Debug then
---                          Output_Seen
---                            ("characters: " & Get (Get_Fixed (Handler)).all);
---                       end if;
---
---                       Mask := (others => True);
---                       Validate_Characters
---                         (Get_Validator (Handler.Validators.Typ), Handler,
---                          Get (Get_Fixed (Handler)).all,
---                          Empty_Element => False,
---                          Mask          => Mask);
---                    end if;
---
---                    --  in 3.3.1: if the element is empty, the "fixed" value
---                    --  should be used for it, just as for "default"
---                    Characters (Handler.all, Get (Get_Fixed (Handler)).all);
---
---                 else
---                    Typ := Handler.Validators.Typ;
---                    if Typ = No_Type then
---                       Typ := Get_Type (Handler.Validators.Element);
---                    end if;
---
---                    if not Equal
---                      (Get_Validator (Typ), Handler,
---                       Val2.all, Get (Get_Fixed (Handler)).all)
---                    then
---                       Free (Handler.Validators.Characters);
---                       Validation_Error
---                         (Handler, "#Element's value must be """
---                          & Get (Get_Fixed (Handler.Validators.Element)).all
---                          & """");
---                    end if;
 --                 end if;
 --
 --              else
