@@ -37,6 +37,7 @@ with Sax.Readers;
 with Sax.Symbols;
 with Sax.Utils;
 with Schema.Readers;
+with Schema.Simple_Types;
 with Schema.Validators;
 with Unicode.CES;
 with GNAT.Dynamic_Tables;
@@ -152,37 +153,53 @@ private
       end case;
    end record;
 
+   type Type_Member is record
+      Name  : Qualified_Name := No_Qualified_Name;
+      Local : Type_Index := No_Type_Index;
+   end record;
+   No_Type_Member : constant Type_Member := (No_Qualified_Name, No_Type_Index);
+   --  Only one of the two fields is set. These are the possible members of a
+   --  union or list.
+
+   type Type_Member_Array is array (Natural range <>) of Type_Member;
+
    type Simple_Type_Kind is (Simple_Type,
                              Simple_Type_Restriction,
-                             Simple_Type_Extension,
                              Simple_Type_Union,
                              Simple_Type_List);
-   type Simple_Type_Descr (Kind : Simple_Type_Kind := Simple_Type) is record
+   type Internal_Simple_Type_Descr (Kind : Simple_Type_Kind := Simple_Type)
+   is record
+      Loc : Sax.Locators.Location := Sax.Locators.No_Location;
       case Kind is
          when Simple_Type             => null;
          when Simple_Type_Union       =>
-            Union_Items      : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
-            Union_Local_Type : Type_Index := No_Type_Index;
+            Union_Items      : Type_Member_Array
+              (1 .. Schema.Simple_Types.Max_Types_In_Union) :=
+              (others => No_Type_Member);
          when Simple_Type_List        =>
-            List_Items      : Qualified_Name := No_Qualified_Name;
-            List_Local_Type : Type_Index := No_Type_Index;
+            List_Items      : Type_Member_Array
+              (1 .. 1) := (others => No_Type_Member);
          when Simple_Type_Restriction =>
             Restriction_Base : Qualified_Name;
-            --  ??? Facets
-         when Simple_Type_Extension   =>
-            Extension_Base   : Qualified_Name;
+            Facets           : Schema.Simple_Types.All_Facets :=
+              Schema.Simple_Types.No_Facets;
       end case;
    end record;
-   subtype Union_Type_Descr is Simple_Type_Descr (Simple_Type_Union);
-   subtype List_Type_Descr  is Simple_Type_Descr (Simple_Type_List);
+   subtype Union_Type_Descr is Internal_Simple_Type_Descr (Simple_Type_Union);
+   subtype List_Type_Descr  is Internal_Simple_Type_Descr (Simple_Type_List);
 
-   type Internal_Type_Descr is record
+   type Internal_Type_Descr (Is_Simple : Boolean := False) is record
       Descr      : Type_Descr;
-      Attributes : Attr_Array_Access;    --  if not Details.Simple_Content
-      Details    : Type_Details_Access;  --  if not Details.Simple_Content
-      Simple     : Simple_Type_Descr;    --  if Details.Simple_Content
       S          : Schema_State_Machines.State;
       Loc        : Sax.Locators.Location := Sax.Locators.No_Location;
+
+      case Is_Simple is
+         when False =>
+            Attributes : Attr_Array_Access;
+            Details    : Type_Details_Access;
+         when True =>
+            Simple     : Internal_Simple_Type_Descr;
+      end case;
    end record;
    --  Temporary structure while parsing a XSD file. Only [Descr] will be
    --  stored in the NFA for reuse while validating (or while parsing other
@@ -227,7 +244,8 @@ private
          when Context_Extension       => Extension   : Type_Details_Access;
          when Context_List            => List        : List_Type_Descr;
          when Context_Restriction     => Restriction : Type_Details_Access;
-         when Context_Simple_Restriction => Simple   : Simple_Type_Descr;
+         when Context_Simple_Restriction =>
+            Simple   : Internal_Simple_Type_Descr;
          when Context_Union           => Union       : Union_Type_Descr;
          when Context_Attribute      => Attribute   : Internal_Attribute_Descr;
       end case;

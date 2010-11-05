@@ -260,6 +260,12 @@ package Schema.Validators is
    --  Returns the state machine and global references used to validate
    --  [Grammar]
 
+   function Get_Simple_Type
+     (Grammar : XML_Grammar;
+      Simple  : Schema.Simple_Types.Simple_Type_Index)
+      return Schema.Simple_Types.Simple_Type_Descr;
+   --  Return the simple type corresponding to the index
+
    ---------------
    -- ID_Htable --
    ---------------
@@ -565,7 +571,13 @@ package Schema.Validators is
    procedure Create_Global_Attribute
      (Grammar : in out XML_Grammar;
       Attr    : Attribute_Descr);
-   --  Register a global attribute
+   function Create_Global_Simple_Type
+     (Grammar : XML_Grammar;
+      Name    : Qualified_Name;
+      Descr   : Schema.Simple_Types.Simple_Type_Descr)
+      return Schema.Simple_Types.Simple_Type_Index;
+   --  Register a global attribute or type.
+   --  [Name] can be No_Qualified_Name
 
    function URI_Was_Parsed
      (Grammar : XML_Grammar;

@@ -80,9 +80,24 @@
    <xsd:element name="code_postal" type="xsd:string"/>
   </xsd:choice>
  </xsd:sequence>
- <xsd:attribute name="attr1" type="xsd:string" use="optional"/>
+ <xsd:attribute name="attr1" use="optional">
+    <xsd:simpleType>
+       <xsd:union memberTypes="xsd:time myRange"/>
+    </xsd:simpleType>
+ </xsd:attribute>
 </xsd:complexType>
 <xsd:element name="zipb" type="Tzip_base" />
+
+<xsd:simpleType name="myRange">
+   <xsd:restriction base="myRange2">
+      <xsd:maxInclusive value="-11"/>
+   </xsd:restriction>
+</xsd:simpleType>
+
+<xsd:simpleType name="myRange2">
+   <xsd:restriction base="xsd:nonPositiveInteger">
+   </xsd:restriction>
+</xsd:simpleType>
 
 <xsd:element name="my_string" type="AdaString" />
 <xsd:complexType name="AdaString">

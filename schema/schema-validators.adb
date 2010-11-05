@@ -747,6 +747,9 @@ package body Schema.Validators is
       end if;
 
       if Attr.Simple_Type = No_Simple_Type_Index then
+         if Debug then
+            Debug_Output ("No simple type defined");
+         end if;
          return;
       end if;
 
@@ -899,6 +902,56 @@ package body Schema.Validators is
          (Kind => Ref_Attribute, Attributes => List));
    end Create_Global_Attribute;
 
+   -------------------------------
+   -- Create_Global_Simple_Type --
+   -------------------------------
+
+   function Create_Global_Simple_Type
+     (Grammar : XML_Grammar;
+      Name    : Qualified_Name;
+      Descr   : Simple_Type_Descr) return Simple_Type_Index
+   is
+      use Reference_HTables, Simple_Type_Tables;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      S    : State;
+      Info : Type_Descr;
+   begin
+      Append (G.Simple_Types, Descr);
+
+      if Name /= No_Qualified_Name then
+         if Debug then
+            Debug_Output ("Create_global_simple_type: " & To_QName (Name)
+                          & " at index" & Last (G.Simple_Types)'Img);
+         end if;
+         Info := Type_Descr'
+           (Name           => Name,
+            Attributes     => Empty_Attribute_List,
+            Block          => No_Block,
+            Final          => (others => False),
+            Simple_Content => Last (G.Simple_Types),
+            Mixed          => False,
+            Is_Abstract    => False);
+         S := G.NFA.Add_State ((Descr => Info));
+         Set (G.References, (Info.Name, Ref_Type), (Ref_Type, S));
+      end if;
+
+      return Last (G.Simple_Types);
+   end Create_Global_Simple_Type;
+
+   ---------------------
+   -- Get_Simple_Type --
+   ---------------------
+
+   function Get_Simple_Type
+     (Grammar : XML_Grammar;
+      Simple  : Schema.Simple_Types.Simple_Type_Index)
+      return Schema.Simple_Types.Simple_Type_Descr
+   is
+      G : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+   begin
+      return G.Simple_Types.Table (Simple);
+   end Get_Simple_Type;
+
    ------------------------
    -- Initialize_Grammar --
    ------------------------
@@ -912,22 +965,14 @@ package body Schema.Validators is
       procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr);
 
       procedure Register (Local : Byte_Sequence; Descr : Simple_Type_Descr) is
-         S    : State;
-         Info : Type_Descr;
+         Index : Simple_Type_Index;
+         pragma Unreferenced (Index);
       begin
-         Append (G.Simple_Types, Descr);
-         Info := Type_Descr'
-           (Name           => (NS    => Reader.XML_Schema_URI,
-                               Local => Find (G.Symbols, Local)),
-            Attributes     => Empty_Attribute_List,
-            Block          => No_Block,
-            Final          => (others => False),
-            Simple_Content => Last (G.Simple_Types),
-            Mixed          => False,
-            Is_Abstract    => False);
-
-         S := G.NFA.Add_State ((Descr => Info));
-         Set (G.References, (Info.Name, Ref_Type), (Ref_Type, S));
+         Index := Create_Global_Simple_Type
+           (Reader.Grammar,
+            (NS    => Reader.XML_Schema_URI,
+             Local => Find (G.Symbols, Local)),
+            Descr);
       end Register;
 
       procedure Do_Register is new Register_Predefined_Types (Register);

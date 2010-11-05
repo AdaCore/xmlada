@@ -9,7 +9,7 @@
     <contents>ManuManuMa</contents>
   </my_string>
 
-  <zip attr1="val" attr3="value1" attr4="value1">
+  <zip attr1="-11" attr3="value1" attr4="value1">
     <code_postal>1723</code_postal>
     <foo>Manu</foo>
   </zip>
@@ -24,7 +24,7 @@
     <code_postal>1723</code_postal>
   </zipb>
 
-  <zipr attr1="val">
+  <zipr attr1="12:00:12">
      <zipcode>1723</zipcode>
   </zipr>
 
