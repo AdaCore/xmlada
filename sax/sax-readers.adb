@@ -384,7 +384,7 @@ package body Sax.Readers is
       In_DTD => True,
       Recognize_External => True,
       Handle_Strings => True,
-      In_Tag => False,
+      In_Tag => True,
       Report_Parenthesis => True,
       In_Attlist => False);
    Attribute_Def_State : constant Parser_State :=
@@ -1907,12 +1907,13 @@ package body Sax.Readers is
       procedure Handle_Entity_Ref is
       begin
          if not Parser.Last_Read_Is_Valid
-           or else Is_Letter (Parser.Last_Read)
-           or else Parser.Last_Read = Spacing_Underscore
+           or else Is_Valid_Name_Startchar
+             (Parser.Last_Read, Parser.XML_Version)
          then
             while Parser.Last_Read_Is_Valid
               and then Parser.Last_Read /= Semicolon
-              and then Is_Valid_Name_Char (Parser.Last_Read)
+              and then Is_Valid_Name_Char
+                (Parser.Last_Read, Parser.XML_Version)
             loop
                Put_In_Buffer (Parser, Parser.Last_Read);
                Next_Char (Input, Parser);
@@ -2106,7 +2107,8 @@ package body Sax.Readers is
                Next_Char (Input, Parser);
                if Parser.State.Expand_Param_Entities then
                   while Parser.Last_Read /= Semicolon
-                    and then Is_Valid_Name_Char (Parser.Last_Read)
+                    and then Is_Valid_Name_Char
+                      (Parser.Last_Read, Parser.XML_Version)
                   loop
                      Put_In_Buffer (Parser, Parser.Last_Read);
                      Next_Char (Input, Parser);
@@ -2342,7 +2344,7 @@ package body Sax.Readers is
          --  try to coalesce as many things as possible into a single
          --  text event
          if Id.Typ = End_Of_Input then
-            if Is_Letter (Parser.Last_Read)
+            if Is_Valid_Name_Startchar (Parser.Last_Read, Parser.XML_Version)
               or else Parser.Last_Read = Spacing_Underscore
             then
                Id.Typ := Name;
@@ -2354,10 +2356,11 @@ package body Sax.Readers is
          end if;
 
          if Id.Typ = Name and then not Coalesce_Space then
-            while Is_Valid_NCname_Char (Parser.Last_Read)
-              or else
-                (not Parser.Feature_Namespace
-                 and then Parser.Last_Read = Unicode.Names.Basic_Latin.Colon)
+            while
+              (Parser.Last_Read /= Unicode.Names.Basic_Latin.Colon
+               or else not Parser.Feature_Namespace)
+              and then
+                Is_Valid_NCname_Char (Parser.Last_Read, Parser.XML_Version)
             loop
                Put_In_Buffer (Parser, Parser.Last_Read);
                Next_Char (Input, Parser);
@@ -2714,7 +2717,13 @@ package body Sax.Readers is
       end loop;
       Name_Id := Id;
 
-      if Name_Id.Typ = Name then
+      if Name_Id.Typ = Colon then
+         --  An empty namespace, used in the XML testsuite ?
+         NS_Id := Null_Token;
+         Reset_Buffer (Parser, Id);
+         Next_Token (Input, Parser, Name_Id);
+
+      elsif Name_Id.Typ = Name then
          if Parser.Last_Read_Is_Valid
            and then Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
            and then Parser.Feature_Namespace
@@ -3135,7 +3144,8 @@ package body Sax.Readers is
                      Start_Sub := Parser.Buffer_Length + 1;
 
                      while Parser.Last_Read = Unicode.Names.Basic_Latin.Colon
-                       or else Is_Valid_Name_Char (Parser.Last_Read)
+                       or else Is_Valid_Name_Char
+                         (Parser.Last_Read, Parser.XML_Version)
                      loop
                         Put_In_Buffer (Parser, Parser.Last_Read);
                         Next_Char (Input, Parser);
@@ -3262,11 +3272,15 @@ package body Sax.Readers is
    is
    begin
       if Parser.Feature_Namespace then
-         if not Is_Valid_NCname (Parser.Buffer (Name.First .. Name.Last)) then
+         if not Is_Valid_NCname
+           (Parser.Buffer (Name.First .. Name.Last), Parser.XML_Version)
+         then
             Fatal_Error (Parser, Error_Is_Ncname, Name);
          end if;
       else
-         if not Is_Valid_Name (Parser.Buffer (Name.First .. Name.Last)) then
+         if not Is_Valid_Name
+           (Parser.Buffer (Name.First .. Name.Last), Parser.XML_Version)
+         then
             Fatal_Error (Parser, Error_Is_Name, Name);
          end if;
       end if;
@@ -3289,14 +3303,14 @@ package body Sax.Readers is
       case Typ is
          when Id | Idref =>
             if Parser.Feature_Namespace then
-               if not Is_Valid_NCname (Val.all) then
+               if not Is_Valid_NCname (Val.all, Parser.XML_Version) then
                   --  Always a non-fatal error, since we are dealing with
                   --  namespaces
                   Error (Parser, Error_Attribute_Is_Ncname
                          & Get (Local_Name).all, Error_Loc);
                end if;
             else
-               if not Is_Valid_Name (Val.all) then
+               if not Is_Valid_Name (Val.all, Parser.XML_Version) then
                   Error (Parser, Error_Attribute_Is_Name
                          & Get (Local_Name).all, Error_Loc);
                end if;
@@ -3304,31 +3318,31 @@ package body Sax.Readers is
 
          when Idrefs =>
             if Parser.Feature_Namespace then
-               if not Is_Valid_NCnames (Val.all) then
+               if not Is_Valid_NCnames (Val.all, Parser.XML_Version) then
                   Error (Parser, Error_Attribute_Is_Ncname
                          & Get (Local_Name).all, Error_Loc);
                end if;
             else
-               if not Is_Valid_Names (Val.all) then
+               if not Is_Valid_Names (Val.all, Parser.XML_Version) then
                   Error (Parser, Error_Attribute_Is_Name
                          & Get (Local_Name).all, Error_Loc);
                end if;
             end if;
 
          when Nmtoken =>
-            if not Is_Valid_Nmtoken (Val.all) then
+            if not Is_Valid_Nmtoken (Val.all, Parser.XML_Version) then
                Error (Parser, Error_Attribute_Is_Nmtoken
                       & Get (Local_Name).all, Error_Loc);
             end if;
 
          when Nmtokens =>
-            if not Is_Valid_Nmtokens (Val.all) then
+            if not Is_Valid_Nmtokens (Val.all, Parser.XML_Version) then
                Error (Parser, Error_Attribute_Is_Nmtoken
                       & Get (Local_Name).all, Error_Loc);
             end if;
 
          when Entity =>
-            if not Is_Valid_Name (Val.all) then
+            if not Is_Valid_Name (Val.all, Parser.XML_Version) then
                Error (Parser, Error_Attribute_Is_Name
                       & Get (Local_Name).all, Error_Loc);
             end if;
@@ -3352,7 +3366,9 @@ package body Sax.Readers is
                   if C = Unicode.Names.Basic_Latin.Space
                     or else Last > Val'Last
                   then
-                     if not Is_Valid_Name (Val (Index .. Previous)) then
+                     if not Is_Valid_Name (Val (Index .. Previous),
+                                           Parser.XML_Version)
+                     then
                         Error (Parser, Error_Attribute_Is_Name
                                & Get (Local_Name).all,
                                Error_Loc);
@@ -3763,9 +3779,9 @@ package body Sax.Readers is
          --  conformance suite, so we only handle the case of a single ':'
          --  to mean both an empty prefix and empty local name.
          elsif Name_Id.Typ = Colon then
-               Name_Id.Typ := Text;
-               NS_Id := Name_Id;
-               Next_Token (Input, Parser, Id);
+            Name_Id.Typ := Text;
+            NS_Id := Name_Id;
+            Next_Token (Input, Parser, Id);
 
          elsif Id.Typ /= Name then
             Fatal_Error (Parser, Error_Is_Name, Id);
@@ -4673,6 +4689,15 @@ package body Sax.Readers is
               and then Attr_NS_Id = Null_Token
               and then Attr_Name = Parser.Xmlns_Sequence
             then
+               if Get (Attr_Value).all = Xmlns_URI_Sequence
+                 or else Get (Attr_Value).all = Namespaces_URI_Sequence
+               then
+                  Fatal_Error
+                    (Parser,
+                     "The xml namespace cannot be declared as the default"
+                     & " namespace");
+               end if;
+
                --  We might have a FIXED declaration for this attribute in the
                --  DTD, as per the XML Conformance testsuite
                if Parser.Feature_Validation
@@ -4848,6 +4873,12 @@ package body Sax.Readers is
 
          elsif Parser.Feature_Validation then
             Check_Model;
+         end if;
+
+         if Elem_NS_Id /= Null_Token
+           and then Get_String (Elem_NS_Id) = Xmlns_Sequence
+         then
+            Fatal_Error (Parser, "Elements must not have the prefix xmlns");
          end if;
 
          --  Call the hook before checking the attributes. This might mean we
@@ -5302,13 +5333,27 @@ package body Sax.Readers is
             Tmp_Version := XML_1_0;
 
          else
-            Fatal_Error
-              (Parser, "Unsupported version of XML: "
-               & Parser.Buffer (Value_Start.First .. Value_End.Last));
+            case Parser.XML_Version is
+               when XML_1_0_Third_Edition
+                  | XML_1_0_Fourth_Edition =>
+                  Error
+                    (Parser, "Unsupported version of XML: "
+                     & Parser.Buffer (Value_Start.First .. Value_End.Last));
+
+               when XML_1_0_Fifth_Edition
+                  | XML_1_0
+                  | XML_1_1 =>
+                  null;
+            end case;
          end if;
 
          if Parser.In_External_Entity
-           and then Parser.XML_Version /= Tmp_Version
+           and then
+             ((Tmp_Version = XML_1_1
+               and then Parser.XML_Version /= XML_1_1)
+              or else
+                (Tmp_Version /= XML_1_1
+                 and then Parser.XML_Version = XML_1_1))
          then
             Fatal_Error
               (Parser,
@@ -5316,7 +5361,19 @@ package body Sax.Readers is
                & " XML version as document");
          end if;
 
-         Parser.XML_Version := Tmp_Version;
+         --  Override the version in the parser, but only if the one set
+         --  doesn't match yet. In particular, this allows users to set their
+         --  preferred edition of XML 1.0
+
+         if Tmp_Version = XML_1_1
+           and then Parser.XML_Version /= XML_1_1
+         then
+            Parser.XML_Version := XML_1_1;
+         elsif Tmp_Version = XML_1_0
+           and then Parser.XML_Version = XML_1_1
+         then
+            Parser.XML_Version := XML_1_0;
+         end if;
 
          Next_Token (Input, Parser, Id);
          if Id.Typ = Space then
@@ -6426,5 +6483,29 @@ package body Sax.Readers is
    begin
       return Get_Location (Handler.Locator);
    end Current_Location;
+
+   ---------------------
+   -- Set_XML_Version --
+   ---------------------
+
+   procedure Set_XML_Version
+     (Parser : in out Sax_Reader; XML : XML_Versions := XML_1_0_Fifth_Edition)
+   is
+   begin
+      if XML = XML_1_0 then
+         Parser.XML_Version := XML_1_0_Fifth_Edition;
+      else
+         Parser.XML_Version := XML;
+      end if;
+   end Set_XML_Version;
+
+   ---------------------
+   -- Get_XML_Version --
+   ---------------------
+
+   function Get_XML_Version (Parser : Sax_Reader) return XML_Versions is
+   begin
+      return Parser.XML_Version;
+   end Get_XML_Version;
 
 end Sax.Readers;

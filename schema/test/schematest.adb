@@ -103,6 +103,7 @@ procedure Schematest is
    --  tests are not run.
 
    XSD_Version : XSD_Versions := XSD_1_1;
+   XML_Version : constant XML_Versions := XML_1_0_Third_Edition;
 
    type Test_Kind is (Not_Accepted,
                       XSD_Should_Fail,
@@ -396,6 +397,8 @@ procedure Schematest is
             Set_Grammar (XSD_Reader, Grammar);
             Use_Basename_In_Error_Messages (XSD_Reader, True);
 
+            Set_XML_Version (XSD_Reader, XML_Version);
+
             while N /= null loop
                if Local_Name (N) = S_Schema_Document then
                   Group.Parsed_XSD := Group.Parsed_XSD + 1;
@@ -531,6 +534,7 @@ procedure Schematest is
       Use_Basename_In_Error_Messages (Inst_Reader, True);
       Set_Grammar (Inst_Reader, Grammar);
       Set_Feature (Inst_Reader, Schema_Validation_Feature, True);
+      Set_XML_Version (Inst_Reader, XML_Version);
 
       while N /= null loop
          if Local_Name (N) = S_Instance_Document then
@@ -761,6 +765,7 @@ procedure Schematest is
       Grammar : XML_Grammar := No_Grammar;
    begin
       Set_Symbol_Table (Reader, Symbols);  --  optional, for efficiency
+      Set_XML_Version (Reader, XML_Version);
 
       Load (Filename, Input);
       Parse (Reader, Input);

@@ -109,6 +109,28 @@ package body Input_Sources.File is
 
       Input.Index := Input.Buffer'First + Input.Prolog_Size;
 
+      --  Do we have multiple instances of a BOM ? If yes, this is generally
+      --  valid except if the resulting encodings differ
+
+      declare
+         BOM2 : Bom_Type;
+         Len  : Natural;
+      begin
+         Read_Bom
+           (Input.Buffer (Input.Index .. Input.Buffer'Last), Len, BOM2);
+
+         if BOM2 /= Unknown
+           and then BOM /= BOM2
+         then
+            Raise_Exception
+              (Mismatching_BOM'Identity,
+               Filename & " specifies two different encodings");
+         end if;
+
+         --  In XML, we should apparently still report the second BOM
+         --  Input.Index := Input.Index + Len;
+      end;
+
       --  Base file name should be used as the public Id
       Set_Public_Id (Input, Filename);
       Set_System_Id (Input, Filename);

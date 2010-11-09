@@ -250,7 +250,8 @@ package Schema.Simple_Types is
       Insert_Id     : Boolean := True;
       Simple_Type   : Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Error         : in out Symbol);
+      Error         : in out Symbol;
+      XML_Version   : XML_Versions);
    --  Validate [Ch] for the simple type [Simple_Type].
    --  Returns an error message in case of error, or No_Symbol otherwise.
    --  If [Insert_Id] is True and you are validating an ID, it will be inserted
@@ -265,7 +266,8 @@ package Schema.Simple_Types is
       Simple_Type   : Simple_Type_Index;
       Ch1           : Sax.Symbols.Symbol;
       Ch2           : Unicode.CES.Byte_Sequence;
-      Is_Equal      : out Boolean);
+      Is_Equal      : out Boolean;
+      XML_Version   : XML_Versions);
    --  Checks whether [Ch1]=[Ch2] according to the type.
    --  (This involves for instance normalizing whitespaces)
 

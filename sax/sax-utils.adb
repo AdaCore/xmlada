@@ -176,34 +176,100 @@ package body Sax.Utils is
    -- Is_Valid_Name_Char --
    ------------------------
 
-   function Is_Valid_Name_Char (Char : Unicode.Unicode_Char) return Boolean is
+   function Is_Valid_Name_Char
+     (Char    : Unicode.Unicode_Char;
+      Version : XML_Versions := XML_1_1) return Boolean
+   is
    begin
       --  ??? Should we create a single lookup table for all of these, that
       --  would be more efficient
-      return Char = Period
-        or else Char = Hyphen_Minus
-        or else Char = Spacing_Underscore
-        or else Char = Colon
-        or else Is_Digit (Char)
-        or else Is_Letter (Char)
-        or else Is_Combining_Char (Char)
-        or else Is_Extender (Char);
+      case Version is
+         when XML_1_0_Third_Edition
+            | XML_1_0_Fourth_Edition =>
+            return Char = Period
+              or else Char = Hyphen_Minus
+              or else Char = Spacing_Underscore
+              or else Char = Colon
+              or else Is_Digit (Char)
+              or else Is_Letter (Char)
+              or else Is_Combining_Char (Char)
+              or else Is_Extender (Char);
+
+         when XML_1_0_Fifth_Edition
+            | XML_1_0
+            | XML_1_1 =>
+            return Char = Hyphen_Minus
+              or else Char = Period
+              or else (Char in Digit_Zero .. Digit_Nine)
+              or else Char = 16#B7#
+              or else (Char in 16#0300# .. 16#036F#)
+              or else (Char in 16#203F# .. 16#2040#)
+              or else Is_Valid_Name_Startchar (Char, Version);
+      end case;
    end Is_Valid_Name_Char;
+
+   -----------------------------
+   -- Is_Valid_Name_Startchar --
+   -----------------------------
+
+   function Is_Valid_Name_Startchar
+     (Char    : Unicode.Unicode_Char;
+      Version : XML_Versions := XML_1_1) return Boolean
+   is
+   begin
+      case Version is
+         when XML_1_0_Third_Edition
+            | XML_1_0_Fourth_Edition
+            =>
+            return Char = Spacing_Underscore
+              or else Is_Letter (Char);
+
+         when XML_1_0_Fifth_Edition
+            | XML_1_0
+            | XML_1_1 =>
+            return Char = Colon
+              or else Char = Spacing_Underscore
+              or else Char in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
+              or else Char in Latin_Small_Letter_A .. Latin_Small_Letter_Z
+              or else Char in 16#C0# .. 16#D6#
+              or else Char in 16#D8# .. 16#F6#
+              or else Char in 16#F8# .. 16#2FF#
+              or else Char in 16#370# .. 16#37D#
+              or else Char in 16#37F# .. 16#1FFF#
+              or else Char in 16#200C# .. 16#200D#
+              or else Char in 16#2070# .. 16#218F#
+              or else Char in 16#2C00# .. 16#2FEF#
+              or else Char in 16#3001# .. 16#D7FF#
+              or else Char in 16#F900# .. 16#FDCF#
+              or else Char in 16#FDF0# .. 16#FFFD#
+              or else Char in 16#10000# .. 16#EFFFF#;
+      end case;
+   end Is_Valid_Name_Startchar;
 
    --------------------------
    -- Is_Valid_NCname_Char --
    --------------------------
 
    function Is_Valid_NCname_Char
-     (Char : Unicode.Unicode_Char) return Boolean is
+     (Char    : Unicode.Unicode_Char;
+      Version : XML_Versions := XML_1_1) return Boolean is
    begin
-      return Char = Period
-        or else Char = Hyphen_Minus
-        or else Char = Spacing_Underscore
-        or else Is_Digit (Char)
-        or else Is_Letter (Char)
-        or else Is_Combining_Char (Char)
-        or else Is_Extender (Char);
+      case Version is
+         when XML_1_0_Third_Edition
+            | XML_1_0_Fourth_Edition =>
+            return Char = Period
+              or else Char = Hyphen_Minus
+              or else Char = Spacing_Underscore
+              or else Is_Digit (Char)
+              or else Is_Letter (Char)
+              or else Is_Combining_Char (Char)
+              or else Is_Extender (Char);
+
+         when XML_1_0_Fifth_Edition
+            | XML_1_0
+            | XML_1_1 =>
+            return Is_Valid_Name_Char (Char, Version);
+      end case;
    end Is_Valid_NCname_Char;
 
    ----------------------
@@ -211,14 +277,15 @@ package body Sax.Utils is
    ----------------------
 
    function Is_Valid_Nmtoken
-     (Nmtoken     : Unicode.CES.Byte_Sequence) return Boolean
+     (Nmtoken : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean
    is
       C     : Unicode_Char;
       Index : Natural := Nmtoken'First;
    begin
       while Index <= Nmtoken'Last loop
          Encoding.Read (Nmtoken, Index, C);
-         if not Is_Valid_Name_Char (C) then
+         if not Is_Valid_Name_Char (C, Version) then
             return False;
          end if;
       end loop;
@@ -231,7 +298,8 @@ package body Sax.Utils is
    -----------------------
 
    function Is_Valid_Nmtokens
-     (Nmtokens : Unicode.CES.Byte_Sequence) return Boolean
+     (Nmtokens : Unicode.CES.Byte_Sequence;
+      Version  : XML_Versions := XML_1_1) return Boolean
    is
       C     : Unicode_Char;
       Index : Natural := Nmtokens'First;
@@ -242,7 +310,7 @@ package body Sax.Utils is
 
       while Index <= Nmtokens'Last loop
          Encoding.Read (Nmtokens, Index, C);
-         if C /= Space and then not Is_Valid_Name_Char (C) then
+         if C /= Space and then not Is_Valid_Name_Char (C, Version) then
             return False;
          end if;
       end loop;
@@ -255,7 +323,8 @@ package body Sax.Utils is
    -------------------
 
    function Is_Valid_Name
-     (Name : Unicode.CES.Byte_Sequence) return Boolean
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean
    is
       C     : Unicode_Char;
       Index : Natural := Name'First;
@@ -266,14 +335,13 @@ package body Sax.Utils is
 
       Encoding.Read (Name, Index, C);
 
-      if C /= Spacing_Underscore
-        and then C /= Colon
-        and then not Is_Letter (C)
+      if C /= Colon
+        and then not Is_Valid_Name_Startchar (C, Version)
       then
          return False;
       end if;
 
-      return Is_Valid_Nmtoken (Name (Index .. Name'Last));
+      return Is_Valid_Nmtoken (Name (Index .. Name'Last), Version);
    end Is_Valid_Name;
 
    --------------------
@@ -281,7 +349,8 @@ package body Sax.Utils is
    --------------------
 
    function Is_Valid_Names
-     (Name : Unicode.CES.Byte_Sequence) return Boolean
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean
    is
       C             : Unicode_Char;
       Index         : Natural := Name'First;
@@ -298,15 +367,12 @@ package body Sax.Utils is
             First_In_Name := True;
 
          elsif First_In_Name then
-            if C /= Spacing_Underscore
-              and then C /= Colon
-              and then not Is_Letter (C)
-            then
+            if not Is_Valid_Name_Startchar (C, Version) then
                return False;
             end if;
             First_In_Name := False;
 
-         elsif not Is_Valid_Name_Char (C) then
+         elsif not Is_Valid_Name_Char (C, Version) then
             return False;
          end if;
       end loop;
@@ -318,7 +384,8 @@ package body Sax.Utils is
    ----------------------
 
    function Is_Valid_NCnames
-     (Name : Unicode.CES.Byte_Sequence) return Boolean
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean
    is
       C             : Unicode_Char;
       Index         : Natural := Name'First;
@@ -342,7 +409,7 @@ package body Sax.Utils is
             end if;
             First_In_Name := False;
 
-         elsif not Is_Valid_NCname_Char (C) then
+         elsif not Is_Valid_NCname_Char (C, Version) then
             return False;
          end if;
       end loop;
@@ -354,7 +421,8 @@ package body Sax.Utils is
    ---------------------
 
    function Is_Valid_NCname
-     (Name : Unicode.CES.Byte_Sequence) return Boolean
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean
    is
       C     : Unicode_Char;
       Index : Natural := Name'First;
@@ -365,13 +433,13 @@ package body Sax.Utils is
 
       Encoding.Read (Name, Index, C);
 
-      if C /= Spacing_Underscore and then not Is_Letter (C) then
+      if not Is_Valid_Name_Startchar (C, Version) then
          return False;
       end if;
 
       while Index <= Name'Last loop
          Encoding.Read (Name, Index, C);
-         if not Is_Valid_NCname_Char (C) then
+         if not Is_Valid_NCname_Char (C, Version) then
             return False;
          end if;
       end loop;
@@ -384,17 +452,17 @@ package body Sax.Utils is
    --------------------
 
    function Is_Valid_QName
-     (Name : Unicode.CES.Byte_Sequence) return Boolean is
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean is
    begin
       for N in Name'Range loop
          if Name (N) = ':' then
             return N /= Name'Last
-              and then Is_Valid_NCname (Name (Name'First .. N - 1))
-              and then Is_Valid_NCname (Name (N + 1 .. Name'Last));
+              and then Is_Valid_NCname (Name (Name'First .. N - 1), Version)
+              and then Is_Valid_NCname (Name (N + 1 .. Name'Last), Version);
          end if;
       end loop;
-      return Is_Valid_NCname (Name);
-
+      return Is_Valid_NCname (Name, Version);
    end Is_Valid_QName;
 
    ----------
@@ -550,7 +618,7 @@ package body Sax.Utils is
          --  the characters. We'll just accept them here, no point in wasting
          --  time for a case that will never occur in practice
 
-         elsif Version = XML_1_0
+         elsif Version /= XML_1_1
            and then (C not in Valid_URI_Characters'Range
                      or else not Valid_URI_Characters (C))
          then

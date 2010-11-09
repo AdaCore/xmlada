@@ -79,6 +79,11 @@ package Sax.Readers is
    --
    --  This subprogram must be called before calling Parse.
 
+   procedure Set_XML_Version
+     (Parser : in out Sax_Reader; XML : XML_Versions := XML_1_0_Fifth_Edition);
+   function Get_XML_Version (Parser : Sax_Reader) return XML_Versions;
+   --  Set the XML version to accept.
+
    procedure Set_Feature
      (Parser : in out Sax_Reader; Name : String; Value : Boolean);
    function Get_Feature (Parser : Sax_Reader; Name : String) return Boolean;
@@ -1067,7 +1072,7 @@ private
       Hooks  : Parser_Hooks;
       --  Hooks to be called before the primitive operations
 
-      XML_Version   : XML_Versions := XML_1_0;
+      XML_Version   : XML_Versions := XML_1_0_Fifth_Edition;
 
       Standalone_Document : Boolean := False;
       --  Whether the document is specified as "standalone" in the XML

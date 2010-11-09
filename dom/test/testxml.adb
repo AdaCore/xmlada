@@ -105,7 +105,7 @@ procedure Testxml is
    Dump : Boolean := False;
    Name_Start : Natural;
    Validate : Boolean := False;
-   Valid_Chars : Boolean := False;
+   Valid_Chars : Boolean := True;
    Must_Normalize : Boolean := False;
    Support_Namespaces : Boolean := True;
    Encoding_Out : Unicode.Encodings.Unicode_Encoding := Get_By_Name ("utf-8");
@@ -142,13 +142,15 @@ procedure Testxml is
       Output      : Unbounded_String;
       Version     : Unbounded_String;
       Test_Type   : Testcase_Type;
+      Edition     : XML_Versions;
+      Namespace   : Boolean;
    end record;
 
    function Open_Input (XML_File : String) return Input_Source_Access;
    --  Open a given input_source. According to the file prefix, various types
    --  of sources can be open
 
-   procedure Run_Single_Test (XML_File : String);
+   procedure Run_Single_Test (XML_File : String; Edition : XML_Versions);
    --  Parse XML_File, and print the output according to the command-line
    --  parameters
 
@@ -164,7 +166,6 @@ procedure Testxml is
    procedure Run_Test
      (Entities       : String;
       Descr          : Test_Description;
-      Namespaces     : Boolean;
       Results        : in out Testcases_Results);
    --  Run a single test from the W3C testsuite
 
@@ -288,7 +289,7 @@ procedure Testxml is
    -- Run_Single_Test --
    ---------------------
 
-   procedure Run_Single_Test (XML_File : String) is
+   procedure Run_Single_Test (XML_File : String; Edition : XML_Versions) is
       Read : Input_Source_Access;
       Reader : My_Tree_Reader;
    begin
@@ -297,6 +298,7 @@ procedure Testxml is
          return;
       end if;
 
+      Set_XML_Version (Reader, Edition);
       Set_Feature (Reader, Namespace_Feature, Support_Namespaces);
       Set_Feature (Reader, Namespace_Prefixes_Feature, Support_Namespaces);
       Set_Feature (Reader, Validation_Feature, Validate);
@@ -525,11 +527,17 @@ procedure Testxml is
               (Get_Attribute (Test, "OUTPUT"));
             Descr.Version := To_Unbounded_String
               (Get_Attribute (Test, "VERSION"));
+            Descr.Namespace := Get_Attribute (Test, "NAMESPACE") /= "no";
+
+            if Get_Attribute (Test, "EDITION") = "1 2 3 4" then
+               Descr.Edition := XML_1_0_Fourth_Edition;
+            else
+               Descr.Edition := XML_1_0_Fifth_Edition;
+            end if;
 
             Run_Test
               (Descr      => Descr,
                Entities   => Get_Attribute (Test, "ENTITIES"),
-               Namespaces => Get_Attribute (Test, "NAMESPACE") /= "no",
                Results    => Results);
 
          elsif Node_Name (Test) = "TESTCASES" then
@@ -610,7 +618,6 @@ procedure Testxml is
    procedure Run_Test
      (Entities       : String;
       Descr          : Test_Description;
-      Namespaces     : Boolean;
       Results        : in out Testcases_Results)
    is
       Path     : constant String := Test_URI (Descr, Descr.URI);
@@ -654,7 +661,9 @@ procedure Testxml is
 
       Set_Symbol_Table (Reader, Symbols);  --  Optional, for efficiency
 
-      if not Namespaces then
+      Set_XML_Version (Reader, Descr.Edition);
+
+      if not Descr.Namespace then
          Set_Feature (Reader, Namespace_Feature, False);
          Set_Feature (Reader, Namespace_Prefixes_Feature, False);
       end if;
@@ -682,7 +691,7 @@ procedure Testxml is
                Descr2 : Test_Description := Descr;
             begin
                Descr2.Test_Type := Type_WF;
-               Run_Test (Entities, Descr2, Namespaces, Results => Results);
+               Run_Test (Entities, Descr2, Results => Results);
             end;
 
             Set_Feature (Reader, Validation_Feature, True);
@@ -766,6 +775,7 @@ procedure Testxml is
       Results (Descr.Test_Type, R) := Results (Descr.Test_Type, R) + 1;
 
       Put (Test_Prefix (Descr.Test_Type) & " ");
+      Put (Descr.Edition'Img & " ");
       Put_Line ('[' & To_String (Descr.ID) & "] ");
       if Verbose then
          Put_Line ("  " & Test_URI (Descr, Descr.URI));
@@ -981,6 +991,7 @@ procedure Testxml is
             & Exception_Message (E), Results);
    end Run_Invalid_Test;
 
+   Edition : XML_Versions := XML_1_0;
 begin
    --  Since we are going to create multiple parsers, we will share the symbol
    --  table, which saves on the number of calls to malloc().
@@ -997,7 +1008,8 @@ begin
    loop
       case Getopt
         ("silent uri normalize validate dump valid_chars encoding-out: eol:"
-         & " comments xmlpi collapse nonamespaces auto verbose pretty xml11")
+         & " comments xmlpi collapse nonamespaces auto verbose pretty xml11"
+         & " edition:")
       is
          when ASCII.NUL => exit;
          when 'e' =>
@@ -1010,6 +1022,9 @@ begin
                end if;
             elsif Full_Switch = "encoding-out" then
                Encoding_Out := Get_By_Name (Parameter);
+
+            elsif Full_Switch = "edition" then
+               Edition := XML_Versions'Value (Parameter);
             end if;
          when 'x' =>
             if Full_Switch = "xmlpi" then
@@ -1029,7 +1044,7 @@ begin
             if Full_Switch = "validate" then
                Validate := True;
             elsif Full_Switch = "valid_chars" then
-               Valid_Chars := True;
+               Valid_Chars := False;
             elsif Full_Switch = "verbose" then
                Verbose := True;
             end if;
@@ -1057,7 +1072,7 @@ begin
    if Auto_Run then
       Run_Testsuite;
    else
-      Run_Single_Test (Get_Argument);
+      Run_Single_Test (Get_Argument, Edition);
    end if;
 
    Free (EOL);

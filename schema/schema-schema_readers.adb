@@ -1513,6 +1513,7 @@ package body Schema.Schema_Readers is
       S_File_Full : constant Symbol := To_Absolute_URI (Handler.all, Xsd_File);
       Need_To_Initialize : Boolean := True;
    begin
+      Set_XML_Version (Schema, Get_XML_Version (Handler.all));
       if URI_Was_Parsed (Get_Grammar (Handler.all), S_File_Full) then
          if Debug then
             Debug_Output ("Parse_Grammar " & Get (S_File_Full).all

@@ -46,6 +46,7 @@ with Input_Sources.File;    use Input_Sources.File;
 with Ada.Exceptions;        use Ada.Exceptions;
 with GNAT.IO;               use GNAT.IO;
 with Sax.Readers;           use Sax.Readers;
+with Sax.Utils;             use Sax.Utils;
 with GNAT.Command_Line;     use GNAT.Command_Line;
 
 procedure TestSchema is
@@ -89,6 +90,7 @@ begin
    --  only be done at the end, and we need to let XML/Ada know about that.
 
    Set_XSD_Version (Grammar, XSD_1_0);
+   Set_XML_Version (Schema, XML_1_0_Third_Edition);
    Set_Grammar (Schema, Grammar);
    Initialize_Option_Scan;
 
@@ -127,6 +129,7 @@ begin
       My_Reader := new Standard.Schema.Readers.Validating_Reader;
    end if;
 
+   Set_XML_Version (My_Reader.all, XML_1_0_Third_Edition);
    Use_Basename_In_Error_Messages (My_Reader.all, Base_Names);
 
    --  If we have at least one schema, we need to perform the final checks

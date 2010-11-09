@@ -36,50 +36,70 @@ with Sax.Symbols;
 
 package Sax.Utils is
 
-   type XML_Versions is (XML_1_0, XML_1_1);
+   type XML_Versions is
+     (XML_1_0_Third_Edition,
+      XML_1_0_Fourth_Edition,
+      XML_1_0_Fifth_Edition,
+      XML_1_0,   --  Alias for the latest version
+      XML_1_1
+     );
 
    function Is_Valid_Language_Name
      (Lang : Unicode.CES.Byte_Sequence) return Boolean;
    --  Whether Lang is a valid language, as per 2.12 in the XML specifications.
    --  Lang is encoded with Sax.Encodings.Encoding
 
-   function Is_Valid_Name_Char (Char : Unicode.Unicode_Char) return Boolean;
+   function Is_Valid_Name_Char
+     (Char    : Unicode.Unicode_Char;
+      Version : XML_Versions := XML_1_1) return Boolean;
+   function Is_Valid_Name_Startchar
+     (Char    : Unicode.Unicode_Char;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Char is a valid NameChar, as per 2.3 in the XML specifications
 
-   function Is_Valid_NCname_Char (Char : Unicode.Unicode_Char) return Boolean;
+   function Is_Valid_NCname_Char
+     (Char    : Unicode.Unicode_Char;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Char is a valid NCnameChar, as per 2 in the XML specifications
 
    function Is_Valid_Nmtoken
-     (Nmtoken     : Unicode.CES.Byte_Sequence) return Boolean;
+     (Nmtoken : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Nmtoken is valid NMTOKEN as per 2.3 in the XML specifications
 
    function Is_Valid_Nmtokens
-     (Nmtokens    : Unicode.CES.Byte_Sequence) return Boolean;
+     (Nmtokens : Unicode.CES.Byte_Sequence;
+      Version  : XML_Versions := XML_1_1) return Boolean;
    --  Whether Nmtokens is valid NMTOKENS as per 2.3
 
    function Is_Valid_Name
-     (Name        : Unicode.CES.Byte_Sequence) return Boolean;
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Name is valid name as per 2.3 in the XML specifications.
 
    function Is_Valid_Names
-     (Name        : Unicode.CES.Byte_Sequence) return Boolean;
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Name contains one or more valid Name, separated by a single
    --  space character.
 
    function Is_Valid_NCname
-     (Name : Unicode.CES.Byte_Sequence) return Boolean;
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Name is valid NCname as per 2 in the XML namespaces
    --  specifications
    --  Colon should not be allowed when namespaces are supported, since names
    --  must then match NCName, as per 6 in XML Namespaces specifications
 
    function Is_Valid_NCnames
-     (Name        : Unicode.CES.Byte_Sequence) return Boolean;
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Name contains one or more valid NCname, separated by a single
    --  space character.
 
    function Is_Valid_QName
-     (Name : Unicode.CES.Byte_Sequence) return Boolean;
+     (Name    : Unicode.CES.Byte_Sequence;
+      Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Name is valid QName as per 3 in the XML specifications
 
    type URI_Type is (URI_Absolute, URI_Relative_Ref, URI_None);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2008, AdaCore            --
+--                       Copyright (C) 2001-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -44,6 +44,12 @@ package Input_Sources.File is
    --  it is no longer read.
    --  This function can decode a file if it is coded in Utf8, Utf16 or Utf32
    --  This function must raise Name_Error if the file does not exist
+   --
+   --  This function will raise Mismatching_BOM if there are multiple
+   --  Byte-Order-Marks at the beginning of the file, and they do not match.
+
+   Mismatching_BOM : exception;
+   --  see Open
 
    procedure Close (Input : in out File_Input);
    --  Close the file and free the memory

@@ -1880,7 +1880,8 @@ package body Schema.Validators is
          Insert_Id     => Insert_Id,
          Simple_Type   => Simple_Type,
          Ch            => Ch,
-         Error         => Error);
+         Error         => Error,
+         XML_Version   => Get_XML_Version (Reader.all));
 
       if Error /= No_Symbol then
          Validation_Error (Reader, Get (Error).all, Loc);
@@ -1909,7 +1910,8 @@ package body Schema.Validators is
          Simple_Type   => Simple_Type,
          Ch1           => Ch1,
          Ch2           => Ch2,
-         Is_Equal      => Is_Equal);
+         Is_Equal      => Is_Equal,
+         XML_Version   => Get_XML_Version (Reader.all));
       return Is_Equal;
    end Equal;
 

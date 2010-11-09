@@ -15,6 +15,13 @@ of the feature.
 New features in version 4.1
 ---------------------------
 
+NF-41-JB09-020 Support for XML 1.0 (Fifth Edition) (2010-11-09)
+
+   XML/Ada now support the fifth edition of XML 1.0 (but you can still
+   chose to use earlier versions). The differences mostly have to do with
+   the range of characters allowed for names. This change was needed to
+   run the most recent version of the W3C XML testsuite.
+
 NF-41-J302-043 Rewrite schema validation module (2010-11-05)
 
    The schema validation module was almost fully rewritten. It is now

@@ -271,23 +271,28 @@ package body Schema.Simple_Types is
    function Validate_NMTOKEN
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol;
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol;
    function Validate_NMTOKENS
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol;
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol;
    function Validate_Name
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol;
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol;
    function Validate_NCName
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol;
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol;
    function Validate_NCNames
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol;
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol;
    function Validate_Language
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
@@ -312,7 +317,8 @@ package body Schema.Simple_Types is
    function Validate_QName
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol;
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol;
    function Validate_Boolean
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
@@ -663,7 +669,8 @@ package body Schema.Simple_Types is
       Simple_Type   : Simple_Type_Index;
       Ch1           : Sax.Symbols.Symbol;
       Ch2           : Unicode.CES.Byte_Sequence;
-      Is_Equal      : out Boolean)
+      Is_Equal      : out Boolean;
+      XML_Version   : XML_Versions)
    is
       Descr : Simple_Type_Descr renames Simple_Types.Table (Simple_Type);
       Error : Symbol;
@@ -736,7 +743,8 @@ package body Schema.Simple_Types is
                         Insert_Id     => False,
                         Simple_Type   => Descr.Union (S),
                         Ch            => Norm (Norm'First .. Last),
-                        Error         => Error);
+                        Error         => Error,
+                        XML_Version   => XML_Version);
 
                      if Debug and then Error /= No_Symbol then
                         Debug_Output
@@ -754,7 +762,8 @@ package body Schema.Simple_Types is
                            Simple_Type  => Descr.Union (S),
                            Ch1  => Find (Symbols, Norm (Norm'First .. Last)),
                            Ch2  => Ch2,
-                           Is_Equal     => Is_Equal);
+                           Is_Equal     => Is_Equal,
+                           XML_Version  => XML_Version);
                         if Is_Equal then
                            return;
                         end if;
@@ -783,7 +792,8 @@ package body Schema.Simple_Types is
       Insert_Id     : Boolean := True;
       Simple_Type   : Simple_Type_Index;
       Ch            : Unicode.CES.Byte_Sequence;
-      Error         : in out Symbol)
+      Error         : in out Symbol;
+      XML_Version   : XML_Versions)
    is
       Descr : Simple_Type_Descr renames Simple_Types.Table (Simple_Type);
       Index : Integer;
@@ -798,7 +808,8 @@ package body Schema.Simple_Types is
               (Simple_Types, Enumerations, Notations, Symbols, Id_Table,
                Simple_Type   => Descr.List_Item,
                Ch            => Str,
-               Error         => Error);
+               Error         => Error,
+               XML_Version   => XML_Version);
          end if;
       end Validate_List_Item;
 
@@ -820,7 +831,8 @@ package body Schema.Simple_Types is
                   Simple_Type,
                   Ch1 => Enumerations.Table (Enum).Value,
                   Ch2 => Ch,
-                  Is_Equal => Found);
+                  Is_Equal => Found,
+                  XML_Version => XML_Version);
                exit when Found;
 
                Enum := Enumerations.Table (Enum).Next;
@@ -928,24 +940,24 @@ package body Schema.Simple_Types is
          when Primitive_Language =>
             Error := Validate_Language (Descr, Symbols, Ch);
          when Primitive_QName    =>
-            Error := Validate_QName (Descr, Symbols, Ch);
+            Error := Validate_QName (Descr, Symbols, Ch, XML_Version);
          when Primitive_NCName   =>
-            Error := Validate_NCName (Descr, Symbols, Ch);
+            Error := Validate_NCName (Descr, Symbols, Ch, XML_Version);
          when Primitive_ID       =>
-            Error := Validate_NCName (Descr, Symbols, Ch);
+            Error := Validate_NCName (Descr, Symbols, Ch, XML_Version);
             if Error = No_Symbol and then Insert_Id then
                Check_Id (Symbols, Id_Table, Ch, Error);
             end if;
          when Primitive_NCNames  =>
-            Error := Validate_NCNames (Descr, Symbols, Ch);
+            Error := Validate_NCNames (Descr, Symbols, Ch, XML_Version);
          when Primitive_Name     =>
-            Error :=  Validate_Name (Descr, Symbols, Ch);
+            Error :=  Validate_Name (Descr, Symbols, Ch, XML_Version);
          when Primitive_Any_URI  =>
             Error := Validate_URI (Descr, Symbols, Ch);
          when Primitive_NMTOKEN  =>
-            Error := Validate_NMTOKEN (Descr, Symbols, Ch);
+            Error := Validate_NMTOKEN (Descr, Symbols, Ch, XML_Version);
          when Primitive_NMTOKENS =>
-            Error := Validate_NMTOKENS (Descr, Symbols, Ch);
+            Error := Validate_NMTOKENS (Descr, Symbols, Ch, XML_Version);
          when Primitive_Boolean  =>
             Error := Validate_Boolean (Descr, Symbols, Ch);
          when Primitive_Decimal  =>
@@ -982,7 +994,8 @@ package body Schema.Simple_Types is
                      Id_Table      => Id_Table,
                      Simple_Type   => Descr.Union (S),
                      Ch            => Ch,
-                     Error         => Error);
+                     Error         => Error,
+                     XML_Version   => XML_Version);
                   if Error = No_Symbol then
                      return;
                   else
@@ -1047,9 +1060,10 @@ package body Schema.Simple_Types is
    function Validate_NMTOKEN
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol is
    begin
-      if not Is_Valid_Nmtoken (Ch) then
+      if not Is_Valid_Nmtoken (Ch, XML_Version) then
          return Find (Symbols, "Invalid NMTOKEN: """ & Ch & """");
       end if;
       return Validate_String (Descr, Symbols, Ch);
@@ -1062,9 +1076,10 @@ package body Schema.Simple_Types is
    function Validate_NMTOKENS
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol is
    begin
-      if not Is_Valid_Nmtokens (Ch) then
+      if not Is_Valid_Nmtokens (Ch, XML_Version) then
          return Find (Symbols, "Invalid NMTOKENS: """ & Ch & """");
       end if;
 
@@ -1080,9 +1095,10 @@ package body Schema.Simple_Types is
    function Validate_Name
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol is
    begin
-      if not Is_Valid_Name (Ch) then
+      if not Is_Valid_Name (Ch, XML_Version) then
          return Find (Symbols, "Invalid Name: """ & Ch & """");
       end if;
       return Validate_String (Descr, Symbols, Ch);
@@ -1095,9 +1111,10 @@ package body Schema.Simple_Types is
    function Validate_NCName
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol is
    begin
-      if not Is_Valid_NCname (Ch) then
+      if not Is_Valid_NCname (Ch, XML_Version) then
          return Find (Symbols, "Invalid NCName: """ & Ch & """");
       end if;
       return Validate_String (Descr, Symbols, Ch);
@@ -1110,9 +1127,10 @@ package body Schema.Simple_Types is
    function Validate_NCNames
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol is
    begin
-      if not Is_Valid_NCnames (Ch) then
+      if not Is_Valid_NCnames (Ch, XML_Version) then
          return Find (Symbols, "Invalid NCName: """ & Ch & """");
       end if;
 
@@ -1143,9 +1161,10 @@ package body Schema.Simple_Types is
    function Validate_QName
      (Descr         : Simple_Type_Descr;
       Symbols       : Sax.Utils.Symbol_Table;
-      Ch            : Unicode.CES.Byte_Sequence) return Symbol is
+      Ch            : Unicode.CES.Byte_Sequence;
+      XML_Version   : XML_Versions) return Symbol is
    begin
-      if not Is_Valid_QName (Ch) then
+      if not Is_Valid_QName (Ch, XML_Version) then
          return Find (Symbols, "Invalid QName: """ & Ch & """");
       end if;
       return Validate_String (Descr, Symbols, Ch);

@@ -27,6 +27,8 @@ ibm-invalid-P60-ibm60i03
 
 ibm-invalid-P59-ibm59i01
 attr07
+rmt-e3e-06g
+rmt-e3e-06h
    --  enums
 
 ibm-invalid-P56-ibm56i10
@@ -143,3 +145,35 @@ inv-dtd01
 --  not-wf-sa-084
    --  Incorrect error message
 
+
+rmt-e3e-13
+   --  This test is incorrect: ent2 is indeed not defined (perhaps they meant
+   --  ent1), as confirmed by Xerces and xmllint
+
+invalid-sa-140
+invalid-sa-141
+   --  The test (for XML 1.0 Fifth Edition) is expected to be invalid, but
+   --  reported as valid by Xerces, xmllint and XML/Ada. The comment for this
+   --  indicates this is "legal", so the expected output of the test seems
+   --  incorrect here.
+
+rmt-ns10-045
+rmt-ns10-046
+   --  Requires validating parser with DTD: when an attribute is of type ID,
+   --  its value must not  include ":"
+
+invalid-bo-9
+   --  One BOM and part of another result in an invalid character, as expected.
+   --  However, the testsuite says this should be a non-fatal error, when in
+   --  fact an invalid character really is a fatal error. They might be
+   --  expecting some special handling of multiple partial BOM here
+
+invalid-bo-1
+invalid-bo-2
+invalid-bo-3
+invalid-bo-4
+invalid-bo-5
+invalid-bo-6
+   --  Validating tests related to Byte-Order-Mark: the byte order mark should
+   --  go away in a general entity. Not clear how the test is checking that,
+   --  but XML/Ada is not a DTD-validating parser in any case
