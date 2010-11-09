@@ -572,21 +572,21 @@ Did you want to use &amp;?
  OK XMLv [valid-ext-sa-013] 
  OK XMLv [valid-ext-sa-014] 
 Profile: Fuji Xerox Japanese Text Tests
- NA XMLerror  [pr-xml-euc-jp] 
+ ENC XMLerror  [pr-xml-euc-jp] 
    Invalid encoding
- NA XMLerror  [pr-xml-iso-2022-jp] 
+ ENC XMLerror  [pr-xml-iso-2022-jp] 
    Invalid encoding
  OK XMLv [pr-xml-little] 
- NA XMLerror  [pr-xml-shift_jis] 
+ ENC XMLerror  [pr-xml-shift_jis] 
    Invalid encoding
  OK XMLv [pr-xml-utf-16] 
  OK XMLv [pr-xml-utf-8] 
- NA XMLerror  [weekly-euc-jp] 
+ ENC XMLerror  [weekly-euc-jp] 
    Invalid encoding
- NA XMLerror  [weekly-iso-2022-jp] 
+ ENC XMLerror  [weekly-iso-2022-jp] 
    Invalid encoding
  OK XMLv [weekly-little] 
- NA XMLerror  [weekly-shift_jis] 
+ ENC XMLerror  [weekly-shift_jis] 
    Invalid encoding
  OK XMLv [weekly-utf-16] 
  OK XMLv [weekly-utf-8] 
@@ -3575,435 +3575,435 @@ Profile: IBM XML Conformance Test Suite - Production 89
  OK XMLv [ibm-valid-P89-ibm89v01.xml] 
 Profile: IBM Invalid Conformance Tests for XML 1.1 CR October 15, 2002
 Profile: IBM XML Conformance Test Suite
- NA XMLi [ibm-1-1-valid-P46-ibm46i01.xml] 
+ 1.1 XMLi [ibm-1-1-valid-P46-ibm46i01.xml] 
    For XML 1.1
- NA XMLi [ibm-1-1-valid-P46-ibm46i02.xml] 
+ 1.1 XMLi [ibm-1-1-valid-P46-ibm46i02.xml] 
    For XML 1.1
 Profile: IBM Not-WF Conformance Tests for XML 1.1 CR October 15, 2002
 Profile: IBM XML Conformance Test Suite - Production 2
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n01.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n01.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n02.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n02.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n03.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n03.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n04.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n04.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n05.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n05.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n06.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n06.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n07.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n07.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n08.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n08.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n09.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n09.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n10.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n10.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n11.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n11.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n12.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n12.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n14.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n14.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n15.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n15.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n16.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n16.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n17.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n17.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n18.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n18.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n19.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n19.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n20.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n20.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n21.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n21.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n22.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n22.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n23.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n23.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n24.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n24.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n25.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n25.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n26.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n26.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n27.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n27.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n28.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n28.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n29.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n29.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n30.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n30.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n31.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n31.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n32.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n32.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n33.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n33.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n34.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n34.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n35.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n35.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n36.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n36.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n37.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n37.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n38.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n38.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n39.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n39.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n40.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n40.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n41.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n41.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n42.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n42.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n43.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n43.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n44.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n44.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n45.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n45.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n46.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n46.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n47.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n47.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n48.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n48.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n49.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n49.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n50.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n50.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n51.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n51.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n52.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n52.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n53.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n53.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n54.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n54.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n55.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n55.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n56.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n56.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n57.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n57.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n58.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n58.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n59.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n59.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n60.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n60.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n61.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n61.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n62.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n62.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n63.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n63.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n64.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n64.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n65.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n65.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n66.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n66.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n67.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n67.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n68.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n68.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n69.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n69.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n70.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n70.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n71.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P02-ibm02n71.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 4
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n01.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n01.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n02.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n02.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n03.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n03.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n04.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n04.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n05.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n05.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n06.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n06.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n07.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n07.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n08.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n08.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n09.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n09.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n10.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n10.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n11.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n11.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n12.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n12.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n13.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n13.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n14.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n14.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n15.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n15.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n16.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n16.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n17.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n17.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n18.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n18.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n19.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n19.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n20.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n20.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n21.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n21.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n22.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n22.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n23.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n23.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n24.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n24.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n25.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n25.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n26.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n26.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n27.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n27.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n28.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04-ibm04n28.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 4a
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an01.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an01.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an02.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an02.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an03.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an03.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an04.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an04.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an05.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an05.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an06.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an06.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an07.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an07.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an08.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an08.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an09.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an09.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an10.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an10.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an11.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an11.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an12.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an12.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an13.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an13.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an14.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an14.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an15.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an15.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an16.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an16.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an17.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an17.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an18.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an18.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an19.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an19.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an20.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an20.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an21.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an21.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an22.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an22.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an23.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an23.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an24.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an24.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an25.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an25.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an26.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an26.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an27.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an27.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an28.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P04a-ibm04an28.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 5
- NA XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n01.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n01.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n02.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n02.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n03.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n03.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n04.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n04.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n05.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n05.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n06.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P05-ibm05n06.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 77
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n01.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n01.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n02.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n02.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n03.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n03.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n04.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n04.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n05.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n05.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n06.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n06.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n07.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n07.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n08.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n08.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n09.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n09.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n10.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n10.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n11.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n11.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n12.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n12.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n13.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n13.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n14.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n14.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n15.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n15.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n16.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n16.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n17.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n17.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n18.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n18.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n19.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n19.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n20.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n20.xml] 
    For XML 1.1
- NA XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n21.xml] 
+ 1.1 XMLnot-wf [ibm-1-1-not-wf-P77-ibm77n21.xml] 
    For XML 1.1
 Profile: IBM Valid Conformance Tests for XML 1.1 CR October 15, 2002
 Profile: IBM XML Conformance Test Suite - Production 2
- NA XMLv [ibm-1-1-valid-P02-ibm02v01.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P02-ibm02v01.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P02-ibm02v02.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P02-ibm02v02.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P02-ibm02v03.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P02-ibm02v03.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P02-ibm02v04.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P02-ibm02v04.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P02-ibm02v05.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P02-ibm02v05.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P02-ibm02v06.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P02-ibm02v06.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 3
- NA XMLv [ibm-1-1-valid-P03-ibm03v01.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v01.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P03-ibm03v02.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v02.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P03-ibm03v03.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v03.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P03-ibm03v04.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v04.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P03-ibm03v05.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v05.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P03-ibm03v06.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v06.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P03-ibm03v07.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v07.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P03-ibm03v08.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v08.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P03-ibm03v09.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P03-ibm03v09.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 4
- NA XMLv [ibm-1-1-valid-P04-ibm04v01.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P04-ibm04v01.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 4a
- NA XMLv [ibm-1-1-valid-P04-ibm04av01.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P04-ibm04av01.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 5
- NA XMLv [ibm-1-1-valid-P05-ibm05v01.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P05-ibm05v01.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P05-ibm05v02.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P05-ibm05v02.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P05-ibm05v03.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P05-ibm05v03.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P05-ibm05v04.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P05-ibm05v04.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P05-ibm05v05.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P05-ibm05v05.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 7
- NA XMLv [ibm-1-1-valid-P047-ibm07v01.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P047-ibm07v01.xml] 
    For XML 1.1
 Profile: IBM XML Conformance Test Suite - Production 77
- NA XMLv [ibm-1-1-valid-P77-ibm77v01.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v01.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v02.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v02.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v03.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v03.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v04.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v04.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v05.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v05.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v06.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v06.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v07.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v07.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v08.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v08.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v09.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v09.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v10.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v10.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v11.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v11.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v12.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v12.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v13.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v13.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v14.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v14.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v15.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v15.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v16.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v16.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v17.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v17.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v18.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v18.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v19.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v19.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v20.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v20.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v21.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v21.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v22.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v22.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v23.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v23.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v24.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v24.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v25.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v25.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v26.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v26.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v27.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v27.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v28.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v28.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v29.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v29.xml] 
    For XML 1.1
- NA XMLv [ibm-1-1-valid-P77-ibm77v30.xml] 
+ 1.1 XMLv [ibm-1-1-valid-P77-ibm77v30.xml] 
    For XML 1.1
 Profile: Richard Tobin's XML 1.0 2nd edition errata test suite 21 Jul 2003
  NA XMLi [rmt-e2e-2a] 
@@ -4055,7 +4055,7 @@ E9b.xml:5:27: Attribute must reference an existing unparsed entity: bar
    E38.ent:1:20: External entity doesn't have the same XML version as document
  OK XMLv [rmt-e2e-41] 
  OK XMLv [rmt-e2e-48] 
- NA XMLv [rmt-e2e-50] 
+ 1.1 XMLv [rmt-e2e-50] 
    For XML 1.1
  NA XMLerror  [rmt-e2e-55] 
    Disabled in XML/Ada
@@ -4065,119 +4065,119 @@ E9b.xml:5:27: Attribute must reference an existing unparsed entity: bar
  OK XMLnot-wf [rmt-e2e-61] 
    E61.xml:2:1: Non-white space found at top level
 Profile: Richard Tobin's XML 1.1 test suite 13 Feb 2003
- NA XMLnot-wf [rmt-001] 
+ 1.1 XMLnot-wf [rmt-001] 
    For XML 1.1
- NA XMLnot-wf [rmt-002] 
+ 1.1 XMLnot-wf [rmt-002] 
    For XML 1.1
- NA XMLnot-wf [rmt-003] 
+ 1.1 XMLnot-wf [rmt-003] 
    For XML 1.1
- NA XMLnot-wf [rmt-004] 
+ 1.1 XMLnot-wf [rmt-004] 
    For XML 1.1
- NA XMLnot-wf [rmt-005] 
+ 1.1 XMLnot-wf [rmt-005] 
    For XML 1.1
- NA XMLv [rmt-006] 
+ 1.1 XMLv [rmt-006] 
    For XML 1.1
- NA XMLv [rmt-007] 
+ 1.1 XMLv [rmt-007] 
    For XML 1.1
- NA XMLerror  [rmt-008] 
+ 1.1 XMLerror  [rmt-008] 
    For XML 1.1
- NA XMLerror  [rmt-009] 
+ 1.1 XMLerror  [rmt-009] 
    For XML 1.1
- NA XMLv [rmt-010] 
+ 1.1 XMLv [rmt-010] 
    For XML 1.1
- NA XMLnot-wf [rmt-011] 
+ 1.1 XMLnot-wf [rmt-011] 
    For XML 1.1
- NA XMLv [rmt-012] 
+ 1.1 XMLv [rmt-012] 
    For XML 1.1
- NA XMLnot-wf [rmt-013] 
+ 1.1 XMLnot-wf [rmt-013] 
    For XML 1.1
- NA XMLnot-wf [rmt-014] 
+ 1.1 XMLnot-wf [rmt-014] 
    For XML 1.1
- NA XMLi [rmt-015] 
+ 1.1 XMLi [rmt-015] 
    For XML 1.1
- NA XMLnot-wf [rmt-016] 
+ 1.1 XMLnot-wf [rmt-016] 
    For XML 1.1
- NA XMLi [rmt-017] 
+ 1.1 XMLi [rmt-017] 
    For XML 1.1
- NA XMLi [rmt-018] 
+ 1.1 XMLi [rmt-018] 
    For XML 1.1
- NA XMLnot-wf [rmt-019] 
+ 1.1 XMLnot-wf [rmt-019] 
    For XML 1.1
- NA XMLnot-wf [rmt-020] 
+ 1.1 XMLnot-wf [rmt-020] 
    For XML 1.1
- NA XMLnot-wf [rmt-021] 
+ 1.1 XMLnot-wf [rmt-021] 
    For XML 1.1
- NA XMLv [rmt-022] 
+ 1.1 XMLv [rmt-022] 
    For XML 1.1
- NA XMLv [rmt-023] 
+ 1.1 XMLv [rmt-023] 
    For XML 1.1
- NA XMLv [rmt-024] 
+ 1.1 XMLv [rmt-024] 
    For XML 1.1
- NA XMLv [rmt-025] 
+ 1.1 XMLv [rmt-025] 
    For XML 1.1
- NA XMLv [rmt-026] 
+ 1.1 XMLv [rmt-026] 
    For XML 1.1
- NA XMLv [rmt-027] 
+ 1.1 XMLv [rmt-027] 
    For XML 1.1
- NA XMLv [rmt-028] 
+ 1.1 XMLv [rmt-028] 
    For XML 1.1
- NA XMLv [rmt-029] 
+ 1.1 XMLv [rmt-029] 
    For XML 1.1
- NA XMLi [rmt-030] 
+ 1.1 XMLi [rmt-030] 
    For XML 1.1
- NA XMLv [rmt-031] 
+ 1.1 XMLv [rmt-031] 
    For XML 1.1
- NA XMLi [rmt-032] 
+ 1.1 XMLi [rmt-032] 
    For XML 1.1
- NA XMLv [rmt-033] 
+ 1.1 XMLv [rmt-033] 
    For XML 1.1
- NA XMLv [rmt-034] 
+ 1.1 XMLv [rmt-034] 
    For XML 1.1
- NA XMLv [rmt-035] 
+ 1.1 XMLv [rmt-035] 
    For XML 1.1
- NA XMLi [rmt-036] 
+ 1.1 XMLi [rmt-036] 
    For XML 1.1
- NA XMLi [rmt-037] 
+ 1.1 XMLi [rmt-037] 
    For XML 1.1
- NA XMLnot-wf [rmt-038] 
+ 1.1 XMLnot-wf [rmt-038] 
    For XML 1.1
- NA XMLnot-wf [rmt-039] 
+ 1.1 XMLnot-wf [rmt-039] 
    For XML 1.1
- NA XMLv [rmt-040] 
+ 1.1 XMLv [rmt-040] 
    For XML 1.1
- NA XMLnot-wf [rmt-041] 
+ 1.1 XMLnot-wf [rmt-041] 
    For XML 1.1
- NA XMLnot-wf [rmt-042] 
+ 1.1 XMLnot-wf [rmt-042] 
    For XML 1.1
- NA XMLv [rmt-043] 
+ 1.1 XMLv [rmt-043] 
    For XML 1.1
- NA XMLv [rmt-044] 
+ 1.1 XMLv [rmt-044] 
    For XML 1.1
- NA XMLv [rmt-045] 
+ 1.1 XMLv [rmt-045] 
    For XML 1.1
- NA XMLi [rmt-046] 
+ 1.1 XMLi [rmt-046] 
    For XML 1.1
- NA XMLv [rmt-047] 
+ 1.1 XMLv [rmt-047] 
    For XML 1.1
- NA XMLi [rmt-048] 
+ 1.1 XMLi [rmt-048] 
    For XML 1.1
- NA XMLv [rmt-049] 
+ 1.1 XMLv [rmt-049] 
    For XML 1.1
- NA XMLv [rmt-050] 
+ 1.1 XMLv [rmt-050] 
    For XML 1.1
- NA XMLv [rmt-051] 
+ 1.1 XMLv [rmt-051] 
    For XML 1.1
- NA XMLi [rmt-052] 
+ 1.1 XMLi [rmt-052] 
    For XML 1.1
- NA XMLi [rmt-053] 
+ 1.1 XMLi [rmt-053] 
    For XML 1.1
- NA XMLv [rmt-054] 
+ 1.1 XMLv [rmt-054] 
    For XML 1.1
- NA XMLerror  [rmt-055] 
+ 1.1 XMLerror  [rmt-055] 
    For XML 1.1
- NA XMLerror  [rmt-056] 
+ 1.1 XMLerror  [rmt-056] 
    For XML 1.1
- NA XMLerror  [rmt-057] 
+ 1.1 XMLerror  [rmt-057] 
    For XML 1.1
 Profile: Richard Tobin's XML Namespaces 1.0 test suite 14 Feb 2003
  OK XMLv [rmt-ns10-001] 
@@ -4298,29 +4298,29 @@ Profile: Richard Tobin's XML Namespaces 1.0 test suite 14 Feb 2003
    046.xml:8:2: Attribute must contain Names with no colon: ref
 046.xml:9:3: Attribute must contain Names with no colon: id
 Profile: Richard Tobin's XML Namespaces 1.1 test suite 14 Feb 2003
- NA XMLv [rmt-ns11-001] 
+ 1.1 XMLv [rmt-ns11-001] 
    For XML 1.1
- NA XMLv [rmt-ns11-002] 
+ 1.1 XMLv [rmt-ns11-002] 
    For XML 1.1
- NA XMLi [rmt-ns11-003] 
+ 1.1 XMLi [rmt-ns11-003] 
    For XML 1.1
- NA XMLi [rmt-ns11-004] 
+ 1.1 XMLi [rmt-ns11-004] 
    For XML 1.1
- NA XMLnot-wf [rmt-ns11-005] 
+ 1.1 XMLnot-wf [rmt-ns11-005] 
    For XML 1.1
- NA XMLv [rmt-ns11-006] 
+ 1.1 XMLv [rmt-ns11-006] 
    For XML 1.1
 
 
 Release: XML 1.0 (2nd edition) W3C Conformance Test Suite, 6 October 2000
 N/A: XML 1.1 tests
 N/A: tests with encoding unknown to XML/Ada
-+-----------+--------+---------+---------+---------+----+
-|           | Total  | Success | Failure | N/A     | IE |
-+-----------+--------+---------+---------+---------+----+
-| XMLwf     |    126 |     126 |       0 |       0 |  0 |
-| XMLnot-wf |   1424 |    1248 |       0 |     176 |  0 |
-| XMLv      |    494 |     409 |       0 |      85 |  0 |
-| XMLi      |    215 |     126 |       0 |      89 |  0 |
-| XMLerror  |     29 |      16 |       0 |      13 |  0 |
-+-----------+--------+---------+---------+---------+----+
++-----------+--------+---------+---------+---------+---------+--------+----+
+|           | Total  | Success | Failure | N/A     | XML 1.1 | Encod. | IE |
++-----------+--------+---------+---------+---------+---------+--------+----+
+| XMLwf     |    126 |     126 |       0 |       0 |       0 |      0 |  0 |
+| XMLnot-wf |   1424 |    1248 |       0 |       6 |     170 |      0 |  0 |
+| XMLv      |    494 |     409 |       0 |       3 |      82 |      0 |  0 |
+| XMLi      |    215 |     126 |       0 |      74 |      15 |      0 |  0 |
+| XMLerror  |     29 |      16 |       0 |       2 |       5 |      6 |  0 |
++-----------+--------+---------+---------+---------+---------+--------+----+

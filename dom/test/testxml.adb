@@ -128,6 +128,8 @@ procedure Testxml is
    type Result_Type is (Result_Success, --  Matches expected result
                         Result_Failure, --  Doesn't match expected result
                         Result_Ignore,  --  Explicitly marked as "unsupported"
+                        Result_XML_1_1, --  Test for XML 1.1
+                        Result_Encoding, --  Invalid encoding
                         Result_IE);     --  Unexpected exception
    type Testcases_Results is array (Testcase_Type, Result_Type) of Natural;
 
@@ -432,13 +434,13 @@ procedure Testxml is
 
       Put_Line
         ("+-----------+--------+---------+---------+"
-         & "---------+----+");
+         & "---------+---------+--------+----+");
       Put_Line
         ("|           | Total  | Success | Failure |"
-         & " N/A     | IE |");
+         & " N/A     | XML 1.1 | Encod. | IE |");
       Put_Line
         ("+-----------+--------+---------+---------+"
-         & "---------+----+");
+         & "---------+---------+--------+----+");
 
       for T in Count'Range (1) loop
          declare
@@ -457,12 +459,14 @@ procedure Testxml is
             & " |" & Image (Count (T, Result_Success), 8)
             & " |" & Image (Count (T, Result_Failure), 8)
             & " |" & Image (Count (T, Result_Ignore),  8)
+            & " |" & Image (Count (T, Result_XML_1_1),  8)
+            & " |" & Image (Count (T, Result_Encoding),  7)
             & " |" & Image (Count (T, Result_IE), 3) & " |");
       end loop;
 
       Put_Line
         ("+-----------+--------+---------+---------+"
-         & "---------+----+");
+         & "---------+---------+--------+----+");
       Free (Tests);
    end Run_Testsuite;
 
@@ -628,7 +632,7 @@ procedure Testxml is
    begin
       if not Run_XML_1_1_Tests and then Descr.Version = "1.1" then
          Print_Test_Result
-           (Reader, Descr, Result_Ignore, "For XML 1.1", Results);
+           (Reader, Descr, Result_XML_1_1, "For XML 1.1", Results);
          return;
       end if;
 
@@ -700,7 +704,7 @@ procedure Testxml is
                & Exception_Message (E), Results);
          else
             Print_Test_Result
-              (Reader, Descr, Result_Ignore, "Invalid encoding", Results);
+              (Reader, Descr, Result_Encoding, "Invalid encoding", Results);
          end if;
 
       when E : others =>
@@ -755,6 +759,8 @@ procedure Testxml is
          when Result_Failure   => Put (" NOK ");
          when Result_Ignore    => Put (" NA ");
          when Result_IE        => Put (" IE ");
+         when Result_XML_1_1   => Put (" 1.1 ");
+         when Result_Encoding  => Put (" ENC ");
       end case;
 
       Results (Descr.Test_Type, R) := Results (Descr.Test_Type, R) + 1;
