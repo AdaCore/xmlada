@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
+--                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                       Copyright (C) 2010, AdaCore                 --
+--                    Copyright (C) 2010, AdaCore                    --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -44,8 +44,9 @@ package Sax.Symbols is
    --  the symbol is to be shared between multiple tasks.
 
    type Symbol is private;
-   No_Symbol        : constant Symbol;
-   Empty_String     : constant Symbol;
+
+   No_Symbol    : constant Symbol;
+   Empty_String : constant Symbol;
 
    function Find
      (Table : access Symbol_Table_Record;
@@ -96,12 +97,12 @@ private
       Equal         => Key_Equal);
 
    Hash_Num : constant := 2**16;
-   --  Number of headers in the hash table.
+   --  Number of headers in the hash table
 
    type Hash_Type is range 0 .. Hash_Num - 1;
 
    type Symbol_Table_Record is new Sax.Pointers.Root_Encapsulated with record
-      Hash    : String_Htable.HTable (Hash_Num);
+      Hash : String_Htable.HTable (Hash_Num);
    end record;
 
 end Sax.Symbols;

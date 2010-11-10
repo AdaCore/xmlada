@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
+--                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                       Copyright (C) 2001-2010, AdaCore            --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -47,7 +47,7 @@ package DOM.Readers is
    function Get_Tree (Read : Tree_Reader) return Document;
 
    procedure Free (Read : in out Tree_Reader);
-   --  Free the memory associated with the reader, in particular the tree.
+   --  Free the memory associated with the reader, in particular the tree
 
    procedure Set_Warnings_As_Errors
      (Read : in out Tree_Reader; Warnings_As_Error : Boolean);
@@ -56,14 +56,14 @@ package DOM.Readers is
 
    overriding procedure Start_Document (Handler : in out Tree_Reader);
    overriding procedure Start_Element
-     (Handler       : in out Tree_Reader;
-      NS            : Sax.Utils.XML_NS;
-      Local_Name    : Sax.Symbols.Symbol;
-      Atts          : Sax.Readers.Sax_Attribute_List);
+     (Handler    : in out Tree_Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol;
+      Atts       : Sax.Readers.Sax_Attribute_List);
    overriding procedure End_Element
-     (Handler       : in out Tree_Reader;
-      NS            : Sax.Utils.XML_NS;
-      Local_Name    : Sax.Symbols.Symbol);
+     (Handler    : in out Tree_Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol);
    overriding procedure Characters
      (Handler : in out Tree_Reader;
       Ch      : Unicode.CES.Byte_Sequence);
@@ -88,16 +88,17 @@ package DOM.Readers is
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
    overriding procedure Warning
      (Handler : in out Tree_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class);
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
    --  See inherited documentation
 
 private
 
    type Tree_Reader is new Reader with record
-      Tree                       : Document;
-      Current_Node               : Node;
-      Internal_Encoding          : Unicode.CES.Encoding_Scheme;
-      In_DTD                     : Boolean := False;
-      Warnings_As_Error          : Boolean := False;
+      Tree              : Document;
+      Current_Node      : Node;
+      Internal_Encoding : Unicode.CES.Encoding_Scheme;
+      In_DTD            : Boolean := False;
+      Warnings_As_Error : Boolean := False;
    end record;
+
 end DOM.Readers;

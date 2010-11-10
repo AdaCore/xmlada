@@ -55,7 +55,7 @@ package body Sax.Pointers is
 
       function Allocate (Data : Encapsulated'Class) return Pointer is
          Tmp : constant Encapsulated_Access :=
-           new Encapsulated'Class'(Data);
+                 new Encapsulated'Class'(Data);
       begin
          return Allocate (Tmp);
       end Allocate;

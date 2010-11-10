@@ -86,7 +86,7 @@ package Sax.Pointers is
 
    private
       type Pointer is new Ada.Finalization.Controlled with record
-         Data     : Root_Encapsulated_Access;
+         Data : Root_Encapsulated_Access;
       end record;
 
       procedure Finalize (P : in out Pointer);
@@ -94,7 +94,7 @@ package Sax.Pointers is
       --  Take care of reference counting
 
       Null_Pointer : constant Pointer :=
-        (Ada.Finalization.Controlled with Data => null);
+                       (Ada.Finalization.Controlled with Data => null);
    end Smart_Pointers;
 
 private

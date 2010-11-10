@@ -50,7 +50,7 @@ package Sax.HTable is
    type Element_Ptr is access all Element;
 
    procedure Reset (Hash_Table : in out HTable);
-   --  Resets the hash table by freeing all the elements.
+   --  Resets the hash table by freeing all the elements
 
    procedure Set (Hash_Table : in out HTable; E : Element);
    procedure Set_With_Hash
@@ -97,7 +97,7 @@ package Sax.HTable is
    --  Iter is set to No_Iterator if there is no more element in the table.
 
    function Current (Iter : Iterator) return Element;
-   --  Return the element pointed to by Iter.
+   --  Return the element pointed to by Iter
 
 private
 
@@ -129,5 +129,5 @@ private
    end record;
 
    No_Iterator : constant Iterator :=
-     (Interfaces.Unsigned_32'Last, null, null);
+                   (Interfaces.Unsigned_32'Last, null, null);
 end Sax.HTable;

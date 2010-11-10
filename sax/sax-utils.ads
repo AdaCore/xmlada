@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
+--                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                       Copyright (C) 2005-2010, AdaCore            --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -75,7 +75,7 @@ package Sax.Utils is
    function Is_Valid_Name
      (Name    : Unicode.CES.Byte_Sequence;
       Version : XML_Versions := XML_1_1) return Boolean;
-   --  Whether Name is valid name as per 2.3 in the XML specifications.
+   --  Whether Name is valid name as per 2.3 in the XML specifications
 
    function Is_Valid_Names
      (Name    : Unicode.CES.Byte_Sequence;
@@ -105,7 +105,7 @@ package Sax.Utils is
    type URI_Type is (URI_Absolute, URI_Relative_Ref, URI_None);
 
    function Check_URI
-     (Name : Unicode.CES.Byte_Sequence;
+     (Name    : Unicode.CES.Byte_Sequence;
       Version : XML_Versions := XML_1_1) return URI_Type;
    --  Check whether Name is a URI, and its type if it is. This is RFC 3986,
    --  see http://www.ietf.org/rfc/rfc3986.txt.
@@ -172,9 +172,11 @@ package Sax.Utils is
 
    package Symbol_Table_Pointers is new Sax.Pointers.Smart_Pointers
      (Encapsulated => Sax.Symbols.Symbol_Table_Record);
+
    subtype Symbol_Table is Symbol_Table_Pointers.Pointer;
+
    No_Symbol_Table : constant Symbol_Table :=
-     Symbol_Table_Pointers.Null_Pointer;
+                       Symbol_Table_Pointers.Null_Pointer;
 
    function Allocate return Symbol_Table;
    --  Return a new symbol table

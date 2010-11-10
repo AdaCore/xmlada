@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
+--                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                       Copyright (C) 2001-2010, AdaCore            --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -1047,10 +1047,11 @@ package body DOM.Core.Nodes is
       if N = null then
          return;
       end if;
+
       case N.Node_Type is
          when Element_Node =>
             --  If we have an ID attribute, remove the element from the
-            --  htable
+            --  htable.
 
             if N.Attributes.Items /= null then
                for Att in N.Attributes.Items'First .. N.Attributes.Last loop
@@ -1105,6 +1106,7 @@ package body DOM.Core.Nodes is
             Free (N.Public_ID);
             Free (N.System_ID);
       end case;
+
       Internal_Free (N);
    end Free;
 
@@ -1116,7 +1118,7 @@ package body DOM.Core.Nodes is
       Arr : Node_Array (0 .. Map.Last + 1) := (others => null);
       Index : Natural;
    begin
-      --  ??? The algorithm is not efficient, we use Insertion_Sort.
+      --  ??? The algorithm is not efficient, we use Insertion_Sort
       for J in 0 .. Map.Last loop
          Index := 0;
          loop

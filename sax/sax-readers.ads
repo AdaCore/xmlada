@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
+--                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                       Copyright (C) 2001-2010, AdaCore            --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -190,7 +190,7 @@ package Sax.Readers is
 
    procedure Warning
      (Handler : in out Sax_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class) is null;
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is null;
    --  Receive notification of a warning.
    --  This method is used to report conditions that are not errors or fatal
    --  errors.
@@ -235,8 +235,8 @@ package Sax.Readers is
    --  based on symbols.
 
    function Get_Index
-     (List : Sax_Attribute_List;
-      URI  : Sax.Symbols.Symbol;
+     (List       : Sax_Attribute_List;
+      URI        : Sax.Symbols.Symbol;
       Local_Name : Sax.Symbols.Symbol) return Integer;
    --  Return the index of the attribute within the list, or -1 if not found
 
@@ -351,10 +351,10 @@ package Sax.Readers is
    --  This will always occur after the corresponding End_Element event.
 
    procedure Start_Element
-     (Handler       : in out Sax_Reader;
-      NS            : Sax.Utils.XML_NS;
-      Local_Name    : Sax.Symbols.Symbol;
-      Atts          : Sax_Attribute_List) is null;
+     (Handler    : in out Sax_Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol;
+      Atts       : Sax_Attribute_List) is null;
    --  Receive notification of the beginning of an element.
    --  There will always be a matching call to End_Element, even for empty
    --  elements.
@@ -369,9 +369,9 @@ package Sax.Readers is
    --  Namespace_Prefixes_Feature is True.
 
    procedure End_Element
-     (Handler       : in out Sax_Reader;
-      NS            : Sax.Utils.XML_NS;
-      Local_Name    : Sax.Symbols.Symbol) is null;
+     (Handler    : in out Sax_Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol) is null;
    --  Receive notification of the end of an element.
 
    procedure Characters
@@ -576,13 +576,13 @@ package Sax.Readers is
    --  parentheses.
 
    procedure Attribute_Decl
-     (Handler : in out Sax_Reader;
-      Ename   : Unicode.CES.Byte_Sequence;
-      Aname   : Unicode.CES.Byte_Sequence;
-      Typ     : Sax.Attributes.Attribute_Type;
-      Content : Sax.Models.Content_Model;
+     (Handler       : in out Sax_Reader;
+      Ename         : Unicode.CES.Byte_Sequence;
+      Aname         : Unicode.CES.Byte_Sequence;
+      Typ           : Sax.Attributes.Attribute_Type;
+      Content       : Sax.Models.Content_Model;
       Value_Default : Sax.Attributes.Default_Declaration;
-      Value   : Unicode.CES.Byte_Sequence) is null;
+      Value         : Unicode.CES.Byte_Sequence) is null;
    --  Report an attribute type declaration.
    --  Only the first declaration for an attribute will be reported.
    --  If Typ is Notation or Enumeration, then Content will contain the
@@ -647,7 +647,7 @@ package Sax.Readers is
 
    function Find_Symbol
      (Parser : Sax_Reader'Class;
-      Str : Unicode.CES.Byte_Sequence) return Sax.Symbols.Symbol;
+      Str    : Unicode.CES.Byte_Sequence) return Sax.Symbols.Symbol;
    function Get_Symbol_Table (Parser : Sax_Reader'Class) return Symbol_Table;
    --  Manipulation of symbols
 
@@ -692,26 +692,26 @@ package Sax.Readers is
    type Whitespace_Hook is access procedure
      (Handler : access Sax_Reader'Class; Ch : Unicode.CES.Byte_Sequence);
    type Set_Doc_Locator_Hook is access procedure
-     (Handler       : in out Sax_Reader'Class;
-      Loc           : in out Sax.Locators.Locator);
+     (Handler : in out Sax_Reader'Class;
+      Loc     : in out Sax.Locators.Locator);
    type Notation_Decl_Hook is access procedure
-     (Handler       : access Sax_Reader'Class;
-      Name          : Unicode.CES.Byte_Sequence;
-      Public_Id     : Unicode.CES.Byte_Sequence;
-      System_Id     : Unicode.CES.Byte_Sequence);
+     (Handler   : access Sax_Reader'Class;
+      Name      : Unicode.CES.Byte_Sequence;
+      Public_Id : Unicode.CES.Byte_Sequence;
+      System_Id : Unicode.CES.Byte_Sequence);
 
    function Get_Hooks_Data (Handler : Sax_Reader) return Hook_Data_Access;
    --  Return the hook data that was set through Set_Hooks. This could be null
 
    procedure Set_Hooks
-     (Handler        : in out Sax_Reader;
-      Data           : Hook_Data_Access     := null;
-      Start_Element  : Start_Element_Hook   := null;
-      End_Element    : End_Element_Hook     := null;
-      Characters     : Characters_Hook      := null;
-      Whitespace     : Whitespace_Hook      := null;
-      Doc_Locator    : Set_Doc_Locator_Hook := null;
-      Notation_Decl  : Notation_Decl_Hook   := null);
+     (Handler       : in out Sax_Reader;
+      Data          : Hook_Data_Access     := null;
+      Start_Element : Start_Element_Hook   := null;
+      End_Element   : End_Element_Hook     := null;
+      Characters    : Characters_Hook      := null;
+      Whitespace    : Whitespace_Hook      := null;
+      Doc_Locator   : Set_Doc_Locator_Hook := null;
+      Notation_Decl : Notation_Decl_Hook   := null);
    --  Set a list of hooks to be called before calling the usual primitive
    --  operations. These override hooks that were defined previously.
    --  Data will be passed to each of the hook. It is automatically
@@ -767,14 +767,14 @@ package Sax.Readers is
    overriding procedure End_Prefix_Mapping
      (Handler : in out Reader; Prefix : Sax.Symbols.Symbol);
    overriding procedure Start_Element
-     (Handler       : in out Reader;
-      NS            : Sax.Utils.XML_NS;
-      Local_Name    : Sax.Symbols.Symbol;
-      Atts          : Sax_Attribute_List);
+     (Handler    : in out Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol;
+      Atts       : Sax_Attribute_List);
    overriding procedure End_Element
-     (Handler       : in out Reader;
-      NS            : Sax.Utils.XML_NS;
-      Local_Name    : Sax.Symbols.Symbol);
+     (Handler    : in out Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol);
    overriding procedure Skipped_Entity
      (Handler : in out Reader;
       Name    : Sax.Symbols.Symbol);
@@ -787,6 +787,7 @@ package Sax.Readers is
    --  See inherited documentation
 
 private
+
    type Parser_Hooks is record
       Data          : Hook_Data_Access     := null;
       Start_Element : Start_Element_Hook   := null;
