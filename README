@@ -172,9 +172,9 @@ check XML/Ada. Most likely, this is only useful to you if you are modifying
 XML/Ada itself. Here is how you can run this testsuite:
    You need to download the official XML Conformance Testsuite for XML,
    The name of the current archive is
-       xmlconf-20031210.tar
+       xmlconf-20080827.tar
    The URL is:
-       http://www.w3.org/XML/Test/xmlconf-20031210.html
+       http://www.w3.org/XML/Test/
 
    Uncompress it somewhere on your disk, then add a link in dom/test, which
    points to the directory where you unpackaged the testsuite. The link should
