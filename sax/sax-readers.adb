@@ -2628,6 +2628,9 @@ package body Sax.Readers is
                           (Parser, Error_External_Entity_Not_Found
                            & Get (URI).all, Id);
                         Unchecked_Free (Parser.Inputs.Input);
+                     when E : Mismatching_BOM =>
+                        Error (Parser, Exception_Message (E));
+                        Unchecked_Free (Parser.Inputs.Input);
                   end;
 
                   Parser.In_External_Entity := True;

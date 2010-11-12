@@ -4362,10 +4362,10 @@ Profile: University of Edinburgh tests for XML 1.0 5th edition
    Disabled in XML/Ada
  NA XMLi XML_1_0_FIFTH_EDITION [invalid-bo-6] 
    Disabled in XML/Ada
- IE XMLerror  XML_1_0_FIFTH_EDITION [invalid-bo-7] 
-   Unexpected error: /home/briot/svn/trunk/xmlada/dom/test/tests/eduni/errata-4e/bomboom_be.xml specifies two different encodings
- IE XMLerror  XML_1_0_FIFTH_EDITION [invalid-bo-8] 
-   Unexpected error: /home/briot/svn/trunk/xmlada/dom/test/tests/eduni/errata-4e/bomboom_le.xml specifies two different encodings
+ OK XMLerror  XML_1_0_FIFTH_EDITION [invalid-bo-7] 
+   inclbomboom_be.xml:4:15: /home/briot/svn/trunk/xmlada/dom/test/tests/eduni/errata-4e/bomboom_be.xml specifies two different encodings
+ OK XMLerror  XML_1_0_FIFTH_EDITION [invalid-bo-8] 
+   inclbomboom_le.xml:4:15: /home/briot/svn/trunk/xmlada/dom/test/tests/eduni/errata-4e/bomboom_le.xml specifies two different encodings
  NA XMLerror  XML_1_0_FIFTH_EDITION [invalid-bo-9] 
    Disabled in XML/Ada
  NA XMLi XML_1_0_FIFTH_EDITION [invalid-sa-140] 
@@ -4855,5 +4855,5 @@ N/A: tests with encoding unknown to XML/Ada
 | XMLnot-wf |   1489 |    1316 |       0 |       6 |     167 |      0 |  0 |
 | XMLv      |    806 |     721 |       0 |       3 |      82 |      0 |  0 |
 | XMLi      |    242 |     140 |       0 |      87 |      15 |      0 |  0 |
-| XMLerror  |     33 |      17 |       0 |       3 |       5 |      6 |  2 |
+| XMLerror  |     33 |      19 |       0 |       3 |       5 |      6 |  0 |
 +-----------+--------+---------+---------+---------+---------+--------+----+
