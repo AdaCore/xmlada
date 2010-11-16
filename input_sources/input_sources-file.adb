@@ -124,7 +124,7 @@ package body Input_Sources.File is
          then
             Raise_Exception
               (Mismatching_BOM'Identity,
-               Filename & " specifies two different encodings");
+               "File specifies two different encodings");
          end if;
 
          --  In XML, we should apparently still report the second BOM

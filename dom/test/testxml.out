@@ -4363,9 +4363,9 @@ Profile: University of Edinburgh tests for XML 1.0 5th edition
  NA XMLi XML_1_0_FIFTH_EDITION [invalid-bo-6] 
    Disabled in XML/Ada
  OK XMLerror  XML_1_0_FIFTH_EDITION [invalid-bo-7] 
-   inclbomboom_be.xml:4:15: /home/briot/svn/trunk/xmlada/dom/test/tests/eduni/errata-4e/bomboom_be.xml specifies two different encodings
+   inclbomboom_be.xml:4:15: File specifies two different encodings
  OK XMLerror  XML_1_0_FIFTH_EDITION [invalid-bo-8] 
-   inclbomboom_le.xml:4:15: /home/briot/svn/trunk/xmlada/dom/test/tests/eduni/errata-4e/bomboom_le.xml specifies two different encodings
+   inclbomboom_le.xml:4:15: File specifies two different encodings
  NA XMLerror  XML_1_0_FIFTH_EDITION [invalid-bo-9] 
    Disabled in XML/Ada
  NA XMLi XML_1_0_FIFTH_EDITION [invalid-sa-140] 
