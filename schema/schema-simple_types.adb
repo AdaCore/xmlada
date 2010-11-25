@@ -2006,7 +2006,7 @@ package body Schema.Simple_Types is
       elsif Get (Facet_Name).all = "fractionDigits" then
          Facets (Facet_Fraction_Digits) := (Val, No_Enumeration_Index, Loc);
       else
-         pragma Assert (False, "Invalid facet: " & Get (Facet_Name).all);
+         pragma Assert (False, "Invalid facet:");
          null;
       end if;
    end Add_Facet;
