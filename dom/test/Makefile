@@ -1,7 +1,8 @@
 tests: force
-	@./testxml -auto > testxml.tmp.out
-	-@tr -d '\r' < testxml.tmp.out > testxml.tmp
-	@ diff testxml.out testxml.tmp
-	@cd act_testsuite; ./run
+	@./testxml -auto > test_xml.tmp_out
+	-@tr -d '\r' < test_xml.tmp_out > test_xml.out
+	@ diff test_xml.expected test_xml.out > test_xml.diff
+	@cat test_xml.diff
+	@cd act_testsuite; ./run > test_act.out
 
 force:

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2007, AdaCore            --
+--                       Copyright (C) 2004-2010, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -231,7 +231,7 @@ begin
    end;
 
    if not Had_Error then
-      Put_Line (Command_Name & ": SUCCESS");
+      Put_Line ("test_unicode : SUCCESS");
    end if;
 
 exception

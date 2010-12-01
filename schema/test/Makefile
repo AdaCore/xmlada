@@ -13,16 +13,18 @@ all:
 # The W3C testsuite is meant to test XSD 1.0, so we have to configure the parser
 # in the appropriate mode.
 new:
-	-@./testsuite > testsuite.tmp.out 2>&1
-	-@tr -d '\r' < testsuite.tmp.out > testsuite.tmp
-	-@diff -c testsuite.out testsuite.tmp
-	-@./schematest --xsd10 > schematest.tmp.out
-	-@tr -d '\r' < schematest.tmp.out > schematest.tmp
-	-@diff -u schematest.out schematest.tmp
+	-@./testsuite > test_act_schema.tmp_out 2>&1
+	-@tr -d '\r' < test_act_schema.tmp_out > test_act_schema.out
+	-@diff -c test_act_schema.expected test_act_schema.out > test_act_schema.diff
+	@cat test_act_schema.diff
+	-@./schematest --xsd10 > test_schema.tmp_out
+	-@tr -d '\r' < test_schema.tmp_out > test_schema.out
+	-@diff -u test_schema.expected test_schema.out > test_schema.diff
+	@cat test_schema.diff
 
 # Explain how the various errors are split:
 errors:
-	@egrep "^  -" schematest.out | perl -pi -e  's/\S+:\d+:\d+://g; s/^\s+//' | sort | uniq -c | sort -n
+	@egrep "^  -" test_schema.expected | perl -pi -e  's/\S+:\d+:\d+://g; s/^\s+//' | sort | uniq -c | sort -n
 
 # Display the NFA used for validation. This requires the external tool
 # "graphviz" to be installed on your machine.

@@ -79,7 +79,7 @@ test: force
 	${GNATMAKE} -m -p -Pschema/test/schema_test.gpr ${MAKE_ARGS}
 
 run_test: force
-	@cd unicode/test; ./test_unicode
+	@make --no-print-directory -C unicode/test tests
 	@make --no-print-directory -C sax/test tests
 	@make --no-print-directory -C dom/test tests
 	@make --no-print-directory -C schema/test tests
