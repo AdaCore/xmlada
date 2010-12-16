@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
+--                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                       Copyright (C) 2001-2010, AdaCore            --
---                       Copyright (C) 2010, Jehan Pages             --
+--                 Copyright (C) 2001-2010, AdaCore                  --
+--                  Copyright (C) 2010, Jehan Pages                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -27,9 +27,10 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with GNAT.Sockets;
+
 with Unicode;
 with Unicode.CES;
-with GNAT.Sockets;
 
 package Input_Sources.Socket is
 
@@ -43,7 +44,7 @@ package Input_Sources.Socket is
 
    procedure Open
      (Socket : GNAT.Sockets.Socket_Type; Input : out Socket_Input);
-   --  Open a new input reading from the socket.
+   --  Open a new input reading from the socket
 
    procedure Close (Input : in out Socket_Input);
    --  Free the memory
@@ -60,11 +61,13 @@ package Input_Sources.Socket is
    --  read.
 
 private
+
    type Socket_Input is new Input_Source with record
-      Socket : GNAT.Sockets.Socket_Type;
-      Index  : Natural;
+      Socket      : GNAT.Sockets.Socket_Type;
+      Index       : Natural;
       Buffer_Last : Natural;
-      Buffer : Unicode.CES.Byte_Sequence_Access;
+      Buffer      : Unicode.CES.Byte_Sequence_Access;
       End_Of_File : Boolean;
    end record;
+
 end Input_Sources.Socket;

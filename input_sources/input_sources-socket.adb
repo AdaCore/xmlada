@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
+--                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                       Copyright (C) 2001-2010, AdaCore            --
---                       Copyright (C) 2010, Jehan Pages             --
+--                 Copyright (C) 2001-2010, AdaCore                  --
+--                  Copyright (C) 2010, Jehan Pages                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -27,13 +27,14 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Streams; use Ada.Streams;
+
+with GNAT.Sockets;            use GNAT.Sockets;
+
 with Unicode;
 with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
-
-with GNAT.Sockets;            use GNAT.Sockets;
-with Ada.Text_IO; use Ada.Text_IO;
-with Ada.Streams; use Ada.Streams;
 
 package body Input_Sources.Socket is
 
@@ -83,9 +84,10 @@ package body Input_Sources.Socket is
 
       procedure Update_Buffer is
          --  There can be at most 3 bytes not processed (unfinished UTF-8 code)
-         Len : constant Stream_Element_Count :=
-           Stream_Element_Count (BUFSIZ - From.Buffer_Last + From.Index + 1);
-         Buffer  : Stream_Element_Array (1 .. Len);
+         Len         : constant Stream_Element_Count :=
+                         Stream_Element_Count
+                           (BUFSIZ - From.Buffer_Last + From.Index + 1);
+         Buffer      : Stream_Element_Array (1 .. Len);
          Buffer_Last : Stream_Element_Count := 0;
 
       begin
@@ -101,6 +103,7 @@ package body Input_Sources.Socket is
                From.Buffer (A - From.Index + 1) := From.Buffer (A);
             end loop;
             From.Buffer_Last := From.Buffer_Last - From.Index + 1;
+
          else
             From.Buffer_Last := 0;
          end if;
