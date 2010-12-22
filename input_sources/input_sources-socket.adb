@@ -46,7 +46,10 @@ package body Input_Sources.Socket is
    ----------
 
    procedure Open (Socket : Socket_Type; Input : out Socket_Input) is
+      Blocking_IO_Request : Request_Type (Non_Blocking_IO);
    begin
+      Blocking_IO_Request.Enabled := False;
+      Control_Socket (Socket, Blocking_IO_Request);
       Input.Socket := Socket;
       Input.Buffer := new String (1 .. BUFSIZ);
       Input.Index := Input.Buffer'First;
@@ -93,7 +96,7 @@ package body Input_Sources.Socket is
       begin
          GNAT.Sockets.Receive_Socket (From.Socket, Buffer, Buffer_Last);
 
-         if Buffer_Last = Buffer'Last - 1 then
+         if Buffer_Last = Buffer'First - 1 then
             From.End_Of_File := True;
             return;
          end if;
