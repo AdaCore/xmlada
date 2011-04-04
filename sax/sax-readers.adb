@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -6310,6 +6310,22 @@ package body Sax.Readers is
          end if;
       end loop;
       return -1;
+   end Get_Index;
+
+   ---------------
+   -- Get_Index --
+   ---------------
+
+   function Get_Index
+     (Handler    : Sax_Reader'Class;
+      List       : Sax_Attribute_List;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence) return Integer is
+   begin
+      return Get_Index
+        (List,
+         URI        => Find_Symbol (Handler, URI),
+         Local_Name => Find_Symbol (Handler, Local_Name));
    end Get_Index;
 
    ---------------

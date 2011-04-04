@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -238,7 +238,30 @@ package Sax.Readers is
      (List       : Sax_Attribute_List;
       URI        : Sax.Symbols.Symbol;
       Local_Name : Sax.Symbols.Symbol) return Integer;
-   --  Return the index of the attribute within the list, or -1 if not found
+   function Get_Index
+     (Handler    : Sax_Reader'Class;
+      List       : Sax_Attribute_List;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence) return Integer;
+   --  Return the index of the attribute within the list, or -1 if not found.
+   --  The first version is more efficient. The idea is that the symbols can be
+   --  computed once when the parsing starts, and then reused. They are much
+   --  faster to compare than strings.
+   --  The second version is provided to help transitions.
+   --
+   --  A more efficient approach is to traverse the list of attributes only
+   --  once and store the values in your own record, rather than traverse the
+   --  list of attributes every time you need to access a value:
+   --
+   --     Name : Qualified_Name;
+   --     for J in 1 .. Get_Length (List) loop
+   --        Name := Get_Qualified_Name (List, J);
+   --        if Name.NS = Empty_String and then Name.Local = ... then
+   --           ...;
+   --        elsif ... then
+   --           ...
+   --        end if;
+   --     end loop;
 
    procedure Set_Value
      (List  : Sax_Attribute_List;
@@ -246,7 +269,9 @@ package Sax.Readers is
       Val   : Sax.Symbols.Symbol);
    function Get_Value
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
-   --  Returns No_Symbol if Index is negative
+   --  Returns No_Symbol if Index is negative.
+   --  Use  Get (Get_Value (List, Index)).all  to retrive the strings value
+   --  (or in Ada05 dotted notation:  Get_Value (List, Index).Get.all
 
    function Get_Location
      (List : Sax_Attribute_List; Index : Integer) return Sax.Locators.Location;
@@ -367,6 +392,12 @@ package Sax.Readers is
    --  The attribute list will only contain attributes with explicit values. It
    --  will contain attributes used for namespace declaration (xmlns*) only if
    --  Namespace_Prefixes_Feature is True.
+   --
+   --  For users of older versions of XML/Ada, the old profile of Start_Element
+   --  is still available if you derive from the "Reader" type (below) instead
+   --  of "Sax_Reader". We do encourage you to transition to the new profiles
+   --  at your convenience, though, because they provide greater efficiency,
+   --  mostly by limiting the number of string comparison and allocations.
 
    procedure End_Element
      (Handler    : in out Sax_Reader;
