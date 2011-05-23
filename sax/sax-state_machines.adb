@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2010, AdaCore                 --
+--                       Copyright (C) 2010-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -1400,6 +1400,7 @@ package body Sax.State_Machines is
       procedure Dump_Nested
         (Self   : access NFA'Class;
          Result : in out Unbounded_String;
+         Dumped : in out State_Array;
          S      : State;
          Mode   : Dump_Mode;
          Since  : NFA_Snapshot := No_NFA_Snapshot);
@@ -1530,13 +1531,11 @@ package body Sax.State_Machines is
       procedure Dump_Nested
         (Self   : access NFA'Class;
          Result : in out Unbounded_String;
+         Dumped : in out State_Array;
          S      : State;
          Mode   : Dump_Mode;
          Since  : NFA_Snapshot := No_NFA_Snapshot)
       is
-         Dumped : State_Array (State_Tables.First .. Last (Self.States)) :=
-           (others => False);
-
          Name  : constant String := Node_Name (Self, S);
          Label : constant String := Node_Label (Self, S);
       begin
@@ -1752,7 +1751,7 @@ package body Sax.State_Machines is
                Append (Result, "rankdir=LR;");
                Newline (Result, Mode);
 
-               Dump_Nested (Self, Result, Nested.Default_Start, Mode);
+               Dump_Nested (Self, Result, Dumped, Nested.Default_Start, Mode);
                Append (Result, "}" & ASCII.LF);
          end case;
          return To_String (Result);
@@ -1810,8 +1809,8 @@ package body Sax.State_Machines is
 
             for S in Since.States + 1 .. Last (Self.States) loop
                if Self.States.Table (S).Nested /= No_State then
-                  Dump_Nested (Self, Result, Self.States.Table (S).Nested,
-                               Mode, Since);
+                  Dump_Nested (Self, Result, Dumped,
+                               Self.States.Table (S).Nested, Mode, Since);
                end if;
             end loop;
 
