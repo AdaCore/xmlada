@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2007-2010, AdaCore            --
+--                Copyright (C) 2007-2011, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -54,16 +54,15 @@ package body Sax.Pointers is
       --------------
 
       function Allocate (Data : Encapsulated'Class) return Pointer is
-         Tmp : constant Encapsulated_Access :=
-                 new Encapsulated'Class'(Data);
+         Tmp : constant Encapsulated_Access := new Encapsulated'Class'(Data);
       begin
          return Allocate (Tmp);
       end Allocate;
 
       function Allocate (Data : access Encapsulated'Class) return Pointer is
       begin
-         return (Ada.Finalization.Controlled with
-                 Root_Encapsulated_Access (Data));
+         return
+           (Ada.Finalization.Controlled with Root_Encapsulated_Access (Data));
       end Allocate;
 
       ---------
@@ -119,6 +118,7 @@ package body Sax.Pointers is
             P.Data.Refcount := P.Data.Refcount + 1;
          end if;
       end Adjust;
+
    end Smart_Pointers;
 
 end Sax.Pointers;

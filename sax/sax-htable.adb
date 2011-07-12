@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2010, AdaCore            --
+--                Copyright (C) 2004-2011, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -140,7 +140,7 @@ package body Sax.HTable is
       K          : Key;
       Hashed     : Interfaces.Unsigned_32) return Element_Ptr
    is
-      H : constant Unsigned_32 := Hashed mod Hash_Table.Size + 1;
+      H    : constant Unsigned_32 := Hashed mod Hash_Table.Size + 1;
       Elmt : Item_Ptr;
    begin
       if Hash_Table.Table (H).Set then
@@ -167,7 +167,7 @@ package body Sax.HTable is
 
    procedure Remove (Hash_Table : in out HTable; K : Key) is
       Index     : constant Unsigned_32 :=
-        Hash (K) mod Hash_Table.Size + 1;
+                    Hash (K) mod Hash_Table.Size + 1;
       Elmt      : Item_Ptr;
       Next_Elmt : Item_Ptr;
    begin
@@ -306,6 +306,10 @@ package body Sax.HTable is
          Iter.Elem := Hash_Table.Table (Iter.Index).Elem'Unrestricted_Access;
       end if;
    end Next;
+
+   -------------
+   -- Current --
+   -------------
 
    function Current (Iter : Iterator) return Element is
    begin

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                 XML/Ada - An XML suite for Ada95                  --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -75,7 +75,7 @@ package Sax.Symbols is
 private
    type Symbol is new Cst_Byte_Sequence_Access;
 
-   Cst_Empty_String     : aliased constant Unicode.CES.Byte_Sequence := "";
+   Cst_Empty_String : aliased constant Unicode.CES.Byte_Sequence := "";
 
    No_Symbol        : constant Symbol := null;
    Empty_String     : constant Symbol := Cst_Empty_String'Access;

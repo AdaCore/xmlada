@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2010, AdaCore            --
+--                Copyright (C) 2004-2011, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -192,10 +192,10 @@ package body Schema.Validators is
    ----------------------------
 
    procedure Normalize_And_Validate
-     (Parser  : access Abstract_Validation_Reader'Class;
-      Simple  : Simple_Type_Index;
-      Fixed   : in out Sax.Symbols.Symbol;
-      Loc     : Sax.Locators.Location)
+     (Parser : access Abstract_Validation_Reader'Class;
+      Simple : Simple_Type_Index;
+      Fixed  : in out Sax.Symbols.Symbol;
+      Loc    : Sax.Locators.Location)
    is
    begin
       if Fixed /= No_Symbol
@@ -203,9 +203,9 @@ package body Schema.Validators is
       then
          declare
             Simple_Descr : constant Simple_Type_Descr :=
-              Get_NFA (Parser.Grammar).Get_Simple_Type (Simple);
-            Norm  : Byte_Sequence := Get (Fixed).all;
-            Last  : Integer := Norm'Last;
+                             Get_NFA (Parser.Grammar).Get_Simple_Type (Simple);
+            Norm         : Byte_Sequence := Get (Fixed).all;
+            Last         : Integer := Norm'Last;
          begin
             --  Normalize whitespaces, for faster comparison later
             --  on.
@@ -217,11 +217,11 @@ package body Schema.Validators is
             end if;
 
             Validate_Simple_Type
-              (Reader        => Parser,
-               Simple_Type   => Simple,
-               Ch            => Norm (Norm'First .. Last),
-               Loc           => Loc,
-               Insert_Id     => True);
+              (Reader      => Parser,
+               Simple_Type => Simple,
+               Ch          => Norm (Norm'First .. Last),
+               Loc         => Loc,
+               Insert_Id   => True);
          end;
       end if;
    end Normalize_And_Validate;
@@ -231,15 +231,15 @@ package body Schema.Validators is
    -------------------
 
    procedure Add_Attribute
-     (Parser         : access Abstract_Validation_Reader'Class;
-      List           : in out Attributes_List;
-      Attribute      : Attribute_Descr;
-      Ref            : Named_Attribute_List := Empty_Named_Attribute_List;
-      Loc            : Sax.Locators.Location)
+     (Parser    : access Abstract_Validation_Reader'Class;
+      List      : in out Attributes_List;
+      Attribute : Attribute_Descr;
+      Ref       : Named_Attribute_List := Empty_Named_Attribute_List;
+      Loc       : Sax.Locators.Location)
    is
-      NFA : constant Schema_NFA_Access := Get_NFA (Parser.Grammar);
-      L   : Named_Attribute_List := List.Named;
-      Tmp : Named_Attribute_List;
+      NFA  : constant Schema_NFA_Access := Get_NFA (Parser.Grammar);
+      L    : Named_Attribute_List := List.Named;
+      Tmp  : Named_Attribute_List;
       Attr : Attribute_Descr := Attribute;
    begin
       if Debug then
@@ -347,12 +347,12 @@ package body Schema.Validators is
    -------------
 
    function Combine
-     (Grammar             : XML_Grammar;
-      Base_Any            : Any_Descr;
-      Local_Process       : Process_Contents_Type;
-      Local               : Sax.Symbols.Symbol;
-      As_Restriction      : Boolean;
-      Target_NS           : Sax.Symbols.Symbol) return Any_Descr
+     (Grammar        : XML_Grammar;
+      Base_Any       : Any_Descr;
+      Local_Process  : Process_Contents_Type;
+      Local          : Sax.Symbols.Symbol;
+      As_Restriction : Boolean;
+      Target_NS      : Sax.Symbols.Symbol) return Any_Descr
    is
       use Symbol_Htable;
       Namespaces    : Symbol_Htable.HTable (127);
@@ -380,8 +380,13 @@ package body Schema.Validators is
       -----------
 
       procedure Merge (Sym : Symbol) is
+
          procedure Callback (Str : Byte_Sequence);
          procedure Do_Merge (S : Symbol);
+
+         --------------
+         -- Do_Merge --
+         --------------
 
          procedure Do_Merge (S : Symbol) is
          begin
@@ -394,16 +399,22 @@ package body Schema.Validators is
             end if;
          end Do_Merge;
 
+         --------------
+         -- Callback --
+         --------------
+
          procedure Callback (Str : Byte_Sequence) is
          begin
             if Str = "##targetNamespace" then
                Do_Merge (Target_NS);
+
             elsif Str = "##other" then
                if Target_NS /= No_Symbol then
                   Set (No_Namespaces, Target_NS);
                end if;
 
                Set (No_Namespaces, Find (Symbols, "##local"));
+
             else
                Do_Merge (Find (Symbols, Str));  --  including ##any, ##local
             end if;
@@ -424,6 +435,11 @@ package body Schema.Validators is
         (Sym : Symbol; Table : in out Symbol_Htable.HTable)
       is
          procedure Callback (Str : Byte_Sequence);
+
+         --------------
+         -- Callback --
+         --------------
+
          procedure Callback (Str : Byte_Sequence) is
          begin
             Set (Table, Find (Symbols, Str));
@@ -596,6 +612,10 @@ package body Schema.Validators is
       procedure Callback (Str : Byte_Sequence);
       procedure Negate_Callback (Str : Byte_Sequence);
 
+      ---------------------
+      -- Negate_Callback --
+      ---------------------
+
       procedure Negate_Callback (Str : Byte_Sequence) is
       begin
          if Str = "##local" then
@@ -604,6 +624,10 @@ package body Schema.Validators is
             Invalid_No_NS := Invalid_No_NS or else Get (Name.NS).all = Str;
          end if;
       end Negate_Callback;
+
+      --------------
+      -- Callback --
+      --------------
 
       procedure Callback (Str : Byte_Sequence) is
       begin
@@ -662,15 +686,15 @@ package body Schema.Validators is
    -------------------------
 
    procedure Validate_Attributes
-     (NFA        : access Schema_NFA'Class;
-      Typ        : access Type_Descr;
-      Reader     : access Abstract_Validation_Reader'Class;
-      Atts       : in out Sax.Readers.Sax_Attribute_List;
-      Is_Nil     : in out Integer)
+     (NFA    : access Schema_NFA'Class;
+      Typ    : access Type_Descr;
+      Reader : access Abstract_Validation_Reader'Class;
+      Atts   : in out Sax.Readers.Sax_Attribute_List;
+      Is_Nil : in out Integer)
    is
-      Length       : constant Natural := Get_Length (Atts);
-      Valid_Attrs  : Attribute_Validator_Array :=
-        To_Attribute_Array (NFA, Typ.Attributes);
+      Length      : constant Natural := Get_Length (Atts);
+      Valid_Attrs : Attribute_Validator_Array :=
+                      To_Attribute_Array (NFA, Typ.Attributes);
 
       type Attr_Status is record
          Prohibited : Boolean := False;
@@ -811,7 +835,7 @@ package body Schema.Validators is
                                    & Get (Get_Prefix (Atts, A)).all
                                    & " at index" & A'Img
                                    & " Is_Local=" & Is_Local'Img
-                                & " Form=" & Attr.Form'Img);
+                                   & " Form=" & Attr.Form'Img);
                   end if;
                   return A;
                end if;
@@ -834,7 +858,7 @@ package body Schema.Validators is
             elsif Get_Name (Atts, S).Local = Reader.Typ
               or else Get_Name (Atts, S).Local = Reader.Schema_Location
               or else Get_Name (Atts, S).Local =
-              Reader.No_Namespace_Schema_Location
+                        Reader.No_Namespace_Schema_Location
             then
                Seen (S).Seen := True;
             end if;
@@ -846,7 +870,7 @@ package body Schema.Validators is
       end loop;
 
       declare
-         TRef   : Global_Reference;
+         TRef : Global_Reference;
       begin
          for S in Seen'Range loop
             if not Seen (S).Seen then
@@ -858,7 +882,7 @@ package body Schema.Validators is
                      Validation_Error
                        (Reader, "Attribute """ & Get_Qname (Atts, S)
                         & """ is prohibited in this context "
-                        & To_QName (Typ.Name));
+                          & To_QName (Typ.Name));
                   elsif Typ.Attributes.Any = No_Any_Descr then
                      Validation_Error
                        (Reader, "Attribute """ & Get_Qname (Atts, S)
@@ -914,10 +938,10 @@ package body Schema.Validators is
 
    function To_Graphic_String (Str : Byte_Sequence) return String is
       To_Hex : constant array (0 .. 15) of Character :=
-        ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C',
-        'D', 'E', 'F');
+                 ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                  'A', 'B', 'C', 'D', 'E', 'F');
       Result : String (1 .. 4 * Str'Length);
-      Index : Integer := Result'First;
+      Index  : Integer := Result'First;
    begin
       for S in Str'Range loop
          if Character'Pos (Str (S)) >= 32
@@ -942,10 +966,10 @@ package body Schema.Validators is
    ------------------------
 
    procedure Validate_Attribute
-     (Attr      : Attribute_Descr;
-      Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax_Attribute_List;
-      Index     : Natural)
+     (Attr   : Attribute_Descr;
+      Reader : access Abstract_Validation_Reader'Class;
+      Atts   : in out Sax_Attribute_List;
+      Index  : Natural)
    is
       Value    : Symbol := Get_Value (Atts, Index);
       Val      : Cst_Byte_Sequence_Access;
@@ -1221,6 +1245,10 @@ package body Schema.Validators is
       --  All children (at any depth level) are allowed.
       --  Any character contents is allowed.
 
+      --------------
+      -- Register --
+      --------------
+
       function Register
         (Local          : Byte_Sequence;
          Descr          : Simple_Type_Descr;
@@ -1245,6 +1273,10 @@ package body Schema.Validators is
                Is_Abstract     => False,
                Complex_Content => No_State));
       end Register;
+
+      --------------------
+      -- Create_UR_Type --
+      --------------------
 
       function Create_UR_Type
         (Process_Contents : Process_Contents_Type)
@@ -1447,6 +1479,11 @@ package body Schema.Validators is
       NFA : Schema_NFA_Access;
 
       function Preserve (TRef : Global_Reference) return Boolean;
+
+      --------------
+      -- Preserve --
+      --------------
+
       function Preserve (TRef : Global_Reference) return Boolean is
          R : Boolean;
       begin
@@ -1541,8 +1578,8 @@ package body Schema.Validators is
    --------------------
 
    procedure Set_Parsed_URI
-     (Reader  : in out Abstract_Validation_Reader'Class;
-      URI     : Symbol) is
+     (Reader : in out Abstract_Validation_Reader'Class;
+      URI    : Symbol) is
    begin
       Initialize_Grammar (Reader);
 
@@ -1603,14 +1640,15 @@ package body Schema.Validators is
       Parser.Annotation             := Find_Symbol (Parser, "annotation");
       Parser.Any                    := Find_Symbol (Parser, "any");
       Parser.Any_Attribute          := Find_Symbol (Parser, "anyAttribute");
-      Parser.Any_Namespace     := Find_Symbol (Parser, "##any");
+      Parser.Any_Namespace          := Find_Symbol (Parser, "##any");
       Parser.Any_Simple_Type        := Find_Symbol (Parser, "anySimpleType");
-      Parser.Anytype           := Find_Symbol (Parser, "anyType");
+      Parser.Anytype                := Find_Symbol (Parser, "anyType");
       Parser.Appinfo                := Find_Symbol (Parser, "appinfo");
       Parser.Attr_Decls             := Find_Symbol (Parser, "attrDecls");
       Parser.Attribute              := Find_Symbol (Parser, "attribute");
       Parser.Attribute_Group        := Find_Symbol (Parser, "attributeGroup");
-      Parser.Attribute_Group_Ref  := Find_Symbol (Parser, "attributeGroupRef");
+      Parser.Attribute_Group_Ref  :=
+        Find_Symbol (Parser, "attributeGroupRef");
       Parser.Base                   := Find_Symbol (Parser, "base");
       Parser.Block                  := Find_Symbol (Parser, "block");
       Parser.Block_Default          := Find_Symbol (Parser, "blockDefault");
@@ -1622,14 +1660,16 @@ package body Schema.Validators is
       Parser.Complex_Restriction_Type :=
         Find_Symbol (Parser, "complexRestrictionType");
       Parser.Complex_Type           := Find_Symbol (Parser, "complexType");
-      Parser.Complex_Type_Model := Find_Symbol (Parser, "complexTypeModel");
+      Parser.Complex_Type_Model     :=
+        Find_Symbol (Parser, "complexTypeModel");
       Parser.Def_Ref                := Find_Symbol (Parser, "defRef");
       Parser.Default                := Find_Symbol (Parser, "default");
-      Parser.Derivation_Control   := Find_Symbol (Parser, "derivationControl");
+      Parser.Derivation_Control     :=
+        Find_Symbol (Parser, "derivationControl");
       Parser.Derivation_Set         := Find_Symbol (Parser, "derivationSet");
       Parser.Documentation          := Find_Symbol (Parser, "documentation");
       Parser.Element                := Find_Symbol (Parser, "element");
-      Parser.Enumeration       := Find_Symbol (Parser, "enumeration");
+      Parser.Enumeration            := Find_Symbol (Parser, "enumeration");
       Parser.Explicit_Group         := Find_Symbol (Parser, "explicitGroup");
       Parser.Extension              := Find_Symbol (Parser, "extension");
       Parser.Extension_Type         := Find_Symbol (Parser, "extensionType");
@@ -1640,14 +1680,16 @@ package body Schema.Validators is
       Parser.Fixed                  := Find_Symbol (Parser, "fixed");
       Parser.Form                   := Find_Symbol (Parser, "form");
       Parser.Form_Choice            := Find_Symbol (Parser, "formChoice");
-      Parser.Fraction_Digits   := Find_Symbol (Parser, "fractionDigits");
+      Parser.Fraction_Digits        := Find_Symbol (Parser, "fractionDigits");
       Parser.Group                  := Find_Symbol (Parser, "group");
-      Parser.Group_Def_Particle := Find_Symbol (Parser, "groupDefParticle");
+      Parser.Group_Def_Particle     :=
+        Find_Symbol (Parser, "groupDefParticle");
       Parser.Group_Ref              := Find_Symbol (Parser, "groupRef");
       Parser.Id                     := Find_Symbol (Parser, "id");
       Parser.IDREF                  := Find_Symbol (Parser, "IDREF");
       Parser.IDREFS                 := Find_Symbol (Parser, "IDREFS");
-      Parser.Identity_Constraint := Find_Symbol (Parser, "identityConstraint");
+      Parser.Identity_Constraint    :=
+        Find_Symbol (Parser, "identityConstraint");
       Parser.Import                 := Find_Symbol (Parser, "import");
       Parser.Include                := Find_Symbol (Parser, "include");
       Parser.Item_Type              := Find_Symbol (Parser, "itemType");
@@ -1656,34 +1698,35 @@ package body Schema.Validators is
       Parser.Keyref                 := Find_Symbol (Parser, "keyref");
       Parser.Lang                   := Find_Symbol (Parser, "lang");
       Parser.Lax                    := Find_Symbol (Parser, "lax");
-      Parser.Length            := Find_Symbol (Parser, "length");
+      Parser.Length                 := Find_Symbol (Parser, "length");
       Parser.List                   := Find_Symbol (Parser, "list");
-      Parser.Local             := Find_Symbol (Parser, "##local");
-      Parser.Local_Complex_Type    := Find_Symbol (Parser, "localComplexType");
+      Parser.Local                  := Find_Symbol (Parser, "##local");
+      Parser.Local_Complex_Type     :=
+        Find_Symbol (Parser, "localComplexType");
       Parser.Local_Element          := Find_Symbol (Parser, "localElement");
       Parser.Local_Simple_Type      := Find_Symbol (Parser, "localSimpleType");
-      Parser.MaxExclusive      := Find_Symbol (Parser, "maxExclusive");
-      Parser.MaxInclusive      := Find_Symbol (Parser, "maxInclusive");
-      Parser.MaxOccurs         := Find_Symbol (Parser, "maxOccurs");
+      Parser.MaxExclusive           := Find_Symbol (Parser, "maxExclusive");
+      Parser.MaxInclusive           := Find_Symbol (Parser, "maxInclusive");
+      Parser.MaxOccurs              := Find_Symbol (Parser, "maxOccurs");
       Parser.Max_Bound              := Find_Symbol (Parser, "maxBound");
-      Parser.Maxlength         := Find_Symbol (Parser, "maxLength");
+      Parser.Maxlength              := Find_Symbol (Parser, "maxLength");
       Parser.Member_Types           := Find_Symbol (Parser, "memberTypes");
-      Parser.MinExclusive      := Find_Symbol (Parser, "minExclusive");
-      Parser.MinInclusive      := Find_Symbol (Parser, "minInclusive");
-      Parser.MinOccurs         := Find_Symbol (Parser, "minOccurs");
+      Parser.MinExclusive           := Find_Symbol (Parser, "minExclusive");
+      Parser.MinInclusive           := Find_Symbol (Parser, "minInclusive");
+      Parser.MinOccurs              := Find_Symbol (Parser, "minOccurs");
       Parser.Min_Bound              := Find_Symbol (Parser, "minBound");
-      Parser.Minlength         := Find_Symbol (Parser, "minLength");
+      Parser.Minlength              := Find_Symbol (Parser, "minLength");
       Parser.Mixed                  := Find_Symbol (Parser, "mixed");
       Parser.NCName                 := Find_Symbol (Parser, "NCName");
       Parser.NMTOKEN                := Find_Symbol (Parser, "NMTOKEN");
-      Parser.Name              := Find_Symbol (Parser, "name");
+      Parser.Name                   := Find_Symbol (Parser, "name");
       Parser.Named_Attribute_Group  :=
         Find_Symbol (Parser, "namedAttributeGroup");
       Parser.Named_Group            := Find_Symbol (Parser, "namedGroup");
-      Parser.Namespace         := Find_Symbol (Parser, "namespace");
+      Parser.Namespace              := Find_Symbol (Parser, "namespace");
       Parser.Namespace_List         := Find_Symbol (Parser, "namespaceList");
       Parser.Nested_Particle        := Find_Symbol (Parser, "nestedParticle");
-      Parser.Nil               := Find_Symbol (Parser, "nil");
+      Parser.Nil                    := Find_Symbol (Parser, "nil");
       Parser.Nillable               := Find_Symbol (Parser, "nillable");
       Parser.No_Namespace_Schema_Location :=
         Find_Symbol (Parser, "noNamespaceSchemaLocation");
@@ -1694,44 +1737,46 @@ package body Schema.Validators is
       Parser.Occurs                 := Find_Symbol (Parser, "occurs");
       Parser.Open_Attrs             := Find_Symbol (Parser, "openAttrs");
       Parser.Optional               := Find_Symbol (Parser, "optional");
-      Parser.Other_Namespace   := Find_Symbol (Parser, "##other");
+      Parser.Other_Namespace        := Find_Symbol (Parser, "##other");
       Parser.Particle               := Find_Symbol (Parser, "particle");
-      Parser.Pattern           := Find_Symbol (Parser, "pattern");
+      Parser.Pattern                := Find_Symbol (Parser, "pattern");
       Parser.Positive_Integer       := Find_Symbol (Parser, "positiveInteger");
-      Parser.Precision_Decimal := Find_Symbol (Parser, "precisionDecimal");
-      Parser.Process_Contents   := Find_Symbol (Parser, "processContents");
-      Parser.Prohibited         := Find_Symbol (Parser, "prohibited");
+      Parser.Precision_Decimal      :=
+        Find_Symbol (Parser, "precisionDecimal");
+      Parser.Process_Contents       := Find_Symbol (Parser, "processContents");
+      Parser.Prohibited             := Find_Symbol (Parser, "prohibited");
       Parser.Public                 := Find_Symbol (Parser, "public");
       Parser.QName                  := Find_Symbol (Parser, "QName");
-      Parser.Qualified          := Find_Symbol (Parser, "qualified");
+      Parser.Qualified              := Find_Symbol (Parser, "qualified");
       Parser.Real_Group             := Find_Symbol (Parser, "realGroup");
       Parser.Redefinable            := Find_Symbol (Parser, "redefinable");
-      Parser.Redefine           := Find_Symbol (Parser, "redefine");
+      Parser.Redefine               := Find_Symbol (Parser, "redefine");
       Parser.Reduced_Derivation_Control :=
         Find_Symbol (Parser, "reducedDerivationControl");
-      Parser.Ref               := Find_Symbol (Parser, "ref");
+      Parser.Ref                    := Find_Symbol (Parser, "ref");
       Parser.Refer                  := Find_Symbol (Parser, "refer");
-      Parser.Required           := Find_Symbol (Parser, "required");
-      Parser.Restriction        := Find_Symbol (Parser, "restriction");
+      Parser.Required               := Find_Symbol (Parser, "required");
+      Parser.Restriction            := Find_Symbol (Parser, "restriction");
       Parser.Restriction_Type       := Find_Symbol (Parser, "restrictionType");
       Parser.S_1                    := Find_Symbol (Parser, "1");
-      Parser.S_Abstract         := Find_Symbol (Parser, "abstract");
-      Parser.S_All              := Find_Symbol (Parser, "all");
+      Parser.S_Abstract             := Find_Symbol (Parser, "abstract");
+      Parser.S_All                  := Find_Symbol (Parser, "all");
       Parser.S_Attribute_Form_Default :=
         Find_Symbol (Parser, "attributeFormDefault");
       Parser.S_Boolean              := Find_Symbol (Parser, "boolean");
-      Parser.S_Element_Form_Default   :=
+      Parser.S_Element_Form_Default :=
         Find_Symbol (Parser, "elementFormDefault");
       Parser.S_False                := Find_Symbol (Parser, "false");
-      Parser.S_Schema           := Find_Symbol (Parser, "schema");
+      Parser.S_Schema               := Find_Symbol (Parser, "schema");
       Parser.S_String               := Find_Symbol (Parser, "string");
-      Parser.S_Use              := Find_Symbol (Parser, "use");
-      Parser.Schema_Location   := Find_Symbol (Parser, "schemaLocation");
+      Parser.S_Use                  := Find_Symbol (Parser, "use");
+      Parser.Schema_Location        := Find_Symbol (Parser, "schemaLocation");
       Parser.Schema_Top             := Find_Symbol (Parser, "schemaTop");
       Parser.Selector               := Find_Symbol (Parser, "selector");
-      Parser.Sequence           := Find_Symbol (Parser, "sequence");
-      Parser.Simple_Content     := Find_Symbol (Parser, "simpleContent");
-      Parser.Simple_Derivation     := Find_Symbol (Parser, "simpleDerivation");
+      Parser.Sequence               := Find_Symbol (Parser, "sequence");
+      Parser.Simple_Content         := Find_Symbol (Parser, "simpleContent");
+      Parser.Simple_Derivation      :=
+        Find_Symbol (Parser, "simpleDerivation");
       Parser.Simple_Derivation_Set  :=
         Find_Symbol (Parser, "simpleDerivationSet");
       Parser.Simple_Extension_Type  :=
@@ -1740,43 +1785,46 @@ package body Schema.Validators is
         Find_Symbol (Parser, "simpleRestrictionModel");
       Parser.Simple_Restriction_Type  :=
         Find_Symbol (Parser, "simpleRestrictionType");
-      Parser.Simple_Type        := Find_Symbol (Parser, "simpleType");
+      Parser.Simple_Type            := Find_Symbol (Parser, "simpleType");
       Parser.Source                 := Find_Symbol (Parser, "source");
-      Parser.Strict             := Find_Symbol (Parser, "strict");
-      Parser.Substitution_Group := Find_Symbol (Parser, "substitutionGroup");
+      Parser.Strict                 := Find_Symbol (Parser, "strict");
+      Parser.Substitution_Group     :=
+        Find_Symbol (Parser, "substitutionGroup");
       Parser.System                 := Find_Symbol (Parser, "system");
-      Parser.Target_Namespace  := Find_Symbol (Parser, "##targetNamespace");
-      Parser.Namespace_Target  := Find_Symbol (Parser, "targetNamespace");
+      Parser.Target_Namespace       :=
+        Find_Symbol (Parser, "##targetNamespace");
+      Parser.Namespace_Target       := Find_Symbol (Parser, "targetNamespace");
       Parser.Token                  := Find_Symbol (Parser, "token");
-      Parser.Top_Level_Attribute  := Find_Symbol (Parser, "topLevelAttribute");
+      Parser.Top_Level_Attribute    :=
+        Find_Symbol (Parser, "topLevelAttribute");
       Parser.Top_Level_Complex_Type :=
         Find_Symbol (Parser, "topLevelComplexType");
       Parser.Top_Level_Element      :=
         Find_Symbol (Parser, "topLevelElement");
       Parser.Top_Level_Simple_Type  :=
         Find_Symbol (Parser, "topLevelSimpleType");
-      Parser.Total_Digits      := Find_Symbol (Parser, "totalDigits");
-      Parser.Typ   := Find_Symbol (Parser, "type");
+      Parser.Total_Digits           := Find_Symbol (Parser, "totalDigits");
+      Parser.Typ                    := Find_Symbol (Parser, "type");
       Parser.Type_Def_Particle      := Find_Symbol (Parser, "typeDefParticle");
       Parser.UC_ID                  := Find_Symbol (Parser, "ID");
       Parser.URI_Reference          := Find_Symbol (Parser, "uriReference");
-      Parser.Unbounded         := Find_Symbol (Parser, "unbounded");
-      Parser.Union              := Find_Symbol (Parser, "union");
+      Parser.Unbounded              := Find_Symbol (Parser, "unbounded");
+      Parser.Union                  := Find_Symbol (Parser, "union");
       Parser.Unique                 := Find_Symbol (Parser, "unique");
       Parser.Unqualified            := Find_Symbol (Parser, "unqualified");
-      Parser.Ur_Type            := Find_Symbol (Parser, "ur-Type");
-      Parser.Value              := Find_Symbol (Parser, "value");
+      Parser.Ur_Type                := Find_Symbol (Parser, "ur-Type");
+      Parser.Value                  := Find_Symbol (Parser, "value");
       Parser.Version                := Find_Symbol (Parser, "version");
-      Parser.Whitespace        := Find_Symbol (Parser, "whiteSpace");
+      Parser.Whitespace             := Find_Symbol (Parser, "whiteSpace");
       Parser.Wildcard               := Find_Symbol (Parser, "wildcard");
-      Parser.XML_Instance_URI := Find_Symbol (Parser, XML_Instance_URI);
+      Parser.XML_Instance_URI       := Find_Symbol (Parser, XML_Instance_URI);
 
-      Parser.XML_Schema_URI    := Find_Symbol (Parser, XML_Schema_URI);
+      Parser.XML_Schema_URI         := Find_Symbol (Parser, XML_Schema_URI);
       Parser.XML_URI                := Find_Symbol (Parser, XML_URI);
       Parser.XPath                  := Find_Symbol (Parser, "xpath");
       Parser.XPath_Expr_Approx      := Find_Symbol (Parser, "XPathExprApprox");
       Parser.XPath_Spec             := Find_Symbol (Parser, "XPathSpec");
-      Parser.Xmlns := Find_Symbol (Parser, "xmlns");
+      Parser.Xmlns                  := Find_Symbol (Parser, "xmlns");
    end Initialize_Symbols;
 
    -----------
@@ -1862,11 +1910,11 @@ package body Schema.Validators is
    --------------------------
 
    procedure Validate_Simple_Type
-     (Reader        : access Abstract_Validation_Reader'Class;
-      Simple_Type   : Schema.Simple_Types.Simple_Type_Index;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Loc           : Sax.Locators.Location;
-      Insert_Id     : Boolean := True)
+     (Reader      : access Abstract_Validation_Reader'Class;
+      Simple_Type : Schema.Simple_Types.Simple_Type_Index;
+      Ch          : Unicode.CES.Byte_Sequence;
+      Loc         : Sax.Locators.Location;
+      Insert_Id   : Boolean := True)
    is
       Error : Symbol;
       G : constant XML_Grammars.Encapsulated_Access := Get (Reader.Grammar);
@@ -1951,12 +1999,12 @@ package body Schema.Validators is
    ---------------------------------
 
    procedure Check_Substitution_Group_OK
-     (Handler : access Abstract_Validation_Reader'Class;
+     (Handler            : access Abstract_Validation_Reader'Class;
       New_Type, Old_Type : Type_Index;
-      Loc     : Sax.Locators.Location;
-      Element_Block : Block_Status)
+      Loc                : Sax.Locators.Location;
+      Element_Block      : Block_Status)
    is
-      NFA : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
+      NFA       : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
       Old_Descr : constant access Type_Descr := NFA.Get_Type_Descr (Old_Type);
       New_Descr : constant access Type_Descr := NFA.Get_Type_Descr (New_Type);
       Has_Restriction, Has_Extension : Boolean := False;

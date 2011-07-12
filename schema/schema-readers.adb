@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2003-2010, AdaCore                   --
+--                Copyright (C) 2003-2011, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -720,9 +720,9 @@ package body Schema.Readers is
       end if;
 
       Do_Match
-        (Matcher => H.Matcher,
-         NFA     => Get_NFA (H.Grammar),
-         Sym     => (Closing => False, Name => Element_QName),
+        (Matcher         => H.Matcher,
+         NFA             => Get_NFA (H.Grammar),
+         Sym             => (Closing => False, Name => Element_QName),
          Success         => Success,
          Through_Any     => Through_Any,
          Through_Process => Through_Process);
@@ -736,8 +736,8 @@ package body Schema.Readers is
          --  out what its type would be, and use this for the matcher
 
          declare
-            Descr   : Type_Descr_Access;
-            Index   : Type_Index;
+            Descr : Type_Descr_Access;
+            Index : Type_Index;
          begin
             Compute_Type_From_Attribute (Index, Descr);
             if Descr = null then
