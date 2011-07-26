@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2010, AdaCore                 --
+--                       Copyright (C) 2010-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -284,24 +284,31 @@ package Sax.State_Machines is
    -- Non-deterministic automatons matching --
    -------------------------------------------
 
-   type NFA_Matcher is private;
-   No_NFA_Matcher : constant NFA_Matcher;
-   --  When processing an input, the state machine is left untouched. Instead,
-   --  the required information is stored in a separate object, so that
-   --  multiple objects can test the same machine in parallel..
-   --  It is valid to modify the state machine during the lifetime of a
-   --  matcher. However, this will only affect the matcher the next time
-   --  [Process] is called (so for instance adding an empty transition will
-   --  never impact existing matchers.
+   type NFA_Matcher is tagged private;
+   --  When processing an input, the state machine is left untouched (and thus
+   --  can be shared among matchers). Instead, the required information is
+   --  stored in a separate object, so that multiple objects can test the same
+   --  machine in parallel.. It is valid to modify the state machine during
+   --  the lifetime of a matcher. However, this will only affect the matcher
+   --  the next time [Process] is called (so for instance adding an empty
+   --  transition will not immediately impact existing matchers.
+
+   function Is_Initialized (Self : NFA_Matcher) return Boolean;
+   --  Whether the NFA has been initialized through a call to Start_Match (and
+   --  not yet been freed through a call to Free)
 
    procedure Free (Self : in out NFA_Matcher);
    --  Free the memory allocated for [Self]
 
-   function Start_Match
-     (Self : access NFA; Start_At : State := Start_State) return NFA_Matcher;
-   --  Return a matcher which is in [Self]'s initial states.
-   --  The matcher holds a reference to [Self], so is only valid while [Self]
+   procedure Start_Match
+     (Self     : in out NFA_Matcher;
+      On       : access NFA'Class;
+      Start_At : State := Start_State);
+   --  Return a matcher which is in [On]'s initial states.
+   --  The matcher holds a reference to [On], so is only valid while [On]
    --  is in the scope.
+   --  This function automatically frees Self, releasing any previously used
+   --  memory.
 
    type Active_State_Iterator (<>) is private;
    No_Active_State_Iterator : constant Active_State_Iterator;
@@ -369,7 +376,7 @@ package Sax.State_Machines is
 
    generic
       with function Match
-        (The_NFA    : access NFA'Class;
+        (Self       : access NFA_Matcher'Class;
          From_State : State;
          Trans      : Transition_Symbol;
          Input      : Symbol) return Boolean;
@@ -379,8 +386,12 @@ package Sax.State_Machines is
       --  not handle the case where the transitions are more general (for
       --  instance, allowing a transition on integers where the symbol is
       --  between 1 and 10).
+      --  The NFA associated with Self must not be modified by this function,
+      --  since it might be shared among several matchers. Self, on the other
+      --  hand, can be freely modified.
+
    procedure Process
-     (Self    : in out NFA_Matcher;
+     (Self    : in out NFA_Matcher'Class;
       Input   : Symbol;
       Success : out Boolean);
    --  Processes one input symbol, and compute the transitions.
@@ -449,7 +460,7 @@ package Sax.State_Machines is
       --  Dump the NFA into a string.
 
       procedure Debug_Print
-        (Self   : NFA_Matcher;
+        (Self   : NFA_Matcher'Class;
          Mode   : Dump_Mode := Dump_Multiline;
          Prefix : String := "");
       --  Print on stdout some debug information for [Self].
@@ -557,12 +568,11 @@ private
    No_Active_State_Iterator : constant Active_State_Iterator :=
      (0, False, False, (1 .. 0 => No_Matcher_State), No_Matcher_State);
 
-   type NFA_Matcher is record
+   type NFA_Matcher is tagged record
       NFA          : NFA_Access;
       Active       : Matcher_State_Arrays.Instance;
       First_Active : Matcher_State_Index := No_Matcher_State;
    end record;
-   No_NFA_Matcher : constant NFA_Matcher := (null, others => <>);
    --  [First_Active] is the first active state at the toplevel.
 
    type NFA_Snapshot is record

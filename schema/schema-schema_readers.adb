@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2004-2010, AdaCore                   --
+--                Copyright (C) 2004-2011, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -29,6 +29,7 @@
 pragma Ada_05;
 
 with Ada.Exceptions;    use Ada.Exceptions;
+with GNAT.Task_Lock;    use GNAT.Task_Lock;
 with Unicode;           use Unicode;
 with Unicode.CES;       use Unicode.CES;
 with Sax.Encodings;     use Sax.Encodings;
@@ -1513,12 +1514,14 @@ package body Schema.Schema_Readers is
       S_File_Full : constant Symbol := To_Absolute_URI (Handler.all, Xsd_File);
       Need_To_Initialize : Boolean := True;
    begin
+      GNAT.Task_Lock.Lock;
       Set_XML_Version (Schema, Get_XML_Version (Handler.all));
       if URI_Was_Parsed (Get_Grammar (Handler.all), S_File_Full) then
          if Debug then
             Debug_Output ("Parse_Grammar " & Get (S_File_Full).all
                           & " already parsed");
          end if;
+         GNAT.Task_Lock.Unlock;
          return;
       end if;
 
@@ -1605,10 +1608,13 @@ package body Schema.Schema_Readers is
          Output_Seen ("Done parsing new grammar: " & Get (Xsd_File).all);
       end if;
 
+      GNAT.Task_Lock.Unlock;
+
    exception
       when Ada.IO_Exceptions.Name_Error =>
          Free (Schema);
          Close (File);
+         GNAT.Task_Lock.Unlock;
 
          if Debug then
             Debug_Output
@@ -1626,6 +1632,7 @@ package body Schema.Schema_Readers is
                     Loc     => Handler.Current_Location));
 
       when others =>
+         GNAT.Task_Lock.Unlock;
          Close (File);
          raise;
    end Parse_Grammar;

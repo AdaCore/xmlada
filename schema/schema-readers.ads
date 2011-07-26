@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2010, AdaCore            --
+--                       Copyright (C) 2004-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -121,7 +121,7 @@ private
 
    type Validating_Reader is new Schema.Validators.Abstract_Validation_Reader
    with record
-      Matcher          : Schema.Validators.Schema_State_Machines.NFA_Matcher;
+      Matcher          : Schema.Validators.Schema_NFA_Matcher;
 
       Characters       : Unicode.CES.Byte_Sequence_Access;
       Characters_Count : Natural := 0;

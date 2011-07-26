@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2010, AdaCore                 --
+--                       Copyright (C) 2010-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -64,12 +64,12 @@ procedure TestState is
    use Character_Machines;
 
    function Match
-     (Self : access NFA'Class; From_State : State;
+     (Self : access NFA_Matcher'Class; From_State : State;
       Trans : Transition_Descr; Input : Character) return Boolean;
    --  To instantiation Sax.State_Machines
 
    function Match
-     (Self : access NFA'Class; From_State : State;
+     (Self : access NFA_Matcher'Class; From_State : State;
       Trans : Transition_Descr; Input : Character) return Boolean
    is
       pragma Unreferenced (Self, From_State);
@@ -179,8 +179,9 @@ procedure TestState is
                      N : NFA_Access; Str : String; Final : Boolean := True)
    is
       Success : Boolean;
-      M : NFA_Matcher := N.Start_Match;
+      M : NFA_Matcher;
    begin
+      M.Start_Match (N);
       if Debug then
          Put_Line ("+++Assert " & Str);
       end if;
@@ -224,8 +225,9 @@ procedure TestState is
       N : NFA_Access; Str : String; At_Char : Natural; Error : String)
    is
       Success : Boolean;
-      M : NFA_Matcher := N.Start_Match;
+      M : NFA_Matcher;
    begin
+      M.Start_Match (N);
       if Debug then
          Put_Line ("+++Assert_Error " & Str);
          Put_Line (Dump (N, Dump_Compact));

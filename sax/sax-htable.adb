@@ -74,12 +74,14 @@ package body Sax.HTable is
          --  Check whether we already have the item
 
          if Equal (Get_Key (Hash_Table.Table (Index).Elem), Get_Key (E)) then
+            Free (Hash_Table.Table (Index).Elem);
             Hash_Table.Table (Index).Elem := E;
             return;
          else
             Item := Hash_Table.Table (Index).Next;
             while Item /= null loop
                if Equal (Get_Key (Item.Elem), Get_Key (E)) then
+                  Free (Item.Elem);
                   Item.Elem := E;
                   return;
                end if;

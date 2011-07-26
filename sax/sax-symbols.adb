@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2010, AdaCore                 --
+--                       Copyright (C) 2010-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -29,6 +29,7 @@
 with Interfaces;                 use Interfaces;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with GNAT.Task_Lock;
 with System.Address_Image;
 
 package body Sax.Symbols is
@@ -123,14 +124,19 @@ package body Sax.Symbols is
          return Empty_String;
       else
          Hashed := Hash (Cst_Byte_Sequence_Access'(Str'Unrestricted_Access));
+
+         GNAT.Task_Lock.Lock;
          Result := String_Htable.Get_Ptr_With_Hash
            (Table.Hash, Str'Unrestricted_Access, Hashed);
 
          if Result = null then
             Str_A := new Byte_Sequence'(Str);
             String_Htable.Set_With_Hash (Table.Hash, Str_A, Hashed);
+            GNAT.Task_Lock.Unlock;
             return Str_A;
          end if;
+
+         GNAT.Task_Lock.Unlock;
          return Result.all;
       end if;
    end Find;

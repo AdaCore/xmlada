@@ -32,6 +32,7 @@ with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Exceptions;                 use Ada.Exceptions;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with GNAT.Task_Lock;
 with Interfaces;                     use Interfaces;
 with Sax.Attributes;                 use Sax.Attributes;
 with Sax.Locators;                   use Sax.Locators;
@@ -49,7 +50,7 @@ package body Schema.Validators is
    --  Convert non-graphic characters in Str to make them visible in a display
 
    function Match
-     (Self       : access NFA'Class;
+     (Self       : access NFA_Matcher'Class;
       From_State : State;
       Trans      : Transition_Descr;
       Sym        : Transition_Event) return Boolean;
@@ -69,8 +70,11 @@ package body Schema.Validators is
       Attributes : Attributes_List) return Attribute_Validator_Array;
    --  The data required to validate attributes
 
-   procedure Create_Grammar_If_Needed (Grammar : in out XML_Grammar);
+   procedure Create_Grammar_If_Needed
+     (Grammar : in out XML_Grammar;
+      Symbols : Symbol_Table := No_Symbol_Table);
    --  Create the grammar if needed
+   --  Symbols is used only when a new grammar is created.
 
    procedure Validate_Attribute
      (Attr      : Attribute_Descr;
@@ -192,10 +196,10 @@ package body Schema.Validators is
    ----------------------------
 
    procedure Normalize_And_Validate
-     (Parser : access Abstract_Validation_Reader'Class;
-      Simple : Simple_Type_Index;
-      Fixed  : in out Sax.Symbols.Symbol;
-      Loc    : Sax.Locators.Location)
+     (Parser  : access Abstract_Validation_Reader'Class;
+      Simple  : Schema.Simple_Types.Simple_Type_Index;
+      Fixed   : in out Sax.Symbols.Symbol;
+      Loc     : Sax.Locators.Location)
    is
    begin
       if Fixed /= No_Symbol
@@ -213,7 +217,9 @@ package body Schema.Validators is
             if Simple_Descr.Mask (Facet_Whitespace) then
                Normalize_Whitespace
                  (Simple_Descr.Whitespace, Norm, Last);
-               Fixed := Find_Symbol (Parser.all, Norm (Norm'First .. Last));
+               Fixed := Find
+                 (Get_Symbol_Table (Parser.Grammar),
+                  Norm (Norm'First .. Last));
             end if;
 
             Validate_Simple_Type
@@ -255,7 +261,9 @@ package body Schema.Validators is
             Tmp := NFA.Attributes.Table (L).Next;
 
             Attr := Attribute;
-            Normalize_And_Validate (Parser, Attr.Simple_Type, Attr.Fixed, Loc);
+            Normalize_And_Validate
+              (Parser,
+               Attr.Simple_Type, Attr.Fixed, Loc);
 
             NFA.Attributes.Table (L) := Attr;
             NFA.Attributes.Table (L).Next := Tmp;
@@ -275,7 +283,9 @@ package body Schema.Validators is
          end if;
       end if;
 
-      Normalize_And_Validate (Parser, Attr.Simple_Type, Attr.Fixed, Loc);
+      Normalize_And_Validate
+        (Parser,
+         Attr.Simple_Type, Attr.Fixed, Loc);
 
       Append (NFA.Attributes, Attr);
       NFA.Attributes.Table (Last (NFA.Attributes)).Next := List.Named;
@@ -1088,12 +1098,16 @@ package body Schema.Validators is
    -- Create_Grammar_If_Needed --
    ------------------------------
 
-   procedure Create_Grammar_If_Needed (Grammar : in out XML_Grammar) is
+   procedure Create_Grammar_If_Needed
+     (Grammar : in out XML_Grammar;
+      Symbols : Symbol_Table := No_Symbol_Table)
+   is
       use Types_Tables;
       G : XML_Grammars.Encapsulated_Access;
    begin
       if Grammar = No_Grammar then
          G     := new XML_Grammar_Record;
+         G.Symbols := Symbols;
          G.NFA := new Schema_NFA;
          G.NFA.Initialize (States_Are_Statefull => True);
          Init (G.NFA.Attributes);
@@ -1115,7 +1129,9 @@ package body Schema.Validators is
       XSD_Version : XSD_Versions) is
    begin
       Create_Grammar_If_Needed (Grammar);
+      GNAT.Task_Lock.Lock;
       Get (Grammar).XSD_Version := XSD_Version;
+      GNAT.Task_Lock.Unlock;
    end Set_XSD_Version;
 
    ---------------------
@@ -1337,16 +1353,20 @@ package body Schema.Validators is
 
       Attr : Attribute_Descr;
    begin
-      Create_Grammar_If_Needed (Reader.Grammar);
+      Create_Grammar_If_Needed (Reader.Grammar, Get_Symbol_Table (Reader));
+
+      --  In the case of a shared grammar, created will always be false (since
+      --  it has already been parsed), so the code below will not be called.
+      --  As such, it is safe to let it modify the grammar.
+
       G := Get (Reader.Grammar);
-      G.Symbols := Get_Symbol_Table (Reader);
 
       if Get (G.NFA.References.all,
-              (Name => (NS => Reader.XML_Schema_URI,
-                        Local => Reader.S_Boolean),
-               Kind => Ref_Type)) = No_Global_Reference
+        (Name => (NS => Reader.XML_Schema_URI,
+                  Local => Reader.S_Boolean),
+         Kind => Ref_Type)) = No_Global_Reference
       then
-         Do_Register (G.Symbols);
+         Do_Register (G.Symbols);   --  Simple types
 
          Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Lang),
                   Form => Qualified,
@@ -2156,7 +2176,7 @@ package body Schema.Validators is
    -----------
 
    function Match
-     (Self       : access NFA'Class;
+     (Self       : access NFA_Matcher'Class;
       From_State : State;
       Trans      : Transition_Descr;
       Sym        : Transition_Event) return Boolean
@@ -2191,8 +2211,8 @@ package body Schema.Validators is
             else
                Result := Match_Any (Trans.Any, Sym.Name);
                if Result then
-                  Schema_NFA_Access (Self).Matched_Through_Any := True;
-                  Schema_NFA_Access (Self).Matched_Process_Content :=
+                  Schema_NFA_Matcher (Self.all).Matched_Through_Any := True;
+                  Schema_NFA_Matcher (Self.all).Matched_Process_Content :=
                     Trans.Any.Process_Contents;
                end if;
             end if;
@@ -2206,18 +2226,17 @@ package body Schema.Validators is
    --------------
 
    procedure Do_Match
-     (Matcher         : in out Schema_State_Machines.NFA_Matcher;
-      NFA             : access Schema_NFA'Class;
+     (Matcher         : in out Schema_NFA_Matcher;
       Sym             : Transition_Event;
       Success         : out Boolean;
       Through_Any     : out Boolean;
       Through_Process : out Process_Contents_Type)
    is
    begin
-      NFA.Matched_Through_Any := False;
+      Matcher.Matched_Through_Any := False;
       Process (Matcher, Input => Sym, Success => Success);
-      Through_Any     := NFA.Matched_Through_Any;
-      Through_Process := NFA.Matched_Process_Content;
+      Through_Any     := Matcher.Matched_Through_Any;
+      Through_Process := Matcher.Matched_Process_Content;
    end Do_Match;
 
    ------------------

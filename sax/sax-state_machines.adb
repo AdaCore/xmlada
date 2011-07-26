@@ -42,7 +42,7 @@ package body Sax.State_Machines is
    --  machine.
 
    procedure Mark_Active
-     (Self         : in out NFA_Matcher;
+     (Self         : in out NFA_Matcher'Class;
       List_Start   : in out Matcher_State_Index;
       From         : State;
       First_Nested : Matcher_State_Index := No_Matcher_State);
@@ -51,34 +51,29 @@ package body Sax.State_Machines is
    --  is set to [First_Nested].
 
    procedure Mark_Active_No_Check
-     (Self         : in out NFA_Matcher;
+     (Self         : in out NFA_Matcher'Class;
       List_Start   : in out Matcher_State_Index;
       From         : State;
       First_Nested : Matcher_State_Index := No_Matcher_State);
    --  Same as [Mark_Active], but do not check whether [From] is already
    --  active.
 
-   function Start_Match
-     (Self : access NFA'Class; S : State) return NFA_Matcher;
-   --  Returns a new matcher, initially in state [S] (and all empty transitions
-   --  form it).
-
    function Nested_In_Final
-     (Self : NFA_Matcher;
+     (Self : NFA_Matcher'Class;
       S    : Matcher_State_Index) return Boolean;
    --  Return true if the nested NFA for [S] is in a final state, or if [S]
    --  has no nested automaton.
    --  [List_Start] is the first state in the level that contains [S]
 
    function Is_Active
-     (Self       : NFA_Matcher;
+     (Self       : NFA_Matcher'Class;
       List_Start : Matcher_State_Index;
       S          : State) return Boolean;
    pragma Inline (Is_Active);
    --  Whether [S] is marked as active in the given list
 
    procedure Internal_Next
-     (Self       : NFA_Matcher;
+     (Self       : NFA_Matcher'Class;
       Iter       : in out Active_State_Iterator;
       Move_First : Boolean);
    --  Internal implementation of the matcher iterator
@@ -137,6 +132,8 @@ package body Sax.State_Machines is
    procedure Free (Self : in out NFA_Matcher) is
    begin
       Free (Self.Active);
+      Self.First_Active := No_Matcher_State;
+      Self.NFA := null;
    end Free;
 
    ---------------
@@ -658,7 +655,7 @@ package body Sax.State_Machines is
    ---------------
 
    function Is_Active
-     (Self       : NFA_Matcher;
+     (Self       : NFA_Matcher'Class;
       List_Start : Matcher_State_Index;
       S          : State) return Boolean
    is
@@ -678,7 +675,7 @@ package body Sax.State_Machines is
    --------------------------
 
    procedure Mark_Active_No_Check
-     (Self         : in out NFA_Matcher;
+     (Self         : in out NFA_Matcher'Class;
       List_Start   : in out Matcher_State_Index;
       From         : State;
       First_Nested : Matcher_State_Index := No_Matcher_State)
@@ -764,7 +761,7 @@ package body Sax.State_Machines is
    -----------------
 
    procedure Mark_Active
-     (Self         : in out NFA_Matcher;
+     (Self         : in out NFA_Matcher'Class;
       List_Start   : in out Matcher_State_Index;
       From         : State;
       First_Nested : Matcher_State_Index := No_Matcher_State) is
@@ -784,26 +781,17 @@ package body Sax.State_Machines is
    -- Start_Match --
    -----------------
 
-   function Start_Match
-     (Self : access NFA; Start_At : State := Start_State) return NFA_Matcher is
-   begin
-      return Start_Match (Self, S => Start_At);
-   end Start_Match;
-
-   -----------------
-   -- Start_Match --
-   -----------------
-
-   function Start_Match
-     (Self : access NFA'Class; S : State) return NFA_Matcher
+   procedure Start_Match
+     (Self     : in out NFA_Matcher;
+      On       : access NFA'Class;
+      Start_At : State := Start_State)
    is
-      R : NFA_Matcher;
    begin
-      R.NFA          := NFA_Access (Self);
-      R.First_Active := No_Matcher_State;
-      Init (R.Active);
-      Mark_Active (R, R.First_Active, S);
-      return R;
+      Free (NFA_Matcher'Class (Self));
+      Self.NFA          := NFA_Access (On);
+      Self.First_Active := No_Matcher_State;
+      Init (Self.Active);
+      Mark_Active (Self, Self.First_Active, Start_At);
    end Start_Match;
 
    ------------------
@@ -837,21 +825,31 @@ package body Sax.State_Machines is
       Ignore_If_Nested  : Boolean := False;
       Ignore_If_Default : Boolean := False) return Active_State_Iterator
    is
-      Iter : Active_State_Iterator (Last (Self.Active));
+      Max : Matcher_State_Index;
    begin
-      Iter.Ignore_If_Nested  := Ignore_If_Nested;
-      Iter.Ignore_If_Default := Ignore_If_Default;
-
-      if Iter.Max /= 0 then
-         Iter.States (1) := Self.First_Active;
-         Iter.Current_Level := 1;
-         Internal_Next (Self, Iter, Move_First => False);
-
+      if Self.NFA = null then
+         Max := 0;
       else
-         Iter.Current_Level := No_Matcher_State;
+         Max := Last (Self.Active);
       end if;
 
-      return Iter;
+      declare
+         Iter : Active_State_Iterator (Max);
+      begin
+         Iter.Ignore_If_Nested  := Ignore_If_Nested;
+         Iter.Ignore_If_Default := Ignore_If_Default;
+
+         if Iter.Max /= 0 then
+            Iter.States (1) := Self.First_Active;
+            Iter.Current_Level := 1;
+            Internal_Next (Self, Iter, Move_First => False);
+
+         else
+            Iter.Current_Level := No_Matcher_State;
+         end if;
+
+         return Iter;
+      end;
    end For_Each_Active_State;
 
    -------------------
@@ -859,7 +857,7 @@ package body Sax.State_Machines is
    -------------------
 
    procedure Internal_Next
-     (Self       : NFA_Matcher;
+     (Self       : NFA_Matcher'Class;
       Iter       : in out Active_State_Iterator;
       Move_First : Boolean)
    is
@@ -1043,7 +1041,7 @@ package body Sax.State_Machines is
    -------------
 
    procedure Process
-     (Self    : in out NFA_Matcher;
+     (Self    : in out NFA_Matcher'Class;
       Input   : Symbol;
       Success : out Boolean)
    is
@@ -1088,7 +1086,8 @@ package body Sax.State_Machines is
                         Mark_Active (Self, New_First, Tr.To_State);
                      when others =>
                         if not Is_Active (Self, New_First, Tr.To_State)
-                          and then Match (Self.NFA, From_State, Tr.Sym, Input)
+                          and then Match
+                            (Self'Access, From_State, Tr.Sym, Input)
                         then
                            Mark_Active (Self, New_First, Tr.To_State);
                         end if;
@@ -1227,7 +1226,7 @@ package body Sax.State_Machines is
    ---------------------
 
    function Nested_In_Final
-     (Self : NFA_Matcher;
+     (Self : NFA_Matcher'Class;
       S    : Matcher_State_Index) return Boolean is
    begin
       return S = No_Matcher_State
@@ -1871,7 +1870,7 @@ package body Sax.State_Machines is
       -----------------
 
       procedure Debug_Print
-        (Self   : NFA_Matcher;
+        (Self   : NFA_Matcher'Class;
          Mode   : Dump_Mode := Dump_Multiline;
          Prefix : String := "")
       is
@@ -1968,5 +1967,14 @@ package body Sax.State_Machines is
    begin
       return S <= Snapshot.States;
    end Exists;
+
+   --------------------
+   -- Is_Initialized --
+   --------------------
+
+   function Is_Initialized (Self : NFA_Matcher) return Boolean is
+   begin
+      return Self.NFA /= null;
+   end Is_Initialized;
 
 end Sax.State_Machines;

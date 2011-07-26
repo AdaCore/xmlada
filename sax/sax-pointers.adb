@@ -27,11 +27,22 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with GNAT.Task_Lock;
+with Interfaces;   use Interfaces;
 
 package body Sax.Pointers is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Encapsulated'Class, Root_Encapsulated_Access);
+
+--     function Sync_Add_And_Fetch
+--       (Ptr   : access Interfaces.Integer_32;
+--        Value : Interfaces.Integer_32) return Interfaces.Integer_32;
+--     pragma Import (Intrinsic, Sync_Add_And_Fetch, "__sync_add_and_fetch_4");
+   --  Increment Ptr by Value. This is task safe (either using a lock or
+   --  intrinsic atomic operations). Returns the new value (as set, it
+   --  might already have been changed by another by the time this function
+   --  returns.
 
    ----------
    -- Free --
@@ -99,11 +110,18 @@ package body Sax.Pointers is
          --  element. That shouldn't happen, though, since we are not in a
          --  multi-tasking environment.
 
-         if Data /= null and then Data.Refcount > 0 then
+         if Data /= null then
+            --  GNATCOLL uses a more efficient implementation for platforms
+            --  providing the gcc builtin. Here, we keep things simpler,
+            --  although less efficient.
+            GNAT.Task_Lock.Lock;
             Data.Refcount := Data.Refcount - 1;
             if Data.Refcount = 0 then
+               GNAT.Task_Lock.Unlock;
                Free (Data.all);
                Unchecked_Free (Data);
+            else
+               GNAT.Task_Lock.Unlock;
             end if;
          end if;
       end Finalize;
@@ -113,9 +131,14 @@ package body Sax.Pointers is
       ------------
 
       procedure Adjust (P : in out Pointer) is
+         Dummy : Integer_32;
+         pragma Unreferenced (Dummy);
+         Data : Root_Encapsulated_Access := P.Data;
       begin
-         if P.Data /= null then
-            P.Data.Refcount := P.Data.Refcount + 1;
+         if Data /= null then
+            GNAT.Task_Lock.Lock;
+            Data.Refcount := Data.Refcount + 1;
+            GNAT.Task_Lock.Unlock;
          end if;
       end Adjust;
 

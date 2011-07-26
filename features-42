@@ -2,7 +2,7 @@
 XML/Ada NEW FEATURES LIST
 =========================
 
-Copyright (C) 2001-2010, AdaCore
+Copyright (C) 2001-2011, AdaCore
 
 This file contains a list of new features introduced in GPS.
 A full description of all GPS features can be found in the GPS
@@ -14,6 +14,11 @@ of the feature.
 
 New features in version 4.2
 ---------------------------
+
+NF-42-K708-021 Schema: Improved multi-tasking support (2010-07-26)
+
+   It is now possible to parse an XSD file once, and then use it for
+   several parsers in different threads.
 
 NF-42-J818-003 New input source for streaming sockets (2010-12-16)
 

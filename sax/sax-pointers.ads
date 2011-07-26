@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2007-2010, AdaCore            --
+--                       Copyright (C) 2007-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -30,6 +30,7 @@
 --  standard pointer and provide automatic memory management for it.
 
 with Ada.Finalization;
+with Interfaces;
 
 package Sax.Pointers is
    --  All types that can be encapsulated in a smart pointer must derive from
@@ -99,6 +100,6 @@ package Sax.Pointers is
 
 private
    type Root_Encapsulated is abstract tagged record
-      Refcount : Natural := 1;
+      Refcount : aliased Interfaces.Integer_32 := 1;
    end record;
 end Sax.Pointers;

@@ -657,7 +657,7 @@ package body Schema.Readers is
       Xsi_Descr   : Type_Descr_Access;
       Xsi_Index   : Type_Index;
 
-      Had_Matcher : constant Boolean := H.Matcher /= No_NFA_Matcher;
+      Had_Matcher : constant Boolean := Is_Initialized (H.Matcher);
 
       Element_QName : constant Qualified_Name :=
         (NS    => Get_URI (Get_NS (Elem)),
@@ -715,13 +715,13 @@ package body Schema.Readers is
             Debug_Output ("Creating NFA matcher");
          end if;
 
-         H.Matcher := Get_NFA (H.Grammar).Start_Match
-           (Start_At => Start_State);
+         H.Matcher.Start_Match
+           (On       => Get_NFA (H.Grammar),
+            Start_At => Start_State);
       end if;
 
       Do_Match
         (Matcher         => H.Matcher,
-         NFA             => Get_NFA (H.Grammar),
          Sym             => (Closing => False, Name => Element_QName),
          Success         => Success,
          Through_Any     => Through_Any,
@@ -744,17 +744,17 @@ package body Schema.Readers is
                Validation_Error
                  (H, "No type found for " & To_QName (Element_QName));
             elsif Descr.Complex_Content /= No_State then
-               Free (H.Matcher);
-               H.Matcher := Get_NFA (H.Grammar).Start_Match
-                 (Start_At => Descr.Complex_Content);
+               H.Matcher.Start_Match
+                 (On       => Get_NFA (H.Grammar),
+                  Start_At => Descr.Complex_Content);
             else
                --  Just expect a "close". The current active state, however,
                --  ends up with no state data, and we need to set it to the
                --  appropriate simpleType. Can't use Replace_State for this.
 
-               Free (H.Matcher);
-               H.Matcher := Get_NFA (H.Grammar).Start_Match
-                 (Start_At => NFA.Simple_Nested);
+               H.Matcher.Start_Match
+                 (Get_NFA (H.Grammar),
+                  Start_At => NFA.Simple_Nested);
 
                declare
                   Iter : constant Active_State_Iterator :=
@@ -979,7 +979,6 @@ package body Schema.Readers is
 
       Do_Match
         (H.Matcher,
-         Get_NFA (H.Grammar),
          Sym => (Closing => True,
                  Name    => (NS    => Get_URI (Get_NS (Elem)),
                              Local => Get_Local_Name (Elem))),
@@ -1117,8 +1116,7 @@ package body Schema.Readers is
                     Characters    => Hook_Characters'Access,
                     Whitespace    => Hook_Ignorable_Whitespace'Access,
                     Notation_Decl => Hook_Notation_Decl'Access);
-
-         Parser.Matcher := No_NFA_Matcher;
+         Free (Parser.Matcher);
       else
          Set_Hooks (Parser,
                     Start_Element => null,

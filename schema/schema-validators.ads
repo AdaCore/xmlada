@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2010, AdaCore            --
+--                       Copyright (C) 2004-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -296,10 +296,11 @@ package Schema.Validators is
 
    type Schema_NFA is new Schema_State_Machines.NFA with private;
    type Schema_NFA_Access is access all Schema_NFA'Class;
+   type Schema_NFA_Matcher
+     is new Schema_State_Machines.NFA_Matcher with private;
 
    procedure Do_Match
-     (Matcher         : in out Schema_State_Machines.NFA_Matcher;
-      NFA             : access Schema_NFA'Class;
+     (Matcher         : in out Schema_NFA_Matcher;
       Sym             : Transition_Event;
       Success         : out Boolean;
       Through_Any     : out Boolean;
@@ -706,6 +707,9 @@ package Schema.Validators is
    --  discard the namespaces you no longer use).
    --  Keeping the grammar for the XSD files provides a minor optimization,
    --  avoiding the need to recreate it the next time you parse a XSD file.
+   --
+   --  TASKING: you should not call this procedure while some parsers are still
+   --  using the grammar.
 
    procedure Create_Global_Attribute
      (Parser    : access Abstract_Validation_Reader'Class;
@@ -810,15 +814,17 @@ private
       --  accept the <close> tag. We will temporarily override the state
       --  data to match the simple type.
 
-      Matched_Through_Any     : Boolean := False;
-      Matched_Process_Content : Process_Contents_Type;
-
       Metaschema_NFA_Last          : NFA_Snapshot := No_NFA_Snapshot;
       Metaschema_Simple_Types_Last : Schema.Simple_Types.Simple_Type_Index;
       Metaschema_Attributes_Last   : Named_Attribute_List;
       Metaschema_Enumerations_Last : Schema.Simple_Types.Enumeration_Index;
       Metaschema_Types_Last        : Type_Index;
       --  Last state for the metaschema XSD (for Reset)
+   end record;
+
+   type Schema_NFA_Matcher is new Schema_State_Machines.NFA_Matcher with record
+      Matched_Through_Any     : Boolean := False;
+      Matched_Process_Content : Process_Contents_Type;
    end record;
 
    type XML_Grammar_Record is new Sax.Pointers.Root_Encapsulated with record
