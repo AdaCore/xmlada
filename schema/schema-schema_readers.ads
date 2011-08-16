@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004-2010, AdaCore            --
+--                       Copyright (C) 2004-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -59,6 +59,20 @@ package Schema.Schema_Readers is
    --  with the given namespace [URI].
    --  [Handler] is used to convert [Xsd_File] to an absolute URI, and find
    --  the grammar.
+
+   overriding procedure Set_Feature
+     (Parser : in out Schema_Reader; Name : String; Value : Boolean);
+   overriding function Get_Feature
+     (Parser : Schema_Reader; Name : String) return Boolean;
+   --  Add support for new features
+
+   Feature_Ignore_Unsupported_XSD_Elements : constant String :=
+     "http://www.adacore.com/schema/features/ignoreUnsupportedXSDElements";
+   --  If this feature is true, then elements from an XSD file that are known
+   --  to be unsupported by XML/Ada (for instance <key>, <keyref>,...) will
+   --  result in a warning, rather than a fatal error.
+   --  As a user, you are free to ignore these. XML/Ada will simply not provide
+   --  validation for those elements.
 
 private
    use Schema.Validators;
@@ -340,6 +354,8 @@ private
       Element_Form_Default : Schema.Validators.Form_Type :=
         Schema.Validators.Unqualified;
       --  The value of elementFormDefault for the current file
+
+      Feature_Ignore_Unsupported_XSD_Elements : Boolean := False;
 
       Target_NS            : Sax.Symbols.Symbol;
       Target_Block_Default : Block_Status := No_Block;

@@ -3630,6 +3630,19 @@ package body Schema.Schema_Readers is
       elsif Handler.In_Annotation then
          null;   --  ignore all tags
 
+      elsif Handler.Feature_Ignore_Unsupported_XSD_Elements
+        and then
+          (Local_Name = Handler.Keyref
+           or else Local_Name = Handler.Key
+           or else Local_Name = Handler.Selector
+           or else Local_Name = Handler.Field)
+      then
+         Warning
+           (Handler,
+            Create (Message => "Unsupported element in the schema: "
+                    & Get (Local_Name).all,
+                    Loc     => Handler.Current_Location));
+
       else
          Validation_Error
            (Handler'Access,
@@ -3781,5 +3794,33 @@ package body Schema.Schema_Readers is
          Self := Next;
       end loop;
    end Free;
+
+   -----------------
+   -- Set_Feature --
+   -----------------
+
+   overriding procedure Set_Feature
+     (Parser : in out Schema_Reader; Name : String; Value : Boolean) is
+   begin
+      if Name = Feature_Ignore_Unsupported_XSD_Elements then
+         Parser.Feature_Ignore_Unsupported_XSD_Elements := Value;
+      else
+         Set_Feature (Validating_Reader (Parser), Name, Value);
+      end if;
+   end Set_Feature;
+
+   -----------------
+   -- Get_Feature --
+   -----------------
+
+   overriding function Get_Feature
+     (Parser : Schema_Reader; Name : String) return Boolean is
+   begin
+      if Name = Feature_Ignore_Unsupported_XSD_Elements then
+         return Parser.Feature_Ignore_Unsupported_XSD_Elements;
+      else
+         return Get_Feature (Validating_Reader (Parser), Name);
+      end if;
+   end Get_Feature;
 
 end Schema.Schema_Readers;
