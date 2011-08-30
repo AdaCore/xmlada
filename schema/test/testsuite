@@ -143,7 +143,7 @@ expect "" "$act/basic_types-1.xml" \
 expect "" "$act/basic_types-2.xml" \
      "basic_types-2.xml:10:20: 04:01:02 is greater than maxInclusive (03:01:02)"
 expect "" "$act/basic_types-3.xml" \
-     "basic_types-3.xml:14:21: 12521 is greater than maxInclusive ( 1.252E+04)"
+     "basic_types-3.xml:14:21: 12521 is greater than maxInclusive (1.252E+4)"
 expect "" "$act/E802-003.xml" ""
 expect "" "$act/uri.xml" ""
 expect "" "$act/wf.xml" "wf.xml:7:86: Name differ for closing tag (expecting test, opened line 6)"

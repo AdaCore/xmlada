@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2005-2010, AdaCore               --
+--                    Copyright (C) 2005-2011, AdaCore               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -26,12 +26,16 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+pragma Warnings (Off, "*is an internal GNAT unit");
+with System.Img_Real;           use System.Img_Real;
+pragma Warnings (On, "*is an internal GNAT unit");
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Sax.Encodings;             use Sax.Encodings;
 with Sax.Symbols;               use Sax.Symbols;
 with Sax.Utils;                 use Sax.Utils;
 with Unicode.CES;               use Unicode, Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
+with GNAT.IO; use GNAT.IO;
 
 package body Schema.Decimal is
 
@@ -546,7 +550,25 @@ package body Schema.Decimal is
                when Minus_Infinity =>
                   return False;
                when Standard_Float =>
-                  return F1.Value <= F2.Value;
+                  if F1.Mantiss < 0.0 then
+                     if F2.Mantiss >= 0.0 then
+                        return True;
+                     else
+                        --  Same sign
+                        return F1.Exp > F2.Exp
+                         or else
+                            (F1.Exp = F2.Exp and F1.Mantiss <= F2.Mantiss);
+                     end if;
+
+                  else
+                     if F2.Mantiss < 0.0 then
+                        return False;
+                     else
+                        return F1.Exp < F2.Exp
+                         or else
+                            (F1.Exp = F2.Exp and F1.Mantiss <= F2.Mantiss);
+                     end if;
+                  end if;
             end case;
       end case;
    end "<=";
@@ -591,7 +613,23 @@ package body Schema.Decimal is
                when Minus_Infinity =>
                   return False;
                when Standard_Float =>
-                  return F1.Value < F2.Value;
+                  if F1.Mantiss < 0.0 then
+                     if F2.Mantiss >= 0.0 then
+                        return True;
+                     else
+                        --  Same sign
+                        return F1.Exp > F2.Exp
+                         or else (F1.Exp = F2.Exp and F1.Mantiss < F2.Mantiss);
+                     end if;
+
+                  else
+                     if F2.Mantiss < 0.0 then
+                        return False;
+                     else
+                        return F1.Exp < F2.Exp
+                         or else (F1.Exp = F2.Exp and F1.Mantiss < F2.Mantiss);
+                     end if;
+                  end if;
             end case;
       end case;
    end "<";
@@ -601,6 +639,9 @@ package body Schema.Decimal is
    -----------
 
    function Value (Str : String) return XML_Float is
+      E : Integer;
+      Exp : Integer;
+      Mantiss : Long_Long_Float;
    begin
       if Str = "NaN" then
          return XML_Float'(Kind => NaN);
@@ -609,8 +650,47 @@ package body Schema.Decimal is
       elsif Str = "-INF" then
          return XML_Float'(Kind => Minus_Infinity);
       else
+         --  The issue here is that XML can represent float numbers outside
+         --  the range of Long_Long_Float. So we try a basic normalization of
+         --  floats (mantissa * 10^exp) with 1.0<=mantissa<10.0
+
+         E := Index (Str, "E");
+         if E < Str'First then
+            Exp := 0;
+            Mantiss := Long_Long_Float'Value (Str);
+         else
+            Exp := Integer'Value (Str (E + 1 .. Str'Last));
+            Mantiss := Long_Long_Float'Value (Str (Str'First .. E - 1));
+         end if;
+
+         declare
+            Str2 : String (1 .. 200);
+            P    : Integer := Str2'First - 1;
+            Exp_Chars : constant Natural := 5;
+         begin
+            System.Img_Real.Set_Image_Real
+               (Mantiss,
+                S => Str2,
+                P => P,
+                Fore => 1,
+                Aft => 30,
+                Exp => Exp_Chars);
+            Exp := Exp + Integer'Value (Str2 (P - Exp_Chars + 1 .. P));
+            Mantiss := Long_Long_Float'Value
+               (Str2 (Str2'First .. P - Exp_Chars - 1));
+         end;
+
+         --  Put_Line ("MANU " & Str
+         --  & " Exp=" & Exp'Img
+         --  & " Mantiss=" & Mantiss'Img);
+         --  & " Radix=" & Integer'Image (Long_Long_Float'Machine_Radix)
+         --  " exponent=" & Integer'Image (Long_Long_Float'Exponent (Mantiss))
+         --  & " fraction=" & Long_Long_Float'Image
+         --     (Long_Long_Float'Fraction (Mantiss)));
+
          return XML_Float'(Kind  => Standard_Float,
-                           Value => Long_Long_Float'Value (Str));
+                           Mantiss => Mantiss,
+                           Exp     => Exp);
       end if;
    end Value;
 
@@ -629,23 +709,36 @@ package body Schema.Decimal is
             return "-INF";
          when Standard_Float =>
             declare
-               Str : constant String := Long_Long_Float'Image (Value.Value);
-               E   : constant Integer := Index (Str, "E");
+               Str : constant String := Long_Long_Float'Image (Value.Mantiss);
+               --  Always has a "E+00", by construction
+
+               Exp : constant String := Integer'Image (Value.Exp);
+               E   : Integer := Index (Str, "E");
+               F   : Integer := Str'First;
             begin
                if E < Str'First then
-                  for J in reverse Str'Range loop
-                     if Str (J) /= '0' then
-                        return Str (Str'First .. J);
-                     end if;
-                  end loop;
-               else
-                  for J in reverse Str'First .. E - 1 loop
-                     if Str (J) /= '0' then
-                        return Str (Str'First .. J) & Str (E .. Str'Last);
-                     end if;
-                  end loop;
+                  E := Str'Last + 1;
                end if;
-               return Str;
+
+               if Str (F) = ' ' then
+                  F := F + 1;
+               end if;
+
+               for J in reverse F .. E - 1 loop
+                  if Str (J) /= '0' then
+                     E := J + 1;
+                     exit;
+                  end if;
+               end loop;
+
+               if Value.Exp = 0 then
+                  return Str (F .. E - 1);
+               elsif Value.Exp > 0 then
+                  return Str (F .. E - 1)
+                     & "E+" & Exp (Exp'First + 1 .. Exp'Last);
+               else
+                  return Str (F .. E - 1) & "E" & Exp;
+               end if;
             end;
       end case;
    end Image;

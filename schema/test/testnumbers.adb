@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2007-2010, AdaCore            --
+--                       Copyright (C) 2007-2011, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -40,6 +40,9 @@ procedure TestNumbers is
 
    procedure Assert_Digits
       (Num : String; Fraction, Total : Integer; Error : Boolean := False);
+
+   procedure Float_Less_Than (Num1, Num2 : String);
+   --  Makes sure than Num1 < Num2
 
    Symbols : constant Symbol_Table := Allocate;
 
@@ -121,6 +124,22 @@ procedure TestNumbers is
       end case;
    end Assert;
 
+   ---------------------
+   -- Float_Less_Than --
+   ---------------------
+
+   procedure Float_Less_Than (Num1, Num2 : String) is
+      N1 :  constant XML_Float := Value (Num1);
+      N2 :  constant XML_Float := Value (Num2);
+   begin
+      if not (N1 < N2) then
+         Put_Line ("Should have " & Num1 & " < " & Num2);
+      end if;
+      if not (N1 <= N2) then
+         Put_Line ("Should have " & Num1 & " <= " & Num2);
+      end if;
+   end Float_Less_Than;
+
    Num_Invalid1 : constant String := "--23";
    Num_Invalid2 : constant String := "-23..";
    Num_Invalid3 : constant String := "2A24";
@@ -169,4 +188,15 @@ begin
    Assert_Digits (Num8, 0, -1);
    Assert_Digits (Num6, 1, -1);
    Assert_Digits (Num6, 0, -1, True);
+
+   Float_Less_Than ("0.0", "1.0");
+   Float_Less_Than ("1.0", "2.0");
+   Float_Less_Than ("-2.0", "1.0");
+   Float_Less_Than ("-2.0", "-1.0");
+   Float_Less_Than ("-1.79E+308", "-1.79");
+   Float_Less_Than ("1E+3245", "1E+3246");
+   Float_Less_Than ("-1E+3246", "-1E+3245");
+   Float_Less_Than ("1E-32", "1E+32");
+   Float_Less_Than ("-1E+32", "1E-32");
+
 end TestNumbers;

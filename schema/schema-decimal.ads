@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2005-2010, AdaCore               --
+--                    Copyright (C) 2005-2011, AdaCore               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -117,7 +117,8 @@ private
    type XML_Float (Kind : XML_Float_Kind := NaN) is record
       case Kind is
          when Standard_Float =>
-            Value : Long_Long_Float;
+            Mantiss : Long_Long_Float;
+            Exp     : Integer;
          when others =>
             null;
       end case;
