@@ -74,6 +74,7 @@ EOF
       AC_MSG_RESULT($GNAT_BUILDS_SHARED)
    else
       AC_MSG_RESULT([no (--disabled-shared)])
+      DEFAULT_LIBRARY_TYPE=static
    fi
 
    AC_SUBST(GNAT_BUILDS_SHARED)
