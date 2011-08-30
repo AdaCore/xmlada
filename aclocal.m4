@@ -65,6 +65,7 @@ EOF
       $gnatmake -c -q -P$tmp/lib 2>/dev/null
       if test $? = 0 ; then
          GNAT_BUILDS_SHARED=yes
+         DEFAULT_LIBRARY_TYPE=relocatable
       else
          GNAT_BUILDS_SHARED=no
          DEFAULT_LIBRARY_TYPE=static
