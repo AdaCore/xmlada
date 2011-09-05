@@ -10,6 +10,10 @@
 #   @gnatmake@: the gnatmake command to use
 #   @GNAT_BUILDS_SHARED@: either "yes" or "no"
 #   @DEFAULT_LIBRARY_TYPE@: either "static" or "relocatable"
+#       This is only set to "relocatable" if the user explicitly
+#       added --enable-shared. Otherwise, even if we detect that
+#       shared libs are available, we will still use static as the
+#       safe default.
 #############################################################
 
 AC_DEFUN(AM_GNAT_BUILDS_SHARED,
@@ -65,16 +69,13 @@ EOF
       $gnatmake -c -q -P$tmp/lib 2>/dev/null
       if test $? = 0 ; then
          GNAT_BUILDS_SHARED=yes
-         DEFAULT_LIBRARY_TYPE=relocatable
       else
          GNAT_BUILDS_SHARED=no
-         DEFAULT_LIBRARY_TYPE=static
       fi
       rm -rf $tmp
       AC_MSG_RESULT($GNAT_BUILDS_SHARED)
    else
       AC_MSG_RESULT([no (--disabled-shared)])
-      DEFAULT_LIBRARY_TYPE=static
    fi
 
    AC_SUBST(GNAT_BUILDS_SHARED)
