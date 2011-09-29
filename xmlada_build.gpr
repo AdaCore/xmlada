@@ -6,6 +6,11 @@ with "schema/schema",   "schema/test/schema_test";
 with "shared";
 
 project XmlAda_Build is
-   for Source_Files use ();
+   for Languages use ("gpr");
+   for Object_Dir use "sax/obj";  --  for coverage output (*.gcov)
    package Ide renames Shared.Ide;
+
+   package Naming is
+      for Spec_Suffix ("gpr") use ".gpr";
+   end Naming;
 end XmlAda_Build;

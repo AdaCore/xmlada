@@ -3410,6 +3410,7 @@ package body Sax.Readers is
       Att_Type           : Attribute_Type := Cdata;
       Default_Decl       : Default_Declaration := Default)
    is
+      pragma Unreferenced (Parser);
       Tmp : Sax_Attribute_Array_Access;
    begin
       if If_Unique then

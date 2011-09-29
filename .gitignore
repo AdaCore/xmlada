@@ -16,6 +16,9 @@ dom/test/testxml
 dom/test/tostring
 dom/test/testxml_tmp*
 dom/test/act_testsuite/test_act.out
+dom/test/act_testsuite/CC01-006/my_test
+dom/test/act_testsuite/EA03-006/reproducer
+schema/test/act_testsuite/tasking/concurrent
 schema/test/testschema
 schema/test/testnumbers
 schema/test/testdomschema
@@ -32,11 +35,17 @@ schema/test/test_date_time
 unicode/test/test_unicode
 xmlada-config
 shared.gpr
+auto.cgpr
 *.o
 *.ali
 b~*.ad*
+b__*.ad*
+*.bexch
 *.a
 *.so.*
 *.so
+*.gcda
+*.gcno
+*.gcov
 *.lexch
 *.dll

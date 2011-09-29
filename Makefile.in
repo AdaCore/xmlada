@@ -22,7 +22,7 @@ includedir=@includedir@
 PROCESSORS?=1
 GNATMAKE=@gnatmake@ -j${PROCESSORS}
 
-# Compiler mode: one of "distrib", "debug", "optimize", "profile"
+# Compiler mode: one of "distrib", "debug", "optimize", "profile", "coverage"
 MODE=distrib
 
 ifeq (${OS},Windows_NT)

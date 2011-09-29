@@ -35,7 +35,6 @@ with Sax.Symbols;               use Sax.Symbols;
 with Sax.Utils;                 use Sax.Utils;
 with Unicode.CES;               use Unicode, Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
-with GNAT.IO; use GNAT.IO;
 
 package body Schema.Decimal is
 
