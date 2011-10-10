@@ -95,7 +95,7 @@ Do the following, from the root directory of XML/Ada:
      will fail.
      You can replace it with some manual steps:
        * Create the installation directory
-       * copy the files 
+       * copy the files
            unicode/obj/*
            unicode/*.adb unicode/*.ads
            input_sources/obj/*
