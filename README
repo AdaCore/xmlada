@@ -47,7 +47,10 @@ Compiling with GNAT 3.16 or newer versions of GNAT
 You need to automatically detect a few aspects of your build environment,
 which is done by running
     ./configure --prefix=PREFIX
-where PREFIX is the installation directory you wish to use
+where PREFIX is the installation directory you wish to use. It is recommended
+to install into the GNAT directory. This way the project files will be
+installed into the default location where gnatmake and gprbuild are looking
+for projects.
 
 If, however, you are running a cross-compiler, you need to add an additional
 command line switch to configure, namely
@@ -130,9 +133,13 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
    XML/Ada.
 
 3. Before building make sure to set the following values in 'Makefile':
-      PREFIX=C:/GNAT/XMLada
+      PREFIX=C:/GNATPRO/6.4.2
    the makefile where to install the library. Note the slashes in the path!
-   The value should have been set properly by the call to configure
+   The value should have been set properly by the call to configure.
+
+   It is recommended to install into the GNAT directory. This way the project
+   files will be installed into the default location where gnatmake and
+   gprbuild are looking for projects.
 
 4. As a general rule for GNAT, the temporary directory must be accessible
    from gnatmake native applications (not a cygwin path). For instance, from
