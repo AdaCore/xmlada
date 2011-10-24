@@ -5,7 +5,7 @@
 @settitle The Ada95 XML Library
 @syncodeindex fn cp
 
-@set XMLVersion 4.2w
+@set XMLVersion 4.3w
 
 @c ----------------------------------------- MACRO
 
@@ -1435,8 +1435,8 @@ and
 
        If the element must accept child elements, or if a further constraint
        needs to be enforced on the list of valid values, one must create the
-       type. As mentioned above, this can be done by creating a type 
-       separately and referencing it by name, or through an inline type 
+       type. As mentioned above, this can be done by creating a type
+       separately and referencing it by name, or through an inline type
        definition.
 
        The syntax is mostly the same in both cases. Schemas distinguish between
