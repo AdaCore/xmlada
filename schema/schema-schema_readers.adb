@@ -3635,6 +3635,7 @@ package body Schema.Schema_Readers is
           (Local_Name = Handler.Keyref
            or else Local_Name = Handler.Key
            or else Local_Name = Handler.Selector
+           or else Local_Name = Handler.Unique
            or else Local_Name = Handler.Field)
       then
          Warning
