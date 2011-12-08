@@ -13,4 +13,8 @@ project XmlAda_Build is
    package Naming is
       for Spec_Suffix ("gpr") use ".gpr";
    end Naming;
+
+   package Compiler is
+      for Driver ("gpr") use "";
+   end Compiler;
 end XmlAda_Build;

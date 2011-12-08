@@ -63,24 +63,51 @@ procedure TestState is
       Default_Transition_Count => 15);
    use Character_Machines;
 
+   function State_Image
+     (Self : access NFA'Class; S : State; Data : State_User_Data)
+      return String;
+
+   type Active_State_Data is null record;
+   No_Active_Data : constant Active_State_Data := (null record);
+
    function Match
-     (Self : access NFA_Matcher'Class; From_State : State;
+     (Self : access Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      From_Data  : access Active_State_Data;
       Trans : Transition_Descr; Input : Character) return Boolean;
    --  To instantiation Sax.State_Machines
 
+   function Expected
+     (Self : Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      Parent_Data  : access Active_State_Data;
+      Trans : Transition_Descr) return String;
+   --  How to write the "expecting ..." string
+
+   function Expected
+     (Self : Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      Parent_Data  : access Active_State_Data;
+      Trans : Transition_Descr) return String
+   is
+      pragma Unreferenced (Self, From_State, To_State, Parent_Data);
+   begin
+      return Image (Trans);
+   end Expected;
+
    function Match
-     (Self : access NFA_Matcher'Class; From_State : State;
+     (Self : access Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      From_Data : access Active_State_Data;
       Trans : Transition_Descr; Input : Character) return Boolean
    is
-      pragma Unreferenced (Self, From_State);
+      pragma Unreferenced (Self, From_State, From_Data);
    begin
       case Trans.Kind is
          when Any_Char => return True;
          when Char     => return Trans.C = Input;
       end case;
    end Match;
-
-   procedure Process is new Character_Machines.Process (Match);
 
    function Image (Trans : Transition_Descr) return String is
    begin
@@ -90,11 +117,12 @@ procedure TestState is
       end case;
    end Image;
 
-   function State_Image
-     (Self : access NFA'Class; S : State; Data : State_User_Data)
-      return String;
    package PP is new Character_Machines.Pretty_Printers (State_Image);
-   use PP;
+   package Matchers is new Character_Machines.Matchers
+     (Active_State_Data, No_Active_Data, Match, Expected);
+   procedure Print is new Matchers.Debug_Print (PP.Node_Label);
+
+   use PP, Matchers;
 
    procedure Display_Result (Msg, Str : String; S : Positive);
    --  Display the result of a test
@@ -121,6 +149,23 @@ procedure TestState is
    procedure Test6;
    procedure Test7;
    --  Various tests
+
+   -----------
+   -- Match --
+   -----------
+
+   function Match
+     (Self : access NFA'Class; From_State : State;
+      From_Data  : access Active_State_Data;
+      Trans : Transition_Descr; Input : Character) return Boolean
+   is
+      pragma Unreferenced (Self, From_State, From_Data);
+   begin
+      case Trans.Kind is
+         when Any_Char => return True;
+         when Char     => return Trans.C = Input;
+      end case;
+   end Match;
 
    -----------------
    -- State_Image --
@@ -188,7 +233,7 @@ procedure TestState is
       for S in Str'Range loop
          if Debug then
             New_Line;
-            Debug_Print (M, Dump_Compact);
+            Print (M, Dump_Compact);
             Put_Line ("Sending " & Str (S));
          end if;
 
@@ -236,7 +281,7 @@ procedure TestState is
       for S in Str'Range loop
          if Debug then
             New_Line;
-            Debug_Print (M, Dump_Compact);
+            Print (M, Dump_Compact);
             Put_Line ("Sending " & Str (S));
          end if;
 
@@ -263,7 +308,7 @@ procedure TestState is
       end loop;
 
       if Debug then
-         Debug_Print (M, Dump_Compact);
+         Print (M, Dump_Compact);
       end if;
 
       Put_Line ("Expected an error on " & Msg & " (" & Str & ")");

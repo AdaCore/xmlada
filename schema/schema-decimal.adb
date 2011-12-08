@@ -679,14 +679,6 @@ package body Schema.Decimal is
                (Str2 (Str2'First .. P - Exp_Chars - 1));
          end;
 
-         --  Put_Line ("MANU " & Str
-         --  & " Exp=" & Exp'Img
-         --  & " Mantiss=" & Mantiss'Img);
-         --  & " Radix=" & Integer'Image (Long_Long_Float'Machine_Radix)
-         --  " exponent=" & Integer'Image (Long_Long_Float'Exponent (Mantiss))
-         --  & " fraction=" & Long_Long_Float'Image
-         --     (Long_Long_Float'Fraction (Mantiss)));
-
          return XML_Float'(Kind  => Standard_Float,
                            Mantiss => Mantiss,
                            Exp     => Exp);

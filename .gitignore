@@ -29,6 +29,7 @@ schema/test/xmltests
 schema/test/xmlschema2006-11-06
 schema/test/xmltests.2002-01-16
 schema/test/test_date_time
+schema/test/act_testsuite/tasking/concurrent
 */test/*.diff
 */test/*.out
 */test/*.tmp_out
@@ -48,4 +49,5 @@ b__*.ad*
 *.gcno
 *.gcov
 *.lexch
+*.bexch
 *.dll

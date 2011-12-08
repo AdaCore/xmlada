@@ -166,15 +166,51 @@ package Schema.Validators is
 
    type Transition_Kind is (Transition_Symbol,
                             Transition_Any,
-                            Transition_Close);
+                            Transition_Close,
+                            Transition_Symbol_From_All,
+                            Transition_Close_From_All
+                           );
+   --  Transition_*_From_All is used to support the <all> construct without
+   --  creating a set of states for all possible permuations of child elements
+   --  (since otherwise the number of states explodes). Instead, an <all> node
+   --  has one output transition per possible child elements (these transitions
+   --  are Transition_Symbol_From_All). These transitions are disabled once
+   --  they have been visited (since maxOccurs=1 for children of <all>) and
+   --  cannot be visited again. The <all> state also has one output transition
+   --  to the next state. This transition is also conditional: it will be on
+   --  active on any symbol, provided that all children of <all> have been
+   --  visited once or have minOccurs=0.
+   --  This also requires temporary data associated with all active instances
+   --  of the <all> state in the Matcher, to remember which children have been
+   --  visited.
+
+   type Visited_All_Children is mod 2 ** 32;
+   --  A mask for the children of an <all> element that have been visited.
+   --  Such children can be visited at most once. In the transition, we store
+   --  the mask for all such children that must be visited (the optional ones
+   --  have a 0 in the mask). In the Matcher, we also store this info in the
+   --  <all> node itself to make sure that children are not visited more than
+   --  once.
+
    type Transition_Descr (Kind : Transition_Kind := Transition_Symbol) is
       record
          case Kind is
-            when Transition_Symbol =>
+            when Transition_Symbol | Transition_Symbol_From_All =>
                Name : Qualified_Name;
                Form : Form_Type := Qualified;
-            when Transition_Close  =>
+
+               --  For <all> nodes: the index of this transition in the mask
+               --  (Visited_All_Children) for <all>. This is used to memorize
+               --  which children have already been visited.
+
+               All_Child_Index : Integer;
+
+            when Transition_Close_From_All =>
+               Mask : Visited_All_Children := 0;
+
+            when Transition_Close =>
                null;
+
             when Transition_Any    =>
                Any : Any_Descr;
          end case;
@@ -291,13 +327,39 @@ package Schema.Validators is
       Data : State_Data) return String;
    --  Needed for the instantiation of Pretty_Printers
 
+   type Active_State_Data is record
+      Visited : Visited_All_Children := 0;
+   end record;
+   No_Active_Data : constant Active_State_Data := (Visited => 0);
+
+   function Match
+     (Self       : access Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      Parent_Data : access Active_State_Data;
+      Trans      : Transition_Descr;
+      Sym        : Transition_Event) return Boolean;
+   --  Whether [Sym] matches [Trans].
+   --  Parent_Data is the execution data associated with the parent state in
+   --  which From_State is nested. It is used to validate <all> nodes (which
+   --  needs to check that all children are either optional or were visited).
+
+   function Expected
+     (Self       : Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      Parent_Data : access Active_State_Data;
+      Trans      : Transition_Descr) return String;
+   --  What to display in "expecting ..." for this transition.
+
    package Schema_State_Machines_PP
      is new Schema_State_Machines.Pretty_Printers (Image);
+   package Schema_State_Machines_Matchers
+     is new Schema_State_Machines.Matchers
+       (Active_State_Data, No_Active_Data, Match, Expected);
 
    type Schema_NFA is new Schema_State_Machines.NFA with private;
    type Schema_NFA_Access is access all Schema_NFA'Class;
    type Schema_NFA_Matcher
-     is new Schema_State_Machines.NFA_Matcher with private;
+     is new Schema_State_Machines_Matchers.NFA_Matcher with private;
 
    procedure Do_Match
      (Matcher         : in out Schema_NFA_Matcher;
@@ -822,10 +884,12 @@ private
       --  Last state for the metaschema XSD (for Reset)
    end record;
 
-   type Schema_NFA_Matcher is new Schema_State_Machines.NFA_Matcher with record
-      Matched_Through_Any     : Boolean := False;
-      Matched_Process_Content : Process_Contents_Type;
-   end record;
+   type Schema_NFA_Matcher
+     is new Schema_State_Machines_Matchers.NFA_Matcher with
+      record
+         Matched_Through_Any     : Boolean := False;
+         Matched_Process_Content : Process_Contents_Type;
+      end record;
 
    type XML_Grammar_Record is new Sax.Pointers.Root_Encapsulated with record
       Symbols  : Sax.Utils.Symbol_Table;

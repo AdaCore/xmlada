@@ -43,6 +43,10 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Schema.Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
+   use Schema_State_Machines_Matchers;
+
+   procedure Print is new Schema_State_Machines_Matchers.Debug_Print
+     (Schema_State_Machines_PP.Node_Label);
 
    procedure Internal_Characters
      (Handler : access Validating_Reader'Class;
@@ -230,8 +234,7 @@ package body Schema.Readers is
 
    begin
       if Debug then
-         Debug_Print
-           (Handler.Matcher, Dump_Compact, "Validate_Current_Char: ");
+         Print (Handler.Matcher, Dump_Compact, "Validate_Current_Char: ");
       end if;
 
       --  Handling of nil elements
@@ -586,7 +589,7 @@ package body Schema.Readers is
          end loop;
 
          if Debug then
-            Debug_Print (H.Matcher, Dump_Compact, "After substitution:");
+            Print (H.Matcher, Dump_Compact, "After substitution:");
          end if;
       end Replace_State;
 
@@ -728,7 +731,7 @@ package body Schema.Readers is
          Through_Process => Through_Process);
 
       if Debug then
-         Debug_Print (H.Matcher, Dump_Compact, "After: ");
+         Print (H.Matcher, Dump_Compact, "After: ");
       end if;
 
       if not Had_Matcher and not Success then
@@ -987,7 +990,7 @@ package body Schema.Readers is
          Through_Process => Through_Process);
 
       if Debug then
-         Debug_Print (H.Matcher, Dump_Compact, "After end element: ");
+         Print (H.Matcher, Dump_Compact, "After end element: ");
       end if;
 
       if not Success then

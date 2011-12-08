@@ -42,21 +42,14 @@ with Schema.Simple_Types;            use Schema.Simple_Types;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
+with GNAT.IO; use GNAT.IO;
 
 package body Schema.Validators is
    use XML_Grammars, Attributes_Tables, Enumeration_Tables;
+   use Schema_State_Machines_Matchers;
 
    function To_Graphic_String (Str : Byte_Sequence) return String;
    --  Convert non-graphic characters in Str to make them visible in a display
-
-   function Match
-     (Self       : access NFA_Matcher'Class;
-      From_State : State;
-      Trans      : Transition_Descr;
-      Sym        : Transition_Event) return Boolean;
-   --  Whether [Sym] matches [Trans]
-
-   procedure Process is new Schema_State_Machines.Process (Match);
 
    type Attribute_Validator_Data is record
       Validator : Named_Attribute_List;  --  Index into the table
@@ -1854,14 +1847,14 @@ package body Schema.Validators is
    function Image (Trans : Transition_Descr) return String is
    begin
       case Trans.Kind is
-         when Transition_Symbol       =>
+         when Transition_Symbol | Transition_Symbol_From_All =>
             if Trans.Name.Local = No_Symbol then
                return "";
             else
                return To_QName (Trans.Name);
-               --  return Get (Trans.Name.Local).all;
             end if;
-         when Transition_Close => return "close parent";
+         when Transition_Close | Transition_Close_From_All =>
+            return "close parent";
          when Transition_Any   => return "<any>";
       end case;
    end Image;
@@ -2171,23 +2164,60 @@ package body Schema.Validators is
       end if;
    end Dump_Dot_NFA;
 
+   --------------
+   -- Expected --
+   --------------
+
+   function Expected
+     (Self       : Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      Parent_Data : access Active_State_Data;
+      Trans      : Transition_Descr) return String
+   is
+      pragma Unreferenced (Self, From_State, To_State);
+      Mask : Visited_All_Children;
+   begin
+      case Trans.Kind is
+         when Transition_Symbol_From_All =>
+            --  Only if the element has not been visited yet
+
+            Mask := 2 ** Trans.All_Child_Index;
+            if (Parent_Data.Visited and Mask) = 0 then
+               return Image (Trans);
+            end if;
+
+         when Transition_Close_From_All =>
+            --  Only if all children have been visited.
+            if (Parent_Data.Visited and Trans.Mask) = Trans.Mask then
+               return "close parent";
+            end if;
+
+         when others =>
+            return Image (Trans);
+      end case;
+
+      return "";
+   end Expected;
+
    -----------
    -- Match --
    -----------
 
    function Match
-     (Self       : access NFA_Matcher'Class;
-      From_State : State;
+     (Self       : access Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      Parent_Data : access Active_State_Data;
       Trans      : Transition_Descr;
       Sym        : Transition_Event) return Boolean
    is
       Result : Boolean;
+      Mask   : Visited_All_Children;
    begin
       case Trans.Kind is
          when Transition_Close =>
             Result := Sym.Closing;
 
-         when Transition_Symbol =>
+         when Transition_Symbol | Transition_Symbol_From_All =>
             if Sym.Closing then
                Result := False;
             else
@@ -2204,6 +2234,24 @@ package body Schema.Validators is
                   end case;
                end if;
             end if;
+
+            if Result and then Trans.Kind = Transition_Symbol_From_All then
+               --  Check that the transition hasn't been visited yet
+
+               Mask := 2 ** Trans.All_Child_Index;
+
+               if (Parent_Data.Visited and Mask) = 1 then
+                  Result := False;
+               else
+                  Parent_Data.Visited := Parent_Data.Visited or Mask;
+                  Result := True;
+               end if;
+            end if;
+
+         when Transition_Close_From_All =>
+            --  Check that all children have been visited or are optional
+            Result := ((Parent_Data.Visited and Trans.Mask) = Trans.Mask)
+              and then Sym.Closing;
 
          when Transition_Any =>
             if Sym.Closing then

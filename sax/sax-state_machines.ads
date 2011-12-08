@@ -92,8 +92,14 @@ package Sax.State_Machines is
    procedure Free (Automaton : in out NFA_Access);
    --  Free the memory allocated to [Self]
 
+   type State_Callback is access procedure
+     (Machine   : access NFA'Class;
+      For_State : State);
+   --  A callback when some event occurs on a state
+
    function Add_State
-     (Self : access NFA; Data : State_User_Data := Default_Data) return State;
+     (Self     : access NFA;
+      Data     : State_User_Data := Default_Data) return State;
    --  Add a new state into the table.
 
    No_State    : constant State;
@@ -260,7 +266,10 @@ package Sax.State_Machines is
    --  after this call, since its states have been marked specially. It is
    --  still valid to add transitions to the ouside.
 
-   procedure Set_Nested (Self : access NFA; S : State; Nested : Nested_NFA);
+   procedure Set_Nested
+     (Self            : access NFA;
+      S               : State;
+      Nested          : Nested_NFA);
    function Get_Nested (Self : access NFA; S : State) return Nested_NFA;
    --  Setup state [S] so that it includes a nested NFA defined by [Nested]
 
@@ -279,132 +288,6 @@ package Sax.State_Machines is
    --  When the nested NFA in [From] is terminated (because it has reached
    --  [Final_State] after processing [On_Symbol]), a transition from [From] to
    --  [To] is performed. [Set_Nested] must have been called for [From] first.
-
-   -------------------------------------------
-   -- Non-deterministic automatons matching --
-   -------------------------------------------
-
-   type NFA_Matcher is tagged private;
-   --  When processing an input, the state machine is left untouched (and thus
-   --  can be shared among matchers). Instead, the required information is
-   --  stored in a separate object, so that multiple objects can test the same
-   --  machine in parallel.. It is valid to modify the state machine during
-   --  the lifetime of a matcher. However, this will only affect the matcher
-   --  the next time [Process] is called (so for instance adding an empty
-   --  transition will not immediately impact existing matchers.
-
-   function Is_Initialized (Self : NFA_Matcher) return Boolean;
-   --  Whether the NFA has been initialized through a call to Start_Match (and
-   --  not yet been freed through a call to Free)
-
-   procedure Free (Self : in out NFA_Matcher);
-   --  Free the memory allocated for [Self]
-
-   procedure Start_Match
-     (Self     : in out NFA_Matcher;
-      On       : access NFA'Class;
-      Start_At : State := Start_State);
-   --  Return a matcher which is in [On]'s initial states.
-   --  The matcher holds a reference to [On], so is only valid while [On]
-   --  is in the scope.
-   --  This function automatically frees Self, releasing any previously used
-   --  memory.
-
-   type Active_State_Iterator (<>) is private;
-   No_Active_State_Iterator : constant Active_State_Iterator;
-   --  Intended use is:
-   --     declare
-   --        Iter : Active_State_Iterator := For_Each_Active_State (Matcher);
-   --     begin
-   --        loop
-   --           S := Current (Matcher, Iter);
-   --           exit when S = No_State;
-   --           ...
-   --           Next (Matcher, Iter);
-   --        end loop;
-   --     end;
-
-   function For_Each_Active_State
-     (Self              : NFA_Matcher;
-      Ignore_If_Nested  : Boolean := False;
-      Ignore_If_Default : Boolean := False) return Active_State_Iterator;
-   procedure Next
-     (Self : NFA_Matcher; Iter : in out Active_State_Iterator);
-   function Current
-     (Self : NFA_Matcher; Iter : Active_State_Iterator) return State;
-   --  Iterates over all currently active states.
-   --  If [Ignore_If_Nested] is true, the states with a nested NFA are not
-   --  returned unless their nested NFA is in a final state (that's because we
-   --  would be ignoring events on them otherwise).
-   --  If [Ignore_If_Default] is true, the states for which no user data was
-   --  set are never returned.
-   --  [Current] returns [No_State] when there are no remaining active
-   --  states.
-
-   function Has_Parent (Iter : Active_State_Iterator) return Boolean;
-   function Parent (Iter : Active_State_Iterator) return Active_State_Iterator;
-   --  Return the parent state of the current state.
-
-   function Current_Data
-     (Self : NFA_Matcher; Iter : Active_State_Iterator) return State_User_Data;
-   --  Returns the user data either from the locally overridden data in the
-   --  matcher, or from the NFA. See [Override_Data].
-
-   procedure Replace_State
-     (Self : in out NFA_Matcher;
-      Iter : Active_State_Iterator;
-      S    : State);
-   --  Replace the state pointed to by [Iter].
-   --  This is only rarely useful, but for instance is used when
-   --  validating a XML schema to handle the xsi:type that can be used
-   --  to override the current state.
-   --  This also activates the state accessible from [S] through an empty
-   --  transition.
-
-   procedure Override_Data
-     (Self : NFA_Matcher;
-      Iter : Active_State_Iterator;
-      Data : State_User_Data);
-   --  Overridde the user data associated with the current state. This only
-   --  impacts the matcher, so this data is lost as soon as the current state
-   --  is no longer active. Same as [Replace_State], this is rarely useful.
-
-   function In_Final (Self : NFA_Matcher) return Boolean;
-   --  Whether [Self] is in the final step: if True, it means that all input
-   --  processed so far matches the state machine. It is possible to keep
-   --  submitting input
-
-   generic
-      with function Match
-        (Self       : access NFA_Matcher'Class;
-         From_State : State;
-         Trans      : Transition_Symbol;
-         Input      : Symbol) return Boolean;
-      --  Whether the two symbols match. In particular this means that the
-      --  corresponding transition is valid.
-      --  Using the "=" operator might be enough in a lot of cases, but will
-      --  not handle the case where the transitions are more general (for
-      --  instance, allowing a transition on integers where the symbol is
-      --  between 1 and 10).
-      --  The NFA associated with Self must not be modified by this function,
-      --  since it might be shared among several matchers. Self, on the other
-      --  hand, can be freely modified.
-
-   procedure Process
-     (Self    : in out NFA_Matcher'Class;
-      Input   : Symbol;
-      Success : out Boolean);
-   --  Processes one input symbol, and compute the transitions.
-   --  [Success] is set to False if the input was invalid, and no transition
-   --  could be found for it. In such a case, [Self] is left unmodified.
-   --  If [Success] is set to True, a new set of active states was computed,
-   --  and at least one state is active.
-   --  This function is generic so that the way the symbols are matched can be
-   --  altered depending on the context.
-
-   function Expected (Self : NFA_Matcher) return String;
-   --  Return a textual description of the valid input symbols from the current
-   --  state. This should be used for error messages for instance.
 
    -------------------------
    -- Dumping information --
@@ -435,6 +318,10 @@ package Sax.State_Machines is
       --  user data associated with it. Nor it is called for the start state.
 
    package Pretty_Printers is
+      --  This package provides various functions to view the current state of
+      --  a NFA. It is generic so that most users who instantiate a State
+      --  Machine do not have to provide a State_Image function.
+
       function Dump
         (Self                : access NFA'Class;
          Mode                : Dump_Mode := Dump_Compact;
@@ -459,14 +346,239 @@ package Sax.State_Machines is
          Mode   : Dump_Mode := Dump_Compact) return String;
       --  Dump the NFA into a string.
 
+      function Node_Label
+        (Self : access NFA'Class; S : State) return String;
+      --  Textual representation of a state, based on State_Image.
+
+   end Pretty_Printers;
+
+   -------------------------------------------
+   -- Non-deterministic automatons matching --
+   -------------------------------------------
+
+   type Abstract_NFA_Matcher is abstract tagged null record;
+
+   generic
+      type Active_State_Data is private;
+      No_Active_Data : Active_State_Data;
+      --  Extra data associated with each active state. This data will be
+      --  copied from one iteration of the matcher to the next even if the
+      --  state remains active, so you should use small data and not
+      --  memory-allocated types.
+
+      with function Match
+        (Self       : access Abstract_NFA_Matcher'Class;
+         From_State, To_State : State;
+         Parent_State_Data : access Active_State_Data;
+         Trans      : Transition_Symbol;
+         Input      : Symbol) return Boolean;
+      --  Whether the two symbols match. In particular this means that the
+      --  corresponding transition is valid.
+      --  Using the "=" operator might be enough in a lot of cases, but will
+      --  not handle the case where the transitions are more general (for
+      --  instance, allowing a transition on integers where the symbol is
+      --  between 1 and 10).
+      --  The NFA associated with Self must not be modified by this function,
+      --  since it might be shared among several matchers. Self, on the other
+      --  hand, can be freely modified.
+      --  This function can also be used to implement conditional transitions:
+      --  if you store the condition as part of the Transition_Symbol, you can
+      --  then evaluate it as part of this function. This function, however,
+      --  is never called for empty transitions, so these cannot be made
+      --  conditional.
+
+      with function Expected
+        (Self                 : Abstract_NFA_Matcher'Class;
+         From_State, To_State : State;
+         Parent_State_Data    : access Active_State_Data;
+         Trans                : Transition_Symbol) return String;
+      --  This function should return the name to display in the result of
+      --  Expected to show what transitions are expected. It is only called
+      --  when Trans.Kind is Transition_On_Symbol.
+      --  The default implementation should be something like:
+      --      return Image (Trans);
+      --  It should return the empty string if the transition is not valid
+      --  (when you implemented conditional transitions).
+
+   package Matchers is
+      --  This package contains the actual processor to process a series of
+      --  input events, and compute at each step which are the active states
+      --  in the automaton. This package is generic so that for a given NFA
+      --  there can be several different ways to process it and intrepret the
+      --  events.
+
+      type NFA_Matcher is new Abstract_NFA_Matcher with private;
+      --  When processing an input, the state machine is left untouched.
+      --  Instead, the required information is stored in a separate object,
+      --  so that multiple objects can test the same machine in parallel..
+      --  It is valid to modify the state machine during the lifetime of a
+      --  matcher. However, this will only affect the matcher the next time
+      --  [Process] is called (so for instance adding an empty transition will
+      --  never impact existing matchers.
+
+      procedure Free (Self : in out NFA_Matcher);
+      --  Free the memory allocated for [Self]
+
+      function Is_Initialized (Self : NFA_Matcher) return Boolean;
+      --  Whether the NFA has been initialized through a call to Start_Match
+      --  (and not yet been freed through a call to Free)
+
+      procedure Start_Match
+        (Self     : in out NFA_Matcher;
+         On       : access NFA'Class;
+         Start_At : State := Start_State);
+      --  Return a matcher which is in [On]'s initial states.
+      --  The matcher holds a reference to [On], so is only valid while [On]
+      --  is in the scope.
+      --  This function automatically frees Self, releasing any previously used
+      --  memory.
+
+      type Active_State_Iterator (<>) is private;
+      No_Active_State_Iterator : constant Active_State_Iterator;
+      --  Intended use is:
+      --  declare
+      --     Iter : Active_State_Iterator := For_Each_Active_State (Matcher);
+      --  begin
+      --     loop
+      --        S := Current (Matcher, Iter);
+      --        exit when S = No_State;
+      --        ...
+      --        Next (Matcher, Iter);
+      --     end loop;
+      --  end;
+
+      function For_Each_Active_State
+        (Self              : NFA_Matcher;
+         Ignore_If_Nested  : Boolean := False;
+         Ignore_If_Default : Boolean := False) return Active_State_Iterator;
+      procedure Next
+        (Self : NFA_Matcher; Iter : in out Active_State_Iterator);
+      function Current
+        (Self : NFA_Matcher; Iter : Active_State_Iterator) return State;
+      --  Iterates over all currently active states.
+      --  If [Ignore_If_Nested] is true, the states with a nested NFA are not
+      --  returned unless their nested NFA is in a final state (that's because
+      --  we would be ignoring events on them otherwise).
+      --  If [Ignore_If_Default] is true, the states for which no user data was
+      --  set are never returned.
+      --  [Current] returns [No_State] when there are no remaining active
+      --  states. Note that a given state might have several corresponding
+      --  active states because of nested NFA.
+
+      function Has_Parent (Iter : Active_State_Iterator) return Boolean;
+      function Parent
+        (Iter : Active_State_Iterator) return Active_State_Iterator;
+      --  Return the parent state of the current state.
+
+      function Current_Data
+        (Self : NFA_Matcher; Iter : Active_State_Iterator)
+         return State_User_Data;
+      --  Returns the user data either from the locally overridden data in the
+      --  matcher, or from the NFA. See [Override_Data].
+
+      procedure Replace_State
+        (Self : in out NFA_Matcher;
+         Iter : Active_State_Iterator;
+         S    : State);
+      --  Replace the state pointed to by [Iter].
+      --  This is only rarely useful, but for instance is used when
+      --  validating a XML schema to handle the xsi:type that can be used
+      --  to override the current state.
+      --  This also activates the state accessible from [S] through an empty
+      --  transition.
+
+      procedure Override_Data
+        (Self : NFA_Matcher;
+         Iter : Active_State_Iterator;
+         Data : State_User_Data);
+      --  Overridde the user data associated with the current state. This only
+      --  impacts the matcher, so this data is lost as soon as the current
+      --  state is no longer active. Same as [Replace_State], this is rarely
+      --  useful.
+
+      function In_Final (Self : NFA_Matcher) return Boolean;
+      --  Whether [Self] is in the final step: if True, it means that all input
+      --  processed so far matches the state machine. It is possible to keep
+      --  submitting input
+
+      procedure Process
+        (Self    : in out NFA_Matcher;
+         Input   : Symbol;
+         Success : out Boolean);
+      --  Processes one input symbol, and compute the transitions.
+      --  [Success] is set to False if the input was invalid, and no transition
+      --  could be found for it. In such a case, [Self] is left unmodified.
+      --  If [Success] is set to True, a new set of active states was computed,
+      --  and at least one state is active.
+      --  The transitions (and thus the calls to Match) are processed in the
+      --  order they were created in the NFA.
+
+      function Expected (Self : NFA_Matcher) return String;
+      --  Return a textual description of the valid input symbols from the
+      --  current state. This should be used for error messages for instance.
+
+      generic
+         with function Node_Label
+           (Self : access NFA'Class; S : State) return String;
+         --  Should come from an instantiation of Pretty_Printers
       procedure Debug_Print
-        (Self   : NFA_Matcher'Class;
+        (Self   : Matchers.NFA_Matcher'Class;
          Mode   : Dump_Mode := Dump_Multiline;
          Prefix : String := "");
       --  Print on stdout some debug information for [Self].
       --  [Prefix] is printed at the beginning of the first line
 
-   end Pretty_Printers;
+   private
+      type Matcher_State_Index is new Natural range 0 .. 2 ** 16;
+      No_Matcher_State : constant Matcher_State_Index := 0;
+
+      type Matcher_State is record
+         S      : State;
+
+         Data_Is_Overridden : Boolean         := False;
+         Overridden_Data    : State_User_Data := Default_Data;
+
+         Next   : Matcher_State_Index;
+         Nested : Matcher_State_Index;
+
+         Active_Data : aliased Active_State_Data;
+      end record;
+      --  All currently active states in a NFA.
+      --  For each state, we store a pointer to the next state at the same
+      --  level of the hierarchy (and within the same parent).
+      --  It also stores a pointer to the list of nested states, if there is a
+      --  nested state machine.
+      --  If the state machine is in the final state at any level,
+      --  [Final_State] will be the first element of the corresponding list.
+
+      package Matcher_State_Arrays is new GNAT.Dynamic_Tables
+        (Table_Component_Type => Matcher_State,
+         Table_Index_Type     => Matcher_State_Index,
+         Table_Low_Bound      => No_Matcher_State + 1,
+         Table_Initial        => 15,
+         Table_Increment      => 10);
+
+      type Matcher_State_Array
+        is array (Matcher_State_Index range <>) of Matcher_State_Index;
+      --  Each element in the array is the currently active state at that
+      --  level. so Arr(2) is nested in Arr(1),...
+
+      type Active_State_Iterator (Max : Matcher_State_Index) is record
+         Ignore_If_Nested  : Boolean;
+         Ignore_If_Default : Boolean;
+         States            : Matcher_State_Array (1 .. Max);
+         Current_Level     : Matcher_State_Index := No_Matcher_State;
+      end record;
+      No_Active_State_Iterator : constant Active_State_Iterator :=
+        (0, False, False, (1 .. 0 => No_Matcher_State), No_Matcher_State);
+
+      type NFA_Matcher is new Abstract_NFA_Matcher with record
+         NFA          : NFA_Access;
+         Active       : Matcher_State_Arrays.Instance;
+         First_Active : Matcher_State_Index := No_Matcher_State;
+      end record;
+      --  [First_Active] is the first active state at the toplevel.
+   end Matchers;
 
 private
    type Transition_Id is new State;
@@ -478,7 +590,11 @@ private
 
    type Transition (Kind : Transition_Kind := Transition_On_Empty) is record
       To_State       : State;
+      --  State the transition is pointing to.
+
       Next_For_State : Transition_Id;
+      --  Next transition from the same state. This implements a list of
+      --  transitions.
 
       case Kind is
          when Transition_On_Empty | Transition_On_Exit_Empty => null;
@@ -493,12 +609,16 @@ private
 
    type State_Data is record
       First_Transition : Transition_Id;
+      --  The first element in the list of transitions from this state.
+
       Nested           : State := No_State;
+      --  If defined, indicates that this state contains a nested state
+      --  machine, for which the initial state is Nested. Any transition
+      --  to this state will also activate [Nested].
+
       Data             : aliased State_User_Data;
+      --  Custom data associated with each state.
    end record;
-   --  [Nested], if defined, indicates that this state contains a nested
-   --  state machine, for which the default is Nested. Any transition to this
-   --  state will also activate [Nested].
 
    package Transition_Tables is new GNAT.Dynamic_Tables
      (Table_Component_Type => Transition,
@@ -526,54 +646,6 @@ private
       Default_Start : State;
    end record;
    No_Nested : constant Nested_NFA := (Default_Start => No_State);
-
-   type Matcher_State_Index is new Natural range 0 .. 2 ** 16;
-   No_Matcher_State : constant Matcher_State_Index := 0;
-
-   type Matcher_State is record
-      S      : State;
-
-      Data_Is_Overridden : Boolean         := False;
-      Overridden_Data    : State_User_Data := Default_Data;
-
-      Next   : Matcher_State_Index;
-      Nested : Matcher_State_Index;
-   end record;
-   --  All currently active states in a NFA.
-   --  For each state, we store a pointer to the next state at the same level
-   --  of the hierarchy (and within the same parent).
-   --  It also stores a pointer to the list of nested states, if there is a
-   --  nested state machine.
-   --  If the state machine is in the final state at any level, [Final_State]
-   --  will be the first element of the corresponding list.
-
-   package Matcher_State_Arrays is new GNAT.Dynamic_Tables
-     (Table_Component_Type => Matcher_State,
-      Table_Index_Type     => Matcher_State_Index,
-      Table_Low_Bound      => No_Matcher_State + 1,
-      Table_Initial        => 15,
-      Table_Increment      => 10);
-
-   type Matcher_State_Array
-     is array (Matcher_State_Index range <>) of Matcher_State_Index;
-   --  Each element in the array is the currently active state at that level.
-   --  so Arr(2) is nested in Arr(1),...
-
-   type Active_State_Iterator (Max : Matcher_State_Index) is record
-      Ignore_If_Nested  : Boolean;
-      Ignore_If_Default : Boolean;
-      States            : Matcher_State_Array (1 .. Max);
-      Current_Level     : Matcher_State_Index := No_Matcher_State;
-   end record;
-   No_Active_State_Iterator : constant Active_State_Iterator :=
-     (0, False, False, (1 .. 0 => No_Matcher_State), No_Matcher_State);
-
-   type NFA_Matcher is tagged record
-      NFA          : NFA_Access;
-      Active       : Matcher_State_Arrays.Instance;
-      First_Active : Matcher_State_Index := No_Matcher_State;
-   end record;
-   --  [First_Active] is the first active state at the toplevel.
 
    type NFA_Snapshot is record
       States      : State;
