@@ -8,7 +8,7 @@ GPS.parse_xml ("""
       <title>/Help/XML Ada</title>
    </submenu>
    <documentation_file>
-      <name>xml.html</name>
+      <name>index.html</name>
       <descr>XML/Ada User's Guide</descr>
       <category>XMLAda</category>
       <menu>/Help/XML Ada/XML Ada User's Guide</menu>

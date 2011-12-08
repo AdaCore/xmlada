@@ -87,7 +87,7 @@ run_test_valgrind: test
 	cd dom/test; valgrind --tool=memcheck --leak-check=full ./testxml -auto
 
 docs: force
-	-${MAKE} -e -C docs all_check
+	-${MAKE} -e -C docs html latexpdf
 
 # Rule for installing the modules
 %_inst: force
@@ -132,10 +132,8 @@ install_library_type: install_dirs ${MODULE_INSTALL}
 	${INSTALL} distrib/xmlada_schema.gpr         ${libdir}/gnat/
 	${INSTALL} distrib/xmlada_unicode.gpr        ${libdir}/gnat/
 	${INSTALL} xmlada-config  ${bindir}
-	-${INSTALL} docs/xml.ps   ${datadir}/doc/xmlada 2>/dev/null
-	-${INSTALL} docs/xml.pdf  ${datadir}/doc/xmlada
-	-${INSTALL} docs/xml.html ${datadir}/doc/xmlada
-	-${INSTALL} docs/xml.info ${datadir}/doc/xmlada
+	-$(CP) -r docs/_build/html/* $(datadir)/doc/xmlada/ 2>/dev/null
+	-$(CP) -r docs/_build/latex/XMLAda.pdf $(datadir)/doc/xmlada/ 2>/dev/null
 	${CHMOD} +x ${bindir}/xmlada-config
 	${INSTALL} distrib/xmlada_gps.py ${datadir}/gps/plug-ins/
 

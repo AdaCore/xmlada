@@ -15,6 +15,11 @@ of the feature.
 New features in version 4.3
 ---------------------------
 
+NF-43-KC07-033 Documentation converted to Sphinx (2011-12-08)
+
+   The documentation was converted to another format, providing nicer
+   looking output. It also adds support for searching in the documentation.
+
 NF-43-KC01-026 Schema: Ignore unsupported xsd:unique (2011-12-01)
 
    In the 4.2 version, we added support for silently ignoring some

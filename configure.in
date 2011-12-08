@@ -5,11 +5,6 @@ AC_CANONICAL_SYSTEM
 XMLADA_MAJOR_VERSION=4
 XMLADA_MINOR_VERSION=3w
 
-AC_CHECK_PROGS(DVIPS, dvips, "")
-AC_CHECK_PROGS(MAKEINFO, makeinfo, "")
-AC_CHECK_PROGS(TEXI2DVI, texi2dvi, "")
-AC_CHECK_PROGS(PDFTEX, pdftex, "")
-AC_CHECK_PROGS(TEX, tex, "")
 AM_GNAT_BUILDS_SHARED
 
 IFS=' '
@@ -34,4 +29,4 @@ esac
 AC_SUBST(MKDIR)
 AC_SUBST(CC)
 
-AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config distrib/xmlada_shared.gpr)
+AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr xmlada-config distrib/xmlada_shared.gpr)
