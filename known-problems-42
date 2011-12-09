@@ -11,6 +11,18 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
+KP-42-KC09-030 Project files not found on x86_64-linux
+
+  Problem:    When installing on a 64bit linux platform, the projects
+              files are copied into the wrong directory and cannot be found
+              automatically by the compiler.
+
+  Status:     Fixed in XML/Ada 4.3.0
+
+  Workaround: Either set the GPR_PROJECT_PATH environment variable, or
+              manually copy the project files from prefix/lib64/gnat/ to
+              prefix/lib/gnat/.
+
 KP-42-K518-020 Heap exhausted when validating <all> element
 
   Problem:    The implementation of the state machine for <all> nodes was

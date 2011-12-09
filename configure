@@ -272,7 +272,7 @@ PACKAGE_VERSION='4.3w'
 PACKAGE_STRING='XML/Ada 4.3w'
 PACKAGE_BUGREPORT='report@adacore.com'
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os gnatmake GNAT_BUILDS_SHARED DEFAULT_LIBRARY_TYPE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S MKDIR CC LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os gnatmake GNAT_BUILDS_SHARED DEFAULT_LIBRARY_TYPE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S MKDIR CC LIB LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1493,6 +1493,9 @@ esac
 
 
 
+LIB=`basename $libdir`
+
+
                                                             ac_config_files="$ac_config_files shared.gpr Makefile Makefile.314 dom/test/default.gpr xmlada-config distrib/xmlada_shared.gpr"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -2154,6 +2157,7 @@ s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@LN_S@,$LN_S,;t t
 s,@MKDIR@,$MKDIR,;t t
 s,@CC@,$CC,;t t
+s,@LIB@,$LIB,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

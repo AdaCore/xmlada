@@ -29,4 +29,7 @@ esac
 AC_SUBST(MKDIR)
 AC_SUBST(CC)
 
+LIB=`basename $libdir`
+AC_SUBST(LIB)
+
 AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr xmlada-config distrib/xmlada_shared.gpr)
