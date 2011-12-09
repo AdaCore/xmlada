@@ -3,11 +3,6 @@ Makefile.314
 config.log
 config.status
 distrib/xmlada_shared.gpr
-docs/Makefile
-docs/xml.html
-docs/xml.info
-docs/xml.pdf
-docs/xml.txt
 sax/test/testsax
 sax/test/teststate
 dom/test/default.gpr
