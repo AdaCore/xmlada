@@ -42,7 +42,6 @@ with Schema.Readers;      use Schema.Readers;
 with Ada.Unchecked_Deallocation;
 with Ada.IO_Exceptions;
 with Input_Sources.File;  use Input_Sources.File;
-with GNAT.IO; use GNAT.IO;
 
 package body Schema.Schema_Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;

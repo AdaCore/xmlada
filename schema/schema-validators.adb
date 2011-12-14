@@ -42,7 +42,6 @@ with Schema.Simple_Types;            use Schema.Simple_Types;
 with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
 with Unicode.CES;                    use Unicode.CES;
 with Unicode;                        use Unicode;
-with GNAT.IO; use GNAT.IO;
 
 package body Schema.Validators is
    use XML_Grammars, Attributes_Tables, Enumeration_Tables;
@@ -2210,6 +2209,7 @@ package body Schema.Validators is
       Trans      : Transition_Descr;
       Sym        : Transition_Event) return Boolean
    is
+      pragma Unreferenced (To_State);
       Result : Boolean;
       Mask   : Visited_All_Children;
    begin
