@@ -169,8 +169,12 @@ private
          when Type_Element     => Element         : Element_Descr;
          when Type_Any         => Any             : Internal_Any_Descr;
          when Type_Group       => Group           : Group_Descr;
-         when Type_Extension   => Extension       : Extension_Descr;
-         when Type_Restriction => Restriction     : Restriction_Descr;
+         when Type_Extension   =>
+            Extension       : Extension_Descr;
+            Simple_Content  : Boolean;
+         when Type_Restriction =>
+            Restriction                : Restriction_Descr;
+            Simple_Content_Restriction : Boolean;
          when Type_All         => First_In_All    : Type_Details_Access;
       end case;
    end record;

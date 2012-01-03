@@ -25,3 +25,5 @@ MS-Additional2006-07-15 / addB064
   --  location for a namespace that we have already used. Since we know we
   --  can parse the metaschema anyway, the test has been disabled
 
+MS-Particles2006-07-15 / particlesZ031
+  --  XSD is marked as invalid in recent CVS versions of the testsuite

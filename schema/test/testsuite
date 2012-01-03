@@ -168,17 +168,16 @@ expect "$act/I728-012/test.xsd" "$act/I728-012/test.xml" ""
 expect "$act/I702-017/test.xsd" "$act/I702-017/test.xml" "test.xml:7:11: Unexpected element \"size\": expecting \"contents\""
 expect "$act/IC10-021/pref.xsd" "$act/IC10-021/pref.xml" ""
 
-(cd $act/K518-020;
-  out=`make 2>&1`
-  expected=`cat test.out`
-  compare K518-020 "$out" "$expected")
-
 for dir in tasking \
+           K518-020 \
            L103-011_unknown_simple \
+           L103-016_extend_simplecontent \
            ;
 do
-   (cd act_testsuite/$dir;
-    compare "$dir" "`./test.sh`" "`cat test.out`")
+   (cd act_testsuite/$dir
+    actual=`sh ./test.sh`
+    expected=`cat test.out`
+    compare "$dir" "$actual" "$expected")
 done
            
 summary

@@ -793,6 +793,27 @@ package body Schema.Schema_Readers is
                   else
                      --  ??? Should handle simple types
                      Nested_End := Start;
+
+                     --  The test is correct. However, it makes
+                     --  msData/particles/particlesZ031.xsd fails, because the
+                     --  test is incorrect. The test pretends that the XSD is
+                     --  valid, but later checkins in the testsuite have proven
+                     --  it incorrect. The following Ada test would make the
+                     --  test pass, but then
+                     --     MS-Additional2006-07-15/addB036
+                     --  fails
+                     --
+                     --  and then
+                     --    (Internal_Type = No_Internal_Type_Index
+                     --   or else Shared.Types.Table (Internal_Type).Is_Simple)
+
+                     if not Details.Simple_Content then
+                        Validation_Error
+                          (Parser,
+                           "base type specified in complexContent definition"
+                           & " must be a complex type",
+                           Details.Extension.Loc);
+                     end if;
                   end if;
 
                   In_Type.Extension_Of   := NFA_Type;
@@ -841,6 +862,14 @@ package body Schema.Schema_Readers is
                   else
                      --  ??? Should handle simple types
                      Nested_End := Start;
+
+                     if not Details.Simple_Content_Restriction then
+                        Validation_Error
+                          (Parser,
+                           "base type specified in complexContent definition"
+                           & " must be a complex type",
+                           Details.Restriction.Loc);
+                     end if;
                   end if;
 
                   In_Type.Restriction_Of := NFA_Type;
@@ -1150,11 +1179,18 @@ package body Schema.Schema_Readers is
                        (Internal.Base.Local, NFA_Simple, NFA_Type);
                   end if;
 
-                  if NFA_Simple = null
-                    or else NFA_Simple.Simple_Content = No_Simple_Type_Index
-                  then
+                  if Internal.Base = No_Type_Member then
                      Base     := Any_Simple_Type;
                      NFA_Type := Any_Simple_Type_Index;
+
+                  elsif NFA_Simple = null
+                    or else NFA_Simple.Simple_Content = No_Simple_Type_Index
+                  then
+                     Validation_Error
+                       (Parser,
+                        "base type specified in simpleContent definition must"
+                        & " be a simple type",
+                        Loc);
 
                   else
                      Base := Copy
@@ -2722,6 +2758,7 @@ package body Schema.Schema_Readers is
                Max_Occurs  => (False, 1),
                In_Process  => False,
                Next        => null,
+               Simple_Content_Restriction => True,
                Restriction => Restr);
             Insert_In_Type (Handler, Details);
          end if;
@@ -2744,6 +2781,7 @@ package body Schema.Schema_Readers is
             Max_Occurs  => (False, 1),
             In_Process  => False,
             Next        => null,
+            Simple_Content_Restriction => False,
             Restriction => Restr);
          Insert_In_Type (Handler, Details);
          Push_Context
@@ -2887,6 +2925,7 @@ package body Schema.Schema_Readers is
                Max_Occurs => (False, 1),
                In_Process => False,
                Next       => null,
+               Simple_Content => True,
                Extension  => Ext);
             Insert_In_Type (Handler, Details);
          end if;
@@ -2907,6 +2946,7 @@ package body Schema.Schema_Readers is
             Max_Occurs => (False, 1),
             In_Process => False,
             Next       => null,
+            Simple_Content => False,
             Extension  => Ext);
          Insert_In_Type (Handler, Details);
          Push_Context
