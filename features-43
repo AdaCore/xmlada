@@ -2,7 +2,7 @@
 XML/Ada NEW FEATURES LIST
 =========================
 
-Copyright (C) 2001-2011, AdaCore
+Copyright (C) 2001-2012, AdaCore
 
 This file contains a list of new features introduced in GPS.
 A full description of all GPS features can be found in the GPS
@@ -14,6 +14,11 @@ of the feature.
 
 New features in version 4.3
 ---------------------------
+
+NF-43-KC20-003 License updated to GPL3 (2011-12-20)
+
+   The license for XML/Ada Pro is now GPL3 with the standard exception
+   allowing the creation of proprietary software.
 
 NF-43-KC07-033 Documentation converted to Sphinx (2011-12-08)
 
