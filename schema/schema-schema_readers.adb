@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2011, AdaCore                     --
+--                     Copyright (C) 2004-2012, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -341,7 +341,8 @@ package body Schema.Schema_Readers is
       --  Register a global attribute.
 
       procedure Resolve_Attribute_Type
-        (Attr : in out Internal_Attribute_Descr);
+        (Attr : in out Internal_Attribute_Descr;
+         Loc  : Sax.Locators.Location);
       --  Set [Attr.Descr.Simple_Type] to the appropriate value, after looking
       --  up the type
 
@@ -890,7 +891,8 @@ package body Schema.Schema_Readers is
       ----------------------------
 
       procedure Resolve_Attribute_Type
-        (Attr : in out Internal_Attribute_Descr)
+        (Attr : in out Internal_Attribute_Descr;
+         Loc  : Sax.Locators.Location)
       is
          TRef     : Global_Reference;
          NFA_Type : Type_Index;  --  In NFA
@@ -899,11 +901,18 @@ package body Schema.Schema_Readers is
             NFA_Type := Shared.Types.Table (Attr.Local_Type).In_NFA;
             Attr.Descr.Simple_Type :=
               Get_Type_Descr (NFA, NFA_Type).Simple_Content;
+
+         elsif Attr.Typ = No_Qualified_Name then
+               --  ??? Type should be ur-type (3.2.2)
+               null;
+
          else
             TRef := Get (Ref.all, (Attr.Typ, Ref_Type));
             if TRef = No_Global_Reference then
-               --  ??? Type should be ur-type (3.2.2)
-               null;
+               Validation_Error
+                 (Parser,
+                  "Unknown type: " & To_QName (Attr.Typ),
+                  Loc);
 
             else
                Attr.Descr.Simple_Type :=
@@ -975,7 +984,7 @@ package body Schema.Schema_Readers is
                            Loc       => Attrs (A).Loc);
 
                      else
-                        Resolve_Attribute_Type (Attrs (A).Attr);
+                        Resolve_Attribute_Type (Attrs (A).Attr, Attrs (A).Loc);
 
                         if Attrs (A).Attr.Any /= No_Internal_Any_Descr then
                            Had_Any := True;
@@ -1198,7 +1207,7 @@ package body Schema.Schema_Readers is
                         "Type of global attributes should be undefined here");
 
          Attr2 := Attr;
-         Resolve_Attribute_Type (Attr2);
+         Resolve_Attribute_Type (Attr2, No_Location);
 
          Create_Global_Attribute (Parser, Attr2.Descr, No_Location);
       end Create_Global_Attributes;

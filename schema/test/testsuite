@@ -173,6 +173,12 @@ expect "$act/IC10-021/pref.xsd" "$act/IC10-021/pref.xml" ""
   expected=`cat test.out`
   compare K518-020 "$out" "$expected")
 
-(cd act_testsuite/tasking; sh ./test.sh)
-
+for dir in tasking \
+           L103-011_unknown_simple \
+           ;
+do
+   (cd act_testsuite/$dir;
+    compare "$dir" "`./test.sh`" "`cat test.out`")
+done
+           
 summary
