@@ -3694,7 +3694,9 @@ package body Schema.Schema_Readers is
       elsif Local_Name = Handler.Complex_Content then
          Ctx := Handler.Contexts (Handler.Contexts_Last)'Access;
          pragma Assert (Ctx.Typ = Context_Type_Def);
-         Handler.Shared.Types.Table (Ctx.Type_Info).Properties.Mixed := False;
+
+         --  Do not reset Properties.Mixed here, since it might have been set
+         --  to "true" on the parent <complexType> node.
 
       elsif Local_Name = Handler.Attribute_Group then
          Create_Attribute_Group (H, Atts);

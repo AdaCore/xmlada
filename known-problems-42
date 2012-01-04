@@ -11,6 +11,17 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
+KP-42-L104-016 Schema: mixedContent ignored when using complexContent
+
+  Problem:    When a type is declared as a <complexType mixed="true"..> but
+              contains a <complexContent> child, the mixed attribute is
+              ignored. As a result, nodes of this type cannot include text
+              contents.
+
+  Status:     Fixed in XML/Ada 4.3.0
+
+  Workaround: None.
+
 KP-42-L103-016 Schema: a complexContent's base must be a complex type
 
   Problem:    XML/Ada does not check that the base type in a complexContent

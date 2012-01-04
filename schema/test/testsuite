@@ -22,7 +22,7 @@
 ## All NIST tests are included in this testsuite
 ## Some Microsoft tests are missing in this testsuite
 
-xmltests=./xmlschema2006-11-06 
+xmltests=./xmlschema2006-11-06
 
 if [ -d $xmltests ]; then
   :
@@ -118,7 +118,7 @@ compare() {
    total=`expr $total + 1`
 
    if [ x"$actual" != x"$expected" ]; then
-      quoted=`echo $actual | sed -e 's/\"/\\\"/g'` 
+      quoted=`echo $actual | sed -e 's/\"/\\\"/g'`
       echo "#------------ Test failed ------------"
       echo "  cmd: $testname"
       echo "  quoted  = $quoted"
@@ -172,6 +172,7 @@ for dir in tasking \
            K518-020 \
            L103-011_unknown_simple \
            L103-016_extend_simplecontent \
+           L104-016_inherit_mixed \
            ;
 do
    (cd act_testsuite/$dir
@@ -179,5 +180,5 @@ do
     expected=`cat test.out`
     compare "$dir" "$actual" "$expected")
 done
-           
+
 summary
