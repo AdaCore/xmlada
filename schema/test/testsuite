@@ -173,6 +173,7 @@ for dir in tasking \
            L103-011_unknown_simple \
            L103-016_extend_simplecontent \
            L104-016_inherit_mixed \
+           L104-021_duplicate_child \
            ;
 do
    (cd act_testsuite/$dir

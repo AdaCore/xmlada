@@ -160,6 +160,8 @@ private
       --  used to prevent infinite recursion, for instance when an extension
       --  indirectly uses itself as a base.
 
+      Loc    : Sax.Locators.Location;
+
       Min_Occurs, Max_Occurs : Occurrences;
       Next : Type_Details_Access;
       case Kind is

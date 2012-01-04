@@ -337,6 +337,11 @@ package body Schema.Schema_Readers is
       --  [Attrs]. [Had_Any] is set to true if a <anyAttribute> was
       --  encountered. The caller should first set it to False.
 
+      procedure Check_Unique_Particle_Attribution
+        (Details : Type_Details_Access);
+      --  Check that all elements in the content model are unique (we must not
+      --  have two elements that compete with each other).
+
       procedure Create_Global_Attributes (Attr : Internal_Attribute_Descr);
       --  Register a global attribute.
 
@@ -612,6 +617,92 @@ package body Schema.Schema_Readers is
          end if;
       end Lookup_Simple_Type;
 
+      ---------------------------------------
+      -- Check_Unique_Particle_Attribution --
+      ---------------------------------------
+
+      procedure Check_Unique_Particle_Attribution
+        (Details : Type_Details_Access)
+      is
+         Duplicates : Element_HTables.Instance;
+         --  Used to check for duplicate elements within a sequence or choice.
+         --  ??? Could use a htable of locations, so that we can point to the
+         --  two duplicate declarations.
+
+         T     : Type_Details_Access;
+         Elem  : Element_Descr;
+
+      begin
+         case Details.Kind is
+            when Type_Sequence =>
+               T := Details.First_In_Seq;
+            when Type_Choice =>
+               T := Details.First_In_Choice;
+            when Type_All =>
+               T := Details.First_In_All;
+            when others =>
+               raise Program_Error with "Internal error";
+         end case;
+
+         while T /= null loop
+            case T.Kind is
+               when Type_Element =>
+                  if T.Element.Name /= No_Qualified_Name then
+                     Elem := Element_HTables.Get (Duplicates, T.Element.Name);
+
+                     if Elem /= No_Element_Descr then
+                        --  It is always invalid to have an element with the
+                        --  same name but with different types in the same
+                        --  model, even if there is no ambiguity (for instance
+                        --  in a sequence).
+
+                        if Elem.Typ /= No_Qualified_Name
+                          and then Elem.Typ /= T.Element.Typ
+                        then
+                           Validation_Error
+                             (Parser,
+                              "Multiple elements with name '"
+                              & To_QName (T.Element.Name)
+                              & "', with different types, appear in the model"
+                              & " group",
+                              Details.Loc);
+                        end if;
+
+                        --  In a <choice> or <all>, we cannot have the same
+                        --  element multiple times, since that would be
+                        --  ambiguous.
+
+                        if Details.Kind = Type_Choice
+                          or else Details.Kind = Type_All
+                        then
+                           Validation_Error
+                             (Parser,
+                              "'" & To_QName (T.Element.Name) & "' and '"
+                              & To_QName (Elem.Name) & "' violate the Unique"
+                              & " Particle Attribution rule, creating an"
+                              & " ambiguity for the validation",
+                              Details.Loc);
+                        end if;
+
+                     else
+                        Element_HTables.Set
+                          (Duplicates, T.Element.Name, T.Element);
+                     end if;
+                  end if;
+
+               when Type_Group =>
+                  null;
+
+               when others =>
+                  --  ??? Should check, in particular for groups or nested
+                  --  sequences (we can have a Sequence that contains choices)
+                  null;
+            end case;
+
+            T := T.Next;
+         end loop;
+      end Check_Unique_Particle_Attribution;
+
       ---------------------
       -- Process_Details --
       ---------------------
@@ -642,6 +733,8 @@ package body Schema.Schema_Readers is
                null;
 
             when Type_Sequence =>
+               Check_Unique_Particle_Attribution (Details);
+
                S := From;
                T := Details.First_In_Seq;
                while T /= null loop
@@ -651,6 +744,8 @@ package body Schema.Schema_Readers is
                end loop;
 
             when Type_Choice =>
+               Check_Unique_Particle_Attribution (Details);
+
                T := Details.First_In_Choice;
                Nested_End := NFA.Add_State;
                while T /= null loop
@@ -660,6 +755,8 @@ package body Schema.Schema_Readers is
                end loop;
 
             when Type_All =>
+               Check_Unique_Particle_Attribution (Details);
+
                if Details.First_In_All /= null then
                   declare
                      Count : Natural := 0;
@@ -1987,6 +2084,7 @@ package body Schema.Schema_Readers is
               (Kind       => Type_Group,
                Min_Occurs => Min_Occurs,
                Max_Occurs => Max_Occurs,
+               Loc        => Handler.Current_Location,
                In_Process => False,
                Next       => null,
                Group      => Group);
@@ -2409,6 +2507,7 @@ package body Schema.Schema_Readers is
            (Kind         => Type_Element,
             Min_Occurs   => Min_Occurs,
             Max_Occurs   => Max_Occurs,
+            Loc          => Handler.Current_Location,
             In_Process   => False,
             Next         => null,
             Element      => Info);
@@ -2756,6 +2855,7 @@ package body Schema.Schema_Readers is
               (Kind        => Type_Restriction,
                Min_Occurs  => (False, 1),
                Max_Occurs  => (False, 1),
+               Loc         => Handler.Current_Location,
                In_Process  => False,
                Next        => null,
                Simple_Content_Restriction => True,
@@ -2779,6 +2879,7 @@ package body Schema.Schema_Readers is
            (Kind        => Type_Restriction,
             Min_Occurs  => (False, 1),
             Max_Occurs  => (False, 1),
+            Loc         => Handler.Current_Location,
             In_Process  => False,
             Next        => null,
             Simple_Content_Restriction => False,
@@ -2923,6 +3024,7 @@ package body Schema.Schema_Readers is
               (Kind       => Type_Extension,
                Min_Occurs => (False, 1),
                Max_Occurs => (False, 1),
+               Loc        => Handler.Current_Location,
                In_Process => False,
                Next       => null,
                Simple_Content => True,
@@ -2944,6 +3046,7 @@ package body Schema.Schema_Readers is
            (Kind       => Type_Extension,
             Min_Occurs => (False, 1),
             Max_Occurs => (False, 1),
+            Loc        => Handler.Current_Location,
             In_Process => False,
             Next       => null,
             Simple_Content => False,
@@ -3158,6 +3261,7 @@ package body Schema.Schema_Readers is
         (Kind            => Type_Choice,
          Min_Occurs      => Min_Occurs,
          Max_Occurs      => Max_Occurs,
+         Loc             => Handler.Current_Location,
          In_Process      => False,
          Next            => null,
          First_In_Choice => null);
@@ -3184,6 +3288,7 @@ package body Schema.Schema_Readers is
         (Kind         => Type_Sequence,
          Min_Occurs   => Min_Occurs,
          Max_Occurs   => Max_Occurs,
+         Loc          => Handler.Current_Location,
          In_Process   => False,
          Next         => null,
          First_In_Seq => null);
@@ -3539,6 +3644,7 @@ package body Schema.Schema_Readers is
         (Kind       => Type_Any,
          Min_Occurs => Min_Occurs,
          Max_Occurs => Max_Occurs,
+         Loc        => Handler.Current_Location,
          In_Process => False,
          Next       => null,
          Any        => Any);
@@ -3561,6 +3667,7 @@ package body Schema.Schema_Readers is
         (Kind         => Type_All,
          Min_Occurs   => Min_Occurs,
          Max_Occurs   => Max_Occurs,
+         Loc          => Handler.Current_Location,
          In_Process   => False,
          Next         => null,
          First_In_All => null);
