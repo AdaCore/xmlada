@@ -13,10 +13,7 @@ all:
 # The W3C testsuite is meant to test XSD 1.0, so we have to configure the parser
 # in the appropriate mode.
 new:
-	-@./testsuite > test_act_schema.tmp_out 2>&1
-	-@tr -d '\r' < test_act_schema.tmp_out > test_act_schema.out
-	-@diff -c test_act_schema.expected test_act_schema.out > test_act_schema.diff
-	@cat test_act_schema.diff
+	-@./testsuite 
 	-@./schematest --xsd10 > test_schema.tmp_out
 	-@tr -d '\r' < test_schema.tmp_out > test_schema.out
 	-@diff -u test_schema.expected test_schema.out > test_schema.diff

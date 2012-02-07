@@ -134,6 +134,27 @@ compare() {
    fi
 }
 
+compare_file() {
+   testname="$1"
+   actual="$2"
+   expected="$3"
+   total=`expr $total + 1`
+
+   if diff $expected $actual >/dev/null ; then
+      passed=`expr $passed + 1`
+      if [ x$verbose = x1 ]; then
+         echo "#+++++ Test passed +++++"
+         echo "  cmd: $testname"
+      fi
+   else
+      echo "#------------ Test failed ------------"
+      echo "  cmd: $testname"
+      echo ""
+      diff -u $expected $actual
+      failed=`expr $failed + 1`
+   fi
+}
+
 ###############
 ## ACT tests ##
 ###############
@@ -177,9 +198,9 @@ for dir in tasking \
            ;
 do
    (cd act_testsuite/$dir
-    actual=`sh ./test.sh`
-    expected=`cat test.out`
-    compare "$dir" "$actual" "$expected")
+    sh ./test.sh | tr -d '\r' > tmp.out
+    compare_file "$dir" tmp.out test.out
+   )
 done
 
 summary
