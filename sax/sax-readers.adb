@@ -500,6 +500,14 @@ package body Sax.Readers is
    --  If there are no more characters in the input streams, Parser is setup
    --  so that End_Of_Stream (Parser) returns True.
 
+   procedure Lookup_Char
+     (Input   : in out Input_Source'Class;
+      Parser  : in out Sax_Reader'Class;
+      Char    : out Unicode_Char);
+   --  Lookup one character, but put it back in the input so that the next call
+   --  to Next_Char will return it again. This does not change
+   --  Parser.Last_Read.
+
    function End_Of_Stream (Parser : Sax_Reader'Class) return Boolean;
    pragma Inline (End_Of_Stream);
    --  Return True if there are no more characters in the parser.
@@ -1021,6 +1029,43 @@ package body Sax.Readers is
       Warning (Parser, Create (Location (Parser, Id2) & ": " & Msg, Id2));
    end Warning;
 
+   -----------------
+   -- Lookup_Char --
+   -----------------
+
+   procedure Lookup_Char
+     (Input   : in out Input_Source'Class;
+      Parser  : in out Sax_Reader'Class;
+      Char    : out Unicode_Char)
+   is
+   begin
+      if Parser.Inputs /= null then
+         if Eof (Parser.Inputs.Input.all) then
+            if Debug_Input then
+               Put_Line ("++Input Lookup_Char: <at end of stream>");
+            end if;
+            Char := Unicode_Char'Last;
+         else
+            Input_Sources.Next_Char (Parser.Inputs.Input.all, Char);
+         end if;
+      else
+         if Eof (Input) then
+            if Debug_Input then
+               Put_Line ("++Input Lookup_Char 2: <at end of stream>");
+            end if;
+            Char := Unicode_Char'Last;
+         else
+            Input_Sources.Next_Char (Input, Char);
+         end if;
+      end if;
+
+      if Debug_Input then
+         Put_Line ("++Input Lookup_Char: " & Unicode_Char'Image (Char));
+      end if;
+
+      Parser.Lookup_Char := Char;
+   end Lookup_Char;
+
    ---------------
    -- Next_Char --
    ---------------
@@ -1039,7 +1084,12 @@ package body Sax.Readers is
       procedure Internal (Stream : in out Input_Source'Class) is
          C : Unicode_Char;
       begin
-         Next_Char (Stream, C);
+         if Parser.Lookup_Char /= Unicode_Char'Last then
+            C := Parser.Lookup_Char;
+            Parser.Lookup_Char := Unicode_Char'Last;
+         else
+            Next_Char (Stream, C);
+         end if;
 
          --  XML specs say that #xD#xA must be converted to one single #xA.
          --  A single #xD must be converted to one single #xA
@@ -2378,14 +2428,22 @@ package body Sax.Readers is
                      when Greater_Than_Sign =>
                         exit when Parser.State.Greater_Special;
 
-                     when Less_Than_Sign
-                        | Ampersand
-                        | Equals_Sign
-                        | Quotation_Mark
-                        | Apostrophe
-                        | Closing_Square_Bracket
-                        | Slash =>
+                     when Less_Than_Sign             --  Start of new tag
+                        | Ampersand                  --  for Entities
+                        | Closing_Square_Bracket     --  for CData   ]]>
+                        | Quotation_Mark             --  for attributes a="..."
+                        | Apostrophe                 --  for attributes a='...'
+                        | Equals_Sign =>             --  for attributes
                         exit;
+
+                     when Slash =>                   --  For <NODE/>
+                        declare
+                           C : Unicode_Char;
+                        begin
+                           Lookup_Char (Input, Parser, C);
+                           exit when C = Greater_Than_Sign
+                             or else Id.Typ = Name;
+                        end;
 
                      when Percent_Sign =>
                         exit when Parser.State.Expand_Param_Entities;

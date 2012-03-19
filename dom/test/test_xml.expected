@@ -857,7 +857,7 @@ Did you want to use &amp;?
    dtd03.xml:5:9: Entity references must end with ';'.
 Did you want to use &amp;?
  OK XMLnot-wf XML_1_0_FIFTH_EDITION [dtd04] 
-   dtd04.xml:4:26: Expecting a string after PUBLIC
+   dtd04.xml:4:52: Expecting a string after PUBLIC
  OK XMLnot-wf XML_1_0_FIFTH_EDITION [dtd05] 
    dtd05.xml:4:34: Expecting a string after SYSTEM
  OK XMLnot-wf XML_1_0_FIFTH_EDITION [dtd07] 
