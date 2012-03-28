@@ -14,7 +14,8 @@ all:
 # in the appropriate mode.
 new:
 	-@./testsuite 
-	-@valgrind --leak-resolution=high --leak-check=full ./schematest --xsd10 > test_schema.tmp_out
+	@#-valgrind --leak-resolution=high --leak-check=full ./schematest --xsd10 > test_schema.tmp_out
+	-@./schematest --xsd10 > test_schema.tmp_out
 	-@tr -d '\r' < test_schema.tmp_out > test_schema.out
 	-@diff -u test_schema.expected test_schema.out > test_schema.diff
 	@cat test_schema.diff
