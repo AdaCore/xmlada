@@ -96,7 +96,7 @@ procedure TestState is
       From_Data : access Active_State_Data;
       Trans : Transition_Descr; Input : Character) return Boolean
    is
-      pragma Unreferenced (Self, From_State, From_Data);
+      pragma Unreferenced (Self, From_State, From_Data, To_State);
    begin
       case Trans.Kind is
          when Any_Char => return True;
@@ -144,23 +144,6 @@ procedure TestState is
    procedure Test6;
    procedure Test7;
    --  Various tests
-
-   -----------
-   -- Match --
-   -----------
-
-   function Match
-     (Self : access NFA'Class; From_State : State;
-      From_Data  : access Active_State_Data;
-      Trans : Transition_Descr; Input : Character) return Boolean
-   is
-      pragma Unreferenced (Self, From_State, From_Data);
-   begin
-      case Trans.Kind is
-         when Any_Char => return True;
-         when Char     => return Trans.C = Input;
-      end case;
-   end Match;
 
    -----------------
    -- State_Image --
