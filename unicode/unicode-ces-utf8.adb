@@ -110,6 +110,7 @@ package body Unicode.CES.Utf8 is
       Val  : Unicode_Char;
       C    : Unicode_Char := Character'Pos (Str (Index));
    begin
+
       --  Compute the length of the encoding given what was in the first byte
       if C < 128 then
          Len := Index;

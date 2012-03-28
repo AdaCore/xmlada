@@ -42,11 +42,15 @@ package Schema.Dom_Readers is
    --  Note that in case of a fatal error, it is your responsability to
    --  free the tree, since it is left in the state it was when the error
    --  was raised (for post-death analysis, if required).
+   --  You should call Free when you are done with this parser.
 
    function Get_Tree (Read : Tree_Reader) return Document;
 
-   procedure Free (Read : in out Tree_Reader);
-   --  Free the memory associated with the reader, in particular the tree
+   overriding procedure Free (Read : in out Tree_Reader);
+   --  Free the memory associated with the reader. However, this does not
+   --  free the tree itself which has its own lifespan. You will need to call
+   --      DOM.Core.Nodes.Free (Get_Tree (Read));
+   --  when you no longer need the tree.
 
    procedure Set_Warnings_As_Errors
      (Read : in out Tree_Reader; Warnings_As_Error : Boolean);

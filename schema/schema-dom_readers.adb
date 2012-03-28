@@ -242,8 +242,10 @@ package body Schema.Dom_Readers is
 
    procedure Free (Read : in out Tree_Reader) is
    begin
-      Free (Read.Tree);
+      --  Do not free the tree, but resets the internal pointer to it.
+      --      Free (Read.Tree);
       Read.Tree := null;
+      Schema.Readers.Free (Schema.Readers.Validating_Reader (Read));
    end Free;
 
    ----------------------------

@@ -1174,4 +1174,12 @@ package body Schema.Readers is
       end if;
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Reader : in out Validating_Reader) is
+   begin
+      Free (Schema.Validators.Abstract_Validation_Reader (Reader));
+   end Free;
 end Schema.Readers;

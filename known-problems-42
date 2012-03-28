@@ -11,6 +11,21 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
+KP-42-L327-044 Schema: change of behavior in Schema.Dom_Readers.Free
+
+  Problem:    The previous implementation of Free would free the DOM tree
+              that was just parsed, and not call the inherited Free, thus
+              leaving a memory leak. As a result, the implementation was
+              changed so that now you must call Free on the parser. But since
+              users might want to keep the tree around for a longer time, Free
+              no longer deallocates the tree, which must be freed separately.
+
+  Status:     Fixed in XML/Ada 4.3.0
+
+  Workaround: Do not call Schema.Dom_Readers.Free with older versions of
+              XML/Ada. This will result in a small memory leak. but is safe
+              when you need to keep the tree around.
+
 KP-42-L316-045 SAX: slow parsing when node character content contains slashes
 
   Problem:    When a node's text content contains slashes ('/'), the parsing

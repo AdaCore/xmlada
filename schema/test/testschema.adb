@@ -53,6 +53,7 @@ procedure TestSchema is
    Switches     : constant String := "xsd: debug base dom h";
    DOM          : Boolean := False;
    Base_Names   : Boolean := False;
+   Tree         : Document;
 
 begin
    --  Special case: check if we want debug output, before doing anything else
@@ -135,6 +136,8 @@ begin
       Set_Grammar (My_Reader.all, Get_Grammar (Schema));
    end if;
 
+   Free (Schema);  --  No longer needed
+
    --  Activate validation. Even though we have a validating reader, we can
    --  still choose to disable validation if we know the document is correct.
    --  This makes loading the document faster
@@ -174,7 +177,15 @@ begin
       end;
    end loop;
 
+   if DOM then
+      Tree := Get_Tree (Tree_Reader (My_Reader.all));
+   end if;
+
    Free (My_Reader);
+
+   --  You can keep using the tree here, it is still valid.
+
+   Standard.DOM.Core.Nodes.Free (Tree);
 
 exception
    when XML_Validation_Error =>

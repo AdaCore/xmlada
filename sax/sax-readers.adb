@@ -5946,6 +5946,7 @@ package body Sax.Readers is
       Set_System_Id (Parser.Locator, Parser.System_Id);
       Set_Column_Number (Parser.Locator, Prolog_Size (Input));
       Set_Line_Number (Parser.Locator, 1);
+      Parser.Lookup_Char := Unicode.Unicode_Char'Last;
       Parser.Current_Node := null;
       Parser.Num_Toplevel_Elements := 0;
       Parser.Previous_Char_Was_CR := False;

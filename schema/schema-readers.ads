@@ -104,6 +104,7 @@ package Schema.Readers is
    --  The caller must not modify the return value.
    --  Returns No_XML_NS if the prefix is not defined
 
+   overriding procedure Free (Reader : in out Validating_Reader);
    procedure Free (Reader : in out Validating_Reader_Access);
    --  Free the memory used by Reader
 
