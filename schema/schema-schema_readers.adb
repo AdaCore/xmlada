@@ -701,6 +701,13 @@ package body Schema.Schema_Readers is
 
             T := T.Next;
          end loop;
+
+         Reset (Duplicates);
+
+      exception
+         when others =>
+            Reset (Duplicates);
+            raise;
       end Check_Unique_Particle_Attribution;
 
       ---------------------
@@ -1372,6 +1379,7 @@ package body Schema.Schema_Readers is
             elsif Info.Details = null then
                Add_Attributes (List, Info.Attributes, Processed_Groups,
                                As_Restriction => True, Had_Any => Had_Any);
+               Reset (Processed_Groups);
                return;
             end if;
 

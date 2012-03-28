@@ -508,10 +508,18 @@ package body Schema.Validators is
          if Local /= No_Symbol then
             All_Items (Get (Local).all);
          end if;
-         return Any_Descr'
-           (Process_Contents => Local_Process,
-            No_Namespaces    => To_Symbol (No_Namespaces),
-            Namespaces       => To_Symbol (Namespaces));
+
+         declare
+            Result : constant Any_Descr := Any_Descr'
+              (Process_Contents => Local_Process,
+               No_Namespaces    => To_Symbol (No_Namespaces),
+               Namespaces       => To_Symbol (Namespaces));
+         begin
+            Reset (Namespaces);
+            Reset (No_Namespaces);
+            Reset (Tmp);
+            return Result;
+         end;
       end if;
 
       Local_Is_Any := Local /= No_Symbol and then Get (Local).all = "##any";
@@ -594,6 +602,13 @@ package body Schema.Validators is
       Reset (Tmp);
 
       return Result;
+
+   exception
+      when others =>
+         Reset (Namespaces);
+         Reset (No_Namespaces);
+         Reset (Tmp);
+         raise;
    end Combine;
 
    ---------------
