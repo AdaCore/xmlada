@@ -1,3 +1,26 @@
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2004-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
+
 with Ada.Text_IO;    use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;
@@ -62,10 +85,10 @@ package body Debug_Readers is
 
       if Handler.Color then
          return ASCII.ESC & "[33m"
-           & To_String (Handler.Locator.all) & To_String (Result)
+           & To_String (Handler.Locator) & To_String (Result)
            & ASCII.ESC & "[39m";
       else
-         return To_String (Handler.Locator.all) & To_String (Result);
+         return To_String (Handler.Locator) & To_String (Result);
       end if;
    end Location;
 
@@ -101,7 +124,7 @@ package body Debug_Readers is
    begin
       Put_Line ("Sax.Warning ("
                 & Get_Message (Except) & ", at "
-                & To_String (Get_Locator (Except)) & ')');
+                & To_String (Get_Location (Except)) & ')');
    end Warning;
 
    -----------
@@ -116,7 +139,7 @@ package body Debug_Readers is
    begin
       Put_Line ("Sax.Error ("
                 & Get_Message (Except) & ", at "
-                & To_String (Get_Locator (Except)) & ')');
+                & To_String (Get_Location (Except)) & ')');
    end Error;
 
    -----------------
@@ -140,12 +163,12 @@ package body Debug_Readers is
 
    procedure Set_Document_Locator
      (Handler : in out Debug_Reader;
-      Loc     : access Sax.Locators.Locator'Class) is
+      Loc     : in out Sax.Locators.Locator) is
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Set_Document_Locator ()");
       end if;
-      Handler.Locator := Locator_Access (Loc);
+      Handler.Locator := Loc;
    end Set_Document_Locator;
 
    --------------------
@@ -181,7 +204,9 @@ package body Debug_Readers is
    procedure Start_Prefix_Mapping
      (Handler : in out Debug_Reader;
       Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence) is
+      URI     : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Start_Prefix_Mapping (" & Prefix & ", " & URI
@@ -194,7 +219,9 @@ package body Debug_Readers is
    ------------------------
 
    procedure End_Prefix_Mapping
-     (Handler : in out Debug_Reader; Prefix : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Debug_Reader; Prefix : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.End_Prefix_Mapping (" & Prefix & ") at "
@@ -211,7 +238,9 @@ package body Debug_Readers is
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class) is
+      Atts          : Sax.Attributes.Attributes'Class)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put ("Sax.Start_Element ("
@@ -232,7 +261,9 @@ package body Debug_Readers is
      (Handler : in out Debug_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "") is
+      Qname         : Unicode.CES.Byte_Sequence := "")
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.End_Element (" & Namespace_URI & ", "
@@ -245,7 +276,9 @@ package body Debug_Readers is
    ----------------
 
    procedure Characters
-     (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Characters (" & Ch & ','
@@ -260,8 +293,9 @@ package body Debug_Readers is
    procedure Ignorable_Whitespace
      (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
+      pragma Unmodified (Handler);
       Index : Natural := Ch'First;
-      C : Unicode_Char;
+      C     : Unicode_Char;
    begin
       if not Handler.Silent then
          Put ("Sax.Ignorable_Whitespace (");
@@ -282,7 +316,9 @@ package body Debug_Readers is
    procedure Processing_Instruction
      (Handler : in out Debug_Reader;
       Target  : Unicode.CES.Byte_Sequence;
-      Data    : Unicode.CES.Byte_Sequence) is
+      Data    : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Processing instruction (" & Target & ", '" & Data
@@ -295,7 +331,9 @@ package body Debug_Readers is
    --------------------
 
    procedure Skipped_Entity
-     (Handler : in out Debug_Reader; Name : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Debug_Reader; Name : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Skipped_Entity (" & Name & ") at "
@@ -308,7 +346,9 @@ package body Debug_Readers is
    -------------
 
    procedure Comment
-     (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence) is
+     (Handler : in out Debug_Reader; Ch : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Comment (" & Ch & ") at "
@@ -321,6 +361,7 @@ package body Debug_Readers is
    -----------------
 
    procedure Start_Cdata (Handler : in out Debug_Reader) is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Start_Cdata () at " & Location (Handler));
@@ -332,6 +373,7 @@ package body Debug_Readers is
    ---------------
 
    procedure End_Cdata (Handler : in out Debug_Reader) is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.End_Cdata () at " & Location (Handler));
@@ -352,7 +394,7 @@ package body Debug_Readers is
                    & Location (Handler));
 
          Tmp := new String_List'
-           (new String'(To_String (Handler.Locator.all))
+           (new String'(To_String (Handler.Locator))
             & Handler.Saved_Locs.all);
          Unchecked_Free (Handler.Saved_Locs);
          Handler.Saved_Locs := Tmp;
@@ -387,7 +429,9 @@ package body Debug_Readers is
      (Handler   : in out Debug_Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence := "";
-      System_Id : Unicode.CES.Byte_Sequence := "") is
+      System_Id : Unicode.CES.Byte_Sequence := "")
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Start_DTD (" & Name
@@ -402,6 +446,7 @@ package body Debug_Readers is
    -------------
 
    procedure End_DTD (Handler : in out Debug_Reader) is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.End_DTD () at " & Location (Handler));
@@ -415,7 +460,9 @@ package body Debug_Readers is
    procedure Internal_Entity_Decl
      (Handler : in out Debug_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Value   : Unicode.CES.Byte_Sequence) is
+      Value   : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Internal_Entity_Decl ("
@@ -432,7 +479,9 @@ package body Debug_Readers is
      (Handler   : in out Debug_Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence;
-      System_Id : Unicode.CES.Byte_Sequence) is
+      System_Id : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.External_Entity_Decl ("
@@ -450,7 +499,9 @@ package body Debug_Readers is
      (Handler       : in out Debug_Reader;
       Name          : Unicode.CES.Byte_Sequence;
       System_Id     : Unicode.CES.Byte_Sequence;
-      Notation_Name : Unicode.CES.Byte_Sequence) is
+      Notation_Name : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Unparsed_Entity_Decl ("
@@ -467,7 +518,9 @@ package body Debug_Readers is
    procedure Element_Decl
      (Handler : in out Debug_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Content_Model) is
+      Model   : Content_Model)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Element_Decl ("
@@ -481,10 +534,12 @@ package body Debug_Readers is
    -------------------
 
    procedure Notation_Decl
-     (Handler       : in out Debug_Reader;
-      Name          : Unicode.CES.Byte_Sequence;
-      Public_Id     : Unicode.CES.Byte_Sequence;
-      System_Id     : Unicode.CES.Byte_Sequence) is
+     (Handler   : in out Debug_Reader;
+      Name      : Unicode.CES.Byte_Sequence;
+      Public_Id : Unicode.CES.Byte_Sequence;
+      System_Id : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          Put_Line ("Sax.Notation_Decl ("
@@ -499,21 +554,23 @@ package body Debug_Readers is
    --------------------
 
    procedure Attribute_Decl
-     (Handler : in out Debug_Reader;
-      Ename   : Unicode.CES.Byte_Sequence;
-      Aname   : Unicode.CES.Byte_Sequence;
-      Typ     : Attribute_Type;
-      Content : Content_Model;
+     (Handler       : in out Debug_Reader;
+      Ename         : Unicode.CES.Byte_Sequence;
+      Aname         : Unicode.CES.Byte_Sequence;
+      Typ           : Attribute_Type;
+      Content       : Content_Model;
       Value_Default : Sax.Attributes.Default_Declaration;
-      Value   : Unicode.CES.Byte_Sequence) is
+      Value         : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unmodified (Handler);
    begin
       if not Handler.Silent then
          if Content /= Unknown_Model then
             Put_Line ("Sax.Attribute_Decl ("
                       & Ename & ", " & Aname
                       & ", " & Attribute_Type'Image (Typ) & ", "
-                      & To_String (Content) & ", "
-                      & Default_Declaration'Image (Value_Default)
+                      & To_String (Content)
+                      & ", " & Default_Declaration'Image (Value_Default)
                       & ", " & Value & ") at " & Location (Handler));
          else
             Put_Line ("Sax.Attribute_Decl ("

@@ -1,7 +1,50 @@
-with Schema.Date_Time;        use Schema.Date_Time;
-with GNAT.IO;                 use GNAT.IO;
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2005-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
+
+with Schema.Date_Time;         use Schema.Date_Time;
+with Schema.Validators;        use Schema.Validators;
+with Schema.Simple_Types;      use Schema.Simple_Types;
+with GNAT.IO;                  use GNAT.IO;
+with Sax.Readers;              use Sax.Readers;
+with Sax.Utils;                use Sax.Utils;
+with Sax.Symbols;              use Sax.Symbols;
+with Unicode.CES;              use Unicode.CES;
 
 procedure Test_Date_Time is
+
+   type Local_Reader is new Abstract_Validation_Reader with null record;
+
+   Reader : aliased Local_Reader;
+   R      : constant Abstract_Validating_Reader_Access :=
+     Reader'Unchecked_Access;
+
+   generic
+      type T is private;
+      with procedure Value (Symbols : Symbol_Table;
+                            Ch      : Byte_Sequence;
+                            Val     : out T;
+                            Error   : out Symbol) is <>;
+   function Generic_Value (Ch : Byte_Sequence) return T;
 
    generic
       type T is private;
@@ -16,6 +59,54 @@ procedure Test_Date_Time is
       with function "<" (T1, T2 : T) return Boolean is <>;
       with function ">" (T1, T2 : T) return Boolean is <>;
    procedure Assert_Generic (T1, T2 : T; Expected : Character);
+
+   generic
+      type T is private;
+      with function Image (T1 : T) return String is <>;
+   procedure Assert_Equal (T1, T2 : T);
+
+   procedure Assert_Re (Re1, Re2 : String);
+   --  Compare the conversion of Re1 to Re2
+
+   -------------------
+   -- Generic_Value --
+   -------------------
+
+   function Generic_Value (Ch : Byte_Sequence) return T is
+      Val   : T;
+      Error : Symbol;
+   begin
+      Value (Sax.Readers.Get_Symbol_Table (R.all), Ch, Val, Error);
+      return Val;
+   end Generic_Value;
+
+   function Value is new Generic_Value (Time_T);
+   function Value is new Generic_Value (Date_Time_T);
+   function Value is new Generic_Value (Duration_T);
+   function Value is new Generic_Value (GMonth_T);
+
+   ------------------
+   -- Assert_Equal --
+   ------------------
+
+   procedure Assert_Equal (T1, T2 : T) is
+   begin
+      if T1 /= T2 then
+         Put_Line (Image (T1) & " /= " & Image (T2));
+      end if;
+   end Assert_Equal;
+
+   ---------------
+   -- Assert_Re --
+   ---------------
+
+   procedure Assert_Re (Re1, Re2 : String) is
+   begin
+      if Convert_Regexp (Re1) /= Re2 then
+         Put_Line ("Converting " & Re1 & " gives "
+                   & Convert_Regexp (Re1) & " and not " & Re2);
+      end if;
+   end Assert_Re;
 
    --------------------
    -- Assert_Generic --
@@ -81,6 +172,10 @@ procedure Test_Date_Time is
    procedure Assert_NC is new Assert_NC_Generic (Date_Time_T);
    procedure Assert_NC is new Assert_NC_Generic (Duration_T);
    --  Test whether Str1 = Str2
+
+   procedure Assert    is new Assert_Equal (Integer, Integer'Image);
+   procedure Assert    is new Assert_Equal (Date_Time_T);
+   procedure Assert    is new Assert_Equal (GMonth_T);
 
    ------------
    -- Assert --
@@ -183,6 +278,11 @@ begin
    --  Basic comparison tests
    Assert (Time1, Time2, '<');
 
+   Assert (Time1 + Dur1Y, Date_Time_T'(Value ("2001-01-12T12:13:14Z")));
+   Assert (Year (Time1), 2000);
+   Assert (Month (Time1), 1);
+   Assert (Day (Time1), 12);
+
    --  Examples from the XML Schema standard
    Assert    (T5, T6, '<');
    Assert    (T7, T8, '<');
@@ -209,5 +309,25 @@ begin
    Assert_NC (Dur5M, Dur152D);
    Assert_NC (Dur5M, Dur153D);
    Assert    (Dur5M, Dur154D, '<');
+
+   --  Parsing GMonth
+   --  The format that ends with '--' is actually incorrect, but was mentioned
+   --  in earlier versions of the w3c schema specification, so should be
+   --  accepted. See http://books.xmlschemata.org/relaxng/ch19-77111.html
+
+   Assert (GMonth_T'(Value ("--01")), GMonth_T'(Value ("--01--")));
+   Assert (GMonth_T'(Value ("--01Z")), GMonth_T'(Value ("--01")));
+   Assert (GMonth_T'(Value ("--01+02:00")), GMonth_T'(Value ("--01+02:00")));
+   Assert (GMonth_T'(Value ("--01-04:00")), GMonth_T'(Value ("--01-04:00")));
+
+   --  Regexps
+
+   Assert_Re ("[a-z]", "^([a-z])$");
+   Assert_Re ("a[]b", "^(a[]b)$");
+   Assert_Re ("[\c]$", "^[a-z:A-Z0-9._-]$");
+   Assert_Re ("^[\i]", "^[A-Za-z:_]$");
+   Assert_Re ("\c", "^([a-z:A-Z0-9._-])$");  --  ??? Not sure that's correct
+   --  Assert_Re ("[abc-[b]]", "[ac]");  --  ??? Not supported for now
+   Assert_Re ("^\d{5}$", "^\d{5}$");
 
 end Test_Date_Time;

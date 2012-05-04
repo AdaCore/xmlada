@@ -1,38 +1,37 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
+pragma Ada_2005;
+
+with Ada.Unchecked_Deallocation;
 with Input_Sources;
 with Interfaces;
 with Sax.Locators;
 with Sax.Exceptions;
 with Sax.Attributes;
 with Sax.Models;
+with Sax.Symbols;
+with Sax.Utils;            use Sax.Utils;
 with Unicode;
 with Unicode.CES;
 with Sax.HTable;
@@ -40,26 +39,63 @@ pragma Elaborate_All (Sax.HTable);
 
 package Sax.Readers is
 
-   type Reader is tagged private;
-   type Reader_Access is access all Reader'Class;
+   type Sax_Reader is tagged private;
+   type Sax_Reader_Access is access all Sax_Reader'Class;
+   --  This package defines two types of XML readers: Reader is the historic
+   --  type; Sax_Reader was added later on.
+   --  These two readers differ by the type of parameters to their callbacks.
+   --  The callbacks of Sax_Reader require less string copying and memory
+   --  allocations, so are therefore more efficient. On the other hand, they
+   --  do not pass strings directly (for the name of the elements for instance)
+   --  but symbols (basically, naturals that can be converted to a string
+   --  through calls to Get_Symbol below).
+   --  New code is encouraged to extend Sax_Reader rather than Reader.
 
    procedure Parse
-     (Parser : in out Reader;
-      Input  : in out Input_Sources.Input_Source'Class);
+     (Parser  : in out Sax_Reader;
+      Input   : in out Input_Sources.Input_Source'Class);
    --  Parse an XML stream, and calls the appropriate SAX callbacks for each
    --  event.
+   --  To parse a stream, you must therefore extend the Reader or Sax_Reader
+   --  class, and override any of the callbacks (see "Content Handlers" below).
+   --  You then call Parse.
    --  This is not re-entrant: you can not call Parse with the same Parser
    --  argument in one of the SAX callbacks. This has undefined behavior.
 
-   function Get_Feature (Parser : Reader; Name : String) return Boolean;
-   --  lookup the value of a feature
-   --  Name is a fully qualified URI.
-   --  All XML_Readers must recognize the two features Namespace_Feature
-   --  and Namespace_Prefix_Feature
+   procedure Set_Symbol_Table
+     (Parser  : in out Sax_Reader;
+      Symbols : Symbol_Table);
+   --  Symbols is the symbol table to use. Most of the time, it should be left
+   --  to null, but you might want to share it with other parsers for
+   --  efficiency (in which case you will need to provide a task-safe version
+   --  of the symbol table).
+   --  If Symbols is null (or this subprogram is not called) a symbol table
+   --  will be created just for that parser and discarded along with the parser
+   --
+   --  This subprogram must be called before calling Parse.
+
+   procedure Set_XML_Version
+     (Parser : in out Sax_Reader; XML : XML_Versions := XML_1_0_Fifth_Edition);
+   function Get_XML_Version (Parser : Sax_Reader) return XML_Versions;
+   --  Set the XML version to accept.
 
    procedure Set_Feature
-     (Parser : in out Reader; Name : String; Value : Boolean);
-   --  Set the state of a feature
+     (Parser : in out Sax_Reader; Name : String; Value : Boolean);
+   function Get_Feature (Parser : Sax_Reader; Name : String) return Boolean;
+   --  Set or lookup the value of a feature
+   --  Name is a fully qualified URI, see below in "Recognized features" for
+   --  more information.
+
+   procedure Use_Basename_In_Error_Messages
+     (Parser       : in out Sax_Reader;
+      Use_Basename : Boolean := True);
+   function Use_Basename_In_Error_Messages
+     (Parser       : Sax_Reader) return Boolean;
+   --  Indicates whether error messages will include only the base name of
+   --  files, or the full file names. In the latter case, the error message
+   --  itself might be incomplete, since the message attached to an Ada
+   --  exception is limited to 200 characters.
+   --  For backward compatibility, the default is to show full file names.
 
    -------------------------
    -- Recognized features --
@@ -148,8 +184,8 @@ package Sax.Readers is
    --  in the SAX standard.
 
    procedure Warning
-     (Handler : in out Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class);
+     (Handler : in out Sax_Reader;
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is null;
    --  Receive notification of a warning.
    --  This method is used to report conditions that are not errors or fatal
    --  errors.
@@ -158,8 +194,8 @@ package Sax.Readers is
    --  Default action is to do nothing.
 
    procedure Error
-     (Handler : in out Reader;
-      Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
+     (Handler : in out Sax_Reader;
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is null;
    --  Receive notification of a recoverable error.
    --  For example, a validating parser would use this callback to report the
    --  violation of a validity constraint. The default behaviour is to take no
@@ -170,7 +206,7 @@ package Sax.Readers is
    --  Default action is to do nothing.
 
    procedure Fatal_Error
-     (Handler : in out Reader;
+     (Handler : in out Sax_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
    --  Receive notification of a non-recoverable error.
    --  For example, a parser would use this callback to report the violation
@@ -179,6 +215,106 @@ package Sax.Readers is
    --  parser has invoked this method. Thus, a Program_Error will be raised
    --  if your callback returns. You should always raise an exception.
    --  Default action is to raise an exception Fatal_Error;
+
+   ----------------
+   -- Attributes --
+   ----------------
+   --  Although there is a more complete attributes API in the package
+   --  Sax.Attributes, the following types are used for those more efficient
+   --  callbacks. The following attributes do not require any memory allocation
+   --  however they are only valid while the parser has not been destroyed.
+
+   type Sax_Attribute is private;
+   type Sax_Attribute_List is private;
+   --  A lighter weight version of attributes than Attributes,
+   --  based on symbols.
+
+   function Get_Index
+     (List       : Sax_Attribute_List;
+      URI        : Sax.Symbols.Symbol;
+      Local_Name : Sax.Symbols.Symbol) return Integer;
+   function Get_Index
+     (Handler    : Sax_Reader'Class;
+      List       : Sax_Attribute_List;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence) return Integer;
+   --  Return the index of the attribute within the list, or -1 if not found.
+   --  The first version is more efficient. The idea is that the symbols can be
+   --  computed once when the parsing starts, and then reused. They are much
+   --  faster to compare than strings.
+   --  The second version is provided to help transitions.
+   --
+   --  A more efficient approach is to traverse the list of attributes only
+   --  once and store the values in your own record, rather than traverse the
+   --  list of attributes every time you need to access a value:
+   --
+   --     Name : Qualified_Name;
+   --     for J in 1 .. Get_Length (List) loop
+   --        Name := Get_Qualified_Name (List, J);
+   --        if Name.NS = Empty_String and then Name.Local = ... then
+   --           ...;
+   --        elsif ... then
+   --           ...
+   --        end if;
+   --     end loop;
+
+   procedure Set_Value
+     (List  : Sax_Attribute_List;
+      Index : Integer;
+      Val   : Sax.Symbols.Symbol);
+   function Get_Value
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   --  Returns No_Symbol if Index is negative.
+   --  Use  Get (Get_Value (List, Index)).all  to retrive the strings value
+   --  (or in Ada05 dotted notation:  Get_Value (List, Index).Get.all
+
+   function Get_Location
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Locators.Location;
+   --  Return the start location for this attribute
+
+   function Get_Non_Normalized_Value
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   function Get_Value_As_Boolean
+     (List : Sax_Attribute_List; Index : Integer; Default : Boolean := False)
+      return Boolean;
+   pragma Inline (Get_Value, Get_Non_Normalized_Value, Get_Value_As_Boolean);
+   --  Return the value of the corresponding attribute.
+   --  [Default] is returned if the attribute does not exist
+
+   procedure Set_Normalized_Value
+     (List : Sax_Attribute_List; Index : Integer; Value : Sax.Symbols.Symbol);
+   pragma Inline (Set_Normalized_Value);
+   --  Set the normalized value of the attribute
+
+   function Get_Type
+     (List : Sax_Attribute_List; Index : Integer)
+      return Sax.Attributes.Attribute_Type;
+   procedure Set_Type
+     (List : Sax_Attribute_List; Index : Integer;
+      Typ  : Sax.Attributes.Attribute_Type);
+   pragma Inline (Get_Type, Set_Type);
+   --  Return the type of the attribute
+
+   function Get_Length (List : Sax_Attribute_List) return Natural;
+   pragma Inline (Get_Length);
+   --  Return the number of attributes in the list
+
+   type Qualified_Name is record
+      NS    : Sax.Symbols.Symbol;
+      Local : Sax.Symbols.Symbol;
+   end record;
+   No_Qualified_Name : constant Qualified_Name :=
+     (Sax.Symbols.No_Symbol, Sax.Symbols.No_Symbol);
+
+   function Get_Prefix
+     (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol;
+   function Get_Name
+     (List : Sax_Attribute_List; Index : Integer) return Qualified_Name;
+   function Get_Qname
+     (List : Sax_Attribute_List; Index : Integer)
+      return Unicode.CES.Byte_Sequence;  --  Using the prefix
+   pragma Inline (Get_Prefix, Get_Name, Get_QName);
+   --  Return the various name components of the attribute
 
    ----------------------
    -- Content Handlers --
@@ -189,29 +325,36 @@ package Sax.Readers is
    --  otherwise specified.
 
    procedure Set_Document_Locator
-     (Handler : in out Reader;
-      Loc     : access Sax.Locators.Locator'Class);
+     (Handler : in out Sax_Reader; Loc : in out Sax.Locators.Locator) is null;
    --  Receive an object for locating the origin of SAX document events.
    --  SAX parsers are strongly encouraged but not required to give this
    --  information. This callback will always be called before any other.
-   --  This locator is no longer valid after the end of Parse (even if it
-   --  terminated with an exception), unless you explicitely Ref the locator.
+   --  Note that [Loc] is only valid within the call to [Parse], and will be
+   --  free on exit, so should no longer be referenced.
+   --  In practice, this callback (mandated by the standard), is not so very
+   --  useful and direct calls to [Locator] below should be preferred.
 
-   procedure Start_Document (Handler : in out Reader);
+   function Current_Location
+     (Handler : Sax_Reader) return Sax.Locators.Location;
+   pragma Inline (Current_Location);
+   --  Return the current location in the stream (or [No_Location] if parsing
+   --  has finished or not started).
+
+   procedure Start_Document (Handler : in out Sax_Reader) is null;
    --  Receive notification of the beginning of a document.
    --  This callback is called only once by the parser, before any other
    --  function in this interface except Set_Document_Locator.
 
-   procedure End_Document (Handler : in out Reader);
+   procedure End_Document (Handler : in out Sax_Reader) is null;
    --  Receive notification of the end of a document.
    --  This callback will be called only once once it has reached the end of
    --  the input stream. It won't be called if a Fatal_Error is raised, it is
    --  your responsability to call the callback yourself in this case.
 
    procedure Start_Prefix_Mapping
-     (Handler : in out Reader;
-      Prefix  : Unicode.CES.Byte_Sequence;
-      URI     : Unicode.CES.Byte_Sequence);
+     (Handler : in out Sax_Reader;
+      Prefix  : Sax.Symbols.Symbol;
+      URI     : Sax.Symbols.Symbol) is null;
    --  Begin the scope of a prefix-URI mapping.
    --  This callback is not necessarily for normal namespace processing, since
    --  the SAX parser will automatically substitute prefixes for elements and
@@ -222,17 +365,16 @@ package Sax.Readers is
    --  same order (or the reverse one) as Start_Prefix_Mapping.
 
    procedure End_Prefix_Mapping
-     (Handler : in out Reader;
-      Prefix  : Unicode.CES.Byte_Sequence);
+     (Handler : in out Sax_Reader;
+      Prefix  : Sax.Symbols.Symbol) is null;
    --  End the scope of a prefix-URI mapping.
    --  This will always occur after the corresponding End_Element event.
 
    procedure Start_Element
-     (Handler       : in out Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
-      Atts          : Sax.Attributes.Attributes'Class);
+     (Handler    : in out Sax_Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol;
+      Atts       : Sax_Attribute_List) is null;
    --  Receive notification of the beginning of an element.
    --  There will always be a matching call to End_Element, even for empty
    --  elements.
@@ -245,17 +387,22 @@ package Sax.Readers is
    --  The attribute list will only contain attributes with explicit values. It
    --  will contain attributes used for namespace declaration (xmlns*) only if
    --  Namespace_Prefixes_Feature is True.
+   --
+   --  For users of older versions of XML/Ada, the old profile of Start_Element
+   --  is still available if you derive from the "Reader" type (below) instead
+   --  of "Sax_Reader". We do encourage you to transition to the new profiles
+   --  at your convenience, though, because they provide greater efficiency,
+   --  mostly by limiting the number of string comparison and allocations.
 
    procedure End_Element
-     (Handler : in out Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "");
+     (Handler    : in out Sax_Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol) is null;
    --  Receive notification of the end of an element.
 
    procedure Characters
-     (Handler : in out Reader;
-      Ch      : Unicode.CES.Byte_Sequence);
+     (Handler : in out Sax_Reader;
+      Ch      : Unicode.CES.Byte_Sequence) is null;
    --  Receives notification of character data.
    --  XML parsers may return all contiguous character data in a single chunk,
    --  or they may split them into several chunks. However, all of the
@@ -266,8 +413,8 @@ package Sax.Readers is
    --  whitespace between elements using the Ignorable_Whitespace event.
 
    procedure Ignorable_Whitespace
-     (Handler : in out Reader;
-      Ch      : Unicode.CES.Byte_Sequence);
+     (Handler : in out Sax_Reader;
+      Ch      : Unicode.CES.Byte_Sequence) is null;
    --  Receive notification of ignorable whitespace in element content (ie
    --  for elements whose xml:space attribute is not set to 'preserve', see
    --  XML specifications 2.10)
@@ -277,17 +424,17 @@ package Sax.Readers is
    --  they may split it into several chunks.
 
    procedure Processing_Instruction
-     (Handler : in out Reader;
+     (Handler : in out Sax_Reader;
       Target  : Unicode.CES.Byte_Sequence;
-      Data    : Unicode.CES.Byte_Sequence);
+      Data    : Unicode.CES.Byte_Sequence) is null;
    --  Receive notification of a processing instruction.
    --  A SAX parser must never report an XML declaration (<?xml..?>, 2.8 in
    --  XML specifications) or a text declaration (<?xml?>, 4.3.1 in XML
    --  specifications) using this method.
 
    procedure Skipped_Entity
-     (Handler : in out Reader;
-      Name    : Unicode.CES.Byte_Sequence);
+     (Handler : in out Sax_Reader;
+      Name    : Sax.Symbols.Symbol) is null;
    --  Receive notification of a skipped entity.
    --  The Parser will invoke this method once for each entity
    --  skipped. Non-validating processors may skip entities if they have not
@@ -307,18 +454,18 @@ package Sax.Readers is
    --  in the SAX standard.
 
    procedure Unparsed_Entity_Decl
-     (Handler       : in out Reader;
+     (Handler       : in out Sax_Reader;
       Name          : Unicode.CES.Byte_Sequence;
       System_Id     : Unicode.CES.Byte_Sequence;
-      Notation_Name : Unicode.CES.Byte_Sequence);
+      Notation_Name : Unicode.CES.Byte_Sequence) is null;
    --  Receive notification of an unparsed entity declaration event.
    --  This is for entities like  "<!ENTITY foo SYSTEM ".." NDATA gif>"
 
    procedure Notation_Decl
-     (Handler       : in out Reader;
+     (Handler       : in out Sax_Reader;
       Name          : Unicode.CES.Byte_Sequence;
       Public_Id     : Unicode.CES.Byte_Sequence;
-      System_Id     : Unicode.CES.Byte_Sequence);
+      System_Id     : Unicode.CES.Byte_Sequence) is null;
    --  Receive notification of a notation declaration event.
    --  At least one of publicId and systemId must be non-null. If a system
    --  identifier is present, and it is a URL, the SAX parser must resolve it
@@ -333,7 +480,7 @@ package Sax.Readers is
    --  in the SAX standard.
 
    function Resolve_Entity
-     (Handler   : Reader;
+     (Handler   : Sax_Reader;
       Public_Id : Unicode.CES.Byte_Sequence;
       System_Id : Unicode.CES.Byte_Sequence)
       return Input_Sources.Input_Source_Access;
@@ -374,34 +521,35 @@ package Sax.Readers is
    --  subprograms.
 
    procedure Comment
-     (Handler : in out Reader; Ch : Unicode.CES.Byte_Sequence);
+     (Handler : in out Sax_Reader; Ch : Unicode.CES.Byte_Sequence) is null;
    --  Report an XML comment anywhere in the document.
    --  Default behavior is to do nothing.
 
-   procedure Start_Cdata (Handler : in out Reader);
+   procedure Start_Cdata (Handler : in out Sax_Reader) is null;
    --  Report the start of a CData section.
    --  The content of the section is reported through the usual Characters
    --  event, this only acts as the boundary.
 
-   procedure End_Cdata (Handler : in out Reader);
+   procedure End_Cdata (Handler : in out Sax_Reader) is null;
    --  Report the end of a CData section
 
    procedure Start_Entity
-     (Handler : in out Reader; Name : Unicode.CES.Byte_Sequence);
+     (Handler : in out Sax_Reader;
+      Name    : Sax.Symbols.Symbol) is null;
    --  Report the beginning of some internal and external XML entities.
    --  Check the feature Parameter_Entities_Feature to know if the handler
    --  will report these events.
 
    procedure End_Entity
-     (Handler : in out Reader;
-      Name    : Unicode.CES.Byte_Sequence);
+     (Handler : in out Sax_Reader;
+      Name    : Sax.Symbols.Symbol) is null;
    --  Report the end of an entity
 
    procedure Start_DTD
-     (Handler   : in out Reader;
+     (Handler   : in out Sax_Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence := "";
-      System_Id : Unicode.CES.Byte_Sequence := "");
+      System_Id : Unicode.CES.Byte_Sequence := "") is null;
    --  Report the start of DTD declarations, if any.
    --  All events reported to a Decl_Handler are reported between a Start_DTD
    --  and an End_DTD event.
@@ -411,7 +559,7 @@ package Sax.Readers is
    --  appear between a Start_Entity and End_Entity events (with "[dtd]" for
    --  the name).
 
-   procedure End_DTD (Handler : in out Reader);
+   procedure End_DTD (Handler : in out Sax_Reader) is null;
    --  Report the end of a DTD section
 
    ------------------
@@ -422,9 +570,9 @@ package Sax.Readers is
    --  but rather part of the extension for it.
 
    procedure Internal_Entity_Decl
-     (Handler : in out Reader;
+     (Handler : in out Sax_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Value   : Unicode.CES.Byte_Sequence);
+      Value   : Unicode.CES.Byte_Sequence) is null;
    --  Report an internal entity declaration.
    --  This is for <!ENTITY...> notations in the DTD, where the value is
    --  specified directly as a string.
@@ -434,17 +582,17 @@ package Sax.Readers is
    --  For Parameter entities, Name will start with '%'
 
    procedure External_Entity_Decl
-     (Handler   : in out Reader;
+     (Handler   : in out Sax_Reader;
       Name      : Unicode.CES.Byte_Sequence;
       Public_Id : Unicode.CES.Byte_Sequence;
-      System_Id : Unicode.CES.Byte_Sequence);
+      System_Id : Unicode.CES.Byte_Sequence) is null;
    --  Report a parsed external entity declaration, ie when their value is
    --  not defined as a string.
 
    procedure Element_Decl
-     (Handler : in out Reader;
+     (Handler : in out Sax_Reader;
       Name    : Unicode.CES.Byte_Sequence;
-      Model   : Sax.Models.Content_Model);
+      Model   : Sax.Models.Content_Model) is null;
    --  Report an element type declaration.
    --  Model represents the content model for this element. If you need to keep
    --  a copy of it, you must Ref it, and Unref it when you no longer need the
@@ -454,13 +602,13 @@ package Sax.Readers is
    --  parentheses.
 
    procedure Attribute_Decl
-     (Handler : in out Reader;
-      Ename   : Unicode.CES.Byte_Sequence;
-      Aname   : Unicode.CES.Byte_Sequence;
-      Typ     : Sax.Attributes.Attribute_Type;
-      Content : Sax.Models.Content_Model;
+     (Handler       : in out Sax_Reader;
+      Ename         : Unicode.CES.Byte_Sequence;
+      Aname         : Unicode.CES.Byte_Sequence;
+      Typ           : Sax.Attributes.Attribute_Type;
+      Content       : Sax.Models.Content_Model;
       Value_Default : Sax.Attributes.Default_Declaration;
-      Value   : Unicode.CES.Byte_Sequence);
+      Value         : Unicode.CES.Byte_Sequence) is null;
    --  Report an attribute type declaration.
    --  Only the first declaration for an attribute will be reported.
    --  If Typ is Notation or Enumeration, then Content will contain the
@@ -499,79 +647,181 @@ package Sax.Readers is
    procedure Free (Data : in out Hook_Data) is abstract;
    --  Free the memory associated with the data
 
+   type Element is private;
+   type Element_Access is access Element;
+
+   function To_QName
+     (Namespace_URI, Local_Name : Sax.Symbols.Symbol)
+      return Unicode.CES.Byte_Sequence;
+   function To_QName
+     (Elem   : Element_Access) return Unicode.CES.Byte_Sequence;
+   --  Return the qualified name "{namespace_uri}local_name"
+
+   function Start_Tag_Location
+     (Elem : Element_Access) return Sax.Locators.Location;
+   function Start_Tag_End_Location
+     (Elem : Element_Access) return Sax.Locators.Location;
+   --  The location for the start of the element (start tag and end tag).
+
+   function Get_NS (Elem : Element_Access) return XML_NS;
+   function Get_Local_Name (Elem : Element_Access) return Sax.Symbols.Symbol;
+   pragma Inline (Get_NS, Get_Local_Name);
+   --  Return the name and local name of the element
+
+   procedure Initialize_Symbols (Parser : in out Sax_Reader);
+   --  Initialize the symbol table with some predefined symbols
+
+   function Find_Symbol
+     (Parser : Sax_Reader'Class;
+      Str    : Unicode.CES.Byte_Sequence) return Sax.Symbols.Symbol;
+   function Get_Symbol_Table (Parser : Sax_Reader'Class) return Symbol_Table;
+   --  Manipulation of symbols
+
+   procedure Find_NS
+     (Parser             : Sax_Reader'Class;
+      Prefix             : Sax.Symbols.Symbol;
+      NS                 : out XML_NS;
+      Include_Default_NS : Boolean := True);
+   --  Search the namespace associated with a given prefix in the scope of
+   --  Elem or its parents. Use the empty string to get the default namespace.
+   --  Fatal_Error is raised if no such namespace was found (and null is
+   --  returned, in case Fatal_Error didn't raise an exception)
+   --  The default namespace is not resolved if Include_Default_NS is False.
+   --  Returns No_XML_NS if the namespace is not defined
+
+   procedure Find_NS_From_URI
+     (Parser             : in out Sax_Reader'Class;
+      URI                : Sax.Symbols.Symbol;
+      NS                 : out XML_NS);
+   --  Return the XML_NS for URI. There could be several, and the most recent
+   --  one is returned (that is with the prefix that was defined last in the
+   --  current context.
+   --  Returns No_XML_NS if the namespace is not defined
+
    type Start_Element_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Qname         : Unicode.CES.Byte_Sequence;
-      Atts          : in out Sax.Attributes.Attributes'Class);
+     (Handler : access Sax_Reader'Class;
+      Element : Element_Access;
+      Atts    : in out Sax_Attribute_List);
    --  This hook should take the opportunity of normalizing attribute values
    --  if necessary (basic normalization is already done by the SAX parser,
    --  but based on information extracted from schemas, further normalization
    --  might be needed).
+   --  The list of attributes Atts has not been checked, and thus some of the
+   --  attributes might have wrong values, or some attributes might be missing.
+   --  This hook is really intended for validating parsers to do their own
+   --  checks in any case. Standard applications should override Start_Element.
 
    type End_Element_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Qname         : Unicode.CES.Byte_Sequence);
+     (Handler : access Sax_Reader'Class; Elem : Element_Access);
    type Characters_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Ch            : Unicode.CES.Byte_Sequence);
+     (Handler : access Sax_Reader'Class; Ch : Unicode.CES.Byte_Sequence);
    type Whitespace_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Ch            : Unicode.CES.Byte_Sequence);
-   type Start_Prefix_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Prefix        : Unicode.CES.Byte_Sequence;
-      URI           : Unicode.CES.Byte_Sequence);
-   type End_Prefix_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Prefix        : Unicode.CES.Byte_Sequence);
+     (Handler : access Sax_Reader'Class; Ch : Unicode.CES.Byte_Sequence);
    type Set_Doc_Locator_Hook is access procedure
-     (Handler       : in out Reader'Class;
-      Loc           : access Sax.Locators.Locator'Class);
+     (Handler : in out Sax_Reader'Class;
+      Loc     : in out Sax.Locators.Locator);
+   type Notation_Decl_Hook is access procedure
+     (Handler   : access Sax_Reader'Class;
+      Name      : Unicode.CES.Byte_Sequence;
+      Public_Id : Unicode.CES.Byte_Sequence;
+      System_Id : Unicode.CES.Byte_Sequence);
 
-   type Get_Error_Location_Hook is access function
-     (Handler       : Reader'Class) return Sax.Locators.Locator_Impl_Access;
-   --  Return the location that should be used when raising an exception.
-   --  It should return null if the default location (ie the one corresponding
-   --  to the curernt position in the stream) should be used
-
-   function Get_Hooks_Data (Handler : Reader) return Hook_Data_Access;
+   function Get_Hooks_Data (Handler : Sax_Reader) return Hook_Data_Access;
    --  Return the hook data that was set through Set_Hooks. This could be null
 
    procedure Set_Hooks
-     (Handler        : in out Reader;
-      Data           : Hook_Data_Access     := null;
-      Start_Element  : Start_Element_Hook   := null;
-      End_Element    : End_Element_Hook     := null;
-      Characters     : Characters_Hook      := null;
-      Whitespace     : Whitespace_Hook      := null;
-      Start_Prefix   : Start_Prefix_Hook    := null;
-      End_Prefix     : End_Prefix_Hook      := null;
-      Doc_Locator    : Set_Doc_Locator_Hook := null;
-      Error_Location : Get_Error_Location_Hook := null);
+     (Handler       : in out Sax_Reader;
+      Data          : Hook_Data_Access     := null;
+      Start_Element : Start_Element_Hook   := null;
+      End_Element   : End_Element_Hook     := null;
+      Characters    : Characters_Hook      := null;
+      Whitespace    : Whitespace_Hook      := null;
+      Doc_Locator   : Set_Doc_Locator_Hook := null;
+      Notation_Decl : Notation_Decl_Hook   := null);
    --  Set a list of hooks to be called before calling the usual primitive
    --  operations. These override hooks that were defined previously.
    --  Data will be passed to each of the hook. It is automatically
    --  deallocated when no longer needed by the parser (ie the next call to
    --  Set_Hooks or when the parser itself is freed).
 
-   procedure Error (Parser : in out Reader'Class; Msg : String);
+   procedure Error (Parser : in out Sax_Reader'Class; Msg : String);
    --  Raises an error
 
+   ------------
+   -- Reader --
+   ------------
+
+   type Reader is new Sax_Reader with private;
+   type Reader_Access is access all Reader'Class;
+   --  This is the old type that was provided by this package
+
+   procedure Start_Prefix_Mapping
+     (Handler : in out Reader;
+      Prefix  : Unicode.CES.Byte_Sequence;
+      URI     : Unicode.CES.Byte_Sequence) is null;
+   procedure End_Prefix_Mapping
+     (Handler : in out Reader;
+      Prefix  : Unicode.CES.Byte_Sequence) is null;
+   procedure Start_Element
+     (Handler       : in out Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence := "";
+      Local_Name    : Unicode.CES.Byte_Sequence := "";
+      Qname         : Unicode.CES.Byte_Sequence := "";
+      Atts          : Sax.Attributes.Attributes'Class) is null;
+   procedure End_Element
+     (Handler       : in out Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence := "";
+      Local_Name    : Unicode.CES.Byte_Sequence := "";
+      Qname         : Unicode.CES.Byte_Sequence := "") is null;
+   procedure Skipped_Entity
+     (Handler : in out Reader;
+      Name    : Unicode.CES.Byte_Sequence) is null;
+   procedure Start_Entity
+     (Handler : in out Reader;
+      Name    : Unicode.CES.Byte_Sequence) is null;
+   procedure End_Entity
+     (Handler : in out Reader;
+      Name    : Unicode.CES.Byte_Sequence) is null;
+   --  See documentation for similarly named callbacks for Sax_Reader.
+   --  These subprograms require extra processing and are less efficient than
+   --  the above subprograms
+
+   overriding procedure Start_Prefix_Mapping
+     (Handler : in out Reader;
+      Prefix  : Sax.Symbols.Symbol;
+      URI     : Sax.Symbols.Symbol);
+   overriding procedure End_Prefix_Mapping
+     (Handler : in out Reader; Prefix : Sax.Symbols.Symbol);
+   overriding procedure Start_Element
+     (Handler    : in out Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol;
+      Atts       : Sax_Attribute_List);
+   overriding procedure End_Element
+     (Handler    : in out Reader;
+      NS         : Sax.Utils.XML_NS;
+      Local_Name : Sax.Symbols.Symbol);
+   overriding procedure Skipped_Entity
+     (Handler : in out Reader;
+      Name    : Sax.Symbols.Symbol);
+   overriding procedure Start_Entity
+     (Handler : in out Reader;
+      Name    : Sax.Symbols.Symbol);
+   overriding procedure End_Entity
+     (Handler : in out Reader;
+      Name    : Sax.Symbols.Symbol);
+   --  See inherited documentation
+
 private
+
    type Parser_Hooks is record
-      Data           : Hook_Data_Access     := null;
-      Start_Element  : Start_Element_Hook   := null;
-      End_Element    : End_Element_Hook     := null;
-      Characters     : Characters_Hook      := null;
-      Whitespace     : Whitespace_Hook      := null;
-      Start_Prefix   : Start_Prefix_Hook    := null;
-      End_Prefix     : End_Prefix_Hook      := null;
-      Doc_Locator    : Set_Doc_Locator_Hook := null;
-      Error_Location : Get_Error_Location_Hook := null;
+      Data          : Hook_Data_Access     := null;
+      Start_Element : Start_Element_Hook   := null;
+      End_Element   : End_Element_Hook     := null;
+      Characters    : Characters_Hook      := null;
+      Whitespace    : Whitespace_Hook      := null;
+      Doc_Locator   : Set_Doc_Locator_Hook := null;
+      Notation_Decl : Notation_Decl_Hook   := null;
    end record;
 
    Entities_Table_Size : constant := 50;
@@ -594,9 +844,9 @@ private
    --  substitution ourselves.
 
    type Entity_Entry is record
-      Name         : Unicode.CES.Byte_Sequence_Access;
-      Value        : Unicode.CES.Byte_Sequence_Access;
-      Public       : Unicode.CES.Byte_Sequence_Access;
+      Name         : Sax.Symbols.Symbol;
+      Value        : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Public       : Sax.Symbols.Symbol;
 
       External     : Boolean;
       --  Whether the entity references an external document
@@ -613,24 +863,25 @@ private
    end record;
    type Entity_Entry_Access is access Entity_Entry;
 
-   procedure Free (Entity : in out Entity_Entry_Access);
-   function Get_Key (Entity : Entity_Entry_Access) return String;
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Entity_Entry, Entity_Entry_Access);
+   function Get_Key (Entity : Entity_Entry_Access) return Sax.Symbols.Symbol;
 
    package Entity_Table is new Sax.HTable
      (Element       => Entity_Entry_Access,
       Empty_Element => null,
       Free          => Free,
-      Key           => String,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => Standard."=");
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
 
    type Entity_Input_Source;
    type Entity_Input_Source_Access is access Entity_Input_Source;
    type Entity_Input_Source is record
       External : Boolean;
       Next  : Entity_Input_Source_Access;
-      Name  : Unicode.CES.Byte_Sequence_Access;
+      Name  : Sax.Symbols.Symbol;
       --  Name of the entity
 
       Handle_Strings : Boolean := True;
@@ -638,11 +889,12 @@ private
       --  This is used so that a string started in one stream isn't terminated
       --  in another entity or stream.
 
-      Id : Natural;
-      --  Uniq ID for each input source
+      System_Id : Sax.Symbols.Symbol;
+      Public_Id : Sax.Symbols.Symbol;
+      --  Uniq System_Id for each input source
 
       Input    : Input_Sources.Input_Source_Access;
-      Save_Loc : Sax.Locators.Locator_Impl;
+      Save_Loc : Sax.Locators.Location;
    end record;
 
    type Parser_State is record
@@ -705,75 +957,106 @@ private
       --  True if Opening_Parenthesis should be reported separately
    end record;
 
-   type XML_NS_Record;
-   type XML_NS is access XML_NS_Record;
-   type XML_NS_Record is record
-      Prefix : Unicode.CES.Byte_Sequence_Access;
-      URI    : Unicode.CES.Byte_Sequence_Access;
-      Next   : XML_NS;
-   end record;
-
-   type Element;
-   type Element_Access is access Element;
    type Element is record
-      NS             : Unicode.CES.Byte_Sequence_Access;
-      Name           : Unicode.CES.Byte_Sequence_Access;
+      NS             : XML_NS;
+      Name           : Sax.Symbols.Symbol;
       Parent         : Element_Access;
-      Start_Line     : Natural;
-      Start_Id       : Natural;
-      --  Id of the Input source for the start tag. End tag must end on the
-      --  same entity.
+      Start          : Sax.Locators.Location;  --  Start tag location
+      Start_Tag_End  : Sax.Locators.Location := Sax.Locators.No_Location;
+      --  Character after start tag (ie first char of content)
       Namespaces     : XML_NS;
       --  Namespaces defined for that element and its children
    end record;
 
-   type Attributes_Ptr is access all Sax.Attributes.Attributes'Class;
-   type Attributes_Entry is record
-      Element_Name : Unicode.CES.Byte_Sequence_Access;
-      Attributes   : Attributes_Ptr;
+   type Sax_Attribute is record
+      Prefix       : Sax.Symbols.Symbol;
+      Local_Name   : Sax.Symbols.Symbol;
+      Value        : Sax.Symbols.Symbol;
+      Non_Normalized_Value : Sax.Symbols.Symbol;
+      NS           : Sax.Utils.XML_NS := Sax.Utils.No_XML_NS;
+      Att_Type     : Sax.Attributes.Attribute_Type := Sax.Attributes.Cdata;
+      Default_Decl : Sax.Attributes.Default_Declaration :=
+        Sax.Attributes.Default;
+      Location     : Sax.Locators.Location;  --  Where the declaration occurred
    end record;
-   Null_Attribute : constant Attributes_Entry := (null, null);
+   --  An attribute as read in the XML stream. This is used to temporarily
+   --  store the list of attributes until we have parsed all the namespace
+   --  declarations, after which a regular list of attributes is created.
+
+   type Sax_Attribute_Array is array (Natural range <>) of Sax_Attribute;
+   type Sax_Attribute_Array_Access is access all Sax_Attribute_Array;
+   --  A list of attributes.
+
+   type Sax_Attribute_List is record
+      Count : Natural := 0;
+      List  : Sax_Attribute_Array_Access;
+   end record;
+
+   type Attributes_Entry is record
+      Element_Name : Sax.Symbols.Symbol;
+      Attributes   : Sax_Attribute_Array_Access;
+   end record;
+   Null_Attribute : constant Attributes_Entry := (Sax.Symbols.No_Symbol, null);
 
    procedure Free (Att : in out Attributes_Entry);
-   function Get_Key (Att : Attributes_Entry) return String;
+   function Get_Key (Att : Attributes_Entry) return Sax.Symbols.Symbol;
 
    package Attributes_Table is new Sax.HTable
      (Element       => Attributes_Entry,
       Empty_Element => Null_Attribute,
       Free          => Free,
-      Key           => String,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => Standard."=");
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
 
    type Notation_Entry is record
-      Name             : Unicode.CES.Byte_Sequence_Access;
+      Name             : Sax.Symbols.Symbol;
       Declaration_Seen : Boolean;
    end record;
-   Null_Notation : constant Notation_Entry := (null, False);
+   Null_Notation : constant Notation_Entry := (Sax.Symbols.No_Symbol, False);
 
    procedure Free (Notation : in out Notation_Entry);
-   function Get_Key (Notation : Notation_Entry) return String;
+   function Get_Key (Notation : Notation_Entry) return Sax.Symbols.Symbol;
 
    package Notations_Table is new Sax.HTable
      (Element       => Notation_Entry,
       Empty_Element => Null_Notation,
       Free          => Free,
-      Key           => String,
+      Key           => Sax.Symbols.Symbol,
       Get_Key       => Get_Key,
-      Hash          => Hash,
-      Equal         => Standard."=");
+      Hash          => Sax.Symbols.Hash,
+      Equal         => Sax.Symbols."=");
    --  For notations, we simply store whether they have been defined or not,
    --  and then only for validating parsers
 
-   type XML_Versions is (XML_1_0, XML_1_1);
-
-   type Reader is tagged record
+   type Sax_Reader is tagged record
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
 
-      Locator       : Sax.Locators.Locator_Impl_Access;
+      Attributes       : Sax_Attribute_List;
+      --  List of attributes for the current element. This array is to limit
+      --  the number of memory allocations, by reusing it for each element.
+
+      Locator       : Sax.Locators.Locator;
       Current_Node  : Element_Access;
+
+      Public_Id     : Sax.Symbols.Symbol;
+      System_Id     : Sax.Symbols.Symbol;
+      --  The initial file we were parsing.
+
+      Symbols        : Symbol_Table;
+      Lt_Sequence    : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+      Gt_Sequence    : Sax.Symbols.Symbol;
+      Amp_Sequence   : Sax.Symbols.Symbol;
+      Apos_Sequence  : Sax.Symbols.Symbol;
+      Quot_Sequence  : Sax.Symbols.Symbol;
+      Xmlns_Sequence : Sax.Symbols.Symbol;
+      Namespaces_URI_Sequence : Sax.Symbols.Symbol;
+      Xml_Sequence            : Sax.Symbols.Symbol;
+      Symbol_Percent   : Sax.Symbols.Symbol;
+      Symbol_Ampersand : Sax.Symbols.Symbol;
+      --  The symbol table, and a few predefined symbols
 
       Inputs        : Entity_Input_Source_Access;
       --  Entities and parameter entities are processed inline (if we
@@ -798,7 +1081,7 @@ private
 
       Entities : Entity_Table.HTable (Entities_Table_Size);
 
-      DTD_Name : Unicode.CES.Byte_Sequence_Access;
+      DTD_Name : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
       --  Name of the DTD, and also name of the root element (in case we have
       --  a validating parser). This is left to null for non-validating
       --  parsers.
@@ -816,11 +1099,15 @@ private
       Hooks  : Parser_Hooks;
       --  Hooks to be called before the primitive operations
 
-      XML_Version   : XML_Versions := XML_1_0;
+      XML_Version   : XML_Versions := XML_1_0_Fifth_Edition;
 
       Standalone_Document : Boolean := False;
       --  Whether the document is specified as "standalone" in the XML
       --  prolog
+
+      Lookup_Char  : Unicode.Unicode_Char := Unicode.Unicode_Char'Last;
+      --  We can have a single forward lookup character, which is used to speed
+      --  the parsing.
 
       Last_Read     : Unicode.Unicode_Char;
       Last_Read_Is_Valid : Boolean := True;
@@ -844,13 +1131,20 @@ private
       --  to Next_Token. This is used for handling of special characters
       --  withing strings.
 
+      Basename_In_Messages : Boolean := False;
+      --  If True, error messages are output with simple basenames for the
+      --  files. This is required in a lot of cases because the message
+      --  attached to an Ada exception is limited to 200 characters.
+
       Feature_Namespace                   : Boolean := True;
       Feature_Namespace_Prefixes          : Boolean := False;
       Feature_External_General_Entities   : Boolean := True;
       Feature_External_Parameter_Entities : Boolean := True;
       Feature_Validation                  : Boolean := False;
       Feature_Test_Valid_Chars            : Boolean := False;
-      Feature_Schema_Validation           : Boolean := False;
+      Feature_Schema_Validation           : Boolean := True;
    end record;
+
+   type Reader is new Sax_Reader with null record;
 
 end Sax.Readers;

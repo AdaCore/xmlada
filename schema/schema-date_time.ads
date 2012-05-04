@@ -1,3 +1,25 @@
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2005-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
 --  This package provides handling for the various time-related types found
 --  in the XML schema standard.
@@ -5,14 +27,15 @@
 --
 --  We cannot use the standard Ada types to represent dates, since the range of
 --  dates supported by XML is much broader (any year should be manageable),
---  whic isn't provided by Ada.
+--  which isn't supported directly by Ada.
 --
 --  These types also handle timezones, which means that sometimes two dates
 --  might not be comparable if we do not know the timezone of one of them. The
 --  precise semantics of the comparison of dates is defined in the XML Schema
 --  standard part 3.
 
-with Ada.Calendar;
+with Sax.Symbols; use Sax.Symbols;
+with Sax.Utils;   use Sax.Utils;
 
 package Schema.Date_Time is
 
@@ -25,6 +48,16 @@ package Schema.Date_Time is
    type GMonth_T      is private;  --  A month, with timezone
    type GYear_T       is private;  --  A year, with timezone
    type GYear_Month_T is private;  --  A year/month combination, with timezone
+
+   No_Time_T     : constant Time_T;
+   No_Duration   : constant Duration_T;
+   No_Date_Time  : constant Date_Time_T;
+   No_Date_T     : constant Date_T;
+   No_GDay       : constant GDay_T;
+   No_Month_Day  : constant GMonth_Day_T;
+   No_Month      : constant GMonth_T;
+   No_Year       : constant GYear_T;
+   No_Year_Month : constant GYear_Month_T;
 
    function Image (Date : Date_Time_T) return String;
    --  Return the string representation of Date, as defined in the XML
@@ -44,22 +77,74 @@ package Schema.Date_Time is
    function Image (Month : GYear_Month_T) return String;
    --  Return the string representation of the argument
 
-   function Value (Ch : String) return Duration_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out Duration_T;
+      Error   : out Symbol);
    --  Return the duration stored in Ch. It should contain a string of the
    --  type "PyyyyYmmM".
 
-   function Value (Ch : String) return Date_Time_T;
+   subtype Day_Duration is Duration range 0.0 .. 86_400.0;
+
+   function Sign    (Duration : Duration_T) return Integer;
+   function Year    (Duration : Duration_T) return Natural;
+   function Month   (Duration : Duration_T) return Natural;
+   function Day     (Duration : Duration_T) return Natural;
+   function Seconds (Duration : Duration_T) return Day_Duration;
+   --  Return the components of the duration. In general, you do not need to
+   --  use this directly, and can instead use the "+" operator below to
+   --  add it directly to a date.
+
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out Date_Time_T;
+      Error   : out Symbol);
    --  Return the date stored in Ch. It should contain a string with the format
    --      yyyy-mm-ddThh:mm:ss.sss+tz:tz
    --  Any number of digits is supported for the date and the subseconds field
 
-   function Value (Ch : String) return Time_T;
-   function Value (Ch : String) return GDay_T;
-   function Value (Ch : String) return GMonth_Day_T;
-   function Value (Ch : String) return GMonth_T;
-   function Value (Ch : String) return GYear_T;
-   function Value (Ch : String) return GYear_Month_T;
-   function Value (Ch : String) return Date_T;
+   function Year (Date : Date_Time_T) return Integer;
+   function Month (Date : Date_Time_T) return Natural;
+   function Day (Date : Date_Time_T) return Natural;
+   --  Return the components of Date
+
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out Time_T;
+      Error   : out Symbol);
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GDay_T;
+      Error   : out Symbol);
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GMonth_Day_T;
+      Error   : out Symbol);
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GYear_T;
+      Error   : out Symbol);
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GMonth_T;
+      Error   : out Symbol);
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GYear_Month_T;
+      Error   : out Symbol);
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out Date_T;
+      Error   : out Symbol);
    --  Return the date stored in Ch. The format of the string is specified in
    --  the XML Schema specifications
 
@@ -193,7 +278,7 @@ private
    type Duration_T is record
       Sign             : Integer;
       Year, Month, Day : Natural;
-      Seconds          : Ada.Calendar.Day_Duration;
+      Seconds          : Duration;
    end record;
    No_Duration : constant Duration_T := (1, 0, 0, 0, 0.0);
    --  A negative duration is representated by having all fields to a negative

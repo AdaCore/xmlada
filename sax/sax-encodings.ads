@@ -1,3 +1,26 @@
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2002-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
+
 with Unicode.CES.Utf8;
 with Unicode.CES.Utf32;
 use Unicode.CES;
@@ -76,6 +99,8 @@ package Sax.Encodings is
    Xml_Sequence           : constant Byte_Sequence := "xml";
    Xmlns_Sequence         : constant Byte_Sequence := "xmlns";
    Yes_Sequence           : constant Byte_Sequence := "yes";
+   True_Sequence          : constant Byte_Sequence := "true";
+   False_Sequence         : constant Byte_Sequence := "false";
    Vertical_Line_Sequence : constant Byte_Sequence := "|";
    Comma_Sequence         : constant Byte_Sequence := ",";
    Closing_Parenthesis_Sequence : constant Byte_Sequence := ")";

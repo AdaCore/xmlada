@@ -3,9 +3,12 @@ with "../../input_sources/input_sources";
 with "../../shared";
 
 project Schema_Test is
-  for Main use ("testschema.adb", "test_date_time.adb", "testnumbers.adb", "testdomschema.adb");
+  for Main use ("testschema.adb", "test_date_time.adb", "testnumbers.adb", "testdomschema.adb", "schematest.adb", "cleanup_schema.adb");
   package Builder  renames Shared.Builder;
-  package Compiler renames Shared.Compiler;
+  package Compiler is
+     for Switches ("Ada") use
+        Shared.Compiler'Switches ("Ada") & ("-gnat05");
+  end Compiler;
   package Binder   renames Shared.Binder;
-  package Linker   renames Shared.Linker;
+  package Linker renames Shared.Linker;
 end Schema_Test;

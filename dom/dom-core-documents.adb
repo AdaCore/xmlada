@@ -1,37 +1,33 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
 with DOM.Core.Nodes;            use DOM.Core.Nodes;
 with DOM.Core.Elements;         use DOM.Core.Elements;
+with Sax.Symbols;               use Sax.Symbols;
+with Sax.Utils;                 use Sax.Utils;
 
 package body DOM.Core.Documents is
-   use Nodes_Htable;
+   use Nodes_Htable, Symbol_Table_Pointers;
 
    --------------
    -- Doc_Type --
@@ -80,7 +76,8 @@ package body DOM.Core.Documents is
         (Node_Type  => Element_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Name       => From_Qualified_Name (Doc, Tag_Name, null),
+         Name       => From_Qualified_Name
+           (Doc, Doc.Symbols, Find (Doc.Symbols, Tag_Name)),
          Children   => Null_List,
          Attributes => Null_Node_Map);
    end Create_Element;
@@ -99,9 +96,44 @@ package body DOM.Core.Documents is
          Parent          => Doc,
          Parent_Is_Owner => True,
          Name       => From_Qualified_Name
-           (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
+           (Doc,
+            Doc.Symbols,
+            Find (Doc.Symbols, Qualified_Name),
+            Find (Doc.Symbols, Namespace_URI)),
          Children   => Null_List,
          Attributes => Null_Node_Map);
+   end Create_Element_NS;
+
+   -----------------------
+   -- Create_Element_NS --
+   -----------------------
+
+   function Create_Element_NS
+     (Doc            : Document;
+      Symbols        : Sax.Utils.Symbol_Table;
+      Namespace_URI  : Sax.Symbols.Symbol;
+      Prefix         : Sax.Symbols.Symbol;
+      Local_Name     : Sax.Symbols.Symbol) return Element
+   is
+      Name : Node_Name_Def;
+   begin
+      if Symbols = Doc.Symbols then
+         Name := (Local_Name => Local_Name,
+                  Prefix     => Prefix,
+                  Namespace  => Namespace_URI);
+      else
+         Name := (Local_Name => Convert (Doc.Symbols, Local_Name),
+                  Prefix     => Convert (Doc.Symbols, Prefix),
+                  Namespace  => Convert (Doc.Symbols, Namespace_URI));
+      end if;
+
+      return new Node_Record'
+        (Node_Type       => Element_Node,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
+         Name            => Name,
+         Children        => Null_List,
+         Attributes      => Null_Node_Map);
    end Create_Element_NS;
 
    ------------------------------
@@ -126,10 +158,20 @@ package body DOM.Core.Documents is
       return Text is
    begin
       return new Node_Record'
-        (Node_Type => Text_Node,
+        (Node_Type       => Text_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Text      => new DOM_String'(Data));
+         Text            => new DOM_String'(Data));
+   end Create_Text_Node;
+
+   function Create_Text_Node (Doc : Document; Data : DOM_String_Access)
+      return Text is
+   begin
+      return new Node_Record'
+        (Node_Type       => Text_Node,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
+         Text            => Data);
    end Create_Text_Node;
 
    --------------------
@@ -172,11 +214,13 @@ package body DOM.Core.Documents is
       --  ??? Test for Invalid_Character_Err
       --  ??? Must raise Not_Supported_Err for HTML documents
       return new Node_Record'
-        (Node_Type => Processing_Instruction_Node,
+        (Node_Type       => Processing_Instruction_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Target    => new DOM_String'(Target),
-         Pi_Data   => new DOM_String'(Data));
+         Target          => Find
+           (Symbol_Table_Pointers.Get (Doc.Symbols), Target),
+         Pi_Data         => Find
+           (Symbol_Table_Pointers.Get (Doc.Symbols), Data));
    end Create_Processing_Instruction;
 
    ----------------------
@@ -194,8 +238,9 @@ package body DOM.Core.Documents is
          Specified       => False,
          Owner_Element   => Doc,
          Is_Id           => False,
-         Attr_Name       => From_Qualified_Name (Doc, Name, null),
-         Attr_Value      => null);
+         Attr_Name       => From_Qualified_Name
+           (Doc, Doc.Symbols, Find (Doc.Symbols, Name)),
+         Attr_Value      => No_Symbol);
    end Create_Attribute;
 
    -------------------------
@@ -215,8 +260,44 @@ package body DOM.Core.Documents is
          Owner_Element   => Doc,
          Is_Id           => False,
          Attr_Name       => From_Qualified_Name
-           (Doc, Qualified_Name, Internalize_String (Doc, Namespace_URI)),
-         Attr_Value      => null);
+           (Doc, Doc.Symbols,
+            Find (Doc.Symbols, Qualified_Name),
+            Find (Doc.Symbols, Namespace_URI)),
+         Attr_Value      => No_Symbol);
+   end Create_Attribute_NS;
+
+   -------------------------
+   -- Create_Attribute_NS --
+   -------------------------
+
+   function Create_Attribute_NS
+     (Doc           : Document;
+      Symbols       : Symbol_Table;
+      Namespace_URI : Sax.Symbols.Symbol;
+      Prefix        : Sax.Symbols.Symbol;
+      Local_Name    : Sax.Symbols.Symbol) return Attr
+   is
+      Name : Node_Name_Def;
+   begin
+      if Symbols = Doc.Symbols then
+         Name := (Local_Name => Local_Name,
+                  Namespace  => Namespace_URI,
+                  Prefix     => Prefix);
+      else
+         Name := (Local_Name => Convert (Doc.Symbols, Local_Name),
+                  Namespace  => Convert (Doc.Symbols, Namespace_URI),
+                  Prefix     => Convert (Doc.Symbols, Prefix));
+      end if;
+
+      return new Node_Record'
+        (Node_Type       => Attribute_Node,
+         Parent          => Doc,
+         Parent_Is_Owner => True,
+         Specified       => False,
+         Owner_Element   => Doc,
+         Is_Id           => False,
+         Attr_Name       => Name,
+         Attr_Value      => No_Symbol);
    end Create_Attribute_NS;
 
    -----------------------------
@@ -233,7 +314,7 @@ package body DOM.Core.Documents is
         (Node_Type => Entity_Reference_Node,
          Parent          => Doc,
          Parent_Is_Owner => True,
-         Entity_Reference_Name => new DOM_String'(Name));
+         Entity_Reference_Name => Find (Doc.Symbols, Name));
    end Create_Entity_Reference;
 
    ------------------------------
@@ -294,12 +375,15 @@ package body DOM.Core.Documents is
    -----------------------
 
    function Get_Element_By_Id
-     (Doc : Document; Element_Id : DOM_String) return Node is
+     (Doc : Document; Element_Id : DOM_String) return Node
+   is
+      N : Symbol;
    begin
       if Doc.Ids = null then
          return null;
       else
-         return Get (Doc.Ids.all, Element_Id'Unrestricted_Access).N;
+         N := Find (Doc.Symbols, Element_Id);
+         return Get (Doc.Ids.all, N).N;
       end if;
    end Get_Element_By_Id;
 

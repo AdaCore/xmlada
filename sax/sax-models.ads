@@ -1,8 +1,31 @@
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2005-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
 --  This package implements the content models as described in the DTDs.
 --  They are not strictly part of the SAX 2.0 standard, however they are
 --  used to simply the handling in users' applications.
 
+with Sax.Symbols;
 with Unicode.CES;
 
 package Sax.Models is
@@ -27,7 +50,7 @@ package Sax.Models is
          when Character_Data | Empty | Anything => null;
 
          when Element_Ref =>
-            Name : Unicode.CES.Byte_Sequence_Access; --  Name of the element
+            Name : Sax.Symbols.Symbol; --  Name of the element
 
          when Any_Of | Sequence =>
             List : Element_Model_Array_Ptr; --  all the possible choices
@@ -74,7 +97,8 @@ package Sax.Models is
    --  Return a description of the content model. Do not free the resulting
    --  pointer, since this points directly into the Content_Model structure
 
-   function To_String (Model : Content_Model) return Unicode.CES.Byte_Sequence;
+   function To_String
+     (Model : Content_Model) return Unicode.CES.Byte_Sequence;
    --  Return the string to put in an XML file to describe Model
    --  Invalid_Content_Model is raised if Model can not be described in a
    --  DTD.

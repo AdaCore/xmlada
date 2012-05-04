@@ -1,24 +1,32 @@
 <?xml version="1.0" ?>
 
 <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://test2 test2.xsd"
+      xmlns:test2="http://test2"
       xsi:noNamespaceSchemaLocation='test.xsd' >
   <my_string>
     <size>10</size>
     <contents>ManuManuMa</contents>
   </my_string>
 
-  <zip>
-    <zipcode>1723</zipcode>
-  </zip>
-
-  <zip>
+  <zip attr1="-11" attr3="1 2 3" attr4="value1">
     <code_postal>1723</code_postal>
+    <foo>Manu</foo>
   </zip>
 
   <zip>
     <zipcode>1723</zipcode>
     <!--  <zipcode>1724</zipcode> -->
+    <foo>Manu</foo>
   </zip>
+
+  <zipb>
+    <code_postal>1723</code_postal>
+  </zipb>
+
+  <zipr attr1="12:00:12">
+     <zipcode>1723</zipcode>
+  </zipr>
 
   <strs>
      <str>a</str>
@@ -26,31 +34,17 @@
      <str>c</str>
   </strs>
 
-  <strs3>
-     <str>a</str>
-     <str3>b</str3>
-  </strs3>
-
-  <strs3>
-     <str2>a</str2>
-     <str3>b</str3>
-  </strs3>
-
-  <!-- Invalid
-  <strs3>
-     <str3>a</str3>
-     <str3>b</str3>
-  </strs3>
-  -->
-
-  <strs2>
+  <strs>
      <str>a</str>
      <str2>b</str2>
-  </strs2>
+     <str>c</str>
+  </strs>
 
-  <strs2>
-     <str3>c</str3>
-  </strs2>
+  <strs>
+     <str>a</str>
+     <str2>b</str2>
+     <str>c</str>
+  </strs>
 
   <!-- Invalid
   <strs2>
@@ -59,5 +53,20 @@
      <str3>c</str3>
   </strs2>
   -->
+
+  <person>
+     <first_name>Emmanuel</first_name>
+     <last_name>Briot</last_name>
+  </person>
+  <person>
+     <last_name>Briot</last_name>
+     <first_name>Emmanuel</first_name>
+  </person>
+  <person>
+     <first_name>Emmanuel</first_name>
+  </person>
+
+  <test2:manu/>
+  <test2:manu/>
 
 </root>

@@ -1,12 +1,46 @@
-with Schema.Validators;       use Schema.Validators;
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2005-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
+
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Schema.Date_Time is
 
-   procedure Parse (Ch : String; Date     : out Date_NZ_T;  Eos : out Natural);
-   procedure Parse (Ch : String; Time     : out Time_NZ_T;  Eos : out Natural);
-   procedure Parse (Ch : String; TZ       : out Timezone_T);
-   procedure Parse_Year (Ch : String; Year : out Integer; Eos : out Natural);
+   procedure Parse
+     (Symbols : Symbol_Table;
+      Ch     : String;
+      Date   : out Date_NZ_T;
+      Eos    : out Natural;
+      Error  : out Symbol);
+   procedure Parse
+     (Symbols : Symbol_Table;
+      Ch : String; Time : out Time_NZ_T;  Eos : out Natural;
+      Error : out Symbol);
+   procedure Parse
+     (Symbols : Symbol_Table;
+      Ch : String; TZ : out Timezone_T; Error : out Symbol);
+   procedure Parse_Year
+     (Symbols : Symbol_Table;
+      Ch : String; Year : out Integer; Eos : out Natural; Error : out Symbol);
    --  Parse the various components of dates.
    --  On exit, Eos is set to the first unused character in Ch, except for the
    --  timezone which must finish on the last character in Ch.
@@ -190,7 +224,7 @@ package body Schema.Date_Time is
 
    function Image (Month : GMonth_T) return String is
    begin
-      return "--" & Image (Month.Month, 2) & "--" & Image (Month.TZ);
+      return "--" & Image (Month.Month, 2) & Image (Month.TZ);
    end Image;
 
    function Image (Year  : GYear_T) return String is
@@ -345,9 +379,11 @@ package body Schema.Date_Time is
    ----------------
 
    procedure Parse_Year
-     (Ch   : String;
-      Year : out Integer;
-      Eos  : out Natural)
+     (Symbols : Symbol_Table;
+      Ch     : String;
+      Year   : out Integer;
+      Eos    : out Natural;
+      Error  : out Symbol)
    is
       Pos : Integer := Ch'First;
    begin
@@ -355,22 +391,32 @@ package body Schema.Date_Time is
          Pos := Pos + 1;
       end if;
 
-      while Pos <= Ch'Last and then Ch (Pos) /= '-' loop
+      while Pos <= Ch'Last
+         and then Ch (Pos) /= '-'
+         and then Ch (Pos) /= 'Z'
+      loop
          Pos := Pos + 1;
       end loop;
 
       Year := Integer'Value (Ch (Ch'First .. Pos - 1));
 
       if Year = 0 then
-         Validation_Error ("Year cannot be null in: """ & Ch & """");
+         Error := Find
+           (Symbols, "Year cannot be null in: """ & Ch & """");
          Eos  := Ch'Last;
+         return;
+
+      elsif Pos - Ch'First < 4 then
+         Error := Find (Symbols, "Year must include at least four digits");
          return;
       end if;
 
       Eos := Pos;
+      Error := No_Symbol;
+
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid year in """ & Ch & """");
+         Error := Find (Symbols, "Invalid year in """ & Ch & """");
          Year := 0;
          Eos  := Ch'Last + 1;
    end Parse_Year;
@@ -380,30 +426,74 @@ package body Schema.Date_Time is
    -----------
 
    procedure Parse
-     (Ch   : String;
-      Date : out Date_NZ_T;
-      Eos  : out Natural)
+     (Symbols : Symbol_Table;
+      Ch     : String;
+      Date   : out Date_NZ_T;
+      Eos    : out Natural;
+      Error  : out Symbol)
    is
+      Max_Days : constant array (1 .. 12) of Natural :=
+        (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
       Pos  : Integer;
+      Leap_Year : Boolean;
    begin
-      Parse_Year (Ch, Date.Year, Pos);
+      Parse_Year (Symbols, Ch, Date.Year, Pos, Error);
+
+      if Error /= No_Symbol then
+         Eos := Ch'First;
+         return;
+      end if;
 
       if Ch (Pos) /= '-'
         or else Ch (Pos + 3) /= '-'
-        or else (Pos + 6 <= Ch'Last and then Ch (Pos + 6) /= 'T')
+        or else (Pos + 6 <= Ch'Last
+                 and then Ch (Pos + 6) /= 'T'
+                 and then Ch (Pos + 6) /= '-'
+                 and then Ch (Pos + 6) /= '+'
+                 and then Ch (Pos + 6) /= 'Z')
       then
-         Validation_Error ("Invalid separator in date value """ & Ch & """");
+         Error := Find
+           (Symbols, "Invalid separator in date value """ & Ch & """");
          Date := No_Date_NZ;
+         Eos  := Ch'First;
          return;
       end if;
 
       Date.Month  := Integer'Value (Ch (Pos +  1 .. Pos +  2));
+
+      if Date.Month < 1 or else Date.Month > 12 then
+         Error := Find (Symbols, "Invalid month in """ & Ch & '"');
+         return;
+      end if;
+
       Date.Day    := Integer'Value (Ch (Pos +  4 .. Pos +  5));
       Eos := Pos + 6;
 
+      --  Check that the date is correct.
+      --  We cannot use Ada.Calendar, since its range of dates is much more
+      --  limited than the one in XML.
+
+      Leap_Year :=
+        Date.Year mod 4 = 0
+        and then (Date.Year mod 100 /= 0 or else Date.Year mod 400 = 0);
+
+      if Date.Day > Max_Days (Date.Month)
+        or else (Date.Month = 2
+                 and then (Date.Day > 29
+                           or else (Date.Day = 29 and then not Leap_Year)))
+      then
+         Error := Find (Symbols, "Invalid date """ & Ch & """");
+         --  & Date.Year'Image & Date.Month'Img & Date.Day'Img);
+         Date := No_Date_NZ;
+         Eos  := Ch'Last + 1;
+         return;
+      end if;
+
+      Error := No_Symbol;
+
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid date """ & Ch & """");
+         Error := Find (Symbols, "Invalid date """ & Ch & """");
          Date := No_Date_NZ;
          Eos  := Ch'Last + 1;
    end Parse;
@@ -413,40 +503,43 @@ package body Schema.Date_Time is
    -----------
 
    procedure Parse
-     (Ch   : String;
-      Time : out Time_NZ_T;
-      Eos  : out Natural)
+     (Symbols : Symbol_Table;
+      Ch     : String;
+      Time   : out Time_NZ_T;
+      Eos    : out Natural;
+      Error  : out Symbol)
    is
       --  Format is "hh:mm:ss.sss[+-]hh:mm"
-      Dur : Time_NZ_T;
       Pos : Integer;
       Hour, Min : Integer;
       Msec : Day_Range := 0.0;
    begin
       Hour := Integer'Value (Ch (Ch'First .. Ch'First + 1));
-      Dur  := Day_Range (Hour) * 3600.0;
 
       if Ch (Ch'First + 2) /= ':'
         or else Ch (Ch'First + 5) /= ':'
       then
-         Validation_Error ("Invalid separator in time: """ & Ch & """");
+         Error := Find
+           (Symbols, "Invalid separator in time: """ & Ch & """");
          Time := No_Time_NZ;
+         Eos  := Ch'First;
          return;
       end if;
 
       Min := Integer'Value (Ch (Ch'First + 3 .. Ch'First + 4));
-      Dur := Dur + Day_Range (Min) * 60.0;
 
       if Min > 59 then
-         Validation_Error
-           ("Invalid minutes specification in time: """ & Ch & """");
+         Error := Find
+           (Symbols, "Invalid minutes in time: """ & Ch & """");
          Time := No_Time_NZ;
          return;
       end if;
 
       Pos := Ch'First + 8;
       if Pos = Ch'Last and then Ch (Pos) = '.' then
-         Validation_Error ("'.' must be followed by digits in """ & Ch & """");
+         Error := Find
+           (Symbols, "'.' must be followed by digits in """ & Ch & """");
+         return;
       end if;
 
       if Pos < Ch'Last and then Ch (Pos) = '.' then
@@ -462,20 +555,26 @@ package body Schema.Date_Time is
          Eos := Ch'First + 8;
       end if;
 
-      Time := Dur + Msec;
-
-      if Hour > 24
-        or else (Hour = 24 and then (Min /= 0 or else Msec /= 0.0))
-      then
-         Validation_Error
-           ("Invalid hour specification in time: """ & Ch & """");
+      if Msec >= 60.0 then
+         Error := Find (Symbols, "Invalid seconds in time: """ & Ch & """");
          Time := No_Time_NZ;
          return;
       end if;
 
+      if Hour > 24
+        or else (Hour = 24 and then (Min /= 0 or else Msec /= 0.0))
+      then
+         Error := Find (Symbols, "Invalid hour in time: """ & Ch & """");
+         Time := No_Time_NZ;
+         return;
+      end if;
+
+      Error := No_Symbol;
+      Time  := Day_Range (Hour) * 3600.0 + Day_Range (Min) * 60.0 + Msec;
+
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid time: """ & Ch & """");
+         Error := Find (Symbols, "Invalid time: """ & Ch & """");
          Time := No_Time_NZ;
          Eos  := Ch'Last + 1;
    end Parse;
@@ -485,13 +584,15 @@ package body Schema.Date_Time is
    -----------
 
    procedure Parse
-     (Ch : String;
-      TZ : out Timezone_T) is
+     (Symbols : Symbol_Table;
+      Ch     : String;
+      TZ     : out Timezone_T;
+      Error  : out Symbol) is
    begin
       if Ch'Length /= 0 then
          if Ch (Ch'First) = 'Z' then
             if Ch'Length /= 1 then
-               Validation_Error ("Invalid time zone in """ & Ch & """");
+               Error := Find (Symbols, "Invalid time zone in """ & Ch & """");
                TZ := No_Timezone;
                return;
             else
@@ -499,7 +600,7 @@ package body Schema.Date_Time is
             end if;
 
          elsif Ch'Length /= 6 then
-            Validation_Error ("Invalid time zone in """ & Ch & """");
+            Error := Find (Symbols, "Invalid time zone in """ & Ch & """");
             TZ := No_Timezone;
             return;
 
@@ -507,8 +608,9 @@ package body Schema.Date_Time is
             if (Ch (Ch'First) /= '-' and then Ch (Ch'First) /= '+')
               or else Ch (Ch'First + 3) /= ':'
             then
-               Validation_Error
-                 ("Invalid time zone specification in """ & Ch & """");
+               Error := Find
+                 (Symbols,
+                  "Invalid time zone specification in """ & Ch & """");
                TZ := No_Timezone;
                return;
             end if;
@@ -518,7 +620,8 @@ package body Schema.Date_Time is
               + Timezone_T'Value (Ch (Ch'First + 4 .. Ch'First + 5));
 
             if abs (TZ) > 14 * 60 then
-               Validation_Error ("Invalid time zone range in """ & Ch & """");
+               Error := Find
+                 (Symbols, "Invalid time zone range in """ & Ch & """");
                TZ := No_Timezone;
                return;
             end if;
@@ -530,10 +633,13 @@ package body Schema.Date_Time is
       else
          TZ := No_Timezone;
       end if;
+
+      Error := No_Symbol;
+
    exception
       when Constraint_Error =>
-         Validation_Error
-           ("Invalid time zone specification in """ & Ch & """");
+         Error := Find
+           (Symbols, "Invalid time zone specification in """ & Ch & """");
          TZ := No_Timezone;
    end Parse;
 
@@ -541,23 +647,39 @@ package body Schema.Date_Time is
    -- Value --
    -----------
 
-   function Value (Ch : String) return Duration_T is
-      Result : Duration_T := No_Duration;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out Duration_T;
+      Error   : out Symbol)
+   is
       Pos    : Integer := Ch'First;
       Tmp    : Integer;
       Processing_Time : Boolean := False;
+      Hour   : Natural;
    begin
+      Val := No_Duration;
+
+      if Ch = "" then
+         Error := Find
+           (Symbols, "Empty string is not a valid value for duration");
+         return;
+      end if;
+
       if Ch (Pos) = '-' then
-         Result.Sign := -1;
+         Val.Sign := -1;
          Pos := Pos + 1;
       else
-         Result.Sign := 1;
+         Val.Sign := 1;
       end if;
 
       if Ch (Pos) /= 'P' then
-         Validation_Error ("Invalid prefix for duration in """ & Ch & """");
-         return No_Duration;
+         Error := Find
+           (Symbols, "Invalid prefix for duration in """ & Ch & """");
+         return;
       end if;
+
+      Pos := Pos + 1;
 
       while Pos <= Ch'Last loop
          Tmp := Pos;
@@ -567,203 +689,310 @@ package body Schema.Date_Time is
             Tmp := Tmp + 1;
          end loop;
 
+         if Tmp > Ch'Last then
+            Error := Find
+              (Symbols,
+               "Missing qualifier after last digit in duration """
+               & Ch & """");
+            return;
+         end if;
+
          if Ch (Tmp) = 'T' then
             Processing_Time := True;
             if Tmp = Ch'Last then
-               Validation_Error ("Expecting time after T in """ & Ch & """");
+               Error := Find
+                 (Symbols, "Expecting time after T in """ & Ch & """");
+               return;
             end if;
 
          elsif Ch (Tmp) = 'Y' then
             if Processing_Time then
-               Validation_Error ("Expecting time component in """ & Ch & """");
-               return No_Duration;
+               Error := Find
+                 (Symbols, "Expecting time component in """ & Ch & """");
+               return;
             end if;
 
-            Result.Year := Integer'Value (Ch (Pos .. Tmp - 1));
+            begin
+               Val.Year := Integer'Value (Ch (Pos .. Tmp - 1));
+            exception
+               when Constraint_Error =>
+                  Error := Find
+                    (Symbols, "Expecting an integer for the year, found """
+                     & Ch (Pos .. Tmp - 1) & """");
+                  return;
+            end;
 
          elsif Ch (Tmp) = 'M' then
             if Processing_Time then
-               Result.Seconds := Result.Seconds + Day_Range
+               Val.Seconds := Val.Seconds + Day_Range
                  (Integer'Value (Ch (Pos .. Tmp - 1))) * 60.0;
             else
-               Result.Month := Integer'Value (Ch (Pos .. Tmp - 1));
+               Val.Month := Integer'Value (Ch (Pos .. Tmp - 1));
             end if;
 
          elsif Ch (Tmp) = 'D' then
             if Processing_Time then
-               Validation_Error ("Expecting time component in """ & Ch & """");
-               return No_Duration;
+               Error := Find
+                 (Symbols, "Expecting time component in """ & Ch & """");
+               return;
             end if;
 
-            Result.Day := Integer'Value (Ch (Pos .. Tmp - 1));
+            Val.Day := Integer'Value (Ch (Pos .. Tmp - 1));
 
          elsif Ch (Tmp) = 'S' then
             if not Processing_Time then
-               Validation_Error ("Expecting date component in """ & Ch & """");
-               return No_Duration;
+               Error := Find
+                 (Symbols, "Expecting date component in """ & Ch & """");
+               return;
             end if;
 
-            Result.Seconds := Result.Seconds
-              + Day_Range'Value (Ch (Pos .. Tmp - 1));
+            Val.Seconds := Val.Seconds + Day_Range'Value (Ch (Pos .. Tmp - 1));
 
          elsif Ch (Tmp) = 'H' then
             if not Processing_Time then
-               Validation_Error ("Expecting date component in """ & Ch & """");
-               return No_Duration;
+               Error := Find
+                 (Symbols, "Expecting date component in """ & Ch & """");
+               return;
             end if;
-            Result.Seconds := Result.Seconds + Day_Range
-              (Integer'Value (Ch (Pos .. Tmp - 1))) * 3600.0;
+
+            Hour := Integer'Value (Ch (Pos .. Tmp - 1));
+            Val.Seconds := Val.Seconds + Duration (Hour) * 3600.0;
+
+         else
+            Error := Find
+              (Symbols, "Invalid character '" & Ch (Tmp)
+               & "' in duration: """ & Ch & """");
+            return;
          end if;
 
          Pos := Tmp + 1;
       end loop;
 
-      return Result;
+      Error := No_Symbol;
    end Value;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : String) return Date_Time_T is
-      Result : Date_Time_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out Date_Time_T;
+      Error   : out Symbol)
+   is
       Eos    : Integer;
    begin
-      Parse (Ch, Result.Date, Eos);
-
-      if Ch (Eos) /= 'T' then
-         Validation_Error ("Invalid date/time separator in """ & Ch & """");
-         return No_Date_Time;
+      Parse (Symbols, Ch, Val.Date, Eos, Error);
+      if Error /= No_Symbol then
+         return;
       end if;
 
-      Parse (Ch (Eos + 1 .. Ch'Last), Result.Time, Eos);
-      Parse (Ch (Eos .. Ch'Last), Result.TZ);
-      return Result;
+      if Ch (Eos) /= 'T' then
+         Error := Find
+           (Symbols, "Invalid date/time separator in """ & Ch & """");
+         return;
+      end if;
+
+      Parse (Symbols, Ch (Eos + 1 .. Ch'Last), Val.Time, Eos, Error);
+      if Error /= No_Symbol then
+         return;
+      end if;
+
+      Parse (Symbols, Ch (Eos .. Ch'Last), Val.TZ, Error);
    end Value;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : String) return Date_T is
-      Result : Date_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out Date_T;
+      Error   : out Symbol)
+   is
       Eos    : Integer;
    begin
-      Parse (Ch, Result.Date, Eos);
-      Parse (Ch (Eos .. Ch'Last), Result.TZ);
-      return Result;
+      Parse (Symbols, Ch, Val.Date, Eos, Error);
+      if Error /= No_Symbol then
+         return;
+      end if;
+
+      Parse (Symbols, Ch (Eos .. Ch'Last), Val.TZ, Error);
    end Value;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : String) return GDay_T is
-      Result : GDay_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GDay_T;
+      Error   : out Symbol) is
    begin
       if Ch (Ch'First) /= '-'
         or else Ch (Ch'First + 1) /= '-'
         or else Ch (Ch'First + 2) /= '-'
       then
-         Validation_Error ("Invalid date """ & Ch & """");
+         Error := Find (Symbols, "Invalid date """ & Ch & """");
+         return;
       end if;
-      Result.Day := Integer'Value (Ch (Ch'First + 3 .. Ch'First + 4));
-      Parse (Ch (Ch'First + 5 .. Ch'Last), Result.TZ);
-      return Result;
+
+      Val.Day := Integer'Value (Ch (Ch'First + 3 .. Ch'First + 4));
+      Parse (Symbols, Ch (Ch'First + 5 .. Ch'Last), Val.TZ, Error);
+
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid date """ & Ch & """");
-         return No_Gday;
+         Error := Find (Symbols, "Invalid date """ & Ch & """");
    end Value;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : String) return GMonth_Day_T is
-      Result : GMonth_Day_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GMonth_Day_T;
+      Error   : out Symbol) is
    begin
       if Ch (Ch'First .. Ch'First + 1) /= "--"
         or else Ch (Ch'First + 4) /= '-'
       then
-         Validation_Error ("Invalid gMonthDay: """ & Ch & """");
+         Error := Find (Symbols, "Invalid gMonthDay: """ & Ch & """");
+         return;
       end if;
-      Result.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
-      Result.Day   := Integer'Value (Ch (Ch'First + 5 .. Ch'First + 6));
-      Parse (Ch (Ch'First + 7 .. Ch'Last),  Result.TZ);
-      return Result;
+
+      Val.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
+      Val.Day   := Integer'Value (Ch (Ch'First + 5 .. Ch'First + 6));
+      Parse (Symbols, Ch (Ch'First + 7 .. Ch'Last),  Val.TZ, Error);
+
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid gMonthDay: """ & Ch & """");
-         return No_Month_Day;
+         Error := Find (Symbols, "Invalid gMonthDay: """ & Ch & """");
    end Value;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : String) return GMonth_T is
-      Result : GMonth_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GMonth_T;
+      Error   : out Symbol)
+   is
+      Index  : Natural;
    begin
-      if Ch (Ch'First .. Ch'First + 1) /= "--"
-        or else Ch (Ch'First + 4 .. Ch'First + 5) /= "--"
-      then
-         Validation_Error ("Invalid gMonth: """ & Ch & """");
+      if Ch (Ch'First .. Ch'First + 1) /= "--" then
+         Error := Find (Symbols, "Invalid gMonth: """ & Ch & """");
+         return;
       end if;
-      Result.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
-      Parse (Ch (Ch'First + 6 .. Ch'Last), Result.TZ);
-      return Result;
+      Val.Month := Integer'Value (Ch (Ch'First + 2 .. Ch'First + 3));
+
+      if Val.Month > 12 then
+         Error := Find (Symbols, "Invalid month:" & Val.Month'Img);
+         return;
+      end if;
+
+      Val.TZ    := No_Timezone;
+
+      if Ch'Last > Ch'First + 3  then
+         if Ch'Last >= Ch'First + 5
+           and then Ch (Ch'First + 4 .. Ch'First + 5) = "--"
+         then
+            Index := Ch'First + 6;
+         else
+            Index := Ch'First + 4;
+         end if;
+
+         if Index < Ch'Last then
+            Parse (Symbols, Ch (Index .. Ch'Last), Val.TZ, Error);
+         end if;
+      else
+         Error := No_Symbol;
+      end if;
+
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid gMonth: """ & Ch & """");
-         return No_Month;
+         Error := Find (Symbols, "Invalid gMonth: """ & Ch & """");
    end Value;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : String) return GYear_T is
-      Result : GYear_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GYear_T;
+      Error   : out Symbol)
+   is
       Eos    : Integer;
    begin
-      Parse_Year (Ch, Result.Year, Eos);
-      Parse (Ch (Eos .. Ch'Last), Result.TZ);
-      return Result;
+      Parse_Year (Symbols, Ch, Val.Year, Eos, Error);
+      if Error /= No_Symbol then
+         return;
+      end if;
+
+      Parse (Symbols, Ch (Eos .. Ch'Last), Val.TZ, Error);
    end Value;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : String) return GYear_Month_T is
-      Result : GYear_Month_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out GYear_Month_T;
+      Error   : out Symbol)
+   is
       Eos    : Integer;
    begin
-      Parse_Year (Ch, Result.Year, Eos);
+      Parse_Year (Symbols, Ch, Val.Year, Eos, Error);
+      if Error /= No_Symbol then
+         return;
+      end if;
+
       if Ch (Eos) /= '-' then
-         Validation_Error ("Invalid gYearMonth: """ & Ch & """");
+         Error := Find (Symbols, "Invalid gYearMonth: """ & Ch & """");
+         return;
       end if;
-      Result.Month := Integer'Value (Ch (Eos + 1 .. Eos + 2));
-      Parse (Ch (Eos + 3 .. Ch'Last), Result.TZ);
-      return Result;
+
+      Val.Month := Integer'Value (Ch (Eos + 1 .. Eos + 2));
+
+      if Val.Month > 12 then
+         Error := Find (Symbols, "Invalid month:" & Val.Month'Img);
+         return;
+      end if;
+
+      Parse (Symbols, Ch (Eos + 3 .. Ch'Last), Val.TZ, Error);
+
    exception
       when Constraint_Error =>
-         Validation_Error ("Invalid gYearMonth: """ & Ch & """");
-         return No_Year_Month;
+         Error := Find (Symbols, "Invalid gYearMonth: """ & Ch & """");
    end Value;
 
    -----------
    -- Value --
    -----------
 
-   function Value (Ch : String) return Time_T is
-      Result : Time_T;
+   procedure Value
+     (Symbols : Symbol_Table;
+      Ch      : String;
+      Val     : out Time_T;
+      Error   : out Symbol)
+   is
       Eos    : Integer;
    begin
-      Parse (Ch, Result.Time, Eos);
-      Parse (Ch (Eos .. Ch'Last), Result.TZ);
-      return Result;
+      Parse (Symbols, Ch, Val.Time, Eos, Error);
+      if Error /= No_Symbol then
+         return;
+      end if;
+      Parse (Symbols, Ch (Eos .. Ch'Last), Val.TZ, Error);
    end Value;
 
    -----------------------
@@ -890,6 +1119,88 @@ package body Schema.Date_Time is
    begin
       return Duration;
    end Normalize;
+
+   ----------
+   -- Sign --
+   ----------
+
+   function Sign (Duration : Duration_T) return Integer is
+   begin
+      return Duration.Sign;
+   end Sign;
+
+   ----------
+   -- Year --
+   ----------
+
+   function Year (Duration : Duration_T) return Natural is
+   begin
+      return Duration.Year;
+   end Year;
+
+   -----------
+   -- Month --
+   -----------
+
+   function Month (Duration : Duration_T) return Natural is
+   begin
+      return Duration.Month;
+   end Month;
+
+   ---------
+   -- Day --
+   ---------
+
+   function Day (Duration : Duration_T) return Natural is
+   begin
+      return Duration.Day;
+   end Day;
+
+   -------------
+   -- Seconds --
+   -------------
+
+   function Seconds (Duration : Duration_T) return Day_Duration is
+   begin
+      return Duration.Seconds;
+   end Seconds;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Year (Date : Date_Time_T) return Integer is
+      D : Date_Time_T := Date;
+   begin
+      if D.TZ /= No_Timezone then
+         D.Time := D.Time - Time_NZ_T (D.TZ) * 60.0;
+         D := Normalize (D);
+      end if;
+
+      return D.Date.Year;
+   end Year;
+
+   function Month (Date : Date_Time_T) return Natural is
+      D : Date_Time_T := Date;
+   begin
+      if D.TZ /= No_Timezone then
+         D.Time := D.Time - Time_NZ_T (D.TZ) * 60.0;
+         D := Normalize (D);
+      end if;
+
+      return D.Date.Month;
+   end Month;
+
+   function Day (Date : Date_Time_T) return Natural is
+      D : Date_Time_T := Date;
+   begin
+      if D.TZ /= No_Timezone then
+         D.Time := D.Time - Time_NZ_T (D.TZ) * 60.0;
+         D := Normalize (D);
+      end if;
+
+      return D.Date.Day;
+   end Day;
 
    -------------
    -- Compare --
@@ -1072,7 +1383,7 @@ package body Schema.Date_Time is
            Compare (Normalize (T1), Normalize (T2));
       begin
          if Result = Uncomparable then
-            raise Not_Comparable;
+            return False;
          else
             return Result = Equal;
          end if;

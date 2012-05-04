@@ -1,31 +1,25 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
 --  This is the root of the hierarchy that provides different encoding
 --  schemes.
@@ -46,6 +40,7 @@ package Unicode.CES is
 
    subtype Byte_Sequence is String;
    type Byte_Sequence_Access is access all Byte_Sequence;
+   type Cst_Byte_Sequence_Access is access constant Byte_Sequence;
    --  A sequence of bytes. The encoding is unknown.
 
    procedure Free is new Unchecked_Deallocation
@@ -120,7 +115,9 @@ package Unicode.CES is
    --  This function returns the character at position Index in the byte
    --  sequence Str, and moves Index to the start of the next character.
    --  If Str doesn't contain enough bytes for a valid encoding of a character,
-   --  Invalid_Encoding is raised.
+   --  Incomplete_Encoding is raised.
+   --  If Str contains an invalid byte sequence at Index, Invalid_Encoding
+   --  is raised.
 
    type Width_Function is access
      function (Char : Unicode.Unicode_Char) return Natural;
@@ -164,6 +161,11 @@ package Unicode.CES is
    ----------------
 
    Invalid_Encoding : exception;
-   --  Raised whener the byte sequence associated with a given encoding
+   --  Raised whenever the byte sequence associated with a given encoding
    --  scheme is not valid.
+
+   Incomplete_Encoding : exception;
+   --  Raised whenever the byte sequence associated with a given encoding
+   --  scheme is incomplete.
+
 end Unicode.CES;

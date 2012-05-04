@@ -1,31 +1,25 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
 --  In addition to the SAX standard, we have added an extra field to
 --  Attributes to memorize the default declaration for the attribute
@@ -59,15 +53,14 @@ package Sax.Attributes is
    --  index is out of bounds.
    --  Indexes are zero-based.
 
-   function Get_Index (Attr : Attributes; Qname : Unicode.CES.Byte_Sequence)
-      return Integer;
-   --  Look up the index of an attribute by XML 1.0 qualified name.
-   --  (-1) is returned if there is no match
-
    function Get_Index
      (Attr       : Attributes;
       URI        : Unicode.CES.Byte_Sequence;
       Local_Name : Unicode.CES.Byte_Sequence)
+      return Integer;
+   function Get_Index
+     (Attr       : Attributes;
+      Local_Name : Unicode.CES.Byte_Sequence)  --  no namespace
       return Integer;
    --  Look up the index of an attribute by Namespace name
    --  (-1) is returned if there is no match
@@ -78,6 +71,10 @@ package Sax.Attributes is
    function Get_Local_Name (Attr : Attributes; Index : Natural)
       return Unicode.CES.Byte_Sequence;
    --  Return an attribute's local name by index
+
+   function Get_Prefix (Attr : Attributes; Index : Natural)
+      return Unicode.CES.Byte_Sequence;
+   --  Return the prefix used for the attribute in the XML file
 
    function Get_Qname (Attr : Attributes; Index : Natural)
       return Unicode.CES.Byte_Sequence;
@@ -218,10 +215,16 @@ package Sax.Attributes is
    --   Set the Namespace URI of a specific attribute in the list
 
    procedure Set_Value
-     (Attr  : in out Attributes;
+     (Attr  : Attributes;
       Index : Natural;
       Value : Unicode.CES.Byte_Sequence);
    --   Set the value of a specific attribute in the list
+
+   function Get_Non_Normalized_Value
+     (Attr       : Attributes;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence) return Unicode.CES.Byte_Sequence;
+   --  Get the value of the attribute before normalization
 
    Out_Of_Bounds : exception;
    --  Raised when Index is out of bounds in all the Set_* subprograms.
@@ -234,6 +237,7 @@ private
       URI          : Unicode.CES.Byte_Sequence_Access;
       Local_Name   : Unicode.CES.Byte_Sequence_Access;
       Value        : Unicode.CES.Byte_Sequence_Access;
+      Non_Normalized_Value : Unicode.CES.Byte_Sequence_Access;
       Att_Type     : Attribute_Type;
       Qname        : Unicode.CES.Byte_Sequence_Access;
       Default_Decl : Default_Declaration;

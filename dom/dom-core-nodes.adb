@@ -1,44 +1,41 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            AdaCore                                --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
-with DOM.Core.Attrs;            use DOM.Core.Attrs;
+with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Text_IO.Text_Streams;
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
 with Sax.Encodings;             use Sax.Encodings;
+with Sax.Symbols;               use Sax.Symbols;
+with Sax.Utils;                 use Sax.Utils;
 with Unicode.Encodings;         use Unicode.Encodings;
-with Ada.Text_IO;               use Ada.Text_IO;
 
 package body DOM.Core.Nodes is
 
    procedure Print_String
-     (Str          : DOM_String;
+     (Stream       : access Ada.Streams.Root_Stream_Type'Class;
+      Str          : DOM_String;
       EOL_Sequence : String;
       Encoding     : Unicode.Encodings.Unicode_Encoding);
    --  Print a string on standard output, in XML, protecting special
@@ -46,11 +43,15 @@ package body DOM.Core.Nodes is
    --  Str is encoded in Unicode/Sax.Encodings.Encoding, and the output is done
    --  with Encoding
 
-   procedure Put (Str : DOM_String; Encoding : Unicode_Encoding);
+   procedure Put
+     (Stream   : access Ada.Streams.Root_Stream_Type'Class;
+      Str      : DOM_String;
+      Encoding : Unicode_Encoding);
    --  Print Str, but doesn't protect any special character in it
 
    procedure Print_Name
-     (N            : Node;
+     (Stream       : access Ada.Streams.Root_Stream_Type'Class;
+      N            : Node;
       With_URI     : Boolean;
       EOL_Sequence : String;
       Encoding     : Unicode.Encodings.Unicode_Encoding);
@@ -70,10 +71,8 @@ package body DOM.Core.Nodes is
    --  Sort alphabetically the contents of Map (this is based on the value
    --  of Node_Name).
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (String_Htable.HTable, String_Htable_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Node_Name_Htable.HTable, Node_Name_Htable_Access);
+   function Namespace_URI (N : Node) return Symbol;
+   --  Internal version returning symbols
 
    --------------------
    -- Child_Is_Valid --
@@ -116,10 +115,10 @@ package body DOM.Core.Nodes is
    begin
       case N.Node_Type is
          when Element_Node =>
-            return Qualified_Name (N.Name.all);
+            return Qualified_Name (N.Name);
 
          when Attribute_Node =>
-            return Qualified_Name (N.Attr_Name.all);
+            return Qualified_Name (N.Attr_Name);
 
          when Text_Node =>
             --  ??? Should this return an encoded string instead ?
@@ -129,16 +128,16 @@ package body DOM.Core.Nodes is
             return "#cdata-section";
 
          when Entity_Reference_Node =>
-            pragma Assert (N.Entity_Reference_Name /= null);
-            return N.Entity_Reference_Name.all;
+            pragma Assert (N.Entity_Reference_Name /= No_Symbol);
+            return Get (N.Entity_Reference_Name).all;
 
          when Entity_Node =>
-            pragma Assert (N.Entity_Name /= null);
-            return N.Entity_Name.all;
+            pragma Assert (N.Entity_Name /= No_Symbol);
+            return Get (N.Entity_Name).all;
 
          when Processing_Instruction_Node =>
-            pragma Assert (N.Target /= null);
-            return N.Target.all;
+            pragma Assert (N.Target /= No_Symbol);
+            return Get (N.Target).all;
 
          when Comment_Node =>
             return "#comment";
@@ -167,8 +166,8 @@ package body DOM.Core.Nodes is
    begin
       case N.Node_Type is
          when Attribute_Node =>
-            pragma Assert (N.Attr_Value /= null);
-            return N.Attr_Value.all;
+            pragma Assert (N.Attr_Value /= No_Symbol);
+            return Get (N.Attr_Value).all;
 
          when Text_Node =>
             pragma Assert (N.Text /= null);
@@ -179,8 +178,8 @@ package body DOM.Core.Nodes is
             return N.Cdata.all;
 
          when Processing_Instruction_Node =>
-            pragma Assert (N.Pi_Data /= null);
-            return N.Pi_Data.all;
+            pragma Assert (N.Pi_Data /= No_Symbol);
+            return Get (N.Pi_Data).all;
 
          when Comment_Node =>
             pragma Assert (N.Comment /= null);
@@ -201,8 +200,7 @@ package body DOM.Core.Nodes is
          when Attribute_Node =>
             --  ??? If Specified is False, we should make a copy and assign
             --  it to the owner element
-            Free (N.Attr_Value);
-            N.Attr_Value := new DOM_String'(Value);
+            N.Attr_Value := Find (Owner_Document (N).Symbols, Value);
             N.Specified := True;
 
          when Text_Node =>
@@ -214,8 +212,7 @@ package body DOM.Core.Nodes is
             N.Cdata := new DOM_String'(Value);
 
          when Processing_Instruction_Node =>
-            Free (N.Pi_Data);
-            N.Pi_Data := new DOM_String'(Value);
+            N.Pi_Data := Find (Owner_Document (N).Symbols, Value);
 
          when Comment_Node =>
             Free (N.Comment);
@@ -384,10 +381,29 @@ package body DOM.Core.Nodes is
 
    function Namespace_URI (N : Node) return DOM_String is
    begin
+      return Get (Namespace_URI (N)).all;
+   end Namespace_URI;
+
+   -------------------
+   -- Namespace_URI --
+   -------------------
+
+   function Namespace_URI (N : Node) return Symbol is
+   begin
       case N.Node_Type is
-         when Element_Node   => return Get_Namespace_URI (N.Name.all);
-         when Attribute_Node => return Get_Namespace_URI (N.Attr_Name.all);
-         when others         => return "";
+         when Element_Node   =>
+            if N.Name.Namespace = No_Symbol then
+               return Empty_String;
+            else
+               return N.Name.Namespace;
+            end if;
+         when Attribute_Node =>
+            if N.Attr_Name.Namespace = No_Symbol then
+               return Empty_String;
+            else
+               return N.Attr_Name.Namespace;
+            end if;
+         when others         => return Empty_String;
       end case;
    end Namespace_URI;
 
@@ -398,8 +414,18 @@ package body DOM.Core.Nodes is
    function Prefix (N : Node) return DOM_String is
    begin
       case N.Node_Type is
-         when Element_Node   => return Get_Prefix (N.Name.all);
-         when Attribute_Node => return Get_Prefix (N.Attr_Name.all);
+         when Element_Node   =>
+            if N.Name.Prefix = No_Symbol then
+               return "";
+            else
+               return Get (N.Name.Prefix).all;
+            end if;
+         when Attribute_Node =>
+            if N.Attr_Name.Prefix = No_Symbol then
+               return "";
+            else
+               return Get (N.Attr_Name.Prefix).all;
+            end if;
          when others         => return "";
       end case;
    end Prefix;
@@ -418,8 +444,10 @@ package body DOM.Core.Nodes is
       end if;
 
       case N.Node_Type is
-         when Element_Node   => Set_Prefix (Doc, N.Name.all, Prefix);
-         when Attribute_Node => Set_Prefix (Doc, N.Attr_Name.all, Prefix);
+         when Element_Node   =>
+            N.Name.Prefix := Find (Doc.Symbols, Prefix);
+         when Attribute_Node =>
+            N.Attr_Name.Prefix := Find (Doc.Symbols, Prefix);
          when others         => null;
       end case;
    end Set_Prefix;
@@ -431,9 +459,22 @@ package body DOM.Core.Nodes is
    function Local_Name (N : Node) return DOM_String is
    begin
       case N.Node_Type is
-         when Element_Node   => return Get_Local_Name (N.Name.all);
-         when Attribute_Node => return Get_Local_Name (N.Attr_Name.all);
+         when Element_Node   => return Get (N.Name.Local_Name).all;
+         when Attribute_Node => return Get (N.Attr_Name.Local_Name).all;
          when others         => return "";
+      end case;
+   end Local_Name;
+
+   ----------------
+   -- Local_Name --
+   ----------------
+
+   function Local_Name (N : Node) return Sax.Symbols.Symbol is
+   begin
+      case N.Node_Type is
+         when Element_Node   => return N.Name.Local_Name;
+         when Attribute_Node => return N.Attr_Name.Local_Name;
+         when others         => return Empty_String;
       end case;
    end Local_Name;
 
@@ -591,7 +632,7 @@ package body DOM.Core.Nodes is
    function Clone_List (List : Node_List; Deep : Boolean) return Node_List is
       L : Node_List := Null_List;
    begin
-      if Deep then
+      if List /= Null_List and then Deep then
          L := (Items => new Node_Array'(List.Items.all), Last  => List.Last);
          for J in 0 .. L.Last loop
             L.Items (J) := List.Items (J);
@@ -613,17 +654,14 @@ package body DOM.Core.Nodes is
 
       case N.Node_Type is
          when Element_Node =>
-            Clone_Node_Name (Clone.Name, Source => N.Name);
+            Clone.Name := N.Name;
             Clone.Children := Clone_List (N.Children, Deep);
             Clone.Attributes := Named_Node_Map
               (Clone_List (Node_List (N.Attributes), True));
 
          when Attribute_Node =>
-            Clone_Node_Name (Clone.Attr_Name, Source => N.Attr_Name);
-
-            if N.Attr_Value /= null then
-               Clone.Attr_Value := new DOM_String'(N.Attr_Value.all);
-            end if;
+            Clone.Attr_Name := N.Attr_Name;
+            Clone.Attr_Value := N.Attr_Value;
 
          when Text_Node =>
             if N.Text /= null then
@@ -636,17 +674,14 @@ package body DOM.Core.Nodes is
             end if;
 
          when Entity_Reference_Node =>
-            pragma Assert (N.Entity_Reference_Name /= null);
-            Clone.Entity_Reference_Name :=
-              new DOM_String'(N.Entity_Reference_Name.all);
+            Clone.Entity_Reference_Name := N.Entity_Reference_Name;
 
          when Entity_Node =>
-            pragma Assert (N.Entity_Name /= null);
-            Clone.Entity_Name := new DOM_String'(N.Entity_Name.all);
+            Clone.Entity_Name := N.Entity_Name;
 
          when Processing_Instruction_Node =>
-            Clone.Target := new DOM_String'(N.Target.all);
-            Clone.Pi_Data := new DOM_String'(N.Pi_Data.all);
+            Clone.Target  := N.Target;
+            Clone.Pi_Data := N.Pi_Data;
 
          when Comment_Node =>
             pragma Assert (N.Comment /= null);
@@ -776,6 +811,23 @@ package body DOM.Core.Nodes is
    end Get_Named_Item;
 
    --------------------
+   -- Get_Named_Item --
+   --------------------
+
+   function Get_Named_Item
+     (Map : Named_Node_Map; Name : Sax.Symbols.Symbol) return Node is
+   begin
+      for J in 0 .. Map.Last loop
+         if Namespace_URI (Map.Items (J)) = Empty_String
+           and then Local_Name (Map.Items (J)) = Name
+         then
+            return Map.Items (J);
+         end if;
+      end loop;
+      return null;
+   end Get_Named_Item;
+
+   --------------------
    -- Set_Named_Item --
    --------------------
 
@@ -870,6 +922,27 @@ package body DOM.Core.Nodes is
       Local_Name    : DOM_String) return Node is
    begin
       for J in 0 .. Map.Last loop
+         if Symbol'(DOM.Core.Nodes.Namespace_URI (Map.Items (J))) =
+           Namespace_URI
+           and then
+             Symbol'(DOM.Core.Nodes.Local_Name (Map.Items (J))) = Local_Name
+         then
+            return Map.Items (J);
+         end if;
+      end loop;
+      return null;
+   end Get_Named_Item_NS;
+
+   --------------------
+   -- Get_Named_Item --
+   --------------------
+
+   function Get_Named_Item_NS
+     (Map           : Named_Node_Map;
+      Namespace_URI : Symbol;
+      Local_Name    : Symbol) return Node is
+   begin
+      for J in 0 .. Map.Last loop
          if DOM.Core.Nodes.Namespace_URI (Map.Items (J)) = Namespace_URI
            and then DOM.Core.Nodes.Local_Name (Map.Items (J)) = Local_Name
          then
@@ -914,8 +987,10 @@ package body DOM.Core.Nodes is
       Removed       : out Node) is
    begin
       for J in 0 .. Map.Last loop
-         if DOM.Core.Nodes.Namespace_URI (Map.Items (J)) = Namespace_URI
-           and then DOM.Core.Nodes.Local_Name (Map.Items (J)) = Local_Name
+         if Symbol'(DOM.Core.Nodes.Namespace_URI (Map.Items (J))) =
+           Namespace_URI
+           and then
+             Symbol'(DOM.Core.Nodes.Local_Name (Map.Items (J))) = Local_Name
          then
             Removed := Map.Items (J);
             Map.Items (J .. Map.Last - 1) := Map.Items (J + 1 .. Map.Last);
@@ -967,18 +1042,18 @@ package body DOM.Core.Nodes is
       if N = null then
          return;
       end if;
+
       case N.Node_Type is
          when Element_Node =>
-            Free_Unless_Shared (N.Name);
             --  If we have an ID attribute, remove the element from the
-            --  htable
+            --  htable.
 
             if N.Attributes.Items /= null then
                for Att in N.Attributes.Items'First .. N.Attributes.Last loop
                   if Attr (N.Attributes.Items (Att)).Is_Id then
                      Document_Remove_Id
                        (Owner_Document (N),
-                        Value (Attr (N.Attributes.Items (Att))));
+                        N.Attributes.Items (Att).Attr_Value);
                   end if;
                end loop;
             end if;
@@ -987,8 +1062,7 @@ package body DOM.Core.Nodes is
             Free (N.Children, Deep);
 
          when Attribute_Node =>
-            Free_Unless_Shared (N.Attr_Name);
-            Free (N.Attr_Value);
+            null;
 
          when Text_Node =>
             Free (N.Text);
@@ -997,28 +1071,24 @@ package body DOM.Core.Nodes is
             Free (N.Cdata);
 
          when Entity_Reference_Node =>
-            Free (N.Entity_Reference_Name);
+            null;
 
          when Entity_Node =>
-            Free (N.Entity_Name);
+            null;
 
          when Processing_Instruction_Node =>
-            Free (N.Target);
-            Free (N.Pi_Data);
+            null;
 
          when Comment_Node =>
             Free (N.Comment);
 
          when Document_Node =>
             Free (N.Doc_Children, Deep);
-            String_Htable.Reset (N.Shared_Strings.all);
-            Unchecked_Free (N.Shared_Strings);
-            Node_Name_Htable.Reset (N.Node_Names.all);
-            Unchecked_Free (N.Node_Names);
             if N.Ids /= null then
                Nodes_Htable.Reset (N.Ids.all);
                Unchecked_Free (N.Ids);
             end if;
+            N.Symbols := No_Symbol_Table;
 
          when Document_Type_Node =>
             Free (N.Document_Type_Name);
@@ -1031,6 +1101,7 @@ package body DOM.Core.Nodes is
             Free (N.Public_ID);
             Free (N.System_ID);
       end case;
+
       Internal_Free (N);
    end Free;
 
@@ -1042,7 +1113,7 @@ package body DOM.Core.Nodes is
       Arr : Node_Array (0 .. Map.Last + 1) := (others => null);
       Index : Natural;
    begin
-      --  ??? The algorithm is not efficient, we use Insertion_Sort.
+      --  ??? The algorithm is not efficient, we use Insertion_Sort
       for J in 0 .. Map.Last loop
          Index := 0;
          loop
@@ -1069,7 +1140,8 @@ package body DOM.Core.Nodes is
    ------------------
 
    procedure Print_String
-     (Str          : DOM_String;
+     (Stream       : access Ada.Streams.Root_Stream_Type'Class;
+      Str          : DOM_String;
       EOL_Sequence : String;
       Encoding     : Unicode.Encodings.Unicode_Encoding)
    is
@@ -1081,25 +1153,33 @@ package body DOM.Core.Nodes is
       while J <= Str'Last loop
          Sax.Encodings.Encoding.Read (Str, J, C);
          case C is
-            when Ampersand             => Put (Amp_DOM_Sequence);
-            when Less_Than_Sign        => Put (Lt_DOM_Sequence);
-            when Greater_Than_Sign     => Put (Gt_DOM_Sequence);
-            when Quotation_Mark        => Put (Quot_DOM_Sequence);
+            when Ampersand      =>
+               String'Write (Stream, Amp_DOM_Sequence);
+            when Less_Than_Sign =>
+               String'Write (Stream, Lt_DOM_Sequence);
+            when Greater_Than_Sign     =>
+               String'Write (Stream, Gt_DOM_Sequence);
+            when Quotation_Mark        =>
+               String'Write (Stream, Quot_DOM_Sequence);
                --  when Apostrophe            => Put ("&apos;");
-            when Horizontal_Tabulation => Put (Tab_Sequence);
-            when Line_Feed             => Put (EOL_Sequence, Encoding);
-            when Carriage_Return       => Put (Cr_Sequence);
+            when Horizontal_Tabulation =>
+               String'Write (Stream, Tab_Sequence);
+            when Line_Feed             =>
+               Put (Stream, EOL_Sequence, Encoding);
+            when Carriage_Return       =>
+               String'Write (Stream, Cr_Sequence);
             when 0 .. 8 | 11 .. 12 | 14 .. 31 =>
                declare
                   Img : constant String := Unicode_Char'Image (C);
                begin
-                  Put ("&#" & Img (Img'First + 1 .. Img'Last) & ";");
+                  String'Write
+                    (Stream, "&#" & Img (Img'First + 1 .. Img'Last) & ";");
                end;
             when others                =>
                Index := Buffer'First - 1;
                Encoding.Encoding_Scheme.Encode
                  (Encoding.Character_Set.To_CS (C), Buffer, Index);
-               Put (Buffer (Buffer'First .. Index));
+               String'Write (Stream, Buffer (Buffer'First .. Index));
          end case;
       end loop;
    end Print_String;
@@ -1108,7 +1188,11 @@ package body DOM.Core.Nodes is
    -- Put --
    ---------
 
-   procedure Put (Str : DOM_String; Encoding : Unicode_Encoding) is
+   procedure Put
+     (Stream   : access Ada.Streams.Root_Stream_Type'Class;
+      Str      : DOM_String;
+      Encoding : Unicode_Encoding)
+   is
       J : Natural := Str'First;
       C : Unicode.Unicode_Char;
       Buffer : Byte_Sequence (1 .. 20);
@@ -1119,7 +1203,7 @@ package body DOM.Core.Nodes is
          Index := Buffer'First - 1;
          Encoding.Encoding_Scheme.Encode
            (Encoding.Character_Set.To_CS (C), Buffer, Index);
-         Put (Buffer (Buffer'First .. Index));
+         String'Write (Stream, Buffer (Buffer'First .. Index));
       end loop;
    end Put;
 
@@ -1128,45 +1212,97 @@ package body DOM.Core.Nodes is
    ----------------
 
    procedure Print_Name
-     (N            : Node;
+     (Stream       : access Ada.Streams.Root_Stream_Type'Class;
+      N            : Node;
       With_URI     : Boolean;
       EOL_Sequence : String;
       Encoding     : Unicode.Encodings.Unicode_Encoding) is
    begin
       if With_URI then
          Print_String
-           (Namespace_URI (N) & Colon_Sequence & Local_Name (N),
+           (Stream,
+            Namespace_URI (N) & Colon_Sequence & Local_Name (N),
             EOL_Sequence, Encoding);
       else
-         Print_String (Node_Name (N), EOL_Sequence, Encoding);
+         Print_String (Stream, Node_Name (N), EOL_Sequence, Encoding);
       end if;
    end Print_Name;
 
    -----------
-   -- Print --
+   -- Write --
    -----------
 
-   procedure Print
-     (N              : Node;
-      Print_Comments : Boolean := False;
-      Print_XML_PI   : Boolean := False;
-      With_URI       : Boolean := False;
-      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
-      Encoding       : Unicode.Encodings.Unicode_Encoding :=
+   procedure Write
+     (Stream                : access Ada.Streams.Root_Stream_Type'Class;
+      N                     : Node;
+      Print_Comments        : Boolean := True;
+      Print_XML_Declaration : Boolean := True;
+      With_URI              : Boolean := False;
+      Pretty_Print          : Boolean := False;
+      EOL_Sequence          : String  := "" & ASCII.LF;
+      Encoding              : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
-      Collapse_Empty_Nodes : Boolean := False)
+      Collapse_Empty_Nodes  : Boolean := True)
    is
-      use Node_Name_Htable;
-
-      Namespaces : Node_Name_Htable_Access :=
-        new Node_Name_Htable.HTable (127);
-      --  Namespaces defined so far
-
       procedure Recursive_Print (N : Node);
       --  Print N recursively
 
       procedure Recursive_Print (List : Node_List);
       --  Print all nodes in List
+
+      function Has_Non_Whitespace (N : Text) return Boolean;
+      --  True if the text code contains text other than whitespaces
+
+      procedure Newline;
+      --  Go to the next line, when pretty-printing is activated
+
+      procedure Indent_Line;
+      --  Indent the newline if needed
+
+      Indent : Natural := 0;
+      At_Bol : Boolean := True;
+
+      -------------
+      -- Newline --
+      -------------
+
+      procedure Newline is
+      begin
+         if Pretty_Print then
+            String'Write (Stream, "" & ASCII.LF);
+            At_Bol := True;
+         end if;
+      end Newline;
+
+      -----------------
+      -- Indent_Line --
+      -----------------
+
+      procedure Indent_Line is
+      begin
+         if Pretty_Print and At_Bol then
+            String'Write (Stream, (1 .. Indent => ' '));
+            At_Bol := False;
+         end if;
+      end Indent_Line;
+
+      ------------------------
+      -- Has_Non_Whitespace --
+      ------------------------
+
+      function Has_Non_Whitespace (N : Text) return Boolean is
+         Val   : constant Byte_Sequence := Node_Value (N);
+      begin
+         for V in Val'Range loop
+            if Val (V) /= ' '
+              and then Val (V) /= ASCII.HT
+              and then Val (V) /= ASCII.LF
+            then
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Has_Non_Whitespace;
 
       ---------------------
       -- Recursive_Print --
@@ -1191,74 +1327,108 @@ package body DOM.Core.Nodes is
 
          case N.Node_Type is
             when Element_Node =>
-               Put (Less_Than_Sequence, Encoding);
-               Print_Name (N, With_URI, EOL_Sequence, Encoding);
+               Indent_Line;
+               Put (Stream, Less_Than_Sequence, Encoding);
+               Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
 
                --  Sort the XML attributes as required for canonical XML
                Sort (N.Attributes);
 
                for J in 0 .. N.Attributes.Last loop
-                  Put (Space_Sequence, Encoding);
+                  Put (Stream, Space_Sequence, Encoding);
                   Recursive_Print (N.Attributes.Items (J));
                end loop;
 
                if Collapse_Empty_Nodes and then N.Children = Null_List then
-                  Put (Slash_Sequence & Greater_Than_Sequence, Encoding);
+                  Put
+                    (Stream, Slash_Sequence & Greater_Than_Sequence, Encoding);
                else
-                  Put (Greater_Than_Sequence, Encoding);
+                  Put (Stream, Greater_Than_Sequence, Encoding);
 
+                  --  If the first child is a text node with text other than
+                  --  whitespaces, we'll have to preserve whitespaces in the
+                  --  children, otherwise we are free to modify them when
+                  --  pretty-printing.
+
+                  if Pretty_Print then
+                     if Length (N.Children) = 0
+                       or else N.Children.Items (0).Node_Type /= Text_Node
+                       or else not Has_Non_Whitespace (N.Children.Items (0))
+                     then
+                        Newline;
+                     end if;
+                  end if;
+
+                  Indent := Indent + 1;
                   Recursive_Print (N.Children);
+                  Indent := Indent - 1;
 
-                  Put (Less_Than_Sequence & Slash_Sequence, Encoding);
-                  Print_Name (N, With_URI, EOL_Sequence, Encoding);
-                  Put (Greater_Than_Sequence, Encoding);
+                  Indent_Line;
+                  Put (Stream, Less_Than_Sequence & Slash_Sequence, Encoding);
+                  Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
+                  Put (Stream, Greater_Than_Sequence, Encoding);
                end if;
+               Newline;
 
             when Attribute_Node =>
-               Print_Name (N, With_URI, EOL_Sequence, Encoding);
-               Put (Equals_Sign_Sequence & Quotation_Mark_Sequence, Encoding);
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               Put (Quotation_Mark_Sequence, Encoding);
+               At_Bol := False;
+               Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
+               Put (Stream,
+                    Equals_Sign_Sequence & Quotation_Mark_Sequence, Encoding);
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Put (Stream, Quotation_Mark_Sequence, Encoding);
 
             when Processing_Instruction_Node =>
+               Indent_Line;
                Put
-                 (Less_Than_Sequence
+                 (Stream,
+                  Less_Than_Sequence
                   & Question_Mark_Sequence
-                  & N.Target.all, Encoding);
+                  & Get (N.Target).all, Encoding);
 
-               if N.Pi_Data'Length = 0 then
-                  Put (Space_Sequence, Encoding);
+               if N.Pi_Data = Empty_String then
+                  Put (Stream, Space_Sequence, Encoding);
 
                else
                   declare
+                     P : constant Cst_Byte_Sequence_Access := Get (N.Pi_Data);
                      C : Unicode_Char;
-                     Index : Natural := N.Pi_Data'First;
+                     Index : Natural := P'First;
                   begin
-                     Sax.Encodings.Encoding.Read (N.Pi_Data.all, Index, C);
+                     Sax.Encodings.Encoding.Read (P.all, Index, C);
 
                      if C /= Space then
-                        Put (Space_Sequence, Encoding);
+                        Put (Stream, Space_Sequence, Encoding);
                      end if;
                   end;
                end if;
+
                Put
-                 (N.Pi_Data.all & Question_Mark_Sequence
+                 (Stream,
+                  Get (N.Pi_Data).all & Question_Mark_Sequence
                   & Greater_Than_Sequence, Encoding);
+               Newline;
 
             when Comment_Node =>
                if Print_Comments then
-                  Put ("<!--", Encoding);
-                  Put (Node_Value (N), Encoding);
-                  Put ("-->", Encoding);
+                  if Pretty_Print then
+                     Newline;
+                     Indent_Line;
+                  end if;
+                  Put (Stream, "<!--", Encoding);
+                  Put (Stream, Node_Value (N), Encoding);
+                  Put (Stream, "-->", Encoding);
+                  Newline;
                end if;
 
             when Document_Node =>
-               if Print_XML_PI then
-                  Put (Write_Bom (Encoding.Encoding_Scheme.BOM));
+               if Print_XML_Declaration then
+                  String'Write
+                    (Stream, Write_Bom (Encoding.Encoding_Scheme.BOM));
                   Put
-                    ("<?xml version=""1.0"" encoding="""
+                    (Stream, "<?xml version=""1.0"" encoding="""
                      & Encoding.Name.all & """?>", Encoding);
-                  Print_String ("" & ASCII.LF, EOL_Sequence, Encoding);
+                  Print_String (Stream, "" & ASCII.LF, EOL_Sequence, Encoding);
                end if;
                Recursive_Print (N.Doc_Children);
 
@@ -1269,21 +1439,75 @@ package body DOM.Core.Nodes is
                null;
 
             when Text_Node =>
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+               if not Pretty_Print then
+                  Print_String
+                    (Stream, Node_Value (N), EOL_Sequence, Encoding);
+
+               elsif Has_Non_Whitespace (N) then
+                  declare
+                     Val   : constant Byte_Sequence := Node_Value (N);
+                     First : Integer := Val'Last + 1;
+                     Last  : Integer := Val'Last;
+                  begin
+                     for V in Val'Range loop
+                        if Val (V) /= ' '
+                          and then Val (V) /= ASCII.HT
+                          and then Val (V) /= ASCII.LF
+                        then
+                           First := V;
+                           exit;
+                        end if;
+                     end loop;
+
+                     for V in reverse First + 1 .. Val'Last loop
+                        if Val (V) /= ' '
+                          and then Val (V) /= ASCII.HT
+                          and then Val (V) /= ASCII.LF
+                        then
+                           Last := V;
+                           exit;
+                        end if;
+                     end loop;
+
+                     Print_String
+                       (Stream, Val (First .. Last),
+                        EOL_Sequence, Encoding);
+                  end;
+               end if;
 
             when others =>
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
          end case;
       end Recursive_Print;
 
    begin
       Recursive_Print (N);
+   end Write;
 
-      if not Shared_Strings then
-         Reset (Namespaces.all);
-      end if;
+   -----------
+   -- Print --
+   -----------
 
-      Unchecked_Free (Namespaces);
+   procedure Print
+     (N                    : Node;
+      Print_Comments       : Boolean := False;
+      Print_XML_PI         : Boolean := False;
+      With_URI             : Boolean := False;
+      EOL_Sequence         : String  := Sax.Encodings.Lf_Sequence;
+      Encoding             : Unicode.Encodings.Unicode_Encoding :=
+        Unicode.Encodings.Get_By_Name ("utf-8");
+      Collapse_Empty_Nodes : Boolean := False)
+   is
+   begin
+      Write
+        (Stream            => Ada.Text_IO.Text_Streams.Stream (Current_Output),
+         N                 => N,
+         Print_Comments    => Print_Comments,
+         Print_XML_Declaration => Print_XML_PI,
+         With_URI          => With_URI,
+         EOL_Sequence      => EOL_Sequence,
+         Encoding          => Encoding,
+         Collapse_Empty_Nodes => Collapse_Empty_Nodes);
    end Print;
 
    ----------
@@ -1299,6 +1523,9 @@ package body DOM.Core.Nodes is
 
       Encoding : constant Unicode_Encoding := Get_By_Name ("utf-8");
       EOL_Sequence : constant Byte_Sequence := Sax.Encodings.Lf_Sequence;
+
+      Stream : constant Ada.Text_IO.Text_Streams.Stream_Access :=
+        Ada.Text_IO.Text_Streams.Stream (Current_Output);
 
       ----------
       -- Dump --
@@ -1319,9 +1546,9 @@ package body DOM.Core.Nodes is
       begin
          case N.Node_Type is
             when Element_Node =>
-               Put (Prefix & "Element: ");
-               Print_Name (N, With_URI, EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Element: ");
+               Print_Name
+                 (Stream, N, With_URI, EOL_Sequence & ASCII.LF, Encoding);
 
                --  Sort the XML attributes as required for canonical XML
                Sort (N.Attributes);
@@ -1334,54 +1561,55 @@ package body DOM.Core.Nodes is
                Dump (N.Children, Prefix & "  ");
 
             when Attribute_Node =>
-               Put (Prefix & "Attribute: ");
-               Print_Name (N, With_URI, EOL_Sequence, Encoding);
-               Put ("=");
+               String'Write (Stream, Prefix & "Attribute: ");
+               Print_Name (Stream, N, With_URI, EOL_Sequence, Encoding);
+               Character'Write (Stream, '=');
                --  ??? Could be a tree
                Print_String
-                 (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+                 (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
 
             when Processing_Instruction_Node =>
-               Put_Line (Prefix & "PI: " & N.Target.all);
-               Put_Line (Prefix & "   Data: " & N.Pi_Data.all);
+               String'Write (Stream, Prefix & "PI: " & Get (N.Target).all);
+               String'Write
+                 (Stream, Prefix & "   Data: " & Get (N.Pi_Data).all);
 
             when Comment_Node =>
-               Put_Line (Prefix & "Comment: " & Node_Value (N));
+               String'Write (Stream, Prefix & "Comment: " & Node_Value (N));
 
             when Document_Node =>
-               Put_Line (Prefix & "Document: ");
+               String'Write (Stream, Prefix & "Document: ");
                Dump (N.Doc_Children, Prefix => Prefix & "  ");
 
             when Document_Fragment_Node =>
-               Put_Line (Prefix & "Document_Fragment: ");
+               String'Write (Stream, Prefix & "Document_Fragment: ");
                Dump (N.Doc_Frag_Children, Prefix => Prefix & "  ");
 
             when Document_Type_Node =>
-               Put_Line (Prefix & "Document_Type: ");
+               String'Write (Stream, Prefix & "Document_Type: ");
 
             when Notation_Node =>
-               Put_Line (Prefix & "Notation:");
+               String'Write (Stream, Prefix & "Notation:");
 
             when Text_Node =>
-               Put (Prefix & "Text: ");
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Text: ");
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
 
             when Cdata_Section_Node =>
-               Put (Prefix & "Cdata: ");
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Cdata: ");
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
 
             when Entity_Reference_Node =>
-               Put (Prefix & "Entity_Reference: ");
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Entity_Reference: ");
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
 
             when Entity_Node =>
-               Put (Prefix & "Entity: ");
-               Print_String (Node_Value (N), EOL_Sequence, Encoding);
-               New_Line;
+               String'Write (Stream, Prefix & "Entity: ");
+               Print_String (Stream, Node_Value (N), EOL_Sequence, Encoding);
+               Character'Write (Stream, ASCII.LF);
          end case;
       end Dump;
 

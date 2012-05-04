@@ -1,3 +1,26 @@
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2004-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
+
 with Unicode;                use Unicode;
 with Unicode.CES;            use Unicode.CES;
 with Unicode.CES.Utf32;      use Unicode.CES.Utf32;
@@ -7,13 +30,14 @@ with Unicode.CES.Basic_8bit; use Unicode.CES.Basic_8bit;
 with Unicode.CCS;            use Unicode.CCS;
 with Unicode.Encodings;      use Unicode.Encodings;
 with Unicode.CCS.Iso_8859_2; use Unicode.CCS.Iso_8859_2;
-
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Exceptions; use Ada.Exceptions;
 
 procedure Test_Unicode is
 
    Test_Num : Natural := 1;
+
+   Had_Error : Boolean := False;
 
    procedure Assert (S1, S2 : String; Msg : String);
    function Image (Str : String) return String;
@@ -51,6 +75,7 @@ procedure Test_Unicode is
          Put_Line ("### (" & Natural'Image (Test_Num) & ") " & Msg);
          Put_Line ("  --" & S1 & "--");
          Put_Line ("  --" & S2 & "--");
+         Had_Error := True;
       end if;
    end Assert;
 
@@ -181,6 +206,26 @@ begin
               "Incorrect conversion to 8bit for Latin1_8bit, with "
               & "Iso_8859_1");
    end;
+
+   declare
+      Asc  : constant Unicode_Encoding := Get_By_Name ("ascii");
+      Utf8 : constant Unicode_Encoding := Get_By_Name ("utf8");
+      Str  : constant String := "Ascii string";
+   begin
+      Assert (Convert (Str, From => Asc, To => Asc), Str,
+              "Incorrect conversion from ascii to ascii");
+      Assert (Convert (Str, From => Asc, To => Utf8), Str,
+              "Incorrect conversion from ascii to utf8");
+      Assert (Convert
+                (Convert (Str, From => Asc, To => Utf8),
+                From => Utf8, To => Asc),
+              Str,
+              "Incorrect conversion from ascii to utf8 and back");
+   end;
+
+   if not Had_Error then
+      Put_Line ("test_unicode : SUCCESS");
+   end if;
 
 exception
    when E : others =>

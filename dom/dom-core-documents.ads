@@ -1,31 +1,25 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
 package DOM.Core.Documents is
 
@@ -47,13 +41,22 @@ package DOM.Core.Documents is
    --  characters.
 
    function Create_Element_NS
-     (Doc : Document;
-      Namespace_URI : DOM_String;
+     (Doc            : Document;
+      Namespace_URI  : DOM_String;
       Qualified_Name : DOM_String) return Element;
+   function Create_Element_NS
+     (Doc            : Document;
+      Symbols        : Sax.Utils.Symbol_Table;
+      Namespace_URI  : Sax.Symbols.Symbol;
+      Prefix         : Sax.Symbols.Symbol;
+      Local_Name     : Sax.Symbols.Symbol) return Element;
    --  Create a new element, and its default attributes.
    --  Invalid_Character_Err is raised if Tag_Name contains invalid
    --  characters.
    --  Namespace_Err raised if Qualified_Name is incorrect.
+   --  The version with Symbols is more efficient.
+   --  Symbol_Table is the table in which the symbols were allocated, to ensure
+   --  they are valid while the document is in use.
 
    function Create_Document_Fragment (Doc : Document) return Document_Fragment;
    --  Create an empty document fragment;
@@ -61,6 +64,9 @@ package DOM.Core.Documents is
    function Create_Text_Node (Doc : Document; Data : DOM_String)
       return Text;
    --  Create a text node given a specific string
+   function Create_Text_Node (Doc : Document; Data : DOM_String_Access)
+      return Text;
+   --  As above but with a pre-allocated Data which must not be freed
 
    function Create_Comment (Doc : Document; Data : DOM_String)
       return Comment;
@@ -89,6 +95,12 @@ package DOM.Core.Documents is
      (Doc : Document;
       Namespace_URI : DOM_String;
       Qualified_Name : DOM_String) return Attr;
+   function Create_Attribute_NS
+     (Doc           : Document;
+      Symbols       : Sax.Utils.Symbol_Table;
+      Namespace_URI : Sax.Symbols.Symbol;
+      Prefix        : Sax.Symbols.Symbol;
+      Local_Name    : Sax.Symbols.Symbol) return Attr;
    --  Create a new attribute.
    --  Use Set_Attribute to associate it with an element.
    --  Invalid_Character_Err raised if Name is invalid

@@ -1,35 +1,30 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            ACT-Europe                             --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
-with Unicode.CES;  use Unicode.CES;
+with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
+with Unicode.CES;            use Unicode.CES;
 with Unchecked_Deallocation;
-with Sax.Models;   use Sax.Models;
+with Sax.Models;             use Sax.Models;
 
 package body Sax.Attributes is
 
@@ -67,6 +62,12 @@ package body Sax.Attributes is
    begin
       Free (Attr.URI);
       Free (Attr.Local_Name);
+
+      if Attr.Non_Normalized_Value /= Attr.Value then
+         Free (Attr.Non_Normalized_Value);
+      end if;
+
+      Attr.Non_Normalized_Value := null;
       Free (Attr.Value);
       Free (Attr.Qname);
       Unref (Attr.Content);
@@ -166,6 +167,7 @@ package body Sax.Attributes is
       Attr.Last.Local_Name := new Byte_Sequence'(Local_Name);
       Attr.Last.Att_Type := Att_Type;
       Attr.Last.Value := new Byte_Sequence'(Value);
+      Attr.Last.Non_Normalized_Value := Attr.Last.Value;
       Attr.Last.Qname := new Byte_Sequence'(Qname);
       Attr.Last.Default_Decl := Default_Decl;
       Attr.Last.Content := Content;
@@ -247,6 +249,7 @@ package body Sax.Attributes is
       Att.Local_Name := new Byte_Sequence'(Local_Name);
       Att.Att_Type := Att_Type;
       Att.Value := new Byte_Sequence'(Value);
+      Att.Non_Normalized_Value := Att.Value;
       Att.Qname := new Byte_Sequence'(Qname);
       Att.Default_Decl := Default_Decl;
       Att.Content := Content;
@@ -338,31 +341,19 @@ package body Sax.Attributes is
    ---------------
 
    procedure Set_Value
-     (Attr  : in out Attributes;
+     (Attr  : Attributes;
       Index : Natural;
       Value : Unicode.CES.Byte_Sequence)
    is
       Tmp : constant Attribute_Access := Get (Attr, Index);
    begin
       pragma Assert (Tmp /= null, "Unexpected null attribute");
-      Free (Tmp.Value);
+      if Tmp.Non_Normalized_Value /= Tmp.Value then
+         Free (Tmp.Value);
+      end if;
+
       Tmp.Value := new Byte_Sequence'(Value);
    end Set_Value;
-
-   ---------------
-   -- Get_Index --
-   ---------------
-
-   function Get_Index
-     (Attr  : Attributes;
-      Qname : Unicode.CES.Byte_Sequence) return Integer
-   is
-      J : Integer;
-      Tmp : Attribute_Access;
-   begin
-      Get (Attr, Qname, J, Tmp);
-      return J;
-   end Get_Index;
 
    ---------------
    -- Get_Index --
@@ -379,6 +370,18 @@ package body Sax.Attributes is
    begin
       Get (Attr, URI, Local_Name, J, Tmp);
       return J;
+   end Get_Index;
+
+   ---------------
+   -- Get_Index --
+   ---------------
+
+   function Get_Index
+     (Attr       : Attributes;
+      Local_Name : Unicode.CES.Byte_Sequence)  --  no namespace
+      return Integer is
+   begin
+      return Get_Index (Attr, URI => "", Local_Name => Local_Name);
    end Get_Index;
 
    ----------------
@@ -409,6 +412,25 @@ package body Sax.Attributes is
    begin
       return Get (Attr, Index).Qname.all;
    end Get_Qname;
+
+   ----------------
+   -- Get_Prefix --
+   ----------------
+
+   function Get_Prefix (Attr : Attributes; Index : Natural)
+      return Unicode.CES.Byte_Sequence
+   is
+      QName : constant Unicode.CES.Byte_Sequence_Access :=
+        Get (Attr, Index).Qname;
+      Pos : constant Natural := Ada.Strings.Fixed.Index
+        (String (QName.all), ":");
+   begin
+      if Pos < QName'First then
+         return "";
+      else
+         return QName (QName'First .. Pos - 1);
+      end if;
+   end Get_Prefix;
 
    --------------
    -- Get_Type --
@@ -504,6 +526,26 @@ package body Sax.Attributes is
       return Tmp.Value.all;
    end Get_Value;
 
+   ------------------------------
+   -- Get_Non_Normalized_Value --
+   ------------------------------
+
+   function Get_Non_Normalized_Value
+     (Attr       : Attributes;
+      URI        : Unicode.CES.Byte_Sequence;
+      Local_Name : Unicode.CES.Byte_Sequence) return Unicode.CES.Byte_Sequence
+   is
+      J : Integer;
+      Tmp : Attribute_Access;
+   begin
+      Get (Attr, URI, Local_Name, J, Tmp);
+      if Tmp /= null then
+         return Tmp.Non_Normalized_Value.all;
+      else
+         return "";
+      end if;
+   end Get_Non_Normalized_Value;
+
    --------------------------
    -- Get_Value_As_Boolean --
    --------------------------
@@ -534,7 +576,11 @@ package body Sax.Attributes is
       Tmp : Attribute_Access;
    begin
       Get (Attr, URI, Local_Name, J, Tmp);
-      return Tmp.Value.all;
+      if Tmp /= null then
+         return Tmp.Value.all;
+      else
+         return "";
+      end if;
    end Get_Value;
 
    --------------------------

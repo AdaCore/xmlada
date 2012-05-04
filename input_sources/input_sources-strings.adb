@@ -1,34 +1,28 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
-with Unicode;      use Unicode;
-with Unicode.CES;  use Unicode.CES;
+with Unicode;            use Unicode;
+with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
 with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
@@ -40,7 +34,7 @@ package body Input_Sources.Strings is
    ----------
 
    procedure Open
-     (Str      : Unicode.CES.Byte_Sequence_Access;
+     (Str      : Unicode.CES.Cst_Byte_Sequence_Access;
       Encoding : Unicode.CES.Encoding_Scheme;
       Input    : out String_Input)
    is
@@ -48,8 +42,8 @@ package body Input_Sources.Strings is
    begin
       Input.Encoding := Encoding;
       Input.Buffer := Str;
+      Input.Buffer2 := null;
       Input.Index := Input.Buffer'First;
-      Input.Free_Buffer := False;
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
@@ -80,9 +74,9 @@ package body Input_Sources.Strings is
       BOM : Bom_Type;
    begin
       Input.Encoding := Encoding;
-      Input.Buffer := new Byte_Sequence'(Str);
+      Input.Buffer2 := new Byte_Sequence'(Str);
+      Input.Buffer := Cst_Byte_Sequence_Access (Input.Buffer2);
       Input.Index := Input.Buffer'First;
-      Input.Free_Buffer := True;
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
@@ -107,8 +101,8 @@ package body Input_Sources.Strings is
 
    procedure Close (Input : in out String_Input) is
    begin
-      if Input.Free_Buffer then
-         Free (Input.Buffer);
+      if Input.Buffer2 /= null then
+         Free (Input.Buffer2);
       end if;
       Input_Sources.Close (Input_Source (Input));
    end Close;
@@ -122,6 +116,11 @@ package body Input_Sources.Strings is
       C    : out Unicode.Unicode_Char) is
    begin
       From.Encoding.Read (From.Buffer.all, From.Index, C);
+
+   exception
+      --  For a String input, an incomplete encoding is invalid.
+      when Incomplete_Encoding =>
+         raise Invalid_Encoding;
    end Next_Char;
 
    ---------

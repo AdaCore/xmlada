@@ -1,34 +1,29 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2002                     --
---                            ACT-Europe                             --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
-with Unicode.Encodings;
+with Ada.Streams;
 with Sax.Encodings;
+with Unicode.Encodings;
 
 package DOM.Core.Nodes is
 
@@ -39,6 +34,9 @@ package DOM.Core.Nodes is
    function Node_Name (N : Node) return DOM_String;
    --  Return the name of the tag.
    --  Its meaning depends on the type of the node, see the DOM specifications.
+   --  For an <element> node, this returns the qualified name, in the form of
+   --  "prefix:local_name". See below for subprograms to get each of the
+   --  components separately instead.
 
    function Node_Value (N : Node) return DOM_String;
    --  Return the value of the node.
@@ -96,6 +94,7 @@ package DOM.Core.Nodes is
    --  a tree already, it doesn't work for isolated nodes.
 
    function Local_Name (N : Node) return DOM_String;
+   function Local_Name (N : Node) return Sax.Symbols.Symbol;
    --  Return the local name of N (second part of the qualified name). This is
    --  null if the node was created with a DOM level 1 method (no namespace at
    --  creation time).
@@ -128,6 +127,7 @@ package DOM.Core.Nodes is
    --    * Wrong_Document_Err: if New_Child was created from another document
    --    * No_Modification_Allowed_Err: N or New_Child is read-only.
    --    * Not_Found_Err: Old_Child is not a child of N.
+   --  The caller must free the returned node.
 
    function Remove_Child
      (N         : Node;
@@ -136,6 +136,7 @@ package DOM.Core.Nodes is
    --  raises:
    --    * No_Modification_Allowed_Err: N is read-only
    --    * Not_Found_Err: Old_Child is not a child of N
+   --  The caller must free the returned node.
 
    function Append_Child
      (N         : Node;
@@ -184,6 +185,8 @@ package DOM.Core.Nodes is
 
    function Get_Named_Item
      (Map : Named_Node_Map; Name : DOM_String) return Node;
+   function Get_Named_Item
+     (Map : Named_Node_Map; Name : Sax.Symbols.Symbol) return Node;
    --  Retrieve a node specified by name.
    --  null is returned if no such node exists
    --  Consider using Get_Named_Item_NS instead for DOM level 2
@@ -218,6 +221,10 @@ package DOM.Core.Nodes is
      (Map           : Named_Node_Map;
       Namespace_URI : DOM_String;
       Local_Name    : DOM_String) return Node;
+   function Get_Named_Item_NS
+     (Map           : Named_Node_Map;
+      Namespace_URI : Sax.Symbols.Symbol;
+      Local_Name    : Sax.Symbols.Symbol) return Node;
    --  Retrieve a node specified by its (namespace, local_name)
 
    procedure Set_Named_Item_NS
@@ -238,6 +245,51 @@ package DOM.Core.Nodes is
       Local_Name    : DOM_String);
    --  Remove a node specified by its namespace and local_name.
 
+   ------------------
+   -- Input/Output --
+   ------------------
+
+   procedure Write
+     (Stream                : access Ada.Streams.Root_Stream_Type'Class;
+      N                     : Node;
+      Print_Comments        : Boolean := True;
+      Print_XML_Declaration : Boolean := True;
+      With_URI              : Boolean := False;
+      Pretty_Print          : Boolean := False;
+      EOL_Sequence          : String  := "" & ASCII.LF;
+      Encoding              : Unicode.Encodings.Unicode_Encoding :=
+        Unicode.Encodings.Get_By_Name ("utf-8");
+      Collapse_Empty_Nodes  : Boolean := True);
+   --  Print the contents of Node and its children in XML format.
+   --  If Print_Comments is True, then nodes associated with comments are
+   --  also displayed.
+   --  EOL_Sequence is output at every end of line. It should be encoded in
+   --  Sax.Encodings.Encoding, and will be automatically converted to the
+   --  appropriate output encoding.
+   --  Encoding specifies the encoding to use in the output stream.
+   --
+   --  The <?xml?> declaration is displayed only if Print_XML_Declaration and
+   --  N is a Document_Node. In this case, a Byte-Order mark is also output
+   --  so that proper decoding of the document can be performed later on.
+   --  Note that you mustn't added <?xml?> yourself to the DOM tree. The XML
+   --  standard doesn't define this as a processing instruction, which is why
+   --  it has a different name ("XML declaration") and cannot be modified by
+   --  users.
+   --
+   --  By default, names are of the form  ns_prefix:local_name. However, if
+   --  with_URI is True, names will be  ns_URI:local_name instead
+   --
+   --  If Collapse_Empty_Nodes is true, then nodes with no child node will be
+   --  output as <name/>, instead of <name></name>
+   --
+   --  If Pretty_Print is true, then the XML nodes will be indented so that
+   --  children nodes are to the right of their parents. It is set to False
+   --  by default because its use changes the document (addition or removal
+   --  of whitespaces among other things), which in general has no effect for
+   --  automatic tools reading the document. All whitespaces are modified
+   --  outside of elements containing nothing but text nodes. For text nodes,
+   --  leading and trailing whitespaces are also deleted
+
    -----------------------
    -- Extra subprograms --
    -----------------------
@@ -255,23 +307,13 @@ package DOM.Core.Nodes is
       Encoding       : Unicode.Encodings.Unicode_Encoding :=
         Unicode.Encodings.Get_By_Name ("utf-8");
       Collapse_Empty_Nodes : Boolean := False);
-   --  Print the contents of Node and its children in XML format.
-   --  If Print_Comments is True, then nodes associated with comments are
-   --  also displayed.
-   --  EOL_Sequence is output at every end of line. It should be encoded in
-   --  Sax.Encodings.Encoding, and will be automatically converted to the
-   --  appropriate output encoding.
-   --  Encoding specifies the encoding to use in the output stream.
+   --  For debugging purposes only!
    --
-   --  The <?xml?> processing instruction is displayed only if Print_XML_PI and
-   --  N is a Document_Node. In this case, a Byte-Order mark is also output
-   --  so that proper decoding of the document can be performed later on.
-   --
-   --  By default, names are of the form  ns_prefix:local_name. However, if
-   --  with_URI is True, names will be  ns_URI:local_name instead
-   --
-   --  If Collapse_Empty_Nodes is true, then nodes with no child node will be
-   --  output as <name/>, instead of <name></name>
+   --  Same as Write, but the output is done on Stdout.
+   --  Warning: the default values for the parameters are not the same as for
+   --  write. For the latter, they are chosen so that by default the output is
+   --  valid XML, whereas Print is mostly intended to be used for testsuite
+   --  purposes, and the default match that goal.
 
    procedure Dump (N : Node; With_URI : Boolean := False);
    --  Dump the contents of the node to standard output.

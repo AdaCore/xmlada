@@ -1,1156 +1,1085 @@
-with Unicode;         use Unicode;
-with Unicode.CES;     use Unicode.CES;
-with Sax.Attributes;  use Sax.Attributes;
-with Sax.Encodings;   use Sax.Encodings;
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2004-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
+
+pragma Ada_05;
+
+with Ada.Characters.Handling;        use Ada.Characters.Handling;
+with Ada.Exceptions;                 use Ada.Exceptions;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;  use Ada.Exceptions;
-with Sax.Utils;       use Sax.Utils;
-with GNAT.IO; use GNAT.IO;
-with Ada.Tags; use Ada.Tags;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Schema.Validators.UR_Type;      use Schema.Validators.UR_Type;
-with Schema.Validators.Extensions;   use Schema.Validators.Extensions;
-with Schema.Validators.Facets;       use Schema.Validators.Facets;
-with Schema.Validators.Restrictions; use Schema.Validators.Restrictions;
-with Schema.Validators.Simple_Types; use Schema.Validators.Simple_Types;
-with Schema.Validators.Lists;        use Schema.Validators.Lists;
+with GNAT.Task_Lock;
+with Interfaces;                     use Interfaces;
+with Sax.Attributes;                 use Sax.Attributes;
+with Sax.Locators;                   use Sax.Locators;
+with Sax.Symbols;                    use Sax.Symbols;
+with Sax.Utils;                      use Sax.Utils;
+with Schema.Simple_Types;            use Schema.Simple_Types;
+with Schema.Validators.XSD_Grammar;  use Schema.Validators.XSD_Grammar;
+with Unicode.CES;                    use Unicode.CES;
+with Unicode;                        use Unicode;
 
 package body Schema.Validators is
+   use XML_Grammars, Attributes_Tables, Enumeration_Tables;
+   use Schema_State_Machines_Matchers;
 
-   Debug : Boolean := False;
+   function To_Graphic_String (Str : Byte_Sequence) return String;
+   --  Convert non-graphic characters in Str to make them visible in a display
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Element_List, Element_List_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Particle_Iterator_Record, Particle_Iterator);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Grammar_NS_Array, Grammar_NS_Array_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (XML_Grammar_Record, XML_Grammar);
+   type Attribute_Validator_Data is record
+      Validator : Named_Attribute_List;  --  Index into the table
+      Visited   : Boolean;
+   end record;
+   type Attribute_Validator_Index is new Natural;
+   type Attribute_Validator_Array is array (Attribute_Validator_Index range <>)
+     of Attribute_Validator_Data;
+   function To_Attribute_Array
+     (NFA        : access Schema_NFA'Class;
+      Attributes : Attributes_List) return Attribute_Validator_Array;
+   --  The data required to validate attributes
 
-   procedure Create_NS_Grammar
-     (Grammar       : in out XML_Grammar;
-      Namespace_URI : Unicode.CES.Byte_Sequence);
-   --  Create a new namespace in the grammar
+   procedure Create_Grammar_If_Needed
+     (Grammar : in out XML_Grammar;
+      Symbols : Symbol_Table := No_Symbol_Table);
+   --  Create the grammar if needed
+   --  Symbols is used only when a new grammar is created.
 
-   procedure Free (Element : in out XML_Element_Record);
-   --  Free Element
+   procedure Validate_Attribute
+     (Attr      : Attribute_Descr;
+      Reader    : access Abstract_Validation_Reader'Class;
+      Atts      : in out Sax_Attribute_List;
+      Index     : Natural);
+   --  Validate the value of a single attribute
 
-   function Move_To_Next_Particle
-     (Seq   : access Sequence_Record'Class;
-      Data  : Sequence_Data_Access;
-      Force : Boolean := False;
-      Increase_Count : Boolean := True) return Boolean;
-   --  Move to the next particle to match in the sequence, or stay on the
-   --  current one if it still can match (its maxOccurs hasn't been reached
-   --  for instance).
-   --  If Increase_Count is true, the current particle will be considered as
-   --  matched
+   procedure Reset_Simple_Types
+     (NFA : access Schema_NFA'Class;
+      To  : Simple_Type_Index := No_Simple_Type_Index);
+   --  Resets the contents of G.Simple_Types by resizing the table and freeing
+   --  needed data
+   --  If [To] is [No_Simple_Type_Index], the table is freed
 
-   procedure Check_Nested
-     (Nested      : access Group_Model_Record'Class;
-      Data        : access Group_Model_Data_Record'Class;
-      Local_Name  : Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      NS                : XML_Grammar_NS;
-      Schema_Target_NS  : XML_Grammar_NS;
-      Element_Validator : out XML_Element;
-      Skip_Current      : out Boolean);
-   --  Check whether Nested matches Local_Name.
-   --  If Nested should match but there is an error, XML_Validator_Record is
-   --  raised.
-   --  If Nested cannot match Local_Name, Element_Validator is set to null on
-   --  exit.
-   --  Data should be the parent's data.
-   --  Skip_Current is set to True if Nested didn't match Local_Name, but
-   --  if it should be considered as terminated successfully (and thus we
-   --  should hand out Local_Name to the next validator in the list)
+   function To_String (Any : Any_Descr) return String;
+   --  Debug only
 
-   procedure Run_Nested
-     (Validator         : access Group_Model_Record'Class;
-      Data              : access Group_Model_Data_Record'Class;
-      Local_Name        : Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      NS                : XML_Grammar_NS;
-      Schema_Target_NS  : XML_Grammar_NS;
-      Element_Validator : out XML_Element);
-   --  Run the nested group of Validator, if there is any.
-   --  On exit, Element_Validator is set to No_Element if either the nested
-   --  group didn't match, or there was no nested group.
+   ---------------
+   -- To_String --
+   ---------------
 
-   function Check_Substitution_Groups
-     (Element          : XML_Element_Access;
-      Local_Name       : Unicode.CES.Byte_Sequence;
-      Namespace_URI    : Unicode.CES.Byte_Sequence;
-      Parent_NS        : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS) return XML_Element;
-   --  Check whether any element in the substitution group of Validator can
-   --  be used to match Local_Name. This also check whether Element itself
-   --  matches.
-   --  This also raises an XML_Validator_Record if the matching element is
-   --  in fact abstract
-
-   function Extension_Of
-     (Base      : XML_Type;
-      Extension : XML_Validator := null) return XML_Validator
-     renames Schema.Validators.Extensions.Create_Extension_Of;
-
-   function Extension_Of
-     (Base       : XML_Type;
-      Group      : XML_Group;
-      Min_Occurs : Natural := 1;
-      Max_Occurs : Integer := 1) return XML_Validator
-      renames Schema.Validators.Extensions.Create_Extension_Of;
-
-   function Restriction_Of
-     (Base        : XML_Type;
-      Restriction : XML_Validator := null) return XML_Validator
-      renames Schema.Validators.Restrictions.Create_Restriction_Of;
-
-   function Internal_Type_Model
-     (Validator  : access Group_Model_Record'Class;
-      Separator  : Byte_Sequence;
-      First_Only : Boolean;
-      All_In_List : Boolean) return Byte_Sequence;
-   --  Internal version of Type_Model (shared implementation)
-   --  All_In_List indicates whether all the elements from the list should be
-   --  included, or only the first one.
-
-   function Type_Model
-     (Iter       : Particle_Iterator;
-      First_Only : Boolean) return Byte_Sequence;
-   --  Return the content model describes by Particle.
-
-   function Is_Optional (Iterator : Particle_Iterator) return Boolean;
-   pragma Inline (Is_Optional);
-   --  Whether the current optional can be omitted
-
-   Debug_Prefixes_Level : Natural := 0;
-
-   --  Provide Debug_Output body early to allow it to be inlined
-
-   ------------------
-   -- Debug_Output --
-   ------------------
-
-   procedure Debug_Output (Str : String) is
+   function To_String (Any : Any_Descr) return String is
+      Str : Unbounded_String;
    begin
-      if Debug then
-         for Prefix in 1 .. Debug_Prefixes_Level loop
-            declare
-               Str : constant String := Integer'Image (Prefix);
-            begin
-               Put ("#" & Str (Str'First + 1 .. Str'Last) & ' ');
-            end;
-         end loop;
-
-         Put_Line (Str);
+      Append (Str, "{" & Any.Process_Contents'Img);
+      if Any.Namespaces /= No_Symbol then
+         Append (Str, " ns={" & Get (Any.Namespaces).all & "}");
       end if;
-   end Debug_Output;
-
-   ------------------------------
-   -- Attribute_Validator_List --
-   ------------------------------
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Attribute_Validator_List, Attribute_Validator_List_Access);
-
-   procedure Free (List : in out Attribute_Validator_List_Access);
-   --  Free the contents of List, including contained
-
-   procedure Append
-     (List      : in out Attribute_Validator_List_Access;
-      Validator : access Attribute_Validator_Record'Class;
-      Override  : Boolean);
-   procedure Append
-     (List      : in out Attribute_Validator_List_Access;
-      Group     : XML_Attribute_Group);
-   --  Append a new value to List.
-   --  If a similar attribute already exists in the list, Validator will either
-   --  be ignored (Override is False), or replace the existing definition
-   --  (Override is True).
-
-   -------------------------
-   -- Get_Attribute_Lists --
-   -------------------------
-
-   procedure Get_Attribute_Lists
-     (Validator   : access XML_Validator_Record;
-      List        : out Attribute_Validator_List_Access;
-      Dependency1 : out XML_Validator;
-      Dependency2 : out XML_Validator) is
-   begin
-      List := Validator.Attributes;
-      Dependency1 := null;
-      Dependency2 := null;
-   end Get_Attribute_Lists;
-
-   ----------------------
-   -- Set_Debug_Output --
-   ----------------------
-
-   procedure Set_Debug_Output (Output : Boolean) is
-   begin
-      Debug := Output;
-   end Set_Debug_Output;
+      if Any.No_Namespaces /= No_Symbol then
+         Append (Str, " no_ns={" & Get (Any.No_Namespaces).all & "}");
+      end if;
+      return To_String (Str) & "}";
+   end To_String;
 
    ----------------------
    -- Validation_Error --
    ----------------------
 
-   procedure Validation_Error (Message : String) is
+   procedure Validation_Error
+     (Reader  : access Abstract_Validation_Reader;
+      Message : Byte_Sequence;
+      Loc     : Sax.Locators.Location := Sax.Locators.No_Location;
+      Except  : Exception_Id := XML_Validation_Error'Identity) is
    begin
-      Debug_Output ("Validation_Error: " & Message);
-      Raise_Exception (XML_Validation_Error'Identity, Message);
+      if Debug then
+         Debug_Output ("Validation_Error: " & Message);
+      end if;
+
+      if Loc /= No_Location then
+         Reader.Error_Location := Loc;
+      else
+         Reader.Error_Location := Reader.Current_Location;
+      end if;
+
+      if Message (Message'First) = '#' then
+         Reader.Error_Msg := Find_Symbol
+           (Reader.all, Message (Message'First + 1 .. Message'Last));
+         raise XML_Not_Implemented;
+      else
+         Reader.Error_Msg := Find_Symbol (Reader.all, Message);
+         Raise_Exception (Except);
+      end if;
    end Validation_Error;
 
-   ----------
-   -- Free --
-   ----------
+   -----------------------
+   -- Get_Error_Message --
+   -----------------------
 
-   procedure Free (List : in out Attribute_Validator_List_Access) is
-   begin
-      if List /= null then
-         for L in List'Range loop
-            if not List (L).Is_Group then
-               Free (List (L).Attr);
-            end if;
-         end loop;
-         Unchecked_Free (List);
-      end if;
-   end Free;
-
-   --------------
-   -- Is_Equal --
-   --------------
-
-   function Is_Equal
-     (Attribute : Named_Attribute_Validator_Record;
-      Attr2     : Attribute_Validator_Record'Class)
-     return Boolean is
-   begin
-      return Attr2 in Named_Attribute_Validator_Record'Class
-        and then Attribute.NS = Attr2.NS
-        and then Attribute.Local_Name.all =
-          Named_Attribute_Validator_Record (Attr2).Local_Name.all;
-   end Is_Equal;
-
-   function Is_Equal
-     (Attribute : Any_Attribute_Validator;
-      Attr2     : Attribute_Validator_Record'Class)
-     return Boolean is
-   begin
-      return Attr2 in Any_Attribute_Validator'Class
-        and then Attribute.NS = Attr2.NS
-        and then Attribute.Kind = Any_Attribute_Validator (Attr2).Kind;
-   end Is_Equal;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (List      : in out Attribute_Validator_List_Access;
-      Validator : access Attribute_Validator_Record'Class;
-      Override  : Boolean)
+   function Get_Error_Message
+     (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence
    is
-      L : Attribute_Validator_List_Access;
+      Loc : Location;
    begin
-      if List /= null then
-         for A in List'Range loop
-            if not List (A).Is_Group
-              and then Is_Equal (List (A).Attr.all, Validator.all)
+      if Reader.Error_Msg = No_Symbol then
+         return "";
+
+      else
+         Loc := Reader.Error_Location;
+         if Loc = No_Location then
+            Loc := Reader.Current_Location;
+         end if;
+
+         declare
+            Error : constant Cst_Byte_Sequence_Access :=
+              Get (Reader.Error_Msg);
+         begin
+            if Loc /= No_Location then
+               return To_String (Loc, Use_Basename_In_Error_Messages (Reader))
+                 & ": " & Error.all;
+            else
+               return Error.all;
+            end if;
+         end;
+      end if;
+   end Get_Error_Message;
+
+   -----------------------
+   -- Add_Any_Attribute --
+   -----------------------
+
+   procedure Add_Any_Attribute
+     (Grammar        : XML_Grammar;
+      List           : in out Attributes_List;
+      Any            : Internal_Any_Descr;
+      As_Restriction : Boolean) is
+   begin
+      List.Any := Combine
+        (Grammar        => Grammar,
+         Base_Any       => List.Any,
+         Local_Process  => Any.Process_Contents,
+         Local          => Any.Namespaces,
+         As_Restriction => As_Restriction,
+         Target_NS      => Any.Target_NS);
+   end Add_Any_Attribute;
+
+   ----------------------------
+   -- Normalize_And_Validate --
+   ----------------------------
+
+   procedure Normalize_And_Validate
+     (Parser  : access Abstract_Validation_Reader'Class;
+      Simple  : Schema.Simple_Types.Simple_Type_Index;
+      Fixed   : in out Sax.Symbols.Symbol;
+      Loc     : Sax.Locators.Location)
+   is
+   begin
+      if Fixed /= No_Symbol
+        and then Simple /= No_Simple_Type_Index
+      then
+         declare
+            Simple_Descr : constant Simple_Type_Descr :=
+                             Get_NFA (Parser.Grammar).Get_Simple_Type (Simple);
+            Norm         : Byte_Sequence := Get (Fixed).all;
+            Last         : Integer := Norm'Last;
+         begin
+            --  Normalize whitespaces, for faster comparison later
+            --  on.
+
+            if Simple_Descr.Mask (Facet_Whitespace) then
+               Normalize_Whitespace
+                 (Simple_Descr.Whitespace, Norm, Last);
+               Fixed := Find
+                 (Get_Symbol_Table (Parser.Grammar),
+                  Norm (Norm'First .. Last));
+            end if;
+
+            Validate_Simple_Type
+              (Reader      => Parser,
+               Simple_Type => Simple,
+               Ch          => Norm (Norm'First .. Last),
+               Loc         => Loc,
+               Insert_Id   => True);
+         end;
+      end if;
+   end Normalize_And_Validate;
+
+   -------------------
+   -- Add_Attribute --
+   -------------------
+
+   procedure Add_Attribute
+     (Parser    : access Abstract_Validation_Reader'Class;
+      List      : in out Attributes_List;
+      Attribute : Attribute_Descr;
+      Ref       : Named_Attribute_List := Empty_Named_Attribute_List;
+      Loc       : Sax.Locators.Location)
+   is
+      NFA  : constant Schema_NFA_Access := Get_NFA (Parser.Grammar);
+      L    : Named_Attribute_List := List.Named;
+      Tmp  : Named_Attribute_List;
+      Attr : Attribute_Descr := Attribute;
+   begin
+      if Debug then
+         Debug_Output
+           ("Adding attribute " & To_QName (Attribute.Name)
+            & " Use_Type=" & Attribute.Use_Type'Img
+            & " local=" & Attribute.Is_Local'Img);
+      end if;
+
+      while L /= Empty_Named_Attribute_List loop
+         if NFA.Attributes.Table (L).Name = Attribute.Name then
+            --  Override use_type, form,... from the <restriction>
+            Tmp := NFA.Attributes.Table (L).Next;
+
+            Attr := Attribute;
+            Normalize_And_Validate
+              (Parser,
+               Attr.Simple_Type, Attr.Fixed, Loc);
+
+            NFA.Attributes.Table (L) := Attr;
+            NFA.Attributes.Table (L).Next := Tmp;
+
+            return;
+         end if;
+         L := NFA.Attributes.Table (L).Next;
+      end loop;
+
+      if Ref /= Empty_Named_Attribute_List then
+         Attr          := NFA.Attributes.Table (Ref);
+         Attr.Use_Type := Attribute.Use_Type;
+         Attr.Is_Local := Attribute.Is_Local;
+
+         if Attribute.Fixed /= No_Symbol then
+            Attr.Fixed    := Attribute.Fixed;
+         end if;
+      end if;
+
+      Normalize_And_Validate
+        (Parser,
+         Attr.Simple_Type, Attr.Fixed, Loc);
+
+      Append (NFA.Attributes, Attr);
+      NFA.Attributes.Table (Last (NFA.Attributes)).Next := List.Named;
+      List.Named := Last (NFA.Attributes);
+   end Add_Attribute;
+
+   --------------------
+   -- Add_Attributes --
+   --------------------
+
+   procedure Add_Attributes
+     (Parser         : access Abstract_Validation_Reader'Class;
+      List           : in out Attributes_List;
+      Attributes     : Attributes_List;
+      As_Restriction : Boolean;
+      Loc            : Sax.Locators.Location)
+   is
+      NFA : constant Schema_NFA_Access := Get_NFA (Parser.Grammar);
+      L   : Named_Attribute_List := Attributes.Named;
+   begin
+      while L /= Empty_Named_Attribute_List loop
+         Add_Attribute (Parser, List, NFA.Attributes.Table (L), Loc => Loc);
+         L := NFA.Attributes.Table (L).Next;
+      end loop;
+
+      Add_Any_Attribute
+        (Parser.Grammar, List,
+         Internal_Any_Descr'
+           (Target_NS        => Empty_String,
+            Process_Contents => Attributes.Any.Process_Contents,
+            Namespaces       => Attributes.Any.Namespaces),
+         As_Restriction);
+   end Add_Attributes;
+
+   ------------------------
+   -- To_Attribute_Array --
+   ------------------------
+
+   function To_Attribute_Array
+     (NFA        : access Schema_NFA'Class;
+      Attributes : Attributes_List) return Attribute_Validator_Array
+   is
+      Count : Attribute_Validator_Index := 0;
+      L     : Named_Attribute_List := Attributes.Named;
+   begin
+      while L /= Empty_Named_Attribute_List loop
+         Count := Count + 1;
+         L := NFA.Attributes.Table (L).Next;
+      end loop;
+
+      declare
+         Result : Attribute_Validator_Array (1 .. Count);
+      begin
+         Count := Result'First;
+         L := Attributes.Named;
+         while L /= Empty_Named_Attribute_List loop
+            Result (Count) := (Validator => L,
+                               Visited   => False);
+            Count := Count + 1;
+            L := NFA.Attributes.Table (L).Next;
+         end loop;
+
+         return Result;
+      end;
+   end To_Attribute_Array;
+
+   -------------
+   -- Combine --
+   -------------
+
+   function Combine
+     (Grammar        : XML_Grammar;
+      Base_Any       : Any_Descr;
+      Local_Process  : Process_Contents_Type;
+      Local          : Sax.Symbols.Symbol;
+      As_Restriction : Boolean;
+      Target_NS      : Sax.Symbols.Symbol) return Any_Descr
+   is
+      use Symbol_Htable;
+      Namespaces    : Symbol_Htable.HTable (127);
+      No_Namespaces : Symbol_Htable.HTable (127);
+      Tmp           : Symbol_Htable.HTable (127);
+
+      Result : Any_Descr;
+      Base_Is_Any, Local_Is_Any : Boolean;
+
+      Symbols : constant Symbol_Table := Get (Grammar).Symbols;
+
+      procedure Callback (Str : Byte_Sequence);
+      procedure Add_To_Table
+        (Sym : Symbol; Table : in out Symbol_Htable.HTable);
+
+      procedure Merge (Sym : Symbol);
+      --  Take all namespaces in [Sym], and copy, in [Namespaces], those that
+      --  are also in [Tmp], but not in [No_Namespaces]
+
+      function To_Symbol (Table : Symbol_Htable.HTable) return Symbol;
+      --  Return the list of strings in Table
+
+      -----------
+      -- Merge --
+      -----------
+
+      procedure Merge (Sym : Symbol) is
+
+         procedure Callback (Str : Byte_Sequence);
+         procedure Do_Merge (S : Symbol);
+
+         --------------
+         -- Do_Merge --
+         --------------
+
+         procedure Do_Merge (S : Symbol) is
+         begin
+            if Base_Is_Any
+              or else ((Base_Any.Namespaces = No_Symbol
+                        or else Get (Tmp, S) /= No_Symbol)
+                       and then Get (No_Namespaces, S) = No_Symbol)
             then
-               if Override then
-                  --  ??? Should we free the previous value => We are sharing
-                  --  the attribute definition through Restriction_Of...
-                  List (A) :=
-                    (Is_Group => False,
-                     Attr     => Attribute_Validator (Validator));
+               Set (Namespaces, S);
+            end if;
+         end Do_Merge;
+
+         --------------
+         -- Callback --
+         --------------
+
+         procedure Callback (Str : Byte_Sequence) is
+         begin
+            if Str = "##targetNamespace" then
+               Do_Merge (Target_NS);
+
+            elsif Str = "##other" then
+               if Target_NS /= No_Symbol then
+                  Set (No_Namespaces, Target_NS);
                end if;
-               return;
+
+               Set (No_Namespaces, Find (Symbols, "##local"));
+
+            else
+               Do_Merge (Find (Symbols, Str));  --  including ##any, ##local
             end if;
+         end Callback;
+
+         procedure All_Add is new For_Each_Item (Callback);
+      begin
+         if Sym /= No_Symbol then
+            All_Add (Get (Sym).all);
+         end if;
+      end Merge;
+
+      ------------------
+      -- Add_To_Table --
+      ------------------
+
+      procedure Add_To_Table
+        (Sym : Symbol; Table : in out Symbol_Htable.HTable)
+      is
+         procedure Callback (Str : Byte_Sequence);
+
+         --------------
+         -- Callback --
+         --------------
+
+         procedure Callback (Str : Byte_Sequence) is
+         begin
+            Set (Table, Find (Symbols, Str));
+         end Callback;
+
+         procedure All_Add is new For_Each_Item (Callback);
+      begin
+         if Sym /= No_Symbol then
+            All_Add (Get (Sym).all);
+         end if;
+      end Add_To_Table;
+
+      ---------------
+      -- To_Symbol --
+      ---------------
+
+      function To_Symbol (Table : Symbol_Htable.HTable) return Symbol is
+         Str  : Unbounded_String;
+         S    : Symbol;
+         Iter : Iterator := Symbol_Htable.First (Table);
+      begin
+         if Iter = No_Iterator then
+            return No_Symbol;
+         end if;
+
+         while Iter /= No_Iterator loop
+            S := Current (Iter);
+
+            if Str = Null_Unbounded_String then
+               Append (Str, Get (S).all);
+            else
+               Append (Str, " " & Get (S).all);
+            end if;
+
+            Symbol_Htable.Next (Table, Iter);
          end loop;
 
-         L := new Attribute_Validator_List'
-           (List.all & Attribute_Or_Group'
-              (Is_Group => False,
-               Attr     => Attribute_Validator (Validator)));
-         Unchecked_Free (List);
-         List := L;
-      else
-         List := new Attribute_Validator_List'
-           (1 => Attribute_Or_Group'
-              (Is_Group => False, Attr => Attribute_Validator (Validator)));
-      end if;
-   end Append;
+         return Find (Get (Grammar).Symbols, To_String (Str));
+      end To_Symbol;
 
-   ------------
-   -- Append --
-   ------------
+      --------------
+      -- Callback --
+      --------------
 
-   procedure Append
-     (List      : in out Attribute_Validator_List_Access;
-      Group     : XML_Attribute_Group)
-   is
-      L : Attribute_Validator_List_Access;
-   begin
-      if Group = null then
-         Validation_Error
-           ("Cannot add null attribute group");
-      end if;
-
-      if List /= null then
-         for A in List'Range loop
-            if List (A).Is_Group and then List (A).Group = Group then
-               return;
+      procedure Callback (Str : Byte_Sequence) is
+      begin
+         if Str = "##targetNamespace" then
+            if Target_NS = Empty_String then
+               Set (Namespaces, Find (Symbols, "##local"));
+            else
+               Set (Namespaces, Target_NS);
             end if;
-         end loop;
 
-         L := new Attribute_Validator_List'
-           (List.all & Attribute_Or_Group'(Is_Group => True, Group => Group));
-         Unchecked_Free (List);
-         List := L;
-      else
-         List := new Attribute_Validator_List'
-           (1 => Attribute_Or_Group'(Is_Group => True, Group => Group));
+         elsif Str = "##other" then
+            if Target_NS /= No_Symbol then
+               Set (No_Namespaces, Target_NS);
+            end if;
+
+            Set (No_Namespaces, Find (Symbols, "##local"));
+         else
+            Set (Namespaces, Find (Symbols, Str)); --  including ##any, ##local
+         end if;
+      end Callback;
+
+      procedure All_Items is new For_Each_Item (Callback);
+
+   begin
+      if Base_Any = No_Any_Descr then
+         if Local /= No_Symbol then
+            All_Items (Get (Local).all);
+         end if;
+
+         declare
+            Result : constant Any_Descr := Any_Descr'
+              (Process_Contents => Local_Process,
+               No_Namespaces    => To_Symbol (No_Namespaces),
+               Namespaces       => To_Symbol (Namespaces));
+         begin
+            Reset (Namespaces);
+            Reset (No_Namespaces);
+            Reset (Tmp);
+            return Result;
+         end;
       end if;
-   end Append;
 
-   ------------
-   -- Append --
-   ------------
+      Local_Is_Any := Local /= No_Symbol and then Get (Local).all = "##any";
+      Base_Is_Any := Base_Any.Namespaces /= No_Symbol
+        and then Get (Base_Any.Namespaces).all = "##any";
 
-   procedure Append
-     (List    : in out Element_List_Access;
-      Element : XML_Element)
+      if As_Restriction then
+         --  The list of "Namespaces" is the intersection of the two (and
+         --  empty if local is empty)
+         --  From this, remove the list of the base's "No_Namespaces".
+         --  We preserve those "No_Namespaces" into the new type, though.
+
+         Add_To_Table (Base_Any.No_Namespaces, No_Namespaces);
+
+         if Local_Is_Any then
+            if Base_Any.Namespaces /= No_Symbol then
+               Add_To_Table (Base_Any.Namespaces, Namespaces);
+            elsif Local /= No_Symbol then
+               Add_To_Table (Local, Namespaces);
+            end if;
+         else
+            Add_To_Table (Base_Any.Namespaces, Tmp);
+            Merge (Local);
+         end if;
+
+      else
+         --  If the base type or the extension contains ##any, we will still
+         --  accept any namespace
+
+         if Base_Is_Any then
+            Add_To_Table (Base_Any.Namespaces, Namespaces); --  ##any
+
+         elsif Local_Is_Any then
+            if Base_Any.No_Namespaces /= No_Symbol then
+               Add_To_Table (Base_Any.No_Namespaces, No_Namespaces);
+            elsif Local /= No_Symbol then
+               Add_To_Table (Local, Namespaces);  --  ##any
+            end if;
+
+         else
+            --  None of the two is ##any, so we just combine them. Since we
+            --  have an extension, the attributes will have to match any of
+            --  the namespaces.
+
+            Add_To_Table (Base_Any.Namespaces, Namespaces);
+            Add_To_Table (Base_Any.No_Namespaces, No_Namespaces);
+
+            if Local /= No_Symbol then
+               All_Items (Get (Local).all);
+            end if;
+         end if;
+      end if;
+
+      Result.Process_Contents := Local_Process;
+      Result.Namespaces       := To_Symbol (Namespaces);
+      Result.No_Namespaces    := To_Symbol (No_Namespaces);
+
+      --  ??? If .Namespaces contain one common NS with .No_Namespaces, then
+      --  we really have a ##any
+
+      if Debug then
+         if Local /= No_Symbol then
+            Debug_Output ("Combine " & To_String (Base_Any)
+                          & " and {" & Local_Process'Img
+                          & " " & Get (Local).all & " target="
+                          & Get (Target_NS).all & "} restr="
+                          & As_Restriction'Img & " => "
+                          & To_String (Result));
+         else
+            Debug_Output ("Combine " & To_String (Base_Any)
+                          & " and {" & Local_Process'Img & " target="
+                          & Get (Target_NS).all & "} restr="
+                          & As_Restriction'Img & " => "
+                          & To_String (Result));
+         end if;
+      end if;
+
+      Reset (Namespaces);
+      Reset (No_Namespaces);
+      Reset (Tmp);
+
+      return Result;
+
+   exception
+      when others =>
+         Reset (Namespaces);
+         Reset (No_Namespaces);
+         Reset (Tmp);
+         raise;
+   end Combine;
+
+   ---------------
+   -- Match_Any --
+   ---------------
+
+   function Match_Any
+     (Any : Any_Descr; Name : Qualified_Name) return Boolean
    is
-      L : Element_List_Access;
+      Matches       : Boolean := False;
+      Invalid_No_NS : Boolean := False;
+
+      procedure Callback (Str : Byte_Sequence);
+      procedure Negate_Callback (Str : Byte_Sequence);
+
+      ---------------------
+      -- Negate_Callback --
+      ---------------------
+
+      procedure Negate_Callback (Str : Byte_Sequence) is
+      begin
+         if Str = "##local" then
+            Invalid_No_NS := Invalid_No_NS or else Name.NS = Empty_String;
+         else
+            Invalid_No_NS := Invalid_No_NS or else Get (Name.NS).all = Str;
+         end if;
+      end Negate_Callback;
+
+      --------------
+      -- Callback --
+      --------------
+
+      procedure Callback (Str : Byte_Sequence) is
+      begin
+         if Matches then
+            null;
+         elsif Str = "##local" then
+            Matches := Name.NS = Empty_String;
+         else
+            Matches := Get (Name.NS).all = Str;
+         end if;
+      end Callback;
+
+      procedure All_Items is new For_Each_Item (Callback);
+      procedure Negate_All_Items is new For_Each_Item (Negate_Callback);
+
    begin
-      if List /= null then
-         L := new Element_List'(List.all & Element.Elem);
-         Unchecked_Free (List);
-         List := L;
+      if Debug then
+         Debug_Output
+           ("match <any>: " & To_String (Any) & " and " & To_QName (Name));
+      end if;
+
+      if Any.Namespaces /= No_Symbol
+        and then Get (Any.Namespaces).all = "##any"
+      then
+         return True;
+      end if;
+
+      if Any.Namespaces /= No_Symbol then
+         All_Items (Get (Any.Namespaces).all);
+      end if;
+
+      if Any.No_Namespaces /= No_Symbol then
+         Negate_All_Items (Get (Any.No_Namespaces).all);
+      end if;
+
+      if Debug then
+         Debug_Output ("Matches=" & Matches'Img
+                       & " Invalid_No_NS=" & Invalid_No_NS'Img);
+      end if;
+
+      if Any.Namespaces /= No_Symbol
+        and then Any.No_Namespaces /= No_Symbol
+      then
+         return Matches or else not Invalid_No_NS;
+      elsif Any.Namespaces /= No_Symbol then
+         return Matches;
+      elsif Any.No_Namespaces /= No_Symbol then
+         return not Invalid_No_NS;
       else
-         List := new Element_List'(1 => Element.Elem);
+         return False;
       end if;
-   end Append;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out Named_Attribute_Validator_Record) is
-   begin
-      Free (Validator.Local_Name);
-      Free (Validator.Value);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out Attribute_Validator) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Validator_Record'Class, Attribute_Validator);
-   begin
-      Free (Validator.all);
-      Unchecked_Free (Validator);
-   end Free;
-
-   -------------------
-   -- Add_Attribute --
-   -------------------
-
-   procedure Add_Attribute
-     (Validator : access XML_Validator_Record;
-      Attribute : access Attribute_Validator_Record'Class) is
-   begin
-      Append (Validator.Attributes, Attribute, Override => True);
-   end Add_Attribute;
-
-   -------------------
-   -- Add_Attribute --
-   -------------------
-
-   procedure Add_Attribute
-     (Group : in out XML_Attribute_Group;
-      Attr  : access Attribute_Validator_Record'Class) is
-   begin
-      Append (Group.Attributes, Attribute_Validator (Attr), Override => True);
-   end Add_Attribute;
-
-   -------------------------
-   -- Add_Attribute_Group --
-   -------------------------
-
-   procedure Add_Attribute_Group
-     (Validator : access XML_Validator_Record;
-      Group     : XML_Attribute_Group) is
-   begin
-      Append (Validator.Attributes, Group);
-   end Add_Attribute_Group;
-
-   -------------------------
-   -- Add_Attribute_Group --
-   -------------------------
-
-   procedure Add_Attribute_Group
-     (Group : in out XML_Attribute_Group;
-      Attr  : XML_Attribute_Group) is
-   begin
-      if Attr = null then
-         Debug_Output ("Add_Attribute_Group: adding empty attribute group");
-      end if;
-      Append (Group.Attributes, Attr);
-   end Add_Attribute_Group;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name
-     (Validator : access XML_Validator_Record'Class) return String is
-   begin
-      if Validator.Debug_Name = null then
-         return External_Tag (Validator'Tag);
-      else
-         return Validator.Debug_Name.all;
-      end if;
-   end Get_Name;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator              : access XML_Validator_Record;
-      Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
-      Element_Validator      : out XML_Element)
-   is
-      pragma Unreferenced
-        (Validator, Data, Namespace_URI, NS, Schema_Target_NS);
-   begin
-      Validation_Error ("No definition found for """ & Local_Name & """");
-      Element_Validator := No_Element;
-   end Validate_Start_Element;
-
-   -----------------------
-   -- Set_Mixed_Content --
-   -----------------------
-
-   procedure Set_Mixed_Content
-     (Validator : access XML_Validator_Record;
-      Mixed     : Boolean) is
-   begin
-      Validator.Mixed_Content := Mixed;
-   end Set_Mixed_Content;
+   end Match_Any;
 
    -------------------------
    -- Validate_Attributes --
    -------------------------
 
    procedure Validate_Attributes
-     (Validator         : access XML_Validator_Record;
-      Atts              : in out Sax.Attributes.Attributes'Class;
-      Id_Table          : in out Id_Htable_Access;
-      Nillable          : Boolean;
-      Is_Nil            : out Boolean;
-      Grammar           : in out XML_Grammar)
+     (NFA    : access Schema_NFA'Class;
+      Typ    : access Type_Descr;
+      Reader : access Abstract_Validation_Reader'Class;
+      Atts   : in out Sax.Readers.Sax_Attribute_List;
+      Is_Nil : in out Integer)
    is
-      Length : constant Natural := Get_Length (Atts);
-      Seen   : array (0 .. Length - 1) of Boolean := (others => False);
+      Length      : constant Natural := Get_Length (Atts);
+      Valid_Attrs : Attribute_Validator_Array :=
+                      To_Attribute_Array (NFA, Typ.Attributes);
 
-      use Attributes_Htable;
-      Visited : Attributes_Htable.HTable (101);
+      type Attr_Status is record
+         Prohibited : Boolean := False;
+         --  Prohibited explicitly, but it might be allowed through
+         --  <anyAttribute>
 
-      function Find_Attribute
-        (Named : Named_Attribute_Validator) return Integer;
+         Seen  : Boolean := False;
+      end record;
+      Seen : array (1 .. Length) of Attr_Status := (others => (False, False));
+
+      function Find_Attribute (Attr : Attribute_Descr) return Integer;
       --  Chech whether Named appears in Atts
 
-      procedure Check_Id (Named : Named_Attribute_Validator;
-                          Index : Integer);
-      --  Check whether the Index-th attribute in Atts, corresponding to Named,
-      --  is an ID.
-
-      procedure Recursive_Check (Validator : XML_Validator);
-      procedure Recursive_Check (List : Attribute_Or_Group);
-      --  Check recursively the attributes provided by Validator
-
-      procedure Check_Named_Attribute (Named : Named_Attribute_Validator);
-      procedure Check_Any_Attribute
-        (Any : Any_Attribute_Validator; Index : Integer);
+      procedure Check_Named_Attribute (Index : Attribute_Validator_Index);
       --  Check a named attribute or a wildcard attribute
+
+      procedure Check_Single_ID;
+      --  If using XSD 1.0, check that there is a single ID attribute.
+      --  This relies on the Sax.Attributes.Get_Type being set correctly.
+      --  XSD 1.0 prevents having two such attributes, for easier conversion
+      --  to DTD (see G.1.7 ID, IDREF, and related types)
+
+      ---------------------
+      -- Check_Single_ID --
+      ---------------------
+
+      procedure Check_Single_ID is
+         Seen_ID : Boolean := False;
+      begin
+         for A in 1 .. Length loop
+            if Get_Type (Atts, A) = Sax.Attributes.Id then
+               if Seen_ID then
+                  Validation_Error
+                    (Reader,
+                     "Elements can have a single ID attribute in XSD 1.0");
+               end if;
+
+               Seen_ID := True;
+            end if;
+         end loop;
+      end Check_Single_ID;
 
       ---------------------------
       -- Check_Named_Attribute --
       ---------------------------
 
-      procedure Check_Named_Attribute (Named : Named_Attribute_Validator) is
+      procedure Check_Named_Attribute (Index : Attribute_Validator_Index) is
          Found  : Integer;
-         Facets : Facets_Description;
-         Whitespace : Whitespace_Restriction := Preserve;
+         Attr   : Attribute_Descr
+           renames NFA.Attributes.Table (Valid_Attrs (Index).Validator);
       begin
-         if Get (Visited, Named.Local_Name.all) = null then
-            Set (Visited, Named);
-            Found := Find_Attribute (Named);
+         if not Valid_Attrs (Index).Visited then
+            if Debug then
+               Debug_Output
+                 ("Checking attribute: "
+                  & To_QName
+                    (NFA.Attributes.Table
+                       (Valid_Attrs (Index).Validator).Name)
+                  & " " & Attr.Use_Type'Img & " " & Attr.Form'Img);
+            end if;
+
+            Valid_Attrs (Index).Visited := True;
+            Found := Find_Attribute (Attr);
 
             if Found = -1 then
-               case Named.Attribute_Use is
+               case Attr.Use_Type is
                   when Required =>
                      Validation_Error
-                       ("Attribute """ & Named.Local_Name.all
+                       (Reader, "Attribute """
+                        & To_QName (Attr.Name)
                         & """ is required in this context");
-                  when Prohibited | Optional | Default | Fixed =>
+                  when Prohibited | Optional | Default =>
                      null;
                end case;
 
             else
-               Seen (Found) := True;
+               Seen (Found).Seen := True;
 
-               case Named.Attribute_Use is
-                  when Prohibited =>
-                     Validation_Error
-                       ("Attribute """ & Named.Local_Name.all
-                        & """ is prohibited in this context");
-
-                  when Fixed =>
-                     if Named.Value.all /=
-                       Get_Value (Atts, Found)
+               case Attr.Form is
+                  when Qualified =>
+                     if Attr.Is_Local
+                       and then Get_Prefix (Atts, Found) = Empty_String
                      then
                         Validation_Error
-                          ("Attribute """ & Named.Local_Name.all
-                           & """ must have the value """
-                           & Named.Value.all & """");
+                          (Reader, "Attribute " & Get_Qname (Atts, Found)
+                           & " must have a namespace");
                      end if;
 
-                  when Optional | Required | Default =>
-                     null;
+                  when Unqualified =>
+                     if Attr.Is_Local
+                       and then Get_Prefix (Atts, Found) /= Empty_String
+                     then
+                        Validation_Error
+                          (Reader, "Attribute " & Get_Qname (Atts, Found)
+                           & " must not have a namespace");
+                     end if;
                end case;
 
-               Check_Id (Named, Found);
-
-               Facets := Get_Facets_Description
-                 (Named.Attribute_Type.Validator);
-               if Facets /= null
-                 and then Facets.all in Common_Facets_Description'Class
-               then
-                  Whitespace :=
-                    Common_Facets_Description (Facets.all).Whitespace;
-               end if;
-
-               --  Normalize attribute value if necessary
-               if Whitespace = Collapse then
-                  declare
-                     Val : constant Byte_Sequence := Get_Value (Atts, Found);
-                     C           : Unicode_Char;
-                     Index, Last : Natural;
-                     First : Natural := Val'Last + 1;
-                  begin
-                     Index := Val'First;
-                     while Index <= Val'Last loop
-                        First := Index;
-                        Encoding.Read (Val, Index, C);
-                        exit when not Is_White_Space (C);
-                        First := Val'Last + 1;
-                     end loop;
-
-                     if First > Val'Last then
-                        Set_Value (Atts, Found, "");
-                     else
-                        Last := Index - 1;
-                        while Index <= Val'Last loop
-                           Encoding.Read (Val, Index, C);
-                           if not Is_White_Space (C) then
-                              Last := Index - 1;
-                           end if;
-                        end loop;
-                        Set_Value (Atts, Found, Val (First .. Last));
+               case Attr.Use_Type is
+                  when Prohibited =>
+                     if Debug then
+                        Debug_Output
+                          ("Marking as prohibited, might be accepted by"
+                           & " <anyAttribute>");
                      end if;
-                  end;
-               end if;
+                     Seen (Found) := (Seen       => False,
+                                      Prohibited => True);
 
-               begin
-                  Validate_Attribute (Named.all, Atts, Found, Grammar);
-               exception
-                  when E : XML_Validation_Error =>
-                     Validation_Error
-                       ("Attribute """ & Get_Qname (Atts, Found)
-                        & """: " & Exception_Message (E));
-               end;
+                  when Optional | Required | Default =>
+                     --  We do not need to check id here, since that is
+                     --  automatically checked from Validate_Characters for the
+                     --  attribute
+                     Validate_Attribute (Attr, Reader, Atts, Found);
+               end case;
             end if;
          end if;
       end Check_Named_Attribute;
-
-      -------------------------
-      -- Check_Any_Attribute --
-      -------------------------
-
-      procedure Check_Any_Attribute
-        (Any : Any_Attribute_Validator; Index : Integer) is
-      begin
-         Validate_Attribute (Any, Atts, Index, Grammar);
-      exception
-         when E : XML_Validation_Error =>
-            Validation_Error
-              ("Attribute """ & Get_Qname (Atts, Index)
-               & """: " & Exception_Message (E));
-      end Check_Any_Attribute;
 
       --------------------
       -- Find_Attribute --
       --------------------
 
-      function Find_Attribute
-        (Named : Named_Attribute_Validator) return Integer is
+      function Find_Attribute (Attr : Attribute_Descr) return Integer is
+         Is_Local : constant Boolean := Attr.Is_Local;
+         Matches  : Boolean;
       begin
-         Debug_Output ("Check if XSD attribute: "
-                       & Named.NS.Namespace_URI.all
-                       & ':' & Named.Local_Name.all);
-
-         for A in 0 .. Length - 1 loop
-            Debug_Output ("   is specified. Elem has: "
-                          & Get_URI (Atts, A) & ':'
-                          & Get_Local_Name (Atts, A));
-            if not Seen (A)
-              and then Get_Local_Name (Atts, A) = Named.Local_Name.all
-              and then (Get_URI (Atts, A) = ""
-                        or else Get_URI (Atts, A) = Named.NS.Namespace_URI.all)
+         for A in 1 .. Length loop
+            if not Seen (A).Seen
+              and then Get_Name (Atts, A).Local = Attr.Name.Local
             then
-               return A;
+               Matches := (Is_Local and Get_Prefix (Atts, A) = Empty_String)
+                 or else Get_Name (Atts, A).NS = Attr.Name.NS;
+
+               if Matches then
+                  if Debug then
+                     Debug_Output ("Found attribute: "
+                                   & To_QName (Get_Name (Atts, A))
+                                   & " prefix="
+                                   & Get (Get_Prefix (Atts, A)).all
+                                   & " at index" & A'Img
+                                   & " Is_Local=" & Is_Local'Img
+                                   & " Form=" & Attr.Form'Img);
+                  end if;
+                  return A;
+               end if;
             end if;
          end loop;
          return -1;
       end Find_Attribute;
 
-      --------------
-      -- Check_Id --
-      --------------
-
-      procedure Check_Id
-        (Named : Named_Attribute_Validator; Index : Integer) is
-      begin
-         if Named.Is_Id then
-            if Id_Table = null then
-               Id_Table := new Id_Htable.HTable (101);
-            else
-               if Id_Htable.Get (Id_Table.all, Get_Value (Atts, Index)) /=
-                 No_Id
-               then
-                  Validation_Error
-                    ("ID """ & Get_Value (Atts, Index)
-                     & """ already defined");
-               end if;
-            end if;
-
-            Id_Htable.Set
-              (Id_Table.all,
-               Id_Ref'(Key => new Byte_Sequence'(Get_Value (Atts, Index))));
-         end if;
-      end Check_Id;
-
-      ---------------------
-      -- Recursive_Check --
-      ---------------------
-
-      procedure Recursive_Check (List : Attribute_Or_Group) is
-      begin
-         if List.Is_Group then
-            if List.Group.Attributes /= null then
-               for L in List.Group.Attributes'Range loop
-                  Recursive_Check (List.Group.Attributes (L));
-               end loop;
-            end if;
-
-         elsif List.Attr.all in Named_Attribute_Validator_Record'Class then
-            Check_Named_Attribute (Named_Attribute_Validator (List.Attr));
-
-         else
-            Debug_Output ("Not a named attribute, cannot check");
-         end if;
-      end Recursive_Check;
-
-      ---------------------
-      -- Recursive_Check --
-      ---------------------
-
-      procedure Recursive_Check (Validator : XML_Validator) is
-         List   : Attribute_Validator_List_Access;
-         Dep1, Dep2 : XML_Validator;
-      begin
-         Get_Attribute_Lists (Validator, List, Dep1, Dep2);
-         if List /= null then
-            for L in List'Range loop
-               Recursive_Check (List (L));
-            end loop;
-
-            for L in List'Range loop
-               if not List (L).Is_Group
-                 and then List (L).Attr.all in Any_Attribute_Validator'Class
-               then
-                  for A in 0 .. Length - 1 loop
-                     if not Seen (A) then
-                        Seen (A) := True;
-                        Check_Any_Attribute
-                          (Any_Attribute_Validator (List (L).Attr.all), A);
-                     end if;
-                  end loop;
-               end if;
-            end loop;
-         end if;
-
-         if Dep1 /= null then
-            Recursive_Check (Dep1);
-         end if;
-
-         if Dep2 /= null then
-            Recursive_Check (Dep2);
-         end if;
-      end Recursive_Check;
-
    begin
-      Debug_Push_Prefix ("Validate_Attributes " & Get_Name (Validator));
-
-      Recursive_Check (XML_Validator (Validator));
-
-      Is_Nil := False;
+      --  All the xsi:* attributes should be valid, whatever the schema
 
       for S in Seen'Range loop
-         if not Seen (S) then
-            if Nillable
-              and then Get_URI (Atts, S) = XML_Instance_URI
-              and then Get_Local_Name (Atts, S) = "nil"
+         if Get_Name (Atts, S).NS = Reader.XML_Instance_URI then
+            if Get_Name (Atts, S).Local = Reader.Nil then
+               Is_Nil := S;
+               Seen (S).Seen := True;
+
+               --  Following attributes are always valid
+               --  See "Element Locally Valid (Complex Type)" 3.4.4.2
+            elsif Get_Name (Atts, S).Local = Reader.Typ
+              or else Get_Name (Atts, S).Local = Reader.Schema_Location
+              or else Get_Name (Atts, S).Local =
+                        Reader.No_Namespace_Schema_Location
             then
-               Is_Nil := Get_Value_As_Boolean (Atts, S);
-
-            elsif Get_URI (Atts, S) = XML_Instance_URI
-              and then Get_Local_Name (Atts, S) = "type"
-            then
-               null;
-
-            else
-               Debug_Output ("Invalid attribute "
-                             & Get_URI (Atts, S) & ":"
-                             & Get_Local_Name (Atts, S));
-
-               Validation_Error
-                 ("Attribute """ & Get_Qname (Atts, S) & """ invalid for this"
-                  & " element");
+               Seen (S).Seen := True;
             end if;
          end if;
       end loop;
 
-      Debug_Pop_Prefix;
+      for L in Valid_Attrs'Range loop
+         Check_Named_Attribute (L);
+      end loop;
+
+      declare
+         TRef : Global_Reference;
+      begin
+         for S in Seen'Range loop
+            if not Seen (S).Seen then
+               Seen (S).Seen := Match_Any
+                 (Typ.Attributes.Any, Get_Name (Atts, S));
+
+               if not Seen (S).Seen then
+                  if Seen (S).Prohibited then
+                     Validation_Error
+                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                        & """ is prohibited in this context "
+                          & To_QName (Typ.Name));
+                  elsif Typ.Attributes.Any = No_Any_Descr then
+                     Validation_Error
+                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                        & """ invalid for type " & To_QName (Typ.Name));
+                  else
+                     Validation_Error
+                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                        & """ does not match attribute wildcard");
+                  end if;
+               end if;
+
+               --  If the processing content forces it, we must check that
+               --  there is indeed a valid definition for this attribute.
+
+               case Typ.Attributes.Any.Process_Contents is
+                  when Process_Skip =>
+                     null;  --  Always OK
+                     TRef := No_Global_Reference;
+
+                  when Process_Lax =>
+                     TRef := Reference_HTables.Get
+                       (NFA.References.all,
+                        (Get_Name (Atts, S), Ref_Attribute));
+
+                  when Process_Strict =>
+                     TRef := Reference_HTables.Get
+                       (NFA.References.all,
+                        (Get_Name (Atts, S), Ref_Attribute));
+                     if TRef = No_Global_Reference then
+                        Validation_Error
+                          (Reader, "No definition found for """
+                           & Get_Qname (Atts, S) & """");
+                     end if;
+               end case;
+
+               if TRef /= No_Global_Reference then
+                  Validate_Attribute
+                    (NFA.Attributes.Table (TRef.Attributes.Named),
+                     Reader, Atts, S);
+               end if;
+
+               Seen (S).Prohibited := False;
+            end if;
+         end loop;
+      end;
+
+      Check_Single_ID;
    end Validate_Attributes;
 
-   --------------------------
-   -- Validate_End_Element --
-   --------------------------
+   -----------------------
+   -- To_Graphic_String --
+   -----------------------
 
-   procedure Validate_End_Element
-     (Validator      : access XML_Validator_Record;
-      Local_Name     : Unicode.CES.Byte_Sequence;
-      Data           : Validator_Data)
-   is
-      pragma Unreferenced (Validator, Local_Name, Data);
+   function To_Graphic_String (Str : Byte_Sequence) return String is
+      To_Hex : constant array (0 .. 15) of Character :=
+                 ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                  'A', 'B', 'C', 'D', 'E', 'F');
+      Result : String (1 .. 4 * Str'Length);
+      Index  : Integer := Result'First;
    begin
-      null;
-   end Validate_End_Element;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator      : access XML_Validator_Record;
-      Ch             : Unicode.CES.Byte_Sequence;
-      Empty_Element  : Boolean) is
-   begin
-      Debug_Output ("Validate_Character for unknown " & Get_Name (Validator)
-                    & " --" & Ch & "--empty=" & Boolean'Image (Empty_Element)
-                    & " mixed=" & Boolean'Image (Validator.Mixed_Content));
-      if not Validator.Mixed_Content
-        and then not Empty_Element
-      then
-         Validation_Error
-           ("Mixed content is not allowed for this element");
-      end if;
-   end Validate_Characters;
-
-   -------------
-   -- List_Of --
-   -------------
-
-   function List_Of (Typ : XML_Type) return XML_Type is
-   begin
-      return Create_Local_Type (List_Of (Typ));
-   end List_Of;
-
-   ---------------
-   -- Add_Facet --
-   ---------------
-
-   procedure Add_Facet
-     (Validator   : access XML_Validator_Record;
-      Facet_Name  : Unicode.CES.Byte_Sequence;
-      Facet_Value : Unicode.CES.Byte_Sequence)
-   is
-      pragma Unreferenced (Validator);
-   begin
-      if Facet_Name = "whiteSpace" then
-         if Facet_Value /= "collapse" then
-            Validation_Error
-              ("Invalid value for restriction whiteSpace: " & Facet_Value);
+      for S in Str'Range loop
+         if Character'Pos (Str (S)) >= 32
+           and then Character'Pos (Str (S)) <= 128
+           and then Is_Graphic (Str (S))
+         then
+            Result (Index) := Str (S);
+            Index := Index + 1;
+         else
+            Result (Index) := '[';
+            Result (Index + 1) := To_Hex (Character'Pos (Str (S)) / 16);
+            Result (Index + 2) := To_Hex (Character'Pos (Str (S)) mod 16);
+            Result (Index + 3) := ']';
+            Index := Index + 4;
          end if;
-      else
-         Validation_Error ("Invalid restriction: " & Facet_Name);
-      end if;
-   end Add_Facet;
-
-   ----------------------------
-   -- Create_Local_Attribute --
-   ----------------------------
-
-   function Create_Local_Attribute
-     (Local_Name     : Unicode.CES.Byte_Sequence;
-      NS             : XML_Grammar_NS;
-      Attribute_Type : XML_Type                  := No_Type;
-      Attribute_Form : Form_Type                 := Qualified;
-      Attribute_Use  : Attribute_Use_Type        := Optional;
-      Value          : Unicode.CES.Byte_Sequence := "";
-      Is_ID          : Boolean := False)
-      return Attribute_Validator
-   is
-   begin
-      return new Named_Attribute_Validator_Record'
-        (Local_Name     => new Unicode.CES.Byte_Sequence'(Local_Name),
-         NS             => NS,
-         Attribute_Type => Attribute_Type,
-         Attribute_Form => Attribute_Form,
-         Attribute_Use  => Attribute_Use,
-         Value          => new Unicode.CES.Byte_Sequence'(Value),
-         Is_Id          => Is_ID);
-   end Create_Local_Attribute;
+      end loop;
+      return Result (1 .. Index - 1);
+   end To_Graphic_String;
 
    ------------------------
    -- Validate_Attribute --
    ------------------------
 
    procedure Validate_Attribute
-     (Validator : Named_Attribute_Validator_Record;
-      Atts      : Sax.Attributes.Attributes'Class;
-      Index     : Natural;
-      Grammar   : in out XML_Grammar)
+     (Attr   : Attribute_Descr;
+      Reader : access Abstract_Validation_Reader'Class;
+      Atts   : in out Sax_Attribute_List;
+      Index  : Natural)
    is
-      pragma Unreferenced (Grammar);
+      Value    : Symbol := Get_Value (Atts, Index);
+      Val      : Cst_Byte_Sequence_Access;
+      Is_Equal : Boolean;
+      Descr    : Simple_Type_Descr;
    begin
-      Debug_Output ("Checking attribute "
-                    & Validator.Local_Name.all
-                    & "=" & Get_Value (Atts, Index) & "--");
+      if Debug then
+         Debug_Output ("Validate attribute " & To_QName (Attr.Name)
+                       & " simpleType=" & Attr.Simple_Type'Img);
+      end if;
 
-      if Validator.Attribute_Type /= No_Type then
-         Validate_Characters (Get_Validator (Validator.Attribute_Type),
-                              Get_Value (Atts, Index),
-                              Empty_Element => False);
+      if Attr.Simple_Type = No_Simple_Type_Index then
+         if Debug then
+            Debug_Output ("No simple type defined");
+         end if;
+      else
+         Descr := Get_Simple_Type (Get (Reader.Grammar).NFA, Attr.Simple_Type);
+         Normalize_And_Validate
+           (Parser => Reader,
+            Simple => Attr.Simple_Type,
+            Fixed  => Value,
+            Loc    => Get_Location (Atts, Index));
+         Set_Value (Atts, Index, Value);
+
+         if Descr.Kind = Primitive_ID then
+            Set_Type (Atts, Index, Sax.Attributes.Id);
+         end if;
+      end if;
+
+      Val := Get (Value);
+
+      --  3.2.4 [Attribute Declaration Value] indicates we should check Fixed
+      --  with the "actual value" of the attribute, not the "normalized value".
+      --  However, we need to match depending on the type of the attribute: if
+      --  it is an integer, the whitespaces are irrelevant; likewise for a list
+
+      if Attr.Fixed /= No_Symbol then
+         if Debug then
+            Debug_Output ("Attribute value must be equal to """
+                          & Get (Attr.Fixed).all & """");
+         end if;
+
+         if Attr.Simple_Type = No_Simple_Type_Index then
+            Is_Equal := Get (Attr.Fixed).all = Val.all;
+         else
+            Is_Equal := Equal (Reader, Attr.Simple_Type, Attr.Fixed, Val.all);
+         end if;
+
+         if not Is_Equal then
+            Validation_Error
+              (Reader, "value must be """
+               & To_Graphic_String (Get (Attr.Fixed).all)
+               & """ (found """ & To_Graphic_String (Val.all) & """)",
+               Get_Location (Atts, Index));
+         end if;
       end if;
    end Validate_Attribute;
 
-   ----------
-   -- Free --
-   ----------
+   --------------
+   -- To_QName --
+   --------------
 
-   procedure Free (Validator : in out XML_Validator_Record) is
+   function To_QName
+     (Name : Qualified_Name) return Unicode.CES.Byte_Sequence is
    begin
-      Free (Validator.Debug_Name);
-      Free (Validator.Attributes);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Typ : in out XML_Type) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Type_Record, XML_Type);
-   begin
-      if Typ /= null then
-         Free (Typ.Local_Name);
-         Unchecked_Free (Typ);
+      if Name = No_Qualified_Name then
+         return "";
+      else
+         return Sax.Readers.To_QName (Name.NS, Name.Local);
       end if;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out XML_Validator) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Validator_Record'Class, XML_Validator);
-   begin
-      Free (Validator.all);
-      Unchecked_Free (Validator);
-   end Free;
-
-   ------------
-   -- Lookup --
-   ------------
-
-   function Lookup
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence;
-      Create_If_Needed : Boolean := True) return XML_Type
-   is
-      Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
-   begin
-      if Typ = No_Type and then Create_If_Needed then
-         Typ := new XML_Type_Record'
-           (Local_Name  => new Byte_Sequence'(Local_Name),
-            Validator   => null,
-            Simple_Type => Unknown_Content,
-            Block_Extension   => Grammar.Block_Extension,
-            Block_Restriction => Grammar.Block_Restriction);
-         Types_Htable.Set (Grammar.Types.all, Typ);
-         Debug_Output ("Forward type decl: {"
-                       & Get_Namespace_URI (Grammar) & "}{"
-                       & Local_Name & "}");
-      elsif Typ = No_Type then
-         Debug_Output ("Type not found: " & Local_Name);
-      end if;
-
-      return Typ;
-   end Lookup;
-
-   --------------------
-   -- Lookup_Element --
-   --------------------
-
-   function Lookup_Element
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence;
-      Create_If_Needed : Boolean := True) return XML_Element
-   is
-      Result : constant XML_Element_Access := Elements_Htable.Get
-        (Grammar.Elements.all, Local_Name);
-   begin
-      if Result = null then
-         if Create_If_Needed then
-            Debug_Output ("Lookup_Element: creating forward "
-                          & Grammar.Namespace_URI.all & " : "
-                          & Local_Name);
-            return Create_Global_Element
-              (Grammar, Local_Name, Form => Unqualified);
-         else
-            return No_Element;
-         end if;
-      end if;
-      return (Elem => Result, Is_Ref => True);
-   end Lookup_Element;
-
-   ------------------
-   -- Lookup_Group --
-   ------------------
-
-   function Lookup_Group
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group
-   is
-      Result : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
-   begin
-      if Result = No_XML_Group then
-         Result := Create_Global_Group (Grammar, Local_Name);
-         Result.Is_Forward_Decl := True;
-      end if;
-      return Result;
-   end Lookup_Group;
-
-   ----------------------------
-   -- Lookup_Attribute_Group --
-   ----------------------------
-
-   function Lookup_Attribute_Group
-     (Grammar       : XML_Grammar_NS;
-      Local_Name    : Unicode.CES.Byte_Sequence) return XML_Attribute_Group
-   is
-      Result : XML_Attribute_Group :=
-        Attribute_Groups_Htable.Get (Grammar.Attribute_Groups.all, Local_Name);
-   begin
-      if Result = Empty_Attribute_Group then
-         Debug_Output ("Lookup_Attribute_Group: Create forward decl");
-         Result := Create_Global_Attribute_Group (Grammar, Local_Name);
-         Result.Is_Forward_Decl := True;
-      end if;
-      return Result;
-   end Lookup_Attribute_Group;
+   end To_QName;
 
    ----------------------
-   -- Lookup_Attribute --
+   -- Get_Symbol_Table --
    ----------------------
 
-   function Lookup_Attribute
-     (Grammar       : XML_Grammar_NS;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Create_If_Needed : Boolean := True) return Attribute_Validator
-   is
-      Result : constant Named_Attribute_Validator :=
-        Attributes_Htable.Get (Grammar.Attributes.all, Local_Name);
+   function Get_Symbol_Table
+     (Grammar : XML_Grammar) return Sax.Utils.Symbol_Table is
    begin
-      if Result = null and then Create_If_Needed then
-         return Create_Global_Attribute (Grammar, Local_Name, No_Type);
-      end if;
-      return Attribute_Validator (Result);
-   end Lookup_Attribute;
-
-   --------------------
-   -- Get_Local_Name --
-   --------------------
-
-   function Get_Local_Name
-     (Element : XML_Element) return Unicode.CES.Byte_Sequence is
-   begin
-      return Element.Elem.Local_Name.all;
-   end Get_Local_Name;
-
-   --------------------
-   -- Get_Local_Name --
-   --------------------
-
-   function Get_Local_Name (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
-   begin
-      if Typ = No_Type then
-         return "No_Type";
-      elsif Typ.Local_Name = null then
-         return "anonymous";
+      if Grammar = No_Grammar then
+         return Symbol_Table_Pointers.Null_Pointer;
       else
-         return Typ.Local_Name.all;
+         return Get (Grammar).Symbols;
       end if;
-   end Get_Local_Name;
+   end Get_Symbol_Table;
 
-   --------------
-   -- Get_Type --
-   --------------
+   ----------------------
+   -- Set_Symbol_Table --
+   ----------------------
 
-   function Get_Type (Element : XML_Element) return XML_Type is
+   procedure Set_Symbol_Table
+     (Grammar : XML_Grammar; Symbols : Sax.Utils.Symbol_Table) is
    begin
-      if Element.Elem = null then
-         return null;
-      else
-         return Element.Elem.Of_Type;
+      if Grammar /= No_Grammar then
+         Get (Grammar).Symbols := Symbols;
       end if;
-   end Get_Type;
-
-   --------------
-   -- Set_Type --
-   --------------
-
-   procedure Set_Type
-     (Attr      : access Attribute_Validator_Record;
-      Attr_Type : XML_Type)
-   is
-      pragma Unreferenced (Attr, Attr_Type);
-   begin
-      null;
-   end Set_Type;
-
-   --------------
-   -- Get_Type --
-   --------------
-
-   function Get_Type
-     (Attr : access Attribute_Validator_Record) return XML_Type
-   is
-      pragma Unreferenced (Attr);
-   begin
-      return No_Type;
-   end Get_Type;
-
-   --------------
-   -- Set_Type --
-   --------------
-
-   procedure Set_Type
-     (Attr      : access Named_Attribute_Validator_Record;
-      Attr_Type : XML_Type) is
-   begin
-      Attr.Attribute_Type := Attr_Type;
-   end Set_Type;
-
-   --------------
-   -- Get_Type --
-   --------------
-
-   function Get_Type
-     (Attr : access Named_Attribute_Validator_Record) return XML_Type is
-   begin
-      return Attr.Attribute_Type;
-   end Get_Type;
-
-   --------------
-   -- Set_Type --
-   --------------
-
-   procedure Set_Type (Element : XML_Element; Element_Type : XML_Type) is
-   begin
-      if Element /= No_Element then
-         if Element.Is_Ref then
-            Validation_Error
-              ("Cannot mix complexType definition and ""ref"" attribute");
-         end if;
-
-         Element.Elem.Of_Type := Element_Type;
-
-         --  3.3 Element Declaration details:  Validation Rule 3.1
-         --  The "default" attribute of element must match the validation rule
-         --  for that element
-
-         if Element.Elem.Default /= null then
-            Validate_Characters
-              (Get_Validator (Element_Type), Element.Elem.Default.all,
-               Empty_Element => False);
-         end if;
-
-         --  3.3 Element Declaration details:  Validation Rule 3.1
-         --  The "fixed" attribute of element must match the validation rule
-         --  for that element
-
-         if Element.Elem.Fixed /= null then
-            Validate_Characters
-              (Get_Validator (Element_Type), Element.Elem.Fixed.all,
-               Empty_Element => False);
-         end if;
-      end if;
-   end Set_Type;
-
-   ------------
-   -- Get_NS --
-   ------------
-
-   procedure Get_NS
-     (Grammar       : in out XML_Grammar;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      Result        : out XML_Grammar_NS;
-      Create_If_Needed : Boolean := True)
-   is
-   begin
-      if Grammar /= null and then Grammar.Grammars /= null then
-         for G in Grammar.Grammars'Range loop
-            if Grammar.Grammars (G).Namespace_URI.all = Namespace_URI then
-               Result := Grammar.Grammars (G);
-               return;
-            end if;
-         end loop;
-      end if;
-
-      if Create_If_Needed then
-         Create_NS_Grammar (Grammar, Namespace_URI);
-         Result := Grammar.Grammars (Grammar.Grammars'Last);
-      else
-         Result := null;
-      end if;
-   end Get_NS;
+   end Set_Symbol_Table;
 
    ----------
    -- Free --
@@ -1163,121 +1092,361 @@ package body Schema.Validators is
    begin
       while List /= null loop
          L := List.Next;
-         Free (List.Str);
          Unchecked_Free (List);
          List := L;
       end loop;
    end Free;
 
-   -----------------------
-   -- Create_NS_Grammar --
-   -----------------------
+   ------------------------------
+   -- Create_Grammar_If_Needed --
+   ------------------------------
 
-   procedure Create_NS_Grammar
-     (Grammar       : in out XML_Grammar;
-      Namespace_URI : Unicode.CES.Byte_Sequence)
+   procedure Create_Grammar_If_Needed
+     (Grammar : in out XML_Grammar;
+      Symbols : Symbol_Table := No_Symbol_Table)
    is
-      Tmp : Grammar_NS_Array_Access;
+      use Types_Tables;
+      G : XML_Grammars.Encapsulated_Access;
    begin
-      if Grammar = null then
-         Grammar := new XML_Grammar_Record;
+      if Grammar = No_Grammar then
+         G     := new XML_Grammar_Record;
+         G.Symbols := Symbols;
+         G.NFA := new Schema_NFA;
+         G.NFA.Initialize (States_Are_Statefull => True);
+         Init (G.NFA.Attributes);
+         Init (G.NFA.Enumerations);
+         Init (G.NFA.Types);
+         G.NFA.References :=
+           new Reference_HTables.HTable (Size => Reference_HTable_Size);
+         Simple_Type_Tables.Init (G.NFA.Simple_Types);
+         Grammar  := Allocate (G);
       end if;
+   end Create_Grammar_If_Needed;
 
-      if Grammar.Grammars = null then
-         Grammar.Grammars := new Grammar_NS_Array (1 .. 1);
+   ---------------------
+   -- Set_XSD_Version --
+   ---------------------
+
+   procedure Set_XSD_Version
+     (Grammar     : in out XML_Grammar;
+      XSD_Version : XSD_Versions) is
+   begin
+      Create_Grammar_If_Needed (Grammar);
+      GNAT.Task_Lock.Lock;
+      Get (Grammar).XSD_Version := XSD_Version;
+      GNAT.Task_Lock.Unlock;
+   end Set_XSD_Version;
+
+   ---------------------
+   -- Get_XSD_Version --
+   ---------------------
+
+   function Get_XSD_Version (Grammar : XML_Grammar) return XSD_Versions is
+      G   : XML_Grammars.Encapsulated_Access;
+   begin
+      G := Get (Grammar);
+      if G = null then
+         return XSD_1_1;
       else
-         Tmp := Grammar.Grammars;
-         Grammar.Grammars := new Grammar_NS_Array (1 .. Tmp'Length + 1);
-         Grammar.Grammars (Tmp'Range) := Tmp.all;
-         Unchecked_Free (Tmp);
+         return G.XSD_Version;
       end if;
+   end Get_XSD_Version;
 
-      Debug_Output ("Create_NS_Grammar: " & Namespace_URI);
+   -----------------------------
+   -- Create_Global_Attribute --
+   -----------------------------
 
-      Grammar.Grammars (Grammar.Grammars'Last) := new XML_Grammar_NS_Record'
-        (Namespace_URI    => new Byte_Sequence'(Namespace_URI),
-         Types            => new Types_Htable.HTable (101),
-         Elements         => new Elements_Htable.HTable (101),
-         Groups           => new Groups_Htable.HTable (101),
-         Attributes       => new Attributes_Htable.HTable (101),
-         Attribute_Groups => new Attribute_Groups_Htable.HTable (101),
-         Block_Restriction => False,
-         Block_Extension   => False);
-   end Create_NS_Grammar;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize (Grammar : in out XML_Grammar) is
-      Tmp2     : XML_Validator;
-      G, XML_G, XML_IG : XML_Grammar_NS;
-
+   procedure Create_Global_Attribute
+     (Parser    : access Abstract_Validation_Reader'Class;
+      Attr      : Attribute_Descr;
+      Loc       : Sax.Locators.Location)
+   is
+      use Reference_HTables;
+      NFA : constant Schema_NFA_Access := Get_NFA (Parser.Grammar);
+      List : Attributes_List := No_Attributes;
    begin
-      --  The first call to Get_NS will also create the grammar itself if
-      --  needed
-      Get_NS (Grammar, XML_Schema_URI,   Result => G);
-      if Lookup (G, "anyType", False) /= No_Type then
-         return;
+      Add_Attribute (Parser, List, Attr, Loc => Loc);
+      Set
+        (NFA.References.all,
+         (Kind => Ref_Attribute, Name => Attr.Name, Attributes => List));
+   end Create_Global_Attribute;
+
+   ------------------------
+   -- Create_Simple_Type --
+   ------------------------
+
+   function Create_Simple_Type
+     (NFA   : access Schema_NFA'Class;
+      Descr : Schema.Simple_Types.Simple_Type_Descr)
+      return Schema.Simple_Types.Simple_Type_Index
+   is
+      use Simple_Type_Tables;
+   begin
+      Append (NFA.Simple_Types, Descr);
+      return Last (NFA.Simple_Types);
+   end Create_Simple_Type;
+
+   -----------------
+   -- Create_Type --
+   -----------------
+
+   function Create_Type
+     (NFA   : access Schema_NFA'Class;
+      Descr : Type_Descr) return Type_Index
+   is
+      use Reference_HTables, Types_Tables;
+   begin
+      Append (NFA.Types, Descr);
+
+      if Descr.Name /= No_Qualified_Name then
+         if Debug then
+            Debug_Output ("Create_global_type: " & To_QName (Descr.Name)
+                          & " at index" & Last (NFA.Types)'Img);
+         end if;
+         Set (NFA.References.all, (Ref_Type, Descr.Name, Last (NFA.Types)));
       end if;
 
-      Get_NS (Grammar, XML_URI,          Result => XML_G);
-      Get_NS (Grammar, XML_Instance_URI, Result => XML_IG);
+      return Last (NFA.Types);
+   end Create_Type;
 
-      Create_UR_Type_Elements (G);
-      Create_Global_Type
-        (G, "ur-Type",
-         Get_Validator (Get_Type (Get_UR_Type_Element (Process_Skip))));
+   ---------------------
+   -- Get_Simple_Type --
+   ---------------------
 
-      Tmp2 := new XML_Validator_Record;
-      Create_Global_Type (G, "anyType", Tmp2);
+   function Get_Simple_Type
+     (NFA    : access Schema_NFA'Class;
+      Simple  : Schema.Simple_Types.Simple_Type_Index)
+      return Schema.Simple_Types.Simple_Type_Descr is
+   begin
+      return NFA.Simple_Types.Table (Simple);
+   end Get_Simple_Type;
 
-      Tmp2 := new Any_Simple_XML_Validator_Record;
-      Create_Global_Type (G, "anySimpleType", Tmp2);
+   --------------------
+   -- Get_Type_Descr --
+   --------------------
 
-      Register_Predefined_Types (G, XML_G);
+   function Get_Type_Descr
+     (NFA   : access Schema_NFA'Class;
+      Index : Type_Index) return access Type_Descr is
+   begin
+      return NFA.Types.Table (Index)'Unrestricted_Access;
+   end Get_Type_Descr;
 
-      --  Invalid below
+   -------------------
+   -- Simple_Nested --
+   -------------------
 
-      Create_Global_Attribute (XML_IG, "nil", Lookup (G, "boolean"));
-      Create_Global_Attribute (XML_IG, "type", Lookup (G, "QName"));
-      Create_Global_Attribute (XML_IG, "schemaLocation",
-                               List_Of (Lookup (G, "uriReference")));
-      Create_Global_Attribute (XML_IG, "noNamespaceSchemaLocation",
-                               Lookup (G, "uriReference"));
-   end Initialize;
+   function Simple_Nested
+     (NFA : access Schema_NFA'Class) return Schema_State_Machines.State is
+   begin
+      return NFA.Simple_Nested;
+   end Simple_Nested;
+
+   ------------------------
+   -- Initialize_Grammar --
+   ------------------------
+
+   procedure Initialize_Grammar
+     (Reader : in out Abstract_Validation_Reader'Class)
+   is
+      use Reference_HTables, Simple_Type_Tables;
+      G : XML_Grammars.Encapsulated_Access;
+
+      function Register
+        (Local          : Byte_Sequence;
+         Descr          : Simple_Type_Descr;
+         Restriction_Of : Type_Index) return Type_Index;
+
+      function Create_UR_Type
+        (Process_Contents : Process_Contents_Type)
+         return State;
+      --  Return the start state for a nested NFA for ur-type
+      --  All children (at any depth level) are allowed.
+      --  Any character contents is allowed.
+
+      --------------
+      -- Register --
+      --------------
+
+      function Register
+        (Local          : Byte_Sequence;
+         Descr          : Simple_Type_Descr;
+         Restriction_Of : Type_Index) return Type_Index
+      is
+         Simple : Simple_Type_Index;
+      begin
+         Simple := Create_Simple_Type (G.NFA, Descr);
+         return Create_Type
+           (G.NFA,
+            Type_Descr'
+              (Name            =>
+                 (NS    => Reader.XML_Schema_URI,
+                  Local => Find (G.Symbols, Local)),
+               Attributes      => No_Attributes,
+               Block           => No_Block,
+               Final           => (others => False),
+               Restriction_Of  => Restriction_Of,
+               Extension_Of    => No_Type_Index,
+               Simple_Content  => Simple,
+               Mixed           => False,
+               Is_Abstract     => False,
+               Complex_Content => No_State));
+      end Register;
+
+      --------------------
+      -- Create_UR_Type --
+      --------------------
+
+      function Create_UR_Type
+        (Process_Contents : Process_Contents_Type)
+         return State
+      is
+         S1      : constant State := G.NFA.Add_State;
+         Ur_Type : constant Nested_NFA := G.NFA.Create_Nested (S1);
+         S2, S3  : State;
+         List    : Attributes_List := No_Attributes;
+         Index   : Type_Index;
+
+      begin
+         List.Any := Any_Descr'
+           (Process_Contents => Process_Lax,
+            No_Namespaces    => No_Symbol,
+            Namespaces       => Reader.Any_Namespace);
+         Index := Create_Type
+           (G.NFA,
+            Type_Descr'
+              (Name            => (NS    => Reader.XML_Schema_URI,
+                                   Local => Reader.Ur_Type),
+               Attributes      => List,
+               Mixed           => True,
+               Complex_Content => S1,
+               others          => <>));
+
+         G.NFA.Set_Data (S1, (Simple   => Index,
+                              Fixed    => No_Symbol,
+                              Default  => No_Symbol,
+                              Nillable => True,
+                              Block    => No_Block));
+         S2 := G.NFA.Add_State ((Simple   => Index,
+                                 Fixed    => No_Symbol,
+                                 Default  => No_Symbol,
+                                 Nillable => True,
+                                 Block    => No_Block));
+
+         G.NFA.Set_Nested (S2, Ur_Type);
+
+         pragma Assert (Reader.Any_Namespace /= No_Symbol);
+         G.NFA.Add_Transition
+           (S1, S2,
+            (Kind => Transition_Any,
+             Any  => (Process_Contents => Process_Contents,
+                      Namespaces       => Reader.Any_Namespace,
+                      No_Namespaces    => No_Symbol)));
+
+         S3 := G.NFA.Add_State;
+         G.NFA.On_Empty_Nested_Exit (S2, S3);
+         G.NFA.Add_Empty_Transition (S3, S1); --  maxOccurs="unbounded"
+         G.NFA.Add_Empty_Transition (S1, S3); --  minOccurs="0"
+         G.NFA.Add_Transition (S3, Final_State, (Kind => Transition_Close));
+         return S1;
+      end Create_UR_Type;
+
+      procedure Do_Register is new Register_Predefined_Types
+        (Type_Index, No_Type_Index, Register);
+
+      Attr : Attribute_Descr;
+   begin
+      Create_Grammar_If_Needed (Reader.Grammar, Get_Symbol_Table (Reader));
+
+      --  In the case of a shared grammar, created will always be false (since
+      --  it has already been parsed), so the code below will not be called.
+      --  As such, it is safe to let it modify the grammar.
+
+      G := Get (Reader.Grammar);
+
+      if Get (G.NFA.References.all,
+        (Name => (NS => Reader.XML_Schema_URI,
+                  Local => Reader.S_Boolean),
+         Kind => Ref_Type)) = No_Global_Reference
+      then
+         Do_Register (G.Symbols);   --  Simple types
+
+         Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Lang),
+                  Form => Qualified,
+                  others => <>);
+         Create_Global_Attribute (Reader'Access, Attr, No_Location);
+
+         Attr := (Name =>
+                    (NS => Reader.XML_URI, Local => Find (G.Symbols, "space")),
+                  Form => Qualified,
+                  others => <>);
+         Create_Global_Attribute (Reader'Access, Attr, No_Location);
+
+         Attr := (Name => (NS => Reader.XML_URI, Local => Reader.Base),
+                  Form => Qualified,
+                  others => <>);
+         Create_Global_Attribute (Reader'Access, Attr, No_Location);
+
+         --  Added support for <ur-Type>
+
+         G.NFA.Ur_Type := Create_UR_Type (Process_Lax);
+         G.NFA.Ur_Type_Skip := Create_UR_Type (Process_Skip);
+
+         Add_Schema_For_Schema (Reader);
+
+         --  The simple nested NFA
+
+         G.NFA.Simple_Nested := G.NFA.Add_State;
+         G.NFA.Add_Transition
+           (G.NFA.Simple_Nested, Final_State,
+            (Kind => Transition_Close));
+
+         --  Save the current state, so that we can restore the grammar to just
+         --  this metaschema.
+
+         G.NFA.Metaschema_NFA_Last := Get_Snapshot (G.NFA);
+         G.NFA.Metaschema_Simple_Types_Last :=
+           Simple_Type_Tables.Last (G.NFA.Simple_Types);
+         G.NFA.Metaschema_Attributes_Last :=
+           Attributes_Tables.Last (G.NFA.Attributes);
+         G.NFA.Metaschema_Enumerations_Last :=
+           Enumeration_Tables.Last (G.NFA.Enumerations);
+         G.NFA.Metaschema_Types_Last := Types_Tables.Last (G.NFA.Types);
+      end if;
+   end Initialize_Grammar;
+
+   -------------
+   -- Ur_Type --
+   -------------
+
+   function Ur_Type
+     (NFA              : access Schema_NFA'Class;
+      Process_Contents : Process_Contents_Type)
+      return Schema_State_Machines.Nested_NFA
+   is
+   begin
+      case Process_Contents is
+         when Process_Skip =>
+            return NFA.Create_Nested (NFA.Ur_Type_Skip);
+         when others =>
+            return NFA.Create_Nested (NFA.Ur_Type);
+      end case;
+   end Ur_Type;
 
    ----------------
    -- Debug_Dump --
    ----------------
 
    procedure Debug_Dump (Grammar : XML_Grammar) is
-      use Elements_Htable;
       Str : String_List;
-      Elem : Elements_Htable.Iterator;
+      G    : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
    begin
       if Debug then
-         Str := Grammar.Parsed_Locations;
+         Str := G.Parsed_Locations;
          while Str /= null loop
-            Put_Line ("   Parsed location: " & Str.Str.all);
+            Debug_Output ("   Parsed location: " & Get (Str.Str).all);
             Str := Str.Next;
          end loop;
-
-         if Grammar.Grammars /= null then
-            for G in Grammar.Grammars'Range  loop
-               Put_Line ("   NS=" & Grammar.Grammars (G).Namespace_URI.all);
-
-               Put ("      Elements:");
-               Elem := First (Grammar.Grammars (G).Elements.all);
-               while Elem /= Elements_Htable.No_Iterator loop
-                  Put (' ' & Elements_Htable.Current (Elem).Local_Name.all);
-                  Next (Grammar.Grammars (G).Elements.all, Elem);
-               end loop;
-               New_Line;
-
-            end loop;
-         end if;
-
       end if;
    end Debug_Dump;
 
@@ -1285,346 +1454,139 @@ package body Schema.Validators is
    -- Free --
    ----------
 
-   procedure Free (Facets : in out Facets_Description) is
+   procedure Free (Grammar : in out XML_Grammar_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Facets_Description_Record'Class, Facets_Description);
+        (Reference_HTables.HTable, Reference_HTable);
    begin
-      if Facets /= null then
-         Free (Facets.all);
-         Unchecked_Free (Facets);
+      if Debug then
+         Debug_Output ("Freeing grammar");
       end if;
+
+      Reset_Simple_Types (Grammar.NFA, No_Simple_Type_Index);
+      Enumeration_Tables.Free (Grammar.NFA.Enumerations);
+      Free (Grammar.NFA.Attributes);
+      Reference_HTables.Reset (Grammar.NFA.References.all);
+      Unchecked_Free (Grammar.NFA.References);
+      Types_Tables.Free (Grammar.NFA.Types);
+      Symbol_Htable.Reset (Grammar.NFA.Notations);
+      Free (NFA_Access (Grammar.NFA));
+      Free (Grammar.Parsed_Locations);
    end Free;
 
-   ----------------------------
-   -- Get_Facets_Description --
-   ----------------------------
-
-   function Get_Facets_Description
-     (Validator : access XML_Validator_Record) return Facets_Description
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return null;
-   end Get_Facets_Description;
-
-   --------------------------
-   -- Create_Local_Element --
-   --------------------------
-
-   function Create_Local_Element
-     (Local_Name : Unicode.CES.Byte_Sequence;
-      NS         : XML_Grammar_NS;
-      Of_Type    : XML_Type;
-      Form       : Form_Type) return XML_Element is
-   begin
-      --  ??? Should be stored in a list in the grammar, so that we can free
-      --  them all later on.
-      return
-        (Elem => new XML_Element_Record'
-           (Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
-            NS                  => NS,
-            Substitution_Groups => null,
-            Of_Type             => Of_Type,
-            Default             => null,
-            Is_Abstract         => False,
-            Nillable            => False,
-            Final_Restriction   => False,
-            Final_Extension     => False,
-            Block_Restriction   => False,
-            Block_Extension     => False,
-            Is_Global           => False,
-            Form                => Form,
-            Fixed               => null),
-         Is_Ref => False);
-   end Create_Local_Element;
-
-   -------------------
-   -- Redefine_Type --
-   -------------------
-
-   function Redefine_Type
-     (Grammar : XML_Grammar_NS; Local_Name : Byte_Sequence) return XML_Type
-   is
-      Old : constant XML_Type := Types_Htable.Get
-        (Grammar.Types.all, Local_Name);
-      Result : XML_Type;
-   begin
-      if Old /= No_Type then
-         Result := Create_Local_Type (Get_Validator (Old));
-         Old.Validator := null;
-         return Result;
-      end if;
-      return No_Type;
-   end Redefine_Type;
-
-   --------------------
-   -- Redefine_Group --
-   --------------------
-
-   function Redefine_Group
-     (Grammar : XML_Grammar_NS; Local_Name : Byte_Sequence) return XML_Group
-   is
-      Old : constant XML_Group := Groups_Htable.Get
-        (Grammar.Groups.all, Local_Name);
-      Result : XML_Group;
-   begin
-      if Old /= No_XML_Group then
-         Result := new XML_Group_Record'(Old.all);
-         Old.all := (Particles       => Empty_Particle_List,
-                     Local_Name      => new Byte_Sequence'(Local_Name),
-                     Is_Forward_Decl => True);
-         return Result;
-      end if;
-      return No_XML_Group;
-   end Redefine_Group;
-
-   ---------------------------
-   -- Create_Global_Element --
-   ---------------------------
-
-   function Create_Global_Element
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence;
-      Form       : Form_Type) return XML_Element
-   is
-      Old : XML_Element_Access := Elements_Htable.Get
-        (Grammar.Elements.all, Local_Name);
-   begin
-      if Old /= null then
-         if Old.Of_Type /= No_Type then
-            Validation_Error
-              ("Element """ & Local_Name & """ has already been declared");
-         end if;
-
-         Old.Form := Form;
-      else
-         Old := new XML_Element_Record'
-           (Local_Name          => new Unicode.CES.Byte_Sequence'(Local_Name),
-            NS                  => Grammar,
-            Substitution_Groups => null,
-            Of_Type             => No_Type,
-            Default             => null,
-            Is_Abstract         => False,
-            Nillable            => False,
-            Final_Restriction   => False,
-            Final_Extension     => False,
-            Block_Restriction   => Grammar.Block_Restriction,
-            Block_Extension     => Grammar.Block_Extension,
-            Is_Global           => True,
-            Form                => Form,
-            Fixed               => null);
-         Elements_Htable.Set (Grammar.Elements.all, Old);
-      end if;
-
-      return (Elem => Old, Is_Ref => False);
-   end Create_Global_Element;
-
    ------------------------
-   -- Create_Global_Type --
+   -- Reset_Simple_Types --
    ------------------------
 
-   function Create_Global_Type
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence;
-      Validator  : access XML_Validator_Record'Class) return XML_Type
-   is
-      Typ : XML_Type := Types_Htable.Get (Grammar.Types.all, Local_Name);
+   procedure Reset_Simple_Types
+     (NFA : access Schema_NFA'Class;
+      To  : Simple_Type_Index := No_Simple_Type_Index) is
    begin
-      if Typ /= No_Type then
-         if Typ.Validator /= null then
-            Validation_Error
-              ("Type has already been declared: " & Local_Name);
-         end if;
+      for S in To + 1 .. Simple_Type_Tables.Last (NFA.Simple_Types) loop
+         Free (NFA.Simple_Types.Table (S).Pattern);
+      end loop;
 
-         Debug_Output ("Overriding forward type " & Local_Name);
-         Typ.Validator := XML_Validator (Validator);
-
-         if Typ.Simple_Type /= Unknown_Content then
-            Check_Content_Type
-              (Validator, Typ.Simple_Type = Simple_Content);
-         end if;
-
+      if To = No_Simple_Type_Index then
+         Simple_Type_Tables.Free (NFA.Simple_Types);
       else
-         Typ := new XML_Type_Record'
-           (Local_Name        => new Byte_Sequence'(Local_Name),
-            Validator         => XML_Validator (Validator),
-            Simple_Type       => Unknown_Content,
-            Block_Extension   => Grammar.Block_Extension,
-            Block_Restriction => Grammar.Block_Restriction);
-         Types_Htable.Set (Grammar.Types.all, Typ);
-         Debug_Output ("Creating global type {"
-                       & Get_Namespace_URI (Grammar) & '}'
-                       & Local_Name);
+         Simple_Type_Tables.Set_Last (NFA.Simple_Types, To);
+      end if;
+   end Reset_Simple_Types;
 
-         if Debug and then Typ.Validator.Debug_Name = null then
-            Set_Debug_Name (Typ.Validator, Local_Name);
-         end if;
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Grammar : in out XML_Grammar) is
+      use Reference_HTables;
+      G   : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
+      NFA : Schema_NFA_Access;
+
+      function Preserve (TRef : Global_Reference) return Boolean;
+
+      --------------
+      -- Preserve --
+      --------------
+
+      function Preserve (TRef : Global_Reference) return Boolean is
+         R : Boolean;
+      begin
+         case TRef.Kind is
+            when Ref_Element =>
+               R := Exists (NFA.Metaschema_NFA_Last, TRef.Element);
+            when Ref_Type =>
+               R := TRef.Typ <= NFA.Metaschema_Types_Last;
+            when Ref_Group =>
+               R := Exists (NFA.Metaschema_NFA_Last, TRef.Gr_Start);
+            when Ref_Attribute | Ref_AttrGroup =>
+               R := TRef.Attributes.Named <= NFA.Metaschema_Attributes_Last;
+         end case;
+         return R;
+      end Preserve;
+
+      procedure Remove_All is new Reference_HTables.Remove_All (Preserve);
+
+   begin
+      if Debug then
+         Debug_Output ("Partial reset of the grammar");
       end if;
 
-      return Typ;
-   end Create_Global_Type;
-
-   ------------------------
-   -- Create_Global_Type --
-   ------------------------
-
-   procedure Create_Global_Type
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence;
-      Validator  : access XML_Validator_Record'Class)
-   is
-      Typ : constant XML_Type :=
-              Create_Global_Type (Grammar, Local_Name, Validator);
-      pragma Unreferenced (Typ);
-   begin
-      null;
-   end Create_Global_Type;
-
-   -----------------------------
-   -- Create_Global_Attribute --
-   -----------------------------
-
-   procedure Create_Global_Attribute
-     (NS             : XML_Grammar_NS;
-      Local_Name     : Unicode.CES.Byte_Sequence;
-      Attribute_Type : XML_Type;
-      Is_ID          : Boolean := False)
-   is
-      Att : constant Attribute_Validator :=
-              Create_Global_Attribute (NS, Local_Name, Attribute_Type, Is_ID);
-      pragma Unreferenced (Att);
-   begin
-      null;
-   end Create_Global_Attribute;
-
-   -----------------------------
-   -- Create_Global_Attribute --
-   -----------------------------
-
-   function Create_Global_Attribute
-     (NS             : XML_Grammar_NS;
-      Local_Name     : Unicode.CES.Byte_Sequence;
-      Attribute_Type : XML_Type;
-      Is_ID          : Boolean := False) return Attribute_Validator
-   is
-      Old : Named_Attribute_Validator :=
-        Attributes_Htable.Get (NS.Attributes.all, Local_Name);
-   begin
-      if Old /= null then
-         if Old.Attribute_Type /= No_Type then
-            Validation_Error
-              ("Attribute has already been declared: " & Local_Name);
-         end if;
-
-         Old.Attribute_Type := Attribute_Type;
-      else
-         Old := new Named_Attribute_Validator_Record'
-           (NS             => NS,
-            Local_Name     => new Byte_Sequence'(Local_Name),
-            Attribute_Type => Attribute_Type,
-            Attribute_Form => Unqualified,
-            Attribute_Use  => Optional,
-            Value          => null,
-            Is_Id          => Is_ID);
-         Attributes_Htable.Set (NS.Attributes.all, Old);
-      end if;
-      return Attribute_Validator (Old);
-   end Create_Global_Attribute;
-
-   -------------------------
-   -- Create_Global_Group --
-   -------------------------
-
-   function Create_Global_Group
-     (Grammar    : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Group
-   is
-      Group : XML_Group := Groups_Htable.Get (Grammar.Groups.all, Local_Name);
-   begin
-      if Group /= No_XML_Group then
-         if not Group.Is_Forward_Decl then
-            Validation_Error
-              ("Group has already been declared: " & Local_Name);
-         end if;
-
-         Group.Is_Forward_Decl := False;
-      else
-         Group := new XML_Group_Record'
-           (Local_Name      => new Byte_Sequence'(Local_Name),
-            Particles       => Empty_Particle_List,
-            Is_Forward_Decl => False);
-         Groups_Htable.Set (Grammar.Groups.all, Group);
-      end if;
-      return Group;
-   end Create_Global_Group;
-
-   -----------------------------------
-   -- Create_Global_Attribute_Group --
-   -----------------------------------
-
-   function Create_Global_Attribute_Group
-     (NS         : XML_Grammar_NS;
-      Local_Name : Unicode.CES.Byte_Sequence) return XML_Attribute_Group
-   is
-      Group : XML_Attribute_Group := Attribute_Groups_Htable.Get
-        (NS.Attribute_Groups.all, Local_Name);
-   begin
-      if Group /= Empty_Attribute_Group then
-         if not Group.Is_Forward_Decl then
-            Validation_Error
-              ("Attribute group has already been declared: " & Local_Name);
-         end if;
-
-         Group.Is_Forward_Decl := False;
-      else
-         Group := new XML_Attribute_Group_Record'
-           (Local_Name => new Unicode.CES.Byte_Sequence'(Local_Name),
-            Attributes => null,
-            Is_Forward_Decl => False);
-         Attribute_Groups_Htable.Set (NS.Attribute_Groups.all, Group);
+      if G = null then
+         return;
       end if;
 
-      return Group;
-   end Create_Global_Attribute_Group;
+      NFA := G.NFA;
+      Free (G.Parsed_Locations);
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Grammar : in out XML_Grammar) is
-   begin
-      if Grammar /= null then
-         if Grammar.Grammars /= null then
-            for G in Grammar.Grammars'Range loop
-               Free (Grammar.Grammars (G));
-            end loop;
-            Unchecked_Free (Grammar.Grammars);
+      if NFA.Metaschema_NFA_Last /= No_NFA_Snapshot then
+         if Debug then
+            Debug_Output ("Preserve metaschema information");
          end if;
+         Enumeration_Tables.Set_Last
+           (NFA.Enumerations, NFA.Metaschema_Enumerations_Last);
+         Attributes_Tables.Set_Last
+           (NFA.Attributes, NFA.Metaschema_Attributes_Last);
+         Types_Tables.Set_Last (NFA.Types, NFA.Metaschema_Types_Last);
 
-         Free (Grammar.Parsed_Locations);
-         Unchecked_Free (Grammar);
+         Reset_Simple_Types (NFA, NFA.Metaschema_Simple_Types_Last);
+         Remove_All (NFA.References.all);
+
+         --  From the toplevel choice (ie the list of valid global elements),
+         --  we need to keep only those belonging to our metaschema, not those
+         --  from grammars loaded afterward
+
+         Reset_To_Snapshot (NFA, NFA.Metaschema_NFA_Last);
       end if;
-   end Free;
+   end Reset;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (Ref : Global_Reference) return Reference_Name is
+   begin
+      return (Kind => Ref.Kind, Name => Ref.Name);
+   end Get_Key;
 
    --------------------
    -- URI_Was_Parsed --
    --------------------
 
    function URI_Was_Parsed
-     (Grammar : XML_Grammar; URI : Byte_Sequence) return Boolean
+     (Grammar : XML_Grammar; URI : Symbol) return Boolean
    is
       L : String_List;
    begin
-      if Grammar /= null then
-         L := Grammar.Parsed_Locations;
+      if Grammar /= No_Grammar then
+         L := Get (Grammar).Parsed_Locations;
          while L /= null loop
             if Debug then
-               Put_Line ("URI_Was_Parsed (" & URI & ") ? Compare with "
-                         & L.Str.all);
+               Debug_Output ("URI_Was_Parsed ("
+                             & Get (URI).all & ") ? Compare with "
+                             & Get (L.Str).all);
             end if;
-            if L.Str.all = URI then
+            if L.Str = URI then
                if Debug then
-                  Put_Line ("    => Yes, already parsed");
+                  Debug_Output ("    => Yes, already parsed");
                end if;
                return True;
             end if;
@@ -1639,2669 +1601,720 @@ package body Schema.Validators is
    --------------------
 
    procedure Set_Parsed_URI
-     (Grammar : in out XML_Grammar; URI : Byte_Sequence) is
+     (Reader : in out Abstract_Validation_Reader'Class;
+      URI    : Symbol) is
    begin
-      if Grammar = null then
-         Initialize (Grammar);
-      end if;
+      Initialize_Grammar (Reader);
 
       if Debug then
-         Put_Line ("Set_Parsed_UI: " & URI);
+         Debug_Output ("Set_Parsed_UI: " & Get (URI).all);
       end if;
-      Grammar.Parsed_Locations := new String_List_Record'
-        (Str  => new Byte_Sequence'(URI),
-         Next => Grammar.Parsed_Locations);
+      Get (Reader.Grammar).Parsed_Locations := new String_List_Record'
+        (Str  => URI,
+         Next => Get (Reader.Grammar).Parsed_Locations);
    end Set_Parsed_URI;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Grammar : in out XML_Grammar_NS) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Types_Htable.HTable, Types_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Elements_Htable.HTable, Elements_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Groups_Htable.HTable, Groups_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Grammar_NS_Record, XML_Grammar_NS);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attributes_Htable.HTable, Attributes_Htable_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Groups_Htable.HTable, Attribute_Groups_Htable_Access);
-
-      use Attributes_Htable;
-      Att_Iter : Attributes_Htable.Iterator;
-      Att      : Named_Attribute_Validator;
-   begin
-      if Grammar /= null then
-         Elements_Htable.Reset (Grammar.Elements.all);
-         Unchecked_Free (Grammar.Elements);
-         Types_Htable.Reset (Grammar.Types.all);
-         Unchecked_Free (Grammar.Types);
-         Groups_Htable.Reset (Grammar.Groups.all);
-         Unchecked_Free (Grammar.Groups);
-         Attribute_Groups_Htable.Reset (Grammar.Attribute_Groups.all);
-         Unchecked_Free (Grammar.Attribute_Groups);
-
-         --  We need to explicitly reset this table, since the Free subprogram
-         --  does nothing here
-
-         Att_Iter := Attributes_Htable.First (Grammar.Attributes.all);
-         while Att_Iter /= Attributes_Htable.No_Iterator loop
-            Att := Attributes_Htable.Current (Att_Iter);
-            Attributes_Htable.Next (Grammar.Attributes.all, Att_Iter);
-            Free (Attribute_Validator (Att));
-         end loop;
-         Attributes_Htable.Reset (Grammar.Attributes.all);
-         Unchecked_Free (Grammar.Attributes);
-
-         Free (Grammar.Namespace_URI);
-         Unchecked_Free (Grammar);
-      end if;
-   end Free;
-
-   ----------------
-   -- Do_Nothing --
-   ----------------
-
-   procedure Do_Nothing (Att : in out Named_Attribute_Validator) is
-      pragma Unreferenced (Att);
-   begin
-      null;
-   end Do_Nothing;
-
-   -----------------
-   -- Set_Default --
-   -----------------
-
-   procedure Set_Default
-     (Element : XML_Element; Default : Unicode.CES.Byte_Sequence) is
-   begin
-      --  3.3 Element Declaration details: Can't have both
-      --  "default" and "fixed"
-
-      if Element.Elem.Fixed /= null then
-         Validation_Error
-           ("Attributes ""fixed"" and ""default"" conflict with each other");
-      end if;
-
-      --  3.3 Element Declaration details:  Validation Rule 3.1
-      --  The "default" attribute of element must match the validation rule
-      --  for that element
-
-      if Element.Elem.Of_Type /= No_Type then
-         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Default,
-                              Empty_Element => False);
-      end if;
-
-      Free (Element.Elem.Default);
-      Element.Elem.Default := new Byte_Sequence'(Default);
-   end Set_Default;
-
-   -----------------
-   -- Has_Default --
-   -----------------
-
-   function Has_Default (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Default /= null;
-   end Has_Default;
-
-   -----------------
-   -- Get_Default --
-   -----------------
-
-   function Get_Default
-     (Element : XML_Element) return Byte_Sequence_Access is
-   begin
-      return Element.Elem.Default;
-   end Get_Default;
-
-   ---------------
-   -- Set_Fixed --
-   ---------------
-
-   procedure Set_Fixed
-     (Element : XML_Element; Fixed : Unicode.CES.Byte_Sequence) is
-   begin
-      --  3.3 Element Declaration details: Can't have both
-      --  "default" and "fixed"
-
-      if Element.Elem.Default /= null then
-         Validation_Error
-           ("Attributes ""fixed"" and ""default"" conflict with each other");
-      end if;
-
-      --  3.3 Element Declaration details:  Validation Rule 3.1
-      --  The "fixed" attribute of element must match the validation rule
-      --  for that element
-
-      if Element.Elem.Of_Type /= No_Type then
-         Validate_Characters (Get_Validator (Element.Elem.Of_Type), Fixed,
-                              Empty_Element => False);
-      end if;
-
-      Free (Element.Elem.Fixed);
-      Element.Elem.Fixed := new Byte_Sequence'(Fixed);
-   end Set_Fixed;
-
-   ---------------
-   -- Has_Fixed --
-   ---------------
-
-   function Has_Fixed (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Fixed /= null;
-   end Has_Fixed;
-
-   ---------------
-   -- Get_Fixed --
-   ---------------
-
-   function Get_Fixed
-     (Element : XML_Element) return Byte_Sequence_Access is
-   begin
-      return Element.Elem.Fixed;
-   end Get_Fixed;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Element : in out XML_Element_Record) is
-   begin
-      --  ??? Should free Of_Type only if it isn't a named type
-      Free (Element.Local_Name);
-      Free (Element.Default);
-      Free (Element.Fixed);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Element : in out XML_Element_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Element_Record, XML_Element_Access);
-   begin
-      Free (Element.all);
-      Unchecked_Free (Element);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Group : in out XML_Group) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (XML_Group_Record, XML_Group);
-   begin
-      Free (Group.Local_Name);
-      Unchecked_Free (Group);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Att : in out XML_Attribute_Group) is
-   begin
-      Free (Att.Local_Name);
-   end Free;
-
    -------------
-   -- Get_Key --
+   -- Get_NFA --
    -------------
 
-   function Get_Key
-     (Att : XML_Attribute_Group) return Unicode.CES.Byte_Sequence is
+   function Get_NFA (Grammar : XML_Grammar) return Schema_NFA_Access is
    begin
-      return Att.Local_Name.all;
-   end Get_Key;
+      return Get (Grammar).NFA;
+   end Get_NFA;
 
-   -------------
-   -- Get_Key --
-   -------------
+   --------------------
+   -- Get_References --
+   --------------------
 
-   function Get_Key
-     (Element : XML_Element_Access) return Unicode.CES.Byte_Sequence is
+   function Get_References (Grammar : XML_Grammar) return Reference_HTable is
    begin
-      return Element.Local_Name.all;
-   end Get_Key;
+      return Get (Grammar).NFA.References;
+   end Get_References;
 
-   -------------
-   -- Get_Key --
-   -------------
+   ------------------------
+   -- Initialize_Symbols --
+   ------------------------
 
-   function Get_Key
-     (Typ : XML_Type) return Unicode.CES.Byte_Sequence is
-   begin
-      return Typ.Local_Name.all;
-   end Get_Key;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key
-     (Group : XML_Group) return Unicode.CES.Byte_Sequence is
-   begin
-      return Group.Local_Name.all;
-   end Get_Key;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key
-     (Att : Named_Attribute_Validator) return Unicode.CES.Byte_Sequence is
-   begin
-      return Att.Local_Name.all;
-   end Get_Key;
-
-   -------------------------------
-   -- Check_Substitution_Groups --
-   -------------------------------
-
-   function Check_Substitution_Groups
-     (Element          : XML_Element_Access;
-      Local_Name       : Unicode.CES.Byte_Sequence;
-      Namespace_URI    : Unicode.CES.Byte_Sequence;
-      Parent_NS        : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS) return XML_Element
+   overriding procedure Initialize_Symbols
+     (Parser : in out Abstract_Validation_Reader)
    is
-      Groups : constant Element_List_Access :=
-        Element.Substitution_Groups;
-      Result : XML_Element := No_Element;
-      Local_Matches : constant Boolean :=
-        Element.Local_Name.all = Local_Name;
+      use Symbol_Table_Pointers;
    begin
-      Debug_Output ("Test " & Namespace_URI
-                    & " : " & Get_Namespace_URI (Parent_NS)
-                    & " : " & Local_Name
-                    & " element.form="
-                    & Element.Form'Img);
+      Initialize_Symbols (Sax_Reader (Parser));
 
-      if Local_Matches
-        and then Get_Namespace_URI (Element.NS) = Namespace_URI
-      then
-         Result := (Elem => Element, Is_Ref => True);
-         Check_Qualification (Schema_Target_NS, Result, Namespace_URI);
-
-      elsif Element.Form = Unqualified
-        and then Namespace_URI = ""
-        and then Local_Matches
-      then
-         Result := (Elem => Element, Is_Ref => True);
-         Check_Qualification (Schema_Target_NS, Result, Namespace_URI);
-
-      elsif Local_Matches and then Namespace_URI = "" then
-         Check_Qualification
-           (Schema_Target_NS, (Element, True), Namespace_URI);
-      end if;
-
-      if Result = No_Element
-        and then Groups /= null
-      then
-         for S in Groups'Range loop
-            Debug_Output ("Check_Substitution group: "
-                          & Element.Local_Name.all & " -> "
-                          & Groups (S).Local_Name.all);
-
-            Result := Check_Substitution_Groups
-              (Groups (S), Local_Name, Namespace_URI, Parent_NS,
-               Schema_Target_NS);
-            exit when Result /= No_Element;
-         end loop;
-      end if;
-
-      if Result /= No_Element and then Is_Abstract (Result) then
-         Validation_Error
-           ("""" & Result.Elem.Local_Name.all & """ is abstract");
-         Result := No_Element;
-      end if;
-
-      return Result;
-   end Check_Substitution_Groups;
-
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   function Create_Validator_Data
-     (Validator : access Sequence_Record) return Validator_Data
-   is
-   begin
-      return new Sequence_Data'
-        (Group_Model_Data_Record with
-         Current               => Start (Validator.Particles),
-         Num_Occurs_Of_Current => 0);
-   end Create_Validator_Data;
-
-   ---------------------------
-   -- Move_To_Next_Particle --
-   ---------------------------
-
-   function Move_To_Next_Particle
-     (Seq            : access Sequence_Record'Class;
-      Data           : Sequence_Data_Access;
-      Force          : Boolean := False;
-      Increase_Count : Boolean := True) return Boolean is
-   begin
-      if Increase_Count then
-         Data.Num_Occurs_Of_Current := Data.Num_Occurs_Of_Current + 1;
-         Debug_Output ("Num_Occurs_Of_Current="
-                       & Data.Num_Occurs_Of_Current'Img);
-      end if;
-
-      if Get (Data.Current) /= null then
-         if Force
-           or else
-             (Get_Max_Occurs (Data.Current) /= Unbounded
-              and then Data.Num_Occurs_Of_Current >=
-                Get_Max_Occurs (Data.Current))
+      if Parser.Grammar /= No_Grammar then
+         if Get (Parser.Grammar).Symbols =
+           Symbol_Table_Pointers.Null_Pointer
          then
-            Debug_Output ("Goto next particle in " & Get_Name (Seq));
-            Next (Data.Current);
-            Data.Num_Occurs_Of_Current := 0;
-            return Get (Data.Current) /= null;
-         end if;
-      end if;
-
-      return True;
-   end Move_To_Next_Particle;
-
-   ------------------
-   -- Check_Nested --
-   ------------------
-
-   procedure Check_Nested
-     (Nested            : access Group_Model_Record'Class;
-      Data              : access Group_Model_Data_Record'Class;
-      Local_Name        : Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      NS                : XML_Grammar_NS;
-      Schema_Target_NS  : XML_Grammar_NS;
-      Element_Validator : out XML_Element;
-      Skip_Current      : out Boolean)
-   is
-      Applies : Boolean;
-   begin
-      Debug_Push_Prefix ("Check_Nested " & Get_Name (Nested));
-
-      Applies_To_Tag
-        (Nested, Local_Name, Namespace_URI, NS,
-         Schema_Target_NS, Applies, Skip_Current);
-
-      if Applies then
-         Data.Nested      := Group_Model (Nested);
-         Data.Nested_Data := Create_Validator_Data (Nested);
-
-         Validate_Start_Element
-           (Data.Nested, Local_Name, Namespace_URI, NS,
-            Data.Nested_Data, Schema_Target_NS, Element_Validator);
-
-         if Element_Validator /= No_Element then
-            Debug_Output
-              ("nested Matched "
-               & Get_Local_Name (Element_Validator.Elem.Of_Type));
-         else
-            Validate_End_Element (Nested, Local_Name, Data.Nested_Data);
-
-            Free_Nested_Group (Group_Model_Data (Data));
-         end if;
-      else
-         Element_Validator := No_Element;
-      end if;
-
-      Debug_Pop_Prefix;
-   end Check_Nested;
-
-   ----------------
-   -- Run_Nested --
-   ----------------
-
-   procedure Run_Nested
-     (Validator         : access Group_Model_Record'Class;
-      Data              : access Group_Model_Data_Record'Class;
-      Local_Name        : Byte_Sequence;
-      Namespace_URI     : Unicode.CES.Byte_Sequence;
-      NS                : XML_Grammar_NS;
-      Schema_Target_NS  : XML_Grammar_NS;
-      Element_Validator : out XML_Element) is
-   begin
-      Debug_Push_Prefix ("Run_Nested: " & Get_Name (Validator)
-                         & " -> " & Get_Name (Data.Nested));
-
-      Validate_Start_Element
-        (Data.Nested, Local_Name, Namespace_URI, NS,
-         Data.Nested_Data, Schema_Target_NS, Element_Validator);
-
-      if Element_Validator = No_Element then
-         Free_Nested_Group (Group_Model_Data (Data));
-      end if;
-
-      Debug_Pop_Prefix;
-   end Run_Nested;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator              : access Sequence_Record;
-      Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
-      Element_Validator      : out XML_Element)
-   is
-      D         : constant Sequence_Data_Access := Sequence_Data_Access (Data);
-      Curr       : XML_Particle_Access;
-      Tmp        : Boolean;
-      pragma Unreferenced (Tmp);
-      Skip_Current : Boolean;
-
-   begin
-      Debug_Push_Prefix ("Validate_Start_Element seq " & Get_Name (Validator)
-                         & " occurs=" & D.Num_Occurs_Of_Current'Img);
-
-      if D.Nested /= null then
-         Run_Nested
-           (Validator, D, Local_Name, Namespace_URI, NS,
-            Schema_Target_NS, Element_Validator);
-         if Element_Validator /= No_Element then
-            Debug_Pop_Prefix;
-            return;
-
-         else
-            --  We might have to try the same element again, in case it only
-            --  returned No_Element because its maxOccurs was reached, be could
-            --  itself be repeat another time:
-            --     <sequence>
-            --       <choice maxOccurs="3">
-            --          <element name="foo" maxOccurs="2" />
-            --          <element name="bar" maxOccurs="1" />
-            --  and the following instance
-            --       <foo/> <foo/> <bar/>    (the choice is repeat twice here)
-
-            Check_Nested
-              (Get (D.Current).Validator, D, Local_Name,
-               Namespace_URI, NS, Schema_Target_NS,
-               Element_Validator, Skip_Current);
-
-            if Element_Validator /= No_Element then
-               D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
-               if Get_Max_Occurs (D.Current) = Unbounded
-                 or else D.Num_Occurs_Of_Current <= Get_Max_Occurs (D.Current)
-               then
-                  Debug_Pop_Prefix;
-                  return;
-               end if;
-
-               --  We cannot raise a Validation_Error here, since there might
-               --  be other valid occurrences of this element. For instance
-               --    <choice maxOccurs="unbounded">
-               --      <sequence>
-               --          <element ref="shell" minOccurs="1" maxOccurs="1" />
-               --  and the following instance
-               --     <shell><shell>
-
-               Debug_Output
-                 ("Giving up on sequence, since repeated too often (maxOccurs="
-                  & Integer'Image (Get_Max_Occurs (D.Current)) & ")");
-               Element_Validator := No_Element;
-               Debug_Pop_Prefix;
-               return;
+            if Debug then
+               Debug_Output ("Initialze_Symbols, set grammar's symbol table");
             end if;
-
-            --  The number of calls should only be incremented when we start
-            --  the sequence initially, not when encountering the end of the
-            --  sequence
-
-            if not Move_To_Next_Particle
-              (Validator, D, Force => False, Increase_Count => False)
-            then
-               Debug_Pop_Prefix;
-               return;
-            end if;
+            Get (Parser.Grammar).Symbols := Get_Symbol_Table (Parser);
          end if;
       end if;
 
-      loop
-         Curr := Get (D.Current);
-         exit when Curr = null;
-
-         case Curr.Typ is
-            when Particle_Element =>
-               Element_Validator := Check_Substitution_Groups
-                 (Curr.Element.Elem, Local_Name, Namespace_URI, NS,
-                  Schema_Target_NS);
-
-               if Element_Validator /= No_Element then
-                  Debug_Output
-                    ("Element Matched: "
-                     & Element_Validator.Elem.Local_Name.all & ' '
-                     & Get_Local_Name (Element_Validator.Elem.Of_Type));
-                  Tmp := Move_To_Next_Particle (Validator, D, Force => False);
-
-               elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
-                  Debug_Pop_Prefix;
-                  Validation_Error
-                    ("Expecting at least"
-                     & Integer'Image (Get_Min_Occurs (D.Current))
-                     & " occurrences of """
-                     & Curr.Element.Elem.Local_Name.all
-                     & """ from namespace """
-                     & Curr.Element.Elem.NS.Namespace_URI.all
-                     & """");
-               end if;
-
-            when Particle_Any =>
-               Validate_Start_Element
-                 (Curr.Any, Local_Name, Namespace_URI, NS,
-                  null, Schema_Target_NS, Element_Validator);
-               if Element_Validator /= No_Element then
-                  Tmp := Move_To_Next_Particle (Validator, D, Force => False);
-               end if;
-
-            when Particle_Nested =>
-               Debug_Output ("Testing nested of sequence "
-                             & Get_Name (Validator) & ": "
-                             & Get_Name (Curr.Validator));
-               Check_Nested
-                 (Curr.Validator, D, Local_Name,
-                  Namespace_URI, NS,
-                  Schema_Target_NS, Element_Validator, Skip_Current);
-
-               if Element_Validator /= No_Element then
-                  D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
-
-               elsif D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current)
-                 and then not Skip_Current
-               then
-                  Debug_Pop_Prefix;
-                  Validation_Error
-                    ("Expecting "
-                     & Type_Model (D.Current, First_Only => True));
-               end if;
-
-            when Particle_Group | Particle_XML_Type =>
-               --  Not possible, since the iterator doesn't return those
-               raise Program_Error;
-         end case;
-
-         if Element_Validator /= No_Element then
-            Debug_Output ("Found validator");
-            Debug_Pop_Prefix;
-            return;
-         end if;
-
-         --  The current element was in fact optional at this point
-
-         Debug_Output ("Skip optional particle in " & Get_Name (Validator)
-                       & ':' & Type_Model (D.Current, First_Only => True));
-
-         if not Move_To_Next_Particle (Validator, D, Force => True) then
-            Element_Validator := No_Element;
-            Debug_Pop_Prefix;
-            return;
-         end if;
-      end loop;
-
-      Debug_Pop_Prefix;
-   end Validate_Start_Element;
-
-   -----------------
-   -- Is_Optional --
-   -----------------
-
-   function Is_Optional (Iterator : Particle_Iterator) return Boolean is
-   begin
-      return Get_Min_Occurs (Iterator) = 0
-        or else (Get (Iterator).Typ = Particle_Nested
-                 and then Can_Be_Empty (Get (Iterator).Validator));
-   end Is_Optional;
-
-   --------------------------
-   -- Validate_End_Element --
-   --------------------------
-
-   procedure Validate_End_Element
-     (Validator         : access Sequence_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data)
-   is
-      D : constant Sequence_Data_Access := Sequence_Data_Access (Data);
-   begin
-      Debug_Push_Prefix ("Validate_End_Element " & Get_Name (Validator));
-
-      if D.Nested /= null then
-         Validate_End_Element (D.Nested, Local_Name, D.Nested_Data);
-      end if;
-
-      if Get (D.Current) /= null
-        and then (D.Num_Occurs_Of_Current >= Get_Min_Occurs (D.Current)
-                 or else Is_Optional (D.Current))
-      then
-         Next (D.Current);
-
-         while Get (D.Current) /= null loop
-            if not Is_Optional (D.Current) then
-               Validation_Error
-                 ("Expecting " & Type_Model (D.Current, First_Only => True));
-            end if;
-
-            Next (D.Current);
-         end loop;
-      end if;
-
-      if Get (D.Current) /= null then
-         Debug_Output ("Current element occurred "
-                       & D.Num_Occurs_Of_Current'Img & " times, minimum is"
-                       & Get_Min_Occurs (D.Current)'Img);
-         Validation_Error ("Unexpected end of sequence, expecting """
-                           & Type_Model (D.Current, True) & """");
-      end if;
-
-      Debug_Pop_Prefix;
-   end Validate_End_Element;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access Group_Model_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
-   is
-      pragma Unreferenced (Ch);
-   begin
-      if not Empty_Element
-        and then not Validator.Mixed_Content
-      then
-         Validation_Error
-           ("No character data allowed by content model");
-      end if;
-   end Validate_Characters;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (List       : in out Particle_List;
-      Item       : XML_Particle) is
-   begin
-      pragma Assert (List /= null, "List was never created");
-
-      if Item.Max_Occurs /= Unbounded
-        and then Item.Min_Occurs > Item.Max_Occurs
-      then
-         Validation_Error
-           ("minOccurs > maxOccurs when creating particle");
-      end if;
-
-      if List.First = null then
-         List.First := new XML_Particle'(Item);
-         List.First.Next := null;
-         List.Last  := List.First;
-      else
-         List.Last.Next := new XML_Particle'(Item);
-         List.Last := List.Last.Next;
-      end if;
-   end Append;
-
-   ---------------------
-   -- Create_Sequence --
-   ---------------------
-
-   function Create_Sequence return Sequence is
-      Seq : constant Sequence := new Sequence_Record;
-   begin
-      return Seq;
-   end Create_Sequence;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Seq : access Sequence_Record; Item : XML_Element;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      if Item.Elem.Local_Name = null then
-         Raise_Exception
-           (Program_Error'Identity,
-            "Adding empty element to a sequence");
-      end if;
-
-      Append
-        (Seq.Particles, XML_Particle'
-           (Typ        => Particle_Element,
-            Element    => Item,
-            Next       => null,
-            Min_Occurs => Min_Occurs,
-            Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Seq : access Sequence_Record; Item : Sequence;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Seq : access Sequence_Record; Item : Choice;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Seq : access Sequence_Record; Item : XML_Group;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Group,
-                 Group      => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator              : access Choice_Record;
-      Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
-      Element_Validator      : out XML_Element)
-   is
-      D     : constant Choice_Data_Access := Choice_Data_Access (Data);
-      Skip_Current : Boolean;
-      Has_Single_Choice : Boolean;
-
-      procedure Check_Particle (It : XML_Particle_Access);
-      --  Check whether a specific particle matches
-
-      procedure Check_Particle (It : XML_Particle_Access) is
-      begin
-         case It.Typ is
-            when Particle_Element =>
-               Element_Validator := Check_Substitution_Groups
-                 (It.Element.Elem, Local_Name, Namespace_URI, NS,
-                  Schema_Target_NS);
-
-            when Particle_Nested =>
-               Check_Nested
-                 (It.Validator, D, Local_Name, Namespace_URI, NS,
-                  Schema_Target_NS, Element_Validator, Skip_Current);
-
-            when Particle_Any =>
-               Validate_Start_Element
-                 (It.Any, Local_Name, Namespace_URI, NS,
-                  null, Schema_Target_NS, Element_Validator);
-
-            when Particle_Group | Particle_XML_Type =>
-               --  Not possible, since the iterator hides these
-               raise Program_Error;
-         end case;
-      end Check_Particle;
-
-   begin
-      Debug_Push_Prefix ("Validate_Start_Element choice "
-                         & Get_Name (Validator)
-                         & " occurs=" & D.Num_Occurs_Of_Current'Img
-                         & ' ' & Namespace_URI & ':' & Local_Name);
-
-      if D.Nested /= null then
-         Run_Nested
-           (Validator, D, Local_Name, Namespace_URI, NS,
-            Schema_Target_NS, Element_Validator);
-         if Element_Validator /= No_Element then
-            Debug_Pop_Prefix;
-            return;
-         end if;
-      end if;
-
-      if D.Current /= No_Iter then
-         Debug_Output ("Testing again same element in choice");
-         Check_Particle (Get (D.Current));
-         if Element_Validator = No_Element then
-            if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
-               Validation_Error
-                 ("Not enough occurrences of current element, expecting at"
-                  & " least" & Integer'Image (Get_Min_Occurs (D.Current)));
-            end if;
-            Free (D.Current);
-
-         else
-            D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
-            if Get_Max_Occurs (D.Current) /= Unbounded
-              and then D.Num_Occurs_Of_Current > Get_Max_Occurs (D.Current)
-            then
-               --  No need to insist on the same element again next time
-               Free (D.Current);
-               D.Current := No_Iter;
-               Element_Validator := No_Element;
-               Debug_Output ("Giving up choice, since too many occurrences");
-            end if;
-
-            Debug_Pop_Prefix;
-            return;
-         end if;
-      end if;
-
-      --  Choice has already matched once, by definition it can no longer match
-      --  so we give back the control to the parent
-      if D.Num_Occurs_Of_Current > 0 then
-         Element_Validator := No_Element;
-         Debug_Pop_Prefix;
+      if Parser.Xmlns /= No_Symbol then
          return;
       end if;
 
-      Debug_Output ("Testing all elements from start in choice");
-      D.Num_Occurs_Of_Current := 0;
-
-      D.Current := Start (Validator.Particles);
-      Next (D.Current);
-      Has_Single_Choice := Get (D.Current) = null;
-
-      D.Current := Start (Validator.Particles);
-
-      --  Check whether the current item is valid
-
-      while Get (D.Current) /= null loop
-         begin
-            Check_Particle (Get (D.Current));
-            exit when Element_Validator /= No_Element;
-            Next (D.Current);
-
-         exception
-            when XML_Validation_Error =>
-               Element_Validator := No_Element;
-               if Has_Single_Choice then
-                  --  If we have a single choice, we report its errors
-                  --  directly to the caller, instead of using our own error
-                  --  messages for <choice>. This is slightly more helpful to
-                  --  the user.
-                  raise;
-               end if;
-
-               Next (D.Current);
-         end;
-      end loop;
-
-      if Get (D.Current) = null then
-         Debug_Output ("Choice didn't match");
-         Element_Validator := No_Element;
-         Debug_Pop_Prefix;
-         return;
-      else
-         Debug_Output ("<choice> matched for "
-                       & Element_Validator.Elem.Local_Name.all);
-      end if;
-
-      D.Num_Occurs_Of_Current := D.Num_Occurs_Of_Current + 1;
-      if Get_Max_Occurs (D.Current) /= Unbounded
-        and then D.Num_Occurs_Of_Current > Get_Max_Occurs (D.Current)
-      then
-         Free (D.Current);
-      else
-         --  Keep same current element, and we will try again next time
-         null;
-      end if;
-
-      Debug_Pop_Prefix;
-   end Validate_Start_Element;
-
-   --------------------------
-   -- Validate_End_Element --
-   --------------------------
-
-   procedure Validate_End_Element
-     (Validator         : access Choice_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data)
-   is
-      pragma Unreferenced (Local_Name);
-      D     : constant Choice_Data_Access := Choice_Data_Access (Data);
-   begin
-      if D.Current /= No_Iter then
-         if D.Num_Occurs_Of_Current < Get_Min_Occurs (D.Current) then
-            if Get (D.Current).Typ = Particle_Element then
-
-               Validation_Error
-                 ("Not enough occurrences of """
-                  & Get_Local_Name (Get (D.Current).Element) & """");
-            else
-               Validation_Error
-                 ("Not enough occurrences of current element");
-            end if;
-         end if;
-
-      --  Never occurred ?
-      elsif D.Num_Occurs_Of_Current = 0 then
-         Validation_Error
-           ("Expecting one of """
-            & Type_Model (Validator, First_Only => True)
-            & """");
-      end if;
-   end Validate_End_Element;
-
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   function Create_Validator_Data
-     (Validator : access Choice_Record) return Validator_Data
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return new Choice_Data'
-        (Group_Model_Data_Record with
-         Current               => No_Iter,
-         Num_Occurs_Of_Current => 0);
-   end Create_Validator_Data;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Validator_Data_Record) is
-      pragma Unreferenced (Data);
-   begin
-      null;
-   end Free;
-
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   function Create_Validator_Data
-     (Validator : access XML_Validator_Record) return Validator_Data
-   is
-      pragma Unreferenced (Validator);
-   begin
-      return null;
-   end Create_Validator_Data;
-
-   -------------------
-   -- Create_Choice --
-   -------------------
-
-   function Create_Choice return Choice is
-   begin
-      return new Choice_Record;
-   end Create_Choice;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C          : access Choice_Record;
-      Item       : XML_Element;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      if Item.Elem.Local_Name = null then
-         Raise_Exception
-           (Program_Error'Identity,
-            "Adding unnamed element to choice");
-      end if;
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Element,
-                 Element    => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C : access Choice_Record; Item : XML_Any;
-      Min_Occurs : Integer := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Any,
-                 Any        => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Seq : access Sequence_Record; Item : XML_Any;
-      Min_Occurs : Integer := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (Seq.Particles, XML_Particle'
-                (Typ        => Particle_Any,
-                 Any        => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C : access Choice_Record; Item : Sequence;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C : access Choice_Record; Item : Choice;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Nested,
-                 Validator  => Group_Model (Item),
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (C : access Choice_Record; Item : XML_Group;
-      Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) is
-   begin
-      Append (C.Particles, XML_Particle'
-                (Typ        => Particle_Group,
-                 Group      => Item,
-                 Next       => null,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Validator_Data) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Validator_Data_Record'Class, Validator_Data);
-   begin
-      if Data /= null then
-         Free (Data.all);
-         Unchecked_Free (Data);
-      end if;
-   end Free;
-
-   --------------------
-   -- Applies_To_Tag --
-   --------------------
-
-   procedure Applies_To_Tag
-     (Group         : access Group_Model_Record;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      NS            : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS;
-      Applies       : out Boolean;
-      Skip_Current  : out Boolean)
-   is
-      pragma Unreferenced (Group, Local_Name, Namespace_URI, NS,
-                           Schema_Target_NS);
-   begin
-      Applies := False;
-      Skip_Current := False;
-   end Applies_To_Tag;
-
-   --------------------
-   -- Applies_To_Tag --
-   --------------------
-
-   procedure Applies_To_Tag
-     (Group         : access Sequence_Record;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      NS            : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS;
-      Applies       : out Boolean;
-      Skip_Current  : out Boolean)
-   is
-      Iter : Particle_Iterator := Start (Group.Particles);
-      Item : XML_Particle_Access;
-
-   begin
-      Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
-      Skip_Current := False;
-
-      loop
-         Item := Get (Iter);
-         exit when Item = null;
-
-         case Item.Typ is
-            when Particle_Element =>
-               Applies := Check_Substitution_Groups
-                 (Item.Element.Elem, Local_Name, Namespace_URI, NS,
-                  Schema_Target_NS) /= No_Element;
-
-            when Particle_Nested =>
-               Applies_To_Tag
-                 (Item.Validator, Local_Name, Namespace_URI, NS,
-                  Schema_Target_NS, Applies, Skip_Current);
-
-            when Particle_Any =>
-               --  ??? Tmp
-               declare
-                  Element_Validator : XML_Element;
-               begin
-                  Validate_Start_Element
-                    (Item.Any, Local_Name, Namespace_URI, NS, null,
-                     Schema_Target_NS, Element_Validator);
-                  Applies := True;
-               exception
-                  when XML_Validation_Error =>
-                     Applies := False;
-               end;
-
-            when Particle_Group | Particle_XML_Type =>
-               --  Not possible since hidden by the iterator
-               raise Program_Error;
-         end case;
-
-         Debug_Output ("Applies= " & Applies'Img
-                       & " Item.minOccurs=" & Item.Min_Occurs'Img);
-
-         if Applies then
-            Debug_Pop_Prefix;
-            return;
-         elsif Get_Min_Occurs (Iter) > 0 and then not Skip_Current then
-            Debug_Output ("Current element is not optional => doesn't apply");
-            Skip_Current := False;
-            Applies := False;
-            Debug_Pop_Prefix;
-            return;
-         end if;
-         Next (Iter);
-      end loop;
-
-      Skip_Current := True;
-      Applies := False;
-
-      Debug_Pop_Prefix;
-   end Applies_To_Tag;
-
-   --------------------
-   -- Applies_To_Tag --
-   --------------------
-
-   procedure Applies_To_Tag
-     (Group         : access Choice_Record;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      NS            : XML_Grammar_NS;
-      Schema_Target_NS : XML_Grammar_NS;
-      Applies       : out Boolean;
-      Skip_Current  : out Boolean)
-   is
-      Item : Particle_Iterator := Start (Group.Particles);
-      It   : XML_Particle_Access;
-   begin
-      Debug_Push_Prefix ("Applies_To_Tag " & Get_Name (Group));
-      while Get (Item) /= null loop
-         It := Get (Item);
-         case It.Typ is
-            when Particle_Element =>
-               Applies := Check_Substitution_Groups
-                 (It.Element.Elem, Local_Name, Namespace_URI, NS,
-                  Schema_Target_NS) /= No_Element;
-
-            when Particle_Nested =>
-               Applies_To_Tag
-                 (It.Validator, Local_Name, Namespace_URI,
-                  NS, Schema_Target_NS, Applies, Skip_Current);
-               Applies := Applies
-                 or else Can_Be_Empty (It.Validator);
-
-            when Particle_Any =>
-               --  ??? Tmp
-               declare
-                  Element_Validator : XML_Element;
-               begin
-                  Validate_Start_Element
-                    (It.Any, Local_Name, Namespace_URI, NS, null,
-                     Schema_Target_NS, Element_Validator);
-                  Applies := True;
-               exception
-                  when XML_Validation_Error =>
-                     Applies := False;
-               end;
-
-            when Particle_Group | Particle_XML_Type =>
-               --  Not possible since hidden by the iterator
-               raise Program_Error;
-         end case;
-
-         if Applies then
-            Debug_Output ("Applies");
-            Debug_Pop_Prefix;
-            return;
-         end if;
-
-         Next (Item);
-      end loop;
-
-      Applies := False;
-      Skip_Current := Can_Be_Empty (Group);
-      Debug_Output ("Doesn't apply");
-      Debug_Pop_Prefix;
-   end Applies_To_Tag;
-
-   ----------------------------
-   -- Set_Substitution_Group --
-   ----------------------------
-
-   procedure Set_Substitution_Group
-     (Element : XML_Element; Head : XML_Element)
-   is
-      Had_Restriction, Had_Extension : Boolean := False;
-   begin
-      if Get_Validator (Get_Type (Element)) /= null
-        and then Get_Validator (Get_Type (Element)) /=
-           Get_Validator (Get_Type (Head))
-      then
-         Check_Replacement
-           (Get_Validator (Get_Type (Element)), Get_Type (Head),
-            Had_Restriction => Had_Restriction,
-            Had_Extension   => Had_Extension);
-
-         if Head.Elem.Final_Restriction and then Had_Restriction then
-            Validation_Error
-              ("""" & Head.Elem.Local_Name.all
-               & """ is final for restrictions, and cannot be substituted by"
-               & """" & Element.Elem.Local_Name.all & """");
-         end if;
-
-         if Head.Elem.Final_Extension and then Had_Extension then
-            Validation_Error
-              ("""" & Head.Elem.Local_Name.all
-               & """ is final for extensions, and cannot be substituted by"
-               & """" & Element.Elem.Local_Name.all & """");
-         end if;
-      end if;
-
-      Append (Head.Elem.Substitution_Groups, Element);
-   end Set_Substitution_Group;
-
-   -------------------------
-   -- Empty_Particle_List --
-   -------------------------
-
-   function Empty_Particle_List return Particle_List is
-   begin
-      return new Particle_List_Record;
-   end Empty_Particle_List;
-
-   --------------------
-   -- Get_Local_Name --
-   --------------------
-
-   function Get_Local_Name
-     (Group : XML_Group) return Unicode.CES.Byte_Sequence is
-   begin
-      return Group.Local_Name.all;
-   end Get_Local_Name;
-
-   -----------------------
-   -- Create_Local_Type --
-   -----------------------
-
-   function Create_Local_Type
-     (Validator  : access XML_Validator_Record'Class) return XML_Type is
-   begin
-      return new XML_Type_Record'
-        (Local_Name        => null,
-         Validator         => XML_Validator (Validator),
-         Simple_Type       => Unknown_Content,
-         Block_Extension   => False,
-         Block_Restriction => False);
-   end Create_Local_Type;
-
-   -------------------
-   -- Get_Validator --
-   -------------------
-
-   function Get_Validator (Typ : XML_Type) return XML_Validator is
-   begin
-      if Typ = null then
-         return null;
-      else
-         return Typ.Validator;
-      end if;
-   end Get_Validator;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Group : in out XML_Group; Particle : access Group_Model_Record'Class;
-      Min_Occurs : Natural := 1; Max_Occurs : Natural := 1) is
-   begin
-      Append
-        (Group.Particles, XML_Particle'
-           (Typ        => Particle_Nested,
-            Validator  => Group_Model (Particle),
-            Next       => null,
-            Min_Occurs => Min_Occurs,
-            Max_Occurs => Max_Occurs));
-   end Add_Particle;
-
-   --------------------
-   -- Set_Debug_Name --
-   --------------------
-
-   procedure Set_Debug_Name
-     (Typ : access XML_Validator_Record'Class; Name : String) is
-   begin
-      Free (Typ.Debug_Name);
-      Typ.Debug_Name := new Unicode.CES.Byte_Sequence'(Name);
-   end Set_Debug_Name;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Iter : in out Particle_Iterator) is
-      Tmp : Particle_Iterator;
-   begin
-      while Iter /= null loop
-         Tmp := Iter;
-         Iter := Iter.Parent;
-         Unchecked_Free (Tmp);
-      end loop;
-   end Free;
+      Parser.All_NNI                := Find_Symbol (Parser, "allNNI");
+      Parser.Annotated              := Find_Symbol (Parser, "annotated");
+      Parser.Annotation             := Find_Symbol (Parser, "annotation");
+      Parser.Any                    := Find_Symbol (Parser, "any");
+      Parser.Any_Attribute          := Find_Symbol (Parser, "anyAttribute");
+      Parser.Any_Namespace          := Find_Symbol (Parser, "##any");
+      Parser.Any_Simple_Type        := Find_Symbol (Parser, "anySimpleType");
+      Parser.Anytype                := Find_Symbol (Parser, "anyType");
+      Parser.Appinfo                := Find_Symbol (Parser, "appinfo");
+      Parser.Attr_Decls             := Find_Symbol (Parser, "attrDecls");
+      Parser.Attribute              := Find_Symbol (Parser, "attribute");
+      Parser.Attribute_Group        := Find_Symbol (Parser, "attributeGroup");
+      Parser.Attribute_Group_Ref  :=
+        Find_Symbol (Parser, "attributeGroupRef");
+      Parser.Base                   := Find_Symbol (Parser, "base");
+      Parser.Block                  := Find_Symbol (Parser, "block");
+      Parser.Block_Default          := Find_Symbol (Parser, "blockDefault");
+      Parser.Block_Set              := Find_Symbol (Parser, "blockSet");
+      Parser.Choice                 := Find_Symbol (Parser, "choice");
+      Parser.Complex_Content        := Find_Symbol (Parser, "complexContent");
+      Parser.Complex_Extension_Type :=
+        Find_Symbol (Parser, "complexExtensionType");
+      Parser.Complex_Restriction_Type :=
+        Find_Symbol (Parser, "complexRestrictionType");
+      Parser.Complex_Type           := Find_Symbol (Parser, "complexType");
+      Parser.Complex_Type_Model     :=
+        Find_Symbol (Parser, "complexTypeModel");
+      Parser.Def_Ref                := Find_Symbol (Parser, "defRef");
+      Parser.Default                := Find_Symbol (Parser, "default");
+      Parser.Derivation_Control     :=
+        Find_Symbol (Parser, "derivationControl");
+      Parser.Derivation_Set         := Find_Symbol (Parser, "derivationSet");
+      Parser.Documentation          := Find_Symbol (Parser, "documentation");
+      Parser.Element                := Find_Symbol (Parser, "element");
+      Parser.Enumeration            := Find_Symbol (Parser, "enumeration");
+      Parser.Explicit_Group         := Find_Symbol (Parser, "explicitGroup");
+      Parser.Extension              := Find_Symbol (Parser, "extension");
+      Parser.Extension_Type         := Find_Symbol (Parser, "extensionType");
+      Parser.Facet                  := Find_Symbol (Parser, "facet");
+      Parser.Field                  := Find_Symbol (Parser, "field");
+      Parser.Final                  := Find_Symbol (Parser, "final");
+      Parser.Final_Default          := Find_Symbol (Parser, "finalDefault");
+      Parser.Fixed                  := Find_Symbol (Parser, "fixed");
+      Parser.Form                   := Find_Symbol (Parser, "form");
+      Parser.Form_Choice            := Find_Symbol (Parser, "formChoice");
+      Parser.Fraction_Digits        := Find_Symbol (Parser, "fractionDigits");
+      Parser.Group                  := Find_Symbol (Parser, "group");
+      Parser.Group_Def_Particle     :=
+        Find_Symbol (Parser, "groupDefParticle");
+      Parser.Group_Ref              := Find_Symbol (Parser, "groupRef");
+      Parser.Id                     := Find_Symbol (Parser, "id");
+      Parser.IDREF                  := Find_Symbol (Parser, "IDREF");
+      Parser.IDREFS                 := Find_Symbol (Parser, "IDREFS");
+      Parser.Identity_Constraint    :=
+        Find_Symbol (Parser, "identityConstraint");
+      Parser.Import                 := Find_Symbol (Parser, "import");
+      Parser.Include                := Find_Symbol (Parser, "include");
+      Parser.Item_Type              := Find_Symbol (Parser, "itemType");
+      Parser.Key                    := Find_Symbol (Parser, "key");
+      Parser.Keybase                := Find_Symbol (Parser, "keybase");
+      Parser.Keyref                 := Find_Symbol (Parser, "keyref");
+      Parser.Lang                   := Find_Symbol (Parser, "lang");
+      Parser.Lax                    := Find_Symbol (Parser, "lax");
+      Parser.Length                 := Find_Symbol (Parser, "length");
+      Parser.List                   := Find_Symbol (Parser, "list");
+      Parser.Local                  := Find_Symbol (Parser, "##local");
+      Parser.Local_Complex_Type     :=
+        Find_Symbol (Parser, "localComplexType");
+      Parser.Local_Element          := Find_Symbol (Parser, "localElement");
+      Parser.Local_Simple_Type      := Find_Symbol (Parser, "localSimpleType");
+      Parser.MaxExclusive           := Find_Symbol (Parser, "maxExclusive");
+      Parser.MaxInclusive           := Find_Symbol (Parser, "maxInclusive");
+      Parser.MaxOccurs              := Find_Symbol (Parser, "maxOccurs");
+      Parser.Max_Bound              := Find_Symbol (Parser, "maxBound");
+      Parser.Maxlength              := Find_Symbol (Parser, "maxLength");
+      Parser.Member_Types           := Find_Symbol (Parser, "memberTypes");
+      Parser.MinExclusive           := Find_Symbol (Parser, "minExclusive");
+      Parser.MinInclusive           := Find_Symbol (Parser, "minInclusive");
+      Parser.MinOccurs              := Find_Symbol (Parser, "minOccurs");
+      Parser.Min_Bound              := Find_Symbol (Parser, "minBound");
+      Parser.Minlength              := Find_Symbol (Parser, "minLength");
+      Parser.Mixed                  := Find_Symbol (Parser, "mixed");
+      Parser.NCName                 := Find_Symbol (Parser, "NCName");
+      Parser.NMTOKEN                := Find_Symbol (Parser, "NMTOKEN");
+      Parser.Name                   := Find_Symbol (Parser, "name");
+      Parser.Named_Attribute_Group  :=
+        Find_Symbol (Parser, "namedAttributeGroup");
+      Parser.Named_Group            := Find_Symbol (Parser, "namedGroup");
+      Parser.Namespace              := Find_Symbol (Parser, "namespace");
+      Parser.Namespace_List         := Find_Symbol (Parser, "namespaceList");
+      Parser.Nested_Particle        := Find_Symbol (Parser, "nestedParticle");
+      Parser.Nil                    := Find_Symbol (Parser, "nil");
+      Parser.Nillable               := Find_Symbol (Parser, "nillable");
+      Parser.No_Namespace_Schema_Location :=
+        Find_Symbol (Parser, "noNamespaceSchemaLocation");
+      Parser.Non_Negative_Integer   :=
+        Find_Symbol (Parser, "nonNegativeInteger");
+      Parser.Notation               := Find_Symbol (Parser, "notation");
+      Parser.Num_Facet              := Find_Symbol (Parser, "numFacet");
+      Parser.Occurs                 := Find_Symbol (Parser, "occurs");
+      Parser.Open_Attrs             := Find_Symbol (Parser, "openAttrs");
+      Parser.Optional               := Find_Symbol (Parser, "optional");
+      Parser.Other_Namespace        := Find_Symbol (Parser, "##other");
+      Parser.Particle               := Find_Symbol (Parser, "particle");
+      Parser.Pattern                := Find_Symbol (Parser, "pattern");
+      Parser.Positive_Integer       := Find_Symbol (Parser, "positiveInteger");
+      Parser.Precision_Decimal      :=
+        Find_Symbol (Parser, "precisionDecimal");
+      Parser.Process_Contents       := Find_Symbol (Parser, "processContents");
+      Parser.Prohibited             := Find_Symbol (Parser, "prohibited");
+      Parser.Public                 := Find_Symbol (Parser, "public");
+      Parser.QName                  := Find_Symbol (Parser, "QName");
+      Parser.Qualified              := Find_Symbol (Parser, "qualified");
+      Parser.Real_Group             := Find_Symbol (Parser, "realGroup");
+      Parser.Redefinable            := Find_Symbol (Parser, "redefinable");
+      Parser.Redefine               := Find_Symbol (Parser, "redefine");
+      Parser.Reduced_Derivation_Control :=
+        Find_Symbol (Parser, "reducedDerivationControl");
+      Parser.Ref                    := Find_Symbol (Parser, "ref");
+      Parser.Refer                  := Find_Symbol (Parser, "refer");
+      Parser.Required               := Find_Symbol (Parser, "required");
+      Parser.Restriction            := Find_Symbol (Parser, "restriction");
+      Parser.Restriction_Type       := Find_Symbol (Parser, "restrictionType");
+      Parser.S_1                    := Find_Symbol (Parser, "1");
+      Parser.S_Abstract             := Find_Symbol (Parser, "abstract");
+      Parser.S_All                  := Find_Symbol (Parser, "all");
+      Parser.S_Attribute_Form_Default :=
+        Find_Symbol (Parser, "attributeFormDefault");
+      Parser.S_Boolean              := Find_Symbol (Parser, "boolean");
+      Parser.S_Element_Form_Default :=
+        Find_Symbol (Parser, "elementFormDefault");
+      Parser.S_False                := Find_Symbol (Parser, "false");
+      Parser.S_Schema               := Find_Symbol (Parser, "schema");
+      Parser.S_String               := Find_Symbol (Parser, "string");
+      Parser.S_Use                  := Find_Symbol (Parser, "use");
+      Parser.Schema_Location        := Find_Symbol (Parser, "schemaLocation");
+      Parser.Schema_Top             := Find_Symbol (Parser, "schemaTop");
+      Parser.Selector               := Find_Symbol (Parser, "selector");
+      Parser.Sequence               := Find_Symbol (Parser, "sequence");
+      Parser.Simple_Content         := Find_Symbol (Parser, "simpleContent");
+      Parser.Simple_Derivation      :=
+        Find_Symbol (Parser, "simpleDerivation");
+      Parser.Simple_Derivation_Set  :=
+        Find_Symbol (Parser, "simpleDerivationSet");
+      Parser.Simple_Extension_Type  :=
+        Find_Symbol (Parser, "simpleExtensionType");
+      Parser.Simple_Restriction_Model :=
+        Find_Symbol (Parser, "simpleRestrictionModel");
+      Parser.Simple_Restriction_Type  :=
+        Find_Symbol (Parser, "simpleRestrictionType");
+      Parser.Simple_Type            := Find_Symbol (Parser, "simpleType");
+      Parser.Source                 := Find_Symbol (Parser, "source");
+      Parser.Strict                 := Find_Symbol (Parser, "strict");
+      Parser.Substitution_Group     :=
+        Find_Symbol (Parser, "substitutionGroup");
+      Parser.System                 := Find_Symbol (Parser, "system");
+      Parser.Target_Namespace       :=
+        Find_Symbol (Parser, "##targetNamespace");
+      Parser.Namespace_Target       := Find_Symbol (Parser, "targetNamespace");
+      Parser.Token                  := Find_Symbol (Parser, "token");
+      Parser.Top_Level_Attribute    :=
+        Find_Symbol (Parser, "topLevelAttribute");
+      Parser.Top_Level_Complex_Type :=
+        Find_Symbol (Parser, "topLevelComplexType");
+      Parser.Top_Level_Element      :=
+        Find_Symbol (Parser, "topLevelElement");
+      Parser.Top_Level_Simple_Type  :=
+        Find_Symbol (Parser, "topLevelSimpleType");
+      Parser.Total_Digits           := Find_Symbol (Parser, "totalDigits");
+      Parser.Typ                    := Find_Symbol (Parser, "type");
+      Parser.Type_Def_Particle      := Find_Symbol (Parser, "typeDefParticle");
+      Parser.UC_ID                  := Find_Symbol (Parser, "ID");
+      Parser.URI_Reference          := Find_Symbol (Parser, "uriReference");
+      Parser.Unbounded              := Find_Symbol (Parser, "unbounded");
+      Parser.Union                  := Find_Symbol (Parser, "union");
+      Parser.Unique                 := Find_Symbol (Parser, "unique");
+      Parser.Unqualified            := Find_Symbol (Parser, "unqualified");
+      Parser.Ur_Type                := Find_Symbol (Parser, "ur-Type");
+      Parser.Value                  := Find_Symbol (Parser, "value");
+      Parser.Version                := Find_Symbol (Parser, "version");
+      Parser.Whitespace             := Find_Symbol (Parser, "whiteSpace");
+      Parser.Wildcard               := Find_Symbol (Parser, "wildcard");
+      Parser.XML_Instance_URI       := Find_Symbol (Parser, XML_Instance_URI);
+
+      Parser.XML_Schema_URI         := Find_Symbol (Parser, XML_Schema_URI);
+      Parser.XML_URI                := Find_Symbol (Parser, XML_URI);
+      Parser.XPath                  := Find_Symbol (Parser, "xpath");
+      Parser.XPath_Expr_Approx      := Find_Symbol (Parser, "XPathExprApprox");
+      Parser.XPath_Spec             := Find_Symbol (Parser, "XPathSpec");
+      Parser.Xmlns                  := Find_Symbol (Parser, "xmlns");
+   end Initialize_Symbols;
 
    -----------
-   -- Start --
+   -- Image --
    -----------
 
-   function Start (List : Particle_List) return Particle_Iterator is
-      Iter : Particle_Iterator;
+   function Image (Trans : Transition_Descr) return String is
    begin
-      Iter := new Particle_Iterator_Record'
-        (Current => List.First, Parent  => null);
+      case Trans.Kind is
+         when Transition_Symbol | Transition_Symbol_From_All =>
+            if Trans.Name.Local = No_Symbol then
+               return "";
+            else
+               return To_QName (Trans.Name);
+            end if;
+         when Transition_Close | Transition_Close_From_All =>
+            return "close parent";
+         when Transition_Any   => return "<any>";
+      end case;
+   end Image;
 
-      while Iter.Current /= null
-        and then Iter.Current.Typ = Particle_Group
-      loop
-         if Iter.Current.Group.Particles.First = null then
-            Next (Iter);
-            exit;
+   -----------
+   -- Image --
+   -----------
+
+   function Image
+     (Self : access NFA'Class;
+      S    : Schema_State_Machines.State;
+      Data : State_Data) return String
+   is
+      pragma Unreferenced (S);
+      Local : Symbol;
+   begin
+      if Data.Simple = No_Type_Index then
+         return "";
+      else
+         Local :=
+           Schema_NFA_Access (Self).Types.Table (Data.Simple).Name.Local;
+         if Local = No_Symbol then
+            return "";
          else
-            Iter := new Particle_Iterator_Record'
-              (Current => Iter.Current.Group.Particles.First,
-               Parent  => Iter);
+            return Get (Local).all;
          end if;
-      end loop;
-
-      return Iter;
-   end Start;
+      end if;
+   end Image;
 
    ----------
-   -- Next --
+   -- Hash --
    ----------
 
-   procedure Next (Iter : in out Particle_Iterator) is
-      Tmp : Particle_Iterator;
+   function Hash (Name : Reference_Name) return Interfaces.Unsigned_32 is
    begin
-      Iter.Current := Iter.Current.Next;
+      return Interfaces.Unsigned_32
+        (Hash (Name.Name) + Reference_Kind'Pos (Name.Kind));
+   end Hash;
 
-      while Iter.Current = null loop
-         Tmp := Iter;
-         Iter := Iter.Parent;
-         Unchecked_Free (Tmp);
+   ----------
+   -- Hash --
+   ----------
 
-         if Iter = null then
-            return;
-         end if;
-
-         Debug_Output ("--> End of group "
-                       & Iter.Current.Group.Local_Name.all);
-
-         Iter.Current := Iter.Current.Next;
-      end loop;
-
-      while Iter.Current.Typ = Particle_Group loop
-         if Iter.Current.Group.Particles.First = null then
-            Next (Iter);
-            exit;
-         else
-            Debug_Output ("--> In group "
-                          & Iter.Current.Group.Local_Name.all);
-            Iter := new Particle_Iterator_Record'
-              (Current => Iter.Current.Group.Particles.First,
-               Parent  => Iter);
-         end if;
-      end loop;
-   end Next;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (Iter : Particle_Iterator) return XML_Particle_Access is
+   function Hash (Name : Qualified_Name) return Header_Num is
    begin
-      if Iter = null then
-         return null;
+      return (Hash (Name.NS) + Hash (Name.Local)) / 2;
+   end Hash;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Name : Sax.Symbols.Symbol) return Header_Num is
+   begin
+      if Name = No_Symbol then
+         return 0;
       else
-         return Iter.Current;
+         return Header_Num
+           (Sax.Symbols.Hash (Name)
+            mod Interfaces.Unsigned_32 (Header_Num'Last));
       end if;
-   end Get;
+   end Hash;
 
-   --------------------
-   -- Get_Min_Occurs --
-   --------------------
+   --------------------------
+   -- Validate_Simple_Type --
+   --------------------------
 
-   function Get_Min_Occurs (Iter : Particle_Iterator) return Natural is
+   procedure Validate_Simple_Type
+     (Reader      : access Abstract_Validation_Reader'Class;
+      Simple_Type : Schema.Simple_Types.Simple_Type_Index;
+      Ch          : Unicode.CES.Byte_Sequence;
+      Loc         : Sax.Locators.Location;
+      Insert_Id   : Boolean := True)
+   is
+      Error : Symbol;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Reader.Grammar);
    begin
-      if Iter.Parent /= null then
-         return Iter.Parent.Current.Min_Occurs;
-      else
-         return Iter.Current.Min_Occurs;
+      Validate_Simple_Type
+        (Simple_Types  => G.NFA.Simple_Types,
+         Enumerations  => G.NFA.Enumerations,
+         Notations     => G.NFA.Notations,
+         Symbols       => G.Symbols,
+         Id_Table      => Reader.Id_Table,
+         Insert_Id     => Insert_Id,
+         Simple_Type   => Simple_Type,
+         Ch            => Ch,
+         Error         => Error,
+         XML_Version   => Get_XML_Version (Reader.all));
+
+      if Error /= No_Symbol then
+         Validation_Error (Reader, Get (Error).all, Loc);
       end if;
-   end Get_Min_Occurs;
+   end Validate_Simple_Type;
 
-   --------------------
-   -- Get_Max_Occurs --
-   --------------------
+   -----------
+   -- Equal --
+   -----------
 
-   function Get_Max_Occurs (Iter : Particle_Iterator) return Integer is
---      Tmp : Particle_Iterator := Iter;
+   function Equal
+     (Reader        : access Abstract_Validation_Reader'Class;
+      Simple_Type   : Simple_Type_Index;
+      Ch1           : Sax.Symbols.Symbol;
+      Ch2           : Unicode.CES.Byte_Sequence) return Boolean
+   is
+      Is_Equal : Boolean;
+      G : constant XML_Grammars.Encapsulated_Access := Get (Reader.Grammar);
    begin
-      --  If we have a <sequence> or <choice> inside a group, we need to
-      --  consider the number of occurrences defined at the group level.
-      --     <complexType name="explicitGroup" >
-      --       <sequence>
-      --         <group ref="nestedParticle" maxOccurs="unbounded" />
-      --     <group name="nestedParticle">
-      --       <choice>
-      --         <element name="...">
+      Equal
+        (Simple_Types  => G.NFA.Simple_Types,
+         Enumerations  => G.NFA.Enumerations,
+         Notations     => G.NFA.Notations,
+         Symbols       => G.Symbols,
+         Id_Table      => Reader.Id_Table,
+         Simple_Type   => Simple_Type,
+         Ch1           => Ch1,
+         Ch2           => Ch2,
+         Is_Equal      => Is_Equal,
+         XML_Version   => Get_XML_Version (Reader.all));
+      return Is_Equal;
+   end Equal;
 
---        Debug_Push_Prefix ("Get_Max_Occurs");
---        while Tmp /= null loop
---           if Tmp.Current.Typ /= Particle_Group then
---              Debug_Output (Tmp.Current.Typ'Img & ' '
---                            & Type_Model (Tmp, First_Only => True)
---                            & Tmp.Current.Max_Occurs'Img);
---           else
---              Debug_Output (Tmp.Current.Typ'Img & ' '
---                            & Tmp.Current.Max_Occurs'Img);
---           end if;
---           Tmp := Tmp.Parent;
---        end loop;
---        Debug_Pop_Prefix;
+   ---------------
+   -- Add_Facet --
+   ---------------
 
-      if Iter.Current.Typ = Particle_Nested
-        and then Iter.Parent /= null
-        and then Iter.Parent.Current.Typ = Particle_Group
-      then
-         return Iter.Parent.Current.Max_Occurs;
-      else
-         return Iter.Current.Max_Occurs;
-      end if;
-   end Get_Max_Occurs;
+   procedure Add_Facet
+     (Grammar      : XML_Grammar;
+      Facets       : in out Schema.Simple_Types.All_Facets;
+      Facet_Name   : Sax.Symbols.Symbol;
+      Value        : Sax.Symbols.Symbol;
+      Loc          : Sax.Locators.Location) is
+   begin
+      Add_Facet
+        (Facets,
+         Symbols      => Get (Grammar).Symbols,
+         Enumerations => Get (Grammar).NFA.Enumerations,
+         Facet_Name   => Facet_Name,
+         Value        => Value,
+         Loc          => Loc);
+   end Add_Facet;
 
-   ------------------
-   -- Global_Check --
-   ------------------
+   ---------------
+   -- To_String --
+   ---------------
 
-   procedure Global_Check (Grammar : XML_Grammar) is
-      procedure Local_Check (Grammar : XML_Grammar_NS);
-      --  Check missing definitions in Grammar
+   function To_String (Blocks : Block_Status) return String is
+   begin
+      return "{restr=" & Blocks (Block_Restriction)'Img
+        & " ext=" & Blocks (Block_Extension)'Img
+        & " sub=" & Blocks (Block_Substitution)'Img & '}';
+   end To_String;
 
-      procedure Local_Check (Grammar : XML_Grammar_NS) is
-         use Elements_Htable, Types_Htable, Attributes_Htable, Groups_Htable;
-         use Attribute_Groups_Htable;
-         Elem_Iter : Elements_Htable.Iterator := First (Grammar.Elements.all);
-         Type_Iter : Types_Htable.Iterator := First (Grammar.Types.all);
-         Attr_Iter : Attributes_Htable.Iterator :=
-           First (Grammar.Attributes.all);
-         Group_Iter : Groups_Htable.Iterator := First (Grammar.Groups.all);
-         Attr_Group_Iter : Attribute_Groups_Htable.Iterator :=
-           First (Grammar.Attribute_Groups.all);
+   ---------------------------------
+   -- Check_Substitution_Group_OK --
+   ---------------------------------
 
-         Elem : XML_Element_Access;
-         Typ  : XML_Type;
-         Attr : Named_Attribute_Validator;
-         Group : XML_Group;
-         Attr_Group : XML_Attribute_Group;
+   procedure Check_Substitution_Group_OK
+     (Handler            : access Abstract_Validation_Reader'Class;
+      New_Type, Old_Type : Type_Index;
+      Loc                : Sax.Locators.Location;
+      Element_Block      : Block_Status)
+   is
+      NFA       : constant Schema_NFA_Access := Get_NFA (Handler.Grammar);
+      Old_Descr : constant access Type_Descr := NFA.Get_Type_Descr (Old_Type);
+      New_Descr : constant access Type_Descr := NFA.Get_Type_Descr (New_Type);
+      Has_Restriction, Has_Extension : Boolean := False;
+
+      Simple_Old_Type : Simple_Type_Index := No_Simple_Type_Index;
+      --  Current target for [Old_Type], when considered a simple type
+
+      function From_Descr_To_Old
+        (Index : Type_Index; Descr : access Type_Descr) return Boolean;
+      --  Try moving from [Descr] to [Old_Descr] through a series of extensions
+      --  or restrictions. [False] is returned if we could not reach the old
+      --  description.
+
+      -----------------------
+      -- From_Descr_To_Old --
+      -----------------------
+
+      function From_Descr_To_Old
+        (Index : Type_Index; Descr : access Type_Descr) return Boolean
+      is
+         Result : Boolean := False;
+         R      : access Type_Descr;
       begin
-         while Type_Iter /= Types_Htable.No_Iterator loop
-            Typ := Current (Type_Iter);
-            if Get_Validator (Typ) = null then
-               Validation_Error
-                 ("Type """
-                  & To_QName (Grammar.Namespace_URI.all, Typ.Local_Name.all)
-                  & """ was referenced but never declared");
-            end if;
-            Next (Grammar.Types.all, Type_Iter);
-         end loop;
-
-         while Elem_Iter /= Elements_Htable.No_Iterator loop
-            Elem := Current (Elem_Iter);
-
-            if Elem.Of_Type = No_Type then
-               Validation_Error
-                 ("Element """
-                  & To_QName (Grammar.Namespace_URI.all, Elem.Local_Name.all)
-                  & """ was referenced but never declared");
-            end if;
-
-            Next (Grammar.Elements.all, Elem_Iter);
-         end loop;
-
-         while Attr_Iter /= Attributes_Htable.No_Iterator loop
-            Attr := Current (Attr_Iter);
-            if Attr.Attribute_Type = No_Type then
-               Validation_Error
-                 ("Attribute """
-                  & Attr.Local_Name.all
-                  & """ is referenced, but not defined");
-            end if;
-
-            Next (Grammar.Attributes.all, Attr_Iter);
-         end loop;
-
-         while Group_Iter /= Groups_Htable.No_Iterator loop
-            Group := Current (Group_Iter);
-            if Group.Is_Forward_Decl then
-               Validation_Error
-                 ("Group """
-                  & To_QName (Grammar.Namespace_URI.all,
-                              Group.Local_Name.all)
-                  & """ is referenced, but not defined");
-            end if;
-
-            Next (Grammar.Groups.all, Group_Iter);
-         end loop;
-
-         while Attr_Group_Iter /= Attribute_Groups_Htable.No_Iterator loop
-            Attr_Group := Current (Attr_Group_Iter);
-            if Attr_Group.Is_Forward_Decl then
-               Validation_Error
-                 ("attributeGroup """
-                  & To_QName (Grammar.Namespace_URI.all,
-                              Attr_Group.Local_Name.all)
-                  & """ is referenced, but not defined");
-            end if;
-            Next (Grammar.Attribute_Groups.all, Attr_Group_Iter);
-         end loop;
-      end Local_Check;
-
-   begin
-      if Grammar /= null then
-         for L in Grammar.Grammars'Range loop
-            Local_Check (Grammar.Grammars (L));
-         end loop;
-      end if;
-   end Global_Check;
-
-   ----------------
-   -- Create_All --
-   ----------------
-
-   function Create_All
-     (Min_Occurs : Natural := 1; Max_Occurs : Integer := 1) return XML_All is
-   begin
-      return new XML_All_Record'
-        (XML_Validator_Record with
-         Particles  => Empty_Particle_List,
-         Min_Occurs => Min_Occurs,
-         Max_Occurs => Max_Occurs);
-   end Create_All;
-
-   ----------------
-   -- Create_Any --
-   ----------------
-
-   function Create_Any
-     (Process_Contents : Process_Contents_Type := Process_Strict;
-      Namespace        : Unicode.CES.Byte_Sequence;
-      Target_NS        : XML_Grammar_NS) return XML_Any
-   is
-      Result : constant XML_Any := new XML_Any_Record;
-   begin
-      Result.Process_Contents := Process_Contents;
-      Result.Namespace := new Byte_Sequence'(Namespace);
-      Result.Target_NS := Target_NS;
-      return Result;
-   end Create_Any;
-
-   ------------------
-   -- Add_Particle --
-   ------------------
-
-   procedure Add_Particle
-     (Validator : access XML_All_Record; Item : XML_Element;
-      Min_Occurs : Zero_Or_One := 1; Max_Occurs : Zero_Or_One := 1) is
-   begin
-      Append (Validator.Particles, XML_Particle'
-                (Typ        => Particle_Element,
-                 Element    => Item,
-                 Min_Occurs => Min_Occurs,
-                 Max_Occurs => Max_Occurs,
-                 Next       => null));
-   end Add_Particle;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator             : access XML_All_Record;
-      Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
-      Element_Validator      : out XML_Element)
-   is
-      Tmp     : Particle_Iterator := Start (Validator.Particles);
-      D       : constant All_Data_Access := All_Data_Access (Data);
-      Count   : Positive := 1;
-   begin
-      --  Check whether there are still some candidates. It isn't the case if
-      --  we have already matches all elements as many times as possible
-
-      Debug_Push_Prefix
-        ("Validate_Start_Element <all>: " & Get_Name (Validator));
-
-      while Get (Tmp) /= null loop
-         if D.All_Elements (Count) < Get_Max_Occurs (Tmp) then
-            exit;
-         end if;
-         Count := Count + 1;
-         Next (Tmp);
-      end loop;
-
-      if Get (Tmp) = null then
-         Debug_Output
-           ("<all> can no longer match, all particles have been matched");
-         D.All_Elements := (others => 0);
-         D.Num_Occurs   := D.Num_Occurs + 1;
-         Element_Validator := No_Element;
-         return;
-      end if;
-
-      Free (Tmp);
-
-      Tmp := Start (Validator.Particles);
-      Count := 1;
-
-      while Get (Tmp) /= null loop
-         Element_Validator := Check_Substitution_Groups
-           (Get (Tmp).Element.Elem, Local_Name, Namespace_URI, NS,
-            Schema_Target_NS);
-
-         if Element_Validator /= No_Element then
-            D.All_Elements (Count) := D.All_Elements (Count) + 1;
-            if D.All_Elements (Count) > Get_Max_Occurs (Tmp) then
-               Validation_Error
-                 ("Element """ & Local_Name & """ is repeated too many times,"
-                  & " maximum number of occurrences is"
-                  & Integer'Image (Get_Max_Occurs (Tmp)));
-            end if;
-
-            exit;
-         end if;
-
-         Count := Count + 1;
-         Next (Tmp);
-      end loop;
-
-      Free (Tmp);
-
-      Debug_Pop_Prefix;
-   end Validate_Start_Element;
-
-   --------------------------
-   -- Validate_End_Element --
-   --------------------------
-
-   procedure Validate_End_Element
-     (Validator         : access XML_All_Record;
-      Local_Name        : Unicode.CES.Byte_Sequence;
-      Data              : Validator_Data)
-   is
-      pragma Unreferenced (Local_Name);
-      Tmp   : Particle_Iterator := Start (Validator.Particles);
-      D     : constant All_Data_Access := All_Data_Access (Data);
-      Count : Positive := 1;
-   begin
-      Debug_Push_Prefix ("Validate_End_Element <all> "
-                         & Get_Name (Validator));
-
-      while Get (Tmp) /= null loop
-         if D.All_Elements (Count) < Get_Min_Occurs (Tmp) then
-            Validation_Error
-              ("Element """ & Get (Tmp).Element.Elem.Local_Name.all
-               & """ must appear at least"
-               & Integer'Image (Get_Min_Occurs (Tmp)) & " times");
-         end if;
-
-         Count := Count + 1;
-         Next (Tmp);
-      end loop;
-
-      D.Num_Occurs := D.Num_Occurs + 1;
-
-      if D.Num_Occurs < Validator.Min_Occurs then
-         Validation_Error
-           ("<all> element must be repeated at least"
-            & Integer'Image (Validator.Min_Occurs) & " times");
-      elsif Validator.Max_Occurs /= Unbounded
-        and then D.Num_Occurs > Validator.Max_Occurs
-      then
-         Validation_Error
-           ("<all> element was repeated too many times, expecting at most"
-            & Integer'Image (Validator.Max_Occurs) & " times");
-      end if;
-
-      Debug_Pop_Prefix;
-   end Validate_End_Element;
-
-   ---------------------------
-   -- Create_Validator_Data --
-   ---------------------------
-
-   function Create_Validator_Data
-     (Validator : access XML_All_Record) return Validator_Data
-   is
-      Count : Natural := 0;
-      Tmp   : Particle_Iterator := Start (Validator.Particles);
-   begin
-      while Get (Tmp) /= null loop
-         Count := Count + 1;
-         Next (Tmp);
-      end loop;
-      Free (Tmp);
-
-      return new All_Data'
-        (Group_Model_Data_Record with
-         Num_Elements => Count,
-         Num_Occurs   => 0,
-         All_Elements => (others => 0));
-   end Create_Validator_Data;
-
-   ----------------
-   -- Type_Model --
-   ----------------
-
-   function Type_Model
-     (Validator  : access XML_All_Record;
-      First_Only : Boolean) return Unicode.CES.Byte_Sequence is
-   begin
-      return Internal_Type_Model
-        (Validator, "&", First_Only, All_In_List => True);
-   end Type_Model;
-
-   ------------------
-   -- Can_Be_Empty --
-   ------------------
-
-   function Can_Be_Empty
-     (Group : access XML_All_Record) return Boolean
-   is
-      Current : Particle_Iterator;
-   begin
-      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
-
-      Current := Start (Group.Particles);
-      while Get (Current) /= null loop
-         if not Is_Optional (Current) then
-            Free (Current);
-            Debug_Output ("Cannot be empty");
-            Debug_Pop_Prefix;
-            return False;
-         end if;
-
-         Next (Current);
-      end loop;
-
-      Debug_Output ("Can be empty");
-      Debug_Pop_Prefix;
-      return True;
-   end Can_Be_Empty;
-
-   ----------------------------
-   -- Validate_Start_Element --
-   ----------------------------
-
-   procedure Validate_Start_Element
-     (Validator              : access XML_Any_Record;
-      Local_Name             : Unicode.CES.Byte_Sequence;
-      Namespace_URI          : Unicode.CES.Byte_Sequence;
-      NS                     : XML_Grammar_NS;
-      Data                   : Validator_Data;
-      Schema_Target_NS       : XML_Grammar_NS;
-      Element_Validator      : out XML_Element)
-   is
-      pragma Unreferenced (Data);
-      Start, Last, Index : Integer;
-      C : Unicode_Char;
-      Valid : Boolean := False;
-   begin
-      --  Do not check qualification, there is a special handling for
-      --  namespaces
-
-      if Validator.Namespace.all = "##any" then
-         null;
-
-      elsif Validator.Namespace.all = "##other" then
-         if Namespace_URI = Validator.Target_NS.Namespace_URI.all then
-            Validation_Error
-              ("Namespace should be different from "
-               & Validator.Target_NS.Namespace_URI.all);
-         end if;
-
-      else
-         Index := Validator.Namespace'First;
-         while Index <= Validator.Namespace'Last loop
-            while Index <= Validator.Namespace'Last loop
-               Start := Index;
-               Encoding.Read (Validator.Namespace.all, Index, C);
-               exit when not Is_White_Space (C);
-            end loop;
-
-            while Index <= Validator.Namespace'Last loop
-               Last := Index;
-               Encoding.Read (Validator.Namespace.all, Index, C);
-               exit when Is_White_Space (C);
-            end loop;
-
-            if Index > Validator.Namespace'Last then
-               Last := Validator.Namespace'Last + 1;
-            end if;
-
-            if Validator.Namespace
-              (Start .. Last - 1) = "##targetNamespace"
-            then
-               Valid := Namespace_URI = Validator.Target_NS.Namespace_URI.all;
-            elsif Validator.Namespace (Start .. Last - 1) = "##local" then
-               Valid := Namespace_URI = "";
-            else
-               Valid :=
-                 Namespace_URI = Validator.Namespace (Start .. Last - 1);
-            end if;
-
-            exit when Valid;
-
-         end loop;
-
-         if not Valid then
-            Validation_Error
-              ("Invalid namespace for this element: """
-               & Namespace_URI & """ not in """
-               & Validator.Namespace.all & """");
-         end if;
-      end if;
-
-      Validate_Start_Element
-        (Get_Validator
-           (Get_Type (Get_UR_Type_Element (Validator.Process_Contents))),
-         Local_Name, Namespace_URI, NS, null,
-         Schema_Target_NS, Element_Validator);
-   end Validate_Start_Element;
-
-   -------------------------
-   -- Validate_Characters --
-   -------------------------
-
-   procedure Validate_Characters
-     (Validator     : access XML_Any_Record;
-      Ch            : Unicode.CES.Byte_Sequence;
-      Empty_Element : Boolean)
-   is
-      pragma Unreferenced (Validator, Ch, Empty_Element);
-   begin
-      Validation_Error ("No character data allowed for this element");
-   end Validate_Characters;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Id : in out Id_Ref) is
-   begin
-      Free (Id.Key);
-   end Free;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Id : Id_Ref) return Unicode.CES.Byte_Sequence is
-   begin
-      return Id.Key.all;
-   end Get_Key;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ids : in out Id_Htable_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Id_Htable.HTable, Id_Htable_Access);
-   begin
-      if Ids /= null then
-         Id_Htable.Reset (Ids.all);
-         Unchecked_Free (Ids);
-      end if;
-   end Free;
-
-   --------------------------
-   -- Create_Any_Attribute --
-   --------------------------
-
-   function Create_Any_Attribute
-     (Process_Contents : Process_Contents_Type := Process_Strict;
-      Kind : Namespace_Kind;
-      NS   : XML_Grammar_NS) return Attribute_Validator is
-   begin
-      return new Any_Attribute_Validator'
-        (Process_Contents => Process_Contents,
-         Kind             => Kind,
-         NS               => NS);
-   end Create_Any_Attribute;
-
-   ------------------------
-   -- Validate_Attribute --
-   ------------------------
-
-   procedure Validate_Attribute
-     (Validator : Any_Attribute_Validator;
-      Atts      : Sax.Attributes.Attributes'Class;
-      Index     : Natural;
-      Grammar   : in out XML_Grammar)
-   is
-      URI  : constant Byte_Sequence := Get_URI (Atts, Index);
-      Attr : Attribute_Validator;
-      G    : XML_Grammar_NS;
-   begin
-      Debug_Output ("Validate_Attribute, anyAttribute: "
-                    & Get_Local_Name (Atts, Index));
-
-      case Validator.Kind is
-         when Namespace_Other =>
-            if URI = "" then
-               Validation_Error
-                 ("Attributes with no namespace invalid in this context");
-            elsif URI = Validator.NS.Namespace_URI.all then
-               Validation_Error
-                 ("Invalid namespace in this context, must be different from "
-                  & """" & Validator.NS.Namespace_URI.all & """");
-            end if;
-         when Namespace_Any =>
-            null;
-         when Namespace_Local =>
-            if URI /= "" then
-               Validation_Error ("No namespace allowed");
-            end if;
-         when Namespace_List =>
-            if URI /= Validator.NS.Namespace_URI.all then
-               Validation_Error
-                 ("Invalid namespace in this context, must be """
-                  & Validator.NS.Namespace_URI.all & """");
-            end if;
-      end case;
-
-      case Validator.Process_Contents is
-         when Process_Strict =>
-            Get_NS (Grammar, URI, G);
-            Attr := Lookup_Attribute
-              (G, Get_Local_Name (Atts, Index), Create_If_Needed => False);
-            if Attr = null then
-               Validation_Error ("No definition provided");
-            else
-               Validate_Attribute (Attr.all, Atts, Index, Grammar);
-            end if;
-
-         when Process_Lax =>
-            Get_NS (Grammar, URI, G);
-            Attr := Lookup_Attribute
-              (G, Get_Local_Name (Atts, Index), Create_If_Needed => False);
-            if Attr = null then
-               Debug_Output
-                 ("Definition not found for attribute "
-                  & Get_Local_Name (Atts, Index));
-            else
-               Validate_Attribute (Attr.all, Atts, Index, Grammar);
-            end if;
-
-         when Process_Skip =>
-            null;
-      end case;
-   end Validate_Attribute;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Validator : in out Any_Attribute_Validator) is
-      pragma Unreferenced (Validator);
-   begin
-      null;
-   end Free;
-
-   ------------------
-   -- Set_Abstract --
-   ------------------
-
-   procedure Set_Abstract
-     (Element     : XML_Element;
-      Is_Abstract : Boolean) is
-   begin
-      Element.Elem.Is_Abstract := Is_Abstract;
-   end Set_Abstract;
-
-   -----------------
-   -- Is_Abstract --
-   -----------------
-
-   function Is_Abstract (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Is_Abstract;
-   end Is_Abstract;
-
-   ------------------
-   -- Set_Nillable --
-   ------------------
-
-   procedure Set_Nillable
-     (Element  : XML_Element;
-      Nillable : Boolean) is
-   begin
-      Element.Elem.Nillable := Nillable;
-   end Set_Nillable;
-
-   -----------------
-   -- Is_Nillable --
-   -----------------
-
-   function Is_Nillable (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Nillable;
-   end Is_Nillable;
-
-   ---------------
-   -- Set_Final --
-   ---------------
-
-   procedure Set_Final
-     (Element : XML_Element;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean) is
-   begin
-      Element.Elem.Final_Restriction := On_Restriction;
-      Element.Elem.Final_Extension   := On_Extension;
-   end Set_Final;
-
-   ---------------
-   -- Set_Block --
-   ---------------
-
-   procedure Set_Block
-     (Element        : XML_Element;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean) is
-   begin
-      Element.Elem.Block_Restriction := On_Restriction;
-      Element.Elem.Block_Extension   := On_Extension;
-   end Set_Block;
-
-   ------------------------------
-   -- Get_Block_On_Restriction --
-   ------------------------------
-
-   function Get_Block_On_Restriction (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Block_Restriction;
-   end Get_Block_On_Restriction;
-
-   ----------------------------
-   -- Get_Block_On_Extension --
-   ----------------------------
-
-   function Get_Block_On_Extension (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Block_Extension;
-   end Get_Block_On_Extension;
-
-   -----------------------
-   -- Check_Replacement --
-   -----------------------
-
-   procedure Check_Replacement
-     (Validator       : access XML_Validator_Record;
-      Typ             : XML_Type;
-      Had_Restriction : in out Boolean;
-      Had_Extension   : in out Boolean)
-   is
-      pragma Unreferenced (Had_Restriction, Had_Extension);
-   begin
-      if Get_Local_Name (Typ) /= "ur-Type" then
-         Debug_Output ("Check_Replacement "
-                       & Get_Name (Validator)
-                       & " " & Get_Local_Name (Typ));
-         Validation_Error ("Type is not a valid replacement for """
-                           & Get_Local_Name (Typ) & """");
-      end if;
-   end Check_Replacement;
-
-   -----------------------
-   -- Free_Nested_Group --
-   -----------------------
-
-   procedure Free_Nested_Group (Data : Group_Model_Data) is
-   begin
-      Data.Nested := null;
-      Free (Data.Nested_Data);
-   end Free_Nested_Group;
-
-   ------------------------
-   -- Check_Content_Type --
-   ------------------------
-
-   procedure Check_Content_Type
-     (Validator        : access XML_Validator_Record;
-      Should_Be_Simple : Boolean)
-   is
-      pragma Unreferenced (Validator);
-   begin
-      if Should_Be_Simple then
-         Validation_Error
-           ("Type specified in a simpleContent context must not have a "
-            & "complexContent");
-      end if;
-   end Check_Content_Type;
-
-   ---------------
-   -- Is_Global --
-   ---------------
-
-   function Is_Global (Element : XML_Element) return Boolean is
-   begin
-      return Element.Elem.Is_Global;
-   end Is_Global;
-
-   -----------------------
-   -- Debug_Push_Prefix --
-   -----------------------
-
-   procedure Debug_Push_Prefix (Append : String) is
-   begin
-      if Debug then
-         Debug_Prefixes_Level := Debug_Prefixes_Level + 1;
-         Debug_Output (ASCII.ESC & "[36m(" & Append
-                       & ")" & ASCII.ESC & "[39m");
-      end if;
-   end Debug_Push_Prefix;
-
-   ----------------------
-   -- Debug_Pop_Prefix --
-   ----------------------
-
-   procedure Debug_Pop_Prefix is
-   begin
-      if Debug then
-         Debug_Prefixes_Level := Debug_Prefixes_Level - 1;
-      end if;
-   end Debug_Pop_Prefix;
-
-   -------------------------
-   -- Check_Qualification --
-   -------------------------
-
-   procedure Check_Qualification
-     (Target_NS     : XML_Grammar_NS;
-      Element       : XML_Element;
-      Namespace_URI : Unicode.CES.Byte_Sequence) is
-   begin
-      if not Is_Global (Element)
-        and then Element.Elem.Form = Unqualified
-        and then Namespace_URI /= ""
-      then
-         Validation_Error
-           ("Namespace specification not authorized in this context");
-
-      elsif Element.Elem.Form = Qualified
-        and then Namespace_URI = ""
-        and then Target_NS /= null
-      then
-         Validation_Error
-           ("Namespace specification is required in this context");
-      end if;
-   end Check_Qualification;
-
-   ------------------
-   -- Can_Be_Empty --
-   ------------------
-
-   function Can_Be_Empty
-     (Group : access Group_Model_Record) return Boolean
-   is
-      pragma Unreferenced (Group);
-   begin
-      return False;
-   end Can_Be_Empty;
-
-   ------------------
-   -- Can_Be_Empty --
-   ------------------
-
-   function Can_Be_Empty
-     (Group : access Sequence_Record) return Boolean
-   is
-      Current : Particle_Iterator;
-   begin
-      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
-
-      Current := Start (Group.Particles);
-      while Get (Current) /= null loop
-         if not Is_Optional (Current) then
-            Free (Current);
-            Debug_Output ("Cannot be empty");
-            Debug_Pop_Prefix;
-            return False;
-         end if;
-         Next (Current);
-      end loop;
-
-      Debug_Output ("Can be empty");
-      Debug_Pop_Prefix;
-      return True;
-   end Can_Be_Empty;
-
-   ------------------
-   -- Can_Be_Empty --
-   ------------------
-
-   function Can_Be_Empty
-     (Group : access Choice_Record) return Boolean
-   is
-      Current : Particle_Iterator;
-   begin
-      Debug_Push_Prefix ("Can_Be_Empty " & Get_Name (Group));
-
-      Current := Start (Group.Particles);
-      while Get (Current) /= null loop
-         if Is_Optional (Current) then
-            Free (Current);
-            Debug_Output ("Can be empty");
-            Debug_Pop_Prefix;
+         if Index = Old_Type
+           or else (Simple_Old_Type /= No_Simple_Type_Index
+                    and then Descr.Simple_Content = Simple_Old_Type)
+         then
             return True;
          end if;
 
-         Next (Current);
-      end loop;
+         if Descr.Restriction_Of /= No_Type_Index then
+            R := NFA.Get_Type_Descr (Descr.Restriction_Of);
+            Has_Restriction := True;
+            Result := From_Descr_To_Old (Descr.Restriction_Of, R);
+         end if;
 
-      Debug_Output ("Cannot be empty");
-      Debug_Pop_Prefix;
-      return False;
-   end Can_Be_Empty;
+         if not Result and then Descr.Extension_Of /= No_Type_Index then
+            R := NFA.Get_Type_Descr (Descr.Extension_Of);
+            Has_Extension := True;
+            Result := From_Descr_To_Old (Descr.Extension_Of, R);
+         end if;
 
-   ------------------------
-   -- Check_Content_Type --
-   ------------------------
+         return Result;
+      end From_Descr_To_Old;
 
-   procedure Check_Content_Type
-     (Typ : XML_Type; Should_Be_Simple : Boolean) is
    begin
-      Debug_Output ("Check_Content_Type: " & Get_Local_Name (Typ)
-                    & " " & Typ.Simple_Type'Img
-                    & " Expect_simple=" & Should_Be_Simple'Img);
-
-      if Typ.Simple_Type = Unknown_Content then
-         if Typ.Validator /= null then
-            Check_Content_Type (Typ.Validator, Should_Be_Simple);
-         end if;
-
-         --  If we matched, we now know the content type
-         if Should_Be_Simple then
-            Typ.Simple_Type := Simple_Content;
-         else
-            Typ.Simple_Type := Complex_Content;
-         end if;
-
-      elsif Should_Be_Simple and Typ.Simple_Type = Complex_Content then
-         if Typ.Local_Name /= null then
-            Validation_Error
-              (Get_Local_Name (Typ) & " specified in a simpleContent context"
-               & " must not have a complexContext");
-         else
-            Validation_Error ("Expecting simple type, got complex type");
-         end if;
-      elsif not Should_Be_Simple and Typ.Simple_Type = Simple_Content then
-         Validation_Error ("Expecting complex type, got simple type");
+      if New_Type = Old_Type
+        or else Old_Type = NFA.Get_Data (NFA.Ur_Type).Simple
+        or else Old_Descr.Name = (NS    => Handler.XML_Schema_URI,
+                                  Local => Handler.Anytype)
+      then
+         return;
       end if;
-   end Check_Content_Type;
 
-   --------------------
-   -- Is_Simple_Type --
-   --------------------
+      if Element_Block (Block_Substitution) then
+         Validation_Error (Handler, "Element blocks substitutions", Loc);
+      end if;
 
-   function Is_Simple_Type (Typ : XML_Type) return Boolean is
-   begin
-      if Typ.Simple_Type = Unknown_Content then
+      if Old_Descr.Simple_Content /= No_Simple_Type_Index then
+         declare
+            Simple : constant Simple_Type_Descr :=
+              NFA.Get_Simple_Type (Old_Descr.Simple_Content);
          begin
-            Check_Content_Type (Typ.Validator, Should_Be_Simple => True);
-            Typ.Simple_Type := Simple_Content;
-         exception
-            when XML_Validation_Error =>
-               Typ.Simple_Type := Complex_Content;
+            case Simple.Kind is
+            when Primitive_Union =>
+               for U in Simple.Union'Range loop
+                  if Simple.Union (U) /= No_Simple_Type_Index then
+                     Simple_Old_Type := Simple.Union (U);
+                     if From_Descr_To_Old (New_Type, New_Descr) then
+                        return;
+                     end if;
+                  end if;
+               end loop;
+
+               Validation_Error
+                 (Handler,
+                  To_QName (New_Descr.Name)
+                  & " is not a derivation of union "
+                  & To_QName (Old_Descr.Name),
+                  Loc);
+
+            when Primitive_List =>
+               Validation_Error
+                 (Handler,
+                  To_QName (New_Descr.Name)
+                  & " is not a derivation of list "
+                  & To_QName (Old_Descr.Name),
+                  Loc);
+
+            when others =>
+               null;   --  Will be dealt with below
+            end case;
          end;
       end if;
 
-      return Typ.Simple_Type = Simple_Content;
-   end Is_Simple_Type;
+      if not From_Descr_To_Old (New_Type, New_Descr) then
+         Validation_Error
+           (Handler,
+            To_QName (New_Descr.Name)
+            & " is not a derivation of " & To_QName (Old_Descr.Name), Loc);
+      end if;
 
-   ----------------
-   -- Type_Model --
-   ----------------
+      if Has_Restriction and then Old_Descr.Block (Block_Restriction) then
+         Validation_Error
+           (Handler, To_QName (Old_Descr.Name) & " blocks restrictions", Loc);
+      end if;
 
-   function Type_Model
-     (Validator : access Group_Model_Record;
-      First_Only : Boolean) return Byte_Sequence is
-   begin
-      return Internal_Type_Model
-        (Validator, "", First_Only, All_In_List => True);
-   end Type_Model;
+      if Has_Restriction and then Element_Block (Block_Restriction) then
+         Validation_Error (Handler, "Element blocks restrictions", Loc);
+      end if;
 
-   ----------------
-   -- Type_Model --
-   ----------------
+      if Has_Extension and then Old_Descr.Block (Block_Extension) then
+         Validation_Error
+           (Handler, To_QName (Old_Descr.Name) & " blocks extensions", Loc);
+      end if;
 
-   function Type_Model
-     (Validator  : access Sequence_Record;
-      First_Only : Boolean) return Byte_Sequence is
-   begin
-      return Internal_Type_Model
-        (Validator, ",", First_Only, All_In_List => not First_Only);
-   end Type_Model;
+      if Has_Extension and then Element_Block (Block_Extension) then
+         Validation_Error (Handler, "Element blocks extensions", Loc);
+      end if;
+   end Check_Substitution_Group_OK;
 
-   ----------------
-   -- Type_Model --
-   ----------------
+   ------------------
+   -- Dump_Dot_NFA --
+   ------------------
 
-   function Type_Model
-     (Validator : access Choice_Record;
-      First_Only : Boolean) return Byte_Sequence is
-   begin
-      return Internal_Type_Model
-        (Validator, "|", First_Only => First_Only, All_In_List => True);
-   end Type_Model;
-
-   -------------------------
-   -- Internal_Type_Model --
-   -------------------------
-
-   function Internal_Type_Model
-     (Validator : access Group_Model_Record'Class;
-      Separator : Byte_Sequence;
-      First_Only : Boolean;
-      All_In_List : Boolean) return Byte_Sequence
+   function Dump_Dot_NFA
+     (Grammar            : XML_Grammar;
+      Nested             : Nested_NFA := No_Nested) return String
    is
-      Str : Unbounded_String;
-      Iter : Particle_Iterator := Start (Validator.Particles);
-      First : Boolean := True;
+      NFA : constant Schema_NFA_Access := Get (Grammar).NFA;
    begin
-      if not All_In_List then
-         Str := Str & Type_Model (Iter, First_Only);
+      if Nested = No_Nested then
+         return Schema_State_Machines_PP.Dump
+           (NFA,
+            Mode                => Dump_Dot_Compact,
+            Show_Details        => True,
+            Show_Isolated_Nodes => False,
+            Since               => NFA.Metaschema_NFA_Last);
       else
-         while Get (Iter) /= null loop
-            if not First then
-               Str := Str & Separator & Type_Model (Iter, First_Only);
-            else
-               Str := Str & Type_Model (Iter, First_Only);
-               First := False;
+         return Schema_State_Machines_PP.Dump
+           (NFA,
+            Nested              => Nested,
+            Mode                => Dump_Dot_Compact);
+      end if;
+   end Dump_Dot_NFA;
+
+   --------------
+   -- Expected --
+   --------------
+
+   function Expected
+     (Self       : Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      Parent_Data : access Active_State_Data;
+      Trans      : Transition_Descr) return String
+   is
+      pragma Unreferenced (Self, From_State, To_State);
+      Mask : Visited_All_Children;
+   begin
+      case Trans.Kind is
+         when Transition_Symbol_From_All =>
+            --  Only if the element has not been visited yet
+
+            Mask := 2 ** Trans.All_Child_Index;
+            if (Parent_Data.Visited and Mask) = 0 then
+               return Image (Trans);
             end if;
 
-            Next (Iter);
-         end loop;
-      end if;
-      Free (Iter);
+         when Transition_Close_From_All =>
+            --  Only if all children have been visited.
+            if (Parent_Data.Visited and Trans.Mask) = Trans.Mask then
+               return "close parent";
+            end if;
 
-      return To_String (Str);
-   end Internal_Type_Model;
-
-   ----------------
-   -- Type_Model --
-   ----------------
-
-   function Type_Model
-     (Iter       : Particle_Iterator;
-      First_Only : Boolean) return Byte_Sequence
-   is
-      Particle : constant XML_Particle_Access := Get (Iter);
-      Str : Unbounded_String;
-   begin
-      case Particle.Typ is
-         when Particle_Element =>
-            Str := Str & Get_Local_Name (Particle.Element);
-         when Particle_Nested =>
-            Str := Str & "("
-              & Type_Model (Particle.Validator, First_Only) & ")";
-         when Particle_Group | Particle_XML_Type =>
-            raise Program_Error;
-         when Particle_Any =>
-            Str := Str & "<any>";
+         when others =>
+            return Image (Trans);
       end case;
 
-      if not First_Only then
-         if Get_Min_Occurs (Iter) = 0 then
-            if Get_Max_Occurs (Iter) = Unbounded then
-               Str := Str & "*";
-            elsif Get_Max_Occurs (Iter) = 1 then
-               Str := Str & "?";
-            else
-               Str := Str & "{0,"
-                 & Integer'Image (Get_Max_Occurs (Iter)) & "}";
-            end if;
+      return "";
+   end Expected;
 
-         elsif Get_Min_Occurs (Iter) = 1 then
-            if Get_Max_Occurs (Iter) = Unbounded then
-               Str := Str & "+";
-            elsif Get_Max_Occurs (Iter) /= 1 then
-               Str := Str & "{"
-                 & Integer'Image (Get_Min_Occurs (Iter)) & ","
-                 & Integer'Image (Get_Max_Occurs (Iter)) & "}";
-            end if;
-         else
-            Str := Str & "{"
-              & Integer'Image (Get_Min_Occurs (Iter)) & ","
-              & Integer'Image (Get_Max_Occurs (Iter)) & "}";
-         end if;
-      end if;
+   -----------
+   -- Match --
+   -----------
 
-      return To_String (Str);
-   end Type_Model;
-
-   -----------------------
-   -- Get_Namespace_URI --
-   -----------------------
-
-   function Get_Namespace_URI
-     (Grammar : XML_Grammar_NS) return Unicode.CES.Byte_Sequence is
-   begin
-      if Grammar = null then
-         return "";
-      else
-         return Grammar.Namespace_URI.all;
-      end if;
-   end Get_Namespace_URI;
-
-   ---------------
-   -- Set_Block --
-   ---------------
-
-   procedure Set_Block
-     (Typ            : XML_Type;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean) is
-   begin
-      Typ.Block_Restriction := On_Restriction;
-      Typ.Block_Extension := On_Extension;
-   end Set_Block;
-
-   ------------------------------
-   -- Get_Block_On_Restriction --
-   ------------------------------
-
-   function Get_Block_On_Restriction (Typ : XML_Type) return Boolean is
-   begin
-      return Typ.Block_Restriction;
-   end Get_Block_On_Restriction;
-
-   ----------------------------
-   -- Get_Block_On_Extension --
-   ----------------------------
-
-   function Get_Block_On_Extension (Typ : XML_Type) return Boolean is
-   begin
-      return Typ.Block_Extension;
-   end Get_Block_On_Extension;
-
-   -----------------------
-   -- Set_Block_Default --
-   -----------------------
-
-   procedure Set_Block_Default
-     (Grammar : XML_Grammar_NS;
-      On_Restriction : Boolean;
-      On_Extension   : Boolean) is
-   begin
-      Grammar.Block_Restriction := On_Restriction;
-      Grammar.Block_Extension   := On_Extension;
-   end Set_Block_Default;
-
-   ------------------------------------------
-   -- Get_Namespace_From_Parent_For_Locals --
-   ------------------------------------------
-
-   function Get_Namespace_From_Parent_For_Locals
-     (Validator : access XML_Any_Record) return Boolean
+   function Match
+     (Self       : access Abstract_NFA_Matcher'Class;
+      From_State, To_State : State;
+      Parent_Data : access Active_State_Data;
+      Trans      : Transition_Descr;
+      Sym        : Transition_Event) return Boolean
    is
-      pragma Unreferenced (Validator);
+      pragma Unreferenced (To_State);
+      Result : Boolean;
+      Mask   : Visited_All_Children;
    begin
-      return False;
-   end Get_Namespace_From_Parent_For_Locals;
+      case Trans.Kind is
+         when Transition_Close =>
+            Result := Sym.Closing;
 
-   -------------------
-   -- Set_Target_NS --
-   -------------------
+         when Transition_Symbol | Transition_Symbol_From_All =>
+            if Sym.Closing then
+               Result := False;
+            else
+               if From_State = Start_State then
+                  --  At toplevel, always qualified
+                  Result := Trans.Name = Sym.Name;
+               else
+                  case Trans.Form is
+                  when Unqualified =>
+                     Result := (NS => Empty_String, Local => Trans.Name.Local)
+                       = Sym.Name;
+                  when Qualified =>
+                     Result := Trans.Name = Sym.Name;
+                  end case;
+               end if;
+            end if;
 
-   procedure Set_Target_NS
-     (Grammar : in out XML_Grammar;
-      NS      : XML_Grammar_NS) is
-   begin
-      if Grammar /= null then
-         Grammar.Target_NS := NS;
-      end if;
-   end Set_Target_NS;
+            if Result and then Trans.Kind = Transition_Symbol_From_All then
+               --  Check that the transition hasn't been visited yet
 
-   -------------------
-   -- Get_Target_NS --
-   -------------------
+               Mask := 2 ** Trans.All_Child_Index;
 
-   function Get_Target_NS (Grammar : XML_Grammar) return XML_Grammar_NS is
-   begin
-      if Grammar = null then
-         return null;
-      else
-         return Grammar.Target_NS;
-      end if;
-   end Get_Target_NS;
+               if (Parent_Data.Visited and Mask) = 1 then
+                  Result := False;
+               else
+                  Parent_Data.Visited := Parent_Data.Visited or Mask;
+                  Result := True;
+               end if;
+            end if;
 
-   ------------------
-   -- Create_Union --
-   ------------------
+         when Transition_Close_From_All =>
+            --  Check that all children have been visited or are optional
+            Result := ((Parent_Data.Visited and Trans.Mask) = Trans.Mask)
+              and then Sym.Closing;
 
-   function Create_Union return XML_Validator is
-   begin
-      return new XML_Union_Record;
-   end Create_Union;
+         when Transition_Any =>
+            if Sym.Closing then
+               Result := False;
+            else
+               Result := Match_Any (Trans.Any, Sym.Name);
+               if Result then
+                  Schema_NFA_Matcher (Self.all).Matched_Through_Any := True;
+                  Schema_NFA_Matcher (Self.all).Matched_Process_Content :=
+                    Trans.Any.Process_Contents;
+               end if;
+            end if;
+      end case;
 
-   ---------------
-   -- Add_Union --
-   ---------------
-
-   procedure Add_Union
-     (Validator : access XML_Validator_Record'Class; Part : XML_Type) is
-   begin
-      Schema.Validators.Simple_Types.Add_Union (XML_Union (Validator), Part);
-   end Add_Union;
+      return Result;
+   end Match;
 
    --------------
-   -- To_QName --
+   -- Do_Match --
    --------------
 
-   function To_QName (Namespace_URI, Local_Name : String) return String is
+   procedure Do_Match
+     (Matcher         : in out Schema_NFA_Matcher;
+      Sym             : Transition_Event;
+      Success         : out Boolean;
+      Through_Any     : out Boolean;
+      Through_Process : out Process_Contents_Type)
+   is
    begin
-      if Namespace_URI = "" then
-         return Local_Name;
-      else
-         return '{' & Namespace_URI & '}' & Local_Name;
-      end if;
-   end To_QName;
+      Matcher.Matched_Through_Any := False;
+      Process (Matcher, Input => Sym, Success => Success);
+      Through_Any     := Matcher.Matched_Through_Any;
+      Through_Process := Matcher.Matched_Process_Content;
+   end Do_Match;
+
+   ------------------
+   -- Add_Notation --
+   ------------------
+
+   procedure Add_Notation
+     (NFA : access Schema_NFA'Class; Name : Sax.Symbols.Symbol) is
+   begin
+      Symbol_Htable.Set (NFA.Notations, Name);
+   end Add_Notation;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Reader : in out Abstract_Validation_Reader) is
+   begin
+      Free (Reader.Id_Table);
+   end Free;
 
 end Schema.Validators;

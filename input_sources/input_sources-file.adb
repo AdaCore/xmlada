@@ -1,34 +1,28 @@
------------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
---                                                                   --
---                       Copyright (C) 2001-2006                     --
---                            AdaCore                                --
---                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
---                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
------------------------------------------------------------------------
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2001-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
 
-with Ada.Direct_IO;
-with Ada.Sequential_IO;
+with Ada.Exceptions;     use Ada.Exceptions;
+with Ada.IO_Exceptions;  use Ada.IO_Exceptions;
 with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
@@ -37,54 +31,60 @@ with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 package body Input_Sources.File is
 
-   procedure Fast_Read (The_File : String; Buf : Byte_Sequence_Access);
-   --  Read Buf'length characters in The_File and store it in Buf.
-   --  This procedure performs a single call to Read.
-
-   ---------------
-   -- Fast_Read --
-   ---------------
-
-   procedure Fast_Read (The_File : String;
-                        Buf      : Byte_Sequence_Access)
-   is
-      type Fixed_String is new String (Buf'Range);
-      package Dir_Fast is new Ada.Sequential_IO (Fixed_String);
-      use Dir_Fast;
-
-      F : Dir_Fast.File_Type;
-
-   begin
-      Dir_Fast.Open (F, In_File, The_File);
-      Dir_Fast.Read (F, Fixed_String (Buf.all));
-      Dir_Fast.Close (F);
-   end Fast_Read;
-
    ----------
    -- Open --
    ----------
 
-   procedure Open (Filename : String; Input : out File_Input) is
-      package Dir is new Ada.Direct_IO (Character);
-      F : Dir.File_Type;
+   procedure Open (Filename : String; Input : out File_Input'Class) is
+      FD : File_Descriptor;
       Length : Natural;
+      Cursor : Positive;
+      Actual_Length : Integer;
       BOM    : Bom_Type;
    begin
-      Dir.Open (F, Dir.In_File, Filename);
-      Length := Natural (Dir.Size (F));
-      Dir.Close (F);
+      --  Open the source FD, note that we open in binary mode, because there
+      --  is no point in wasting time on text translation when it is not
+      --  required.
+
+      FD := Open_Read (Filename, Binary);
+
+      --  Raise Name_Error if file cannot be found
+
+      if FD = Invalid_FD then
+         Raise_Exception
+            (Name_Error'Identity, "Could not open " & Filename);
+      end if;
+
+      Length := Integer (File_Length (FD));
 
       --  If the file is empty, we just create a reader that will not return
       --  any character. This will fail later on when the XML document is
       --  parsed, anyway.
+
       if Length = 0 then
          Input.Buffer := new String (1 .. 1);
          Input.Index := 2;
+         Close (FD);
          return;
       end if;
 
+      --  Allocate buffer
+
       Input.Buffer := new String (1 .. Length);
-      Fast_Read (Filename, Input.Buffer);
+
+      --  On most systems, the loop below will be executed only once and the
+      --  file will be read in one chunk. However, some systems (e.g. VMS) have
+      --  file types that require one read per line, so read until we get the
+      --  Length bytes or until there are no more bytes to read.
+
+      Cursor := 1;
+      loop
+         Actual_Length := Read (FD, Input.Buffer (Cursor)'Address, Length);
+         Cursor := Cursor + Actual_Length;
+         exit when Actual_Length = Length or Actual_Length <= 0;
+      end loop;
+
+      Close (FD);
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
@@ -103,6 +103,28 @@ package body Input_Sources.File is
       end case;
 
       Input.Index := Input.Buffer'First + Input.Prolog_Size;
+
+      --  Do we have multiple instances of a BOM ? If yes, this is generally
+      --  valid except if the resulting encodings differ
+
+      declare
+         BOM2 : Bom_Type;
+         Len  : Natural;
+      begin
+         Read_Bom
+           (Input.Buffer (Input.Index .. Input.Buffer'Last), Len, BOM2);
+
+         if BOM2 /= Unknown
+           and then BOM /= BOM2
+         then
+            Raise_Exception
+              (Mismatching_BOM'Identity,
+               "File specifies two different encodings");
+         end if;
+
+         --  In XML, we should apparently still report the second BOM
+         --  Input.Index := Input.Index + Len;
+      end;
 
       --  Base file name should be used as the public Id
       Set_Public_Id (Input, Filename);
@@ -130,6 +152,10 @@ package body Input_Sources.File is
    begin
       From.Es.Read (From.Buffer.all, From.Index, C);
       C := From.Cs.To_Unicode (C);
+   exception
+      --  For a file input, an incomplete encoding is invalid.
+      when Incomplete_Encoding =>
+         raise Invalid_Encoding;
    end Next_Char;
 
    ---------
@@ -138,7 +164,7 @@ package body Input_Sources.File is
 
    function Eof (From : File_Input) return Boolean is
    begin
-      return From.Index > From.Buffer'Length;
+      return From.Buffer = null or else From.Index > From.Buffer'Length;
    end Eof;
 
    -------------------
@@ -147,7 +173,13 @@ package body Input_Sources.File is
 
    procedure Set_System_Id (Input : in out File_Input; Id : Byte_Sequence) is
    begin
-      Set_System_Id (Input_Source (Input), Normalize_Pathname (Id));
+      if Is_Absolute_Path (Id) then
+         Set_System_Id (Input_Source (Input), Id);
+      else
+         Set_System_Id
+           (Input_Source (Input),
+            Normalize_Pathname (Id, Resolve_Links => False));
+      end if;
    end Set_System_Id;
 
 end Input_Sources.File;

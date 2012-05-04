@@ -44,37 +44,36 @@ to
 Compiling with GNAT 3.16 or newer versions of GNAT
 ---------------------------------------------------
 
-You might need to modify the following lines in the Makefile.in:
-    GNATMAKE= gnatmake
-    CC= gcc
-if you are using a compiler other than native GNAT. For instance, if 
-you are using a cross-compiler for powerpc/vxworks, you would set them
-to
-    GNATMAKE= powerpc-wrs-vxworks-gnatmake
-    CC= powerpc-wrs-vxworks-gcc
+You need to automatically detect a few aspects of your build environment,
+which is done by running
+    ./configure --prefix=PREFIX
+where PREFIX is the installation directory you wish to use. It is recommended
+to install into the GNAT directory. This way the project files will be
+installed into the default location where gnatmake and gprbuild are looking
+for projects.
 
-You can also chose the type of library you want to build. The default is
-to build relocatable libraries, although you can chose to build static
-libraries as well. This is done by changing the value of
-   LIBRARY_TYPE=relocatable
-in the Makefile.in.
+If, however, you are running a cross-compiler, you need to add an additional
+command line switch to configure, namely
+    ./configure --prefix=PREFIX --target=TARGET
+where target will be similar to "powerpc-wrs-vxworks", "powerpc-elinos-linux",
+or any other prefix used to find the name of the gnatmake executable to run.
 
-Note that if you wish to build both types of libraries, you should first build
-and install the static libraries, then clean the build directory with
-"make clean", and then build and install the shared libraries. The installation
-directories should be different, since the generated code might not be the
-same in both cases, and the second set of project files (see below) would
-overwrite the ones previously installed.
+By default, XML/Ada will build both static and shared libraries, if
+"configure" detected that the latter were supported on your system. You can
+prevent the building of shared libraries by specifying --disable-shared as
+an extra switch to configure.
+
+Once installed, your applications will by default be linked statically with
+XML/Ada. You can change that default by specifying explicitly --enable-shared
+as an extra switch to configure.
 
 Depending on what Ada runtime your application is build with, you might need to
 change the file shared.gpr (at the root of the XML/Ada directory) so that the
 Default_Switches lines in the Compiler package contain something like:
    for Default_Switches ("Ada") use ("--RTS=sjlj", ...);
 
-Configure and compile with the following commands:
-   >  ./configure --prefix=<PREFIX>
-   >  make install
-to build and install the library.
+To install the library, use the following command line:
+   make all install
 
 Compiling with other Ada compilers
 ----------------------------------
@@ -99,7 +98,7 @@ Do the following, from the root directory of XML/Ada:
      will fail.
      You can replace it with some manual steps:
        * Create the installation directory
-       * copy the files 
+       * copy the files
            unicode/obj/*
            unicode/*.adb unicode/*.ads
            input_sources/obj/*
@@ -128,17 +127,30 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
      Cygwin : http://cygwin.com/
      Mingw  : http://www.mingw.org/ (MSYS Toolset)
 
-2. Run 'configure --prefix=<installation directory>' to generate the makefile.
+2. Run 'sh configure --prefix=<installation directory>' to generate the
+   makefile.
    where "installation directory" is the place where you want to install
    XML/Ada.
 
 3. Before building make sure to set the following values in 'Makefile':
-      PREFIX=C:/GNAT/XMLada
+      PREFIX=C:/GNATPRO/6.4.2
    the makefile where to install the library. Note the slashes in the path!
-   The value should have been set properly by the call to configure
+   The value should have been set properly by the call to configure.
 
-4. The best way to proceed is to do a 'make install'.
+   It is recommended to install into the GNAT directory. This way the project
+   files will be installed into the default location where gnatmake and
+   gprbuild are looking for projects.
 
+4. As a general rule for GNAT, the temporary directory must be accessible
+   from gnatmake native applications (not a cygwin path). For instance, from
+   cygwin:
+       export TMPDIR=c:/tmp
+   Failing to check this might prevent the building of shared libraries
+
+5. The best way to proceed is to do a 'make all install'.
+   It is possible that make complains that it cannot execute an "install"
+   executable. In such a case, it is recommended to execute
+   "make INSTALL=cp install" instead to use "cp" to do the installation
 
 IV - TWEAKING THE LIBRARY
 =========================
@@ -173,23 +185,45 @@ check XML/Ada. Most likely, this is only useful to you if you are modifying
 XML/Ada itself. Here is how you can run this testsuite:
    You need to download the official XML Conformance Testsuite for XML,
    The name of the current archive is
-       xmlconf-20031210.tar
+       xmlconf-20080827.tar
    The URL is:
-       http://www.w3.org/XML/Test/xmlconf-20031210.html
+       http://www.w3.org/XML/Test/
 
    Uncompress it somewhere on your disk, then add a link in dom/test, which
    points to the directory where you unpackaged the testsuite. The link should
    be called "tests".
 
 A similar setup is required for the W3C schema testsuite. The URL of the
-testsuite is:  http://www.w3.org/XML/2001/05/xmlschema-test-collection
-and once uncompressed, you should created a link from schema/test to this
-directory. The link should be called xmltests.
+testsuite is:
+   http://www.w3.org/XML/2004/xml-schema-test-suite/xmlschema2006-11-06/xsts-2007-06-20.tar.gz
+This file should be extracted in the schema/test directory (creating a
+xmlschema-2006-11-06 subdirectory as a result).
 
-   Execute the command
-     make run_test
+   Then execute the command from the toplevel directory:
+       make run_test
 
    This will report the number of errors found.
+
+The W3C committee has reviewed the status of a number of tests since the
+testsuite was released (as developers of XML parsers have reported issues
+with the testsuite). They provide a public CVS repository that include the
+metadata for the tests (list of tests, their status, expected output,...),
+but unfortunately not the tests themselves. As a result, getting the latest
+version requires several steps. First get the .tar.gz as described above,
+and extract it in schema/test. From the same directory, run:
+
+   cvs -d :pserver:anonymous@dev.w3.org:/sources/public login
+   cvs -d :pserver:anonymous@dev.w3.org:/sources/public -z5 co XML/xml-schema-test-suite/2004-01-14/xmlschema2006-11-06
+
+You can update that directory at any time with:
+   cd XML; cvs update
+
+The XML/Ada testsuite will automatically take advantage of that directory
+if found. You need however to manually run
+   cd schema/test
+   ./schematest --cvs
+to get the output under those conditions, since "make run_test" is setup
+for the .tar.gz output.
 
 
 VII - CONTENTS OF THE LIBRARY

@@ -1,26 +1,35 @@
-AC_REVISION($Revision$)
-AC_INIT(dom/dom.ads)
+AC_INIT(XML/Ada,4.3w,report@adacore.com,xmlada)
+AC_CANONICAL_SYSTEM
 
-## Also change version number in docs/xml.texi
-XMLADA_MAJOR_VERSION=2
-XMLADA_MINOR_VERSION=2w
+# Also update docs/xml.texi, and in AC_INIT above
+XMLADA_MAJOR_VERSION=4
+XMLADA_MINOR_VERSION=3w
 
-AC_PROG_CC
-AC_PROG_RANLIB
-AC_CHECK_PROGS(DVIPS, dvips, "")
-AC_CHECK_PROGS(MAKEINFO, makeinfo, "")
-AC_CHECK_PROGS(TEXI2DVI, texi2dvi, "")
-AC_CHECK_PROGS(PDFTEX, pdftex, "")
-AC_CHECK_PROGS(TEX, tex, "")
+AM_GNAT_BUILDS_SHARED
 
 IFS=' '
 
-EXEC_PREFIX="$prefix"
+# Defaults
+AC_PROG_INSTALL
+AC_PROG_LN_S
+MKDIR="mkdir -p"
 
-AC_SUBST(EXEC_PREFIX)
+# Overrides
+case "${host_os}" in
+  lynxos*)
+    CP="cp -p"
+    MKDIR="mkdir -p -f"
+    ;;
+
+  cygwin*|mingw32*)
+    LN="cp -p -f"
+    ;;
+esac
+
+AC_SUBST(MKDIR)
 AC_SUBST(CC)
-AC_SUBST(RANLIB)
-AC_SUBST(XMLADA_MAJOR_VERSION)
-AC_SUBST(XMLADA_MINOR_VERSION)
 
-AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr docs/Makefile xmlada-config)
+LIB=`basename $libdir`
+AC_SUBST(LIB)
+
+AC_OUTPUT(shared.gpr Makefile Makefile.314 dom/test/default.gpr xmlada-config distrib/xmlada_shared.gpr)

@@ -1,3 +1,26 @@
+------------------------------------------------------------------------------
+--                     XML/Ada - An XML suite for Ada95                     --
+--                                                                          --
+--                     Copyright (C) 2005-2012, AdaCore                     --
+--                                                                          --
+-- This library is free software;  you can redistribute it and/or modify it --
+-- under terms of the  GNU General Public License  as published by the Free --
+-- Software  Foundation;  either version 3,  or (at your  option) any later --
+-- version. This library is distributed in the hope that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE.                            --
+--                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
+--                                                                          --
+------------------------------------------------------------------------------
+
 with Unicode;                   use Unicode;
 with Unicode.CES;               use Unicode.CES;
 with Ada.Unchecked_Deallocation;
@@ -6,7 +29,8 @@ with Sax.Encodings;             use Sax.Encodings;
 
 package body Sax.Models is
 
-   function To_String (Model : Element_Model) return Unicode.CES.Byte_Sequence;
+   function To_String
+     (Model   : Element_Model) return Unicode.CES.Byte_Sequence;
    --  Same as To_String, applies to an Element_Model_Ptr
 
    ---------
@@ -78,8 +102,8 @@ package body Sax.Models is
    -- To_String --
    ---------------
 
-   function To_String (Model : Content_Model) return Unicode.CES.Byte_Sequence
-   is
+   function To_String
+     (Model : Content_Model) return Unicode.CES.Byte_Sequence is
    begin
       if Model.Model = null then
          return "";
@@ -92,7 +116,8 @@ package body Sax.Models is
    -- To_String --
    ---------------
 
-   function To_String (Model : Element_Model) return Unicode.CES.Byte_Sequence
+   function To_String
+     (Model   : Element_Model) return Unicode.CES.Byte_Sequence
    is
       Str : Unbounded_String;
    begin
@@ -107,7 +132,7 @@ package body Sax.Models is
             return Any_Sequence;
 
          when Element_Ref =>
-            return Model.Name.all;
+            return Sax.Symbols.Get (Model.Name).all;
 
          when Any_Of | Sequence =>
             for J in Model.List'Range loop
@@ -168,9 +193,7 @@ package body Sax.Models is
    begin
       if Model /= null then
          case Model.Content is
-            when Character_Data | Anything | Empty => null;
-            when Element_Ref =>
-               Free (Model.Name);
+            when Character_Data | Anything | Empty | Element_Ref => null;
             when Any_Of | Sequence =>
                for J in Model.List'Range loop
                   Free (Model.List (J));
