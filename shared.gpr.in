@@ -11,6 +11,8 @@ project Shared is
 
    Processors := External ("PROCESSORS", "1");
 
+   So_Ext := "@SO_EXT@";
+
    package Builder is
        case Mode is
           when "optimize" =>

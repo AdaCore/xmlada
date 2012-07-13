@@ -25,11 +25,7 @@ GNATMAKE=@gnatmake@ -j${PROCESSORS}
 # Compiler mode: one of "distrib", "debug", "optimize", "profile", "coverage"
 MODE=distrib
 
-ifeq (${OS},Windows_NT)
-LIBEXT=dll
-else
-LIBEXT=so
-endif
+LIBEXT=@SO_EXT@
 
 # Commands for installation procedure
 CHMOD=chmod
@@ -101,14 +97,14 @@ ifeq (${LIBRARY_TYPE},static)
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.a ${xmllib}
 else
 ifeq (${OS},Windows_NT)
-	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT} ${xmllib}
-	cd ${bindir}; ${CP} ${libdir}/xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT} libxmlada_$*.${LIBEXT}
+	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT} ${xmllib}
+	cd ${bindir}; ${CP} ${libdir}/xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT} libxmlada_$*${LIBEXT}
 else
-	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT}.${VERSION} ${xmllib}
-	cd ${xmllib}; ${LN_S} libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}
-	cd ${xmllib}; ${LN_S} libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}.${basename ${VERSION}}
-	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}.${basename ${VERSION}}
-	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*.${LIBEXT}.${VERSION} libxmlada_$*.${LIBEXT}.${VERSION}
+	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT}.${VERSION} ${xmllib}
+	cd ${xmllib}; ${LN_S} libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}
+	cd ${xmllib}; ${LN_S} libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${basename ${VERSION}}
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${basename ${VERSION}}
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${VERSION}
 endif
 endif
 	cd ${xmllib}; ${CHMOD} ugo-w *.ali

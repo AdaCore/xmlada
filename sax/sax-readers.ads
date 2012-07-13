@@ -1105,6 +1105,10 @@ private
       --  Whether the document is specified as "standalone" in the XML
       --  prolog
 
+      Lookup_Char  : Unicode.Unicode_Char := Unicode.Unicode_Char'Last;
+      --  We can have a single forward lookup character, which is used to speed
+      --  the parsing.
+
       Last_Read     : Unicode.Unicode_Char;
       Last_Read_Is_Valid : Boolean := True;
       --  Whether Last_Read is was actualy read, or whether it was set to null

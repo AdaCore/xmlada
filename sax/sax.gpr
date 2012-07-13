@@ -8,7 +8,8 @@ project Sax is
    for Library_Kind use Shared.Library_Type;
    for Object_Dir  use "obj/" & Project'Library_Kind;
    for Library_Dir use "lib/" & Project'Library_Kind;
-   for Library_Version use "lib" & Project'Library_Name & ".so." & Shared.Version;
+   for Library_Version use "lib" & Project'Library_Name
+      & Shared.So_Ext & "." & Shared.Version;
 
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;

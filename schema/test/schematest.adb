@@ -423,6 +423,8 @@ procedure Schematest is
 
             Grammar := Get_Grammar (XSD_Reader);
 
+            Free (XSD_Reader);
+
             if Outcome = Invalid then
                Result.Result := Failed;
                Failed_Grammar := True;
@@ -603,6 +605,8 @@ procedure Schematest is
          end if;
          N := Next_Sibling (N);
       end loop;
+
+      Free (Inst_Reader);
    end Parse_Instance_Test;
 
    ---------------------

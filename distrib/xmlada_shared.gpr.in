@@ -7,4 +7,6 @@ project Xmlada_Shared is
 
    --  Location for the dynamic library and ALI files
    Libdir := "../../@LIB@/xmlada/" & Xmlada_Kind;
+
+   So_Ext := "@SO_EXT@";
 end Xmlada_Shared;
