@@ -273,18 +273,17 @@ validating a file.
 
     with Schema.Schema_Readers, Schema.Validators, Input_Sources.File;
     use  Schema.Schema_Readers, Schema.Validators, Input_Sources.File;
-    with Schema.Schema_Grammar;  use  Schema.Schema_Grammar;
 
     procedure SchemaExample2 is
        Grammar : XML_Grammar;
        Schema  : Schema_Reader;
        Read    : File_Input;
     begin
-         Open ("file.xsd", Read);
-         Parse (Schema, Read);
-         Close (Read);
+       Open ("file.xsd", Read);
+       Parse (Schema, Read);
+       Close (Read);
 
-         Grammar := Get_Grammar (Schema);
+       Grammar := Get_Grammar (Schema);
     end SchemaExample2;
 
   In the example above, the schema file itself is validated against the
