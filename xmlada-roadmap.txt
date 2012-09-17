@@ -7,3 +7,6 @@ be taken as firm.
 - Improve memory usage in the validation of <all> elements
 - Initial support for XInclude
 
+[GNAT Pro 7.1.1]
+
+- Precompile and package XML/Ada with native ports.
