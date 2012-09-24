@@ -169,7 +169,7 @@ begin
 
    Assert_Digits (Num8, 0, 9);
    Assert_Digits (Num8, 0, 8);
-   Assert_Digits (Num8, 0, 7, True);
+   Assert_Digits (Num8, 0, 4, True);
 
    Assert_Digits (Num9, -1, 5);
    Assert_Digits (Num9, -1, 4);
@@ -177,7 +177,7 @@ begin
 
    Assert_Digits (Num9, 2, -1);
    Assert_Digits (Num9, 1, -1);
-   Assert_Digits (Num9, 0, -1, True);
+   Assert_Digits (Num9, Fraction => 0, Total => -1, Error => True);
 
    Assert_Digits (Num8, 1, -1);
    Assert_Digits (Num8, 0, -1);

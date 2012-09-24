@@ -11,6 +11,18 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
+KP-42-L921-037 Schema: leading and trailing zeros in decimal values
+
+  Problem:    XML/Ada does not properly ignore leading and trailing zeros
+              when comparing a decimal value with the various facets like
+              minIncluside, totalDigits, fractionDigits,...
+
+  Status:     Fixed in XML/Ada 4.3.0
+
+  Workaround: Avoid putting these unsignificant zeros in the XML file (thus
+              also leading to a small XML file). However, this is not always
+              applicable if you do not control the origin of the XML file.
+
 KP-42-L327-044 Schema: change of behavior in Schema.Dom_Readers.Free
 
   Problem:    The previous implementation of Free would free the DOM tree

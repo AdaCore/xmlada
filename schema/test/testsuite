@@ -188,6 +188,10 @@ expect "$act/I727-025/test.xsd" "$act/I727-025/test.xml" ""
 expect "$act/I728-012/test.xsd" "$act/I728-012/test.xml" ""
 expect "$act/I702-017/test.xsd" "$act/I702-017/test.xml" "test.xml:7:11: Unexpected element \"size\": expecting \"contents\""
 expect "$act/IC10-021/pref.xsd" "$act/IC10-021/pref.xml" ""
+expect "$act/L921-037/floats.xsd" "$act/L921-037/floats1.xml" ""
+expect "$act/L921-037/floats.xsd" "$act/L921-037/floats2.xml" ""
+expect "$act/L921-037/floats.xsd" "$act/L921-037/floats3.xml" ""
+expect "$act/L921-037/floats.xsd" "$act/L921-037/floats4.xml" ""
 
 for dir in tasking \
            K518-020 \

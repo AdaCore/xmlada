@@ -74,7 +74,9 @@ package Unicode.CES.Utf32 is
      (Str   : Utf32_LE_String;
       Index : in out Positive;
       Char  : out Unicode_Char);
-   --  Return the character starting at location Index in Str
+   pragma Precondition (Str'Last < Positive'Last);
+   --  Return the character starting at location Index in Str, and moves
+   --  Index forward (which is why the precondition is necessary).
    --  Invalid_Encoding is raised if not valid byte sequence starts at Index.
    --  Incomplete_Encoding is raised if there is not enough characters for
    --  a valid encoding.

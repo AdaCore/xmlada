@@ -535,7 +535,15 @@ package body Schema.Simple_Types is
       Integer := Register ("integer",
                            (Kind                  => Primitive_Decimal,
                             Fraction_Digits       => 0,
+                            Whitespace            => Collapse,
+                            Pattern               => new Pattern_Matcher_Array'
+                               (1 => Pattern_Facet'(
+                                   Str => Find (Symbols, "[\-+]?[0-9]+"),
+                                   Pattern => new Pattern_Matcher'
+                                       (Compile ("[\-+]?[0-9]+")))),
                             Mask => (Facet_Fraction_Digits => True,
+                                     Facet_Pattern         => True,
+                                     Facet_Whitespace      => True,
                                      others                => False),
                             others => <>), Decimal);
       Non_Negative_Int :=
@@ -840,35 +848,6 @@ package body Schema.Simple_Types is
          end;
       end if;
 
-      if Descr.Mask (Facet_Pattern) and then Descr.Pattern /= null then
-
-         --  Check whether we have unicode char outside of ASCII
-
-         Index := Ch'First;
-         while Index <= Ch'Last loop
-            Encoding.Read (Ch, Index, Char);
-            if Char > 127 then
-               --  Start with '#' because this is a non-implemented feature
-               Error := Find
-                 (Symbols, "#Regexp matching with unicode not supported");
-               return;
-            end if;
-         end loop;
-
-         for P in Descr.Pattern'Range loop
-            Match (Descr.Pattern (P).Pattern.all, String (Ch), Matched);
-            if Matched (0).First /= Ch'First
-              or else Matched (0).Last /= Ch'Last
-            then
-               Error := Find
-                 (Symbols,
-                  "string pattern not matched: "
-                  & Get (Descr.Pattern (P).Str).all);
-               return;
-            end if;
-         end loop;
-      end if;
-
       if Descr.Mask (Facet_Whitespace) then
          case Descr.Whitespace is
          when Preserve =>
@@ -919,6 +898,34 @@ package body Schema.Simple_Types is
                end if;
             end if;
          end case;
+      end if;
+
+      if Descr.Mask (Facet_Pattern) and then Descr.Pattern /= null then
+         --  Check whether we have unicode char outside of ASCII
+
+         Index := Ch'First;
+         while Index <= Ch'Last loop
+            Encoding.Read (Ch, Index, Char);
+            if Char > 127 then
+               --  Start with '#' because this is a non-implemented feature
+               Error := Find
+                 (Symbols, "#Regexp matching with unicode not supported");
+               return;
+            end if;
+         end loop;
+
+         for P in Descr.Pattern'Range loop
+            Match (Descr.Pattern (P).Pattern.all, String (Ch), Matched);
+            if Matched (0).First /= Ch'First
+              or else Matched (0).Last /= Ch'Last
+            then
+               Error := Find
+                 (Symbols,
+                  "string pattern not matched: "
+                  & Get (Descr.Pattern (P).Str).all);
+               return;
+            end if;
+         end loop;
       end if;
 
       --  Type-specific facets

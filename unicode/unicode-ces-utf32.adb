@@ -77,6 +77,9 @@ package body Unicode.CES.Utf32 is
            + Character'Pos (Str (Index + 1)) * (2 ** 8)
            + Character'Pos (Str (Index + 2)) * (2 ** 16)
            + Character'Pos (Str (Index + 3)) * (2 ** 24);
+
+         --  Overflow error here if Str'Last = Positive'Last and Index was
+         --  Positive'Last - 3 (thus reading the last character).
          Index := Index + 4;
       end if;
    end Read;

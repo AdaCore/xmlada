@@ -69,7 +69,7 @@ project Shared is
             for Switches ("Ada") use ("-fprofile-arcs");
 
          when "distrib" =>
-            for Switches ("Ada") use ("-s");
+            null;
 
          when "optimize" =>
       end case;

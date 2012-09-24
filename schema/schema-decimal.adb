@@ -38,11 +38,18 @@ package body Schema.Decimal is
    --  Compare two numbers
 
    function Get_Exp (Num : String) return Long_Long_Integer;
-   --  Return the exponential part of Num (ie the part after 'E'.
+   --  Return the exponential part of Num (ie the part after 'E').
 
    procedure Get_Fore (Num : String; First, Last : out Integer);
    --  Return the position of the first and last digit in the integer part of
    --  Num
+
+   procedure Get_Aft
+     (Num         : String;
+      Fore_Last   : Integer;
+      First, Last : out Integer);
+   --  Return the last significant position in the number, ignoring trailing 0.
+   --  Fore_Last is the value returned by Get_Fore
 
    procedure To_Next_Digit (Num : String; Pos : in out Integer);
    --  Move Pos to the next digit in Num
@@ -227,6 +234,50 @@ package body Schema.Decimal is
    end Value_No_Exponent;
 
    -------------
+   -- Get_Aft --
+   -------------
+
+   procedure Get_Aft
+     (Num       : String;
+      Fore_Last : Integer;
+      First     : out Integer;
+      Last      : out Integer)
+   is
+      Exp_First : Integer := Num'Last + 1;
+   begin
+      --  Does the number end with an exponent or a fractional part ?
+
+      Last := Num'Last;
+      while Last > Fore_Last loop
+         if Num (Last) = 'e'
+           or else Num (Last) = 'E'
+         then
+            Exp_First := Last;
+         end if;
+
+         Last := Last - 1;
+      end loop;
+
+      First := Fore_Last + 1;
+      if First <= Num'Last
+        and then Num (First) = '.'
+      then
+         First := First + 1;
+         if First < Exp_First then
+            Last := Exp_First - 1;
+            while Last >= First
+              and then Num (Last) = '0'
+            loop
+               Last := Last - 1;
+            end loop;
+         end if;
+
+      else
+         Last := First - 1;  --  no fractional part
+      end if;
+   end Get_Aft;
+
+   -------------
    -- Get_Exp --
    -------------
 
@@ -270,6 +321,14 @@ package body Schema.Decimal is
       end loop;
 
       Last := Pos - 1;
+
+      --  Skip leading 0, but always keep at least one digit before '.'
+
+      while First < Last
+        and then Num (First) = '0'
+      loop
+         First := First + 1;
+      end loop;
    end Get_Fore;
 
    -------------------
@@ -469,8 +528,10 @@ package body Schema.Decimal is
       Pos : Integer;
       Digits_Count : Natural := 0;
       Frac_Digits  : Natural := 0;
+      Aft_First, Aft_Last : Integer;
    begin
       Get_Fore (Value.all, Fore_First, Fore_Last);
+      Get_Aft (Value.all, Fore_Last, Aft_First, Aft_Last);
 
       --  Now count the significant digits (including fractional part)
       Pos := Value'First;
@@ -481,25 +542,10 @@ package body Schema.Decimal is
          Pos := Pos + 1;
       end if;
 
-      while Pos <= Value'Last loop
-         Digits_Count := Digits_Count + 1;
-         if Pos > Fore_Last then
-            Frac_Digits := Frac_Digits + 1;
-         end if;
-         To_Next_Digit (Value.all, Pos);
-      end loop;
+      Digits_Count := Fore_Last - Fore_First + 1
+        + Aft_Last - Aft_First + 1;
 
       if Total_Digits > 0 then
-         --  Gross estimation
-         if Long_Long_Integer (Fore_Last - Fore_First) + Exp >=
-           Long_Long_Integer (Total_Digits)
-         then
-            return Find
-              (Symbols, "Number " & Value.all
-               & " has too many digits (totalDigits is"
-               & Integer'Image (Total_Digits) & ')');
-         end if;
-
          if Digits_Count > Total_Digits then
             return Find
               (Symbols, "Number " & Value.all
@@ -509,7 +555,7 @@ package body Schema.Decimal is
       end if;
 
       if Fraction_Digits >= 0 then
-         if Long_Long_Integer (Frac_Digits) - Exp >
+         if Long_Long_Integer (Aft_Last - Aft_First + 1) - Exp >
            Long_Long_Integer (Fraction_Digits)
          then
             return Find
