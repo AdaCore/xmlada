@@ -99,10 +99,17 @@ package body Unicode.CES.Basic_8bit is
       C : Unicode_Char;
       J : Positive := Str'First;
    begin
-      while J <= Str'Last loop
+      if Str'Length mod Utf32_Char_Width /= 0 then
+         --  There are extra characters at the end of the string.
+         raise Incomplete_Encoding;
+      end if;
+
+      while J <= Str'Last - 3 loop
          Unicode.CES.Utf32.Read (Str, J, Char => C);
+         pragma Assert (R_Index < Result'Last);
          Encode (C, Result, R_Index);
       end loop;
+
       return Result;
    end From_Utf32;
 
