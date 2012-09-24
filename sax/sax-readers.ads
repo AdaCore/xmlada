@@ -146,10 +146,11 @@ package Sax.Readers is
 
    Schema_Validation_Feature : constant String :=
      "http://www.adacore.com/sax/features/schema_validation";
-   --  If True (not the default), XML/Ada will attempt to validate the XML
-   --  document against an XML schema. However, your reader must also extend
-   --  the Schema.Readers.Validating_Reader class (see comments in that
-   --  package).
+   --  By default, a Sax.Readers.Reader does not try to do any validation (See
+   --  Validation_Feature above).
+   --  However, when you extend a Schema_Readers.Validating_Reader, this
+   --  feature is automatically turned on so that indeed the validating parser
+   --  by default attempts to validate XML documents.
 
    External_General_Entities_Feature : constant String :=
      "http://xml.org/sax/features/external-general-entities";
