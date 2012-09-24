@@ -2293,6 +2293,7 @@ package body Schema.Validators is
    is
    begin
       Matcher.Matched_Through_Any := False;
+      Matcher.Matched_Process_Content := Process_Strict;
       Process (Matcher, Input => Sym, Success => Success);
       Through_Any     := Matcher.Matched_Through_Any;
       Through_Process := Matcher.Matched_Process_Content;
