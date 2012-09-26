@@ -72,7 +72,12 @@ package Schema.Readers is
    --
    --  On the other hand, when parsing XML files, Grammar must have been
    --  initialized (in general through a call to Schema.Schema_Readers.Parse).
-   --  If Set_Grammar is not called, no validation takes place.
+   --  If Set_Grammar is not called, no validation takes place unless the XML
+   --  file itself points to a grammar through the xsi:schemaLocation
+   --  attribute.
+   --
+   --  You still need to enable Sax.Readers.Schema_Validation_Feature (via a
+   --  call to Set_Feature) to enable validation.
    --
    --  If a symbol table was set for this reader, the grammar must have been
    --  created with the same symbol table.
