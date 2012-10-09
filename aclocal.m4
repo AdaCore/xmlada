@@ -6,7 +6,7 @@
 
 AC_DEFUN(AM_SO_SUFFIX,
 [
-    case $build_os in
+    case $target_os in
       *darwin*) SO_EXT=.dylib ;;
       *cygwin*|*mingw*)  SO_EXT=.dll ;;
       *)        SO_EXT=.so ;;

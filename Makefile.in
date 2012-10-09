@@ -96,7 +96,7 @@ docs: force
 ifeq (${LIBRARY_TYPE},static)
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*.a ${xmllib}
 else
-ifeq (${OS},Windows_NT)
+ifeq (${LIBEXT},.dll)
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT} ${xmllib}
 	cd ${bindir}; ${CP} ${libdir}/xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT} libxmlada_$*${LIBEXT}
 else
