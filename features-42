@@ -2,10 +2,10 @@
 XML/Ada NEW FEATURES LIST
 =========================
 
-Copyright (C) 2001-2011, AdaCore
+Copyright (C) 2001-2012, AdaCore
 
-This file contains a list of new features introduced in GPS.
-A full description of all GPS features can be found in the GPS
+This file contains a list of new features introduced in XML/Ada.
+A full description of all GPS features can be found in the XML/Ada
 documentation.
 
 An ISO date (YYYY-MM-DD) appears in parentheses after the

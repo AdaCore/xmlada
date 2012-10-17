@@ -2,11 +2,11 @@
 Known problems in XML/Ada version 4.0.0
 =======================================
 
-Copyright (c) 2009-2010, AdaCore
+Copyright (C) 2009-2012, AdaCore
 
 The following is a listing of known problems in release 4.0.0. Except where
 specifically noted, all these problems have been corrected in the development
-tree of the 4.0 technology. This means they are corrected in any 4.1.0w
+tree of the 4.1 technology. This means they are corrected in any 4.1.0w
 wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.

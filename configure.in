@@ -1,9 +1,9 @@
-AC_INIT(XML/Ada,4.3w,report@adacore.com,xmlada)
+AC_INIT(XML/Ada,4.4w,report@adacore.com,xmlada)
 AC_CANONICAL_SYSTEM
 
 # Also update docs/xml.texi, and in AC_INIT above
 XMLADA_MAJOR_VERSION=4
-XMLADA_MINOR_VERSION=3w
+XMLADA_MINOR_VERSION=4w
 
 AM_GNAT_BUILDS_SHARED
 AM_SO_SUFFIX
