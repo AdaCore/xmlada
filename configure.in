@@ -1,7 +1,7 @@
 AC_INIT(XML/Ada,4.3,report@adacore.com,xmlada)
 AC_CANONICAL_SYSTEM
 
-# Also update docs/xml.texi, and in AC_INIT above
+# Also update AC_INIT above
 XMLADA_MAJOR_VERSION=4
 XMLADA_MINOR_VERSION=3
 
