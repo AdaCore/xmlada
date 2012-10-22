@@ -1,7 +1,8 @@
 #!/bin/sh
 # @configure_input@
 
-prefix=`(cd $0/..; echo $PWD)`
+xmlada_config_dir=`dirname $0`
+prefix=`(cd "$xmlada_config_dir"; echo $PWD)`
 prefix=`dirname $prefix`
 
 exec_prefix=@exec_prefix@
