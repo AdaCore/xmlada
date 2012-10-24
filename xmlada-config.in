@@ -2,7 +2,7 @@
 # @configure_input@
 
 xmlada_config_dir=`dirname $0`
-prefix=`(cd "$xmlada_config_dir"; echo $PWD)`
+prefix=`(cd "$xmlada_config_dir"; pwd)`
 prefix=`dirname $prefix`
 
 exec_prefix=@exec_prefix@
