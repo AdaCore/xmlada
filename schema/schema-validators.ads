@@ -633,6 +633,7 @@ package Schema.Validators is
    --  Sets an error message, and raise XML_Validation_Error.
    --  If [Message] starts with "#", this indicates a non-implemented
    --  feature, and XML_Not_Implemented is raised instead.
+   --  If no Loc is provided, it defaults to the current location in Reader.
 
    function Get_Error_Message
      (Reader : Abstract_Validation_Reader) return Unicode.CES.Byte_Sequence;
