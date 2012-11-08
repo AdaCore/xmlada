@@ -2183,7 +2183,7 @@ package body Schema.Schema_Readers is
                (Kind      => Kind_Group,
                 Loc       => Handler.Current_Location,
                 Group_Ref => Ctx.Attr_Group.Ref));
-         when Context_Extension =>
+         when Context_Extension | Context_Simple_Extension =>
             pragma Assert (Ctx.Attr_Group.Attributes = null);
             Index := Handler.Contexts_Last - 1;
             while Index >= Handler.Contexts'First loop

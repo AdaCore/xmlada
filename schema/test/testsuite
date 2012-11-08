@@ -192,6 +192,7 @@ expect "$act/L921-037/floats.xsd" "$act/L921-037/floats1.xml" ""
 expect "$act/L921-037/floats.xsd" "$act/L921-037/floats2.xml" ""
 expect "$act/L921-037/floats.xsd" "$act/L921-037/floats3.xml" ""
 expect "$act/L921-037/floats.xsd" "$act/L921-037/floats4.xml" ""
+expect "$act/LB01-017/PDS_Schema_v2.2.1.xsd" "$act/LB01-017/main.xml" ""
 
 for dir in tasking \
            K518-020 \
