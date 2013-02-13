@@ -159,6 +159,8 @@ compare_file() {
 ## ACT tests ##
 ###############
 
+if [ -d $act ]; then
+
 expect "" "$act/basic_types-1.xml" \
      "basic_types-1.xml:11:20: 03:01:03 is greater than maxExclusive (03:01:02.5)"
 expect "" "$act/basic_types-2.xml" \
@@ -207,5 +209,9 @@ do
     compare_file "$dir" tmp.out test.out
    )
 done
+
+else
+   echo "SCHEMA act_testsuite directory not found (expected)"
+fi
 
 # summary
