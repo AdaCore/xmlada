@@ -1843,6 +1843,7 @@ test -n "$target_alias" &&
 
 
 # Also update in AC_INIT above
+XMLADA_VERSION=4.4w
 XMLADA_MAJOR_VERSION=4
 XMLADA_MINOR_VERSION=4w
 
