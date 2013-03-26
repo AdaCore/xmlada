@@ -515,21 +515,6 @@ package body Sax.Readers is
    --  is different from checking Eof on the current input (since for instance
    --  a new input is open for an entity).
 
-   procedure Add
-     (Parser             : in out Sax_Reader'Class;
-      Attr               : in out Sax_Attribute_Array_Access;
-      Count              : in out Natural;
-      If_Unique          : Boolean;
-      Location           : Sax.Locators.Location;
-      Local_Name, Prefix : Symbol;
-      Value              : Symbol;
-      Att_Type           : Attribute_Type := Cdata;
-      Default_Decl       : Default_Declaration := Default);
-   --  Add the attribute to the list of authorized attributes for this
-   --  element, unless it is already there and If_Unique is True.
-   --  Last is the last position set in Attr, so the new attribute is added
-   --  just after it, and Last modified.
-
    function Create_Attribute_List
      (Attrs  : Sax_Attribute_List) return Sax.Attributes.Attributes;
    --  Create the list of attributes from Parser.Attributes.
@@ -829,7 +814,7 @@ package body Sax.Readers is
       for J in 1 .. Attrs.Count loop
          Add_Attribute
            (Attr       => Attributes,
-            URI        => Get (Get_URI (Attrs.List (J).NS)).all,
+            URI        => Get (Attrs.List (J).URI).all,
             Local_Name => Get (Attrs.List (J).Local_Name).all,
             Qname      =>
               Qname_From_Name
@@ -3448,43 +3433,42 @@ package body Sax.Readers is
       end case;
    end Check_Attribute_Value;
 
-   ---------
-   -- Add --
-   ---------
+   ------------
+   -- Append --
+   ------------
 
-   procedure Add
-     (Parser             : in out Sax_Reader'Class;
-      Attr               : in out Sax_Attribute_Array_Access;
-      Count              : in out Natural;
-      If_Unique          : Boolean;
-      Location           : Sax.Locators.Location;
-      Local_Name, Prefix : Symbol;
-      Value              : Symbol;
-      Att_Type           : Attribute_Type := Cdata;
-      Default_Decl       : Default_Declaration := Default)
+   procedure Append
+      (List         : in out Sax_Attribute_List;
+       Local_Name   : Sax.Symbols.Symbol;
+       Prefix       : Sax.Symbols.Symbol;
+       Att_Type     : Attribute_Type := Cdata;
+       URI          : Sax.Symbols.Symbol := No_Symbol;
+       Value        : Sax.Symbols.Symbol;
+       Location     : Sax.Locators.Location;
+       Default_Decl : Default_Declaration := Default;
+       If_Unique    : Boolean := False)
    is
-      pragma Unreferenced (Parser);
       Tmp : Sax_Attribute_Array_Access;
    begin
       if If_Unique then
-         for A in 1 .. Count loop
-            if Attr (A).Local_Name = Local_Name
-              and then Attr (A).Prefix = Prefix
+         for A in 1 .. List.Count loop
+            if List.List (A).Local_Name = Local_Name
+              and then List.List (A).Prefix = Prefix
             then
                return;
             end if;
          end loop;
       end if;
 
-      if Attr = null or else Count = Attr'Last then
-         Tmp := Attr;
+      if List.List = null or else List.Count = List.List'Last then
+         Tmp := List.List;
          if Tmp /= null then
-            Attr := new Sax_Attribute_Array (Tmp'First .. Tmp'Last + 1);
-            Attr (Tmp'Range) := Tmp.all;
+            List.List := new Sax_Attribute_Array (Tmp'First .. Tmp'Last + 1);
+            List.List (Tmp'Range) := Tmp.all;
             Unchecked_Free (Tmp);
          else
-            Attr  := new Sax_Attribute_Array (1 .. 1);
-            Count := 0;
+            List.List  := new Sax_Attribute_Array (1 .. 1);
+            List.Count := 0;
          end if;
       end if;
 
@@ -3492,17 +3476,17 @@ package body Sax.Readers is
       --  depend on the contents of the document at the place where
       --  the attribute is used.
 
-      Count := Count + 1;
-      Attr (Count) := Sax_Attribute'
-        (Prefix       => Prefix,
-         Local_Name   => Local_Name,
-         Value        => Value,
+      List.Count := List.Count + 1;
+      List.List (List.Count) := Sax_Attribute'
+        (Prefix               => Prefix,
+         Local_Name           => Local_Name,
+         Value                => Value,
          Non_Normalized_Value => Value,
-         Att_Type     => Att_Type,
-         NS           => No_XML_NS,
-         Default_Decl => Default_Decl,
-         Location     => Location);
-   end Add;
+         Att_Type             => Att_Type,
+         URI                  => URI,
+         Default_Decl         => Default_Decl,
+         Location             => Location);
+   end Append;
 
    ---------------------
    -- Syntactic_Parse --
@@ -4187,7 +4171,6 @@ package body Sax.Readers is
          Ename_Id, Ename_NS_Id, Name_Id, NS_Id, Type_Id : Token;
          Default_Id : Token;
          Attr : Attributes_Table.Element_Ptr;
-         Last : Natural;
          Default_Decl : Default_Declaration;
          Att_Type : Attribute_Type;
          Ename, SName : Symbol;
@@ -4207,17 +4190,11 @@ package body Sax.Readers is
             declare
                Attr2 : constant Attributes_Entry :=
                  (Element_Name => Ename,
-                  Attributes   => null);
+                  Attributes   => (0, null));
             begin
                Set (Parser.Default_Atts, Attr2);
                Attr := Get_Ptr (Parser.Default_Atts, Ename);
             end;
-         end if;
-
-         if Attr.Attributes = null then
-            Last := 0;
-         else
-            Last := Attr.Attributes'Last;
          end if;
 
          if Id.Typ = Space then
@@ -4360,10 +4337,8 @@ package body Sax.Readers is
                     (Default_Start.First .. Default_End.Last));
                Unref (M2);
 
-               Add
-                 (Parser       => Parser,
-                  Attr         => Attr.Attributes,
-                  Count        => Last,
+               Append
+                 (List         => Attr.Attributes,
                   If_Unique    => True,
                   Location     => Name_Id.Location,
                   Local_Name   => SName,
@@ -4523,10 +4498,8 @@ package body Sax.Readers is
                      if Parser.Feature_Namespace_Prefixes
                        or else not Is_Xmlns
                      then
-                        Add
-                          (Parser       => Parser,
-                           Attr         => Parser.Attributes.List,
-                           Count        => Parser.Attributes.Count,
+                        Append
+                          (List         => Parser.Attributes,
                            If_Unique    => True,
                            Location     => No_Location,
                            Local_Name   => DTD_Attr (J).Local_Name,
@@ -4574,7 +4547,7 @@ package body Sax.Readers is
                end if;
 
                for A in 1 .. J - 1 loop
-                  if Get_URI (Parser.Attributes.List (A).NS) = Get_URI (NS)
+                  if Parser.Attributes.List (A).URI = Get_URI (NS)
                     and then Parser.Attributes.List (A).Local_Name =
                       Parser.Attributes.List (J).Local_Name
                   then
@@ -4587,7 +4560,7 @@ package body Sax.Readers is
                   end if;
                end loop;
 
-               Parser.Attributes.List (J).NS := NS;
+               Parser.Attributes.List (J).URI := Get_URI (NS);
             end loop;
          end if;
       end Resolve_Attribute_Namespaces;
@@ -4601,7 +4574,7 @@ package body Sax.Readers is
       is
          Elem : constant Symbol := Find_Symbol
            (Parser, Qname_From_Name (Parser, Elem_NS_Id, Elem_Name_Id));
-         Attr : constant Sax_Attribute_Array_Access := Get
+         Attr : constant Sax_Attribute_List := Get
            (Parser.Default_Atts, Elem).Attributes;
          --  The attributes as defined in the DTD
 
@@ -4627,13 +4600,13 @@ package body Sax.Readers is
 
          function Find_Declaration return Integer is
          begin
-            if Attr /= null then
+            if Attr.List /= null then
                --  First test: same prefix and local name. We will test later
                --  for a same URI
 
-               for A in Attr'Range loop
-                  if Attr (A).Local_Name = Attr_Name
-                    and then Attr (A).Prefix = Attr_Prefix
+               for A in Attr.List'First .. Attr.Count loop
+                  if Attr.List (A).Local_Name = Attr_Name
+                    and then Attr.List (A).Prefix = Attr_Prefix
                   then
                      return A;
                   end if;
@@ -4649,16 +4622,16 @@ package body Sax.Readers is
          procedure Check_Required_Attributes is
             Found : Boolean;
          begin
-            if Parser.Feature_Validation and then Attr /= null then
-               for A in Attr'Range loop
-                  if Attr (A).Default_Decl = Required then
+            if Parser.Feature_Validation and then Attr.List /= null then
+               for A in Attr.List'First .. Attr.Count loop
+                  if Attr.List (A).Default_Decl = Required then
                      Found := False;
 
                      for T in 1 .. Parser.Attributes.Count loop
                         if Parser.Attributes.List (T).Local_Name =
-                            Attr (A).Local_Name
+                            Attr.List (A).Local_Name
                           and then Parser.Attributes.List (T).Prefix =
-                            Attr (A).Prefix
+                            Attr.List (A).Prefix
                         then
                            Found := True;
                            exit;
@@ -4668,7 +4641,8 @@ package body Sax.Readers is
                      if not Found then
                         Error
                           (Parser, "[VC 3.3.2] Required attribute '"
-                           & To_QName (Attr (A).Prefix, Attr (A).Local_Name)
+                           & To_QName (Attr.List (A).Prefix,
+                                       Attr.List (A).Local_Name)
                            & "' must be defined");
                      end if;
                   end if;
@@ -4724,7 +4698,7 @@ package body Sax.Readers is
               (Id, Attr_Value_State, Value_Start, Value_End,
                Normalize       => True,
                Collapse_Spaces => A /= -1
-                  and then Attr (A).Att_Type /= Cdata);
+                  and then Attr.List (A).Att_Type /= Cdata);
 
             Attr_Value := Find_Symbol (Parser, Value_Start, Value_End);
             Add_Attr   := True;
@@ -4760,8 +4734,8 @@ package body Sax.Readers is
                if Parser.Feature_Validation
                  and then A /= -1
                then
-                  if Attr (A).Default_Decl = Fixed
-                    and then Attr (A).Value /= Attr_Value
+                  if Attr.List (A).Default_Decl = Fixed
+                    and then Attr.List (A).Value /= Attr_Value
                   then
                      Error
                        (Parser,
@@ -4780,7 +4754,7 @@ package body Sax.Readers is
                --  All attributes must be defined (including xml:lang, that
                --  requires additional testing afterwards)
                if Parser.Feature_Validation then
-                  if Attr = null then
+                  if Attr.List = null then
                      Error
                        (Parser, "[VC] No attribute allowed for element "
                         & Get (Parser.Current_Node.Name).all,
@@ -4817,8 +4791,8 @@ package body Sax.Readers is
                end if;
 
                if A /= -1 then
-                  if Attr (A).Default_Decl = Fixed
-                    and then Attr (A).Value /= Attr_Value
+                  if Attr.List (A).Default_Decl = Fixed
+                    and then Attr.List (A).Value /= Attr_Value
                   then
                      Error
                        (Parser, "[VC 3.3.2] Fixed attribute '"
@@ -4827,15 +4801,13 @@ package body Sax.Readers is
                         Attr_Name_Id.Location);
                   end if;
 
-                  Attr_Type := Attr (A).Att_Type;
+                  Attr_Type := Attr.List (A).Att_Type;
                else
                   Attr_Type := Cdata;
                end if;
 
-               Add
-                 (Parser     => Parser,
-                  Attr       => Parser.Attributes.List,
-                  Count      => Parser.Attributes.Count,
+               Append
+                 (List       => Parser.Attributes,
                   If_Unique  => False,
                   Location   => Attr_Name_Id.Location,
                   Local_Name => Attr_Name,
@@ -4860,7 +4832,7 @@ package body Sax.Readers is
 
          Check_Required_Attributes;
 
-         Add_Default_Attributes (Attr);
+         Add_Default_Attributes (Attr.List);
 
          --  Check attribute values. We must do that after adding the default
          --  attributes, so that they are properly checked as well. It would be
@@ -6028,7 +6000,8 @@ package body Sax.Readers is
 
    procedure Free (Att : in out Attributes_Entry) is
    begin
-      Unchecked_Free (Att.Attributes);
+      Unchecked_Free (Att.Attributes.List);
+      Att.Attributes.Count := 0;
    end Free;
 
    -------------
@@ -6358,7 +6331,7 @@ package body Sax.Readers is
       Local_Name : Sax.Symbols.Symbol) return Integer is
    begin
       for A in 1 .. List.Count loop
-         if Get_URI (List.List (A).NS) = URI
+         if List.List (A).URI = URI
            and then List.List (A).Local_Name = Local_Name
          then
             return A;
@@ -6521,7 +6494,7 @@ package body Sax.Readers is
    function Get_Prefix
      (List : Sax_Attribute_List; Index : Integer) return Sax.Symbols.Symbol is
    begin
-      return Get_Prefix (List.List (Index).NS);
+      return List.List (Index).Prefix;
    end Get_Prefix;
 
    --------------
@@ -6531,7 +6504,7 @@ package body Sax.Readers is
    function Get_Name
      (List : Sax_Attribute_List; Index : Integer) return Qualified_Name is
    begin
-      return (NS    => Get_URI (List.List (Index).NS),
+      return (NS    => List.List (Index).URI,
               Local => List.List (Index).Local_Name);
    end Get_Name;
 
@@ -6544,7 +6517,7 @@ package body Sax.Readers is
       return Unicode.CES.Byte_Sequence
    is
    begin
-      return Qname_From_Name (Get_Prefix (List.List (Index).NS),
+      return Qname_From_Name (List.List (Index).Prefix,
                               List.List (Index).Local_Name);
    end Get_Qname;
 

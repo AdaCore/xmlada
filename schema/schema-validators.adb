@@ -778,8 +778,18 @@ package body Schema.Validators is
                        (Reader, "Attribute """
                         & To_QName (Attr.Name)
                         & """ is required in this context");
-                  when Prohibited | Optional | Default =>
+                  when Prohibited =>
                      null;
+                  when Optional | Default =>
+                     if Attr.Default /= No_Symbol then
+                        Append
+                           (List       => Atts,
+                            Local_Name => Attr.Name.Local,
+                            Prefix     => No_Symbol,
+                            URI        => Attr.Name.NS,
+                            Value      => Attr.Default,
+                            Location   => Sax.Locators.No_Location);
+                     end if;
                end case;
 
             else
