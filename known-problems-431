@@ -1,22 +1,22 @@
 =======================================
-Known problems in XML/Ada version 4.3.0
+Known problems in XML/Ada version 4.3.1
 =======================================
 
 Copyright (C) 2013, AdaCore
 
-The following is a listing of known problems in release 4.3.0. Except where
+The following is a listing of known problems in release 4.3.1. Except where
 specifically noted, all these problems have been corrected in the development
 tree of the 4.4 technology. This means they are corrected in any 4.4.0w
 wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
-KP-43-M325-034 Schema: default attributes not set
+KP-431-M325-034 Schema: default attributes not set
 
   Problem:    When the schema defines optional attributes with default values
               for an element, those attributes are not returned by the parser
               if they were not specified in the XML document.
 
-  Status:     Fixed in XML/Ada 4.4.0
+  Status:     Fixed in XML/Ada 4.4 on 2013-03-26
 
-  Workaround: None.
+  Workaround: Do not use default attribute values.
