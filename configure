@@ -1844,8 +1844,6 @@ test -n "$target_alias" &&
 
 # Also update in AC_INIT above
 XMLADA_VERSION=4.4.0w
-XMLADA_MAJOR_VERSION=4
-XMLADA_MINOR_VERSION=4.0w
 
 
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether gnat can build shared libs" >&5
