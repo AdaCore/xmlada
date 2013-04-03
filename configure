@@ -579,8 +579,8 @@ MAKEFLAGS=
 # Identity of this package.
 PACKAGE_NAME='XML/Ada'
 PACKAGE_TARNAME='xmlada'
-PACKAGE_VERSION='4.4.0w'
-PACKAGE_STRING='XML/Ada 4.4.0w'
+PACKAGE_VERSION='2013'
+PACKAGE_STRING='XML/2013'
 PACKAGE_BUGREPORT='report@adacore.com'
 PACKAGE_URL=''
 
@@ -1843,7 +1843,7 @@ test -n "$target_alias" &&
 
 
 # Also update in AC_INIT above
-XMLADA_VERSION=4.4.0w
+XMLADA_VERSION=2013
 
 
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether gnat can build shared libs" >&5
