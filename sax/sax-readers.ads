@@ -300,6 +300,21 @@ package Sax.Readers is
    pragma Inline (Get_Length);
    --  Return the number of attributes in the list
 
+   procedure Append
+      (List         : in out Sax_Attribute_List;
+       Local_Name   : Sax.Symbols.Symbol;
+       Prefix       : Sax.Symbols.Symbol;
+       Att_Type     : Sax.Attributes.Attribute_Type := Sax.Attributes.Cdata;
+       URI          : Sax.Symbols.Symbol := Sax.Symbols.No_Symbol;
+       Value        : Sax.Symbols.Symbol;
+       Location     : Sax.Locators.Location;
+       Default_Decl : Sax.Attributes.Default_Declaration :=
+          Sax.Attributes.Default;
+       If_Unique    : Boolean := False);
+   --  Append a new attribute to the list.
+   --  If If_Unique is true, the attribute is not added if it is already in
+   --  the list.
+
    type Qualified_Name is record
       NS    : Sax.Symbols.Symbol;
       Local : Sax.Symbols.Symbol;
@@ -974,7 +989,7 @@ private
       Local_Name   : Sax.Symbols.Symbol;
       Value        : Sax.Symbols.Symbol;
       Non_Normalized_Value : Sax.Symbols.Symbol;
-      NS           : Sax.Utils.XML_NS := Sax.Utils.No_XML_NS;
+      URI          : Sax.Symbols.Symbol;
       Att_Type     : Sax.Attributes.Attribute_Type := Sax.Attributes.Cdata;
       Default_Decl : Sax.Attributes.Default_Declaration :=
         Sax.Attributes.Default;
@@ -995,9 +1010,10 @@ private
 
    type Attributes_Entry is record
       Element_Name : Sax.Symbols.Symbol;
-      Attributes   : Sax_Attribute_Array_Access;
+      Attributes   : Sax_Attribute_List;
    end record;
-   Null_Attribute : constant Attributes_Entry := (Sax.Symbols.No_Symbol, null);
+   Null_Attribute : constant Attributes_Entry :=
+      (Sax.Symbols.No_Symbol, (0, null));
 
    procedure Free (Att : in out Attributes_Entry);
    function Get_Key (Att : Attributes_Entry) return Sax.Symbols.Symbol;
@@ -1035,7 +1051,7 @@ private
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
 
-      Attributes       : Sax_Attribute_List;
+      Attributes    : Sax_Attribute_List;
       --  List of attributes for the current element. This array is to limit
       --  the number of memory allocations, by reusing it for each element.
 

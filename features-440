@@ -2,7 +2,7 @@
 XML/Ada NEW FEATURES LIST
 =========================
 
-Copyright (C) 2001-2012, AdaCore
+Copyright (C) 2001-2013, AdaCore
 
 This file contains a list of new features introduced in XML/Ada.
 A full description of all XML/Ada features can be found in the XML/Ada
@@ -15,7 +15,7 @@ of the feature.
 New features in version 4.4
 ---------------------------
 
-NF-44-LB01-017 attributeGroup support in simple type extensions (2012-11-08)
+NF-440-LB01-017 attributeGroup support in simple type extensions (2012-11-08)
 
    It is now possible to extend a simple type in a XSD file, and define which
    attributes are valid in the extension through a <attributeGroup> tag.
