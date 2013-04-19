@@ -101,10 +101,26 @@ ifeq (${LIBEXT},.dll)
 	cd ${bindir}; ${CP} ${libdir}/xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT} libxmlada_$*${LIBEXT}
 else
 	${INSTALL} $*/lib/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT}.${VERSION} ${xmllib}
+
+	@# prefix/lib/xmlada/relocatable/libxmlada.so -> libxmlada.so.4.4.0w
 	cd ${xmllib}; ${LN_S} libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}
+
+	@# prefix/lib/xmlada/relocatable/libxmlada.so.4.4 -> libxmlada.so.4.4.0w
 	-cd ${xmllib}; ${LN_S} libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${basename ${VERSION}}
-	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${VERSION}
+
+	@# prefix/lib/xmlada/relocatable/libxmlada.so.4 -> libxmlada.so.4.4.0w
+ifneq (${basename ${basename ${VERSION}}},${basename ${VERSION}})
+	cd ${xmllib}; ${LN_S} libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${basename ${basename ${VERSION}}}
+
+	@# prefix/lib/libxmlada.so.4 -> prefix/lib/xmlada/relocatable/libxmlada.so.4.4.0w
+	cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${basename ${basename ${VERSION}}}
+endif
+
+	@# prefix/lib/libxmlada.so.4.4 -> prefix/lib/xmlada/relocatable/libxmlada.so.4.4.0w
 	-cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${basename ${VERSION}}
+
+	@# prefix/lib/libxmlada.so.4.4.0w -> prefix/lib/xmlada/relocatable/libxmlada.so.4.4.0w
+	-cd ${libdir}; ${LN_S} xmlada/${LIBRARY_TYPE}/libxmlada_$*${LIBEXT}.${VERSION} libxmlada_$*${LIBEXT}.${VERSION}
 endif
 endif
 	cd ${xmllib}; ${CHMOD} ugo-w *.ali
