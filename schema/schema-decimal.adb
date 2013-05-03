@@ -92,10 +92,10 @@ package body Schema.Decimal is
    -----------
 
    procedure Value
-     (Symbols  : Sax.Utils.Symbol_Table;
-      Ch       : Unicode.CES.Byte_Sequence;
-      Val      : out Arbitrary_Precision_Number;
-      Error    : out Sax.Symbols.Symbol) is
+     (Symbols : Sax.Utils.Symbol_Table;
+      Ch      : Unicode.CES.Byte_Sequence;
+      Val     : out Arbitrary_Precision_Number;
+      Error   : out Sax.Symbols.Symbol) is
    begin
       Internal_Value (Ch, Symbols, True, Val, Error);
    end Value;
@@ -175,6 +175,7 @@ package body Schema.Decimal is
                Error  := Find (Symbols, "No exponent specified in " & Ch);
                Val := Undefined_Number;
                return;
+
             else
                declare
                   Save : constant Integer := Pos;
@@ -199,6 +200,7 @@ package body Schema.Decimal is
                   end if;
                end loop;
                exit;
+
             else
                Error := Find (Symbols, "Invalid integer: """ & Ch & """");
                Val := Undefined_Number;
@@ -225,10 +227,10 @@ package body Schema.Decimal is
    -----------------------
 
    procedure Value_No_Exponent
-     (Symbols  : Sax.Utils.Symbol_Table;
-      Ch       : Unicode.CES.Byte_Sequence;
-      Val      : out Arbitrary_Precision_Number;
-      Error    : out Sax.Symbols.Symbol) is
+     (Symbols : Sax.Utils.Symbol_Table;
+      Ch      : Unicode.CES.Byte_Sequence;
+      Val     : out Arbitrary_Precision_Number;
+      Error   : out Sax.Symbols.Symbol) is
    begin
       Internal_Value (Ch, Symbols, False, Val, Error);
    end Value_No_Exponent;
@@ -259,6 +261,7 @@ package body Schema.Decimal is
       end loop;
 
       First := Fore_Last + 1;
+
       if First <= Num'Last
         and then Num (First) = '.'
       then
@@ -338,6 +341,7 @@ package body Schema.Decimal is
    procedure To_Next_Digit (Num : String; Pos : in out Integer) is
    begin
       Pos := Pos + 1;
+
       if Pos <= Num'Last then
          if Num (Pos) = 'E' or Num (Pos) = 'e' then
             Pos := Num'Last + 1;
@@ -406,6 +410,7 @@ package body Schema.Decimal is
                else
                   return Greater_Than;
                end if;
+
             elsif Num1 (Pos1) < Num2 (Pos2) then
                if Num1_Negative then
                   return Greater_Than;
@@ -421,6 +426,7 @@ package body Schema.Decimal is
               and then Pos2 > Num2'Last
             then
                return Equal;
+
             elsif Pos1 > Num1'Last then
                --  If only "0" remain (and because we are in the decimal part),
                --  the two numbers are equal.
@@ -523,11 +529,12 @@ package body Schema.Decimal is
       return Sax.Symbols.Symbol
    is
       Value : constant Cst_Byte_Sequence_Access := Get (Num.Value);
-      Exp : constant Long_Long_Integer := Get_Exp (Value.all);
+      Exp   : constant Long_Long_Integer := Get_Exp (Value.all);
+
       Fore_First, Fore_Last : Integer;
-      Pos : Integer;
-      Digits_Count : Natural := 0;
-      Aft_First, Aft_Last : Integer;
+      Pos                   : Integer;
+      Digits_Count          : Natural := 0;
+      Aft_First, Aft_Last   : Integer;
    begin
       Get_Fore (Value.all, Fore_First, Fore_Last);
       Get_Aft (Value.all, Fore_Last, Aft_First, Aft_Last);
@@ -537,6 +544,7 @@ package body Schema.Decimal is
       if Value (Pos) = '-' or Value (Pos) = '+' then
          Pos := Pos + 1;
       end if;
+
       if Value (Pos) = '.' then
          Pos := Pos + 1;
       end if;
@@ -576,18 +584,24 @@ package body Schema.Decimal is
       case F1.Kind is
          when NaN =>
             return False;
+
          when Plus_Infinity =>
             return False;
+
          when Minus_Infinity =>
             return True;
+
          when Standard_Float =>
             case F2.Kind is
                when NaN =>
                   return False;
+
                when Plus_Infinity =>
                   return True;
+
                when Minus_Infinity =>
                   return False;
+
                when Standard_Float =>
                   if F1.Mantiss < 0.0 then
                      if F2.Mantiss >= 0.0 then
@@ -639,18 +653,24 @@ package body Schema.Decimal is
       case F1.Kind is
          when NaN =>
             return False;
+
          when Plus_Infinity =>
             return False;
+
          when Minus_Infinity =>
             return True;
+
          when Standard_Float =>
             case F2.Kind is
                when NaN =>
                   return False;
+
                when Plus_Infinity =>
                   return True;
+
                when Minus_Infinity =>
                   return False;
+
                when Standard_Float =>
                   if F1.Mantiss < 0.0 then
                      if F2.Mantiss >= 0.0 then
@@ -703,8 +723,8 @@ package body Schema.Decimal is
          end if;
 
          declare
-            Str2 : String (1 .. 200);
-            P    : Integer := Str2'First - 1;
+            Str2      : String (1 .. 200);
+            P         : Integer := Str2'First - 1;
             Exp_Chars : constant Natural := 5;
          begin
             System.Img_Real.Set_Image_Real
@@ -734,10 +754,13 @@ package body Schema.Decimal is
       case Value.Kind is
          when NaN =>
             return "NaN";
+
          when Plus_Infinity =>
             return "INF";
+
          when Minus_Infinity =>
             return "-INF";
+
          when Standard_Float =>
             declare
                Str : constant String := Long_Long_Float'Image (Value.Mantiss);
