@@ -527,7 +527,6 @@ package body Schema.Decimal is
       Fore_First, Fore_Last : Integer;
       Pos : Integer;
       Digits_Count : Natural := 0;
-      Frac_Digits  : Natural := 0;
       Aft_First, Aft_Last : Integer;
    begin
       Get_Fore (Value.all, Fore_First, Fore_Last);
