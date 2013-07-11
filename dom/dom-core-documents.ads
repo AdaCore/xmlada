@@ -59,7 +59,7 @@ package DOM.Core.Documents is
    --  they are valid while the document is in use.
 
    function Create_Document_Fragment (Doc : Document) return Document_Fragment;
-   --  Create an empty document fragment;
+   --  Create an empty document fragment
 
    function Create_Text_Node (Doc : Document; Data : DOM_String)
       return Text;
