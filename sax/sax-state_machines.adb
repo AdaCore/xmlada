@@ -1927,11 +1927,12 @@ package body Sax.State_Machines is
       --------------
 
       function Expected (Self : NFA_Matcher) return String is
+         type Active_State_Data_Access is access all Active_State_Data;
          Msg  : Unbounded_String;
          Iter : Active_State_Iterator := For_Each_Active_State (Self);
          T    : Transition_Id;
          S    : State;
-         Parent_Data : access Active_State_Data := null;
+         Parent_Data : Active_State_Data_Access := null;
       begin
          loop
             S := Current (Self, Iter);
@@ -1943,8 +1944,9 @@ package body Sax.State_Machines is
                P : constant Active_State_Iterator := Parent (Iter);
             begin
                if P.Current_Level /= No_Matcher_State then
-                  Parent_Data := Self.Active.Table
-                    (P.States (P.Current_Level)).Active_Data'Access;
+                  Parent_Data := Active_State_Data_Access'
+                     (Self.Active.Table
+                       (P.States (P.Current_Level)).Active_Data'Access);
                end if;
             end;
 
