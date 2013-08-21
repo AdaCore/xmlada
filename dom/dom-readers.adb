@@ -258,4 +258,13 @@ package body DOM.Readers is
       Read.Warnings_As_Error := Warnings_As_Error;
    end Set_Warnings_As_Errors;
 
+   ------------------
+   -- Current_Node --
+   ------------------
+
+   function Current_Node (Read : Tree_Reader) return Node is
+   begin
+      return Read.Current_Node;
+   end Current_Node;
+
 end DOM.Readers;
