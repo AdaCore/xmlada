@@ -14,7 +14,6 @@ procedure DomExample2 is
    List   : Node_List;
    N      : Node;
    A      : Attr;
-   C      : Node;
 begin
    Set_Public_Id (Input, "Preferences file");
    Open ("pref.xml", Input);

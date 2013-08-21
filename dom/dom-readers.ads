@@ -40,6 +40,12 @@ package DOM.Readers is
    --  was raised (for post-death analysis, if required).
 
    function Get_Tree (Read : Tree_Reader) return Document;
+   --  The document created on the fly by the reader
+
+   function Current_Node (Read : Tree_Reader) return Node;
+   --  The last node created by Start_Element. This function is useful when
+   --  you want to override Start_Element or Characters to do your own
+   --  specific changes.
 
    procedure Free (Read : in out Tree_Reader);
    --  Free the memory associated with the reader, in particular the tree

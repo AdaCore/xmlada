@@ -136,3 +136,28 @@ An example is provided in the XML/Ada distribution, called
 :file:`dom/test/tostring.adb` which shows how you can create a stream to
 convert the tree in memory, without going through a file on the disk
 
+Adding information to the tree
+==============================
+
+The DOM standard does not mandate each node to have a pointer to the
+location it was read from (for instance `file:line:column`). In fact,
+storing that for each node would increase the size of the DOM tree
+(not small by any means already) significantly.
+
+But depending on your application, this might be a useful information
+to have, for instance if you want to report error messages with a
+correct location.
+
+Fortunately, this can be done relatively easily by extending the
+type `DOM.Readers.Tree_Reader`, and override the `Start_Element`.
+You would then add a custom attribute to all the nodes that contain
+the location for this node. Here is an example.
+
+.. literalinclude:: dom/dom_with_location.ads
+   :language: ada
+   :linenos:
+
+.. literalinclude:: dom/dom_with_location.adb
+   :language: ada
+   :linenos:
+

@@ -42,9 +42,6 @@ Most of the information comes from the official Unicode Web site, at
 Part of this documentation comes from `http://www.unicode.org
 <http://www.unicode.org>`_, the official web site for Unicode.
 
-Some information was also extracted from the "UTF-8 and Unicode FAQ" by M.
-Kuhn, available at `??? <???>`_.
-
 .. _Glyphs:
 
 Glyphs
