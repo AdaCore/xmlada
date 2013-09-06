@@ -15,6 +15,12 @@ of the feature.
 New features in version 4.4
 ---------------------------
 
+NF-440-M805-006 Tree_Reader gives access to the current node (2013-08-21)
+
+   The package DOM.Readers gives access to the DOM node that is being created.
+   This allows users to more easily extend the Tree_Reader object to add their
+   own processing, like creating custom attributes.
+
 NF-440-LB01-017 attributeGroup support in simple type extensions (2012-11-08)
 
    It is now possible to extend a simple type in a XSD file, and define which
