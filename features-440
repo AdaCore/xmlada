@@ -15,6 +15,12 @@ of the feature.
 New features in version 4.4
 ---------------------------
 
+NF-440-M916-017 Allow relative URI in namespace location (2013-09-17)
+
+   For compatibility with older XML documents, XML/Ada can now be set up
+   to allow relative URI when declaration namespaces. This needs to be
+   activated through Sax.Allow_Relative_IRI_Feature.
+
 NF-440-M805-006 Tree_Reader gives access to the current node (2013-08-21)
 
    The package DOM.Readers gives access to the DOM node that is being created.

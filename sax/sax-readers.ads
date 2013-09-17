@@ -178,6 +178,14 @@ package Sax.Readers is
    --  but will provide better validation.
    --  This is False by default.
 
+   Allow_Relative_IRI_Feature : constant String :=
+      "http://www.adacore.com/sax/features/allow_relative_iri";
+   --  By default, XML/Ada conforms to the W3C standard and forbids relative
+   --  URI in the location of namespaces. However, these were allowed by
+   --  W3C in the past, and some documents might still be using them.
+   --  If this feature is set to True, then XML/Ada will emit a warning upon
+   --  seeing a relative URI, otherwise it emits an error.
+
    -------------------
    -- Error handler --
    -------------------
@@ -1160,6 +1168,7 @@ private
       Feature_Validation                  : Boolean := False;
       Feature_Test_Valid_Chars            : Boolean := False;
       Feature_Schema_Validation           : Boolean := True;
+      Feature_Allow_Relative_IRI          : Boolean := False;
    end record;
 
    type Reader is new Sax_Reader with null record;

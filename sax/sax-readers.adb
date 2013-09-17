@@ -677,6 +677,10 @@ package body Sax.Readers is
    procedure Warning
      (Parser : in out Sax_Reader'Class;
       Msg    : String;
+      Loc    : Sax.Locators.Location);
+   procedure Warning
+     (Parser : in out Sax_Reader'Class;
+      Msg    : String;
       Id     : Token := Null_Token);
    --  Same as Fatal_Error, but reports a warning instead
 
@@ -999,6 +1003,19 @@ package body Sax.Readers is
    -------------
    -- Warning --
    -------------
+
+   procedure Warning
+     (Parser : in out Sax_Reader'Class;
+      Msg    : String;
+      Loc    : Sax.Locators.Location)
+   is
+      Id2  : Sax.Locators.Location := Loc;
+   begin
+      if Id2 = No_Location then
+         Id2 := Parser.Current_Location;
+      end if;
+      Warning (Parser, Create (Location (Parser, Id2) & ": " & Msg, Id2));
+   end Warning;
 
    procedure Warning
      (Parser : in out Sax_Reader'Class;
@@ -4448,12 +4465,20 @@ package body Sax.Readers is
            and then not Is_Valid_IRI
              (Get (URI).all, Version => Parser.XML_Version)
          then
-            Error
-              (Parser,
-               "Invalid absolute IRI (Internationalized Resource"
-               & " Identifier) for namespace: """ & Get (URI).all & """",
-               Location);
-            --  NS 2
+            if Parser.Feature_Allow_Relative_IRI then
+               Warning
+                 (Parser,
+                  "Invalid absolute IRI (Internationalized Resource"
+                  & " Identifier) for namespace: """ & Get (URI).all & """",
+                  Location);
+            else
+               Error
+                 (Parser,
+                  "Invalid absolute IRI (Internationalized Resource"
+                  & " Identifier) for namespace: """ & Get (URI).all & """",
+                  Location);
+               --  NS 2
+            end if;
          end if;
 
          Add_Namespace (Parser, Parser.Current_Node, Prefix, URI);
@@ -6059,6 +6084,9 @@ package body Sax.Readers is
       elsif Name = Test_Valid_Chars_Feature then
          return Parser.Feature_Test_Valid_Chars;
 
+      elsif Name = Allow_Relative_IRI_Feature then
+         return Parser.Feature_Allow_Relative_IRI;
+
       elsif Name = Schema_Validation_Feature then
          return Parser.Feature_Schema_Validation;
       end if;
@@ -6093,6 +6121,9 @@ package body Sax.Readers is
 
       elsif Name = Schema_Validation_Feature then
          Parser.Feature_Schema_Validation := Value;
+
+      elsif Name = Allow_Relative_IRI_Feature then
+         Parser.Feature_Allow_Relative_IRI := Value;
       end if;
    end Set_Feature;
 
