@@ -112,6 +112,77 @@ package body Sax.Utils is
        others => False);
    --  Whether the character matches the Base64Binary definitions
 
+   Valid_Name_Startchar : constant Unichar_Boolean_Array (0 .. 255) :=
+      (False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, True, False,
+       False, False, False, False, False, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, False, False, False,
+       False, True, False, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, False, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True, True,
+       True, False, True, True, True, True, True, True, True, True);
+   --  List of valid characters (from the range 0 .. 255) that can be the
+   --  initial character in an XML name.
+   --  Automatically generated with:
+   --      Char = Colon
+   --      or else Char = Spacing_Underscore
+   --      or else Char in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
+   --      or else Char in Latin_Small_Letter_A .. Latin_Small_Letter_Z
+   --      or else Char in 16#C0# .. 16#D6#
+   --      or else Char in 16#D8# .. 16#F6#
+   --      or else Char in 16#F8# .. 16#2FF#;
+
+   Valid_Name_Char : constant Unichar_Boolean_Array (0 .. 255) :=
+      (False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, True, True, False, True, True, True,
+       True, True, True, True, True, True, True, True, False, False, False,
+       False, False, False, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, False, False, False, False, True,
+       False, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, False, False, False, False, False,
+       False, False, False, False, False, True, False, False, False, False,
+       False, False, False, False, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, False, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, True, True, True, True, True, True, True,
+       True, True, True, True, False, True, True, True, True, True, True,
+       True, True);
+   --  List of valid characters (from the range 0 .. 255) that are valid
+   --  for XML names.
+   --  Automatically generated with:
+   --      Char = Hyphen_Minus
+   --      or else Char = Period
+   --      or else (Char in Digit_Zero .. Digit_Nine)
+   --      or else Char = 16#B7#
+   --      or else Valid_Name_Startchar (Char);
+
    ----------------------------
    -- Is_Valid_Language_Name --
    ----------------------------
@@ -193,13 +264,20 @@ package body Sax.Utils is
          when XML_1_0_Fifth_Edition
             | XML_1_0
             | XML_1_1 =>
-            return Char = Hyphen_Minus
-              or else Char = Period
-              or else (Char in Digit_Zero .. Digit_Nine)
-              or else Char = 16#B7#
-              or else (Char in 16#0300# .. 16#036F#)
-              or else (Char in 16#203F# .. 16#2040#)
-              or else Is_Valid_Name_Startchar (Char, Version);
+
+            if Char <= 255 then
+               return Valid_Name_Char (Char);
+            elsif Char < 16#0300# then
+               return Is_Valid_Name_Startchar (Char, Version);
+            elsif Char <= 16#036F# then
+               return True;
+            elsif Char < 16#203F# then
+               return Is_Valid_Name_Startchar (Char, Version);
+            elsif Char <= 16#2040# then
+               return True;
+            else
+               return Is_Valid_Name_Startchar (Char, Version);
+            end if;
       end case;
    end Is_Valid_Name_Char;
 
@@ -222,22 +300,49 @@ package body Sax.Utils is
          when XML_1_0_Fifth_Edition
             | XML_1_0
             | XML_1_1 =>
-            return Char = Colon
-              or else Char = Spacing_Underscore
-              or else Char in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
-              or else Char in Latin_Small_Letter_A .. Latin_Small_Letter_Z
-              or else Char in 16#C0# .. 16#D6#
-              or else Char in 16#D8# .. 16#F6#
-              or else Char in 16#F8# .. 16#2FF#
-              or else Char in 16#370# .. 16#37D#
-              or else Char in 16#37F# .. 16#1FFF#
-              or else Char in 16#200C# .. 16#200D#
-              or else Char in 16#2070# .. 16#218F#
-              or else Char in 16#2C00# .. 16#2FEF#
-              or else Char in 16#3001# .. 16#D7FF#
-              or else Char in 16#F900# .. 16#FDCF#
-              or else Char in 16#FDF0# .. 16#FFFD#
-              or else Char in 16#10000# .. 16#EFFFF#;
+            if Char <= 255 then
+               return Valid_Name_Startchar (Char);
+            elsif Char <= 16#2FF# then
+               return True;
+            elsif Char < 16#370# then
+               return False;
+            elsif Char <= 16#37D# then
+               return True;
+            elsif Char < 16#37F# then
+               return False;
+            elsif Char <= 16#1FFF# then
+               return True;
+            elsif Char < 16#200C# then
+               return False;
+            elsif Char <= 16#200D# then
+               return True;
+            elsif Char < 16#2070# then
+               return False;
+            elsif Char <= 16#218F# then
+               return True;
+            elsif Char < 16#2C00# then
+               return False;
+            elsif Char <= 16#2FEF# then
+               return True;
+            elsif Char < 16#3001# then
+               return False;
+            elsif char <= 16#D7FF# then
+               return True;
+            elsif Char < 16#F900# then
+               return False;
+            elsif Char <= 16#FDCF# then
+               return True;
+            elsif Char < 16#FDF0# then
+               return False;
+            elsif Char <= 16#FFFD# then
+               return True;
+            elsif Char < 16#10000# then
+               return False;
+            elsif Char <= 16#EFFFF# then
+               return True;
+            else
+               return False;
+            end if;
       end case;
    end Is_Valid_Name_Startchar;
 

@@ -80,10 +80,40 @@ package Unicode.CES.Utf8 is
    --  a valid encoding.
 
    function Width (Char : Unicode_Char) return Natural;
+   pragma Inline (Width);
    --  Return the number of bytes occupied by the Utf8 representation of Char
 
    function Length (Str : Utf8_String) return Natural;
    --  Return the number of characters in Str
+
+   function Utf8_Length (Str : Utf8_String) return Natural renames Length;
+   --  Return the number of characters in Str
+
+   function Utf8_Next_Char
+      (Str : Utf8_String; Index : Natural) return Natural;
+   pragma Inline (Utf8_Next_Char);
+   --  Return the location of the next character in Str.
+   --  Index must point to the beginning of a character.
+
+   function Utf8_Prev_Char
+      (Str : Utf8_String; Index : Natural) return Natural;
+   pragma Inline (Utf8_Prev_Char);
+   --  Find the previous UTF-8 character in Str, before Index.
+   --  Index does not have to be at the beginning of a UTF8-character.
+
+   procedure Utf8_Get_Char
+      (Str : Utf8_String; Index : in out Positive; Char : out Unicode_Char);
+   pragma Inline (Utf8_Get_Char);
+   --  Similar to read, but sets Char to Unicode_Char'Last in case of
+   --  invalid encoding.
+
+   function Utf8_Find_Next_Char
+      (Str : Utf8_String; Index : Natural) return Natural;
+   pragma Inline (Utf8_Find_Next_Char);
+   --  Finds the start of the next UTF8 character in the string after Index.
+   --  Index does not have to be at the beginning of a UTF8 character.
+   --  If you know you are at the beginning of a UTF8 character, it is more
+   --  efficient to use Utf8_Next_Char.
 
    -------------------------------------------
    -- Conversion to and from Utf32-encoding --

@@ -146,6 +146,9 @@ package Unicode is
    --  Convert from Ada Character encoding (extended ASCII) to Unicode
    --  character.
 
+   function To_Lower (C : Unicode_Char) return Unicode_Char;
+   --  Converts C to a lower case
+
 private
    pragma Inline (Is_Ideographic);
    pragma Inline (Is_Letter);

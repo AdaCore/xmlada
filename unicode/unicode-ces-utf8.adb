@@ -32,6 +32,152 @@ package body Unicode.CES.Utf8 is
       Order   : Byte_Order := Default_Byte_Order) return Utf8_String;
    --  Internal function used to convert character sets
 
+   type Byte is mod 2 ** 8;
+   Utf8_Skip_Data : constant array (Character) of Byte :=
+      (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+       2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3,
+       3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6,
+       6, 1, 1);
+   --  Skip-byte depending on the first byte of a utf8 string.
+
+   Utf8_Mask : constant array (Character) of Byte :=
+      (16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#, 16#7f#,
+       16#7f#, 16#7f#, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#,
+       16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#,
+       16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#,
+       16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#1f#, 16#0f#, 16#0f#, 16#0f#, 16#0f#,
+       16#0f#, 16#0f#, 16#0f#, 16#0f#, 16#0f#, 16#0f#, 16#0f#, 16#0f#, 16#0f#,
+       16#0f#, 16#0f#, 16#0f#, 16#07#, 16#07#, 16#07#, 16#07#, 16#07#, 16#07#,
+       16#07#, 16#07#, 16#03#, 16#03#, 16#03#, 16#03#, 16#01#, 16#01#, 0, 0);
+   --  Mask to decode the first byte of utf8.
+   --  This was generated automatically with the following algorithm:
+   --    if C < 128 then                       Mask := 16#7f#;
+   --    elsif (C and 16#E0#) = 16#C0# then    Mask := 16#1f#;
+   --    elsif (C and 16#F0#) = 16#E0# then    Mask := 16#0f#;
+   --    elsif (C and 16#F8#) = 16#F0# then    Mask := 16#07#;
+   --    elsif (C and 16#FC#) = 16#F8# then    Mask := 16#03#;
+   --    elsif (C and 16#FE#) = 16#FC# then    Mask := 16#01#;
+
+   function Shift_Left
+      (Value  : Unicode_Char; Amount : Natural) return Unicode_Char;
+   pragma Import (Intrinsic, Shift_Left);
+
+   function Shift_Right
+      (Value  : Unicode_Char; Amount : Natural) return Unicode_Char;
+   pragma Import (Intrinsic, Shift_Right);
+
+   --------------------
+   -- Utf8_Next_Char --
+   --------------------
+
+   function Utf8_Next_Char
+      (Str : Utf8_String; Index : Natural) return Natural is
+   begin
+      return Index + Natural (Utf8_Skip_Data (Str (Index)));
+   end Utf8_Next_Char;
+
+   -------------------------
+   -- Utf8_Find_Next_Char --
+   -------------------------
+
+   function Utf8_Find_Next_Char
+      (Str : Utf8_String; Index : Natural) return Natural
+   is
+      Idx : Natural := Index;
+      C   : Unicode_Char;
+   begin
+      while Idx <= Str'Last loop
+         C := Character'Pos (Str (Idx));
+         if (C and 16#c0#) /= 16#80# then
+            return Idx;
+         end if;
+      end loop;
+      return Str'Last + 1;
+   end Utf8_Find_Next_Char;
+
+   ---------------------
+   --  Utf8_Prev_Char --
+   ---------------------
+
+   function Utf8_Prev_Char
+      (Str : Utf8_String; Index : Natural) return Natural
+   is
+      C : Unicode_Char;
+      Idx : Natural := Index;
+   begin
+      while Idx > Str'First loop
+         Idx := Idx - 1;
+         C := Character'Pos (Str (Idx));
+         if (C and 16#c0#) /= 16#80# then
+            return Idx;
+         end if;
+      end loop;
+      return Str'First - 1;
+   end Utf8_Prev_Char;
+
+   -------------------
+   -- Utf8_Get_Char --
+   -------------------
+
+   procedure Utf8_Get_Char
+      (Str : Utf8_String; Index : in out Positive; Char : out Unicode_Char)
+   is
+--      pragma Suppress (All_Checks);
+      Len  : Natural;
+      Val  : Unicode_Char;
+      C    : Unicode_Char := Character'Pos (Str (Index));
+      Mask : constant Byte := Utf8_Mask (Str (Index));
+   begin
+      if Mask = 0 then
+         Char := Unicode_Char'Last;
+         return;
+      end if;
+
+      Val := C and Unicode_Char (Mask);
+      Len := Index + Natural (Utf8_Skip_Data (Str (Index))) - 1;
+
+      if Str'Last < Len then
+         Char := Unicode_Char'Last;
+         return;
+      end if;
+
+      for Count in Index + 1 .. Len loop
+         C := Character'Pos (Str (Count));
+         if (C and 16#C0#) /= 16#80# then
+            Char := Unicode_Char'Last;
+            return;
+         end if;
+         Val := Shift_Left (Val, 6) or (C and 16#3f#);
+      end loop;
+
+      Index := Len + 1;
+      Char  := Val;
+   end Utf8_Get_Char;
+
    -----------
    -- Width --
    -----------
@@ -91,7 +237,7 @@ package body Unicode.CES.Utf8 is
       Last  := Index + Len;
       for J in reverse First .. Last loop
          Output (J) := Character'Val ((Val and 16#3f#) or 16#80#);
-         Val := Val / (2 ** 6);
+         Val := Shift_Right (Val, 6);
       end loop;
       Output (Index + 1) := Character'Val (Val or Mask);
       Index := Last;
@@ -104,50 +250,12 @@ package body Unicode.CES.Utf8 is
    procedure Read
      (Str   : Utf8_String;
       Index : in out Positive;
-      Char  : out Unicode_Char)
-   is
-      Len  : Natural;
-      Val  : Unicode_Char;
-      C    : Unicode_Char := Character'Pos (Str (Index));
+      Char  : out Unicode_Char) is
    begin
-
-      --  Compute the length of the encoding given what was in the first byte
-      if C < 128 then
-         Len := Index;
-         Val := C and 16#7f#;
-      elsif (C and 16#E0#) = 16#C0# then
-         Len := Index + 1;
-         Val := C and 16#1f#;
-      elsif (C and 16#F0#) = 16#E0# then
-         Len := Index + 2;
-         Val := C and 16#0f#;
-      elsif (C and 16#F8#) = 16#F0# then
-         Len := Index + 3;
-         Val := C and 16#07#;
-      elsif (C and 16#FC#) = 16#F8# then
-         Len := Index + 4;
-         Val := C and 16#03#;
-      elsif (C and 16#FE#) = 16#FC# then
-         Len := Index + 5;
-         Val := C and 16#01#;
-      else
+      Utf8_Get_Char (Str, Index, Char);
+      if Char = Unicode_Char'Last then
          raise Invalid_Encoding;
       end if;
-
-      for Count in Index + 1 .. Natural'Min (Len, Str'Last) loop
-         C := Character'Pos (Str (Count));
-         if (C and 16#C0#) /= 16#80# then
-            raise Invalid_Encoding;
-         end if;
-         Val := (Val * (2 ** 6)) or (C and 16#3f#);
-      end loop;
-
-      if Str'Last < Len then
-         raise Incomplete_Encoding;
-      end if;
-
-      Index := Len + 1;
-      Char  := Val;
    end Read;
 
    ------------

@@ -15,6 +15,11 @@ of the feature.
 New features in version 4.4
 ---------------------------
 
+NF-440-MA08-027 Expose utf8 functions in unicode-ces-utf8.ads (2013-10-08)
+
+   Some specialized UTF8 functions were added to this package, which can
+   therefore be used in more contexts that just XML/Ada
+
 NF-440-M916-017 Allow relative URI in namespace location (2013-09-17)
 
    For compatibility with older XML documents, XML/Ada can now be set up

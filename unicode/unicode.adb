@@ -22,7 +22,7 @@
 ------------------------------------------------------------------------------
 
 with Unicode.Names.Basic_Latin;      use Unicode.Names.Basic_Latin;
---  with Unicode.Names.Latin_Extended_A; use Unicode.Names.Latin_Extended_A;
+with Ada.Wide_Characters.Unicode;    use Ada.Wide_Characters.Unicode;
 
 package body Unicode is
 
@@ -448,4 +448,18 @@ package body Unicode is
    begin
       return Character'Pos (C);
    end To_Unicode;
+
+   --------------
+   -- To_Lower --
+   --------------
+
+   function To_Lower (C : Unicode_Char) return Unicode_Char is
+   begin
+      if C <= Wide_Character'Pos (Wide_Character'Last) then
+         return Unicode_Char
+            (Wide_Character'Pos (To_Lower_Case (Wide_Character'Val (C))));
+      else
+         return C;
+      end if;
+   end To_Lower;
 end Unicode;
