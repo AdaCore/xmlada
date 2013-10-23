@@ -4431,11 +4431,9 @@ package body Sax.Readers is
         (Prefix, URI : Symbol; Location : Sax.Locators.Location) is
       begin
          if Prefix = Empty_String then
-            if URI = Empty_String then
-               --  [2] Empty value is legal for the default namespace, and
-               --  provides unbinding
-               null;
-            end if;
+            --  [2] Empty value is legal for the default namespace, and
+            --  provides unbinding
+            null;
 
          else
             if Prefix = Parser.Xmlns_Sequence then
@@ -4976,9 +4974,25 @@ package body Sax.Readers is
          Parser.Current_Node.NS := NS;
 
          if Parser.Hooks.Start_Element /= null then
-            Parser.Hooks.Start_Element
-              (Parser'Unchecked_Access, Parser.Current_Node,
-               Parser.Attributes);
+            begin
+               Parser.Hooks.Start_Element
+                 (Parser'Unchecked_Access, Parser.Current_Node,
+                  Parser.Attributes);
+            exception
+               when others =>
+                  --  The above call might be dangerous depending on the
+                  --  compiler optimizations: Parser.Attributes is passed
+                  --  as "in out", and might be modified by the callee (for
+                  --  instance the validation does that). But in case of
+                  --  exceptions, Parser.Attributes might not be updated yes,
+                  --  and still point to memory that has been freed by Append.
+                  --
+                  --  To prevent this, we current prefer a memory leak in
+                  --  such a case, and we just lose the list of attributes.
+
+                  Parser.Attributes.List := null;
+                  raise;
+            end;
          end if;
 
          --  This does not take into account the use of the namespace by the
