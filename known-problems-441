@@ -11,3 +11,12 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
+KP-441-MB20-045 DOM: Clone_Node does not do deep cloning
+
+  Problem:    Calling Clone_Node to do a deep cloning only clones the node
+              itself, but the children are still referencing the old tree,
+              and are not cloned.
+
+  Status:     Fixed in XML/Ada 4.4.2 on 2013-11-21
+
+  Workaround: Do the cloning in user code by iterating over the tree.

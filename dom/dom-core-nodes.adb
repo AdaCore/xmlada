@@ -57,10 +57,6 @@ package body DOM.Core.Nodes is
       Encoding     : Unicode.Encodings.Unicode_Encoding);
    --  Print the name of the node.
 
-   function Clone_List (List : Node_List; Deep : Boolean) return Node_List;
-   --  Return a clone of List. If Deep is True, then each item in the list
-   --  is also cloned
-
    procedure Free (List : in out Node_List; Deep : Boolean);
    --  Free the list, and, if Deep is True, all its children
 
@@ -626,27 +622,40 @@ package body DOM.Core.Nodes is
    end Has_Child_Nodes;
 
    ----------------
-   -- Clone_List --
-   ----------------
-
-   function Clone_List (List : Node_List; Deep : Boolean) return Node_List is
-      L : Node_List := Null_List;
-   begin
-      if List /= Null_List and then Deep then
-         L := (Items => new Node_Array'(List.Items.all), Last  => List.Last);
-         for J in 0 .. L.Last loop
-            L.Items (J) := List.Items (J);
-         end loop;
-      end if;
-      return L;
-   end Clone_List;
-
-   ----------------
    -- Clone_Node --
    ----------------
 
    function Clone_Node (N : Node; Deep : Boolean) return Node is
       Clone : Node;
+
+      function Clone_List
+         (List       : Node_List;
+          Deep       : Boolean) return Node_List;
+      --  Return a clone of List. If Deep is True, then each item in the list
+      --  is also cloned
+
+      ----------------
+      -- Clone_List --
+      ----------------
+
+      function Clone_List
+         (List       : Node_List;
+          Deep       : Boolean) return Node_List
+      is
+         L : Node_List := Null_List;
+      begin
+         if List /= Null_List and then Deep then
+            L := (Items => new Node_Array (List.Items'First .. List.Last),
+                  Last  => List.Last);
+            for J in 0 .. L.Last loop
+               L.Items (J) := Clone_Node (List.Items (J), Deep);
+               L.Items (J).Parent := Clone;
+               L.Items (J).Parent_Is_Owner := False;
+            end loop;
+         end if;
+         return L;
+      end Clone_List;
+
    begin
       Clone := new Node_Record (N.Node_Type);
       Clone.Parent := Owner_Document (N);
@@ -655,7 +664,7 @@ package body DOM.Core.Nodes is
       case N.Node_Type is
          when Element_Node =>
             Clone.Name := N.Name;
-            Clone.Children := Clone_List (N.Children, Deep);
+            Clone.Children := Clone_List (N.Children,  Deep);
             Clone.Attributes := Named_Node_Map
               (Clone_List (Node_List (N.Attributes), True));
 

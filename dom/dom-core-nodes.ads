@@ -154,7 +154,9 @@ package DOM.Core.Nodes is
 
    function Clone_Node (N : Node; Deep : Boolean) return Node;
    --  Returns a duplicate of N.
-   --  The duplicate node has no parent.
+   --  The duplicate node has no parent, but it still depends on the original
+   --  document for its Symbol_Table. If that document is destroyed, all
+   --  strings in the cloned node will be reset to the empty string.
 
    procedure Normalize (N : Node);
    --  Make sure there are no adjacent text nodes in the children of N.
