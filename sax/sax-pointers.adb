@@ -128,7 +128,7 @@ package body Sax.Pointers is
       procedure Adjust (P : in out Pointer) is
          Dummy : Integer_32;
          pragma Unreferenced (Dummy);
-         Data : Root_Encapsulated_Access := P.Data;
+         Data : constant Root_Encapsulated_Access := P.Data;
       begin
          if Data /= null then
             GNAT.Task_Lock.Lock;

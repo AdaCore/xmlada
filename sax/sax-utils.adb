@@ -326,7 +326,7 @@ package body Sax.Utils is
                return True;
             elsif Char < 16#3001# then
                return False;
-            elsif char <= 16#D7FF# then
+            elsif Char <= 16#D7FF# then
                return True;
             elsif Char < 16#F900# then
                return False;

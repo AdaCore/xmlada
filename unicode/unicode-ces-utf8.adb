@@ -115,6 +115,7 @@ package body Unicode.CES.Utf8 is
          if (C and 16#c0#) /= 16#80# then
             return Idx;
          end if;
+         Idx := Idx + 1;
       end loop;
       return Str'Last + 1;
    end Utf8_Find_Next_Char;

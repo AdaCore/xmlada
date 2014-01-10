@@ -167,6 +167,4 @@ package Unicode.CES.Utf8 is
      (Utf8_String, Utf8_String_Access);
    --  Free the memory occupied by a utf8-encoded string
 
-private
-   pragma Inline (Width);
 end Unicode.CES.Utf8;

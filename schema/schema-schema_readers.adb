@@ -2310,16 +2310,16 @@ package body Schema.Schema_Readers is
    is
       Location_Index : constant Integer :=
         Get_Index (Atts, Empty_String, Handler.Schema_Location);
-      Namespace_Index : constant Integer :=
-        Get_Index (Atts, Empty_String, Handler.Namespace);
+      --  Namespace_Index : constant Integer :=
+      --    Get_Index (Atts, Empty_String, Handler.Namespace);
    begin
       if Location_Index = -1 then
-         if Namespace_Index = -1 then
-            --  See 4.2.6.1: If that attribute is absent, then the import
-            --  allows unqualified reference to components with no target
-            --  namespace
-            null;
-         end if;
+         --  if Namespace_Index = -1 then
+         --     --  See 4.2.6.1: If that attribute is absent, then the import
+         --     --  allows unqualified reference to components with no target
+         --     --  namespace
+         --     null;
+         --  end if;
 
          Validation_Error
            (Handler,
