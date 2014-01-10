@@ -813,12 +813,22 @@ package body Sax.Readers is
    function Create_Attribute_List
      (Attrs  : Sax_Attribute_List) return Sax.Attributes.Attributes
    is
+      function Get_Or_Null (S : Symbol) return String;
+      function Get_Or_Null (S : Symbol) return String is
+      begin
+         if S = No_Symbol then
+            return "";
+         else
+            return Get (S).all;
+         end if;
+      end Get_Or_Null;
+
       Attributes : Sax.Attributes.Attributes;
    begin
       for J in 1 .. Attrs.Count loop
          Add_Attribute
            (Attr       => Attributes,
-            URI        => Get (Attrs.List (J).URI).all,
+            URI        => Get_Or_Null (Attrs.List (J).URI),
             Local_Name => Get (Attrs.List (J).Local_Name).all,
             Qname      =>
               Qname_From_Name
