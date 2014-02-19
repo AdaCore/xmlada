@@ -1,5 +1,7 @@
+with Ada.Text_IO;        use Ada.Text_IO;
 with Sax.Readers;        use Sax.Readers;
 with Schema.Readers;     use Schema.Readers;
+with Schema.Validators;
 with Input_Sources.File; use Input_Sources.File;
 
 procedure SchemaExample is
@@ -13,4 +15,8 @@ begin
    Parse (My_Reader, Input);
 
    Close (Input);
+
+exception
+   when Schema.Validators.XML_Validation_Error =>
+      Put_Line ("ERROR: " & Get_Error_Message (My_Reader));
 end SchemaExample;

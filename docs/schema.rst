@@ -271,6 +271,7 @@ validating a file.
   then reuse its instance, instead of reparsing the :file:`.xsd` file every
   time::
 
+    with Ada.Text_IO;   use Ada.Text_IO;
     with Schema.Schema_Readers, Schema.Validators, Input_Sources.File;
     use  Schema.Schema_Readers, Schema.Validators, Input_Sources.File;
 
@@ -284,6 +285,10 @@ validating a file.
        Close (Read);
 
        Grammar := Get_Grammar (Schema);
+
+     exception
+        when XML_Validation_Error | XML_Not_Implemented =>
+           Put_Line ("ERROR: " & Get_Error_Message (Schema));
     end SchemaExample2;
 
   In the example above, the schema file itself is validated against the
@@ -306,6 +311,10 @@ validating a file.
         Open (Xml_File.all, Read);
         Parse (My_Reader, Read);
         Close (Read);
+
+     exception
+        when XML_Validation_Error | XML_Not_Implemented =>
+           Put_Line ("ERROR: " & Get_Error_Message (My_reader));
      end;
 
 * Implicitly parsing the schema
