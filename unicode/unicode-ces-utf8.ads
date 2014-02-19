@@ -98,8 +98,12 @@ package Unicode.CES.Utf8 is
    function Utf8_Prev_Char
       (Str : Utf8_String; Index : Natural) return Natural;
    pragma Inline (Utf8_Prev_Char);
-   --  Find the previous UTF-8 character in Str, before Index.
-   --  Index does not have to be at the beginning of a UTF8-character.
+   --  Return the start index of the rightmost UTF-8 sequence starting
+   --  strictly before Index.
+   --  If Index is the start index of an UTF-8 sequence, this returns the
+   --  start index of the previous UTF-8 sequence.
+   --  If Index falls in the middle of an UTF-8 sequence, this returns the
+   --  start index of that sequence.
 
    procedure Utf8_Get_Char
       (Str : Utf8_String; Index : in out Positive; Char : out Unicode_Char);
