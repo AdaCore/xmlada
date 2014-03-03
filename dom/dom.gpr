@@ -1,7 +1,6 @@
 with "../shared.gpr";
 with "../sax/sax.gpr";
 with "../unicode/unicode.gpr";
-with "../input_sources/input_sources.gpr";
 
 project Dom is
 
