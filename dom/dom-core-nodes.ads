@@ -52,6 +52,8 @@ package DOM.Core.Nodes is
    function Child_Nodes (N : Node) return Node_List;
    --  Return the list of children for this node. This could be empty depending
    --  on the type of the node.
+   --  The result must not be freed, since it is the list as used in the DOM
+   --  tree itself.
 
    function First_Child (N : Node) return Node;
    --  Return the first child of N.
