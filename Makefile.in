@@ -22,8 +22,8 @@ includedir=@includedir@
 PROCESSORS?=1
 GNATMAKE=@gnatmake@ -j${PROCESSORS}
 
-# Compiler mode: one of "distrib", "debug", "optimize", "profile", "coverage"
-MODE=distrib
+# Compiler mode: one of "distrib", "Debug", "Production", "profile", "coverage"
+MODE=@BUILD_TYPE@
 
 LIBEXT=@SO_EXT@
 

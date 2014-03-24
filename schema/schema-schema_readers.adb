@@ -1842,7 +1842,7 @@ package body Schema.Schema_Readers is
    begin
       if Debug then
          Output_Action
-           ("Parsing schema "& Input_Sources.Get_System_Id (Input));
+           ("Parsing schema " & Input_Sources.Get_System_Id (Input));
       end if;
 
       Initialize_Symbols (Parser);

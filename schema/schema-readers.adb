@@ -1182,4 +1182,5 @@ package body Schema.Readers is
    begin
       Free (Schema.Validators.Abstract_Validation_Reader (Reader));
    end Free;
+
 end Schema.Readers;

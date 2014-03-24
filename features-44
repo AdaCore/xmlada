@@ -2,7 +2,7 @@
 XML/Ada NEW FEATURES LIST
 =========================
 
-Copyright (C) 2001-2013, AdaCore
+Copyright (C) 2001-2014, AdaCore
 
 This file contains a list of new features introduced in XML/Ada.
 A full description of all XML/Ada features can be found in the XML/Ada
@@ -14,6 +14,12 @@ of the feature.
 
 New features in version 4.4
 ---------------------------
+
+NF-44-N324-002 New configure option --enable-build (2014-03-24)
+
+   This switch improves compatibility with other AdaCore addons like GtkAda.
+   It enables one to choose the default build mode (Debug or Production)
+   at configure line, rather than through environment variables.
 
 NF-44-MA08-027 Expose utf8 functions in unicode-ces-utf8.ads (2013-10-08)
 

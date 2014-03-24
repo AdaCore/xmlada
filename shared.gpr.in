@@ -6,8 +6,8 @@ project Shared is
 
    for Source_Dirs use ();
 
-   type Mode_Type is ("distrib", "debug", "optimize", "profile", "coverage");
-   Mode : Mode_Type := external ("MODE", "optimize");
+   type Mode_Type is ("distrib", "Debug", "Production", "profile", "coverage");
+   Mode : Mode_Type := external ("BUILD", "@BUILD_TYPE@");
 
    Processors := External ("PROCESSORS", "1");
 
@@ -15,9 +15,12 @@ project Shared is
 
    package Builder is
        case Mode is
-          when "optimize" =>
+          when "Production" =>
              for Global_Configuration_Pragmas use "gnat_optimize.adc";
              for Switches ("Ada") use ("-j" & Processors);
+          when "Debug" =>
+             for Global_Configuration_Pragmas use "gnat_debug.adc";
+             for Switches ("Ada") use ("-g", "-j" & Processors);
           when others =>
              for Switches ("Ada") use ("-g", "-j" & Processors);
        end case;
@@ -35,12 +38,12 @@ project Shared is
                & ("-g", "-gnata", "-gnatwe", "-fprofile-arcs",
                   "-ftest-coverage");
 
-         when "debug" =>
+         when "Debug" =>
             for Switches ("Ada") use warnings
                & ("-g", "-gnata", "-gnatwe");
                --  & ("-g", "-gnata", "-gnatVaMI");
 
-         when "optimize" =>
+         when "Production" =>
             for Switches ("Ada") use warnings
                & ("-O2", "-gnatn", "-gnatp");
 
@@ -51,9 +54,9 @@ project Shared is
 
    package binder is
       case Mode is
-         when "debug" =>
+         when "Debug" =>
             for Switches ("Ada") use ("-E");
-         when "distrib" | "optimize" | "profile" | "coverage" =>
+         when "distrib" | "Production" | "profile" | "coverage" =>
       end case;
    end binder;
 
@@ -62,7 +65,7 @@ project Shared is
          when "profile" =>
             for Switches ("Ada") use ("-pg");
 
-         when "debug" =>
+         when "Debug" =>
 --           for Switches ("Ada") use ("-lgmem");
             
          when "coverage" =>
@@ -71,7 +74,7 @@ project Shared is
          when "distrib" =>
             null;
 
-         when "optimize" =>
+         when "Production" =>
       end case;
    end linker;        
 

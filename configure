@@ -594,6 +594,7 @@ INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
 SO_EXT
+BUILD_TYPE
 DEFAULT_LIBRARY_TYPE
 GNAT_BUILDS_SHARED
 gnatmake
@@ -651,6 +652,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_shared
+enable_build
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1272,6 +1274,8 @@ Optional Features:
   --disable-shared        Disable building of shared libraries
   --enable-shared         Build shared libraries if supported on the target
                           Make them the installation default
+  --enable-build=<type>   Default build type for the library (Debug,
+                          Production)
 
 Report bugs to <report@adacore.com>.
 _ACEOF
@@ -1905,6 +1909,17 @@ $as_echo "$GNAT_BUILDS_SHARED" >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no (--disabled-shared)" >&5
 $as_echo "no (--disabled-shared)" >&6; }
    fi
+
+
+
+
+
+    # Check whether --enable-build was given.
+if test "${enable_build+set}" = set; then :
+  enableval=$enable_build; BUILD_TYPE=$enableval
+else
+  BUILD_TYPE=Production
+fi
 
 
 
