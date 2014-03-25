@@ -43,7 +43,7 @@ CP=cp -p
 MODULES=unicode input_sources sax dom schema
 MODULE_INSTALL=${MODULES:%=%_inst}
 
-MAKE_ARGS=-XMODE=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
+MAKE_ARGS=-XBUILD=${MODE} -XLIBRARY_TYPE=${LIBRARY_TYPE}
 
 .PHONY: all obj clean install install_dirs build_library_type install_library_type
 
