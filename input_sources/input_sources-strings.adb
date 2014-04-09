@@ -43,7 +43,6 @@ package body Input_Sources.Strings is
       Input.Encoding := Encoding;
       Input.Buffer := Str;
       Input.Buffer2 := null;
-      Input.Index := Input.Buffer'First;
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
@@ -60,6 +59,8 @@ package body Input_Sources.Strings is
          when Utf8_All | Unknown =>
             Set_Encoding (Input, Utf8_Encoding);
       end case;
+
+      Input.Index := Input.Buffer'First + Input.Prolog_Size;
    end Open;
 
    ----------
@@ -76,7 +77,6 @@ package body Input_Sources.Strings is
       Input.Encoding := Encoding;
       Input.Buffer2 := new Byte_Sequence'(Str);
       Input.Buffer := Cst_Byte_Sequence_Access (Input.Buffer2);
-      Input.Index := Input.Buffer'First;
 
       Read_Bom (Input.Buffer.all, Input.Prolog_Size, BOM);
       case BOM is
@@ -93,6 +93,8 @@ package body Input_Sources.Strings is
          when Utf8_All | Unknown =>
             Set_Encoding (Input, Utf8_Encoding);
       end case;
+
+      Input.Index := Input.Buffer'First + Input.Prolog_Size;
    end Open;
 
    -----------

@@ -11,6 +11,17 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
+KP-441-N409-003 Input: BOM not skipped for string input
+
+  Problem:    When loading XML data from an in-memory string, and the string
+              contains a Byte-Order-Mark, the latter is not properly skipped,
+              resulting in a parsing error.
+
+  Status:     Fixed in XML/Ada 4.4.2 on 2014-04-09
+
+  Workaround: Remove the BOM from the string you pass to the parser, and call
+              Set_Encoding explicitly instead.
+
 KP-441-N109-044 SAX: Constraint_Error when using Sax.Readers.Reader
 
   Problem:    The API in recent versions of XML/Ada has changed slightly to
