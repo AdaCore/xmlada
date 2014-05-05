@@ -444,6 +444,14 @@ package body Schema.Date_Time is
          return;
       end if;
 
+      if Pos > Ch'Last then
+         Error := Find
+           (Symbols, "Invalid date (no month) """ & Ch & """");
+         Date := No_Date_NZ;
+         Eos  := Ch'First;
+         return;
+      end if;
+
       if Ch (Pos) /= '-'
         or else Ch (Pos + 3) /= '-'
         or else (Pos + 6 <= Ch'Last
