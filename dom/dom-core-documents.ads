@@ -139,7 +139,23 @@ package DOM.Core.Documents is
    --  Otherwise, it will not know what attributes should be considered as ID,
    --  and thus will not be able to retrieve them.
 
-   function Import_Node (Doc : Document; Import_Node : Node; Deep : Boolean)
+   function Adopt_Node (Doc : Document; Source : Node) return Node;
+   --  Attempts to adopt a node from another document to this document. If
+   --  supported, it changes the Owner_Document of the source node, its
+   --  children, as well as the attached attribute nodes if there are any. If
+   --  the source node has a parent it is first removed from the child list of
+   --  its parent. This effectively allows moving a subtree from one document
+   --  to another (unlike Import_Node which create a copy of the source node
+   --  instead of moving it). When it fails, applications should use
+   --  Import_Node instead.
+   --
+   --  Note that if the adopted node is already part of this document (i.e. the
+   --  source and target document are the same), this method still has the
+   --  effect of removing the source node from the child list of its parent, if
+   --  any. The following list describes the specifics for each type of node.
+
+   function Import_Node
+      (Doc : Document; Imported_Node : Node; Deep : Boolean := True)
       return Node;
    --  Imports a copy of Import_Node into Doc.
    --  It returns the imported node.

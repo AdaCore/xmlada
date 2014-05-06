@@ -510,10 +510,9 @@ package body DOM.Core.Nodes is
    begin
       pragma Assert (Child_Is_Valid (N, New_Child));
 
-      --  ??? New_Child should use Shared strings from the new document
-
-      --  ??? Should check that New_Child was created from the same document
-      --  (ie same DTD,...), or raise Wrong_Document_Err
+      if Owner_Document (N) /= Owner_Document (New_Child) then
+         raise Wrong_Document_Err;
+      end if;
 
       --  If New_Child is already in the tree, remove it first
       if New_Child.Parent /= null
@@ -531,13 +530,16 @@ package body DOM.Core.Nodes is
 
       if Ref_Child = null then
          case N.Node_Type is
-            when Element_Node => Append (N.Children, New_Child);
-            when Document_Node => Append (N.Doc_Children, New_Child);
+            when Element_Node  =>
+               Append (N.Children, New_Child);
+            when Document_Node =>
+               Append (N.Doc_Children, New_Child);
             when Document_Type_Node =>
                Append (N.Doc_Type_Children, New_Child);
             when Document_Fragment_Node =>
                Append (N.Doc_Frag_Children, New_Child);
-            when others => raise Hierarchy_Request_Err;
+            when others =>
+               raise Hierarchy_Request_Err;
          end case;
 
       else
@@ -568,7 +570,9 @@ package body DOM.Core.Nodes is
       pragma Assert (Child_Is_Valid (N, New_Child));
       --  ??? Case where New_Child is a document_fragment
 
-      --  ??? New_Child should use Shared strings from the new document
+      if Owner_Document (N) /= Owner_Document (New_Child) then
+         raise Wrong_Document_Err;
+      end if;
 
       for J in 0 .. List.Last loop
          if List.Items (J) = Old_Child then
@@ -587,9 +591,6 @@ package body DOM.Core.Nodes is
 
    function Remove_Child (N : Node; Old_Child : Node) return Node is
    begin
-      --  ??? Shared strings should be duplicated, so as not to depend on the
-      --  initial document
-
       case N.Node_Type is
          when Element_Node => Remove (N.Children, Old_Child);
          when Document_Node => Remove (N.Doc_Children, Old_Child);

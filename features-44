@@ -15,6 +15,13 @@ of the feature.
 New features in version 4.4
 ---------------------------
 
+NF-44-N411-012 New subprograms Import_Node and Adopt_Node (2014-05-06)
+
+   These subprograms, part of respectively DOM level 2 and DOM level 3,
+   are now implemented, and can be used to move or copy one node from a
+   tree to another. In addition, subprograms like Append_Child will now
+   correctly complain when the new node was not created for the same tree.
+
 NF-44-N324-002 New configure option --enable-build (2014-03-24)
 
    This switch improves compatibility with other AdaCore addons like GtkAda.

@@ -171,6 +171,7 @@ package body DOM.Core.Elements is
    begin
       pragma Assert (Owner_Element (Old_Attr) = Elem);
       Remove_Named_Item (Elem.Attributes, Old_Attr);
+      Old_Attr.Owner_Element := null;
       return Old_Attr;
    end Remove_Attribute_Node;
 

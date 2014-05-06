@@ -341,33 +341,129 @@ package body DOM.Core.Documents is
         (Get_Element (Doc), Namespace_URI, Local_Name);
    end Get_Elements_By_Tag_Name_NS;
 
+   ----------------
+   -- Adopt_Node --
+   ----------------
+
+   function Adopt_Node (Doc : Document; Source : Node) return Node is
+      Old_Doc : constant Document := Owner_Document (Source);
+
+      procedure Copy (S : in out Symbol);
+      procedure Copy (S : in out Node_Name_Def);
+      --  Duplicate the symbol into the new document
+
+      procedure Recurse (Parent : Node; N : Node);
+      --  Adopt node recursively.
+      --  Parent is the new parent for the node
+
+      procedure Copy (S : in out Symbol) is
+      begin
+         S := Find (Doc.Symbols, Get (S).all);
+      end Copy;
+
+      procedure Copy (S : in out Node_Name_Def) is
+      begin
+         Copy (S.Prefix);
+         Copy (S.Local_Name);
+         Copy (S.Namespace);
+      end Copy;
+
+      procedure Recurse (Parent : Node; N : Node) is
+         Dest  : Integer;
+         Dummy : Attr;
+         pragma Unreferenced (Dummy);
+      begin
+         case N.Node_Type is
+            when Document_Node | Document_Type_Node =>
+               raise Not_Supported_Err with
+                  "Cannot adopt a document or document type node";
+
+            when Attribute_Node =>
+               if N.Is_Id then
+                  Document_Remove_Id (Old_Doc, N.Attr_Value);
+                  Copy (N.Attr_Value);
+
+                  if Parent /= null then
+                     Document_Add_Id (Doc, N.Attr_Value, Parent);
+                  end if;
+               else
+                  Copy (N.Attr_Value);
+               end if;
+
+               if Parent = null then
+                  Dummy := Remove_Attribute_Node
+                     (Element (N.Owner_Element), Attr (N));
+               end if;
+
+               Copy (N.Attr_Name);
+
+            when Document_Fragment_Node =>
+               for J in 0 .. N.Doc_Frag_Children.Last - 1 loop
+                  Recurse (N, N.Doc_Frag_Children.Items (J));
+               end loop;
+
+            when Element_Node =>
+               Copy (N.Name);
+
+               --  Default attributes must be discarded
+
+               Dest := 0;
+               for A in 0 .. N.Attributes.Last - 1 loop
+                  if N.Attributes.Items (A).Specified then
+                     Recurse (N, N.Attributes.Items (A));
+                     N.Attributes.Items (Dest) := N.Attributes.Items (A);
+                     N.Attributes.Items (A) := null;
+                     Dest := Dest + 1;
+                  end if;
+               end loop;
+               N.Attributes.Last := Dest;
+
+               for A in 0 .. N.Children.Last - 1 loop
+                  Recurse (N, N.Children.Items (A));
+               end loop;
+
+            when Entity_Node =>
+               raise Not_Supported_Err with "Cannot adopt an entity node";
+
+            when Notation_Node =>
+               raise Not_Supported_Err with "Cannot adopt a notation node";
+
+            when Entity_Reference_Node =>
+               Copy (N.Entity_Reference_Name);
+
+            when Processing_Instruction_Node =>
+               Copy (N.Target);
+               Copy (N.Pi_Data);
+
+            when Text_Node =>
+               null;  --  nothing to do
+
+            when Cdata_Section_Node =>
+               null;  --  nothing to do
+
+            when Comment_Node =>
+               null;  --  nothing to do
+         end case;
+      end Recurse;
+
+   begin
+      --  ??? Should raise No_Modification_Allowed_Err if source is readonly
+
+      Recurse (null, Source);
+      Source.Parent_Is_Owner := True;
+      Source.Parent := Node (Doc);
+      return Source;
+   end Adopt_Node;
+
    -----------------
    -- Import_Node --
    -----------------
 
-   function Import_Node (Doc : Document; Import_Node : Node; Deep : Boolean)
-      return Node
-   is
-      pragma Warnings (Off, Doc);
-      N : constant Node := Clone_Node (Import_Node, Deep);
+   function Import_Node
+      (Doc : Document; Imported_Node : Node; Deep : Boolean := True)
+      return Node is
    begin
-      pragma Assert (False); --  ??? Unimplemented
-      case N.Node_Type is
-         when Element_Node =>
-            --  ??? Shouldn't import defaulted attribute nodes
-            --  ??? Should assign default attributes from Doc
-            null;
-         when Attribute_Node => null;
-         when Text_Node | Cdata_Section_Node | Comment_Node => null;
-         when Entity_Reference_Node => null;
-         when Entity_Node => null;
-         when Processing_Instruction_Node => null;
-         when Document_Node => null;
-         when Document_Type_Node => null;
-         when Document_Fragment_Node => null;
-         when Notation_Node => null;
-      end case;
-      return N;
+      return Adopt_Node (Doc, Clone_Node (Imported_Node, Deep));
    end Import_Node;
 
    -----------------------

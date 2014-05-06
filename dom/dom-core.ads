@@ -291,7 +291,7 @@ private
 
    type Node_Record (Node_Type : Node_Types) is record
       Parent_Is_Owner : Boolean;
-      --  If False, the Parent node points to the owner document, not to the
+      --  If True, the Parent node points to the owner document, not to the
       --  real parent in the tree (which is null).
       --  This boolean doesn't increase the size of this record, since because
       --  of alignment issues Node_Type already occupies more space than it
