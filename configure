@@ -597,7 +597,7 @@ SO_EXT
 BUILD_TYPE
 DEFAULT_LIBRARY_TYPE
 GNAT_BUILDS_SHARED
-gnatmake
+gprbuild
 target_os
 target_vendor
 target_cpu
@@ -1866,12 +1866,7 @@ else
 fi
 
 
-   if test "$program_prefix" != NONE; then
-      gnatmake=${program_prefix}gnatmake
-   else
-      gnatmake=gnatmake
-   fi
-
+   gprbuild=gprbuild
 
 
    if test x$GNAT_BUILDS_SHARED = xyes; then
@@ -1896,7 +1891,7 @@ project Lib is
 end Lib;
 EOF
 
-      $gnatmake -c -q -P$tmp/lib 2>/dev/null
+      $gprbuild -c -q -P$tmp/lib 2>/dev/null
       if test $? = 0 ; then
          GNAT_BUILDS_SHARED=yes
       else

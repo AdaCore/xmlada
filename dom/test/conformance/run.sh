@@ -6,7 +6,7 @@
 dir="2001/DOM-Test-Suite/tests/level1/core/"
 test="$1"
 
-gnatmake -q -m -P conformance.gpr dom_conformance
+gprbuild -q -m -P conformance.gpr dom_conformance
 if [ $? != 0 ]; then
    exit 1
 fi

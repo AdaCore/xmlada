@@ -20,7 +20,7 @@ includedir=@includedir@
 
 # Set a default value (ignored if set in the environment)
 PROCESSORS?=1
-GNATMAKE=@gnatmake@ -j${PROCESSORS}
+GPRBUILD=@gprbuild@ -j${PROCESSORS}
 
 # Compiler mode: one of "distrib", "Debug", "Production", "profile", "coverage"
 MODE=@BUILD_TYPE@
@@ -62,17 +62,17 @@ shared relocatable:
 	${MAKE} LIBRARY_TYPE=relocatable build_library_type
 
 obj: force
-	${GNATMAKE} -m -p -Punicode/unicode.gpr ${MAKE_ARGS}
-	${GNATMAKE} -m -p -Pinput_sources/input_sources.gpr ${MAKE_ARGS}
-	${GNATMAKE} -m -p -Psax/sax.gpr ${MAKE_ARGS}
-	${GNATMAKE} -m -p -Pdom/dom.gpr ${MAKE_ARGS}
-	${GNATMAKE} -m -p -Pschema/schema.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Punicode/unicode.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Pinput_sources/input_sources.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Psax/sax.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Pdom/dom.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Pschema/schema.gpr ${MAKE_ARGS}
 
 test: force
-	${GNATMAKE} -m -p -Punicode/test/unicode_test.gpr ${MAKE_ARGS}
-	${GNATMAKE} -m -p -Psax/test/sax_test.gpr ${MAKE_ARGS}
-	${GNATMAKE} -m -p -Pdom/test/dom_test.gpr ${MAKE_ARGS}
-	${GNATMAKE} -m -p -Pschema/test/schema_test.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Punicode/test/unicode_test.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Psax/test/sax_test.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Pdom/test/dom_test.gpr ${MAKE_ARGS}
+	${GPRBUILD} -m -p -Pschema/test/schema_test.gpr ${MAKE_ARGS}
 
 run_test: force
 	@make --no-print-directory -C unicode/test tests

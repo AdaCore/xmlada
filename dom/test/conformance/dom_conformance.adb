@@ -481,7 +481,7 @@ procedure DOM_Conformance is
                   Delete_File ("domtest.o", Success);
 
                   if System
-                    ("gnatmake -q -Pconformance domtest.adb" & ASCII.NUL) /= 0
+                    ("gprbuild -q -Pconformance domtest.adb" & ASCII.NUL) /= 0
                   then
                      Put_Line
                        (Standard_Error, "Could not compile domtest.adb");

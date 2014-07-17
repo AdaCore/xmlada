@@ -90,7 +90,7 @@ There are several ways to do it:
 
   and you build your application with::
 
-       gnatmake -Pdefault main.adb
+       gprbuild -Pdefault main.adb
 
   Note in the project file the first line, which indicates that your
   application requires XML/Ada to build. This will automatically set the
