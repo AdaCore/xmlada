@@ -407,16 +407,20 @@ package body DOM.Core.Documents is
 
                --  Default attributes must be discarded
 
-               Dest := 0;
-               for A in 0 .. N.Attributes.Last - 1 loop
-                  if N.Attributes.Items (A).Specified then
-                     Recurse (N, N.Attributes.Items (A));
-                     N.Attributes.Items (Dest) := N.Attributes.Items (A);
-                     N.Attributes.Items (A) := null;
-                     Dest := Dest + 1;
-                  end if;
-               end loop;
-               N.Attributes.Last := Dest;
+               if N.Attributes.Items /= null then
+                  Dest := 0;
+                  for A in 0 .. N.Attributes.Last - 1 loop
+                     if N.Attributes.Items (A).Specified then
+                        Recurse (N, N.Attributes.Items (A));
+                        if A /= Dest then
+                           N.Attributes.Items (Dest) := N.Attributes.Items (A);
+                           N.Attributes.Items (A) := null;
+                        end if;
+                        Dest := Dest + 1;
+                     end if;
+                  end loop;
+                  N.Attributes.Last := Dest;
+               end if;
 
                for A in 0 .. N.Children.Last - 1 loop
                   Recurse (N, N.Children.Items (A));

@@ -18,6 +18,7 @@ dom/test/testxml_tmp*
 dom/test/act_testsuite/test_act.out
 dom/test/act_testsuite/CC01-006/my_test
 dom/test/act_testsuite/EA03-006/reproducer
+dom/test/act_testsuite/N910-017/obj
 schema/test/act_testsuite/tasking/concurrent
 schema/test/testschema
 schema/test/testnumbers
