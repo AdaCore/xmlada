@@ -217,6 +217,7 @@ private
    type Node_List is record
       Items  : Node_Array_Access := null;
       Last   : Integer := -1;
+      --  The index of the last significant element in Items
    end record;
 
    Null_List : constant Node_List := (null, -1);

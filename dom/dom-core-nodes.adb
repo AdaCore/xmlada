@@ -648,7 +648,7 @@ package body DOM.Core.Nodes is
          if List /= Null_List and then Deep then
             L := (Items => new Node_Array (List.Items'First .. List.Last),
                   Last  => List.Last);
-            for J in 0 .. L.Last loop
+            for J in L.Items'First .. L.Last loop
                L.Items (J) := Clone_Node (List.Items (J), Deep);
                L.Items (J).Parent := Clone;
                L.Items (J).Parent_Is_Owner := False;
@@ -672,6 +672,8 @@ package body DOM.Core.Nodes is
          when Attribute_Node =>
             Clone.Attr_Name := N.Attr_Name;
             Clone.Attr_Value := N.Attr_Value;
+            Clone.Specified := N.Specified;
+            Clone.Is_Id := N.Is_Id;
 
          when Text_Node =>
             if N.Text /= null then
