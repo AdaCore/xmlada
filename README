@@ -19,28 +19,6 @@ Make sure that you do not have a previous installation of XML/Ada in one
 of the directories given in ADA_OBJECTS_PATH, or some files will not be
 properly recompiled.
 
-Compiling with GNAT 3.14 and GNAT 3.15
-----------------------------------------
-
-Compilation with these older versions of GNAT is done differently than
-with more versions, since the GNAT project files were lacking some important
-features at that point.
-
-To compile with such versions, do the following:
-  >  ./configure --prefix=<PREFIX>
-  > <possible Makefile.module.314 modification, as documented below>
-  >  make -f Makefile.314 install
-
-This will compile and install XML/Ada in the <PREFIX> directory. The resulting
-installation can only be used through xmlada-config, as documented below,
-and not with project files.
-
-If your system requires -fPIC when compiling source files for shared
-libraries, modify the Makefile.module.314 file to change
-   FPIC=
-to
-   FPIC=-fPIC
-
 Compiling with GNAT 3.16 or newer versions of GNAT
 ---------------------------------------------------
 
@@ -79,8 +57,7 @@ Compiling with other Ada compilers
 ----------------------------------
 
 This library has been reported as being compilable with other compilers than
-GNAT. No build script is provided however, but take a look at
-Makefile.314 and Makefile.module.314 to get ideas on how this could be done.
+GNAT. No build script is provided however.
 
 II - INSTALLING THIS LIBRARY ON VMS
 ===================================

@@ -1,5 +1,6 @@
-with "../sax";
+
 with "../../shared";
+with "../xmlada_sax";
 
 project Sax_Test is
    for Main use ("testsax.adb", "teststate.adb");

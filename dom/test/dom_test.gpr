@@ -1,5 +1,7 @@
-with "../dom";
+
 with "../../shared";
+
+with "../xmlada_dom";
 with "conformance/conformance";
 
 project Dom_Test is

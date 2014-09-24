@@ -63,6 +63,9 @@ Make them the installation default])],
       fi],
      [GNAT_BUILDS_SHARED=yes])
 
+   gprinstall=gprinstall
+   AC_SUBST(gprinstall)
+
    gprbuild=gprbuild
    AC_SUBST(gprbuild)
 
@@ -103,4 +106,3 @@ EOF
    AC_SUBST(GNAT_BUILDS_SHARED)
    AC_SUBST(DEFAULT_LIBRARY_TYPE)
 ])
-

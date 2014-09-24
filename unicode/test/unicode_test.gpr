@@ -1,5 +1,7 @@
-with "../unicode";
+
 with "../../shared";
+with "../xmlada_unicode";
+
 project Unicode_Test is
    for Main use ("test_unicode");
    package Builder  renames Shared.Builder;

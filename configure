@@ -598,6 +598,7 @@ BUILD_TYPE
 DEFAULT_LIBRARY_TYPE
 GNAT_BUILDS_SHARED
 gprbuild
+gprinstall
 target_os
 target_vendor
 target_cpu
@@ -1866,6 +1867,9 @@ else
 fi
 
 
+   gprinstall=gprinstall
+
+
    gprbuild=gprbuild
 
 
@@ -2053,7 +2057,7 @@ esac
 LIB=`basename $libdir`
 
 
-ac_config_files="$ac_config_files shared.gpr Makefile Makefile.314 dom/test/default.gpr xmlada-config distrib/xmlada_shared.gpr"
+ac_config_files="$ac_config_files shared.gpr Makefile dom/test/default.gpr xmlada-config"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -2763,10 +2767,8 @@ do
   case $ac_config_target in
     "shared.gpr") CONFIG_FILES="$CONFIG_FILES shared.gpr" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "Makefile.314") CONFIG_FILES="$CONFIG_FILES Makefile.314" ;;
     "dom/test/default.gpr") CONFIG_FILES="$CONFIG_FILES dom/test/default.gpr" ;;
     "xmlada-config") CONFIG_FILES="$CONFIG_FILES xmlada-config" ;;
-    "distrib/xmlada_shared.gpr") CONFIG_FILES="$CONFIG_FILES distrib/xmlada_shared.gpr" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
