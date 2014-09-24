@@ -19,7 +19,7 @@ docdir=@docdir@
 includedir=@includedir@
 
 # Set a default value (ignored if set in the environment)
-PROCESSORS?=1
+PROCESSORS?=0
 GPRBUILD=@gprbuild@ -j${PROCESSORS}
 
 # Compiler mode: one of "distrib", "Debug", "Production", "profile", "coverage"
@@ -151,7 +151,7 @@ install_library_type: install_dirs ${MODULE_INSTALL}
 	${INSTALL} distrib/xmlada_gps.py ${datadir}/gps/plug-ins/
 
 ## Do the installation for an explicit target
-install_static: 
+install_static:
 	${MAKE} LIBRARY_TYPE=static install_library_type
 install_shared install_relocatable:
 	${MAKE} LIBRARY_TYPE=relocatable install_library_type
