@@ -42,7 +42,6 @@ project XmlAda_Input is
       for Artifacts ("doc/xmlada")
         use ("../docs/_build/html/*", "../docs/_build/latex/XMLAda.pdf");
       for Artifacts ("gps/plug-ins/") use ("../distrib/xmlada_gps.py");
-      for Artifacts ("lib/gnat/") use ("../xmlada.gpr");
       for Artifacts ("bin/") use ("../xmlada-config");
    end Install;
 

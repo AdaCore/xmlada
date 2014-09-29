@@ -89,6 +89,7 @@ install-static:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static ${GPROPTS} \
 		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
 		--build-var=XMLADA_BUILD --build-name=static xmlada.gpr
+	${CP} distrib/xmlada.gpr ${IPREFIX}/$(PSUB)
 ifneq (${OS},Windows_NT)
 	${CHMOD} +x ${IPREFIX}/bin/xmlada-config
 	cd ${IPREFIX}/lib; ${CHMOD} a-w xmlada_*/*.ali
