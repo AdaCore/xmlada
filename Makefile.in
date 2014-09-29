@@ -8,14 +8,6 @@ PACKAGE_TARNAME=@PACKAGE_TARNAME@
 VERSION=@PACKAGE_VERSION@
 BUILDS_SHARED=@GNAT_BUILDS_SHARED@
 prefix=@prefix@
-exec_prefix=@exec_prefix@
-datadir=@datadir@
-datarootdir=@datarootdir@
-bindir=@bindir@
-libdir=@libdir@
-xmllib=${libdir}/xmlada/${LIBRARY_TYPE}/
-docdir=@docdir@
-includedir=@includedir@
 
 # Set a default value (ignored if set in the environment)
 PROCESSORS?=0
@@ -31,6 +23,7 @@ MODE=@BUILD_TYPE@
 # since the latter does not support installing multiple files at once.
 CP=cp -p
 RM=rm
+CHMOD=chmod
 
 #########################################################################
 ## Nothing to modify below this point
@@ -89,7 +82,6 @@ ifneq (,$(wildcard $(IPREFIX)/$(PSUB)/manifests/xmlada_schema))
 		--project-subdir=$(PSUB) xmlada_input
 	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
 		--project-subdir=$(PSUB) xmlada_unicode
-	-${RM} -f ${IPREFIX}/$(PSUB)/xmlada.gpr
 endif
 
 ## Do the installation for an explicit target
@@ -97,7 +89,10 @@ install-static:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static ${GPROPTS} \
 		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
 		--build-var=XMLADA_BUILD --build-name=static xmlada.gpr
-	-${CP} distrib/xmlada.gpr ${IPREFIX}/$(PSUB)
+ifneq (${OS},Windows_NT)
+	${CHMOD} +x ${IPREFIX}/bin/xmlada-config
+	cd ${IPREFIX}/lib; ${CHMOD} a-w xmlada_*/*.ali
+endif
 
 install-shared install-relocatable:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=relocatable ${GPROPTS} \
