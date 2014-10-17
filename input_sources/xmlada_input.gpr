@@ -39,7 +39,7 @@ project XmlAda_Input is
    package Ide      renames Shared.Ide;
 
    package Install is
-      for Artifacts ("doc/xmlada")
+      for Artifacts ("share/doc/xmlada")
         use ("../docs/_build/html/*", "../docs/_build/latex/XMLAda.pdf");
       for Artifacts ("gps/plug-ins/") use ("../distrib/xmlada_gps.py");
       for Artifacts ("bin/") use ("../xmlada-config");
