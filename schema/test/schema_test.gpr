@@ -1,8 +1,8 @@
 
 with "../../shared";
 
-with "../xmlada_schema";
-with "../../input_sources/xmlada_input";
+with "xmlada_schema";
+with "xmlada_input";
 
 project Schema_Test is
 

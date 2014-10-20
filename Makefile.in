@@ -56,9 +56,17 @@ static:
 shared relocatable:
 	${GPRBUILD} -m -p -XLIBRARY_TYPE=relocatable ${GPROPTS} xmlada.gpr
 
+# Rebuild the tests (and not the XML/Ada code itself)
 test: force
 	${GPRBUILD} -m -p -XLIBRARY_TYPE=static ${GPROPTS} \
-		-XTESTS_ACTIVATED=Yes xmlada.gpr
+		-XTESTS_ACTIVATED=Only xmlada.gpr
+
+# Setup the environment to run the tests locally, without requiring an
+# install of XML/Ada
+run_test_and_setenv: force
+	GPR_PROJECT_PATH=`pwd`/sax $(MAKE) run_tests
+
+# Run the tests. This requires an install of XML/Ada first
 run_test: force
 	@make --no-print-directory -C unicode/test tests
 	@make --no-print-directory -C sax/test tests

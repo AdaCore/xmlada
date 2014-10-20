@@ -25,19 +25,24 @@ with "shared";
 
 aggregate project XmlAda is
 
-   type Activated is ("Yes", "No");
+   type Build_Tests is ("Yes", "Only", "No");
 
-   Tests_Activated : Activated := external ("TESTS_ACTIVATED", "No");
+   Tests_Status : Build_Tests := external ("TESTS_ACTIVATED", "No");
 
-   for Project_Files use
-     ("input_sources/xmlada_input.gpr",
-      "unicode/xmlada_unicode.gpr",
-      "sax/xmlada_sax.gpr",
-      "dom/xmlada_dom.gpr",
-      "schema/xmlada_schema.gpr");
+   case Tests_Status is
+      when "Yes" | "No" =>
+         for Project_Files use
+           ("input_sources/xmlada_input.gpr",
+            "unicode/xmlada_unicode.gpr",
+            "sax/xmlada_sax.gpr",
+            "dom/xmlada_dom.gpr",
+            "schema/xmlada_schema.gpr");
+      when "Only" =>
+         null;
+   end case;
 
-   case Tests_Activated is
-      when "Yes" =>
+   case Tests_Status is
+      when "Yes" | "Only" =>
          for Project_Files use Project'Project_Files &
            ("unicode/test/unicode_test.gpr",
             "sax/test/sax_test.gpr",

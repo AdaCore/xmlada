@@ -1,6 +1,6 @@
 
 with "../../../shared";
-with "../../xmlada_dom";
+with "xmlada_dom";
 
 project Conformance is
    for Main use ("dom_conformance");

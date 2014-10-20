@@ -1,6 +1,6 @@
 
 with "../../shared";
-with "../xmlada_unicode";
+with "xmlada_unicode";
 
 project Unicode_Test is
    for Main use ("test_unicode");
