@@ -41,7 +41,7 @@ project XmlAda_Input is
    package Install is
       for Artifacts ("share/doc/xmlada")
         use ("../docs/_build/html/*", "../docs/_build/latex/XMLAda.pdf");
-      for Artifacts ("gps/plug-ins/") use ("../distrib/xmlada_gps.py");
+      for Artifacts ("share/gps/plug-ins/") use ("../distrib/xmlada_gps.py");
       for Artifacts ("bin/") use ("../xmlada-config");
    end Install;
 
