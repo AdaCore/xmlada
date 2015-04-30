@@ -1,4 +1,4 @@
-AC_INIT(XML/Ada,4.6.0w,report@adacore.com,xmlada)
+AC_INIT(XML/Ada,gpl-2015,report@adacore.com,xmlada)
 AC_CANONICAL_SYSTEM
 
 # Also update in AC_INIT above
