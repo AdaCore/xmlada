@@ -78,35 +78,43 @@ run_test_valgrind: test
 docs: force
 	-${MAKE} -e -C docs html latexpdf
 
-install-clean:
+install-clean-obsolete:
 ifneq (,$(wildcard $(IPREFIX)/$(PSUB)/manifests/xmlada_schema))
+	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
+		--project-subdir=$(PSUB) xmlada_schema
 	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
 		--project-subdir=$(PSUB) xmlada_dom
 	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
 		--project-subdir=$(PSUB) xmlada_sax
-	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
-		--project-subdir=$(PSUB) xmlada_schema
 	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
 		--project-subdir=$(PSUB) xmlada_input
 	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
 		--project-subdir=$(PSUB) xmlada_unicode
 endif
 
+install-clean: install-clean-obsolete
+ifneq (,$(wildcard $(IPREFIX)/$(PSUB)/manifests/xmlada))
+	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
+		--project-subdir=$(PSUB) xmlada
+endif
+
 ## Do the installation for an explicit target
 install-static:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static ${GPROPTS} \
 		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
-		--build-var=XMLADA_BUILD --build-name=static xmlada.gpr
+		--build-var=XMLADA_BUILD --build-name=static \
+		--install-name=xmlada xmlada.gpr
 	${CP} distrib/xmlada.gpr ${IPREFIX}/$(PSUB)
 ifneq (${OS},Windows_NT)
 	${CHMOD} +x ${IPREFIX}/bin/xmlada-config
-	cd ${IPREFIX}/lib; ${CHMOD} a-w xmlada_*/*.ali
+	cd ${IPREFIX}/lib/xmlada; ${CHMOD} a-w xmlada_*/*.ali
 endif
 
 install-shared install-relocatable:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=relocatable ${GPROPTS} \
 		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
-		--build-var=XMLADA_BUILD --build-name=relocatable xmlada.gpr
+		--build-var=XMLADA_BUILD --build-name=relocatable \
+		--install-name=xmlada xmlada.gpr
 
 clean_%: force
 	gprclean -XLIBRARY_TYPE=$* -q xmlada.gpr
