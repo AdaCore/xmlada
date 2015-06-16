@@ -1,5 +1,6 @@
 .DS_Store
 /Makefile
+autom4te.cache/
 Makefile.314
 config.log
 config.status
@@ -51,3 +52,5 @@ b__*.ad*
 *.lexch
 *.bexch
 *.dll
+gnatinspect.db
+xmlada-loc.xml
