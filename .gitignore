@@ -35,7 +35,6 @@ schema/test/act_testsuite/tasking/concurrent
 */test/*.out
 */test/*.tmp_out
 unicode/test/test_unicode
-xmlada-config
 shared.gpr
 auto.cgpr
 *.o

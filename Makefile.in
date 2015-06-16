@@ -21,9 +21,7 @@ MODE=@BUILD_TYPE@
 
 # In some cases, we use cp instead of install for doing the installation,
 # since the latter does not support installing multiple files at once.
-CP=cp -p
 RM=rm
-CHMOD=chmod
 
 #########################################################################
 ## Nothing to modify below this point
@@ -104,11 +102,6 @@ install-static:
 		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
 		--build-var=XMLADA_BUILD --build-name=static \
 		--install-name=xmlada xmlada.gpr
-	${CP} distrib/xmlada.gpr ${IPREFIX}/$(PSUB)
-ifneq (${OS},Windows_NT)
-	${CHMOD} +x ${IPREFIX}/bin/xmlada-config
-	cd ${IPREFIX}/lib/xmlada; ${CHMOD} a-w xmlada_*/*.ali
-endif
 
 install-shared install-relocatable:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=relocatable ${GPROPTS} \

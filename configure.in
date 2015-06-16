@@ -31,4 +31,4 @@ AC_SUBST(CC)
 LIB=`basename $libdir`
 AC_SUBST(LIB)
 
-AC_OUTPUT(shared.gpr Makefile dom/test/default.gpr xmlada-config)
+AC_OUTPUT(shared.gpr Makefile dom/test/default.gpr)
