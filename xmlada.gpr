@@ -44,10 +44,10 @@ aggregate project XmlAda is
    case Tests_Status is
       when "Yes" | "Only" =>
          for Project_Files use Project'Project_Files &
-           ("unicode/test/unicode_test.gpr",
-            "sax/test/sax_test.gpr",
-            "dom/test/dom_test.gpr",
-            "schema/test/schema_test.gpr");
+           ("tests/unicode/unicode_test.gpr",
+            "tests/sax/sax_test.gpr",
+            "tests/dom/dom_test.gpr",
+            "tests/schema/schema_test.gpr");
       when "No" =>
          null;
    end case;

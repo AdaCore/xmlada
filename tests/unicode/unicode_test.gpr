@@ -1,9 +1,9 @@
-
 with "../../shared";
 with "xmlada_unicode";
 
 project Unicode_Test is
    for Main use ("test_unicode");
+   for Object_Dir use "obj";
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;
    package Binder   renames Shared.Binder;

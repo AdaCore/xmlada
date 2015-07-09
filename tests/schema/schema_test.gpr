@@ -1,6 +1,4 @@
-
 with "../../shared";
-
 with "xmlada_schema";
 with "xmlada_input";
 
@@ -11,15 +9,14 @@ project Schema_Test is
       "testnumbers.adb", "testdomschema.adb", "schematest.adb",
       "cleanup_schema.adb");
 
+   for Object_Dir use "obj";
    package Builder  renames Shared.Builder;
 
    package Compiler is
       for Switches ("Ada") use
          Shared.Compiler'Switches ("Ada") & ("-gnat05");
    end Compiler;
-
    package Binder   renames Shared.Binder;
-
    package Linker renames Shared.Linker;
 
 end Schema_Test;

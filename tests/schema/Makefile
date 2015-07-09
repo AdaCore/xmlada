@@ -6,19 +6,22 @@ PDFVIEWER=okular
 tests: all new
 
 all:
-	-@./test_date_time
-	-@./testnumbers	
+	-@./obj/test_date_time
+	-@./obj/testnumbers	
+
+# Check whether the W3C tests are available
+check_w3c_tests:
+	@test -d xmlschema2006-11-06
 
 # Do not hide Passed tests, since we want to compare error messages
 # The W3C testsuite is meant to test XSD 1.0, so we have to configure the parser
 # in the appropriate mode.
-new:
-	-@./testsuite 
-	@#-valgrind --leak-resolution=high --leak-check=full ./schematest --xsd10 > test_schema.tmp_out
-	-@./schematest --xsd10 > test_schema.tmp_out
-	-@tr -d '\r' < test_schema.tmp_out > test_schema.out
-	-@diff -u test_schema.expected test_schema.out > test_schema.diff
-	@cat test_schema.diff
+new: check_w3c_tests
+	@if [ -d ../adacore/schema ]; then cd ../adacore/schema; sh ./run.sh; else echo "Schema adacore directory not found (ignored)"; fi
+	-@./obj/schematest --xsd10 > obj/test_schema.tmp_out
+	-@tr -d '\r' < obj/test_schema.tmp_out > obj/test_schema.out
+	-@diff -u test_schema.expected obj/test_schema.out > obj/test_schema.diff
+	@cat obj/test_schema.diff
 
 # Explain how the various errors are split:
 errors:

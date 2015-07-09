@@ -66,12 +66,12 @@ run_test_and_setenv: force
 
 # Run the tests. This requires an install of XML/Ada first
 run_test: force
-	@make --no-print-directory -C unicode/test tests
-	@make --no-print-directory -C sax/test tests
-	@make --no-print-directory -C dom/test tests
-	@make --no-print-directory -C schema/test tests
+	@make --no-print-directory -C tests/unicode tests
+	@make --no-print-directory -C tests/sax tests
+	@make --no-print-directory -C tests/dom tests
+	@make --no-print-directory -C tests/schema tests
 run_test_valgrind: test
-	cd dom/test; valgrind --tool=memcheck --leak-check=full ./testxml -auto
+	cd tests/domt; valgrind --tool=memcheck --leak-check=full ./obj/testxml -auto
 
 docs: force
 	-${MAKE} -e -C docs html latexpdf
@@ -117,7 +117,7 @@ clean: clean_relocatable clean_static
 	cd docs; ${MAKE} -e clean
 
 distclean: clean
-	${RM} dom/test/default.gpr
+	${RM} tests/dom/default.gpr
 	${RM} Makefile config.cache config.log config.status Makefile.314
 
 force:

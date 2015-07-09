@@ -1,11 +1,10 @@
 with "../../shared";
-with "xmlada_dom";
-with "conformance/conformance";
-
-project Dom_Test is
-   for Main use ("testxml.adb", "ea03_006.adb", "tostring.adb");
+with "xmlada_sax";
+project Sax_Test is
+   for Main use ("testsax.adb", "teststate.adb");
+   for Object_Dir use "obj";
    package Builder  renames Shared.Builder;
    package Compiler renames Shared.Compiler;
    package Binder   renames Shared.Binder;
    package Linker   renames Shared.Linker;
-end Dom_Test;
+end Sax_Test;

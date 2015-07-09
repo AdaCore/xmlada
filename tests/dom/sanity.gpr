@@ -2,5 +2,6 @@
 
 with "xmlada";
 project Sanity is
+   for Object_Dir use "obj";
    for Main use ("testxml.adb");
 end Sanity;
