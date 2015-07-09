@@ -1,3 +1,4 @@
 # This file lists all files that do not require style checks
 docs/dom/*  no-precommit-check
 dom/tests/* no-precommit-check
+dom/test/act_testsuite/*/*  no-precommit-check
