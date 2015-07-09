@@ -1,0 +1,6 @@
+[gerrit]
+host = review.eu.adacore.com
+port = 29418
+project = xmlada
+defaultbranch = master
+defaultremote = origin
