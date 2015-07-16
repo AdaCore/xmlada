@@ -59,17 +59,10 @@ test: force
 	${GPRBUILD} -m -p -XLIBRARY_TYPE=static ${GPROPTS} \
 		-XTESTS_ACTIVATED=Only xmlada.gpr
 
-# Setup the environment to run the tests locally, without requiring an
-# install of XML/Ada
-run_test_and_setenv: force
-	GPR_PROJECT_PATH=`pwd`/sax $(MAKE) run_tests
-
 # Run the tests. This requires an install of XML/Ada first
 run_test: force
-	@make --no-print-directory -C tests/unicode tests
-	@make --no-print-directory -C tests/sax tests
-	@make --no-print-directory -C tests/dom tests
-	@make --no-print-directory -C tests/schema tests
+	@make --no-print-directory -C tests tests
+
 run_test_valgrind: test
 	cd tests/domt; valgrind --tool=memcheck --leak-check=full ./obj/testxml -auto
 

@@ -36,10 +36,13 @@ test/*/*.diff
 test/*/*.out
 test/*/*.tmp_out
 tests/unicode/obj
+tests/results/*out
+tests/results/*diff
 
 shared.gpr
 auto.cgpr
 tmp.out
+*tmp_out
 *.o
 *.ali
 b~*.ad*
@@ -54,5 +57,6 @@ b__*.ad*
 *.lexch
 *.bexch
 *.dll
+*dylib*
 gnatinspect.db
 xmlada-loc.xml
