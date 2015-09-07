@@ -30,7 +30,8 @@ abstract project Shared is
 
    for Source_Dirs use ();
 
-   type Mode_Type is ("distrib", "Debug", "Production", "profile", "coverage");
+   type Mode_Type is ("distrib", "Debug", "Production", "profile", "coverage",
+                      "nochecks");
    Mode : Mode_Type := external ("BUILD", "@BUILD_TYPE@");
 
    Processors := External ("PROCESSORS", "0");
@@ -39,7 +40,7 @@ abstract project Shared is
 
    package Builder is
        case Mode is
-          when "Production" =>
+          when "Production" | "nochecks" =>
              for Global_Configuration_Pragmas use "gnat_optimize.adc";
              for Switches ("Ada") use ("-j" & Processors);
           when "Debug" =>
@@ -67,6 +68,9 @@ abstract project Shared is
             --  & ("-g", "-gnata", "-gnatVaMI");
 
          when "Production" =>
+            for Switches ("Ada") use warnings & ("-O2", "-gnatn");
+
+         when "nochecks" =>
             for Switches ("Ada") use warnings & ("-O2", "-gnatn", "-gnatp");
 
          when "profile" =>
@@ -78,7 +82,7 @@ abstract project Shared is
       case Mode is
          when "Debug" =>
             for Switches ("Ada") use ("-E");
-         when "distrib" | "Production" | "profile" | "coverage" =>
+         when "distrib" | "Production" | "profile" | "coverage" | "nochecks" =>
             null;
       end case;
    end binder;
@@ -97,7 +101,7 @@ abstract project Shared is
          when "distrib" =>
             null;
 
-         when "Production" =>
+         when "Production" | "nochecks" =>
       end case;
    end linker;
 
