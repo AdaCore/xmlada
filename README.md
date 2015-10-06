@@ -1,26 +1,15 @@
-
 XML/Ada: A XML parser for Ada95
+===============================
 
-I    - INSTALLING THIS LIBRARY ON UNIX
-II   - INSTALLING THIS LIBRARY ON VMS
-III  - INSTALLING THIS LIBRARY ON WINDOWS
-IV   - TWEAKING THE LIBRARY
-V    - USING THE LIBRARY
-VI   - TESTING THE LIBRARY
-VII  - CONTENTS OF THE LIBRARY
-VIII - LICENSING
-IX   - BUG REPORTS
-
-
-I - INSTALLING THIS LIBRARY ON UNIX
-===================================
+INSTALLING THIS LIBRARY ON UNIX
+-------------------------------
 
 Make sure that you do not have a previous installation of XML/Ada in one
 of the directories given in ADA_OBJECTS_PATH, or some files will not be
 properly recompiled.
 
 Compiling with GNAT 3.16 or newer versions of GNAT
----------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need to automatically detect a few aspects of your build environment,
 which is done by running
@@ -54,48 +43,13 @@ To install the library, use the following command line:
    make all install
 
 Compiling with other Ada compilers
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This library has been reported as being compilable with other compilers than
 GNAT. No build script is provided however.
 
-II - INSTALLING THIS LIBRARY ON VMS
-===================================
-
-On VMS, you should have a recent version of GNAT (3.15 or more recent), since
-the makefile is set up to use the GNAT project files that are now available.
-
-Do the following, from the root directory of XML/Ada:
-
-   - Edit makefile.vms, and change the PREFIX variable to reflect the directory
-     where you want to install XML/Ada
-   - make -f makefile.vms
-   - make -f makefile.vms install
-     If you do not have MKDIR.EXE and other unix-like tools, this command
-     will fail.
-     You can replace it with some manual steps:
-       * Create the installation directory
-       * copy the files
-           unicode/obj/*
-           unicode/*.adb unicode/*.ads
-           input_sources/obj/*
-           input_sources/*.ads input_sources/*.adb
-           sax/obj/*
-           sax/*.adb sax/*.ads
-           dom/obj/*
-           dom/*.adb dom/*.ads
-         into this directory
-
-      To use XML/Ada in your own applications, you need to add the installation
-      directory on the gnatmake command line with a -I switch
-
-   - (optional) make -f makefile.vms test
-     This last step is only required if you want to build the test executables
-     testsax and testdom which can be used to test the library on any XML file.
-
-
-III - INSTALLING THIS LIBRARY ON WINDOWS
-========================================
+INSTALLING THIS LIBRARY ON WINDOWS
+----------------------------------
 
 1. Due to the nature of GNU Make you need to have a UNIX-type shell and
    utilities installed to build this library. If you do not have this,
@@ -129,8 +83,8 @@ III - INSTALLING THIS LIBRARY ON WINDOWS
    executable. In such a case, it is recommended to execute
    "make INSTALL=cp install" instead to use "cp" to do the installation
 
-IV - TWEAKING THE LIBRARY
-=========================
+TWEAKING THE LIBRARY
+--------------------
 
 You can change the way the library behaves, in particular the DOM part,
 by changing some of the hard-coded constants in the code. If you change
@@ -145,13 +99,13 @@ these, you will need to recompile the library and your application:
   Whether the internal representation of namespaces should be shared among
   nodes. The default is yes
 
-V - USING THE LIBRARY
-=====================
+USING THE LIBRARY
+-----------------
 
 See the XML/Ada user's guide for information on how to use this library.
 
-VI - TESTING THE LIBRARY
-========================
+TESTING THE LIBRARY
+-------------------
 
 Several test programs are provided in the XML/Ada source package. These
 are found in the dom/test and sax/test subdirectories. These are very simple
@@ -203,8 +157,8 @@ to get the output under those conditions, since "make run_test" is setup
 for the .tar.gz output.
 
 
-VII - CONTENTS OF THE LIBRARY
-=============================
+CONTENTS OF THE LIBRARY
+-----------------------
 
 The sources in this library are split into several subdirectories, each
 with its own README, sources, documentation and unit tests.
@@ -234,9 +188,8 @@ The list of subdirectories (aka modules) is:
 - docs
   This contains the full documentation for this XML library
 
-
-VIII - BUG REPORTS
-==================
+BUG REPORTS
+-----------
 
 Please send questions and bug reports to report@gnat.com following
 the same procedures used to submit reports with the GNAT toolset itself.
