@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2014, AdaCore                     --
+--                     Copyright (C) 2004-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -59,6 +59,10 @@ package Schema.Validators is
    --  namespace we are defining).
    --  A grammar is a smart pointer, and will take care of freeing memory
    --  automatically when no longer needed.
+   --  Do not load, in a single XML_Grammar, multiple xsd files for the same
+   --  namespace (in particular grammars with no targetNamespace). They would
+   --  be merged together, and validating files from this grammar would result
+   --  in unexpected results.
 
    procedure Set_XSD_Version
      (Grammar     : in out XML_Grammar;
