@@ -116,18 +116,18 @@ check XML/Ada. Most likely, this is only useful to you if you are modifying
 XML/Ada itself. Here is how you can run this testsuite:
    You need to download the official XML Conformance Testsuite for XML,
    The name of the current archive is
-       xmlconf-20080827.tar
+       xmlts20080827.tar
    The URL is:
        http://www.w3.org/XML/Test/
 
-   Uncompress it somewhere on your disk, then add a link in dom/test, which
+   Uncompress it somewhere on your disk, then add a link in tests/dom, which
    points to the directory where you unpackaged the testsuite. The link should
    be called "tests".
 
 A similar setup is required for the W3C schema testsuite. The URL of the
 testsuite is:
    http://www.w3.org/XML/2004/xml-schema-test-suite/xmlschema2006-11-06/xsts-2007-06-20.tar.gz
-This file should be extracted in the schema/test directory (creating a
+This file should be extracted in the tests/schema directory (creating a
 xmlschema-2006-11-06 subdirectory as a result).
 
    Then execute the command from the toplevel directory:
