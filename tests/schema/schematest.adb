@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2007-2014, AdaCore                     --
+--                     Copyright (C) 2007-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -402,10 +402,8 @@ procedure Schematest is
                      Append (Schema_Files, " - ");
                   end if;
 
-                  Load (Normalize_Pathname
-                        (Get_Attribute_NS (N, S_Xlink, S_Href),
-                         Base_Dir, Resolve_Links => False),
-                    Input);
+                  Load (Base_Dir & Get_Attribute_NS (N, S_Xlink, S_Href),
+                        Input);
 
                   if Verbose then
                      Put_Line ("  Will parse: " & Get_System_Id (Input));
@@ -539,10 +537,7 @@ procedure Schematest is
                Group.Parsed_XML := Group.Parsed_XML + 1;
 
                Result.Result := Passed;
-               Load (Normalize_Pathname
-                     (Get_Attribute_NS (N, S_Xlink, S_Href),
-                      Base_Dir, Resolve_Links => False),
-                     Input);
+               Load (Base_Dir & Get_Attribute_NS (N, S_Xlink, S_Href), Input);
                Result.XML := To_Unbounded_String (Get_System_Id (Input));
 
                if Failed_Grammar then
@@ -776,10 +771,7 @@ procedure Schematest is
       while N /= null loop
          if Local_Name (N) = Test_Set_Ref then
             Run_Testset
-              (Normalize_Pathname
-                 (Get_Attribute_NS (N, S_Xlink, S_Href),
-                  Dir_Name (Filename),
-                  Resolve_Links => False),
+              (Dir_Name (Filename) & Get_Attribute_NS (N, S_Xlink, S_Href),
                Grammar => Grammar);
          end if;
 
